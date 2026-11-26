@@ -3,6 +3,7 @@
  * the request becomes as a service call, the status each service error is sent with, and that an
  * error the handler does not own reaches the global error handler unchanged.
  */
+import { legacyMatch } from '../../support/match-sides';
 import { expect } from '@jest/globals';
 import { ContestStatus, Sport } from '@poolmaster/shared/domain';
 import type { ContestConfigTemplateDto } from '@poolmaster/shared/dto';
@@ -208,7 +209,7 @@ describe('event page handler errors', () => {
 describe('squares handlers', () => {
   const board = {
     contest: { id: 'c1', status: ContestStatus.OPEN },
-    game: { scheduledDate: null, periodScores: [], slot: weekRoundSlot() },
+    game: legacyMatch({ id: 'game-1', slot: weekRoundSlot() }),
     digits: null,
   };
   const service = {

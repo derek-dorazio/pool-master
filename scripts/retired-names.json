@@ -53,7 +53,11 @@
     "phaseMissing": "#2153 (6b): competitionMissing",
     "externalGameId": "#2007 (10): the Game's GameProviderMapping holds the provider game id",
     "linkGames": "#2007 (10): GameRepository.applySync maps Games",
-    "holdsGame": "#2007 (10): a webhook routes by GameProviderMapping, no fan-out"
+    "holdsGame": "#2007 (10): a webhook routes by GameProviderMapping, no fan-out",
+    "sportEventMatchPeriodScore": "#2046 (10e): Game side result period scores",
+    "savePeriodScore": "#2046 (10e): saveGamePeriodScores, one Game's side periods",
+    "applyLiveScores": "#2046 (10e): applyStatuses and the Game side results",
+    "PrismaMatchSide": "#2046 (10e): side numbers on match sides"
   },
   "ROUND_NAMES_FROM_FINAL": 0,
   "roundLabel": 0,
@@ -107,5 +111,9 @@
   "phaseMissing": 0,
   "externalGameId": 0,
   "linkGames": 0,
-  "holdsGame": 0
+  "holdsGame": 0,
+  "sportEventMatchPeriodScore": 0,
+  "savePeriodScore": 0,
+  "applyLiveScores": 0,
+  "PrismaMatchSide": 0
 }

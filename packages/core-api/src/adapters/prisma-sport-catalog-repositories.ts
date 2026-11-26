@@ -910,8 +910,7 @@ function fieldRowInclude() {
       orderBy: { sportEventRound: { roundNumber: 'asc' } },
     },
     raceResult: true,
-    homeMatches: { include: MATCH_INCLUDE },
-    awayMatches: { include: MATCH_INCLUDE },
+    matchSides: { select: { match: { include: MATCH_INCLUDE } } },
   } satisfies Prisma.SportEventParticipantInclude;
 }
 
@@ -919,7 +918,7 @@ type FieldRow = Prisma.SportEventParticipantGetPayload<{ include: ReturnType<typ
 
 /** A field row, flagged when its participant belongs to `sportLeagueId`, its event's. */
 function toFieldRow(row: FieldRow, sportLeagueId: string): SportEventParticipantView {
-  const { participant, valuation, standing, rounds, raceResult, homeMatches, awayMatches, ...entry } = row;
+  const { participant, valuation, standing, rounds, raceResult, matchSides, ...entry } = row;
   return {
     entry: toSportEventParticipant(entry),
     participant: mapToParticipant(participant),
@@ -954,8 +953,8 @@ function toFieldRow(row: FieldRow, sportLeagueId: string): SportEventParticipant
       golf: round.golf ? toGolfRound(round.golf) : null,
     })),
     raceResult: raceResult ? toRaceResult(raceResult) : null,
-    matches: [...homeMatches, ...awayMatches]
-      .map(toSportEventRoundMatch)
+    matches: matchSides
+      .map((side) => toSportEventRoundMatch(side.match))
       .sort(compareMatchPlaces),
     affiliatedWithSportLeague: participant.sportLeagueId === sportLeagueId,
   };
@@ -1334,7 +1333,7 @@ const SPORT_EVENT_INCLUDE = {
     orderBy: { provider: { name: 'asc' } },
   },
   // The slot definitions it covers (#2010): where contest templates are offered on it.
-  slots: { select: { seasonSlot: { select: { definition: { select: { id: true, key: true, slotKind: true, weekNumber: true, ...SLOT_PLACE_SELECT } } } } } },
+  slots: { select: { seasonSlot: { select: { definition: { select: { id: true, key: true, slotKind: true, weekNumber: true, canEndTied: true, ...SLOT_PLACE_SELECT } } } } } },
 } as const;
 
 function toSportEvent(row: Prisma.SportEventGetPayload<{ include: typeof SPORT_EVENT_INCLUDE }>): SportEvent {
@@ -1357,7 +1356,7 @@ function toSportEvent(row: Prisma.SportEventGetPayload<{ include: typeof SPORT_E
     slotDefinitions: row.slots
       .map(({ seasonSlot: { definition } }) => ({ ...definition, ...slotPlaceOf(definition) }))
       .sort(compareCoveredSlots)
-      .map((definition) => ({ id: definition.id, slotKind: definition.slotKind })),
+      .map((definition) => ({ id: definition.id, slotKind: definition.slotKind, canEndTied: definition.canEndTied })),
     sportLeagueSeasonId: row.sportLeagueSeasonId,
     championshipYear: row.sportLeagueSeason.championshipYear,
     sportLeagueId: row.sportLeagueId,

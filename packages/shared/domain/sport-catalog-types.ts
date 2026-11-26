@@ -6,7 +6,7 @@
  */
 
 import type { ScoringFamily } from './sports/scoring-family';
-import type { ProviderCode, MatchEnding, MatchPeriodLayout, MatchResultSource, MatchSide, MatchStatus, ParticipantRoundStatus, ParticipantType, ParticipantStandingStatus, RaceResultStatus, SlotKind, SlotPairing, SportLeagueNoun, ValuationSource } from './enums';
+import type { ProviderCode, HomeAway, MatchEnding, MatchPeriodLayout, MatchSideOutcome, MatchStatus, PeriodKind, ParticipantRoundStatus, ParticipantType, ParticipantStandingStatus, RaceResultStatus, SlotKind, SlotPairing, SportLeagueNoun, ValuationSource } from './enums';
 import type { DomainEntity } from './types';
 
 /**
@@ -108,6 +108,11 @@ export interface SportEventRoundSlot {
   seriesGames: number;
   /** Whether the slot's matches are set by fixed links or reseeded. */
   pairing: SlotPairing;
+  /**
+   * Whether a game of the slot can finish level (#2043), read from its definition: a level final
+   * score is then a tie; where it cannot, only a shoot-out decides a level score (#2046).
+   */
+  canEndTied: boolean;
 }
 
 /** What a match reads of its round's slot (#2006): its label's facts and its kind. */
@@ -218,10 +223,10 @@ export interface SportEventParticipantRaceResult extends DomainEntity {
 
 /**
  * One game or match of an event, played in one of its rounds. In a knockout bracket it is also a
- * bracket slot: `advancesToMatchId` and `advancesToSide` name the match and side its winner moves
- * on to (null for the final). A side is a field row, null until it is decided (a later-round slot
- * waiting on its feeder match). A COMPLETED match with no `winnerSide` is a draw, which a knockout
- * never allows. In a series (the NBA's best of seven) the scores are games won.
+ * bracket slot: `advancesToMatchId` and `advancesToSideNumber` name the match and side its winner
+ * moves on to (null for the final). Its two `sides` (#2046) are in side-number order, each a field
+ * row or empty until it is decided (a later-round slot waiting on its feeder match). Its `games`
+ * hold each side's score; a single game is Game 1, a best-of series one Game per game played.
  */
 export interface SportEventRoundMatch extends DomainEntity {
   sportEventId: string;
@@ -231,58 +236,53 @@ export interface SportEventRoundMatch extends DomainEntity {
   slot: SportEventRoundSlot;
   /** Unique within its round (#2161): the match's place in the round and its display order. */
   matchNumber: number;
-  homeSportEventParticipantId: string | null;
-  awaySportEventParticipantId: string | null;
   isNeutralSite: boolean;
   scheduledDate: Date | null;
+  /** Rolled up from the Games by the result writer. */
   status: MatchStatus;
-  winnerSide: MatchSide | null;
-  homeScore: number | null;
-  awayScore: number | null;
-  /**
-   * The shoot-out that settled a knockout match level after extra time (#791): both sides' kicks
-   * scored, or neither. Not part of the match score (IFAB Law 10), which every scorer reads, so
-   * only the winner it names counts. Null in a sport without shoot-outs (`SportDefinition.shootout`).
-   */
-  homeShootoutScore: number | null;
-  awayShootoutScore: number | null;
   /**
    * How the match ended (#704): PLAYED unless it stopped early (a retirement, a walkover or a
    * default). A match without a result is PLAYED.
    */
   ending: MatchEnding;
   advancesToMatchId: string | null;
-  advancesToSide: MatchSide | null;
+  /** The `sideNumber` of the next match's side the winner fills; set exactly with `advancesToMatchId`. */
+  advancesToSideNumber: number | null;
   /** The bracket region or conference ("East", "AFC"); null where the bracket has none. */
   regionLabel: string | null;
-  /**
-   * The points spread from the home team's side (#720): -3.5 has the home team favoured by 3.5,
-   * +3.5 has it getting 3.5. Null until set. A pick'em contest scored against the spread reads it.
-   */
-  homeSpread: number | null;
-  /**
-   * Who set the result (#1531): an admin, or the provider of the linked game; null while the
-   * match has none. A cancelled match was cancelled by an admin.
-   */
-  resultSource: MatchResultSource | null;
   /**
    * When the result was last recorded (#1889): each write of a COMPLETED result sets it, a
    * correction included; null in every other status.
    */
   completedAt: Date | null;
+  /** Side 1 then side 2 (#2046). */
+  sides: readonly SportEventRoundMatchSide[];
+  /** The match's Games in game-number order, each with its side results (#2046). */
+  games: readonly SportEventRoundMatchGame[];
+}
+
+/**
+ * One side of a match (#2046): its fixed place, set by whoever created the match (the sync puts the
+ * away team on side 1 and the home team on side 2), and the field row playing it, null until known.
+ */
+export interface SportEventRoundMatchSide {
+  id: string;
+  sideNumber: number;
+  sportEventParticipantId: string | null;
   /**
-   * The score at the end of each period entered so far (#772), in period order: the end of each
-   * quarter but the last in American football. The final score is `homeScore`/`awayScore`.
-   * Empty for a sport without periods (`SportDefinition.matchPeriods`).
+   * The points spread, on side 1 only: -3.5 has side 1 favoured by 3.5, +3.5 has it getting 3.5.
+   * Null until set, and always on side 2. A pick'em contest scored against the spread reads it.
    */
-  periodScores: readonly SportEventMatchPeriodScore[];
+  spread: number | null;
+  /** Rolled up from the Games by the result writer; PENDING until the match is decided. */
+  outcome: MatchSideOutcome;
 }
 
 /**
  * One game of a match (#2007): a single-game match has its Game 1, a best-of series one Game per
  * game played. Every match has its Game 1 from the moment it is loaded. A Game holds the provider's
- * score of that game alone; the match's own result (a series' games won) is the match's. Its
- * provider game ids are its provider mappings, one per provider.
+ * score of that game alone, as each side's result (#2046). Its provider game ids are its provider
+ * mappings, one per provider.
  */
 export interface SportEventRoundMatchGame extends DomainEntity {
   sportEventId: string;
@@ -293,9 +293,6 @@ export interface SportEventRoundMatchGame extends DomainEntity {
   gameNumber: number;
   scheduledDate: Date | null;
   status: MatchStatus;
-  winnerSide: MatchSide | null;
-  homeScore: number | null;
-  awayScore: number | null;
   completedAt: Date | null;
   /**
    * The Game this one was moved to (#2007): a provider that moves a game to another week keeps
@@ -305,6 +302,26 @@ export interface SportEventRoundMatchGame extends DomainEntity {
   movedToGameId: string | null;
   /** When a provider last sent a notification about the game (#1499); null until one does. */
   lastProviderNotificationAt: Date | null;
+  /** Each side's result in this game, in side-number order; empty for neither side yet written. */
+  sideResults: readonly SportEventRoundMatchGameSideResult[];
+}
+
+/** One side's result in one Game (#2046). */
+export interface SportEventRoundMatchGameSideResult {
+  sportEventRoundMatchSideId: string;
+  sideNumber: number;
+  /** The side's score in the game, overtime included and a shoot-out never; null until it starts. */
+  score: number | null;
+  homeAway: HomeAway;
+  /** The side's own points in each period, in play order; a shoot-out is one SHOOTOUT period. */
+  periodScores: readonly GamePeriodScore[];
+}
+
+/** The points one side scored in one period of a game (#2046): that period's own, not a running total. */
+export interface GamePeriodScore {
+  kind: PeriodKind;
+  periodNumber: number;
+  score: number;
 }
 
 /** A Game's id at one provider (#2007): the provider's game id the Game takes its score from. */
@@ -314,10 +331,3 @@ export interface SportEventRoundMatchGameProviderMapping {
   externalId: string;
 }
 
-/** Both sides' score at the end of one period of a game, as the scoreboard shows it (#772). */
-export interface SportEventMatchPeriodScore {
-  /** 1 for the first period; never the last, whose score is the match's final result. */
-  periodNumber: number;
-  homeScore: number;
-  awayScore: number;
-}

@@ -49,6 +49,8 @@ import {
   type SportEvent,
   type SportEventRoundMatch,
   type SquaresWinner,
+  matchParticipantIds,
+  teamOnMatchSide,
 } from '@poolmaster/shared/domain';
 import { errorMessage } from '../../core/error-message';
 import { hasMatchStarted } from '../contests/entry-window';
@@ -402,10 +404,8 @@ export class SquaresService {
 
   /** The game's two teams' names, from their two field rows alone (#1201). */
   private async findTeamNames(game: SportEventRoundMatch): Promise<{ home: string | null; away: string | null }> {
-    const field = await this.deps.field.findByIds(
-      [game.homeSportEventParticipantId, game.awaySportEventParticipantId].filter((id): id is string => id !== null),
-    );
-    const rowOf = (side: MatchSide) => field.find((row) => row.id === (side === MatchSide.HOME ? game.homeSportEventParticipantId : game.awaySportEventParticipantId));
+    const field = await this.deps.field.findByIds(matchParticipantIds(game));
+    const rowOf = (side: MatchSide) => field.find((row) => row.id === teamOnMatchSide(game, side));
     const home = rowOf(MatchSide.HOME);
     const away = rowOf(MatchSide.AWAY);
     const participants = await this.deps.participants.findByIds([home, away].flatMap((row) => row ? [row.participantId] : []));
@@ -469,5 +469,5 @@ function isDrawOpen(context: Pick<SquaresContext, 'contest' | 'game'>): boolean 
   const { contest, game } = context;
   if (contest.status !== ContestStatus.OPEN && contest.status !== ContestStatus.ACTIVE) return false;
   if (game.status === MatchStatus.COMPLETED || game.status === MatchStatus.CANCELLED) return false;
-  return !game.periodScores.some((score) => score.periodNumber === 1);
+  return !squaresScoringMoments(game, Number.MAX_SAFE_INTEGER).some((moment) => moment.periodNumber === 1);
 }

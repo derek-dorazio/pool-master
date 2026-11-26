@@ -1,3 +1,4 @@
+import { legacyMatch } from '../../support/match-sides';
 import {
   ContestEntryStatus,
   MatchStatus,
@@ -23,7 +24,7 @@ function week(id: string, startDate: Date, overrides: Partial<SportEvent> = {}):
 }
 
 function game(id: string, sportEventId: string, roundNumber = 1): SportEventRoundMatch {
-  return { id, sportEventId, roundNumber, status: MatchStatus.SCHEDULED, scheduledDate: null, homeSportEventParticipantId: `${id}-home`, awaySportEventParticipantId: `${id}-away`, winnerSide: null } as SportEventRoundMatch;
+  return legacyMatch({ id, sportEventId, roundNumber, status: MatchStatus.SCHEDULED, scheduledDate: null, homeSportEventParticipantId: `${id}-home`, awaySportEventParticipantId: `${id}-away`, winnerSide: null });
 }
 
 function entry(id: string, entryNumber: number, submittedFor: string[]): ContestEntryWithSquad {

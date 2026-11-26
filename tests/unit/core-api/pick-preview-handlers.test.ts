@@ -2,8 +2,9 @@
  * #1612 — the pick preview handlers: the unsaved setup and trial picks off the body go to the
  * services as they are, and each preview answers its published shape.
  */
+import { legacyMatch } from '../../support/match-sides';
 import { expect } from '@jest/globals';
-import { MatchStatus, PickEmMode, PredictedResult, SelectionType, type SportEventRoundMatch } from '@poolmaster/shared/domain';
+import { MatchStatus, PickEmMode, PredictedResult, SelectionType } from '@poolmaster/shared/domain';
 import { GamePickPreviewResponseSchema, RosterPickPreviewResponseSchema } from '@poolmaster/shared/dto';
 import { createPickPreviewHandlers } from '../../../packages/core-api/src/modules/selections/preview-handler';
 import type { GamesPreview, PredictionService } from '../../../packages/core-api/src/modules/selections/prediction-service';
@@ -50,7 +51,7 @@ function gamesPreview(withPick: boolean): GamesPreview {
     gameCount: 1,
     tiebreakerMatchId: GAME,
     games: [{
-      match: { id: GAME, matchNumber: 1, roundNumber: 1, slot: slotOfRound(1), status: MatchStatus.SCHEDULED, isNeutralSite: false, regionLabel: null, homeSpread: null } as SportEventRoundMatch,
+      match: legacyMatch({ id: GAME, matchNumber: 1, roundNumber: 1, slot: slotOfRound(1), status: MatchStatus.SCHEDULED, isNeutralSite: false, regionLabel: null, homeSpread: null }),
       kickoff: KICKOFF,
       home: team(HOME),
       away: team(AWAY),

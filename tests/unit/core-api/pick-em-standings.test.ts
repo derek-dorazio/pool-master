@@ -8,6 +8,7 @@
  * and Cara one; Alice's tiebreaker (40) is closer than Bob's (50) to the Monday game's 41. Week 2:
  * Bob gets all three, Alice two; Cara left it in draft at kickoff, so it scores nothing for her.
  */
+import { withHomeAway, homeAwayOf } from '../../support/match-sides';
 import { expect } from '@jest/globals';
 import {
   ContestEntryStatus,
@@ -87,7 +88,7 @@ function setup() {
         games.predictions.set(`${entry.id}:${game.id}`, {
           id: `prediction-${entry.id}-${game.id}`, contestEntryId: entry.id, sportEventRoundMatchId: game.id,
           predictedResult: PredictedResult.TEAM,
-          sportEventParticipantId: expectDefined(side === 'home' ? game.homeSportEventParticipantId : game.awaySportEventParticipantId),
+          sportEventParticipantId: expectDefined(side === 'home' ? homeAwayOf(game).homeSportEventParticipantId : homeAwayOf(game).awaySportEventParticipantId),
           confidence: null, pickedAt: T0, createdAt: T0, updatedAt: T0,
         });
       }
@@ -121,7 +122,7 @@ function setup() {
   const settlement = new ContestSettlementService({ domainEvents: testDomainEvents(), ...deps, contests: world.contestRepo(), sportEvents: world.sportEventRepo(), squares: fakeSquaresRepo(), championship: { recordContest: async () => 0 } });
 
   const play = (game: SportEventRoundMatch, winner: MatchSide | null, homeScore: number, awayScore: number) => {
-    games.putMatches([{ ...expectDefined(games.matches.get(game.id)), status: MatchStatus.COMPLETED, winnerSide: winner, homeScore, awayScore }]);
+    games.putMatches([withHomeAway(expectDefined(games.matches.get(game.id)), { status: MatchStatus.COMPLETED, winnerSide: winner, homeScore, awayScore })]);
   };
   const setEventStatus = (sportEventId: string, status: SportEventStatus) => {
     world.sportEvents.set(sportEventId, { ...expectDefined(world.sportEvents.get(sportEventId)), status });
@@ -400,9 +401,9 @@ describe('ContestService.getPickEmLeaderboard', () => {
     const leaderboard = await context.leaderboard();
     expect(leaderboard.currentWeekId).toBe(context.week1.id);
     expect(leaderboard.entries.map((entry) => [entry.entryName, entry.currentWeekPicks])).toEqual([
-      ['Alice', [{ sportEventRoundMatchId: context.week1Games.g1.id, sportEventParticipantId: context.week1Games.g1.homeSportEventParticipantId, outcome: 'CORRECT' }]],
-      ['Bob', [{ sportEventRoundMatchId: context.week1Games.g1.id, sportEventParticipantId: context.week1Games.g1.homeSportEventParticipantId, outcome: 'CORRECT' }]],
-      ['Cara', [{ sportEventRoundMatchId: context.week1Games.g1.id, sportEventParticipantId: context.week1Games.g1.awaySportEventParticipantId, outcome: 'BUSTED' }]],
+      ['Alice', [{ sportEventRoundMatchId: context.week1Games.g1.id, sportEventParticipantId: homeAwayOf(context.week1Games.g1).homeSportEventParticipantId, outcome: 'CORRECT' }]],
+      ['Bob', [{ sportEventRoundMatchId: context.week1Games.g1.id, sportEventParticipantId: homeAwayOf(context.week1Games.g1).homeSportEventParticipantId, outcome: 'CORRECT' }]],
+      ['Cara', [{ sportEventRoundMatchId: context.week1Games.g1.id, sportEventParticipantId: homeAwayOf(context.week1Games.g1).awaySportEventParticipantId, outcome: 'BUSTED' }]],
     ]);
   });
 
@@ -528,7 +529,7 @@ describe('ContestService.listMyLeagueEntries — a live contest\'s places', () =
     games.predictions.set(`${second.id}:${g1.id}`, {
       id: `prediction-${second.id}-${g1.id}`, contestEntryId: second.id, sportEventRoundMatchId: g1.id,
       predictedResult: PredictedResult.TEAM,
-      sportEventParticipantId: expectDefined(g1.awaySportEventParticipantId),
+      sportEventParticipantId: expectDefined(homeAwayOf(g1).awaySportEventParticipantId),
       confidence: null, pickedAt: T0, createdAt: T0, updatedAt: T0,
     });
     const thirdId = 'entry-alice-3';

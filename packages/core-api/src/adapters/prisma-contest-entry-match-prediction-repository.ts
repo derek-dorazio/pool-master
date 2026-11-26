@@ -149,10 +149,23 @@ export class PrismaContestEntryMatchPredictionRepository implements ContestEntry
           where: { contestEntryId, sportEventRoundMatchId: { in: [...replacedMatchIds] } },
         });
       }
+      // A pick names its match side by number (#2046): one read of the picked games' sides.
+      const pickedSides = saves.some((save) => save.sideNumber !== null)
+        ? await tx.sportEventRoundMatchSide.findMany({
+          where: { sportEventRoundMatchId: { in: saves.filter((save) => save.sideNumber !== null).map((save) => save.sportEventRoundMatchId) } },
+          select: { id: true, sportEventRoundMatchId: true, sideNumber: true },
+        })
+        : [];
+      const sideIdOf = (sportEventRoundMatchId: string, sideNumber: number | null): string | null => {
+        if (sideNumber === null) return null;
+        const side = pickedSides.find((each) => each.sportEventRoundMatchId === sportEventRoundMatchId && each.sideNumber === sideNumber);
+        if (side === undefined) throw new Error(`Match ${sportEventRoundMatchId} has no side ${String(sideNumber)}.`);
+        return side.id;
+      };
       const created = saves.length > 0
         ? await tx.contestEntryMatchPrediction.createManyAndReturn({
-          data: saves.map(({ sportEventRoundMatchId, predictedResult, sportEventParticipantId, confidence }) => ({
-            contestEntryId, sportEventRoundMatchId, predictedResult, sportEventParticipantId, confidence, pickedAt: at,
+          data: saves.map(({ sportEventRoundMatchId, predictedResult, sportEventParticipantId, sideNumber, confidence }) => ({
+            contestEntryId, sportEventRoundMatchId, predictedResult, sportEventParticipantId, sportEventRoundMatchSideId: sideIdOf(sportEventRoundMatchId, sideNumber), confidence, pickedAt: at,
           })),
           include: WITH_MATCH_PLACE,
         })

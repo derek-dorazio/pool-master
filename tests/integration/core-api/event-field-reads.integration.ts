@@ -1,7 +1,7 @@
 import { testDomainEvents } from '../../support/domain-events';
 import { expect } from '@jest/globals';
 import { randomUUID } from 'node:crypto';
-import { Sport, SportEventStatus } from '@poolmaster/shared/domain';
+import { PeriodKind, Sport, SportEventStatus, gameNumbered, matchParticipantIds, matchSpread } from '@poolmaster/shared/domain';
 import type { SportEventParticipantListResponse, SportEventParticipantResponse } from '@poolmaster/shared/dto';
 import {
   PrismaSportEventRoundMatchRepository,
@@ -25,6 +25,7 @@ import { participantLeagueId } from '../../support/participant-league';
 import { sportRowKeys } from '../../support/sport-rows';
 import { linkTestSlot } from '../../support/test-slots';
 import { oneEventSlotId } from '../../support/test-slots';
+import { createMatchRow } from '../../support/match-rows';
 
 // An event's field against real Postgres (#1163): read in one repository call on one connection,
 // shared by every contest and pick screen on the event for 30 seconds, and read afresh once an
@@ -125,7 +126,8 @@ describe('An event\'s field', () => {
     const { result: field, statements } = await recordStatements(() => createSportEventParticipantService(getAppPrisma(), testDomainEvents()).listEventParticipants(event.id));
 
     // The event's own row, then the field and each of its relations in one statement: no read per
-    // row, and nothing else. A field row's games are read twice, as the home side and as the away side.
+    // row, and nothing else. A field row's games are read through the match sides naming it (#2046);
+    // a field with no matches reads no further.
     expect(statementCounts(statements)).toEqual([
       ['SELECT participants', 1],
       ['SELECT sport_event_participant_golf_rounds', 1],
@@ -136,7 +138,7 @@ describe('An event\'s field', () => {
       ['SELECT sport_event_participant_valuations', 1],
       ['SELECT sport_event_participants', 1],
       ['SELECT sport_event_provider_mappings', 1],
-      ['SELECT sport_event_round_matches', 2],
+      ['SELECT sport_event_round_match_sides', 1],
       ['SELECT sport_event_rounds', 1],
       // The event's slot definitions (#2010), where templates are offered.
       ['SELECT sport_event_slots', 1],
@@ -242,46 +244,37 @@ describe('An event\'s field, for every scoring family', () => {
     const [round1, round2] = await Promise.all([1, 2].map((roundNumber) => prisma.sportEventRound.create({
       data: { sportEventId: event.id, sportEventSlotId, roundNumber, scheduledDate: new Date(`2026-03-${19 + roundNumber}`) },
     })));
-    // Duke is away in match 1 and home in match 2; written match 2 first.
-    const match2 = await prisma.sportEventRoundMatch.create({
-      data: { sportEventId: event.id, sportEventRoundId: round2.id, matchNumber: 2, homeSportEventParticipantId: duke.id, isNeutralSite: true },
+    // Duke is on side 1 of match 1 and side 2 of match 2; written match 2 first.
+    const match2 = await createMatchRow(prisma, { sportEventId: event.id, sportEventRoundId: round2.id, sportEventSlotId, matchNumber: 2, teams: [null, duke.id], isNeutralSite: true });
+    const match1 = await createMatchRow(prisma, {
+      sportEventId: event.id, sportEventRoundId: round1.id, sportEventSlotId, matchNumber: 1, teams: [duke.id, unc.id], isNeutralSite: true,
+      result: { winnerSideNumber: 1, scores: [75, 70] },
     });
-    const match1 = await prisma.sportEventRoundMatch.create({
-      data: {
-        sportEventId: event.id,
-        sportEventRoundId: round1.id,
-        matchNumber: 1,
-        homeSportEventParticipantId: unc.id,
-        awaySportEventParticipantId: duke.id,
-        isNeutralSite: true,
-        status: 'COMPLETED',
-        winnerSide: 'AWAY',
-        homeScore: 70,
-        awayScore: 75,
-        homeSpread: '-3.5',
-        advancesToMatchId: match2.id,
-        advancesToSide: 'HOME',
-      },
+    await prisma.sportEventRoundMatch.update({ where: { id: match1.id }, data: { advancesToMatchId: match2.id, advancesToSideNumber: 2 } });
+    const matchRepo = new PrismaSportEventRoundMatchRepository(getAppPrisma());
+    await matchRepo.update(match1.id, { spread: 3.5 });
+    const gameOne = await prisma.sportEventRoundMatchGame.findFirstOrThrow({ where: { sportEventRoundMatchId: match1.id, gameNumber: 1 } });
+    await matchRepo.saveGamePeriodScores({
+      sportEventRoundMatchId: match1.id,
+      gameId: gameOne.id,
+      sides: [
+        { sideNumber: 1, periodScores: [{ kind: PeriodKind.REGULAR, periodNumber: 2, score: 37 }, { kind: PeriodKind.REGULAR, periodNumber: 1, score: 38 }] },
+        { sideNumber: 2, periodScores: [{ kind: PeriodKind.REGULAR, periodNumber: 2, score: 40 }, { kind: PeriodKind.REGULAR, periodNumber: 1, score: 30 }] },
+      ],
     });
-    for (const [periodNumber, homeScore, awayScore] of [[2, 40, 37], [1, 30, 38]]) {
-      await prisma.sportEventMatchPeriodScore.create({ data: { sportEventRoundMatchId: match1.id, periodNumber, homeScore, awayScore } });
-    }
-    await prisma.sportEventRoundMatch.create({
-      data: { sportEventId: event.id, sportEventRoundId: round1.id, matchNumber: 3, homeSportEventParticipantId: kansas.id, awaySportEventParticipantId: baylor.id, isNeutralSite: true },
-    });
+    await createMatchRow(prisma, { sportEventId: event.id, sportEventRoundId: round1.id, sportEventSlotId, matchNumber: 3, teams: [baylor.id, kansas.id], isNeutralSite: true });
 
     const rows = await createSportEventParticipantService(getAppPrisma(), testDomainEvents()).listEventParticipants(event.id);
-    const matches = await new PrismaSportEventRoundMatchRepository(getAppPrisma()).findBySportEvent(event.id);
+    const matches = await matchRepo.findBySportEvent(event.id);
 
     const dukeRow = rows.find((row) => row.entry.id === duke.id);
     expect(dukeRow?.matches.map((match) => [match.matchNumber, match.roundNumber])).toEqual([[1, 1], [2, 2]]);
-    expect(dukeRow?.matches[0]).toMatchObject({ homeSpread: -3.5, periodScores: [
-      { periodNumber: 1, homeScore: 30, awayScore: 38 },
-      { periodNumber: 2, homeScore: 40, awayScore: 37 },
-    ] });
+    const first = expectDefined(dukeRow?.matches[0]);
+    expect(matchSpread(first)).toBe(3.5);
+    expect(expectDefined(gameNumbered(first, 1)).sideResults.map((result) => [result.sideNumber, result.periodScores.map((period) => period.score)])).toEqual([[1, [38, 37]], [2, [30, 40]]]);
     for (const row of rows) {
       expect(row.matches).toEqual(matches.filter((match) => (
-        match.homeSportEventParticipantId === row.entry.id || match.awaySportEventParticipantId === row.entry.id
+        matchParticipantIds(match).includes(row.entry.id)
       )));
     }
   });

@@ -84,6 +84,7 @@ function match(overrides: Partial<SportEventRoundMatchDto> & Pick<SportEventRoun
     scheduledDate: null,
     status: 'SCHEDULED',
     isUnplayed: true,
+    isFinal: false,
     winnerSide: null,
     homeScore: null,
     awayScore: null,
@@ -104,16 +105,16 @@ function match(overrides: Partial<SportEventRoundMatchDto> & Pick<SportEventRoun
 const MATCHES = [
   match({
     id: 'm-1', matchNumber: 1, roundNumber: 1, homeSportEventParticipantId: 'sep-1', awaySportEventParticipantId: 'sep-2',
-    status: 'COMPLETED', isUnplayed: false, winnerSide: 'HOME', homeScore: 80, awayScore: 61, resultSource: 'PROVIDER', completedAt: '2026-03-20T22:00:00.000Z',
+    status: 'COMPLETED', isUnplayed: false, isFinal: true, winnerSide: 'HOME', homeScore: 80, awayScore: 61, resultSource: 'PROVIDER', completedAt: '2026-03-20T22:00:00.000Z',
   }),
   match({
     id: 'm-2', matchNumber: 2, roundNumber: 1, homeSportEventParticipantId: 'sep-3', awaySportEventParticipantId: 'sep-4', isNeutralSite: false,
-    status: 'COMPLETED', isUnplayed: false, winnerSide: 'AWAY', homeScore: 1, awayScore: 1, homeShootoutScore: 3, awayShootoutScore: 4, resultSource: 'PROVIDER',
+    status: 'COMPLETED', isUnplayed: false, isFinal: true, winnerSide: 'AWAY', homeScore: 1, awayScore: 1, homeShootoutScore: 3, awayShootoutScore: 4, resultSource: 'PROVIDER',
   }),
   match({ id: 'm-3', matchNumber: 1, roundNumber: 2, homeSportEventParticipantId: 'sep-1' }),
   match({
     id: 'm-4', matchNumber: 2, roundNumber: 2, homeSportEventParticipantId: 'sep-2', awaySportEventParticipantId: 'sep-4',
-    status: 'COMPLETED', isUnplayed: false, homeScore: 70, awayScore: 70, resultSource: 'PROVIDER',
+    status: 'COMPLETED', isUnplayed: false, isFinal: true, homeScore: 70, awayScore: 70, resultSource: 'PROVIDER',
   }),
 ];
 

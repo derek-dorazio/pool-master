@@ -1,9 +1,10 @@
 import { NO_CONTEST_ACTIVATION, testDomainEvents } from '../../support/domain-events';
 import { expect, jest } from '@jest/globals';
-import { BackgroundJobType, isAtPlace, matchPlaceOf, MatchEnding, MatchPeriodLayout, MatchResultSource, MatchSide, MatchStatus, ParticipantStandingStatus, Sport, SportEventStatus, type BackgroundJobRequest } from '@poolmaster/shared/domain';
+import { BackgroundJobType, isAtPlace, matchPlaceOf, type MatchPlace, MatchEnding, MatchPeriodLayout, MatchResultSource, MatchSide, MatchSideOutcome, MatchStatus, ParticipantStandingStatus, PeriodKind, Sport, SportEventStatus, type BackgroundJobRequest } from '@poolmaster/shared/domain';
 import { SportEventBracketService } from '../../../packages/core-api/src/modules/events/sport-event-bracket-service';
 import type { EventLifecycleService } from '../../../packages/core-api/src/modules/events/event-lifecycle-service';
-import { MatchResultService, describeScoreProblem } from '../../../packages/core-api/src/modules/scoring-families/head-to-head/match-result-service';
+import { MatchResultService, describeScoreProblem, gameStandings } from '../../../packages/core-api/src/modules/scoring-families/head-to-head/match-result-service';
+import { homeAwayOf, homeAwayPeriod, homeAwayResult, legacyMatch, placeTeam, type HomeAwayResultRequest } from '../../support/match-sides';
 import { InMemorySportEvents, NO_PICKS_ON_EVENT } from '../../support/in-memory-sport-events';
 import { expectDefined } from '../../support/expect-defined';
 import { eventRebuildJob } from '../../support/recording-leaderboard-rebuilds';
@@ -18,6 +19,30 @@ import { bracketRoundSlots } from '../../support/round-slots';
 // Prisma adapter's transaction is covered in sport-event-matches.integration.
 
 const AS_OF = new Date('2027-03-19T04:00:00.000Z');
+
+/**
+ * The result service named by home and away, as these tests and the API still are (#2046 part b
+ * moves the API to sides): home is side 2. It answers each match as the API reads it.
+ */
+class HomeAwayResults {
+  private readonly service: MatchResultService;
+
+  constructor(deps: ConstructorParameters<typeof MatchResultService>[0]) {
+    this.service = new MatchResultService(deps);
+  }
+
+  async recordResult(sportEventId: string, place: MatchPlace, result: HomeAwayResultRequest) {
+    return (await this.service.recordResult(sportEventId, place, homeAwayResult(result))).map(homeAwayOf);
+  }
+
+  async cancelMatch(sportEventId: string, place: MatchPlace) {
+    return (await this.service.cancelMatch(sportEventId, place)).map(homeAwayOf);
+  }
+
+  async recordPeriodScore(sportEventId: string, place: MatchPlace, periodNumber: number, score: { homeScore: number; awayScore: number }) {
+    return (await this.service.recordPeriodScore(sportEventId, place, periodNumber, homeAwayPeriod(score))).map(homeAwayOf);
+  }
+}
 
 /** The job a decided game's write carries to settle its squares contests, as the handler map builds it. */
 function settleGameJob(sportEventId: string, sportEventRoundMatchId: string): BackgroundJobRequest {
@@ -39,6 +64,15 @@ function gameSettlement() {
   const decided = (sportEventId: string, sportEventRoundMatchId: string) => domainEvents.collected.filter((event) => event.type === DomainEventType.GAME_DECIDED
     && event.sportEventId === sportEventId && event.sportEventRoundMatchId === sportEventRoundMatchId && event.decidedAt.getTime() === AS_OF.getTime());
   return { domainEvents, queued, decided };
+}
+
+/** Game 1's period write for the week's first game: each quarter's own points, home and away. */
+function gamePeriods(periods: readonly (readonly [number, number, number])[]) {
+  const side = (sideNumber: number, pick: (home: number, away: number) => number) => ({
+    sideNumber,
+    periodScores: periods.map(([periodNumber, home, away]) => ({ kind: PeriodKind.REGULAR, periodNumber, score: pick(home, away) })),
+  });
+  return { sportEventRoundMatchId: 'game-1', gameId: 'game-1-g1', sides: [side(1, (_home, away) => away), side(2, (home) => home)] };
 }
 
 const noActivation = () => jest.fn<EventLifecycleService['activateContestsPastCutoff']>(async () => 0);
@@ -83,7 +117,7 @@ async function setup({ sport = Sport.BASKETBALL, status = SportEventStatus.IN_PR
   event.status = status;
   // The bracket's loading carried a rebuild of its own; each test asserts only the jobs its writes carry.
   store.backgroundJobs.length = 0;
-  const service = new MatchResultService({ domainEvents: testDomainEvents(), contestActivation: NO_CONTEST_ACTIVATION, sportEvents: store.sportEventRepo(), matches: store.matchRepo(), now: () => AS_OF });
+  const service = new HomeAwayResults({ domainEvents: testDomainEvents(), contestActivation: NO_CONTEST_ACTIVATION, sportEvents: store.sportEventRepo(), matches: store.matchRepo(), now: () => AS_OF });
   const standingOf = (rowId: string) => store.standingRows.find((row) => row.sportEventParticipantId === rowId);
   return { store, service, event, duke, vermont, houston, texas, standingOf };
 }
@@ -94,6 +128,8 @@ async function week() {
   const sportRow = store.addSport(Sport.FOOTBALL);
   const event = store.addEvent({ sport: Sport.FOOTBALL, status: SportEventStatus.DRAFT, rounds: 1 });
   await store.addRounds(event.id, [{ roundNumber: 1, scheduledDate: new Date('2027-09-12T17:00:00.000Z') }]);
+  // A regular-season week's games can end level (#792): its slot says so (#2046).
+  for (const round of store.roundRows) round.slot = { ...round.slot, canEndTied: true };
   const [bills, jets, chiefs, raiders] = ['Bills', 'Jets', 'Chiefs', 'Raiders'].map((name) =>
     store.addToField(event.id, store.addParticipant(sportRow.id, name, { participantType: 'TEAM' }).id));
   let sequence = 0;
@@ -119,14 +155,18 @@ async function week() {
   event.status = SportEventStatus.SCHEDULED;
   // The games' loading carried a rebuild of its own; each test asserts only the jobs its writes carry.
   store.backgroundJobs.length = 0;
-  const service = new MatchResultService({ domainEvents: testDomainEvents(), contestActivation: NO_CONTEST_ACTIVATION, sportEvents: store.sportEventRepo(), matches: store.matchRepo(), now: () => AS_OF });
+  const service = new HomeAwayResults({ domainEvents: testDomainEvents(), contestActivation: NO_CONTEST_ACTIVATION, sportEvents: store.sportEventRepo(), matches: store.matchRepo(), now: () => AS_OF });
   const standingOf = (rowId: string) => store.standingRows.find((row) => row.sportEventParticipantId === rowId);
   return { store, service, event, bills, jets, chiefs, raiders, standingOf };
 }
 
 const homeWins = { winnerSide: MatchSide.HOME, homeScore: 80, awayScore: 70 };
 /** The bracket as the write leaves it, handed on so the lifecycle need not read it again (#1355). */
-const writtenBracketWithResult = expect.arrayContaining([expect.objectContaining({ id: 'match-1', status: MatchStatus.COMPLETED, winnerSide: MatchSide.HOME, homeScore: 80 })]);
+const writtenBracketWithResult = expect.arrayContaining([expect.objectContaining({
+  id: 'match-1',
+  status: MatchStatus.COMPLETED,
+  sides: [expect.objectContaining({ sideNumber: 1, outcome: MatchSideOutcome.LOST }), expect.objectContaining({ sideNumber: 2, outcome: MatchSideOutcome.WON })],
+})]);
 const awayWins = { winnerSide: MatchSide.AWAY, homeScore: 70, awayScore: 80 };
 
 describe('MatchResultService.recordResult', () => {
@@ -141,7 +181,7 @@ describe('MatchResultService.recordResult', () => {
 
   it('records every result as the feed\'s, a correction included: the feed is the only writer of a synced event\'s results (#2074)', async () => {
     const { store, service, event } = await setup();
-    const sourceOf = async () => (await store.matchRepo().findBySportEvent(event.id)).find((match) => isAtPlace(match, { roundNumber: 1, matchNumber: 1 }))?.resultSource;
+    const sourceOf = async () => (await store.matchRepo().findBySportEvent(event.id)).map(homeAwayOf).find((match) => isAtPlace(match, { roundNumber: 1, matchNumber: 1 }))?.resultSource;
 
     await service.recordResult(event.id, { roundNumber: 1, matchNumber: 1 }, awayWins);
     const first = await sourceOf();
@@ -155,7 +195,7 @@ describe('MatchResultService.recordResult', () => {
     const completedAtOf = async () => (await store.matchRepo().findBySportEvent(event.id)).find((match) => isAtPlace(match, { roundNumber: 1, matchNumber: 1 }))?.completedAt;
     const corrected = new Date(AS_OF.getTime() + 60_000);
     let now = AS_OF;
-    const service = new MatchResultService({ domainEvents: testDomainEvents(), contestActivation: NO_CONTEST_ACTIVATION, sportEvents: store.sportEventRepo(), matches: store.matchRepo(), now: () => now });
+    const service = new HomeAwayResults({ domainEvents: testDomainEvents(), contestActivation: NO_CONTEST_ACTIVATION, sportEvents: store.sportEventRepo(), matches: store.matchRepo(), now: () => now });
 
     await service.recordResult(event.id, { roundNumber: 1, matchNumber: 1 }, awayWins);
     const recorded = await completedAtOf();
@@ -177,19 +217,19 @@ describe('MatchResultService.recordResult', () => {
     const { store, event, vermont } = await setup();
     const matches = store.matchRepo();
     const findBySportEvent = jest.spyOn(matches, 'findBySportEvent');
-    const service = new MatchResultService({ domainEvents: testDomainEvents(), contestActivation: NO_CONTEST_ACTIVATION, sportEvents: store.sportEventRepo(), matches, now: () => AS_OF });
+    const service = new HomeAwayResults({ domainEvents: testDomainEvents(), contestActivation: NO_CONTEST_ACTIVATION, sportEvents: store.sportEventRepo(), matches, now: () => AS_OF });
 
     const bracket = await service.recordResult(event.id, { roundNumber: 1, matchNumber: 1 }, awayWins);
 
     expect(findBySportEvent).toHaveBeenCalledTimes(1);
-    expect(bracket).toEqual(await store.matchRepo().findBySportEvent(event.id));
+    expect(bracket).toEqual((await store.matchRepo().findBySportEvent(event.id)).map(homeAwayOf));
     expect(bracket.find((match) => isAtPlace(match, { roundNumber: 2, matchNumber: 1 }))?.homeSportEventParticipantId).toBe(vermont.id);
   });
 
   it('asks the lifecycle to start the contests whose cutoff the result passed, with the service clock, on an event under way', async () => {
     const { store, event } = await setup();
     const activateContestsPastCutoff = jest.fn<EventLifecycleService['activateContestsPastCutoff']>(async () => 0);
-    const service = new MatchResultService({ sportEvents: store.sportEventRepo(), matches: store.matchRepo(), contestActivation: { activateContestsPastCutoff }, domainEvents: testDomainEvents(), now: () => AS_OF });
+    const service = new HomeAwayResults({ sportEvents: store.sportEventRepo(), matches: store.matchRepo(), contestActivation: { activateContestsPastCutoff }, domainEvents: testDomainEvents(), now: () => AS_OF });
 
     await service.recordResult(event.id, { roundNumber: 1, matchNumber: 1 }, homeWins);
 
@@ -199,7 +239,7 @@ describe('MatchResultService.recordResult', () => {
   it('starts no contest for a result on an event that is not under way', async () => {
     const { store, event } = await setup({ status: SportEventStatus.SCHEDULED });
     const activateContestsPastCutoff = jest.fn<EventLifecycleService['activateContestsPastCutoff']>(async () => 0);
-    const service = new MatchResultService({ sportEvents: store.sportEventRepo(), matches: store.matchRepo(), contestActivation: { activateContestsPastCutoff }, domainEvents: testDomainEvents(), now: () => AS_OF });
+    const service = new HomeAwayResults({ sportEvents: store.sportEventRepo(), matches: store.matchRepo(), contestActivation: { activateContestsPastCutoff }, domainEvents: testDomainEvents(), now: () => AS_OF });
 
     await service.recordResult(event.id, { roundNumber: 1, matchNumber: 1 }, homeWins);
 
@@ -211,7 +251,7 @@ describe('MatchResultService.recordResult', () => {
     const settlement = gameSettlement();
     const matches = store.matchRepo();
     const applyResult = jest.spyOn(matches, 'applyResult');
-    const service = new MatchResultService({
+    const service = new HomeAwayResults({
       sportEvents: store.sportEventRepo(),
       matches,
       contestActivation: { activateContestsPastCutoff: noActivation() },
@@ -232,7 +272,7 @@ describe('MatchResultService.recordResult', () => {
     const settlement = gameSettlement();
     const matches = store.matchRepo();
     jest.spyOn(matches, 'applyResult').mockRejectedValue(new Error('connection lost'));
-    const service = new MatchResultService({
+    const service = new HomeAwayResults({
       sportEvents: store.sportEventRepo(),
       matches,
       contestActivation: { activateContestsPastCutoff: noActivation() },
@@ -354,6 +394,43 @@ describe('MatchResultService once the next game has quarter scores', () => {
 
 });
 
+describe('MatchResultService side outcomes (#2046)', () => {
+  /** Each side's outcome on the match at this place, side 1's first. */
+  const outcomesAt = (store: InMemorySportEvents, place: { roundNumber: number; matchNumber: number }) =>
+    expectDefined(store.matchRows.find((match) => isAtPlace(match, place))).sides.map((side) => side.outcome);
+
+  it('rolls a win up to the winning side WON and the other LOST, and a tie where the game can end level to both TIED', async () => {
+    const { service, event, store } = await week();
+
+    await service.recordResult(event.id, { roundNumber: 1, matchNumber: 1 }, homeWins);
+    await service.recordResult(event.id, { roundNumber: 1, matchNumber: 2 }, { winnerSide: null, homeScore: 20, awayScore: 20 });
+
+    // Side 1 is the away team, side 2 the home team.
+    expect(outcomesAt(store, { roundNumber: 1, matchNumber: 1 })).toEqual([MatchSideOutcome.LOST, MatchSideOutcome.WON]);
+    expect(outcomesAt(store, { roundNumber: 1, matchNumber: 2 })).toEqual([MatchSideOutcome.TIED, MatchSideOutcome.TIED]);
+  });
+
+  it('rolls a level game a shoot-out settled up to the shoot-out\'s winner, where the game cannot end level', async () => {
+    const { service, event, store } = await setup({ sport: Sport.SOCCER });
+
+    await service.recordResult(event.id, { roundNumber: 1, matchNumber: 1 }, { winnerSide: MatchSide.AWAY, homeScore: 1, awayScore: 1, homeShootoutScore: 3, awayShootoutScore: 4 });
+
+    expect(outcomesAt(store, { roundNumber: 1, matchNumber: 1 })).toEqual([MatchSideOutcome.WON, MatchSideOutcome.LOST]);
+  });
+
+  it('rolls a 4-2 series up to the side with four wins WON, leaving its Games as they were', async () => {
+    const { service, event, store } = await setup();
+    // The first round is played as best-of-seven series, its matches' slot says so.
+    for (const match of store.matchRows) match.slot = { ...match.slot, seriesGames: 7 };
+    const before = expectDefined(store.matchRows.find((match) => isAtPlace(match, { roundNumber: 1, matchNumber: 1 }))).games;
+
+    await service.recordResult(event.id, { roundNumber: 1, matchNumber: 1 }, { winnerSide: MatchSide.HOME, homeScore: 4, awayScore: 2 });
+
+    expect(outcomesAt(store, { roundNumber: 1, matchNumber: 1 })).toEqual([MatchSideOutcome.LOST, MatchSideOutcome.WON]);
+    expect(expectDefined(store.matchRows.find((match) => isAtPlace(match, { roundNumber: 1, matchNumber: 1 }))).games).toEqual(before);
+  });
+});
+
 describe('MatchResultService shoot-outs (#791)', () => {
   it('saves a soccer bracket match level after extra time with its shoot-out, the shoot-out\'s winner moving on', async () => {
     const { service, event, vermont } = await setup({ sport: Sport.SOCCER });
@@ -373,8 +450,10 @@ describe('MatchResultService shoot-outs (#791)', () => {
       .rejects.toMatchObject({ code: 'MATCH_RESULT_INVALID', statusCode: 422 });
   });
 
-  it('refuses (422 MATCH_RESULT_INVALID) shoot-out scores in a sport whose knockouts never end level, and saves nothing', async () => {
+  it('refuses (422 MATCH_RESULT_INVALID) shoot-out scores on a game its slot lets end level, and saves nothing', async () => {
     const { service, event, store } = await setup();
+    // A slot whose games can end level never settles one by shoot-out (#2046: the slot's canEndTied).
+    for (const match of store.matchRows) match.slot = { ...match.slot, canEndTied: true };
 
     await expect(service.recordResult(event.id, { roundNumber: 1, matchNumber: 1 }, { winnerSide: MatchSide.HOME, homeScore: 70, awayScore: 70, homeShootoutScore: 4, awayShootoutScore: 3 }))
       .rejects.toMatchObject({ code: 'MATCH_RESULT_INVALID', statusCode: 422 });
@@ -392,19 +471,21 @@ describe('MatchResultService shoot-outs (#791)', () => {
 });
 
 describe('describeScoreProblem with shoot-outs (#791)', () => {
-  // A test-only sport rule: no sport settles a level knockout by shoot-out until soccer.
-  const penalties = { inBracket: true, shootout: true };
+  // A slot whose games cannot end level settles a level score by shoot-out (#2046: the slot's canEndTied).
+  const penalties = { inBracket: true, canEndTied: false };
   const level = { winnerSide: MatchSide.AWAY, homeScore: 1, awayScore: 1 };
   const kicks = (homeShootoutScore: number | null, awayShootoutScore: number | null) => ({ homeShootoutScore, awayShootoutScore });
+  const problem = (result: HomeAwayResultRequest, shootout: ReturnType<typeof kicks>, rules: { inBracket: boolean; canEndTied: boolean }) =>
+    describeScoreProblem(homeAwayResult({ ...result, ...shootout }), rules);
 
   it('accepts a level bracket match whose winner has the higher shoot-out score', () => {
-    expect(describeScoreProblem(level, kicks(3, 4), penalties)).toBeNull();
-    expect(describeScoreProblem({ ...level, winnerSide: MatchSide.HOME }, kicks(5, 4), penalties)).toBeNull();
+    expect(problem(level, kicks(3, 4), penalties)).toBeNull();
+    expect(problem({ ...level, winnerSide: MatchSide.HOME }, kicks(5, 4), penalties)).toBeNull();
   });
 
   it('accepts a decided match with no shoot-out, and a winner with no scores at all', () => {
-    expect(describeScoreProblem({ winnerSide: MatchSide.HOME, homeScore: 2, awayScore: 1 }, kicks(null, null), penalties)).toBeNull();
-    expect(describeScoreProblem({ winnerSide: MatchSide.HOME, homeScore: null, awayScore: null }, kicks(null, null), penalties)).toBeNull();
+    expect(problem({ winnerSide: MatchSide.HOME, homeScore: 2, awayScore: 1 }, kicks(null, null), penalties)).toBeNull();
+    expect(problem({ winnerSide: MatchSide.HOME, homeScore: null, awayScore: null }, kicks(null, null), penalties)).toBeNull();
   });
 
   it.each([
@@ -413,22 +494,24 @@ describe('describeScoreProblem with shoot-outs (#791)', () => {
     ['a winner who lost the shoot-out', level, kicks(4, 3), 'the winner\'s shoot-out score must be higher than the loser\'s'],
     ['a shoot-out after a decided score', { winnerSide: MatchSide.AWAY, homeScore: 1, awayScore: 2 }, kicks(3, 4), 'a shoot-out is only held after a level score'],
     ['a shoot-out with no match score', { winnerSide: MatchSide.AWAY, homeScore: null, awayScore: null }, kicks(3, 4), 'a shoot-out needs the score after extra time, level'],
-  ])('refuses %s in a bracket of a sport settled by shoot-out', (_label, result, shootout, problem) => {
-    expect(describeScoreProblem(result, shootout, penalties)).toBe(problem);
+  ])('refuses %s where the game cannot end level', (_label, result, shootout, message) => {
+    expect(problem(result, shootout, penalties)).toBe(message);
   });
 
-  it('refuses a shoot-out, and a level score, on a week of games that forms no bracket', () => {
-    const week = { ...penalties, inBracket: false };
+  it('refuses a shoot-out, and a winner on a level score, where the game can end level', () => {
+    const canEndLevel = { inBracket: false, canEndTied: true };
 
-    expect(describeScoreProblem(level, kicks(3, 4), week)).toBe('only a bracket match is settled by a shoot-out');
-    expect(describeScoreProblem(level, kicks(null, null), week)).toBe('the winner\'s score must be higher than the loser\'s');
+    expect(problem(level, kicks(3, 4), canEndLevel)).toBe('a game that can end level is never settled by a shoot-out');
+    expect(problem(level, kicks(null, null), canEndLevel)).toBe('the winner\'s score must be higher than the loser\'s');
   });
 
-  it('refuses a shoot-out, and a level score, in a sport without shoot-outs', () => {
-    const noShootouts = { inBracket: true, shootout: false };
+  it('accepts a tie, both scores level, only where the game can end level and outside a bracket', () => {
+    const tie = { winnerSide: null, homeScore: 1, awayScore: 1 };
 
-    expect(describeScoreProblem(level, kicks(3, 4), noShootouts)).toBe('this sport has no shoot-outs');
-    expect(describeScoreProblem(level, kicks(null, null), noShootouts)).toBe('the winner\'s score must be higher than the loser\'s');
+    expect(problem(tie, kicks(null, null), { inBracket: false, canEndTied: true })).toBeNull();
+    expect(problem(tie, kicks(null, null), { inBracket: false, canEndTied: false })).toBe('this game cannot end level');
+    expect(problem(tie, kicks(null, null), { inBracket: true, canEndTied: true })).toBe('a bracket match always has a winner');
+    expect(problem({ ...tie, awayScore: 2 }, kicks(null, null), { inBracket: false, canEndTied: true })).toBe('a tie needs both scores, level');
   });
 });
 
@@ -495,27 +578,29 @@ describe('MatchResultService matches that ended early (#704)', () => {
 });
 
 describe('describeScoreProblem for matches that ended early (#704)', () => {
-  const bracket = { inBracket: true, shootout: false };
+  const bracket = { inBracket: true, canEndTied: false };
+  const problem = (result: HomeAwayResultRequest, shootout: { homeShootoutScore: number | null; awayShootoutScore: number | null }, rules: { inBracket: boolean; canEndTied: boolean }) =>
+    describeScoreProblem(homeAwayResult({ ...result, ...shootout }), rules);
   const noKicks = { homeShootoutScore: null, awayShootoutScore: null };
 
   it.each([MatchEnding.RETIREMENT, MatchEnding.DEFAULT])('accepts a %s whose winner\'s score is lower, level or missing', (ending) => {
-    expect(describeScoreProblem({ winnerSide: MatchSide.HOME, homeScore: 0, awayScore: 1, ending }, noKicks, bracket)).toBeNull();
-    expect(describeScoreProblem({ winnerSide: MatchSide.HOME, homeScore: 1, awayScore: 1, ending }, noKicks, bracket)).toBeNull();
-    expect(describeScoreProblem({ winnerSide: MatchSide.HOME, homeScore: null, awayScore: null, ending }, noKicks, bracket)).toBeNull();
+    expect(problem({ winnerSide: MatchSide.HOME, homeScore: 0, awayScore: 1, ending }, noKicks, bracket)).toBeNull();
+    expect(problem({ winnerSide: MatchSide.HOME, homeScore: 1, awayScore: 1, ending }, noKicks, bracket)).toBeNull();
+    expect(problem({ winnerSide: MatchSide.HOME, homeScore: null, awayScore: null, ending }, noKicks, bracket)).toBeNull();
   });
 
   it('still refuses a played match whose winner\'s score is lower', () => {
-    expect(describeScoreProblem({ winnerSide: MatchSide.HOME, homeScore: 0, awayScore: 1, ending: MatchEnding.PLAYED }, noKicks, bracket))
+    expect(problem({ winnerSide: MatchSide.HOME, homeScore: 0, awayScore: 1, ending: MatchEnding.PLAYED }, noKicks, bracket))
       .toBe('the winner\'s score must be higher than the loser\'s');
   });
 
   it.each([
     ['a retirement with one score', { winnerSide: MatchSide.HOME, homeScore: 1, awayScore: null, ending: MatchEnding.RETIREMENT }, noKicks, bracket, 'give both scores or neither'],
     ['a walkover with scores', { winnerSide: MatchSide.HOME, homeScore: 0, awayScore: 0, ending: MatchEnding.WALKOVER }, noKicks, bracket, 'a walkover has no score'],
-    ['a tie that ended early', { winnerSide: null, homeScore: 1, awayScore: 1, ending: MatchEnding.RETIREMENT }, noKicks, { inBracket: false, shootout: false }, 'a tie is played to its end'],
-    ['a shoot-out after a retirement', { winnerSide: MatchSide.HOME, homeScore: 1, awayScore: 1, ending: MatchEnding.RETIREMENT }, { homeShootoutScore: 4, awayShootoutScore: 3 }, { inBracket: true, shootout: true }, 'a match that ended early has no shoot-out'],
-  ])('refuses %s', (_label, result, shootout, rules, problem) => {
-    expect(describeScoreProblem(result, shootout, rules)).toBe(problem);
+    ['a tie that ended early', { winnerSide: null, homeScore: 1, awayScore: 1, ending: MatchEnding.RETIREMENT }, noKicks, { inBracket: false, canEndTied: true }, 'a tie is played to its end'],
+    ['a shoot-out after a retirement', { winnerSide: MatchSide.HOME, homeScore: 1, awayScore: 1, ending: MatchEnding.RETIREMENT }, { homeShootoutScore: 4, awayShootoutScore: 3 }, { inBracket: true, canEndTied: false }, 'a match that ended early has no shoot-out'],
+  ])('refuses %s', (_label, result, shootout, rules, message) => {
+    expect(problem(result, shootout, rules)).toBe(message);
   });
 });
 
@@ -537,7 +622,7 @@ describe('MatchResultService.cancelMatch', () => {
     const settlement = gameSettlement();
     const matches = store.matchRepo();
     const applyResult = jest.spyOn(matches, 'applyResult');
-    const service = new MatchResultService({
+    const service = new HomeAwayResults({
       sportEvents: store.sportEventRepo(),
       matches,
       contestActivation: { activateContestsPastCutoff: noActivation() },
@@ -613,8 +698,8 @@ describe('MatchResultService period scores', () => {
     const { store, event } = await week();
     const settlement = gameSettlement();
     const matches = store.matchRepo();
-    const savePeriodScore = jest.spyOn(matches, 'savePeriodScore');
-    const service = new MatchResultService({
+    const saveGamePeriodScores = jest.spyOn(matches, 'saveGamePeriodScores');
+    const service = new HomeAwayResults({
       sportEvents: store.sportEventRepo(),
       matches,
       contestActivation: { activateContestsPastCutoff: noActivation() },
@@ -622,7 +707,7 @@ describe('MatchResultService period scores', () => {
       now: () => AS_OF,
     });
     await service.recordPeriodScore(event.id, { roundNumber: 1, matchNumber: 1 }, 1, { homeScore: 7, awayScore: 0 });
-    expect(savePeriodScore).toHaveBeenLastCalledWith('game-1', { periodNumber: 1, homeScore: 7, awayScore: 0 }, [eventRebuildJob(event.id)]);
+    expect(saveGamePeriodScores).toHaveBeenLastCalledWith(gamePeriods([[1, 7, 0]]), [eventRebuildJob(event.id)]);
     expect(settlement.decided(event.id, 'game-1')).toHaveLength(0);
     await service.recordResult(event.id, { roundNumber: 1, matchNumber: 1 }, { winnerSide: MatchSide.HOME, homeScore: 24, awayScore: 10 });
     settlement.queued.mockClear();
@@ -631,7 +716,8 @@ describe('MatchResultService period scores', () => {
 
     // Decided twice: by its result, then by the quarter entered after it.
     expect(settlement.decided(event.id, 'game-1')).toHaveLength(2);
-    expect(savePeriodScore).toHaveBeenLastCalledWith('game-1', { periodNumber: 3, homeScore: 17, awayScore: 3 }, [settleGameJob(event.id, 'game-1'), eventRebuildJob(event.id)]);
+    // Each side's own points per quarter: the third's are its running score less the first's.
+    expect(saveGamePeriodScores).toHaveBeenLastCalledWith(gamePeriods([[1, 7, 0], [3, 10, 3]]), [settleGameJob(event.id, 'game-1'), eventRebuildJob(event.id)]);
     expect(settlement.queued).toHaveBeenCalledTimes(1);
   });
 
@@ -695,12 +781,12 @@ describe('MatchResultService period scores — refusals and clock', () => {
 
     await expect(service.recordPeriodScore(event.id, { roundNumber: 2, matchNumber: 1 }, 1, { homeScore: 20, awayScore: 18 }))
       .rejects.toMatchObject({ code: 'MATCH_SIDES_NOT_SET', statusCode: 422 });
-    expect(store.matchRows.find((match) => isAtPlace(match, { roundNumber: 2, matchNumber: 1 }))?.periodScores).toEqual([]);
+    expect(store.matchRows.map(homeAwayOf).find((match) => isAtPlace(match, { roundNumber: 2, matchNumber: 1 }))?.periodScores).toEqual([]);
   });
 
   it('stamps results, cancellations and period scores with the current time when it has no clock of its own', async () => {
     const { store, event } = await week();
-    const service = new MatchResultService({ domainEvents: testDomainEvents(), contestActivation: NO_CONTEST_ACTIVATION, sportEvents: store.sportEventRepo(), matches: store.matchRepo() });
+    const service = new HomeAwayResults({ domainEvents: testDomainEvents(), contestActivation: NO_CONTEST_ACTIVATION, sportEvents: store.sportEventRepo(), matches: store.matchRepo() });
     const before = Date.now();
 
     await service.recordPeriodScore(event.id, { roundNumber: 1, matchNumber: 1 }, 1, { homeScore: 7, awayScore: 0 });
@@ -795,13 +881,13 @@ describe('MatchResultService on a reseeded bracket', () => {
       return store.addToField(event.id, team.id, { seedNumber: seed });
     });
     // Each match is named here by a key, its id `m<key>`; its place is its round and its number within the round (#2161).
-    const match = (key: number, roundNumber: number, matchNumber: number, home: string | null, away: string | null, advancesTo: [string, MatchSide] | null) => ({
+    const match = (key: number, roundNumber: number, matchNumber: number, home: string | null, away: string | null, advancesTo: [string, MatchSide] | null) => (legacyMatch({
       id: `m${key}`, sportEventId: event.id, roundNumber, slot: bracketRoundSlots(3)[roundNumber - 1], matchNumber,
       homeSportEventParticipantId: home, awaySportEventParticipantId: away, isNeutralSite: false,
       scheduledDate: null, status: MatchStatus.SCHEDULED, winnerSide: null, homeScore: null, awayScore: null, homeShootoutScore: null, awayShootoutScore: null, ending: MatchEnding.PLAYED,
       advancesToMatchId: advancesTo?.[0] ?? null, advancesToSide: advancesTo?.[1] ?? null, regionLabel: null, homeSpread: null, resultSource: null, completedAt: null, periodScores: [],
       createdAt: AS_OF, updatedAt: AS_OF,
-    });
+    }));
     const [first, second, third, fourth, final] = finalFirst ? [3, 4, 5, 2, 1] : [1, 2, 3, 4, 5];
     store.matchRows.push(
       match(first, 1, 1, three.id, six.id, null),
@@ -812,7 +898,7 @@ describe('MatchResultService on a reseeded bracket', () => {
     );
     // Stored in key order, so with `finalFirst` the final's row comes first.
     store.matchRows.sort((left, right) => left.id.localeCompare(right.id));
-    const service = new MatchResultService({ domainEvents: testDomainEvents(), contestActivation: NO_CONTEST_ACTIVATION, sportEvents: store.sportEventRepo(), matches: store.matchRepo(), now: () => AS_OF });
+    const service = new HomeAwayResults({ domainEvents: testDomainEvents(), contestActivation: NO_CONTEST_ACTIVATION, sportEvents: store.sportEventRepo(), matches: store.matchRepo(), now: () => AS_OF });
     const standingOf = (rowId: string) => store.standingRows.find((row) => row.sportEventParticipantId === rowId);
     const matchOf = (key: number) => expectMatch(store.matchRows.find((row) => row.id === `m${key}`));
     const placeOf = (key: number) => matchPlaceOf(matchOf(key));
@@ -829,7 +915,7 @@ describe('MatchResultService on a reseeded bracket', () => {
 
     await service.recordResult(event.id, placeOf(1), awayWins);
 
-    expect([matchOf(3).awaySportEventParticipantId, matchOf(4).awaySportEventParticipantId]).toEqual([null, null]);
+    expect([homeAwayOf(matchOf(3)).awaySportEventParticipantId, homeAwayOf(matchOf(4)).awaySportEventParticipantId]).toEqual([null, null]);
     expect(standingOf(six.id)).toMatchObject({ status: ParticipantStandingStatus.ACTIVE, currentRound: 2 });
     expect(standingOf(three.id)).toMatchObject({ status: ParticipantStandingStatus.ELIMINATED, currentRound: 1 });
   });
@@ -837,17 +923,17 @@ describe('MatchResultService on a reseeded bracket', () => {
   it('swaps the placed team when a first-round winner changes before the next round is played', async () => {
     const { service, event, three, six, matchOf, placeOf } = await reseeded();
     await service.recordResult(event.id, placeOf(1), awayWins);
-    matchOf(3).awaySportEventParticipantId = six.id;
+    placeTeam(matchOf(3), MatchSide.AWAY, six.id);
 
     await service.recordResult(event.id, placeOf(1), homeWins);
 
-    expect(matchOf(3).awaySportEventParticipantId).toBe(three.id);
+    expect(homeAwayOf(matchOf(3)).awaySportEventParticipantId).toBe(three.id);
   });
 
   it('refuses (409 SPORT_EVENT_ROUND_MATCH_RESULT_LOCKED) a new first-round winner once the match it was placed in has a result', async () => {
     const { service, event, six, matchOf, placeOf } = await reseeded();
     await service.recordResult(event.id, placeOf(1), awayWins);
-    matchOf(3).awaySportEventParticipantId = six.id;
+    placeTeam(matchOf(3), MatchSide.AWAY, six.id);
     await service.recordResult(event.id, placeOf(3), homeWins);
 
     await expect(service.recordResult(event.id, placeOf(1), homeWins)).rejects.toMatchObject({ code: 'SPORT_EVENT_ROUND_MATCH_RESULT_LOCKED', statusCode: 409 });
@@ -856,20 +942,20 @@ describe('MatchResultService on a reseeded bracket', () => {
   it('refuses (409 SPORT_EVENT_ROUND_MATCH_RESULT_LOCKED) a new first-round winner once its next-round game is played, even when the final\'s row is stored first', async () => {
     const { service, event, six, matchOf, placeOf } = await reseeded({ finalFirst: true });
     await service.recordResult(event.id, placeOf(3), awayWins);
-    matchOf(5).awaySportEventParticipantId = six.id;
+    placeTeam(matchOf(5), MatchSide.AWAY, six.id);
     await service.recordResult(event.id, placeOf(5), awayWins);
-    expect(matchOf(1).homeSportEventParticipantId).toBe(six.id);
+    expect(homeAwayOf(matchOf(1)).homeSportEventParticipantId).toBe(six.id);
 
     await expect(service.recordResult(event.id, placeOf(3), homeWins)).rejects.toMatchObject({ code: 'SPORT_EVENT_ROUND_MATCH_RESULT_LOCKED', statusCode: 409 });
-    expect([matchOf(5).awaySportEventParticipantId, matchOf(1).homeSportEventParticipantId]).toEqual([six.id, six.id]);
+    expect([homeAwayOf(matchOf(5)).awaySportEventParticipantId, homeAwayOf(matchOf(1)).homeSportEventParticipantId]).toEqual([six.id, six.id]);
   });
 
   it('crowns the winner of the one match in the last round, not a first-round winner that links nowhere', async () => {
     const { service, event, one, two, six, five, standingOf, matchOf, placeOf } = await reseeded();
     await service.recordResult(event.id, placeOf(1), awayWins);
     await service.recordResult(event.id, placeOf(2), awayWins);
-    Object.assign(matchOf(3), { awaySportEventParticipantId: six.id });
-    Object.assign(matchOf(4), { awaySportEventParticipantId: five.id });
+    placeTeam(matchOf(3), MatchSide.AWAY, six.id);
+    placeTeam(matchOf(4), MatchSide.AWAY, five.id);
     await service.recordResult(event.id, placeOf(3), homeWins);
     await service.recordResult(event.id, placeOf(4), homeWins);
 
@@ -887,13 +973,13 @@ describe('MatchResultService on a bracket numbered within each round (#2161)', (
     const sportRow = store.addSport(Sport.BASKETBALL);
     const event = store.addEvent({ sport: Sport.BASKETBALL, status: SportEventStatus.IN_PROGRESS, rounds: 3 });
     const [one, two, three, five, six] = [1, 2, 3, 5, 6].map((seed) => store.addToField(event.id, store.addParticipant(sportRow.id, `Seed ${seed}`, { participantType: 'TEAM' }).id, { seedNumber: seed }));
-    const match = (id: string, roundNumber: number, matchNumber: number, home: string | null, away: string | null, advancesTo: [string, MatchSide] | null) => ({
+    const match = (id: string, roundNumber: number, matchNumber: number, home: string | null, away: string | null, advancesTo: [string, MatchSide] | null) => (legacyMatch({
       id, sportEventId: event.id, roundNumber, slot: bracketRoundSlots(3)[roundNumber - 1], matchNumber,
       homeSportEventParticipantId: home, awaySportEventParticipantId: away, isNeutralSite: false,
       scheduledDate: null, status: MatchStatus.SCHEDULED, winnerSide: null, homeScore: null, awayScore: null, homeShootoutScore: null, awayShootoutScore: null, ending: MatchEnding.PLAYED,
       advancesToMatchId: advancesTo?.[0] ?? null, advancesToSide: advancesTo?.[1] ?? null, regionLabel: null, homeSpread: null, resultSource: null, completedAt: null, periodScores: [],
       createdAt: AS_OF, updatedAt: AS_OF,
-    });
+    }));
     // Round 1 is one play-in game; the 1 and 2 seeds' byes meet in round 2's match 1.
     store.matchRows.push(
       match('play-in', 1, 1, five.id, six.id, ['semi-2', MatchSide.AWAY]),
@@ -901,13 +987,13 @@ describe('MatchResultService on a bracket numbered within each round (#2161)', (
       match('semi-2', 2, 2, three.id, null, ['final', MatchSide.AWAY]),
       match('final', 3, 1, null, null, null),
     );
-    const service = new MatchResultService({ domainEvents: testDomainEvents(), contestActivation: NO_CONTEST_ACTIVATION, sportEvents: store.sportEventRepo(), matches: store.matchRepo(), now: () => AS_OF });
+    const service = new HomeAwayResults({ domainEvents: testDomainEvents(), contestActivation: NO_CONTEST_ACTIVATION, sportEvents: store.sportEventRepo(), matches: store.matchRepo(), now: () => AS_OF });
 
     await service.recordResult(event.id, { roundNumber: 1, matchNumber: 1 }, awayWins);
 
     const byId = (id: string) => store.matchRows.find((row) => row.id === id);
-    expect(byId('semi-2')).toMatchObject({ homeSportEventParticipantId: three.id, awaySportEventParticipantId: six.id });
-    expect(byId('semi-1')).toMatchObject({ homeSportEventParticipantId: one.id, awaySportEventParticipantId: two.id });
+    expect(homeAwayOf(expectDefined(byId('semi-2')))).toMatchObject({ homeSportEventParticipantId: three.id, awaySportEventParticipantId: six.id });
+    expect(homeAwayOf(expectDefined(byId('semi-1')))).toMatchObject({ homeSportEventParticipantId: one.id, awaySportEventParticipantId: two.id });
   });
 });
 
@@ -915,7 +1001,7 @@ describe('MatchResultService — leaderboard rebuild (#1466)', () => {
   /** The context's store, with a service that hands each write the event's rebuild. */
   function rebuilding(store: InMemorySportEvents, contestActivation: ConstructorParameters<typeof MatchResultService>[0]['contestActivation'] = NO_CONTEST_ACTIVATION) {
     const domainEvents = new RecordingDomainEvents();
-    const service = new MatchResultService({ sportEvents: store.sportEventRepo(), matches: store.matchRepo(), contestActivation, domainEvents, now: () => AS_OF });
+    const service = new HomeAwayResults({ sportEvents: store.sportEventRepo(), matches: store.matchRepo(), contestActivation, domainEvents, now: () => AS_OF });
     return { service, domainEvents };
   }
 
@@ -958,10 +1044,68 @@ describe('MatchResultService — leaderboard rebuild (#1466)', () => {
     const { store, event } = await setup();
     const matches = { ...store.matchRepo(), applyResult: () => Promise.reject(new Error('result write failed')) };
     const domainEvents = new RecordingDomainEvents();
-    const service = new MatchResultService({ contestActivation: NO_CONTEST_ACTIVATION, sportEvents: store.sportEventRepo(), matches, domainEvents, now: () => AS_OF });
+    const service = new HomeAwayResults({ contestActivation: NO_CONTEST_ACTIVATION, sportEvents: store.sportEventRepo(), matches, domainEvents, now: () => AS_OF });
 
     await expect(service.recordResult(event.id, { roundNumber: 1, matchNumber: 1 }, homeWins)).rejects.toThrow('result write failed');
     expect(domainEvents.handedOutSportEventIds).toEqual([event.id]);
     expect(domainEvents.changedSportEventIds).toEqual([]);
+  });
+});
+
+describe('MatchResultService on matches missing a Game or a side (#2046)', () => {
+  /** The week with its first game's Game 1 taken away, and the service by side number. */
+  async function weekWithoutGameOne() {
+    const setUp = await week();
+    const first = expectDefined(setUp.store.matchRows.find((match) => isAtPlace(match, { roundNumber: 1, matchNumber: 1 })));
+    first.games = [];
+    const bySide = new MatchResultService({ domainEvents: testDomainEvents(), contestActivation: NO_CONTEST_ACTIVATION, sportEvents: setUp.store.sportEventRepo(), matches: setUp.store.matchRepo(), now: () => AS_OF });
+    return { ...setUp, first, bySide };
+  }
+
+  it('fails, saving nothing, on a period score for a match with no Game 1, which every loaded match has', async () => {
+    const { event, first, bySide } = await weekWithoutGameOne();
+
+    await expect(bySide.recordPeriodScore(event.id, { roundNumber: 1, matchNumber: 1 }, 1, [{ sideNumber: 1, score: 0 }, { sideNumber: 2, score: 7 }]))
+      .rejects.toThrow(`Match ${first.id} has no Game 1`);
+    expect(first.games).toEqual([]);
+  });
+
+  it('completes a match with no Game 1 with its winner, writing no Game\'s scores', async () => {
+    const { event, bySide } = await weekWithoutGameOne();
+
+    const after = await bySide.recordResult(event.id, { roundNumber: 1, matchNumber: 1 }, { winnerSideNumber: 2, sides: [{ sideNumber: 1, score: 7 }, { sideNumber: 2, score: 14 }] });
+
+    const first = expectDefined(after.find((match) => isAtPlace(match, { roundNumber: 1, matchNumber: 1 })));
+    expect([first.status, first.sides.map((side) => side.outcome), first.games]).toEqual([MatchStatus.COMPLETED, [MatchSideOutcome.LOST, MatchSideOutcome.WON], []]);
+  });
+
+  it('leaves a side\'s Game 1 score as it was when a walkover names no side\'s score', async () => {
+    const { store, event } = await week();
+    const bySide = new MatchResultService({ domainEvents: testDomainEvents(), contestActivation: NO_CONTEST_ACTIVATION, sportEvents: store.sportEventRepo(), matches: store.matchRepo(), now: () => AS_OF });
+
+    const after = await bySide.recordResult(event.id, { roundNumber: 1, matchNumber: 1 }, { winnerSideNumber: 2, sides: [], ending: MatchEnding.WALKOVER });
+
+    const first = expectDefined(after.find((match) => isAtPlace(match, { roundNumber: 1, matchNumber: 1 })));
+    expect([first.ending, first.games[0]?.sideResults.map((result) => result.score)]).toEqual([MatchEnding.WALKOVER, [null, null]]);
+  });
+
+  it('counts a side a period score leaves out as 0 at the end of that period', async () => {
+    const { store, event } = await week();
+    const bySide = new MatchResultService({ domainEvents: testDomainEvents(), contestActivation: NO_CONTEST_ACTIVATION, sportEvents: store.sportEventRepo(), matches: store.matchRepo(), now: () => AS_OF });
+
+    const after = await bySide.recordPeriodScore(event.id, { roundNumber: 1, matchNumber: 1 }, 1, [{ sideNumber: 2, score: 7 }]);
+
+    expect(homeAwayOf(expectDefined(after.find((match) => isAtPlace(match, { roundNumber: 1, matchNumber: 1 })))).periodScores).toEqual([{ periodNumber: 1, homeScore: 7, awayScore: 0 }]);
+  });
+
+  it('refuses a winner that is not one of the match\'s sides', () => {
+    expect(describeScoreProblem({ winnerSideNumber: 3, sides: [{ sideNumber: 1, score: 1 }, { sideNumber: 2, score: 0 }] }, { inBracket: true, canEndTied: false }))
+      .toBe('the winner must be one of the match\'s sides');
+  });
+
+  it('gives a week\'s side with no team yet no standing, and its other side one', () => {
+    const match = legacyMatch({ id: 'm', homeSportEventParticipantId: 'home-team', status: MatchStatus.SCHEDULED });
+
+    expect(gameStandings([match], AS_OF).map((row) => [row.sportEventParticipantId, row.status])).toEqual([['home-team', ParticipantStandingStatus.ACTIVE]]);
   });
 });

@@ -21,7 +21,9 @@
  * - Until the bracket has a result, no team is scored: nobody has won or lost yet.
  */
 import {
-  MatchSide,
+  matchParticipantIds,
+  opposingSideOf,
+  winningSide,
   MatchStatus,
   ParticipantInactiveReason,
   UpsetBonusRule,
@@ -39,9 +41,9 @@ import { isMatchRoundDecided } from './finished-rounds';
  */
 export function withdrawnRowIds(
   field: ReadonlyArray<{ id: string; isActive: boolean; inactiveReason?: ParticipantInactiveReason | null }>,
-  bracket: ReadonlyArray<Pick<SportEventRoundMatch, 'homeSportEventParticipantId' | 'awaySportEventParticipantId'>>,
+  bracket: ReadonlyArray<Pick<SportEventRoundMatch, 'id' | 'sides'>>,
 ): Set<string> {
-  const named = new Set(bracket.flatMap((match) => [match.homeSportEventParticipantId, match.awaySportEventParticipantId]));
+  const named = new Set(bracket.flatMap(matchParticipantIds));
   return new Set(field
     .filter((row) => !row.isActive && row.inactiveReason === ParticipantInactiveReason.WITHDRAWN && !named.has(row.id))
     .map((row) => row.id));
@@ -63,14 +65,14 @@ export interface ByeEntry {
  * were missing from it would read as a bye.
  */
 export function byeEntries(
-  bracket: ReadonlyArray<Pick<SportEventRoundMatch, 'roundNumber' | 'homeSportEventParticipantId' | 'awaySportEventParticipantId'>>,
+  bracket: ReadonlyArray<Pick<SportEventRoundMatch, 'id' | 'roundNumber' | 'sides'>>,
 ): Map<string, ByeEntry> {
   const rounds = [...new Set(bracket.map((match) => match.roundNumber))].sort((left, right) => left - right);
   const firstMatchRound = new Map<string, number>();
   for (const match of bracket) {
-    for (const team of [match.homeSportEventParticipantId, match.awaySportEventParticipantId]) {
-      const seen = team === null ? undefined : firstMatchRound.get(team);
-      if (team !== null && (seen === undefined || match.roundNumber < seen)) {
+    for (const team of matchParticipantIds(match)) {
+      const seen = firstMatchRound.get(team);
+      if (seen === undefined || match.roundNumber < seen) {
         firstMatchRound.set(team, match.roundNumber);
       }
     }
@@ -96,13 +98,11 @@ export interface KnockoutTeamScore {
   record: KnockoutTeamRecord;
 }
 
-/** The field row on the winning or losing side of a completed match. */
-function sideRowId(match: SportEventRoundMatch, side: MatchSide): string | null {
-  return side === MatchSide.HOME ? match.homeSportEventParticipantId : match.awaySportEventParticipantId;
-}
-
-function otherSide(side: MatchSide): MatchSide {
-  return side === MatchSide.HOME ? MatchSide.AWAY : MatchSide.HOME;
+/** A decided match's winning and losing field rows. */
+interface DecidedMatch {
+  match: SportEventRoundMatch;
+  winner: string | null;
+  loser: string | null;
 }
 
 /** What one win is worth as upset bonus under the contest's rule. */
@@ -135,11 +135,12 @@ export function scoreKnockoutField(
   field: readonly SportEventParticipantView[],
   settings: KnockoutRoundPointsSettings,
 ): KnockoutTeamScore[] {
-  const decided = new Map<string, SportEventRoundMatch & { winnerSide: MatchSide }>();
+  const decided = new Map<string, DecidedMatch>();
   for (const row of field) {
     for (const match of row.matches) {
-      if (match.status === MatchStatus.COMPLETED && match.winnerSide !== null) {
-        decided.set(match.id, { ...match, winnerSide: match.winnerSide });
+      const winner = winningSide(match);
+      if (match.status === MatchStatus.COMPLETED && winner !== null) {
+        decided.set(match.id, { match, winner: winner.sportEventParticipantId, loser: opposingSideOf(match, winner.sideNumber).sportEventParticipantId });
       }
     }
   }
@@ -154,14 +155,14 @@ export function scoreKnockoutField(
       const result = decided.get(match.id);
       return result ? [result] : [];
     });
-    const won = results.filter((match) => sideRowId(match, match.winnerSide) === row.entry.id);
-    const upsetBonusPoints = won.reduce((total, match) => total + upsetBonusFor(
+    const won = results.filter((result) => result.winner === row.entry.id);
+    const upsetBonusPoints = won.reduce((total, result) => total + upsetBonusFor(
       settings.upsetBonus,
       seedById.get(row.entry.id) ?? null,
-      seedById.get(sideRowId(match, otherSide(match.winnerSide)) ?? '') ?? null,
+      seedById.get(result.loser ?? '') ?? null,
     ), 0);
     const byeRounds = (byes.get(row.entry.id)?.skippedRounds ?? []).filter((roundNumber) => isMatchRoundDecided(bracket, roundNumber));
-    const roundPoints = [...byeRounds, ...won.map((match) => match.roundNumber)]
+    const roundPoints = [...byeRounds, ...won.map((result) => result.match.roundNumber)]
       .map((roundNumber) => settings.roundValues.at(roundNumber - 1));
     const record: KnockoutTeamRecord = {
       wins: won.length + byeRounds.length,

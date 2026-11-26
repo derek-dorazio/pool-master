@@ -18,7 +18,7 @@ import type {
 } from '@poolmaster/shared/db';
 import {
   compareMatchPlaces,
-  MatchEnding,
+  matchParticipantIds,
   ContestEntryStatus,
   MatchStatus,
   ParticipantStatus,
@@ -30,6 +30,7 @@ import {
   type SportEventParticipant,
 } from '@poolmaster/shared/domain';
 import { weekRoundSlot } from './round-slots';
+import { legacyMatch } from './match-sides';
 import { expectDefined } from './expect-defined';
 import type { EventFieldReads } from '../../packages/core-api/src/modules/events/sport-event-participant-service';
 import { fieldReads } from './field-reads';
@@ -42,6 +43,8 @@ export class InMemoryGamePicks {
   readonly field = new Map<string, SportEventParticipant>();
   readonly participants = new Map<string, Participant>();
   readonly predictions = new Map<string, ContestEntryMatchPrediction>();
+  /** The side number each stored pick was written with (#2046), by prediction id; null for a tie pick. */
+  readonly pickedSideNumbers = new Map<string, number | null>();
   /** The background jobs each save wrote with its picks (#1466), as the adapter inserts them in its transaction. */
   readonly writtenJobs: BackgroundJobRequest[] = [];
   private sequence = 0;
@@ -91,7 +94,7 @@ export class InMemoryGamePicks {
   ): SportEventRoundMatch {
     const home = this.addTeam(sportEventId, `Home ${matchNumber}`, { participantId: teams?.home });
     const away = this.addTeam(sportEventId, `Away ${matchNumber}`, { participantId: teams?.away });
-    const match: SportEventRoundMatch = {
+    const match = legacyMatch({
       id: `game-${matchNumber}`,
       sportEventId,
       roundNumber: 1,
@@ -99,25 +102,11 @@ export class InMemoryGamePicks {
       matchNumber,
       homeSportEventParticipantId: home.id,
       awaySportEventParticipantId: away.id,
-      isNeutralSite: false,
       scheduledDate: kickoff,
       status,
-      winnerSide: null,
-      homeScore: null,
-      awayScore: null,
-      homeShootoutScore: null,
-      awayShootoutScore: null, ending: MatchEnding.PLAYED,
-      advancesToMatchId: null,
-      advancesToSide: null,
-      regionLabel: null,
-      homeSpread: null,
-
-      resultSource: null,
-      completedAt: null,
-      periodScores: [],
       createdAt: T0,
       updatedAt: T0,
-    };
+    });
     this.matches.set(match.id, match);
     return match;
   }
@@ -134,8 +123,8 @@ export class InMemoryGamePicks {
   addBracket(matches: readonly SportEventRoundMatch[], seedOf: ReadonlyMap<string, number | null>): void {
     this.putMatches(matches);
     for (const match of matches) {
-      for (const team of [match.homeSportEventParticipantId, match.awaySportEventParticipantId]) {
-        if (team === null || this.field.has(team)) continue;
+      for (const team of matchParticipantIds(match)) {
+        if (this.field.has(team)) continue;
         this.addTeam(match.sportEventId, `Team ${team}`, { id: team, seedNumber: seedOf.get(team) ?? undefined });
       }
     }
@@ -231,10 +220,12 @@ export class InMemoryGamePicks {
           throw new Error('violates check constraint contest_entry_match_predictions_confidence_check');
         }
         for (const matchId of clearedMatchIds) this.predictions.delete(key(contestEntryId, matchId));
-        for (const save of saves) {
+        for (const { sideNumber, ...save } of saves) {
           const existing = this.predictions.get(key(contestEntryId, save.sportEventRoundMatchId));
+          const id = existing?.id ?? `prediction-${contestEntryId}-${save.sportEventRoundMatchId}`;
+          this.pickedSideNumbers.set(id, sideNumber);
           this.predictions.set(key(contestEntryId, save.sportEventRoundMatchId), {
-            id: existing?.id ?? `prediction-${contestEntryId}-${save.sportEventRoundMatchId}`,
+            id,
             contestEntryId,
             ...save,
             pickedAt: when,

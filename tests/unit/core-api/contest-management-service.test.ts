@@ -1,3 +1,4 @@
+import { withHomeAway, legacyMatch } from '../../support/match-sides';
 import { expect } from '@jest/globals';
 import {
   ContestFormat,
@@ -2716,7 +2717,7 @@ describe('ContestManagementService — a second-chance bracket, started at a lat
     const bracket = options.roundOnePlayed === false ? eightTeamBracket(event.id) : withResults(eightTeamBracket(event.id), new Map([
       [1, { winner: MatchSide.HOME }], [2, { winner: MatchSide.HOME }], [3, { winner: MatchSide.HOME }], [4, { winner: MatchSide.HOME }],
       [5, { home: 'T1', away: 'T4', winner: MatchSide.HOME }], [6, { home: 'T2', away: 'T3', winner: MatchSide.HOME }],
-    ])).map((match) => (match.roundNumber === 2 ? { ...match, status: MatchStatus.SCHEDULED, winnerSide: null } : match));
+    ])).map((match) => (match.roundNumber === 2 ? withHomeAway(match, { status: MatchStatus.SCHEDULED, winnerSide: null }) : match));
     store.matchRows.push(...bracket.map((match) => ({ ...match, scheduledDate: at(expectDefined(KICKOFF_HOURS.get(match.matchNumber))) })));
 
     const world = new InMemoryContestWorld();
@@ -3022,7 +3023,7 @@ describe('ContestManagementService squares rules (#711)', () => {
   it('refuses a squares contest whose game has kicked off with SPORT_EVENT_ALREADY_STARTED, though its event started long before', async () => {
     const { contestCoreRepo, reader, service } = squaresService(MatchStatus.IN_PROGRESS);
     reader.findCutoffTiming.mockImplementation(async (sportEvent: Parameters<ContestCreateSportEventReader['findCutoffTiming']>[0], cutoff: Parameters<ContestCreateSportEventReader['findCutoffTiming']>[1]) =>
-      cutoffTiming(cutoff, sportEvent, [{ id: GAME_ID, roundNumber: 4, status: MatchStatus.IN_PROGRESS, scheduledDate: null }]));
+      cutoffTiming(cutoff, sportEvent, [legacyMatch({ id: GAME_ID, roundNumber: 4, status: MatchStatus.IN_PROGRESS })]));
 
     await expect(service.createContest({ leagueId: 'league-1' }, squaresRequest()))
       .rejects.toMatchObject({ code: 'SPORT_EVENT_ALREADY_STARTED' });
@@ -3173,9 +3174,9 @@ describe('createContestSportEventReader field, game and price reads', () => {
   it('counts the games without a spread, leaving out a cancelled one, and finds a game by id or null', async () => {
     const reader = readerOver({
       games: [
-        { id: 'g1', status: MatchStatus.SCHEDULED, roundNumber: 1, homeSpread: null },
-        { id: 'g2', status: MatchStatus.SCHEDULED, roundNumber: 2, homeSpread: -3.5 },
-        { id: 'g3', status: MatchStatus.CANCELLED, roundNumber: 1, homeSpread: null },
+        legacyMatch({ id: 'g1', status: MatchStatus.SCHEDULED, roundNumber: 1, homeSpread: null }),
+        legacyMatch({ id: 'g2', status: MatchStatus.SCHEDULED, roundNumber: 2, homeSpread: -3.5 }),
+        legacyMatch({ id: 'g3', status: MatchStatus.CANCELLED, roundNumber: 1, homeSpread: null }),
       ],
     });
 

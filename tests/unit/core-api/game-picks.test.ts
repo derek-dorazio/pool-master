@@ -2,6 +2,7 @@
  * Pick'em scoring (#717): a week's picks scored against its games' results in both modes, the
  * week's tiebreaker game, and the ranking that breaks level points with the tiebreaker.
  */
+import { legacyMatch, type HomeAwayFields } from '../../support/match-sides';
 import { expect } from '@jest/globals';
 import { MatchEnding, MatchSide, MatchStatus, PickEmMode, PickOutcome, PredictedResult, type SportEventRoundMatch } from '@poolmaster/shared/domain';
 import { rankPredictionStandings } from '../../../packages/core-api/src/modules/scoring-families/head-to-head/bracket-picks';
@@ -17,8 +18,8 @@ const T0 = new Date('2026-09-01T00:00:00.000Z');
 const SUNDAY = new Date('2026-09-13T17:00:00.000Z');
 const MONDAY = new Date('2026-09-15T00:15:00.000Z');
 
-function game(matchNumber: number, overrides: Partial<SportEventRoundMatch> = {}): SportEventRoundMatch {
-  return {
+function game(matchNumber: number, overrides: HomeAwayFields & Partial<SportEventRoundMatch> = {}): SportEventRoundMatch {
+  return legacyMatch({
     id: `game-${matchNumber}`,
     sportEventId: 'week-1',
     roundNumber: 1,
@@ -45,7 +46,7 @@ function game(matchNumber: number, overrides: Partial<SportEventRoundMatch> = {}
     createdAt: T0,
     updatedAt: T0,
     ...overrides,
-  };
+  });
 }
 
 const played = (matchNumber: number, winnerSide: MatchSide | null, homeScore: number, awayScore: number) =>

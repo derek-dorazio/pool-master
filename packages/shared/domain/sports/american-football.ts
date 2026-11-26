@@ -23,7 +23,6 @@ export const americanFootballSportDefinition: SportDefinition = {
   defaultRounds: 4,
   selectionTypes: [SelectionType.TIERED, SelectionType.BUDGET_PICK, SelectionType.RANDOM_DRAW, SelectionType.PICK_EM, SelectionType.BRACKET, SelectionType.SURVIVOR, SelectionType.SQUARES],
   scoringDefinitions: ['KNOCKOUT_ROUND_POINTS'],
-  shootout: false,
   matchPeriodLayout: MatchPeriodLayout.QUARTERS,
   pickEm: { tiePicks: false, againstTheSpread: true },
   // A four-round bracket reads Wild Card, Divisional, Conference Championship, Super Bowl; a

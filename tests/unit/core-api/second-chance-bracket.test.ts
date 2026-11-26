@@ -12,6 +12,7 @@
  * days ago: T1, T2 and T3 won at home and T5 upset T4, so round 2 is T1 against T5 (game 5, two
  * hours from the test's clock) and T2 against T3 (game 6, five hours from it). The final is game 7.
  */
+import { withHomeAway } from '../../support/match-sides';
 import { expect } from '@jest/globals';
 import { testDomainEvents } from '../../support/domain-events';
 import {
@@ -68,11 +69,10 @@ function bracketAfterRoundOne(sportEventId: string): SportEventRoundMatch[] {
   const placed = new Map([[5, ['T1', 'T5']], [6, ['T2', 'T3']]]);
   return played.map((match) => {
     const sides = placed.get(match.matchNumber);
-    return {
-      ...match,
+    return withHomeAway(match, {
       scheduledDate: at(expectDefined(KICKOFF_HOURS.get(match.matchNumber))),
       ...(sides && { homeSportEventParticipantId: sides[0], awaySportEventParticipantId: sides[1] }),
-    };
+    });
   });
 }
 

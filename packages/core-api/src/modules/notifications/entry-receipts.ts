@@ -30,6 +30,8 @@ import {
   type SportLeague,
   sportVocabulary,
   type User,
+  matchSpread,
+  sideOfParticipant,
 } from '@poolmaster/shared/domain';
 import {
   emailRecipientOf,
@@ -309,10 +311,11 @@ function describePick(game: GamePickGame, againstTheSpread: boolean, tieWord: st
   return spread === null ? team.name : `${team.name} ${formatSpread(spread)}`;
 }
 
-/** The spread the team plays the game at: the home spread for the home team, its opposite for the away team. */
+/** The spread the team plays the game at: side 1's spread for side 1's team, its opposite for the other (#2046). */
 function teamSpread(match: SportEventRoundMatch, team: GamePickTeam): number | null {
-  if (match.homeSpread === null) return null;
-  return team.sportEventParticipantId === match.homeSportEventParticipantId ? match.homeSpread : -match.homeSpread;
+  const spread = matchSpread(match);
+  if (spread === null) return null;
+  return sideOfParticipant(match, team.sportEventParticipantId)?.spread === spread ? spread : 0 - spread;
 }
 
 /** "Bills at Chiefs", or "Bills vs Chiefs" at a neutral site, as the app lists a game. */

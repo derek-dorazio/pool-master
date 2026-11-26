@@ -2,7 +2,7 @@ import { BALLDONTLIE_TEST_PROVIDER_ID } from '../../support/balldontlie-provider
 import { expect } from '@jest/globals';
 import { testDomainEvents } from '../../support/domain-events';
 import { randomUUID } from 'node:crypto';
-import { BackgroundJobType, ContestStatus, MatchResultSource, MatchSide, MatchStatus, ProviderGameState, SelectionType, Sport } from '@poolmaster/shared/domain';
+import { BackgroundJobType, ContestStatus, HomeAway, MatchResultSource, MatchSide, MatchStatus, ProviderGameState, SelectionType, Sport } from '@poolmaster/shared/domain';
 import type { GameScoreUpdate } from '@poolmaster/shared/dto';
 import {
   PrismaSportEventRoundMatchRepository,
@@ -22,6 +22,7 @@ import { NO_SETTLE_JOBS } from '../../support/event-settlement';
 import { sportRowKeys } from '../../support/sport-rows';
 import { eventRoundSlots, mapEventToProvider, fixtureSeasonId, type TestRoundSlot } from '../../support/event-edition';
 import { sportPlay } from '../../support/sport-play';
+import { AWAY_SIDE, HOME_SIDE, homeAwayOf } from '../../support/match-sides';
 
 // A provider's game scores written into a linked bracket against real Postgres (#1496): the
 // head-to-head family's GAME writer, through the admin's result path, with the teams' provider
@@ -104,9 +105,10 @@ async function linkedBracket(sportOf: typeof Sport.BASKETBALL | typeof Sport.SOC
   const matches = new PrismaSportEventRoundMatchRepository(getAppPrisma());
   const finalId = randomUUID();
   await matches.replaceBracket(event.id, [
-    { id: randomUUID(), roundNumber: 1, matchNumber: 1, homeSportEventParticipantId: entryOf('Duke').id, awaySportEventParticipantId: entryOf('Houston').id, isNeutralSite: true, scheduledDate: null, advancesToMatchId: finalId, advancesToSide: MatchSide.HOME, regionLabel: null },
-    { id: randomUUID(), roundNumber: 1, matchNumber: 2, homeSportEventParticipantId: entryOf('Auburn').id, awaySportEventParticipantId: entryOf('Florida').id, isNeutralSite: true, scheduledDate: null, advancesToMatchId: finalId, advancesToSide: MatchSide.AWAY, regionLabel: null },
-    { id: finalId, roundNumber: 2, matchNumber: 3, homeSportEventParticipantId: null, awaySportEventParticipantId: null, isNeutralSite: true, scheduledDate: null, advancesToMatchId: null, advancesToSide: null, regionLabel: null },
+    // Each side's team as the sync writes it: Houston and Florida on side 1, Duke and Auburn on side 2.
+    { id: randomUUID(), roundNumber: 1, matchNumber: 1, sides: neutralSides(entryOf('Houston').id, entryOf('Duke').id), isNeutralSite: true, scheduledDate: null, advancesToMatchId: finalId, advancesToSideNumber: HOME_SIDE, regionLabel: null },
+    { id: randomUUID(), roundNumber: 1, matchNumber: 2, sides: neutralSides(entryOf('Florida').id, entryOf('Auburn').id), isNeutralSite: true, scheduledDate: null, advancesToMatchId: finalId, advancesToSideNumber: AWAY_SIDE, regionLabel: null },
+    { id: finalId, roundNumber: 2, matchNumber: 3, sides: neutralSides(null, null), isNeutralSite: true, scheduledDate: null, advancesToMatchId: null, advancesToSideNumber: null, regionLabel: null },
   ]);
   // Mapped directly here; the sync maps games itself, which the auto-linking test covers.
   if (mapGames) {
@@ -114,6 +116,19 @@ async function linkedBracket(sportOf: typeof Sport.BASKETBALL | typeof Sport.SOC
     await mapGameOne(event.id, 1, 2, 'g2');
   }
   return { event, externalId, entryOf, teamId, matches };
+}
+
+/** A neutral-site match's two sides, side 1's team first. */
+function neutralSides(sideOne: string | null, sideTwo: string | null) {
+  return [
+    { sideNumber: 1, sportEventParticipantId: sideOne, homeAway: HomeAway.NONE },
+    { sideNumber: 2, sportEventParticipantId: sideTwo, homeAway: HomeAway.NONE },
+  ];
+}
+
+/** The event's matches as the API shows them until the DTOs move to sides: side 2 the home side, side 1 the away side. */
+async function viewsOf(matches: PrismaSportEventRoundMatchRepository, sportEventId: string) {
+  return (await matches.findBySportEvent(sportEventId)).map(homeAwayOf);
 }
 
 /** Maps the provider's game id to the Game 1 of the match at this place. */
@@ -136,18 +151,27 @@ async function gamesOf(sportEventId: string) {
   const rows = await getPrisma().sportEventRoundMatchGame.findMany({
     where: { sportEventId },
     select: {
-      id: true, gameNumber: true, status: true, winnerSide: true, homeScore: true, awayScore: true, movedToGameId: true,
+      id: true, gameNumber: true, status: true, movedToGameId: true,
+      sideResults: { select: { score: true, side: { select: { sideNumber: true } } } },
       match: { select: { matchNumber: true, sportEventRound: { select: { roundNumber: true } } } },
       providerMappings: { select: { externalId: true } },
     },
   });
+  const scoreOf = (row: (typeof rows)[number], sideNumber: number) => row.sideResults.find((result) => result.side.sideNumber === sideNumber)?.score ?? null;
   return rows
-    .map((row) => ({
-      id: row.id,
-      place: [row.match.sportEventRound.roundNumber, row.match.matchNumber, row.gameNumber],
-      providerGameId: row.providerMappings[0]?.externalId ?? null,
-      status: row.status, winnerSide: row.winnerSide, homeScore: row.homeScore, awayScore: row.awayScore, movedToGameId: row.movedToGameId,
-    }))
+    .map((row) => {
+      const [homeScore, awayScore] = [scoreOf(row, HOME_SIDE), scoreOf(row, AWAY_SIDE)];
+      const decided = row.status === MatchStatus.COMPLETED && homeScore !== null && awayScore !== null && homeScore !== awayScore;
+      return {
+        id: row.id,
+        place: [row.match.sportEventRound.roundNumber, row.match.matchNumber, row.gameNumber],
+        providerGameId: row.providerMappings[0]?.externalId ?? null,
+        status: row.status,
+        // The side with more points in a final game: the home side is side 2.
+        winnerSide: decided ? (homeScore > awayScore ? MatchSide.HOME : MatchSide.AWAY) : null,
+        homeScore, awayScore, movedToGameId: row.movedToGameId,
+      };
+    })
     .sort((left, right) => left.place.join('.').localeCompare(right.place.join('.'), undefined, { numeric: true }));
 }
 
@@ -207,7 +231,7 @@ describe('game scores from a provider', () => {
     ]);
 
     expect(result).toMatchObject({ updatesReturned: 2, updatesPersisted: 2, updatesSkipped: 0 });
-    const [first, second, final] = await matches.findBySportEvent(event.id);
+    const [first, second, final] = await viewsOf(matches, event.id);
     expect(first).toMatchObject({ status: MatchStatus.COMPLETED, winnerSide: MatchSide.HOME, homeScore: 70, awayScore: 67 });
     // A live score decides nothing: no winner, no result source.
     expect(second).toMatchObject({ status: MatchStatus.IN_PROGRESS, winnerSide: null, homeScore: 40, awayScore: 38, resultSource: null });
@@ -216,7 +240,7 @@ describe('game scores from a provider', () => {
 
   it('puts a squares contest on a game the provider calls final live with its "Contest is live" job, and writes the job that settles it, as an admin\'s result does', async () => {
     const { event, externalId, teamId, matches } = await linkedBracket();
-    const [game] = await matches.findBySportEvent(event.id);
+    const [game] = await viewsOf(matches, event.id);
     const contestId = await squaresContestOn(event.id, expectDefined(game, 'g1').id);
 
     await publish(externalId, [
@@ -236,13 +260,13 @@ describe('game scores from a provider', () => {
     const { event, externalId, entryOf, teamId, matches } = await linkedBracket();
     const game = { providerGameId: 'g1', homeTeamExternalId: teamId('Duke'), awayTeamExternalId: teamId('Houston') };
     await publish(externalId, [{ ...game, state: ProviderGameState.IN_PROGRESS, homeScore: 40, awayScore: 44 }]);
-    const live = (await matches.findBySportEvent(event.id)).at(0);
+    const live = (await viewsOf(matches, event.id)).at(0);
 
     const result = await publish(externalId, [{ ...game, state: ProviderGameState.FINAL, homeScore: 66, awayScore: 71 }]);
 
     expect(live).toMatchObject({ status: MatchStatus.IN_PROGRESS, homeScore: 40, awayScore: 44, winnerSide: null });
     expect(result).toMatchObject({ updatesPersisted: 1, updatesSkipped: 0 });
-    const [first, , final] = await matches.findBySportEvent(event.id);
+    const [first, , final] = await viewsOf(matches, event.id);
     expect(first).toMatchObject({ status: MatchStatus.COMPLETED, homeScore: 66, awayScore: 71, winnerSide: MatchSide.AWAY, resultSource: MatchResultSource.PROVIDER });
     expect(final.homeSportEventParticipantId).toBe(entryOf('Houston').id);
   });
@@ -257,7 +281,7 @@ describe('game scores from a provider', () => {
 
     expect(first).toMatchObject({ updatesPersisted: 1, updatesSkipped: 0 });
     expect(again).toMatchObject({ updatesPersisted: 0, updatesSkipped: 1 });
-    const [semifinal, , theFinal] = await matches.findBySportEvent(event.id);
+    const [semifinal, , theFinal] = await viewsOf(matches, event.id);
     expect(semifinal).toMatchObject({
       status: MatchStatus.COMPLETED, winnerSide: MatchSide.AWAY, homeScore: 1, awayScore: 1, homeShootoutScore: 2, awayShootoutScore: 4, resultSource: MatchResultSource.PROVIDER,
     });
@@ -274,22 +298,23 @@ describe('game scores from a provider', () => {
 
     expect(again).toMatchObject({ updatesPersisted: 0, updatesSkipped: 1 });
     expect(again.writeDiagnostics.summary).toMatchObject({ total: 1, unchanged: 1 });
-    expect((await matches.findBySportEvent(event.id)).at(0)?.updatedAt).toEqual(written.updatedAt);
+    // The match and its Games as they were, each Game unwritten since.
+    expect((await matches.findBySportEvent(event.id)).at(0)).toEqual(written);
   });
 
   it('overwrites a result an admin wrote earlier with the provider\'s final: the feed is the only writer on a synced event', async () => {
     const { event, externalId, teamId, matches } = await linkedBracket();
     const final = { providerGameId: 'g1', homeTeamExternalId: teamId('Duke'), awayTeamExternalId: teamId('Houston'), state: ProviderGameState.FINAL, homeScore: 70, awayScore: 67 };
     await publish(externalId, [final]);
-    const fromProvider = (await matches.findBySportEvent(event.id)).at(0);
-    // A correction an admin wrote before results came only from the feed; the migration relabelled its source PROVIDER.
-    await getPrisma().sportEventRoundMatch.updateMany({ where: { sportEventId: event.id, matchNumber: 1 }, data: { awayScore: 68, resultSource: MatchResultSource.PROVIDER } });
+    const fromProvider = (await viewsOf(matches, event.id)).at(0);
+    // A correction an admin wrote before results came only from the feed: Houston's (side 1's) score.
+    await getPrisma().sportEventRoundMatchGameSideResult.updateMany({ where: { game: { sportEventId: event.id, gameNumber: 1, match: { matchNumber: 1 } }, side: { sideNumber: AWAY_SIDE } }, data: { score: 68 } });
 
     const again = await publish(externalId, [final]);
 
     expect(fromProvider).toMatchObject({ homeScore: 70, awayScore: 67, resultSource: MatchResultSource.PROVIDER });
     expect(again).toMatchObject({ updatesPersisted: 1 });
-    expect((await matches.findBySportEvent(event.id)).at(0)).toMatchObject({ homeScore: 70, awayScore: 67, resultSource: MatchResultSource.PROVIDER });
+    expect((await viewsOf(matches, event.id)).at(0)).toMatchObject({ homeScore: 70, awayScore: 67, resultSource: MatchResultSource.PROVIDER });
   });
 
   it('links each game nobody linked to the match its teams play, records the final, and keeps the link for the next sync', async () => {
@@ -302,7 +327,7 @@ describe('game scores from a provider', () => {
     ]);
 
     expect(result).toMatchObject({ updatesPersisted: 1 });
-    const [first, second, final] = await matches.findBySportEvent(event.id);
+    const [first, second, final] = await viewsOf(matches, event.id);
     expect(first).toMatchObject({ status: MatchStatus.COMPLETED, winnerSide: MatchSide.HOME, homeScore: 70, awayScore: 67 });
     expect(second).toMatchObject({ status: MatchStatus.SCHEDULED });
     expect(final).toMatchObject({ homeSportEventParticipantId: entryOf('Duke').id });
@@ -312,6 +337,23 @@ describe('game scores from a provider', () => {
       { place: [1, 2, 1], providerGameId: 'p-2', status: MatchStatus.SCHEDULED, homeScore: null, awayScore: null },
       { place: [2, 3, 1], providerGameId: null, status: MatchStatus.SCHEDULED, homeScore: null, awayScore: null },
     ]);
+  });
+
+  it('links the final\'s Game 1, loaded with the bracket before its teams were known, to the provider\'s game once both semifinals send their winners into it, and records its result', async () => {
+    const { event, externalId, entryOf, teamId, matches } = await linkedBracket();
+    await publish(externalId, [
+      { providerGameId: 'g1', homeTeamExternalId: teamId('Duke'), awayTeamExternalId: teamId('Houston'), state: ProviderGameState.FINAL, homeScore: 70, awayScore: 67 },
+      { providerGameId: 'g2', homeTeamExternalId: teamId('Auburn'), awayTeamExternalId: teamId('Florida'), state: ProviderGameState.FINAL, homeScore: 60, awayScore: 66 },
+    ]);
+
+    await publish(externalId, [
+      { providerGameId: 'f1', homeTeamExternalId: teamId('Duke'), awayTeamExternalId: teamId('Florida'), state: ProviderGameState.FINAL, homeScore: 75, awayScore: 72 },
+    ]);
+
+    // The final's own Game 1, there since the bracket was loaded, now holds the provider's game.
+    expect((await gamesOf(event.id)).find((game) => game.place.join('.') === '2.3.1')).toMatchObject({ providerGameId: 'f1', status: MatchStatus.COMPLETED, homeScore: 75, awayScore: 72 });
+    const [, , final] = await viewsOf(matches, event.id);
+    expect(final).toMatchObject({ homeSportEventParticipantId: entryOf('Duke').id, awaySportEventParticipantId: entryOf('Florida').id, status: MatchStatus.COMPLETED, winnerSide: MatchSide.HOME });
   });
 
   it('fills a First Four play-in place with the winner the provider names in its round of 64 game, links that game in the same sync, and scores it on the next (#1571)', async () => {
@@ -330,13 +372,13 @@ describe('game scores from a provider', () => {
 
     const filled = await prisma.sportEventParticipant.findUniqueOrThrow({ where: { id: place.id } });
     expect(filled).toMatchObject({ participantId: umbc.id, isPlayInPlace: false });
-    expect((await matches.findBySportEvent(event.id))[0]).toMatchObject({ awaySportEventParticipantId: place.id, status: MatchStatus.SCHEDULED });
+    expect((await viewsOf(matches, event.id))[0]).toMatchObject({ awaySportEventParticipantId: place.id, status: MatchStatus.SCHEDULED });
     expect((await gamesOf(event.id))[0]).toMatchObject({ place: [1, 1, 1], providerGameId: 'p-1' });
 
     const result = await publish(externalId, [{ ...roundOf64, state: ProviderGameState.FINAL, homeScore: 62, awayScore: 70 }]);
 
     expect(result).toMatchObject({ updatesPersisted: 1 });
-    const [first, , final] = await matches.findBySportEvent(event.id);
+    const [first, , final] = await viewsOf(matches, event.id);
     expect(first).toMatchObject({ status: MatchStatus.COMPLETED, winnerSide: MatchSide.AWAY, homeScore: 62, awayScore: 70, resultSource: MatchResultSource.PROVIDER });
     expect(final.homeSportEventParticipantId).toBe(place.id);
   });
@@ -360,7 +402,7 @@ describe('game scores from a provider', () => {
     const result = await publish(externalId, games);
 
     expect(result).toMatchObject({ updatesPersisted: 2 });
-    const [first, second, nbaFinal] = await matches.findBySportEvent(event.id);
+    const [first, second, nbaFinal] = await viewsOf(matches, event.id);
     expect(first).toMatchObject({ status: MatchStatus.COMPLETED, winnerSide: MatchSide.HOME, homeScore: 4, awayScore: 1, resultSource: MatchResultSource.PROVIDER });
     expect(second).toMatchObject({ status: MatchStatus.IN_PROGRESS, winnerSide: null, homeScore: 1, awayScore: 0 });
     expect(nbaFinal).toMatchObject({ homeSportEventParticipantId: entryOf('Duke').id, awaySportEventParticipantId: null });
@@ -385,11 +427,11 @@ describe('game scores from a provider', () => {
     const win = (gameNumber: number): GameScoreUpdate => ({ providerGameId: `c${gameNumber}`, gameNumber, homeTeamExternalId: teamId('Duke'), awayTeamExternalId: teamId('Houston'), state: ProviderGameState.FINAL, homeScore: 90, awayScore: 80 });
 
     await publish(externalId, [win(1), win(2), win(3)]);
-    const onThree = (await matches.findBySportEvent(event.id))[0];
+    const onThree = (await viewsOf(matches, event.id))[0];
     await publish(externalId, [win(4)]);
 
     expect(onThree).toMatchObject({ status: MatchStatus.IN_PROGRESS, homeScore: 3, awayScore: 0 });
-    expect((await matches.findBySportEvent(event.id))[0]).toMatchObject({ status: MatchStatus.COMPLETED, winnerSide: MatchSide.HOME, homeScore: 4, awayScore: 0 });
+    expect((await viewsOf(matches, event.id))[0]).toMatchObject({ status: MatchStatus.COMPLETED, winnerSide: MatchSide.HOME, homeScore: 4, awayScore: 0 });
   });
 
   it('moves a re-issued game id to the Game its teams and game number place it at, scores that Game, and raises a GAME_ID_REISSUED finding', async () => {
@@ -400,7 +442,7 @@ describe('game scores from a provider', () => {
     ]);
 
     expect((await gamesOf(event.id))[0]).toMatchObject({ place: [1, 1, 1], providerGameId: 'g1-reissued', status: MatchStatus.COMPLETED, homeScore: 70, awayScore: 67 });
-    expect((await matches.findBySportEvent(event.id))[0]).toMatchObject({ status: MatchStatus.COMPLETED, winnerSide: MatchSide.HOME });
+    expect((await viewsOf(matches, event.id))[0]).toMatchObject({ status: MatchStatus.COMPLETED, winnerSide: MatchSide.HOME });
     expect(await getPrisma().providerSyncFinding.findMany({ where: { sportEventId: event.id }, select: { kind: true, severity: true, providerValue: true } }))
       .toEqual([{ kind: 'GAME_ID_REISSUED', severity: 'WARNING', providerValue: 'g1-reissued' }]);
   });
@@ -438,18 +480,24 @@ describe('game scores from a provider', () => {
     await publish(externalId, [{ ...live('g1', 'Duke', 'Houston', 0, 0), state: ProviderGameState.POSTPONED, homeScore: null, awayScore: null }]);
 
     // Pinned: the event's own reads, then one read of the matches, one of the sides, one of the
-    // team mappings, and one update per live game, with no result path and no rebuild.
+    // team mappings, and one update per live game and per side's score, with no result path and no rebuild.
     expect(statementCounts(statements)).toEqual([
+      // The batch's shoot-outs taken off its side results (#2046), in one statement.
+      ['DELETE sport_event_round_match_game_side_result_period_scores', 1],
       ['SELECT participant_provider_mappings', 1],
       // The mappings' Provider rows, for their names (#2040): one read for the batch.
       ['SELECT providers', 1],
-      ['SELECT sport_event_match_period_scores', 1],
       ['SELECT sport_event_participants', 1],
       // The event's provider ids and its Season, the event's path to its league (#2004).
       ['SELECT sport_event_provider_mappings', 1],
       // The event's Games with their provider ids (#2007), read once for the batch.
       ['SELECT sport_event_round_match_game_provider_mappings', 1],
-      ['SELECT sport_event_round_match_games', 1],
+      // Each Game's side results with their periods (#2046): the matches' and the Games' reads,
+      // and the batch's write reading its side results once.
+      ['SELECT sport_event_round_match_game_side_result_period_scores', 2],
+      ['SELECT sport_event_round_match_game_side_results', 3],
+      ['SELECT sport_event_round_match_games', 2],
+      ['SELECT sport_event_round_match_sides', 4],
       ['SELECT sport_event_round_matches', 1],
       ['SELECT sport_event_rounds', 1],
       // The rounds' slots (#2006): each round reads its slot's definition and Season slot.
@@ -461,11 +509,13 @@ describe('game scores from a provider', () => {
       ['SELECT sport_leagues', 1],
       // The event's sport, read through its league (#2042), to pick its scoring family's writer.
       ['SELECT sports', 1],
-      // Each game's own score on its Game (#2007), one row each, as for its match.
+      // Each side's own score in its Game (#2046), one row each.
+      ['UPDATE sport_event_round_match_game_side_results', 4],
+      // Each game's own status on its Game (#2007), one row each, as for its match.
       ['UPDATE sport_event_round_match_games', 2],
       ['UPDATE sport_event_round_matches', 2],
     ]);
-    const [first, second] = await matches.findBySportEvent(event.id);
+    const [first, second] = await viewsOf(matches, event.id);
     expect(first).toMatchObject({ status: MatchStatus.POSTPONED, homeScore: null, awayScore: null });
     expect(second).toMatchObject({ status: MatchStatus.IN_PROGRESS, homeScore: 11, awayScore: 9 });
   });
@@ -482,6 +532,8 @@ describe('game scores from a provider', () => {
     // its follow-up jobs (the game's settling, the boards' rebuild) in one insert with its result.
     expect(statementCounts(statements)).toEqual([
       ['DELETE sport_event_participant_standings', 1],
+      // Each final's Game 1 shoot-out taken off (#2046): one statement per result.
+      ['DELETE sport_event_round_match_game_side_result_period_scores', 2],
       ['INSERT background_jobs', 2],
       ['INSERT sport_event_participant_standings', 2],
       ['SELECT contests', 2],
@@ -489,14 +541,18 @@ describe('game scores from a provider', () => {
       // The mappings' Provider rows, for their names (#2040), in one read for the batch; and each
       // read of the event names its provider ids' providers (#2004), one more each.
       ['SELECT providers', 3],
-      ['SELECT sport_event_match_period_scores', 3],
       ['SELECT sport_event_participant_golf_standings', 1],
       ['SELECT sport_event_participant_standings', 2],
       ['SELECT sport_event_participants', 1],
       ['SELECT sport_event_provider_mappings', 3],
       // The event's Games with their provider ids (#2007), read once for the batch.
       ['SELECT sport_event_round_match_game_provider_mappings', 1],
-      ['SELECT sport_event_round_match_games', 1],
+      // Each read of the matches reads their sides and their Games' side results (#2046), and each
+      // result's write reads its Game 1's side results once.
+      ['SELECT sport_event_round_match_game_side_result_period_scores', 4],
+      ['SELECT sport_event_round_match_game_side_results', 6],
+      ['SELECT sport_event_round_match_games', 4],
+      ['SELECT sport_event_round_match_sides', 9],
       ['SELECT sport_event_round_matches', 3],
       ['SELECT sport_event_rounds', 3],
       // Each full read of the event names its slot definitions (#2010), where templates are offered,
@@ -510,9 +566,12 @@ describe('game scores from a provider', () => {
       ['SELECT sport_league_seasons', 3],
       ['SELECT sport_leagues', 3],
       ['SELECT sports', 3],
-      // Each final's own score on its Game (#2007), one row each; the bracket's advance writes only matches.
+      // Each final's two side scores on its Game 1 (#2046), and the Game's status, one row each.
+      ['UPDATE sport_event_round_match_game_side_results', 4],
       ['UPDATE sport_event_round_match_games', 2],
-      ['UPDATE sport_event_round_matches', 4],
+      // Each final's two side outcomes, and the side of the final its winner fills.
+      ['UPDATE sport_event_round_match_sides', 6],
+      ['UPDATE sport_event_round_matches', 2],
     ]);
   });
 });

@@ -3,14 +3,15 @@ import { randomUUID } from 'node:crypto';
 import {
   ContestEntryStatus,
   ContestStatus,
-  MatchSide,
-  MatchStatus,
+  HomeAway,
   PickEmMode,
   PredictedResult,
   SelectionType,
   Sport,
   SportEventStatus,
+  sideParticipantId,
 } from '@poolmaster/shared/domain';
+import type { SportEventRoundMatch } from '@poolmaster/shared/domain';
 import {
   PrismaContestConfigurationRepository,
   PrismaContestEntryMatchPredictionRepository,
@@ -43,6 +44,8 @@ import { sportLeagueRowDefaults } from '../../support/league-profiles';
 import { sportRowKeys } from '../../support/sport-rows';
 import { fixtureSeasonId } from '../../support/event-edition';
 import { sportPlay } from '../../support/sport-play';
+import { AWAY_SIDE, HOME_SIDE } from '../../support/match-sides';
+import { singleGameResult } from '../../support/match-rows';
 
 // The pick'em season leaderboard's reads against real Postgres (#762): however many weeks the
 // season has, the games of every week come from one query, and only the week under way loads its
@@ -95,12 +98,15 @@ async function createWeek(label: string, startDate: Date, status: SportEventStat
     id: randomUUID(),
     roundNumber: 1,
     matchNumber,
-    homeSportEventParticipantId: rowOf((matchNumber - 1) * 2).id,
-    awaySportEventParticipantId: rowOf((matchNumber - 1) * 2 + 1).id,
+    // The away team on side 1 and the home team on side 2, as the sync writes them.
+    sides: [
+      { sideNumber: AWAY_SIDE, sportEventParticipantId: rowOf((matchNumber - 1) * 2 + 1).id, homeAway: HomeAway.AWAY },
+      { sideNumber: HOME_SIDE, sportEventParticipantId: rowOf((matchNumber - 1) * 2).id, homeAway: HomeAway.HOME },
+    ],
     isNeutralSite: false,
     scheduledDate: new Date(startDate.getTime() + (matchNumber - 1) * HOUR),
     advancesToMatchId: null,
-    advancesToSide: null,
+    advancesToSideNumber: null,
     regionLabel: null,
   })));
   const games = await matchRepo.findBySportEvent(event.id);
@@ -108,11 +114,12 @@ async function createWeek(label: string, startDate: Date, status: SportEventStat
 }
 
 /** Every game of the week played, home winning each 20-17, so the last game totals 37 points. */
-async function playWeek(games: readonly { id: string }[]) {
-  await getPrisma().sportEventRoundMatch.updateMany({
-    where: { id: { in: games.map((game) => game.id) } },
-    data: { status: MatchStatus.COMPLETED, winnerSide: MatchSide.HOME, homeScore: 20, awayScore: 17 },
-  });
+async function playWeek(games: readonly SportEventRoundMatch[]) {
+  const matches = new PrismaSportEventRoundMatchRepository(getAppPrisma());
+  for (const game of games) {
+    // poolmaster-allow-query-in-loop: a test week's few games
+    await matches.applyResult({ result: singleGameResult(game, { winnerSideNumber: HOME_SIDE, scores: [17, 20] }), sideFill: null, standings: [] });
+  }
 }
 
 /** A league whose commissioner is the viewer, with a squad and an ACTIVE straight-up pick'em contest over `sportEventIds`. */
@@ -147,14 +154,15 @@ async function createPickEmContest(sportEventIds: string[]) {
 }
 
 /** The entry's week submitted, picking the home team in every game. */
-async function submitHomePicks(entryId: string, sportEventId: string, games: readonly { id: string; homeSportEventParticipantId: string | null }[], at: Date) {
+async function submitHomePicks(entryId: string, sportEventId: string, games: readonly SportEventRoundMatch[], at: Date) {
   await writePicks(new PrismaContestEntryMatchPredictionRepository(getAppPrisma()), {
     contestEntryId: entryId,
     sportEventId,
     saves: games.map((game) => ({
       sportEventRoundMatchId: game.id,
       predictedResult: PredictedResult.TEAM,
-      sportEventParticipantId: expectDefined(game.homeSportEventParticipantId),
+      sportEventParticipantId: expectDefined(sideParticipantId(game, HOME_SIDE)),
+      sideNumber: HOME_SIDE,
       confidence: null,
     })),
     clearedMatchIds: [],
@@ -259,9 +267,13 @@ describe('Pick\'em leaderboard week cells and the current week\'s picks (#1751)'
     const season = await midSeason();
     const [firstGame] = season.liveWeek.games;
     // The live week's first game goes to the away team instead, busting the entry's home pick.
-    await getPrisma().sportEventRoundMatch.update({ where: { id: expectDefined(firstGame).id }, data: { winnerSide: MatchSide.AWAY, homeScore: 10, awayScore: 24 } });
+    await new PrismaSportEventRoundMatchRepository(getAppPrisma()).applyResult({
+      result: singleGameResult(expectDefined(firstGame), { winnerSideNumber: AWAY_SIDE, scores: [24, 10] }),
+      sideFill: null,
+      standings: [],
+    });
     const homeTeam = await getPrisma().sportEventParticipant.findUniqueOrThrow({
-      where: { id: expectDefined(expectDefined(firstGame).homeSportEventParticipantId) },
+      where: { id: expectDefined(sideParticipantId(expectDefined(firstGame), HOME_SIDE)) },
       include: { participant: true },
     });
 
@@ -285,7 +297,7 @@ describe('Pick\'em leaderboard week cells and the current week\'s picks (#1751)'
     const row = expectDefined(leaderboard.entries.find((entry) => entry.entryId === season.entry.id));
     expect(row.currentWeekPicks).toEqual(season.liveWeek.games.map((game, index) => ({
       sportEventRoundMatchId: game.id,
-      sportEventParticipantId: game.homeSportEventParticipantId,
+      sportEventParticipantId: sideParticipantId(game, HOME_SIDE),
       // The first two games are played and picked right; the third has kicked off but is not finished.
       outcome: index < 2 ? 'CORRECT' : 'PENDING',
     })));

@@ -2,8 +2,7 @@ import { expect } from '@jest/globals';
 import { randomUUID } from 'node:crypto';
 import {
   MatchEnding,
-  MatchResultSource,
-  MatchSide,
+  MatchSideOutcome,
   MatchStatus,
   ParticipantRoundStatus,
   ParticipantStandingStatus,
@@ -28,6 +27,8 @@ import { freshEventEdition } from '../../support/event-edition';
 import { participantLeagueId } from '../../support/participant-league';
 import { sportRowKeys } from '../../support/sport-rows';
 import { oneEventSlotId } from '../../support/test-slots';
+import { AWAY_SIDE, HOME_SIDE } from '../../support/match-sides';
+import { createMatchRow } from '../../support/match-rows';
 
 // The root-admin event tools' batch writes against real Postgres (#1252): each writes a whole
 // field in a fixed number of queries, however big the field, and leaves the rows as the
@@ -325,22 +326,27 @@ describe('Entering a bracket match\'s result (#1252)', () => {
     const counts = await queriesFor(async (size, measure) => {
       const { event, round, field } = await eventWithField(size);
       const [home, away] = field;
-      const match = await getPrisma().sportEventRoundMatch.create({
-        data: {
-          sportEventId: event.id,
-          sportEventRoundId: round.id,
-          matchNumber: 1,
-          homeSportEventParticipantId: expectDefined(home).id,
-          awaySportEventParticipantId: expectDefined(away).id,
-          isNeutralSite: false,
-        },
+      const match = await createMatchRow(getPrisma(), {
+        sportEventId: event.id,
+        sportEventRoundId: round.id,
+        sportEventSlotId: round.sportEventSlotId,
+        matchNumber: 1,
+        teams: [expectDefined(away).id, expectDefined(home).id],
+        isNeutralSite: false,
       });
       const earlier = await getPrisma().sportEventParticipantStanding.create({
         data: { sportEventParticipantId: expectDefined(home).id, position: 4, status: ParticipantStandingStatus.ACTIVE },
       });
 
       await measure(() => new PrismaSportEventRoundMatchRepository(getAppPrisma()).applyResult({
-        result: { id: match.id, status: MatchStatus.COMPLETED, winnerSide: MatchSide.HOME, homeScore: 70, awayScore: 60, homeShootoutScore: null, awayShootoutScore: null, ending: MatchEnding.PLAYED, resultSource: MatchResultSource.PROVIDER, completedAt: AS_OF },
+        result: {
+          id: match.id,
+          status: MatchStatus.COMPLETED,
+          ending: MatchEnding.PLAYED,
+          completedAt: AS_OF,
+          outcomes: [{ sideNumber: AWAY_SIDE, outcome: MatchSideOutcome.LOST }, { sideNumber: HOME_SIDE, outcome: MatchSideOutcome.WON }],
+          gameOne: null,
+        },
         sideFill: null,
         standings: field.map((row, index) => ({ sportEventParticipantId: row.id, position: index + 1, displayPosition: `${index + 1}`, status: ParticipantStandingStatus.ACTIVE, currentRound: 1, asOf: AS_OF })),
       }));
@@ -349,7 +355,8 @@ describe('Entering a bracket match\'s result (#1252)', () => {
       const byId = new Map(standings.map((row) => [row.sportEventParticipantId, row]));
       expect(field.map((row) => byId.get(row.id)?.position)).toEqual(field.map((_, index) => index + 1));
       expect(byId.get(expectDefined(home).id)).toMatchObject({ id: earlier.id, createdAt: earlier.createdAt, asOf: AS_OF });
-      expect((await getPrisma().sportEventRoundMatch.findUniqueOrThrow({ where: { id: match.id } })).winnerSide).toBe(MatchSide.HOME);
+      const sides = await getPrisma().sportEventRoundMatchSide.findMany({ where: { sportEventRoundMatchId: match.id }, orderBy: { sideNumber: 'asc' } });
+      expect(sides.map((side) => side.outcome)).toEqual([MatchSideOutcome.LOST, MatchSideOutcome.WON]);
     });
 
     expect(counts[1]).toEqual(counts[0]);

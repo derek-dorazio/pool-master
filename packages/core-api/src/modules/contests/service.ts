@@ -68,6 +68,10 @@ import {
   PARTICIPANT_SCORING_DEFINITIONS,
   ScoringFamily,
   eventSportDefinition,
+  sideOfParticipant,
+  opposingSideOf,
+  matchSideOfSideNumber,
+  matchScoreOf,
 } from '@poolmaster/shared/domain';
 import {
   CONTEST_EVENT_NOT_IN_CONTEST,
@@ -1413,7 +1417,8 @@ export class ContestService {
     const opponentRowOf = (pick: SurvivorSeasonPick) => {
       const game = gameById.get(pick.sportEventRoundMatchId)?.game;
       if (!game) return null;
-      return game.homeSportEventParticipantId === pick.sportEventParticipantId ? game.awaySportEventParticipantId : game.homeSportEventParticipantId;
+      const side = sideOfParticipant(game, pick.sportEventParticipantId);
+      return side === null ? null : opposingSideOf(game, side.sideNumber).sportEventParticipantId;
     };
     const opponentRowIds = [...new Set(shown.flatMap((pick) => opponentRowOf(pick) ?? []))];
     const participantOfRow = new Map((opponentRowIds.length === 0 ? [] : await this.deps.fieldRows.findByIds(opponentRowIds))
@@ -1431,7 +1436,8 @@ export class ContestService {
         this.logger.warn({ contestId, sportEventRoundMatchId: game.id, participantId: opponentId ?? null, fieldRowId: opponentRow }, 'survivor leaderboard pick game opponent missing');
       }
       if (!game || !opponent) return null;
-      const side = game.homeSportEventParticipantId === pick.sportEventParticipantId ? MatchSide.HOME : MatchSide.AWAY;
+      const pickedSide = sideOfParticipant(game, pick.sportEventParticipantId);
+      const side = pickedSide === null ? MatchSide.AWAY : matchSideOfSideNumber(pickedSide.sideNumber);
       return {
         opponent: opponent.name,
         opponentShortName: opponent.shortName ?? null,
@@ -1439,8 +1445,8 @@ export class ContestService {
         isNeutralSite: game.isNeutralSite,
         scheduledDate: game.scheduledDate,
         status: game.status,
-        teamScore: side === MatchSide.HOME ? game.homeScore : game.awayScore,
-        opponentScore: side === MatchSide.HOME ? game.awayScore : game.homeScore,
+        teamScore: pickedSide === null ? null : matchScoreOf(game, pickedSide.sideNumber),
+        opponentScore: pickedSide === null ? null : matchScoreOf(game, opposingSideOf(game, pickedSide.sideNumber).sideNumber),
       };
     };
     const settled = contest.status === ContestStatus.COMPLETED

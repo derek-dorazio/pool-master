@@ -9,7 +9,7 @@
  * have their teams. A team picked in one round is used for every other.
  */
 
-import { PickEmMode, SelectionType, isTeamChoice } from '@poolmaster/shared/domain';
+import { PickEmMode, SelectionType, isTeamChoice, teamOnMatchSide, MatchSide } from '@poolmaster/shared/domain';
 import { PickWindow } from '../../contests/entry-window';
 import { scoreGamePicks } from '../../scoring-families/head-to-head/game-picks';
 import { PredictionIssueKind, type PredictionEngine, type PredictionIssue } from './prediction-engine';
@@ -27,8 +27,8 @@ export const survivorPredictionEngine: PredictionEngine = {
 
   resolvePicks({ games, predictions }) {
     const sides = new Map(games.map((game) => [game.id, {
-      home: game.homeSportEventParticipantId,
-      away: game.awaySportEventParticipantId,
+      home: teamOnMatchSide(game, MatchSide.HOME),
+      away: teamOnMatchSide(game, MatchSide.AWAY),
     }]));
     const roundOf = new Map(games.map((game) => [game.id, game.roundNumber]));
     // A survivor pick names a team: a tie pick never stands.

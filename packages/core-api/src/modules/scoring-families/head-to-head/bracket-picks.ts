@@ -23,6 +23,11 @@
  */
 import {
   MatchSide,
+  MatchSideOutcome,
+  opposingSideOf,
+  sideNumberOfMatchSide,
+  sideParticipantId,
+  winningSide,
   MatchStatus,
   PickOutcome,
   finalRoundsOfMatches,
@@ -39,7 +44,7 @@ export interface BracketPick {
   sportEventParticipantId: string;
 }
 
-/** The two teams an entry's picks put in one game; null until the picks that decide it are made. */
+/** The two teams an entry's picks put in one game, home on side 2 (#2046); null until the picks that decide it are made. */
 export interface PredictedSides {
   home: string | null;
   away: string | null;
@@ -70,11 +75,20 @@ export function contestBracketGames<Match extends Pick<SportEventRoundMatch, 'st
 }
 
 function storedSide(match: SportEventRoundMatch, side: MatchSide): string | null {
-  return side === MatchSide.HOME ? match.homeSportEventParticipantId : match.awaySportEventParticipantId;
+  return sideParticipantId(match, sideNumberOfMatchSide(side));
 }
 
-function withSides(match: SportEventRoundMatch, sides: PredictedSides): SportEventRoundMatch {
-  return { ...match, homeSportEventParticipantId: sides.home, awaySportEventParticipantId: sides.away };
+/** The game as the entry's picks play it: its predicted teams, and the side the entry picked to win, if any. */
+function withSides(match: SportEventRoundMatch, sides: PredictedSides, winner: MatchSide | null = null): SportEventRoundMatch {
+  const winnerNumber = winner === null ? null : sideNumberOfMatchSide(winner);
+  return {
+    ...match,
+    sides: match.sides.map((side) => ({
+      ...side,
+      sportEventParticipantId: side.sideNumber === sideNumberOfMatchSide(MatchSide.HOME) ? sides.home : sides.away,
+      outcome: winnerNumber === null ? MatchSideOutcome.PENDING : side.sideNumber === winnerNumber ? MatchSideOutcome.WON : MatchSideOutcome.LOST,
+    })),
+  };
 }
 
 /**
@@ -93,10 +107,7 @@ export function resolveBracketPicks<Pick extends BracketPick>(
   const firstRound = rounds.at(0);
   const reseeded = reseededRounds(bracket);
   const pickByMatchId = new Map(picks.map((pick) => [pick.sportEventRoundMatchId, pick]));
-  const feederOf = new Map(bracket.flatMap((match) =>
-    match.advancesToMatchId !== null && match.advancesToSide !== null
-      ? [[`${match.advancesToMatchId}/${match.advancesToSide}`, match] as const]
-      : []));
+  const feederOf = (matchId: string, side: MatchSide) => bracket.find((match) => match.advancesToMatchId === matchId && match.advancesToSideNumber === sideNumberOfMatchSide(side));
 
   const sides = new Map<string, PredictedSides>();
   const kept: Pick[] = [];
@@ -114,7 +125,7 @@ export function resolveBracketPicks<Pick extends BracketPick>(
       const placed: PredictedSides = { home: null, away: null };
       for (const side of SIDES) {
         const team = storedSide(match, side);
-        const feeder = feederOf.get(`${match.id}/${side}`);
+        const feeder = feederOf(match.id, side);
         const value = roundNumber === firstRound
           ? team
           : feeder !== undefined
@@ -157,8 +168,8 @@ export function resolveBracketPicks<Pick extends BracketPick>(
       }
       // A withdrawn team the entry picked wins its game in the entry's bracket, so reseeding moves it on.
       predicted.push(pickedWithdrawn
-        ? { ...withSides(match, { home: pick.sportEventParticipantId, away: null }), status: MatchStatus.COMPLETED, winnerSide: MatchSide.HOME }
-        : { ...withSides(match, placed), status: winnerSide === null ? MatchStatus.SCHEDULED : MatchStatus.COMPLETED, winnerSide });
+        ? { ...withSides(match, { home: pick.sportEventParticipantId, away: null }, MatchSide.HOME), status: MatchStatus.COMPLETED }
+        : { ...withSides(match, placed, winnerSide), status: winnerSide === null ? MatchStatus.SCHEDULED : MatchStatus.COMPLETED });
     }
   }
   return { sides, kept, stranded };
@@ -234,9 +245,10 @@ export function scoreBracketPicks(
   const firstRound = Math.min(...bracket.map((match) => match.roundNumber));
   const lostIn = new Map<string, number>([...withdrawn].map((sportEventParticipantId) => [sportEventParticipantId, firstRound]));
   for (const match of bracket) {
-    if (match.status !== MatchStatus.COMPLETED || match.winnerSide === null) continue;
-    const winner = storedSide(match, match.winnerSide);
-    const loser = storedSide(match, match.winnerSide === MatchSide.HOME ? MatchSide.AWAY : MatchSide.HOME);
+    const winnerSide = winningSide(match);
+    if (match.status !== MatchStatus.COMPLETED || winnerSide === null) continue;
+    const winner = winnerSide.sportEventParticipantId;
+    const loser = opposingSideOf(match, winnerSide.sideNumber).sportEventParticipantId;
     if (winner !== null) {
       const byRound = wins.get(winner) ?? new Map<number, string | null>();
       byRound.set(match.roundNumber, loser);
