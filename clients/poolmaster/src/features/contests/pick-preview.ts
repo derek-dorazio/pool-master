@@ -128,7 +128,7 @@ export function toPreviewWeek(preview: GamePickPreviewResponse, tiebreakerValue:
     games: preview.games.map((game): PickEmGame => ({
       ...game,
       revealed: false,
-      pick: game.pick && { ...game.pick, outcome: null, points: null },
+      pick: game.pick && { ...game.pick, outcome: null, points: null, survivorOutcome: null },
     })),
   };
 }
