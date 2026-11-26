@@ -16,10 +16,13 @@ import {
   formatNumber,
   useDisplayPreferences,
 } from '@/features/shared/ui';
+import type { PlanFeatureGroupDto } from '@/lib/api';
 import { buildPlanComparison, type ComparedPlan, type PlanComparisonSection } from './plan-comparison';
 
 interface PlanComparisonTableProps {
   plans: readonly ComparedPlan[];
+  /** Which group each feature is in, from the plans API: one section per group. */
+  featureGroups: readonly PlanFeatureGroupDto[];
   /** Feature groups that start folded to one row of counts ("4 of 11"); a reader can open them. */
   initiallyFolded?: readonly PlanFeatureGroup[];
   /**
@@ -46,10 +49,10 @@ function foldedCounts(section: PlanComparisonSection, planCount: number): string
  * still has to scroll. One plan's column can be tinted, and on a league's Plan page (#972) a cap
  * below what the league uses says so. It sits inside a section card, so it draws no frame.
  */
-export function PlanComparisonTable({ plans, initiallyFolded = [], highlightedPlan = null, capUsage }: PlanComparisonTableProps) {
+export function PlanComparisonTable({ plans, featureGroups, initiallyFolded = [], highlightedPlan = null, capUsage }: PlanComparisonTableProps) {
   const tint = (index: number) => (highlightedPlan !== null && plans[index]?.plan === highlightedPlan ? 'bg-primary/10' : null);
   const { locale } = useDisplayPreferences();
-  const sections = buildPlanComparison(plans, locale);
+  const sections = buildPlanComparison(plans, featureGroups, locale);
   const [folded, setFolded] = useState<ReadonlySet<PlanFeatureGroup>>(() => new Set(initiallyFolded));
   const toggle = (group: PlanFeatureGroup) => setFolded((current) => {
     const next = new Set(current);

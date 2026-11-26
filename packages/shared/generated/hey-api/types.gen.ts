@@ -1280,6 +1280,17 @@ export type PlanEntitlementsDto = {
 };
 
 /**
+ * One group of plan features (#2110): the plan pages list a group's features under its name, or count them on one line.
+ */
+export type PlanFeatureGroupDto = {
+    group: 'EMAILS' | 'CHAMPIONSHIPS' | 'HISTORY';
+    /**
+     * The features in the group, in `PlanFeature` order.
+     */
+    features: Array<'EMAIL_CONTEST_OPENED' | 'EMAIL_CONTEST_ENTRY_COMPLETED' | 'EMAIL_CONTEST_RESULTS' | 'EMAIL_CONTEST_EVENT_CHANGED' | 'EMAIL_CONTEST_STARTED_SUMMARY' | 'EMAIL_CONTEST_ENTRY_REMINDER' | 'EMAIL_CONTEST_STANDINGS' | 'EMAIL_EVENT_COMING_UP' | 'EMAIL_EVENT_READY_FOR_CONTESTS' | 'EMAIL_CONTEST_NOT_OPEN' | 'EMAIL_YEAR_IN_REVIEW' | 'EMAIL_LEAGUE_MEMBER_JOINED' | 'CUP_STANDINGS' | 'CUP_CROWNING' | 'CHAMPIONSHIP' | 'TROPHY_SHELF' | 'CUP_SETTINGS' | 'PAST_YEARS' | 'ALL_TIME_SUMMARY' | 'RECORD_BOOK'>;
+};
+
+/**
  * What each league plan allows, which plan new leagues are gifted and for how long, and what expanding a contest costs on each plan.
  */
 export type LeaguePlanListResponse = {
@@ -1312,6 +1323,16 @@ export type LeaguePlanListResponse = {
          * Whether a commissioner may move a league to the plan now. False for a plan not offered yet (PLATINUM), which only a root admin may set.
          */
         commissionerSelectable: boolean;
+    }>;
+    /**
+     * Every feature group that has features, in `PlanFeatureGroup` declaration order: which group each feature is in, so the app never keeps that list itself.
+     */
+    featureGroups: Array<{
+        group: 'EMAILS' | 'CHAMPIONSHIPS' | 'HISTORY';
+        /**
+         * The features in the group, in `PlanFeature` order.
+         */
+        features: Array<'EMAIL_CONTEST_OPENED' | 'EMAIL_CONTEST_ENTRY_COMPLETED' | 'EMAIL_CONTEST_RESULTS' | 'EMAIL_CONTEST_EVENT_CHANGED' | 'EMAIL_CONTEST_STARTED_SUMMARY' | 'EMAIL_CONTEST_ENTRY_REMINDER' | 'EMAIL_CONTEST_STANDINGS' | 'EMAIL_EVENT_COMING_UP' | 'EMAIL_EVENT_READY_FOR_CONTESTS' | 'EMAIL_CONTEST_NOT_OPEN' | 'EMAIL_YEAR_IN_REVIEW' | 'EMAIL_LEAGUE_MEMBER_JOINED' | 'CUP_STANDINGS' | 'CUP_CROWNING' | 'CHAMPIONSHIP' | 'TROPHY_SHELF' | 'CUP_SETTINGS' | 'PAST_YEARS' | 'ALL_TIME_SUMMARY' | 'RECORD_BOOK'>;
     }>;
     /**
      * How many months of Premium every new league is gifted from signup (#986), before it moves to Free.
