@@ -21407,7 +21407,7 @@ export interface components {
             status: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
             /** @description Whether the provider moved the Game to another slot's event; it is played there, so it is never chosen. */
             moved: boolean;
-            /** @description Whether a root admin can choose it now: the slot's game has not started, and this one is in the slot, not cancelled, scheduled and not started. */
+            /** @description Whether a root admin can choose it now: the slot's game has not started, and this one is in the slot, not cancelled and not started. */
             choosable: boolean;
         };
         /** @description One slot's tiebreaker game and the Games it could be. */
@@ -21419,7 +21419,7 @@ export interface components {
             seasonSlotId: string;
             /**
              * Format: uuid
-             * @description The slot's tiebreaker game, one of `games`; null until a Game of the slot is scheduled. The rule chooses it, the latest scheduled start with ties to the lower Game id, and chooses again on each schedule change until it starts.
+             * @description The slot's tiebreaker game, one of `games`; null while the slot has no Game that can be one. The rule chooses it, the latest scheduled start with ties to the lower Game id and an unscheduled Game after every scheduled one (the later round first), and chooses again on each schedule change until it starts.
              */
             tiebreakerGameId: string | null;
             /**
@@ -21460,7 +21460,7 @@ export interface components {
                 status: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
                 /** @description Whether the provider moved the Game to another slot's event; it is played there, so it is never chosen. */
                 moved: boolean;
-                /** @description Whether a root admin can choose it now: the slot's game has not started, and this one is in the slot, not cancelled, scheduled and not started. */
+                /** @description Whether a root admin can choose it now: the slot's game has not started, and this one is in the slot, not cancelled and not started. */
                 choosable: boolean;
             }[];
         };
@@ -21474,7 +21474,7 @@ export interface components {
                 seasonSlotId: string;
                 /**
                  * Format: uuid
-                 * @description The slot's tiebreaker game, one of `games`; null until a Game of the slot is scheduled. The rule chooses it, the latest scheduled start with ties to the lower Game id, and chooses again on each schedule change until it starts.
+                 * @description The slot's tiebreaker game, one of `games`; null while the slot has no Game that can be one. The rule chooses it, the latest scheduled start with ties to the lower Game id and an unscheduled Game after every scheduled one (the later round first), and chooses again on each schedule change until it starts.
                  */
                 tiebreakerGameId: string | null;
                 /**
@@ -21515,7 +21515,7 @@ export interface components {
                     status: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
                     /** @description Whether the provider moved the Game to another slot's event; it is played there, so it is never chosen. */
                     moved: boolean;
-                    /** @description Whether a root admin can choose it now: the slot's game has not started, and this one is in the slot, not cancelled, scheduled and not started. */
+                    /** @description Whether a root admin can choose it now: the slot's game has not started, and this one is in the slot, not cancelled and not started. */
                     choosable: boolean;
                 }[];
             }[];
@@ -21537,7 +21537,7 @@ export interface components {
                 seasonSlotId: string;
                 /**
                  * Format: uuid
-                 * @description The slot's tiebreaker game, one of `games`; null until a Game of the slot is scheduled. The rule chooses it, the latest scheduled start with ties to the lower Game id, and chooses again on each schedule change until it starts.
+                 * @description The slot's tiebreaker game, one of `games`; null while the slot has no Game that can be one. The rule chooses it, the latest scheduled start with ties to the lower Game id and an unscheduled Game after every scheduled one (the later round first), and chooses again on each schedule change until it starts.
                  */
                 tiebreakerGameId: string | null;
                 /**
@@ -21578,7 +21578,7 @@ export interface components {
                     status: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
                     /** @description Whether the provider moved the Game to another slot's event; it is played there, so it is never chosen. */
                     moved: boolean;
-                    /** @description Whether a root admin can choose it now: the slot's game has not started, and this one is in the slot, not cancelled, scheduled and not started. */
+                    /** @description Whether a root admin can choose it now: the slot's game has not started, and this one is in the slot, not cancelled and not started. */
                     choosable: boolean;
                 }[];
             };

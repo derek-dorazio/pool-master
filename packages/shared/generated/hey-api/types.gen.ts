@@ -23205,7 +23205,7 @@ export type SlotTiebreakerGameDto = {
      */
     moved: boolean;
     /**
-     * Whether a root admin can choose it now: the slot's game has not started, and this one is in the slot, not cancelled, scheduled and not started.
+     * Whether a root admin can choose it now: the slot's game has not started, and this one is in the slot, not cancelled and not started.
      */
     choosable: boolean;
 };
@@ -23219,7 +23219,7 @@ export type SportEventSlotTiebreakerDto = {
      */
     seasonSlotId: string;
     /**
-     * The slot's tiebreaker game, one of `games`; null until a Game of the slot is scheduled. The rule chooses it, the latest scheduled start with ties to the lower Game id, and chooses again on each schedule change until it starts.
+     * The slot's tiebreaker game, one of `games`; null while the slot has no Game that can be one. The rule chooses it, the latest scheduled start with ties to the lower Game id and an unscheduled Game after every scheduled one (the later round first), and chooses again on each schedule change until it starts.
      */
     tiebreakerGameId: string | null;
     /**
@@ -23263,7 +23263,7 @@ export type SportEventSlotTiebreakerDto = {
          */
         moved: boolean;
         /**
-         * Whether a root admin can choose it now: the slot's game has not started, and this one is in the slot, not cancelled, scheduled and not started.
+         * Whether a root admin can choose it now: the slot's game has not started, and this one is in the slot, not cancelled and not started.
          */
         choosable: boolean;
     }>;
@@ -23279,7 +23279,7 @@ export type SportEventSlotTiebreakersResponse = {
          */
         seasonSlotId: string;
         /**
-         * The slot's tiebreaker game, one of `games`; null until a Game of the slot is scheduled. The rule chooses it, the latest scheduled start with ties to the lower Game id, and chooses again on each schedule change until it starts.
+         * The slot's tiebreaker game, one of `games`; null while the slot has no Game that can be one. The rule chooses it, the latest scheduled start with ties to the lower Game id and an unscheduled Game after every scheduled one (the later round first), and chooses again on each schedule change until it starts.
          */
         tiebreakerGameId: string | null;
         /**
@@ -23323,7 +23323,7 @@ export type SportEventSlotTiebreakersResponse = {
              */
             moved: boolean;
             /**
-             * Whether a root admin can choose it now: the slot's game has not started, and this one is in the slot, not cancelled, scheduled and not started.
+             * Whether a root admin can choose it now: the slot's game has not started, and this one is in the slot, not cancelled and not started.
              */
             choosable: boolean;
         }>;
@@ -23347,7 +23347,7 @@ export type SportEventSlotTiebreakerResponse = {
          */
         seasonSlotId: string;
         /**
-         * The slot's tiebreaker game, one of `games`; null until a Game of the slot is scheduled. The rule chooses it, the latest scheduled start with ties to the lower Game id, and chooses again on each schedule change until it starts.
+         * The slot's tiebreaker game, one of `games`; null while the slot has no Game that can be one. The rule chooses it, the latest scheduled start with ties to the lower Game id and an unscheduled Game after every scheduled one (the later round first), and chooses again on each schedule change until it starts.
          */
         tiebreakerGameId: string | null;
         /**
@@ -23391,7 +23391,7 @@ export type SportEventSlotTiebreakerResponse = {
              */
             moved: boolean;
             /**
-             * Whether a root admin can choose it now: the slot's game has not started, and this one is in the slot, not cancelled, scheduled and not started.
+             * Whether a root admin can choose it now: the slot's game has not started, and this one is in the slot, not cancelled and not started.
              */
             choosable: boolean;
         }>;
