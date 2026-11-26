@@ -1403,7 +1403,7 @@ function renderSquadOwnerAddedEmail(
 
 /**
  * A receipt's content: its sections, and when its picks can still change or why they can't. A
- * receipt for an entry nobody submitted (a sweepstakes's draw, a squares draw) says what happened
+ * receipt for an entry nobody submitted (a sweepstakes draw, a squares draw) says what happened
  * instead of "was submitted".
  */
 function entryReceiptContent(receipt: EntryReceipt, dates: EmailDateStyle): {

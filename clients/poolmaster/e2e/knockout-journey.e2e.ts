@@ -14,8 +14,8 @@ import { registerFreshUser } from './helpers/user-session';
 import { newRunId, e2eName, e2eEmail, e2eUsername, e2eLeagueCode } from './helpers/test-marker';
 
 /**
- * #749 — the knockout journey, on the 2025 WNBA playoffs as they were played (seeds and series
- * results from `basketball-2025-wnba-playoffs-test.json`): the root admin builds the playoffs on
+ * #749 — the knockout journey, on the 2025 WNBA playoffs as they were played (series results
+ * from `basketball-2025-wnba-playoffs-test.json`, the seeds spread over the league's seed lines): the root admin builds the playoffs on
  * the shared Manage pages (a seeded league, the eight teams, the tournament, its field with seeds, tiers
  * from those seeds, prices), loads the bracket with one pairing still open, completes
  * that pairing on the bracket tab, and releases it (act 1); a new commissioner creates a
@@ -46,9 +46,11 @@ const TEAMS: ReadonlyArray<{ name: string; seed: number }> = [
 ];
 
 /**
- * Basketball's four tiers don't fill at 16 a tier from eight teams, so tiers from seeds spread
- * them evenly: two a tier, the 1 and 2 seeds first.
+ * The seed each team carries, by its place in the field. Men's March Madness tiers by seed line
+ * (1-4, 5-8, 9-12, 13 and up, #2164), so the eight teams are seeded two to a line, keeping their
+ * order, and tiers from seeds put two teams in each tier.
  */
+const SEED_NUMBER: readonly number[] = [1, 2, 5, 6, 9, 10, 13, 14];
 const TIER_OF_SEED: readonly number[] = [1, 1, 2, 2, 3, 3, 4, 4];
 
 type Side = 'HOME' | 'AWAY';
@@ -80,20 +82,20 @@ const ROUND_COUNT = 3;
 /** The commissioner's scoring: a win is 1 in the first round, 2 in the semifinals, 4 in the final. */
 const ROUND_VALUES: readonly number[] = [1, 2, 4];
 
-/** The member's pick in each tier, by seed: the Aces, the Mercury, the Fever and the Storm. */
+/** The member's pick in each tier, by place in the field: the Aces, the Mercury, the Fever and the Storm. */
 const PICKED_SEEDS: readonly number[] = [2, 4, 6, 7];
 
 /**
- * What the picks score, with the upset bonus. After the first round: the Aces 1, the Mercury 1,
- * the Fever 1 + (6 - 3) = 4 for beating the 3 seed, and the Storm 0, out to the Aces. After the
- * final: the Aces 1 + 2 + 4 = 7 as champions, the Mercury 1 + 2 + (4 - 1) = 6 for beating the 1
- * seed in the semifinals, the Fever still 4. Without the bonus the entry would score 11, so 17
- * can only come from the commissioner's settings.
+ * What the picks score, with the upset bonus on the seeds above. After the first round: the Aces
+ * 1, the Mercury 1, the Fever 1 + (10 - 5) = 6 for beating the Dream, and the Storm 0, out to the
+ * Aces. After the final: the Aces 1 + 2 + 4 = 7 as champions, the Mercury 1 + 2 + (6 - 1) = 8 for
+ * beating the Lynx in the semifinals, the Fever still 6. Without the bonus the entry would score
+ * 11, so 21 can only come from the commissioner's settings.
  */
-const POINTS_AFTER_ROUND_1: Readonly<Record<number, number>> = { 2: 1, 4: 1, 6: 4, 7: 0 };
-const POINTS_AFTER_FINAL: Readonly<Record<number, number>> = { 2: 7, 4: 6, 6: 4, 7: 0 };
-const EXPECTED_TOTAL_AFTER_ROUND_1 = 6;
-const EXPECTED_TOTAL = 17;
+const POINTS_AFTER_ROUND_1: Readonly<Record<number, number>> = { 2: 1, 4: 1, 6: 6, 7: 0 };
+const POINTS_AFTER_FINAL: Readonly<Record<number, number>> = { 2: 7, 4: 8, 6: 6, 7: 0 };
+const EXPECTED_TOTAL_AFTER_ROUND_1 = 8;
+const EXPECTED_TOTAL = 21;
 
 type KnockoutJourneyState = {
   run: JourneyRun;
@@ -253,7 +255,7 @@ test('act 1: the root admin builds the 2025 WNBA playoffs — league, eight team
     });
 
     for (const [index, entryId] of entryIds.entries()) {
-      await correctFieldParticipant(page, eventId, entryId, { seedNumber: TEAMS[index].seed });
+      await correctFieldParticipant(page, eventId, entryId, { seedNumber: SEED_NUMBER[index] });
     }
     return entryIds;
   });
@@ -436,7 +438,7 @@ test('act 3: a new member joins by the link and submits one team from each tier,
     for (const seed of PICKED_SEEDS) {
       const fieldEntryId = state.fieldEntryIds[seed - 1];
       const choice = page.getByTestId(`contest-entry-participant-${fieldEntryId}`);
-      await expect(choice).toContainText(`(${seed}) ${teamName(run, seed)}`);
+      await expect(choice).toContainText(`(${String(SEED_NUMBER[seed - 1])}) ${teamName(run, seed)}`);
       await submitAndRead(page, `contest-entry-participant-${fieldEntryId}`, 'PUT', `/api/v1/selections/${state.contestId}/entries/${state.entryId}/picks/${fieldEntryId}`);
       await expect(page.getByTestId(`contest-entry-selected-${fieldEntryId}`)).toBeVisible();
     }

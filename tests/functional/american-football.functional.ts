@@ -207,10 +207,10 @@ describe('SDK Functional: American football', () => {
       .filter((template) => template.contestFormat === ContestFormat.ROSTER);
     expect(templates.map((template) => template.templateKey).sort()).toEqual([
       'nfl-budget-pick-3',
-      'nfl-random-draw-doubling', 'nfl-random-draw-doubling-upset-bonus',
+      'nfl-random-draw-doubling', 'nfl-random-draw-doubling-upset-bonus', 'nfl-random-draw-straight-up',
       'nfl-tiered-pick-3',
     ]);
-    const tiered = expectDefined(templates.find((template) => template.isDefault), 'the NFL default');
+    const tiered = expectDefined(templates.find((template) => template.isDefault && template.selectionType === SelectionType.TIERED), 'the NFL tiered default');
     expect(tiered.templateKey).toBe('nfl-tiered-pick-3');
 
     const contest = await createContest({

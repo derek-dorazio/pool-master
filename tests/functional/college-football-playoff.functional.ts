@@ -147,7 +147,7 @@ describe('SDK Functional: College Football Playoff', () => {
       query: { sportLeagueId: cfp.id, active: true },
     })).data).templates
       .filter((template) => template.contestFormat === ContestFormat.ROSTER);
-    const tiered = expectDefined(templates.find((template) => template.isDefault), 'the College Football Playoff default');
+    const tiered = expectDefined(templates.find((template) => template.isDefault && template.selectionType === SelectionType.TIERED), 'the College Football Playoff tiered default');
     expect(tiered.templateKey).toBe('cfp-tiered-pick-3');
 
     const contest = await createContest({

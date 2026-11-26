@@ -150,7 +150,7 @@ describe('SDK Functional: NBA and WNBA playoffs', () => {
       query: { sportLeagueId: nba.id, active: true },
     })).data).templates
       .filter((template) => template.contestFormat === ContestFormat.ROSTER);
-    const tiered = expectDefined(templates.find((template) => template.isDefault), 'the NBA default');
+    const tiered = expectDefined(templates.find((template) => template.isDefault && template.selectionType === SelectionType.TIERED), 'the NBA tiered default');
     expect(tiered.templateKey).toBe('nba-tiered-pick-3');
 
     const contest = await createContest({

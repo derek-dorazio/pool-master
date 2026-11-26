@@ -176,7 +176,7 @@ describe('SDK Functional: the 2026 US Open singles draws', () => {
       query: { sportLeagueId: atp.id, active: true },
     })).data).templates
       .filter((template) => template.contestFormat === ContestFormat.ROSTER);
-    const tiered = expectDefined(templates.find((template) => template.isDefault), 'the ATP default');
+    const tiered = expectDefined(templates.find((template) => template.isDefault && template.selectionType === SelectionType.TIERED), 'the ATP tiered default');
     expect(tiered.templateKey).toBe('atp-tiered-doubling-upset-bonus');
 
     const contest = await createContest({
