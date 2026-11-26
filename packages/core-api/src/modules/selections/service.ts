@@ -651,7 +651,7 @@ export class SelectionService {
   }
 
   /**
-   * Queues every entry of a drawn quick pick contest its receipt of the dealt picks (#867), for
+   * Queues every entry of a drawn sweepstakes contest its receipt of the dealt picks (#867), for
    * the receipts sweep once the draw has marked them owed (#1171). The contest's room context is
    * read once, the entries' picks in one read, and the receipts go to the outbox in one batch, so
    * the reads do not grow with the entries. The event is the one the draw dealt, as it recorded

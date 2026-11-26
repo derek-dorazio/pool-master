@@ -12,7 +12,6 @@
     "PlanFeature"
   ],
   "packages/shared/domain/contest-rules-text.ts": [
-    "SelectionType",
     "PickEmMode"
   ]
 }

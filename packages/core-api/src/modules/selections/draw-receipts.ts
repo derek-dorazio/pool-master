@@ -1,5 +1,5 @@
 /**
- * Quick pick receipts (#867), sent by their clock-driven sweep (`DRAW_RECEIPTS`) rather than in
+ * Sweepstakes receipts (#867), sent by their clock-driven sweep (`DRAW_RECEIPTS`) rather than in
  * the draw's request (#1171). A draw marks itself as owing its entries their receipts; each sweep,
  * under the sweep's job lock, sends every marked draw's receipts and clears the marks. A receipt may so arrive up
  * to one sweep, five minutes, after the draw.
@@ -38,13 +38,13 @@ export class DrawReceipts implements DueNotifications {
         this.deps.logger?.error({
           action: 'email.drawReceipts.failed',
           data: { ...draw, error: errorMessage(error) },
-        }, 'Failed to queue a quick pick draw\'s receipts; the next sweep tries again');
+        }, 'Failed to queue a sweepstakes draw\'s receipts; the next sweep tries again');
       }
     }
     await this.deps.contests.clearDrawReceiptsPending(sent);
     this.deps.logger?.info({
       action: 'email.drawReceipts.sent',
       data: { contestIds: sent, failedCount: pending.length - sent.length },
-    }, 'Queued quick pick draws\' receipts');
+    }, 'Queued sweepstakes draws\' receipts');
   }
 }

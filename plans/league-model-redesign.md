@@ -428,8 +428,8 @@ loses the slots already under way. The event-level "event started" readiness rea
 | Super Bowl Clutch Card | ONE_SLOT | FINAL |
 | Playoff bracket | ALL_LISTED | every POSTSEASON slot but the play-in |
 | Playoff survivor | FROM_SLOT | every POSTSEASON slot but the play-in |
-| Whole-tournament tiered, budget, quick pick | ALL_LISTED | every POSTSEASON slot but the play-in |
-| Round tiered, budget, quick pick | ONE_SLOT | each starting-point POSTSEASON slot |
+| Whole-tournament tiered, budget, sweepstakes | ALL_LISTED | every POSTSEASON slot but the play-in |
+| Round tiered, budget, sweepstakes | ONE_SLOT | each starting-point POSTSEASON slot |
 | Playoffs Clutch Card | ALL_LISTED | every POSTSEASON slot of one event |
 | NFL week pick'em | ONE_SLOT | each WEEK slot |
 
@@ -454,7 +454,7 @@ loses the slots already under way. The event-level "event started" readiness rea
 - **Settlement** runs when every covered slot is COMPLETED or CANCELLED, as a job keyed by
   the contest; squares settle on their one Game, final or cancelled.
   Leaderboards rebuild through the existing snapshot job, one per contest.
-- **Team tiered, budget and quick pick contests** cover what their template's coverage mode
+- **Team tiered, budget and sweepstakes contests** cover what their template's coverage mode
   gives (§9c) and use their first covered slot's team tiers. Bracket templates may list slots (Championship Weekend =
   [CONFERENCE, FINAL]). Whether each template is worth offering is #1965.
 - Join, leave and rename close at the first covered Game.
@@ -725,9 +725,9 @@ Contest:
   table ("whole postseason" lists its slots; a season-long open-phase contest is not
   offered). One default per (sport league, selection type). Coverage mode (Derek
   2026-11-24), `ContestConfigTemplate.coverageMode`: ONE_SLOT (the list is where it may run;
-  the commissioner picks one slot: tiered, budget, quick pick, squares, a single-round Clutch
+  the commissioner picks one slot: tiered, budget, sweepstakes, squares, a single-round Clutch
   Card), ALL_LISTED (covers every listed slot of one event: brackets, a tiered, budget or
-  quick pick pool over several POSTSEASON slots of one event, a whole-playoffs Clutch Card) or FROM_SLOT (the commissioner picks a starting slot and the contest covers it
+  sweepstakes pool over several POSTSEASON slots of one event, a whole-playoffs Clutch Card) or FROM_SLOT (the commissioner picks a starting slot and the contest covers it
   and every later listed slot: season-long pick'em and survivor). A contest copies only the
   slots its mode and the commissioner's choice give into `ContestSeasonSlot`. No template versions: a contest
   copies its slots into `ContestSeasonSlot` at creation, so a template edit (by migration
@@ -738,9 +738,9 @@ Contest:
 - Cups (Derek 2026-11-24, slices 20c and 20f): a cup adds up the counted contests that cover a single
   slot and rank every entry by its own choices (today tiered, budget and the Clutch Card;
   both tiered and budget count). Contests covering several slots (pick'em, survivor,
-  bracket, a tiered, budget or quick pick pool over several POSTSEASON slots of one event)
+  bracket, a tiered, budget or sweepstakes pool over several POSTSEASON slots of one event)
   crown their own winner and never count; a contest on one TOURNAMENT slot (one major) is
-  ONE_SLOT and counts; squares and quick pick
+  ONE_SLOT and counts; squares and sweepstakes
   never count. One global rule, no sport branches. Which cups exist is sport league data,
   `SportLeagueCupDefinition` (sport league, name, `coverage` ALL_SLOTS | PHASE |
   LISTED_SLOTS, `phase` only with PHASE by database check) with
@@ -771,7 +771,7 @@ Contest:
 - Finishes and medals (Derek 2026-11-24, slice 20b): `LeagueYearFinish` is renamed
   `ContestSquadFinish` (one row per team per settled contest, from its best entry: place,
   tied, ranked entries, points, `championshipYear` copied from the contest). Every
-  contest type with a finishing order writes them (tiered, budget, quick pick, pick'em,
+  contest type with a finishing order writes them (tiered, budget, sweepstakes, pick'em,
   survivor, bracket, Clutch Card); squares does not. Medals count gold, silver, bronze and
   top 10 (new) from these rows in one shared function, over every contest that writes them;
   cups and the Championship filter them by their own rules. A team's run in a recurring
@@ -823,7 +823,7 @@ Contest:
   and their entries voided; a multi-slot contest settles on the slots played; cups and the
   year close treat a cancelled slot as finished.
 - Overlapping rounds (Derek 2026-11-24, slices 16 and 26): a contest locks at its first
-  covered Game and, when it picks from a field (tiered, budget, quick pick, Clutch Card),
+  covered Game and, when it picks from a field (tiered, budget, sweepstakes, Clutch Card),
   opens once every match feeding that slot is decided; brackets and pick'em pick sides, which
   can be "winner of", so they open earlier. Templates list a slot
   as a starting point (ONE_SLOT, or the first slot of ALL_LISTED / FROM_SLOT) only where that
@@ -846,7 +846,7 @@ Contest:
   refused, read from the slot's kind and match format (slice 11); the ATP and WTA bracket
   templates stay.
 - No multi-tournament field pools (Derek 2026-11-24, slices 11 and 15: "not practical; the
-  Majors cup serves that purpose"): tiered, budget and quick pick contests never span events.
+  Majors cup serves that purpose"): tiered, budget and sweepstakes contests never span events.
   The PGA and LPGA majors pools and the ATP and WTA Grand Slam tiered pools are deleted by
   migration in slice 11 (#2010), with their code: `scoreMissedLineup` and the multi-event
   `ContestSportEvent.sequence` reading (slice 15). The unplayed-round 80 inside one event

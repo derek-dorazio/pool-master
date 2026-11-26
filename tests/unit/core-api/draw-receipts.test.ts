@@ -1,5 +1,5 @@
 /**
- * #1171 — the lifecycle sweep's quick pick receipts step: each draw marked as owing its receipts
+ * #1171 — the lifecycle sweep's sweepstakes receipts step: each draw marked as owing its receipts
  * has them sent, and the marks of the draws sent are cleared in one write. A draw whose receipts
  * cannot be queued keeps its mark for the next sweep.
  */

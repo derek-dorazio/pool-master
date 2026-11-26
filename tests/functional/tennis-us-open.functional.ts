@@ -176,8 +176,8 @@ describe('SDK Functional: the 2026 US Open singles draws', () => {
       query: { sportLeagueId: atp.id, active: true },
     })).data).templates
       .filter((template) => template.contestFormat === ContestFormat.ROSTER);
-    const tiered = expectDefined(templates.find((template) => template.isDefault), 'the ATP default');
-    expect(tiered.templateKey).toBe('atp-tiered-doubling');
+    const tiered = expectDefined(templates.find((template) => template.isDefault && template.selectionType === SelectionType.TIERED), 'the ATP tiered default');
+    expect(tiered.templateKey).toBe('atp-tiered-doubling-upset-bonus');
 
     const contest = await createContest({
       client: commissioner.client,
@@ -203,19 +203,20 @@ describe('SDK Functional: the 2026 US Open singles draws', () => {
       .map((pick) => [expectDefined(field.find((row) => row.id === pick.sportEventParticipantId)).participant.name, pick.knockout?.points]));
     // Zverev wins all seven rounds, 1 + 2 + ... + 64; Tiafoe loses the semifinal; Blockx retires
     // in the quarterfinal, so his four wins count and the retirement is a loss; Sweeny's first-round
-    // win over Moutet, who retired, counts in full.
+    // win over Moutet, who retired, counts in full. The default setup adds the upset bonus, so a
+    // win over a better seed (an unseeded player counting as the worst) adds the seed difference.
     expect(points).toEqual({
       'Alexander Zverev': 127,
-      'Frances Tiafoe': 31,
+      'Frances Tiafoe': 35,
       'Luciano Darderi': 7,
-      'Alexander Blockx': 15,
-      'Botic van de Zandschulp': 15,
-      'Dane Sweeny': 3,
+      'Alexander Blockx': 42,
+      'Botic van de Zandschulp': 42,
+      'Dane Sweeny': 22,
     });
 
     expect((await transitionEvent({ client: a, path: { eventId: event.id }, body: { toStatus: 'COMPLETED' } })).data?.event.status).toBe('COMPLETED');
     expect(expectDefined((await getContest({ client: member.client, path: { contestId } })).data).contest.status).toBe(ContestStatus.COMPLETED);
     const settled = await getFunctionalPrisma().contestEntryStanding.findUniqueOrThrow({ where: { contestEntryId: entryId } });
-    expect([settled.totalScore, settled.displayPosition]).toEqual([198, '1']);
+    expect([settled.totalScore, settled.displayPosition]).toEqual([275, '1']);
   }, 60_000);
 });

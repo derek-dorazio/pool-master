@@ -29,7 +29,7 @@ after settlement is applied with Re-settle.**
   definitions a template covers; there is no phase coverage row. `ContestConfigTemplate.coverageMode`
   says how a contest uses the list:
   - `ONE_SLOT`: the list is where it may run, and the commissioner picks one slot (tiered,
-    budget, quick pick, squares, a single-round Clutch Card).
+    budget, sweepstakes, squares, a single-round Clutch Card).
   - `ALL_LISTED`: the contest covers every listed slot (brackets, a whole-playoffs Clutch
     Card, a majors pool).
   - `FROM_SLOT`: the commissioner picks a starting slot, and the contest covers it and every

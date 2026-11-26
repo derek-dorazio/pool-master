@@ -67,8 +67,8 @@ describe('Event page', () => {
     expect(screen.getByTestId('event-page-when')).toHaveTextContent('Picks close at the first kickoff');
     expect(getEventPageMock).toHaveBeenCalledWith(expect.objectContaining({ path: { sportUrlSegment: 'football', urlSegment: 'championship-weekend' } }));
 
-    expect(screen.getByTestId('event-page-offer-nfl-bracket-second-chance-doubling')).toHaveTextContent('Bracket');
-    expect(screen.getByTestId('event-page-offer-nfl-bracket-second-chance-doubling-opens')).toHaveTextContent('Opens when the four teams are set');
+    expect(screen.getByTestId('event-page-offer-nfl-bracket-doubling')).toHaveTextContent('Bracket');
+    expect(screen.getByTestId('event-page-offer-nfl-bracket-doubling-opens')).toHaveTextContent('Opens when the four teams are set');
     expect(screen.getByTestId('event-page-offer-nfl-squares-start')).toHaveTextContent('Start with Squares');
     expect(await screen.findByTestId('event-page-gift')).toHaveTextContent('Premium free for 6 months');
     expect(screen.getByTestId('event-page-disclaimer')).toHaveTextContent('Not affiliated with the NFL or any sports league.');
@@ -105,8 +105,8 @@ describe('Event page', () => {
     renderPage();
 
     const start = '/start?sport=football&page=championship-weekend&template=';
-    expect(await screen.findByTestId('event-page-start')).toHaveAttribute('href', `${start}template-nfl-bracket-second-chance-doubling`);
-    expect(screen.getByTestId('event-page-offer-nfl-bracket-second-chance-doubling-start')).toHaveTextContent('Start your league now');
+    expect(await screen.findByTestId('event-page-start')).toHaveAttribute('href', `${start}template-nfl-bracket-doubling`);
+    expect(screen.getByTestId('event-page-offer-nfl-bracket-doubling-start')).toHaveTextContent('Start your league now');
     expect(screen.getByTestId('event-page-offer-nfl-squares-start')).toHaveAttribute('href', `${start}template-nfl-squares`);
   });
 

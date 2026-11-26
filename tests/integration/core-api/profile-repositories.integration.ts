@@ -42,16 +42,35 @@ const SEED_FIRST = [FieldOrderBasis.SEED, FieldOrderBasis.ODDS, FieldOrderBasis.
 const EQUAL_GROUPS = { type: TierProfileType.EQUAL_GROUPS, sources: ODDS_FIRST } as const;
 const SEED_RANGES = [{ tierNumber: 1, fromValue: 1, toValue: 1 }, { tierNumber: 2, fromValue: 2, toValue: 4 }, { tierNumber: 3, fromValue: 5, toValue: null }];
 
+/** The tier profile the template review's migration (#2164) gave each playoff, by URL segment. */
+const PROFILES_FROM_THE_TEMPLATE_REVIEW: Record<string, string> = {
+  ncaamf: 'SEEDS_4_8_12',
+  nba: 'SEEDS_2_5_REST',
+  nhl: 'SEEDS_1_2_REST',
+  mlb: 'SEEDS_2_4_REST',
+  mls: 'SEEDS_3_6_REST',
+  ncaamb: 'REGION_SEED_LINES_4',
+  ncaawb: 'REGION_SEED_LINES_4',
+  ncaamh: 'REGION_SEEDS_EACH',
+  'world-cup': 'TIERS_4_OF_8_BY_ODDS',
+  'womens-world-cup': 'TIERS_4_OF_4_BY_ODDS',
+  euro: 'TIERS_4_OF_4_BY_ODDS',
+  'copa-america': 'TIERS_4_OF_4_BY_ODDS',
+  ucl: 'TIERS_4_OF_4_BY_ODDS',
+};
+/** The seeded playoffs among them, priced by seed as the NFL is. */
+const PRICED_BY_SEED_FROM_THE_TEMPLATE_REVIEW = ['ncaamf', 'nba', 'nhl', 'mlb', 'mls', 'ncaamb', 'ncaawb', 'ncaamh'];
+
 describe('The migration to tier and pricing profiles', () => {
-  it('points every seeded sport league at its old layout: its sport\'s, or NCAA Men\'s Football\'s and the PWHL\'s own count of two, and the NFL at its playoff seed ranges (#2160)', async () => {
+  it('points every seeded sport league at its old layout, its sport\'s or the PWHL\'s own count of two, but the NFL at its playoff seed ranges (#2160) and the playoffs the template review profiled (#2164)', async () => {
     const leagues = await getPrisma().sportLeague.findMany({
       include: { sport: true, platformTierProfile: true },
       orderBy: [{ sport: { sport: 'asc' } }, { name: 'asc' }],
     });
-    const overrides: Record<string, string> = { 'NCAA Men\'s Football': 'TIERS_6_OF_2', PWHL: 'TIERS_2_OF_2', NFL: 'PLAYOFF_SEEDS_1_4_REST' };
+    const overrides: Record<string, string> = { pwhl: 'TIERS_2_OF_2', nfl: 'PLAYOFF_SEEDS_1_4_REST', ...PROFILES_FROM_THE_TEMPLATE_REVIEW };
 
     const mismatched = leagues.flatMap((league) => {
-      const expected = overrides[league.name] ?? SPORT_PLATFORM_TIER_PROFILE_CODE[league.sport.sport];
+      const expected = overrides[league.urlSegment] ?? SPORT_PLATFORM_TIER_PROFILE_CODE[league.sport.sport];
       return league.platformTierProfile.code === expected ? [] : [`${league.sport.sport} ${league.name}: ${league.platformTierProfile.code}, expected ${expected}`];
     });
 
@@ -77,7 +96,7 @@ describe('The migration to tier and pricing profiles', () => {
     await expect(getPrisma().platformTierProfile.findUnique({ where: { id: OLD_STAT_POOL_PLATFORM_TIER_PROFILE_ID } })).resolves.toBeNull();
   });
 
-  it('makes Standard and Small pricing profiles from the Budget pricing settings\' defaults, points every sport league but the NFL at Standard, and drops the settings group', async () => {
+  it('makes Standard and Small pricing profiles from the Budget pricing settings\' defaults, points every sport league at Standard but those priced by seed, and drops the settings group', async () => {
     const prisma = getPrisma();
     const [standard, small] = await Promise.all([
       prisma.platformPricingProfile.findUniqueOrThrow({ where: { code: 'STANDARD' } }),
@@ -86,7 +105,7 @@ describe('The migration to tier and pricing profiles', () => {
 
     expect(standard).toMatchObject({ name: 'Standard', ...STANDARD_VALUES });
     expect(small).toMatchObject({ name: 'Small', ...STANDARD_VALUES, salaryCap: 5000, unit: 10 });
-    await expect(prisma.sportLeague.count({ where: { platformPricingProfileId: { not: standard.id }, id: { notIn: [...made.sportLeagueIds] }, urlSegment: { not: 'nfl' } } })).resolves.toBe(0);
+    await expect(prisma.sportLeague.count({ where: { platformPricingProfileId: { not: standard.id }, id: { notIn: [...made.sportLeagueIds] }, urlSegment: { notIn: ['nfl', ...PRICED_BY_SEED_FROM_THE_TEMPLATE_REVIEW] } } })).resolves.toBe(0);
     await expect(prisma.platformRuntimeConfig.count({ where: { configKey: 'BUDGET_PRICING_CONFIG' } })).resolves.toBe(0);
   });
 

@@ -563,7 +563,7 @@ export const SelectionTypeOrder = alphabeticalOrder('SelectionType');
 
 /**
  * How a contest made from a template covers the template's slot definitions (#2010, plan §7).
- * ONE_SLOT: the commissioner picks one of them (tiered, budget, quick pick, squares, a week's
+ * ONE_SLOT: the commissioner picks one of them (tiered, budget, sweepstakes, squares, a week's
  * pick'em). ALL_LISTED: every listed slot of one event (a bracket, a whole-playoffs pool).
  * FROM_SLOT: a starting slot and every later listed slot of its Season (survivor). Mirrors
  * `PrismaTemplateCoverageMode`.

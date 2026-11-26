@@ -38,7 +38,7 @@ vi.mock('@/lib/logger', () => ({
 }));
 
 const SQUARES = '/start?sport=football&page=championship-weekend&template=template-nfl-squares';
-const BRACKET = '/start?sport=football&page=championship-weekend&template=template-nfl-bracket-second-chance-doubling';
+const BRACKET = '/start?sport=football&page=championship-weekend&template=template-nfl-bracket-doubling';
 
 function LocationProbe() {
   const location = useLocation();
@@ -108,7 +108,7 @@ describe('Start from an event page', () => {
     renderStart(BRACKET);
 
     expect(await screen.findByText(/^\/league\/OFFICE\?/)).toHaveTextContent(
-      '/league/OFFICE?sport=football&page=championship-weekend&template=template-nfl-bracket-second-chance-doubling',
+      '/league/OFFICE?sport=football&page=championship-weekend&template=template-nfl-bracket-doubling',
     );
   });
 

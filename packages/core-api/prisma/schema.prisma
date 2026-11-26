@@ -1959,7 +1959,7 @@ model ContestDraw {
   entryOrder                  String[] @map("entry_order") @db.Uuid
   drawnByUserId               String?  @map("drawn_by_user_id") @db.Uuid
   drawnAt                     DateTime @default(now()) @map("drawn_at") @db.Timestamptz
-  /// The event whose dealt picks the entries' quick pick receipts are still to list (#1171): the
+  /// The event whose dealt picks the entries' sweepstakes receipts are still to list (#1171): the
   /// draw sets it, and the next lifecycle sweep sends them and clears it. Null once sent.
   receiptsPendingSportEventId String?  @map("receipts_pending_sport_event_id") @db.Uuid
 

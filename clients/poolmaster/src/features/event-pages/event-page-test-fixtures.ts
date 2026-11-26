@@ -45,7 +45,7 @@ export function championshipWeekendFixture(overrides: Partial<EventPageDto> = {}
     isActive: true,
     redirectTo: null,
     offers: [
-      offerFixture('nfl-bracket-second-chance-doubling', {
+      offerFixture('nfl-bracket-doubling', {
         sportLeagueName: 'NFL',
         isPrimary: true,
         state: 'NOT_YET',

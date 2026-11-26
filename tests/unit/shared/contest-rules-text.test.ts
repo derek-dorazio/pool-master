@@ -1,3 +1,4 @@
+import { enumLabel } from '@poolmaster/shared/display-strings';
 import {
   PickEmMode,
   SelectionType,
@@ -42,7 +43,7 @@ describe('formatContestRules — the other selection types', () => {
     expect(formatContestRules(budget, 0, golfer)).toBe('Pick 6 golfers whose prices fit under the salary cap. The best 4 scores count.');
   });
 
-  it('deals a quick pick entry its participants at random', () => {
+  it('deals a sweepstakes entry its participants at random', () => {
     const draw = rules({ selectionType: SelectionType.RANDOM_DRAW, picksPerEntry: 3, countedScores: 3 });
     expect(formatContestRules(draw, 0, golfer)).toBe('The draw deals each entry 3 golfers at random. Every score counts.');
   });
@@ -99,7 +100,7 @@ describe('suggestContestName', () => {
 
 describe('contest rules labels', () => {
   it('formats the type, pick\'em rules, bracket start, entry limits and spreads as their choices read', () => {
-    expect(formatSelectionTypeName(SelectionType.RANDOM_DRAW)).toBe('Quick pick');
+    expect(formatSelectionTypeName(SelectionType.RANDOM_DRAW)).toBe(enumLabel('SelectionType', SelectionType.RANDOM_DRAW));
     expect(formatPickEmRulesName({ mode: PickEmMode.CONFIDENCE, againstTheSpread: true })).toBe('Confidence, against the spread');
     expect(formatPickEmRulesName({ mode: PickEmMode.STRAIGHT_UP, againstTheSpread: false })).toBe('Straight up');
     expect(formatBracketStartLabel(1, () => 'First Four')).toBe('Full bracket');

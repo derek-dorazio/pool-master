@@ -518,7 +518,7 @@ export interface ParticipantProviderMappingRepository {
 
 // --- Contest ---
 
-/** A quick pick draw whose entries' receipts are still to send (#1171): its contest and the event it dealt. */
+/** A sweepstakes draw whose entries' receipts are still to send (#1171): its contest and the event it dealt. */
 export interface PendingDrawReceipts {
   contestId: string;
   sportEventId: string;
@@ -581,7 +581,7 @@ export interface ContestRepository {
    * the event, because their events or their times changed (#1170). One write.
    */
   recheckReminders(scope: { contestIds: readonly string[] } | { sportEventId: string }, at: Date): Promise<void>;
-  /** The drawn quick pick contests whose entries' receipts are still to send (#1171), with the event dealt, oldest draw first. */
+  /** The drawn sweepstakes contests whose entries' receipts are still to send (#1171), with the event dealt, oldest draw first. */
   findDrawReceiptsPending(): Promise<PendingDrawReceipts[]>;
   /** Marks the contests' draws as having sent their receipts (#1171), in one write. */
   clearDrawReceiptsPending(contestIds: readonly string[]): Promise<void>;

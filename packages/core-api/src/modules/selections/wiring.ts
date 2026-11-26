@@ -58,7 +58,7 @@ export function createSelectionService(
   });
 }
 
-/** The clock-driven sweep that sends quick pick draws' receipts (#1171), on its own timer and lock. */
+/** The clock-driven sweep that sends sweepstakes draws' receipts (#1171), on its own timer and lock. */
 export function createDrawReceipts(
   prisma: PrismaClient,
   logger: FastifyBaseLogger,
