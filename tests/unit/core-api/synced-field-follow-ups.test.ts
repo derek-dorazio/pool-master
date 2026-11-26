@@ -21,7 +21,7 @@ const UNCHANGED_VALUATION = {
   outcome: 'VALUED' as const,
   sportEventId: 'sport-event-1',
   tiers: { result: 'UNCHANGED' as const, basis: FieldOrderBasis.ODDS, tierCount: 4 },
-  prices: { result: 'UNCHANGED' as const, basis: FieldOrderBasis.ODDS, pricedCount: 32, profileName: 'Standard' },
+  prices: { result: 'UNCHANGED' as const, basis: FieldOrderBasis.ODDS, pricedCount: 32, platformPricingProfileId: 'pricing-profile-default' },
 };
 
 function followUps(options: {
@@ -63,7 +63,7 @@ describe('SyncedFieldFollowUps, a field sync\'s follow-up job', () => {
   it('reports the games it loaded and the tiers and prices it made, with the run\'s stats, as the job\'s result', async () => {
     const { service } = followUps({
       slate: { outcome: 'MATCHES_UPDATED', sportEventId: 'sport-event-1', matches: [{ roundNumber: 1, matchNumber: 1 }, { roundNumber: 1, matchNumber: 2 }] },
-      valuation: { ...UNCHANGED_VALUATION, tiers: { result: 'MADE', basis: FieldOrderBasis.ODDS, tierCount: 4 }, prices: { result: 'MADE', basis: FieldOrderBasis.ODDS, pricedCount: 32, profileName: 'Standard' } },
+      valuation: { ...UNCHANGED_VALUATION, tiers: { result: 'MADE', basis: FieldOrderBasis.ODDS, tierCount: 4 }, prices: { result: 'MADE', basis: FieldOrderBasis.ODDS, pricedCount: 32, platformPricingProfileId: 'pricing-profile-default' } },
     });
 
     expect(await service.run(PAYLOAD)).toEqual({

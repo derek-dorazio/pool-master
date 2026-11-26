@@ -31,7 +31,7 @@ import {
 } from './setup';
 import { expectDefined } from '../support/expect-defined';
 import { copyContestSetups } from '../support/contest-setups';
-import { standardEventPricing } from '../support/budget-pricing';
+import { standardPricingRequest } from './standard-pricing';
 import { sportRowKeys } from '../support/sport-rows';
 import { insertTestSportLeague } from '../support/test-sport-league';
 
@@ -133,7 +133,7 @@ describe('SDK Functional: Horse racing Win/Place/Show', () => {
       body: { participants: field.map((row, index) => ({ sportEventParticipantId: row.id, oddsToWin: 2 + index * 3 })) },
     });
     expect((await autoAssignEventTiers({ client: a, path: { eventId }, body: {} })).response?.status).toBe(200);
-    expect((await autoAssignEventPrices({ client: a, path: { eventId }, body: standardEventPricing() })).response?.status).toBe(200);
+    expect((await autoAssignEventPrices({ client: a, path: { eventId }, body: await standardPricingRequest(a) })).response?.status).toBe(200);
     expect((await releaseEvent({ client: a, path: { eventId } })).data?.event.status).toBe('SCHEDULED');
 
     // --- A Win/Place/Show contest from the sport's template, entered and drawn ------------------

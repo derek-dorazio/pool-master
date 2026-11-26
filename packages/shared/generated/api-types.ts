@@ -2370,7 +2370,7 @@ export interface paths {
         put?: never;
         /**
          * Price a sport event's seeded field
-         * @description Prices the active field on the budget curve with the values sent, in the order of the league's pricing profile's sources, and stores the values as the event's pricing. Repeatable until release. Returns the field with its new valuations. Root admin only. 409 SPORT_EVENT_TIERS_LOCKED once the event is released: its tiers and prices are locked. 422 PRICING_CONFIG_INVALID when the floor share is above the top share or the rounding unit is above the worst golfer's price (salaryCap × floorSharePercent / 100), which could round prices to $0. 409 FIELD_HAS_NO_ORDER when no active participant has a value for any source the league's pricing profile lists: a field is never ordered by name.
+         * @description Prices the active field on the budget curve with the values sent, in the order of the league's pricing profile's sources, and stores the values as the event's pricing, with the profile they started from by id. Repeatable until release. Returns the field with its new valuations. Root admin only. 409 SPORT_EVENT_TIERS_LOCKED once the event is released: its tiers and prices are locked. 422 PRICING_CONFIG_INVALID when the floor share is above the top share or the rounding unit is above the worst golfer's price (salaryCap × floorSharePercent / 100), which could round prices to $0. 409 FIELD_HAS_NO_ORDER when no active participant has a value for any source the league's pricing profile lists: a field is never ordered by name. 404 PLATFORM_PRICING_PROFILE_NOT_FOUND when no pricing profile has the id sent.
          */
         post: operations["autoAssignEventPrices"];
         delete?: never;
@@ -13348,8 +13348,11 @@ export interface components {
                 floorSharePercent: number;
                 /** @description How fast prices fall from the top: 1 is a straight line; higher keeps the top few expensive and drops the middle of the field towards the floor. */
                 steepness: number;
-                /** @description The profile the values started from. The admin may have changed any value before assigning. */
-                profileName: string;
+                /**
+                 * Format: uuid
+                 * @description The pricing profile the values started from (#2205), or null once that profile is deleted. The admin may have changed any value before assigning.
+                 */
+                platformPricingProfileId: string | null;
             } | null;
             /** @description The tier layout the field was last auto-tiered with: its sport league's tier profile at the time, with any tier size an admin sent instead. Null until the field is first auto-tiered. Hand placements do not change it. */
             tierLayout: ({
@@ -13366,8 +13369,11 @@ export interface components {
                 lastTier: "ALL_REMAINING" | "CAPPED";
                 /** @description The most the last tier takes when lastTier is CAPPED. Null when it is ALL_REMAINING. */
                 lastTierMax: number | null;
-                /** @description The tier profile the layout came from. */
-                profileName: string;
+                /**
+                 * Format: uuid
+                 * @description The tier profile the layout came from (#2205), or null once that profile is deleted.
+                 */
+                platformTierProfileId: string | null;
             } | null) | ({
                 /** @enum {string} */
                 type: "RANGES";
@@ -13380,8 +13386,11 @@ export interface components {
                     /** @description The highest seed or rank the tier takes. Null: everyone from fromValue on, which only the last tier may be. */
                     toValue: number | null;
                 }[];
-                /** @description The tier profile the layout came from. */
-                profileName: string;
+                /**
+                 * Format: uuid
+                 * @description The tier profile the layout came from (#2205), or null once that profile is deleted.
+                 */
+                platformTierProfileId: string | null;
             } | null);
             /**
              * @description Contest-setup readiness right now.
@@ -13693,8 +13702,11 @@ export interface components {
                     floorSharePercent: number;
                     /** @description How fast prices fall from the top: 1 is a straight line; higher keeps the top few expensive and drops the middle of the field towards the floor. */
                     steepness: number;
-                    /** @description The profile the values started from. The admin may have changed any value before assigning. */
-                    profileName: string;
+                    /**
+                     * Format: uuid
+                     * @description The pricing profile the values started from (#2205), or null once that profile is deleted. The admin may have changed any value before assigning.
+                     */
+                    platformPricingProfileId: string | null;
                 } | null;
                 /** @description The tier layout the field was last auto-tiered with: its sport league's tier profile at the time, with any tier size an admin sent instead. Null until the field is first auto-tiered. Hand placements do not change it. */
                 tierLayout: ({
@@ -13711,8 +13723,11 @@ export interface components {
                     lastTier: "ALL_REMAINING" | "CAPPED";
                     /** @description The most the last tier takes when lastTier is CAPPED. Null when it is ALL_REMAINING. */
                     lastTierMax: number | null;
-                    /** @description The tier profile the layout came from. */
-                    profileName: string;
+                    /**
+                     * Format: uuid
+                     * @description The tier profile the layout came from (#2205), or null once that profile is deleted.
+                     */
+                    platformTierProfileId: string | null;
                 } | null) | ({
                     /** @enum {string} */
                     type: "RANGES";
@@ -13725,8 +13740,11 @@ export interface components {
                         /** @description The highest seed or rank the tier takes. Null: everyone from fromValue on, which only the last tier may be. */
                         toValue: number | null;
                     }[];
-                    /** @description The tier profile the layout came from. */
-                    profileName: string;
+                    /**
+                     * Format: uuid
+                     * @description The tier profile the layout came from (#2205), or null once that profile is deleted.
+                     */
+                    platformTierProfileId: string | null;
                 } | null);
                 /**
                  * @description Contest-setup readiness right now.
@@ -14017,8 +14035,11 @@ export interface components {
                     floorSharePercent: number;
                     /** @description How fast prices fall from the top: 1 is a straight line; higher keeps the top few expensive and drops the middle of the field towards the floor. */
                     steepness: number;
-                    /** @description The profile the values started from. The admin may have changed any value before assigning. */
-                    profileName: string;
+                    /**
+                     * Format: uuid
+                     * @description The pricing profile the values started from (#2205), or null once that profile is deleted. The admin may have changed any value before assigning.
+                     */
+                    platformPricingProfileId: string | null;
                 } | null;
                 /** @description The tier layout the field was last auto-tiered with: its sport league's tier profile at the time, with any tier size an admin sent instead. Null until the field is first auto-tiered. Hand placements do not change it. */
                 tierLayout: ({
@@ -14035,8 +14056,11 @@ export interface components {
                     lastTier: "ALL_REMAINING" | "CAPPED";
                     /** @description The most the last tier takes when lastTier is CAPPED. Null when it is ALL_REMAINING. */
                     lastTierMax: number | null;
-                    /** @description The tier profile the layout came from. */
-                    profileName: string;
+                    /**
+                     * Format: uuid
+                     * @description The tier profile the layout came from (#2205), or null once that profile is deleted.
+                     */
+                    platformTierProfileId: string | null;
                 } | null) | ({
                     /** @enum {string} */
                     type: "RANGES";
@@ -14049,8 +14073,11 @@ export interface components {
                         /** @description The highest seed or rank the tier takes. Null: everyone from fromValue on, which only the last tier may be. */
                         toValue: number | null;
                     }[];
-                    /** @description The tier profile the layout came from. */
-                    profileName: string;
+                    /**
+                     * Format: uuid
+                     * @description The tier profile the layout came from (#2205), or null once that profile is deleted.
+                     */
+                    platformTierProfileId: string | null;
                 } | null);
                 /**
                  * @description Contest-setup readiness right now.
@@ -14580,8 +14607,11 @@ export interface components {
             floorSharePercent: number;
             /** @description How fast prices fall from the top: 1 is a straight line; higher keeps the top few expensive and drops the middle of the field towards the floor. */
             steepness: number;
-            /** @description The profile the values started from. The admin may have changed any value before assigning. */
-            profileName: string;
+            /**
+             * Format: uuid
+             * @description The pricing profile the values started from (#2205), or null once that profile is deleted. The admin may have changed any value before assigning.
+             */
+            platformPricingProfileId: string | null;
         };
         /** @description The tier layout an event's field was last auto-tiered with. */
         EventTierConfig: {
@@ -14598,8 +14628,11 @@ export interface components {
             lastTier: "ALL_REMAINING" | "CAPPED";
             /** @description The most the last tier takes when lastTier is CAPPED. Null when it is ALL_REMAINING. */
             lastTierMax: number | null;
-            /** @description The tier profile the layout came from. */
-            profileName: string;
+            /**
+             * Format: uuid
+             * @description The tier profile the layout came from (#2205), or null once that profile is deleted.
+             */
+            platformTierProfileId: string | null;
         } | {
             /** @enum {string} */
             type: "RANGES";
@@ -14612,10 +14645,13 @@ export interface components {
                 /** @description The highest seed or rank the tier takes. Null: everyone from fromValue on, which only the last tier may be. */
                 toValue: number | null;
             }[];
-            /** @description The tier profile the layout came from. */
-            profileName: string;
+            /**
+             * Format: uuid
+             * @description The tier profile the layout came from (#2205), or null once that profile is deleted.
+             */
+            platformTierProfileId: string | null;
         };
-        /** @description Prices the active field on the budget curve with these values, best seed first and golfers with no seed last, and records them on the event as its pricing. The values usually come from a Budget pricing profile, possibly changed. */
+        /** @description Prices the active field on the budget curve with these values, in the field's order, and records them on the event as its pricing, with the profile they started from. The values usually are the profile's, possibly changed. */
         AutoAssignSportEventPricesRequest: {
             /** @description Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event. */
             salaryCap: number;
@@ -14627,8 +14663,11 @@ export interface components {
             floorSharePercent: number;
             /** @description How fast prices fall from the top: 1 is a straight line; higher keeps the top few expensive and drops the middle of the field towards the floor. */
             steepness: number;
-            /** @description The profile the values started from. The admin may have changed any value before assigning. */
-            profileName: string;
+            /**
+             * Format: uuid
+             * @description The pricing profile the values started from. 404 PLATFORM_PRICING_PROFILE_NOT_FOUND when there is none with this id.
+             */
+            platformPricingProfileId: string;
         };
         /** @description A field row's tier placement and price, each set independently. */
         SportEventParticipantValuationDto: {

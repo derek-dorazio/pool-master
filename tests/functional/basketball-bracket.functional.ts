@@ -27,7 +27,7 @@ import {
   getFunctionalPrisma,
 } from './setup';
 import { expectDefined } from '../support/expect-defined';
-import { standardEventPricing } from '../support/budget-pricing';
+import { standardPricingRequest } from './standard-pricing';
 import { expectMatchesSchema } from '../support/expect-matches-schema';
 import { sportRowKeys } from '../support/sport-rows';
 import { insertTestSportLeague } from '../support/test-sport-league';
@@ -119,7 +119,7 @@ describe('SDK Functional: Basketball bracket', () => {
     });
     expect(upload.response?.status).toBe(200);
     expect((await autoAssignEventTiers({ client: a, path: { eventId }, body: { tierSize: 1 } })).response?.status).toBe(200);
-    expect((await autoAssignEventPrices({ client: a, path: { eventId }, body: standardEventPricing() })).response?.status).toBe(200);
+    expect((await autoAssignEventPrices({ client: a, path: { eventId }, body: await standardPricingRequest(a) })).response?.status).toBe(200);
 
     const field = expectDefined((await listEventParticipants({ client: a, path: { eventId } })).data).participants;
     const rowOf = (name: string) => expectDefined(field.find((row) => row.participant.name === `${name} ${RUN}`)).id;

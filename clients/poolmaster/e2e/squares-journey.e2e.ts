@@ -1,5 +1,6 @@
 import { expect, test, type APIRequestContext } from '@playwright/test';
 import { adminApiHeaders, expectOk, type AuthHeaders } from './helpers/admin-api';
+import { standardPricingRequest } from './helpers/standard-pricing';
 import { adminSignIn, logOut, readAdminCredentials, type AdminCredentials } from './helpers/admin-session';
 import { submitAndRead } from './helpers/browser-writes';
 import { removeJourneyRun, type JourneyRun } from './helpers/journey-teardown';
@@ -32,15 +33,6 @@ const TWO_TIERS = [
   { tierKey: 'tier-2', label: 'Tier 2', tierNumber: 2 },
 ];
 
-/** The app's default "Standard" pricing profile, as an event stores it once priced. */
-const STANDARD_PRICING = {
-  profileName: 'Standard',
-  salaryCap: 50_000,
-  unit: 100,
-  topSharePercent: 24,
-  floorSharePercent: 12,
-  steepness: 4,
-};
 
 type SquaresJourneyState = {
   run: JourneyRun;
@@ -168,7 +160,7 @@ test('act 1: the root admin releases an American football event of one game betw
     });
     await postJson(api, headers, `/api/v1/events/${event.id}/tiers`, { tiers: TWO_TIERS }, 'put');
     await postJson(api, headers, `/api/v1/events/${event.id}/tiers/auto-assign`, {});
-    await postJson(api, headers, `/api/v1/events/${event.id}/prices/auto-assign`, STANDARD_PRICING);
+    await postJson(api, headers, `/api/v1/events/${event.id}/prices/auto-assign`, await standardPricingRequest(api, headers));
 
     const { participants } = await (await expectOk(api.get(`/api/v1/events/${event.id}/participants`, { headers }), 'read the field')).json() as {
       participants: Array<{ id: string; participant: { name: string } }>;

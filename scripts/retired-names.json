@@ -75,7 +75,8 @@
     "matchPeriodsOf": "#2047 (10f): slotPeriodsOf",
     "loadedParticipantCount": "#2047 (10f): participantCount, counted on each read",
     "GOLF_HOLES_PER_ROUND": "#2047 (10f): the round's slot periods",
-    "HOLES_IN_ROUND": "#2047 (10f): the round's slot periods"
+    "HOLES_IN_ROUND": "#2047 (10f): the round's slot periods",
+    "profileName": "#2205: platformTierProfileId / platformPricingProfileId, the profile by key"
   },
   "ROUND_NAMES_FROM_FINAL": 0,
   "roundLabel": 0,
@@ -151,5 +152,6 @@
   "matchPeriodsOf": 0,
   "loadedParticipantCount": 0,
   "GOLF_HOLES_PER_ROUND": 0,
-  "HOLES_IN_ROUND": 0
+  "HOLES_IN_ROUND": 0,
+  "profileName": 0
 }

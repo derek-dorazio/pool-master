@@ -49,10 +49,13 @@ export type BudgetPricingProfile = z.infer<typeof BudgetPricingProfileSchema>;
  * event by every price assignment and locked at release.
  */
 export const EventPricingConfigSchema = BudgetPricingValuesSchema.extend({
-  profileName: z.string().trim().min(1).max(50)
-    .describe('The profile the values started from. The admin may have changed any value before assigning.'),
+  platformPricingProfileId: z.uuid().nullable()
+    .describe('The pricing profile the values started from (#2205), or null once that profile is deleted. The admin may have changed any value before assigning.'),
 }).describe('The values an event\'s field was priced with for budget contests.');
 export type EventPricingConfig = z.infer<typeof EventPricingConfigSchema>;
+
+/** The values as the event's JSON column stores them; the profile they started from is a column of its own. */
+export const StoredEventPricingSchema = BudgetPricingValuesSchema;
 
 /** A pricing profile, defined once for the platform; each sport league names one (`SportLeague.platformPricingProfileId`). */
 export interface PlatformPricingProfile extends DomainEntity, BudgetPricingProfile {
@@ -64,15 +67,15 @@ export interface PlatformPricingProfile extends DomainEntity, BudgetPricingProfi
   sources: FieldOrderBasis[];
 }
 
-/** A profile as an event stores the values it was priced with. */
-export function eventPricingOf({ name, ...values }: BudgetPricingProfile): EventPricingConfig {
+/** A profile as an event records the values it was priced with, and the profile they started from. */
+export function eventPricingOf(profile: PlatformPricingProfile): EventPricingConfig {
   return {
-    profileName: name,
-    salaryCap: values.salaryCap,
-    unit: values.unit,
-    topSharePercent: values.topSharePercent,
-    floorSharePercent: values.floorSharePercent,
-    steepness: values.steepness,
+    platformPricingProfileId: profile.id,
+    salaryCap: profile.salaryCap,
+    unit: profile.unit,
+    topSharePercent: profile.topSharePercent,
+    floorSharePercent: profile.floorSharePercent,
+    steepness: profile.steepness,
   };
 }
 

@@ -1277,6 +1277,7 @@ model PlatformTierProfile {
   updatedAt   DateTime                           @updatedAt @map("updated_at") @db.Timestamptz
 
   sportLeagues SportLeague[]
+  sportEvents  SportEvent[]
   sources      PlatformTierProfileSource[]
   ranges       PlatformTierProfileRange[]
 
@@ -1340,6 +1341,7 @@ model PlatformPricingProfile {
   updatedAt         DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
   sportLeagues SportLeague[]
+  sportEvents  SportEvent[]
   sources      PlatformPricingProfileSource[]
 
   @@map("platform_pricing_profiles")
@@ -2132,10 +2134,16 @@ model SportEvent {
   // EventPricingConfigSchema. Null until prices are assigned; written with the
   // prices in one transaction and locked with them at release.
   pricingConfig              Json?                          @map("pricing_config")
+  // The pricing profile the recorded values started from (#2205): set with them, null until the
+  // field is first priced or once that profile is deleted. The values stay either way.
+  platformPricingProfileId   String?                        @map("platform_pricing_profile_id") @db.Uuid
   // The tier layout the field was last auto-tiered with (#1844), typed by EventTierConfigSchema:
   // its sport league's tier profile at the time, with any tier size an admin sent instead. Null
   // until the field is first auto-tiered; written with the tiers in one transaction.
   tierConfig                 Json?                          @map("tier_config")
+  // The tier profile the recorded layout came from (#2205): set with it, null until the field is
+  // first auto-tiered or once that profile is deleted. The layout stays either way.
+  platformTierProfileId      String?                        @map("platform_tier_profile_id") @db.Uuid
   // When the event's provider last sent a webhook notification about the event itself (#1499): a
   // golf round's. Null until one arrives. A game's notification is recorded on its Game (#2007).
   lastProviderNotificationAt DateTime?                      @map("last_provider_notification_at") @db.Timestamptz
@@ -2172,6 +2180,8 @@ model SportEvent {
   slots                      SportEventSlot[]
 
   /// The target of an event slot's composite key, which keeps its slot in the event's own Season.
+  platformPricingProfile     PlatformPricingProfile?        @relation(fields: [platformPricingProfileId], references: [id], onDelete: SetNull)
+  platformTierProfile        PlatformTierProfile?           @relation(fields: [platformTierProfileId], references: [id], onDelete: SetNull)
   @@unique([id, sportLeagueSeasonId])
   @@index([sportLeagueId, sportLeagueSeasonId])
   @@index([sportLeagueSeasonId])

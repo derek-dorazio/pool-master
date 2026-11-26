@@ -1,12 +1,13 @@
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
+import { profileWords } from '@poolmaster/shared/display-strings';
 import {
-  EventPricingConfigSchema,
   findBudgetPricingProblem,
   formatDollars,
   priceOnBudgetCurve,
   type BudgetPricingProfile,
   type EventPricingConfig, SportEventParticipantStatus } from '@poolmaster/shared/domain';
+import { AutoAssignSportEventPricesRequestSchema, type AutoAssignSportEventPricesRequest } from '@poolmaster/shared/dto';
 import { autoAssignEventPrices, type SportEventOverviewDto } from '@/lib/api';
 import {
   Button,
@@ -46,10 +47,13 @@ function toDraft(values: BudgetPricingProfile | EventPricingConfig): PricingDraf
   };
 }
 
-/** The values the dialog would send, or the first thing wrong with them. */
-function parseDraft(profileName: string, draft: PricingDraft): { pricing: EventPricingConfig; error: null } | { pricing: null; error: string } {
-  const parsed = EventPricingConfigSchema.safeParse({
-    profileName,
+/** The request the dialog would send, with the profile the values started from, or the first thing wrong with it. */
+function parseDraft(platformPricingProfileId: string, draft: PricingDraft): { pricing: AutoAssignSportEventPricesRequest; error: null } | { pricing: null; error: string } {
+  if (platformPricingProfileId === '') {
+    return { pricing: null, error: 'Choose the pricing profile the values start from.' };
+  }
+  const parsed = AutoAssignSportEventPricesRequestSchema.safeParse({
+    platformPricingProfileId,
     salaryCap: Number(draft.salaryCap),
     unit: Number(draft.unit),
     topSharePercent: Number(draft.topSharePercent),
@@ -94,11 +98,11 @@ export function PriceAssignAction({
   const profiles = pricingQuery.data ?? [];
   const sportLeagueQuery = useQuery(sportLeagueQueryOptions(sportLeagueId));
   const [open, setOpen] = useState(false);
-  const [profileName, setProfileName] = useState('');
+  const [profileId, setProfileId] = useState('');
   const [draft, setDraft] = useState<PricingDraft | null>(null);
 
   const mutation = useInvalidatingMutation({
-    mutationFn: async (pricing: EventPricingConfig) => {
+    mutationFn: async (pricing: AutoAssignSportEventPricesRequest) => {
       const response = await autoAssignEventPrices({ path: { eventId }, body: pricing });
       if (response.error) {
         throwApiError(response.error);
@@ -120,37 +124,35 @@ export function PriceAssignAction({
 
   function openDialog() {
     mutation.reset();
+    // poolmaster-allow-list-lookup: the dialog's profile picker shows this whole list
+    const leagueProfile = profiles.find((profile) => profile.id === sportLeagueQuery.data?.platformPricingProfileId);
     if (current) {
-      setProfileName(current.profileName);
+      // The profile the event was priced from, or the league's once that profile is gone (#2205).
+      setProfileId(current.platformPricingProfileId ?? leagueProfile?.id ?? '');
       setDraft(toDraft(current));
     } else {
-      // poolmaster-allow-list-lookup: the dialog's profile picker shows this whole list
-      const defaultProfile = profiles.find((profile) => profile.id === sportLeagueQuery.data?.platformPricingProfileId);
-      setProfileName(defaultProfile?.name ?? '');
-      setDraft(defaultProfile ? toDraft(defaultProfile) : null);
+      setProfileId(leagueProfile?.id ?? '');
+      setDraft(leagueProfile ? toDraft(leagueProfile) : null);
     }
     setOpen(true);
   }
 
-  function chooseProfile(name: string) {
-    // poolmaster-allow-list-lookup: the name was picked from this list, shown in the dialog
-    const profile = profiles.find((candidate) => candidate.name === name);
-    setProfileName(name);
+  function chooseProfile(id: string) {
+    // poolmaster-allow-list-lookup: the profile was picked from this list, shown in the dialog
+    const profile = profiles.find((candidate) => candidate.id === id);
+    setProfileId(id);
     if (profile) {
       setDraft(toDraft(profile));
     }
   }
 
-  const parsed = draft ? parseDraft(profileName, draft) : null;
+  const parsed = draft ? parseDraft(profileId, draft) : null;
   const preview = parsed?.pricing && activeParticipantCount > 0
     ? {
       best: priceOnBudgetCurve(parsed.pricing, 0, activeParticipantCount),
       worst: priceOnBudgetCurve(parsed.pricing, activeParticipantCount - 1, activeParticipantCount),
     }
     : null;
-  const profileNames = profiles.some((profile) => profile.name === profileName) || !profileName
-    ? profiles.map((profile) => profile.name)
-    : [profileName, ...profiles.map((profile) => profile.name)];
 
   return (
     <>
@@ -186,10 +188,10 @@ export function PriceAssignAction({
             <Select
               data-testid="root-admin-tier-auto-prices-profile"
               onChange={(event) => chooseProfile(event.target.value)}
-              value={profileName}
+              value={profileId}
             >
-              {profileNames.map((name) => (
-                <option key={name} value={name}>{name}</option>
+              {profiles.map((profile) => (
+                <option key={profile.id} value={profile.id}>{profileWords('pricingProfile', profile).name}</option>
               ))}
             </Select>
           </FormField>

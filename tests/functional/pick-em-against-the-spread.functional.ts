@@ -48,7 +48,7 @@ import {
 } from './setup';
 import { expectDefined } from '../support/expect-defined';
 import { unlinkContestsFromSportEvents } from '../support/contest-event-links';
-import { standardEventPricing } from '../support/budget-pricing';
+import { standardPricingRequest } from './standard-pricing';
 import { expectMatchesSchema } from '../support/expect-matches-schema';
 import { sportRowKeys } from '../support/sport-rows';
 import { insertTestSportLeague } from '../support/test-sport-league';
@@ -149,7 +149,7 @@ describe('SDK Functional: a pick\'em week against the spread (#720)', () => {
       body: { rows: TEAMS.map((team, index) => ({ playerName: `${team} ${RUN}`, seedNumber: index + 1 })) },
     })).response?.status).toBe(200);
     expect((await autoAssignEventTiers({ client: a, path: { eventId }, body: { tierSize: 2 } })).response?.status).toBe(200);
-    expect((await autoAssignEventPrices({ client: a, path: { eventId }, body: standardEventPricing() })).response?.status).toBe(200);
+    expect((await autoAssignEventPrices({ client: a, path: { eventId }, body: await standardPricingRequest(a) })).response?.status).toBe(200);
     const field = expectDefined((await listEventParticipants({ client: a, path: { eventId } })).data).participants;
     const rowOf = (team: string) => expectDefined(field.find((row) => row.participant.name === `${team} ${RUN}`), team).id;
     const loaded = await loadEventBracket({

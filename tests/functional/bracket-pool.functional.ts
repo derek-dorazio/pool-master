@@ -57,7 +57,7 @@ import {
 } from './setup';
 import { expectDefined } from '../support/expect-defined';
 import { unlinkContestsFromSportEvents } from '../support/contest-event-links';
-import { standardEventPricing } from '../support/budget-pricing';
+import { standardPricingRequest } from './standard-pricing';
 import { expectMatchesSchema } from '../support/expect-matches-schema';
 import { sportRowKeys } from '../support/sport-rows';
 import { insertTestSportLeague } from '../support/test-sport-league';
@@ -170,7 +170,7 @@ async function releasedKnockout(options: {
     body: { rows: options.seeds.map((seed) => ({ playerName: `Seed ${seed} ${options.label} ${RUN}`, seedNumber: seed })) },
   })).response?.status).toBe(200);
   expect((await autoAssignEventTiers({ client: a, path: { eventId }, body: { tierSize: options.tierSize } })).response?.status).toBe(200);
-  expect((await autoAssignEventPrices({ client: a, path: { eventId }, body: standardEventPricing() })).response?.status).toBe(200);
+  expect((await autoAssignEventPrices({ client: a, path: { eventId }, body: await standardPricingRequest(a) })).response?.status).toBe(200);
 
   const field = expectDefined((await listEventParticipants({ client: a, path: { eventId } })).data).participants;
   const row = (seed: number) => expectDefined(field.find((each) => each.participant.name === `Seed ${seed} ${options.label} ${RUN}`), `seed ${seed}`).id;

@@ -71,7 +71,6 @@ import type {
   UserResponse,
 } from '@poolmaster/shared/dto';
 import { ErrorEnvelopeSchema } from '@poolmaster/shared/dto/errors.dto';
-import { standardEventPricing } from '../../support/budget-pricing';
 import { ingestionModule } from '../../../packages/core-api/src/modules/ingestion/routes';
 import { participantsModule } from '../../../packages/core-api/src/modules/participants/routes';
 import { eventsModule } from '../../../packages/core-api/src/modules/events/routes';
@@ -100,7 +99,8 @@ import {
   integrationBackgroundJobs,
   setupIntegrationTests,
   teardownIntegrationTests,
-  withoutJsonBodyHeaders, integrationSportEventServices, integrationEventLifecycle, integrationProviderSettings, integrationSyncFindings } from '../helpers';
+  withoutJsonBodyHeaders, integrationSportEventServices, integrationEventLifecycle, integrationProviderSettings, integrationSyncFindings, standardEventPricingInDb,
+} from '../helpers';
 import type {
   ProviderParticipant,
   ProviderPayloadCapture,
@@ -1562,7 +1562,7 @@ describe('Contract verification (root admin)', () => {
         method: 'POST',
         url: `/api/v1/events/${eventId}/prices/auto-assign`,
         headers: rootAdmin.headers,
-        payload: standardEventPricing(),
+        payload: await standardEventPricingInDb(),
       });
       expect(autoPriceRes.statusCode).toBe(200);
       expect(SportEventParticipantListResponseSchema.safeParse(autoPriceRes.json()).success).toBe(true);

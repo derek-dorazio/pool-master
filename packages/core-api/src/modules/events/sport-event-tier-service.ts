@@ -87,7 +87,7 @@ export type SyncedTiers =
 
 /** What a field sync's pricing did (#1822): made or found already made, or kept as an admin edited them. */
 export type SyncedPrices =
-  | { result: 'MADE' | 'UNCHANGED'; basis: FieldOrderBasis; pricedCount: number; profileName: string }
+  | { result: 'MADE' | 'UNCHANGED'; basis: FieldOrderBasis; pricedCount: number; platformPricingProfileId: string | null }
   | { result: 'KEPT_AS_EDITED'; unpriced: number };
 
 /** What tiering and pricing a synced field did, or why it did neither. */
@@ -124,7 +124,7 @@ export interface SportEventTierServiceDeps {
   /** The event's sport league's tier profile (#1844), the layout auto-tiering fills. */
   platformTierProfiles: Pick<PlatformTierProfileRepository, 'findBySportLeague' | 'findById'>;
   /** The event's sport league's pricing profile (#1844), which prices a synced field never priced before. */
-  platformPricingProfiles: Pick<PlatformPricingProfileRepository, 'findBySportLeague'>;
+  platformPricingProfiles: Pick<PlatformPricingProfileRepository, 'findById' | 'findBySportLeague'>;
   logger?: FastifyBaseLogger;
 }
 
@@ -273,7 +273,7 @@ export class SportEventTierService {
       {
         sportEventId: event.id,
         source,
-        profileName: tierConfig.profileName,
+        platformTierProfileId: tierConfig.platformTierProfileId,
         tierSize: tierConfig.type === TierProfileType.EQUAL_GROUPS && spread !== 'EVEN' ? tierConfig.tierSize : null,
         spread,
         tierCount: tiers.length,
@@ -389,6 +389,9 @@ export class SportEventTierService {
     if (problem) {
       throw new SportEventError(problem, 'PRICING_CONFIG_INVALID', 422);
     }
+    if (pricingConfig.platformPricingProfileId !== null && await this.deps.platformPricingProfiles.findById(pricingConfig.platformPricingProfileId) === null) {
+      throw new SportEventError(`No pricing profile ${pricingConfig.platformPricingProfileId}.`, 'PLATFORM_PRICING_PROFILE_NOT_FOUND', 404);
+    }
     const { sources } = await this.requirePlatformPricingProfile(event);
     const order = await this.orderedActiveField(sportEventId, sources);
     if (order === 'NO_FIELD') {
@@ -400,7 +403,7 @@ export class SportEventTierService {
     await this.deps.valuations.assignEventPrices({ sportEventId, pricingConfig, assignments });
 
     this.deps.logger?.info(
-      { sportEventId, source, profileName: pricingConfig.profileName, salaryCap: pricingConfig.salaryCap, pricedCount: assignments.length },
+      { sportEventId, source, platformPricingProfileId: pricingConfig.platformPricingProfileId, salaryCap: pricingConfig.salaryCap, pricedCount: assignments.length },
       'Auto-assigned prices',
     );
     return this.getEffectiveValuationsForSportEvent(sportEventId);
@@ -484,7 +487,7 @@ export class SportEventTierService {
         return current?.price === assignment.price && current.priceAssignedSource === assignment.source;
       });
       if (!unchanged) await this.deps.valuations.assignEventPrices({ sportEventId: event.id, pricingConfig, assignments });
-      pricesResult = { result: unchanged ? 'UNCHANGED' : 'MADE', basis: priceOrder.basis, pricedCount: assignments.length, profileName: pricingConfig.profileName };
+      pricesResult = { result: unchanged ? 'UNCHANGED' : 'MADE', basis: priceOrder.basis, pricedCount: assignments.length, platformPricingProfileId: pricingConfig.platformPricingProfileId };
     }
 
     this.deps.logger?.info(
@@ -606,10 +609,10 @@ function tierPlacements(
       };
     }),
     tierConfig: profile.type === TierProfileType.RANGES
-      ? { type: TierProfileType.RANGES, profileName: profile.name, ranges: profile.ranges.map(({ tierNumber, fromValue, toValue }) => ({ tierNumber, fromValue, toValue })) }
+      ? { type: TierProfileType.RANGES, platformTierProfileId: profile.id, ranges: profile.ranges.map(({ tierNumber, fromValue, toValue }) => ({ tierNumber, fromValue, toValue })) }
       : {
         type: TierProfileType.EQUAL_GROUPS,
-        profileName: profile.name,
+        platformTierProfileId: profile.id,
         tierCount: profile.tierCount,
         tierSize: requestedTierSize ?? profile.tierSize,
         lastTier: profile.lastTier,
@@ -621,7 +624,7 @@ function tierPlacements(
 
 /** Whether the event already records this layout, so a re-run that places the same writes nothing. */
 function sameTierConfig(stored: EventTierConfig | undefined, next: EventTierConfig): boolean {
-  if (stored === undefined || stored.type !== next.type || stored.profileName !== next.profileName) return false;
+  if (stored === undefined || stored.type !== next.type || stored.platformTierProfileId !== next.platformTierProfileId) return false;
   if (stored.type === TierProfileType.RANGES && next.type === TierProfileType.RANGES) {
     return stored.ranges.length === next.ranges.length && stored.ranges.every((range, index) => {
       const other = next.ranges[index];

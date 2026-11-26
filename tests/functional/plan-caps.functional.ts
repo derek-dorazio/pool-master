@@ -23,7 +23,7 @@ import { LeaguePlanUsageResponseSchema, SportLeaguesUsedResponseSchema } from '@
 import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, seedContestFixture, createTestEvent } from './builders';
 import { cleanupFunctionalData, disconnectFunctionalPrisma, getFunctionalPrisma } from './setup';
 import { expectDefined } from '../support/expect-defined';
-import { standardEventPricing } from '../support/budget-pricing';
+import { standardPricingRequest } from './standard-pricing';
 
 // A plan's caps end to end (#947). With Free's sports leagues a year saved as one, a league's 2099
 // contests may be in one sports league: its first men's Majors contest is made, a women's one is
@@ -108,7 +108,7 @@ describe('SDK Functional: plan caps (#947)', () => {
         body: { rows: RUNNERS.map((runner, index) => ({ playerName: `${runner} ${RUN}`, ranking: index + 1, seedNumber: index + 1 })) },
       });
       await autoAssignEventTiers({ client: a, path: { eventId }, body: { tierSize: 1 } });
-      await autoAssignEventPrices({ client: a, path: { eventId }, body: standardEventPricing() });
+      await autoAssignEventPrices({ client: a, path: { eventId }, body: await standardPricingRequest(a) });
       expect((await releaseEvent({ client: a, path: { eventId } })).data?.event.status).toBe('SCHEDULED');
       return eventId;
     };

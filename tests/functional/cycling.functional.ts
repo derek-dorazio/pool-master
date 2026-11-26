@@ -28,7 +28,7 @@ import {
   getFunctionalPrisma,
 } from './setup';
 import { expectDefined } from '../support/expect-defined';
-import { standardEventPricing } from '../support/budget-pricing';
+import { standardPricingRequest } from './standard-pricing';
 
 // Cycling end to end over HTTP (#626): an admin builds a race in the seeded UCI WorldTour and loads
 // its field's rankings by upload, a commissioner runs a contest from the tour's default tiered template
@@ -112,7 +112,7 @@ describe('SDK Functional: Cycling UCI WorldTour Top 10 points', () => {
     });
     expect(upload.response?.status).toBe(200);
     expect((await autoAssignEventTiers({ client: a, path: { eventId }, body: { tierSize: 1 } })).response?.status).toBe(200);
-    expect((await autoAssignEventPrices({ client: a, path: { eventId }, body: standardEventPricing() })).response?.status).toBe(200);
+    expect((await autoAssignEventPrices({ client: a, path: { eventId }, body: await standardPricingRequest(a) })).response?.status).toBe(200);
     expect((await releaseEvent({ client: a, path: { eventId } })).data?.event.status).toBe('SCHEDULED');
 
     const field = expectDefined((await listEventParticipants({ client: a, path: { eventId } })).data).participants;

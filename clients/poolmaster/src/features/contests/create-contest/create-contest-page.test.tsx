@@ -1011,7 +1011,7 @@ describe('Commissioner tools › Contests › Create contest › a sport league\
 });
 
 describe('Commissioner tools › Contests › Create contest › Budget format (#93)', () => {
-  const PRICING = { profileName: 'Standard', salaryCap: 50_000, unit: 100, topSharePercent: 24, floorSharePercent: 12, steepness: 4 };
+  const PRICING = { platformPricingProfileId: '00000000-0000-4000-8000-0000000000b2', salaryCap: 50_000, unit: 100, topSharePercent: 24, floorSharePercent: 12, steepness: 4 };
   const BUDGET_TEMPLATE = {
     id: '55555555-5555-4555-8555-555555555555',
     coverageMode: 'ONE_SLOT',
@@ -1340,7 +1340,7 @@ describe('Commissioner tools › Contests › Create contest for a horse race', 
 
 describe('Commissioner tools › Contests › Create contest for a Formula 1 race', () => {
   const FORMULA_1_LEAGUE_ID = '62500000-0000-4000-8000-000000000001';
-  const PRICING = { profileName: 'Standard', salaryCap: 50_000, unit: 100, topSharePercent: 24, floorSharePercent: 12, steepness: 4 };
+  const PRICING = { platformPricingProfileId: '00000000-0000-4000-8000-0000000000b2', salaryCap: 50_000, unit: 100, topSharePercent: 24, floorSharePercent: 12, steepness: 4 };
   const FORMULA_1_SCORING = {
     participantScoringDefinitionId: 'FINISH_POSITION_POINTS',
     config: { pointsTable: [25, 18, 15, 12, 10, 8, 6, 4, 2, 1], didNotFinishPoints: 0 },

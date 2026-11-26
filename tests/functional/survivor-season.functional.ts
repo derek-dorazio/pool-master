@@ -49,7 +49,7 @@ import {
 } from './setup';
 import { expectDefined } from '../support/expect-defined';
 import { unlinkContestsFromSportEvents } from '../support/contest-event-links';
-import { standardEventPricing } from '../support/budget-pricing';
+import { standardPricingRequest } from './standard-pricing';
 import { expectMatchesSchema } from '../support/expect-matches-schema';
 import { sportRowKeys } from '../support/sport-rows';
 import { insertTestSportLeague } from '../support/test-sport-league';
@@ -124,7 +124,7 @@ async function releasedWeek(a: Client, sportLeagueId: string, teamIds: readonly 
     body: { rows: TEAMS.map((team, index) => ({ playerName: `${team} ${run}`, seedNumber: index + 1 })) },
   })).response?.status).toBe(200);
   expect((await autoAssignEventTiers({ client: a, path: { eventId }, body: { tierSize: 2 } })).response?.status).toBe(200);
-  expect((await autoAssignEventPrices({ client: a, path: { eventId }, body: standardEventPricing() })).response?.status).toBe(200);
+  expect((await autoAssignEventPrices({ client: a, path: { eventId }, body: await standardPricingRequest(a) })).response?.status).toBe(200);
   const field = expectDefined((await listEventParticipants({ client: a, path: { eventId } })).data).participants;
   const rowOf = (team: string) => expectDefined(field.find((row) => row.participant.name === `${team} ${run}`), team).id;
 

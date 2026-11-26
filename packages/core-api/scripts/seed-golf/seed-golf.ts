@@ -196,9 +196,8 @@ const STANDARD_PLATFORM_PRICING_PROFILE_CODE = 'STANDARD';
 /** The Standard pricing profile: its id, and its values as an event's price assignment sends them. */
 async function standardPricing(client: Client): Promise<{ platformPricingProfileId: string; request: AutoAssignSportEventPricesRequest }> {
   const { platformPricingProfiles } = await must(listPlatformPricingProfiles({ client }), 'List pricing profiles');
-  const { id, name, ...values } = found(platformPricingProfiles.find((profile) => profile.code === STANDARD_PLATFORM_PRICING_PROFILE_CODE), 'The Standard pricing profile');
-  const { salaryCap, unit, topSharePercent, floorSharePercent, steepness } = values;
-  return { platformPricingProfileId: id, request: { profileName: name, salaryCap, unit, topSharePercent, floorSharePercent, steepness } };
+  const { id, salaryCap, unit, topSharePercent, floorSharePercent, steepness } = found(platformPricingProfiles.find((profile) => profile.code === STANDARD_PLATFORM_PRICING_PROFILE_CODE), 'The Standard pricing profile');
+  return { platformPricingProfileId: id, request: { platformPricingProfileId: id, salaryCap, unit, topSharePercent, floorSharePercent, steepness } };
 }
 
 /** "round 1 match 3, round 2 match 1": matches as a run's detail names them, each by its round and number. */
