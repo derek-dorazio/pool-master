@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import type { LeaguePlan } from '@poolmaster/shared/domain';
 import { enumLabel } from '@poolmaster/shared/display-strings';
-import type { LeaguePlanListResponse } from '@/lib/api';
+import type { LeaguePlanListResponse, PlanFeatureGroupDto } from '@/lib/api';
 import { describeExpansionPrices } from '@/features/billing/billing-format';
 import { Heading, Tile, useDisplayPreferences } from '@/features/shared/ui';
 import { FeatureList } from './feature-list';
@@ -12,6 +12,8 @@ import { LEAGUE_PLAN_TAGLINE } from './plan-labels';
 
 interface PlanCardsProps {
   plans: readonly ComparedPlan[];
+  /** Which group each feature is in, from the plans API: how each card groups and counts its features. */
+  featureGroups: readonly PlanFeatureGroupDto[];
   /** The button or note at the foot of each card's price, which differs by page. */
   renderAction: (plan: LeaguePlan) => ReactNode;
   /** Each plan's contest expansion prices, shown under its price when given (#973). */
@@ -26,9 +28,9 @@ interface PlanCardsProps {
  * There are no plan prices yet: the lowest plan is $0 and every other plan is free for now. Yearly
  * prices come with payments (#931). A contest expansion's price is shown when given.
  */
-export function PlanCards({ expansion, plans, renderAction }: PlanCardsProps) {
+export function PlanCards({ expansion, featureGroups, plans, renderAction }: PlanCardsProps) {
   const { locale } = useDisplayPreferences();
-  const highlights = buildPlanHighlights(plans, locale);
+  const highlights = buildPlanHighlights(plans, featureGroups, locale);
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4" data-testid="plan-cards">
       {highlights.map((card, index) => (

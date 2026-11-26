@@ -1,5 +1,5 @@
-import { LeaguePlan, PlanFeature } from '@poolmaster/shared/domain';
-import type { LeaguePlanListResponse, PlanEntitlementsDto } from '@/lib/api';
+import { LeaguePlan, PLAN_FEATURE_GROUP, PlanFeature, PlanFeatureGroup } from '@poolmaster/shared/domain';
+import type { LeaguePlanListResponse, PlanEntitlementsDto, PlanFeatureGroupDto } from '@/lib/api';
 
 /** A plan as the API returns it; by default Platinum with no limit set, every feature, and not offered to commissioners. */
 export function buildPlanEntitlements(overrides: Partial<PlanEntitlementsDto> = {}): PlanEntitlementsDto {
@@ -12,6 +12,14 @@ export function buildPlanEntitlements(overrides: Partial<PlanEntitlementsDto> = 
   };
 }
 
+/** The feature groups as the plans API sends them: each group with its features, in declaration order. */
+export function buildPlanFeatureGroups(): PlanFeatureGroupDto[] {
+  return Object.values(PlanFeatureGroup).map((group) => ({
+    group,
+    features: Object.values(PlanFeature).filter((feature) => PLAN_FEATURE_GROUP[feature] === group),
+  }));
+}
+
 /** The plan list as the API returns it: the plans given, a six-month Premium preview, and the default expansion prices with payments off. */
 export function buildPlanListResponse(
   plans: PlanEntitlementsDto[],
@@ -20,6 +28,7 @@ export function buildPlanListResponse(
   const band = (entriesPerContest: number, dollars: number) => ({ entriesPerContest, priceCents: dollars * 100 });
   return {
     plans,
+    featureGroups: buildPlanFeatureGroups(),
     previewPeriodMonths: 6,
     previewPlan: LeaguePlan.PREMIUM,
     paymentsEnabled: false,

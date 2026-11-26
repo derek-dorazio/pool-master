@@ -6,7 +6,7 @@ import {
   listLeaguePlans,
   updateLeaguePlan,
 } from '@poolmaster/shared/generated/hey-api';
-import { LeaguePlan, PlanFeature } from '@poolmaster/shared/domain';
+import { LeaguePlan, PlanFeature, PlanFeatureGroup } from '@poolmaster/shared/domain';
 import { LeagueContextResponseSchema, LeaguePlanListResponseSchema, LeagueResponseSchema } from '@poolmaster/shared/dto';
 import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin } from './builders';
 import { cleanupFunctionalData, disconnectFunctionalPrisma, getSdkClient } from './setup';
@@ -76,6 +76,14 @@ describe('SDK Functional: choosing a league plan (#945)', () => {
     expect(plans[2]?.features).toContain(PlanFeature.ALL_TIME_SUMMARY);
     expect(plans[2]?.features).toContain(PlanFeature.RECORD_BOOK);
     expect(plans[3]?.caps).toEqual({ ENTRIES_PER_CONTEST: 500, SPORTS_LEAGUES_PER_YEAR: 50 });
+  });
+
+  it('tells a visitor which group each plan feature is in, every feature in exactly one group', async () => {
+    const list = LeaguePlanListResponseSchema.parse(expectDefined((await listLeaguePlans({ client: getSdkClient() })).data));
+
+    expect(list.featureGroups.map((entry) => entry.group)).toEqual([PlanFeatureGroup.EMAILS, PlanFeatureGroup.CHAMPIONSHIPS, PlanFeatureGroup.HISTORY]);
+    expect(list.featureGroups.flatMap((entry) => entry.features).sort()).toEqual(Object.values(PlanFeature).sort());
+    expect(list.featureGroups.find((entry) => entry.group === PlanFeatureGroup.HISTORY)?.features).toContain(PlanFeature.RECORD_BOOK);
   });
 
   it('tells a visitor that every new league is gifted Premium and for how long, and each plan\'s contest expansion prices, free while payments are off', async () => {

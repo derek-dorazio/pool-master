@@ -10,7 +10,7 @@ import { schemaRef } from '@poolmaster/shared/dto/schema-registry';
 // Registers the named components these routes $ref (#192).
 import '@poolmaster/shared/dto';
 import { schemaComponentsPlugin } from '../../plugins/schema-components';
-import { toPlanEntitlementsDto } from '../../mappers/plans.mapper';
+import { toPlanEntitlementsDto, toPlanFeatureGroupDtos } from '../../mappers/plans.mapper';
 import { PREMIUM_PREVIEW_PERIOD_MONTHS, PREVIEW_PLAN } from './league-plan-service';
 import type { PlanEntitlementsService } from './plan-entitlements-service';
 
@@ -44,6 +44,7 @@ export function plansModule(fastify: FastifyInstance, opts: PlansModuleOptions):
       const billing = opts.readBillingConfig();
       return {
         plans: LEAGUE_PLANS.map((plan) => toPlanEntitlementsDto(opts.planEntitlements.forPlan(plan))),
+        featureGroups: toPlanFeatureGroupDtos(),
         previewPeriodMonths: PREMIUM_PREVIEW_PERIOD_MONTHS,
         previewPlan: PREVIEW_PLAN,
         paymentsEnabled: billing.paymentsEnabled,

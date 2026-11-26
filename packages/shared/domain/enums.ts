@@ -1916,8 +1916,12 @@ export const PlanFeatureGroup = {
   HISTORY: 'HISTORY',
 } as const;
 export type PlanFeatureGroup = (typeof PlanFeatureGroup)[keyof typeof PlanFeatureGroup];
-/** No natural order: A to Z by its display strings. */
-export const PlanFeatureGroupOrder = alphabeticalOrder('PlanFeatureGroup');
+/** The order the Plans pages list the groups in (#2110): emails first, then championships, then history. */
+export const PlanFeatureGroupOrder = explicitOrder<PlanFeatureGroup>({
+  [PlanFeatureGroup.EMAILS]: 0,
+  [PlanFeatureGroup.CHAMPIONSHIPS]: 1,
+  [PlanFeatureGroup.HISTORY]: 2,
+});
 
 export const PLAN_FEATURE_GROUP: Readonly<Record<PlanFeature, PlanFeatureGroup>> = {
   EMAIL_CONTEST_OPENED: PlanFeatureGroup.EMAILS,
