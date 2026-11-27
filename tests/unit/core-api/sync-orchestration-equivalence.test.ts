@@ -10,11 +10,8 @@ import { JobTrigger, Sport, type ProviderSyncRun } from '@poolmaster/shared/doma
 import type { ProviderSyncRunRepository } from '@poolmaster/shared/db';
 import { ProviderSyncRunLedger } from '../../../packages/core-api/src/modules/ingestion/persistence/provider-sync-run-ledger';
 import { SyncOrchestrator } from '../../../packages/core-api/src/modules/ingestion/core/sync-orchestrator';
-import type {
-  IngestionFeedType,
-  IngestionJobRecord,
-} from '../../../packages/core-api/src/modules/ingestion/core/ingestion-scheduler';
-import type { NormalizedSyncRequest } from '../../../packages/core-api/src/modules/ingestion/core/sync-orchestrator';
+import type { IngestionJobRecord } from '../../../packages/core-api/src/modules/ingestion/core/ingestion-scheduler';
+import type { EventSyncKind, NormalizedSyncRequest } from '../../../packages/core-api/src/modules/ingestion/core/sync-orchestrator';
 import type { StoredSyncRunDetails } from '../../support/sync-run-payload';
 import { TEST_PROVIDER_ROWS } from '../../support/balldontlie-provider-rows';
 
@@ -84,7 +81,7 @@ function createOrchestrator(now: Date) {
 
 function createEventRequest(input: {
   source: 'SCHEDULED' | 'MANUAL';
-  feed: 'EVENTPARTICIPANTS' | 'EVENTLIVESCORES';
+  kind: 'FIELD' | 'SCORES';
   now: Date;
 }): NormalizedSyncRequest {
   const actor = input.source === 'SCHEDULED'
@@ -98,14 +95,14 @@ function createEventRequest(input: {
       sport: Sport.GOLF,
       providerId: 'balldontlie',
       eventId: 'event-1',
-      feeds: [input.feed],
+      kinds: [input.kind],
     },
   });
 }
 
 function createJob(input: {
   jobType: IngestionJobRecord['jobType'];
-  feed: IngestionFeedType;
+  kind: EventSyncKind;
   eventId: string;
   status?: IngestionJobRecord['status'];
   recordsProcessed: number;
@@ -127,14 +124,13 @@ function createJob(input: {
       ? [{ error: 'Provider returned no live scores', at: new Date('2026-05-30T12:00:02.000Z') }]
       : [],
     providerPayload: {
-      operation: input.feed,
       rawCaptured: true,
       rawTruncated: false,
       raw: [{
         operation: 'balldontlie.request',
-        path: `/v1/test/${input.feed}`,
+        path: `/v1/test/${input.kind}`,
         capturedAt: '2026-05-30T12:00:02.000Z',
-        raw: { feed: input.feed },
+        raw: { kind: input.kind },
       }],
     },
     stats: input.stats,
@@ -172,7 +168,7 @@ describe('sync orchestration equivalence', () => {
     const now = new Date('2026-05-30T12:00:00.000Z');
     const job = createJob({
       jobType: 'EVENT_PARTICIPANTS_SYNC',
-      feed: 'EVENTPARTICIPANTS',
+      kind: 'FIELD',
       eventId: 'event-1',
       recordsProcessed: 0,
       warnings: [{
@@ -187,18 +183,18 @@ describe('sync orchestration equivalence', () => {
     });
 
     const scheduledPayload = await runAndReadPayload({
-      normalizedRequest: createEventRequest({ source: 'SCHEDULED', feed: 'EVENTPARTICIPANTS', now }),
+      normalizedRequest: createEventRequest({ source: 'SCHEDULED', kind: 'FIELD', now }),
       job,
     });
     const manualPayload = await runAndReadPayload({
-      normalizedRequest: createEventRequest({ source: 'MANUAL', feed: 'EVENTPARTICIPANTS', now }),
+      normalizedRequest: createEventRequest({ source: 'MANUAL', kind: 'FIELD', now }),
       job,
     });
 
     expect(clonePayload(scheduledPayload)).toEqual(clonePayload(manualPayload));
     expect(clonePayload(scheduledPayload)).toMatchObject({
       providerPayload: {
-        operation: 'EVENTPARTICIPANTS',
+        
         rawCaptured: true,
       },
       stats: {
@@ -213,7 +209,7 @@ describe('sync orchestration equivalence', () => {
     const now = new Date('2026-05-30T12:00:00.000Z');
     const job = createJob({
       jobType: 'EVENT_LIVE_SCORES_SYNC',
-      feed: 'EVENTLIVESCORES',
+      kind: 'SCORES',
       eventId: 'event-1',
       status: 'FAILED',
       recordsProcessed: 0,
@@ -224,11 +220,11 @@ describe('sync orchestration equivalence', () => {
     });
 
     const scheduledPayload = await runAndReadPayload({
-      normalizedRequest: createEventRequest({ source: 'SCHEDULED', feed: 'EVENTLIVESCORES', now }),
+      normalizedRequest: createEventRequest({ source: 'SCHEDULED', kind: 'SCORES', now }),
       job,
     });
     const manualPayload = await runAndReadPayload({
-      normalizedRequest: createEventRequest({ source: 'MANUAL', feed: 'EVENTLIVESCORES', now }),
+      normalizedRequest: createEventRequest({ source: 'MANUAL', kind: 'SCORES', now }),
       job,
     });
 
@@ -238,11 +234,11 @@ describe('sync orchestration equivalence', () => {
       changedCount: null,
       errorCount: 1,
       providerPayload: {
-        operation: 'EVENTLIVESCORES',
+        
         rawCaptured: true,
         raw: [{
           operation: 'balldontlie.request',
-          path: '/v1/test/EVENTLIVESCORES',
+          path: '/v1/test/SCORES',
         }],
       },
       jobPayload: {

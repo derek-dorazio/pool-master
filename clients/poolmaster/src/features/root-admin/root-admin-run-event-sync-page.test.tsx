@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
@@ -108,7 +108,7 @@ describe('RootAdminRunEventSyncPage', () => {
       data: {
         sport: 'GOLF',
         eventId: 'golf-masters-2026',
-        requestedFeeds: ['EVENTPARTICIPANTS'],
+        requestedKinds: ['FIELD'],
         syncRuns: [{ id: 'sync-run-2' }],
       },
     });
@@ -130,6 +130,7 @@ describe('RootAdminRunEventSyncPage', () => {
             readinessReasons: [],
             contestEligible: true,
             isTestData: false,
+            syncKinds: ['FIELD'],
           },
         ],
       },
@@ -160,7 +161,7 @@ describe('RootAdminRunEventSyncPage', () => {
     await waitFor(() => {
       expect(submitEventSyncMock).toHaveBeenCalledWith({
         path: { eventId: 'event-internal-1' },
-        body: { feeds: ['EVENTPARTICIPANTS'] },
+        body: { kinds: ['FIELD'] },
       });
     });
 
@@ -170,6 +171,14 @@ describe('RootAdminRunEventSyncPage', () => {
     expect(
       screen.getByTestId('root-admin-event-sync-response'),
     ).toHaveTextContent('golf-masters-2026');
+  });
+
+  it('offers the two event sync kinds, field and scores, by their display names', async () => {
+    renderPage();
+
+    const kindSelect = await screen.findByTestId('root-admin-event-sync-kind');
+    expect(within(kindSelect).getAllByRole('option').map((option) => [(option as HTMLOptionElement).value, option.textContent]))
+      .toEqual([['FIELD', 'Field'], ['SCORES', 'Live scores and results']]);
   });
 
   it('reads only the sport league\'s current Season of events, never every Season of the sport, and reads another Season when it is picked', async () => {
@@ -209,6 +218,7 @@ describe('RootAdminRunEventSyncPage', () => {
             readinessReasons: [],
             contestEligible: true,
             isTestData: true,
+            syncKinds: [],
           },
         ],
       },
@@ -216,7 +226,7 @@ describe('RootAdminRunEventSyncPage', () => {
 
     renderPage();
 
-    expect(await screen.findByText(/No synced golf events match this preset/)).toBeInTheDocument();
+    expect(await screen.findByText(/No synced golf events match this sync/)).toBeInTheDocument();
     expect(screen.getByRole('option', { name: 'Golf' })).toBeInTheDocument();
     expect(screen.queryByRole('option', { name: /Unlinked Golf Tournament/ })).not.toBeInTheDocument();
     expect(screen.getByTestId('root-admin-event-sync-now')).toBeDisabled();
@@ -256,7 +266,7 @@ describe('RootAdminRunEventSyncPage', () => {
     expect(screen.getByTestId('root-admin-event-sync-now')).toBeDisabled();
   });
 
-  it('drops the selected event when the preset rules it out, so sync cannot run on it', async () => {
+  it('drops the selected event when the chosen sync rules it out, so sync cannot run on it', async () => {
     renderPage();
 
     await screen.findByRole('option', { name: /Manual Test Golf Tournament/ });
@@ -265,13 +275,36 @@ describe('RootAdminRunEventSyncPage', () => {
     });
     expect(screen.getByTestId('root-admin-event-sync-now')).toBeEnabled();
 
-    // A scheduled event has no live scores to sync without a mock state.
-    fireEvent.change(screen.getByTestId('root-admin-event-sync-preset'), {
-      target: { value: 'EVENTLIVESCORES' },
+    // A scheduled event's sync kinds are its FIELD only, so choosing SCORES rules it out.
+    fireEvent.change(screen.getByTestId('root-admin-event-sync-kind'), {
+      target: { value: 'SCORES' },
     });
 
     expect(screen.getByTestId('root-admin-event-sync-event-id')).toHaveValue('');
     expect(screen.getByTestId('root-admin-event-sync-now')).toBeDisabled();
+  });
+
+  it('offers an event under a sync kind only when the API lists that kind for it, whatever its status', async () => {
+    const inPlay = {
+      providerMappings: [{ providerCode: 'BALLDONTLIE', providerName: 'BALLDONTLIE', externalId: '7' }],
+      sport: 'GOLF', venue: null, location: null, status: 'IN_PROGRESS', startDate: '2026-04-27T16:00:00.000Z', endDate: null,
+      participantCount: 144, readinessStatus: 'STARTED', readinessReasons: [], contestEligible: false, isTestData: false,
+    };
+    listEventsMock.mockResolvedValue({
+      data: {
+        events: [
+          { ...inPlay, id: 'event-scores', name: 'Scores Open', syncKinds: ['FIELD', 'SCORES'] },
+          { ...inPlay, id: 'event-field-only', name: 'Field Only Open', syncKinds: ['FIELD'] },
+        ],
+      },
+    });
+    renderPage();
+
+    expect(await screen.findByRole('option', { name: /Field Only Open/ })).toBeInTheDocument();
+    fireEvent.change(screen.getByTestId('root-admin-event-sync-kind'), { target: { value: 'SCORES' } });
+
+    expect(screen.getByRole('option', { name: /Scores Open/ })).toBeInTheDocument();
+    expect(screen.queryByRole('option', { name: /Field Only Open/ })).not.toBeInTheDocument();
   });
 
   it('sends the chosen event by its own id when two providers\' events share an external id', async () => {
@@ -287,6 +320,7 @@ describe('RootAdminRunEventSyncPage', () => {
       readinessReasons: [],
       contestEligible: true,
       isTestData: false,
+      syncKinds: ['FIELD'],
     };
     listEventsMock.mockResolvedValue({
       data: {
@@ -304,7 +338,7 @@ describe('RootAdminRunEventSyncPage', () => {
     await waitFor(() => {
       expect(submitEventSyncMock).toHaveBeenCalledWith({
         path: { eventId: 'event-bdl' },
-        body: { feeds: ['EVENTPARTICIPANTS'] },
+        body: { kinds: ['FIELD'] },
       });
     });
 

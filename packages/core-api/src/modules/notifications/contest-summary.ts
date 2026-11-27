@@ -13,6 +13,7 @@ import type {
 import {
   type Contest,
   type ContestSelectionConfig,
+  contestRoundCoverage,
   eventSportDefinition,
   formatContestRules,
   formatEntriesPerTeamSentence,
@@ -23,7 +24,7 @@ import {
   sportVocabulary,
 } from '@poolmaster/shared/domain';
 import { ContestCutoffKind, contestCutoff, cutoffTiming } from '../contests/entry-window';
-import { readEventMatchesOnce, readEventsOnce, readOncePerKey } from '../events/event-reads';
+import { readEventMatchesOnce, readEventsOnce, readOncePerKey, readTiersOnce } from '../events/event-reads';
 import type { SportEventTierService } from '../events/sport-event-tier-service';
 
 export interface ContestSummaryDeps {
@@ -63,7 +64,7 @@ export function shareSummaryReads(
     sportEvents: readEventsOnce(deps.sportEvents, known),
     sportLeagues: { findById: readOncePerKey((id) => deps.sportLeagues.findById(id)) },
     matches: readEventMatchesOnce(deps.matches),
-    tiers: { getEffectiveTiersForSportEvent: readOncePerKey((id) => deps.tiers.getEffectiveTiersForSportEvent(id)) },
+    tiers: readTiersOnce(deps.tiers),
   };
 }
 
@@ -91,7 +92,10 @@ export async function summarizeContest(deps: ContestSummaryDeps, contest: Contes
     sportLeagueName: sportLeague?.name ?? '',
     rules: formatContestRules(
       rules,
-      rules.selectionType === SelectionType.TIERED ? (await deps.tiers.getEffectiveTiersForSportEvent(first.id)).length : 0,
+      rules.selectionType === SelectionType.TIERED
+        // The set the contest picks from: the first slot it covers holding one (#2044).
+        ? (await deps.tiers.getEffectiveTiersForSportEvent(first.id, { coveredSlotDefinitionIds: contestRoundCoverage(configuration).slotDefinitionIds })).length
+        : 0,
       sportVocabulary(eventSportDefinition(first)).participant,
       rules.selectionType === SelectionType.BUDGET_PICK ? rules.salaryCap : null,
     ),

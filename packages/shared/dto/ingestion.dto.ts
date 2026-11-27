@@ -17,22 +17,16 @@ import {
   ProviderWebhookEventSet,
   Sport,
 } from '@poolmaster/shared/domain';
-import { DateTimeSchema, JsonObjectSchema } from './common.dto';
+import { DateTimeSchema, EventSyncKindSchema, JsonObjectSchema } from './common.dto';
 import { registerSchema } from './schema-registry';
 
 const SportDtoSchema = z.enum(Sport);
 
-export const IngestionFeedTypeSchema = z.enum([
-  'EVENTPARTICIPANTS',
-  'EVENTLIVESCORES',
-]).describe('Explicit ingestion feed type requested by the caller. Every feed is event-scoped.');
-export type IngestionFeedType = z.infer<typeof IngestionFeedTypeSchema>;
-
 export const EventSyncRequestSchema = z.object({
-  feeds: z.array(IngestionFeedTypeSchema).min(1).describe(
-    'Feed types to run for a specific event sync request.',
+  kinds: z.array(EventSyncKindSchema).min(1).describe(
+    'The sync kinds to run for the event, each once.',
   ),
-}).describe('Feed-aware event sync request.');
+}).describe('A manual event sync request.');
 export type EventSyncRequest = z.infer<typeof EventSyncRequestSchema>;
 
 // --- Providers ---
@@ -144,7 +138,6 @@ export const ProviderSyncKindSchema = z.enum(ProviderSyncKind).describe('What a 
 export const JobTriggerSchema = z.enum(JobTrigger).describe('What started a job or sync run: a SCHEDULE, the provider\'s WEBHOOK, a person acting through a root ADMIN route (Sync now, Release) or a league\'s COMMISSIONER tools, or the SYSTEM (another job, or upkeep such as a stale board\'s rebuild). A person\'s trigger is the role the route requires, not their highest role. A sync run has its job\'s.');
 
 export const ProviderSyncProviderPayloadDtoSchema = z.object({
-  operation: IngestionFeedTypeSchema.describe('Provider feed operation represented by this payload.'),
   rawCaptured: z.boolean().describe('Whether raw provider response JSON was captured for this run.'),
   rawTruncated: z.boolean().describe('Whether the captured raw provider payload was truncated before storage.'),
   raw: z.unknown().optional().describe('Raw provider response JSON retained for debugging when capture is available.'),
@@ -274,7 +267,7 @@ export type ProviderSyncRunListResponse = z.infer<typeof ProviderSyncRunListResp
 export const ProviderManualSyncSubmissionResponseSchema = z.object({
   sport: SportDtoSchema,
   eventId: z.string().describe('Provider event identifier the submitted runs sync.'),
-  requestedFeeds: z.array(IngestionFeedTypeSchema),
+  requestedKinds: z.array(EventSyncKindSchema).describe('The sync kinds the submission runs, each once.'),
   submittedAt: DateTimeSchema,
   syncRuns: z.array(ProviderSyncRunDtoSchema),
 }).describe('A manual sync submission. The runs execute asynchronously after the request is accepted.');

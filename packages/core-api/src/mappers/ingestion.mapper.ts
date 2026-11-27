@@ -120,7 +120,7 @@ export function toProviderManualSyncSubmissionResponse(
   return {
     sport: result.sport,
     eventId: result.eventId,
-    requestedFeeds: result.requestedFeeds,
+    requestedKinds: result.requestedKinds,
     submittedAt: result.submittedAt.toISOString(),
     syncRuns: result.syncRuns.map((run) => toProviderSyncRunDto(run)),
   };

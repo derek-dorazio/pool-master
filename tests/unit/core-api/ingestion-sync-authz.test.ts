@@ -42,7 +42,7 @@ function createIngestionServiceMock() {
     syncSportEvent: jest.fn().mockResolvedValue({
       sport: 'GOLF',
       eventId: EVENT_ID,
-      requestedFeeds: ['EVENTLIVESCORES'],
+      requestedKinds: ['SCORES'],
       submittedAt: new Date('2026-05-30T00:00:00.000Z'),
       syncRuns: [],
     }),
@@ -84,7 +84,7 @@ describe('pool-master-rop.68.4.1 ingestion sync route authorization', () => {
       url: '/api/v1/ingestion/sports/GOLF/sync',
       headers: authHeaders('root-admin-user', true),
       payload: {
-        feeds: ['EVENTSCHEDULE'],
+        kinds: ['EVENTSCHEDULE'],
       },
     });
 
@@ -101,7 +101,7 @@ describe('pool-master-rop.68.4.1 ingestion sync route authorization', () => {
       method: 'POST',
       url: `/api/v1/ingestion/events/${EVENT_ID}/sync`,
       headers: authHeaders('member-user', false),
-      payload: { feeds: ['EVENTLIVESCORES'] },
+      payload: { kinds: ['SCORES'] },
     });
 
     expect(res.statusCode).toBe(403);
@@ -119,11 +119,11 @@ describe('pool-master-rop.68.4.1 ingestion sync route authorization', () => {
       method: 'POST',
       url: `/api/v1/ingestion/events/${EVENT_ID}/sync`,
       headers: authHeaders('root-admin-user', true),
-      payload: { feeds: ['EVENTLIVESCORES'] },
+      payload: { kinds: ['SCORES'] },
     });
     expect(eventRes.statusCode).toBe(202);
     expect(ProviderManualSyncSubmissionResponseSchema.safeParse(eventRes.json()).success).toBe(true);
-    expect(providerService.syncSportEvent).toHaveBeenCalledWith(EVENT_ID, ['EVENTLIVESCORES'], 'root-admin-user', 'root-admin-user@example.test');
+    expect(providerService.syncSportEvent).toHaveBeenCalledWith(EVENT_ID, ['SCORES'], 'root-admin-user', 'root-admin-user@example.test');
 
     await app.close();
   });
@@ -135,7 +135,7 @@ describe('pool-master-rop.68.4.1 ingestion sync route authorization', () => {
       method: 'POST',
       url: '/api/v1/ingestion/events/event-1/sync',
       headers: authHeaders('root-admin-user', true),
-      payload: { feeds: ['EVENTLIVESCORES'] },
+      payload: { kinds: ['SCORES'] },
     });
 
     expect(eventRes.statusCode).toBe(400);
@@ -154,7 +154,7 @@ describe('pool-master-rop.68.4.1 ingestion sync route authorization', () => {
       method: 'POST',
       url: `/api/v1/ingestion/events/${EVENT_ID}/sync`,
       headers: authHeaders('root-admin-user', true),
-      payload: { feeds: ['EVENTLIVESCORES'] },
+      payload: { kinds: ['SCORES'] },
     });
     expect(eventRes.statusCode).toBe(422);
     expect(eventRes.json<ErrorEnvelope>().error).toEqual({

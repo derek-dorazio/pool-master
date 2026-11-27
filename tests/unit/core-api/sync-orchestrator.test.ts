@@ -1,14 +1,11 @@
 import { Sport } from '@poolmaster/shared/domain';
-import {
-  EventSyncRequestSchema,
-  IngestionFeedTypeSchema,
-  type IngestionFeedType,
-} from '@poolmaster/shared/dto/ingestion.dto';
+import { EventSyncKindSchema } from '@poolmaster/shared/dto/common.dto';
+import { EventSyncRequestSchema } from '@poolmaster/shared/dto/ingestion.dto';
 import * as ingestionDtos from '@poolmaster/shared/dto/ingestion.dto';
 import * as syncOrchestratorModule from '../../../packages/core-api/src/modules/ingestion/core/sync-orchestrator';
 import {
-  EVENT_SYNC_FEEDS,
   SyncOrchestrator,
+  isEventSyncKind,
   SyncRequestValidationError,
   normalizeSyncRequest,
 } from '../../../packages/core-api/src/modules/ingestion/core/sync-orchestrator';
@@ -25,7 +22,7 @@ describe('SyncOrchestrator request model', () => {
     name: 'scheduler',
   } as const;
 
-  it('pool-master-rop.68.2.1: normalizes a manual event sync: trims the event id and drops repeated feeds', () => {
+  it('pool-master-rop.68.2.1: normalizes a manual event sync: trims the event id and drops repeated sync kinds', () => {
     const normalized = normalizeSyncRequest({
       source: 'MANUAL',
       actor: rootAdminActor,
@@ -34,7 +31,7 @@ describe('SyncOrchestrator request model', () => {
         sport: Sport.GOLF,
         providerId: 'mock-provider',
         eventId: '  golf-open-championship-2026  ',
-        feeds: ['EVENTPARTICIPANTS', 'EVENTLIVESCORES', 'EVENTPARTICIPANTS'],
+        kinds: ['FIELD', 'SCORES', 'FIELD'],
       },
     }, { now: () => new Date('2026-05-30T12:00:00.000Z') });
 
@@ -46,7 +43,7 @@ describe('SyncOrchestrator request model', () => {
       sport: Sport.GOLF,
       providerId: 'mock-provider',
       eventId: 'golf-open-championship-2026',
-      feeds: ['EVENTPARTICIPANTS', 'EVENTLIVESCORES'],
+      kinds: ['FIELD', 'SCORES'],
     });
   });
 
@@ -62,7 +59,7 @@ describe('SyncOrchestrator request model', () => {
         sport: Sport.GOLF,
         providerId: 'mock-provider',
         eventId: 'golf-masters-2026',
-        feeds: ['EVENTLIVESCORES'],
+        kinds: ['SCORES'],
       },
     });
 
@@ -74,7 +71,7 @@ describe('SyncOrchestrator request model', () => {
         sport: Sport.GOLF,
         providerId: 'mock-provider',
         eventId: 'golf-masters-2026',
-        feeds: ['EVENTLIVESCORES'],
+        kinds: ['SCORES'],
       },
       normalizedAt: now,
     });
@@ -89,7 +86,7 @@ describe('SyncOrchestrator request model', () => {
         sport: Sport.GOLF,
         providerId: 'mock-provider',
         eventId: 'golf-masters-2026',
-        feeds: ['EVENTLIVESCORES'],
+        kinds: ['SCORES'],
       },
     }), 'MANUAL_REQUIRES_ROOT_ADMIN_ACTOR');
 
@@ -101,7 +98,7 @@ describe('SyncOrchestrator request model', () => {
         sport: Sport.GOLF,
         providerId: 'mock-provider',
         eventId: 'golf-masters-2026',
-        feeds: ['EVENTLIVESCORES'],
+        kinds: ['SCORES'],
       },
     }), 'SCHEDULED_REQUIRES_SYSTEM_ACTOR');
   });
@@ -112,7 +109,7 @@ describe('SyncOrchestrator request model', () => {
       sport: Sport.GOLF,
       providerId: 'balldontlie',
       eventId: '1133',
-      feeds: ['EVENTLIVESCORES' as const],
+      kinds: ['SCORES' as const],
     };
 
     expect(normalizeSyncRequest({ source: 'WEBHOOK', actor: { type: 'SYSTEM', name: 'webhook' }, scope: webhookScope }).source)
@@ -123,7 +120,7 @@ describe('SyncOrchestrator request model', () => {
       'WEBHOOK_REQUIRES_WEBHOOK_ACTOR');
   });
 
-  it('rejects an empty feed list and a feed the event scope does not run', () => {
+  it('rejects a sync request with no sync kind', () => {
     expectSyncRequestValidationErrorCode(() => normalizeSyncRequest({
       source: 'MANUAL',
       actor: rootAdminActor,
@@ -132,48 +129,26 @@ describe('SyncOrchestrator request model', () => {
         sport: Sport.GOLF,
         providerId: 'mock-provider',
         eventId: 'golf-open-championship-2026',
-        feeds: [],
+        kinds: [],
       },
-    }), 'EMPTY_FEED_LIST');
-
-    expectSyncRequestValidationErrorCode(() => normalizeSyncRequest({
-      source: 'MANUAL',
-      actor: rootAdminActor,
-      scope: {
-        type: 'EVENT',
-        sport: Sport.GOLF,
-        providerId: 'mock-provider',
-        eventId: 'golf-open-championship-2026',
-        // @ts-expect-error -- EVENTSCHEDULE is no longer a member of IngestionFeedType.
-        feeds: ['EVENTSCHEDULE'],
-      },
-    }), 'INVALID_EVENT_FEED');
+    }), 'EMPTY_KIND_LIST');
   });
 
-  it.each(['PARTICIPANTRANKINGS', 'EVENTSCHEDULE', 'EVENTRESULTS'])(
-    '#125/#126: %s is retired as a feed type — the contract, the event sync request and the orchestrator all refuse it',
-    (retired) => {
-      expect(IngestionFeedTypeSchema.safeParse(retired).success).toBe(false);
-      expect(IngestionFeedTypeSchema.options).not.toContain(retired);
-      expect(EventSyncRequestSchema.safeParse({ feeds: [retired] }).success).toBe(false);
-      expect(EVENT_SYNC_FEEDS).not.toContain(retired);
-      expectSyncRequestValidationErrorCode(() => normalizeSyncRequest({
-        source: 'MANUAL',
-        actor: rootAdminActor,
-        scope: {
-          type: 'EVENT',
-          sport: Sport.GOLF,
-          providerId: 'mock-provider',
-          eventId: 'golf-masters-2026',
-          feeds: [retired as IngestionFeedType],
-        },
-      }), 'INVALID_EVENT_FEED');
+  it.each(['EVENTS', 'EVENTPARTICIPANTS', 'EVENTLIVESCORES', 'EVENTSCHEDULE'])(
+    'the event sync request refuses %s: an event syncs its FIELD or its SCORES, never a league\'s EVENTS or an old feed name',
+    (refused) => {
+      expect(EventSyncRequestSchema.safeParse({ kinds: [refused] }).success).toBe(false);
     },
   );
 
-  it('#126: there is no sport-level sync — every feed is event-scoped and no sport sync request exists', () => {
-    expect(IngestionFeedTypeSchema.options).toEqual(['EVENTPARTICIPANTS', 'EVENTLIVESCORES']);
-    expect(EVENT_SYNC_FEEDS).toEqual(['EVENTPARTICIPANTS', 'EVENTLIVESCORES']);
+  it('the event sync request takes sync kinds, not the old feeds list', () => {
+    expect(EventSyncRequestSchema.safeParse({ kinds: ['FIELD', 'SCORES'] }).success).toBe(true);
+    expect(EventSyncRequestSchema.safeParse({ feeds: ['EVENTPARTICIPANTS'] }).success).toBe(false);
+  });
+
+  it('#126: there is no sport-level sync — an event syncs its FIELD and SCORES, and a league\'s EVENTS is no event sync', () => {
+    expect(EventSyncKindSchema.options).toEqual(['FIELD', 'SCORES']);
+    expect([isEventSyncKind('FIELD'), isEventSyncKind('SCORES'), isEventSyncKind('EVENTS')]).toEqual([true, true, false]);
     expect(Reflect.get(ingestionDtos, 'SportSyncRequestSchema')).toBeUndefined();
     expect(Reflect.get(syncOrchestratorModule, 'SPORT_SYNC_FEEDS')).toBeUndefined();
     expect(Reflect.get(syncOrchestratorModule, 'resolveSportSyncWindowPolicy')).toBeUndefined();
@@ -188,7 +163,7 @@ describe('SyncOrchestrator request model', () => {
         sport: Sport.GOLF,
         providerId: 'mock-provider',
         eventId: '   ',
-        feeds: ['EVENTLIVESCORES'],
+        kinds: ['SCORES'],
       },
     }), 'INVALID_EVENT_ID');
   });

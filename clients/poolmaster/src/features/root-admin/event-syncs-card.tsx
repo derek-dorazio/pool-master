@@ -1,5 +1,5 @@
 import { enumLabel } from '@poolmaster/shared/display-strings';
-import { ProviderSyncKind, SportLeagueSyncHealth } from '@poolmaster/shared/domain';
+import { ProviderSyncKind, SportLeagueSyncHealth, type EventSyncKind } from '@poolmaster/shared/domain';
 import { refreshEventParticipants, submitEventSync, type SportEventDto, type SportEventOverviewDto } from '@/lib/api';
 import {
   Button,
@@ -20,9 +20,6 @@ import { fieldWriteKeys } from './use-sport-event';
 
 const logger = getLogger().child({ feature: 'root-admin-event-page' });
 
-/** The syncs an event's tabs show, each on its own tab. */
-type EventSyncKind = typeof ProviderSyncKind.FIELD | typeof ProviderSyncKind.SCORES;
-
 /** Queues one run of the event's field or live scores sync, as its provider's own. */
 async function queueEventSync(event: SportEventDto, kind: EventSyncKind): Promise<void> {
   if (kind === ProviderSyncKind.FIELD) {
@@ -30,7 +27,7 @@ async function queueEventSync(event: SportEventDto, kind: EventSyncKind): Promis
     if (!response.data?.syncRuns) throwApiError(response.error, 'Field sync response is missing data.');
     return;
   }
-  const response = await submitEventSync({ path: { eventId: event.id }, body: { feeds: ['EVENTLIVESCORES'] } });
+  const response = await submitEventSync({ path: { eventId: event.id }, body: { kinds: [ProviderSyncKind.SCORES] } });
   if (!response.data) throwApiError(response.error, 'Live scores sync response is missing data.');
 }
 

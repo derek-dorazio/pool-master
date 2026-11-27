@@ -72,6 +72,8 @@ function errors(...statuses: number[]) {
 
 const uuid = { type: 'string', format: 'uuid' };
 const EVENT_PARAMS = { type: 'object', required: ['eventId'], properties: { eventId: uuid } };
+/** An event and a Season slot it is played in: the slot whose tier set a slot route reads or writes (#2044). */
+const SLOT_PARAMS = { type: 'object', required: ['eventId', 'seasonSlotId'], properties: { eventId: uuid, seasonSlotId: uuid } };
 const ROUND_PARAMS = {
   type: 'object',
   required: ['eventId', 'roundNumber'],
@@ -465,6 +467,94 @@ export async function eventsModule(fastify: FastifyInstance, opts: EventsModuleO
       response: { 200: schemaRef('SportEventParticipantListResponse'), ...errors(401, 403, 404, 409, 422) },
     },
     handler: handler.autoAssignEventPrices,
+  });
+
+  // --- A slot's tiers and valuations (#2044): every slot a tiered or budget contest may start at
+  // holds its own set (chooseTierSetSlots), keyed by the Season slot the event is played in. The event routes above act on
+  // the event's tier-set slot, the first of them. Each answers 404 SPORT_EVENT_SLOT_NOT_FOUND for a
+  // Season slot the event is not played in.
+
+  const SLOT_SET = 'The set of the slot the event plays in this Season slot (#2044): a slot holds one when a contest of a tiered or budget template may start there (each slot a one-slot or from-slot template lists, the first a whole-event template lists), or it is the event\'s first slot and no such template lists any.';
+  const SLOT_LOCK = '409 SPORT_EVENT_TIERS_LOCKED once the set is locked: the event\'s tier-set slot (its first slot holding a set) at release, any other slot once it starts. 409 SLOT_HOLDS_NO_TIER_SET for a slot holding no set.';
+
+  fastify.get('/:eventId/slots/:seasonSlotId/participants', {
+    schema: {
+      tags: TAGS,
+      summary: 'List a sport event\'s field with a slot\'s valuations',
+      description: `The field as listEventParticipants reads it, each row's valuation in the slot's set. ${SLOT_SET}`,
+      operationId: 'listEventSlotParticipants',
+      params: SLOT_PARAMS,
+      response: { 200: schemaRef('SportEventParticipantListResponse'), ...errors(401, 404) },
+    },
+    handler: handler.listEventSlotParticipants,
+  });
+
+  fastify.get('/:eventId/slots/:seasonSlotId/tiers', {
+    schema: {
+      tags: TAGS,
+      summary: 'List a sport event slot\'s tiers',
+      description: `${SLOT_SET} Who is in each tier is on each field row's valuation (listEventSlotParticipants).`,
+      operationId: 'listEventSlotTiers',
+      params: SLOT_PARAMS,
+      response: { 200: schemaRef('SportEventTierListResponse'), ...errors(401, 404) },
+    },
+    handler: handler.listEventSlotTiers,
+  });
+
+  fastify.put('/:eventId/slots/:seasonSlotId/tiers', {
+    ...write,
+    schema: {
+      tags: TAGS,
+      summary: 'Replace a sport event slot\'s tiers',
+      description: `replaceEventTiers on the slot's set. ${SLOT_SET} ${SLOT_LOCK} Root admin only.`,
+      operationId: 'replaceEventSlotTiers',
+      params: SLOT_PARAMS,
+      body: schemaRef('ReplaceSportEventTiersRequest'),
+      response: { 200: schemaRef('SportEventTierListResponse'), ...errors(401, 403, 404, 409, 422) },
+    },
+    handler: handler.replaceEventSlotTiers,
+  });
+
+  fastify.post('/:eventId/slots/:seasonSlotId/tiers/auto-assign', {
+    ...write,
+    schema: {
+      tags: TAGS,
+      summary: 'Fill a sport event slot\'s tiers from its active field',
+      description: `autoAssignEventTiers on the slot's set, from the field still active: a later slot's set covers who is still in when it starts. Returns the field with the slot's valuations. ${SLOT_LOCK} Root admin only.`,
+      operationId: 'autoAssignEventSlotTiers',
+      params: SLOT_PARAMS,
+      body: schemaRef('AutoAssignSportEventTiersRequest'),
+      response: { 200: schemaRef('SportEventParticipantListResponse'), ...errors(401, 403, 404, 409, 422) },
+    },
+    handler: handler.autoAssignEventSlotTiers,
+  });
+
+  fastify.put('/:eventId/slots/:seasonSlotId/tiers/assignments', {
+    ...write,
+    schema: {
+      tags: TAGS,
+      summary: 'Replace a sport event slot\'s tier assignments',
+      description: `replaceEventTierAssignments on the slot's set. Returns the field with the slot's valuations. ${SLOT_LOCK} Root admin only.`,
+      operationId: 'replaceEventSlotTierAssignments',
+      params: SLOT_PARAMS,
+      body: schemaRef('ReplaceSportEventTierAssignmentsRequest'),
+      response: { 200: schemaRef('SportEventParticipantListResponse'), ...errors(401, 403, 404, 409, 422) },
+    },
+    handler: handler.replaceEventSlotTierAssignments,
+  });
+
+  fastify.post('/:eventId/slots/:seasonSlotId/prices/auto-assign', {
+    ...write,
+    schema: {
+      tags: TAGS,
+      summary: 'Price a sport event slot\'s seeded field',
+      description: `autoAssignEventPrices on the slot's set, recording the values on the slot. Returns the field with the slot's valuations. ${SLOT_LOCK} Root admin only.`,
+      operationId: 'autoAssignEventSlotPrices',
+      params: SLOT_PARAMS,
+      body: schemaRef('AutoAssignSportEventPricesRequest'),
+      response: { 200: schemaRef('SportEventParticipantListResponse'), ...errors(401, 403, 404, 409, 422) },
+    },
+    handler: handler.autoAssignEventSlotPrices,
   });
 
   // --- Golf score corrections: the operations that write golf extension rows ---------------

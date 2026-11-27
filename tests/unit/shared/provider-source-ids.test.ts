@@ -1,4 +1,4 @@
-import { eventFeedRef, eventProviderNameOf, isProviderSyncedEvent, ProviderCode, providerCodeOfSourceId, ProviderHealthStatus, providerHealthOfRuns, providerSourceIdOf } from '@poolmaster/shared/domain';
+import { eventFeedRef, eventProviderNameOf, eventSyncKindsOf, SportEventStatus, isProviderSyncedEvent, ProviderCode, providerCodeOfSourceId, ProviderHealthStatus, providerHealthOfRuns, providerSourceIdOf } from '@poolmaster/shared/domain';
 
 // The providerId a Provider row's events carry, and back: a scheduled sync of synced leagues asks
 // only providers with a row, so a feed with none (the QA mock) syncs no league.
@@ -52,6 +52,25 @@ describe('an event\'s id at its league\'s sync provider (#2004)', () => {
 
     expect(eventFeedRef(event)).toBeUndefined();
     expect(eventProviderNameOf(event)).toBeNull();
+  });
+});
+
+describe('the sync kinds a root admin can run on an event now (#2234)', () => {
+  const linked = { providerMappings: [{ providerCode: ProviderCode.BALLDONTLIE, providerName: 'BALLDONTLIE', externalId: '1133' }], syncProviderId: 'balldontlie' };
+
+  it.each([
+    [SportEventStatus.DRAFT, []],
+    [SportEventStatus.SCHEDULED, ['FIELD']],
+    [SportEventStatus.IN_PROGRESS, ['FIELD', 'SCORES']],
+    [SportEventStatus.COMPLETED, ['FIELD']],
+    [SportEventStatus.POSTPONED, []],
+    [SportEventStatus.CANCELLED, []],
+  ])('a linked %s event runs %j: its field while there is one to load, its scores only while in play', (status, kinds) => {
+    expect(eventSyncKindsOf({ ...linked, status })).toEqual(kinds);
+  });
+
+  it('a test event, which no provider has an id for, runs no sync kind even in play', () => {
+    expect(eventSyncKindsOf({ providerMappings: [], syncProviderId: 'balldontlie', status: SportEventStatus.IN_PROGRESS })).toEqual([]);
   });
 });
 

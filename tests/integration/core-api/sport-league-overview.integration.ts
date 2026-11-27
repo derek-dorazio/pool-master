@@ -164,7 +164,7 @@ describe('ProviderSyncRunLedger with the event repository', () => {
     const normalizedRequest = new SyncOrchestrator({ now: () => NOW }).normalizeRequest({
       source: 'SCHEDULED',
       actor: { type: 'SYSTEM', name: 'scheduler' },
-      scope: { type: 'EVENT', sport: Sport.GOLF, providerId: 'balldontlie', eventId: externalId, feeds: ['EVENTLIVESCORES'] },
+      scope: { type: 'EVENT', sport: Sport.GOLF, providerId: 'balldontlie', eventId: externalId, kinds: ['SCORES'] },
     });
 
     const [run] = await ledger.createSubmissions({ normalizedRequest, providerId: 'balldontlie', submittedAt: NOW, trigger: JobTrigger.SCHEDULE });
