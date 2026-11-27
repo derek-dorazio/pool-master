@@ -42,7 +42,7 @@ import { sportRowKeys } from '../../support/sport-rows';
 import { linkTestSlot } from '../../support/test-slots';
 import { oneEventSlotId, setEventSlotPeriods } from '../../support/test-slots';
 import { createMatchRow } from '../../support/match-rows';
-import { contestOnEvents } from '../../support/contest-rows';
+import { contestOnEvents, coverEvents, templateForEvent } from '../../support/contest-rows';
 import { inTierSet, tierSetSlot } from '../../support/event-tier-sets';
 
 // The routes #1355 brought under the request query budget, against Postgres: each reads the
@@ -116,19 +116,21 @@ const PINNED_TRANSITION_COUNTS: Array<[string, number]> = [
   ['INSERT background_jobs', 1],
   // Whether a tiered or budget template lists each tier slot, which picks the tier-set slot (#2044).
   ['SELECT contest_config_template_slots', 1],
-  ['SELECT contest_sport_events', 1],
+  // Its contests, through the Season slots they cover (#2014): the event's slots, then theirs.
+  ['SELECT contest_season_slots', 1],
   ['SELECT sport_event_participants', 3],
   ['SELECT sport_event_provider_mappings', 2],
   ['SELECT sport_event_slot_tiers', 2],
-  // The slot definitions the event plays, read with it (#2010), and its tier slots (#2044).
-  ['SELECT sport_event_slots', 3],
+  // The slot definitions the event plays, read with it (#2010), its tier slots (#2044), and the
+  // slots its contests are found through (#2014).
+  ['SELECT sport_event_slots', 4],
   ['SELECT sport_events', 2],
   // The event's round is played in its slot (#2006), so its event reads take the slot's definition
   // and its place in play; so does its tier slots' read, for their play order (#2044).
   ['SELECT sport_league_competition_slots', 4],
   ['SELECT sport_league_competitions', 2],
   ['SELECT sport_league_phases', 2],
-  ['SELECT sport_league_season_competition_slots', 4], // the answer's event slots (#2004), and the event reads' (#2006)
+  ['SELECT sport_league_season_competition_slots', 5], // the answer's event slots (#2004), the event reads' (#2006), and its contests' (#2014)
   ['SELECT sport_league_seasons', 2],
   ['SELECT sport_leagues', 2],
   ['SELECT sports', 2], // a sport is read through its event's Season and league since #2042 (#2089)
@@ -299,8 +301,11 @@ describe('Adding a co-owner to a team (#1355)', () => {
   });
 });
 
-/** A scheduled golf event with six tiers and a two-golfer field. */
-async function tieredGolfEvent(name: string) {
+/**
+ * A scheduled PGA TOUR event with six tiers and a two-golfer field. One a contest is made on
+ * through the API is first put in a slot its league's tiered template lists (#2014).
+ */
+async function tieredGolfEvent(name: string, contestMadeOnIt: boolean) {
   const prisma = getPrisma();
   const sport = await prisma.sport.upsert({
     where: { sport: Sport.GOLF },
@@ -309,12 +314,13 @@ async function tieredGolfEvent(name: string) {
   });
   const event = await prisma.sportEvent.create({
     data: {
-      ...(await freshEventEdition(prisma)),
+      ...(await freshEventEdition(prisma, { onPgaTour: true })),
       name,
       startDate: buildContestEligibleEventTiming().startDate,
       status: 'SCHEDULED',
     },
   });
+  if (contestMadeOnIt) await templateForEvent(prisma, event.id, SelectionType.TIERED);
   const tiers = [];
   for (const [index, tierKey] of TIER_KEYS.entries()) {
     tiers.push(await prisma.sportEventSlotTier.create({ data: { sportEventSlotId: (await tierSetSlot(prisma, event.id)).id, tierKey, tierNumber: index + 1 } }));
@@ -334,22 +340,25 @@ async function tieredGolfEvent(name: string) {
 describe('Opening a contest (#1355)', () => {
   it('reads a two-event tiered contest\'s events together, never one by one, and sends a fixed set of statements when opening it', async () => {
     const { commissioner, leagueId } = await leagueWithTeam();
-    const first = await tieredGolfEvent(`Read Once Open ${randomUUID().slice(0, 6)}`);
-    const second = await tieredGolfEvent(`Read Once Classic ${randomUUID().slice(0, 6)}`);
+    const first = await tieredGolfEvent(`Read Once Open ${randomUUID().slice(0, 6)}`, true);
+    const second = await tieredGolfEvent(`Read Once Classic ${randomUUID().slice(0, 6)}`, false);
     const created = await getApp().inject({
       method: 'POST',
       url: API_ROUTES.leagues.contests(leagueId),
       headers: commissioner.headers,
       payload: {
         name: 'Read Once Picks',
-        sportEventIds: [first.id, second.id],
+        sportEventIds: [first.id],
         contestFormat: 'ROSTER',
         selectionType: 'TIERED',
+        templateId: await templateForEvent(getPrisma(), first.id, SelectionType.TIERED),
         configuration: { selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 4 },
       },
     });
     expect(created.statusCode).toBe(201);
     const contestId = created.json<ContestResponse>().contest.id;
+    // A template covers one tournament now (ADR 0014); a contest made before that covers two.
+    await coverEvents(getPrisma(), contestId, [second.id]);
 
     const { response, statements } = await measureRequest({
       method: 'POST',
@@ -361,15 +370,16 @@ describe('Opening a contest (#1355)', () => {
     expect(response.json<ContestResponse>().contest.status).toBe(ContestStatus.OPEN);
     // Every read of the events or their slots takes both events together: the reply's pick groups
     // read the first event's tier slots from the opening's read of both (#2044).
+    // A read by the contest's covered Season slots names neither event, so it is a read of both too (#2014).
     const eachEvent = (table: string) => statementsOn(statements, StatementVerb.SELECT, table)
-      .filter((statement) => !(statementParams(statement).includes(first.id) && statementParams(statement).includes(second.id))).length;
+      .filter((statement) => statementParams(statement).includes(first.id) !== statementParams(statement).includes(second.id)).length;
     expect([eachEvent('sport_events'), eachEvent('sport_event_slots')]).toEqual([0, 0]);
     expect(requestCounts(statements)).toEqual([
       ['INSERT background_jobs', 1], // the opened contest's board rebuild, written with the move (#1973)
       ['SELECT contest_config_template_slots', 1], // the templates listing the tier slots, which pick the tier-set slot (#2044)
       ['SELECT contest_configurations', 1],
       ['SELECT contest_draws', 2],
-      ['SELECT contest_sport_events', 2],
+      ['SELECT contest_season_slots', 2], // the contest's covered Season slots, which give its events (#2014)
       ['SELECT contest_squares_draws', 2],
       ['SELECT contest_squares_games', 2],
       ['SELECT contests', 2],
@@ -382,13 +392,15 @@ describe('Opening a contest (#1355)', () => {
       ['SELECT sport_event_slot_tiers', 3],
       // The slot definitions the event plays, read with it (#2010), and one read of both events'
       // tier slots, each with its Season slot and definition for play order, remembered for the
-      // request's later steps (#2044); a fixed number however many events the contest covers.
-      ['SELECT sport_event_slots', 2],
-      ['SELECT sport_events', 3],
+      // request's later steps (#2044); a fixed number however many events the contest covers. The
+      // contest's events come from its covered Season slots' event slots (#2014), two reads more,
+      // and the events read with them, two fewer.
+      ['SELECT sport_event_slots', 4],
+      ['SELECT sport_events', 1],
       ['SELECT sport_league_competition_slots', 2],
       ['SELECT sport_league_competitions', 1],
       ['SELECT sport_league_phases', 1],
-      ['SELECT sport_league_season_competition_slots', 2],
+      ['SELECT sport_league_season_competition_slots', 4], // with the covered slots, and the tier slots'
   ['SELECT sport_league_seasons', 3], // a sport is read through each contest read's event's Season and league (#2042, #2004)
       ['SELECT sport_leagues', 4],
       ['SELECT sports', 3], // contest setup's reader no longer reads the sport rows: whether an event plays matches is its slots' (#2008)
@@ -711,7 +723,11 @@ async function openContestsOnScheduledEvent(options: { contests: 1 | 3 }) {
   return { admin, eventId: event.id, startDate: event.startDate, contestIds, commissionerIds: leagues.map(({ commissioner }) => commissioner.user.id) };
 }
 
-/** An admin's postponement of the event, or a move of its start by a day. */
+/**
+ * An admin's postponement of the event. An admin no longer moves the start of an event that holds
+ * a contest: the contest covers its Season slots, so its dates are its slots' (#2014). The sync's
+ * move, which tells its leagues, is pinned in the event service's unit tests.
+ */
 type EventChangeRequest = (seeded: Awaited<ReturnType<typeof openContestsOnScheduledEvent>>) => InjectOptions;
 const postpone: EventChangeRequest = ({ admin, eventId }) => ({
   method: 'POST',
@@ -719,13 +735,6 @@ const postpone: EventChangeRequest = ({ admin, eventId }) => ({
   headers: admin.headers,
   payload: { toStatus: 'POSTPONED' },
 });
-const moveByADay: EventChangeRequest = ({ admin, eventId, startDate }) => ({
-  method: 'PATCH',
-  url: `/api/v1/events/${eventId}`,
-  headers: admin.headers,
-  payload: { startDate: new Date(startDate.getTime() + 24 * 60 * 60 * 1000).toISOString() },
-});
-
 /**
  * What an admin's postponement sends (#1458): the event and its answer, then one read of the
  * contests told and one insert of their email jobs and the event's leaderboard rebuild job, written
@@ -735,51 +744,34 @@ const moveByADay: EventChangeRequest = ({ admin, eventId, startDate }) => ({
  */
 const PINNED_POSTPONE_COUNTS: Array<[string, number]> = [
   ['INSERT background_jobs', 1],
+  // Whether a tiered or budget template lists the event's slot, which picks its tier-set slot (#2044).
+  ['SELECT contest_config_template_slots', 1],
   ['SELECT contest_draws', 1],
-  ['SELECT contest_sport_events', 2],
+  // Its contests, through the Season slots they cover (#2014), and the contests' own read of theirs.
+  ['SELECT contest_season_slots', 2],
   ['SELECT contest_squares_draws', 1],
   ['SELECT contest_squares_games', 1],
   ['SELECT contests', 2],
-  // The answer's field count; the event covers no slot, so it has no tier set to count (#2044).
-  ['SELECT sport_event_participants', 1],
+  // The answer's field count, and its tier set's (#2044): the event plays the slot its contests cover.
+  ['SELECT sport_event_participants', 3],
   ['SELECT sport_event_provider_mappings', 2],
-  // The slot definitions the event plays, read with it (#2010), and its tier slots (#2044).
-  ['SELECT sport_event_slots', 3],
-  ['SELECT sport_events', 3],
-  ['SELECT sport_league_season_competition_slots', 1], // the answer's event slots (#2004)
+  ['SELECT sport_event_slot_tiers', 2],
+  // The slot definitions the event plays, read with it (#2010), its tier slots (#2044), and the
+  // slots its contests are found through and cover (#2014).
+  ['SELECT sport_event_slots', 5],
+  ['SELECT sport_events', 2],
+  // The event's slot takes its definition and its place in play, as its tier slots do (#2006, #2044).
+  ['SELECT sport_league_competition_slots', 4],
+  ['SELECT sport_league_competitions', 2],
+  ['SELECT sport_league_phases', 2],
+  ['SELECT sport_league_season_competition_slots', 6], // the answer's, the event reads' and the contests' Season slots
   ['SELECT sport_league_seasons', 3], // a sport is read through its event's Season and league (#2042, #2004)
   ['SELECT sport_leagues', 3],
   ['SELECT sports', 3],
   ['UPDATE sport_events', 1],
 ];
 
-/**
- * What an admin's move of a released event's start sends (#1458), on the same terms. It also
- * shifts the event's rounds and rechecks its contests' entry reminders, in one write for all.
- */
-const PINNED_MOVE_COUNTS: Array<[string, number]> = [
-  ['INSERT background_jobs', 1],
-  ['SELECT contest_draws', 1],
-  ['SELECT contest_sport_events', 2],
-  ['SELECT contest_squares_draws', 1],
-  ['SELECT contest_squares_games', 1],
-  ['SELECT contests', 1],
-  // The answer's field count; the event covers no slot, so it has no tier set to count (#2044).
-  ['SELECT sport_event_participants', 1],
-  ['SELECT sport_event_provider_mappings', 3],
-  ['SELECT sport_event_rounds', 1],
-  // The slot definitions the event plays, read with it (#2010), and its tier slots (#2044).
-  ['SELECT sport_event_slots', 4],
-  ['SELECT sport_events', 4],
-  ['SELECT sport_league_season_competition_slots', 2], // whether the event has slots (its dates are theirs), and the answer's (#2004)
-  ['SELECT sport_league_seasons', 4], // a sport is read through its event's Season and league (#2042, #2004)
-  ['SELECT sport_leagues', 4],
-  ['SELECT sports', 4],
-  ['UPDATE contests', 1],
-  ['UPDATE sport_events', 1],
-];
-
-describe('Postponing or moving an event whose email jobs cannot be written (#1464)', () => {
+describe('Postponing an event whose email jobs cannot be written (#1464)', () => {
   it('leaves the event SCHEDULED, and answers with an error, when its postponement\'s email jobs fail to write, so nobody is left untold', async () => {
     const seeded = await openContestsOnScheduledEvent({ contests: 1 });
 
@@ -789,29 +781,16 @@ describe('Postponing or moving an event whose email jobs cannot be written (#146
     await expect(getPrisma().sportEvent.findUniqueOrThrow({ where: { id: seeded.eventId }, select: { status: true } }))
       .resolves.toEqual({ status: 'SCHEDULED' });
   });
-
-  it('leaves the event\'s start where it was, and answers with an error, when its move\'s email jobs fail to write, so nobody is left untold', async () => {
-    const seeded = await openContestsOnScheduledEvent({ contests: 1 });
-
-    const response = await withBackgroundJobsFailing('CONTEST_EVENT_CHANGED_EMAILS', () => getApp().inject(moveByADay(seeded)));
-
-    expect(response.statusCode).toBe(500);
-    await expect(getPrisma().sportEvent.findUniqueOrThrow({ where: { id: seeded.eventId }, select: { startDate: true } }))
-      .resolves.toEqual({ startDate: seeded.startDate });
-  });
 });
 
-describe('Postponing or moving an event (#1458)', () => {
-  it.each([
-    ['postpone', postpone, PINNED_POSTPONE_COUNTS],
-    ['move', moveByADay, PINNED_MOVE_COUNTS],
-  ] as const)('answers an admin\'s %s with a fixed set of statements that builds no email, writing one email job per contest for the job runner', async (_change, request, pinned) => {
+describe('Postponing an event (#1458)', () => {
+  it('answers an admin\'s postpone with a fixed set of statements that builds no email, writing one email job per contest for the job runner', async () => {
     const seeded = await openContestsOnScheduledEvent({ contests: 3 });
 
-    const { response, statements } = await measureRequest(request(seeded));
+    const { response, statements } = await measureRequest(postpone(seeded));
 
     expect(response.statusCode).toBe(200);
-    expect(requestCounts(statements)).toEqual(pinned);
+    expect(requestCounts(statements)).toEqual(PINNED_POSTPONE_COUNTS);
     const jobs = await getPrisma().backgroundJob.findMany({ where: { type: 'CONTEST_EVENT_CHANGED_EMAILS' }, select: { payload: true } });
     expect(jobs).toHaveLength(3);
     expect(jobs.map(({ payload }) => (payload as { contestId: string }).contestId).sort()).toEqual([...seeded.contestIds].sort());
@@ -826,15 +805,12 @@ describe('Postponing or moving an event (#1458)', () => {
     }
   });
 
-  it.each([
-    ['postpone', postpone],
-    ['move', moveByADay],
-  ] as const)('sends the same statements to %s an event with three contests across two leagues as with one', async (_change, request) => {
+  it('sends the same statements to postpone an event with three contests across two leagues as with one', async () => {
     const one = await openContestsOnScheduledEvent({ contests: 1 });
     const three = await openContestsOnScheduledEvent({ contests: 3 });
 
-    const withOne = await measureRequest(request(one));
-    const withThree = await measureRequest(request(three));
+    const withOne = await measureRequest(postpone(one));
+    const withThree = await measureRequest(postpone(three));
 
     expect([withOne.response.statusCode, withThree.response.statusCode]).toEqual([200, 200]);
     expect(requestCounts(withThree.statements)).toEqual(requestCounts(withOne.statements));

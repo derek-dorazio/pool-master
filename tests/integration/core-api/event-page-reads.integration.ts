@@ -23,7 +23,7 @@ import {
 } from '@poolmaster/shared/dto';
 import { PrismaSportEventRoundRepository } from '../../../packages/core-api/src/adapters';
 import { resultBody } from '../../support/match-requests';
-import { cleanupTestData, createTestUser, getApp, getAppPrisma, getPrisma, setupIntegrationTests, teardownIntegrationTests, withoutJsonBodyHeaders, type TestUserResult } from '../helpers';
+import { cleanupTestData, createTestUser, deleteTestContests, getApp, getAppPrisma, getPrisma, setupIntegrationTests, teardownIntegrationTests, withoutJsonBodyHeaders, type TestUserResult } from '../helpers';
 import { DAY, get, okBody, seedEventWithField, seedFootballWeek, seedLeagueWithTeams } from '../list-route-seeds';
 import { expectConstantQueries } from '../query-scaling';
 import { expectDefined } from '../../support/expect-defined';
@@ -44,7 +44,7 @@ beforeEach(() => cleanupTestData());
 const madeTemplateIds = new Set<string>();
 afterEach(async () => {
   // A contest's configuration restricts its template's delete (#2014): the contests made from them go first.
-  await getPrisma().contest.deleteMany({ where: { configuration: { templateId: { in: [...madeTemplateIds] } } } });
+  await deleteTestContests({ configuration: { templateId: { in: [...madeTemplateIds] } } });
   await getPrisma().contestConfigTemplate.deleteMany({ where: { id: { in: [...madeTemplateIds] } } });
   madeTemplateIds.clear();
 });

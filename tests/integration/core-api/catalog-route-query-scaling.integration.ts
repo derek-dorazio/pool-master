@@ -254,17 +254,18 @@ describe('sport catalog reads cost the same statements for 2 rows as for 20', ()
     });
   });
 
-  it("GET a sport league's events: one event with its slot costs a fixed set of statements, its slots in three reads and its slot definitions in three more", async () => {
+  it("GET a sport league's events: one event with its slot costs a fixed set of statements, its slot definitions in three reads and its Season slots in four", async () => {
     // The league's own event only.
     const { sportLeague, rootAdmin } = await seedSportLeagueEvents(0);
     const { result, statements } = await recordStatements(() => get(`/api/v1/events/?sportLeagueId=${sportLeague.id}`, rootAdmin));
     expect(okBody(result, SportEventListResponseSchema).events.map((each) => each.slots.length)).toEqual([1]);
     // The listed slots are read once (#2004); the event read carries the slot definitions it
     // covers (#2010) through the same tables, a second read #2089 folds into the first; the third
-    // is the events' tier slots, in play order with their status, for tiers and prices (#2044).
+    // is the events' tier slots, in play order with their status, for tiers and prices (#2044); a
+    // fourth Season-slot read is the contest count, through the Season slots contests cover (#2014).
     expect(statementCounts(statements).filter(([statement]) => statement.includes('sport_league_season_competition_slots') || statement.includes('sport_league_competition_slots'))).toEqual([
       ['SELECT sport_league_competition_slots', 3],
-      ['SELECT sport_league_season_competition_slots', 3],
+      ['SELECT sport_league_season_competition_slots', 4],
     ]);
   });
 

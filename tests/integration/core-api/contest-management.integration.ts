@@ -452,7 +452,7 @@ describe('Contest management integration', () => {
     expect(ErrorEnvelopeSchema.safeParse(createRes.json()).success).toBe(true);
   });
 
-  it('refuses PICK_EM sent as a ROSTER contest with 422 CONTEST_FORMAT_NOT_ALLOWED, creating nothing', async () => {
+  it('refuses PICK_EM sent with a tiered template as a ROSTER contest with 422 CONTEST_CONFIGURATION_INVALID, the template being for another selection type, creating nothing', async () => {
     const createRes = await getApp().inject({
       method: 'POST',
       url: API_ROUTES.leagues.contests(leagueId),
@@ -468,7 +468,7 @@ describe('Contest management integration', () => {
     });
 
     expect(createRes.statusCode).toBe(422);
-    expect(ErrorEnvelopeSchema.parse(createRes.json()).error.code).toBe('CONTEST_FORMAT_NOT_ALLOWED');
+    expect(ErrorEnvelopeSchema.parse(createRes.json()).error.code).toBe('CONTEST_CONFIGURATION_INVALID');
     await expect(getPrisma().contest.count({ where: { leagueId, name: 'Pick Em As Roster' } })).resolves.toBe(0);
   });
 

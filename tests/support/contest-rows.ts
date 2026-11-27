@@ -9,9 +9,12 @@ type Db = PrismaClient | Prisma.TransactionClient;
 /**
  * What a fixture contest on these events covers (#2014): their Season and every Season slot of
  * theirs, as a contest made before covered slots covered its events whole. An event with no slot
- * yet is given the one `createRoundRows` would give it, so its rounds are placed in that slot.
+ * yet is given the one `createRoundRows` would give it, so its rounds are placed in that slot. No
+ * events at all puts the contest in a Season of this year (`anySeasonId`), covering nothing.
  */
 export async function coverageOfEvents(prisma: Db, sportEventIds: readonly string[]): Promise<{ sportLeagueSeasonId: string; seasonSlotIds: string[] }> {
+  // A draft on no event yet still sits in a Season, as the commissioner's form leaves one.
+  if (sportEventIds.length === 0) return { sportLeagueSeasonId: await anySeasonId(prisma, new Date().getUTCFullYear()), seasonSlotIds: [] };
   const events = await prisma.sportEvent.findMany({
     where: { id: { in: [...sportEventIds] } },
     select: { id: true, sportLeagueSeasonId: true, startDate: true, slots: { select: { sportLeagueSeasonCompetitionSlotId: true } } },
