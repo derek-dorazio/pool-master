@@ -1,4 +1,4 @@
-import { FieldOrderBasis, Sport, SportEventStatus, SportEventParticipantStatus } from '@poolmaster/shared/domain';
+import { FieldOrderBasis, SeasonSlotStatus, SlotKind, Sport, SportEventStatus, SportEventParticipantStatus } from '@poolmaster/shared/domain';
 import { SportEventTierService } from '../../../packages/core-api/src/modules/events/sport-event-tier-service';
 import { IN_MEMORY_PLATFORM_TIER_PROFILE_ID, InMemorySportEvents } from '../../support/in-memory-sport-events';
 import { inMemoryStandardPricing } from '../../support/budget-pricing';
@@ -726,5 +726,90 @@ describe('SportEventTierService — the field changing between assignments', () 
 
     await expect(service.autoAssignPrices({ sportEventId: event.id, pricing: inMemoryStandardPricing() })).resolves.toEqual([]);
     expect(store.valuationRows).toEqual([]);
+  });
+});
+
+describe('SportEventTierService — a set on each slot a tiered or budget template lists (#2044)', () => {
+  /**
+   * A three-slot knockout event: a play-in no tiered or budget template lists, then a round of 64
+   * and a round of 32 that one does. Twelve teams, p-01 the shortest odds.
+   */
+  async function knockout(status: SportEventStatus = SportEventStatus.DRAFT) {
+    const store = new InMemorySportEvents();
+    const event = store.addEvent({ status });
+    const [playIn, roundOf64, roundOf32] = store.addRoundSlots(event.id, [
+      { slotKind: SlotKind.PLAY_IN, slotDefinitionId: 'def-play-in' },
+      { slotKind: SlotKind.ROUND_OF_64, slotDefinitionId: 'def-r64' },
+      { slotKind: SlotKind.ROUND_OF_32, slotDefinitionId: 'def-r32' },
+    ]);
+    store.tierSetTemplateDefinitionIds = new Set(['def-r64', 'def-r32']);
+    const service = new SportEventTierService({
+      sportEvents: store.sportEventRepo(),
+      tiers: store.tierRepo(),
+      valuations: store.valuationRepo(),
+      field: store.fieldRepo(),
+      participants: store.participantRepo(),
+      platformTierProfiles: store.platformTierProfileRepo(),
+      platformPricingProfiles: store.platformPricingProfileRepo(),
+    });
+    await service.createDefaultTiers({ id: event.sportLeagueId, platformTierProfileId: IN_MEMORY_PLATFORM_TIER_PROFILE_ID }, [event.id]);
+    addFieldByOdds(store, event.id, 12);
+    const startSlot = (seasonSlotId: string) => Object.assign(store.seasonSlots.find((slot) => slot.id === seasonSlotId) as object, { status: SeasonSlotStatus.IN_PROGRESS });
+    return { store, event, service, playIn, roundOf64, roundOf32, startSlot };
+  }
+
+  const placed = (groups: ReadonlyArray<{ participants: readonly unknown[] }>) => groups.reduce((sum, group) => sum + group.participants.length, 0);
+
+  it('gives every listed slot the default tiers and the play-in none, answering the round of 64 as the event\'s tier-set slot', async () => {
+    const { store, event, roundOf64, roundOf32 } = await knockout();
+
+    expect(store.tierSlotsOf(event.id).map((slot) => [slot.seasonSlotId, slot.holdsTierSet, slot.isTierSetSlot])).toEqual([
+      [expect.any(String), false, false], [roundOf64, true, true], [roundOf32, true, false],
+    ]);
+    expect(new Set(store.tierRows.map((tier) => store.tierSlotsOf(event.id).find((slot) => slot.id === tier.sportEventSlotId)?.seasonSlotId))).toEqual(new Set([roundOf64, roundOf32]));
+  });
+
+  it('tiers the round of 32 from the teams still in, leaving the round of 64\'s set as it was', async () => {
+    const { store, event, service, roundOf64, roundOf32 } = await knockout();
+    await service.autoAssignTiers({ sportEventId: event.id });
+    for (const entry of store.field.filter((row) => ['p-02', 'p-05'].includes(row.participantId))) entry.status = SportEventParticipantStatus.ELIMINATED;
+
+    const later = await service.autoAssignTiers({ sportEventId: event.id, seasonSlotId: roundOf32 });
+
+    expect([placed(later), placed(await service.getEffectiveTiersForSportEvent(event.id, { seasonSlotId: roundOf64 }))]).toEqual([10, 12]);
+  });
+
+  it('keeps a later slot\'s set open once the event is released, until that slot starts', async () => {
+    const { event, service, roundOf64, roundOf32, startSlot } = await knockout(SportEventStatus.SCHEDULED);
+
+    await expect(service.autoAssignTiers({ sportEventId: event.id, seasonSlotId: roundOf64 })).rejects.toMatchObject({ code: 'SPORT_EVENT_TIERS_LOCKED', statusCode: 409 });
+    expect(placed(await service.autoAssignTiers({ sportEventId: event.id, seasonSlotId: roundOf32 }))).toBe(12);
+    startSlot(roundOf32);
+    await expect(service.autoAssignPrices({ sportEventId: event.id, seasonSlotId: roundOf32, pricing: inMemoryStandardPricing() })).rejects.toMatchObject({ code: 'SPORT_EVENT_TIERS_LOCKED', statusCode: 409 });
+  });
+
+  it('refuses a write on the play-in with 409 SLOT_HOLDS_NO_TIER_SET, and on a Season slot the event is not played in with 404 SPORT_EVENT_SLOT_NOT_FOUND', async () => {
+    const { event, service, playIn } = await knockout();
+
+    await expect(service.replaceTiers({ sportEventId: event.id, seasonSlotId: playIn, tiers: TWO_TIERS })).rejects.toMatchObject({ code: 'SLOT_HOLDS_NO_TIER_SET', statusCode: 409 });
+    await expect(service.autoAssignTiers({ sportEventId: event.id, seasonSlotId: 'season-slot-elsewhere' })).rejects.toMatchObject({ code: 'SPORT_EVENT_SLOT_NOT_FOUND', statusCode: 404 });
+  });
+
+  it('values a released event\'s later slot from each field sync, reporting the locked tier-set slot', async () => {
+    const { store, event, service, roundOf32 } = await knockout(SportEventStatus.SCHEDULED);
+
+    const outcome = await service.valueSyncedField(store.events.find((row) => row.id === event.id) as typeof event);
+
+    expect(outcome).toEqual({ outcome: 'SKIPPED', reason: 'LOCKED' });
+    expect([placed(await service.getEffectiveTiersForSportEvent(event.id, { seasonSlotId: roundOf32 })), store.tierSlotsOf(event.id).find((slot) => slot.seasonSlotId === roundOf32)?.pricing]).toEqual([12, inMemoryStandardPricing()]);
+  });
+
+  it('reads a contest\'s set from the first slot it covers holding one, so a round-of-32 contest sees the round of 32\'s tiers', async () => {
+    const { store, event, service, roundOf32 } = await knockout();
+    await service.autoAssignTiers({ sportEventId: event.id, seasonSlotId: roundOf32 });
+
+    const { valuations } = await service.getEffectiveTiersAndValuations(event.id, undefined, { coveredSlotDefinitionIds: ['def-play-in', 'def-r32'] });
+
+    expect([valuations.length, (await service.getEffectiveValuationsForSportEvent(event.id)).length, store.valuationRows.length]).toEqual([12, 0, 12]);
   });
 });
