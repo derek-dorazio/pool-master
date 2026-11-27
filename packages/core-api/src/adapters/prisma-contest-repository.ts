@@ -63,7 +63,7 @@ const CONTEST_INCLUDE = {
     orderBy: COVERED_SLOT_ORDER,
   },
   draw: { select: { drawnAt: true } },
-  squaresGame: { select: { sportEventRoundMatchId: true } },
+  squaresGame: { select: { sportEventRoundMatchGameId: true, game: { select: { sportEventRoundMatchId: true } } } },
   squaresDraw: { select: { drawnAt: true } },
 } as const;
 
@@ -168,8 +168,8 @@ export class PrismaContestRepository implements ContestRepository {
           sportLeagueSeasonId: contest.sportLeagueSeasonId,
           // The covered slots are written once, here (#2014): no later write adds one.
           seasonSlots: { create: contest.seasonSlotIds.map((sportLeagueSeasonCompetitionSlotId) => ({ sportLeagueSeasonCompetitionSlotId })) },
-          ...(contest.squaresGameMatchId !== undefined && {
-            squaresGame: { create: { sportEventRoundMatchId: contest.squaresGameMatchId } },
+          ...(contest.squaresGameId !== undefined && {
+            squaresGame: { create: { sportEventRoundMatchGameId: contest.squaresGameId } },
           }),
         },
         include: CONTEST_INCLUDE,
@@ -489,7 +489,7 @@ function mapToContest(row: {
   contestFormat: ContestFormat;
   selectionType: SelectionType;
   draw?: { drawnAt: Date } | null;
-  squaresGame?: { sportEventRoundMatchId: string } | null;
+  squaresGame?: { sportEventRoundMatchGameId: string; game: { sportEventRoundMatchId: string } } | null;
   squaresDraw?: { drawnAt: Date } | null;
   openedAt: Date | null;
   startsAt: Date | null;
@@ -518,7 +518,9 @@ function mapToContest(row: {
     endsAt: row.endsAt ?? undefined,
     // A contest has at most one of the two draws: a random draw's deal or squares' digits.
     drawnAt: row.draw?.drawnAt ?? row.squaresDraw?.drawnAt ?? undefined,
-    squaresGameMatchId: row.squaresGame?.sportEventRoundMatchId ?? undefined,
+    squaresGame: row.squaresGame
+      ? { sportEventRoundMatchGameId: row.squaresGame.sportEventRoundMatchGameId, sportEventRoundMatchId: row.squaresGame.game.sportEventRoundMatchId }
+      : undefined,
     sportLeagueSeasonId: row.sportLeagueSeasonId,
     seasonYear: row.sportLeagueSeason.championshipYear,
     cupWeight: row.cupWeight,

@@ -17,8 +17,10 @@ export const QueryKeys = {
     /** A sport's events that can still take a contest: what contest setup chooses from. */
     offerable: (sport: QueryKeyId) => ['poolmaster', 'sport-events', 'offerable', sport] as const,
     detail: (sportEventId: QueryKeyId) => ['poolmaster', 'sport-events', sportEventId] as const,
-    /** One event's games: what a squares contest's game picker offers (#711). */
+    /** One event's games: its bracket's matches (#711). */
     games: (sportEventId: QueryKeyId) => ['poolmaster', 'sport-events', sportEventId, 'games'] as const,
+    /** The Games of one event a squares contest can be played on (#2050): what the squares game picker offers. */
+    squaresGames: (sportEventId: QueryKeyId) => ['poolmaster', 'sport-events', sportEventId, 'squares-games'] as const,
     /** One event's field: the team names a squares game picker shows (#711), and each lineup pick's tier and price (#1740). */
     field: (sportEventId: QueryKeyId) => ['poolmaster', 'sport-events', sportEventId, 'field'] as const,
     /**

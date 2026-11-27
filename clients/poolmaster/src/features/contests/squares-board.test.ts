@@ -3,7 +3,6 @@ import { describe, expect, it } from 'vitest';
 import {
   formatClaimedCount,
   formatSquaresGameTeams,
-  squaresGameChoices,
   squaresLiveBox,
   squaresMomentRows,
   squaresMomentTag,
@@ -59,28 +58,6 @@ describe('squares board helpers', () => {
   it('counts an entry\'s claimed boxes against its limit in words', () => {
     expect(formatClaimedCount(4, 10)).toBe('4 of 10 boxes');
     expect(formatClaimedCount(0, 1)).toBe('0 of 1 box');
-  });
-
-  it('offers only games still to kick off with no quarter scored, the final first and then by kickoff', () => {
-    const now = new Date('2099-01-20T00:00:00.000Z');
-    const games = [
-      squaresGameFixture({ id: 'played', status: 'COMPLETED', advancesTo: { matchId: 'final', sideNumber: 1 } }),
-      squaresGameFixture({ id: 'kicked-off', scheduledDate: '2099-01-19T20:00:00.000Z', advancesTo: { matchId: 'final', sideNumber: 1 } }),
-      squaresGameFixture({ id: 'scored', periodScores: [{ periodNumber: 1, homeScore: 7, awayScore: 0 }], advancesTo: { matchId: 'final', sideNumber: 1 } }),
-      squaresGameFixture({ id: 'late-semi', matchNumber: 12, scheduledDate: '2099-01-26T00:00:00.000Z', advancesTo: { matchId: 'final', sideNumber: 1 } }),
-      squaresGameFixture({ id: 'early-semi', matchNumber: 11, scheduledDate: '2099-01-25T20:00:00.000Z', advancesTo: { matchId: 'final', sideNumber: 1 } }),
-      squaresGameFixture({ id: 'final', matchNumber: 13, scheduledDate: '2099-02-07T23:30:00.000Z' }),
-    ];
-    expect(squaresGameChoices(games, now).map((game) => game.id)).toEqual(['final', 'early-semi', 'late-semi']);
-  });
-
-  it('leaves out games before the sport league\'s first squares round, so a Champions League pool offers only its final', () => {
-    const now = new Date('2099-01-20T00:00:00.000Z');
-    const games = [
-      squaresGameFixture({ id: 'semi-tie', roundNumber: 4, matchNumber: 11, scheduledDate: '2099-04-28T19:00:00.000Z', advancesTo: { matchId: 'final', sideNumber: 1 } }),
-      squaresGameFixture({ id: 'final', roundNumber: 5, matchNumber: 13, scheduledDate: '2099-05-30T16:00:00.000Z' }),
-    ];
-    expect(squaresGameChoices(games, now, 5).map((game) => game.id)).toEqual(['final']);
   });
 
   it('names a game away team first, "vs" at a neutral site, and a side still to be decided as such', () => {

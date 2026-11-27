@@ -339,3 +339,8 @@ export function predictedHomeAndAway(game: PickSides): Array<string | null> {
 export function homeAndAwayOf(sides: ReadonlyMap<number, string | null> | undefined): { home: string | null; away: string | null } {
   return { home: sides?.get(HOME_SIDE) ?? null, away: sides?.get(AWAY_SIDE) ?? null };
 }
+
+/** A squares contest's Game (#2050): Game 1 of the match, as `legacyMatch` names it. */
+export function squaresGameOf(matchId: string): { sportEventRoundMatchGameId: string; sportEventRoundMatchId: string } {
+  return { sportEventRoundMatchGameId: `${matchId}-g1`, sportEventRoundMatchId: matchId };
+}

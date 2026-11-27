@@ -42,6 +42,11 @@ const EVENT_STATUS_BY_STATE: Readonly<Record<Exclude<PgaStatusState, 'unknown'>,
   [PgaStatusState.ABANDONED]: 'CANCELLED',
 };
 
+/** Whether the feed calls the tournament final: every round is in, and its slot completes (#2013). */
+export function isTournamentFinal(tournament: PgaTournament): boolean {
+  return tournament.status_state === PgaStatusState.FINAL;
+}
+
 export function isClassifiedTournament(tournament: PgaTournament): boolean {
   return tournament.status_state !== PgaStatusState.UNKNOWN;
 }
@@ -247,7 +252,7 @@ export function toGolfRoundUpdates(
   results: readonly PgaTournamentResult[],
 ): GolfRoundUpdate[] {
   const path = `/pga/v2/tournament_results ${String(tournament.id)}`;
-  const tournamentFinal = tournament.status_state === PgaStatusState.FINAL;
+  const tournamentFinal = isTournamentFinal(tournament);
   return results.flatMap((result) => {
     if (result.competitor.type !== PgaCompetitorType.PLAYER) {
       throw new BalldontlieContractError(path, [

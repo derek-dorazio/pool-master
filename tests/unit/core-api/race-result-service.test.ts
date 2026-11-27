@@ -9,6 +9,7 @@ import { InMemorySportEvents } from '../../support/in-memory-sport-events';
 import { eventRebuildJob } from '../../support/recording-leaderboard-rebuilds';
 import { RecordingDomainEvents } from '../../support/recording-domain-events';
 import type { RaceSessionUpdate } from '@poolmaster/shared/dto';
+import { slotStatusRefreshJob } from '../../support/slot-tiebreaker-jobs';
 
 /** A test participant's id, fixed by its name, so a row names it by id as the feed does (#2114). */
 const idOf = (name: string): string => `participant-${name.toLowerCase().replace(/\s+/g, '-')}`;
@@ -299,7 +300,8 @@ describe('RaceResultService — leaderboard rebuild (#1466)', () => {
 
     await service.applyResults(event.id, { isOfficial: true, rows: FULL_ORDER });
 
-    expect(store.backgroundJobs).toEqual([eventRebuildJob(event.id)]);
+    // The race's Game moved, so its slot's status is refreshed with it (#2013).
+    expect(store.backgroundJobs).toEqual([eventRebuildJob(event.id), slotStatusRefreshJob(event.id)]);
     expect(domainEvents.changedSportEventIds).toEqual([event.id]);
   });
 
@@ -343,6 +345,14 @@ describe('RaceResultService — the feed\'s race sessions (#2045)', () => {
       [arrow.id, 1], [bolt.id, 2], [comet.id, null],
     ]);
     expect(outcome).toMatchObject({ updatesReturned: 5, updatesPersisted: 3, updatesSkipped: 2, unmappedExternalIds: [] });
+  });
+
+  it('writes the race with its board rebuild and its slot\'s status refresh in the same write, so a race the feed calls final completes its slot', async () => {
+    const { store, service, event } = await setup(Sport.AUTO_RACING);
+
+    await service.persistSessionUpdatesForSportEvent(event.id, [session()], PROVIDER);
+
+    expect(store.backgroundJobs).toEqual([eventRebuildJob(event.id), slotStatusRefreshJob(event.id)]);
   });
 
   it('writes a race under way as in progress, with no completion time', async () => {

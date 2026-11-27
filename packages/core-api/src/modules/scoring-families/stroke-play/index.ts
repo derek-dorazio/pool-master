@@ -34,6 +34,7 @@ export const strokePlayScoringFamily: ScoringFamilyModule = {
         event.id,
         result.rounds,
         deps.providerId,
+        { final: result.final ?? false },
       );
     },
   },

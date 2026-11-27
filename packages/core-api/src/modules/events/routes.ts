@@ -600,6 +600,20 @@ export async function eventsModule(fastify: FastifyInstance, opts: EventsModuleO
     handler: handler.getEventBracket,
   });
 
+  fastify.get('/:eventId/squares-games', {
+    schema: {
+      tags: TAGS,
+      summary: 'List the games a squares contest can be played on',
+      description: 'The event\'s Games a squares contest can be played on now: each a Game of a slot that takes squares, still to kick off, with no period score in, the final\'s first, then by kickoff. Create contest lists them, and creating a squares contest accepts only one of them. '
+        + 'Any signed-in user may read a released event\'s; a DRAFT event\'s are a root admin\'s only. '
+        + `422 ${BRACKET_NOT_A_BRACKET}`,
+      operationId: 'listEventSquaresGames',
+      params: EVENT_PARAMS,
+      response: { 200: schemaRef('SquaresGameChoicesResponse'), ...errors(401, 404, 422) },
+    },
+    handler: handler.listEventSquaresGames,
+  });
+
   fastify.put('/:eventId/bracket', {
     ...write,
     schema: {

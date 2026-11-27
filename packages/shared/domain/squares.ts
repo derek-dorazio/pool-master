@@ -1,7 +1,8 @@
-import { MatchSide, MatchStatus, PeriodKind } from './enums';
-import { gameNumbered, gameScoreOf, runningPeriodScores, sideNumberOfMatchSide } from './match-sides';
+import { MatchSide, MatchStatus, PeriodKind, SlotKind } from './enums';
+import { gameNumbered, gameScoreOf, hasPeriodScores, runningPeriodScores, sideNumberOfMatchSide } from './match-sides';
 import { SQUARES_GRID_SIZE } from './contest-rules';
-import type { SportEventRoundMatch } from './sport-catalog-types';
+import { isMatchUnplayed } from './match-status';
+import type { SportEventRoundMatch, SportEventRoundMatchGame } from './sport-catalog-types';
 
 /**
  * Squares pools (#711, plans/super-bowl-squares.md): a 10x10 grid on one game. A box is a grid
@@ -105,11 +106,31 @@ export function squaresWinners(
   });
 }
 
+/** A Game a squares contest can be played on (#2050), with the match it is a Game of. */
+export interface SquaresGameChoice {
+  game: SportEventRoundMatchGame;
+  match: SportEventRoundMatch;
+}
+
 /**
- * Whether a squares pool can be played on a match of this round (#787): every round's, unless the
- * sport league names the first round of single games (`SportLeague.squaresFromRound`). A
- * two-legged tie or a series before it is one match with no half-time score to pay on.
+ * The Games a squares contest can be played on (#711, #2050), from an event's head-to-head
+ * matches: a Game of a slot that takes squares (`squaresEligible`: a two-legged tie or a short
+ * series says no), still to kick off (a postponed Game too), with no period score in. The final's
+ * Games come first, then by kickoff, round, match and game number, so the first is the default:
+ * Game 1 of the soonest match. Create contest lists these, and create accepts only one of them.
  */
-export function isSquaresRound(squaresFromRound: number | null | undefined, roundNumber: number): boolean {
-  return squaresFromRound === null || squaresFromRound === undefined || roundNumber >= squaresFromRound;
+export function squaresGameChoices(matches: readonly SportEventRoundMatch[], now: Date): SquaresGameChoice[] {
+  const kickoff = ({ game }: SquaresGameChoice) => game.scheduledDate?.getTime() ?? Number.POSITIVE_INFINITY;
+  const isFinal = ({ match }: SquaresGameChoice) => Number(match.slot.slotKind === SlotKind.FINAL);
+  return matches
+    .filter((match) => match.slot.squaresEligible)
+    .flatMap((match) => match.games.map((game) => ({ game, match })))
+    .filter(({ game }) => isMatchUnplayed(game.status)
+      && !hasPeriodScores({ games: [game] })
+      && (game.scheduledDate === null || game.scheduledDate.getTime() > now.getTime()))
+    .sort((left, right) => isFinal(right) - isFinal(left)
+      || kickoff(left) - kickoff(right)
+      || left.match.roundNumber - right.match.roundNumber
+      || left.match.matchNumber - right.match.matchNumber
+      || left.game.gameNumber - right.game.gameNumber);
 }

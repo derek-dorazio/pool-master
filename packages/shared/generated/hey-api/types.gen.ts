@@ -8616,6 +8616,407 @@ export type SportEventRoundMatchResponse = {
 };
 
 /**
+ * A Game a squares contest can be played on.
+ */
+export type SquaresGameChoiceDto = {
+    /**
+     * The Game: what CreateContestRequest.sportEventRoundMatchGameId takes.
+     */
+    sportEventRoundMatchGameId: string;
+    /**
+     * Its number in its match: 1 for a single game, a series' games in the order they are played.
+     */
+    gameNumber: number;
+    /**
+     * The Game's kickoff, which closes a squares contest on it; null while it is to be announced.
+     */
+    scheduledDate: string | null;
+    /**
+     * The match it is a Game of: its round, its slot and its two sides.
+     */
+    match: {
+        id: string;
+        sportEventId: string;
+        /**
+         * The round the match is played in.
+         */
+        roundNumber: number;
+        /**
+         * The slot the match's round is played in: the round's label and whether the match is the final.
+         */
+        slot: {
+            /**
+             * The Season slot (SportLeagueSeasonSlotDto) the round is played in. Rounds that share it, such as a golf tournament's four, are named by number rather than by the slot.
+             */
+            seasonSlotId: string;
+            /**
+             * The slot's proper name ("Super Bowl", "Sweet 16"); null when it is called by its kind's word.
+             */
+            name: string | null;
+            /**
+             * The slot's kind. FINAL is the event's final: never found by round position.
+             */
+            slotKind: 'WEEK' | 'PLAY_IN' | 'ROUND_OF_64' | 'ROUND_OF_32' | 'ROUND_OF_16' | 'QUARTERFINAL' | 'SEMIFINAL' | 'THIRD_PLACE' | 'FINAL' | 'TOURNAMENT';
+            /**
+             * A WEEK slot's week ("Week 14"); null for every other kind.
+             */
+            weekNumber: number | null;
+            /**
+             * What a game of the slot is played in (#2047); null for a game that keeps no score by period, such as a race or a tennis match.
+             */
+            periods: {
+                /**
+                 * What a game of the slot is played in: QUARTER, HALF, PERIOD, INNING or HOLE. Its words come from the display strings.
+                 */
+                unit: 'QUARTER' | 'HALF' | 'PERIOD' | 'INNING' | 'HOLE';
+                /**
+                 * How many periods a game has, overtime aside: 4 quarters, 2 halves, 9 innings, 18 holes. The last period's score is the final score.
+                 */
+                count: number;
+            } | null;
+        };
+        /**
+         * Unique within its round (#2161): the match's place in the round and its display order. Two rounds each have a match 1, so a match is named by roundNumber and matchNumber together.
+         */
+        matchNumber: number;
+        /**
+         * True when neither side is at home: screens then say "vs" rather than "at".
+         */
+        isNeutralSite: boolean;
+        /**
+         * Tip-off or kickoff; null until it is announced.
+         */
+        scheduledDate: string | null;
+        /**
+         * Where a match stands. COMPLETED once its result is in; CANCELLED when it was never played; POSTPONED when it was put off before it began and is still to be played, at its scheduledDate once a new time is set.
+         */
+        status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
+        /**
+         * True once the match is decided (COMPLETED): its score and its winner, or its tie, stand. The server's own fact, so a client never re-derives it from the status.
+         */
+        isFinal: boolean;
+        /**
+         * True while the match is still to be played: scheduled, or postponed to be played later. The server's own `isMatchUnplayed`, so a client never re-derives it from the status.
+         */
+        isUnplayed: boolean;
+        /**
+         * How the match ended; PLAYED for a match without a result. A WALKOVER has no scores.
+         */
+        ending: 'PLAYED' | 'RETIREMENT' | 'WALKOVER' | 'DEFAULT';
+        /**
+         * When the result was last recorded: each COMPLETED result sets it, a correction included. Null in every other status.
+         */
+        completedAt: string | null;
+        /**
+         * Where the winner moves on to; null for the final, and for a match whose winner is placed by seed in a league that reseeds.
+         */
+        advancesTo: {
+            /**
+             * The match the winner moves on to.
+             */
+            matchId: string;
+            /**
+             * The side of that match the winner fills.
+             */
+            sideNumber: number;
+        } | null;
+        /**
+         * The region or conference the match is played in ("AFC", "East"); null when the bracket has none. In a reseeded round each team stays in its region.
+         */
+        regionLabel: string | null;
+        /**
+         * Side 1 then side 2. The winner is the side whose outcome is WON.
+         */
+        sides: Array<{
+            /**
+             * The side's fixed place in the match: 1 or 2. A synced game has its away team on side 1 and its home team on side 2; where each side played a game is its game side result's homeAway.
+             */
+            sideNumber: number;
+            /**
+             * The field row playing the side; null until it is decided, such as a later round waiting on its feeder match.
+             */
+            sportEventParticipantId: string | null;
+            /**
+             * How a side came out of its match: PENDING until the match is decided, then WON or LOST, or TIED for both sides of a game of a week that ended level (#792).
+             */
+            outcome: 'PENDING' | 'WON' | 'LOST' | 'TIED';
+            /**
+             * The side's score in the match, summed by the server from its games: its game 1 score in a single game, and in a best-of series the games it has won. Null until it has one.
+             */
+            score: number | null;
+            /**
+             * The points spread, on side 1 only (#720): -3.5 has side 1 favoured by 3.5, +3.5 has it getting 3.5. Null until set, and always on side 2. A pick'em contest scored against the spread reads it.
+             */
+            spread: number | null;
+        }>;
+        /**
+         * The match's games in game-number order: a single game has its game 1 from the moment the match is loaded.
+         */
+        games: Array<{
+            /**
+             * 1 for a single game; a best-of series numbers its games in the order they are played.
+             */
+            gameNumber: number;
+            /**
+             * Where a match stands. COMPLETED once its result is in; CANCELLED when it was never played; POSTPONED when it was put off before it began and is still to be played, at its scheduledDate once a new time is set.
+             */
+            status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
+            /**
+             * True once the game is decided (COMPLETED). The server's own fact, so a client never re-derives it from the status.
+             */
+            isFinal: boolean;
+            /**
+             * The game's start; null until it is announced.
+             */
+            scheduledDate: string | null;
+            /**
+             * Each side's result in the game, side 1 first, from the moment the game is loaded: where the side plays it, then its scores once they are in.
+             */
+            sideResults: Array<{
+                /**
+                 * The match side the result is for.
+                 */
+                sideNumber: number;
+                /**
+                 * The side's score in the game, overtime included and a shoot-out never; null until the game starts.
+                 */
+                score: number | null;
+                /**
+                 * Where a side played a game: HOME, AWAY, or NONE at a neutral site. Screens say "at" or "vs" from it.
+                 */
+                homeAway: 'HOME' | 'AWAY' | 'NONE';
+                /**
+                 * The side's kicks scored in the shoot-out that settled a game level after extra time; null when there was none. Not part of the score.
+                 */
+                shootoutScore: number | null;
+                /**
+                 * The side's running score at the end of each period of play entered so far, regulation then overtime, in play order; empty for a sport whose games keep no score by period.
+                 */
+                periodScores: Array<{
+                    /**
+                     * REGULAR for a period of regulation, OVERTIME for one of overtime. A shoot-out is not a period here: it is the side result's shootoutScore.
+                     */
+                    kind: 'REGULAR' | 'OVERTIME' | 'SHOOTOUT';
+                    /**
+                     * 1 for the first period of its kind.
+                     */
+                    periodNumber: number;
+                    /**
+                     * The side's score at the end of the period, earlier periods included, as the scoreboard shows it: summed by the server from each period's own points.
+                     */
+                    score: number;
+                }>;
+            }>;
+        }>;
+    };
+};
+
+/**
+ * The Games of an event a squares contest can be played on.
+ */
+export type SquaresGameChoicesResponse = {
+    /**
+     * The Games a squares contest can be played on now: each a Game of a slot that takes squares, still to kick off, with no period score in. The final's first, then by kickoff, round, match and game number. Empty when every game has kicked off.
+     */
+    games: Array<{
+        /**
+         * The Game: what CreateContestRequest.sportEventRoundMatchGameId takes.
+         */
+        sportEventRoundMatchGameId: string;
+        /**
+         * Its number in its match: 1 for a single game, a series' games in the order they are played.
+         */
+        gameNumber: number;
+        /**
+         * The Game's kickoff, which closes a squares contest on it; null while it is to be announced.
+         */
+        scheduledDate: string | null;
+        /**
+         * The match it is a Game of: its round, its slot and its two sides.
+         */
+        match: {
+            id: string;
+            sportEventId: string;
+            /**
+             * The round the match is played in.
+             */
+            roundNumber: number;
+            /**
+             * The slot the match's round is played in: the round's label and whether the match is the final.
+             */
+            slot: {
+                /**
+                 * The Season slot (SportLeagueSeasonSlotDto) the round is played in. Rounds that share it, such as a golf tournament's four, are named by number rather than by the slot.
+                 */
+                seasonSlotId: string;
+                /**
+                 * The slot's proper name ("Super Bowl", "Sweet 16"); null when it is called by its kind's word.
+                 */
+                name: string | null;
+                /**
+                 * The slot's kind. FINAL is the event's final: never found by round position.
+                 */
+                slotKind: 'WEEK' | 'PLAY_IN' | 'ROUND_OF_64' | 'ROUND_OF_32' | 'ROUND_OF_16' | 'QUARTERFINAL' | 'SEMIFINAL' | 'THIRD_PLACE' | 'FINAL' | 'TOURNAMENT';
+                /**
+                 * A WEEK slot's week ("Week 14"); null for every other kind.
+                 */
+                weekNumber: number | null;
+                /**
+                 * What a game of the slot is played in (#2047); null for a game that keeps no score by period, such as a race or a tennis match.
+                 */
+                periods: {
+                    /**
+                     * What a game of the slot is played in: QUARTER, HALF, PERIOD, INNING or HOLE. Its words come from the display strings.
+                     */
+                    unit: 'QUARTER' | 'HALF' | 'PERIOD' | 'INNING' | 'HOLE';
+                    /**
+                     * How many periods a game has, overtime aside: 4 quarters, 2 halves, 9 innings, 18 holes. The last period's score is the final score.
+                     */
+                    count: number;
+                } | null;
+            };
+            /**
+             * Unique within its round (#2161): the match's place in the round and its display order. Two rounds each have a match 1, so a match is named by roundNumber and matchNumber together.
+             */
+            matchNumber: number;
+            /**
+             * True when neither side is at home: screens then say "vs" rather than "at".
+             */
+            isNeutralSite: boolean;
+            /**
+             * Tip-off or kickoff; null until it is announced.
+             */
+            scheduledDate: string | null;
+            /**
+             * Where a match stands. COMPLETED once its result is in; CANCELLED when it was never played; POSTPONED when it was put off before it began and is still to be played, at its scheduledDate once a new time is set.
+             */
+            status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
+            /**
+             * True once the match is decided (COMPLETED): its score and its winner, or its tie, stand. The server's own fact, so a client never re-derives it from the status.
+             */
+            isFinal: boolean;
+            /**
+             * True while the match is still to be played: scheduled, or postponed to be played later. The server's own `isMatchUnplayed`, so a client never re-derives it from the status.
+             */
+            isUnplayed: boolean;
+            /**
+             * How the match ended; PLAYED for a match without a result. A WALKOVER has no scores.
+             */
+            ending: 'PLAYED' | 'RETIREMENT' | 'WALKOVER' | 'DEFAULT';
+            /**
+             * When the result was last recorded: each COMPLETED result sets it, a correction included. Null in every other status.
+             */
+            completedAt: string | null;
+            /**
+             * Where the winner moves on to; null for the final, and for a match whose winner is placed by seed in a league that reseeds.
+             */
+            advancesTo: {
+                /**
+                 * The match the winner moves on to.
+                 */
+                matchId: string;
+                /**
+                 * The side of that match the winner fills.
+                 */
+                sideNumber: number;
+            } | null;
+            /**
+             * The region or conference the match is played in ("AFC", "East"); null when the bracket has none. In a reseeded round each team stays in its region.
+             */
+            regionLabel: string | null;
+            /**
+             * Side 1 then side 2. The winner is the side whose outcome is WON.
+             */
+            sides: Array<{
+                /**
+                 * The side's fixed place in the match: 1 or 2. A synced game has its away team on side 1 and its home team on side 2; where each side played a game is its game side result's homeAway.
+                 */
+                sideNumber: number;
+                /**
+                 * The field row playing the side; null until it is decided, such as a later round waiting on its feeder match.
+                 */
+                sportEventParticipantId: string | null;
+                /**
+                 * How a side came out of its match: PENDING until the match is decided, then WON or LOST, or TIED for both sides of a game of a week that ended level (#792).
+                 */
+                outcome: 'PENDING' | 'WON' | 'LOST' | 'TIED';
+                /**
+                 * The side's score in the match, summed by the server from its games: its game 1 score in a single game, and in a best-of series the games it has won. Null until it has one.
+                 */
+                score: number | null;
+                /**
+                 * The points spread, on side 1 only (#720): -3.5 has side 1 favoured by 3.5, +3.5 has it getting 3.5. Null until set, and always on side 2. A pick'em contest scored against the spread reads it.
+                 */
+                spread: number | null;
+            }>;
+            /**
+             * The match's games in game-number order: a single game has its game 1 from the moment the match is loaded.
+             */
+            games: Array<{
+                /**
+                 * 1 for a single game; a best-of series numbers its games in the order they are played.
+                 */
+                gameNumber: number;
+                /**
+                 * Where a match stands. COMPLETED once its result is in; CANCELLED when it was never played; POSTPONED when it was put off before it began and is still to be played, at its scheduledDate once a new time is set.
+                 */
+                status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
+                /**
+                 * True once the game is decided (COMPLETED). The server's own fact, so a client never re-derives it from the status.
+                 */
+                isFinal: boolean;
+                /**
+                 * The game's start; null until it is announced.
+                 */
+                scheduledDate: string | null;
+                /**
+                 * Each side's result in the game, side 1 first, from the moment the game is loaded: where the side plays it, then its scores once they are in.
+                 */
+                sideResults: Array<{
+                    /**
+                     * The match side the result is for.
+                     */
+                    sideNumber: number;
+                    /**
+                     * The side's score in the game, overtime included and a shoot-out never; null until the game starts.
+                     */
+                    score: number | null;
+                    /**
+                     * Where a side played a game: HOME, AWAY, or NONE at a neutral site. Screens say "at" or "vs" from it.
+                     */
+                    homeAway: 'HOME' | 'AWAY' | 'NONE';
+                    /**
+                     * The side's kicks scored in the shoot-out that settled a game level after extra time; null when there was none. Not part of the score.
+                     */
+                    shootoutScore: number | null;
+                    /**
+                     * The side's running score at the end of each period of play entered so far, regulation then overtime, in play order; empty for a sport whose games keep no score by period.
+                     */
+                    periodScores: Array<{
+                        /**
+                         * REGULAR for a period of regulation, OVERTIME for one of overtime. A shoot-out is not a period here: it is the side result's shootoutScore.
+                         */
+                        kind: 'REGULAR' | 'OVERTIME' | 'SHOOTOUT';
+                        /**
+                         * 1 for the first period of its kind.
+                         */
+                        periodNumber: number;
+                        /**
+                         * The side's score at the end of the period, earlier periods included, as the scoreboard shows it: summed by the server from each period's own points.
+                         */
+                        score: number;
+                    }>;
+                }>;
+            }>;
+        };
+    }>;
+    /**
+     * The Game Create contest starts on: Game 1 of the soonest match, the first of `games`. Null when there is none.
+     */
+    defaultSportEventRoundMatchGameId: string | null;
+};
+
+/**
  * The whole bracket: it replaces every match the event has. Each team appears at most once, there is exactly one final in the last round named, and two matches never advance to the same side.
  */
 export type LoadSportEventBracketRequest = {
@@ -9596,10 +9997,6 @@ export type SportLeagueDto = {
      */
     platformPricingProfileId: string;
     /**
-     * The first round whose matches are single games a squares contest can be played on, when not every round's are: 5 for the Champions League, whose earlier rounds are two-legged ties, 3 for MLS, whose round one is a best-of-three series. Null when every round's matches can take one. Set with the league's reference data, never by a request.
-     */
-    squaresFromRound: number | null;
-    /**
      * What screens call the sport league, when not what its sport calls one: LEAGUE for the NCAA Division I tennis championships, where the ATP and the WTA are tours. Null takes the sport's noun. Set with the league's reference data, never by a request.
      */
     noun: 'LEAGUE' | null;
@@ -9759,10 +10156,6 @@ export type SportLeagueListResponse = {
          */
         platformPricingProfileId: string;
         /**
-         * The first round whose matches are single games a squares contest can be played on, when not every round's are: 5 for the Champions League, whose earlier rounds are two-legged ties, 3 for MLS, whose round one is a best-of-three series. Null when every round's matches can take one. Set with the league's reference data, never by a request.
-         */
-        squaresFromRound: number | null;
-        /**
          * What screens call the sport league, when not what its sport calls one: LEAGUE for the NCAA Division I tennis championships, where the ATP and the WTA are tours. Null takes the sport's noun. Set with the league's reference data, never by a request.
          */
         noun: 'LEAGUE' | null;
@@ -9898,10 +10291,6 @@ export type SportLeagueResponse = {
          * The pricing profile the sport league names (PlatformPricingProfileDto): a synced field of the league never priced before is priced with its values.
          */
         platformPricingProfileId: string;
-        /**
-         * The first round whose matches are single games a squares contest can be played on, when not every round's are: 5 for the Champions League, whose earlier rounds are two-legged ties, 3 for MLS, whose round one is a best-of-three series. Null when every round's matches can take one. Set with the league's reference data, never by a request.
-         */
-        squaresFromRound: number | null;
         /**
          * What screens call the sport league, when not what its sport calls one: LEAGUE for the NCAA Division I tennis championships, where the ATP and the WTA are tours. Null takes the sport's noun. Set with the league's reference data, never by a request.
          */
@@ -16441,9 +16830,9 @@ export type CreateContestRequest = {
      */
     startingSlotId?: string;
     /**
-     * A squares contest's game (#711): one of its event's games not yet kicked off. Required for SQUARES (422 CONTEST_SQUARES_GAME_REQUIRED) and refused for every other selection type; 422 CONTEST_SQUARES_GAME_INVALID for a game not of the event, cancelled, or already started.
+     * A squares contest's Game (#711, #2050): one of the event's squares Game choices (GET /sport-events/{eventId}/squares-games), a Game of a slot that takes squares not yet kicked off. Required for SQUARES (422 CONTEST_SQUARES_GAME_REQUIRED) and refused for every other selection type; 422 CONTEST_SQUARES_GAME_INVALID for any other Game.
      */
-    sportEventRoundMatchId?: string;
+    sportEventRoundMatchGameId?: string;
 };
 
 /**
@@ -32909,7 +33298,7 @@ export type ActivityJobDto = {
     /**
      * The job's handler. Its kind follows from it.
      */
-    type: 'SYNC_EVENT_FIELD' | 'SYNC_EVENT_SCORES' | 'CONTEST_STARTED_EMAILS' | 'CONTEST_SETTLED_EMAILS' | 'CONTEST_EVENT_CHANGED_EMAILS' | 'CONTEST_REOPENED_EMAILS' | 'SETTLE_SPORT_EVENT_CONTESTS' | 'SETTLE_GAME_CONTESTS' | 'REBUILD_LEADERBOARDS' | 'SYNC_LEAGUE_EVENTS' | 'RELEASE_SPORT_EVENT' | 'SYNC_EVENT_GAMES_AND_TIERS' | 'ACTIVATE_EVENT_CONTESTS' | 'FOLLOW_POSTPONED_EVENT_CONTESTS' | 'RESOLVE_MAPPED_PARTICIPANT_FINDINGS' | 'REFRESH_SLOT_TIEBREAKERS' | 'SYNC_LEAGUE_ROSTER';
+    type: 'SYNC_EVENT_FIELD' | 'SYNC_EVENT_SCORES' | 'CONTEST_STARTED_EMAILS' | 'CONTEST_SETTLED_EMAILS' | 'CONTEST_EVENT_CHANGED_EMAILS' | 'CONTEST_REOPENED_EMAILS' | 'SETTLE_SPORT_EVENT_CONTESTS' | 'SETTLE_GAME_CONTESTS' | 'REBUILD_LEADERBOARDS' | 'SYNC_LEAGUE_EVENTS' | 'RELEASE_SPORT_EVENT' | 'SYNC_EVENT_GAMES_AND_TIERS' | 'ACTIVATE_EVENT_CONTESTS' | 'FOLLOW_POSTPONED_EVENT_CONTESTS' | 'RESOLVE_MAPPED_PARTICIPANT_FINDINGS' | 'REFRESH_SLOT_TIEBREAKERS' | 'SYNC_LEAGUE_ROSTER' | 'REFRESH_SLOT_STATUS' | 'REFRESH_EVENT_STATUS';
     /**
      * What a job is about: a provider SYNC, EMAIL to a league, contest SETTLEMENT, an event's RELEASE, or OTHER.
      */
@@ -33038,7 +33427,7 @@ export type ActivityListResponse = {
         /**
          * The job's handler. Its kind follows from it.
          */
-        type: 'SYNC_EVENT_FIELD' | 'SYNC_EVENT_SCORES' | 'CONTEST_STARTED_EMAILS' | 'CONTEST_SETTLED_EMAILS' | 'CONTEST_EVENT_CHANGED_EMAILS' | 'CONTEST_REOPENED_EMAILS' | 'SETTLE_SPORT_EVENT_CONTESTS' | 'SETTLE_GAME_CONTESTS' | 'REBUILD_LEADERBOARDS' | 'SYNC_LEAGUE_EVENTS' | 'RELEASE_SPORT_EVENT' | 'SYNC_EVENT_GAMES_AND_TIERS' | 'ACTIVATE_EVENT_CONTESTS' | 'FOLLOW_POSTPONED_EVENT_CONTESTS' | 'RESOLVE_MAPPED_PARTICIPANT_FINDINGS' | 'REFRESH_SLOT_TIEBREAKERS' | 'SYNC_LEAGUE_ROSTER';
+        type: 'SYNC_EVENT_FIELD' | 'SYNC_EVENT_SCORES' | 'CONTEST_STARTED_EMAILS' | 'CONTEST_SETTLED_EMAILS' | 'CONTEST_EVENT_CHANGED_EMAILS' | 'CONTEST_REOPENED_EMAILS' | 'SETTLE_SPORT_EVENT_CONTESTS' | 'SETTLE_GAME_CONTESTS' | 'REBUILD_LEADERBOARDS' | 'SYNC_LEAGUE_EVENTS' | 'RELEASE_SPORT_EVENT' | 'SYNC_EVENT_GAMES_AND_TIERS' | 'ACTIVATE_EVENT_CONTESTS' | 'FOLLOW_POSTPONED_EVENT_CONTESTS' | 'RESOLVE_MAPPED_PARTICIPANT_FINDINGS' | 'REFRESH_SLOT_TIEBREAKERS' | 'SYNC_LEAGUE_ROSTER' | 'REFRESH_SLOT_STATUS' | 'REFRESH_EVENT_STATUS';
         /**
          * What a job is about: a provider SYNC, EMAIL to a league, contest SETTLEMENT, an event's RELEASE, or OTHER.
          */
@@ -33144,7 +33533,7 @@ export type ActivityJobResponse = {
         /**
          * The job's handler. Its kind follows from it.
          */
-        type: 'SYNC_EVENT_FIELD' | 'SYNC_EVENT_SCORES' | 'CONTEST_STARTED_EMAILS' | 'CONTEST_SETTLED_EMAILS' | 'CONTEST_EVENT_CHANGED_EMAILS' | 'CONTEST_REOPENED_EMAILS' | 'SETTLE_SPORT_EVENT_CONTESTS' | 'SETTLE_GAME_CONTESTS' | 'REBUILD_LEADERBOARDS' | 'SYNC_LEAGUE_EVENTS' | 'RELEASE_SPORT_EVENT' | 'SYNC_EVENT_GAMES_AND_TIERS' | 'ACTIVATE_EVENT_CONTESTS' | 'FOLLOW_POSTPONED_EVENT_CONTESTS' | 'RESOLVE_MAPPED_PARTICIPANT_FINDINGS' | 'REFRESH_SLOT_TIEBREAKERS' | 'SYNC_LEAGUE_ROSTER';
+        type: 'SYNC_EVENT_FIELD' | 'SYNC_EVENT_SCORES' | 'CONTEST_STARTED_EMAILS' | 'CONTEST_SETTLED_EMAILS' | 'CONTEST_EVENT_CHANGED_EMAILS' | 'CONTEST_REOPENED_EMAILS' | 'SETTLE_SPORT_EVENT_CONTESTS' | 'SETTLE_GAME_CONTESTS' | 'REBUILD_LEADERBOARDS' | 'SYNC_LEAGUE_EVENTS' | 'RELEASE_SPORT_EVENT' | 'SYNC_EVENT_GAMES_AND_TIERS' | 'ACTIVATE_EVENT_CONTESTS' | 'FOLLOW_POSTPONED_EVENT_CONTESTS' | 'RESOLVE_MAPPED_PARTICIPANT_FINDINGS' | 'REFRESH_SLOT_TIEBREAKERS' | 'SYNC_LEAGUE_ROSTER' | 'REFRESH_SLOT_STATUS' | 'REFRESH_EVENT_STATUS';
         /**
          * What a job is about: a provider SYNC, EMAIL to a league, contest SETTLEMENT, an event's RELEASE, or OTHER.
          */
@@ -39825,6 +40214,41 @@ export type LoadEventBracketResponses = {
 };
 
 export type LoadEventBracketResponse = LoadEventBracketResponses[keyof LoadEventBracketResponses];
+
+export type ListEventSquaresGamesData = {
+    body?: never;
+    path: {
+        eventId: string;
+    };
+    query?: never;
+    url: '/api/v1/events/{eventId}/squares-games';
+};
+
+export type ListEventSquaresGamesErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    401: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    404: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    422: ErrorEnvelope;
+};
+
+export type ListEventSquaresGamesError = ListEventSquaresGamesErrors[keyof ListEventSquaresGamesErrors];
+
+export type ListEventSquaresGamesResponses = {
+    /**
+     * The Games of an event a squares contest can be played on.
+     */
+    200: SquaresGameChoicesResponse;
+};
+
+export type ListEventSquaresGamesResponse = ListEventSquaresGamesResponses[keyof ListEventSquaresGamesResponses];
 
 export type ListEventSlotTiebreakersData = {
     body?: never;

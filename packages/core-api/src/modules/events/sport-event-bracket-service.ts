@@ -51,6 +51,8 @@ import {
   SportEventStatus,
   sportVocabulary,
   SportEventParticipantStatus,
+  squaresGameChoices,
+  type SquaresGameChoice,
 } from '@poolmaster/shared/domain';
 import { roundLabels } from '@poolmaster/shared/display-strings';
 import { SportEventError } from './errors';
@@ -259,6 +261,16 @@ export class SportEventBracketService {
   async listBracket(sportEventId: string): Promise<SportEventRoundMatch[]> {
     await this.requireBracketEvent(sportEventId);
     return this.deps.matches.findBySportEvent(sportEventId);
+  }
+
+  /**
+   * The Games a squares contest can be played on now (`squaresGameChoices`, #2050), the default
+   * first: what Create contest lists, and the one rule create checks a chosen Game against.
+   * 422 SPORT_EVENT_NOT_BRACKET for an event that plays no matches.
+   */
+  async listSquaresGameChoices(sportEventId: string): Promise<SquaresGameChoice[]> {
+    await this.requireBracketEvent(sportEventId);
+    return squaresGameChoices(await this.deps.matches.findBySportEvent(sportEventId), this.deps.now?.() ?? new Date());
   }
 
   /**

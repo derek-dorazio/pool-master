@@ -17,13 +17,15 @@
  * A random draw closes entries early (#601): once it has dealt, nobody may enter, leave or
  * change an entry, or the deal would no longer be the one every entry was given.
  */
-import type { Contest, ContestRules, ContestSelectionConfig, SportEventRoundMatch } from '@poolmaster/shared/domain';
+import type { Contest, ContestRules, ContestSelectionConfig, ContestSquaresGame, SportEventRoundMatch, SportEventRoundMatchGame } from '@poolmaster/shared/domain';
 import { ContestStatus, isMatchUnplayed, SelectionType, SportEventStatus, hasSportEventStarted, isSportEventStatusFinished, hasPeriodScores } from '@poolmaster/shared/domain';
 
 export type EventTiming = { status: SportEventStatus; startDate: Date };
 /** A game's timing: its status, its kickoff, and any period scores, which only a game under way has (#772). */
 type MatchTiming = Pick<SportEventRoundMatch, 'status' | 'scheduledDate' | 'games'>;
 type RoundMatchTiming = MatchTiming & { id: string; roundNumber: number };
+/** One Game's timing (#2050): its status, its kickoff and its period scores. */
+type GameTiming = Pick<SportEventRoundMatchGame, 'id' | 'status' | 'scheduledDate' | 'sideResults'>;
 
 /**
  * Where a contest's window on an event closes (#721): at the event's start, as for every contest,
@@ -32,13 +34,13 @@ type RoundMatchTiming = MatchTiming & { id: string; roundNumber: number };
  */
 export const ContestCutoffKind = {
   EVENT_START: 'EVENT_START',
-  MATCH_START: 'MATCH_START',
+  GAME_START: 'GAME_START',
 } as const;
 export type ContestCutoffKind = (typeof ContestCutoffKind)[keyof typeof ContestCutoffKind];
 
 export type ContestCutoff =
   | { kind: typeof ContestCutoffKind.EVENT_START }
-  | { kind: typeof ContestCutoffKind.MATCH_START; sportEventRoundMatchId: string };
+  | { kind: typeof ContestCutoffKind.GAME_START; sportEventRoundMatchGameId: string };
 
 const AT_EVENT_START: ContestCutoff = { kind: ContestCutoffKind.EVENT_START };
 
@@ -53,32 +55,33 @@ export function hasGameMovedOn(game: MatchTiming): boolean {
  */
 export function contestCutoff(
   rules: ContestRules | ContestSelectionConfig | undefined,
-  squaresGameMatchId?: string,
+  squaresGame?: Pick<ContestSquaresGame, 'sportEventRoundMatchGameId'>,
 ): ContestCutoff {
-  if (rules?.selectionType === SelectionType.SQUARES && squaresGameMatchId !== undefined) {
-    return { kind: ContestCutoffKind.MATCH_START, sportEventRoundMatchId: squaresGameMatchId };
+  if (rules?.selectionType === SelectionType.SQUARES && squaresGame !== undefined) {
+    return { kind: ContestCutoffKind.GAME_START, sportEventRoundMatchGameId: squaresGame.sportEventRoundMatchGameId };
   }
   return AT_EVENT_START;
 }
 
 /**
  * The timing a contest's window runs on for one event, in the shape every check below reads: the
- * event's own, or at a game's kickoff, that game's time and whether it has moved on (a cancelled game
- * has, so its contest closes, and so has a game with a period score). A finished event is finished for every cutoff.
+ * event's own, or at a Game's kickoff, that Game's time and whether it has moved on (a cancelled
+ * Game has, so its contest closes, and so has a Game with a period score). The Game is looked up
+ * among the event's matches' Games. A finished event is finished for every cutoff.
  */
-export function cutoffTiming(cutoff: ContestCutoff, sportEvent: EventTiming, games: readonly RoundMatchTiming[]): EventTiming {
+export function cutoffTiming(cutoff: ContestCutoff, sportEvent: EventTiming, matches: readonly { games: readonly GameTiming[] }[]): EventTiming {
   switch (cutoff.kind) {
     case ContestCutoffKind.EVENT_START:
       return sportEvent;
-    case ContestCutoffKind.MATCH_START: {
+    case ContestCutoffKind.GAME_START: {
       if (isSportEventStatusFinished(sportEvent.status)) {
         return sportEvent;
       }
-      const game = games.find((candidate) => candidate.id === cutoff.sportEventRoundMatchId);
+      const game = matches.flatMap((match) => match.games).find((candidate) => candidate.id === cutoff.sportEventRoundMatchGameId);
       if (!game) {
         return sportEvent;
       }
-      const status = hasGameMovedOn(game)
+      const status = !isMatchUnplayed(game.status) || hasPeriodScores({ games: [game] })
         ? SportEventStatus.IN_PROGRESS
         : sportEvent.status === SportEventStatus.IN_PROGRESS ? SportEventStatus.SCHEDULED : sportEvent.status;
       return { status, startDate: game.scheduledDate ?? sportEvent.startDate };

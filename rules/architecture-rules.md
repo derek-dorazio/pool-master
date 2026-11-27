@@ -261,6 +261,30 @@ is the `background_jobs` table, the transactional outbox; moving it out of proce
 delivery, not the map (`docs/BACKGROUND-JOBS.md` *Scaling out*). The bus #261 deleted had
 publishers and no subscriber; this map exists because its handlers do.
 
+### Status bubbles up through the handler map
+
+A status flows up Game → Match → Season slot → event (#2013), each step a guarded write whose
+domain event queues the next step's refresh job:
+
+- **Game → Match** is the result writer's own: a Match's status is written with its Games in
+  one transaction (a head-to-head result, a series rolled up from its Games, a FIELD round or
+  race), because a Match result is validated as it is written. Every such write raises
+  `MATCH_STATUS_CHANGED`.
+- **Match → Season slot** is `REFRESH_SLOT_STATUS`, one waiting per event. Its handler
+  (`SlotStatusService.refreshSlots`) computes each slot from its Matches with
+  `seasonSlotStatusOf`: one completion rule per scoring family (every Match decided for matches
+  and races; the feed's final call for stroke play, whose last round is not known in advance).
+  COMPLETED and CANCELLED are final; nothing reopens them on its own. A slot that moves raises
+  `SEASON_SLOT_STATUS_CHANGED`.
+- **Season slot → event** is `REFRESH_EVENT_STATUS`, one waiting per event. Its handler moves
+  the event to `sportEventStatusOfSlots` through `EventLifecycleService`, the one writer of an
+  event's status, which raises `SPORT_EVENT_STATUS_CHANGED`. A draft stays a draft, and an event
+  with `autoLifecycleEnabled` off keeps the status its admin set.
+
+An event covering a slot completes when its slots do, never on the clock; one covering none, which has no slot to complete it, completes at its end date. The lifecycle sweep still starts a
+scheduled event at its first round's date, because a live score is accepted only for an event
+in progress; that start moves to the slots when the live-score gate does (#2013).
+
 ### Background jobs run on one server task
 
 Every API task starts the schedulers (the lifecycle sweep, the clock-driven email sweeps, the

@@ -25,6 +25,7 @@ export function roundSlot(slotKind: SlotKind, overrides: Partial<SportEventRound
     pairing: SlotPairing.FIXED,
     canEndTied: false,
     isNeutralSite: false,
+    squaresEligible: true,
     periods: null,
     tiebreakerMatchId: null,
     ...overrides,

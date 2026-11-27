@@ -2503,6 +2503,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/events/{eventId}/squares-games": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List the games a squares contest can be played on
+         * @description The event's Games a squares contest can be played on now: each a Game of a slot that takes squares, still to kick off, with no period score in, the final's first, then by kickoff. Create contest lists them, and creating a squares contest accepts only one of them. Any signed-in user may read a released event's; a DRAFT event's are a root admin's only. 422 SPORT_EVENT_NOT_BRACKET when the event's sport is not played as a bracket.
+         */
+        get: operations["listEventSquaresGames"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/events/{eventId}/slots/tiebreakers": {
         parameters: {
             query?: never;
@@ -10211,6 +10231,320 @@ export interface components {
                 }[];
             };
         };
+        /** @description A Game a squares contest can be played on. */
+        SquaresGameChoiceDto: {
+            /**
+             * Format: uuid
+             * @description The Game: what CreateContestRequest.sportEventRoundMatchGameId takes.
+             */
+            sportEventRoundMatchGameId: string;
+            /** @description Its number in its match: 1 for a single game, a series' games in the order they are played. */
+            gameNumber: number;
+            /**
+             * Format: date-time
+             * @description The Game's kickoff, which closes a squares contest on it; null while it is to be announced.
+             */
+            scheduledDate: string | null;
+            /** @description The match it is a Game of: its round, its slot and its two sides. */
+            match: {
+                /** Format: uuid */
+                id: string;
+                /** Format: uuid */
+                sportEventId: string;
+                /** @description The round the match is played in. */
+                roundNumber: number;
+                /** @description The slot the match's round is played in: the round's label and whether the match is the final. */
+                slot: {
+                    /**
+                     * Format: uuid
+                     * @description The Season slot (SportLeagueSeasonSlotDto) the round is played in. Rounds that share it, such as a golf tournament's four, are named by number rather than by the slot.
+                     */
+                    seasonSlotId: string;
+                    /** @description The slot's proper name ("Super Bowl", "Sweet 16"); null when it is called by its kind's word. */
+                    name: string | null;
+                    /**
+                     * @description The slot's kind. FINAL is the event's final: never found by round position.
+                     * @enum {string}
+                     */
+                    slotKind: "WEEK" | "PLAY_IN" | "ROUND_OF_64" | "ROUND_OF_32" | "ROUND_OF_16" | "QUARTERFINAL" | "SEMIFINAL" | "THIRD_PLACE" | "FINAL" | "TOURNAMENT";
+                    /** @description A WEEK slot's week ("Week 14"); null for every other kind. */
+                    weekNumber: number | null;
+                    /** @description What a game of the slot is played in (#2047); null for a game that keeps no score by period, such as a race or a tennis match. */
+                    periods: {
+                        /**
+                         * @description What a game of the slot is played in: QUARTER, HALF, PERIOD, INNING or HOLE. Its words come from the display strings.
+                         * @enum {string}
+                         */
+                        unit: "QUARTER" | "HALF" | "PERIOD" | "INNING" | "HOLE";
+                        /** @description How many periods a game has, overtime aside: 4 quarters, 2 halves, 9 innings, 18 holes. The last period's score is the final score. */
+                        count: number;
+                    } | null;
+                };
+                /** @description Unique within its round (#2161): the match's place in the round and its display order. Two rounds each have a match 1, so a match is named by roundNumber and matchNumber together. */
+                matchNumber: number;
+                /** @description True when neither side is at home: screens then say "vs" rather than "at". */
+                isNeutralSite: boolean;
+                /**
+                 * Format: date-time
+                 * @description Tip-off or kickoff; null until it is announced.
+                 */
+                scheduledDate: string | null;
+                /**
+                 * @description Where a match stands. COMPLETED once its result is in; CANCELLED when it was never played; POSTPONED when it was put off before it began and is still to be played, at its scheduledDate once a new time is set.
+                 * @enum {string}
+                 */
+                status: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
+                /** @description True once the match is decided (COMPLETED): its score and its winner, or its tie, stand. The server's own fact, so a client never re-derives it from the status. */
+                isFinal: boolean;
+                /** @description True while the match is still to be played: scheduled, or postponed to be played later. The server's own `isMatchUnplayed`, so a client never re-derives it from the status. */
+                isUnplayed: boolean;
+                /**
+                 * @description How the match ended; PLAYED for a match without a result. A WALKOVER has no scores.
+                 * @enum {string}
+                 */
+                ending: "PLAYED" | "RETIREMENT" | "WALKOVER" | "DEFAULT";
+                /**
+                 * Format: date-time
+                 * @description When the result was last recorded: each COMPLETED result sets it, a correction included. Null in every other status.
+                 */
+                completedAt: string | null;
+                /** @description Where the winner moves on to; null for the final, and for a match whose winner is placed by seed in a league that reseeds. */
+                advancesTo: {
+                    /**
+                     * Format: uuid
+                     * @description The match the winner moves on to.
+                     */
+                    matchId: string;
+                    /** @description The side of that match the winner fills. */
+                    sideNumber: number;
+                } | null;
+                /** @description The region or conference the match is played in ("AFC", "East"); null when the bracket has none. In a reseeded round each team stays in its region. */
+                regionLabel: string | null;
+                /** @description Side 1 then side 2. The winner is the side whose outcome is WON. */
+                sides: {
+                    /** @description The side's fixed place in the match: 1 or 2. A synced game has its away team on side 1 and its home team on side 2; where each side played a game is its game side result's homeAway. */
+                    sideNumber: number;
+                    /**
+                     * Format: uuid
+                     * @description The field row playing the side; null until it is decided, such as a later round waiting on its feeder match.
+                     */
+                    sportEventParticipantId: string | null;
+                    /**
+                     * @description How a side came out of its match: PENDING until the match is decided, then WON or LOST, or TIED for both sides of a game of a week that ended level (#792).
+                     * @enum {string}
+                     */
+                    outcome: "PENDING" | "WON" | "LOST" | "TIED";
+                    /** @description The side's score in the match, summed by the server from its games: its game 1 score in a single game, and in a best-of series the games it has won. Null until it has one. */
+                    score: number | null;
+                    /** @description The points spread, on side 1 only (#720): -3.5 has side 1 favoured by 3.5, +3.5 has it getting 3.5. Null until set, and always on side 2. A pick'em contest scored against the spread reads it. */
+                    spread: number | null;
+                }[];
+                /** @description The match's games in game-number order: a single game has its game 1 from the moment the match is loaded. */
+                games: {
+                    /** @description 1 for a single game; a best-of series numbers its games in the order they are played. */
+                    gameNumber: number;
+                    /**
+                     * @description Where a match stands. COMPLETED once its result is in; CANCELLED when it was never played; POSTPONED when it was put off before it began and is still to be played, at its scheduledDate once a new time is set.
+                     * @enum {string}
+                     */
+                    status: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
+                    /** @description True once the game is decided (COMPLETED). The server's own fact, so a client never re-derives it from the status. */
+                    isFinal: boolean;
+                    /**
+                     * Format: date-time
+                     * @description The game's start; null until it is announced.
+                     */
+                    scheduledDate: string | null;
+                    /** @description Each side's result in the game, side 1 first, from the moment the game is loaded: where the side plays it, then its scores once they are in. */
+                    sideResults: {
+                        /** @description The match side the result is for. */
+                        sideNumber: number;
+                        /** @description The side's score in the game, overtime included and a shoot-out never; null until the game starts. */
+                        score: number | null;
+                        /**
+                         * @description Where a side played a game: HOME, AWAY, or NONE at a neutral site. Screens say "at" or "vs" from it.
+                         * @enum {string}
+                         */
+                        homeAway: "HOME" | "AWAY" | "NONE";
+                        /** @description The side's kicks scored in the shoot-out that settled a game level after extra time; null when there was none. Not part of the score. */
+                        shootoutScore: number | null;
+                        /** @description The side's running score at the end of each period of play entered so far, regulation then overtime, in play order; empty for a sport whose games keep no score by period. */
+                        periodScores: {
+                            /**
+                             * @description REGULAR for a period of regulation, OVERTIME for one of overtime. A shoot-out is not a period here: it is the side result's shootoutScore.
+                             * @enum {string}
+                             */
+                            kind: "REGULAR" | "OVERTIME" | "SHOOTOUT";
+                            /** @description 1 for the first period of its kind. */
+                            periodNumber: number;
+                            /** @description The side's score at the end of the period, earlier periods included, as the scoreboard shows it: summed by the server from each period's own points. */
+                            score: number;
+                        }[];
+                    }[];
+                }[];
+            };
+        };
+        /** @description The Games of an event a squares contest can be played on. */
+        SquaresGameChoicesResponse: {
+            /** @description The Games a squares contest can be played on now: each a Game of a slot that takes squares, still to kick off, with no period score in. The final's first, then by kickoff, round, match and game number. Empty when every game has kicked off. */
+            games: {
+                /**
+                 * Format: uuid
+                 * @description The Game: what CreateContestRequest.sportEventRoundMatchGameId takes.
+                 */
+                sportEventRoundMatchGameId: string;
+                /** @description Its number in its match: 1 for a single game, a series' games in the order they are played. */
+                gameNumber: number;
+                /**
+                 * Format: date-time
+                 * @description The Game's kickoff, which closes a squares contest on it; null while it is to be announced.
+                 */
+                scheduledDate: string | null;
+                /** @description The match it is a Game of: its round, its slot and its two sides. */
+                match: {
+                    /** Format: uuid */
+                    id: string;
+                    /** Format: uuid */
+                    sportEventId: string;
+                    /** @description The round the match is played in. */
+                    roundNumber: number;
+                    /** @description The slot the match's round is played in: the round's label and whether the match is the final. */
+                    slot: {
+                        /**
+                         * Format: uuid
+                         * @description The Season slot (SportLeagueSeasonSlotDto) the round is played in. Rounds that share it, such as a golf tournament's four, are named by number rather than by the slot.
+                         */
+                        seasonSlotId: string;
+                        /** @description The slot's proper name ("Super Bowl", "Sweet 16"); null when it is called by its kind's word. */
+                        name: string | null;
+                        /**
+                         * @description The slot's kind. FINAL is the event's final: never found by round position.
+                         * @enum {string}
+                         */
+                        slotKind: "WEEK" | "PLAY_IN" | "ROUND_OF_64" | "ROUND_OF_32" | "ROUND_OF_16" | "QUARTERFINAL" | "SEMIFINAL" | "THIRD_PLACE" | "FINAL" | "TOURNAMENT";
+                        /** @description A WEEK slot's week ("Week 14"); null for every other kind. */
+                        weekNumber: number | null;
+                        /** @description What a game of the slot is played in (#2047); null for a game that keeps no score by period, such as a race or a tennis match. */
+                        periods: {
+                            /**
+                             * @description What a game of the slot is played in: QUARTER, HALF, PERIOD, INNING or HOLE. Its words come from the display strings.
+                             * @enum {string}
+                             */
+                            unit: "QUARTER" | "HALF" | "PERIOD" | "INNING" | "HOLE";
+                            /** @description How many periods a game has, overtime aside: 4 quarters, 2 halves, 9 innings, 18 holes. The last period's score is the final score. */
+                            count: number;
+                        } | null;
+                    };
+                    /** @description Unique within its round (#2161): the match's place in the round and its display order. Two rounds each have a match 1, so a match is named by roundNumber and matchNumber together. */
+                    matchNumber: number;
+                    /** @description True when neither side is at home: screens then say "vs" rather than "at". */
+                    isNeutralSite: boolean;
+                    /**
+                     * Format: date-time
+                     * @description Tip-off or kickoff; null until it is announced.
+                     */
+                    scheduledDate: string | null;
+                    /**
+                     * @description Where a match stands. COMPLETED once its result is in; CANCELLED when it was never played; POSTPONED when it was put off before it began and is still to be played, at its scheduledDate once a new time is set.
+                     * @enum {string}
+                     */
+                    status: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
+                    /** @description True once the match is decided (COMPLETED): its score and its winner, or its tie, stand. The server's own fact, so a client never re-derives it from the status. */
+                    isFinal: boolean;
+                    /** @description True while the match is still to be played: scheduled, or postponed to be played later. The server's own `isMatchUnplayed`, so a client never re-derives it from the status. */
+                    isUnplayed: boolean;
+                    /**
+                     * @description How the match ended; PLAYED for a match without a result. A WALKOVER has no scores.
+                     * @enum {string}
+                     */
+                    ending: "PLAYED" | "RETIREMENT" | "WALKOVER" | "DEFAULT";
+                    /**
+                     * Format: date-time
+                     * @description When the result was last recorded: each COMPLETED result sets it, a correction included. Null in every other status.
+                     */
+                    completedAt: string | null;
+                    /** @description Where the winner moves on to; null for the final, and for a match whose winner is placed by seed in a league that reseeds. */
+                    advancesTo: {
+                        /**
+                         * Format: uuid
+                         * @description The match the winner moves on to.
+                         */
+                        matchId: string;
+                        /** @description The side of that match the winner fills. */
+                        sideNumber: number;
+                    } | null;
+                    /** @description The region or conference the match is played in ("AFC", "East"); null when the bracket has none. In a reseeded round each team stays in its region. */
+                    regionLabel: string | null;
+                    /** @description Side 1 then side 2. The winner is the side whose outcome is WON. */
+                    sides: {
+                        /** @description The side's fixed place in the match: 1 or 2. A synced game has its away team on side 1 and its home team on side 2; where each side played a game is its game side result's homeAway. */
+                        sideNumber: number;
+                        /**
+                         * Format: uuid
+                         * @description The field row playing the side; null until it is decided, such as a later round waiting on its feeder match.
+                         */
+                        sportEventParticipantId: string | null;
+                        /**
+                         * @description How a side came out of its match: PENDING until the match is decided, then WON or LOST, or TIED for both sides of a game of a week that ended level (#792).
+                         * @enum {string}
+                         */
+                        outcome: "PENDING" | "WON" | "LOST" | "TIED";
+                        /** @description The side's score in the match, summed by the server from its games: its game 1 score in a single game, and in a best-of series the games it has won. Null until it has one. */
+                        score: number | null;
+                        /** @description The points spread, on side 1 only (#720): -3.5 has side 1 favoured by 3.5, +3.5 has it getting 3.5. Null until set, and always on side 2. A pick'em contest scored against the spread reads it. */
+                        spread: number | null;
+                    }[];
+                    /** @description The match's games in game-number order: a single game has its game 1 from the moment the match is loaded. */
+                    games: {
+                        /** @description 1 for a single game; a best-of series numbers its games in the order they are played. */
+                        gameNumber: number;
+                        /**
+                         * @description Where a match stands. COMPLETED once its result is in; CANCELLED when it was never played; POSTPONED when it was put off before it began and is still to be played, at its scheduledDate once a new time is set.
+                         * @enum {string}
+                         */
+                        status: "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
+                        /** @description True once the game is decided (COMPLETED). The server's own fact, so a client never re-derives it from the status. */
+                        isFinal: boolean;
+                        /**
+                         * Format: date-time
+                         * @description The game's start; null until it is announced.
+                         */
+                        scheduledDate: string | null;
+                        /** @description Each side's result in the game, side 1 first, from the moment the game is loaded: where the side plays it, then its scores once they are in. */
+                        sideResults: {
+                            /** @description The match side the result is for. */
+                            sideNumber: number;
+                            /** @description The side's score in the game, overtime included and a shoot-out never; null until the game starts. */
+                            score: number | null;
+                            /**
+                             * @description Where a side played a game: HOME, AWAY, or NONE at a neutral site. Screens say "at" or "vs" from it.
+                             * @enum {string}
+                             */
+                            homeAway: "HOME" | "AWAY" | "NONE";
+                            /** @description The side's kicks scored in the shoot-out that settled a game level after extra time; null when there was none. Not part of the score. */
+                            shootoutScore: number | null;
+                            /** @description The side's running score at the end of each period of play entered so far, regulation then overtime, in play order; empty for a sport whose games keep no score by period. */
+                            periodScores: {
+                                /**
+                                 * @description REGULAR for a period of regulation, OVERTIME for one of overtime. A shoot-out is not a period here: it is the side result's shootoutScore.
+                                 * @enum {string}
+                                 */
+                                kind: "REGULAR" | "OVERTIME" | "SHOOTOUT";
+                                /** @description 1 for the first period of its kind. */
+                                periodNumber: number;
+                                /** @description The side's score at the end of the period, earlier periods included, as the scoreboard shows it: summed by the server from each period's own points. */
+                                score: number;
+                            }[];
+                        }[];
+                    }[];
+                };
+            }[];
+            /**
+             * Format: uuid
+             * @description The Game Create contest starts on: Game 1 of the soonest match, the first of `games`. Null when there is none.
+             */
+            defaultSportEventRoundMatchGameId: string | null;
+        };
         /** @description The whole bracket: it replaces every match the event has. Each team appears at most once, there is exactly one final in the last round named, and two matches never advance to the same side. */
         LoadSportEventBracketRequest: {
             matches: {
@@ -10961,8 +11295,6 @@ export interface components {
              * @description The pricing profile the sport league names (PlatformPricingProfileDto): a synced field of the league never priced before is priced with its values.
              */
             platformPricingProfileId: string;
-            /** @description The first round whose matches are single games a squares contest can be played on, when not every round's are: 5 for the Champions League, whose earlier rounds are two-legged ties, 3 for MLS, whose round one is a best-of-three series. Null when every round's matches can take one. Set with the league's reference data, never by a request. */
-            squaresFromRound: number | null;
             /**
              * @description What screens call the sport league, when not what its sport calls one: LEAGUE for the NCAA Division I tennis championships, where the ATP and the WTA are tours. Null takes the sport's noun. Set with the league's reference data, never by a request.
              * @enum {string|null}
@@ -11088,8 +11420,6 @@ export interface components {
                  * @description The pricing profile the sport league names (PlatformPricingProfileDto): a synced field of the league never priced before is priced with its values.
                  */
                 platformPricingProfileId: string;
-                /** @description The first round whose matches are single games a squares contest can be played on, when not every round's are: 5 for the Champions League, whose earlier rounds are two-legged ties, 3 for MLS, whose round one is a best-of-three series. Null when every round's matches can take one. Set with the league's reference data, never by a request. */
-                squaresFromRound: number | null;
                 /**
                  * @description What screens call the sport league, when not what its sport calls one: LEAGUE for the NCAA Division I tennis championships, where the ATP and the WTA are tours. Null takes the sport's noun. Set with the league's reference data, never by a request.
                  * @enum {string|null}
@@ -11201,8 +11531,6 @@ export interface components {
                  * @description The pricing profile the sport league names (PlatformPricingProfileDto): a synced field of the league never priced before is priced with its values.
                  */
                 platformPricingProfileId: string;
-                /** @description The first round whose matches are single games a squares contest can be played on, when not every round's are: 5 for the Champions League, whose earlier rounds are two-legged ties, 3 for MLS, whose round one is a best-of-three series. Null when every round's matches can take one. Set with the league's reference data, never by a request. */
-                squaresFromRound: number | null;
                 /**
                  * @description What screens call the sport league, when not what its sport calls one: LEAGUE for the NCAA Division I tennis championships, where the ATP and the WTA are tours. Null takes the sport's noun. Set with the league's reference data, never by a request.
                  * @enum {string|null}
@@ -16463,9 +16791,9 @@ export interface components {
             startingSlotId?: string;
             /**
              * Format: uuid
-             * @description A squares contest's game (#711): one of its event's games not yet kicked off. Required for SQUARES (422 CONTEST_SQUARES_GAME_REQUIRED) and refused for every other selection type; 422 CONTEST_SQUARES_GAME_INVALID for a game not of the event, cancelled, or already started.
+             * @description A squares contest's Game (#711, #2050): one of the event's squares Game choices (GET /sport-events/{eventId}/squares-games), a Game of a slot that takes squares not yet kicked off. Required for SQUARES (422 CONTEST_SQUARES_GAME_REQUIRED) and refused for every other selection type; 422 CONTEST_SQUARES_GAME_INVALID for any other Game.
              */
-            sportEventRoundMatchId?: string;
+            sportEventRoundMatchGameId?: string;
         };
         /** @description Patch payload for updating editable contest metadata. */
         UpdateContestRequest: {
@@ -28244,7 +28572,7 @@ export interface components {
              * @description The job's handler. Its kind follows from it.
              * @enum {string}
              */
-            type: "SYNC_EVENT_FIELD" | "SYNC_EVENT_SCORES" | "CONTEST_STARTED_EMAILS" | "CONTEST_SETTLED_EMAILS" | "CONTEST_EVENT_CHANGED_EMAILS" | "CONTEST_REOPENED_EMAILS" | "SETTLE_SPORT_EVENT_CONTESTS" | "SETTLE_GAME_CONTESTS" | "REBUILD_LEADERBOARDS" | "SYNC_LEAGUE_EVENTS" | "RELEASE_SPORT_EVENT" | "SYNC_EVENT_GAMES_AND_TIERS" | "ACTIVATE_EVENT_CONTESTS" | "FOLLOW_POSTPONED_EVENT_CONTESTS" | "RESOLVE_MAPPED_PARTICIPANT_FINDINGS" | "REFRESH_SLOT_TIEBREAKERS" | "SYNC_LEAGUE_ROSTER";
+            type: "SYNC_EVENT_FIELD" | "SYNC_EVENT_SCORES" | "CONTEST_STARTED_EMAILS" | "CONTEST_SETTLED_EMAILS" | "CONTEST_EVENT_CHANGED_EMAILS" | "CONTEST_REOPENED_EMAILS" | "SETTLE_SPORT_EVENT_CONTESTS" | "SETTLE_GAME_CONTESTS" | "REBUILD_LEADERBOARDS" | "SYNC_LEAGUE_EVENTS" | "RELEASE_SPORT_EVENT" | "SYNC_EVENT_GAMES_AND_TIERS" | "ACTIVATE_EVENT_CONTESTS" | "FOLLOW_POSTPONED_EVENT_CONTESTS" | "RESOLVE_MAPPED_PARTICIPANT_FINDINGS" | "REFRESH_SLOT_TIEBREAKERS" | "SYNC_LEAGUE_ROSTER" | "REFRESH_SLOT_STATUS" | "REFRESH_EVENT_STATUS";
             /**
              * @description What a job is about: a provider SYNC, EMAIL to a league, contest SETTLEMENT, an event's RELEASE, or OTHER.
              * @enum {string}
@@ -28368,7 +28696,7 @@ export interface components {
                  * @description The job's handler. Its kind follows from it.
                  * @enum {string}
                  */
-                type: "SYNC_EVENT_FIELD" | "SYNC_EVENT_SCORES" | "CONTEST_STARTED_EMAILS" | "CONTEST_SETTLED_EMAILS" | "CONTEST_EVENT_CHANGED_EMAILS" | "CONTEST_REOPENED_EMAILS" | "SETTLE_SPORT_EVENT_CONTESTS" | "SETTLE_GAME_CONTESTS" | "REBUILD_LEADERBOARDS" | "SYNC_LEAGUE_EVENTS" | "RELEASE_SPORT_EVENT" | "SYNC_EVENT_GAMES_AND_TIERS" | "ACTIVATE_EVENT_CONTESTS" | "FOLLOW_POSTPONED_EVENT_CONTESTS" | "RESOLVE_MAPPED_PARTICIPANT_FINDINGS" | "REFRESH_SLOT_TIEBREAKERS" | "SYNC_LEAGUE_ROSTER";
+                type: "SYNC_EVENT_FIELD" | "SYNC_EVENT_SCORES" | "CONTEST_STARTED_EMAILS" | "CONTEST_SETTLED_EMAILS" | "CONTEST_EVENT_CHANGED_EMAILS" | "CONTEST_REOPENED_EMAILS" | "SETTLE_SPORT_EVENT_CONTESTS" | "SETTLE_GAME_CONTESTS" | "REBUILD_LEADERBOARDS" | "SYNC_LEAGUE_EVENTS" | "RELEASE_SPORT_EVENT" | "SYNC_EVENT_GAMES_AND_TIERS" | "ACTIVATE_EVENT_CONTESTS" | "FOLLOW_POSTPONED_EVENT_CONTESTS" | "RESOLVE_MAPPED_PARTICIPANT_FINDINGS" | "REFRESH_SLOT_TIEBREAKERS" | "SYNC_LEAGUE_ROSTER" | "REFRESH_SLOT_STATUS" | "REFRESH_EVENT_STATUS";
                 /**
                  * @description What a job is about: a provider SYNC, EMAIL to a league, contest SETTLEMENT, an event's RELEASE, or OTHER.
                  * @enum {string}
@@ -28464,7 +28792,7 @@ export interface components {
                  * @description The job's handler. Its kind follows from it.
                  * @enum {string}
                  */
-                type: "SYNC_EVENT_FIELD" | "SYNC_EVENT_SCORES" | "CONTEST_STARTED_EMAILS" | "CONTEST_SETTLED_EMAILS" | "CONTEST_EVENT_CHANGED_EMAILS" | "CONTEST_REOPENED_EMAILS" | "SETTLE_SPORT_EVENT_CONTESTS" | "SETTLE_GAME_CONTESTS" | "REBUILD_LEADERBOARDS" | "SYNC_LEAGUE_EVENTS" | "RELEASE_SPORT_EVENT" | "SYNC_EVENT_GAMES_AND_TIERS" | "ACTIVATE_EVENT_CONTESTS" | "FOLLOW_POSTPONED_EVENT_CONTESTS" | "RESOLVE_MAPPED_PARTICIPANT_FINDINGS" | "REFRESH_SLOT_TIEBREAKERS" | "SYNC_LEAGUE_ROSTER";
+                type: "SYNC_EVENT_FIELD" | "SYNC_EVENT_SCORES" | "CONTEST_STARTED_EMAILS" | "CONTEST_SETTLED_EMAILS" | "CONTEST_EVENT_CHANGED_EMAILS" | "CONTEST_REOPENED_EMAILS" | "SETTLE_SPORT_EVENT_CONTESTS" | "SETTLE_GAME_CONTESTS" | "REBUILD_LEADERBOARDS" | "SYNC_LEAGUE_EVENTS" | "RELEASE_SPORT_EVENT" | "SYNC_EVENT_GAMES_AND_TIERS" | "ACTIVATE_EVENT_CONTESTS" | "FOLLOW_POSTPONED_EVENT_CONTESTS" | "RESOLVE_MAPPED_PARTICIPANT_FINDINGS" | "REFRESH_SLOT_TIEBREAKERS" | "SYNC_LEAGUE_ROSTER" | "REFRESH_SLOT_STATUS" | "REFRESH_EVENT_STATUS";
                 /**
                  * @description What a job is about: a provider SYNC, EMAIL to a league, contest SETTLEMENT, an event's RELEASE, or OTHER.
                  * @enum {string}
@@ -37258,6 +37586,55 @@ export interface operations {
             };
             /** @description Standard API error envelope. */
             409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    listEventSquaresGames: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                eventId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The Games of an event a squares contest can be played on. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SquaresGameChoicesResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };

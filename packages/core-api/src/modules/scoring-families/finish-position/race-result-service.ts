@@ -278,13 +278,16 @@ export class RaceResultService {
     }));
 
     const rebuild = await this.deps.domainEvents.collect({ type: DomainEventType.SPORT_EVENT_RESULTS_CHANGED, sportEventId });
+    // The race's Game moves its Match, and with it the slot's status (#2013).
+    const statusChanged = await this.deps.domainEvents.collect({ type: DomainEventType.MATCH_STATUS_CHANGED, sportEventId });
     const status = input.isOfficial ? MatchStatus.COMPLETED : MatchStatus.IN_PROGRESS;
     await this.deps.fieldGames.applyResults(sportEventId, {
       games: [{ roundNumber: RACE_ROUND_NUMBER, status, completedAt: input.isOfficial ? asOf : null, sides }],
       standings,
-      jobs: rebuild.jobs,
+      jobs: [...rebuild.jobs, ...statusChanged.jobs],
     });
     rebuild.queued();
+    statusChanged.queued();
     this.deps.logger?.info({
       sportEventId,
       rows: sides.length,

@@ -1,5 +1,5 @@
 import { sportPlay } from '../../support/sport-play';
-import { legacyMatch } from '../../support/match-sides';
+import { legacyMatch, squaresGameOf } from '../../support/match-sides';
 import { slotOfRound } from '../../support/round-slots';
 import type { ContestEntryCreateLimits } from '@poolmaster/shared/db';
 import * as SharedDomainEnums from '@poolmaster/shared/domain/enums';
@@ -2619,7 +2619,7 @@ describe('a squares contest\'s entry window, which closes at its game\'s kickoff
     status: ContestStatus.OPEN,
     contestFormat: ContestFormat.SQUARES,
     selectionType: SelectionType.SQUARES,
-    squaresGameMatchId: 'game-1',
+    squaresGame: squaresGameOf('game-1'),
   });
 
   function squaresService(now: Date) {
@@ -2649,7 +2649,7 @@ describe('a squares contest\'s entry window, which closes at its game\'s kickoff
   });
 
   it('reads the rules of several squares contests in one read, listing as taking entries only the one whose game is still to kick off', async () => {
-    const later = buildContest({ ...squares, id: 'contest-squares-later', name: 'Later', squaresGameMatchId: 'game-2' });
+    const later = buildContest({ ...squares, id: 'contest-squares-later', name: 'Later', squaresGame: squaresGameOf('game-2') });
     const findByContests = jest.fn().mockResolvedValue([squares, later].map((contest) => ({
       id: `config-${contest.id}`,
       contestId: contest.id,
@@ -2677,7 +2677,7 @@ describe('a squares contest\'s entry window, which closes at its game\'s kickoff
   it('closes at the event\'s start like any other contest when it names no game, reading no games for it', async () => {
     const { findBySportEvents, service } = squaresService(new Date(KICKOFF.getTime() - 60_000));
 
-    expect(await service.areEntriesOpen({ ...squares, squaresGameMatchId: undefined })).toBe(false);
+    expect(await service.areEntriesOpen({ ...squares, squaresGame: undefined })).toBe(false);
     expect(findBySportEvents).not.toHaveBeenCalled();
   });
 

@@ -44,6 +44,7 @@ import { oneEventSlotId, setEventSlotPeriods } from '../../support/test-slots';
 import { createMatchRow } from '../../support/match-rows';
 import { contestOnEvents, coverEvents, templateForEvent } from '../../support/contest-rows';
 import { inTierSet, tierSetSlot } from '../../support/event-tier-sets';
+import { squaresGameCreate } from '../../support/squares-game-row';
 
 // The routes #1355 brought under the request query budget, against Postgres: each reads the
 // joiner, the team, the league and the contest's events once however many steps of the request
@@ -469,7 +470,7 @@ async function squaresContestUnderWay(options: { gameFinished: boolean; contests
       data: {
         leagueId,
         ...(await contestOnEvents(prisma, [event.id])),
-        squaresGame: { create: { sportEventRoundMatchId: game.id } },
+        squaresGame: await squaresGameCreate(prisma, game.id),
         name: `Read Once Squares ${suffix} ${number}`,
         status: 'ACTIVE',
         contestFormat: 'SQUARES',
@@ -539,6 +540,8 @@ describe('Settling a squares contest with its game (#1355, #1460)', () => {
       { type: 'REBUILD_LEADERBOARDS', payload: { subject: 'EVENT', id: eventId } },
       // A decided game runs its event's slots' tiebreaker rule again (#2048).
       { type: 'REFRESH_SLOT_TIEBREAKERS', payload: { sportEventId: eventId } },
+      // A decided game moves its Match, and its slot's status is refreshed (#2013).
+      { type: 'REFRESH_SLOT_STATUS', payload: { sportEventId: eventId } },
     ]);
 
     const { statements: jobStatements } = await recordStatements(() => drainBackgroundJobs());

@@ -551,12 +551,17 @@ describe('Seeded soccer competitions and their knockout templates', () => {
     await expect(knockoutDefinitions('NWSL')).resolves.toEqual([[null, 'QUARTERFINAL', 'FIXED'], [null, 'SEMIFINAL', 'FIXED'], ['NWSL Championship', 'FINAL', 'FIXED']]);
   });
 
-  it('starts squares at the Champions League final and the MLS conference semifinals, past their two-legged ties and best-of-three series, and every other soccer league at its first round', async () => {
-    const soccer = await getPrisma().sport.findUniqueOrThrow({ where: { sport: Sport.SOCCER } });
-    const leagues = await new PrismaSportLeagueRepository(getAppPrisma()).findAll({ sportId: soccer.id });
+  it('takes no squares on the Champions League\'s two-legged ties or MLS\'s play-in and best-of-three series, and squares on every other soccer slot (#2050)', async () => {
+    const closed = await getPrisma().sportLeagueCompetitionSlot.findMany({
+      where: { sportLeague: { sport: { sport: Sport.SOCCER } }, squaresEligible: false },
+      select: { key: true, sportLeague: { select: { name: true } } },
+      orderBy: [{ sportLeague: { name: 'asc' } }, { key: 'asc' }],
+    });
 
-    expect(leagues.filter((league) => league.squaresFromRound !== null).map((league) => [league.name, league.squaresFromRound]))
-      .toEqual([['MLS', 3], ['UEFA Champions League', 5]]);
+    expect(closed.map((slot) => [slot.sportLeague.name, slot.key])).toEqual([
+      ['MLS', 'PLAY_IN'], ['MLS', 'ROUND_OF_16'],
+      ['UEFA Champions League', 'PLAY_IN'], ['UEFA Champions League', 'QUARTERFINAL'], ['UEFA Champions League', 'ROUND_OF_16'], ['UEFA Champions League', 'SEMIFINAL'],
+    ]);
   });
 
   it.each(SOCCER_COMPETITIONS)('gives %s its knockout templates (#2164): a tiered and budget pair on a playoff of more than eight teams, Straight up, Escalating and, with seeds, Full random draws and brackets, Full the default where seeded, and no squares', async (name, prefix, roundValues, rosterPicks, seeded, oneEach) => {

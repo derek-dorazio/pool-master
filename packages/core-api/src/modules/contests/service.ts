@@ -434,7 +434,7 @@ export class ContestService {
       : await this.deps.configurations.findByContests(ruled.map((contest) => contest.id));
     const rulesOf = new Map(configurations.map((configuration) => [configuration.contestId, configuration.configJson]));
     return new Map(ruled.flatMap((contest) => {
-      const cutoff = contestCutoff(rulesOf.get(contest.id), contest.squaresGameMatchId);
+      const cutoff = contestCutoff(rulesOf.get(contest.id), contest.squaresGame);
       return cutoff.kind === ContestCutoffKind.EVENT_START ? [] : [[contest.id, cutoff] as const];
     }));
   }

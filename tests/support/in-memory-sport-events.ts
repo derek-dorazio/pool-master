@@ -76,7 +76,7 @@ const T0 = new Date('2026-01-01T00:00:00.000Z');
 
 /** A round's slot as the round read gives it (#2006). */
 function roundSlotOf({ id, slotDefinitionId, name, slotKind, weekNumber, seriesGames, pairing }: SportLeagueSeasonSlot, periods: SlotPeriods | null, isNeutralSite: boolean): SportEventRoundSlot {
-  return { seasonSlotId: id, slotDefinitionId, name, slotKind, weekNumber, seriesGames, pairing, canEndTied: false, isNeutralSite, periods, tiebreakerMatchId: null };
+  return { seasonSlotId: id, slotDefinitionId, name, slotKind, weekNumber, seriesGames, pairing, canEndTied: false, isNeutralSite, squaresEligible: true, periods, tiebreakerMatchId: null };
 }
 
 /** A Game read back, as a database hands it: a copy, its side results in side order. */
@@ -327,6 +327,8 @@ export class InMemorySportEvents {
   slotTierSettings = new Map<string, SlotTierSettings>();
   slotPricings = new Map<string, SlotPricing>();
   standingRows: SportEventParticipantStanding[] = [];
+  /** When the feed called each event's play final (`FieldResultsApply.feedFinalAt`), by event id; first call kept, as the adapter keeps it. */
+  feedFinalAtByEvent = new Map<string, Date>();
   /**
    * Each competitor's side result in its event's FIELD Games (#2008): a race's one Game, a golf
    * round's, with the round and the Game's status it is read with.
@@ -363,7 +365,7 @@ export class InMemorySportEvents {
 
   addSportLeague(sportId: string, name = 'PGA Tour'): SportLeague {
     const play = sportPlay(this.sports.find((row) => row.id === sportId)?.sport ?? Sport.GOLF);
-    const sportLeague = stamp({ id: this.id('sport-league'), sportId, name, urlSegment: name.toLowerCase().replace(/[^a-z0-9]+/g, '-'), ...play, platformTierProfileId: IN_MEMORY_PLATFORM_TIER_PROFILE_ID, platformPricingProfileId: IN_MEMORY_PLATFORM_PRICING_PROFILE_ID, matchPeriodLayout: null, squaresFromRound: null, noun: null, displayOrder: null, currentSeasonId: IN_MEMORY_SEASON_ID, timeZone: 'UTC', isActive: true, selectedProviderMapping: null, autoReleaseDaysBeforeStart: 7 });
+    const sportLeague = stamp({ id: this.id('sport-league'), sportId, name, urlSegment: name.toLowerCase().replace(/[^a-z0-9]+/g, '-'), ...play, platformTierProfileId: IN_MEMORY_PLATFORM_TIER_PROFILE_ID, platformPricingProfileId: IN_MEMORY_PLATFORM_PRICING_PROFILE_ID, matchPeriodLayout: null, noun: null, displayOrder: null, currentSeasonId: IN_MEMORY_SEASON_ID, timeZone: 'UTC', isActive: true, selectedProviderMapping: null, autoReleaseDaysBeforeStart: 7 });
     this.sportLeagues.push(sportLeague);
     return sportLeague;
   }
@@ -1258,7 +1260,8 @@ export class InMemorySportEvents {
           .sort((left, right) => left.sportEventParticipantId.localeCompare(right.sportEventParticipantId))
           .map(({ createdAt: _created, updatedAt: _updated, ...row }) => ({ ...row }));
       },
-      applyResults: async (sportEventId, { games, standings, jobs }) => {
+      hasFeedFinal: async (sportEventId) => this.feedFinalAtByEvent.has(sportEventId),
+      applyResults: async (sportEventId, { games, standings, jobs, feedFinalAt }) => {
         const entryIds = entryIdsOf(sportEventId);
         if ([...games.flatMap((game) => game.sides), ...standings].some((write) => !entryIds.has(write.sportEventParticipantId))) {
           throw new Error('unknown field row');
@@ -1285,6 +1288,7 @@ export class InMemorySportEvents {
           }
           Object.assign(standing, values);
         }
+        if (feedFinalAt && !this.feedFinalAtByEvent.has(sportEventId)) this.feedFinalAtByEvent.set(sportEventId, feedFinalAt);
         this.backgroundJobs.push(...(jobs ?? []));
       },
     };

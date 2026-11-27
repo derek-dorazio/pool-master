@@ -762,6 +762,8 @@ export const enUS = {
       RESOLVE_MAPPED_PARTICIPANT_FINDINGS: 'Mapped participant findings',
       REFRESH_SLOT_TIEBREAKERS: 'Tiebreaker games',
       SYNC_LEAGUE_ROSTER: 'Roster',
+      REFRESH_SLOT_STATUS: 'Slot status',
+      REFRESH_EVENT_STATUS: 'Event status',
     },
     BackgroundJobKind: {
       SYNC: 'Sync',

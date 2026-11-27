@@ -3,7 +3,7 @@
  * sweep never sends one twice. The contest world is in memory; the email service is the real one
  * over an in-memory outbox, so the tests assert on the emails recorded.
  */
-import { legacyMatch } from '../../support/match-sides';
+import { legacyMatch, squaresGameOf } from '../../support/match-sides';
 import type { ContestEntrySeasonPrediction } from '@poolmaster/shared/db';
 import {
   ContestEntryStatus,
@@ -439,7 +439,7 @@ describe('EntryReminders.queueDue', () => {
     const contest = world.addContest(league.id, {
       selectionType: SelectionType.SQUARES,
       sportEventIds: [week.id],
-      squaresGameMatchId: 'big-game',
+      squaresGame: squaresGameOf('big-game'),
     });
     world.addConfiguration(contest.id, {
       selectionType: SelectionType.SQUARES,
@@ -470,7 +470,7 @@ describe('EntryReminders.queueDue', () => {
       name: 'Super Bowl Squares',
       selectionType: SelectionType.SQUARES,
       sportEventIds: [week.id],
-      squaresGameMatchId: 'big-game',
+      squaresGame: squaresGameOf('big-game'),
     });
     world.addConfiguration(contest.id, {
       selectionType: SelectionType.SQUARES,

@@ -1,27 +1,42 @@
 import { useQuery } from '@tanstack/react-query';
 import { refetchFailed } from '@/features/shared/ui';
-import type { SportEventDto } from '@/lib/api';
-import { squaresGameChoices, teamNamesById } from './squares-board';
-import { sportLeagueQueryOptions } from './use-bracket-round-label';
-import { eventFieldQueryOptions, eventGamesQueryOptions } from './use-event-games';
+import { listEventSquaresGames, type SportEventDto, type SquaresGameChoicesResponse } from '@/lib/api';
+import { throwApiError } from '@/lib/errors';
+import { QueryKeys } from '@/lib/query-keys';
+import { teamNamesById } from './squares-board';
+import { eventFieldQueryOptions } from './use-event-games';
+
+/** The Games of one event a squares contest can be played on, as the API decides them (#2050). */
+function squaresGamesQueryOptions(eventId: string) {
+  return {
+    queryKey: QueryKeys.sportEvents.squaresGames(eventId),
+    queryFn: async (): Promise<SquaresGameChoicesResponse> => {
+      const response = await listEventSquaresGames({ path: { eventId } });
+      if (!response.data) {
+        throwApiError(response.error, 'Squares game choices response is missing data.');
+      }
+      return response.data;
+    },
+    enabled: eventId !== '',
+    retry: false,
+  };
+}
 
 /**
- * The games a squares contest can be played on, for the chosen event (#711): its games still to
- * kick off, the final first, with the field's team names. Games before the sport league's first
- * squares round are left out (#787: a Champions League two-legged tie). Reads nothing until an
- * event is chosen.
+ * The Games a squares contest can be played on, for the chosen event (#711, #2050): the API's
+ * choices and its default, with the field's team names. Reads nothing until an event is chosen.
  */
-export function useSquaresGameChoices(event: SportEventDto | null, now: Date) {
+export function useSquaresGameChoices(event: SportEventDto | null) {
   const eventId = event?.id ?? '';
-  const gamesQuery = useQuery(eventGamesQueryOptions(eventId));
+  const choicesQuery = useQuery(squaresGamesQueryOptions(eventId));
   const fieldQuery = useQuery({ ...eventFieldQueryOptions(eventId), select: teamNamesById });
-  const sportLeagueQuery = useQuery(sportLeagueQueryOptions(event?.sportLeagueId ?? ''));
   return {
-    games: squaresGameChoices(gamesQuery.data ?? [], now, sportLeagueQuery.data?.squaresFromRound ?? null),
+    games: choicesQuery.data?.games ?? [],
+    defaultGameId: choicesQuery.data?.defaultSportEventRoundMatchGameId ?? null,
     namesById: fieldQuery.data ?? new Map<string, string>(),
-    isLoading: gamesQuery.isLoading || fieldQuery.isLoading || sportLeagueQuery.isLoading,
-    isError: gamesQuery.isError || fieldQuery.isError || sportLeagueQuery.isError,
-    /** Reads again whichever of the three failed. */
-    retry: refetchFailed(gamesQuery, fieldQuery, sportLeagueQuery),
+    isLoading: choicesQuery.isLoading || fieldQuery.isLoading,
+    isError: choicesQuery.isError || fieldQuery.isError,
+    /** Reads again whichever of the two failed. */
+    retry: refetchFailed(choicesQuery, fieldQuery),
   };
 }

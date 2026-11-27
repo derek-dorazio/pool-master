@@ -64,12 +64,6 @@ export interface SportEvent extends DomainEntity {
   /** The event's sport league (#2010): stored, and its Season is the same league's (a composite key). */
   sportLeagueId: string;
   /**
-   * Its sport league's first squares round when not every round's matches are single
-   * games (#787), read through the league; absent takes every round. Read
-   * through `isSquaresRound`.
-   */
-  squaresFromRound?: number;
-  /**
    * Its sport league's participant type and scoring family (#2001), read through the
    * league. Read through `eventSportDefinition`.
    */
