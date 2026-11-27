@@ -397,10 +397,10 @@ export class ContestManagementService {
    * Only a tiered contest picks by tier, so only its tiers are read, every event's in one read
    * (#1201); any other format's events carry an empty list.
    */
-  private async resolveContestSportEvents(contest: Contest, configuration: Pick<ContestConfiguration, 'coveredSlotDefinitionIds'>): Promise<ContestManagementSportEventDto[]> {
+  private async resolveContestSportEvents(contest: Contest): Promise<ContestManagementSportEventDto[]> {
     // The set the contest picks from: the first slot it covers holding one (#2044).
     const tiersByEvent = contest.selectionType === SelectionType.TIERED
-      ? await this.sportEventTierService.getEffectiveTiersForSportEvents(contest.sportEventIds, { coveredSlotDefinitionIds: contestRoundCoverage(configuration).slotDefinitionIds })
+      ? await this.sportEventTierService.getEffectiveTiersForSportEvents(contest.sportEventIds, { coveredSlotDefinitionIds: contestRoundCoverage(contest).slotDefinitionIds })
       : new Map<string, SportEventTierGroup[]>();
     return contest.sportEventIds.map((sportEventId) => ({
       sportEventId,
@@ -432,7 +432,7 @@ export class ContestManagementService {
     return buildContestManagementDetail(
       contest,
       configuration,
-      await this.resolveContestSportEvents(contest, configuration),
+      await this.resolveContestSportEvents(contest),
     );
   }
 
@@ -510,7 +510,7 @@ export class ContestManagementService {
     return buildContestManagementDetail(
       contest,
       refreshedConfiguration,
-      await this.resolveContestSportEvents(contest, refreshedConfiguration),
+      await this.resolveContestSportEvents(contest),
     );
   }
 
