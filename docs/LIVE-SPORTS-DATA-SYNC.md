@@ -264,7 +264,10 @@ placed leaves the bowls. A field sync then gives each event of the provider even
 take: an event playing a rest-of-phase slot gets those games, which its Matches are made from, and a
 field of their teams; an event playing only date-window slots gets no game and no new team (its
 Matches are its seeds' bracket); any other event gets the whole feed. A date-window slot records no
-games.
+games. While a rest-of-phase event is a draft, a team on its field with no game left in its slots is
+withdrawn (#2221), so a CFP team the bowls held before the seeds were placed leaves the bowls'
+field with its game; a team whose game comes back is made active again. A released event keeps
+every row, since a contest may already hold it.
 
 For each provider event:
 
