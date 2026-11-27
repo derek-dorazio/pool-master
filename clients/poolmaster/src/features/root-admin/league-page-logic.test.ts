@@ -28,6 +28,7 @@ function participant(overrides: Partial<SportLeagueParticipantOverviewDto> = {})
     lastInFeedAt: null,
     addedBy: 'ADMIN',
     createdAt: '2027-01-01T00:00:00.000Z',
+    roster: null,
     ...overrides,
   };
 }
@@ -83,6 +84,12 @@ describe('leagueParticipantColumnIds', () => {
   it('leaves out a column no participant has a value for, so none is blank for the whole league', () => {
     expect(leagueParticipantColumnIds([participant(), participant({ id: 'p-2' })])).toEqual([]);
     expect(leagueParticipantColumnIds([participant(), participant({ id: 'p-2', ranking: 4 })])).toEqual(['ranking']);
+  });
+
+  it('gives a league with rostered players Team and Position columns, and leaves them off where no player is on a roster', () => {
+    const roster = { teamParticipantId: 't-kc', teamName: 'Kansas City Chiefs', positionCode: 'QB', lastSeenAt: '2027-01-02T00:00:00.000Z' };
+    expect(leagueParticipantColumnIds([participant({ name: 'Patrick Mahomes', roster }), participant({ id: 'p-2' })])).toEqual(['team', 'position']);
+    expect(leagueParticipantColumnIds([participant({ participantType: 'TEAM', name: 'Kansas City Chiefs' })])).toEqual([]);
   });
 });
 

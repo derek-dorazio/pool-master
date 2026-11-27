@@ -52,11 +52,18 @@ export class PrismaSportLeaguePageReader implements SportLeaguePageReader {
   async readSyncFacts(sportLeagueId: string): Promise<SportLeagueSyncFacts | null> {
     const league = await this.league(sportLeagueId);
     if (league === null) return null;
-    const latest = await this.prisma.providerSyncRun.groupBy({
-      by: ['kind'],
-      where: { sportLeagueId },
-      _max: { createdAt: true },
-    });
+    const [latest, positionCode] = await Promise.all([
+      this.prisma.providerSyncRun.groupBy({
+        by: ['kind'],
+        where: { sportLeagueId },
+        _max: { createdAt: true },
+      }),
+      // The roster sync runs where the selected mapping names a position code (#2025).
+      this.prisma.sportLeaguePositionProviderMapping.findFirst({
+        where: { sportLeagueId, sportLeagueProviderMapping: { selectedBy: { isNot: null } } },
+        select: { id: true },
+      }),
+    ]);
     const keys = latest.flatMap((group) => (group._max.createdAt === null
       ? []
       : [{ sportLeagueId, kind: group.kind, createdAt: group._max.createdAt }]));
@@ -65,7 +72,7 @@ export class PrismaSportLeaguePageReader implements SportLeaguePageReader {
       select: RUN_SELECT,
       orderBy: { id: 'asc' },
     });
-    return { league, latestRuns: oneRunPerKind(rows.map(toRun)) };
+    return { league, latestRuns: oneRunPerKind(rows.map(toRun)), syncsRoster: positionCode !== null };
   }
 
   async readEventFacts(sportLeagueId: string, now: Date): Promise<SportLeagueEventFacts | null> {
@@ -225,7 +232,7 @@ export class PrismaSportLeaguePageReader implements SportLeaguePageReader {
   }
 
   async readParticipants(sportLeagueId: string): Promise<SportLeaguePageParticipant[] | null> {
-    const [league, participants, mappings] = await Promise.all([
+    const [league, participants, mappings, rosterRows] = await Promise.all([
       this.prisma.sportLeague.findUnique({ where: { id: sportLeagueId }, select: { id: true } }),
       this.prisma.participant.findMany({
         // The league's roster: a test participant is on none (#2096).
@@ -239,6 +246,11 @@ export class PrismaSportLeaguePageReader implements SportLeaguePageReader {
         // Of two providers' mappings, the latest made names the participant's feed id.
         orderBy: [{ mappedAt: 'desc' }, { id: 'asc' }],
       }),
+      // The players' roster rows in the league's current Season (#2025).
+      this.prisma.sportLeagueSeasonParticipantTeam.findMany({
+        where: { sportLeagueId, season: { currentOf: { is: { id: sportLeagueId } } } },
+        select: { participantId: true, teamParticipantId: true, lastSeenAt: true, team: { select: { name: true } }, position: { select: { code: true } } },
+      }),
     ]);
     if (league === null) return null;
     const mappingByParticipant = new Map<string, { externalId: string; lastSeenAt: Date | null }>();
@@ -247,7 +259,17 @@ export class PrismaSportLeaguePageReader implements SportLeaguePageReader {
         mappingByParticipant.set(mapping.participantId, { externalId: mapping.externalId, lastSeenAt: mapping.lastSeenAt });
       }
     }
-    return participants.map((participant) => ({ participant, mapping: mappingByParticipant.get(participant.id) ?? null }));
+    const rosterByPlayer = new Map(rosterRows.map((row) => [row.participantId, {
+      teamParticipantId: row.teamParticipantId,
+      teamName: row.team.name,
+      positionCode: row.position.code,
+      lastSeenAt: row.lastSeenAt,
+    }]));
+    return participants.map((participant) => ({
+      participant,
+      mapping: mappingByParticipant.get(participant.id) ?? null,
+      roster: rosterByPlayer.get(participant.id) ?? null,
+    }));
   }
 
   async readPositions(sportLeagueId: string): Promise<SportLeaguePosition[] | null> {

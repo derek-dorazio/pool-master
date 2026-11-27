@@ -175,6 +175,7 @@ function participant(overrides: Partial<SportLeagueParticipantOverviewDto>): Spo
     lastInFeedAt: '2027-01-01T00:00:00.000Z',
     addedBy: 'FEED',
     createdAt: '2026-01-01T00:00:00.000Z',
+    roster: null,
     ...overrides,
   };
 }
@@ -417,6 +418,27 @@ describe('League page', () => {
 
     await screen.findByTestId('root-admin-league-participant-p-bos');
     expect(columnHeaders('root-admin-league-participants-table')).toEqual(expect.arrayContaining(['Abbreviation']));
+  });
+
+  it('shows a rostered player\'s team and position in the Participants grid, and leaves them blank for a player not on the roster', async () => {
+    listSportLeagueParticipantOverviewsMock.mockResolvedValue({
+      data: {
+        participants: [participant({
+          id: 'p-mahomes',
+          name: 'Patrick Mahomes',
+          participantType: 'INDIVIDUAL',
+          shortName: null,
+          roster: { teamParticipantId: 'p-kc', teamName: 'Kansas City Chiefs', positionCode: 'QB', lastSeenAt: '2027-01-01T00:00:00.000Z' },
+        }), participant({ id: 'p-free', name: 'Free Agent', participantType: 'INDIVIDUAL', shortName: null })],
+      },
+    });
+    renderLeaguePage('/manage/sports/basketball/leagues/nba/participants');
+
+    const row = await screen.findByTestId('root-admin-league-participant-p-mahomes');
+    expect(columnHeaders('root-admin-league-participants-table')).toEqual(expect.arrayContaining(['Team', 'Position']));
+    expect(within(row).getByText('Kansas City Chiefs')).toBeInTheDocument();
+    expect(within(row).getByText('QB')).toBeInTheDocument();
+    expect(within(screen.getByTestId('root-admin-league-participant-p-free')).queryByText('Kansas City Chiefs')).not.toBeInTheDocument();
   });
 
   it('shows a team\'s abbreviation and rank in its details, and a player no feed has listed as never in the feed with no short name', async () => {

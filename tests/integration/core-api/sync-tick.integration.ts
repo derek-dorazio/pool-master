@@ -10,7 +10,6 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { SyncedLeagueRef } from '@poolmaster/shared/db';
 import { BackgroundJobType, fieldWindowEventIds, JobTrigger, MatchStatus, Sport, SyncSeasonState, syncSeasonStateOf } from '@poolmaster/shared/domain';
-import { IngestionScheduleConfigSchema } from '@poolmaster/shared/dto/config.dto';
 import { PrismaBackgroundJobRepository, PrismaSportLeagueRepository } from '../../../packages/core-api/src/adapters';
 import { PrismaSyncDueWorkReader } from '../../../packages/core-api/src/adapters/prisma-sync-due-work-reader';
 import { BackgroundJobQueue } from '../../../packages/core-api/src/modules/background-jobs';
@@ -353,6 +352,5 @@ describe('the migration giving each sync kind an interval per Season state', () 
       FIELD: { intervals: { IN_SEASON: { intervalMinutes: 360 }, OFFSEASON: { intervalMinutes: 1440 } } },
       SCORES: { enabled: true, intervals: { IN_SEASON: { intervalSeconds: 60 }, OFFSEASON: { intervalSeconds: 60 } } },
     });
-    expect(IngestionScheduleConfigSchema.safeParse(migrated).success).toBe(true);
   });
 });

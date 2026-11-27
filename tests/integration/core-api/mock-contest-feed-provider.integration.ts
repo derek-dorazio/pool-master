@@ -52,6 +52,7 @@ const syncVerificationNow = new Date('2026-05-30T12:00:00.000Z');
 const syncVerificationConfig: IngestionScheduleConfig = {
   FIELD: { intervals: { IN_SEASON: { intervalMinutes: 360 }, OFFSEASON: { intervalMinutes: 360 } } },
   SCORES: { enabled: false, intervals: { IN_SEASON: { intervalSeconds: 30 }, OFFSEASON: { intervalSeconds: 30 } } },
+  ROSTER: { intervals: { IN_SEASON: { intervalMinutes: 1440 }, OFFSEASON: { intervalMinutes: 1440 } } },
   EVENTS: { enabled: true, intervals: { IN_SEASON: { intervalMinutes: 360 }, OFFSEASON: { intervalMinutes: 360 } } },
 };
 

@@ -17,5 +17,6 @@ export function toIngestionScheduleDto(config: IngestionScheduleConfig): Ingesti
     [ProviderSyncKind.EVENTS]: toSyncSchedule(config.EVENTS),
     [ProviderSyncKind.FIELD]: toSyncSchedule(config.FIELD),
     [ProviderSyncKind.SCORES]: toSyncSchedule(config.SCORES),
+    [ProviderSyncKind.ROSTER]: toSyncSchedule(config.ROSTER),
   };
 }

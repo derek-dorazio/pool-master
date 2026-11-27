@@ -112,6 +112,7 @@ the league's Seasons on every tick).
 | `EVENTS.intervals` | 6 h | 24 h | the Events sync of every synced league (§2) |
 | `FIELD.intervals` | 6 h | 24 h | the Field sync of each event in the league's next slot (§3); it has no `enabled` switch and always runs (#2086) |
 | `SCORES.intervals` | 300 s | 300 s | the Scores sync of each event with a Game due or in play (§5); webhooks arrive between runs |
+| `ROSTER.intervals` | 24 h | 24 h | the Roster sync of each synced league whose provider mapping names position codes (*Rosters* below); no `enabled` switch, it always runs |
 
 The sync tick reads the schedule every minute, so a saved change applies without a restart.
 The schedule read (`GET /api/v1/platform/ingestion-schedule`) answers each kind's policy with
@@ -404,9 +405,32 @@ never replace a multi-round event's bracket; a draft only takes their kickoffs.
 | Schedule, live scores policy | Scores sync of each linked event with a Game in play, or scheduled and started, not overdue | `SYNC_EVENT_SCORES` |
 | Root admin event sync or field refresh | Field or scores for one event, one job per kind | `SYNC_EVENT_FIELD`, `SYNC_EVENT_SCORES` |
 | BALLDONTLIE webhook | Scores for the notified events | `SYNC_EVENT_SCORES` |
+| Schedule, roster policy | Roster sync of each synced league whose provider mapping names position codes | `SYNC_LEAGUE_ROSTER` |
 | Hourly release sweep | Auto-release check | `RELEASE_SPORT_EVENT` |
 
-Every sync writes a `provider_sync_runs` row with its **kind** (`EVENTS`, `FIELD`, `SCORES`),
+### Rosters
+
+The Roster sync (#2025, `modules/ingestion/roster/league-roster-sync.ts`) writes the league's
+current Season's roster rows (`SportLeagueSeasonParticipantTeam`): one per player, naming the
+player's team and position. It runs only for a league whose selected provider mapping names
+position codes (`SportLeaguePositionProviderMapping`); the League page lists the Rosters sync only
+for those leagues. It reads the provider's roster for the current Season's provider id
+(BALLDONTLIE: NFL `players/active`, which takes no season and answers today's rosters), and:
+
+- keeps a player only when the feed sends a position code the league maps to a position that is
+  eligible for a field, and a team. A code the league has no position for is not one of its
+  positions, and is dropped without a finding.
+- reads the team only through a provider mapping of one of the league's TEAM participants. A team
+  id mapped to none raises `UNMAPPED_PARTICIPANT` for the team, named as the feed names it; the writer refuses a row whose team
+  is not a TEAM participant of the league.
+- creates a player named for the first time, with its provider mapping, renames one the feed names
+  differently, and moves a traded one. A player the feed stops listing keeps their row, with the
+  time it last listed them.
+
+Mapping lookups by feed id filter to the league's own participant type, so a player mapped in a
+team league never answers for a team the provider numbers the same.
+
+Every sync writes a `provider_sync_runs` row with its **kind** (`EVENTS`, `FIELD`, `SCORES`, `ROSTER`),
 its **trigger** (`SCHEDULE`, `WEBHOOK`, `ADMIN`, `COMMISSIONER`, `SYSTEM`; a job's own when a job
 ran it), its sport league and event (every event sync job names its event by our own id), and the
 job that ran it. Its outcome is in columns (#1999): a one-line `summary`, its

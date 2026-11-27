@@ -32,18 +32,8 @@ import { soccerMatchListSchema, soccerTeamListSchema, type SoccerMatch } from '.
 /** A range spanning more seasons than this reads none. */
 const MAX_SEASONS_READ = 3;
 
-/**
- * The month (0-based) the next season's teams are listed: July. Only the roster read uses it, which
- * has no Season to ask for until rosters are read per Season (slice 21); the events sync asks for
- * a Season by its id.
- */
-const ROSTER_ROLLOVER_MONTH = 6;
-
 export class EplReader {
-  constructor(
-    private readonly client: BalldontlieClient,
-    private readonly now: () => number,
-  ) {}
+  constructor(private readonly client: BalldontlieClient) {}
 
   /**
    * One season's matchweeks, when `season` names it (the events sync asks for a Season by its id,
@@ -68,11 +58,12 @@ export class EplReader {
     return { ...toEplMatchweekEvent(scope, matches), participants, games: toEplScheduledGames(matches) };
   }
 
-  /** The teams of the season under way. */
+  /**
+   * The teams of the vendor's current season: the endpoint's own default when no season is named,
+   * so nothing here works out a season from today's date (#2025).
+   */
   async teams(): Promise<ProviderParticipant[]> {
-    const today = new Date(this.now());
-    const current = today.getUTCMonth() >= ROSTER_ROLLOVER_MONTH ? today.getUTCFullYear() : today.getUTCFullYear() - 1;
-    const page = await this.client.get(EPL_TEAMS_PATH, { season: current }, soccerTeamListSchema);
+    const page = await this.client.get(EPL_TEAMS_PATH, {}, soccerTeamListSchema);
     return page.data.map(toEplTeamParticipant);
   }
 

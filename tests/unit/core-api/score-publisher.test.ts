@@ -92,7 +92,7 @@ describe('pool-master-rop.78.3 / plans/117 §10.3 — publishLiveScoreUpdate', (
         },
         participantProviderMapping: {
           findMany: jest.fn().mockResolvedValue([
-            { externalId: 'rory', participantId: 'pp-rory', provider: { name: 'BALLDONTLIE' } },
+            { externalId: 'rory', participantId: 'pp-rory', participantType: 'INDIVIDUAL', sportLeague: { participantType: 'INDIVIDUAL' }, provider: { name: 'BALLDONTLIE' } },
           ]),
         },
         sportEventParticipant: {
@@ -181,7 +181,7 @@ describe('pool-master-rop.78.3 / plans/117 §10.3 — publishLiveScoreUpdate', (
         const prisma = {
           sportEventProviderMapping: { findFirst: jest.fn().mockResolvedValue(atProvider({ id: 'evt-1', status })) },
           sportEventRound: { findMany: jest.fn().mockResolvedValue([{ id: 'ser-1', roundNumber: 1 }]) },
-          participantProviderMapping: { findMany: jest.fn().mockResolvedValue([{ externalId: 'rory', participantId: 'pp-rory', provider: { name: 'BALLDONTLIE' } }]) },
+          participantProviderMapping: { findMany: jest.fn().mockResolvedValue([{ externalId: 'rory', participantId: 'pp-rory', participantType: 'INDIVIDUAL', sportLeague: { participantType: 'INDIVIDUAL' }, provider: { name: 'BALLDONTLIE' } }]) },
           sportEventParticipant: { findMany: jest.fn().mockResolvedValue([{ id: 'sep-rory', participantId: 'pp-rory' }]) },
           sportEventParticipantRound: { upsert: jest.fn(), findMany: jest.fn() },
           sportEventParticipantStanding: { upsert: jest.fn(), findMany: jest.fn() },
