@@ -183,6 +183,8 @@ test('act 1: the root admin builds a race — the seeded series, ten test driver
       slotLabel: run.tournamentName,
       startsAt: start,
       name: run.tournamentName,
+      // The journey moves the event's status by hand, so its results do not move it first (#2013).
+      autoLifecycleEnabled: false,
     });
     expect(created.sport).toBe('AUTO_RACING');
     await page.goto(`/manage/sports/auto-racing/events/${created.id}`);

@@ -456,6 +456,8 @@ describe('game scores from a provider', () => {
     expect(statementCounts(statements)).toEqual([
       // The batch's shoot-outs taken off its side results (#2046), in one statement.
       ['DELETE sport_event_round_match_game_side_result_period_scores', 1],
+      // The matches going live carry their slot's status refresh (#2013), in one insert.
+      ['INSERT background_jobs', 1],
       ['SELECT participant_provider_mappings', 1],
       // The mappings' Provider rows, for their names (#2040): one read for the batch.
       ['SELECT providers', 1],

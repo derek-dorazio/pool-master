@@ -65,7 +65,7 @@ function dateTimeInput(date: Date): string {
  */
 export async function createTestEvent(
   page: Page,
-  input: { sportUrlSegment: string; sportLeagueId: string; slotKind: string; slotLabel: string; startsAt: Date; name: string; rounds?: number },
+  input: { sportUrlSegment: string; sportLeagueId: string; slotKind: string; slotLabel: string; startsAt: Date; name: string; rounds?: number; autoLifecycleEnabled?: boolean },
 ): Promise<{ id: string; sport: string; championshipYear: number }> {
   const definitionId = await currentSeasonDefinitionId(page.request, {}, input.sportLeagueId, input.slotKind);
   await page.goto(`/manage/sports/${input.sportUrlSegment}/events/new`);
@@ -83,6 +83,7 @@ export async function createTestEvent(
   await expect(page.getByTestId('root-admin-sport-event-create-slot')).toHaveValue(slot.id);
   await page.getByTestId('root-admin-sport-event-create-name').fill(input.name);
   if (input.rounds !== undefined) await page.getByTestId('root-admin-sport-event-create-rounds').fill(String(input.rounds));
+  if (input.autoLifecycleEnabled === false) await page.getByTestId('root-admin-sport-event-create-auto-lifecycle').uncheck();
   const created = await submitAndRead<{ event: { id: string; sport: string; championshipYear: number } }>(
     page,
     'root-admin-sport-event-create-submit',

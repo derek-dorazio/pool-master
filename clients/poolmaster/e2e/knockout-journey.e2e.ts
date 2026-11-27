@@ -218,6 +218,8 @@ test('act 1: the root admin builds the 2025 WNBA playoffs — league, eight team
       slotLabel: run.tournamentName,
       startsAt: start.toISOString(),
       name: run.tournamentName,
+      // The journey moves the event's status by hand, so its results do not move it first (#2013).
+      autoLifecycleEnabled: false,
     });
     await page.goto(`/manage/sports/basketball/events/${created.id}/field`);
     await expect(page.getByTestId('root-admin-event-page')).toBeVisible();
