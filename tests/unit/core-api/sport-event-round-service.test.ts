@@ -1,4 +1,4 @@
-import { ParticipantRoundStatus, RoundStatus, SlotKind } from '@poolmaster/shared/domain';
+import { MatchStatus, RoundStatus, SlotKind } from '@poolmaster/shared/domain';
 import { dailyRoundSchedule, providerEventRoundSchedule, roundsInSlots, SportEventRoundService } from '../../../packages/core-api/src/modules/events/sport-event-round-service';
 import { InMemorySportEvents } from '../../support/in-memory-sport-events';
 import { expectDefined } from '../../support/expect-defined';
@@ -142,8 +142,7 @@ describe('SportEventRoundService.listRoundViews (#1889)', () => {
       rounds: {
         ...rounds,
         findResultFacts: async () => new Map([[expectDefined(first).id, {
-          matches: [],
-          participantRounds: [{ status: ParticipantRoundStatus.COMPLETED, count: 3, lastCompletedAt: completedAt }],
+          matches: [{ status: MatchStatus.COMPLETED, count: 3, lastCompletedAt: completedAt }],
         }]]),
       },
     });

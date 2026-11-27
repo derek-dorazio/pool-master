@@ -103,7 +103,7 @@ function fakes() {
       replaceTierAssignments: fn(undefined),
       autoAssignPrices: fn(undefined),
     },
-    golfScores: { previewRoundScores: fn([]), applyRoundScores: fn(undefined), updateRoundScore: fn(undefined) },
+    strokePlayResults: { previewRoundScores: fn([]), applyRoundScores: fn(undefined), updateRoundScore: fn(undefined) },
     raceResults: { previewResults: fn({ rows: [], orderErrors: [] }), applyResults: fn(undefined) },
     matchResults: {
       recordResult: fn([]), recordPeriodScore: fn([]), cancelMatch: fn([]),
@@ -255,6 +255,26 @@ describe('field refresh from the provider', () => {
     const reply = await callHandler(handlers.refreshEventParticipants, stubRequest({ params }));
 
     expect(reply).toMatchObject({ statusCode: 409, body: { error: { code: 'EVENT_NOT_LINKED' } } });
+    expect(ingestion.syncEventData).not.toHaveBeenCalled();
+  });
+
+  it('queues a field sync for a linked draft event, whose field is loaded before release', async () => {
+    const { services, ingestion, handlers } = fakes();
+    services.sportEvents.requireEvent.mockResolvedValueOnce(sportEvent({ status: SportEventStatus.DRAFT }));
+
+    const reply = await callHandler(handlers.refreshEventParticipants, stubRequest({ params, authUser: admin }));
+
+    expect(reply).toMatchObject({ statusCode: 202 });
+    expect(ingestion.syncEventData).toHaveBeenCalledWith(expect.objectContaining({ kinds: ['FIELD'] }), 'admin', 'admin@example.test');
+  });
+
+  it('refuses a field sync for a cancelled event, which no field sync runs on, with 422 EVENT_SYNC_KIND_UNAVAILABLE and syncs nothing', async () => {
+    const { services, ingestion, handlers } = fakes();
+    services.sportEvents.requireEvent.mockResolvedValueOnce(sportEvent({ status: SportEventStatus.CANCELLED }));
+
+    const reply = await callHandler(handlers.refreshEventParticipants, stubRequest({ params }));
+
+    expect(reply).toMatchObject({ statusCode: 422, body: { error: { code: 'EVENT_SYNC_KIND_UNAVAILABLE' } } });
     expect(ingestion.syncEventData).not.toHaveBeenCalled();
   });
 
@@ -433,7 +453,7 @@ describe('results', () => {
     const raceApplied = await callHandler(handlers.applyRaceResults, stubRequest({ params, body: { rows: [] } }));
 
     expect(golfPreview.body).toMatchObject({ rows: [], rollup: { total: 0 } });
-    expect(services.golfScores.applyRoundScores).toHaveBeenCalledWith(EVENT_ID, 2, []);
+    expect(services.strokePlayResults.applyRoundScores).toHaveBeenCalledWith(EVENT_ID, 2, []);
     expect(racePreview.body).toMatchObject({ rows: [], orderErrors: [] });
     for (const reply of [golfApplied, raceApplied]) {
       expect(reply.body).toMatchObject({ participants: [{ id: 'sep-1' }] });
@@ -445,7 +465,7 @@ describe('results', () => {
 
     const reply = await callHandler(handlers.updateGolfRoundScore, stubRequest({ params: { ...roundParams, sportEventParticipantId: 'sep-1' }, body: { strokes: 70 } }));
 
-    expect(services.golfScores.updateRoundScore).toHaveBeenCalledWith(EVENT_ID, 2, 'sep-1', { strokes: 70 });
+    expect(services.strokePlayResults.updateRoundScore).toHaveBeenCalledWith(EVENT_ID, 2, 'sep-1', { strokes: 70 });
     expect(services.field.getEventParticipant).toHaveBeenCalledWith(EVENT_ID, 'sep-1');
     expect(reply.body).toMatchObject({ participant: { id: 'sep-1' } });
   });
@@ -537,7 +557,7 @@ describe('admin result writes on a test event only (#2074)', () => {
     for (const write of [
       services.bracket.loadBracket, services.bracket.updateMatch, services.bracket.setRoundMatchups,
       services.matchResults.recordResult, services.matchResults.recordPeriodScore, services.matchResults.cancelMatch,
-      services.golfScores.applyRoundScores, services.golfScores.updateRoundScore, services.raceResults.applyResults,
+      services.strokePlayResults.applyRoundScores, services.strokePlayResults.updateRoundScore, services.raceResults.applyResults,
     ]) {
       expect(write).not.toHaveBeenCalled();
     }

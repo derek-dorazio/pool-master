@@ -11,6 +11,7 @@ import {
   setupIntegrationTests,
   teardownIntegrationTests,
 } from '../helpers';
+import { writeGolfRounds } from '../golf-rounds';
 import { createContestEmailJobs } from '../../../packages/core-api/src/modules/notifications';
 import { freshEventEdition } from '../../support/event-edition';
 import { fakeLogger } from '../../support/fake-logger';
@@ -217,9 +218,9 @@ describe('pool-master-eux.6: schedule-driven Golf contest settlement', () => {
     // #246 — the freeze. A late provider correction (Winner A's -7 becomes +10, which would
     // drop the winner's best-2 total to +1 and tie it with the runner-up) followed by the event
     // being settled again must not rewrite a COMPLETED contest's result.
-    await prisma.sportEventParticipantGolfStanding.updateMany({
-      where: { standing: { sportEventParticipantId: participants[0].id } },
-      data: { eventScoreToPar: 10 },
+    await prisma.sportEventParticipantStanding.updateMany({
+      where: { sportEventParticipantId: participants[0].id },
+      data: { scoreToPar: 10 },
     });
     const second = await service.settleFinishedSportEvent(event.id);
 
@@ -425,7 +426,7 @@ describe('golf contest settlement — unplayed rounds score 80 strokes', () => {
       },
     });
     const sportEventSlotId = await oneEventSlotId(prisma, event.id);
-    const eventRounds = await Promise.all([1, 2, 3, 4].map((roundNumber) => prisma.sportEventRound.create({
+    await Promise.all([1, 2, 3, 4].map((roundNumber) => prisma.sportEventRound.create({
       data: { sportEventId: event.id, sportEventSlotId, roundNumber, scheduledDate: new Date(Date.UTC(2026, 4, 27 + roundNumber, 12)) },
     })));
     // The leader played all four rounds at 70 on par 72, so every round's par is derivable.
@@ -433,24 +434,18 @@ describe('golf contest settlement — unplayed rounds score 80 strokes', () => {
     const cut = await createSettlementParticipant({
       sportId: sport.id, sportEventId: event.id, name: `Cut ${suffix}`, scoreToPar: 2, strokes: 146, status: 'ELIMINATED',
     });
-    const writeRound = (sportEventParticipantId: string, roundNumber: number, status: 'COMPLETED' | 'MISSED_CUT', strokes: number) =>
-      prisma.sportEventParticipantRound.create({
-        data: {
-          sportEventParticipantId,
-          sportEventRoundId: eventRounds[roundNumber - 1].id,
-          status,
-          golf: { create: { strokes, scoreToPar: strokes - 72, thru: 18 } },
-        },
-      });
+    // A cut golfer's last round is FINISHED, as the stroke-play writer stores a MISSED_CUT round (#2008).
+    const writeRound = (sportEventParticipantId: string, roundNumber: number, strokes: number) =>
+      writeGolfRounds(prisma, event.id, [{ roundNumber, scores: [{ sportEventParticipantId, strokes, scoreToPar: strokes - 72 }] }]);
     for (const roundNumber of [1, 2, 3, 4]) {
-      await writeRound(leader.id, roundNumber, 'COMPLETED', 70);
+      await writeRound(leader.id, roundNumber, 70);
     }
-    await writeRound(cut.id, 1, 'COMPLETED', 72);
-    await writeRound(cut.id, 2, 'MISSED_CUT', 74);
+    await writeRound(cut.id, 1, 72);
+    await writeRound(cut.id, 2, 74);
     // Never flagged as cut by the feed: still COMPLETE, two rounds at par, nothing after.
     const unflagged = await createSettlementParticipant({ sportId: sport.id, sportEventId: event.id, name: `Unflagged ${suffix}`, scoreToPar: 0, strokes: 144 });
-    await writeRound(unflagged.id, 1, 'COMPLETED', 72);
-    await writeRound(unflagged.id, 2, 'COMPLETED', 72);
+    await writeRound(unflagged.id, 1, 72);
+    await writeRound(unflagged.id, 2, 72);
     const contest = await prisma.contest.create({
       data: {
         leagueId: league.id,
@@ -537,9 +532,8 @@ async function createSettlementParticipant(input: {
       sportEventParticipantId: sportEventParticipant.id,
       status: input.status ?? 'COMPLETE',
       asOf: new Date('2026-05-31T22:00:00.000Z'),
-      golf: {
-        create: { eventScoreToPar: input.scoreToPar, eventStrokes: input.strokes, currentRoundThru: 18 },
-      },
+      scoreToPar: input.scoreToPar,
+      total: input.strokes,
     },
   });
   return sportEventParticipant;

@@ -16,16 +16,14 @@
  * yet. Rounds past the event's scheduled count are never scored (#375).
  */
 import {
-  ParticipantRoundStatus,
+  GameSideStatus,
   ParticipantStandingStatus,
   SportEventStatus,
   type SportEvent,
   SportEventParticipantStatus,
 } from '@poolmaster/shared/domain';
-import type {
-  ParticipantRoundView,
-  SportEventParticipantView,
-} from '../../events/sport-event-participant-service';
+import type { SportEventParticipantView } from '../../events/sport-event-participant-service';
+import { scoredRoundsOf, type ScoredRound } from './scored-rounds';
 
 /** What one unplayed round scores, in strokes. */
 export const UNPLAYED_ROUND_STROKES = 80;
@@ -50,20 +48,17 @@ export interface GolfContestScore {
 }
 
 /**
- * A round played to the end: completed, completed and then cut on, or every hole of the round
- * (`holes`, from `holesPerRound`) scored while the status has not caught up (the event can
- * complete before the last group's round flips to COMPLETED).
+ * A round played to the end: finished, or every hole of the round (`holes`, from
+ * `holesPerRound`) scored while the status has not caught up (the event can complete before the
+ * last group's round is marked finished).
  */
-export function isRoundFinished(round: ParticipantRoundView, holes: number | null): boolean {
-  return round.golf !== null && (
-    round.round.status === ParticipantRoundStatus.COMPLETED
-    || round.round.status === ParticipantRoundStatus.MISSED_CUT
-    || (round.round.status === ParticipantRoundStatus.IN_PROGRESS && holes !== null && round.golf.thru === holes)
-  );
+export function isRoundFinished(round: ScoredRound, holes: number | null): boolean {
+  return round.result.status === GameSideStatus.FINISHED
+    || (round.result.status === null && holes !== null && round.result.periodsCompleted === holes);
 }
 
 export function isOutOfEvent(row: SportEventParticipantView): boolean {
-  const status = row.standing?.standing.status;
+  const status = row.standing?.status;
   return row.entry.status !== SportEventParticipantStatus.ACTIVE
     || status === ParticipantStandingStatus.WITHDRAWN
     || status === ParticipantStandingStatus.ELIMINATED;
@@ -88,10 +83,10 @@ export function buildUnplayedRoundContext(
   const holes = holesPerRound(event);
   const derivedPar = new Map<number, number>();
   for (const row of field) {
-    for (const round of row.rounds) {
-      highestStartedRound = Math.max(highestStartedRound, round.round.roundNumber);
-      if (round.golf && isRoundFinished(round, holes) && !derivedPar.has(round.round.roundNumber)) {
-        derivedPar.set(round.round.roundNumber, round.golf.strokes - round.golf.scoreToPar);
+    for (const round of scoredRoundsOf(row)) {
+      highestStartedRound = Math.max(highestStartedRound, round.roundNumber);
+      if (isRoundFinished(round, holes) && !derivedPar.has(round.roundNumber)) {
+        derivedPar.set(round.roundNumber, round.result.score - round.result.scoreToPar);
       }
     }
   }
@@ -130,7 +125,8 @@ export function scoreGolferForContest(
     };
   };
 
-  const finished = new Map(row.rounds.filter((round) => isRoundFinished(round, context.holes)).map((round) => [round.round.roundNumber, round]));
+  const rounds = scoredRoundsOf(row);
+  const finished = new Map(rounds.filter((round) => isRoundFinished(round, context.holes)).map((round) => [round.roundNumber, round]));
   const missesScheduledRound = context.scheduledRoundNumbers.some((roundNumber) => !finished.has(roundNumber));
 
   // Out of the event, or the event is over and they did not finish every round: the rounds
@@ -141,15 +137,15 @@ export function scoreGolferForContest(
       context.scheduledRoundNumbers.filter((roundNumber) => !finished.has(roundNumber)),
     );
     const played = context.scheduledRoundNumbers
-      .reduce((sum, roundNumber) => sum + (finished.get(roundNumber)?.golf?.scoreToPar ?? 0), 0);
+      .reduce((sum, roundNumber) => sum + (finished.get(roundNumber)?.result.scoreToPar ?? 0), 0);
     const hasScore = unplayedRoundNumbers.length > 0
       || context.scheduledRoundNumbers.some((roundNumber) => finished.has(roundNumber));
     return { score: hasScore ? played + penalty : null, unplayedRoundNumbers };
   }
 
   // Still in it with a score (or done with every round): their live event to-par, untouched.
-  const live = row.standing?.golf?.eventScoreToPar ?? null;
-  if (live !== null || row.rounds.length > 0) {
+  const live = row.standing?.scoreToPar ?? null;
+  if (live !== null || rounds.length > 0) {
     return { score: live, unplayedRoundNumbers: [] };
   }
 

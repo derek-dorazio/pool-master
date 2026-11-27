@@ -33,13 +33,15 @@ function setup(sportName: Sport = Sport.GOLF, status: SportEventStatus = SportEv
 }
 
 describe('SportEventParticipantService.listEventParticipants', () => {
-  it('returns each field row with its participant, valuation, standing and rounds, each carrying its golf extension', async () => {
+  it('returns each field row with its participant, valuation, standing and its side result in each FIELD Game', async () => {
     const { store, service, sport, event } = setup();
     const golfer = store.addParticipant(sport.id, 'Ana');
     const entry = store.addToField(event.id, golfer.id, { seedNumber: 1 });
     const [round] = await (async () => { await store.addRounds(event.id, [{ roundNumber: 1, scheduledDate: new Date() }]); return store.roundRows; })();
-    await store.golfRoundRepo().upsert({ sportEventParticipantId: entry.id, sportEventRoundId: round.id, status: 'COMPLETED', completedAt: null, strokes: 70, scoreToPar: -2, thru: 18 });
-    await store.golfStandingRepo().upsertMany([{ sportEventParticipantId: entry.id, status: 'COMPLETE', asOf: new Date(), eventScoreToPar: -2, eventStrokes: 70, currentRoundThru: 18 }]);
+    await store.fieldGameRepo().applyResults(event.id, {
+      games: [{ roundNumber: round.roundNumber, status: 'COMPLETED', completedAt: null, sides: [{ sportEventParticipantId: entry.id, score: 70, scoreToPar: -2, periodsCompleted: 18, position: null, startPosition: null, status: 'FINISHED' }] }],
+      standings: [{ sportEventParticipantId: entry.id, position: 1, displayPosition: '1', status: 'COMPLETE', asOf: new Date(), total: 70, scoreToPar: -2 }],
+    });
     await store.valuationRepo().assignSlotPrices({
       slot: store.tierSetSlotOf(event.id),
       pricing: inMemoryStandardPricing(),
@@ -50,8 +52,8 @@ describe('SportEventParticipantService.listEventParticipants', () => {
 
     expect(view.participant.name).toBe('Ana');
     expect(view.valuation).toMatchObject({ price: 9 });
-    expect(view.standing?.golf).toMatchObject({ eventScoreToPar: -2 });
-    expect(view.rounds).toEqual([expect.objectContaining({ round: expect.objectContaining({ roundNumber: 1 }), golf: expect.objectContaining({ strokes: 70 }) })]);
+    expect(view.standing).toMatchObject({ scoreToPar: -2, total: 70 });
+    expect(view.fieldResults).toEqual([expect.objectContaining({ roundNumber: 1, result: expect.objectContaining({ score: 70, scoreToPar: -2, periodsCompleted: 18 }) })]);
   });
 
   it('flags a participant of the event\'s sport league, and one invited from another league', async () => {

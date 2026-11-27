@@ -89,35 +89,12 @@ async function cleanupMockProviderImportData(): Promise<void> {
   });
   const participantIds = [...new Set(fieldRows.map((row) => row.participantId))];
 
+  // The rounds' FIELD matches name the golfers as sides (#2008).
+  await prisma.sportEventRoundMatch.deleteMany({ where: { sportEvent: MOCK_FEED_EVENTS } });
   await prisma.sportEventSlotParticipantValuation.deleteMany({
     where: {
       sportEventParticipant: {
         sportEvent: MOCK_FEED_EVENTS,
-      },
-    },
-  });
-  await prisma.sportEventParticipantGolfRound.deleteMany({
-    where: {
-      participantRound: {
-        sportEventParticipant: {
-          sportEvent: MOCK_FEED_EVENTS,
-        },
-      },
-    },
-  });
-  await prisma.sportEventParticipantRound.deleteMany({
-    where: {
-      sportEventParticipant: {
-        sportEvent: MOCK_FEED_EVENTS,
-      },
-    },
-  });
-  await prisma.sportEventParticipantGolfStanding.deleteMany({
-    where: {
-      standing: {
-        sportEventParticipant: {
-          sportEvent: MOCK_FEED_EVENTS,
-        },
       },
     },
   });

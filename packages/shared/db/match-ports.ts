@@ -123,9 +123,12 @@ export interface GamePeriodScoresWrite {
 export interface SportEventRoundMatchRepository {
   /** One match, or null when there is none: a squares grid's game (#1201). */
   findById(id: string): Promise<SportEventRoundMatch | null>;
-  /** The event's matches in match-number order, each with its sides and Games. */
+  /**
+   * The event's head-to-head matches in match-number order, each with its sides and Games. A golf
+   * round's or a race's FIELD match is no part of them: it is read as its side results (#2008).
+   */
   findBySportEvent(sportEventId: string): Promise<SportEventRoundMatch[]>;
-  /** Several events' matches in one read (#762), each event's in match-number order. */
+  /** Several events' head-to-head matches in one read (#762), each event's in match-number order. */
   findBySportEvents(sportEventIds: readonly string[]): Promise<SportEventRoundMatch[]>;
   /**
    * Replaces every match of the event with `matches`, each with its two sides and its Game 1

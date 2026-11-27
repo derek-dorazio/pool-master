@@ -40,7 +40,7 @@ import type {
   SportEventRoundMatchupsResponse,
   UpdateSportEventRoundMatchRequest,
 } from '@poolmaster/shared/dto/bracket.dto';
-import { eventFeedRef, ProviderSyncKind, matchPlaceOf, OFFERABLE_SPORT_EVENT_STATUSES, type MatchPlace } from '@poolmaster/shared/domain';
+import { ProviderSyncKind, matchPlaceOf, OFFERABLE_SPORT_EVENT_STATUSES, type MatchPlace } from '@poolmaster/shared/domain';
 import { sendError } from '../../core/error-handler';
 import {
   mapGolfRoundScorePreviewToDto,
@@ -54,7 +54,7 @@ import {
   toProviderManualSyncSubmissionResponse,
 } from '../../mappers';
 import type { IngestionService } from '../ingestion/ingestion-service';
-import { SportProviderNotFoundError } from '../ingestion/ingestion-service';
+import { requireSyncableEvent, SportEventNotSyncedError, SportProviderNotFoundError } from '../ingestion/ingestion-service';
 import type { EventLifecycleService } from './event-lifecycle-service';
 import { SportEventError } from './errors';
 import type { SportEventServices } from './wiring';
@@ -109,7 +109,7 @@ export interface EventHandlerDeps {
  * the provider-sync errors, which carry neither, are mapped here.
  */
 export function createEventHandlers({ services, eventLifecycle, ingestion, leaderboards, eventOverviews, slotTiebreakers }: EventHandlerDeps) {
-  const { sportEvents, rounds, field, tiers, golfScores, raceResults, matchResults, bracket, contests } = services;
+  const { sportEvents, rounds, field, tiers, strokePlayResults, raceResults, matchResults, bracket, contests } = services;
 
   /** An admin action's answer: the event with the root admin's counts. */
   async function eventResponse(eventId: string): Promise<SportEventResponse> {
@@ -209,14 +209,14 @@ export function createEventHandlers({ services, eventLifecycle, ingestion, leade
       return reply.status(204).send();
     },
 
-    /** Queues a provider sync of the event's field. 409 EVENT_NOT_LINKED for an event with no provider link. */
+    /**
+     * Queues a provider sync of the event's field. 409 EVENT_NOT_LINKED for an event with no provider
+     * link, 422 EVENT_SYNC_KIND_UNAVAILABLE for a postponed or cancelled event (#2238).
+     */
     refreshEventParticipants: async (request: FastifyRequest<EventParams>, reply: FastifyReply) => {
       const event = await sportEvents.requireEvent(request.params.eventId);
-      const feedRef = eventFeedRef(event);
-      if (feedRef === undefined) {
-        return sendError(reply, 409, 'EVENT_NOT_LINKED', `Sport event ${event.id} has no id at its league's provider.`);
-      }
       try {
+        const feedRef = requireSyncableEvent(event, [ProviderSyncKind.FIELD]);
         const result = await ingestion.syncEventData(
           { sport: event.sport, providerId: feedRef.providerId, eventId: feedRef.externalId, kinds: [ProviderSyncKind.FIELD] },
           request.authUser?.userId ?? '',
@@ -224,6 +224,7 @@ export function createEventHandlers({ services, eventLifecycle, ingestion, leade
         );
         return reply.status(202).send(toProviderManualSyncSubmissionResponse(result));
       } catch (err) {
+        if (err instanceof SportEventNotSyncedError) return sendError(reply, err.statusCode, err.code, err.message);
         if (err instanceof SportProviderNotFoundError) return sendError(reply, 404, 'SPORT_PROVIDER_NOT_FOUND', err.message);
         throw err;
       }
@@ -374,7 +375,7 @@ export function createEventHandlers({ services, eventLifecycle, ingestion, leade
       request: FastifyRequest<RoundParams & { Body: GolfRoundScoreUploadRequest }>,
     ): Promise<GolfRoundScorePreviewResponse> => {
       await requireEvent(request.params.eventId);
-      const rows = await golfScores.previewRoundScores(request.params.eventId, request.params.roundNumber, request.body.rows);
+      const rows = await strokePlayResults.previewRoundScores(request.params.eventId, request.params.roundNumber, request.body.rows);
       return mapGolfRoundScorePreviewToDto(rows);
     },
 
@@ -382,7 +383,7 @@ export function createEventHandlers({ services, eventLifecycle, ingestion, leade
       request: FastifyRequest<RoundParams & { Body: GolfRoundScoreUploadRequest }>,
     ): Promise<SportEventParticipantListResponse> => {
       await sportEvents.requireTestEvent(request.params.eventId);
-      await golfScores.applyRoundScores(request.params.eventId, request.params.roundNumber, request.body.rows);
+      await strokePlayResults.applyRoundScores(request.params.eventId, request.params.roundNumber, request.body.rows);
       return fieldResponse(request.params.eventId);
     },
 
@@ -406,7 +407,7 @@ export function createEventHandlers({ services, eventLifecycle, ingestion, leade
     ): Promise<SportEventParticipantResponse> => {
       const { eventId, roundNumber, sportEventParticipantId } = request.params;
       await sportEvents.requireTestEvent(eventId);
-      await golfScores.updateRoundScore(eventId, roundNumber, sportEventParticipantId, request.body);
+      await strokePlayResults.updateRoundScore(eventId, roundNumber, sportEventParticipantId, request.body);
       return fieldRowResponse(eventId, sportEventParticipantId);
     },
 

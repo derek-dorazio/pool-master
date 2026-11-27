@@ -40,6 +40,7 @@ import {
 } from '../../support/repo-fakes';
 import { mockFn } from '../../support/mock-fn';
 import { testDomainEvents } from '../../support/domain-events';
+import { golfRound, golfStanding } from '../../support/golf-rounds';
 import { inMemoryBackgroundJobs, testCurrentJobStart } from '../../support/in-memory-background-jobs';
 
 const MASTERS = 'event-masters';
@@ -52,16 +53,11 @@ function golfer(sportEventParticipantId: string, eventScoreToPar: number) {
     entry: { id: sportEventParticipantId, participantId: `participant-${sportEventParticipantId}`, isActive: true },
     participant: { id: `participant-${sportEventParticipantId}`, name: `Golfer ${sportEventParticipantId}` },
     valuation: null,
-    standing: {
-      standing: { status: 'COMPLETE', asOf: T },
-      golf: { eventScoreToPar, eventStrokes: 288 + eventScoreToPar, currentRoundThru: 18 },
-    },
+    standing: golfStanding({ sportEventParticipantId, status: 'COMPLETE', asOf: T, scoreToPar: eventScoreToPar, total: 288 + eventScoreToPar }),
     // Four par-72 rounds, the event's to-par all in the first.
-    rounds: [1, 2, 3, 4].map((roundNumber) => ({
-      round: { roundNumber, status: 'COMPLETED' },
-      golf: { strokes: 72 + (roundNumber === 1 ? eventScoreToPar : 0), scoreToPar: roundNumber === 1 ? eventScoreToPar : 0, thru: 18 },
+    fieldResults: [1, 2, 3, 4].map((roundNumber) => golfRound({
+      roundNumber, strokes: 72 + (roundNumber === 1 ? eventScoreToPar : 0), scoreToPar: roundNumber === 1 ? eventScoreToPar : 0,
     })),
-    fieldResults: [],
     matches: [],
     affiliatedWithSportLeague: true,
   };
@@ -503,7 +499,7 @@ describe('ContestSettlementService — edge cases', () => {
     const w = world();
     const settleAt = new Date('2026-04-13T01:00:00.000Z');
     for (const [eventId, field] of w.fields) {
-      w.fields.set(eventId, field.map((row) => ({ ...row, standing: { ...row.standing, standing: { ...row.standing.standing, asOf: null as unknown as Date } } })));
+      w.fields.set(eventId, field.map((row) => ({ ...row, standing: { ...row.standing, asOf: null } })));
     }
     w.complete(MASTERS);
 

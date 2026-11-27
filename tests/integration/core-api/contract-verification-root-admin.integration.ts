@@ -121,7 +121,7 @@ import { sportLeagueRowDefaults } from '../../support/league-profiles';
 import { SYNCED_PROVIDER_ID, syncLeagueTo, syncSeasonsTo } from '../../support/league-sync';
 import { sportRowKeys } from '../../support/sport-rows';
 import { PrismaSportLeagueSeasonRepository } from '../../../packages/core-api/src/adapters/prisma-sport-league-season-repository';
-import { ProviderCode, Sport, SportEventParticipantStatus } from '@poolmaster/shared/domain';
+import { ProviderCode, Sport, SportEventParticipantStatus, SportEventStatus } from '@poolmaster/shared/domain';
 import { sportPlay } from '../../support/sport-play';
 import { insertTestSportLeague } from '../../support/test-sport-league';
 
@@ -302,13 +302,14 @@ class TourSlateContractProvider extends OperationalContractProvider {
  * BALLDONTLIE's id for it, as the tour's sync leaves it (#2004): what an event sync names by its
  * own id.
  */
-async function syncedEvent(externalId: string) {
+/** An event its league's provider syncs, in play by default so it can run both sync kinds (#2238). */
+async function syncedEvent(externalId: string, status: SportEventStatus = SportEventStatus.IN_PROGRESS) {
   const prisma = getPrisma();
   const sport = await prisma.sport.findUniqueOrThrow({ where: { sport: Sport.GOLF } });
   const tour = await prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(Sport.GOLF), sportId: sport.id, name: `Contract Sync Tour ${randomUUID()}` } });
   await syncLeagueTo(prisma, tour.id, 'pga');
   const event = await prisma.sportEvent.create({
-    data: { ...(await freshEventEdition(prisma, { sportLeagueId: tour.id })), name: `Contract Sync ${externalId}`, startDate: new Date('2026-04-10T15:00:00.000Z') },
+    data: { ...(await freshEventEdition(prisma, { sportLeagueId: tour.id })), name: `Contract Sync ${externalId}`, status, startDate: new Date('2026-04-10T15:00:00.000Z') },
   });
   await mapEventToProvider(prisma, event.id, { providerId: 'balldontlie', externalId });
   return event;
@@ -1112,6 +1113,12 @@ describe('Contract verification (root admin)', () => {
       expect(ErrorEnvelopeSchema.parse(missingEventRes.json()).error.code).toBe('EVENT_NOT_FOUND');
       expect(ErrorEnvelopeSchema.parse(unlinkedEventRes.json()).error.code).toBe('EVENT_NOT_LINKED');
 
+      // A linked event asked for a kind it cannot run now (#2238): live scores before play starts.
+      const scheduledEvent = await syncedEvent('contract-scheduled-event', SportEventStatus.SCHEDULED);
+      const notYetRes = await syncOf(scheduledEvent.id);
+      expect(notYetRes.statusCode).toBe(422);
+      expect(ErrorEnvelopeSchema.parse(notYetRes.json()).error.code).toBe('EVENT_SYNC_KIND_UNAVAILABLE');
+
       const inactivateMissingLeagueRes = await getApp().inject({
         method: 'POST',
         url: '/api/v1/leagues/00000000-0000-0000-0000-000000000000/inactivate',
@@ -1612,9 +1619,8 @@ describe('Contract verification (root admin)', () => {
         const sepIds = seps.map((s) => s.id);
         if (sepIds.length) {
           await prisma.contestEntryPick.deleteMany({ where: { sportEventParticipantId: { in: sepIds } } });
-          await prisma.sportEventParticipantGolfRound.deleteMany({ where: { participantRound: { sportEventParticipantId: { in: sepIds } } } });
-          await prisma.sportEventParticipantRound.deleteMany({ where: { sportEventParticipantId: { in: sepIds } } });
-          await prisma.sportEventParticipantGolfStanding.deleteMany({ where: { standing: { sportEventParticipantId: { in: sepIds } } } });
+          // The rounds' FIELD matches name the golfers as sides (#2008).
+          await prisma.sportEventRoundMatch.deleteMany({ where: { sportEventId: { in: created.eventIds } } });
           await prisma.sportEventParticipantStanding.deleteMany({ where: { sportEventParticipantId: { in: sepIds } } });
           await prisma.sportEventSlotParticipantValuation.deleteMany({ where: { sportEventParticipantId: { in: sepIds } } });
           await prisma.sportEventParticipant.deleteMany({ where: { id: { in: sepIds } } });

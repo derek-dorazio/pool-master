@@ -27,7 +27,7 @@ export const headToHeadScoringFamily: ScoringFamilyModule = {
         name: row.participant.name,
         score: ownSettings ? score : null,
         detail: { scoringFamily: ScoringFamily.HEAD_TO_HEAD, ...record },
-        asOf: row.standing?.standing.asOf ?? null,
+        asOf: row.standing?.asOf ?? null,
       };
     });
   },

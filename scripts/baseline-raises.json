@@ -564,6 +564,84 @@
       "key": "teamOnMatchSide",
       "now": 0,
       "reason": "retired by #2016"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "SportEventParticipantRound",
+      "now": 0,
+      "reason": "retired by #2008"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "sportEventParticipantRound",
+      "now": 0,
+      "reason": "retired by #2008"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "SportEventParticipantGolfRound",
+      "now": 0,
+      "reason": "retired by #2008"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "sportEventParticipantGolfRound",
+      "now": 0,
+      "reason": "retired by #2008"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "SportEventParticipantGolfStanding",
+      "now": 0,
+      "reason": "retired by #2008"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "sportEventParticipantGolfStanding",
+      "now": 0,
+      "reason": "retired by #2008"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "GolfScoreService",
+      "now": 0,
+      "reason": "retired by #2008"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "GolfScoreError",
+      "now": 0,
+      "reason": "retired by #2008"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "RaceOrderRepository",
+      "now": 0,
+      "reason": "retired by #2008"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "PrismaRaceOrderRepository",
+      "now": 0,
+      "reason": "retired by #2008"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "ParticipantRoundView",
+      "now": 0,
+      "reason": "retired by #2008"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "currentRoundThru",
+      "now": 3,
+      "reason": "retired by #2008"
+    },
+    {
+      "file": "scripts/dead-exports.json",
+      "key": "own:packages/core-api/src/modules/scoring-families/stroke-play/stroke-play-result-service.ts",
+      "now": 1,
+      "reason": "#2008: golf-score-service.ts moved here as the stroke-play result service; its error class keeps the one own-file export it had"
     }
   ]
 }

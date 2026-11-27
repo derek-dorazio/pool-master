@@ -8,6 +8,7 @@ import {
   setupIntegrationTests,
   teardownIntegrationTests,
 } from '../helpers';
+import { writeGolfRounds } from '../golf-rounds';
 import { ContestLeaderboardResponseSchema, type ErrorEnvelope } from '@poolmaster/shared/dto';
 import { PARTICIPANT_SCORING_DEFINITIONS, Sport } from '@poolmaster/shared/domain';
 import { freshEventEdition } from '../../support/event-edition';
@@ -94,7 +95,7 @@ describe('pool-master-eux.4: Golf leaderboard read API', () => {
     // failed on sport_event_rounds_sport_event_id_round_number_key. See #142.
     // `create` rather than `upsert` on purpose -- the event was just created with
     // a unique suffix, so a pre-existing round is a broken assumption worth failing on.
-    const [round1, round2] = await Promise.all([
+    await Promise.all([
       prisma.sportEventRound.create({
         data: { sportEventId: event.id, sportEventSlotId: await oneEventSlotId(prisma, event.id), roundNumber: 1, scheduledDate: new Date('2026-04-09T12:00:00.000Z') },
       }),
@@ -102,49 +103,45 @@ describe('pool-master-eux.4: Golf leaderboard read API', () => {
         data: { sportEventId: event.id, sportEventSlotId: await oneEventSlotId(prisma, event.id), roundNumber: 2, scheduledDate: new Date('2026-04-10T12:00:00.000Z') },
       }),
     ]);
-    const participants = await Promise.all([
-      createGolfLeaderboardParticipant({
+    // One golfer at a time: each one's sides join the rounds' FIELD Games in turn.
+    const participants: Awaited<ReturnType<typeof createGolfLeaderboardParticipant>>[] = [];
+    for (const golfer of [
+      {
         sportId: sport.id,
         sportEventId: event.id,
-        round1Id: round1.id,
-        round2Id: round2.id,
         name: `Rory ${suffix}`,
         scoreToPar: -5,
         strokes: 139,
         status: 'IN_PROGRESS',
         thru: 9,
-      }),
-      createGolfLeaderboardParticipant({
+      },
+      {
         sportId: sport.id,
         sportEventId: event.id,
-        round1Id: round1.id,
-        round2Id: round2.id,
         name: `Scottie ${suffix}`,
         scoreToPar: -2,
         strokes: 142,
         status: 'COMPLETE',
-      }),
-      createGolfLeaderboardParticipant({
+      },
+      {
         sportId: sport.id,
         sportEventId: event.id,
-        round1Id: round1.id,
-        round2Id: round2.id,
         name: `Jordan ${suffix}`,
         scoreToPar: 1,
         strokes: 145,
         status: 'COMPLETE',
-      }),
-      createGolfLeaderboardParticipant({
+      },
+      {
         sportId: sport.id,
         sportEventId: event.id,
-        round1Id: round1.id,
-        round2Id: round2.id,
         name: `Ludvig ${suffix}`,
         scoreToPar: -7,
         strokes: 137,
         status: 'COMPLETE',
-      }),
-    ]);
+      },
+    ] as const) {
+      participants.push(await createGolfLeaderboardParticipant(golfer));
+    }
     const contest = await prisma.contest.create({
       data: {
         leagueId: league.id,
@@ -310,8 +307,6 @@ describe('pool-master-eux.4: Golf leaderboard read API', () => {
 async function createGolfLeaderboardParticipant(input: {
   sportId: string;
   sportEventId: string;
-  round1Id: string;
-  round2Id: string;
   name: string;
   scoreToPar: number;
   strokes: number;
@@ -333,40 +328,21 @@ async function createGolfLeaderboardParticipant(input: {
       participantId: participant.id,
     },
   });
-  await prisma.sportEventParticipantRound.create({
-    data: {
-      sportEventParticipantId: sportEventParticipant.id,
-      sportEventRoundId: input.round1Id,
-      status: 'COMPLETED',
-      golf: { create: { strokes: input.strokes - 47, scoreToPar: input.scoreToPar + 2 } },
+  const playing = input.status === 'IN_PROGRESS';
+  await writeGolfRounds(prisma, input.sportEventId, [
+    { roundNumber: 1, scores: [{ sportEventParticipantId: sportEventParticipant.id, strokes: input.strokes - 47, scoreToPar: input.scoreToPar + 2 }] },
+    {
+      roundNumber: 2,
+      scores: [{ sportEventParticipantId: sportEventParticipant.id, strokes: 47, scoreToPar: -2, ...(playing ? { status: null, thru: input.thru ?? null } : {}) }],
     },
-  });
-  await prisma.sportEventParticipantRound.create({
-    data: {
-      sportEventParticipantId: sportEventParticipant.id,
-      sportEventRoundId: input.round2Id,
-      status: input.status === 'IN_PROGRESS' ? 'IN_PROGRESS' : 'COMPLETED',
-      golf: {
-        create: {
-          strokes: 47,
-          scoreToPar: -2,
-          thru: input.status === 'IN_PROGRESS' ? input.thru ?? null : null,
-        },
-      },
-    },
-  });
+  ]);
   await prisma.sportEventParticipantStanding.create({
     data: {
       sportEventParticipantId: sportEventParticipant.id,
       status: input.status,
       asOf: new Date('2026-05-31T18:00:00.000Z'),
-      golf: {
-        create: {
-          eventScoreToPar: input.scoreToPar,
-          eventStrokes: input.strokes,
-          currentRoundThru: input.status === 'IN_PROGRESS' ? input.thru ?? null : 18,
-        },
-      },
+      scoreToPar: input.scoreToPar,
+      total: input.strokes,
     },
   });
   return sportEventParticipant;

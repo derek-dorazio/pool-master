@@ -64,6 +64,9 @@ describe('the round slot migration', () => {
       await tx.$executeRawUnsafe('ALTER TABLE "sport_event_rounds" ALTER COLUMN "sport_event_slot_id" DROP NOT NULL');
       // The match column the migration clears, which the later match sides migration replaced.
       await tx.$executeRawUnsafe('ALTER TABLE "sport_event_round_matches" ADD COLUMN "advances_to_side" TEXT');
+      // The golf round tables the migration clears, which a later migration (#2008) moved onto FIELD Games.
+      await tx.$executeRawUnsafe('CREATE TABLE "sport_event_participant_rounds" ("id" UUID NOT NULL, "sport_event_round_id" UUID NOT NULL)');
+      await tx.$executeRawUnsafe('CREATE TABLE "sport_event_participant_golf_rounds" ("participant_round_id" UUID NOT NULL)');
       const rounds = [
         ...[1, 2, 3, 4].map((roundNumber) => ({ sportEventId: oneSlot.id, roundNumber })),
         ...[1, 2, 3, 4].map((roundNumber) => ({ sportEventId: bracket.id, roundNumber })),

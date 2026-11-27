@@ -16,6 +16,7 @@ import {
   scoringFamilyForEvent,
 } from '../../../packages/core-api/src/modules/scoring-families';
 import { expectDefined } from '../../support/expect-defined';
+import { FIELD_MATCH_WHERE } from '../../../packages/core-api/src/adapters/season-slot-select';
 
 // The scoring-family conformance suite (#606): every family in the registry gets these checks.
 
@@ -77,7 +78,8 @@ describe('head to head', () => {
     );
 
     expect(findMany).toHaveBeenCalledTimes(1);
-    expect(findMany).toHaveBeenCalledWith(expect.objectContaining({ where: { sportEventId: { in: ['event-1'] } } }));
+    // The event's head-to-head matches: a FIELD match is read as its side results (#2008).
+    expect(findMany).toHaveBeenCalledWith(expect.objectContaining({ where: { sportEventId: { in: ['event-1'] }, NOT: FIELD_MATCH_WHERE } }));
     expect(findGames).toHaveBeenCalledTimes(1);
     expect(findGames).toHaveBeenCalledWith(expect.objectContaining({ where: { sportEventId: 'event-1' } }));
     expect(result).toMatchObject({ updatesReturned: 0, updatesPersisted: 0, updatesSkipped: 0 });

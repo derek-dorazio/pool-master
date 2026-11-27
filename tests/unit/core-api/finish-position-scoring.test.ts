@@ -45,15 +45,17 @@ function field(runners: RunnerInput[]): SportEventParticipantView[] {
     const participant = store.addParticipant(sport.id, name);
     const entry = store.addToField(event.id, participant.id, { status: isActive ? SportEventParticipantStatus.ACTIVE : SportEventParticipantStatus.WITHDRAWN });
     const fieldResults: FieldGameResultView[] = result === null || result === undefined ? [] : [{
+      sportEventRoundId: 'round-1',
       roundNumber: 1,
       gameStatus: result.isOfficial === false ? MatchStatus.IN_PROGRESS : MatchStatus.COMPLETED,
+      gameCompletedAt: null,
       result: {
         sportEventRoundMatchSideId: `side-${entry.id}`, sideNumber: 1, score: null, homeAway: HomeAway.NONE, periodScores: [],
-        position: result.finishPosition ?? null, startPosition: null, status: result.resultStatus === undefined ? GameSideStatus.FINISHED : result.resultStatus,
+        position: result.finishPosition ?? null, startPosition: null, scoreToPar: null, periodsCompleted: null, status: result.resultStatus === undefined ? GameSideStatus.FINISHED : result.resultStatus,
       },
       updatedAt: new Date('2026-05-02T22:00:00.000Z'),
     }];
-    return { entry, participant, valuation: null, standing: null, rounds: [], fieldResults, matches: [], affiliatedWithSportLeague: true };
+    return { entry, participant, valuation: null, standing: null, fieldResults, matches: [], affiliatedWithSportLeague: true };
   });
 }
 

@@ -17,6 +17,7 @@ import {
   teardownIntegrationTests,
   withBackgroundJobsFailing,
 } from '../helpers';
+import { writeGolfRounds } from '../golf-rounds';
 import { integrationPlanEntitlements } from '../plan-entitlements';
 import { recordStatements, statementParams, statementsOn, statementTarget, StatementVerb, type RecordedStatement } from '../statement-log';
 import { freshEventEdition } from '../../support/event-edition';
@@ -76,24 +77,13 @@ async function createEvent(label: string, daysAgo: number, status: SportEventSta
     const row = await prisma.sportEventParticipant.create({ data: { sportEventId: event.id, participantId: participant.id } });
     const scoreToPar = scoresToPar?.[golfer - 1];
     if (rounds && scoreToPar !== undefined) {
-      for (const [index, round] of rounds.entries()) {
-        await prisma.sportEventParticipantRound.create({
-          data: {
-            sportEventParticipantId: row.id,
-            sportEventRoundId: round.id,
-            status: 'COMPLETED',
-            // The first round carries the event's score to par, the second is level.
-            golf: { create: { strokes: index === 0 ? 72 + scoreToPar : 72, scoreToPar: index === 0 ? scoreToPar : 0 } },
-          },
-        });
-      }
+      // The first round carries the event's score to par, the second is level.
+      await writeGolfRounds(prisma, event.id, rounds.map((round, index) => ({
+        roundNumber: round.roundNumber,
+        scores: [{ sportEventParticipantId: row.id, strokes: index === 0 ? 72 + scoreToPar : 72, scoreToPar: index === 0 ? scoreToPar : 0 }],
+      })));
       await prisma.sportEventParticipantStanding.create({
-        data: {
-          sportEventParticipantId: row.id,
-          status: 'COMPLETE',
-          asOf: new Date(),
-          golf: { create: { eventScoreToPar: scoreToPar, eventStrokes: 144 + scoreToPar, currentRoundThru: 18 } },
-        },
+        data: { sportEventParticipantId: row.id, status: 'COMPLETE', asOf: new Date(), scoreToPar, total: 144 + scoreToPar },
       });
     }
     field.push(row);
@@ -445,9 +435,9 @@ describe('Roster settlement freezes the last live board (#1435)', () => {
 describe('Contest leaderboard snapshots (#1435)', () => {
   /** The golfer on this field row now stands at `scoreToPar`, as a score save writes it. */
   async function setScore(fieldRowId: string, scoreToPar: number) {
-    await getPrisma().sportEventParticipantGolfStanding.updateMany({
-      where: { standing: { sportEventParticipantId: fieldRowId } },
-      data: { eventScoreToPar: scoreToPar, eventStrokes: 144 + scoreToPar },
+    await getPrisma().sportEventParticipantStanding.updateMany({
+      where: { sportEventParticipantId: fieldRowId },
+      data: { scoreToPar, total: 144 + scoreToPar },
     });
   }
 

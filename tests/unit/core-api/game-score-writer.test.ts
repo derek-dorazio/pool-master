@@ -42,6 +42,8 @@ function withWrittenGame(match: SportEventRoundMatch, write: SportEventRoundMatc
         homeAway: side.homeAway,
         position: null,
         startPosition: null,
+        scoreToPar: null,
+        periodsCompleted: null,
         status: null,
         periodScores: side.shootoutScore === null ? [] : [{ kind: PeriodKind.SHOOTOUT, periodNumber: 1, score: side.shootoutScore }],
       })),

@@ -386,13 +386,6 @@ describe('Contract verification (web)', () => {
       expect(seasons.success).toBe(true);
       expect(seasons.data?.seasons.map((season) => season.id)).toContain(event?.sportLeagueSeasonId);
     } finally {
-      await prisma.sportEventParticipantGolfStanding.deleteMany({
-        where: {
-          standing: {
-            sportEventParticipant: { sportEventId: eventId },
-          },
-        },
-      });
       await prisma.sportEventParticipantStanding.deleteMany({
         where: {
           sportEventParticipant: { sportEventId: eventId },

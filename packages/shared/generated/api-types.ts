@@ -2226,7 +2226,7 @@ export interface paths {
         put?: never;
         /**
          * Reload a sport event's field from its provider
-         * @description Queues a provider sync of the field and returns at once; reload the field once the sync runs complete. 409 EVENT_NOT_LINKED for an event with no provider. Root admin only.
+         * @description Queues a provider sync of the field and returns at once; reload the field once the sync runs complete. 409 EVENT_NOT_LINKED for an event with no provider; 422 EVENT_SYNC_KIND_UNAVAILABLE for a postponed or cancelled event, which no field sync runs on (#2238). Root admin only.
          */
         post: operations["refreshEventParticipants"];
         delete?: never;
@@ -3571,7 +3571,7 @@ export interface paths {
         put?: never;
         /**
          * Sync an event now
-         * @description Queues one sync run per requested event-level feed for the event, read from its sport league's provider by the id the events sync gave it, and answers at once (202); the runs execute in a background job. 404 EVENT_NOT_FOUND, or SPORT_PROVIDER_NOT_FOUND when that provider is not running here; 409 EVENT_NOT_LINKED for a test event, which no provider syncs.
+         * @description Queues one sync run per requested event-level feed for the event, read from its sport league's provider by the id the events sync gave it, and answers at once (202); the runs execute in a background job. 404 EVENT_NOT_FOUND, or SPORT_PROVIDER_NOT_FOUND when that provider is not running here; 409 EVENT_NOT_LINKED for a test event, which no provider syncs; 422 EVENT_SYNC_KIND_UNAVAILABLE for a kind outside the event's syncKinds (#2238).
          */
         post: operations["submitEventSync"];
         delete?: never;
@@ -13911,7 +13911,7 @@ export interface components {
             } | null;
             /** @description Statuses the event may move to next, from the declared transition map. (Admin-only: operational detail no member surface reads.) */
             allowedTransitions: ("DRAFT" | "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED")[];
-            /** @description The sync kinds a root admin can run on the event now (#2234): its FIELD while it is scheduled, in play or completed, and its SCORES while it is in play. Empty for an event its league's provider has no id for, such as a test event. (Admin-only: operational detail no member surface reads.) */
+            /** @description The sync kinds a root admin can run on the event now (#2234): its FIELD while it is a draft, scheduled, in play or completed, and its SCORES while it is in play. Empty for an event its league's provider has no id for, such as a test event. (Admin-only: operational detail no member surface reads.) */
             syncKinds: ("FIELD" | "SCORES")[];
             /**
              * Format: date-time
@@ -14337,7 +14337,7 @@ export interface components {
                 } | null;
                 /** @description Statuses the event may move to next, from the declared transition map. (Admin-only: operational detail no member surface reads.) */
                 allowedTransitions: ("DRAFT" | "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED")[];
-                /** @description The sync kinds a root admin can run on the event now (#2234): its FIELD while it is scheduled, in play or completed, and its SCORES while it is in play. Empty for an event its league's provider has no id for, such as a test event. (Admin-only: operational detail no member surface reads.) */
+                /** @description The sync kinds a root admin can run on the event now (#2234): its FIELD while it is a draft, scheduled, in play or completed, and its SCORES while it is in play. Empty for an event its league's provider has no id for, such as a test event. (Admin-only: operational detail no member surface reads.) */
                 syncKinds: ("FIELD" | "SCORES")[];
                 /**
                  * Format: date-time
@@ -14742,7 +14742,7 @@ export interface components {
                 } | null;
                 /** @description Statuses the event may move to next, from the declared transition map. (Admin-only: operational detail no member surface reads.) */
                 allowedTransitions: ("DRAFT" | "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED")[];
-                /** @description The sync kinds a root admin can run on the event now (#2234): its FIELD while it is scheduled, in play or completed, and its SCORES while it is in play. Empty for an event its league's provider has no id for, such as a test event. (Admin-only: operational detail no member surface reads.) */
+                /** @description The sync kinds a root admin can run on the event now (#2234): its FIELD while it is a draft, scheduled, in play or completed, and its SCORES while it is in play. Empty for an event its league's provider has no id for, such as a test event. (Admin-only: operational detail no member surface reads.) */
                 syncKinds: ("FIELD" | "SCORES")[];
                 /**
                  * Format: date-time

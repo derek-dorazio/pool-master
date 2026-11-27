@@ -90,7 +90,8 @@ function liveRosterContest(selectionType: RosterType, { tied = false }: { tied?:
         data: {
           sportEventParticipantId: row.id,
           asOf: new Date(),
-          golf: { create: { eventScoreToPar: tied ? 0 : scoreToPar, eventStrokes: 72 + (tied ? 0 : scoreToPar), currentRoundThru: 9 } },
+          scoreToPar: tied ? 0 : scoreToPar,
+          total: 72 + (tied ? 0 : scoreToPar),
         },
       });
     }

@@ -6,6 +6,7 @@ import {
   providerCodeOfSourceId,
   providerSourceIdOf,
   ProviderSyncKind,
+  SCHEDULED_FIELD_SYNC_STATUSES,
   SportEventStatus,
   type ProviderCode,
   type Sport,
@@ -56,7 +57,7 @@ export function createScheduledEventReader({
           where: {
             providerMappings: { some: { provider: { code } } },
             // A field loads while the event is a draft or released and not yet started (#431).
-            status: { in: [SportEventStatus.DRAFT, SportEventStatus.SCHEDULED] },
+            status: { in: [...SCHEDULED_FIELD_SYNC_STATUSES] },
             startDate: {
               gte: from ?? now,
               ...(to ? { lte: to } : {}),

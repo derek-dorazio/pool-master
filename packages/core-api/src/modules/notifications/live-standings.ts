@@ -49,7 +49,6 @@ import {
   LeagueRole,
   PickOutcome,
   PARTICIPANT_SCORING_DEFINITIONS,
-  ParticipantRoundStatus,
   SelectionType,
   finalRoundsOfMatches,
   SportEventStatus,
@@ -58,6 +57,8 @@ import {
   type SportEvent,
   type User,
   isSportEventStatusFinished,
+  latestParticipantRound,
+  ParticipantStandingStatus,
 } from '@poolmaster/shared/domain';
 import type { ContestLeaderboardEntryRow } from '../../mappers/contests.mapper';
 import type { ContestService } from '../contests/service';
@@ -79,6 +80,7 @@ import {
 import type { DueNotifications } from './due-notifications-scheduler';
 import type { SportEventParticipantService, SportEventParticipantView } from '../events/sport-event-participant-service';
 import { eventStoresGolfRoundScores } from '../scoring-families/golf-round-scores';
+import { scoredRoundsOf } from '../scoring-families/stroke-play/scored-rounds';
 import { lastFinishedMatchRound } from '../scoring-families/head-to-head/finished-rounds';
 import { lastFinishedRound } from '../scoring-families/stroke-play/finished-rounds';
 import { holesPerRound } from '../scoring-families/stroke-play/unplayed-rounds';
@@ -645,8 +647,11 @@ function cutNews(
   return entries.flatMap((row) => {
     const names = row.picks.flatMap((pick) => {
       const fieldRow = fieldRows.get(pick.sportEventParticipantId);
-      const round = fieldRow?.rounds.find((candidate) => candidate.round.roundNumber === roundNumber);
-      return fieldRow && round?.round.status === ParticipantRoundStatus.MISSED_CUT ? [fieldRow.participant.name] : [];
+      // Cut in this round (#2008): out of the event on its standing, with this round its last played.
+      const lastRound = fieldRow ? latestParticipantRound(scoredRoundsOf(fieldRow), (round) => round) : null;
+      return fieldRow && fieldRow.standing?.status === ParticipantStandingStatus.ELIMINATED && lastRound?.roundNumber === roundNumber
+        ? [fieldRow.participant.name]
+        : [];
     });
     return names.length > 0 ? [{ entryName: row.entryName, entryUrl: entryUrlOf(row.entryId), names }] : [];
   });

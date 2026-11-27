@@ -512,7 +512,7 @@ The family is the event's sport league's (`scoringFamilyForEvent`). Finish posit
 
 | Category | Writer | Writes |
 |---|---|---|
-| `GOLF` | `GolfScoreService` | Rounds and standings. Stroke play only. |
+| `GOLF` | `StrokePlayResultService` | Each round as the golfer's side result in the round's FIELD Game, and the standings with their totals and ranks, in one write. A tick that changes nothing writes nothing. Stroke play only. |
 | `GAME` | `writeGameScores` | `sport_event_round_match_games`: maps each provider game id to its Game and keeps the Game's status; `sport_event_round_match_game_side_results`: each side's score in that Game and where it played; `sport_event_round_matches` and `sport_event_round_match_sides`: a match's status and each side's outcome, written for a final of a single game or a series through `MatchResultService.recordResult`. Postponed games are marked `POSTPONED`. |
 
 **Games** (#2007). Every match has its Games: a single game has Game 1, and a best-of series is

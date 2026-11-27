@@ -999,6 +999,7 @@ export const enUS = {
     EVENT_PARTICIPANT_NOT_FOUND: 'They are not on this event\'s field.',
     EVENT_ROUNDS_FROM_SLOTS: 'This event plays a round in each of its slots, so its round count comes from them.',
     EVENT_SCORING_FAMILY_MISMATCH: 'This event is not scored this way.',
+    EVENT_SYNC_KIND_UNAVAILABLE: 'This event can’t run that sync right now. Live scores sync only while it is in play.',
     FIELD_HAS_NO_ORDER: 'No one in the field has a value for any of this league\'s order sources, so it cannot be put in tiers or priced.',
     FST_ERR_VALIDATION: 'The request is not valid. Check the details and try again.',
     INTERNAL_ERROR: 'Something went wrong. Please try again.',
