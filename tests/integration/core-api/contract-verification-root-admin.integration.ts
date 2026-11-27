@@ -935,7 +935,15 @@ describe('Contract verification (root admin)', () => {
         payload: { feeds: ['EVENTPARTICIPANTS'] },
       });
       expect(oldFeedsRes.statusCode).toBe(400);
-      for (const retiredFeed of ['EVENTS', 'EVENTPARTICIPANTS', 'EVENTLIVESCORES', 'PARTICIPANTRANKINGS', 'EVENTSCHEDULE', 'EVENTRESULTS']) {
+      // EVENTS is the one ProviderSyncKind an event sync leaves out: a league syncs its events.
+      const leagueKindRes = await app.inject({
+        method: 'POST',
+        url: `/api/v1/ingestion/events/${syncTarget.id}/sync`,
+        headers: withoutJsonBodyHeaders(rootAdmin.headers),
+        payload: { kinds: ['EVENTS'] },
+      });
+      expect(leagueKindRes.statusCode).toBe(400);
+      for (const retiredFeed of ['EVENTPARTICIPANTS', 'EVENTLIVESCORES', 'PARTICIPANTRANKINGS', 'EVENTSCHEDULE', 'EVENTRESULTS']) {
         const retiredFeedRes = await app.inject({
           method: 'POST',
           url: `/api/v1/ingestion/events/${syncTarget.id}/sync`,
