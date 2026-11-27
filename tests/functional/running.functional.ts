@@ -198,7 +198,6 @@ describe('SDK Functional: Running World Marathon Majors Top 10 points', () => {
       resultStatus: FINISH[runner] === null ? 'DID_NOT_FINISH' as const : 'FINISHED' as const,
       finishPosition: FINISH[runner],
       startPosition: null,
-      riderName: null,
     })));
     const official = await applyEventRaceResults({ client: a, path: { eventId }, body: { isOfficial: true, rows } });
     expect(official.response?.status).toBe(200);

@@ -129,7 +129,7 @@ describe('field row mappers', () => {
       fieldResults: [{
         roundNumber: 1,
         gameStatus: 'COMPLETED',
-        result: { sportEventRoundMatchSideId: 'side-1', sideNumber: 1, score: null, homeAway: 'NONE', position: 2, startPosition: 5, status: 'FINISHED', riderName: 'J. Velez', periodScores: [] },
+        result: { sportEventRoundMatchSideId: 'side-1', sideNumber: 1, score: null, homeAway: 'NONE', position: 2, startPosition: 5, status: 'FINISHED', periodScores: [] },
         updatedAt: new Date('2026-04-12T20:00:00.000Z'),
       }],
       affiliatedWithSportLeague: false,
@@ -153,7 +153,7 @@ describe('field row mappers', () => {
       { id: 'r-1', sportEventRoundId: 'er-1', roundNumber: 1, status: 'COMPLETE', completedAt: '2026-04-09T23:00:00.000Z', golf: { strokes: 68, scoreToPar: -4, thru: 18 } },
       { id: 'r-2', sportEventRoundId: 'er-2', roundNumber: 2, status: 'IN_PROGRESS', completedAt: null, golf: null },
     ]);
-    expect(dto.race).toEqual({ finishPosition: 2, startPosition: 5, resultStatus: 'FINISHED', isOfficial: true, riderName: 'J. Velez' });
+    expect(dto.race).toEqual({ finishPosition: 2, startPosition: 5, resultStatus: 'FINISHED', isOfficial: true });
   });
 
   it('gives a standing with no time and no golf detail a null as-of and null golf', () => {

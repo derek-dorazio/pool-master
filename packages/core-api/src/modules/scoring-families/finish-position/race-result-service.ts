@@ -62,7 +62,6 @@ export interface RaceResultRowInput extends ParticipantRowIdentifiers {
   resultStatus: GameSideStatusValue;
   finishPosition: number | null;
   startPosition: number | null;
-  riderName: string | null;
 }
 
 export interface RaceResultInput {
@@ -74,7 +73,6 @@ export interface RaceResultValues {
   resultStatus: GameSideStatusValue;
   finishPosition: number | null;
   startPosition: number | null;
-  riderName: string | null;
   isOfficial: boolean;
 }
 
@@ -142,7 +140,6 @@ export class RaceResultService {
         resultStatus: row.resultStatus,
         finishPosition: row.finishPosition,
         startPosition: row.startPosition,
-        riderName: row.riderName,
         isOfficial: input.isOfficial,
       };
       const sportEventParticipantId = participant ? entryIdByParticipantId.get(participant.id) ?? null : null;
@@ -233,7 +230,6 @@ export class RaceResultService {
       status: row.row.resultStatus,
       position: row.row.finishPosition,
       startPosition: row.row.startPosition,
-      riderName: row.row.riderName,
     }));
     const stored = await this.deps.raceOrder.findBySportEvent(sportEventId);
     const merged = new Map<string, Pick<RaceResultValues, 'resultStatus' | 'finishPosition'>>(
@@ -299,7 +295,6 @@ function raceResultValues(result: RaceOrderResult): RaceResultValues {
     resultStatus: result.status,
     finishPosition: result.position,
     startPosition: result.startPosition,
-    riderName: result.riderName,
     isOfficial: result.isOfficial,
   };
 }
@@ -308,6 +303,5 @@ function raceResultValuesEqual(before: RaceResultValues, after: RaceResultValues
   return before.resultStatus === after.resultStatus
     && before.finishPosition === after.finishPosition
     && before.startPosition === after.startPosition
-    && before.riderName === after.riderName
     && before.isOfficial === after.isOfficial;
 }

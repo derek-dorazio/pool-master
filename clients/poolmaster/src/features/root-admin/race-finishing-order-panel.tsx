@@ -67,7 +67,6 @@ function StoredFinishingOrder({ event, field }: { event: SportEventDto; field: r
                   <TableHeaderCell>Finish</TableHeaderCell>
                   <TableHeaderCell>{upperFirst(vocabulary.participant.one)}</TableHeaderCell>
                   <TableHeaderCell>Start</TableHeaderCell>
-                  {vocabulary.rider !== undefined ? <TableHeaderCell>{vocabulary.rider}</TableHeaderCell> : null}
                 </tr>
               </TableHead>
               <TableBody>
@@ -83,9 +82,6 @@ function StoredFinishingOrder({ event, field }: { event: SportEventDto; field: r
                       <TableCell className="font-medium" data-testid={`root-admin-race-result-finish-${entry.id}`}>{finish}</TableCell>
                       <TableCell>{entry.participant.name}</TableCell>
                       <TableCell className="text-muted-foreground">{race?.startPosition ?? '—'}</TableCell>
-                      {vocabulary.rider !== undefined ? (
-                        <TableCell className="text-muted-foreground">{race?.riderName ?? '—'}</TableCell>
-                      ) : null}
                     </TableRow>
                   );
                 })}

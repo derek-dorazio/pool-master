@@ -1718,7 +1718,7 @@ describe('Contract verification (root admin)', () => {
     const race = await createEvent('HORSE_RACING', horseRacing.id, ['Arrow', 'Bolt']);
     const golfEvent = await createEvent('GOLF', golf.id, ['Golfer']);
     const finisher = (name: string, finishPosition: number | null) => ({
-      participantId: participantIdByName.get(name) ?? randomUUID(), resultStatus: 'FINISHED', finishPosition, startPosition: null, riderName: null,
+      participantId: participantIdByName.get(name) ?? randomUUID(), resultStatus: 'FINISHED', finishPosition, startPosition: null,
     });
     const send = (method: 'POST' | 'PUT', eventId: string, payload: object, headers = rootAdmin.headers) => getApp().inject({
       method,

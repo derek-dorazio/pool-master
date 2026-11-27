@@ -1,7 +1,7 @@
 /**
  * Prisma adapter for a race's finishing order (#622, #2008). A race is one FIELD Match in its
  * event's first round, every runner a side, with one Game: a runner's result is its side result
- * there, with its rider, and the race is official once that Game is COMPLETED. The finishing
+ * there, and the race is official once that Game is COMPLETED. The finishing
  * order writes the sides, their results, the Game's status and each runner's core standing in
  * one transaction, so a reader never sees a result without the place
  * it gives the runner in the event.
@@ -40,7 +40,6 @@ export class PrismaRaceOrderRepository implements RaceOrderRepository {
         position: row.position,
         startPosition: row.startPosition,
         status: row.status,
-        riderName: row.riderName,
         isOfficial: row.game.status === MatchStatus.COMPLETED,
         updatedAt: row.updatedAt,
       }] : [];
@@ -50,7 +49,7 @@ export class PrismaRaceOrderRepository implements RaceOrderRepository {
   /**
    * In a fixed number of statements, however big the field (#1252): the race's Match and Game are
    * created with its first result, a runner new to the race gets the next side number, and the
-   * named runners' side results, each with its rider, are deleted and inserted again.
+   * named runners' side results are deleted and inserted again.
    */
   async applyOrder(sportEventId: string, apply: RaceOrderApply): Promise<void> {
     // A runner named twice keeps the later result, as two writes in a row would leave it.
@@ -98,7 +97,6 @@ export class PrismaRaceOrderRepository implements RaceOrderRepository {
             position: side.position,
             startPosition: side.startPosition,
             status: side.status,
-            riderName: side.riderName,
           })),
         });
       }

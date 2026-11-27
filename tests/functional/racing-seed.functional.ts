@@ -84,7 +84,7 @@ describe('SDK Functional: racing test seed', () => {
     expect(field.every((row) => row.race?.isOfficial === true)).toBe(true);
     expect(field.filter((row) => row.race?.resultStatus === GameSideStatus.DID_NOT_START)).toHaveLength(6);
     const winner = expectDefined(field.find((row) => row.race?.finishPosition === 1));
-    expect([winner.participant.name, winner.race?.startPosition, winner.race?.riderName]).toEqual(['Golden Tempo', 19, 'José Ortiz']);
+    expect([winner.participant.name, winner.race?.startPosition]).toEqual(['Golden Tempo', 19]);
 
     const again = await loadSportData(file, { getClient: () => Promise.resolve(a), now: new Date(), mode: LoadMode.DRY_RUN });
     expect(again.filter((row) => row.action !== LoadAction.SKIP)).toEqual([]);

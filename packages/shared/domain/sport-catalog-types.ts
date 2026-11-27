@@ -308,8 +308,6 @@ export interface SportEventRoundMatchGameSideResult {
   startPosition: number | null;
   /** How the side's part in a FIELD Game ended; null on a head-to-head Game. */
   status: GameSideStatus | null;
-  /** Who rode the side in this Game (a horse's jockey); null where nobody rides. */
-  riderName: string | null;
   /** The side's own points in each period, in play order; a shoot-out is one SHOOTOUT period. */
   periodScores: readonly GamePeriodScore[];
 }

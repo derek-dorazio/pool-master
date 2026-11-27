@@ -74,6 +74,5 @@ function raceBlockOf(view: SportEventParticipantView): SportEventParticipantDto[
     startPosition: raced.result.startPosition,
     resultStatus: raced.result.status,
     isOfficial: isRaceOfficial(raced),
-    riderName: raced.result.riderName,
   };
 }

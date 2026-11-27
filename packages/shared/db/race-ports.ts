@@ -15,7 +15,6 @@ export interface RaceOrderSideWrite {
   position: number | null;
   startPosition: number | null;
   status: GameSideStatus;
-  riderName: string | null;
 }
 
 /** One runner's result as stored: its side result in the race's Game, and its rider. */

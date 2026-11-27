@@ -352,7 +352,6 @@ export const SportEventParticipantRaceResultDtoSchema = z.object({
   startPosition: z.number().int().min(1).nullable().describe('Post position (or grid slot, or starting spot); null when not entered.'),
   resultStatus: z.enum(GameSideStatus).describe('How the race ended for this runner. Every status but FINISHED scores the contest\'s "did not finish" points.'),
   isOfficial: z.boolean().describe('Whether the race\'s result is official. Contest scoring counts a result only once it is.'),
-  riderName: z.string().nullable().describe('The jockey (or rider) for this start; null when not entered. The trainer is the participant\'s teamAffiliation.'),
 }).describe('Finish-position extension of a field row: how one runner\'s race ended, as an admin entered it.');
 export type SportEventParticipantRaceResultDto = z.infer<typeof SportEventParticipantRaceResultDtoSchema>;
 

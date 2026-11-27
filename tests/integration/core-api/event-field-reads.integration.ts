@@ -288,8 +288,8 @@ describe('An event\'s field, for every scoring family', () => {
     const raceOrder = new PrismaRaceOrderRepository(getAppPrisma());
     await raceOrder.applyOrder(event.id, {
       sides: [
-        { sportEventParticipantId: winner.id, position: 1, startPosition: 2, status: GameSideStatus.FINISHED, riderName: 'Ron Turcotte' },
-        { sportEventParticipantId: scratched.id, position: null, startPosition: null, status: GameSideStatus.DID_NOT_START, riderName: null },
+        { sportEventParticipantId: winner.id, position: 1, startPosition: 2, status: GameSideStatus.FINISHED },
+        { sportEventParticipantId: scratched.id, position: null, startPosition: null, status: GameSideStatus.DID_NOT_START },
       ],
       isOfficial: true,
       at: new Date('2026-05-07T12:05:00.000Z'),
@@ -300,8 +300,8 @@ describe('An event\'s field, for every scoring family', () => {
     const results = await raceOrder.findBySportEvent(event.id);
 
     const byRow = new Map(rows.map((row) => [row.entry.id, row]));
-    expect(byRow.get(winner.id)?.fieldResults.map(({ roundNumber, gameStatus, result }) => [roundNumber, gameStatus, result.position, result.startPosition, result.status, result.riderName]))
-      .toEqual([[1, MatchStatus.COMPLETED, 1, 2, GameSideStatus.FINISHED, 'Ron Turcotte']]);
+    expect(byRow.get(winner.id)?.fieldResults.map(({ roundNumber, gameStatus, result }) => [roundNumber, gameStatus, result.position, result.startPosition, result.status]))
+      .toEqual([[1, MatchStatus.COMPLETED, 1, 2, GameSideStatus.FINISHED]]);
     expect(byRow.get(scratched.id)?.fieldResults.map(({ result }) => [result.position, result.status])).toEqual([[null, GameSideStatus.DID_NOT_START]]);
     expect(byRow.get(unplaced.id)?.fieldResults).toEqual([]);
     // The race's FIELD match is not one of a runner's head-to-head matches.

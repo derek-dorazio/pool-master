@@ -300,7 +300,7 @@ describe('Entering a race\'s finishing order (#1252)', () => {
     const counts = await queriesFor(async (size, measure) => {
       const { event, field } = await eventWithField(size);
       const repo = new PrismaRaceOrderRepository(getAppPrisma());
-      const result = (row: { id: string }, index: number) => ({ sportEventParticipantId: row.id, position: index + 1, startPosition: null, status: GameSideStatus.FINISHED, riderName: null });
+      const result = (row: { id: string }, index: number) => ({ sportEventParticipantId: row.id, position: index + 1, startPosition: null, status: GameSideStatus.FINISHED });
       await repo.applyOrder(event.id, { isOfficial: false, at: AS_OF, sides: [{ ...result(expectDefined(field[0]), 8) }], standings: [] });
       const earlier = await getPrisma().sportEventRoundMatchSide.findFirstOrThrow({ where: { sportEventParticipantId: expectDefined(field[0]).id } });
 

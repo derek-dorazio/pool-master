@@ -769,7 +769,7 @@ How one runner's race ended (#622, #2008). A race is one FIELD Match in its even
 (the round's slot definition plays `FIELD`), every runner a side numbered 1 to n, with one Game.
 A runner's result is its side result there: `status` (`GameSideStatus`: `FINISHED`,
 `DID_NOT_FINISH`, `DISQUALIFIED`, `DID_NOT_START`), `position` (1 the winner; a dead heat shares a
-place), `startPosition` and `riderName`. The race is official once its Game is `COMPLETED`
+place) and `startPosition`; no jockey is stored. The race is official once its Game is `COMPLETED`
 (`completedAt` the time it was made official); while provisional the Game is `IN_PROGRESS`. A
 runner's side goes with its field row. The table refuses a place or start below 1 and a place on
 a runner that did not finish; an official finisher's place is the finishing order's check. The

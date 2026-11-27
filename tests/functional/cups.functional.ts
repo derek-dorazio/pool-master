@@ -190,7 +190,6 @@ describe('SDK Functional: sports league cups and the league championship (#841, 
         resultStatus: 'FINISHED' as const,
         finishPosition: expectDefined(finish[runner]),
         startPosition: null,
-        riderName: null,
       })));
       expect((await applyEventRaceResults({ client: a, path: { eventId }, body: { isOfficial: true, rows } })).response?.status).toBe(200);
     };

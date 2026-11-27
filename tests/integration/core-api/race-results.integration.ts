@@ -70,7 +70,7 @@ async function seedRace(status: 'SCHEDULED' | 'COMPLETED' = 'COMPLETED') {
 }
 
 const write = (sportEventParticipantId: string, position: number | null, status: GameSideStatus = GameSideStatus.FINISHED) => ({
-  sportEventParticipantId, position, status, startPosition: null, riderName: null,
+  sportEventParticipantId, position, status, startPosition: null,
 });
 const AT = new Date('2026-05-02T22:30:00.000Z');
 const standing = (sportEventParticipantId: string, position: number | null) => ({
@@ -88,7 +88,7 @@ describe('RaceOrderRepository — the race as a FIELD match', () => {
     const repo = new PrismaRaceOrderRepository(getAppPrisma());
 
     await repo.applyOrder(event.id, {
-      sides: [write(arrow.id, 1), { ...write(bolt.id, 2), startPosition: 5, riderName: 'J. Velez' }],
+      sides: [write(arrow.id, 1), { ...write(bolt.id, 2), startPosition: 5 }],
       isOfficial: false,
       at: AT,
       standings: [standing(arrow.id, 1), standing(bolt.id, 2)],
@@ -96,10 +96,10 @@ describe('RaceOrderRepository — the race as a FIELD match', () => {
     await repo.applyOrder(other.event.id, { sides: [write(other.arrow.id, 1)], isOfficial: false, at: AT, standings: [] });
 
     const results = await repo.findBySportEvent(event.id);
-    expect(results.map((result) => [result.sportEventParticipantId, result.position, result.startPosition, result.riderName, result.isOfficial]))
+    expect(results.map((result) => [result.sportEventParticipantId, result.position, result.startPosition, result.isOfficial]))
       .toEqual([
-        [arrow.id, 1, null, null, false],
-        [bolt.id, 2, 5, 'J. Velez', false],
+        [arrow.id, 1, null, false],
+        [bolt.id, 2, 5, false],
       ].sort(([left], [right]) => String(left).localeCompare(String(right))));
     const standings = await prisma.sportEventParticipantStanding.findMany({ where: { sportEventParticipant: { sportEventId: event.id } } });
     expect(standings.map((row) => [row.sportEventParticipantId, row.position, row.status]))
@@ -266,9 +266,9 @@ describe('horse racing contest — read and settled from the finishing order', (
   const officialOrder = (race: { arrow: { participantId: string }; bolt: { participantId: string }; comet: { participantId: string } }) => ({
     isOfficial: true,
     rows: [
-      { participantId: race.arrow.participantId, resultStatus: GameSideStatus.FINISHED, finishPosition: 1, startPosition: null, riderName: null },
-      { participantId: race.bolt.participantId, resultStatus: GameSideStatus.FINISHED, finishPosition: 2, startPosition: null, riderName: null },
-      { participantId: race.comet.participantId, resultStatus: GameSideStatus.FINISHED, finishPosition: 3, startPosition: null, riderName: null },
+      { participantId: race.arrow.participantId, resultStatus: GameSideStatus.FINISHED, finishPosition: 1, startPosition: null },
+      { participantId: race.bolt.participantId, resultStatus: GameSideStatus.FINISHED, finishPosition: 2, startPosition: null },
+      { participantId: race.comet.participantId, resultStatus: GameSideStatus.FINISHED, finishPosition: 3, startPosition: null },
     ],
   });
 

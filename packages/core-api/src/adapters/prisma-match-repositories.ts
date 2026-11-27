@@ -276,7 +276,6 @@ export function toGameSideResult(result: GameRow['sideResults'][number]): SportE
     position: result.position,
     startPosition: result.startPosition,
     status: result.status,
-    riderName: result.riderName,
     periodScores: result.periodScores,
   };
 }

@@ -41,7 +41,7 @@ function migrationStatements(): string[] {
  */
 const PUT_BACK = [
   `CREATE INDEX "participant_provider_mappings_sport_league_id_external_id_idx" ON "participant_provider_mappings"("sport_league_id", "external_id")`,
-  `ALTER TABLE "sport_event_round_match_game_side_results" DROP COLUMN "position", DROP COLUMN "start_position", DROP COLUMN "status", DROP COLUMN "rider_name"`,
+  `ALTER TABLE "sport_event_round_match_game_side_results" DROP COLUMN "position", DROP COLUMN "start_position", DROP COLUMN "status"`,
   `ALTER TYPE "GameSideStatus" RENAME TO "RaceResultStatus"`,
   `ALTER TABLE "sport_event_round_match_sides" DROP CONSTRAINT "sport_event_round_match_sides_side_number_check"`,
   `ALTER TABLE "sport_event_round_match_sides" ADD CONSTRAINT "sport_event_round_match_sides_side_number_check" CHECK ("side_number" IN (1, 2))`,
@@ -90,7 +90,7 @@ class Rollback extends Error {}
 
 interface MovedRace {
   matches: Array<{ roundNumber: number; matchNumber: number; status: string; gameNumber: number; gameStatus: string; completedAt: string | null }>;
-  sides: Array<{ sideNumber: number; entryId: string; position: number | null; startPosition: number | null; status: string; riderName: string | null }>;
+  sides: Array<{ sideNumber: number; entryId: string; position: number | null; startPosition: number | null; status: string }>;
 }
 
 describe('the race results migration', () => {
@@ -121,7 +121,7 @@ describe('the race results migration', () => {
       }
       const read = async (sportEventId: string): Promise<MovedRace> => ({
         matches: await tx.$queryRaw`${uncachedStatement()} SELECT r."round_number" AS "roundNumber", m."match_number" AS "matchNumber", m."status"::text AS "status", g."game_number" AS "gameNumber", g."status"::text AS "gameStatus", to_char(g."completed_at" AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS') AS "completedAt" FROM "sport_event_round_matches" m JOIN "sport_event_rounds" r ON r."id" = m."sport_event_round_id" JOIN "sport_event_round_match_games" g ON g."sport_event_round_match_id" = m."id" WHERE m."sport_event_id" = ${sportEventId}::uuid`,
-        sides: await tx.$queryRaw`${uncachedStatement()} SELECT s."side_number" AS "sideNumber", s."sport_event_participant_id"::text AS "entryId", x."position", x."start_position" AS "startPosition", x."status"::text AS "status", x."rider_name" AS "riderName" FROM "sport_event_round_match_sides" s JOIN "sport_event_round_match_game_side_results" x ON x."sport_event_round_match_side_id" = s."id" WHERE s."sport_event_id" = ${sportEventId}::uuid ORDER BY s."side_number"`,
+        sides: await tx.$queryRaw`${uncachedStatement()} SELECT s."side_number" AS "sideNumber", s."sport_event_participant_id"::text AS "entryId", x."position", x."start_position" AS "startPosition", x."status"::text AS "status" FROM "sport_event_round_match_sides" s JOIN "sport_event_round_match_game_side_results" x ON x."sport_event_round_match_side_id" = s."id" WHERE s."sport_event_id" = ${sportEventId}::uuid ORDER BY s."side_number"`,
       });
       const table = await tx.$queryRaw<unknown[]>`${uncachedStatement()} SELECT 1 FROM information_schema.tables WHERE "table_name" = 'sport_event_participant_race_results'`;
       throw new Rollback(JSON.stringify({ official: await read(official.event.id), provisional: await read(provisional.event.id), tableLeft: table.length > 0 }));
@@ -134,14 +134,14 @@ describe('the race results migration', () => {
       official: {
         matches: [{ roundNumber: 1, matchNumber: 1, status: 'COMPLETED', gameNumber: 1, gameStatus: 'COMPLETED', completedAt: '2027-05-01T22:30:00' }],
         sides: [
-          { sideNumber: 1, entryId: official.field['Bolt'], position: 1, startPosition: null, status: 'FINISHED', riderName: null },
-          { sideNumber: 2, entryId: official.field['Arrow'], position: 2, startPosition: 4, status: 'FINISHED', riderName: 'J. Velez' },
-          { sideNumber: 3, entryId: official.field['Comet'], position: null, startPosition: null, status: 'DID_NOT_START', riderName: null },
+          { sideNumber: 1, entryId: official.field['Bolt'], position: 1, startPosition: null, status: 'FINISHED' },
+          { sideNumber: 2, entryId: official.field['Arrow'], position: 2, startPosition: 4, status: 'FINISHED' },
+          { sideNumber: 3, entryId: official.field['Comet'], position: null, startPosition: null, status: 'DID_NOT_START' },
         ],
       },
       provisional: {
         matches: [{ roundNumber: 1, matchNumber: 1, status: 'IN_PROGRESS', gameNumber: 1, gameStatus: 'IN_PROGRESS', completedAt: null }],
-        sides: [{ sideNumber: 1, entryId: provisional.field['Drift'], position: 1, startPosition: null, status: 'FINISHED', riderName: null }],
+        sides: [{ sideNumber: 1, entryId: provisional.field['Drift'], position: 1, startPosition: null, status: 'FINISHED' }],
       },
       tableLeft: false,
     });

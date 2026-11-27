@@ -1,6 +1,6 @@
 -- #2008 (10b part 3a): a race is one FIELD Match in the event's first round, with every runner
 -- as a side and one Game. Each runner's result moves from sport_event_participant_race_results
--- onto that Game's side results, its jockey with it. The race's official flag
+-- onto that Game's side results. The jockey's name goes with the race result table (#2008). The race's official flag
 -- becomes the Game's status: COMPLETED once official, IN_PROGRESS while provisional.
 
 -- How a side's part in a FIELD Game ended: the race result status, renamed.
@@ -14,7 +14,6 @@ ALTER TABLE "sport_event_round_match_game_side_results"
   ADD COLUMN "position" INTEGER,
   ADD COLUMN "start_position" INTEGER,
   ADD COLUMN "status" "GameSideStatus",
-  ADD COLUMN "rider_name" VARCHAR(255),
   ADD CONSTRAINT "sport_event_round_match_game_side_results_position_check" CHECK ("position" IS NULL OR "position" >= 1),
   ADD CONSTRAINT "sport_event_round_match_game_side_results_start_position_check" CHECK ("start_position" IS NULL OR "start_position" >= 1),
   ADD CONSTRAINT "sport_event_round_match_game_side_results_place_only_when_finished_check" CHECK ("position" IS NULL OR "status" = 'FINISHED');
@@ -82,8 +81,8 @@ INSERT INTO "sport_event_round_match_sides" ("id", "sport_event_id", "sport_even
 SELECT s."side_id", s."sport_event_id", s."match_id", s."side_number", s."sport_event_participant_id", s."created_at", now()
 FROM "race_side_moves" AS s;
 
-INSERT INTO "sport_event_round_match_game_side_results" ("sport_event_round_match_id", "sport_event_round_match_game_id", "sport_event_round_match_side_id", "position", "start_position", "status", "rider_name", "home_away", "created_at", "updated_at")
-SELECT s."match_id", s."game_id", s."side_id", s."finish_position", s."start_position", s."result_status", s."rider_name", 'NONE', s."created_at", s."updated_at"
+INSERT INTO "sport_event_round_match_game_side_results" ("sport_event_round_match_id", "sport_event_round_match_game_id", "sport_event_round_match_side_id", "position", "start_position", "status", "home_away", "created_at", "updated_at")
+SELECT s."match_id", s."game_id", s."side_id", s."finish_position", s."start_position", s."result_status", 'NONE', s."created_at", s."updated_at"
 FROM "race_side_moves" AS s;
 
 DROP TABLE "race_side_moves";

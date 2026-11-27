@@ -50,7 +50,6 @@ function runner(
       startPosition: null,
       resultStatus: GameSideStatus.FINISHED,
       isOfficial: true,
-      riderName: null,
       ...race,
     },
     affiliatedWithSportLeague: true,

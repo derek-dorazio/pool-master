@@ -115,7 +115,7 @@ function withSideScores(match: SportEventRoundMatch, game: SportEventRoundMatchG
     const side = match.sides.find((each) => each.sideNumber === sideNumber);
     if (!side) throw new Error('unknown side');
     const index = results.findIndex((result) => result.sideNumber === sideNumber);
-    const stored = index === -1 ? { sportEventRoundMatchSideId: side.id, sideNumber, score: null, homeAway: HomeAway.NONE, position: null, startPosition: null, status: null, riderName: null, periodScores: [] } : results[index];
+    const stored = index === -1 ? { sportEventRoundMatchSideId: side.id, sideNumber, score: null, homeAway: HomeAway.NONE, position: null, startPosition: null, status: null, periodScores: [] } : results[index];
     const written = {
       ...stored,
       score,
@@ -1015,7 +1015,7 @@ export class InMemorySportEvents {
           gameStatus: raced.isOfficial ? MatchStatus.COMPLETED : MatchStatus.IN_PROGRESS,
           result: {
             sportEventRoundMatchSideId: `race-side-${entry.id}`, sideNumber: 1, score: null, homeAway: HomeAway.NONE,
-            position: raced.position, startPosition: raced.startPosition, status: raced.status, riderName: raced.riderName, periodScores: [],
+            position: raced.position, startPosition: raced.startPosition, status: raced.status, periodScores: [],
           },
           updatedAt: raced.updatedAt,
         }]
@@ -1214,7 +1214,7 @@ export class InMemorySportEvents {
               games: [stamp({
                 id: `${match.id}-g1`, sportEventId, sportEventRoundMatchId: match.id, sportEventSlotId: `event-slot-${String(match.roundNumber)}`, gameNumber: 1,
                 scheduledDate: match.scheduledDate, isNeutralSite, venue: null, location: null, status: MatchStatus.SCHEDULED, completedAt: null, movedToGameId: null, lastProviderNotificationAt: null,
-                sideResults: sides.map((side, index) => ({ sportEventRoundMatchSideId: stored[index].id, sideNumber: side.sideNumber, score: null, homeAway: side.homeAway, position: null, startPosition: null, status: null, riderName: null, periodScores: [] })),
+                sideResults: sides.map((side, index) => ({ sportEventRoundMatchSideId: stored[index].id, sideNumber: side.sideNumber, score: null, homeAway: side.homeAway, position: null, startPosition: null, status: null, periodScores: [] })),
               })],
             });
           }),
@@ -1276,7 +1276,7 @@ export class InMemorySportEvents {
           const side = row.sides.find((each) => each.sideNumber === sideNumber);
           if (!side) throw new Error('unknown side');
           const index = results.findIndex((each) => each.sideNumber === sideNumber);
-          const stored = index === -1 ? { sportEventRoundMatchSideId: side.id, sideNumber, score: null, homeAway: HomeAway.NONE, position: null, startPosition: null, status: null, riderName: null, periodScores: [] } : results[index];
+          const stored = index === -1 ? { sportEventRoundMatchSideId: side.id, sideNumber, score: null, homeAway: HomeAway.NONE, position: null, startPosition: null, status: null, periodScores: [] } : results[index];
           const written = { ...stored, periodScores: [...stored.periodScores.filter((period) => period.kind === PeriodKind.SHOOTOUT), ...periodScores.map((period) => ({ ...period }))] };
           if (index === -1) results.push(written);
           else results[index] = written;

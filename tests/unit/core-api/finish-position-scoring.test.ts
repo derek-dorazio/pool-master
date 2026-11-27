@@ -49,7 +49,7 @@ function field(runners: RunnerInput[]): SportEventParticipantView[] {
       gameStatus: result.isOfficial === false ? MatchStatus.IN_PROGRESS : MatchStatus.COMPLETED,
       result: {
         sportEventRoundMatchSideId: `side-${entry.id}`, sideNumber: 1, score: null, homeAway: HomeAway.NONE, periodScores: [],
-        position: result.finishPosition ?? null, startPosition: null, status: result.resultStatus === undefined ? GameSideStatus.FINISHED : result.resultStatus, riderName: null,
+        position: result.finishPosition ?? null, startPosition: null, status: result.resultStatus === undefined ? GameSideStatus.FINISHED : result.resultStatus,
       },
       updatedAt: new Date('2026-05-02T22:00:00.000Z'),
     }];

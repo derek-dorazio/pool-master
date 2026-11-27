@@ -186,7 +186,6 @@ describe('SDK Functional: Auto racing NASCAR Cup Series points', () => {
       resultStatus: FINISH[driver] === null ? 'DID_NOT_FINISH' as const : 'FINISHED' as const,
       finishPosition: FINISH[driver],
       startPosition: null,
-      riderName: null,
     })));
     const official = await applyEventRaceResults({ client: a, path: { eventId }, body: { isOfficial: true, rows } });
     expect(official.response?.status).toBe(200);
@@ -331,7 +330,6 @@ describe('SDK Functional: Auto racing Formula 1 points', () => {
           resultStatus: F1_FINISH[driver] === null ? 'DID_NOT_FINISH' as const : 'FINISHED' as const,
           finishPosition: F1_FINISH[driver],
           startPosition: null,
-          riderName: null,
         }))),
       },
     });

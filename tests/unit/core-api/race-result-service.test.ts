@@ -47,7 +47,6 @@ function row(name: string, finishPosition: number | null, overrides: Partial<Rac
     resultStatus: GameSideStatus.FINISHED,
     finishPosition,
     startPosition: null,
-    riderName: null,
     ...overrides,
   };
 }
@@ -142,18 +141,18 @@ describe('RaceResultService — apply', () => {
     await service.applyResults(event.id, {
       isOfficial: true,
       rows: [
-        row('Arrow', 1, { startPosition: 4, riderName: 'J. Velez' }),
+        row('Arrow', 1, { startPosition: 4 }),
         row('Bolt', null, { resultStatus: GameSideStatus.DISQUALIFIED }),
         row('Comet', 2),
       ],
     });
 
     const results = await store.raceOrderRepo().findBySportEvent(event.id);
-    expect(results.map((result) => [result.sportEventParticipantId, result.status, result.position, result.startPosition, result.riderName, result.isOfficial]))
+    expect(results.map((result) => [result.sportEventParticipantId, result.status, result.position, result.startPosition, result.isOfficial]))
       .toEqual(expect.arrayContaining([
-        [arrow.id, 'FINISHED', 1, 4, 'J. Velez', true],
-        [bolt.id, 'DISQUALIFIED', null, null, null, true],
-        [comet.id, 'FINISHED', 2, null, null, true],
+        [arrow.id, 'FINISHED', 1, 4, true],
+        [bolt.id, 'DISQUALIFIED', null, null, true],
+        [comet.id, 'FINISHED', 2, null, true],
       ]));
     expect(store.standingRows.map((standing) => [standing.sportEventParticipantId, standing.position, standing.displayPosition, standing.status, standing.asOf]))
       .toEqual(expect.arrayContaining([

@@ -101,8 +101,6 @@ const FieldEntrySchema = z.object({
     finishPosition: z.number().int().min(1).nullable(),
     /** Post position or grid slot. */
     startPosition: z.number().int().min(1).nullable().optional(),
-    /** The jockey, for a horse. */
-    riderName: z.string().min(1).nullable().optional(),
   }).strict().optional(),
 }).strict();
 

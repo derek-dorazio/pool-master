@@ -2460,9 +2460,6 @@ model SportEventRoundMatchGameSideResult {
   startPosition              Int?            @map("start_position")
   /// How the side's part in a FIELD Game ended; null on a head-to-head Game.
   status                     GameSideStatus?
-  /// Who rode the side in this Game (a horse's jockey, #2008); the trainer is the participant's
-  /// `teamAffiliation`. Null where nobody rides.
-  riderName                  String?         @map("rider_name") @db.VarChar(255)
   createdAt                  DateTime        @default(now()) @map("created_at") @db.Timestamptz
   updatedAt                  DateTime        @updatedAt @map("updated_at") @db.Timestamptz
 

@@ -51,8 +51,8 @@ const MAPPED_GAME: ProviderMappedGame = {
     scheduledDate: null, isNeutralSite: false, venue: null, location: null, status: MatchStatus.IN_PROGRESS, completedAt: null,
     movedToGameId: null, lastProviderNotificationAt: null, createdAt: NOW, updatedAt: NOW,
     sideResults: [
-      { sportEventRoundMatchSideId: 'match-1-s1', sideNumber: 1, score: 3, homeAway: HomeAway.AWAY, position: null, startPosition: null, status: null, riderName: null, periodScores: [] },
-      { sportEventRoundMatchSideId: 'match-1-s2', sideNumber: 2, score: 7, homeAway: HomeAway.HOME, position: null, startPosition: null, status: null, riderName: null, periodScores: [] },
+      { sportEventRoundMatchSideId: 'match-1-s1', sideNumber: 1, score: 3, homeAway: HomeAway.AWAY, position: null, startPosition: null, status: null, periodScores: [] },
+      { sportEventRoundMatchSideId: 'match-1-s2', sideNumber: 2, score: 7, homeAway: HomeAway.HOME, position: null, startPosition: null, status: null, periodScores: [] },
     ],
   },
 };

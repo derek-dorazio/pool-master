@@ -190,10 +190,10 @@ describe('SDK Functional: Horse racing Win/Place/Show', () => {
 
     // --- The finishing order: previewed, provisional, refused incomplete, then official -----
     const rows = await byParticipantId(a, eventId, [
-      { playerName: `Arrow ${RUN}`, resultStatus: 'FINISHED' as const, finishPosition: 1, startPosition: 3, riderName: 'J. Velez' },
-      { playerName: `Bolt ${RUN}`, resultStatus: 'FINISHED' as const, finishPosition: 2, startPosition: 1, riderName: null },
-      { playerName: `Comet ${RUN}`, resultStatus: 'FINISHED' as const, finishPosition: 2, startPosition: null, riderName: null },
-      { playerName: `Drift ${RUN}`, resultStatus: 'DID_NOT_FINISH' as const, finishPosition: null, startPosition: null, riderName: null },
+      { playerName: `Arrow ${RUN}`, resultStatus: 'FINISHED' as const, finishPosition: 1, startPosition: 3 },
+      { playerName: `Bolt ${RUN}`, resultStatus: 'FINISHED' as const, finishPosition: 2, startPosition: 1 },
+      { playerName: `Comet ${RUN}`, resultStatus: 'FINISHED' as const, finishPosition: 2, startPosition: null },
+      { playerName: `Drift ${RUN}`, resultStatus: 'DID_NOT_FINISH' as const, finishPosition: null, startPosition: null },
     ]);
     const preview = expectDefined((await previewEventRaceResults({ client: a, path: { eventId }, body: { isOfficial: true, rows } })).data);
     expect(preview.rollup).toMatchObject({ total: 4, matched: 4, unresolved: 0, invalid: 0 });
