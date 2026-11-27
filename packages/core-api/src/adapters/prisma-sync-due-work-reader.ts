@@ -1,11 +1,11 @@
 /**
- * The sync tick's reads (#2009), on Prisma: the slots each synced league plays next, and the linked
- * events whose Games are due or in play. Neither reads an event's status. Each is a fixed few
+ * The sync tick's reads (#2009), on Prisma: the Seasons that tell whether each synced league is in
+ * season, the slots each plays next, and the linked events whose Games are due or in play. Neither reads an event's status. Each is a fixed few
  * statements however many leagues, slots and Games there are.
  */
 
 import type { Prisma, PrismaClient } from '@prisma/client';
-import type { LiveEventView, SyncDueWorkReader, SyncedLeagueRef } from '@poolmaster/shared/db';
+import type { LiveEventView, SeasonSpanView, SyncDueWorkReader, SyncedLeagueRef } from '@poolmaster/shared/db';
 import { MatchFormat, MatchStatus, ProviderSyncKind, ProviderSyncRunStatus, scoresDueSince, type FieldWindowSlot } from '@poolmaster/shared/domain';
 
 /** An event of one of the leagues, linked under the league's provider mapping. */
@@ -19,7 +19,16 @@ function linkedEventOf(leagues: readonly SyncedLeagueRef[]): Prisma.SportEventWh
 }
 
 export class PrismaSyncDueWorkReader implements SyncDueWorkReader {
-  constructor(private readonly prisma: Pick<PrismaClient, 'sportLeagueSeasonCompetitionSlot' | 'sportEventRoundMatchGame' | 'providerSyncRun'>) {}
+  constructor(private readonly prisma: Pick<PrismaClient, 'sportLeagueSeason' | 'sportLeagueSeasonCompetitionSlot' | 'sportEventRoundMatchGame' | 'providerSyncRun'>) {}
+
+  async findSeasonSpans(input: { leagues: readonly SyncedLeagueRef[]; now: Date }): Promise<SeasonSpanView[]> {
+    if (input.leagues.length === 0) return [];
+    return this.prisma.sportLeagueSeason.findMany({
+      where: { sportLeagueId: { in: input.leagues.map((league) => league.sportLeagueId) }, endsAt: { gte: input.now } },
+      select: { sportLeagueId: true, startsAt: true, endsAt: true },
+      orderBy: [{ sportLeagueId: 'asc' }, { startsAt: 'asc' }],
+    });
+  }
 
   async findNextSlots(input: { leagues: readonly SyncedLeagueRef[]; now: Date }): Promise<FieldWindowSlot[]> {
     if (input.leagues.length === 0) return [];

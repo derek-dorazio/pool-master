@@ -207,7 +207,7 @@ describe('Loading a golf test seed through the admin API', () => {
     expect(expectDefined(field.get(`${prefix} Golfer 1`)).standing).toMatchObject({ position: 1, status: 'COMPLETE' });
     expect(expectDefined(field.get(`${prefix} Golfer 11`)).standing).toMatchObject({ position: null, status: 'ELIMINATED' });
     expect(expectDefined(field.get(`${prefix} Golfer 12`)).standing).toMatchObject({ position: null, status: 'WITHDRAWN' });
-    expect(expectDefined(field.get(`${prefix} Golfer 12`)).rounds.find((round) => round.roundNumber === 2)?.status).toBe('DNF');
+    expect(expectDefined(field.get(`${prefix} Golfer 12`)).rounds.find((round) => round.roundNumber === 2)?.status).toBe('DID_NOT_FINISH');
   });
 
   it('skips everything on a second run, keeping a tour ranking an admin changed by hand', async () => {

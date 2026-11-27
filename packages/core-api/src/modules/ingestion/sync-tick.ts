@@ -16,6 +16,9 @@
  *   per quiet stretch. An empty poll inside the window raises nothing: a game between scoring
  *   plays is not a problem. The next scores sync that brings updates resolves it.
  *
+ * Each kind's interval is the one for its league's Season state (`syncSeasonStateOf`): in season
+ * while one of the league's Seasons' spans holds now, off season otherwise.
+ *
  * A league is synced while it is active and its selected mapping names a provider running here.
  */
 
@@ -31,11 +34,13 @@ import {
   ProviderSyncFindingSeverity,
   ProviderSyncKind,
   SYNC_TICK_MS,
+  syncSeasonStateOf,
   type BackgroundJobRequest,
   type ProviderCode,
   type SportLeague,
+  type SyncSeasonState,
 } from '@poolmaster/shared/domain';
-import type { IngestionScheduleConfig } from '@poolmaster/shared/dto/config.dto';
+import type { IngestionAlwaysOnSchedulePolicy, IngestionFeedSchedulePolicy, IngestionScheduleConfig } from '@poolmaster/shared/dto/config.dto';
 import type { JobLock } from '../../core/job-lock';
 import type { ProviderSyncFindingService } from './findings/provider-sync-finding-service';
 import { SCHEDULE_START } from '../../core/job-start';
@@ -91,6 +96,15 @@ interface TickLeague extends SyncedLeagueRef {
   providerId: string;
   /** The provider league's quiet window, read once per tick. */
   quietAfterMs: number;
+  /** Which of its kind's intervals each sync takes. */
+  seasonState: SyncSeasonState;
+}
+
+/** How long a league waits between runs of one sync kind: its policy's interval for the league's Season state. */
+type LeagueInterval = (league: TickLeague) => number;
+
+function intervalFor(policy: IngestionFeedSchedulePolicy | IngestionAlwaysOnSchedulePolicy): LeagueInterval {
+  return (league) => schedulePolicyDelayMs(policy, league.seasonState);
 }
 
 export class SyncTick {
@@ -126,12 +140,13 @@ export class SyncTick {
   async tick(): Promise<number> {
     const now = this.now();
     const config = await this.options.schedule.getConfig();
-    const leagues = this.syncedLeagues(await this.options.sportLeagues.findEventSynced());
-    if (leagues.length === 0) return 0;
+    const synced = this.syncedLeagues(await this.options.sportLeagues.findEventSynced());
+    if (synced.length === 0) return 0;
+    const leagues = await this.withSeasonStates(synced, now);
     const [events, field, scores] = await Promise.all([
-      config.EVENTS.enabled ? this.eventsJobs(leagues, schedulePolicyDelayMs(config.EVENTS), now) : [],
-      this.fieldJobs(leagues, schedulePolicyDelayMs(config.FIELD), now),
-      config.SCORES.enabled ? this.scoresJobs(leagues, schedulePolicyDelayMs(config.SCORES), now) : [],
+      config.EVENTS.enabled ? this.eventsJobs(leagues, intervalFor(config.EVENTS), now) : [],
+      this.fieldJobs(leagues, intervalFor(config.FIELD), now),
+      config.SCORES.enabled ? this.scoresJobs(leagues, intervalFor(config.SCORES), now) : [],
     ]);
     // poolmaster-allow-direct-job: the sync tick queues every due provider sync
     const queued = await this.options.jobs.enqueueAll([...events, ...field, ...scores]);
@@ -142,8 +157,17 @@ export class SyncTick {
     return queued;
   }
 
+  /** Each league with its Season state, from one read of the Seasons not yet ended. */
+  private async withSeasonStates(leagues: ReadonlyArray<Omit<TickLeague, 'seasonState'>>, now: Date): Promise<TickLeague[]> {
+    const spans = await this.options.dueWork.findSeasonSpans({ leagues, now });
+    return leagues.map((league) => ({
+      ...league,
+      seasonState: syncSeasonStateOf(spans.filter((span) => span.sportLeagueId === league.sportLeagueId), now),
+    }));
+  }
+
   /** Each active league synced from a provider running here (#2073). */
-  private syncedLeagues(leagues: readonly SportLeague[]): TickLeague[] {
+  private syncedLeagues(leagues: readonly SportLeague[]): Array<Omit<TickLeague, 'seasonState'>> {
     const running = new Set(this.options.registry.all().map((provider) => provider.providerCode));
     return leagues.flatMap((league) => {
       const mapping = league.selectedProviderMapping;
@@ -158,7 +182,7 @@ export class SyncTick {
     });
   }
 
-  private async eventsJobs(leagues: readonly TickLeague[], intervalMs: number, now: Date): Promise<BackgroundJobRequest[]> {
+  private async eventsJobs(leagues: readonly TickLeague[], intervalMs: LeagueInterval, now: Date): Promise<BackgroundJobRequest[]> {
     const lastRunAt = await this.options.jobHistory.findLatestRunAt({
       type: BackgroundJobType.SYNC_LEAGUE_EVENTS,
       by: 'sportLeagueId',
@@ -166,11 +190,11 @@ export class SyncTick {
       dueBy: now,
     });
     return leagues
-      .filter((league) => isSyncDue(lastRunAt.get(league.sportLeagueId), intervalMs, now))
+      .filter((league) => isSyncDue(lastRunAt.get(league.sportLeagueId), intervalMs(league), now))
       .map((league) => syncLeagueEventsJob(this.options.jobs, { sportLeagueId: league.sportLeagueId }, { start: SCHEDULE_START, providerCode: league.providerCode }));
   }
 
-  private async fieldJobs(leagues: readonly TickLeague[], intervalMs: number, now: Date): Promise<BackgroundJobRequest[]> {
+  private async fieldJobs(leagues: readonly TickLeague[], intervalMs: LeagueInterval, now: Date): Promise<BackgroundJobRequest[]> {
     const slots = await this.options.dueWork.findNextSlots({ leagues, now });
     const eventIds = fieldWindowEventIds(slots, now);
     const leagueOfEvent = new Map(slots.map((slot) => [slot.sportEventId, slot.sportLeagueId]));
@@ -178,12 +202,12 @@ export class SyncTick {
     const leaguesById = new Map(leagues.map((league) => [league.sportLeagueId, league]));
     return eventIds.flatMap((sportEventId) => {
       const league = leaguesById.get(leagueOfEvent.get(sportEventId) ?? '');
-      if (league === undefined || !isSyncDue(lastRunAt.get(sportEventId), intervalMs, now)) return [];
+      if (league === undefined || !isSyncDue(lastRunAt.get(sportEventId), intervalMs(league), now)) return [];
       return [eventSyncJob(this.options.jobs, ProviderSyncKind.FIELD, { sportEventId }, { start: SCHEDULE_START, providerCode: league.providerCode })];
     });
   }
 
-  private async scoresJobs(leagues: readonly TickLeague[], intervalMs: number, now: Date): Promise<BackgroundJobRequest[]> {
+  private async scoresJobs(leagues: readonly TickLeague[], intervalMs: LeagueInterval, now: Date): Promise<BackgroundJobRequest[]> {
     const live = await this.options.dueWork.findLiveEvents({ leagues, now });
     const lastRunAt = await this.latestEventJobs(ProviderSyncKind.SCORES, live.map((event) => event.sportEventId), now);
     const cadence = this.options.notifiedProviderCadence();
@@ -195,7 +219,7 @@ export class SyncTick {
       const notified = cadence !== undefined && cadence.providerIds.includes(league.providerId);
       if (notified) this.warnIfQuiet(event, league, now);
       const eventIntervalMs = !notified
-        ? intervalMs
+        ? intervalMs(league)
         : event.games.some((game) => game.playedAsField) ? cadence.roundPollIntervalMs : cadence.pollIntervalMs;
       if (!isSyncDue(lastRunAt.get(event.sportEventId), eventIntervalMs, now)) return [];
       return [eventSyncJob(this.options.jobs, ProviderSyncKind.SCORES, { sportEventId: event.sportEventId }, { start: SCHEDULE_START, providerCode: league.providerCode })];

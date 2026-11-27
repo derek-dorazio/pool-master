@@ -700,13 +700,13 @@ describe('Contract verification (root admin)', () => {
       headers: rootAdmin.headers,
       payload: {
         SCORES: {
-          intervalSeconds: 45,
+          intervals: { IN_SEASON: { intervalSeconds: 45 } },
         },
       },
     });
     expect(ingestionUpdateRes.statusCode).toBe(200);
     expect(IngestionScheduleSchema.safeParse(ingestionUpdateRes.json()).success).toBe(true);
-    expect(ingestionUpdateRes.json<IngestionSchedule>().SCORES.intervalSeconds).toBe(45);
+    expect(ingestionUpdateRes.json<IngestionSchedule>().SCORES.intervals.IN_SEASON.intervalSeconds).toBe(45);
 
     const templateListRes = await getApp().inject({
       method: 'GET',

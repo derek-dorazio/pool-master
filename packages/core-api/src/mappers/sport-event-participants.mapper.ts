@@ -9,7 +9,7 @@ import { latestParticipantRound } from '@poolmaster/shared/domain';
 import type { SportEventParticipantDto } from '@poolmaster/shared/dto/events.dto';
 import type { SportEventParticipantView } from '../modules/events/sport-event-participant-service';
 import { isRaceOfficial, raceResultOf } from '../modules/scoring-families/finish-position/score-runner';
-import { roundStatusOfSide, scoredRoundsOf } from '../modules/scoring-families/stroke-play/scored-rounds';
+import { scoredRoundsOf } from '../modules/scoring-families/stroke-play/scored-rounds';
 import { mapParticipantToDto } from './participants.mapper';
 
 export function mapSportEventParticipantToDto(view: SportEventParticipantView): SportEventParticipantDto {
@@ -48,7 +48,6 @@ export function mapSportEventParticipantToDto(view: SportEventParticipantView): 
             ? {
                 eventScoreToPar: standing.scoreToPar,
                 eventStrokes: standing.total,
-                currentRoundThru: current?.result.periodsCompleted ?? null,
               }
             : null,
         }
@@ -57,9 +56,10 @@ export function mapSportEventParticipantToDto(view: SportEventParticipantView): 
       id: round.result.sportEventRoundMatchSideId,
       sportEventRoundId: round.sportEventRoundId,
       roundNumber: round.roundNumber,
-      status: roundStatusOfSide(round.result.status),
+      status: round.result.status,
+      periodsCompleted: round.result.periodsCompleted,
       completedAt: round.result.status === null ? null : round.gameCompletedAt?.toISOString() ?? null,
-      golf: { strokes: round.result.score, scoreToPar: round.result.scoreToPar, thru: round.result.periodsCompleted },
+      golf: { strokes: round.result.score, scoreToPar: round.result.scoreToPar },
     })),
     // One FIELD result list holds either a golfer's rounds or a runner's race: a row scored in rounds has no race.
     race: rounds.length > 0 ? null : raceBlockOf(view),

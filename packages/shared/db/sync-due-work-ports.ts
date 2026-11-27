@@ -24,7 +24,16 @@ export interface LiveEventView {
   lastScoresChangedAt: Date | null;
 }
 
+/** One Season's span, as the tick reads it to tell whether its league is in season (`syncSeasonStateOf`). */
+export interface SeasonSpanView {
+  sportLeagueId: string;
+  startsAt: Date;
+  endsAt: Date;
+}
+
 export interface SyncDueWorkReader {
+  /** The leagues' Seasons that have not ended by `now`, in one read: what `syncSeasonStateOf` reads. */
+  findSeasonSpans(input: { leagues: readonly SyncedLeagueRef[]; now: Date }): Promise<SeasonSpanView[]>;
   /**
    * The slots each league plays next (`fieldWindowEventIds`): of the league's synced Season slots
    * starting after `now` with an event linked under its provider mapping, those with the earliest

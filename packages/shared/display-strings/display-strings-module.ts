@@ -63,6 +63,7 @@ export type SharedEnums = {
   ContestOpening: Enums.ContestOpening;
   ProviderSyncRunStatus: Enums.ProviderSyncRunStatus;
   ProviderSyncKind: Enums.ProviderSyncKind;
+  SyncSeasonState: Enums.SyncSeasonState;
   AutoReleaseCheckOutcome: Enums.AutoReleaseCheckOutcome;
   ReleaseCheckKey: Enums.ReleaseCheckKey;
   SportLeagueSyncHealth: Enums.SportLeagueSyncHealth;

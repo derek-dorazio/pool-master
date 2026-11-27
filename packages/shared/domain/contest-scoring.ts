@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import type { AssertTrue } from './assert-never';
 
-import { ParticipantRoundStatus } from './enums';
+import { GameSideStatus } from './enums';
 
 /**
  * Only ids with a live scoring engine are listed. The exhaustive
@@ -44,21 +44,15 @@ export interface ParticipantScoringDefinition {
   formatRound: ((round: ParticipantRoundScore) => string) | null;
 }
 
-/** One participant's scored round, as a formatter needs it. `status` is the round row's own. */
+/**
+ * One participant's scored round, as a formatter needs it. `status` is the round's Game side
+ * status, null while the participant is still playing it.
+ */
 export interface ParticipantRoundScore {
-  status: ParticipantRoundStatus;
+  status: GameSideStatus | null;
   strokes: number;
   scoreToPar: number;
 }
-
-/**
- * Whether a round row is finished: every hole played. `completedAt` is provider-supplied and
- * often null, so the status is the only signal — which is why it is asked here rather than
- * re-spelled by each surface that needs it. `formatRound` below is one caller; a client
- * deriving which round a leaderboard is currently on is another.
- */
-export const isRoundComplete = (round: Pick<ParticipantRoundScore, 'status'>): boolean =>
-  round.status === ParticipantRoundStatus.COMPLETED;
 
 const formatStrokesToPar = (value: number): string =>
   value === 0 ? 'E' : value > 0 ? `+${value}` : String(value);
@@ -74,7 +68,7 @@ export const PARTICIPANT_SCORING_DEFINITIONS = {
     format: formatStrokesToPar,
     // Strokes once a round is complete, to par while it is still being played (or ended short:
     // a withdrawal or a missed cut shows where the golfer stood against par).
-    formatRound: (round: ParticipantRoundScore): string => (isRoundComplete(round)
+    formatRound: (round: ParticipantRoundScore): string => (round.status === GameSideStatus.FINISHED
       ? String(round.strokes)
       : formatStrokesToPar(round.scoreToPar)),
   },
@@ -99,6 +93,11 @@ export const PARTICIPANT_SCORING_DEFINITIONS = {
     formatRound: null,
   },
 } as const satisfies Record<ParticipantScoringDefinitionId, ParticipantScoringDefinition>;
+
+/** A score as the contest's participant scoring definition shows it: "+3" to par, "25" points. */
+export function formatParticipantScore(definitionId: ParticipantScoringDefinitionId, value: number): string {
+  return PARTICIPANT_SCORING_DEFINITIONS[definitionId].format(value);
+}
 
 /** The most places a finish-position points table may score. */
 export const FINISH_POSITION_POINTS_TABLE_MAX_PLACES = 50;

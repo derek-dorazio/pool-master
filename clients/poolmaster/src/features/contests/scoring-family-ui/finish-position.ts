@@ -2,12 +2,13 @@
  * Finish position's leaderboard (racing, #622): one Finish column after the total, showing each
  * runner's place ("T2" for a dead heat) or how its race ended, and the points from the contest's
  * points table as the total. Every number renders through the contest's participant scoring
- * definition (`PARTICIPANT_SCORING_DEFINITIONS`). Until the race is official no runner has
+ * definition (`formatParticipantScore`). Until the race is official no runner has
  * points, and a footnote says the places shown are provisional.
  */
 
+import { enumLabel } from '@poolmaster/shared/display-strings';
 import {
-  PARTICIPANT_SCORING_DEFINITIONS,
+  formatParticipantScore,
   GameSideStatus,
   type SportDefinition,
   sportVocabulary,
@@ -15,13 +16,6 @@ import {
 } from '@poolmaster/shared/domain';
 import type { SportEventParticipantDto } from '@/lib/api';
 import type { ScoringFamilyUi } from './types';
-
-/** How a race that did not end in a place reads in the Finish column. */
-const NON_FINISH_LABEL: Readonly<Record<Exclude<GameSideStatus, typeof GameSideStatus.FINISHED>, string>> = {
-  [GameSideStatus.DID_NOT_FINISH]: 'DNF',
-  [GameSideStatus.DISQUALIFIED]: 'DQ',
-  [GameSideStatus.DID_NOT_START]: 'DNS',
-};
 
 /**
  * The Finish cell: the runner's place (with the event standing's "T" for a dead heat), how its
@@ -39,14 +33,13 @@ export function formatFinish(participant: SportEventParticipantDto, sport: Sport
     }
     return participant.standing?.displayPosition ?? String(race.finishPosition);
   }
-  return NON_FINISH_LABEL[race.resultStatus];
+  return enumLabel('GameSideStatus', race.resultStatus, { form: 'short' });
 }
 
 export const finishPositionUi: ScoringFamilyUi = {
   // A race's points table breaks no ties with a prediction: entries submit without one.
   entryTiebreaker: null,
   leaderboard(response, sport) {
-    const definition = PARTICIPANT_SCORING_DEFINITIONS[response.scoringDefinitionId];
     const provisional = response.participants.some((participant) => participant.race !== null && !participant.race.isOfficial);
     return {
       detailColumns: [
@@ -61,7 +54,7 @@ export const finishPositionUi: ScoringFamilyUi = {
       pickDetail(entryId, pick, participant) {
         const points = pick.race?.points ?? null;
         return {
-          total: points === null ? null : definition.format(points),
+          total: points === null ? null : formatParticipantScore(response.scoringDefinitionId, points),
           detailCells: [
             {
               key: 'finish',

@@ -56,7 +56,7 @@ export {
   ContestScoringSettingsSchema,
   FINISH_POSITION_POINTS_TABLE_MAX_PLACES,
   FinishPositionPointsSettingsSchema,
-  isRoundComplete,
+  formatParticipantScore,
   KnockoutRoundPointsSettingsSchema,
   PARTICIPANT_SCORING_DEFINITIONS,
   PARTICIPANT_SCORING_SETTINGS_SCHEMAS,
