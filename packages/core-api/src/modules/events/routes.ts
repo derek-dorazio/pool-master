@@ -371,7 +371,7 @@ export async function eventsModule(fastify: FastifyInstance, opts: EventsModuleO
     schema: {
       tags: TAGS,
       summary: 'Reload a sport event\'s field from its provider',
-      description: 'Queues a provider sync of the field and returns at once; reload the field once the sync runs complete. 409 EVENT_NOT_LINKED for an event with no provider. Root admin only.',
+      description: 'Queues a provider sync of the field and returns at once; reload the field once the sync runs complete. 409 EVENT_NOT_LINKED for an event with no provider; 422 EVENT_SYNC_KIND_UNAVAILABLE while it has no field to load (a draft, postponed or cancelled event, #2238). Root admin only.',
       operationId: 'refreshEventParticipants',
       params: EVENT_PARAMS,
       response: { 202: schemaRef('ProviderManualSyncSubmissionResponse'), ...errors(401, 403, 404, 409, 422) },
