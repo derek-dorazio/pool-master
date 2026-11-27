@@ -10,6 +10,7 @@ import {
   PARTICIPANT_SCORING_SETTINGS_SCHEMAS,
   SUPPORTED_SPORTS,
   SelectionType,
+  ScoringFamily,
   Sport,
   assertNever,
   getSportDefinition,
@@ -250,6 +251,20 @@ describe('Golf and horse racing setups, one copy per sport league', () => {
       [name, 'golf-budget-pick-6-all-count', false, 6, 6],
     ];
     expect(shapes).toEqual([...perTour('LPGA Tour'), ...perTour('PGA TOUR')]);
+  });
+
+  it('presets +8 for an unplayed round on every golf setup, each a valid template configuration, so a golf contest scores a missed round against its own setting', async () => {
+    const templates = await getPrisma().contestConfigTemplate.findMany({
+      where: { sportLeague: { scoringFamily: ScoringFamily.STROKE_PLAY } },
+    });
+
+    expect(templates.length).toBeGreaterThan(0);
+    for (const template of templates) {
+      expect(ContestRulesWithEntryLimitSchema.parse(template.configJson).scoring).toEqual({
+        participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL',
+        config: { unplayedRoundToPar: 8 },
+      });
+    }
   });
 
   it('gives US Thoroughbred horse racing\'s three setups as its own, kept while the league is switched off, one default per way of picking', async () => {

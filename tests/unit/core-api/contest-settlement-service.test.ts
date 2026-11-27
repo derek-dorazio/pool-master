@@ -90,7 +90,7 @@ function entry(id: string, entryNumber: number, submitted: readonly string[]): C
  */
 function world({
   configJson = { selectionType: 'TIERED', picksPerTier: 1, countedScores: 1 },
-  scoringRules = [parseContestScoringSettings('GOLF_RELATIVE_TO_PAR_TOTAL', {})],
+  scoringRules = [parseContestScoringSettings('GOLF_RELATIVE_TO_PAR_TOTAL', { unplayedRoundToPar: 8 })],
   contestCount = 1,
   selectionType,
   configurationReadFails = false,

@@ -96,6 +96,8 @@ function raceLeaderboard(participants: SportEventParticipantDto[]): ContestLeade
     scoringDefinitionId: 'FINISH_POSITION_POINTS',
     countingRule: { type: 'BEST_N', count: 3, pickCount: 6 },
     upsetBonus: false,
+    unplayedRoundToPar: null,
+    currentRound: null,
     participants,
     entries: [entry],
     asOf: null,

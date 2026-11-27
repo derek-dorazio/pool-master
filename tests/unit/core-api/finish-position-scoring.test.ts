@@ -146,7 +146,7 @@ describe('finish position — unofficial and unscorable results', () => {
   it('leaves every runner unscored under another family\'s scoring definition instead of guessing points', () => {
     expect(scores(
       [{ name: 'Arrow', result: { finishPosition: 1 } }],
-      { participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', config: {} },
+      { participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', config: { unplayedRoundToPar: 8 } },
     )).toEqual({ Arrow: null });
   });
 

@@ -223,7 +223,7 @@ describe('bracket engine', () => {
       predictions: fullBracket,
       seedOf: EIGHT_SEEDS,
       withdrawn: NONE_WITHDRAWN,
-      scoring: { participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', config: {} },
+      scoring: { participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', config: { unplayedRoundToPar: 8 } },
     })).toBeNull();
   });
 
