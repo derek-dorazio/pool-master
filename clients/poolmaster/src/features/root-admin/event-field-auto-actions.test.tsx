@@ -188,6 +188,18 @@ describe('the Field section\'s automatic tiers and prices', () => {
     );
   });
 
+  it('closes the tier confirmation on Escape without auto-assigning', async () => {
+    seed();
+    renderPage();
+
+    await userEvent.click(await screen.findByTestId('root-admin-tier-auto-tiers'));
+    expect(screen.getByTestId('root-admin-tier-auto-tiers-modal')).toBeInTheDocument();
+    await userEvent.keyboard('{Escape}');
+
+    await waitFor(() => expect(screen.queryByTestId('root-admin-tier-auto-tiers-modal')).not.toBeInTheDocument());
+    expect(autoAssignEventSlotTiersMock).not.toHaveBeenCalled();
+  });
+
   it('prices the field with its sport league\'s profile, previewing the best and worst price in domain words, and with a changed one', async () => {
     seed({ tournament: { pricing: null } });
     const [small] = platformPricingProfilesFixture();
