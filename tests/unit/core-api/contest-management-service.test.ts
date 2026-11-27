@@ -2375,6 +2375,15 @@ describe('ContestManagementService — a contest of several events', () => {
   });
 
   describe('changing the event and starting slot of a contest in Set up', () => {
+    it('refuses changing the event of a contest whose configuration is gone with 404 CONTEST_NOT_FOUND, changing nothing', async () => {
+      const { service, contestRepo, configurationRepo } = build({ contest: { status: ContestStatus.DRAFT } });
+      jest.mocked(configurationRepo.findByContest).mockResolvedValue(null);
+
+      await expect(service.setContestCoverage('league-1', 'contest-1', { sportEventIds: [PGA] }))
+        .rejects.toMatchObject({ code: 'CONTEST_NOT_FOUND', statusCode: 404 });
+      expect(contestRepo.replaceCoveredSlots).not.toHaveBeenCalled();
+    });
+
     it('moves a draft to another event, covering that event\'s slot', async () => {
       const { service, contestRepo } = build({ contest: { status: ContestStatus.DRAFT } });
 

@@ -711,7 +711,7 @@ describe('Commissioner tools › Contests › one contest › what it covers', (
 
     const dialog = await screen.findByTestId('contest-change-event-dialog');
     const select = await within(dialog).findByTestId('contest-change-event-select');
-        // Every event of the Season in start order; only one a contest can be built on now, other than its own, can be chosen.
+    // Every event of the Season in start order; only one a contest can be built on now, other than its own, can be chosen.
     expect(within(select).getAllByRole('option').map((option) => [option.textContent, (option as HTMLOptionElement).disabled])).toEqual([
       ['Choose an event', false],
       [expect.stringMatching(/^The Masters · /), true],
@@ -739,10 +739,52 @@ describe('Commissioner tools › Contests › one contest › what it covers', (
     fireEvent.click(await screen.findByTestId('manage-contest-change-event'));
     const dialog = await screen.findByTestId('contest-change-event-dialog');
     const select = await within(dialog).findByTestId('contest-change-event-select');
-        fireEvent.change(select, { target: { value: 'event-2' } });
+    fireEvent.change(select, { target: { value: 'event-2' } });
     fireEvent.click(within(dialog).getByRole('button', { name: 'Change event' }));
 
     expect(await within(dialog).findByText('This contest is open now, so its event can no longer change.')).toBeInTheDocument();
+  });
+
+  it('keeps Change event unavailable until an event is chosen, and closes the dialog unchanged on Cancel', async () => {
+    primeMocks();
+    listEventsMock.mockResolvedValue(apiSuccess({ events: [buildSportEvent({ id: 'event-2', name: 'PGA Championship' })] }));
+
+    renderAt('/league/BIGDAWGS/admin/contests/contest-1');
+    fireEvent.click(await screen.findByTestId('manage-contest-change-event'));
+    const dialog = await screen.findByTestId('contest-change-event-dialog');
+    await within(dialog).findByTestId('contest-change-event-select');
+
+    expect(within(dialog).getByRole('button', { name: 'Change event' })).toBeDisabled();
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Cancel' }));
+
+    await waitFor(() => expect(screen.queryByTestId('contest-change-event-dialog')).not.toBeInTheDocument());
+    expect(setContestCoverageMock).not.toHaveBeenCalled();
+  });
+
+  it('says the Season\'s events could not load, offering no event to choose, when the event list fails', async () => {
+    primeMocks();
+    listEventsMock.mockResolvedValue({ error: { error: { code: 'INTERNAL_ERROR', message: 'boom' } } });
+
+    renderAt('/league/BIGDAWGS/admin/contests/contest-1');
+    fireEvent.click(await screen.findByTestId('manage-contest-change-event'));
+    const dialog = await screen.findByTestId('contest-change-event-dialog');
+
+    expect(await within(dialog).findByTestId('contest-change-event-events-error')).toBeInTheDocument();
+    expect(within(dialog).queryByTestId('contest-change-event-select')).not.toBeInTheDocument();
+  });
+
+  it('shows the try-again message and keeps the dialog open when the change fails without an answer from the server', async () => {
+    primeMocks();
+    listEventsMock.mockResolvedValue(apiSuccess({ events: [buildSportEvent({ id: 'event-2', name: 'PGA Championship' })] }));
+    setContestCoverageMock.mockRejectedValue(new TypeError('Failed to fetch'));
+
+    renderAt('/league/BIGDAWGS/admin/contests/contest-1');
+    fireEvent.click(await screen.findByTestId('manage-contest-change-event'));
+    const dialog = await screen.findByTestId('contest-change-event-dialog');
+    fireEvent.change(await within(dialog).findByTestId('contest-change-event-select'), { target: { value: 'event-2' } });
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Change event' }));
+
+    expect(await within(dialog).findByText('We could not change the event. Please try again.')).toBeInTheDocument();
   });
 
   it('lists every slot a contest covers in play order, named as the league names it, under Covers, in order', async () => {
