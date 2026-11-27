@@ -10,7 +10,7 @@
  * result with Zod and persists it through the event's scoring family.
  */
 
-import type { MatchSide, ProviderCode, SportEventParticipantStatus, ProviderSlotPlay, Sport } from '@poolmaster/shared/domain';
+import type { MatchSide, ProviderCode, SportEventParticipantStatus, ProviderSlotPlay, ProviderSession, Sport } from '@poolmaster/shared/domain';
 import type { LiveScoreResult } from '@poolmaster/shared/dto';
 import { JobErrorType } from '@poolmaster/shared/domain';
 
@@ -182,6 +182,12 @@ export interface SportEvent {
    * is not synced. Empty where the provider names no place (a playoff read by date window).
    */
   providerSlots: ProviderSlotPlay[];
+  /**
+   * The event's sessions, where the provider lists them (a Formula 1 weekend's practice,
+   * qualifying, sprint and race, #2045). The event plays those of its league's session types as
+   * Rounds; the provider lists all it has, and never chooses. Left out where it lists none.
+   */
+  sessions?: ProviderSession[];
 }
 
 export interface SportEventDetail extends SportEvent {

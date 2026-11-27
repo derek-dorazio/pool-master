@@ -83,6 +83,12 @@ export interface SyncTickOptions {
    * tick. Zero says never.
    */
   quietAfterMs: (providerLeagueId: string) => number;
+  /**
+   * Whether a provider league (`providerLeagues.id`) is notified at all: a league that subscribes
+   * to no webhook events (its set is NONE, #2045) keeps the SCORES interval and is never warned
+   * quiet for want of a notification, however its provider's other leagues are paced.
+   */
+  leagueSendsNotifications: (providerLeagueId: string) => boolean;
   /** The quiet live scores finding (#2094) is raised here. */
   findings: Pick<ProviderSyncFindingService, 'raiseOfSource'>;
   jobLock: JobLock;
@@ -96,6 +102,8 @@ interface TickLeague extends SyncedLeagueRef {
   providerId: string;
   /** The provider league's quiet window, read once per tick. */
   quietAfterMs: number;
+  /** Whether the provider league subscribes to webhook events. */
+  sendsNotifications: boolean;
   /** Which of its kind's intervals each sync takes. */
   seasonState: SyncSeasonState;
 }
@@ -178,6 +186,7 @@ export class SyncTick {
         providerCode: mapping.providerCode,
         providerId: mapping.providerId,
         quietAfterMs: this.options.quietAfterMs(mapping.providerLeagueId),
+        sendsNotifications: this.options.leagueSendsNotifications(mapping.providerLeagueId),
       }];
     });
   }
@@ -216,7 +225,7 @@ export class SyncTick {
     return live.flatMap((event) => {
       const league = leaguesById.get(event.sportLeagueId);
       if (league === undefined) return [];
-      const notified = cadence !== undefined && cadence.providerIds.includes(league.providerId);
+      const notified = league.sendsNotifications && cadence !== undefined && cadence.providerIds.includes(league.providerId);
       if (notified) this.warnIfQuiet(event, league, now);
       const eventIntervalMs = !notified
         ? intervalMs(league)

@@ -98,6 +98,7 @@ function buildScheduler(feed: { shiftDays: number; name?: string } = { shiftDays
     notifiedProviderCadence: () => undefined,
     // No provider league is quiet-checked here: the quiet live scores finding has its own tests.
     quietAfterMs: () => 0,
+    leagueSendsNotifications: () => true,
     findings: { raiseOfSource: () => Promise.resolve() },
     jobLock: heldHere(),
     // A tick a day after the last, so each league's events sync is due again even off season,

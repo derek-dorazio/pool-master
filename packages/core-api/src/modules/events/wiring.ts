@@ -81,7 +81,7 @@ export function createStrokePlayResultService(
   });
 }
 
-/** The admin finishing order for a finish-position event (#622). */
+/** A finish-position event's results: the admin's finishing order (#622) and the feed's race sessions (#2045). */
 export function createRaceResultService(
   prisma: PrismaClient,
   domainEvents: Pick<DomainEvents, 'collect'>,
@@ -93,6 +93,8 @@ export function createRaceResultService(
     participants: new PrismaParticipantRepository(prisma),
     mappings: new PrismaParticipantProviderMappingRepository(prisma),
     fieldGames: new PrismaFieldGameRepository(prisma),
+    rounds: new PrismaSportEventRoundRepository(prisma),
+    sessionTypes: new PrismaSportLeagueSeasonRepository(prisma),
     storesRaceResults: eventStoresRaceResults,
     domainEvents,
     logger,

@@ -1,0 +1,47 @@
+{
+  "data": [
+    {
+      "id": 31,
+      "first_name": "Lando",
+      "last_name": "Norris",
+      "display_name": "Lando Norris",
+      "short_name": "NOR",
+      "country_code": "GB",
+      "country_name": "United Kingdom",
+      "racing_number": "4"
+    },
+    {
+      "id": 32,
+      "first_name": "Charles",
+      "last_name": "Leclerc",
+      "display_name": "Charles Leclerc",
+      "short_name": "LEC",
+      "country_code": "MC",
+      "country_name": "Monaco",
+      "racing_number": "16"
+    },
+    {
+      "id": 33,
+      "first_name": "Oscar",
+      "last_name": "Piastri",
+      "display_name": "Oscar Piastri",
+      "short_name": "PIA",
+      "country_code": "AU",
+      "country_name": "Australia",
+      "racing_number": "81"
+    },
+    {
+      "id": 34,
+      "first_name": "Lewis",
+      "last_name": "Hamilton",
+      "display_name": "Lewis Hamilton",
+      "short_name": "HAM",
+      "country_code": "GB",
+      "country_name": "United Kingdom",
+      "racing_number": "44"
+    }
+  ],
+  "meta": {
+    "per_page": 100
+  }
+}

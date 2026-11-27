@@ -191,7 +191,7 @@ describe('Sport and SportLeague repositories', () => {
 
     expect(provider).toMatchObject({ name: 'BALLDONTLIE', baseUrl: 'https://api.balldontlie.io', requestsPerMinute: 5, webhooksEnabled: true, isEnabled: true });
     expect(provider).not.toHaveProperty('priority');
-    expect(provider.leagues.map((league) => league.code)).toEqual(['epl', 'mlb', 'nba', 'ncaab', 'ncaaf', 'ncaaw', 'nfl', 'nhl', 'pga', 'wnba', 'worldcup']);
+    expect(provider.leagues.map((league) => league.code)).toEqual(['epl', 'f1', 'mlb', 'nba', 'ncaab', 'ncaaf', 'ncaaw', 'nfl', 'nhl', 'pga', 'wnba', 'worldcup']);
     expect(provider.leagues.find((league) => league.code === 'mlb')).toEqual({ code: 'mlb', typicalGameMinutes: 180, quietAfterMinutes: 210 });
   });
 

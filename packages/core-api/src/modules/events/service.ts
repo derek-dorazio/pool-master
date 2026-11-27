@@ -41,6 +41,9 @@ import {
   placeSlotsByName,
   providerSourceIdOf,
   type ProviderSlotPlay,
+  type ProviderSession,
+  type SessionRound,
+  sessionRounds,
   slotNeedsDates,
   SlotWindowStatus,
   ReleaseAttemptOutcome,
@@ -139,13 +142,20 @@ export interface ProviderEventDetail {
   endDate: Date | null;
   /** The places its games are in, by the provider's code (#2005). */
   providerSlots: readonly ProviderSlotPlay[];
+  /**
+   * The event's sessions, where its provider lists them (a Formula 1 weekend, #2045): the event
+   * plays those of its league's session types as Rounds, one each. Left out where the provider
+   * lists none.
+   */
+  sessions?: readonly ProviderSession[];
 }
 
 /**
  * Why a provider Season import left a provider event alone: it is linked already, it has started,
- * its games matched no slot, no template lists a slot they matched, or those slots have an event.
+ * its games matched no slot, no template lists a slot they matched, those slots have an event, or
+ * it lists sessions and none is scheduled of a type its league plays (#2045).
  */
-export type ProviderEventSkipReason = 'ALREADY_LINKED' | 'ALREADY_STARTED' | 'NO_SLOT' | 'NO_TEMPLATE' | 'SLOT_TAKEN';
+export type ProviderEventSkipReason = 'ALREADY_LINKED' | 'ALREADY_STARTED' | 'NO_SLOT' | 'NO_TEMPLATE' | 'SLOT_TAKEN' | 'NO_PLAYED_SESSION';
 
 /** What a provider Season import (#385, #2003, #2005) created, what it left alone and why, and the codes it could not place. */
 export interface ProviderSeasonImport {
@@ -215,7 +225,7 @@ export interface SportEventServiceDeps {
   sportLeagues: SportLeagueRepository;
   sports: SportRepository;
   /** The Season slot a test event is made on (#2004). */
-  seasons: Pick<SportLeagueSeasonRepository, 'findSlotsByIds' | 'findSyncSlots' | 'findSlotNamePatterns' | 'linkNameMatchedSlots' | 'recordSyncedSlots'>;
+  seasons: Pick<SportLeagueSeasonRepository, 'findSlotsByIds' | 'findSyncSlots' | 'findSlotNamePatterns' | 'findSessionTypes' | 'linkNameMatchedSlots' | 'recordSyncedSlots'>;
   rounds: SportEventRoundService;
   tiers: SportEventTierService;
   bracket: Pick<SportEventBracketService, 'releaseBlockers'>;
@@ -358,11 +368,15 @@ export class SportEventService {
   }): Promise<ProviderSeasonImport> {
     const { sportLeague } = await this.resolveSportLeague(input.sportLeagueId);
     const now = this.now();
-    const [linkedEvents, seasonSlots, namePatterns] = await Promise.all([
+    const listsSessions = input.providerEvents.some((providerEvent) => providerEvent.sessions !== undefined);
+    const [linkedEvents, seasonSlots, namePatterns, sessionTypes] = await Promise.all([
       this.deps.sportEvents.findByProviderRefs(input.providerId, input.providerEvents.map((providerEvent) => providerEvent.externalId)),
       this.deps.seasons.findSyncSlots(input.sportLeagueSeasonId, input.sportLeagueProviderMappingId),
       this.deps.seasons.findSlotNamePatterns(input.sportLeagueProviderMappingId),
+      // Only a slate that lists sessions reads which of them its league plays.
+      listsSessions ? this.deps.seasons.findSessionTypes(input.sportLeagueProviderMappingId) : [],
     ]);
+    const playedSessionTypes = new Set(sessionTypes);
     const named = await this.placeByName(input, seasonSlots, namePatterns);
     const slots = named.slots;
     // A provider event's games can reach several competitions, each with its own event (#2154).
@@ -449,7 +463,13 @@ export class SportEventService {
         const inCompetition = matched.filter(({ slot }) => slot.seasonCompetitionId === competitionId);
         return [{ plays: freeInCompetition, reason: unplayableReason(providerEvent, inCompetition, freeInCompetition.map(({ slot }) => slot), now) }];
       });
+      // An event that lists sessions plays those of its league's types as Rounds: with none scheduled, it has nothing to play yet.
+      const rounds = providerEvent.sessions === undefined ? undefined : sessionRounds(providerEvent.sessions, playedSessionTypes);
       const playable = judged.flatMap(({ plays, reason }) => (reason === null ? [plays] : []));
+      if (playable.length > 0 && rounds?.length === 0) {
+        skipped.push({ externalId, name, reason: 'NO_PLAYED_SESSION' });
+        continue;
+      }
       if (playable.length === 0) {
         // Nothing new: already linked, or the first competition's own reason (NO_SLOT or ALREADY_STARTED when nothing matched).
         const [first] = judged;
@@ -468,6 +488,7 @@ export class SportEventService {
           sportLeagueSeasonId: input.sportLeagueSeasonId,
           providerId: input.providerId,
           plays: plays.map(({ slot, play }) => ({ seasonSlotId: slot.seasonSlotId, startsAt: play.startsAt, endsAt: play.endsAt })),
+          sessionRounds: rounds,
         }));
       }
     }
@@ -1079,13 +1100,17 @@ function providerEdition(
     rounds?: number;
     /** The free slots its games matched, at least one, each with its games' span. */
     plays: ReadonlyArray<{ seasonSlotId: string; startsAt: Date; endsAt: Date }>;
+    /** The sessions it plays as Rounds, numbered, for an event that lists sessions (#2045); at least one. */
+    sessionRounds?: ReadonlyArray<SessionRound<ProviderSession>>;
   },
 ): NewEdition {
   const dates = eventDatesFromSlots(input.plays);
   if (dates === null) throw new Error(`Provider event ${input.externalId} matched no slot.`);
-  const schedule = input.rounds === undefined
-    ? providerEventRoundSchedule(dates.startDate, dates.endDate)
-    : dailyRoundSchedule(input.rounds, dates.startDate);
+  const schedule = input.sessionRounds !== undefined
+    ? input.sessionRounds.map(({ roundNumber, session }) => ({ roundNumber, scheduledDate: session.startsAt }))
+    : input.rounds === undefined
+      ? providerEventRoundSchedule(dates.startDate, dates.endDate)
+      : dailyRoundSchedule(input.rounds, dates.startDate);
   return {
     event: {
       providerRef: { providerId: input.providerId, externalId: input.externalId },

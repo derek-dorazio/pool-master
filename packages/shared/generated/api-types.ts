@@ -27104,7 +27104,7 @@ export interface components {
              * @description Which of the provider's webhook events the league sends for its games.
              * @enum {string}
              */
-            webhookEventSet: "GAME_PERIODS" | "GAME_HALVES" | "GOLF_ROUNDS";
+            webhookEventSet: "GAME_PERIODS" | "GAME_HALVES" | "GOLF_ROUNDS" | "NONE";
             /** @description How long a game may go between two of its notifications in normal play, in minutes; past it the live-score sweep warns that the webhook may have stopped. */
             quietAfterMinutes: number;
             /** @description How long one of its games usually takes from its scheduled start, in minutes: a start plus this is when a game with no scheduled end should have ended, for the overdue results check. */
@@ -27165,7 +27165,7 @@ export interface components {
                  * @description Which of the provider's webhook events the league sends for its games.
                  * @enum {string}
                  */
-                webhookEventSet: "GAME_PERIODS" | "GAME_HALVES" | "GOLF_ROUNDS";
+                webhookEventSet: "GAME_PERIODS" | "GAME_HALVES" | "GOLF_ROUNDS" | "NONE";
                 /** @description How long a game may go between two of its notifications in normal play, in minutes; past it the live-score sweep warns that the webhook may have stopped. */
                 quietAfterMinutes: number;
                 /** @description How long one of its games usually takes from its scheduled start, in minutes: a start plus this is when a game with no scheduled end should have ended, for the overdue results check. */
@@ -27255,7 +27255,7 @@ export interface components {
                      * @description Which of the provider's webhook events the league sends for its games.
                      * @enum {string}
                      */
-                    webhookEventSet: "GAME_PERIODS" | "GAME_HALVES" | "GOLF_ROUNDS";
+                    webhookEventSet: "GAME_PERIODS" | "GAME_HALVES" | "GOLF_ROUNDS" | "NONE";
                     /** @description How long a game may go between two of its notifications in normal play, in minutes; past it the live-score sweep warns that the webhook may have stopped. */
                     quietAfterMinutes: number;
                     /** @description How long one of its games usually takes from its scheduled start, in minutes: a start plus this is when a game with no scheduled end should have ended, for the overdue results check. */
@@ -27335,7 +27335,7 @@ export interface components {
                      * @description Which of the provider's webhook events the league sends for its games.
                      * @enum {string}
                      */
-                    webhookEventSet: "GAME_PERIODS" | "GAME_HALVES" | "GOLF_ROUNDS";
+                    webhookEventSet: "GAME_PERIODS" | "GAME_HALVES" | "GOLF_ROUNDS" | "NONE";
                     /** @description How long a game may go between two of its notifications in normal play, in minutes; past it the live-score sweep warns that the webhook may have stopped. */
                     quietAfterMinutes: number;
                     /** @description How long one of its games usually takes from its scheduled start, in minutes: a start plus this is when a game with no scheduled end should have ended, for the overdue results check. */
@@ -27373,7 +27373,7 @@ export interface components {
                  * @description Which of the provider's webhook events the league sends for its games.
                  * @enum {string}
                  */
-                webhookEventSet: "GAME_PERIODS" | "GAME_HALVES" | "GOLF_ROUNDS";
+                webhookEventSet: "GAME_PERIODS" | "GAME_HALVES" | "GOLF_ROUNDS" | "NONE";
                 /** @description How long a game may go between two of its notifications in normal play, in minutes; past it the live-score sweep warns that the webhook may have stopped. */
                 quietAfterMinutes: number;
                 /** @description How long one of its games usually takes from its scheduled start, in minutes: a start plus this is when a game with no scheduled end should have ended, for the overdue results check. */
@@ -27488,7 +27488,7 @@ export interface components {
                          * @description Which of the provider's webhook events the league sends for its games.
                          * @enum {string}
                          */
-                        webhookEventSet: "GAME_PERIODS" | "GAME_HALVES" | "GOLF_ROUNDS";
+                        webhookEventSet: "GAME_PERIODS" | "GAME_HALVES" | "GOLF_ROUNDS" | "NONE";
                         /** @description How long a game may go between two of its notifications in normal play, in minutes; past it the live-score sweep warns that the webhook may have stopped. */
                         quietAfterMinutes: number;
                         /** @description How long one of its games usually takes from its scheduled start, in minutes: a start plus this is when a game with no scheduled end should have ended, for the overdue results check. */

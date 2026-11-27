@@ -1374,7 +1374,7 @@ model Participant {
   /// slot's field, never gets a provider mapping, and no roster or sync reads it.
   isTestData       Boolean                 @default(false) @map("is_test_data")
 
-  sportLeague            SportLeague                    @relation(fields: [sportLeagueId], references: [id])
+  sportLeague            SportLeague                        @relation(fields: [sportLeagueId], references: [id])
   providerMappings       ParticipantProviderMapping[]
   sportEventParticipants SportEventParticipant[]
   championOf             SportLeagueSeasonCompetition[]
@@ -1470,27 +1470,27 @@ model ParticipantProviderMapping {
 // =============================================================================
 
 model Contest {
-  id             String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  leagueId       String              @map("league_id") @db.Uuid
-  name           String
-  status         PrismaContestStatus @default(DRAFT)
-  contestFormat  PrismaContestFormat @default(ROSTER) @map("contest_format")
-  selectionType  PrismaSelectionType @map("selection_type")
+  id                  String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  leagueId            String              @map("league_id") @db.Uuid
+  name                String
+  status              PrismaContestStatus @default(DRAFT)
+  contestFormat       PrismaContestFormat @default(ROSTER) @map("contest_format")
+  selectionType       PrismaSelectionType @map("selection_type")
   /// When the commissioner opened the contest to the league (#845); null for a draft, and for contests opened before it was kept.
-  openedAt       DateTime?           @map("opened_at") @db.Timestamptz
-  startsAt       DateTime?           @map("starts_at") @db.Timestamptz
-  endsAt         DateTime?           @map("ends_at") @db.Timestamptz
+  openedAt            DateTime?           @map("opened_at") @db.Timestamptz
+  startsAt            DateTime?           @map("starts_at") @db.Timestamptz
+  endsAt              DateTime?           @map("ends_at") @db.Timestamptz
   /// When the entry reminder sweep next looks at the contest (#1170): its next reminder's moment,
   /// the end of the quiet hours after it opened, or once its events or their times change. Null
   /// when no reminder is left; the sweep reads only contests whose moment has come.
-  nextReminderAt DateTime?           @map("next_reminder_at") @db.Timestamptz
+  nextReminderAt      DateTime?           @map("next_reminder_at") @db.Timestamptz
   /// The sport league Season the contest is in (#2014): fixed at creation, and every slot it covers
   /// is one of this Season's (composite key on `ContestSeasonSlot`). Its cup is this Season's.
-  sportLeagueSeasonId String         @map("sport_league_season_id") @db.Uuid
+  sportLeagueSeasonId String              @map("sport_league_season_id") @db.Uuid
   /// How much it counts toward its cup and the championship (#841); fixed once COMPLETED.
-  cupWeight      PrismaCupWeight     @default(NORMAL) @map("cup_weight")
-  createdAt      DateTime            @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt      DateTime            @updatedAt @map("updated_at") @db.Timestamptz
+  cupWeight           PrismaCupWeight     @default(NORMAL) @map("cup_weight")
+  createdAt           DateTime            @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt           DateTime            @updatedAt @map("updated_at") @db.Timestamptz
 
   league               League                       @relation(fields: [leagueId], references: [id])
   sportLeagueSeason    SportLeagueSeason            @relation(fields: [sportLeagueSeasonId], references: [id], onDelete: Restrict)
@@ -1537,10 +1537,10 @@ model Cup {
   createdAt           DateTime              @default(now()) @map("created_at") @db.Timestamptz
 
   // A cup is the league's, so it goes with the league; nothing else deletes one.
-  league      League        @relation(fields: [leagueId], references: [id], onDelete: Cascade)
-  sportLeague SportLeague   @relation(fields: [sportLeagueId], references: [id], onDelete: Cascade)
+  league            League            @relation(fields: [leagueId], references: [id], onDelete: Cascade)
+  sportLeague       SportLeague       @relation(fields: [sportLeagueId], references: [id], onDelete: Cascade)
   sportLeagueSeason SportLeagueSeason @relation(fields: [sportLeagueId, sportLeagueSeasonId], references: [sportLeagueId, id], onDelete: Restrict, map: "cups_season_fkey")
-  standings   CupStanding[]
+  standings         CupStanding[]
 
   @@unique([leagueId, sportLeagueSeasonId])
   @@index([sportLeagueId])
@@ -2002,19 +2002,19 @@ model ContestLeaderboardSnapshot {
 /// those two orders reproduces every pick. One per contest; the unique key is what stops two
 /// presses racing from dealing twice.
 model ContestDraw {
-  id                          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  contestId                   String   @unique @map("contest_id") @db.Uuid
-  seed                        String   @db.VarChar(64)
-  fieldOrder                  String[] @map("field_order") @db.Uuid
-  entryOrder                  String[] @map("entry_order") @db.Uuid
-  drawnByUserId               String?  @map("drawn_by_user_id") @db.Uuid
-  drawnAt                     DateTime @default(now()) @map("drawn_at") @db.Timestamptz
+  id                                 String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  contestId                          String   @unique @map("contest_id") @db.Uuid
+  seed                               String   @db.VarChar(64)
+  fieldOrder                         String[] @map("field_order") @db.Uuid
+  entryOrder                         String[] @map("entry_order") @db.Uuid
+  drawnByUserId                      String?  @map("drawn_by_user_id") @db.Uuid
+  drawnAt                            DateTime @default(now()) @map("drawn_at") @db.Timestamptz
   /// The covered slot whose dealt picks the entries' sweepstakes receipts are still to list (#1171,
   /// #2014): the draw sets it, and the next lifecycle sweep sends them and clears it. Null once sent.
-  receiptsPendingContestSeasonSlotId String? @map("receipts_pending_contest_season_slot_id") @db.Uuid
+  receiptsPendingContestSeasonSlotId String?  @map("receipts_pending_contest_season_slot_id") @db.Uuid
 
-  contest                   Contest     @relation(fields: [contestId], references: [id], onDelete: Cascade)
-  drawnBy                   User?       @relation(fields: [drawnByUserId], references: [id], onDelete: SetNull)
+  contest                          Contest            @relation(fields: [contestId], references: [id], onDelete: Cascade)
+  drawnBy                          User?              @relation(fields: [drawnByUserId], references: [id], onDelete: SetNull)
   receiptsPendingContestSeasonSlot ContestSeasonSlot? @relation("ContestDrawReceiptsPending", fields: [receiptsPendingContestSeasonSlotId], references: [id], onDelete: SetNull)
 
   @@index([drawnByUserId])
@@ -2135,37 +2135,37 @@ model ContestEntryPick {
 // =============================================================================
 
 model SportEvent {
-  id                         String                         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name                       String                         @db.VarChar(500)
-  venue                      String?                        @db.VarChar(500)
-  location                   String?                        @db.VarChar(500)
-  startDate                  DateTime                       @map("start_date") @db.Timestamptz
-  endDate                    DateTime?                      @map("end_date") @db.Timestamptz
-  status                     PrismaSportEventStatus         @default(SCHEDULED)
+  id                      String                         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name                    String                         @db.VarChar(500)
+  venue                   String?                        @db.VarChar(500)
+  location                String?                        @db.VarChar(500)
+  startDate               DateTime                       @map("start_date") @db.Timestamptz
+  endDate                 DateTime?                      @map("end_date") @db.Timestamptz
+  status                  PrismaSportEventStatus         @default(SCHEDULED)
   // The event's sport league (#2010): its Season is one of this league's, by a composite key.
-  sportLeagueId              String                         @map("sport_league_id") @db.Uuid
+  sportLeagueId           String                         @map("sport_league_id") @db.Uuid
   // The Season the event is played in (#2003): the synced Season the sync read it from, or the
   // league's current Season for one made by hand. Its championship year is the event's year.
-  sportLeagueSeasonId        String                         @map("sport_league_season_id") @db.Uuid
+  sportLeagueSeasonId     String                         @map("sport_league_season_id") @db.Uuid
   // Admin escape hatch: false stops the lifecycle scheduler (plans/124 §3.6)
   // from ever touching this event's status, no matter what the recorded
   // round schedule says — a rain delay, a dispute, etc.
-  autoLifecycleEnabled       Boolean                        @default(true) @map("auto_lifecycle_enabled")
+  autoLifecycleEnabled    Boolean                        @default(true) @map("auto_lifecycle_enabled")
   // The latest automatic release check (#1847): when the release job last judged the event,
   // whether it released or held it, and the checks that held it. Null and empty until the first
   // check; each check overwrites the one before, and a root admin's release by hand clears it. A
   // check that skips the event is not stored. Check constraints keep the time and outcome
   // together, and a RELEASED check with no failed checks. The Sports page counts the DRAFT
   // events a check HELD.
-  autoReleaseCheckedAt       DateTime?                      @map("auto_release_checked_at") @db.Timestamptz
-  autoReleaseOutcome         PrismaAutoReleaseCheckOutcome? @map("auto_release_outcome")
-  autoReleaseFailedChecks    PrismaReleaseCheckKey[]        @default([]) @map("auto_release_failed_checks")
+  autoReleaseCheckedAt    DateTime?                      @map("auto_release_checked_at") @db.Timestamptz
+  autoReleaseOutcome      PrismaAutoReleaseCheckOutcome? @map("auto_release_outcome")
+  autoReleaseFailedChecks PrismaReleaseCheckKey[]        @default([]) @map("auto_release_failed_checks")
   // When the event was released for contests (#1865), by a root admin or by the automatic
   // release: written with the DRAFT to SCHEDULED move. Null for a draft, and for an event
   // released before the column existed.
-  releasedAt                 DateTime?                      @map("released_at") @db.Timestamptz
-  createdAt                  DateTime                       @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt                  DateTime                       @updatedAt @map("updated_at") @db.Timestamptz
+  releasedAt              DateTime?                      @map("released_at") @db.Timestamptz
+  createdAt               DateTime                       @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt               DateTime                       @updatedAt @map("updated_at") @db.Timestamptz
 
   contestEntryEvents         ContestEntryEvent[]
   contestEntryEventStandings ContestEntryEventStanding[]
@@ -2210,12 +2210,12 @@ model SportEventProviderMapping {
   provider                   Provider                   @relation(fields: [providerId], references: [id], onDelete: Restrict)
   sportLeagueProviderMapping SportLeagueProviderMapping @relation(fields: [sportLeagueProviderMappingId], references: [id], onDelete: Restrict)
 
+  /// An event has one id per provider.
+  @@unique([sportEventId, providerId])
   /// Not unique (#2154): a provider event whose games reach several competitions of a Season (a
   /// season's slate of college football games: its bowls, its title games, its CFP) is one event
   /// per competition, each holding the provider's id. No event crosses competitions.
   @@index([providerId, externalId])
-  /// An event has one id per provider.
-  @@unique([sportEventId, providerId])
   @@index([sportLeagueProviderMappingId])
   @@map("sport_event_provider_mappings")
 }
@@ -2238,32 +2238,32 @@ model SportEventSlot {
   /// game stays until it starts, unless it is cancelled or moved, when the rule chooses again.
   tiebreakerGameChosenAt             DateTime? @map("tiebreaker_game_chosen_at") @db.Timestamptz
   /// The root admin who chose it; null while the rule chose it.
-  tiebreakerGameChosenByUserId String?   @map("tiebreaker_game_chosen_by_user_id") @db.Uuid
+  tiebreakerGameChosenByUserId       String?   @map("tiebreaker_game_chosen_by_user_id") @db.Uuid
   /// The tier profile the slot's team tier set was last auto-tiered with (#2044): its sport
   /// league's at the time. Null until the set is first auto-tiered; written with the tiers. The
   /// layout is the profile's own, read from it.
-  platformTierProfileId        String?  @map("platform_tier_profile_id") @db.Uuid
+  platformTierProfileId              String?   @map("platform_tier_profile_id") @db.Uuid
   /// The tier size an admin sent to Auto-assign tiers instead of the profile's (EQUAL_GROUPS only);
   /// null for the profile's size.
-  tierSize                     Int?     @map("tier_size")
+  tierSize                           Int?      @map("tier_size")
   /// The pricing profile the slot's set was last priced from (#2044), and the five values it was
   /// priced with, which an admin may have changed before pricing. All six are null until the set
   /// is priced, and set together (a check constraint); written with the prices. The salary cap is
   /// the cap of every budget contest the set values.
-  platformPricingProfileId     String?  @map("platform_pricing_profile_id") @db.Uuid
-  salaryCap                    Int?     @map("salary_cap")
-  pricingUnit                  Int?     @map("pricing_unit")
-  topSharePercent              Float?   @map("top_share_percent")
-  floorSharePercent            Float?   @map("floor_share_percent")
-  steepness                    Float?
-  createdAt                    DateTime @default(now()) @map("created_at") @db.Timestamptz
+  platformPricingProfileId           String?   @map("platform_pricing_profile_id") @db.Uuid
+  salaryCap                          Int?      @map("salary_cap")
+  pricingUnit                        Int?      @map("pricing_unit")
+  topSharePercent                    Float?    @map("top_share_percent")
+  floorSharePercent                  Float?    @map("floor_share_percent")
+  steepness                          Float?
+  createdAt                          DateTime  @default(now()) @map("created_at") @db.Timestamptz
 
-  sportEvent SportEvent                 @relation(fields: [sportEventId, sportLeagueSeasonId], references: [id, sportLeagueSeasonId], onDelete: Cascade, map: "sport_event_slots_event_fkey")
-  seasonSlot SportLeagueSeasonCompetitionSlot @relation(fields: [sportLeagueSeasonId, sportLeagueSeasonCompetitionSlotId], references: [sportLeagueSeasonId, id], onDelete: Restrict, map: "sport_event_slots_season_slot_fkey")
-  tiebreakerGame         SportEventRoundMatchGame? @relation("SportEventSlotTiebreakerGame", fields: [tiebreakerGameId], references: [id], onDelete: SetNull)
-  tiebreakerGameChosenBy User?                     @relation("SportEventSlotTiebreakerGameChosenBy", fields: [tiebreakerGameChosenByUserId], references: [id], onDelete: SetNull)
-  platformTierProfile    PlatformTierProfile?      @relation(fields: [platformTierProfileId], references: [id], onDelete: Restrict)
-  platformPricingProfile PlatformPricingProfile?   @relation(fields: [platformPricingProfileId], references: [id], onDelete: Restrict)
+  sportEvent             SportEvent                       @relation(fields: [sportEventId, sportLeagueSeasonId], references: [id, sportLeagueSeasonId], onDelete: Cascade, map: "sport_event_slots_event_fkey")
+  seasonSlot             SportLeagueSeasonCompetitionSlot @relation(fields: [sportLeagueSeasonId, sportLeagueSeasonCompetitionSlotId], references: [sportLeagueSeasonId, id], onDelete: Restrict, map: "sport_event_slots_season_slot_fkey")
+  tiebreakerGame         SportEventRoundMatchGame?        @relation("SportEventSlotTiebreakerGame", fields: [tiebreakerGameId], references: [id], onDelete: SetNull)
+  tiebreakerGameChosenBy User?                            @relation("SportEventSlotTiebreakerGameChosenBy", fields: [tiebreakerGameChosenByUserId], references: [id], onDelete: SetNull)
+  platformTierProfile    PlatformTierProfile?             @relation(fields: [platformTierProfileId], references: [id], onDelete: Restrict)
+  platformPricingProfile PlatformPricingProfile?          @relation(fields: [platformPricingProfileId], references: [id], onDelete: Restrict)
 
   /// A slot belongs to at most one event (slot ids are unique, so the Season adds nothing).
   rounds     SportEventRound[]
@@ -2294,8 +2294,8 @@ model SportEventParticipant {
   createdAt     DateTime                    @default(now()) @map("created_at") @db.Timestamptz
   updatedAt     DateTime                    @updatedAt @map("updated_at") @db.Timestamptz
 
-  sportEvent  SportEvent                       @relation(fields: [sportEventId], references: [id])
-  participant Participant                      @relation(fields: [participantId], references: [id])
+  sportEvent  SportEvent                           @relation(fields: [sportEventId], references: [id])
+  participant Participant                          @relation(fields: [participantId], references: [id])
   valuations  SportEventSlotParticipantValuation[]
   picks       ContestEntryPick[]
   standing    SportEventParticipantStanding?
@@ -2326,9 +2326,9 @@ model SportEventRound {
   createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz
   updatedAt        DateTime  @updatedAt @map("updated_at") @db.Timestamptz
 
-  sportEvent        SportEvent                   @relation(fields: [sportEventId], references: [id])
-  eventSlot         SportEventSlot               @relation(fields: [sportEventId, sportEventSlotId], references: [sportEventId, id], onDelete: Restrict, map: "sport_event_rounds_event_slot_fkey")
-  matches           SportEventRoundMatch[]
+  sportEvent SportEvent             @relation(fields: [sportEventId], references: [id])
+  eventSlot  SportEventSlot         @relation(fields: [sportEventId, sportEventSlotId], references: [sportEventId, id], onDelete: Restrict, map: "sport_event_rounds_event_slot_fkey")
+  matches    SportEventRoundMatch[]
 
   @@unique([sportEventId, roundNumber])
   @@map("sport_event_rounds")
@@ -2555,7 +2555,7 @@ model SportEventParticipantStanding {
   createdAt               DateTime                  @default(now()) @map("created_at") @db.Timestamptz
   updatedAt               DateTime                  @updatedAt @map("updated_at") @db.Timestamptz
 
-  sportEventParticipant SportEventParticipant              @relation(fields: [sportEventParticipantId], references: [id])
+  sportEventParticipant SportEventParticipant @relation(fields: [sportEventParticipantId], references: [id])
 
   @@map("sport_event_participant_standings")
 }
@@ -2624,6 +2624,7 @@ enum PrismaProviderWebhookEventSet {
   GAME_PERIODS
   GAME_HALVES
   GOLF_ROUNDS
+  NONE
 }
 
 /// One data provider (#1997, plans/league-model-redesign.md §4), with the settings each
@@ -2703,10 +2704,11 @@ model SportLeagueProviderMapping {
   createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt        DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
-  sportLeague     SportLeague                                       @relation("SportLeagueProviderMappings", fields: [sportLeagueId], references: [id], onDelete: Cascade)
-  providerLeague  ProviderLeague                                    @relation(fields: [providerLeagueId], references: [id], onDelete: Restrict)
-  selectedBy      SportLeague?                                      @relation("SelectedSportLeagueProviderMapping")
+  sportLeague     SportLeague                                           @relation("SportLeagueProviderMappings", fields: [sportLeagueId], references: [id], onDelete: Cascade)
+  providerLeague  ProviderLeague                                        @relation(fields: [providerLeagueId], references: [id], onDelete: Restrict)
+  selectedBy      SportLeague?                                          @relation("SelectedSportLeagueProviderMapping")
   positionCodes   SportLeaguePositionProviderMapping[]
+  sessionTypes    SportLeagueProviderSessionTypeMapping[]
   slotMappings    SportLeagueCompetitionSlotProviderMapping[]
   seasonMappings  SportLeagueSeasonProviderMapping[]
   eventMappings   SportEventProviderMapping[]
@@ -2769,6 +2771,26 @@ model SportLeaguePositionProviderMapping {
   @@index([sportLeagueId, sportLeaguePositionId])
   @@index([sportLeagueId, sportLeagueProviderMappingId], map: "sport_league_position_provider_mappings_provider_mapping_idx")
   @@map("sport_league_position_provider_mappings")
+}
+
+/// A provider's session type a sport league's events play as Rounds (#2045, plan §3): BALLDONTLIE's
+/// F1 `Race`, so a Grand Prix's one Round is its race and its practice, qualifying and sprint are
+/// not synced. Inclusion only: a session of a type with no row is not played. A league whose feed
+/// lists no sessions (golf's rounds, a game's periods) has none. Set by migration.
+model SportLeagueProviderSessionTypeMapping {
+  id                           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sportLeagueId                String   @map("sport_league_id") @db.Uuid
+  sportLeagueProviderMappingId String   @map("sport_league_provider_mapping_id") @db.Uuid
+  /// The provider's own session type, exactly as its feed sends it.
+  providerSessionType          String   @map("provider_session_type") @db.VarChar(50)
+  createdAt                    DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt                    DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  sportLeagueProviderMapping SportLeagueProviderMapping @relation(fields: [sportLeagueId, sportLeagueProviderMappingId], references: [sportLeagueId, id], onDelete: Cascade, map: "provider_session_type_mappings_provider_mapping_fkey")
+
+  @@unique([sportLeagueProviderMappingId, providerSessionType], map: "provider_session_type_mappings_value_key")
+  @@index([sportLeagueId, sportLeagueProviderMappingId], map: "provider_session_type_mappings_provider_mapping_idx")
+  @@map("sport_league_provider_session_type_mappings")
 }
 
 /// The three phases a sport league's Season can have (#2002, plans/league-model-redesign.md §1).
@@ -3165,15 +3187,15 @@ model SportLeagueSeasonCompetitionSlot {
   createdAt                      DateTime                @default(now()) @map("created_at") @db.Timestamptz
   updatedAt                      DateTime                @updatedAt @map("updated_at") @db.Timestamptz
 
-  season            SportLeagueSeason                                 @relation(fields: [sportLeagueId, sportLeagueSeasonId], references: [sportLeagueId, id], onDelete: Cascade, map: "sport_league_season_competition_slots_season_fkey")
+  season            SportLeagueSeason                                     @relation(fields: [sportLeagueId, sportLeagueSeasonId], references: [sportLeagueId, id], onDelete: Cascade, map: "sport_league_season_competition_slots_season_fkey")
   /// The composite key keeps the slot in a competition of its own Season.
-  seasonCompetition SportLeagueSeasonCompetition                      @relation(fields: [sportLeagueSeasonId, sportLeagueSeasonCompetitionId], references: [sportLeagueSeasonId, id], onDelete: Cascade, map: "sport_league_season_competition_slots_season_competition_fkey")
+  seasonCompetition SportLeagueSeasonCompetition                          @relation(fields: [sportLeagueSeasonId, sportLeagueSeasonCompetitionId], references: [sportLeagueSeasonId, id], onDelete: Cascade, map: "sport_league_season_competition_slots_season_competition_fkey")
   /// The composite key keeps the definition one of its own league's.
-  definition    SportLeagueCompetitionSlot                        @relation(fields: [sportLeagueId, sportLeagueCompetitionSlotId], references: [sportLeagueId, id], onDelete: Restrict, map: "sport_league_season_competition_slots_definition_fkey")
-  eventSlot     SportEventSlot?
-  contestSlots  ContestSeasonSlot[]
-  providerLinks SportLeagueSeasonCompetitionSlotProviderMapping[]
-  placedGames   SportLeagueSeasonCompetitionSlotGameProviderMapping[]
+  definition        SportLeagueCompetitionSlot                            @relation(fields: [sportLeagueId, sportLeagueCompetitionSlotId], references: [sportLeagueId, id], onDelete: Restrict, map: "sport_league_season_competition_slots_definition_fkey")
+  eventSlot         SportEventSlot?
+  contestSlots      ContestSeasonSlot[]
+  providerLinks     SportLeagueSeasonCompetitionSlotProviderMapping[]
+  placedGames       SportLeagueSeasonCompetitionSlotGameProviderMapping[]
 
   /// The target of an event slot's composite key.
   @@unique([sportLeagueSeasonId, id], map: "sport_league_season_competition_slots_season_id_key")
@@ -3222,7 +3244,7 @@ model SportLeagueSeasonCompetitionSlotGameProviderMapping {
   updatedAt                          DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
   seasonSlot                 SportLeagueSeasonCompetitionSlot @relation(fields: [sportLeagueId, sportLeagueSeasonCompetitionSlotId], references: [sportLeagueId, id], onDelete: Cascade, map: "season_slot_game_provider_mappings_slot_fkey")
-  sportLeagueProviderMapping SportLeagueProviderMapping @relation(fields: [sportLeagueId, sportLeagueProviderMappingId], references: [sportLeagueId, id], onDelete: Cascade, map: "season_slot_game_provider_mappings_mapping_fkey")
+  sportLeagueProviderMapping SportLeagueProviderMapping       @relation(fields: [sportLeagueId, sportLeagueProviderMappingId], references: [sportLeagueId, id], onDelete: Cascade, map: "season_slot_game_provider_mappings_mapping_fkey")
 
   @@unique([sportLeagueProviderMappingId, externalId], map: "season_slot_game_provider_mappings_game_key")
   @@index([sportLeagueId, sportLeagueSeasonCompetitionSlotId], map: "season_slot_game_provider_mappings_slot_idx")
@@ -3260,11 +3282,11 @@ model ProviderSyncRun {
   detailsJson     Json?                       @map("details_json")
   createdAt       DateTime                    @default(now()) @map("created_at") @db.Timestamptz
 
-  provider    Provider     @relation(fields: [providerId], references: [id], onDelete: Restrict)
+  provider       Provider              @relation(fields: [providerId], references: [id], onDelete: Restrict)
   /// The run's sport league (#2042), which gives the run its sport; a run with none has no sport.
-  sportLeague SportLeague? @relation(fields: [sportLeagueId], references: [id], onDelete: SetNull)
+  sportLeague    SportLeague?          @relation(fields: [sportLeagueId], references: [id], onDelete: SetNull)
   /// The run's event (#2040); a deleted event leaves its runs, unscoped.
-  sportEvent  SportEvent?  @relation(fields: [sportEventId], references: [id], onDelete: SetNull)
+  sportEvent     SportEvent?           @relation(fields: [sportEventId], references: [id], onDelete: SetNull)
   /// The SYNC_FAILED findings that name this run as their latest failure (#2092).
   failedFindings ProviderSyncFinding[]
 
@@ -3312,11 +3334,11 @@ model ProviderSyncFinding {
   createdAt             DateTime                          @default(now()) @map("created_at") @db.Timestamptz
   updatedAt             DateTime                          @updatedAt @map("updated_at") @db.Timestamptz
 
-  sportLeague     SportLeague @relation(fields: [sportLeagueId], references: [id], onDelete: Cascade)
-  sportEvent      SportEvent? @relation(fields: [sportEventId], references: [id], onDelete: Cascade)
-  provider        Provider?   @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  sportLeague     SportLeague      @relation(fields: [sportLeagueId], references: [id], onDelete: Cascade)
+  sportEvent      SportEvent?      @relation(fields: [sportEventId], references: [id], onDelete: Cascade)
+  provider        Provider?        @relation(fields: [providerId], references: [id], onDelete: Cascade)
   syncRun         ProviderSyncRun? @relation(fields: [syncRunId], references: [id], onDelete: SetNull)
-  statusChangedBy User?       @relation("SyncFindingStatusChangedBy", fields: [statusChangedByUserId], references: [id], onDelete: SetNull)
+  statusChangedBy User?            @relation("SyncFindingStatusChangedBy", fields: [statusChangedByUserId], references: [id], onDelete: SetNull)
 
   /// One row per kind and subject. The migration builds it NULLS NOT DISTINCT, so a subject
   /// with no event or value still has one row; Prisma cannot say so here.

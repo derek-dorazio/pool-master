@@ -8,6 +8,7 @@ import { eventStoresRaceResults } from '../../../packages/core-api/src/modules/s
 import { InMemorySportEvents } from '../../support/in-memory-sport-events';
 import { eventRebuildJob } from '../../support/recording-leaderboard-rebuilds';
 import { RecordingDomainEvents } from '../../support/recording-domain-events';
+import type { RaceSessionUpdate } from '@poolmaster/shared/dto';
 
 /** A test participant's id, fixed by its name, so a row names it by id as the feed does (#2114). */
 const idOf = (name: string): string => `participant-${name.toLowerCase().replace(/\s+/g, '-')}`;
@@ -18,6 +19,9 @@ const idOf = (name: string): string => `participant-${name.toLowerCase().replace
 
 const NOW = new Date('2026-05-02T22:30:00.000Z');
 
+/** The session types the event's league plays as Rounds, as its session type mappings name them. */
+let playedSessionTypes: string[] = ['Race'];
+
 async function setup(sport: Sport = Sport.HORSE_RACING) {
   const store = new InMemorySportEvents();
   const sportRow = store.addSport(sport);
@@ -25,7 +29,7 @@ async function setup(sport: Sport = Sport.HORSE_RACING) {
   // A race is its event's round 1 (#2008).
   await store.addRounds(event.id, [{ roundNumber: 1, scheduledDate: NOW }]);
   const [arrow, bolt, comet] = ['Arrow', 'Bolt', 'Comet'].map((name) => {
-    const participant = store.addParticipant(sportRow.id, name, { id: idOf(name) });
+    const participant = store.addParticipant(sportRow.id, name, { id: idOf(name), externalId: `feed-${name}` });
     return store.addToField(event.id, participant.id);
   });
   const scratchedHorse = store.addParticipant(sportRow.id, 'Drift', { id: idOf('Drift') });
@@ -36,6 +40,8 @@ async function setup(sport: Sport = Sport.HORSE_RACING) {
     field: store.fieldRepo(),
     participants: store.participantRepo(), mappings: store.mappingRepo(),
     fieldGames: store.fieldGameRepo(),
+    rounds: store.roundRepo(),
+    sessionTypes: { findEventSessionTypes: async () => playedSessionTypes },
     storesRaceResults: eventStoresRaceResults,
     domainEvents,
     now: () => NOW,
@@ -273,6 +279,8 @@ describe('RaceResultService — clock', () => {
       field: store.fieldRepo(),
       participants: store.participantRepo(), mappings: store.mappingRepo(),
       fieldGames: store.fieldGameRepo(),
+      rounds: store.roundRepo(),
+      sessionTypes: { findEventSessionTypes: async () => playedSessionTypes },
       storesRaceResults: eventStoresRaceResults,
     });
     const before = Date.now();
@@ -301,5 +309,132 @@ describe('RaceResultService — leaderboard rebuild (#1466)', () => {
     await expect(service.applyResults(event.id, { isOfficial: true, rows: FULL_ORDER })).rejects.toMatchObject({ code: 'EVENT_SCORING_FAMILY_MISMATCH' });
     expect(store.backgroundJobs).toEqual([]);
     expect(domainEvents.changedSportEventIds).toEqual([]);
+  });
+});
+
+describe('RaceResultService — the feed\'s race sessions (#2045)', () => {
+  // The provider's source id, as its feed's live scores name it.
+  const PROVIDER = 'balldontlie';
+  const runner = (name: string, position: number | null, status: GameSideStatus = GameSideStatus.FINISHED) => ({ participantExternalId: `feed-${name}`, status, position });
+  const session = (overrides: Partial<RaceSessionUpdate> = {}): RaceSessionUpdate => ({
+    providerSessionId: '5503',
+    sessionType: 'Race',
+    startsAt: '2026-05-02T20:00:00.000Z',
+    isOfficial: true,
+    runners: [runner('Arrow', 1), runner('Bolt', 2), runner('Comet', null, GameSideStatus.DID_NOT_FINISH)],
+    ...overrides,
+  });
+  const practice = session({ providerSessionId: '5501', sessionType: 'Practice', startsAt: '2026-05-01T12:00:00.000Z', runners: [runner('Comet', 1), runner('Arrow', 2)] });
+
+  beforeEach(() => { playedSessionTypes = ['Race']; });
+
+  it('writes the race as the event\'s Round 1 Game with each driver\'s result and the standings, leaving practice unwritten', async () => {
+    const { store, service, event, arrow, bolt, comet } = await setup(Sport.AUTO_RACING);
+
+    const outcome = await service.persistSessionUpdatesForSportEvent(event.id, [practice, session()], PROVIDER);
+
+    expect(store.fieldSideRows.map((side) => [side.sportEventParticipantId, side.status, side.position])).toEqual([
+      [arrow.id, GameSideStatus.FINISHED, 1],
+      [bolt.id, GameSideStatus.FINISHED, 2],
+      [comet.id, GameSideStatus.DID_NOT_FINISH, null],
+    ]);
+    expect(store.fieldSideRows.every((side) => side.gameCompletedAt?.getTime() === NOW.getTime())).toBe(true);
+    expect(store.standingRows.map((standing) => [standing.sportEventParticipantId, standing.position])).toEqual([
+      [arrow.id, 1], [bolt.id, 2], [comet.id, null],
+    ]);
+    expect(outcome).toMatchObject({ updatesReturned: 5, updatesPersisted: 3, updatesSkipped: 2, unmappedExternalIds: [] });
+  });
+
+  it('writes a race under way as in progress, with no completion time', async () => {
+    const { store, service, event } = await setup(Sport.AUTO_RACING);
+
+    await service.persistSessionUpdatesForSportEvent(event.id, [session({ isOfficial: false })], PROVIDER);
+
+    expect(store.fieldSideRows.map((side) => side.gameCompletedAt)).toEqual([null, null, null]);
+  });
+
+  it('writes nothing, and queues no rebuild, when the feed sends the same results again', async () => {
+    const { service, event, domainEvents } = await setup(Sport.AUTO_RACING);
+    await service.persistSessionUpdatesForSportEvent(event.id, [session()], PROVIDER);
+    const rebuilds = domainEvents.collected.length;
+
+    const again = await service.persistSessionUpdatesForSportEvent(event.id, [session()], PROVIDER);
+
+    expect(again.updatesPersisted).toBe(0);
+    expect(domainEvents.collected).toHaveLength(rebuilds);
+  });
+
+  it('skips a driver no participant is mapped to and names them, writing the rest', async () => {
+    const { store, service, event } = await setup(Sport.AUTO_RACING);
+
+    const outcome = await service.persistSessionUpdatesForSportEvent(event.id, [session({ runners: [runner('Arrow', 1), runner('Nobody', 2)] })], PROVIDER);
+
+    expect(store.fieldSideRows).toHaveLength(1);
+    expect(outcome).toMatchObject({ updatesPersisted: 1, updatesSkipped: 1, unmappedExternalIds: ['feed-Nobody'] });
+  });
+
+  it('writes nothing for a session the event has no Round for, such as a second played type the event was built without', async () => {
+    playedSessionTypes = ['Race', 'Sprint'];
+    const { store, service, event } = await setup(Sport.AUTO_RACING);
+    const sprint = session({ providerSessionId: '5504', sessionType: 'Sprint', startsAt: '2026-05-01T10:00:00.000Z' });
+
+    // The sprint is Round 1 and the race Round 2, which this one-round event does not have.
+    const outcome = await service.persistSessionUpdatesForSportEvent(event.id, [sprint, session()], PROVIDER);
+
+    expect(store.fieldSideRows).toHaveLength(3);
+    expect(outcome.updatesSkipped).toBe(3);
+  });
+
+  it('writes a corrected race again, reporting each driver whose result moved as updated', async () => {
+    const { store, service, event, arrow, bolt } = await setup(Sport.AUTO_RACING);
+    await service.persistSessionUpdatesForSportEvent(event.id, [session()], PROVIDER);
+
+    const corrected = await service.persistSessionUpdatesForSportEvent(event.id, [session({ runners: [runner('Arrow', 2), runner('Bolt', 1), runner('Comet', null, GameSideStatus.DID_NOT_FINISH)] })], PROVIDER);
+
+    const placed = new Map(store.fieldSideRows.map((side) => [side.sportEventParticipantId, side.position]));
+    expect([placed.get(arrow.id), placed.get(bolt.id)]).toEqual([2, 1]);
+    expect(corrected.writeDiagnostics.summary).toMatchObject({ updated: 3, created: 0 });
+  });
+
+  it('skips a mapped driver who is not on the event\'s field, without naming them unmapped', async () => {
+    const { store, service, event } = await setup(Sport.AUTO_RACING);
+    store.addParticipant(store.sports[0].id, 'Reserve', { id: idOf('Reserve'), externalId: 'feed-Reserve' });
+
+    const outcome = await service.persistSessionUpdatesForSportEvent(event.id, [session({ runners: [runner('Arrow', 1), runner('Reserve', 2)] })], PROVIDER);
+
+    expect(outcome).toMatchObject({ updatesPersisted: 1, updatesSkipped: 1, unmappedExternalIds: [] });
+  });
+
+  it('plays no session the provider has not scheduled yet, writing nothing for it', async () => {
+    const { store, service, event } = await setup(Sport.AUTO_RACING);
+
+    const outcome = await service.persistSessionUpdatesForSportEvent(event.id, [session({ startsAt: null })], PROVIDER);
+
+    expect(store.fieldSideRows).toEqual([]);
+    expect(outcome.updatesPersisted).toBe(0);
+  });
+
+  it('stamps the feed\'s race with the current time when the service has no clock of its own', async () => {
+    const { store, event } = await setup(Sport.AUTO_RACING);
+    const service = new RaceResultService({ domainEvents: testDomainEvents(),
+      events: store.sportEventRepo(), field: store.fieldRepo(), participants: store.participantRepo(), mappings: store.mappingRepo(),
+      fieldGames: store.fieldGameRepo(), rounds: store.roundRepo(), sessionTypes: { findEventSessionTypes: async () => ['Race'] },
+      storesRaceResults: eventStoresRaceResults,
+    });
+    const before = Date.now();
+
+    await service.persistSessionUpdatesForSportEvent(event.id, [session()], PROVIDER);
+
+    expect(store.standingRows.every((standing) => (standing.asOf?.getTime() ?? 0) >= before)).toBe(true);
+  });
+
+  it('writes nothing when the league plays no session the feed sent', async () => {
+    playedSessionTypes = [];
+    const { store, service, event } = await setup(Sport.AUTO_RACING);
+
+    const outcome = await service.persistSessionUpdatesForSportEvent(event.id, [session()], PROVIDER);
+
+    expect(store.fieldSideRows).toEqual([]);
+    expect(outcome).toMatchObject({ updatesReturned: 3, updatesPersisted: 0, updatesSkipped: 3 });
   });
 });

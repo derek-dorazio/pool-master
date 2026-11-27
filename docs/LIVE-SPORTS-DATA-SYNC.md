@@ -453,7 +453,9 @@ written.
 Subscribed types are the events `GAME_EVENTS_BY_SET` and `GOLF_EVENT_PHASES` name, by each enabled league row's
 webhook event set: `game.started`, `game.period_ended` (`game.halftime` for soccer, `GAME_HALVES`)
 and `game.ended` for a game league, and the four PGA tournament and round events for
-`GOLF_ROUNDS`.
+`GOLF_ROUNDS`. A league whose set is `NONE` subscribes to nothing: the vendor publishes no
+Formula 1 webhooks (#2045), so its events keep the SCORES interval whatever the provider's other
+leagues do, and are never warned quiet for want of a notification.
 
 While the webhook secret is set, polling is only the safety net:
 
@@ -531,18 +533,19 @@ sequenceDiagram
   participant F as Scoring family writer
   S->>A: getLiveScores(externalId)
   A->>A: route by scope id to the league reader
-  A-->>S: LiveScoreResult {GOLF | GAME}
+  A-->>S: LiveScoreResult {GOLF | GAME | RACE}
   S->>P: onLiveScores(result, providerId)
   P->>P: Zod-validate; find event by the provider's id for it (its mapping); skip unless IN_PROGRESS
   P->>F: the event's scoring family's writer, if it accepts the category
   F-->>P: rows + REBUILD_LEADERBOARDS job, one transaction
 ```
 
-The family is the event's sport league's (`scoringFamilyForEvent`). Finish position (racing) accepts no live scores.
+The family is the event's sport league's (`scoringFamilyForEvent`).
 
 | Category | Writer | Writes |
 |---|---|---|
 | `GOLF` | `StrokePlayResultService` | Each round as the golfer's side result in the round's FIELD Game, and the standings with their totals and ranks, in one write. A tick that changes nothing writes nothing. Stroke play only. |
+| `RACE` | `RaceResultService.persistSessionUpdatesForSportEvent` | Each session the event plays as a Round (*Sessions* below) as its FIELD Game, each runner a side with its place or how it went out (`FINISHED`, `DID_NOT_FINISH`, `DID_NOT_START`); the Game is `COMPLETED` once the provider marks the session final. The standings follow the race's finishing order. A session the event has no Round for, a runner with no mapping or not on the field, and a session that has not changed are skipped. Finish position (racing) only (#2045). |
 | `GAME` | `writeGameScores` | `sport_event_round_match_games`: maps each provider game id to its Game and keeps the Game's status; `sport_event_round_match_game_side_results`: each side's score in that Game and where it played; `sport_event_round_matches` and `sport_event_round_match_sides`: a match's status and each side's outcome, written for a final of a single game or a series through `MatchResultService.recordResult`. Postponed games are marked `POSTPONED`. |
 
 **Games** (#2007). Every match has its Games: a single game has Game 1, and a best-of series is
@@ -596,6 +599,7 @@ nothing (#2005).
 | NBA / NHL / MLB / WNBA playoffs | `nba` / `nhl` / `mlb` / `wnba` | `<league>-<season>-postseason` | raw team id | `GAME`, as series | `<league>-*`, `series-playoffs*.ts` |
 | Premier League | `epl` | `epl-<season>-matchweek-<n>` | raw team id | `GAME` (draws allowed) | `epl-*`, `soccer-contract.ts` |
 | FIFA World Cup | `worldcup` | `fifa-wc-<year>-knockout` | raw team id | `GAME` with shoot-outs | `fifa-world-cup-*` |
+| Formula 1 | `f1` | `f1-<vendor event id>` | raw driver id | `RACE` | `f1-*` |
 
 A participant id is the provider's raw feed id, never prefixed (#2040). The same raw id can name a
 team in two leagues, or a team and a player in one: the participant's provider mapping tells them
@@ -616,6 +620,17 @@ League notes that are not obvious from the code:
   season, so every normalizer must read it.
 - **Round numbering** (`playoffSeries`): a team's first series is round 1, each later one is one
   past the later of its teams' previous series, which puts MLB's bye teams in round 2.
+- **Formula 1** (#2045). A Grand Prix weekend is one event, its slot code the event id, placed on
+  its Season slot by the Grand Prix's name (`NAME_PATTERN`), as golf's tournaments are. The
+  weekend lists every session (practice, qualifying, sprint, race); the league plays as Rounds
+  only the types its `sport_league_provider_session_type_mappings` rows name, which for Formula 1
+  is `Race` alone. The one computation is `sessionRounds` (`packages/shared/domain`): the played
+  sessions with a start, numbered from 1 in the order they start, read by both the events sync
+  and the RACE writer. A weekend with no played session scheduled yet is not created
+  (`NO_PLAYED_SESSION`); a session added to a weekend after it is created gives it no new Round.
+  The grid is the season's driver standings, or the season before's while the new one has none.
+  Plan tiers: events and drivers are free; sessions, session results and driver standings need
+  a paid key, so a free key's events sync is refused (`PROVIDER_LEAGUE_REFUSED`).
 - **WNBA** has no postseason filter, so the whole season is read. **NHL** places games on
   `game_date`.
 

@@ -99,13 +99,16 @@ export const ProviderWebhookEventSet = {
   GAME_HALVES: 'GAME_HALVES',
   /** A golf tournament's start, each round's start, each player's finished round and its end. */
   GOLF_ROUNDS: 'GOLF_ROUNDS',
+  /** None: the provider publishes no notifications for the league (BALLDONTLIE's F1, #2045), which is synced on the schedule only. */
+  NONE: 'NONE',
 } as const;
 export type ProviderWebhookEventSet = (typeof ProviderWebhookEventSet)[keyof typeof ProviderWebhookEventSet];
-/** Games by periods, then by halves, then golf's rounds. */
+/** Games by periods, then by halves, then golf's rounds, then none. */
 export const ProviderWebhookEventSetOrder = explicitOrder<ProviderWebhookEventSet>({
   [ProviderWebhookEventSet.GAME_PERIODS]: 0,
   [ProviderWebhookEventSet.GAME_HALVES]: 1,
   [ProviderWebhookEventSet.GOLF_ROUNDS]: 2,
+  [ProviderWebhookEventSet.NONE]: 3,
 });
 
 /**

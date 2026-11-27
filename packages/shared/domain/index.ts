@@ -51,6 +51,7 @@ export * from './sport-league-structure';
 export * from './slot-periods';
 export * from './sport-league-seasons';
 export * from './slot-matching';
+export * from './provider-sessions';
 export { assertNever, type AssertTrue } from './assert-never';
 export {
   compareScores,

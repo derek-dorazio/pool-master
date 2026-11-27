@@ -75142,7 +75142,8 @@
             "enum": [
               "GAME_PERIODS",
               "GAME_HALVES",
-              "GOLF_ROUNDS"
+              "GOLF_ROUNDS",
+              "NONE"
             ],
             "description": "Which of the provider's webhook events the league sends for its games."
           },
@@ -75274,7 +75275,8 @@
                   "enum": [
                     "GAME_PERIODS",
                     "GAME_HALVES",
-                    "GOLF_ROUNDS"
+                    "GOLF_ROUNDS",
+                    "NONE"
                   ],
                   "description": "Which of the provider's webhook events the league sends for its games."
                 },
@@ -75500,7 +75502,8 @@
                       "enum": [
                         "GAME_PERIODS",
                         "GAME_HALVES",
-                        "GOLF_ROUNDS"
+                        "GOLF_ROUNDS",
+                        "NONE"
                       ],
                       "description": "Which of the provider's webhook events the league sends for its games."
                     },
@@ -75708,7 +75711,8 @@
                       "enum": [
                         "GAME_PERIODS",
                         "GAME_HALVES",
-                        "GOLF_ROUNDS"
+                        "GOLF_ROUNDS",
+                        "NONE"
                       ],
                       "description": "Which of the provider's webhook events the league sends for its games."
                     },
@@ -75830,7 +75834,8 @@
                 "enum": [
                   "GAME_PERIODS",
                   "GAME_HALVES",
-                  "GOLF_ROUNDS"
+                  "GOLF_ROUNDS",
+                  "NONE"
                 ],
                 "description": "Which of the provider's webhook events the league sends for its games."
               },
@@ -76129,7 +76134,8 @@
                             "enum": [
                               "GAME_PERIODS",
                               "GAME_HALVES",
-                              "GOLF_ROUNDS"
+                              "GOLF_ROUNDS",
+                              "NONE"
                             ],
                             "description": "Which of the provider's webhook events the league sends for its games."
                           },

@@ -867,6 +867,16 @@ export interface SportLeagueSeasonRepository {
    */
   findSlotNamePatterns(sportLeagueProviderMappingId: string): Promise<SlotNamePattern[]>;
   /**
+   * The session types a league's provider mapping plays as Rounds (#2045): F1's `Race`. Empty for a
+   * league whose feed lists no sessions. One read.
+   */
+  findSessionTypes(sportLeagueProviderMappingId: string): Promise<string[]>;
+  /**
+   * The session types the event's league plays as Rounds, by its selected provider mapping
+   * (#2045); empty when the league has no selected mapping or plays no sessions. One read.
+   */
+  findEventSessionTypes(sportEventId: string): Promise<string[]>;
+  /**
    * The tournaments the events sync placed by name (#2011), in one transaction: an existing Season
    * slot linked to its tournament's code, or a new Season slot of the definition, in the Season's
    * competition for the definition's competition, with the definition's series format and pairing,

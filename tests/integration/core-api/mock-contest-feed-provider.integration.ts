@@ -737,6 +737,7 @@ describe('mock contest feed provider event-first verification', () => {
       notifiedProviderCadence: () => undefined,
       // No provider league is quiet-checked here: the quiet live scores finding has its own tests.
       quietAfterMs: () => 0,
+      leagueSendsNotifications: () => true,
       findings: { raiseOfSource: () => Promise.resolve() },
       jobLock: heldHere(),
       now: () => syncVerificationNow,

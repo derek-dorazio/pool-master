@@ -13,16 +13,24 @@
  *
  * An apply also writes each runner's core standing, its place in the event (1 the winner, a dead
  * heat sharing a place), so every reader of the event's standings sees the finishing order.
+ *
+ * The feed's results (#2045, `persistSessionUpdatesForSportEvent`) take the same write: each
+ * session of the league's session types is its Round (`sessionRounds`), its runners resolved to
+ * the field through their provider mappings, and a race the feed reports as it is already stored
+ * writes nothing.
  */
 import type { FastifyBaseLogger } from 'fastify';
 import type {
   ParticipantRepository,
   FieldGameRepository,
+  FieldGameWrite,
   FieldSideResult,
   FieldSideWrite,
   FieldStandingWrite,
   SportEventParticipantRepository,
   SportEventRepository,
+  SportEventRoundRepository,
+  SportLeagueSeasonRepository,
   ParticipantProviderMappingRepository,
 } from '@poolmaster/shared/db';
 import {
@@ -34,8 +42,10 @@ import {
   type GameSideStatus as GameSideStatusValue,
   type SportEvent,
   SportEventParticipantStatus,
+  requireProviderCodeOfSourceId,
+  sessionRounds,
 } from '@poolmaster/shared/domain';
-import type { ApiErrorCode } from '@poolmaster/shared/dto';
+import type { ApiErrorCode, RaceSessionUpdate } from '@poolmaster/shared/dto';
 import {
   matchAmong,
   feedIdsOfCandidates,
@@ -46,6 +56,17 @@ import {
 import { displayPlace, placesFormFinishingOrder, standingStatusForResult } from './race-order';
 import type { ScoringFamilyEvent } from '../scoring-family-module';
 import { DomainEventType, type DomainEvents } from '../../domain-events';
+import { emptySyncWriteDiagnostics, summarizeSyncWriteRows, type SyncWriteDiagnostics, type SyncWriteDetailRow } from '../../ingestion/core/sync-write-diagnostics';
+
+/** What a feed write of race results did, for the sync run (#2045). */
+export interface RaceSessionPersistenceResult {
+  updatesReturned: number;
+  updatesPersisted: number;
+  updatesSkipped: number;
+  writeDiagnostics: SyncWriteDiagnostics;
+  /** The feed's runner ids no participant is mapped to: skipped, and raised as findings by the publisher. */
+  unmappedExternalIds: readonly string[];
+}
 
 export class RaceResultError extends Error {
   constructor(
@@ -98,8 +119,12 @@ export interface RaceResultServiceDeps {
   events: Pick<SportEventRepository, 'findById'>;
   field: Pick<SportEventParticipantRepository, 'findBySportEvent'>;
   participants: Pick<ParticipantRepository, 'findByIds'>;
-  /** The participants' provider mappings, read when an upload row names a feed id (#2040). */
-  mappings: Pick<ParticipantProviderMappingRepository, 'findByParticipantIds'>;
+  /** The participants' provider mappings, read when an upload row names a feed id (#2040) and for the feed's runners (#2045). */
+  mappings: Pick<ParticipantProviderMappingRepository, 'findByParticipantIds' | 'findByProviderExternalIds'>;
+  /** The event's Rounds, which the feed's sessions are written to (#2045). */
+  rounds: Pick<SportEventRoundRepository, 'findBySportEvent'>;
+  /** The session types the event's league plays as Rounds: its session type provider mappings. */
+  sessionTypes: Pick<SportLeagueSeasonRepository, 'findEventSessionTypes'>;
   /** The race's FIELD Game: its side results and status (#2008). */
   fieldGames: Pick<FieldGameRepository, 'findResults' | 'applyResults'>;
   /**
@@ -268,6 +293,111 @@ export class RaceResultService {
   }
 
   /**
+   * The feed's results for the event (#2045): each session of `playedSessionTypes` is the Round
+   * `sessionRounds` numbers it, and a session for a Round the event does not have is skipped. Each
+   * runner is resolved through its provider mapping to the event's field: one with no mapping is
+   * skipped and answered in `unmappedExternalIds`, one mapped but not on the field is skipped and
+   * logged. A race is official when the feed marks its session final. A session whose results are
+   * stored as the feed reports them writes nothing, so a sync that finds no change rebuilds no
+   * leaderboard.
+   */
+  async persistSessionUpdatesForSportEvent(
+    sportEventId: string,
+    sessions: readonly RaceSessionUpdate[],
+    providerId: string,
+  ): Promise<RaceSessionPersistenceResult> {
+    const playedSessionTypes = new Set(await this.deps.sessionTypes.findEventSessionTypes(sportEventId));
+    const played = sessionRounds(sessions.map((session) => ({ ...session, startsAt: session.startsAt === null ? null : new Date(session.startsAt) })), playedSessionTypes);
+    const updatesReturned = sessions.reduce((total, session) => total + session.runners.length, 0);
+    if (played.length === 0) {
+      return { updatesReturned, updatesPersisted: 0, updatesSkipped: updatesReturned, writeDiagnostics: emptySyncWriteDiagnostics(), unmappedExternalIds: [] };
+    }
+    const externalIds = [...new Set(played.flatMap(({ session }) => session.runners.map((runner) => runner.participantExternalId)))];
+    const [eventRounds, mappings, field, stored] = await Promise.all([
+      this.deps.rounds.findBySportEvent(sportEventId),
+      this.deps.mappings.findByProviderExternalIds(requireProviderCodeOfSourceId(providerId), { sportEventId }, externalIds),
+      this.deps.field.findBySportEvent(sportEventId),
+      this.deps.fieldGames.findResults(sportEventId),
+    ]);
+    const roundNumbers = new Set(eventRounds.map((round) => round.roundNumber));
+    const participantIdByExternalId = new Map(mappings.map((mapping) => [mapping.externalId, mapping.participantId]));
+    const entryIdByParticipantId = new Map(field.map((entry) => [entry.participantId, entry.id]));
+    const unmapped = new Set<string>();
+    const offField = new Set<string>();
+    let skipped = sessions.filter((session) => !played.some((round) => round.session.providerSessionId === session.providerSessionId))
+      .reduce((total, session) => total + session.runners.length, 0);
+    const rows: SyncWriteDetailRow[] = [];
+    const games: FieldGameWrite[] = [];
+    let standings: FieldStandingWrite[] = [];
+    const asOf = (this.deps.now ?? (() => new Date()))();
+    for (const { roundNumber, session } of played) {
+      if (!roundNumbers.has(roundNumber)) {
+        this.deps.logger?.warn({ action: 'liveScore.race.unscheduledRoundSkipped', data: { sportEventId, roundNumber, providerSessionId: session.providerSessionId } }, 'Skipping a race session for a round the event does not have');
+        skipped += session.runners.length;
+        continue;
+      }
+      const finishes: RaceFinish[] = [];
+      for (const runner of session.runners) {
+        const participantId = participantIdByExternalId.get(runner.participantExternalId);
+        const sportEventParticipantId = participantId === undefined ? undefined : entryIdByParticipantId.get(participantId);
+        if (participantId === undefined) unmapped.add(runner.participantExternalId);
+        else if (sportEventParticipantId === undefined) offField.add(runner.participantExternalId);
+        if (sportEventParticipantId === undefined) {
+          skipped += 1;
+          continue;
+        }
+        finishes.push({ sportEventParticipantId, status: runner.status, position: runner.status === GameSideStatus.FINISHED ? runner.position : null });
+      }
+      const sides: FieldSideWrite[] = finishes.map((finish) => ({ ...finish, startPosition: null, score: null, scoreToPar: null, periodsCompleted: null }));
+      const before = new Map(stored.filter((result) => result.roundNumber === roundNumber).map((result) => [result.sportEventParticipantId, result]));
+      const status = session.isOfficial ? MatchStatus.COMPLETED : MatchStatus.IN_PROGRESS;
+      const unchanged = sides.every((side) => {
+        const result = before.get(side.sportEventParticipantId);
+        return result !== undefined && result.status === side.status && result.position === side.position && result.gameStatus === status;
+      });
+      for (const side of sides) {
+        rows.push({
+          id: `race-result:${side.sportEventParticipantId}:${String(roundNumber)}`,
+          entityType: 'SportEventRoundMatchGameSideResult',
+          disposition: unchanged ? 'UNCHANGED' : before.has(side.sportEventParticipantId) ? 'UPDATED' : 'CREATED',
+          after: { status: side.status, position: side.position },
+        });
+      }
+      if (unchanged) continue;
+      games.push({ roundNumber, status, completedAt: session.isOfficial ? asOf : null, sides });
+      // The event's standing is its race's finishing order (one race per event, #2008).
+      const places = finishingPlaces(finishes.map((finish) => ({ resultStatus: finish.status, finishPosition: finish.position })));
+      standings = finishes.map((side) => ({
+        sportEventParticipantId: side.sportEventParticipantId,
+        position: side.position,
+        displayPosition: side.position === null ? null : displayPlace(side.position, places),
+        status: standingStatusForResult(side.status),
+        asOf,
+        total: null,
+        scoreToPar: null,
+      }));
+    }
+    if (unmapped.size > 0 || offField.size > 0) {
+      this.deps.logger?.warn(
+        { action: 'liveScore.race.runnersSkipped', data: { providerId, sportEventId, unmapped: [...unmapped], notOnField: [...offField] } },
+        'Skipping race results for runners with no mapping, or not on the event\'s field',
+      );
+    }
+    if (games.length > 0) {
+      const rebuild = await this.deps.domainEvents.collect({ type: DomainEventType.SPORT_EVENT_RESULTS_CHANGED, sportEventId });
+      await this.deps.fieldGames.applyResults(sportEventId, { games, standings, jobs: rebuild.jobs });
+      rebuild.queued();
+    }
+    return {
+      updatesReturned,
+      updatesPersisted: games.reduce((total, game) => total + game.sides.length, 0),
+      updatesSkipped: skipped,
+      writeDiagnostics: summarizeSyncWriteRows(rows),
+      unmappedExternalIds: [...unmapped],
+    };
+  }
+
+  /**
    * The event a finishing order is for, refused with 422 EVENT_SCORING_FAMILY_MISMATCH when its
    * sport's scoring family does not keep race results. Null when there is no such event; the
    * handler has already answered 404 for that.
@@ -299,6 +429,13 @@ function finishingPlaces(results: Iterable<Pick<RaceResultValues, 'resultStatus'
   return [...results].flatMap((result) => (
     result.resultStatus === GameSideStatus.FINISHED && result.finishPosition !== null ? [result.finishPosition] : []
   ));
+}
+
+/** A runner's place in one feed session, on the event's field. */
+interface RaceFinish {
+  sportEventParticipantId: string;
+  status: GameSideStatusValue;
+  position: number | null;
 }
 
 /** A race is its event's round 1 (#2008): one FIELD Game with every runner a side. */

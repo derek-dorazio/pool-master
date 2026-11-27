@@ -9,7 +9,7 @@
  * persistence path.
  *
  * A category arrives with the scoring code that persists it (#605): GOLF for stroke play, GAME
- * for head-to-head games (#1496).
+ * for head-to-head games (#1496), RACE for finish position (#2045).
  */
 
 import { z } from 'zod';
@@ -72,6 +72,28 @@ export const GameScoreUpdateSchema = z.object({
 }).describe('Head-to-head game update emitted by game adapters.');
 export type GameScoreUpdate = z.infer<typeof GameScoreUpdateSchema>;
 
+/**
+ * RACE — one session of a field event, with every runner's result in it as the provider reports
+ * it (#2045): a Formula 1 weekend's race. Each runner is the provider's id for them, resolved to
+ * the event's field through their provider mapping. The writer plays only the sessions of the
+ * league's session types, each as its Round (`sessionRounds`).
+ */
+const RaceRunnerUpdateSchema = z.object({
+  participantExternalId: z.string().min(1).describe('Provider-side runner identifier; resolved to the event\'s field before persistence.'),
+  status: z.enum(GameSideStatus).describe('How the runner\'s session ended: FINISHED with a place, or how they went out.'),
+  position: z.number().int().min(1).nullable().describe('The runner\'s finishing place; null unless FINISHED.'),
+}).describe('One runner\'s result in a session.');
+export type RaceRunnerUpdate = z.infer<typeof RaceRunnerUpdateSchema>;
+
+const RaceSessionUpdateSchema = z.object({
+  providerSessionId: z.string().min(1),
+  sessionType: z.string().min(1).describe('The session\'s type, exactly as the provider sends it ("Race").'),
+  startsAt: z.iso.datetime().nullable(),
+  isOfficial: z.boolean().describe('Whether the provider marks the session final: its results are official.'),
+  runners: z.array(RaceRunnerUpdateSchema),
+}).describe('One session of a field event with its runners\' results.');
+export type RaceSessionUpdate = z.infer<typeof RaceSessionUpdateSchema>;
+
 // ============================================================================
 // LiveScoreResult discriminated union
 // ============================================================================
@@ -101,6 +123,11 @@ export const LiveScoreResultSchema = z.discriminatedUnion('category', [
     category: z.literal('GAME'),
     ...sportEventScope,
     games: z.array(GameScoreUpdateSchema),
+  }),
+  z.object({
+    category: z.literal('RACE'),
+    ...sportEventScope,
+    sessions: z.array(RaceSessionUpdateSchema),
   }),
 ]);
 export type LiveScoreResult = z.infer<typeof LiveScoreResultSchema>;
