@@ -97,7 +97,7 @@ describe('how the seeded slot definitions are played (#2043)', () => {
     const slots = await getPrisma().sportLeagueCompetitionSlot.findMany({
       where: { sportLeague: { name: { not: { startsWith: 'Structure League' } } } },
       select: {
-        key: true, seriesFormat: true, matchFormat: true, canEndTied: true, periodUnit: true, periodCount: true,
+        key: true, slotKind: true, seriesFormat: true, matchFormat: true, canEndTied: true, periodUnit: true, periodCount: true,
         competition: { select: { phase: { select: { phase: true } } } },
         sportLeague: { select: { name: true, scoringFamily: true, sport: { select: { sport: true } } } },
       },
@@ -112,14 +112,17 @@ describe('how the seeded slot definitions are played (#2043)', () => {
     expect(slots.filter((slot) => (slot.scoringFamily === 'HEAD_TO_HEAD') !== (slot.matchFormat === MatchFormat.HEAD_TO_HEAD))).toEqual([]);
   });
 
-  it('lets a soccer league\'s regular season, the legs of its two-legged ties and the NFL\'s regular season end level, never a one-game knockout or another league\'s game', async () => {
+  it('lets a soccer matchday (a league\'s week or a tournament\'s group matchday), the legs of its two-legged ties and the NFL\'s regular season end level, never a one-game knockout or another league\'s game', async () => {
     const slots = await seededSlots();
     const tied = (league: string, key: string) => slots.find((slot) => slot.league === league && slot.key === key)?.canEndTied;
 
     expect(slots.filter((slot) => slot.canEndTied && slot.sport !== Sport.SOCCER && !(slot.league === 'NFL' && slot.phase === LeaguePhase.REGULAR))).toEqual([]);
     expect(slots.filter((slot) => slot.league === 'NFL' && slot.phase === LeaguePhase.REGULAR && !slot.canEndTied)).toEqual([]);
-    expect(slots.filter((slot) => slot.sport === Sport.SOCCER && slot.canEndTied !== (slot.phase === LeaguePhase.REGULAR || slot.seriesFormat === SeriesFormat.AGGREGATE))).toEqual([]);
-    expect([tied('Premier League', 'WEEK_1'), tied('UEFA Champions League', 'ROUND_OF_16'), tied('UEFA Champions League', 'FINAL'), tied('NFL', 'WEEK_1'), tied('NFL', 'FINAL')]).toEqual([true, true, false, true, false]);
+    expect(slots.filter((slot) => slot.sport === Sport.SOCCER && slot.canEndTied !== (slot.slotKind === SlotKind.WEEK || slot.seriesFormat === SeriesFormat.AGGREGATE))).toEqual([]);
+    expect([
+      tied('Premier League', 'WEEK_1'), tied('FIFA World Cup', 'MATCHDAY_1'), tied('FIFA World Cup', 'ROUND_OF_32'),
+      tied('UEFA Champions League', 'ROUND_OF_16'), tied('UEFA Champions League', 'FINAL'), tied('NFL', 'WEEK_1'), tied('NFL', 'FINAL'),
+    ]).toEqual([true, true, false, true, false, true, false]);
   });
 
   it('plays the NFL in four quarters, men\'s college basketball in two halves, MLB in nine innings and the PGA TOUR over eighteen holes, and a race in no periods', async () => {
