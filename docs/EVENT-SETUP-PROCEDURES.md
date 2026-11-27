@@ -67,10 +67,11 @@ tour's League page, its Events tab, and choose *New test event*
 | Tour | Prefilled from the League page |
 | Test slot | The slot added in 1 (only free test slots of the current Season are listed) |
 | Name, Venue, Location | A name of your own (for example "Derek's Golf Tournament") |
+| Rounds | **4**, the tournament's rounds, all played in its one slot |
 | Move this tournament through Live and Completed automatically | **Unchecked** |
 
-The tournament takes its dates from its slot and its round count from its tour; neither is set
-here, nor later in its ⚙ dialog. Its **Slots** tab lists the slot.
+The tournament takes its dates from its slot, and its round count is the rounds it was made with
+(its Round rows, #2008); neither changes later in its ⚙ dialog. Its **Slots** tab lists the slot.
 
 The tournament is saved as a **draft**: commissioners can't see it until step 6.
 

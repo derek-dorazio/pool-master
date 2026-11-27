@@ -54,7 +54,6 @@ async function seedRace(status: 'SCHEDULED' | 'COMPLETED' = 'COMPLETED') {
       startDate: new Date('2026-05-02T22:00:00.000Z'),
       endDate: new Date('2026-05-02T22:05:00.000Z'),
       status,
-      rounds: 1,
     },
   });
   await createRoundRows(prisma, new PrismaSportEventRoundRepository(getAppPrisma()), event, [{ roundNumber: 1, scheduledDate: event.startDate }]);

@@ -10,7 +10,7 @@ import { correctFieldParticipant } from './helpers/event-field';
 import { readCsrfToken, submitAndRead } from './helpers/browser-writes';
 import { addTestParticipants } from './helpers/test-participants';
 import { removeJourneyRun, type JourneyRun } from './helpers/journey-teardown';
-import { createTestEvent, findSeededSportLeague } from './helpers/test-event';
+import { createTestEventThroughApi, findSeededSportLeague } from './helpers/test-event';
 import { registerFreshUser } from './helpers/user-session';
 import { newRunId, e2eName, e2eEmail, e2eUsername, e2eLeagueCode } from './helpers/test-marker';
 import { AWAY_SIDE, HOME_SIDE, bracketLoadMatch, teamOn, type BracketReadMatch } from './helpers/match-sides';
@@ -210,23 +210,19 @@ test('act 1: the root admin builds the 2025 WNBA playoffs — league, eight team
   const eventId = await test.step(`create the ${ROUND_COUNT}-round tournament on the league, a week out`, async () => {
     const start = addDays(new Date(), 7);
     start.setHours(19, 0, 0, 0);
-    // Eight teams start at the quarterfinals.
-    const created = await createTestEvent(page, {
-      sportUrlSegment: 'basketball',
+    // Eight teams start at the quarterfinals: three series, a round in each slot (#2008).
+    const created = await createTestEventThroughApi(page.request, { 'x-csrf-token': await readCsrfToken(page) }, {
       sportLeagueId: leagueId,
       slotKind: 'QUARTERFINAL',
+      laterSlotKinds: ['SEMIFINAL', 'FINAL'],
       slotLabel: run.tournamentName,
-      startsAt: start,
+      startsAt: start.toISOString(),
       name: run.tournamentName,
     });
-    expect(created.sport).toBe('BASKETBALL');
-    // The event starts from basketball's six rounds; three series make the WNBA playoffs.
+    await page.goto(`/manage/sports/basketball/events/${created.id}/field`);
+    await expect(page.getByTestId('root-admin-event-page')).toBeVisible();
     await page.getByTestId('root-admin-event-settings').click();
-    await expect(page.getByTestId('root-admin-event-settings-dialog-rounds')).toContainText('6');
-    await page.getByTestId('root-admin-event-settings-dialog-edit').click();
-    await page.getByTestId('root-admin-sport-event-edit-rounds').fill(String(ROUND_COUNT));
-    const edited = await submitAndRead<{ event: { rounds: number } }>(page, 'root-admin-event-settings-dialog-save', 'PATCH', `/api/v1/events/${created.id}`);
-    expect(edited.event.rounds).toBe(ROUND_COUNT);
+    await expect(page.getByTestId('root-admin-event-settings-dialog-rounds')).toContainText(String(ROUND_COUNT));
     return created.id;
   });
   journey.eventId = eventId;

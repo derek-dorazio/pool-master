@@ -8,7 +8,6 @@ import {
 } from '../../../packages/core-api/src/mappers/sport-events.mapper';
 import type { SportEventSummary } from '../../../packages/core-api/src/modules/events/service';
 import { inMemoryStandardPricing } from '../../support/budget-pricing';
-import { ROUNDS_PAR_MAX, ROUNDS_PAR_MIN } from '@poolmaster/shared/dto';
 import { roundSlot } from '../../support/round-slots';
 
 function event(overrides: Partial<SportEvent> = {}): SportEvent {
@@ -22,6 +21,7 @@ function event(overrides: Partial<SportEvent> = {}): SportEvent {
     // Far ahead, so the mapper's own clock always reads it as not yet started.
     startDate: new Date('2999-04-12T16:00:00.000Z'),
     slotDefinitions: [],
+    roundCount: 0,
     sportLeagueSeasonId: 'season-2026',
     championshipYear: 2026,
     sportLeagueId: '33333333-3333-4333-8333-333333333333',
@@ -73,9 +73,9 @@ describe('SportEvent pricing on the wire (#93)', () => {
   });
 });
 
-describe('SportEvent par bounds on the wire', () => {
-  it('sends the par per round an update takes, so the settings form checks what the server checks', () => {
-    expect(mapSportEventToDto(summary(event(), 72))).toEqual(expect.objectContaining({ roundsParMin: ROUNDS_PAR_MIN, roundsParMax: ROUNDS_PAR_MAX }));
+describe('SportEvent round count on the wire (#2008)', () => {
+  it('sends the count of the event\'s Round rows as roundCount', () => {
+    expect(mapSportEventToDto(summary(event({ roundCount: 4 }), 72)).roundCount).toBe(4);
   });
 });
 
@@ -138,7 +138,6 @@ describe('SportEvent readiness on the wire', () => {
       venue: null,
       location: null,
       endDate: null,
-      rounds: null,
     });
   });
 

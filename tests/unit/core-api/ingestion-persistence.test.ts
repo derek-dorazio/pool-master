@@ -42,7 +42,6 @@ function linkedRow(overrides: Record<string, unknown> & { sport?: Sport } = {}) 
     startDate: new Date('2026-05-02T20:00:00.000Z'),
     endDate: null,
     status: 'SCHEDULED',
-    rounds: 4,
     releaseAt: new Date('2026-05-01T20:00:00.000Z'),
     fieldLocksAt: new Date('2026-05-02T19:00:00.000Z'),
     fieldLocked: false,
@@ -563,11 +562,11 @@ describe('IngestionPersistence', () => {
     expect(prisma.$transaction).not.toHaveBeenCalled();
   });
 
-  // #118, #435 — the stored header, rounds and status of a linked event are not the feed's to
+  // #118, #435 — the stored header and status of a linked event are not the feed's to
   // change here.
-  it('reports a linked event\'s stored header, rounds and status unchanged whatever the feed sends', async () => {
+  it('reports a linked event\'s stored header and status unchanged whatever the feed sends', async () => {
     const prisma = {
-      sportEventProviderMapping: eventReads([linkedRow({ name: 'Admin Open', rounds: 4 })]),
+      sportEventProviderMapping: eventReads([linkedRow({ name: 'Admin Open' })]),
       sportEvent: { update: jest.fn() },
       $transaction: jest.fn(),
     };
@@ -579,8 +578,8 @@ describe('IngestionPersistence', () => {
 
     expect(result.writeDiagnostics.rows[0]).toMatchObject({
       disposition: 'UNCHANGED',
-      before: expect.objectContaining({ name: 'Admin Open', rounds: 4 }),
-      after: expect.objectContaining({ name: 'Admin Open', rounds: 4 }),
+      before: expect.objectContaining({ name: 'Admin Open' }),
+      after: expect.objectContaining({ name: 'Admin Open' }),
     });
     expect(prisma.sportEvent.update).not.toHaveBeenCalled();
   });

@@ -1,4 +1,4 @@
-import { createEvent, createLeague, createTestSlot, listEvents, updateEvent, loginUser, registerUser } from '@poolmaster/shared/generated/hey-api';
+import { createEvent, createLeague, createTestSlot, listEvents, loginUser, registerUser } from '@poolmaster/shared/generated/hey-api';
 import type { Client } from '@poolmaster/shared/generated/hey-api/client';
 import { randomUUID } from 'node:crypto';
 import { fixtureSeasonId, keyedSlotDefinitionId, withCurrentSeason, type TestRoundSlot } from '../support/event-edition';
@@ -310,7 +310,7 @@ export interface TestEventBody {
   location?: string;
   startDate: string;
   endDate?: string;
-  /** A round count other than its league's default, set by an edit after the create. */
+  /** How many rounds the event plays in its one slot (#2008); one unless given. */
   rounds?: number;
   /**
    * One test slot per round (#2006), of a postseason definition made on first use, round 1 first
@@ -323,8 +323,8 @@ export interface TestEventBody {
 
 /**
  * A test event through the API as QA makes one (#2004): a labelled test slot in the league's
- * current Season (`createTestSlot`), then the event on it (`createEvent`). Answers the create's
- * result; a round count is set by an edit, and the result then carries the edited event.
+ * current Season (`createTestSlot`), then the event on it (`createEvent`), with its `rounds`.
+ * Answers the create's result.
  */
 export async function createTestEvent({ client, body }: { client: Client; body: TestEventBody }) {
   const { sportLeagueId, championshipYear, startDate, endDate, rounds, roundSlots, ...event } = body;
@@ -340,11 +340,7 @@ export async function createTestEvent({ client, body }: { client: Client; body: 
     body: { slotDefinitionId, label: uniqueTestSlotLabel(), startsAt: startDate, ...(endDate !== undefined && { endsAt: endDate }) },
   });
   if (!slot.data) throw new Error(`Could not add a test slot: ${JSON.stringify(slot.error)}`);
-  const created = await createEvent({ client, body: { ...event, seasonSlotIds: [slot.data.slot.id] } });
-  if (rounds === undefined || !created.data || created.data.event.rounds === rounds) return created;
-  const edited = await updateEvent({ client, path: { eventId: created.data.event.id }, body: { rounds } });
-  if (!edited.data) throw new Error(`Could not set the test event's rounds: ${JSON.stringify(edited.error)}`);
-  return { ...created, data: edited.data };
+  return createEvent({ client, body: { ...event, seasonSlotIds: [slot.data.slot.id], ...(rounds !== undefined && { rounds }) } });
 }
 
 /**

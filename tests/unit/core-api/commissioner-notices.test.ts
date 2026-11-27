@@ -249,7 +249,7 @@ describe('CommissionerNotices', () => {
       const week = (name: string, days: number) => event({
         name,
         sport: Sport.FOOTBALL,
-        rounds: 1,
+        roundCount: 1,
         slotDefinitions: [{ id: slotOf(name), slotKind: SlotKind.WEEK, canEndTied: false, periods: null, matchFormat: MatchFormat.HEAD_TO_HEAD }],
         sportLeagueId: 'nfl',
         sportLeagueSeasonId: 'season-2026',
@@ -527,7 +527,7 @@ describe('CommissionerNotices', () => {
       const week = (name: string, days: number) => event({
         name,
         sport: Sport.FOOTBALL,
-        rounds: 1,
+        roundCount: 1,
         slotDefinitions: [{ id: slotOf(name), slotKind: SlotKind.WEEK, canEndTied: false, periods: null, matchFormat: MatchFormat.HEAD_TO_HEAD }],
         sportLeagueId: 'nfl',
         sportLeagueSeasonId: 'season-2026',

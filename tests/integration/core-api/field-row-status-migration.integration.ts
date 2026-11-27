@@ -57,7 +57,6 @@ async function migrate(oldRows: readonly OldRow[]): Promise<string[]> {
     name: `Migrated Field ${randomUUID().slice(0, 8)}`,
     startDate: new Date('2027-04-08T12:00:00.000Z'),
     status: 'SCHEDULED',
-    rounds: 4,
     autoLifecycleEnabled: false,
   });
   const golfers = await Promise.all(oldRows.map((_, index) => prisma.participant.create({

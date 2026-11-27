@@ -115,7 +115,7 @@ export async function publishLiveScoreUpdate(
     select: {
       sportEvent: {
         select: {
-          id: true, rounds: true, status: true,
+          id: true, status: true,
           sportLeagueSeason: { select: { sportLeague: { select: { id: true, scoringFamily: true, sport: { select: { sport: true } } } } } },
         },
       },
@@ -163,10 +163,7 @@ export async function publishLiveScoreUpdate(
     scoringFamily: sportEvent.sportLeagueSeason.sportLeague.scoringFamily,
   }).liveScores;
   const acceptedCategory = writer?.category ?? null;
-  const target: LiveScoreTargetEvent = {
-    id: sportEvent.id,
-    rounds: sportEvent.rounds,
-  };
+  const target: LiveScoreTargetEvent = { id: sportEvent.id };
   const write = writer === null ? null : writeFor(writer, deps, target, validated);
   if (write === null) {
     deps.logger?.warn(

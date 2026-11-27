@@ -107,7 +107,7 @@ describe('SDK Functional: the 2025 NCAA singles championships', () => {
     ] as const) {
       const { sportLeague, event } = await findDraw(admin, file, leagueIndex);
       expect(expectDefined((await listEventRounds({ client: admin.client, path: { eventId: event.id } })).data).rounds.map((round) => round.slot.slotKind)).toEqual(['ROUND_OF_64', 'ROUND_OF_32', 'ROUND_OF_16', 'QUARTERFINAL', 'SEMIFINAL', 'FINAL']);
-      expect([event.status, event.rounds]).toEqual(['SCHEDULED', 6]);
+      expect([event.status, event.roundCount]).toEqual(['SCHEDULED', 6]);
       const field = expectDefined((await listEventParticipants({ client: admin.client, path: { eventId: event.id } })).data).participants;
       expect(field).toHaveLength(64);
       expect(field.map((row) => row.seedNumber).filter((seed) => seed !== null).sort((left, right) => left - right))

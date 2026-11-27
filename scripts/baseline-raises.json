@@ -645,6 +645,36 @@
     },
     {
       "file": "scripts/retired-names.json",
+      "key": "roundsPar",
+      "now": 0,
+      "reason": "retired by #2008"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "ROUNDS_PAR_MIN",
+      "now": 0,
+      "reason": "retired by #2008"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "ROUNDS_PAR_MAX",
+      "now": 0,
+      "reason": "retired by #2008"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "extendTo",
+      "now": 0,
+      "reason": "retired by #2008"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "scoresUnplayedRoundsAgainstPar",
+      "now": 0,
+      "reason": "retired by #2008"
+    },
+    {
+      "file": "scripts/retired-names.json",
       "key": "listEventTiers",
       "now": 0,
       "reason": "retired by #2044"

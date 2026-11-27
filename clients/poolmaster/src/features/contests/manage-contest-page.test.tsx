@@ -960,7 +960,7 @@ describe('Commissioner tools › Contests › one contest › Edit', () => {
 
 /** A six-round basketball tournament, not started unless told otherwise. */
 function basketballEvent(overrides: Partial<SportEventDto> = {}) {
-  return buildSportEvent({ sport: 'BASKETBALL', name: 'March Madness', venue: null, rounds: 6, tierCount: 4, ...overrides });
+  return buildSportEvent({ sport: 'BASKETBALL', name: 'March Madness', venue: null, roundCount: 6, tierCount: 4, ...overrides });
 }
 
 function bracketContest(overrides: Partial<ContestDto> = {}) {

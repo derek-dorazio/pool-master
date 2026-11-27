@@ -83,7 +83,6 @@ async function seedPage(offers: number, displayOrder: number, first = 0) {
         name,
         startDate,
         status: SportEventStatus.SCHEDULED,
-        rounds: roundNumber,
       },
     });
     const round = await prisma.sportEventRound.create({ data: { sportEventId: event.id, sportEventSlotId: await oneEventSlotId(prisma, event.id), roundNumber, scheduledDate: startDate } });

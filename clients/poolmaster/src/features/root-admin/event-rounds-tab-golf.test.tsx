@@ -60,7 +60,7 @@ function tournament(overrides: Parameters<typeof sportEventFixture>[0] = {}) {
     startDate: '2026-07-16T08:00:00.000Z',
     endDate: '2026-07-19T20:00:00.000Z',
     status: 'IN_PROGRESS',
-    rounds: 4,
+    roundCount: 4,
     sportLeagueSeasonId: 'season-2026',
     championshipYear: 2026,
     sportLeagueId: 'league-1',
@@ -220,7 +220,7 @@ describe('pool-master-r11 Rounds and matches tab for a golf event', () => {
   });
 
   it('says a tournament with no rounds has none scheduled, and offers no round tools', async () => {
-    seed({ tournament: { rounds: 0 } });
+    seed({ tournament: { roundCount: 0 } });
     listEventRoundsMock.mockResolvedValue({ data: { rounds: [] } });
     renderPage();
 

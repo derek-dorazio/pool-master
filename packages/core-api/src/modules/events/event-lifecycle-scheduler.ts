@@ -93,7 +93,7 @@ export class EventLifecycleScheduler {
     const now = this.now();
     const candidates = await this.sportEvents.findAutoLifecycleCandidates();
     const roundsByEvent = await this.rounds.findBySportEvents(candidates.map((candidate) => candidate.id));
-    const schedules = candidates.map((candidate) => ({ candidate, roundSchedule: countedRounds(candidate, roundsByEvent.get(candidate.id) ?? []) }));
+    const schedules = candidates.map((candidate) => ({ candidate, roundSchedule: roundsByEvent.get(candidate.id) ?? [] }));
 
     for (const { candidate, roundSchedule } of schedules) {
       try {
@@ -147,15 +147,6 @@ function completionDueAt(event: SportEvent, roundSchedule: SportEventRound[]): D
     .map((round) => round.scheduledEndAt)
     .filter((date): date is Date => date !== null);
   return maxDate(roundEnds) ?? event.endDate;
-}
-
-/**
- * The rounds the event plays: an admin who cuts the round count (weather) leaves the rows past
- * it stored, and those no longer decide when the event starts or ends.
- */
-function countedRounds(event: SportEvent, rounds: SportEventRound[]): SportEventRound[] {
-  const roundCount = event.rounds;
-  return roundCount ? rounds.filter((round) => round.roundNumber <= roundCount) : rounds;
 }
 
 function minDate(dates: Date[]): Date | undefined {

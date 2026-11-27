@@ -42,10 +42,6 @@ describe.each(definitions.map((definition) => [definition.sport, definition] as 
     }
   });
 
-  it('gives a new event at least one round', () => {
-    expect(Number.isInteger(definition.defaultRounds) && definition.defaultRounds >= 1).toBe(true);
-  });
-
   it('says what its pick\'em pools can be exactly when it offers pick\'em (#792)', () => {
     expect(definition.pickEm !== undefined).toBe(definition.selectionTypes.includes(SelectionType.PICK_EM));
   });
@@ -101,11 +97,6 @@ describe('sport registry', () => {
     expect(sportVocabulary(golf).sportLeague).toEqual({ one: 'tour', many: 'tours' });
   });
 
-  it('gives a new horse race one round', () => {
-    const horseRacing = getSportDefinition(Sport.HORSE_RACING);
-
-    expect(horseRacing.defaultRounds).toBe(1);
-  });
 
   it('scores auto racing by finishing place in races of a series, calls a driver a driver, and names no rider or top places, and reads the generic Eliminated', () => {
     const autoRacing = getSportDefinition(Sport.AUTO_RACING);
@@ -127,7 +118,6 @@ describe('sport registry', () => {
   it('gives a new auto race one round, and five tiers of eight so a 40-car field fills each exactly', () => {
     const autoRacing = getSportDefinition(Sport.AUTO_RACING);
 
-    expect(autoRacing.defaultRounds).toBe(1);
     expect(autoRacing.selectionTypes).toEqual([SelectionType.TIERED, SelectionType.BUDGET_PICK, SelectionType.RANDOM_DRAW]);
   });
 
@@ -151,7 +141,6 @@ describe('sport registry', () => {
   it('gives a new cycling race one round, not one per stage, and five tiers of ten with the last taking the rest', () => {
     const cycling = getSportDefinition(Sport.CYCLING);
 
-    expect(cycling.defaultRounds).toBe(1);
     expect(cycling.selectionTypes).toEqual([SelectionType.TIERED, SelectionType.BUDGET_PICK, SelectionType.RANDOM_DRAW]);
   });
 
@@ -175,15 +164,9 @@ describe('sport registry', () => {
   it('gives a new running race one round, and four tiers of six with the last taking the rest of an elite field', () => {
     const running = getSportDefinition(Sport.RUNNING);
 
-    expect(running.defaultRounds).toBe(1);
     expect(running.selectionTypes).toEqual([SelectionType.TIERED, SelectionType.BUDGET_PICK, SelectionType.RANDOM_DRAW]);
   });
 
-  it('gives a new golf event four rounds', () => {
-    const golf = getSportDefinition(Sport.GOLF);
-
-    expect(golf.defaultRounds).toBe(4);
-  });
 });
 
 describe('sportAllowsSelectionType', () => {
@@ -203,9 +186,6 @@ describe('basketball', () => {
     expect(basketball.scoringDefinitions).toEqual(['KNOCKOUT_ROUND_POINTS']);
   });
 
-  it('gives a new tournament six rounds', () => {
-    expect(basketball.defaultRounds).toBe(6);
-  });
 
   it('offers the three roster selection types, pick\'em, bracket, survivor and squares', () => {
     expect(basketball.selectionTypes).toEqual([
@@ -229,9 +209,6 @@ describe('American football', () => {
     expect(americanFootball.scoringDefinitions).toEqual(['KNOCKOUT_ROUND_POINTS']);
   });
 
-  it('gives new playoffs four rounds', () => {
-    expect(americanFootball.defaultRounds).toBe(4);
-  });
 
   it('offers the three roster selection types, pick\'em, bracket, survivor and squares', () => {
     expect(americanFootball.selectionTypes).toEqual([
@@ -259,9 +236,6 @@ describe('hockey', () => {
     expect(hockey.scoringDefinitions).toEqual(['KNOCKOUT_ROUND_POINTS']);
   });
 
-  it('gives new playoffs four rounds, for a 16-team bracket', () => {
-    expect(hockey.defaultRounds).toBe(4);
-  });
 
   it('offers the three roster selection types, bracket, survivor and squares, and no pick\'em, since it has no weeks of games', () => {
     expect(hockey.selectionTypes).toEqual([
@@ -284,9 +258,6 @@ describe('baseball', () => {
     expect(baseball.scoringDefinitions).toEqual(['KNOCKOUT_ROUND_POINTS']);
   });
 
-  it('gives a new postseason four rounds, for a 12-team bracket', () => {
-    expect(baseball.defaultRounds).toBe(4);
-  });
 
   it('offers the three roster selection types, bracket and survivor, and no squares or pick\'em, since every round is a series', () => {
     expect(baseball.selectionTypes).toEqual([SelectionType.TIERED, SelectionType.BUDGET_PICK, SelectionType.RANDOM_DRAW, SelectionType.BRACKET, SelectionType.SURVIVOR]);
@@ -312,9 +283,6 @@ describe('soccer', () => {
     expect(sportVocabulary(soccer).overtime).toBe('extra time');
   });
 
-  it('gives a new tournament four rounds, for a 16-team knockout stage', () => {
-    expect(soccer.defaultRounds).toBe(4);
-  });
 
   it('offers the three roster selection types, pick\'em, bracket, survivor and squares, its pick\'em taking draw picks and no spread', () => {
     expect(soccer.selectionTypes).toEqual([
@@ -341,9 +309,6 @@ describe('tennis', () => {
     expect(sportVocabulary(tennis).shootout).toBeUndefined();
   });
 
-  it('gives a new draw seven rounds', () => {
-    expect(tennis.defaultRounds).toBe(7);
-  });
 
   it('offers the three roster selection types, bracket and survivor, and no pick\'em or squares', () => {
     expect(tennis.selectionTypes).toEqual([

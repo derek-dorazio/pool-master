@@ -19,7 +19,6 @@ import type { SportDefinition } from './sport-definition';
 export const americanFootballSportDefinition: SportDefinition = {
   sport: Sport.FOOTBALL,
   name: 'Football',
-  defaultRounds: 4,
   selectionTypes: [SelectionType.TIERED, SelectionType.BUDGET_PICK, SelectionType.RANDOM_DRAW, SelectionType.PICK_EM, SelectionType.BRACKET, SelectionType.SURVIVOR, SelectionType.SQUARES],
   scoringDefinitions: ['KNOCKOUT_ROUND_POINTS'],
   pickEm: { tiePicks: false, againstTheSpread: true },
