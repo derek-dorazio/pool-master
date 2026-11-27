@@ -211,7 +211,11 @@ function coverableSeasons(): Pick<SportLeagueSeasonRepository, 'findCoverableSlo
   };
 }
 
-function createContestConfigTemplateRepo(): ContestConfigTemplateRepository {
+/** What every stroke-play template presets (migration 20271218029700): the server picks no settings (#2255). */
+const GOLF_TEMPLATE_SCORING: ContestScoringSettings = { participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', config: { unplayedRoundToPar: 8 } };
+
+/** The fixture templates, presetting the scoring of the sport the test's contests are in: golf's, else none. */
+function createContestConfigTemplateRepo(scoring: ContestScoringSettings | null = GOLF_TEMPLATE_SCORING): ContestConfigTemplateRepository {
   const template = {
     id: '11111111-1111-4111-8111-111111111111',
     sportLeagueId: PGA_TOUR_LEAGUE_ID,
@@ -230,6 +234,7 @@ function createContestConfigTemplateRepo(): ContestConfigTemplateRepository {
       selectionType: SelectionType.TIERED,
       picksPerTier: 1,
       countedScores: 4,
+      ...(scoring === null ? {} : { scoring }),
     },
     schemaVersion: 1,
     createdAt: new Date('2026-04-07T12:00:00.000Z'),
@@ -1090,6 +1095,33 @@ describe('ContestManagementService', () => {
     ]);
   });
 
+  it('refuses a golf contest whose template presets no scoring and that is sent none with 422 CONTEST_SCORING_SETTINGS_REQUIRED, writing nothing, since the server picks no unplayed-round score', async () => {
+    const contestCoreRepo = createContestRepo();
+    const contestConfigurationRepo = createContestConfigurationRepo();
+    const service = new ContestManagementService({
+      domainEvents: testDomainEvents(),
+      contests: contestCoreRepo,
+      configTemplates: createContestConfigTemplateRepo(null),
+      configurations: contestConfigurationRepo,
+      scoringRules: createParticipantScoringRuleRepo(),
+      tiers: createSportEventTierServiceStub(),
+      seasons: coverableSeasons(),
+      sportEventReader: createSportEventReader(),
+      cups: createCupKeeper(),
+      planEntitlements: platinumEntitlements(),
+    });
+
+    await expect(service.createContest({ leagueId: 'league-1' }, {
+      name: 'Masters With No Scoring',
+      sportEventIds: ['11111111-1111-1111-1111-111111111111'],
+      contestFormat: 'ROSTER',
+      selectionType: 'TIERED',
+      templateId: '11111111-1111-4111-8111-111111111111',
+    })).rejects.toMatchObject({ code: CONTEST_SCORING_SETTINGS_REQUIRED, statusCode: 422 });
+    expect(contestCoreRepo.create).not.toHaveBeenCalled();
+    expect(contestConfigurationRepo.create).not.toHaveBeenCalled();
+  });
+
   it('creates a contest from a seeded template and stores template provenance', async () => {
     const contestCoreRepo = createContestRepo();
     const contestConfigTemplateRepo = createContestConfigTemplateRepo();
@@ -1837,7 +1869,7 @@ describe('ContestManagementService finish-position scoring (#622)', () => {
 
   function raceService(storedScoring: ContestScoringSettings = WIN_PLACE_SHOW) {
     const contestCoreRepo = createContestRepo();
-    const templateRepo = createContestConfigTemplateRepo();
+    const templateRepo = createContestConfigTemplateRepo(null);
     jest.mocked(templateRepo.findById).mockResolvedValue({
       id: '99999999-9999-4999-8999-999999999999',
       sportLeagueId: PGA_TOUR_LEAGUE_ID,
@@ -1929,7 +1961,7 @@ describe('ContestManagementService finish-position scoring (#622)', () => {
     const service = new ContestManagementService({
       domainEvents: testDomainEvents(),
       contests: contestCoreRepo,
-      configTemplates: createContestConfigTemplateRepo(),
+      configTemplates: createContestConfigTemplateRepo(null),
       configurations: createContestConfigurationRepo(),
       scoringRules: scoringRuleRepo,
       tiers: createSportEventTierServiceStub(),
@@ -2580,7 +2612,7 @@ describe('ContestManagementService pick\'em rules (#716)', () => {
     const service = new ContestManagementService({
       domainEvents: testDomainEvents(),
       contests: contestCoreRepo,
-      configTemplates: createContestConfigTemplateRepo(),
+      configTemplates: createContestConfigTemplateRepo(null),
       configurations: contestConfigurationRepo,
       scoringRules: scoringRuleRepo,
       tiers: createSportEventTierServiceStub(),
@@ -2820,7 +2852,7 @@ describe('ContestManagementService bracket rules (#721)', () => {
     const service = new ContestManagementService({
       domainEvents: testDomainEvents(),
       contests: contestCoreRepo,
-      configTemplates: createContestConfigTemplateRepo(),
+      configTemplates: createContestConfigTemplateRepo(null),
       configurations: contestConfigurationRepo,
       scoringRules: createParticipantScoringRuleRepo(),
       tiers: createSportEventTierServiceStub(),
@@ -2994,7 +3026,7 @@ describe('ContestManagementService squares rules (#711)', () => {
 
   function squaresService(
     gameStatus: MatchStatus | null = MatchStatus.SCHEDULED,
-    { roundNumber = 4, squaresFromRound = null, gameSlotDefinitionId = EVENT_SLOT_DEFINITION_ID, configTemplates = createContestConfigTemplateRepo() }: {
+    { roundNumber = 4, squaresFromRound = null, gameSlotDefinitionId = EVENT_SLOT_DEFINITION_ID, configTemplates = createContestConfigTemplateRepo(null) }: {
       roundNumber?: number;
       squaresFromRound?: number | null;
       gameSlotDefinitionId?: string;
@@ -3040,7 +3072,7 @@ describe('ContestManagementService squares rules (#711)', () => {
   });
 
   it('covers the slot its game is played in when its event holds several slots its one-slot template lists, so no starting slot need be chosen', async () => {
-    const configTemplates = createContestConfigTemplateRepo();
+    const configTemplates = createContestConfigTemplateRepo(null);
     const finalSlot = { ...EVENT_SLOT, id: 'definition-final', key: 'FINAL', slotKind: SlotKind.FINAL };
     const listed = await configTemplates.findById(templateIdFor(SelectionType.SQUARES));
     configTemplates.findById = jest.fn().mockResolvedValue({ ...expectDefined(listed), coverageMode: TemplateCoverageMode.ONE_SLOT, slots: [EVENT_SLOT, finalSlot] });
@@ -3052,7 +3084,7 @@ describe('ContestManagementService squares rules (#711)', () => {
   });
 
   it('covers its game\'s slot, not a different starting slot the commissioner sent, so a squares contest never covers a slot its game is not in', async () => {
-    const configTemplates = createContestConfigTemplateRepo();
+    const configTemplates = createContestConfigTemplateRepo(null);
     const finalSlot = { ...EVENT_SLOT, id: 'definition-final', key: 'FINAL', slotKind: SlotKind.FINAL };
     const listed = await configTemplates.findById(templateIdFor(SelectionType.SQUARES));
     configTemplates.findById = jest.fn().mockResolvedValue({ ...expectDefined(listed), coverageMode: TemplateCoverageMode.ONE_SLOT, slots: [EVENT_SLOT, finalSlot] });

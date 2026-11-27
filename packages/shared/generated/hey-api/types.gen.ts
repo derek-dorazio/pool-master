@@ -4452,7 +4452,7 @@ export type ContestConfigurationRequest = {
      */
     maxEntriesPerSquad?: number | null;
     /**
-     * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+     * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.
      */
     scoring?: {
         participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
@@ -4519,7 +4519,7 @@ export type ContestConfigurationRequest = {
      */
     maxEntriesPerSquad?: number | null;
     /**
-     * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+     * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.
      */
     scoring?: {
         participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
@@ -4586,7 +4586,7 @@ export type ContestConfigurationRequest = {
      */
     maxEntriesPerSquad?: number | null;
     /**
-     * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+     * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.
      */
     scoring?: {
         participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
@@ -4653,7 +4653,7 @@ export type ContestConfigurationRequest = {
      */
     maxEntriesPerSquad?: number | null;
     /**
-     * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+     * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.
      */
     scoring?: {
         participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
@@ -4716,7 +4716,7 @@ export type ContestConfigurationRequest = {
      */
     maxEntriesPerSquad?: number | null;
     /**
-     * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+     * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.
      */
     scoring?: {
         participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
@@ -4783,7 +4783,7 @@ export type ContestConfigurationRequest = {
      */
     maxEntriesPerSquad?: number | null;
     /**
-     * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+     * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.
      */
     scoring?: {
         participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
@@ -4842,7 +4842,7 @@ export type ContestConfigurationRequest = {
      */
     maxEntriesPerSquad?: number | null;
     /**
-     * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+     * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.
      */
     scoring?: {
         participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
@@ -5368,7 +5368,7 @@ export type ContestConfigTemplateDto = {
          */
         maxEntriesPerSquad?: number | null;
         /**
-         * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+         * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.
          */
         scoring?: {
             participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
@@ -5435,7 +5435,7 @@ export type ContestConfigTemplateDto = {
          */
         maxEntriesPerSquad?: number | null;
         /**
-         * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+         * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.
          */
         scoring?: {
             participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
@@ -5502,7 +5502,7 @@ export type ContestConfigTemplateDto = {
          */
         maxEntriesPerSquad?: number | null;
         /**
-         * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+         * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.
          */
         scoring?: {
             participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
@@ -5569,7 +5569,7 @@ export type ContestConfigTemplateDto = {
          */
         maxEntriesPerSquad?: number | null;
         /**
-         * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+         * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.
          */
         scoring?: {
             participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
@@ -5632,7 +5632,7 @@ export type ContestConfigTemplateDto = {
          */
         maxEntriesPerSquad?: number | null;
         /**
-         * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+         * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.
          */
         scoring?: {
             participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
@@ -5699,7 +5699,7 @@ export type ContestConfigTemplateDto = {
          */
         maxEntriesPerSquad?: number | null;
         /**
-         * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+         * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.
          */
         scoring?: {
             participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
@@ -5758,7 +5758,7 @@ export type ContestConfigTemplateDto = {
          */
         maxEntriesPerSquad?: number | null;
         /**
-         * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+         * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.
          */
         scoring?: {
             participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
@@ -6184,7 +6184,7 @@ export type ContestConfigTemplateListResponse = {
              */
             maxEntriesPerSquad?: number | null;
             /**
-             * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+             * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.
              */
             scoring?: {
                 participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
@@ -6251,7 +6251,7 @@ export type ContestConfigTemplateListResponse = {
              */
             maxEntriesPerSquad?: number | null;
             /**
-             * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+             * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.
              */
             scoring?: {
                 participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
@@ -6318,7 +6318,7 @@ export type ContestConfigTemplateListResponse = {
              */
             maxEntriesPerSquad?: number | null;
             /**
-             * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+             * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.
              */
             scoring?: {
                 participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
@@ -6385,7 +6385,7 @@ export type ContestConfigTemplateListResponse = {
              */
             maxEntriesPerSquad?: number | null;
             /**
-             * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+             * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.
              */
             scoring?: {
                 participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
@@ -6448,7 +6448,7 @@ export type ContestConfigTemplateListResponse = {
              */
             maxEntriesPerSquad?: number | null;
             /**
-             * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+             * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.
              */
             scoring?: {
                 participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
@@ -6515,7 +6515,7 @@ export type ContestConfigTemplateListResponse = {
              */
             maxEntriesPerSquad?: number | null;
             /**
-             * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+             * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.
              */
             scoring?: {
                 participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
@@ -6574,7 +6574,7 @@ export type ContestConfigTemplateListResponse = {
              */
             maxEntriesPerSquad?: number | null;
             /**
-             * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+             * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.
              */
             scoring?: {
                 participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
@@ -6672,7 +6672,7 @@ export type UpdateContestConfigTemplateRequest = {
          */
         maxEntriesPerSquad?: number | null;
         /**
-         * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+         * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.
          */
         scoring?: {
             participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
@@ -6739,7 +6739,7 @@ export type UpdateContestConfigTemplateRequest = {
          */
         maxEntriesPerSquad?: number | null;
         /**
-         * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+         * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.
          */
         scoring?: {
             participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
@@ -6806,7 +6806,7 @@ export type UpdateContestConfigTemplateRequest = {
          */
         maxEntriesPerSquad?: number | null;
         /**
-         * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+         * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.
          */
         scoring?: {
             participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
@@ -6873,7 +6873,7 @@ export type UpdateContestConfigTemplateRequest = {
          */
         maxEntriesPerSquad?: number | null;
         /**
-         * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+         * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.
          */
         scoring?: {
             participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
@@ -6936,7 +6936,7 @@ export type UpdateContestConfigTemplateRequest = {
          */
         maxEntriesPerSquad?: number | null;
         /**
-         * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+         * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.
          */
         scoring?: {
             participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
@@ -7003,7 +7003,7 @@ export type UpdateContestConfigTemplateRequest = {
          */
         maxEntriesPerSquad?: number | null;
         /**
-         * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+         * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.
          */
         scoring?: {
             participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
@@ -7062,7 +7062,7 @@ export type UpdateContestConfigTemplateRequest = {
          */
         maxEntriesPerSquad?: number | null;
         /**
-         * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+         * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.
          */
         scoring?: {
             participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
@@ -7244,7 +7244,7 @@ export type ContestConfigTemplateResponse = {
              */
             maxEntriesPerSquad?: number | null;
             /**
-             * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+             * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.
              */
             scoring?: {
                 participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
@@ -7311,7 +7311,7 @@ export type ContestConfigTemplateResponse = {
              */
             maxEntriesPerSquad?: number | null;
             /**
-             * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+             * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.
              */
             scoring?: {
                 participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
@@ -7378,7 +7378,7 @@ export type ContestConfigTemplateResponse = {
              */
             maxEntriesPerSquad?: number | null;
             /**
-             * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+             * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.
              */
             scoring?: {
                 participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
@@ -7445,7 +7445,7 @@ export type ContestConfigTemplateResponse = {
              */
             maxEntriesPerSquad?: number | null;
             /**
-             * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+             * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.
              */
             scoring?: {
                 participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
@@ -7508,7 +7508,7 @@ export type ContestConfigTemplateResponse = {
              */
             maxEntriesPerSquad?: number | null;
             /**
-             * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+             * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.
              */
             scoring?: {
                 participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
@@ -7575,7 +7575,7 @@ export type ContestConfigTemplateResponse = {
              */
             maxEntriesPerSquad?: number | null;
             /**
-             * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+             * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.
              */
             scoring?: {
                 participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
@@ -7634,7 +7634,7 @@ export type ContestConfigTemplateResponse = {
              */
             maxEntriesPerSquad?: number | null;
             /**
-             * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+             * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.
              */
             scoring?: {
                 participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
@@ -15873,7 +15873,7 @@ export type CreateContestRequest = {
          */
         maxEntriesPerSquad?: number | null;
         /**
-         * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+         * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.
          */
         scoring?: {
             participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
@@ -15940,7 +15940,7 @@ export type CreateContestRequest = {
          */
         maxEntriesPerSquad?: number | null;
         /**
-         * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+         * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.
          */
         scoring?: {
             participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
@@ -16007,7 +16007,7 @@ export type CreateContestRequest = {
          */
         maxEntriesPerSquad?: number | null;
         /**
-         * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+         * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.
          */
         scoring?: {
             participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
@@ -16074,7 +16074,7 @@ export type CreateContestRequest = {
          */
         maxEntriesPerSquad?: number | null;
         /**
-         * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+         * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.
          */
         scoring?: {
             participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
@@ -16137,7 +16137,7 @@ export type CreateContestRequest = {
          */
         maxEntriesPerSquad?: number | null;
         /**
-         * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+         * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.
          */
         scoring?: {
             participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
@@ -16204,7 +16204,7 @@ export type CreateContestRequest = {
          */
         maxEntriesPerSquad?: number | null;
         /**
-         * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+         * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.
          */
         scoring?: {
             participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
@@ -16263,7 +16263,7 @@ export type CreateContestRequest = {
          */
         maxEntriesPerSquad?: number | null;
         /**
-         * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+         * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.
          */
         scoring?: {
             participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
@@ -26646,7 +26646,7 @@ export type EventPageOfferDto = {
              */
             maxEntriesPerSquad?: number | null;
             /**
-             * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+             * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.
              */
             scoring?: {
                 participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
@@ -26713,7 +26713,7 @@ export type EventPageOfferDto = {
              */
             maxEntriesPerSquad?: number | null;
             /**
-             * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+             * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.
              */
             scoring?: {
                 participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
@@ -26780,7 +26780,7 @@ export type EventPageOfferDto = {
              */
             maxEntriesPerSquad?: number | null;
             /**
-             * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+             * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.
              */
             scoring?: {
                 participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
@@ -26847,7 +26847,7 @@ export type EventPageOfferDto = {
              */
             maxEntriesPerSquad?: number | null;
             /**
-             * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+             * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.
              */
             scoring?: {
                 participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
@@ -26910,7 +26910,7 @@ export type EventPageOfferDto = {
              */
             maxEntriesPerSquad?: number | null;
             /**
-             * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+             * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.
              */
             scoring?: {
                 participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
@@ -26977,7 +26977,7 @@ export type EventPageOfferDto = {
              */
             maxEntriesPerSquad?: number | null;
             /**
-             * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+             * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.
              */
             scoring?: {
                 participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
@@ -27036,7 +27036,7 @@ export type EventPageOfferDto = {
              */
             maxEntriesPerSquad?: number | null;
             /**
-             * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+             * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.
              */
             scoring?: {
                 participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
@@ -27323,7 +27323,7 @@ export type EventPageDto = {
                  */
                 maxEntriesPerSquad?: number | null;
                 /**
-                 * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+                 * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.
                  */
                 scoring?: {
                     participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
@@ -27390,7 +27390,7 @@ export type EventPageDto = {
                  */
                 maxEntriesPerSquad?: number | null;
                 /**
-                 * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+                 * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.
                  */
                 scoring?: {
                     participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
@@ -27457,7 +27457,7 @@ export type EventPageDto = {
                  */
                 maxEntriesPerSquad?: number | null;
                 /**
-                 * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+                 * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.
                  */
                 scoring?: {
                     participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
@@ -27524,7 +27524,7 @@ export type EventPageDto = {
                  */
                 maxEntriesPerSquad?: number | null;
                 /**
-                 * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+                 * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.
                  */
                 scoring?: {
                     participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
@@ -27587,7 +27587,7 @@ export type EventPageDto = {
                  */
                 maxEntriesPerSquad?: number | null;
                 /**
-                 * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+                 * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.
                  */
                 scoring?: {
                     participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
@@ -27654,7 +27654,7 @@ export type EventPageDto = {
                  */
                 maxEntriesPerSquad?: number | null;
                 /**
-                 * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+                 * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.
                  */
                 scoring?: {
                     participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
@@ -27713,7 +27713,7 @@ export type EventPageDto = {
                  */
                 maxEntriesPerSquad?: number | null;
                 /**
-                 * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+                 * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.
                  */
                 scoring?: {
                     participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
@@ -28005,7 +28005,7 @@ export type EventPageResponse = {
                      */
                     maxEntriesPerSquad?: number | null;
                     /**
-                     * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+                     * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.
                      */
                     scoring?: {
                         participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
@@ -28072,7 +28072,7 @@ export type EventPageResponse = {
                      */
                     maxEntriesPerSquad?: number | null;
                     /**
-                     * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+                     * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.
                      */
                     scoring?: {
                         participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
@@ -28139,7 +28139,7 @@ export type EventPageResponse = {
                      */
                     maxEntriesPerSquad?: number | null;
                     /**
-                     * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+                     * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.
                      */
                     scoring?: {
                         participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
@@ -28206,7 +28206,7 @@ export type EventPageResponse = {
                      */
                     maxEntriesPerSquad?: number | null;
                     /**
-                     * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+                     * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.
                      */
                     scoring?: {
                         participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
@@ -28269,7 +28269,7 @@ export type EventPageResponse = {
                      */
                     maxEntriesPerSquad?: number | null;
                     /**
-                     * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+                     * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.
                      */
                     scoring?: {
                         participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
@@ -28336,7 +28336,7 @@ export type EventPageResponse = {
                      */
                     maxEntriesPerSquad?: number | null;
                     /**
-                     * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+                     * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.
                      */
                     scoring?: {
                         participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
@@ -28395,7 +28395,7 @@ export type EventPageResponse = {
                      */
                     maxEntriesPerSquad?: number | null;
                     /**
-                     * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+                     * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.
                      */
                     scoring?: {
                         participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
@@ -28702,7 +28702,7 @@ export type EventPageListResponse = {
                      */
                     maxEntriesPerSquad?: number | null;
                     /**
-                     * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+                     * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.
                      */
                     scoring?: {
                         participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
@@ -28769,7 +28769,7 @@ export type EventPageListResponse = {
                      */
                     maxEntriesPerSquad?: number | null;
                     /**
-                     * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+                     * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.
                      */
                     scoring?: {
                         participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
@@ -28836,7 +28836,7 @@ export type EventPageListResponse = {
                      */
                     maxEntriesPerSquad?: number | null;
                     /**
-                     * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+                     * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.
                      */
                     scoring?: {
                         participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
@@ -28903,7 +28903,7 @@ export type EventPageListResponse = {
                      */
                     maxEntriesPerSquad?: number | null;
                     /**
-                     * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+                     * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.
                      */
                     scoring?: {
                         participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
@@ -28966,7 +28966,7 @@ export type EventPageListResponse = {
                      */
                     maxEntriesPerSquad?: number | null;
                     /**
-                     * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+                     * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.
                      */
                     scoring?: {
                         participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
@@ -29033,7 +29033,7 @@ export type EventPageListResponse = {
                      */
                     maxEntriesPerSquad?: number | null;
                     /**
-                     * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+                     * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.
                      */
                     scoring?: {
                         participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
@@ -29092,7 +29092,7 @@ export type EventPageListResponse = {
                      */
                     maxEntriesPerSquad?: number | null;
                     /**
-                     * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+                     * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.
                      */
                     scoring?: {
                         participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
