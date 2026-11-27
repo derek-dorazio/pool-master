@@ -1480,6 +1480,12 @@ describe('Contract verification (root admin)', () => {
       expect(roundsRes.json<SportEventRoundListResponse>().rounds).toHaveLength(4);
 
       // --- releaseEvent (422 while golfers lack a tier, then 200 once tiered and priced) -
+      // A tiered setup over the event's slot: its tiers and prices are what such a contest picks from.
+      const { seasonSlot } = await getPrisma().sportEventSlot.findFirstOrThrow({ where: { sportEventId: eventId }, select: { seasonSlot: { select: { sportLeagueCompetitionSlotId: true } } } });
+      const tieredSetup = await getPrisma().contestConfigTemplate.create({
+        data: { sportLeagueId: leagueId, templateKey: `z3l-tiered-${stamp}`, coverageMode: 'ONE_SLOT', contestFormat: 'ROSTER', selectionType: 'TIERED', name: 'Tiered', description: 'Tiered', sortOrder: 1, configJson: {} },
+      });
+      await getPrisma().contestConfigTemplateSlot.create({ data: { sportLeagueId: leagueId, templateId: tieredSetup.id, sportLeagueCompetitionSlotId: seasonSlot.sportLeagueCompetitionSlotId } });
       const releaseRefusedRes = await getApp().inject({
         method: 'POST',
         url: `/api/v1/events/${eventId}/release`,
@@ -1585,6 +1591,7 @@ describe('Contract verification (root admin)', () => {
         await prisma.participant.deleteMany({ where: { id: { in: created.participantIds } } });
       }
       if (created.sportLeagueId) {
+        await prisma.contestConfigTemplate.deleteMany({ where: { sportLeagueId: created.sportLeagueId } });
         await deleteTestSportLeagues(prisma, [created.sportLeagueId]);
       }
     }

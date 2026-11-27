@@ -16,7 +16,7 @@ import { sportLeagueRowDefaults } from '../../support/league-profiles';
 import { participantLeagueIdForSport } from '../../support/participant-league';
 import { sportRowKeys } from '../../support/sport-rows';
 import { sportPlay } from '../../support/sport-play';
-import { oneEventSlotId } from '../../support/test-slots';
+import { linkTestSlot, oneEventSlotId } from '../../support/test-slots';
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
@@ -228,13 +228,17 @@ describe('events routes', () => {
   });
 
   describe('release for contests', () => {
+    /**
+     * A draft PGA TOUR event on a test slot of a tournament its seeded tiered and budget setups
+     * cover, so its tiers and prices are release checks.
+     */
     async function seedDraftGolfEvent(options: { tiered: boolean }) {
       const prisma = getPrisma();
       const eventId = randomUUID();
       const participantId = randomUUID();
-      await prisma.sportEvent.create({
+      const event = await prisma.sportEvent.create({
         data: {
-          ...(await freshEventEdition(prisma)),
+          ...(await freshEventEdition(prisma, { onPgaTour: true })),
           id: eventId,
           name: 'Release Route Open',
           startDate: new Date('2099-04-20T15:00:00.000Z'),
@@ -242,6 +246,7 @@ describe('events routes', () => {
           status: 'DRAFT',
         },
       });
+      await linkTestSlot(prisma, event);
       await prisma.participant.create({
         data: {
           id: participantId,
