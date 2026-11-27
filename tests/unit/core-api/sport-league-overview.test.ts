@@ -7,7 +7,6 @@ import {
   OVERDUE_AFTER_MS,
   ProviderSyncFindingSeverity,
   ProviderSyncKind,
-  ProviderSyncRunStatus,
   ReleaseCheckKey,
   Sport,
   SportEventStatus,
@@ -15,7 +14,7 @@ import {
   SportLeagueIssueType,
   SportLeagueSyncHealth,
 } from '@poolmaster/shared/domain';
-import type { SportLeagueLatestSyncRun, SportLeagueOverviewFacts, SportLeagueOverviewLeague } from '@poolmaster/shared/db';
+import type { SportLeagueFailedSync, SportLeagueOverviewFacts, SportLeagueOverviewLeague } from '@poolmaster/shared/db';
 import { SportLeagueOverviewDtoSchema } from '@poolmaster/shared/dto/sport-catalog.dto';
 import { mapSportLeagueOverviewToDto } from '../../../packages/core-api/src/mappers';
 import {
@@ -38,7 +37,8 @@ function league(overrides: Partial<SportLeagueOverviewLeague> = {}): SportLeague
 function facts(overrides: Partial<SportLeagueOverviewFacts> = {}): SportLeagueOverviewFacts {
   return {
     leagues: [league()],
-    latestSyncRuns: [],
+    leaguesWithSyncRuns: new Set(),
+    failedSyncs: [],
     heldEvents: [],
     eventCounts: new Map(),
     currentSeasonSpans: new Map(),
@@ -49,9 +49,12 @@ function facts(overrides: Partial<SportLeagueOverviewFacts> = {}): SportLeagueOv
   };
 }
 
-function run(kind: ProviderSyncKind, status: ProviderSyncRunStatus, overrides: Partial<SportLeagueLatestSyncRun> = {}): SportLeagueLatestSyncRun {
-  return { id: `run-${kind}`, sportLeagueId: 'mlb', kind, status, createdAt: at('2027-04-15T10:00:00.000Z'), summary: null, ...overrides };
+/** An OPEN SYNC_FAILED finding of MLB's `kind` sync, with its latest failed run kept unless `run` says otherwise. */
+function failedSync(syncKind: ProviderSyncKind, overrides: Partial<SportLeagueFailedSync> = {}): SportLeagueFailedSync {
+  return { sportLeagueId: 'mlb', syncKind, lastFailedAt: at('2027-04-15T10:00:00.000Z'), run: { id: `run-${syncKind}`, summary: null }, ...overrides };
 }
+
+const SYNCED = { leaguesWithSyncRuns: new Set(['mlb']) };
 
 function only(input: SportLeagueOverviewFacts) {
   const row = buildSportLeagueOverviews(input, NOW).at(0);
@@ -79,43 +82,50 @@ describe('sport league sync health', () => {
     expect(only(facts()).syncHealth).toBe(SportLeagueSyncHealth.NOT_RUN_YET);
   });
 
-  it('is OK when the latest run of every sync it has run worked or is still under way', () => {
-    const row = only(facts({ latestSyncRuns: [run(ProviderSyncKind.EVENTS, ProviderSyncRunStatus.COMPLETED), run(ProviderSyncKind.SCORES, ProviderSyncRunStatus.IN_PROGRESS)] }));
+  it('is OK when the league has synced and none of its syncs has an open failure', () => {
+    const row = only(facts({ ...SYNCED, failedSyncs: [failedSync(ProviderSyncKind.FIELD, { sportLeagueId: 'other' })] }));
 
     expect(row.syncHealth).toBe(SportLeagueSyncHealth.OK);
     expect(row.issues).toEqual([]);
   });
 
-  it('is ERROR when the latest run of any one sync failed', () => {
-    const row = only(facts({ latestSyncRuns: [run(ProviderSyncKind.EVENTS, ProviderSyncRunStatus.COMPLETED), run(ProviderSyncKind.FIELD, ProviderSyncRunStatus.FAILED)] }));
-
-    expect(row.syncHealth).toBe(SportLeagueSyncHealth.ERROR);
+  it('is ERROR while any one of its syncs has an open failure, even one whose run the history has cleared', () => {
+    expect(only(facts({ ...SYNCED, failedSyncs: [failedSync(ProviderSyncKind.FIELD)] })).syncHealth).toBe(SportLeagueSyncHealth.ERROR);
+    expect(only(facts({ ...SYNCED, failedSyncs: [failedSync(ProviderSyncKind.FIELD, { run: null })] })).syncHealth).toBe(SportLeagueSyncHealth.ERROR);
   });
 });
 
 describe('sport league issues', () => {
-  it('lists a SYNC issue per failed sync, event list first, labelled by the run\'s summary or else its kind, targeting the run', () => {
+  it('lists a SYNC issue per open failed sync, event list first and then the latest failure, labelled by its run\'s summary or else its kind, targeting the run', () => {
     const row = only(facts({
-      latestSyncRuns: [
-        run(ProviderSyncKind.SCORES, ProviderSyncRunStatus.FAILED, { summary: 'Failed live scores sync.' }),
-        run(ProviderSyncKind.EVENTS, ProviderSyncRunStatus.FAILED),
-        run(ProviderSyncKind.FIELD, ProviderSyncRunStatus.COMPLETED),
+      ...SYNCED,
+      failedSyncs: [
+        failedSync(ProviderSyncKind.SCORES, { run: { id: 'run-older', summary: 'Failed live scores sync.' }, lastFailedAt: at('2027-04-15T08:00:00.000Z') }),
+        failedSync(ProviderSyncKind.SCORES, { run: { id: 'run-newer', summary: 'Failed live scores sync: timeout' } }),
+        failedSync(ProviderSyncKind.EVENTS),
       ],
     }));
 
     expect(row.issues).toEqual([{
       type: SportLeagueIssueType.SYNC,
-      count: 2,
+      count: 3,
       items: [
         { label: 'EVENTS', occurredAt: at('2027-04-15T10:00:00.000Z'), target: { type: SportLeagueIssueTargetType.SYNC_RUN, id: 'run-EVENTS' }, syncKind: ProviderSyncKind.EVENTS },
-        { label: 'Failed live scores sync.', occurredAt: at('2027-04-15T10:00:00.000Z'), target: { type: SportLeagueIssueTargetType.SYNC_RUN, id: 'run-SCORES' }, syncKind: ProviderSyncKind.SCORES },
+        { label: 'Failed live scores sync: timeout', occurredAt: at('2027-04-15T10:00:00.000Z'), target: { type: SportLeagueIssueTargetType.SYNC_RUN, id: 'run-newer' }, syncKind: ProviderSyncKind.SCORES },
+        { label: 'Failed live scores sync.', occurredAt: at('2027-04-15T08:00:00.000Z'), target: { type: SportLeagueIssueTargetType.SYNC_RUN, id: 'run-older' }, syncKind: ProviderSyncKind.SCORES },
       ],
     }]);
   });
 
+  it('lists no SYNC item for a failed sync whose run the history has cleared, since the Findings count holds it', () => {
+    const row = only(facts({ ...SYNCED, failedSyncs: [failedSync(ProviderSyncKind.FIELD, { run: null })] }));
+
+    expect(row.issues).toEqual([]);
+  });
+
   it('lists the held draft events as a RELEASE issue by name, after SYNC, leaving out another league\'s', () => {
     const row = only(facts({
-      latestSyncRuns: [run(ProviderSyncKind.FIELD, ProviderSyncRunStatus.FAILED)],
+      failedSyncs: [failedSync(ProviderSyncKind.FIELD)],
       heldEvents: [
         { id: 'e2', sportLeagueId: 'mlb', name: 'World Series', checkedAt: at('2027-04-15T09:00:00.000Z'), failedChecks: [ReleaseCheckKey.TIERS_ASSIGNED] },
         { id: 'e1', sportLeagueId: 'mlb', name: 'ALCS', checkedAt: at('2027-04-15T11:00:00.000Z'), failedChecks: [ReleaseCheckKey.TIERS_ASSIGNED, ReleaseCheckKey.CONTEST_SETUPS_ON] },
@@ -237,7 +247,7 @@ describe('SportLeagueOverviewService', () => {
 describe('mapSportLeagueOverviewToDto', () => {
   it('sends dates as ISO strings and each issue type with its own item fields, matching the published schema', () => {
     const row = only(facts({
-      latestSyncRuns: [run(ProviderSyncKind.SCORES, ProviderSyncRunStatus.FAILED, { summary: 'Failed live scores sync.' })],
+      failedSyncs: [failedSync(ProviderSyncKind.SCORES, { run: { id: 'run-SCORES', summary: 'Failed live scores sync.' } })],
       heldEvents: [{ id: '5f0c8a8e-5a0e-4c1e-9d43-2f6f8e3e4b10', sportLeagueId: 'mlb', name: 'World Series', checkedAt: at('2027-04-15T09:00:00.000Z'), failedChecks: [ReleaseCheckKey.TIERS_ASSIGNED] }],
       currentSeasonSpans: new Map([['mlb', { start: at('2027-03-25T00:00:00.000Z'), end: at('2027-10-20T00:00:00.000Z') }]]),
       nextEventStarts: new Map([['mlb', at('2027-04-16T00:00:00.000Z')]]),

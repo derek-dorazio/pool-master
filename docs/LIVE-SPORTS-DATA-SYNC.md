@@ -472,7 +472,8 @@ column. Each finding names its sport league; its event, Provider row and the fee
 (`provider_value`) are there when its kind has them.
 
 - **One row per kind and subject.** A NULLS NOT DISTINCT unique index on (kind, league, event,
-  Provider, value) dedupes: a finding seen again counts the sighting and takes the new severity.
+  Provider, value, sync kind) dedupes: a finding seen again counts the sighting and takes the new
+  severity. Only `SYNC_FAILED` has a sync kind (a check constraint says so).
 - **Status.** `OPEN`, `RESOLVED` or `WAIVED` (a waive needs a note, a CHECK constraint). A resolved
   finding the sync sees again opens again; a waived one stays waived.
 - **Kinds.** `PROVIDER_RATE_LIMITED` (WARNING after 15 minutes of every call rate limited, ERROR
@@ -489,15 +490,29 @@ column. Each finding names its sport league; its event, Provider row and the fee
   matches more than one slot) and `SLOT_SEASON_COMPETITION_MISSING` (ERROR, a matched slot whose competition the
   Season lacks), all three *Tournaments matched by name* above, and `SLOT_OUTSIDE_SEASON` (WARNING),
   `GAMES_UNPLACED` (INFO) and `SLOT_DATES_NEEDED` (WARNING, resolved once the Season's windows are
-  confirmed), all three *Matching by date window* above. Three are checked on an event by each sync that
+  confirmed), all three *Matching by date window* above. Two are checked on an event by each sync that
   could see them, raised as a WARNING when it does and resolved when a later one does not:
-  `NO_PROVIDER_PARTICIPANTS` (a completed FIELD run whose provider sent no field),
-  `NO_PROVIDER_LIVE_SCORES` (a completed SCORES run with no updates) and `GAMES_NOT_SYNCED` (the
-  field's follow-up job could not load the games the provider listed). `FIELD_TEAM_WITHOUT_GAME`
+  `NO_PROVIDER_PARTICIPANTS` (a completed FIELD run whose provider sent no field) and
+  `GAMES_NOT_SYNCED` (the field's follow-up job could not load the games the provider listed).
+  `NO_PROVIDER_LIVE_SCORES` (#2094) is a WARNING the sync tick raises on an event in play whose
+  scores no completed run has changed, and whose provider has sent no notification, for its
+  provider league's `quietAfterMinutes` (counted from play getting under way, or the later of the
+  two), once per quiet window; a poll with no updates inside the window raises nothing, since a
+  game between scoring plays is quiet. The next SCORES run that brings updates resolves it. `FIELD_TEAM_WITHOUT_GAME`
   is checked the same way per team, by the field sync of a released rest-of-phase event (*A
   rest-of-phase event's games and field* above). The ledger turns a feed
   run's warning into its finding, so a run carries no warnings of its own; the tier and price
   warnings stay in the follow-up job's result.
+- **Failed syncs (#2092).** Every run that ends `FAILED` (its feed threw, its job failed, or an
+  earlier try stopped mid-run and the retry marks it interrupted) raises `SYNC_FAILED`, an ERROR on
+  its league, event (none for a league's events sync), Provider and sync kind, naming the latest
+  run that failed. The next `COMPLETED` run of the same sync resolves it, so a field sync that
+  completes leaves the event's failed scores sync open. The ledger checks every feed run's outcome;
+  the league events sync checks its own. A findings write that fails is logged
+  (`ingestion.syncFinding.checkFailed`), never thrown, since the run's outcome is already written.
+  The Sports page's Sync chip lists a league's open `SYNC_FAILED` findings, each opening its run,
+  and its health is ERROR while any is open; the Findings chip counts the rest, a `SYNC_FAILED`
+  whose run the history has cleared among them.
 - **Alert.** An ERROR that opens logs `ingestion.syncFinding.errorOpened`; a CloudWatch metric
   filter and alarm (`infrastructure/terraform/monitoring.tf`) send it to the alerts topic.
 - **Retention.** The nightly cleanup deletes RESOLVED findings 90 days after they were resolved,

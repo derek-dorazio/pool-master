@@ -242,7 +242,8 @@ describe('sport league handlers', () => {
     reader: {
       readFacts: async () => ({
         leagues: [{ id: 'sl1', sport: Sport.GOLF, sportUrlSegment: 'golf', sportDisplayOrder: 4, name: 'PGA Tour', syncProviderId: 'balldontlie', syncProviderName: 'BALLDONTLIE', isActive: true }],
-        latestSyncRuns: [],
+        leaguesWithSyncRuns: new Set(),
+        failedSyncs: [],
         heldEvents: [],
         eventCounts: new Map([['sl1', 2]]),
         currentSeasonSpans: new Map(),

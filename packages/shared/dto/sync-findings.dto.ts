@@ -8,6 +8,7 @@ import {
   ProviderSyncFindingKind,
   ProviderSyncFindingSeverity,
   ProviderSyncFindingStatus,
+  ProviderSyncKind,
   SlotKind,
   Sport,
 } from '@poolmaster/shared/domain';
@@ -16,7 +17,7 @@ import { registerSchema } from './schema-registry';
 
 export const ProviderSyncFindingSeveritySchema = z.enum(ProviderSyncFindingSeverity).describe('ERROR: synced data is wrong or missing until someone acts (it also raises the alarm when it opens). WARNING: something the sync skipped or guessed at. INFO: something it noticed and left alone on purpose.');
 export const ProviderSyncFindingStatusSchema = z.enum(ProviderSyncFindingStatus).describe('OPEN until it is RESOLVED (an admin fixed it; a missing webhook secret also resolves once it is set) or WAIVED (an admin accepted it, with a note). A waived finding stays waived when the sync sees it again; a resolved one opens again.');
-export const ProviderSyncFindingKindSchema = z.enum(ProviderSyncFindingKind).describe('What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider\'s webhooks are on but its signing secret is not set here. PROVIDER_RATE_LIMITED: the Provider has rate limited every call for a while (WARNING after 15 minutes, ERROR after the league\'s quiet threshold); it resolves on the Provider\'s next answer. SLOT_NAME_UNMATCHED: a tournament whose normalized name (providerValue) no NAME_PATTERN mapping of the league matches, so it has no Season slot (INFO; LINK_SLOT adds the name as a pattern). SLOT_NAME_AMBIGUOUS: a tournament whose normalized name matches more than one slot, or one another tournament already has (ERROR). SLOT_SEASON_COMPETITION_MISSING: a tournament whose name matched a slot whose phase the Season does not have, so no Season slot could be made (ERROR).');
+export const ProviderSyncFindingKindSchema = z.enum(ProviderSyncFindingKind).describe('What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider\'s webhooks are on but its signing secret is not set here. PROVIDER_RATE_LIMITED: the Provider has rate limited every call for a while (WARNING after 15 minutes, ERROR after the league\'s quiet threshold); it resolves on the Provider\'s next answer. SLOT_NAME_UNMATCHED: a tournament whose normalized name (providerValue) no NAME_PATTERN mapping of the league matches, so it has no Season slot (INFO; LINK_SLOT adds the name as a pattern). SLOT_NAME_AMBIGUOUS: a tournament whose normalized name matches more than one slot, or one another tournament already has (ERROR). SLOT_SEASON_COMPETITION_MISSING: a tournament whose name matched a slot whose phase the Season does not have, so no Season slot could be made (ERROR). SYNC_FAILED: a sync run of the league (of the event, when it names one) ended FAILED, and no run of the same sync has completed since (ERROR, syncKind says which sync).');
 export const ProviderSyncFindingActionSchema = z.enum(ProviderSyncFindingAction).describe('MAP_PARTICIPANT: mapProviderSyncFindingParticipant. LINK_SLOT: listProviderSyncFindingSlotChoices, then linkProviderSyncFindingSlot. RESOLVE, WAIVE (with a note) and REOPEN: changeProviderSyncFindingStatus.');
 
 export const ProviderSyncFindingDtoSchema = z.object({
@@ -29,6 +30,7 @@ export const ProviderSyncFindingDtoSchema = z.object({
   provider: z.object({ id: z.uuid(), name: z.string() }).nullable().describe('The Provider it is about; null when its kind names none.'),
   providerValue: z.string().nullable().describe('What the feed sent that nothing maps: an UNMAPPED_PARTICIPANT\'s participant id as the feed sent it, or a SLOT_NAME_ finding\'s normalized tournament name; null when its kind has none.'),
   providerValueName: z.string().nullable().describe('The feed\'s own name for that value, when it sent one.'),
+  syncKind: z.enum(ProviderSyncKind).nullable().describe('The sync a SYNC_FAILED finding is about: the event list (EVENTS), the field (FIELD) or live scores and results (SCORES); null for every other kind.'),
   waiveNote: z.string().nullable().describe('Why it was waived; set only while WAIVED.'),
   firstSeenAt: DateTimeSchema.describe('When the sync first raised it.'),
   lastSeenAt: DateTimeSchema.describe('When the sync last raised it.'),

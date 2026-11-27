@@ -1,5 +1,5 @@
 import { ProviderCode, type ProviderSettings } from '@poolmaster/shared/domain';
-import { notifiedProviderCadenceOf } from '../../../packages/core-api/src/modules/ingestion/notified-provider-cadence';
+import { notifiedProviderCadenceOf, providerLeagueQuietAfterMs } from '../../../packages/core-api/src/modules/ingestion/notified-provider-cadence';
 import { ProviderSettingsStore } from '../../../packages/core-api/src/modules/ingestion/provider-settings-store';
 import { ProviderWebhookSwitch } from '../../../packages/core-api/src/modules/ingestion/provider-webhook-switch';
 import { balldontlieTestProvider } from '../../support/balldontlie-provider-rows';
@@ -28,13 +28,38 @@ describe('the live-score pace for providers that send webhook notifications (#14
       roundPollIntervalMs: 3 * 60_000,
     }));
   });
+});
 
-  it('takes each event\'s quiet window from its league row, not one window for every sport', async () => {
-    const cadence = await cadenceFor(balldontlieTestProvider(), 'whsec_x');
-    const quietMinutes = (providerLeagueCode: string) => (cadence?.quietAfterMs(providerLeagueCode) ?? 0) / 60_000;
+describe('each provider league\'s quiet window (#1499, #2094)', () => {
+  async function quietMinutesOf(provider: ProviderSettings) {
+    const store = new ProviderSettingsStore({ findAll: () => Promise.resolve([provider]) });
+    await store.load();
+    const quietAfterMs = providerLeagueQuietAfterMs(store);
+    return (code: string) => quietAfterMs(provider.leagues.find((league) => league.code === code)?.id ?? 'no-such-league') / 60_000;
+  }
+
+  it('allows each league its longest normal gap, a period or half plus its break, and a golf round six hours for its first group to finish', async () => {
+    const quietMinutes = await quietMinutesOf(balldontlieTestProvider());
 
     expect(quietMinutes('nfl')).toBe(90);
+    expect(quietMinutes('ncaaf')).toBe(110);
     expect(quietMinutes('nba')).toBe(75);
+    expect(quietMinutes('ncaab')).toBe(90);
+    expect(quietMinutes('ncaaw')).toBe(75);
+    expect(quietMinutes('nhl')).toBe(90);
+    expect(quietMinutes('mlb')).toBe(210);
+    expect(quietMinutes('wnba')).toBe(75);
+    expect(quietMinutes('epl')).toBe(90);
+    expect(quietMinutes('worldcup')).toBe(150);
     expect(quietMinutes('pga')).toBe(360);
+  });
+
+  it('takes the window from the league\'s row, so an edit on the Providers page changes it, and gives zero, never, for a league no row has', async () => {
+    const provider = balldontlieTestProvider();
+    const longer = { ...provider, leagues: provider.leagues.map((league) => (league.code === 'nfl' ? { ...league, quietAfterMinutes: 120 } : league)) };
+    const quietMinutes = await quietMinutesOf(longer);
+
+    expect(quietMinutes('nfl')).toBe(120);
+    expect(quietMinutes('mls')).toBe(0);
   });
 });

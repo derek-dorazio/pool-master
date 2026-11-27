@@ -382,11 +382,16 @@ async function seedSportLeagueOverviews(leagues: number) {
     await event('held', 2027, {
       status: 'DRAFT', autoReleaseCheckedAt: new Date(), autoReleaseOutcome: 'HELD', autoReleaseFailedChecks: ['TIERS_ASSIGNED'],
     });
-    await prisma.providerSyncRun.createMany({
-      data: [
-        { kind: 'EVENTS', trigger: 'SCHEDULE', providerId: BALLDONTLIE_TEST_PROVIDER_ID, sportLeagueId: sportLeague.id, status: ProviderSyncRunStatus.FAILED, summary: 'Interrupted before it finished.', errorCount: 1 },
-        { kind: 'FIELD', trigger: 'SCHEDULE', providerId: BALLDONTLIE_TEST_PROVIDER_ID, sportLeagueId: sportLeague.id, status: ProviderSyncRunStatus.COMPLETED },
-      ],
+    const failed = await prisma.providerSyncRun.create({
+      data: { kind: 'EVENTS', trigger: 'SCHEDULE', providerId: BALLDONTLIE_TEST_PROVIDER_ID, sportLeagueId: sportLeague.id, status: ProviderSyncRunStatus.FAILED, summary: 'Interrupted before it finished.', errorCount: 1 },
+    });
+    await prisma.providerSyncRun.create({ data: { kind: 'FIELD', trigger: 'SCHEDULE', providerId: BALLDONTLIE_TEST_PROVIDER_ID, sportLeagueId: sportLeague.id, status: ProviderSyncRunStatus.COMPLETED } });
+    // The failed run's open Sync failed finding is what the Sync chip shows (#2092).
+    await prisma.providerSyncFinding.create({
+      data: {
+        kind: 'SYNC_FAILED', severity: 'ERROR', status: 'OPEN', sportLeagueId: sportLeague.id, providerId: BALLDONTLIE_TEST_PROVIDER_ID,
+        syncKind: 'EVENTS', syncRunId: failed.id, providerValue: randomUUID(), firstSeenAt: new Date(), lastSeenAt: new Date(), statusChangedAt: new Date(),
+      },
     });
   }
   return { suffix, rootAdmin: await createTestUser({ isRootAdmin: true }) };

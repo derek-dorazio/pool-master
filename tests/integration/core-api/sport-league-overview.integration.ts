@@ -5,7 +5,7 @@ import { BALLDONTLIE_TEST_PROVIDER_ID } from '../../support/balldontlie-provider
  */
 import { expect } from '@jest/globals';
 import { randomUUID } from 'node:crypto';
-import { AutoReleaseCheckOutcome, ProviderSyncKind, ProviderSyncRunStatus, ReleaseCheckKey, Sport } from '@poolmaster/shared/domain';
+import { AutoReleaseCheckOutcome, ProviderSyncFindingKind, ProviderSyncFindingSeverity, ProviderSyncKind, ReleaseCheckKey, Sport } from '@poolmaster/shared/domain';
 import { PrismaSportEventRepository } from '../../../packages/core-api/src/adapters';
 import { PrismaSportLeagueOverviewReader } from '../../../packages/core-api/src/adapters/prisma-sport-league-overview-reader';
 import { cleanupTestData, createTestUser, getApp, getAppPrisma, getPrisma, setupIntegrationTests, teardownIntegrationTests } from '../helpers';
@@ -25,6 +25,8 @@ afterAll(async () => {
 beforeEach(() => cleanupTestData());
 
 const NOW = new Date('2027-04-15T12:00:00.000Z');
+/** The overview's reads with every relation it reads present, however many leagues, events, runs and findings there are. */
+const STATEMENTS = 15;
 const DAY_MS = 24 * 60 * 60 * 1000;
 const days = (count: number) => new Date(NOW.getTime() + count * DAY_MS);
 
@@ -55,7 +57,7 @@ async function event(sportLeagueId: string, { championshipYear, ...input }: { ch
 }
 
 describe('PrismaSportLeagueOverviewReader', () => {
-  it('gathers each sport league\'s latest run per sync kind, held drafts, the current Season\'s span and next start', async () => {
+  it('gathers the leagues that have synced, each league\'s failed syncs, held drafts, open findings, the current Season\'s span and next start, in a fixed number of indexed reads', async () => {
     const prisma = getPrisma();
     const tour = await sportLeague('Overview Tour', { synced: true });
     const other = await sportLeague('No Season Tour');
@@ -75,13 +77,34 @@ describe('PrismaSportLeagueOverviewReader', () => {
     await prisma.providerSyncRun.createMany({
       data: [
         run('EVENTS', 'COMPLETED', days(-2)),
-        run('EVENTS', 'FAILED', days(-1), 'Interrupted before it finished.'),
-        run('FIELD', 'FAILED', days(-3)),
-        // An empty summary reads as none.
         run('FIELD', 'COMPLETED', days(-1)),
-        // Two runs in the same instant, neither with a summary: one is the latest.
-        run('SCORES', 'COMPLETED', days(-1)),
-        run('SCORES', 'COMPLETED', days(-1)),
+      ],
+    });
+    const failedEvents = await prisma.providerSyncRun.create({ data: run('EVENTS', 'FAILED', days(-1), 'Interrupted before it finished.') });
+    // An empty summary reads as none.
+    const failedScores = await prisma.providerSyncRun.create({ data: run('SCORES', 'FAILED', days(-1)) });
+    const finding = (input: { syncKind: 'EVENTS' | 'FIELD' | 'SCORES' | null; syncRunId?: string; kind?: ProviderSyncFindingKind; status?: 'OPEN' | 'RESOLVED'; lastSeenAt?: Date }) => ({
+      kind: input.kind ?? ProviderSyncFindingKind.SYNC_FAILED,
+      severity: ProviderSyncFindingSeverity.ERROR,
+      status: input.status ?? 'OPEN' as const,
+      sportLeagueId: tour.id,
+      providerId: BALLDONTLIE_TEST_PROVIDER_ID,
+      syncKind: input.syncKind,
+      syncRunId: input.syncRunId ?? null,
+      providerValue: randomUUID(),
+      firstSeenAt: days(-1),
+      lastSeenAt: input.lastSeenAt ?? days(-1),
+      statusChangedAt: days(-1),
+    });
+    await prisma.providerSyncFinding.createMany({
+      data: [
+        finding({ syncKind: 'EVENTS', syncRunId: failedEvents.id }),
+        finding({ syncKind: 'SCORES', syncRunId: failedScores.id, lastSeenAt: days(-2) }),
+        // Its run is cleared: the Findings count holds it.
+        finding({ syncKind: 'FIELD' }),
+        // Completed since: resolved, so neither list has it.
+        finding({ syncKind: 'FIELD', status: 'RESOLVED' }),
+        finding({ syncKind: null, kind: ProviderSyncFindingKind.SEASON_MISSING }),
       ],
     });
 
@@ -90,11 +113,15 @@ describe('PrismaSportLeagueOverviewReader', () => {
     expect(facts.leagues).toEqual(expect.arrayContaining([
       { id: tour.id, sport: Sport.GOLF, sportUrlSegment: 'golf', sportDisplayOrder: 5, name: tour.name, syncProviderId: 'balldontlie', syncProviderName: 'BALLDONTLIE', isActive: true },
     ]));
-    expect(facts.latestSyncRuns.filter((latest) => latest.sportLeagueId === tour.id).sort((left, right) => left.kind.localeCompare(right.kind))).toEqual([
-      expect.objectContaining({ kind: ProviderSyncKind.EVENTS, status: ProviderSyncRunStatus.FAILED, summary: 'Interrupted before it finished.' }),
-      expect.objectContaining({ kind: ProviderSyncKind.FIELD, status: ProviderSyncRunStatus.COMPLETED, summary: null }),
-      expect.objectContaining({ kind: ProviderSyncKind.SCORES, status: ProviderSyncRunStatus.COMPLETED, summary: null }),
+    expect(facts.leaguesWithSyncRuns.has(tour.id)).toBe(true);
+    expect(facts.leaguesWithSyncRuns.has(other.id)).toBe(false);
+    expect(facts.failedSyncs.filter((sync) => sync.sportLeagueId === tour.id).sort((left, right) => left.syncKind.localeCompare(right.syncKind))).toEqual([
+      { sportLeagueId: tour.id, syncKind: ProviderSyncKind.EVENTS, lastFailedAt: days(-1), run: { id: failedEvents.id, summary: 'Interrupted before it finished.' } },
+      { sportLeagueId: tour.id, syncKind: ProviderSyncKind.FIELD, lastFailedAt: days(-1), run: null },
+      { sportLeagueId: tour.id, syncKind: ProviderSyncKind.SCORES, lastFailedAt: days(-2), run: { id: failedScores.id, summary: null } },
     ]);
+    // The failed syncs with a kept run are the Sync chip's; the cleared one and the other kind are counted.
+    expect(facts.openFindings.filter((count) => count.sportLeagueId === tour.id)).toEqual([{ sportLeagueId: tour.id, severity: ProviderSyncFindingSeverity.ERROR, count: 2 }]);
     expect(facts.heldEvents).toEqual([{ id: held.id, sportLeagueId: tour.id, name: held.name, checkedAt: NOW, failedChecks: [ReleaseCheckKey.TIERS_ASSIGNED] }]);
     expect(facts.eventCounts.get(tour.id)).toBe(6);
     // The season is the current Season's own span, set by migration, not one drawn from its events (#2003).
@@ -102,15 +129,17 @@ describe('PrismaSportLeagueOverviewReader', () => {
     expect(facts.currentSeasonSpans.has(other.id)).toBe(false);
     // The cancelled event is not the next start.
     expect(facts.nextEventStarts.get(tour.id)).toEqual(next.startDate);
+    expect(statements).toHaveLength(STATEMENTS);
     await expect(findUnindexedScans(getPrisma(), statements.map(({ sql }) => ({ sql, test: 'PrismaSportLeagueOverviewReader.readFacts' })))).resolves.toEqual([]);
   });
 
-  it('reads no sync runs at all when no run names a sport league', async () => {
+  it('reads no league as synced and no failed sync when no run names a sport league', async () => {
     await sportLeague('Quiet Tour');
 
     const facts = await new PrismaSportLeagueOverviewReader(getAppPrisma()).readFacts(NOW);
 
-    expect(facts.latestSyncRuns).toEqual([]);
+    expect(facts.leaguesWithSyncRuns.size).toBe(0);
+    expect(facts.failedSyncs).toEqual([]);
   });
 });
 
