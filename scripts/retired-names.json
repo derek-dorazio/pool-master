@@ -146,7 +146,8 @@
     "getScoringFamilyAdminUi": "#2008 (10b part 4b): no per-family results page in Manage; results come from the feed or the test-data loader",
     "ScoreSyncNotice": "#2008 (10b part 4b): no per-family results page in Manage; results come from the feed or the test-data loader",
     "useRowCorrections": "#2008 (10b part 4b): no per-family results page in Manage; results come from the feed or the test-data loader",
-    "lookaheadDays": "#2009 (10c part B): the field sync covers the league's next slot; each sync kind has an interval per Season state"
+    "lookaheadDays": "#2009 (10c part B): the field sync covers the league's next slot; each sync kind has an interval per Season state",
+    "ParticipantRoundStatus": "#2008 (10b part 4e): a round's progress is its Game side's GameSideStatus (null while playing); the cut is the standing's ELIMINATED, sent as missedCut"
   },
   "ROUND_NAMES_FROM_FINAL": 0,
   "roundLabel": 0,
@@ -266,6 +267,7 @@
   "PrismaRaceOrderRepository": 0,
   "ParticipantRoundView": 0,
   "currentRoundThru": 0,
+  "ParticipantRoundStatus": 0,
   "roundsPar": 0,
   "ROUNDS_PAR_MIN": 0,
   "ROUNDS_PAR_MAX": 0,

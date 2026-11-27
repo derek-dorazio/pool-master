@@ -394,7 +394,7 @@ describe('EventFeedSync', () => {
             round: 1,
             strokes: 72,
             scoreToPar: 0,
-            status: 'IN_PROGRESS',
+            status: null,
           },
         ],
       };
@@ -509,7 +509,7 @@ describe('EventFeedSync', () => {
               round: 1,
               strokes: 69,
               scoreToPar: -3,
-              status: 'IN_PROGRESS',
+              status: null,
             },
           ],
         } satisfies LiveScoreResult),

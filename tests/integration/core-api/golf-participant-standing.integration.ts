@@ -102,7 +102,7 @@ describe('pool-master-eux.2: Golf participant standing persistence', () => {
             round: 1,
             strokes: 68,
             scoreToPar: -4,
-            status: 'COMPLETED',
+            status: 'FINISHED',
           },
           {
             participantExternalId: 'golf-standing-player-1',
@@ -110,7 +110,7 @@ describe('pool-master-eux.2: Golf participant standing persistence', () => {
             strokes: 33,
             scoreToPar: -3,
             thru: 9,
-            status: 'IN_PROGRESS',
+            status: null,
           },
         ],
       },
@@ -214,8 +214,8 @@ describe('Golf live-score persistence', () => {
       category: 'GOLF',
       externalEventId: event.externalId,
       rounds: [
-        { participantExternalId: 'scoped-rory', round: 1, strokes: 70, scoreToPar: -2, status: 'COMPLETED' },
-        { participantExternalId: 'scoped-tiger', round: 1, strokes: 37, scoreToPar: 1, thru: 9, status: 'IN_PROGRESS' },
+        { participantExternalId: 'scoped-rory', round: 1, strokes: 70, scoreToPar: -2, status: 'FINISHED' },
+        { participantExternalId: 'scoped-tiger', round: 1, strokes: 37, scoreToPar: 1, thru: 9, status: null },
       ],
     }, { contestActivation: NO_CONTEST_ACTIVATION, prisma: getAppPrisma(), providerId: PROVIDER, domainEvents: testDomainEvents(), scoringFamilyForEvent, findings: integrationSyncFindings() });
 
@@ -242,9 +242,9 @@ describe('Golf live-score persistence', () => {
       category: 'GOLF',
       externalEventId: event.externalId,
       rounds: [
-        { participantExternalId: 'status-dnf', round: 1, strokes: 75, scoreToPar: 3, status: 'DNF' },
-        { participantExternalId: 'status-dsq', round: 1, strokes: 75, scoreToPar: 3, status: 'DSQ' },
-        { participantExternalId: 'status-cut', round: 1, strokes: 78, scoreToPar: 6, status: 'MISSED_CUT' },
+        { participantExternalId: 'status-dnf', round: 1, strokes: 75, scoreToPar: 3, status: 'DID_NOT_FINISH' },
+        { participantExternalId: 'status-dsq', round: 1, strokes: 75, scoreToPar: 3, status: 'DISQUALIFIED' },
+        { participantExternalId: 'status-cut', round: 1, strokes: 78, scoreToPar: 6, status: 'FINISHED', missedCut: true },
       ],
     }, { contestActivation: NO_CONTEST_ACTIVATION, prisma: getAppPrisma(), providerId: PROVIDER, domainEvents: testDomainEvents(), scoringFamilyForEvent, findings: integrationSyncFindings() });
 
@@ -258,7 +258,7 @@ describe('Golf live-score persistence', () => {
     const result = {
       category: 'GOLF' as const,
       externalEventId: event.externalId,
-      rounds: [{ participantExternalId: 'idempotent-rory', round: 1, strokes: 34, scoreToPar: -2, thru: 9, status: 'IN_PROGRESS' as const }],
+      rounds: [{ participantExternalId: 'idempotent-rory', round: 1, strokes: 34, scoreToPar: -2, thru: 9, status: null }],
     };
     const deps = { prisma: getAppPrisma(), providerId: PROVIDER, domainEvents: testDomainEvents(), contestActivation: NO_CONTEST_ACTIVATION, scoringFamilyForEvent, findings: integrationSyncFindings() };
 
@@ -289,7 +289,7 @@ describe('Golf live-score persistence', () => {
       const persisted = await publishLiveScoreUpdate({
         category: 'GOLF',
         externalEventId: event.externalId,
-        rounds: [{ participantExternalId: `closed-${status.toLowerCase()}-rory`, round: 1, strokes: 70, scoreToPar: -2, status: 'COMPLETED' }],
+        rounds: [{ participantExternalId: `closed-${status.toLowerCase()}-rory`, round: 1, strokes: 70, scoreToPar: -2, status: 'FINISHED' }],
       }, { contestActivation: NO_CONTEST_ACTIVATION, prisma: getAppPrisma(), providerId: PROVIDER, domainEvents: testDomainEvents(), scoringFamilyForEvent, findings: integrationSyncFindings() });
 
       expect(persisted).toMatchObject({ updatesReturned: 1, updatesPersisted: 0, updatesSkipped: 1 });
@@ -306,7 +306,7 @@ describe('Golf live-score persistence', () => {
     const persisted = await publishLiveScoreUpdate({
       category: 'GOLF',
       externalEventId: event.externalId,
-      rounds: [{ participantExternalId: 'nostrokes-rory', round: 1, strokes: null, scoreToPar: -2, status: 'IN_PROGRESS' }],
+      rounds: [{ participantExternalId: 'nostrokes-rory', round: 1, strokes: null, scoreToPar: -2, status: null }],
     }, { contestActivation: NO_CONTEST_ACTIVATION, prisma: getAppPrisma(), providerId: PROVIDER, domainEvents: testDomainEvents(), scoringFamilyForEvent, findings: integrationSyncFindings() });
 
     expect(persisted).toMatchObject({ updatesReturned: 1, updatesPersisted: 0, updatesSkipped: 1 });
@@ -323,8 +323,8 @@ describe('Golf live-score persistence', () => {
       category: 'GOLF',
       externalEventId: event.externalId,
       rounds: [
-        { participantExternalId: 'unmapped-rory', round: 1, strokes: 70, scoreToPar: -2, status: 'COMPLETED' },
-        { participantExternalId: 'nobody-we-know', round: 1, strokes: 80, scoreToPar: 8, status: 'COMPLETED' },
+        { participantExternalId: 'unmapped-rory', round: 1, strokes: 70, scoreToPar: -2, status: 'FINISHED' },
+        { participantExternalId: 'nobody-we-know', round: 1, strokes: 80, scoreToPar: 8, status: 'FINISHED' },
       ],
     }, { contestActivation: NO_CONTEST_ACTIVATION, prisma: getAppPrisma(), providerId: PROVIDER, domainEvents: testDomainEvents(), scoringFamilyForEvent, findings: integrationSyncFindings() });
 

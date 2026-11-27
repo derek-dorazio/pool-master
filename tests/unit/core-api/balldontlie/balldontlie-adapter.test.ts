@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { ParticipantRoundStatus, ProviderCode, Sport } from '../../../../packages/shared/domain';
+import { GameSideStatus, ProviderCode, Sport } from '../../../../packages/shared/domain';
 import { BalldontlieAdapter } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/balldontlie-adapter';
 import { BalldontlieContractError } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/balldontlie-client';
 import { ProviderLeagueUnknownError } from '../../../../packages/core-api/src/modules/ingestion/core/provider-interface';
@@ -240,8 +240,8 @@ describe('BalldontlieAdapter (PGA TOUR)', () => {
 
       expect(scores.category).toBe('GOLF');
       expect(scores.externalEventId).toBe('41');
-      expect(golfRoundsOf(scores)).toContainEqual({ participantExternalId: '185', round: 3, strokes: 67, scoreToPar: -3, status: ParticipantRoundStatus.IN_PROGRESS, thru: 12 });
-      expect(golfRoundsOf(scores)).toContainEqual({ participantExternalId: '10', round: 2, strokes: 73, scoreToPar: 3, status: ParticipantRoundStatus.MISSED_CUT });
+      expect(golfRoundsOf(scores)).toContainEqual({ participantExternalId: '185', round: 3, strokes: 67, scoreToPar: -3, status: null, thru: 12 });
+      expect(golfRoundsOf(scores)).toContainEqual({ participantExternalId: '10', round: 2, strokes: 73, scoreToPar: 3, status: GameSideStatus.FINISHED, missedCut: true });
       expect(requestLine(harness.api)).toEqual([
         '/pga/v2/tournaments?tournament_ids%5B%5D=41&include_format=true',
         '/pga/v2/tournament_results?tournament_id=41&per_page=100',

@@ -74,7 +74,7 @@ describe('pool-master-rop.78.3 / plans/117 §10.3 — publishLiveScoreUpdate', (
       const malformed: LiveScoreResult = {
         category: 'GOLF',
         externalEventId: 'evt-ext-1',
-        rounds: [{ participantExternalId: '', round: 0, strokes: -1, scoreToPar: 0, status: 'COMPLETED' }],
+        rounds: [{ participantExternalId: '', round: 0, strokes: -1, scoreToPar: 0, status: 'FINISHED' }],
       };
 
       await expect(
@@ -111,7 +111,7 @@ describe('pool-master-rop.78.3 / plans/117 §10.3 — publishLiveScoreUpdate', (
         category: 'GOLF',
         externalEventId: 'evt-ext-1',
         rounds: [
-          { participantExternalId: 'rory', round: 1, strokes: null, scoreToPar: -2, status: 'IN_PROGRESS' },
+          { participantExternalId: 'rory', round: 1, strokes: null, scoreToPar: -2, status: null },
         ],
       };
 
@@ -151,7 +151,7 @@ describe('pool-master-rop.78.3 / plans/117 §10.3 — publishLiveScoreUpdate', (
         category: 'GOLF',
         externalEventId: 'evt-ext-unknown',
         rounds: [
-          { participantExternalId: 'rory', round: 1, strokes: 70, scoreToPar: -2, status: 'COMPLETED' },
+          { participantExternalId: 'rory', round: 1, strokes: 70, scoreToPar: -2, status: 'FINISHED' },
         ],
       };
 
@@ -190,7 +190,7 @@ describe('pool-master-rop.78.3 / plans/117 §10.3 — publishLiveScoreUpdate', (
         const result: LiveScoreResult = {
           category: 'GOLF',
           externalEventId: 'evt-ext-1',
-          rounds: [{ participantExternalId: 'rory', round: 1, strokes: 70, scoreToPar: -2, status: 'COMPLETED' }],
+          rounds: [{ participantExternalId: 'rory', round: 1, strokes: 70, scoreToPar: -2, status: 'FINISHED' }],
         };
 
         const persisted = await publishLiveScoreUpdate(result, { contestActivation: NO_CONTEST_ACTIVATION, findings: NO_FINDINGS, prisma: asPrismaClient(prisma), domainEvents: testDomainEvents(), providerId: 'balldontlie', logger, scoringFamilyForEvent });
@@ -222,7 +222,7 @@ describe('pool-master-rop.78.3 / plans/117 §10.3 — publishLiveScoreUpdate', (
       const result: LiveScoreResult = {
         category: 'GOLF',
         externalEventId: 'evt-ext-1',
-        rounds: [{ participantExternalId: 'rory', round: 1, strokes: 70, scoreToPar: -2, status: 'COMPLETED' }],
+        rounds: [{ participantExternalId: 'rory', round: 1, strokes: 70, scoreToPar: -2, status: 'FINISHED' }],
       };
 
       const persisted = await publishLiveScoreUpdate(result, { contestActivation: NO_CONTEST_ACTIVATION, findings: NO_FINDINGS,
@@ -291,7 +291,7 @@ describe('pool-master-rop.78.3 / plans/117 §10.3 — publishLiveScoreUpdate', (
     const result: LiveScoreResult = {
       category: 'GOLF',
       externalEventId: 'evt-ext-1',
-      rounds: [{ participantExternalId: 'rory', round: 1, strokes: 70, scoreToPar: -2, status: 'COMPLETED' }],
+      rounds: [{ participantExternalId: 'rory', round: 1, strokes: 70, scoreToPar: -2, status: 'FINISHED' }],
     };
     const persisted = { updatesReturned: 1, updatesPersisted: 1, updatesSkipped: 0, writeDiagnostics: { summary: { total: 0, unchanged: 0, created: 0, updated: 0, deleted: 0 }, rows: [] } };
 

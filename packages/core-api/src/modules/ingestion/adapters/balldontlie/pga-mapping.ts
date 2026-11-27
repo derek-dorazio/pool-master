@@ -6,7 +6,7 @@
  * mappings (#2011, `placeSlotsByName`).
  */
 
-import { ParticipantRoundStatus, Sport, JobErrorType, SportEventParticipantStatus } from '@poolmaster/shared/domain';
+import { GameSideStatus, Sport, JobErrorType, SportEventParticipantStatus } from '@poolmaster/shared/domain';
 import type { GolfRoundUpdate } from '@poolmaster/shared/dto';
 import type { ProviderParticipant, SportEvent } from '../../core/provider-interface';
 import { BalldontlieContractError } from './balldontlie-client';
@@ -157,11 +157,17 @@ export function toTourParticipant(player: PgaPlayer): ProviderParticipant {
   return toGolfer(player, { status: player.active ?? true ? SportEventParticipantStatus.ACTIVE : SportEventParticipantStatus.WITHDRAWN, ranking: player.owgr ?? undefined, metadata: {} });
 }
 
-/** Positions that mean a golfer is out, and the status their last played round takes. */
-const OUT_STATUS_BY_POSITION: ReadonlyMap<string, ParticipantRoundStatus> = new Map([
-  ['CUT', ParticipantRoundStatus.MISSED_CUT],
-  ['WD', ParticipantRoundStatus.DNF],
-  ['DQ', ParticipantRoundStatus.DSQ],
+/** How a golfer's last played round ended: its side status, and whether it ended their event at the cut. */
+type OutRound = Pick<GolfRoundUpdate, 'status' | 'missedCut'>;
+
+/**
+ * Positions that mean a golfer is out, and how their last played round ended. A cut golfer
+ * finished that round: the cut is their standing's, so the round says so beside its status.
+ */
+const OUT_ROUND_BY_POSITION: ReadonlyMap<string, OutRound> = new Map<string, OutRound>([
+  ['CUT', { status: GameSideStatus.FINISHED, missedCut: true }],
+  ['WD', { status: GameSideStatus.DID_NOT_FINISH }],
+  ['DQ', { status: GameSideStatus.DISQUALIFIED }],
 ]);
 
 /** A place on the leaderboard, tied or not: `1`, `T4`. */
@@ -171,38 +177,39 @@ const PLACE_PATTERN = /^T?\d{1,3}$/;
  * Why a golfer is out, or undefined while they are still in it (a place, or no position yet).
  * Any other position is refused rather than read as still playing.
  */
-function readOutStatus(path: string, position: string | null): ParticipantRoundStatus | undefined {
+function readOutRound(path: string, position: string | null): OutRound | undefined {
   if (position === null || PLACE_PATTERN.test(position)) {
     return undefined;
   }
-  const outStatus = OUT_STATUS_BY_POSITION.get(position);
-  if (!outStatus) {
-    throw new BalldontlieContractError(path, [`position "${position}" is neither a place nor one of ${[...OUT_STATUS_BY_POSITION.keys()].join(', ')}`]);
+  const outRound = OUT_ROUND_BY_POSITION.get(position);
+  if (!outRound) {
+    throw new BalldontlieContractError(path, [`position "${position}" is neither a place nor one of ${[...OUT_ROUND_BY_POSITION.keys()].join(', ')}`]);
   }
-  return outStatus;
+  return outRound;
 }
 
 /** `thru` while a round is played: the holes completed, with a `*` when the golfer started on the back nine. */
 const HOLES_THRU_PATTERN = /^(\d{1,2})\*?$/;
 const FINISHED_THRU = 'F';
 
+/** A round finished, or still being played (no side status yet) with the holes completed so far. */
 type RoundProgress =
-  | { status: typeof ParticipantRoundStatus.COMPLETED }
-  | { status: typeof ParticipantRoundStatus.IN_PROGRESS; thru?: number };
+  | { status: typeof GameSideStatus.FINISHED }
+  | { status: null; thru?: number };
 
 function readThru(path: string, thru: string | null): RoundProgress {
   if (thru === null) {
-    return { status: ParticipantRoundStatus.IN_PROGRESS };
+    return { status: null };
   }
   if (thru === FINISHED_THRU) {
-    return { status: ParticipantRoundStatus.COMPLETED };
+    return { status: GameSideStatus.FINISHED };
   }
   const holes = HOLES_THRU_PATTERN.exec(thru);
   if (!holes) {
     throw new BalldontlieContractError(path, [`thru "${thru}" is neither "F" nor a hole count`]);
   }
   // How many holes a round has is its slot's (#2047): the score service skips a thru past them.
-  return { status: ParticipantRoundStatus.IN_PROGRESS, thru: Number(holes[1]) };
+  return { status: null, thru: Number(holes[1]) };
 }
 
 /** The par of the course a round is played on, when the tournament names exactly one with a par. */
@@ -232,8 +239,8 @@ function isPlayed(round: PgaResultRound): boolean {
 
 /**
  * One golf round update per round a golfer has started. A round before the current one, or
- * any round once the tournament is final, is COMPLETED; the current round reads `thru`. A
- * golfer who is out (CUT, WD, DQ) has their last played round marked with why.
+ * any round once the tournament is final, is FINISHED; the current round reads `thru`. A
+ * golfer who is out (CUT, WD, DQ) has their last played round marked with how it ended.
  */
 export function toGolfRoundUpdates(
   tournament: PgaTournament,
@@ -251,7 +258,7 @@ export function toGolfRoundUpdates(
     const played = result.rounds
       .filter(isPlayed)
       .sort((a, b) => a.round_number - b.round_number);
-    const outStatus = readOutStatus(path, result.position);
+    const outRound = readOutRound(path, result.position);
     const lastPlayed = played.at(-1)?.round_number;
 
     return played.map((round): GolfRoundUpdate => {
@@ -261,8 +268,8 @@ export function toGolfRoundUpdates(
         strokes: round.score,
         scoreToPar: roundScoreToPar(path, tournament, round),
       };
-      if (outStatus && round.round_number === lastPlayed) {
-        return { ...base, status: outStatus };
+      if (outRound && round.round_number === lastPlayed) {
+        return { ...base, ...outRound };
       }
       const progress = roundProgress(path, tournamentFinal, result, round.round_number);
       return { ...base, ...progress };
@@ -277,7 +284,7 @@ function roundProgress(
   roundNumber: number,
 ): RoundProgress {
   if (tournamentFinal || result.current_round === null || roundNumber < result.current_round) {
-    return { status: ParticipantRoundStatus.COMPLETED };
+    return { status: GameSideStatus.FINISHED };
   }
   if (roundNumber === result.current_round) {
     return readThru(path, result.thru);

@@ -1424,7 +1424,7 @@ async function uploadRoundScores(
         strokes: row.strokes,
         scoreToPar: row.scoreToPar,
         thru: 18,
-        status: 'COMPLETED',
+        status: 'FINISHED',
       })),
     },
   });

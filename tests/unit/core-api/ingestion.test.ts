@@ -166,7 +166,7 @@ describe('EventFeedSync', () => {
             round: 1,
             strokes: 72,
             scoreToPar: 0,
-            status: 'IN_PROGRESS',
+            status: null,
           },
         ],
       };
