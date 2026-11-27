@@ -657,7 +657,7 @@ describe('SportEvent core repositories', () => {
     expect(fields.map((field) => [field.entry.sportEventId, field.valuation?.price])).toEqual([[event.id, 9000], [oneSlot.id, 5000]]);
   });
 
-  it('keeps an event\'s tier set on the first slot an active tiered or budget template lists, not a play-in before it, and prices its field from there (#2044)', async () => {
+  it('keeps an event\'s tier set on the first slot an active tiered or budget template lists, not a play-in before it, prices its field from there, and reads another slot\'s prices when named (#2044)', async () => {
     const sport = await golfSport();
     const event = await createEvent('play-in-field');
     const [playInSlotId, roundOf64SlotId] = await eventRoundSlots(getPrisma(), event.id, [{ slotKind: 'PLAY_IN' }, { slotKind: 'ROUND_OF_64' }]);
@@ -689,8 +689,13 @@ describe('SportEvent core repositories', () => {
       new PrismaSportEventParticipantRepository(getAppPrisma()).findFieldForEvent(event.id, event.sportLeagueId),
     ]).finally(dropTemplates);
 
-    expect(tierSlots.map((slot) => [slot.id, slot.isTierSetSlot])).toEqual([[playInSlotId, false], [roundOf64SlotId, true]]);
-    expect(field.map((fieldRow) => fieldRow.valuation?.price)).toEqual([9000]);
+    const playInSeasonSlotId = tierSlots.find((slot) => slot.id === playInSlotId)?.seasonSlotId;
+    const playInField = await new PrismaSportEventParticipantRepository(getAppPrisma()).findFieldForEvent(event.id, event.sportLeagueId, playInSeasonSlotId);
+
+    expect(tierSlots.map((slot) => [slot.id, slot.slotDefinitionId, slot.holdsTierSet, slot.isTierSetSlot])).toEqual([
+      [playInSlotId, playInDefinition, false, false], [roundOf64SlotId, roundOf64Definition, true, true],
+    ]);
+    expect([field.map((fieldRow) => fieldRow.valuation?.price), playInField.map((fieldRow) => fieldRow.valuation?.price)]).toEqual([[9000], [7000]]);
   });
 
   it("reads several events' fields in one read, in the order asked, each row's tour membership checked against its own event's tour (#1315)", async () => {

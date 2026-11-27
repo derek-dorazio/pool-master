@@ -35,14 +35,15 @@ export class EventFieldReader implements EventFieldReads {
   /**
    * The field in seed order, unseeded last, read now in one repository call (#1163). What a
    * write answers with, and what settlement and the emails read. 404 EVENT_NOT_FOUND for an
-   * unknown event.
+   * unknown event. Each row's valuation is the event's tier-set slot's, or that of the slot played in
+   * `seasonSlotId` (#2044).
    */
-  async listEventParticipants(sportEventId: string): Promise<SportEventParticipantView[]> {
+  async listEventParticipants(sportEventId: string, seasonSlotId?: string): Promise<SportEventParticipantView[]> {
     const event = await this.deps.sportEvents.findById(sportEventId);
     if (!event) {
       throw new SportEventError(`Sport event ${sportEventId} was not found.`, 'EVENT_NOT_FOUND', 404);
     }
-    return this.deps.field.findFieldForEvent(sportEventId, event.sportLeagueId);
+    return this.deps.field.findFieldForEvent(sportEventId, event.sportLeagueId, seasonSlotId);
   }
 
   /**

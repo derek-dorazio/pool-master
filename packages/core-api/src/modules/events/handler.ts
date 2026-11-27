@@ -66,6 +66,8 @@ import type { SportEventOverviewResponse } from '@poolmaster/shared/dto/sport-ca
 import { mapSportEventOverviewToDto } from '../../mappers/sport-catalog.mapper';
 
 type EventParams = { Params: { eventId: string } };
+/** An event and one Season slot it is played in, whose tier set a slot route reads or writes (#2044). */
+type SlotParams = { Params: { eventId: string; seasonSlotId: string } };
 type RoundParams = { Params: { eventId: string; roundNumber: number } };
 
 /** Only a root admin sees drafts (#431) and reads an event's admin counts (#1198). */
@@ -120,8 +122,9 @@ export function createEventHandlers({ services, eventLifecycle, ingestion, leade
   }
 
   /** The field read now: what a write to it answers with. */
-  async function fieldResponse(eventId: string): Promise<SportEventParticipantListResponse> {
-    return { participants: (await field.listEventParticipants(eventId)).map(mapSportEventParticipantToDto) };
+  /** The field read now; each row's valuation in the set of the slot played in `seasonSlotId`, else the tier-set slot's (#2044). */
+  async function fieldResponse(eventId: string, seasonSlotId?: string): Promise<SportEventParticipantListResponse> {
+    return { participants: (await field.listEventParticipants(eventId, seasonSlotId)).map(mapSportEventParticipantToDto) };
   }
 
   /** One field row read now: what a write to that row answers with, rather than the whole field (#1163). */
@@ -315,6 +318,56 @@ export function createEventHandlers({ services, eventLifecycle, ingestion, leade
       await requireEvent(request.params.eventId);
       await tiers.autoAssignPrices({ sportEventId: request.params.eventId, pricing: request.body });
       return fieldResponse(request.params.eventId);
+    },
+
+    // The same reads and writes on the set of the slot played in a Season slot (#2044).
+    listEventSlotParticipants: async (request: FastifyRequest<SlotParams>): Promise<SportEventParticipantListResponse> => {
+      const { eventId, seasonSlotId } = request.params;
+      await requireEvent(eventId);
+      await tiers.listTiers(eventId, { seasonSlotId });
+      return fieldResponse(eventId, seasonSlotId);
+    },
+
+    listEventSlotTiers: async (request: FastifyRequest<SlotParams>): Promise<SportEventTierListResponse> => {
+      const { eventId, seasonSlotId } = request.params;
+      await requireEvent(eventId);
+      return { tiers: (await tiers.listTiers(eventId, { seasonSlotId })).map(mapSportEventTierToDto) };
+    },
+
+    replaceEventSlotTiers: async (
+      request: FastifyRequest<SlotParams & { Body: ReplaceSportEventTiersRequest }>,
+    ): Promise<SportEventTierListResponse> => {
+      const { eventId, seasonSlotId } = request.params;
+      await requireEvent(eventId);
+      await tiers.replaceTiers({ sportEventId: eventId, seasonSlotId, ...request.body });
+      return { tiers: (await tiers.listTiers(eventId, { seasonSlotId })).map(mapSportEventTierToDto) };
+    },
+
+    autoAssignEventSlotTiers: async (
+      request: FastifyRequest<SlotParams & { Body: AutoAssignSportEventTiersRequest }>,
+    ): Promise<SportEventParticipantListResponse> => {
+      const { eventId, seasonSlotId } = request.params;
+      await requireEvent(eventId);
+      await tiers.autoAssignTiers({ sportEventId: eventId, seasonSlotId, ...request.body });
+      return fieldResponse(eventId, seasonSlotId);
+    },
+
+    replaceEventSlotTierAssignments: async (
+      request: FastifyRequest<SlotParams & { Body: ReplaceSportEventTierAssignmentsRequest }>,
+    ): Promise<SportEventParticipantListResponse> => {
+      const { eventId, seasonSlotId } = request.params;
+      await requireEvent(eventId);
+      await tiers.replaceTierAssignments({ sportEventId: eventId, seasonSlotId, assignments: request.body.assignments });
+      return fieldResponse(eventId, seasonSlotId);
+    },
+
+    autoAssignEventSlotPrices: async (
+      request: FastifyRequest<SlotParams & { Body: AutoAssignSportEventPricesRequest }>,
+    ): Promise<SportEventParticipantListResponse> => {
+      const { eventId, seasonSlotId } = request.params;
+      await requireEvent(eventId);
+      await tiers.autoAssignPrices({ sportEventId: eventId, seasonSlotId, pricing: request.body });
+      return fieldResponse(eventId, seasonSlotId);
     },
 
     previewGolfRoundScores: async (

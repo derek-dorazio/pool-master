@@ -698,7 +698,7 @@ describe('ContestManagementService', () => {
       expect(reader.findByIds).toHaveBeenCalledTimes(1);
       expect(reader.findByIds).toHaveBeenCalledWith([masters, pga]);
       expect(tiers.listTiersOfEvents).toHaveBeenCalledTimes(1);
-      expect(tiers.listTiersOfEvents).toHaveBeenCalledWith([masters, pga]);
+      expect(tiers.listTiersOfEvents).toHaveBeenCalledWith([masters, pga], { coveredSlotDefinitionIds: null });
     });
 
     it('moves a DRAFT contest to OPEN with a compare-and-set from DRAFT, records when it opened, has the reminder sweep look at it next (#1170), and returns it open', async () => {
@@ -951,6 +951,7 @@ describe('ContestManagementService', () => {
     expect(golfTierService.getEffectiveTiersForSportEvents).toHaveBeenCalledTimes(1);
     expect(golfTierService.getEffectiveTiersForSportEvents).toHaveBeenCalledWith(
       ['11111111-1111-1111-1111-111111111111'],
+      { coveredSlotDefinitionIds: null },
     );
     expect(result.sportEvents[0]?.effectiveTiers).toEqual([
       {
@@ -3063,7 +3064,7 @@ describe('createContestSportEventReader field, game and price reads', () => {
     return createContestSportEventReader({
       sportEvents: store.sportEventRepo(),
       field: { findBySportEvent: async () => ports.entries ?? [] } as unknown as Parameters<typeof createContestSportEventReader>[0]['field'],
-      tiers: { findTierSlots: async () => new Map([[EVENT, [{ id: 'event-slot-1', sportEventId: EVENT, seasonSlotId: 'season-slot-1', seasonSlotStatus: SeasonSlotStatus.SCHEDULED, isTierSetSlot: true, tierLayout: null, pricing: null }]]]) },
+      tiers: { findTierSlots: async () => new Map([[EVENT, [{ id: 'event-slot-1', sportEventId: EVENT, seasonSlotId: 'season-slot-1', slotDefinitionId: 'slot-definition-1', seasonSlotStatus: SeasonSlotStatus.SCHEDULED, holdsTierSet: true, isTierSetSlot: true, tierLayout: null, pricing: null }]]]) },
       valuations: { findBySlot: async () => ports.valuations ?? [] } as unknown as Parameters<typeof createContestSportEventReader>[0]['valuations'],
       matches: { findBySportEvent: async () => ports.games ?? [] } as unknown as Parameters<typeof createContestSportEventReader>[0]['matches'],
     });

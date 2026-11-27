@@ -18,6 +18,7 @@ import {
   SportEventRoundListResponseSchema,
   SportEventRoundMatchupsResponseSchema,
   SportEventSlotTiebreakersResponseSchema,
+  SportEventParticipantListResponseSchema,
   SportEventTierListResponseSchema,
   SportLeagueListResponseSchema,
   SportListResponseSchema,
@@ -41,6 +42,7 @@ import { sportPlay } from '../../support/sport-play';
 import { oneEventSlotId } from '../../support/test-slots';
 import { createMatchRow } from '../../support/match-rows';
 import { HOME_SIDE } from '../../support/match-sides';
+import { tierSetSlot } from '../../support/event-tier-sets';
 
 // No mocks.
 
@@ -296,6 +298,35 @@ describe('sport catalog reads cost the same statements for 2 rows as for 20', ()
       },
       call: ({ event, rootAdmin }) => get(`/api/v1/events/${event.id}/tiers`, rootAdmin),
       rowsShown: (response) => okBody(response, SportEventTierListResponseSchema).tiers.length,
+    });
+  });
+
+  it("GET a slot's tiers: the same statements for 2 tiers as for 20 (#2044)", async () => {
+    await expectConstantQueries({
+      route: 'GET /api/v1/events/{eventId}/slots/{seasonSlotId}/tiers',
+      seed: async (tiers) => {
+        const { event, field } = await seedEventWithField(tiers);
+        await seedTiers(event.id, field, tiers);
+        const { sportLeagueSeasonCompetitionSlotId: seasonSlotId } = await getPrisma().sportEventSlot.findFirstOrThrow({ where: { sportEventId: event.id }, select: { sportLeagueSeasonCompetitionSlotId: true } });
+        return { event, seasonSlotId, rootAdmin: await createTestUser({ isRootAdmin: true }) };
+      },
+      call: ({ event, seasonSlotId, rootAdmin }) => get(`/api/v1/events/${event.id}/slots/${seasonSlotId}/tiers`, rootAdmin),
+      rowsShown: (response) => okBody(response, SportEventTierListResponseSchema).tiers.length,
+    });
+  });
+
+  it("GET a slot's field: the same statements for 2 players as for 20 (#2044)", async () => {
+    await expectConstantQueries({
+      route: 'GET /api/v1/events/{eventId}/slots/{seasonSlotId}/participants',
+      seed: async (golfers) => {
+        const { event } = await seedEventWithField(golfers);
+        // The event's one slot, the slot its field is read in.
+        await tierSetSlot(getPrisma(), event.id);
+        const { sportLeagueSeasonCompetitionSlotId: seasonSlotId } = await getPrisma().sportEventSlot.findFirstOrThrow({ where: { sportEventId: event.id }, select: { sportLeagueSeasonCompetitionSlotId: true } });
+        return { event, seasonSlotId, rootAdmin: await createTestUser({ isRootAdmin: true }) };
+      },
+      call: ({ event, seasonSlotId, rootAdmin }) => get(`/api/v1/events/${event.id}/slots/${seasonSlotId}/participants`, rootAdmin),
+      rowsShown: (response) => okBody(response, SportEventParticipantListResponseSchema).participants.length,
     });
   });
 

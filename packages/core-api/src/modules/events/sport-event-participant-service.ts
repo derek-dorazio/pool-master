@@ -102,8 +102,8 @@ export class SportEventParticipantService implements EventFieldReads {
     this.fieldReader = new EventFieldReader(deps);
   }
 
-  listEventParticipants(sportEventId: string): Promise<SportEventParticipantView[]> {
-    return this.fieldReader.listEventParticipants(sportEventId);
+  listEventParticipants(sportEventId: string, seasonSlotId?: string): Promise<SportEventParticipantView[]> {
+    return this.fieldReader.listEventParticipants(sportEventId, seasonSlotId);
   }
 
   listCachedEventParticipants(sportEventId: string): Promise<SportEventParticipantView[]> {

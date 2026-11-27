@@ -53,6 +53,7 @@ import {
   SportEventStatus,
   type SportLeague,
   type SportEventTierSlot,
+  tierSetSlotOf,
   type SportLeagueSeasonSlot,
   slotDatesChange,
   sportLeagueDefinitionOf,
@@ -95,6 +96,11 @@ export interface SportEventSummary {
    * an event covering no slot.
    */
   tierSetSlot: SportEventTierSlot | null;
+  /**
+   * Every slot holding a tier set (#2044, `chooseTierSetSlots`), in play order, the tier-set slot
+   * first, each with its tier count; empty for an event covering no slot.
+   */
+  tierSets: Array<{ slot: SportEventTierSlot; tierCount: number }>;
   /** The Season slots it covers (#2004), in play order; empty for an event with none yet. */
   slots: SportLeagueSeasonSlot[];
   /** Null unless the read asked for them: see `SportEventAdminCounts`. */
@@ -950,6 +956,7 @@ export class SportEventService {
         participantCount: 0,
         tierCount: tiers.length,
         tierSetSlot: made?.slot ?? null,
+        tierSets: (made?.holding ?? []).map((slot) => ({ slot, tierCount: tiers.length })),
         slots: slots.filter((slot) => editions[index]?.event.seasonSlotIds?.includes(slot.id)),
         adminCounts: {
           untieredParticipantCount: 0,
@@ -979,24 +986,26 @@ export class SportEventService {
   }
 
   /**
-   * The counts every reader of an event needs, its slots and its tier-set slot's set (#2044): a fixed
+   * The counts every reader of an event needs, its slots and its slots' tier sets (#2044): a fixed
    * number of reads for the whole list.
    */
   private async summarize(events: SportEvent[]): Promise<SportEventSummary[]> {
     const ids = events.map((event) => event.id);
-    const [participants, slots, tierSetSlots] = await Promise.all([
+    const [participants, slots, holdingSlots] = await Promise.all([
       this.deps.sportEvents.countParticipants(ids),
       this.deps.sportEvents.findSlots(ids),
-      this.deps.tiers.tierSetSlots(ids),
+      this.deps.tiers.holdingSlots(ids),
     ]);
-    const tiers = await this.deps.sportEvents.countTiers([...tierSetSlots.values()].map((slot) => slot.id));
+    const tiers = await this.deps.sportEvents.countTiers([...holdingSlots.values()].flat().map((slot) => slot.id));
     return events.map((event) => {
-      const tierSetSlot = tierSetSlots.get(event.id) ?? null;
+      const holding = holdingSlots.get(event.id) ?? [];
+      const tierSetSlot = tierSetSlotOf(holding) ?? null;
       return {
         event,
         participantCount: participants.get(event.id) ?? 0,
         tierCount: tierSetSlot === null ? 0 : tiers.get(tierSetSlot.id) ?? 0,
         tierSetSlot,
+        tierSets: holding.map((slot) => ({ slot, tierCount: tiers.get(slot.id) ?? 0 })),
         slots: slots.get(event.id) ?? [],
         adminCounts: null,
       };

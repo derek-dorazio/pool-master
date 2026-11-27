@@ -1554,6 +1554,29 @@ describe('Contract verification (root admin)', () => {
       expect(SportEventResponseSchema.safeParse(releaseRes.json()).success).toBe(true);
       expect(releaseRes.json<SportEventResponse>().event.status).toBe('SCHEDULED');
 
+      // --- the slot tier routes (#2044): reads 200, every write 409 once the tier-set slot is released ---
+      const { sportLeagueSeasonCompetitionSlotId: seasonSlotId } = await getPrisma().sportEventSlot.findFirstOrThrow({ where: { sportEventId: eventId }, select: { sportLeagueSeasonCompetitionSlotId: true } });
+      const slotRoute = (path: string) => `/api/v1/events/${eventId}/slots/${seasonSlotId}/${path}`;
+      const slotTiersRes = await getApp().inject({ method: 'GET', url: slotRoute('tiers'), headers: rootAdmin.headers });
+      expect(slotTiersRes.statusCode).toBe(200);
+      expect(SportEventTierListResponseSchema.safeParse(slotTiersRes.json()).success).toBe(true);
+      const slotFieldRes = await getApp().inject({ method: 'GET', url: slotRoute('participants'), headers: rootAdmin.headers });
+      expect(slotFieldRes.statusCode).toBe(200);
+      const slotField = SportEventParticipantListResponseSchema.safeParse(slotFieldRes.json());
+      expect(slotField.success).toBe(true);
+      const someEntryId = slotField.data?.participants[0]?.id ?? randomUUID();
+      const slotWrites = [
+        { method: 'PUT', path: 'tiers', payload: { tiers: [{ tierKey: 'tier-1', tierNumber: 1 }] } },
+        { method: 'POST', path: 'tiers/auto-assign', payload: {} },
+        { method: 'PUT', path: 'tiers/assignments', payload: { assignments: [{ sportEventParticipantId: someEntryId, tierKey: 'tier-1', tierOrderIndex: 1 }] } },
+        { method: 'POST', path: 'prices/auto-assign', payload: await standardPricingIn(getPrisma()) },
+      ] as const;
+      for (const write of slotWrites) {
+        // poolmaster-allow-query-in-loop: four routes, one request each
+        const lockedRes = await getApp().inject({ method: write.method, url: slotRoute(write.path), headers: rootAdmin.headers, payload: write.payload });
+        expect([write.path, lockedRes.statusCode, ErrorEnvelopeSchema.safeParse(lockedRes.json()).success, lockedRes.json<ErrorEnvelope>().error.code]).toEqual([write.path, 409, true, 'SPORT_EVENT_TIERS_LOCKED']);
+      }
+
       // --- the League page reads (200) (#1865): syncs, events, participants -----
       const leagueSyncsRes = await getApp().inject({ method: 'GET', url: `/api/v1/sport-leagues/${leagueId}/syncs`, headers: rootAdmin.headers });
       expect(leagueSyncsRes.statusCode).toBe(200);
