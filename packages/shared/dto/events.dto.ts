@@ -21,8 +21,7 @@ import {
   ValuationSource,
 } from '@poolmaster/shared/domain';
 import { SportEventRoundSlotDtoSchema } from './bracket.dto';
-import { DateTimeSchema } from './common.dto';
-import { EventSyncKindSchema } from './ingestion.dto';
+import { DateTimeSchema, EventSyncKindSchema } from './common.dto';
 import { ParticipantDtoSchema } from './participants.dto';
 import { SportLeagueSeasonSlotDtoSchema } from './sport-catalog.dto';
 
