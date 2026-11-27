@@ -16,7 +16,7 @@ import { homeAwayResult, withHomeAway, type HomeAwayFields } from '../../support
 
 const EVENT_ID = 'event-1';
 /** A league that plays single games in every round. */
-const EVENT = { id: EVENT_ID, rounds: null };
+const EVENT = { id: EVENT_ID };
 
 /** The provider game id each match's Game 1 is mapped to, by match id; null while it has none. */
 const LINKS = new Map<string, string | null>();
@@ -506,7 +506,6 @@ describe('writeGameScores', () => {
   });
 
   describe('a best-of series (one match whose score is games won)', () => {
-    const SEVENS = { id: EVENT_ID, rounds: 2 };
 
     /** A two-round playoff, each round's best-of length its slot's (#2006): both best of seven unless given. */
     function series(lengths: readonly [number, number] = [7, 7]): SportEventRoundMatch[] {
@@ -521,7 +520,7 @@ describe('writeGameScores', () => {
     it('holds each game of a series at its own Game, written with the job running the tiebreaker rule again, counts each final game as a win from the match\'s sides, and records the series 4-1 once a side has four', async () => {
       const { deps, recordResult, applySync, applyStatuses } = writer(series());
 
-      const result = await writeGameScores(deps, SEVENS, [
+      const result = await writeGameScores(deps, EVENT, [
         nth(1, game('s1', 'KC', 'BUF', 100, 90)),
         nth(2, game('s2', 'KC', 'BUF', 88, 95)),
         nth(3, game('s3', 'BUF', 'KC', 97, 101)),
@@ -553,7 +552,7 @@ describe('writeGameScores', () => {
       const { deps, recordResult } = writer(decided);
       const sweep = ['d1', 'd2', 'd3', 'd4'].map((id, index) => nth(index + 1, game(id, 'DAL', 'PHI', 5, 2)));
 
-      const result = await writeGameScores(deps, SEVENS, sweep);
+      const result = await writeGameScores(deps, EVENT, sweep);
 
       expect(recordResult).not.toHaveBeenCalled();
       expect(result.writeDiagnostics.rows).toEqual([expect.objectContaining({ id: 'm2', disposition: 'UNCHANGED' })]);
@@ -562,7 +561,7 @@ describe('writeGameScores', () => {
     it('puts the wins so far on the series\' match as its live score while no side has four, a game under way adding none', async () => {
       const { deps, recordResult, applyStatuses } = writer(series());
 
-      await writeGameScores(deps, SEVENS, [
+      await writeGameScores(deps, EVENT, [
         nth(1, game('s1', 'KC', 'BUF', 100, 90)),
         nth(2, game('s2', 'BUF', 'KC', 101, 99)),
         nth(3, game('s3', 'KC', 'BUF', 104, 100)),
@@ -579,7 +578,7 @@ describe('writeGameScores', () => {
       matches[0] = withHomeAway(matches[0], { status: MatchStatus.IN_PROGRESS, homeScore: 0, awayScore: 0 });
       const { deps, applyStatuses } = writer(matches);
 
-      await writeGameScores(deps, SEVENS, [
+      await writeGameScores(deps, EVENT, [
         nth(1, game('s1', 'KC', 'BUF', null, null, ProviderGameState.POSTPONED)),
         nth(1, game('t1', 'PHI', 'DAL', null, null, ProviderGameState.SCHEDULED)),
       ]);
@@ -592,7 +591,7 @@ describe('writeGameScores', () => {
       matches[1] = withHomeAway(matches[1], { status: MatchStatus.COMPLETED, winnerSide: MatchSide.HOME, homeScore: 4, awayScore: 0 });
       const { deps, applyStatuses } = writer(matches);
 
-      await writeGameScores(deps, SEVENS, [
+      await writeGameScores(deps, EVENT, [
         nth(1, game('s1', 'KC', 'BUF', 100, 90)),
         nth(2, game('s2', 'KC', 'BUF', null, null)),
         nth(1, game('t1', 'PHI', 'DAL', 101, 99)),
@@ -606,7 +605,7 @@ describe('writeGameScores', () => {
       matches[1] = withHomeAway(matches[1], { status: MatchStatus.COMPLETED, winnerSide: MatchSide.HOME });
       const { deps, applyStatuses, recordResult } = writer(matches);
 
-      await writeGameScores(deps, SEVENS, [nth(1, game('t1', 'PHI', 'DAL', 101, 99))]);
+      await writeGameScores(deps, EVENT, [nth(1, game('t1', 'PHI', 'DAL', 101, 99))]);
 
       expect(applyStatuses).toHaveBeenCalledWith([]);
       expect(recordResult).not.toHaveBeenCalled();
@@ -616,7 +615,7 @@ describe('writeGameScores', () => {
       const { deps, recordResult } = writer(series([3, 1]));
       const shootout = { ...nth(2, game('s2', 'BUF', 'KC', 1, 1)), homeShootoutScore: 3, awayShootoutScore: 5 };
 
-      await writeGameScores(deps, SEVENS, [nth(1, game('s1', 'KC', 'BUF', 2, 0)), shootout]);
+      await writeGameScores(deps, EVENT, [nth(1, game('s1', 'KC', 'BUF', 2, 0)), shootout]);
 
       expect(recordResult).toHaveBeenCalledWith(EVENT_ID, { roundNumber: 1, matchNumber: 1 }, homeAwayResult({ winnerSide: MatchSide.HOME, homeScore: 2, awayScore: 0 }));
     });
@@ -626,7 +625,7 @@ describe('writeGameScores', () => {
       matches[2] = withHomeAway(matches[2], { homeSportEventParticipantId: 'sep-DAL', awaySportEventParticipantId: 'sep-PHI' });
       const { deps, recordResult, applyStatuses, logger } = writer(matches);
 
-      await writeGameScores(deps, SEVENS, [
+      await writeGameScores(deps, EVENT, [
         nth(1, game('s1', 'KC', 'BUF', 2, 0)),
         nth(2, game('s2', 'BUF', 'KC', 2, 0)),
         nth(3, game('s3', 'KC', 'BUF', 1, 0)),
@@ -647,7 +646,7 @@ describe('writeGameScores', () => {
       const { deps, recordResult, logger } = writer(series());
       const fiveNil = ['s1', 's2', 's3', 's4', 's5'].map((id, index) => nth(index + 1, game(id, 'KC', 'BUF', 3, 1)));
 
-      await writeGameScores(deps, SEVENS, fiveNil);
+      await writeGameScores(deps, EVENT, fiveNil);
 
       expect(recordResult).not.toHaveBeenCalled();
       expect(logger.warn).toHaveBeenCalledWith(
@@ -661,7 +660,7 @@ describe('writeGameScores', () => {
       matches[2] = withHomeAway(matches[2], { homeSportEventParticipantId: 'sep-KC', awaySportEventParticipantId: 'sep-PHI' });
       const { deps, recordResult, applySync } = writer(matches);
 
-      await writeGameScores(deps, SEVENS, [
+      await writeGameScores(deps, EVENT, [
         game('r1', 'KC', 'BUF', 20, 17),
         ...['f1', 'f2', 'f3', 'f4'].map((id, index) => nth(index + 1, game(id, 'PHI', 'KC', 3, 1))),
       ]);

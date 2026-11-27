@@ -422,7 +422,6 @@ describe('golf contest settlement — unplayed rounds score 80 strokes', () => {
         startDate: new Date('2026-05-28T12:00:00.000Z'),
         endDate: new Date('2026-05-31T22:00:00.000Z'),
         status: 'COMPLETED',
-        rounds: 4,
       },
     });
     const sportEventSlotId = await oneEventSlotId(prisma, event.id);

@@ -831,7 +831,6 @@ describe('Contract verification (root admin)', () => {
         startDate: new Date('2026-04-10T15:00:00.000Z'),
         endDate: new Date('2026-04-14T21:00:00.000Z'),
         status: 'SCHEDULED',
-        rounds: 4,
       },
     });
     await mapEventToProvider(getPrisma(), contractEvent.id, { providerId: 'balldontlie', externalId: 'event-1' });

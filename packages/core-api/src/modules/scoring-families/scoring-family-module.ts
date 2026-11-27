@@ -46,7 +46,6 @@ export interface LiveScoreWriteDeps {
 /** The in-progress event a provider's live scores are written to. */
 export interface LiveScoreTargetEvent {
   id: string;
-  rounds: number | null;
 }
 
 /** A live-score result category, the discriminant of a provider's `LiveScoreResult`. */

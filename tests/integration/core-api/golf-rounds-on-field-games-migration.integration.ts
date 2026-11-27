@@ -83,7 +83,6 @@ async function tournament(names: readonly string[]) {
       name: `Golf Migration ${randomUUID().slice(0, 8)}`,
       startDate: new Date('2027-05-06T12:00:00.000Z'),
       status: 'IN_PROGRESS',
-      rounds: 2,
     },
   });
   const sportEventSlotId = await oneEventSlotId(prisma, event.id);

@@ -656,7 +656,6 @@ describe('mock contest feed provider event-first verification', () => {
       name: 'Admin Spring Classic',
       venue: 'Admin Links',
       startDate: adminStart,
-      rounds: 4,
       status: linked.status,
     });
     await expect(prisma.sportEventParticipant.count({ where: { sportEventId: linked.id } }))
