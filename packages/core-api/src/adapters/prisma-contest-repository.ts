@@ -16,7 +16,8 @@ import type {
   PendingDrawReceipts,
   ReminderCheck,
 } from '@poolmaster/shared/db';
-import { championshipYear, ContestStatus, SelectionType, SportEventStatus, type Contest, type ContestCoveredSlot, type ContestFormat, type CupWeight, FINISHED_SPORT_EVENT_STATUSES, type SeasonSlotStatus, type SlotKind } from '@poolmaster/shared/domain';
+import { championshipYear, ContestStatus, type Contest, type ContestCoveredSlot, type ContestFormat, type CupWeight, type SelectionType, type SeasonSlotStatus, type SlotKind, type SportEventStatus } from '@poolmaster/shared/domain';
+import { neverOpeningDraft } from './never-opening-draft';
 import { forgettingReads, memoizedRead, memoizedReadMany, ReadMemoKey } from '../core/request-read-memo';
 import { lockContestRow, lockContestRowsAtOnce } from './contest-row-lock';
 import { insertBackgroundJobs } from './prisma-background-job-repository';
@@ -102,21 +103,8 @@ export class PrismaContestRepository implements ContestRepository {
       where: {
         leagueId,
         status: { in: [ContestStatus.DRAFT, ContestStatus.OPEN, ContestStatus.ACTIVE] },
-        // A draft that can never open is left out (#1161, #1217): one with an event finished or
-        // cancelled, which is past every cutoff, and one closing at its event's start once an
-        // event has started, since a started event cannot be removed. Only a squares contest with
-        // its game closes later, as `contestCutoff` says.
-        NOT: {
-          status: ContestStatus.DRAFT,
-          OR: [
-            { seasonSlots: { some: { seasonSlot: { eventSlot: { sportEvent: { status: { in: [...FINISHED_SPORT_EVENT_STATUSES] } } } } } } },
-            {
-              // Started as `hasSportEventStarted` has it: by its start date, or under way early.
-              seasonSlots: { some: { seasonSlot: { eventSlot: { sportEvent: { OR: [{ startDate: { lte: now } }, { status: SportEventStatus.IN_PROGRESS }] } } } } },
-              NOT: { selectionType: SelectionType.SQUARES, squaresGame: { isNot: null } },
-            },
-          ],
-        },
+        // A draft that can never open is left out (`neverOpeningDraft`).
+        NOT: neverOpeningDraft(now),
       },
       orderBy: { createdAt: 'desc' },
       include: CONTEST_INCLUDE,

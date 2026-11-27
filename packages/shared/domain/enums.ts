@@ -2189,6 +2189,10 @@ export const BackgroundJobType = {
   REFRESH_SLOT_STATUS: 'REFRESH_SLOT_STATUS',
   /** Recomputes one event's status from its slots after one of them moved (#2013). */
   REFRESH_EVENT_STATUS: 'REFRESH_EVENT_STATUS',
+  /** Closes a contest's league championship year once nothing in it is unfinished, after the contest went final (#2021). */
+  CLOSE_LEAGUE_CHAMPIONSHIP_YEAR: 'CLOSE_LEAGUE_CHAMPIONSHIP_YEAR',
+  /** Closes the championship year of each league with a contest in a Season, after one of its slots moved (#2021). */
+  CLOSE_SEASON_CHAMPIONSHIP_YEARS: 'CLOSE_SEASON_CHAMPIONSHIP_YEARS',
 } as const;
 export type BackgroundJobType = (typeof BackgroundJobType)[keyof typeof BackgroundJobType];
 /** No natural order: A to Z by its display strings. */

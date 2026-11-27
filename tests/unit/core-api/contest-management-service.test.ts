@@ -86,6 +86,9 @@ import { buildCoveredSlot, buildLeague } from '../../factories';
 import { PLAN_SETTINGS } from '../../../packages/core-api/src/modules/plans/plan-settings';
 import { testDomainEvents } from '../../support/domain-events';
 
+/** No championship year of the league is closed (#2021): creation's closed-year check passes. */
+const noClosedYears = { isClosed: jest.fn().mockResolvedValue(false) };
+
 const CONTEST_MANAGEMENT_TEST_NOW = new Date('2026-04-23T12:00:00.000Z');
 /** What a Platinum league's contests are made and moved under: its 50 sports leagues a year (#947, #986). */
 const PLATINUM_SEASON_LIMIT = expect.objectContaining({ sportLeaguesPerYear: 50 });
@@ -423,6 +426,7 @@ describe('ContestManagementService', () => {
       sportEventReader: createSportEventReader(),
       cups: createCupKeeper(cupsAsked),
       planEntitlements: platinumEntitlements(),
+      championshipYears: noClosedYears,
     });
 
     const result = await service.createContest(
@@ -488,6 +492,7 @@ describe('ContestManagementService', () => {
       }),
       cups: createCupKeeper(),
       planEntitlements: platinumEntitlements(),
+      championshipYears: noClosedYears,
     });
 
     await expect(
@@ -530,6 +535,7 @@ describe('ContestManagementService', () => {
       }),
       cups: createCupKeeper(),
       planEntitlements: platinumEntitlements(),
+      championshipYears: noClosedYears,
     });
 
     await expect(
@@ -580,6 +586,7 @@ describe('ContestManagementService', () => {
       sportEventReader: createSportEventReader(),
       cups: createCupKeeper(),
       planEntitlements: platinumEntitlements(),
+      championshipYears: noClosedYears,
     });
     const contest = await contestCoreRepo.findById('contest-1');
 
@@ -608,6 +615,7 @@ describe('ContestManagementService', () => {
         sportEventReader: createSportEventReader({ sportLeagueId: eventLeagueId }),
         cups: createCupKeeper(),
         planEntitlements: platinumEntitlements(),
+        championshipYears: noClosedYears,
       });
       const created = service.createContest({ leagueId: 'league-1' }, {
         name: 'Major Pick 6',
@@ -671,6 +679,7 @@ describe('ContestManagementService', () => {
         now: () => CONTEST_MANAGEMENT_TEST_NOW,
         cups: createCupKeeper(),
         planEntitlements: platinumEntitlements(),
+        championshipYears: noClosedYears,
       });
       return { service, contestCoreRepo };
     }
@@ -757,6 +766,7 @@ describe('ContestManagementService', () => {
         now: () => CONTEST_MANAGEMENT_TEST_NOW,
         cups: createCupKeeper(),
         planEntitlements: platinumEntitlements(),
+        championshipYears: noClosedYears,
       });
       return { service, contestCoreRepo, tiers };
     }
@@ -897,6 +907,7 @@ describe('ContestManagementService', () => {
       sportEventReader: createSportEventReader(),
       cups: createCupKeeper(),
       planEntitlements: platinumEntitlements(),
+      championshipYears: noClosedYears,
     });
 
     const result = await service.updateContestConfiguration('contest-1', {
@@ -941,6 +952,7 @@ describe('ContestManagementService', () => {
       }),
       cups: createCupKeeper(),
       planEntitlements: platinumEntitlements(),
+      championshipYears: noClosedYears,
     });
 
     await expect(
@@ -972,6 +984,7 @@ describe('ContestManagementService', () => {
       }),
       cups: createCupKeeper(),
       planEntitlements: platinumEntitlements(),
+      championshipYears: noClosedYears,
     });
 
     const result = await service.updateContestConfiguration('contest-1', {
@@ -1000,6 +1013,7 @@ describe('ContestManagementService', () => {
       sportEventReader: createSportEventReader(),
       cups: createCupKeeper(),
       planEntitlements: platinumEntitlements(),
+      championshipYears: noClosedYears,
     });
 
     const result = await service.getContest('contest-1');
@@ -1026,6 +1040,7 @@ describe('ContestManagementService', () => {
       sportEventReader: createSportEventReader(),
       cups: createCupKeeper(),
       planEntitlements: platinumEntitlements(),
+      championshipYears: noClosedYears,
     });
 
     const result = await service.getContest('contest-1');
@@ -1085,6 +1100,7 @@ describe('ContestManagementService', () => {
       sportEventReader: createSportEventReader(),
       cups: createCupKeeper(),
       planEntitlements: platinumEntitlements(),
+      championshipYears: noClosedYears,
     });
 
     const result = await service.getContest('contest-1');
@@ -1111,6 +1127,7 @@ describe('ContestManagementService', () => {
       sportEventReader: createSportEventReader(),
       cups: createCupKeeper(),
       planEntitlements: platinumEntitlements(),
+      championshipYears: noClosedYears,
     });
 
     await expect(service.createContest({ leagueId: 'league-1' }, {
@@ -1141,6 +1158,7 @@ describe('ContestManagementService', () => {
       sportEventReader: createSportEventReader(),
       cups: createCupKeeper(),
       planEntitlements: platinumEntitlements(),
+      championshipYears: noClosedYears,
     });
 
     const result = await service.createContest(
@@ -1189,6 +1207,7 @@ describe('ContestManagementService', () => {
       sportEventReader: createSportEventReader(),
       cups: createCupKeeper(),
       planEntitlements: platinumEntitlements(),
+      championshipYears: noClosedYears,
     });
 
     await service.createContest(
@@ -1231,6 +1250,7 @@ describe('ContestManagementService', () => {
       sportEventReader: createSportEventReader(),
       cups: createCupKeeper(),
       planEntitlements: platinumEntitlements(),
+      championshipYears: noClosedYears,
     });
 
     await expect(
@@ -1269,6 +1289,7 @@ describe('ContestManagementService', () => {
       sportEventReader: createSportEventReader(),
       cups: createCupKeeper(),
       planEntitlements: platinumEntitlements(),
+      championshipYears: noClosedYears,
     });
 
     await expect(
@@ -1304,6 +1325,7 @@ describe('ContestManagementService', () => {
       sportEventReader: createSportEventReader(),
       cups: createCupKeeper(),
       planEntitlements: platinumEntitlements(),
+      championshipYears: noClosedYears,
     });
 
     let thrown: unknown;
@@ -1341,6 +1363,7 @@ describe('ContestManagementService', () => {
       sportEventReader: createSportEventReader(),
       cups: createCupKeeper(),
       planEntitlements: platinumEntitlements(),
+      championshipYears: noClosedYears,
     });
 
     let thrown: unknown;
@@ -1369,6 +1392,7 @@ describe('ContestManagementService', () => {
       }),
       cups: createCupKeeper(),
       planEntitlements: platinumEntitlements(),
+      championshipYears: noClosedYears,
     });
 
     await expect(service.createContest(
@@ -1425,6 +1449,7 @@ describe('ContestManagementService', () => {
       sportEventReader: createSportEventReader({ ...event, participantCount: 72 }),
       cups: createCupKeeper(),
       planEntitlements: platinumEntitlements(),
+      championshipYears: noClosedYears,
     });
 
     await expect(service.createContest(
@@ -1477,6 +1502,7 @@ describe('ContestManagementService', () => {
         now: () => CONTEST_MANAGEMENT_TEST_NOW,
         cups: createCupKeeper(),
         planEntitlements: platinumEntitlements(),
+        championshipYears: noClosedYears,
       });
       return { service, contestRepo, configurationRepo };
     }
@@ -1666,6 +1692,7 @@ describe('ContestManagementService budget rules (#93)', () => {
       sportEventReader: reader,
       cups: createCupKeeper(),
       planEntitlements: platinumEntitlements(),
+      championshipYears: noClosedYears,
     });
     return { contestCoreRepo, contestConfigurationRepo, service };
   }
@@ -1806,6 +1833,7 @@ describe('ContestManagementService random-draw rules (#601)', () => {
       sportEventReader: createSportEventReader({ salaryCap: null }),
       cups: createCupKeeper(),
       planEntitlements: platinumEntitlements(),
+      championshipYears: noClosedYears,
     });
     return { contestCoreRepo, contestConfigurationRepo, service };
   }
@@ -1900,6 +1928,7 @@ describe('ContestManagementService finish-position scoring (#622)', () => {
       sportEventReader: createSportEventReader({ sport: Sport.HORSE_RACING, playsMatches: false }),
       cups: createCupKeeper(),
       planEntitlements: platinumEntitlements(),
+      championshipYears: noClosedYears,
     });
     return { contestCoreRepo, scoringRuleRepo, service, templateRepo };
   }
@@ -1960,6 +1989,7 @@ describe('ContestManagementService finish-position scoring (#622)', () => {
       sportEventReader: createSportEventReader({ sport: Sport.BASKETBALL, playsMatches: true, rounds, bracketProblem, knockoutProblem }),
       cups: createCupKeeper(),
       planEntitlements: platinumEntitlements(),
+      championshipYears: noClosedYears,
     });
     return { contestCoreRepo, scoringRuleRepo, service };
   }
@@ -2108,6 +2138,7 @@ describe('ContestManagementService finish-position scoring (#622)', () => {
       sportEventReader,
       cups: createCupKeeper(),
       planEntitlements: platinumEntitlements(),
+      championshipYears: noClosedYears,
     });
     const request = raceRequest({ name: 'Knockout Draw', templateId: '11111111-1111-4111-8111-111111111111', configuration: undefined });
     return { contestCoreRepo, sportEventReader, create: () => service.createContest({ leagueId: 'league-1' }, request) };
@@ -2152,6 +2183,7 @@ describe('ContestManagementService finish-position scoring (#622)', () => {
       sportEventReader,
       cups: createCupKeeper(),
       planEntitlements: platinumEntitlements(),
+      championshipYears: noClosedYears,
     });
 
     await service.createContest({ leagueId: 'league-1' }, raceRequest({ name: 'World Cup Sweep', templateId: '11111111-1111-4111-8111-111111111111', configuration: undefined }));
@@ -2313,6 +2345,7 @@ describe('ContestManagementService — a contest of several events', () => {
       now: () => CONTEST_MANAGEMENT_TEST_NOW,
       cups: createCupKeeper(cupsAsked),
       planEntitlements: options.planEntitlements ?? platinumEntitlements(),
+      championshipYears: noClosedYears,
       logger,
     });
     return { service, contestRepo, configurationRepo, cupsAsked, logger };
@@ -2578,6 +2611,7 @@ describe('ContestManagementService pick\'em rules (#716)', () => {
       sportEventReader: reader,
       cups: createCupKeeper(),
       planEntitlements: platinumEntitlements(),
+      championshipYears: noClosedYears,
     });
     return { contestCoreRepo, contestConfigurationRepo, reader, scoringRuleRepo, service };
   }
@@ -2818,6 +2852,7 @@ describe('ContestManagementService bracket rules (#721)', () => {
       sportEventReader: reader,
       cups: createCupKeeper(),
       planEntitlements: platinumEntitlements(),
+      championshipYears: noClosedYears,
     });
     return { contestCoreRepo, contestConfigurationRepo, service };
   }
@@ -2927,6 +2962,7 @@ describe('ContestManagementService — a bracket on a knockout already under way
       now: () => now,
       cups: createCupKeeper(),
       planEntitlements: platinumEntitlements(),
+      championshipYears: noClosedYears,
     });
     const request = (): CreateContestRequest => ({
       templateId: templateIdFor(SelectionType.BRACKET),
@@ -3015,6 +3051,7 @@ describe('ContestManagementService squares rules (#711)', () => {
       sportEventReader: reader,
       cups: createCupKeeper(),
       planEntitlements: platinumEntitlements(),
+      championshipYears: noClosedYears,
     });
     return { contestCoreRepo, contestConfigurationRepo, reader, service };
   }
@@ -3209,7 +3246,7 @@ describe('ContestManagementService sports leagues a year (#947)', () => {
    * A Free league (1 sports league a year). Its repository answers each create as the adapter
    * would for a season already full of another sports league; the count itself is the adapter's.
    */
-  function serviceForFullFreeLeague() {
+  function serviceForFullFreeLeague(championshipYears = noClosedYears) {
     const contests = createContestRepo();
     const configurations = createContestConfigurationRepo();
     const cupsAsked: CupKey[] = [];
@@ -3225,6 +3262,7 @@ describe('ContestManagementService sports leagues a year (#947)', () => {
       sportEventReader: createSportEventReader(),
       cups: createCupKeeper(cupsAsked),
       planEntitlements: planEntitlementsOver({ findById: async (id) => buildLeague({ id, plan: LeaguePlan.FREE }) }),
+      championshipYears,
     });
     return { service, contests, configurations, cupsAsked };
   }
@@ -3247,6 +3285,18 @@ describe('ContestManagementService sports leagues a year (#947)', () => {
       expect.objectContaining({ leagueId: 'league-1', championshipYear: 2026 }),
       { sportLeaguesPerYear: 5, sportLeagueId: PGA_TOUR_LEAGUE_ID },
     );
+    expect(configurations.create).not.toHaveBeenCalled();
+    expect(cupsAsked).toEqual([]);
+  });
+
+  it('refuses with 409 CHAMPIONSHIP_YEAR_CLOSED a contest in a championship year the league has closed, writing no contest, rules or cup', async () => {
+    const closedYear = { isClosed: jest.fn().mockResolvedValue(true) };
+    const { service, contests, configurations, cupsAsked } = serviceForFullFreeLeague(closedYear);
+
+    await expect(service.createContest({ leagueId: 'league-1' }, MASTERS_CONTEST))
+      .rejects.toMatchObject({ code: 'CHAMPIONSHIP_YEAR_CLOSED', statusCode: 409 });
+    expect(closedYear.isClosed).toHaveBeenCalledWith({ leagueId: 'league-1', championshipYear: 2026 });
+    expect(contests.create).not.toHaveBeenCalled();
     expect(configurations.create).not.toHaveBeenCalled();
     expect(cupsAsked).toEqual([]);
   });
@@ -3276,6 +3326,7 @@ describe('ContestManagementService sports leagues a year (#947)', () => {
         { findById: async (id) => buildLeague({ id, plan: LeaguePlan.PLATINUM }) },
         () => ({ ...defaults, caps: { ...defaults.caps, SPORTS_LEAGUES_PER_YEAR: { ...defaults.caps.SPORTS_LEAGUES_PER_YEAR, PLATINUM: null } } }),
       ),
+      championshipYears: noClosedYears,
     });
 
     await service.createContest({ leagueId: 'league-1' }, MASTERS_CONTEST);

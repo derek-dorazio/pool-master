@@ -219,7 +219,7 @@ export type {
   CupKey,
   CupRepository,
 } from './cup-ports';
-export type { ChampionshipRepository, FinalContest, LeagueYearReviewRepository, SeriesContest } from './championship-ports';
+export type { ChampionshipRepository, ChampionshipYearState, ClosedChampionshipYear, FinalContest, LeagueChampionshipYearKey, LeagueChampionshipYearRepository, LeagueYearReviewRepository, SeriesContest } from './championship-ports';
 export type { EventPageRepository } from './event-page-ports';
 export type {
   ContestExpansionRepository,

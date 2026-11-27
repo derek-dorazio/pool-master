@@ -46,3 +46,7 @@ CREATE UNIQUE INDEX "league_championship_years_league_id_championship_year_key" 
 
 ALTER TABLE "league_championship_years" ADD CONSTRAINT "league_championship_years_league_id_fkey"
   FOREIGN KEY ("league_id") REFERENCES "leagues"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- 5. The jobs that close a year: after a contest goes final, and after a Season slot moves.
+ALTER TYPE "PrismaBackgroundJobType" ADD VALUE 'CLOSE_LEAGUE_CHAMPIONSHIP_YEAR';
+ALTER TYPE "PrismaBackgroundJobType" ADD VALUE 'CLOSE_SEASON_CHAMPIONSHIP_YEARS';

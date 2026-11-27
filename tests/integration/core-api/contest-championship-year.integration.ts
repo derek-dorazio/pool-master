@@ -8,7 +8,15 @@ import { expect } from '@jest/globals';
 import { randomUUID } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { cleanupTestData, createTestUser, getPrisma, setupIntegrationTests, teardownIntegrationTests } from '../helpers';
+import { SeasonSlotStatus, Sport } from '@poolmaster/shared/domain';
+import { PrismaLeagueChampionshipYearRepository } from '../../../packages/core-api/src/adapters';
+import { ChampionshipYearCloseService } from '../../../packages/core-api/src/modules/championship/year-close-service';
+import { cleanupTestData, createTestUser, getAppPrisma, getPrisma, setupIntegrationTests, teardownIntegrationTests } from '../helpers';
+import { fixtureSeasonId } from '../../support/event-edition';
+import { sportLeagueRowDefaults } from '../../support/league-profiles';
+import { sportPlay } from '../../support/sport-play';
+import { sportRowKeys } from '../../support/sport-rows';
+import { linkTestSlot } from '../../support/test-slots';
 import { anySeasonId } from '../../support/contest-rows';
 
 beforeAll(async () => {
@@ -96,5 +104,81 @@ describe('a contest\'s championship year (#2021)', () => {
     await expect(getPrisma().contest.create({
       data: { leagueId: league.id, sportLeagueSeasonId, championshipYear: 2026, name: 'Drifted', status: 'DRAFT', selectionType: 'TIERED' },
     })).rejects.toThrow(/contests_season_year_fkey/);
+  });
+});
+
+/**
+ * A league that ran contests in one football Season of 2025 of a sport league of its own: two real
+ * slots (the Divisional round and the Super Bowl), each with its event, and its contests.
+ */
+async function footballYear() {
+  const prisma = getPrisma();
+  const suffix = randomUUID().slice(0, 8);
+  const sport = await prisma.sport.upsert({ where: { sport: Sport.FOOTBALL }, create: { sport: Sport.FOOTBALL, ...sportRowKeys(Sport.FOOTBALL) }, update: {} });
+  const sportLeague = await prisma.sportLeague.create({
+    data: { timeZone: 'UTC', ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `Year Close League ${suffix}` },
+  });
+  const sportLeagueSeasonId = await fixtureSeasonId(prisma, sportLeague.id, 2025);
+  const slot = async (name: string, startDate: Date) => {
+    const event = await prisma.sportEvent.create({ data: { sportLeagueId: sportLeague.id, sportLeagueSeasonId, name: `${name} ${suffix}`, startDate, status: 'SCHEDULED' } });
+    return { event, seasonSlotId: await linkTestSlot(prisma, event, false) };
+  };
+  const divisional = await slot('Divisional Round', new Date('2026-01-17T21:00:00.000Z'));
+  const superBowl = await slot('Super Bowl', new Date('2026-02-08T23:30:00.000Z'));
+  const commissioner = await createTestUser({ firstName: 'Close', lastName: `Keeper${suffix}` });
+  const league = await prisma.league.create({ data: { cupName: 'Close Cup', leagueCode: `CLS${suffix.toUpperCase()}`, name: `Close League ${suffix}` } });
+  await prisma.leagueMembership.create({ data: { leagueId: league.id, userId: commissioner.user.id, role: 'COMMISSIONER' } });
+  const contest = (name: string, status: 'DRAFT' | 'ACTIVE' | 'COMPLETED', seasonSlotId: string) => prisma.contest.create({
+    data: {
+      leagueId: league.id, sportLeagueSeasonId, championshipYear: 2025, name: `${name} ${suffix}`, status, selectionType: 'TIERED',
+      seasonSlots: { create: { sportLeagueSeasonCompetitionSlotId: seasonSlotId } },
+    },
+  });
+  const finish = (seasonSlotId: string) => prisma.sportLeagueSeasonCompetitionSlot.update({ where: { id: seasonSlotId }, data: { status: SeasonSlotStatus.COMPLETED } });
+  return { league, divisional, superBowl, contest, finish, key: { leagueId: league.id, championshipYear: 2025 } };
+}
+
+const closer = (now: Date) => new ChampionshipYearCloseService({ years: new PrismaLeagueChampionshipYearRepository(getAppPrisma()), now: () => now });
+
+describe('the championship year close against Postgres (#2021)', () => {
+  const AFTER_SUPER_BOWL = new Date('2026-02-10T12:00:00.000Z');
+
+  it('holds the year open while its Super Bowl slot is still to play, then closes it once that slot and every contest are final, reached from the slot', async () => {
+    const year = await footballYear();
+    await year.contest('Divisional pool', 'COMPLETED', year.divisional.seasonSlotId);
+    await year.finish(year.divisional.seasonSlotId);
+
+    await expect(closer(AFTER_SUPER_BOWL).closeSeasonYears(year.divisional.seasonSlotId)).resolves.toEqual({ changedCount: 0 });
+
+    await year.finish(year.superBowl.seasonSlotId);
+    await expect(closer(AFTER_SUPER_BOWL).closeSeasonYears(year.superBowl.seasonSlotId)).resolves.toEqual({ changedCount: 1 });
+    expect(await new PrismaLeagueChampionshipYearRepository(getAppPrisma()).findClosedYears(year.league.id)).toEqual([{ championshipYear: 2025, closedAt: AFTER_SUPER_BOWL }]);
+  });
+
+  it('holds the year open while a contest in it is still live, and closes it from that contest once it goes final', async () => {
+    const year = await footballYear();
+    await year.finish(year.divisional.seasonSlotId);
+    await year.finish(year.superBowl.seasonSlotId);
+    const live = await year.contest('Super Bowl squares', 'ACTIVE', year.superBowl.seasonSlotId);
+
+    await expect(closer(AFTER_SUPER_BOWL).closeContestYear(live.id)).resolves.toEqual({ changedCount: 0 });
+
+    await getPrisma().contest.update({ where: { id: live.id }, data: { status: 'COMPLETED' } });
+    await expect(closer(AFTER_SUPER_BOWL).closeContestYear(live.id)).resolves.toEqual({ changedCount: 1 });
+  });
+
+  it('ignores a draft that can never open, its event over, and never reopens a closed year', async () => {
+    const year = await footballYear();
+    await year.contest('Divisional pool', 'COMPLETED', year.divisional.seasonSlotId);
+    await year.contest('Forgotten draft', 'DRAFT', year.superBowl.seasonSlotId);
+    await getPrisma().sportEvent.update({ where: { id: year.superBowl.event.id }, data: { status: 'COMPLETED' } });
+    await year.finish(year.divisional.seasonSlotId);
+    await year.finish(year.superBowl.seasonSlotId);
+    const repo = new PrismaLeagueChampionshipYearRepository(getAppPrisma());
+
+    await expect(repo.readYearState(year.key, AFTER_SUPER_BOWL)).resolves.toEqual({ contestCount: 1, unfinishedContestCount: 0, unfinishedSeasonSlotCount: 0 });
+    await expect(closer(AFTER_SUPER_BOWL).closeYear(year.key)).resolves.toBe(true);
+    await expect(repo.close(year.key, new Date('2026-03-01T12:00:00.000Z'))).resolves.toBe(false);
+    expect(await repo.findClosedYears(year.league.id)).toEqual([{ championshipYear: 2025, closedAt: AFTER_SUPER_BOWL }]);
   });
 });

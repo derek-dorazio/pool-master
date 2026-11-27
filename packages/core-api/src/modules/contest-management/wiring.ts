@@ -11,6 +11,7 @@ import {
   PrismaContestConfigTemplateRepository,
   PrismaContestConfigurationRepository,
   PrismaContestRepository,
+  PrismaLeagueChampionshipYearRepository,
   PrismaParticipantContestScoringRuleRepository,
   PrismaSportEventRoundMatchRepository,
   PrismaSportEventRoundRepository,
@@ -57,6 +58,7 @@ export function createContestManagementService(
     }),
     cups: createCupService(prisma, logger, planEntitlements),
     planEntitlements,
+    championshipYears: new PrismaLeagueChampionshipYearRepository(prisma),
     contestOpened: options.contestOpened,
     domainEvents: options.domainEvents,
   });
