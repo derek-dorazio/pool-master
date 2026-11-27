@@ -4,7 +4,7 @@ import { chooseTierSetSlot, chooseTierSetSlots, contestTierSetSlot, isTierSetEdi
 const oneSlot = { templateId: 'tiered-one-slot', coverageMode: TemplateCoverageMode.ONE_SLOT };
 const allListed = { templateId: 'tiered-whole-playoffs', coverageMode: TemplateCoverageMode.ALL_LISTED };
 const fromSlot = { templateId: 'budget-from-slot', coverageMode: TemplateCoverageMode.FROM_SLOT };
-const slot = (key: string, tierSetTemplates: readonly TierSetTemplateListing[] = []) => ({ key, tierSetTemplates });
+const slot = (key: string, tierSetTemplates: readonly TierSetTemplateListing[] = [], storesSet = false) => ({ key, tierSetTemplates, storesSet });
 
 describe('chooseTierSetSlot', () => {
   it('picks the first slot in play order that a tiered or budget template lists, past a play-in no such template covers', () => {
@@ -21,6 +21,25 @@ describe('chooseTierSetSlot', () => {
 
   it('picks no slot for an event covering none', () => {
     expect(chooseTierSetSlot<ReturnType<typeof slot>>([])).toBeUndefined();
+  });
+
+  it('keeps the slot whose set was built when no template chooses it any longer: its template switched off, or the slot taken off its list', () => {
+    const switchedOff = [slot('PLAY_IN'), slot('ROUND_OF_64', [], true), slot('ROUND_OF_32')];
+    const takenOff = [slot('PLAY_IN'), slot('ROUND_OF_64', [], true), slot('ROUND_OF_32', [oneSlot])];
+
+    expect([chooseTierSetSlot(switchedOff), chooseTierSetSlot(takenOff)]).toEqual([switchedOff[1], takenOff[1]]);
+  });
+
+  it('moves to the slot the templates choose first when a built later slot is still chosen: that slot keeps its own set', () => {
+    const slots = [slot('ROUND_OF_64', [oneSlot]), slot('ROUND_OF_32', [oneSlot], true)];
+
+    expect([chooseTierSetSlot(slots), chooseTierSetSlots(slots)]).toEqual([slots[0], slots]);
+  });
+
+  it('stays on the slot the templates choose while it stores a set, whatever an earlier slot stores', () => {
+    const slots = [slot('PLAY_IN', [], true), slot('ROUND_OF_64', [oneSlot], true)];
+
+    expect([chooseTierSetSlot(slots), chooseTierSetSlots(slots)]).toEqual([slots[1], [slots[1]]]);
   });
 });
 
@@ -47,6 +66,12 @@ describe('chooseTierSetSlots', () => {
     const [semifinal, final] = [slot('SEMIFINAL'), slot('FINAL')];
 
     expect([chooseTierSetSlots([semifinal, final]), chooseTierSetSlots<typeof final>([])]).toEqual([[semifinal], []]);
+  });
+
+  it('keeps a set in the built slot no template chooses any longer, beside the slots the templates choose now, in play order', () => {
+    const [playIn, roundOf64, roundOf32] = [slot('PLAY_IN', [oneSlot]), slot('ROUND_OF_64'), slot('ROUND_OF_32', [], true)];
+
+    expect(chooseTierSetSlots([playIn, roundOf64, roundOf32])).toEqual([playIn, roundOf32]);
   });
 });
 
