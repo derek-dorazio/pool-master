@@ -1495,7 +1495,7 @@ async function syncDerivedScoring(
 /**
  * What an unplayed golf round adds to par in a contest made without a template or golf settings:
  * the usual rule, an 80 on a par 72. Every stroke-play template presets the same (migration
- * 20271218029500); a commissioner may set another.
+ * 20271218029700); a commissioner may set another.
  */
 const USUAL_UNPLAYED_ROUND_TO_PAR = 8;
 
