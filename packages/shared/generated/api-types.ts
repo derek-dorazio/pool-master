@@ -2339,6 +2339,110 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/events/{eventId}/slots/{seasonSlotId}/participants": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List a sport event's field with a slot's valuations
+         * @description The field as listEventParticipants reads it, each row's valuation in the slot's set. The set of the slot the event plays in this Season slot (#2044): a slot holds one when a tiered or budget template lists it, or it is the event's first slot and none lists any.
+         */
+        get: operations["listEventSlotParticipants"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/events/{eventId}/slots/{seasonSlotId}/tiers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List a sport event slot's tiers
+         * @description The set of the slot the event plays in this Season slot (#2044): a slot holds one when a tiered or budget template lists it, or it is the event's first slot and none lists any. Who is in each tier is on each field row's valuation (listEventSlotParticipants).
+         */
+        get: operations["listEventSlotTiers"];
+        /**
+         * Replace a sport event slot's tiers
+         * @description replaceEventTiers on the slot's set. The set of the slot the event plays in this Season slot (#2044): a slot holds one when a tiered or budget template lists it, or it is the event's first slot and none lists any. 409 SPORT_EVENT_TIERS_LOCKED once the set is locked: the event's tier-set slot (its first slot holding a set) at release, any other slot once it starts. 409 SLOT_HOLDS_NO_TIER_SET for a slot holding no set. Root admin only.
+         */
+        put: operations["replaceEventSlotTiers"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/events/{eventId}/slots/{seasonSlotId}/tiers/auto-assign": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Fill a sport event slot's tiers from its active field
+         * @description autoAssignEventTiers on the slot's set, from the field still active: a later slot's set covers who is still in when it starts. Returns the field with the slot's valuations. 409 SPORT_EVENT_TIERS_LOCKED once the set is locked: the event's tier-set slot (its first slot holding a set) at release, any other slot once it starts. 409 SLOT_HOLDS_NO_TIER_SET for a slot holding no set. Root admin only.
+         */
+        post: operations["autoAssignEventSlotTiers"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/events/{eventId}/slots/{seasonSlotId}/tiers/assignments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Replace a sport event slot's tier assignments
+         * @description replaceEventTierAssignments on the slot's set. Returns the field with the slot's valuations. 409 SPORT_EVENT_TIERS_LOCKED once the set is locked: the event's tier-set slot (its first slot holding a set) at release, any other slot once it starts. 409 SLOT_HOLDS_NO_TIER_SET for a slot holding no set. Root admin only.
+         */
+        put: operations["replaceEventSlotTierAssignments"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/events/{eventId}/slots/{seasonSlotId}/prices/auto-assign": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Price a sport event slot's seeded field
+         * @description autoAssignEventPrices on the slot's set, recording the values on the slot. Returns the field with the slot's valuations. 409 SPORT_EVENT_TIERS_LOCKED once the set is locked: the event's tier-set slot (its first slot holding a set) at release, any other slot once it starts. 409 SLOT_HOLDS_NO_TIER_SET for a slot holding no set. Root admin only.
+         */
+        post: operations["autoAssignEventSlotPrices"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/events/{eventId}/rounds/{roundNumber}/golf-scores/preview": {
         parameters: {
             query?: never;
@@ -35055,6 +35159,376 @@ export interface operations {
             header?: never;
             path: {
                 eventId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AutoAssignSportEventPricesRequest"];
+            };
+        };
+        responses: {
+            /** @description An event's field. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SportEventParticipantListResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    listEventSlotParticipants: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                eventId: string;
+                seasonSlotId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description An event's field. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SportEventParticipantListResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    listEventSlotTiers: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                eventId: string;
+                seasonSlotId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description An event's tiers. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SportEventTierListResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    replaceEventSlotTiers: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                eventId: string;
+                seasonSlotId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReplaceSportEventTiersRequest"];
+            };
+        };
+        responses: {
+            /** @description An event's tiers. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SportEventTierListResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    autoAssignEventSlotTiers: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                eventId: string;
+                seasonSlotId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AutoAssignSportEventTiersRequest"];
+            };
+        };
+        responses: {
+            /** @description An event's field. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SportEventParticipantListResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    replaceEventSlotTierAssignments: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                eventId: string;
+                seasonSlotId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReplaceSportEventTierAssignmentsRequest"];
+            };
+        };
+        responses: {
+            /** @description An event's field. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SportEventParticipantListResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    autoAssignEventSlotPrices: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                eventId: string;
+                seasonSlotId: string;
             };
             cookie?: never;
         };

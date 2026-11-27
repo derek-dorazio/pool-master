@@ -3049,7 +3049,7 @@ describe('createContestSportEventReader field, game and price reads', () => {
     return createContestSportEventReader({
       sportEvents: store.sportEventRepo(),
       field: { findBySportEvent: async () => ports.entries ?? [] } as unknown as Parameters<typeof createContestSportEventReader>[0]['field'],
-      tiers: { findTierSlots: async () => new Map([[EVENT, [{ id: 'event-slot-1', sportEventId: EVENT, seasonSlotId: 'season-slot-1', seasonSlotStatus: SeasonSlotStatus.SCHEDULED, isTierSetSlot: true, tierLayout: null, pricing: null }]]]) },
+      tiers: { findTierSlots: async () => new Map([[EVENT, [{ id: 'event-slot-1', sportEventId: EVENT, seasonSlotId: 'season-slot-1', slotDefinitionId: 'slot-definition-1', seasonSlotStatus: SeasonSlotStatus.SCHEDULED, holdsTierSet: true, isTierSetSlot: true, tierLayout: null, pricing: null }]]]) },
       valuations: { findBySlot: async () => ports.valuations ?? [] } as unknown as Parameters<typeof createContestSportEventReader>[0]['valuations'],
       matches: { findBySportEvent: async () => ports.games ?? [] } as unknown as Parameters<typeof createContestSportEventReader>[0]['matches'],
     });

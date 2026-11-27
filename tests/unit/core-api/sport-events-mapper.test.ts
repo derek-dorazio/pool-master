@@ -35,7 +35,7 @@ function event(overrides: Partial<SportEvent> = {}): SportEvent {
 
 /** The event's first slot (#2044), its set tiered and priced as given. */
 function firstSlot(sportEvent: SportEvent, set: Partial<Pick<SportEventTierSlot, 'pricing' | 'tierLayout'>> = {}): SportEventTierSlot {
-  return { id: 'event-slot-1', sportEventId: sportEvent.id, seasonSlotId: 'season-slot-1', seasonSlotStatus: SeasonSlotStatus.SCHEDULED, isTierSetSlot: true, tierLayout: null, pricing: null, ...set };
+  return { id: 'event-slot-1', sportEventId: sportEvent.id, seasonSlotId: 'season-slot-1', slotDefinitionId: 'slot-definition-1', seasonSlotStatus: SeasonSlotStatus.SCHEDULED, holdsTierSet: true, isTierSetSlot: true, tierLayout: null, pricing: null, ...set };
 }
 
 /** A root admin's summary, with the admin counts; `adminCounts: null` is everyone else's. */

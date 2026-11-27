@@ -20,13 +20,23 @@ export const TIER_SET_SELECTION_TYPES: readonly SelectionType[] = Object.values(
   .filter((selectionType) => READS_TIER_SET_BY_SELECTION_TYPE[selectionType]);
 
 /**
- * Which of an event's slots, in play order, holds the tier set its tiered and budget contests read
- * (#2044): the first one a tiered or budget template of its league lists, since a template starts
- * at its first listed slot (a league's play-in comes first but no such template covers it); the
- * first slot when no such template lists any; undefined for an event covering no slot. The one rule.
+ * Which of an event's slots, in play order, hold a tier set (#2044): every one a tiered or budget
+ * template of its league lists, since such a template covers one slot the commissioner picks from
+ * those it lists, so each is a possible starting point; the first slot alone when no such template
+ * lists any; none for an event covering no slot. The one rule for which slots hold a set.
+ */
+export function chooseTierSetSlots<Slot extends { listedByTierSetTemplate: boolean }>(slotsInPlayOrder: readonly Slot[]): Slot[] {
+  const listed = slotsInPlayOrder.filter((slot) => slot.listedByTierSetTemplate);
+  return listed.length > 0 ? listed : slotsInPlayOrder.slice(0, 1);
+}
+
+/**
+ * Which of an event's slots holds its tier set, the one released with the event (#2044): the first
+ * of those holding a set (`chooseTierSetSlots`), so a league's play-in, which no tiered or budget
+ * template covers, is passed over; undefined for an event covering no slot.
  */
 export function chooseTierSetSlot<Slot extends { listedByTierSetTemplate: boolean }>(slotsInPlayOrder: readonly Slot[]): Slot | undefined {
-  return slotsInPlayOrder.find((slot) => slot.listedByTierSetTemplate) ?? slotsInPlayOrder.at(0);
+  return chooseTierSetSlots(slotsInPlayOrder).at(0);
 }
 
 /**

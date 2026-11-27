@@ -1,5 +1,5 @@
 import { expect } from '@jest/globals';
-import { chooseTierSetSlot, isTierSetEditable, SeasonSlotStatus, SelectionType, SportEventStatus, TIER_SET_SELECTION_TYPES, tierSetSlotOf } from '@poolmaster/shared/domain';
+import { chooseTierSetSlot, chooseTierSetSlots, isTierSetEditable, SeasonSlotStatus, SelectionType, SportEventStatus, TIER_SET_SELECTION_TYPES, tierSetSlotOf } from '@poolmaster/shared/domain';
 
 describe('chooseTierSetSlot', () => {
   it('picks the first slot in play order that a tiered or budget template lists, past a play-in no such template covers', () => {
@@ -19,6 +19,24 @@ describe('chooseTierSetSlot', () => {
 
   it('picks no slot for an event covering none', () => {
     expect(chooseTierSetSlot<{ listedByTierSetTemplate: boolean }>([])).toBeUndefined();
+  });
+});
+
+describe('chooseTierSetSlots', () => {
+  it('gives a set to every slot a tiered or budget template lists, in play order, and none to a play-in no such template covers', () => {
+    const playIn = { key: 'PLAY_IN', listedByTierSetTemplate: false };
+    const roundOf64 = { key: 'ROUND_OF_64', listedByTierSetTemplate: true };
+    const roundOf32 = { key: 'ROUND_OF_32', listedByTierSetTemplate: false };
+    const sweet16 = { key: 'SWEET_16', listedByTierSetTemplate: true };
+
+    expect(chooseTierSetSlots([playIn, roundOf64, roundOf32, sweet16])).toEqual([roundOf64, sweet16]);
+  });
+
+  it('gives a set to the first slot alone when no tiered or budget template lists any, and to none for an event covering no slot', () => {
+    const semifinal = { key: 'SEMIFINAL', listedByTierSetTemplate: false };
+    const final = { key: 'FINAL', listedByTierSetTemplate: false };
+
+    expect([chooseTierSetSlots([semifinal, final]), chooseTierSetSlots<typeof final>([])]).toEqual([[semifinal], []]);
   });
 });
 

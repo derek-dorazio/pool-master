@@ -37180,6 +37180,246 @@ export type AutoAssignEventPricesResponses = {
 
 export type AutoAssignEventPricesResponse = AutoAssignEventPricesResponses[keyof AutoAssignEventPricesResponses];
 
+export type ListEventSlotParticipantsData = {
+    body?: never;
+    path: {
+        eventId: string;
+        seasonSlotId: string;
+    };
+    query?: never;
+    url: '/api/v1/events/{eventId}/slots/{seasonSlotId}/participants';
+};
+
+export type ListEventSlotParticipantsErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    401: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    404: ErrorEnvelope;
+};
+
+export type ListEventSlotParticipantsError = ListEventSlotParticipantsErrors[keyof ListEventSlotParticipantsErrors];
+
+export type ListEventSlotParticipantsResponses = {
+    /**
+     * An event's field.
+     */
+    200: SportEventParticipantListResponse;
+};
+
+export type ListEventSlotParticipantsResponse = ListEventSlotParticipantsResponses[keyof ListEventSlotParticipantsResponses];
+
+export type ListEventSlotTiersData = {
+    body?: never;
+    path: {
+        eventId: string;
+        seasonSlotId: string;
+    };
+    query?: never;
+    url: '/api/v1/events/{eventId}/slots/{seasonSlotId}/tiers';
+};
+
+export type ListEventSlotTiersErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    401: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    404: ErrorEnvelope;
+};
+
+export type ListEventSlotTiersError = ListEventSlotTiersErrors[keyof ListEventSlotTiersErrors];
+
+export type ListEventSlotTiersResponses = {
+    /**
+     * An event's tiers.
+     */
+    200: SportEventTierListResponse;
+};
+
+export type ListEventSlotTiersResponse = ListEventSlotTiersResponses[keyof ListEventSlotTiersResponses];
+
+export type ReplaceEventSlotTiersData = {
+    body: ReplaceSportEventTiersRequest;
+    path: {
+        eventId: string;
+        seasonSlotId: string;
+    };
+    query?: never;
+    url: '/api/v1/events/{eventId}/slots/{seasonSlotId}/tiers';
+};
+
+export type ReplaceEventSlotTiersErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    401: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    403: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    404: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    409: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    422: ErrorEnvelope;
+};
+
+export type ReplaceEventSlotTiersError = ReplaceEventSlotTiersErrors[keyof ReplaceEventSlotTiersErrors];
+
+export type ReplaceEventSlotTiersResponses = {
+    /**
+     * An event's tiers.
+     */
+    200: SportEventTierListResponse;
+};
+
+export type ReplaceEventSlotTiersResponse = ReplaceEventSlotTiersResponses[keyof ReplaceEventSlotTiersResponses];
+
+export type AutoAssignEventSlotTiersData = {
+    body: AutoAssignSportEventTiersRequest;
+    path: {
+        eventId: string;
+        seasonSlotId: string;
+    };
+    query?: never;
+    url: '/api/v1/events/{eventId}/slots/{seasonSlotId}/tiers/auto-assign';
+};
+
+export type AutoAssignEventSlotTiersErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    401: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    403: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    404: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    409: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    422: ErrorEnvelope;
+};
+
+export type AutoAssignEventSlotTiersError = AutoAssignEventSlotTiersErrors[keyof AutoAssignEventSlotTiersErrors];
+
+export type AutoAssignEventSlotTiersResponses = {
+    /**
+     * An event's field.
+     */
+    200: SportEventParticipantListResponse;
+};
+
+export type AutoAssignEventSlotTiersResponse = AutoAssignEventSlotTiersResponses[keyof AutoAssignEventSlotTiersResponses];
+
+export type ReplaceEventSlotTierAssignmentsData = {
+    body: ReplaceSportEventTierAssignmentsRequest;
+    path: {
+        eventId: string;
+        seasonSlotId: string;
+    };
+    query?: never;
+    url: '/api/v1/events/{eventId}/slots/{seasonSlotId}/tiers/assignments';
+};
+
+export type ReplaceEventSlotTierAssignmentsErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    401: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    403: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    404: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    409: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    422: ErrorEnvelope;
+};
+
+export type ReplaceEventSlotTierAssignmentsError = ReplaceEventSlotTierAssignmentsErrors[keyof ReplaceEventSlotTierAssignmentsErrors];
+
+export type ReplaceEventSlotTierAssignmentsResponses = {
+    /**
+     * An event's field.
+     */
+    200: SportEventParticipantListResponse;
+};
+
+export type ReplaceEventSlotTierAssignmentsResponse = ReplaceEventSlotTierAssignmentsResponses[keyof ReplaceEventSlotTierAssignmentsResponses];
+
+export type AutoAssignEventSlotPricesData = {
+    body: AutoAssignSportEventPricesRequest;
+    path: {
+        eventId: string;
+        seasonSlotId: string;
+    };
+    query?: never;
+    url: '/api/v1/events/{eventId}/slots/{seasonSlotId}/prices/auto-assign';
+};
+
+export type AutoAssignEventSlotPricesErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    401: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    403: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    404: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    409: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    422: ErrorEnvelope;
+};
+
+export type AutoAssignEventSlotPricesError = AutoAssignEventSlotPricesErrors[keyof AutoAssignEventSlotPricesErrors];
+
+export type AutoAssignEventSlotPricesResponses = {
+    /**
+     * An event's field.
+     */
+    200: SportEventParticipantListResponse;
+};
+
+export type AutoAssignEventSlotPricesResponse = AutoAssignEventSlotPricesResponses[keyof AutoAssignEventSlotPricesResponses];
+
 export type PreviewEventGolfRoundScoresData = {
     body: GolfRoundScoreUploadRequest;
     path: {

@@ -187,12 +187,18 @@ export interface SportEventTierSlot {
   /** The event slot (SportEventSlot). */
   id: string;
   sportEventId: string;
-  /** The Season slot it is. */
+  /** The Season slot it is, and that slot's definition (which templates list). */
   seasonSlotId: string;
+  slotDefinitionId: string;
   seasonSlotStatus: SeasonSlotStatus;
   /**
-   * Whether it is its event's tier-set slot (`chooseTierSetSlot`): the slot today's tiered and budget
-   * contests read, whose set is built while the event is a draft.
+   * Whether the slot holds a tier set (`chooseTierSetSlots`): a tiered or budget template lists it,
+   * or it is the event's first slot and none lists any. A slot holding none has no tiers or prices.
+   */
+  holdsTierSet: boolean;
+  /**
+   * Whether it is its event's tier-set slot (`chooseTierSetSlot`), the first holding a set: the one
+   * released with the event, so built while the event is a draft.
    */
   isTierSetSlot: boolean;
   /** The layout the set was last auto-tiered with; null until it first is. */
