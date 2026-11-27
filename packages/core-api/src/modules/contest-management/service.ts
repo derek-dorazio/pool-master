@@ -143,6 +143,8 @@ export interface ContestCreateSportEventReader {
   countGamesWithoutSpread(sportEventId: string): Promise<number>;
   /** Why the event's games cannot be filled in as a bracket, or null when they can (#721). */
   findBracketProblem(sportEventId: string): Promise<string | null>;
+  /** Why knockout round points cannot score the event's games (no bracket, nor a slate of one-off games), or null when they can (#2225). */
+  findKnockoutProblem(sportEventId: string): Promise<string | null>;
   /** How many of the event's rounds, by its games' slots, a contest of this coverage covers (#2014). */
   countCoveredRounds(sportEventId: string, coverage: ContestRoundCoverage): Promise<number>;
   /** The status and round of one of the event's games, or null when the game is not the event's (#711). */
@@ -1040,7 +1042,7 @@ export class ContestManagementService {
   }
 
   private async assertEventIsKnockout(sportEventId: string): Promise<void> {
-    const problem = await this.sportEventReader.findBracketProblem(sportEventId);
+    const problem = await this.sportEventReader.findKnockoutProblem(sportEventId);
     if (problem === null) {
       return;
     }

@@ -10,6 +10,7 @@ import {
   MatchStatus,
   SportEventParticipantStatus,
   PickOutcome,
+  SlotKind,
   UpsetBonusRule,
   type KnockoutRoundPointsSettings,
 } from '@poolmaster/shared/domain';
@@ -17,6 +18,7 @@ import {
   contestBracketGames,
   finalTotalPoints,
   findBracketProblem,
+  findKnockoutProblem,
   predictedOn,
   predictedSideOf,
   rankPredictionStandings,
@@ -34,6 +36,7 @@ import {
   sixTeamByeBracket,
   withResults,
 } from '../../support/bracket-fixtures';
+import { roundSlot, weekRoundSlot } from '../../support/round-slots';
 
 const { HOME, AWAY } = MatchSide;
 /** The teams the picks put on a game, home and away as the fixtures name them. */
@@ -167,6 +170,43 @@ describe('resolveBracketPicks — a reseeded round, as the NFL plays its Divisio
 
     expect(sidesOf(resolved, 7)).toEqual({ home: 'AFC-1', away: 'AFC-7' });
     expect(sidesOf(resolved, 8)).toEqual({ home: 'AFC-3', away: 'AFC-5' });
+  });
+});
+
+describe('findKnockoutProblem (#2225)', () => {
+  /** A season's bowl games: one round of games on one TOURNAMENT slot, none leading to another. */
+  const bowls = () => bracketMatches('event-bowls', [
+    { matchNumber: 1, round: 1, home: 'T1', away: 'T2' },
+    { matchNumber: 2, round: 1, home: 'T3', away: 'T4' },
+    { matchNumber: 3, round: 1, home: 'T5', away: 'T6' },
+  ], () => roundSlot(SlotKind.TOURNAMENT));
+
+  it('lets knockout round points score a slate of one-off games, each its own final, though they form no bracket', () => {
+    expect(findBracketProblem(bowls(), EIGHT_SEEDS)).toBe('its final has 0 games, not one');
+    expect(findKnockoutProblem(bowls(), EIGHT_SEEDS)).toBeNull();
+  });
+
+  it('lets them score a bracket, as before', () => {
+    expect(findKnockoutProblem(eightTeamBracket(), EIGHT_SEEDS)).toBeNull();
+  });
+
+  it('refuses a regular-season week, played by pick\'em and survivor rather than a round reached, with the bracket\'s problem', () => {
+    const week = bracketMatches('event-week', [
+      { matchNumber: 1, round: 1, home: 'T1', away: 'T2' },
+      { matchNumber: 2, round: 1, home: 'T3', away: 'T4' },
+    ], () => weekRoundSlot(1));
+
+    expect(findKnockoutProblem(week, EIGHT_SEEDS)).toBe('its final has 0 games, not one');
+  });
+
+  it('refuses games over two rounds that no link joins, and an event with no games', () => {
+    const unlinked = bracketMatches('event-unlinked', [
+      { matchNumber: 1, round: 1, home: 'T1', away: 'T2' },
+      { matchNumber: 2, round: 2, home: 'T3', away: 'T4' },
+    ], () => roundSlot(SlotKind.TOURNAMENT));
+
+    expect(findKnockoutProblem(unlinked, EIGHT_SEEDS)).not.toBeNull();
+    expect(findKnockoutProblem([], EIGHT_SEEDS)).toBe('it has no games');
   });
 });
 

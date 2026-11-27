@@ -31,6 +31,7 @@ import {
   winningSide,
   MatchStatus,
   PickOutcome,
+  SlotKind,
   finalRoundsOfMatches,
   coveredRoundValue,
   coversMatchRound,
@@ -228,6 +229,31 @@ export function findBracketProblem(
     }
   }
   return null;
+}
+
+/**
+ * Whether an event's games are a slate of one-off games (#2225): every game in one round, none
+ * whose winner moves on and none of a WEEK slot, such as a season's bowl games. Each is its own
+ * final, so knockout round points score a win at the round's one value. A regular-season week's
+ * games are not one (#715): a week is played by pick'em and survivor, never by a round reached.
+ */
+function isOneRoundSlate(games: ReadonlyArray<Pick<SportEventRoundMatch, 'roundNumber' | 'advancesToMatchId' | 'slot'>>): boolean {
+  return games.length > 0
+    && new Set(games.map((game) => game.roundNumber)).size === 1
+    && games.every((game) => game.advancesToMatchId === null && game.slot.slotKind !== SlotKind.WEEK);
+}
+
+/**
+ * Why knockout round points cannot score an event's games, or null when they can (#2225): a
+ * win scores its round's value, so the games must be a bracket (`findBracketProblem`) or a slate of
+ * one-off games (`isOneRoundSlate`). A bracket pick'em still needs a bracket: its entry picks every
+ * game to the one final.
+ */
+export function findKnockoutProblem(
+  games: readonly SportEventRoundMatch[],
+  seedOf: ReadonlyMap<string, number | null>,
+): string | null {
+  return isOneRoundSlate(games) ? null : findBracketProblem(games, seedOf);
 }
 
 /** One pick as the results score it. */

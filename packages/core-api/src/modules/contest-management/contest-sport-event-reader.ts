@@ -10,7 +10,7 @@ import type {
   SportEventRepository,
 } from '@poolmaster/shared/db';
 import { MatchStatus, SportEventParticipantStatus, coveredRoundNumbers, eventPlaysMatches, isSquaresRound, hasSportEventStarted, matchSpread } from '@poolmaster/shared/domain';
-import { findBracketProblem } from '../scoring-families/head-to-head/bracket-picks';
+import { findBracketProblem, findKnockoutProblem } from '../scoring-families/head-to-head/bracket-picks';
 import { ContestCutoffKind, cutoffTiming } from '../contests/entry-window';
 import { knockoutSeeds } from '../scoring-families/head-to-head/score-team';
 import { BatchedRead, batchedByIds, batchedByKey, withReads } from '../../core/batched-read';
@@ -83,6 +83,10 @@ export function createContestSportEventReader({ sportEvents, field, valuations, 
       // The event's own bracket, every round of it: whether its games form one is the event's fact,
       // whichever rounds a contest on it covers.
       return findBracketProblem(games.filter((match) => match.status !== MatchStatus.CANCELLED), knockoutSeeds(entries));
+    },
+    findKnockoutProblem: async (sportEventId) => {
+      const [games, entries] = await Promise.all([matches.findBySportEvent(sportEventId), field.findBySportEvent(sportEventId)]);
+      return findKnockoutProblem(games.filter((match) => match.status !== MatchStatus.CANCELLED), knockoutSeeds(entries));
     },
     countCoveredRounds: async (sportEventId, coverage) =>
       coveredRoundNumbers(coverage, await matches.findBySportEvent(sportEventId)).length,
