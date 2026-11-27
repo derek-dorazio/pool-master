@@ -414,6 +414,22 @@ describe('IngestionPersistence', () => {
       });
     });
 
+    it('makes a withdrawn team active again once its game is placed back in the draft\'s slots', async () => {
+      const prisma = getPrisma();
+      const { event, detail, persistence, statuses } = await bowlsHoldingBoth('integration-stale-returns');
+      await persistence.persistEventDetailWithDiagnostics(detail);
+      const { sportLeagueSeasonCompetitionSlotId, sportLeagueProviderMappingId } = await prisma.sportLeagueSeasonCompetitionSlotGameProviderMapping.findFirstOrThrow({
+        where: { sportLeagueId: event.sportLeagueId, externalId: 'integration-stale-returns-stale-bowl' },
+      });
+      await prisma.sportLeagueSeasonCompetitionSlotGameProviderMapping.create({
+        data: { sportLeagueId: event.sportLeagueId, sportLeagueSeasonCompetitionSlotId, sportLeagueProviderMappingId, externalId: 'integration-stale-returns-stale-cfp-0' },
+      });
+
+      await persistence.persistEventDetailWithDiagnostics(detail);
+
+      expect(Object.values(await statuses())).toEqual(['ACTIVE', 'ACTIVE', 'ACTIVE', 'ACTIVE']);
+    });
+
     it('withdraws 20 teams in the same statements as 2', async () => {
       await expectSameStatementCount({
         seed: async (teams) => bowlsHoldingBoth(`integration-stale-scaling-${String(teams)}`, teams / 2),
