@@ -17,6 +17,7 @@ import {
   teamsOfGames,
   toCfpEvent,
   toCfpGameScoreUpdates,
+  toNcaafScheduledGames,
   toNcaafTeamParticipant,
   type CfpScope,
 } from './ncaaf-mapping';
@@ -59,7 +60,7 @@ export class NcaafReader {
   async eventDetails(scope: CfpScope): Promise<SportEventDetail | null> {
     const games = await this.gamesOf(scope);
     if (games.length === 0) return null;
-    return { ...toCfpEvent(scope, games), participants: teamsOfGames(games) };
+    return { ...toCfpEvent(scope, games), participants: teamsOfGames(games), games: toNcaafScheduledGames(games) };
   }
 
   /** Every college football team the vendor lists. */

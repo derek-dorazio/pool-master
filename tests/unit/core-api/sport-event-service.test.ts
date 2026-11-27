@@ -549,6 +549,57 @@ describe('SportEventService.importProviderSeason', () => {
     expect([...again.competitionNames.values()]).toEqual(['Bowl Games']);
   });
 
+  it('gives a linked event that holds no slot yet to the playoff its slate reaches, not to the rest of the phase, though a bowl kicks off first (#2154)', async () => {
+    const { store, service, sportLeague } = setup();
+    const kickoff = slate[0].startDate;
+    const later = new Date(kickoff.getTime() + 3_600_000);
+    const firstRound = store.addWindowSlot(sportLeague, 'ROUND_OF_16', { startsAt: new Date(later.getTime() - 60_000), endsAt: new Date(later.getTime() + 60_000), status: SlotWindowStatus.CONFIRMED });
+    const bowls = store.addWindowSlot(sportLeague, 'BOWLS', { startsAt: new Date(kickoff.getTime() - 60_000), endsAt: new Date(kickoff.getTime() + 86_400_000), status: SlotWindowStatus.CONFIRMED });
+    store.restOfPhaseSlotIds.add(bowls);
+    store.slotCompetitions.set(bowls, 'bowls-competition');
+    const linked = store.addEvent({ providerRef: { providerId: FEED, externalId: 'ncaaf-2026' } });
+    const season = {
+      ...providerEvent('ncaaf-2026', 'College football 2026 season', null, kickoff, later),
+      providerSlots: [
+        { code: null, startsAt: kickoff, endsAt: kickoff, teams: ['8', '9'] },
+        { code: null, startsAt: later, endsAt: later, teams: ['1', '2'] },
+      ],
+    };
+
+    const result = await service.importProviderSeason(importOf(sportLeague, [season]));
+
+    expect(store.slotsByEvent.get(linked.id)?.map((slot) => slot.id)).toEqual([firstRound]);
+    expect(result.created.map(({ slots }) => slots.map((slot) => slot.id))).toEqual([[bowls]]);
+  });
+
+  it('records the provider games the bowls hold, and lets a quarterfinal go from the bowls once its seeds are on the CFP field, so the bowls never keep a CFP game (#2154)', async () => {
+    const { store, service, sportLeague } = setup();
+    const kickoff = slate[0].startDate;
+    const around = { startsAt: new Date(kickoff.getTime() - 60_000), endsAt: new Date(kickoff.getTime() + 60_000), status: SlotWindowStatus.CONFIRMED };
+    const firstRound = store.addWindowSlot(sportLeague, 'ROUND_OF_16', around);
+    const bowls = store.addWindowSlot(sportLeague, 'BOWLS', { ...around, endsAt: new Date(kickoff.getTime() + 86_400_000) });
+    store.restOfPhaseSlotIds.add(bowls);
+    store.slotCompetitions.set(bowls, 'bowls-competition');
+    const season = {
+      ...providerEvent('ncaaf-2026', 'College football 2026 season', null, kickoff, kickoff),
+      providerSlots: [
+        { code: null, startsAt: kickoff, endsAt: kickoff, teams: ['1', '2'], gameIds: ['quarterfinal'] },
+        { code: null, startsAt: new Date(kickoff.getTime() + 3_600_000), endsAt: new Date(kickoff.getTime() + 3_600_000), teams: ['8', '9'], gameIds: ['bowl'] },
+      ],
+    };
+
+    const made = await service.importProviderSeason(importOf(sportLeague, [season]));
+    // Before the seeds are placed the bowls hold both games. The CFP's date-window slot records none:
+    // its event is a bracket on its seeds.
+    expect(Object.fromEntries(store.placedGameIds)).toEqual({ [bowls]: ['quarterfinal', 'bowl'] });
+
+    const cfp = expectDefined(made.created.find(({ slots }) => slots.some((slot) => slot.id === firstRound))).event.id;
+    for (const feedId of ['1', '2']) store.addToField(cfp, store.addParticipant(sportLeague.sportId, `Seed ${feedId}`, { externalId: feedId }).id);
+    await service.importProviderSeason(importOf(sportLeague, [season]));
+
+    expect(Object.fromEntries(store.placedGameIds)).toEqual({ [bowls]: ['bowl'] });
+  });
+
   it('names no slot needing dates for a Season with no slot placed by date window', async () => {
     const { store, service, sportLeague } = setup();
     slotsFor(store, sportLeague, slate);

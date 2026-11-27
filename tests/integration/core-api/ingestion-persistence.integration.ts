@@ -334,6 +334,60 @@ describe('IngestionPersistence', () => {
     expect(rows.map((row) => [feedIdOf(row.participant), row.ranking])).toEqual([['ingestion-window-seed', 2]]);
   });
 
+  // #2154: a rest-of-phase slot (a season's bowls) takes the games no other slot places, which the
+  // events sync records on it; its event's field is those games' teams, and its Matches those games.
+  it('writes the field of an event playing a rest-of-phase slot from the teams of the games placed in it, and hands its follow-up those games alone', async () => {
+    const prisma = getPrisma();
+    const persistence = new IngestionPersistence(getAppPrisma(), testDomainEvents({ queue: integrationBackgroundJobs().queue }));
+    const externalId = 'integration-rest-of-phase-field';
+    const event = await linkedProviderEvent(prisma, { providerId: 'balldontlie', externalId, name: 'Bowl Games', startDate: new Date('2026-12-20T12:00:00.000Z') });
+    const { sportLeagueProviderMappingId } = await prisma.sportEventProviderMapping.findFirstOrThrow({ where: { sportEventId: event.id }, select: { sportLeagueProviderMappingId: true } });
+    const definitionId = await keyedSlotDefinitionId(prisma, event.sportLeagueId, 'REST_OF_POSTSEASON', { phase: 'POSTSEASON', slotKind: 'TOURNAMENT' });
+    await prisma.sportLeagueCompetitionSlotProviderMapping.createMany({
+      data: [{ sportLeagueId: event.sportLeagueId, sportLeagueCompetitionSlotId: definitionId, sportLeagueProviderMappingId, matchType: 'REST_OF_PHASE', providerValue: null }],
+      skipDuplicates: true,
+    });
+    const seasonSlotId = await putEventInSlot(prisma, event.id, definitionId);
+    await prisma.sportLeagueSeasonCompetitionSlotGameProviderMapping.create({
+      data: { sportLeagueId: event.sportLeagueId, sportLeagueSeasonCompetitionSlotId: seasonSlotId, sportLeagueProviderMappingId, externalId: 'bowl-game' },
+    });
+    const game = (id: string, home: string, away: string) => ({ games: [{ providerGameId: id, gameNumber: 1 }], roundNumber: 1, homeTeamExternalId: home, awayTeamExternalId: away, scheduledAt: new Date('2026-12-20T17:00:00.000Z'), isNeutralSite: false });
+
+    await persistence.persistEventDetailWithDiagnostics({
+      ...rankedFieldDetail(externalId, ['ingestion-bowl-home', 'ingestion-bowl-away', 'ingestion-cfp-seed-1', 'ingestion-cfp-seed-4'].map((team) => rankedGolfer(team))),
+      games: [game('bowl-game', 'ingestion-bowl-home', 'ingestion-bowl-away'), game('cfp-game', 'ingestion-cfp-seed-1', 'ingestion-cfp-seed-4')],
+    });
+
+    const rows = await prisma.sportEventParticipant.findMany({ where: { sportEventId: event.id }, include: { participant: { include: { providerMappings: true } } } });
+    expect(rows.map((row) => feedIdOf(row.participant) ?? '').sort((a, b) => a.localeCompare(b))).toEqual(['ingestion-bowl-away', 'ingestion-bowl-home']);
+    const [job] = await prisma.backgroundJob.findMany({ where: { type: 'SYNC_EVENT_GAMES_AND_TIERS', sportEventId: event.id } });
+    expect((job.payload as { games: Array<{ games: Array<{ providerGameId: string }> }> }).games.map((each) => each.games[0].providerGameId)).toEqual(['bowl-game']);
+    await prisma.backgroundJob.deleteMany({ where: { sportEventId: event.id } });
+  });
+
+  it('hands no provider game to the follow-up of an event playing only a date-window slot, whose Matches are its seeds\' bracket', async () => {
+    const prisma = getPrisma();
+    const persistence = new IngestionPersistence(getAppPrisma(), testDomainEvents({ queue: integrationBackgroundJobs().queue }));
+    const externalId = 'integration-window-no-games';
+    const event = await linkedProviderEvent(prisma, { providerId: 'balldontlie', externalId, name: 'Windowed playoff', startDate: new Date('2026-12-30T12:00:00.000Z') });
+    const { sportLeagueProviderMappingId } = await prisma.sportEventProviderMapping.findFirstOrThrow({ where: { sportEventId: event.id }, select: { sportLeagueProviderMappingId: true } });
+    const definitionId = await keyedSlotDefinitionId(prisma, event.sportLeagueId, 'WINDOWED_ROUND', { phase: 'POSTSEASON', slotKind: 'SEMIFINAL' });
+    await prisma.sportLeagueCompetitionSlotProviderMapping.createMany({
+      data: [{ sportLeagueId: event.sportLeagueId, sportLeagueCompetitionSlotId: definitionId, sportLeagueProviderMappingId, matchType: 'DATE_WINDOW', providerValue: null }],
+      skipDuplicates: true,
+    });
+    await putEventInSlot(prisma, event.id, definitionId);
+
+    await persistence.persistEventDetailWithDiagnostics({
+      ...rankedFieldDetail(externalId, [rankedGolfer('ingestion-window-only-team')]),
+      games: [{ games: [{ providerGameId: 'some-game', gameNumber: 1 }], roundNumber: 1, homeTeamExternalId: 'a', awayTeamExternalId: 'b', scheduledAt: new Date('2026-12-30T17:00:00.000Z'), isNeutralSite: false }],
+    });
+
+    const [job] = await prisma.backgroundJob.findMany({ where: { type: 'SYNC_EVENT_GAMES_AND_TIERS', sportEventId: event.id } });
+    expect(job.payload).not.toHaveProperty('games');
+    await prisma.backgroundJob.deleteMany({ where: { sportEventId: event.id } });
+  });
+
   it('keeps a golfer\'s existing ranking when a later field refresh gives no ranking', async () => {
     const prisma = getPrisma();
     const persistence = new IngestionPersistence(getAppPrisma(), testDomainEvents());

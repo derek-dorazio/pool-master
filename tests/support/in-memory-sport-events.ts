@@ -234,6 +234,9 @@ export class InMemorySportEvents {
   /** The synced slots matched REST_OF_PHASE (#2154): their window takes the games no other slot places. */
   restOfPhaseSlotIds = new Set<string>();
 
+  /** The provider game ids the sync placed in each Season slot (#2154), by slot id. */
+  placedGameIds = new Map<string, string[]>();
+
   /** A synced slot placed by date window, with `window` or none, listed by a template (#2012). Answers its id. */
   addWindowSlot(sportLeague: Pick<SportLeague, 'id' | 'currentSeasonId'>, key: string, window: SlotWindow | null): string {
     const id = this.addSyncSlot(sportLeague, null);
@@ -287,7 +290,11 @@ export class InMemorySportEvents {
         }
         return { competitionMissing };
       },
-      recordSyncedSlots: async ({ eventSlots, slotDates, confirmedWindows }) => {
+      recordSyncedSlots: async ({ eventSlots, slotDates, confirmedWindows, placedGames }) => {
+        for (const { seasonSlotId, externalIds } of placedGames?.bySlot ?? []) {
+          for (const [slotId, ids] of this.placedGameIds) this.placedGameIds.set(slotId, ids.filter((id) => !externalIds.includes(id)));
+          this.placedGameIds.set(seasonSlotId, [...externalIds]);
+        }
         for (const slotId of confirmedWindows) {
           const window = this.slotWindows.get(slotId);
           if (window) this.slotWindows.set(slotId, { ...window, status: SlotWindowStatus.CONFIRMED });
