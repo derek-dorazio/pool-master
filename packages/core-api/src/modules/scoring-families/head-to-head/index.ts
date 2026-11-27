@@ -32,11 +32,6 @@ export const headToHeadScoringFamily: ScoringFamilyModule = {
     });
   },
 
-  // A team with no result wins no round, so each counting pick scores nothing.
-  scoreMissedLineup(_field, _event, scoring) {
-    return scoring.participantScoringDefinitionId === 'KNOCKOUT_ROUND_POINTS' ? 0 : null;
-  },
-
   liveScores: {
     category: 'GAME',
     persist(deps, event, result) {

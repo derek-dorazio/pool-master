@@ -30,7 +30,7 @@ export async function readFinalStandings(deps: FinalStandingsReadDeps, contest: 
   ]);
   const entryById = new Map(entries.map((entry) => [entry.id, entry]));
   const scoring = contest.contestFormat === ContestFormat.ROSTER && standings.length > 0
-    ? resolveContestScoringDefinition(await loadContestScoringConfiguration(deps, contest.id))
+    ? resolveContestScoringDefinition(await loadContestScoringConfiguration(deps, contest))
     : null;
   return {
     scoringDefinitionId: scoring?.ok ? scoring.id : null,

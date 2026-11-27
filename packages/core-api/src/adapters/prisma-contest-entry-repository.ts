@@ -158,10 +158,11 @@ export class PrismaContestEntryRepository implements ContestEntryRepository {
         return { status: 'contestFull', entriesPerContest };
       }
       // Read under the lock, so an event added meanwhile is either here or given to the entry by
-      // the event change that runs after (`replaceSportEvents`).
-      const contestEvents = await tx.contestSportEvent.findMany({
-        where: { contestId: entry.contestId },
+      // the event change that runs after (`replaceCoveredSlots`): the events of its covered slots.
+      const contestEvents = await tx.sportEventSlot.findMany({
+        where: { seasonSlot: { contestSlots: { some: { contestId: entry.contestId } } } },
         select: { sportEventId: true },
+        distinct: ['sportEventId'],
       });
       const row = await tx.contestEntry.create({
         data: {

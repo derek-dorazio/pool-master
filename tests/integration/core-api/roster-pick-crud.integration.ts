@@ -28,6 +28,7 @@ import type {
 import { freshEventEdition } from '../../support/event-edition';
 import { participantLeagueId } from '../../support/participant-league';
 import { sportRowKeys } from '../../support/sport-rows';
+import { templateForEvent } from '../../support/contest-rows';
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
@@ -76,7 +77,8 @@ describe('RosterPick CRUD integration', () => {
 
     const sportEvent = await prisma.sportEvent.create({
       data: {
-        ...(await freshEventEdition(prisma)),
+        // On the PGA TOUR, whose seeded templates a contest is made from (#2014).
+        ...(await freshEventEdition(prisma, { onPgaTour: true })),
         name: 'Roster Pick CRUD Event',
         startDate: eventTiming.startDate,
         status: 'SCHEDULED',
@@ -90,6 +92,7 @@ describe('RosterPick CRUD integration', () => {
       },
     });
     sportEventParticipantId = sportEventParticipant.id;
+    const templateId = await templateForEvent(prisma, sportEvent.id, SelectionType.TIERED);
 
     const contestRes = await getApp().inject({
       method: 'POST',
@@ -100,6 +103,7 @@ describe('RosterPick CRUD integration', () => {
         sportEventIds: [sportEvent.id],
         contestFormat: 'ROSTER',
         selectionType: 'TIERED',
+        templateId,
         configuration: {
           maxEntriesPerSquad: 1,
           selectionType: SelectionType.TIERED,

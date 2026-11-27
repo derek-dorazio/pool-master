@@ -360,11 +360,8 @@ test('act 2: a new commissioner creates a basketball contest on the playoffs, on
     await eventChoice.click();
     await expect(eventChoice).toBeChecked();
     // The seeded league's default setup fills the rules once its presets arrive; the commissioner
-    // waits for it, then sets every rule by hand on Custom.
-    const custom = page.getByTestId('contest-template-custom');
-    await expect(custom).toHaveAttribute('aria-checked', 'false');
-    await custom.click();
-    await expect(custom).toHaveAttribute('aria-checked', 'true');
+    // waits for it, then edits its rules by hand (every contest starts from a setup, #2014).
+    await expect(page.getByRole('radiogroup', { name: 'Start from' }).locator('[aria-checked="true"]')).toHaveCount(1);
     await page.getByTestId('contest-tiered-picks-per-tier').fill('1');
     await page.getByTestId('contest-tiered-counted-scores').fill('4');
   });

@@ -940,7 +940,7 @@ export const listContests = <ThrowOnError extends boolean = false>(options: Opti
 /**
  * Create a new contest in a league
  *
- * The one way a contest is created. Name a template, supply a configuration, or both: the template seeds the configuration and `configuration` replaces it. A request with neither is refused with 400 CONTEST_CONFIGURATION_REQUIRED — there is no platform default. A template that names a sport league (that league's own preset) makes contests only for that league's events: 422 CONTEST_CONFIG_TEMPLATE_LEAGUE_MISMATCH otherwise. Commissioners of the league only.
+ * The one way a contest is created, always from a template (#2014): the template seeds the configuration, and `configuration` replaces its rules. A request naming no template is refused with 400 CONTEST_CONFIGURATION_REQUIRED — there is no platform default. The contest covers the template's listed slots among its events' Season slots, as the template's coverage mode allows, fixed at creation: `startingSlotId` chooses the slot a one-slot or from-slot template starts at. A template that names a sport league (that league's own preset) makes contests only for that league's events: 422 CONTEST_CONFIG_TEMPLATE_LEAGUE_MISMATCH otherwise. Commissioners of the league only.
  */
 export const createContest = <ThrowOnError extends boolean = false>(options: Options<CreateContestData, ThrowOnError>): RequestResult<CreateContestResponses, CreateContestErrors, ThrowOnError> => (options.client ?? client).post<CreateContestResponses, CreateContestErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],

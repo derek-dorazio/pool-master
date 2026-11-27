@@ -38,6 +38,7 @@ import {
 import { expectDefined } from '../../support/expect-defined';
 import { forgetStoredLeaderboards, passReadCacheTtl, restoreReadCacheClock } from '../../support/read-cache-clock';
 import { golfRoundsOf } from '../../support/live-score-rounds';
+import { contestOnEvents, contestTemplateId } from '../../support/contest-rows';
 
 const providerId = 'balldontlie';
 /** The mock feed's golf events: the fake answers as BALLDONTLIE, and its event ids start `golf-`. */
@@ -329,8 +330,7 @@ async function createGolfLiveVerificationContests(input: {
   const directContest = await prisma.contest.create({
     data: {
       leagueId: league.id,
-      seasonYear: 2026,
-      sportEvents: { create: { sportEventId: input.sportEventId, sequence: 1 } },
+      ...(await contestOnEvents(prisma, [input.sportEventId])),
       name: `Direct Golf Live E2E ${suffix}`,
       status: 'ACTIVE',
       contestFormat: 'ROSTER',
@@ -354,6 +354,7 @@ async function createGolfLiveContestConfiguration(contestId: string) {
   return getPrisma().contestConfiguration.create({
     data: {
       contestId,
+      templateId: await contestTemplateId(getPrisma(), contestId),
       selectionType: 'TIERED',
       configJson: {
         selectionType: 'TIERED',

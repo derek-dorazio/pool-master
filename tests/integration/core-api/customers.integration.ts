@@ -19,6 +19,7 @@ import {
   setupIntegrationTests,
   teardownIntegrationTests,
 } from '../helpers';
+import { anySeasonId } from '../../support/contest-rows';
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
@@ -52,9 +53,10 @@ async function seedLeague(name: string, planRenewsAt: Date) {
       { leagueId: league.id, userId: former.user.id, role: 'COMMISSIONER', status: 'INACTIVE', joinedAt: new Date(Date.now() - 60 * DAY) },
     ],
   });
+  const sportLeagueSeasonId = await anySeasonId(prisma, 2026);
   await prisma.contest.createMany({
     data: [ContestStatus.DRAFT, ContestStatus.OPEN, ContestStatus.ACTIVE, ContestStatus.COMPLETED].map((status) => ({
-      leagueId: league.id, seasonYear: 2026, name: `Contest ${status}`, status, selectionType: 'TIERED' as const,
+      leagueId: league.id, sportLeagueSeasonId, name: `Contest ${status}`, status, selectionType: 'TIERED' as const,
     })),
   });
   return { league, owner, later, member, former };

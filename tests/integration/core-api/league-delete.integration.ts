@@ -23,6 +23,7 @@ import type {
   SquadListResponse,
   TeamOwnerInvitationResponse,
 } from '@poolmaster/shared/dto';
+import { anySeasonId } from '../../support/contest-rows';
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
@@ -61,7 +62,7 @@ describe('Deleting an inactive league', () => {
 
     // A contest and a league invitation, so every league-owned table the delete clears has a row.
     const contest = await getPrisma().contest.create({
-      data: { leagueId: league.id, seasonYear: 2026, name: 'Doomed Contest', selectionType: 'TIERED' },
+      data: { leagueId: league.id, sportLeagueSeasonId: await anySeasonId(getPrisma(), 2026), name: 'Doomed Contest', selectionType: 'TIERED' },
     });
     // An expansion and its payment history line (#980), which go with the league.
     const payment = await getPrisma().leaguePayment.create({

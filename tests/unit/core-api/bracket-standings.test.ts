@@ -151,7 +151,7 @@ describe('loadBracketStandings', () => {
     const context = setup();
     context.play(ROUND_ONE_CHALK);
 
-    const standings = await loadBracketStandings(context.deps, context.contest.id, context.sportEvent);
+    const standings = await loadBracketStandings(context.deps, context.contest, context.sportEvent);
 
     // Alice and Bob: 4 correct firsts, 2 + 2 + 4 still possible. Cara: T8 busted, T4, T2 and T2 still in.
     expect(rows(standings)).toEqual([
@@ -174,7 +174,7 @@ describe('loadBracketStandings', () => {
     }
     context.play(ROUND_ONE_CHALK);
 
-    const standings = await loadBracketStandings(context.deps, context.contest.id, context.sportEvent);
+    const standings = await loadBracketStandings(context.deps, context.contest, context.sportEvent);
 
     expect(standings.gameCount).toBe(7);
     expect(rows(standings).at(-1)).toEqual(['Empty', 0, 0, '4']);
@@ -184,7 +184,7 @@ describe('loadBracketStandings', () => {
     const context = setup();
     context.play(ROUND_ONE_CHALK, ROUND_TWO_CHALK);
 
-    const standings = await loadBracketStandings(context.deps, context.contest.id, context.sportEvent);
+    const standings = await loadBracketStandings(context.deps, context.contest, context.sportEvent);
 
     // Cara's T4 lost game 5, so her final pick of T2 (worth 4) is all she has left to play for.
     expect(rows(standings)).toEqual([
@@ -197,7 +197,7 @@ describe('loadBracketStandings', () => {
   it('names each entry\'s pick to win the final with its field row and seed, pending while its team is still playing and busted once it is out', async () => {
     const context = setup();
     context.play(ROUND_ONE_CHALK, ROUND_TWO_CHALK);
-    const champions = async () => (await loadBracketStandings(context.deps, context.contest.id, context.sportEvent)).entries
+    const champions = async () => (await loadBracketStandings(context.deps, context.contest, context.sportEvent)).entries
       .map((standing) => [standing.entry.name, standing.champion]);
     const t1 = { sportEventParticipantId: 'T1', name: 'Team T1', seedNumber: 1 };
     const t2 = { sportEventParticipantId: 'T2', name: 'Team T2', seedNumber: 2 };
@@ -220,7 +220,7 @@ describe('loadBracketStandings', () => {
     const context = setup({ seeds: new Map([...EIGHT_SEEDS, ['T2', null]]) });
     context.play(ROUND_ONE_CHALK, ROUND_TWO_CHALK);
 
-    const standings = await loadBracketStandings(context.deps, context.contest.id, context.sportEvent);
+    const standings = await loadBracketStandings(context.deps, context.contest, context.sportEvent);
 
     expect(standings.entries.find((standing) => standing.entry.name === 'Cara')?.champion)
       .toEqual({ sportEventParticipantId: 'T2', name: 'Team T2', seedNumber: null, outcome: PickOutcome.PENDING });
@@ -230,7 +230,7 @@ describe('loadBracketStandings', () => {
     const context = setup();
     context.play(ROUND_ONE_CHALK, ROUND_TWO_CHALK, FINAL_T1_70_66);
 
-    const standings = await loadBracketStandings(context.deps, context.contest.id, context.sportEvent);
+    const standings = await loadBracketStandings(context.deps, context.contest, context.sportEvent);
 
     // The final totals 136: Alice's 140 is 4 away, Bob's 120 is 16 away.
     expect(rows(standings)).toEqual([

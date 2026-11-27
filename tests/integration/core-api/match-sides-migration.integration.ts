@@ -18,6 +18,7 @@ import { expectDefined } from '../../support/expect-defined';
 import { freshEventEdition } from '../../support/event-edition';
 import { linkTestSlot } from '../../support/test-slots';
 import { uncachedStatement } from '../../support/put-back-sql';
+import { contestOnEvents } from '../../support/contest-rows';
 
 beforeAll(async () => {
   await setupIntegrationTests();
@@ -139,7 +140,7 @@ async function pickEmEntry(sportEventId: string) {
   const league = await prisma.league.create({ data: { cupName: 'Test Cup', leagueCode: `MSIDE${suffix.toUpperCase()}`, name: `Migrated Sides ${suffix}` } });
   const squad = await prisma.squad.create({ data: { leagueId: league.id, createdBy: owner.user.id, name: `Pickers ${suffix}` } });
   const contest = await prisma.contest.create({
-    data: { leagueId: league.id, seasonYear: 2027, sportEvents: { create: { sportEventId, sequence: 1 } }, name: `Picks ${suffix}`, status: 'OPEN', contestFormat: 'PREDICTION', selectionType: 'PICK_EM' },
+    data: { leagueId: league.id, ...(await contestOnEvents(prisma, [sportEventId])), name: `Picks ${suffix}`, status: 'OPEN', contestFormat: 'PREDICTION', selectionType: 'PICK_EM' },
   });
   return prisma.contestEntry.create({ data: { contestId: contest.id, squadId: squad.id, entryNumber: 1, name: 'Pickers' } });
 }

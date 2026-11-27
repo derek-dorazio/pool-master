@@ -7,7 +7,7 @@ export { PrismaSquadMembershipRepository } from './prisma-squad-membership-repos
 export { PrismaSquadOwnerInvitationRepository } from './prisma-squad-owner-invitation-repository';
 export { PrismaInvitationEmailTransaction } from './prisma-invitation-email-transaction';
 export { PrismaMembershipTransaction } from './prisma-membership-transaction';
-export { PrismaContestRepository } from './prisma-contest-repository';
+export { COVERED_SLOT_ORDER, PrismaContestRepository, coversEventWhere } from './prisma-contest-repository';
 export { PrismaParticipantRepository } from './prisma-participant-repository';
 export { PrismaParticipantProviderMappingRepository } from './prisma-participant-provider-mapping-repository';
 export { PrismaEmailMessageRepository } from './prisma-email-message-repository';

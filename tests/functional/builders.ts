@@ -3,8 +3,9 @@ import type { Client } from '@poolmaster/shared/generated/hey-api/client';
 import { randomUUID } from 'node:crypto';
 import { fixtureSeasonId, keyedSlotDefinitionId, withCurrentSeason, type TestRoundSlot } from '../support/event-edition';
 import { seasonCompetitionFor } from '../support/competitions';
+import { contestOnEvents, fixtureTemplateId, placeEventForTemplate } from '../support/contest-rows';
 import { testSlotDefinitionId, uniqueTestSlotLabel } from '../support/test-slots';
-import type { ContestSelectionConfig, SelectionType, Sport } from '@poolmaster/shared/domain';
+import { TemplateCoverageMode, type ContestSelectionConfig, type SelectionType, type Sport } from '@poolmaster/shared/domain';
 import {
   createAuthenticatedClient,
   createFunctionalEmail,
@@ -222,6 +223,63 @@ export async function buildLeagueWithCommissioner(overrides?: {
  * see and enter, and a configuration defaulting to one entry per team. `status: 'DRAFT'` seeds
  * the commissioner-only draft create itself writes (#117).
  */
+/**
+ * The template a functional contest is created from (#2014: every contest is made from one and
+ * covers a slot it lists): the first event's league's default of the selection type. A run's own
+ * test league has none, so it gets a copy of a seeded league's, of its sport where one has the
+ * type, as the migration that adds a league seeds them (`placeEventsForTemplate` then fits it).
+ */
+export async function contestTemplateFor(sportEventIds: readonly string[], selectionType: SelectionType): Promise<string> {
+  const prisma = getFunctionalPrisma();
+  // poolmaster-allow-position: the template is the first event's league's; the rest share it
+  const firstId = sportEventIds.at(0);
+  if (firstId === undefined) throw new Error('fixture: a contest template needs an event');
+  const first = await prisma.sportEvent.findUniqueOrThrow({ where: { id: firstId }, select: { sportLeagueId: true, sportLeague: { select: { sportId: true } } } });
+  const order = [{ isDefault: 'desc' as const }, { sortOrder: 'asc' as const }, { id: 'asc' as const }];
+  const own = await prisma.contestConfigTemplate.findFirst({ where: { sportLeagueId: first.sportLeagueId, selectionType, active: true }, orderBy: order, select: { id: true } });
+  if (own !== null) return placedTemplate(sportEventIds, own.id);
+  const seeded = { selectionType, active: true, sportLeague: { displayOrder: { not: null } } };
+  const { configJson, ...source } = await prisma.contestConfigTemplate.findFirst({ where: { ...seeded, sportLeague: { ...seeded.sportLeague, sportId: first.sportLeague.sportId } }, orderBy: order })
+    ?? await prisma.contestConfigTemplate.findFirstOrThrow({ where: seeded, orderBy: order });
+  // The copy is a new row of the event's league: its own id and timestamps, and no slots yet. One
+  // over several events covers each one's listed slot.
+  const copy = await prisma.contestConfigTemplate.create({
+    data: {
+      ...source, id: undefined, createdAt: undefined, updatedAt: undefined, configJson: configJson ?? {}, sportLeagueId: first.sportLeagueId,
+      ...(sportEventIds.length > 1 && { coverageMode: TemplateCoverageMode.ALL_LISTED }),
+    },
+    select: { id: true },
+  });
+  return placedTemplate(sportEventIds, copy.id);
+}
+
+/**
+ * Fits the template to the events for a contest made from it (#2014): a template listing no slot
+ * (a run's copy of a league's setups) lists the events' slot definitions, and each event is put
+ * in a slot the template lists unless it holds one (`placeEventForTemplate`).
+ */
+export async function placeEventsForTemplate(sportEventIds: readonly string[], templateId: string): Promise<void> {
+  const prisma = getFunctionalPrisma();
+  const template = await prisma.contestConfigTemplate.findUniqueOrThrow({ where: { id: templateId }, select: { sportLeagueId: true, slots: { select: { id: true } } } });
+  if (template.slots.length === 0) {
+    const slots = await prisma.sportEventSlot.findMany({ where: { sportEventId: { in: [...sportEventIds] } }, select: { seasonSlot: { select: { sportLeagueCompetitionSlotId: true } } } });
+    const definitionIds = new Set(slots.map((slot) => slot.seasonSlot.sportLeagueCompetitionSlotId));
+    await prisma.contestConfigTemplateSlot.createMany({
+      data: [...definitionIds].map((sportLeagueCompetitionSlotId) => ({ sportLeagueId: template.sportLeagueId, templateId, sportLeagueCompetitionSlotId })),
+    });
+  }
+  for (const sportEventId of sportEventIds) {
+    // poolmaster-allow-query-in-loop: a fixture's few events
+    await placeEventForTemplate(prisma, sportEventId, templateId);
+  }
+}
+
+/** The template, once fitted to the events (`placeEventsForTemplate`). */
+export async function placedTemplate<Id extends string | undefined>(sportEventIds: readonly string[], templateId: Id): Promise<Id> {
+  if (templateId !== undefined) await placeEventsForTemplate(sportEventIds, templateId);
+  return templateId;
+}
+
 export async function seedContestFixture(leagueId: string, options: {
   name: string;
   selectionType: SelectionType;
@@ -236,10 +294,13 @@ export async function seedContestFixture(leagueId: string, options: {
   };
 }): Promise<{ contestId: string }> {
   const prisma = getFunctionalPrisma();
+  // A contest is in a Season (#2014); one seeded before its event takes the event's when it is
+  // attached (`attachContestEvent`), so any 2026 Season holds it meanwhile.
+  const season = await prisma.sportLeagueSeason.findFirstOrThrow({ where: { championshipYear: 2026 }, orderBy: { id: 'asc' }, select: { id: true, sportLeagueId: true } });
   const contest = await prisma.contest.create({
     data: {
       leagueId,
-      seasonYear: 2026,
+      sportLeagueSeasonId: season.id,
       name: options.name,
       status: options.status ?? 'OPEN',
       contestFormat: 'ROSTER',
@@ -249,6 +310,7 @@ export async function seedContestFixture(leagueId: string, options: {
   await prisma.contestConfiguration.create({
     data: {
       contestId: contest.id,
+      templateId: await fixtureTemplateId(prisma, { sportLeagueId: season.sportLeagueId, selectionType: options.selectionType }),
       selectionType: options.selectionType,
       maxEntriesPerSquad: 1,
       ...options.configuration,
@@ -265,8 +327,14 @@ export async function seedContestFixture(leagueId: string, options: {
  */
 export async function attachContestEvent(contestId: string, sportEventId: string): Promise<void> {
   const prisma = getFunctionalPrisma();
-  const sequence = (await prisma.contestSportEvent.count({ where: { contestId } })) + 1;
-  await prisma.contestSportEvent.create({ data: { contestId, sportEventId, sequence } });
+  const { sportLeagueSeasonId, seasonSlots } = await contestOnEvents(prisma, [sportEventId]);
+  // A contest seeded with no event takes its first event's Season (#2014).
+  if (await prisma.contestSeasonSlot.count({ where: { contestId } }) === 0) {
+    await prisma.contest.update({ where: { id: contestId }, data: { sportLeagueSeasonId } });
+  }
+  await prisma.contestSeasonSlot.createMany({
+    data: seasonSlots.create.map((slot) => ({ contestId, sportLeagueSeasonId, ...slot })),
+  });
   const entries = await prisma.contestEntry.findMany({ where: { contestId }, select: { id: true } });
   await prisma.contestEntryEvent.createMany({
     data: entries.map((entry) => ({ contestEntryId: entry.id, sportEventId })),
