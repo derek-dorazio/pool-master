@@ -16,7 +16,7 @@ import {
   PrismaSportLeagueRepository,
   PrismaSportRepository,
 } from '../../../packages/core-api/src/adapters';
-import { freshEventEdition, fixtureSeasonId, mapEventToProvider } from '../../support/event-edition';
+import { eventRoundSlots, freshEventEdition, fixtureSeasonId, mapEventToProvider } from '../../support/event-edition';
 import { sportLeagueRowDefaults } from '../../support/league-profiles';
 import { BALLDONTLIE_TEST_PROVIDER_ID } from '../../support/balldontlie-provider-rows';
 import { participantLeagueId } from '../../support/participant-league';
@@ -651,6 +651,29 @@ describe('SportEvent core repositories', () => {
       ['Second', 2, []],
       ['Unranked', null, []],
     ]);
+  });
+
+  it('prices an event\'s field from its first slot in play order when it covers several, whichever slot was made first (#2044)', async () => {
+    const sport = await golfSport();
+    const event = await createEvent('two-slot-field');
+    const oneSlot = await createEvent('one-slot-field');
+    // Made out of play order: the final's slot first, then the semifinal's, which is played first.
+    const [finalSlotId, semifinalSlotId] = await eventRoundSlots(getPrisma(), event.id, [{ slotKind: 'FINAL' }, { slotKind: 'SEMIFINAL' }]);
+    const [oneSlotId] = await eventRoundSlots(getPrisma(), oneSlot.id, [{ slotKind: 'FINAL' }]);
+    const golfer = await createParticipant(sport.id, 'Two Slot Golfer');
+    const [row, oneSlotRow] = await Promise.all([event, oneSlot].map((sportEvent) => getPrisma().sportEventParticipant.create({ data: { sportEventId: sportEvent.id, participantId: golfer.id } })));
+    await getPrisma().sportEventSlotParticipantValuation.createMany({ data: [
+      { sportEventId: event.id, sportEventSlotId: finalSlotId, sportEventParticipantId: row.id, price: 7000 },
+      { sportEventId: event.id, sportEventSlotId: semifinalSlotId, sportEventParticipantId: row.id, price: 9000 },
+      { sportEventId: oneSlot.id, sportEventSlotId: oneSlotId, sportEventParticipantId: oneSlotRow.id, price: 5000 },
+    ] });
+
+    const fields = await new PrismaSportEventParticipantRepository(getAppPrisma()).findFieldsForEvents([
+      { sportEventId: event.id, sportLeagueId: event.sportLeagueId },
+      { sportEventId: oneSlot.id, sportLeagueId: oneSlot.sportLeagueId },
+    ]);
+
+    expect(fields.map((field) => [field.entry.sportEventId, field.valuation?.price])).toEqual([[event.id, 9000], [oneSlot.id, 5000]]);
   });
 
   it("reads several events' fields in one read, in the order asked, each row's tour membership checked against its own event's tour (#1315)", async () => {

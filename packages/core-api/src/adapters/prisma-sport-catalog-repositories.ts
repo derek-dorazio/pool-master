@@ -1151,13 +1151,24 @@ function inPlayOrder<Row extends { seasonSlot: SeasonSlotRow }>(rows: readonly R
     .sort((a, b) => compareSeasonSlots(a.seasonSlot, b.seasonSlot));
 }
 
-/** Each event's first slot's id (`inPlayOrder`), for the events covering any: one read. */
+/**
+ * Each event's first slot's id (`inPlayOrder`), for the events covering any. An event covering one
+ * slot has it first, so only the events covering several read their slots' places in play.
+ */
 async function findFirstSlotIds(prisma: Db, sportEventIds: readonly string[]): Promise<Map<string, string>> {
-  const rows = await prisma.sportEventSlot.findMany({
+  const slots = await prisma.sportEventSlot.findMany({
     where: { sportEventId: { in: [...sportEventIds] } },
+    select: { id: true, sportEventId: true },
+  });
+  const slotCounts = new Map<string, number>();
+  for (const slot of slots) slotCounts.set(slot.sportEventId, (slotCounts.get(slot.sportEventId) ?? 0) + 1);
+  const firstSlotIds = new Map(slots.filter((slot) => slotCounts.get(slot.sportEventId) === 1).map((slot) => [slot.sportEventId, slot.id]));
+  const severalSlots = [...slotCounts].flatMap(([sportEventId, count]) => count > 1 ? [sportEventId] : []);
+  if (severalSlots.length === 0) return firstSlotIds;
+  const rows = await prisma.sportEventSlot.findMany({
+    where: { sportEventId: { in: severalSlots } },
     select: { id: true, sportEventId: true, seasonSlot: { select: SEASON_SLOT_SELECT } },
   });
-  const firstSlotIds = new Map<string, string>();
   for (const { row } of inPlayOrder(rows)) {
     if (!firstSlotIds.has(row.sportEventId)) firstSlotIds.set(row.sportEventId, row.id);
   }
