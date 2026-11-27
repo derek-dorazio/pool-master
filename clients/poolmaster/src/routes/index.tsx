@@ -82,7 +82,6 @@ import {
   LegacyContestManageRedirect,
   LegacyContestTypesRedirect,
   LegacyEditLeagueRedirect,
-  LegacyGolfManageRedirect,
   LegacyJoinInviteRedirect,
   LegacyLeagueContestsRedirect,
   LegacyLeagueEntriesRedirect,
@@ -451,11 +450,6 @@ export const router = createBrowserRouter([
                       { path: 'participants/:participantId/*', element: <ParticipantLinkRedirect /> },
                       { path: 'participants', element: <Navigate replace to={SPORTS_PATH} /> },
                     ],
-                  },
-                  {
-                    // Golf's pages before they moved under sports/golf.
-                    path: 'golf/*',
-                    element: <LegacyGolfManageRedirect />,
                   },
                   { path: 'customers', element: <Navigate replace to={CUSTOMER_LEAGUES_PATH} /> },
                   { path: 'customers/leagues', element: <RootAdminCustomerLeaguesPage /> },
