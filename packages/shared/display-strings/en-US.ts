@@ -258,6 +258,7 @@ export const enUS = {
       EVENTS: 'Event list',
       FIELD: 'Field',
       SCORES: 'Live scores and results',
+      ROSTER: 'Rosters',
     },
     SyncSeasonState: {
       IN_SEASON: 'In season',
@@ -759,6 +760,7 @@ export const enUS = {
       FOLLOW_POSTPONED_EVENT_CONTESTS: 'Postponed event contests',
       RESOLVE_MAPPED_PARTICIPANT_FINDINGS: 'Mapped participant findings',
       REFRESH_SLOT_TIEBREAKERS: 'Tiebreaker games',
+      SYNC_LEAGUE_ROSTER: 'Roster',
       REFRESH_SLOT_STATUS: 'Slot status',
       REFRESH_EVENT_STATUS: 'Event status',
     },

@@ -3,6 +3,7 @@ import { balldontliePaginationSchema } from '../../../../packages/core-api/src/m
 import {
   nflGameListSchema,
   nflGameSchema,
+  nflPlayerListSchema,
   NflSeasonType,
   nflStandingListSchema,
   nflStandingSchema,
@@ -32,6 +33,7 @@ describe('BALLDONTLIE NFL fixtures', () => {
     ['games-2025-postseason.json', '/nfl/v1/games', nflGameListSchema],
     ['games-2026-postseason-partial.json', '/nfl/v1/games', nflGameListSchema],
     ['standings.json', '/nfl/v1/standings', nflStandingListSchema],
+    ['players-active.json', '/nfl/v1/players/active', nflPlayerListSchema],
   ];
 
   it.each(fixtures)('%s fits the vendor document\'s response schema for GET %s', (file, path) => {
@@ -52,6 +54,7 @@ describe('BALLDONTLIE NFL fields the adapter reads', () => {
     ['NFLGame', nflGameSchema],
     ['NFLTeam', nflTeamSchema],
     ['NFLStandings', nflStandingSchema],
+    ['NFLPlayer', nflPlayerListSchema.shape.data.element],
     ['Pagination', balldontliePaginationSchema],
   ];
 

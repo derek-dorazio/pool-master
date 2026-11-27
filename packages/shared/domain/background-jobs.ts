@@ -110,6 +110,7 @@ export const BACKGROUND_JOB_KINDS = {
   [BackgroundJobType.SYNC_EVENT_FIELD]: BackgroundJobKind.SYNC,
   [BackgroundJobType.SYNC_EVENT_SCORES]: BackgroundJobKind.SYNC,
   [BackgroundJobType.SYNC_LEAGUE_EVENTS]: BackgroundJobKind.SYNC,
+  [BackgroundJobType.SYNC_LEAGUE_ROSTER]: BackgroundJobKind.SYNC,
   [BackgroundJobType.CONTEST_STARTED_EMAILS]: BackgroundJobKind.EMAIL,
   [BackgroundJobType.CONTEST_SETTLED_EMAILS]: BackgroundJobKind.EMAIL,
   [BackgroundJobType.CONTEST_EVENT_CHANGED_EMAILS]: BackgroundJobKind.EMAIL,

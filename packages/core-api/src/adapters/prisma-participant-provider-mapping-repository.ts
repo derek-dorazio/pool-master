@@ -4,7 +4,7 @@
 
 import { Prisma, type PrismaClient } from '@prisma/client';
 import type { ParticipantProviderMappingRepository, ProviderMappingScope } from '@poolmaster/shared/db';
-import type { BackgroundJobRequest, ParticipantProviderMapping, ParticipantType, ProviderCode } from '@poolmaster/shared/domain';
+import { ParticipantType, type BackgroundJobRequest, type ParticipantProviderMapping, type ProviderCode } from '@poolmaster/shared/domain';
 import { backgroundJobsInsert } from './prisma-background-job-repository';
 
 /** The Provider's name, read with each mapping, which the API returns beside its id. */
@@ -33,7 +33,14 @@ export class PrismaParticipantProviderMappingRepository implements ParticipantPr
   async findByProviderExternalIds(providerCode: ProviderCode, scope: ProviderMappingScope, externalIds: readonly string[]): Promise<ParticipantProviderMapping[]> {
     if (externalIds.length === 0) return [];
     const rows = await this.prisma.participantProviderMapping.findMany({
-      where: { provider: { code: providerCode }, externalId: { in: [...externalIds] }, ...scopeWhere(scope) },
+      where: {
+        provider: { code: providerCode },
+        externalId: { in: [...externalIds] },
+        ...scopeWhere(scope),
+        // A league's own competitors only, in the same statement: a team league's rostered players
+        // (#2025) carry feed ids too, and the provider may number a player as it numbers a team.
+        OR: Object.values(ParticipantType).map((participantType) => ({ participantType, sportLeague: { participantType } })),
+      },
       include: WITH_PROVIDER_NAME,
     });
     return rows.map(mapToMapping);

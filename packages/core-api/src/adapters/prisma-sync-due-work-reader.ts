@@ -20,7 +20,7 @@ function linkedEventOf(leagues: readonly SyncedLeagueRef[]): Prisma.SportEventWh
 }
 
 export class PrismaSyncDueWorkReader implements SyncDueWorkReader {
-  constructor(private readonly prisma: Pick<PrismaClient, 'sportLeagueSeason' | 'sportLeagueSeasonCompetitionSlot' | 'sportEventRoundMatchGame' | 'providerSyncRun'>) {}
+  constructor(private readonly prisma: Pick<PrismaClient, 'sportLeagueSeason' | 'sportLeagueSeasonCompetitionSlot' | 'sportEventRoundMatchGame' | 'providerSyncRun' | 'sportLeaguePositionProviderMapping'>) {}
 
   async findSeasonSpans(input: { leagues: readonly SyncedLeagueRef[]; now: Date }): Promise<SeasonSpanView[]> {
     if (input.leagues.length === 0) return [];
@@ -29,6 +29,16 @@ export class PrismaSyncDueWorkReader implements SyncDueWorkReader {
       select: { sportLeagueId: true, startsAt: true, endsAt: true },
       orderBy: [{ sportLeagueId: 'asc' }, { startsAt: 'asc' }],
     });
+  }
+
+  async findRosteredLeagueIds(input: { leagues: readonly SyncedLeagueRef[] }): Promise<Set<string>> {
+    if (input.leagues.length === 0) return new Set();
+    const rows = await this.prisma.sportLeaguePositionProviderMapping.findMany({
+      where: { sportLeagueProviderMappingId: { in: input.leagues.map((league) => league.sportLeagueProviderMappingId) } },
+      select: { sportLeagueId: true },
+      distinct: ['sportLeagueId'],
+    });
+    return new Set(rows.map((row) => row.sportLeagueId));
   }
 
   async findNextSlots(input: { leagues: readonly SyncedLeagueRef[]; now: Date }): Promise<FieldWindowSlot[]> {

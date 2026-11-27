@@ -62,6 +62,8 @@ function whichEvents(kind: ProviderSyncKind): string {
       return 'The events of each league\'s next slot';
     case ProviderSyncKind.EVENTS:
       return '—';
+    case ProviderSyncKind.ROSTER:
+      return 'No events: each league\'s roster for its current Season, where its positions are mapped';
     default:
       return assertNever(kind);
   }

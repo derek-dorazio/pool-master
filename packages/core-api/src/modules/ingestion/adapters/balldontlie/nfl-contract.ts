@@ -39,6 +39,24 @@ export const nflTeamListSchema = z.object({
   data: z.array(nflTeamSchema),
 });
 
+/**
+ * `NFLPlayer` from `/nfl/v1/players/active` (#2025): an active player with their team and the
+ * position code a roster row's position is mapped from (`position_abbreviation`).
+ */
+const nflPlayerSchema = z.object({
+  id: z.number().int().optional(),
+  first_name: z.string().optional(),
+  last_name: z.string().optional(),
+  position_abbreviation: z.string().optional(),
+  team: nflTeamSchema.optional(),
+});
+export type NflPlayer = z.infer<typeof nflPlayerSchema>;
+
+export const nflPlayerListSchema = z.object({
+  data: z.array(nflPlayerSchema),
+  meta: balldontliePaginationSchema.optional(),
+});
+
 /** `NFLGame` from `/nfl/v1/games`. */
 export const nflGameSchema = z.object({
   id: z.number().int().optional(),

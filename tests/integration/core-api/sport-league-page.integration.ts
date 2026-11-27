@@ -30,6 +30,7 @@ import { syncLeagueTo } from '../../support/league-sync';
 import { sportRowKeys } from '../../support/sport-rows';
 import { mapEventToProvider, fixtureSeasonId } from '../../support/event-edition';
 import { sportPlay } from '../../support/sport-play';
+import { insertTestSportLeague } from '../../support/test-sport-league';
 import { oneEventSlotId } from '../../support/test-slots';
 
 beforeAll(() => setupIntegrationTests());
@@ -185,6 +186,34 @@ describe('GET /api/v1/sport-leagues/{sportLeagueId}/participants/overview', () =
       expect.objectContaining({ id: fed.id, ranking: 1, feedId: 'bdl-7', lastInFeedAt: seenAt.toISOString(), addedBy: ParticipantAddedBy.FEED }),
       expect.objectContaining({ id: typed.id, ranking: null, feedId: null, lastInFeedAt: null, addedBy: ParticipantAddedBy.ADMIN }),
     ]);
+  });
+
+  it('names a player\'s team and position on the current Season\'s roster, and none for a team or for a player rostered only in another Season', async () => {
+    const prisma = getPrisma();
+    const league = await insertTestSportLeague(prisma, { sport: Sport.FOOTBALL, name: `Roster Page League ${randomUUID().slice(0, 8)}`, championshipYear: 2026 });
+    const { currentSeasonId } = await prisma.sportLeague.findUniqueOrThrow({ where: { id: league.id }, select: { currentSeasonId: true } });
+    if (currentSeasonId === null) throw new Error('A test sport league starts with a current Season.');
+    const earlierSeasonId = await fixtureSeasonId(prisma, league.id, 2025);
+    const chiefs = await prisma.participant.create({ data: { sportLeagueId: league.id, name: 'Kansas City Chiefs', participantType: 'TEAM' } });
+    const qb = await prisma.sportLeaguePosition.create({ data: { sportLeagueId: league.id, code: 'QB', displayOrder: 1, isFieldEligible: true } });
+    const mahomes = await prisma.participant.create({ data: { sportLeagueId: league.id, name: 'Patrick Mahomes', participantType: 'INDIVIDUAL' } });
+    const retired = await prisma.participant.create({ data: { sportLeagueId: league.id, name: 'Retired Passer', participantType: 'INDIVIDUAL' } });
+    const seenAt = fromNow(-HOUR_MS);
+    await prisma.sportLeagueSeasonParticipantTeam.createMany({
+      data: [
+        { sportLeagueId: league.id, sportLeagueSeasonId: currentSeasonId, participantId: mahomes.id, teamParticipantId: chiefs.id, sportLeaguePositionId: qb.id, lastSeenAt: seenAt },
+        { sportLeagueId: league.id, sportLeagueSeasonId: earlierSeasonId, participantId: retired.id, teamParticipantId: chiefs.id, sportLeaguePositionId: qb.id, lastSeenAt: seenAt },
+      ],
+    });
+
+    const response = await get(`/api/v1/sport-leagues/${league.id}/participants/overview`);
+
+    const participants = SportLeagueParticipantOverviewListResponseSchema.parse(response.json()).participants;
+    expect(participants.find((participant) => participant.id === mahomes.id)?.roster).toEqual({
+      teamParticipantId: chiefs.id, teamName: 'Kansas City Chiefs', positionCode: 'QB', lastSeenAt: seenAt.toISOString(),
+    });
+    expect(participants.find((participant) => participant.id === retired.id)?.roster).toBeNull();
+    expect(participants.find((participant) => participant.id === chiefs.id)?.roster).toBeNull();
   });
 
   it('answers a signed-in member who is not a root admin with 403, and 404 for a sport league that does not exist', async () => {

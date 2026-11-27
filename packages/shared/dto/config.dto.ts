@@ -85,6 +85,9 @@ export const IngestionScheduleConfigSchema = z.object({
   [ProviderSyncKind.SCORES]: IngestionFeedSchedulePolicySchema.describe(
     'The SCORES sync: live score polling for each event with a Game due or in play.',
   ),
+  [ProviderSyncKind.ROSTER]: IngestionAlwaysOnSchedulePolicySchema.describe(
+    'The ROSTER sync: each synced sport league\'s roster for its current Season, in a league whose provider names its positions. It has no switch.',
+  ),
 }).describe('Feed-aware ingestion scheduling configuration, one schedule for every sport league, keyed by sync kind.');
 export type IngestionScheduleConfig = z.infer<typeof IngestionScheduleConfigSchema>;
 
@@ -92,6 +95,7 @@ export const IngestionScheduleConfigPatchSchema = z.object({
   [ProviderSyncKind.EVENTS]: IngestionFeedSchedulePolicyPatchSchema.optional(),
   [ProviderSyncKind.FIELD]: IngestionAlwaysOnSchedulePolicyPatchSchema.optional(),
   [ProviderSyncKind.SCORES]: IngestionFeedSchedulePolicyPatchSchema.optional(),
+  [ProviderSyncKind.ROSTER]: IngestionAlwaysOnSchedulePolicyPatchSchema.optional(),
 }).refine((value) => Object.keys(value).length > 0, {
   message: 'At least one ingestion schedule change must be provided.',
 }).describe('Partial ingestion schedule update: only the sync kinds, states and properties it names change.');
@@ -110,6 +114,7 @@ export const IngestionScheduleSchema = z.object({
   [ProviderSyncKind.EVENTS]: IngestionSyncScheduleSchema,
   [ProviderSyncKind.FIELD]: IngestionSyncScheduleSchema,
   [ProviderSyncKind.SCORES]: IngestionSyncScheduleSchema,
+  [ProviderSyncKind.ROSTER]: IngestionSyncScheduleSchema,
 }).describe('The ingestion schedule as the API answers it: per sync kind, its policy, whether it runs and whether it has a switch.');
 export type IngestionSchedule = z.infer<typeof IngestionScheduleSchema>;
 

@@ -115,6 +115,16 @@ export class AppSettingsService {
     return structuredClone(this.entry(group).state.value as T);
   }
 
+  /**
+   * A stored payload of the group as the group reads it now: over its defaults, so a field added
+   * since it was saved reads as its default (the settings history reads old changes this way).
+   * Null when it does not validate even then.
+   */
+  readStored<T>(group: SettingsGroup<T>, stored: unknown): T | null {
+    const parsed = parseStored(group, this.entry(group).state.defaults as T, stored);
+    return parsed.success ? parsed.data : null;
+  }
+
   getState<T>(group: SettingsGroup<T>): SettingsState<T> {
     return structuredClone(this.entry(group).state as SettingsState<T>);
   }

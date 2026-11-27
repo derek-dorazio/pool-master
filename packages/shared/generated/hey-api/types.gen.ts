@@ -1095,6 +1095,42 @@ export type IngestionScheduleConfigPatch = {
             };
         };
     };
+    /**
+     * Partial scheduling update for a sync kind with no switch.
+     */
+    ROSTER?: {
+        /**
+         * The Season states whose interval changes.
+         */
+        intervals: {
+            /**
+             * How often a sync runs in one Season state: in minutes or in seconds, at least one.
+             */
+            IN_SEASON?: {
+                /**
+                 * How often the sync runs, in minutes.
+                 */
+                intervalMinutes?: number;
+                /**
+                 * How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes.
+                 */
+                intervalSeconds?: number;
+            };
+            /**
+             * How often a sync runs in one Season state: in minutes or in seconds, at least one.
+             */
+            OFFSEASON?: {
+                /**
+                 * How often the sync runs, in minutes.
+                 */
+                intervalMinutes?: number;
+                /**
+                 * How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes.
+                 */
+                intervalSeconds?: number;
+            };
+        };
+    };
 };
 
 /**
@@ -1185,6 +1221,42 @@ export type IngestionScheduleConfig = {
          * Whether the sync is scheduled automatically.
          */
         enabled: boolean;
+        /**
+         * A sync kind's interval for each Season state.
+         */
+        intervals: {
+            /**
+             * How often the sync runs for a league in season.
+             */
+            IN_SEASON: {
+                /**
+                 * How often the sync runs, in minutes.
+                 */
+                intervalMinutes?: number;
+                /**
+                 * How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes.
+                 */
+                intervalSeconds?: number;
+            };
+            /**
+             * How often the sync runs for a league off season.
+             */
+            OFFSEASON: {
+                /**
+                 * How often the sync runs, in minutes.
+                 */
+                intervalMinutes?: number;
+                /**
+                 * How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes.
+                 */
+                intervalSeconds?: number;
+            };
+        };
+    };
+    /**
+     * The ROSTER sync: each synced sport league's roster for its current Season, in a league whose provider names its positions. It has no switch.
+     */
+    ROSTER: {
         /**
          * A sync kind's interval for each Season state.
          */
@@ -1372,6 +1444,54 @@ export type IngestionSchedule = {
      * One sync kind's schedule as the read answers it: its intervals per Season state, whether it runs, and whether it has a switch.
      */
     SCORES: {
+        /**
+         * The sync's switch; absent for a sync with none.
+         */
+        enabled?: boolean;
+        /**
+         * A sync kind's interval for each Season state.
+         */
+        intervals: {
+            /**
+             * How often the sync runs for a league in season.
+             */
+            IN_SEASON: {
+                /**
+                 * How often the sync runs, in minutes.
+                 */
+                intervalMinutes?: number;
+                /**
+                 * How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes.
+                 */
+                intervalSeconds?: number;
+            };
+            /**
+             * How often the sync runs for a league off season.
+             */
+            OFFSEASON: {
+                /**
+                 * How often the sync runs, in minutes.
+                 */
+                intervalMinutes?: number;
+                /**
+                 * How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes.
+                 */
+                intervalSeconds?: number;
+            };
+        };
+        /**
+         * Whether the sync runs on its interval now.
+         */
+        runs: boolean;
+        /**
+         * Whether the sync has a switch an admin can turn off; a sync with none always runs.
+         */
+        switchable: boolean;
+    };
+    /**
+     * One sync kind's schedule as the read answers it: its intervals per Season state, whether it runs, and whether it has a switch.
+     */
+    ROSTER: {
         /**
          * The sync's switch; absent for a sync with none.
          */
@@ -9928,7 +10048,7 @@ export type SportLeagueOverviewDto = {
             /**
              * Which sync failed: the event list (EVENTS), the field (FIELD) or live scores and results (SCORES).
              */
-            syncKind: 'EVENTS' | 'FIELD' | 'SCORES';
+            syncKind: 'EVENTS' | 'FIELD' | 'SCORES' | 'ROSTER';
         }>;
     } | {
         type: 'RELEASE';
@@ -10113,7 +10233,7 @@ export type SportLeagueOverviewListResponse = {
                 /**
                  * Which sync failed: the event list (EVENTS), the field (FIELD) or live scores and results (SCORES).
                  */
-                syncKind: 'EVENTS' | 'FIELD' | 'SCORES';
+                syncKind: 'EVENTS' | 'FIELD' | 'SCORES' | 'ROSTER';
             }>;
         } | {
             type: 'RELEASE';
@@ -10215,7 +10335,7 @@ export type SportLeagueSyncDto = {
     /**
      * The event list (EVENTS, which creates its events), the fields (FIELD) or live scores and results (SCORES).
      */
-    kind: 'EVENTS' | 'FIELD' | 'SCORES';
+    kind: 'EVENTS' | 'FIELD' | 'SCORES' | 'ROSTER';
     /**
      * By the Sports page's rule, from this sync's latest run alone: OFF while the league is off or no provider syncs it, ERROR when that run failed, NOT_RUN_YET before any run, OK otherwise.
      */
@@ -10263,7 +10383,7 @@ export type SportLeagueSyncListResponse = {
         /**
          * The event list (EVENTS, which creates its events), the fields (FIELD) or live scores and results (SCORES).
          */
-        kind: 'EVENTS' | 'FIELD' | 'SCORES';
+        kind: 'EVENTS' | 'FIELD' | 'SCORES' | 'ROSTER';
         /**
          * By the Sports page's rule, from this sync's latest run alone: OFF while the league is off or no provider syncs it, ERROR when that run failed, NOT_RUN_YET before any run, OK otherwise.
          */
@@ -10406,7 +10526,7 @@ export type SportLeagueEventOverviewDto = {
             /**
              * Which sync failed: the event list (EVENTS), the field (FIELD) or live scores and results (SCORES).
              */
-            syncKind: 'EVENTS' | 'FIELD' | 'SCORES';
+            syncKind: 'EVENTS' | 'FIELD' | 'SCORES' | 'ROSTER';
         }>;
     } | {
         type: 'RELEASE';
@@ -10592,7 +10712,7 @@ export type SportLeagueEventOverviewListResponse = {
                 /**
                  * Which sync failed: the event list (EVENTS), the field (FIELD) or live scores and results (SCORES).
                  */
-                syncKind: 'EVENTS' | 'FIELD' | 'SCORES';
+                syncKind: 'EVENTS' | 'FIELD' | 'SCORES' | 'ROSTER';
             }>;
         } | {
             type: 'RELEASE';
@@ -10703,7 +10823,7 @@ export type SportEventOverviewDto = {
         /**
          * The event list (EVENTS, which creates its events), the fields (FIELD) or live scores and results (SCORES).
          */
-        kind: 'EVENTS' | 'FIELD' | 'SCORES';
+        kind: 'EVENTS' | 'FIELD' | 'SCORES' | 'ROSTER';
         /**
          * By the Sports page's rule, from this sync's latest run alone: OFF while the league is off or no provider syncs it, ERROR when that run failed, NOT_RUN_YET before any run, OK otherwise.
          */
@@ -10795,7 +10915,7 @@ export type SportEventOverviewDto = {
             /**
              * Which sync failed: the event list (EVENTS), the field (FIELD) or live scores and results (SCORES).
              */
-            syncKind: 'EVENTS' | 'FIELD' | 'SCORES';
+            syncKind: 'EVENTS' | 'FIELD' | 'SCORES' | 'ROSTER';
         }>;
     } | {
         type: 'RELEASE';
@@ -10932,7 +11052,7 @@ export type SportEventOverviewResponse = {
             /**
              * The event list (EVENTS, which creates its events), the fields (FIELD) or live scores and results (SCORES).
              */
-            kind: 'EVENTS' | 'FIELD' | 'SCORES';
+            kind: 'EVENTS' | 'FIELD' | 'SCORES' | 'ROSTER';
             /**
              * By the Sports page's rule, from this sync's latest run alone: OFF while the league is off or no provider syncs it, ERROR when that run failed, NOT_RUN_YET before any run, OK otherwise.
              */
@@ -11024,7 +11144,7 @@ export type SportEventOverviewResponse = {
                 /**
                  * Which sync failed: the event list (EVENTS), the field (FIELD) or live scores and results (SCORES).
                  */
-                syncKind: 'EVENTS' | 'FIELD' | 'SCORES';
+                syncKind: 'EVENTS' | 'FIELD' | 'SCORES' | 'ROSTER';
             }>;
         } | {
             type: 'RELEASE';
@@ -11176,6 +11296,27 @@ export type SportLeagueParticipantOverviewDto = {
      * ISO 8601 datetime string.
      */
     createdAt: string;
+    /**
+     * A player's team and position in the league's current Season, from their roster row; null for a team and for a player on no roster.
+     */
+    roster: {
+        /**
+         * The player's team: a TEAM participant of the league.
+         */
+        teamParticipantId: string;
+        /**
+         * The team's name.
+         */
+        teamName: string;
+        /**
+         * The player's position's code in the league (QB). Screens read its words by this code.
+         */
+        positionCode: string;
+        /**
+         * When the roster sync last saw the player on the roster.
+         */
+        lastSeenAt: string;
+    } | null;
 };
 
 /**
@@ -11215,6 +11356,27 @@ export type SportLeagueParticipantOverviewListResponse = {
          * ISO 8601 datetime string.
          */
         createdAt: string;
+        /**
+         * A player's team and position in the league's current Season, from their roster row; null for a team and for a player on no roster.
+         */
+        roster: {
+            /**
+             * The player's team: a TEAM participant of the league.
+             */
+            teamParticipantId: string;
+            /**
+             * The team's name.
+             */
+            teamName: string;
+            /**
+             * The player's position's code in the league (QB). Screens read its words by this code.
+             */
+            positionCode: string;
+            /**
+             * When the roster sync last saw the player on the roster.
+             */
+            lastSeenAt: string;
+        } | null;
     }>;
 };
 
@@ -19760,6 +19922,42 @@ export type SettingsGroup = {
                 };
             };
         };
+        /**
+         * The ROSTER sync: each synced sport league's roster for its current Season, in a league whose provider names its positions. It has no switch.
+         */
+        ROSTER: {
+            /**
+             * A sync kind's interval for each Season state.
+             */
+            intervals: {
+                /**
+                 * How often the sync runs for a league in season.
+                 */
+                IN_SEASON: {
+                    /**
+                     * How often the sync runs, in minutes.
+                     */
+                    intervalMinutes?: number;
+                    /**
+                     * How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes.
+                     */
+                    intervalSeconds?: number;
+                };
+                /**
+                 * How often the sync runs for a league off season.
+                 */
+                OFFSEASON: {
+                    /**
+                     * How often the sync runs, in minutes.
+                     */
+                    intervalMinutes?: number;
+                    /**
+                     * How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes.
+                     */
+                    intervalSeconds?: number;
+                };
+            };
+        };
     };
     /**
      * The value a reset would store.
@@ -19849,6 +20047,42 @@ export type SettingsGroup = {
              * Whether the sync is scheduled automatically.
              */
             enabled: boolean;
+            /**
+             * A sync kind's interval for each Season state.
+             */
+            intervals: {
+                /**
+                 * How often the sync runs for a league in season.
+                 */
+                IN_SEASON: {
+                    /**
+                     * How often the sync runs, in minutes.
+                     */
+                    intervalMinutes?: number;
+                    /**
+                     * How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes.
+                     */
+                    intervalSeconds?: number;
+                };
+                /**
+                 * How often the sync runs for a league off season.
+                 */
+                OFFSEASON: {
+                    /**
+                     * How often the sync runs, in minutes.
+                     */
+                    intervalMinutes?: number;
+                    /**
+                     * How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes.
+                     */
+                    intervalSeconds?: number;
+                };
+            };
+        };
+        /**
+         * The ROSTER sync: each synced sport league's roster for its current Season, in a league whose provider names its positions. It has no switch.
+         */
+        ROSTER: {
             /**
              * A sync kind's interval for each Season state.
              */
@@ -20891,6 +21125,42 @@ export type SettingsGroupList = {
                     };
                 };
             };
+            /**
+             * The ROSTER sync: each synced sport league's roster for its current Season, in a league whose provider names its positions. It has no switch.
+             */
+            ROSTER: {
+                /**
+                 * A sync kind's interval for each Season state.
+                 */
+                intervals: {
+                    /**
+                     * How often the sync runs for a league in season.
+                     */
+                    IN_SEASON: {
+                        /**
+                         * How often the sync runs, in minutes.
+                         */
+                        intervalMinutes?: number;
+                        /**
+                         * How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes.
+                         */
+                        intervalSeconds?: number;
+                    };
+                    /**
+                     * How often the sync runs for a league off season.
+                     */
+                    OFFSEASON: {
+                        /**
+                         * How often the sync runs, in minutes.
+                         */
+                        intervalMinutes?: number;
+                        /**
+                         * How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes.
+                         */
+                        intervalSeconds?: number;
+                    };
+                };
+            };
         };
         /**
          * The value a reset would store.
@@ -20980,6 +21250,42 @@ export type SettingsGroupList = {
                  * Whether the sync is scheduled automatically.
                  */
                 enabled: boolean;
+                /**
+                 * A sync kind's interval for each Season state.
+                 */
+                intervals: {
+                    /**
+                     * How often the sync runs for a league in season.
+                     */
+                    IN_SEASON: {
+                        /**
+                         * How often the sync runs, in minutes.
+                         */
+                        intervalMinutes?: number;
+                        /**
+                         * How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes.
+                         */
+                        intervalSeconds?: number;
+                    };
+                    /**
+                     * How often the sync runs for a league off season.
+                     */
+                    OFFSEASON: {
+                        /**
+                         * How often the sync runs, in minutes.
+                         */
+                        intervalMinutes?: number;
+                        /**
+                         * How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes.
+                         */
+                        intervalSeconds?: number;
+                    };
+                };
+            };
+            /**
+             * The ROSTER sync: each synced sport league's roster for its current Season, in a league whose provider names its positions. It has no switch.
+             */
+            ROSTER: {
                 /**
                  * A sync kind's interval for each Season state.
                  */
@@ -21990,6 +22296,42 @@ export type SettingsGroupUpdateRequest = {
                 };
             };
         };
+        /**
+         * The ROSTER sync: each synced sport league's roster for its current Season, in a league whose provider names its positions. It has no switch.
+         */
+        ROSTER: {
+            /**
+             * A sync kind's interval for each Season state.
+             */
+            intervals: {
+                /**
+                 * How often the sync runs for a league in season.
+                 */
+                IN_SEASON: {
+                    /**
+                     * How often the sync runs, in minutes.
+                     */
+                    intervalMinutes?: number;
+                    /**
+                     * How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes.
+                     */
+                    intervalSeconds?: number;
+                };
+                /**
+                 * How often the sync runs for a league off season.
+                 */
+                OFFSEASON: {
+                    /**
+                     * How often the sync runs, in minutes.
+                     */
+                    intervalMinutes?: number;
+                    /**
+                     * How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes.
+                     */
+                    intervalSeconds?: number;
+                };
+            };
+        };
     };
     /**
      * The `updatedAt` the admin last read (null when nothing was stored). If another save has landed since, the update is refused with 409 SETTINGS_CONFLICT.
@@ -22536,6 +22878,42 @@ export type SettingsChange = {
                 };
             };
         };
+        /**
+         * The ROSTER sync: each synced sport league's roster for its current Season, in a league whose provider names its positions. It has no switch.
+         */
+        ROSTER: {
+            /**
+             * A sync kind's interval for each Season state.
+             */
+            intervals: {
+                /**
+                 * How often the sync runs for a league in season.
+                 */
+                IN_SEASON: {
+                    /**
+                     * How often the sync runs, in minutes.
+                     */
+                    intervalMinutes?: number;
+                    /**
+                     * How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes.
+                     */
+                    intervalSeconds?: number;
+                };
+                /**
+                 * How often the sync runs for a league off season.
+                 */
+                OFFSEASON: {
+                    /**
+                     * How often the sync runs, in minutes.
+                     */
+                    intervalMinutes?: number;
+                    /**
+                     * How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes.
+                     */
+                    intervalSeconds?: number;
+                };
+            };
+        };
     } | null;
     /**
      * The value the save stored.
@@ -22625,6 +23003,42 @@ export type SettingsChange = {
              * Whether the sync is scheduled automatically.
              */
             enabled: boolean;
+            /**
+             * A sync kind's interval for each Season state.
+             */
+            intervals: {
+                /**
+                 * How often the sync runs for a league in season.
+                 */
+                IN_SEASON: {
+                    /**
+                     * How often the sync runs, in minutes.
+                     */
+                    intervalMinutes?: number;
+                    /**
+                     * How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes.
+                     */
+                    intervalSeconds?: number;
+                };
+                /**
+                 * How often the sync runs for a league off season.
+                 */
+                OFFSEASON: {
+                    /**
+                     * How often the sync runs, in minutes.
+                     */
+                    intervalMinutes?: number;
+                    /**
+                     * How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes.
+                     */
+                    intervalSeconds?: number;
+                };
+            };
+        };
+        /**
+         * The ROSTER sync: each synced sport league's roster for its current Season, in a league whose provider names its positions. It has no switch.
+         */
+        ROSTER: {
             /**
              * A sync kind's interval for each Season state.
              */
@@ -23623,6 +24037,42 @@ export type SettingsChangeList = {
                     };
                 };
             };
+            /**
+             * The ROSTER sync: each synced sport league's roster for its current Season, in a league whose provider names its positions. It has no switch.
+             */
+            ROSTER: {
+                /**
+                 * A sync kind's interval for each Season state.
+                 */
+                intervals: {
+                    /**
+                     * How often the sync runs for a league in season.
+                     */
+                    IN_SEASON: {
+                        /**
+                         * How often the sync runs, in minutes.
+                         */
+                        intervalMinutes?: number;
+                        /**
+                         * How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes.
+                         */
+                        intervalSeconds?: number;
+                    };
+                    /**
+                     * How often the sync runs for a league off season.
+                     */
+                    OFFSEASON: {
+                        /**
+                         * How often the sync runs, in minutes.
+                         */
+                        intervalMinutes?: number;
+                        /**
+                         * How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes.
+                         */
+                        intervalSeconds?: number;
+                    };
+                };
+            };
         } | null;
         /**
          * The value the save stored.
@@ -23712,6 +24162,42 @@ export type SettingsChangeList = {
                  * Whether the sync is scheduled automatically.
                  */
                 enabled: boolean;
+                /**
+                 * A sync kind's interval for each Season state.
+                 */
+                intervals: {
+                    /**
+                     * How often the sync runs for a league in season.
+                     */
+                    IN_SEASON: {
+                        /**
+                         * How often the sync runs, in minutes.
+                         */
+                        intervalMinutes?: number;
+                        /**
+                         * How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes.
+                         */
+                        intervalSeconds?: number;
+                    };
+                    /**
+                     * How often the sync runs for a league off season.
+                     */
+                    OFFSEASON: {
+                        /**
+                         * How often the sync runs, in minutes.
+                         */
+                        intervalMinutes?: number;
+                        /**
+                         * How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes.
+                         */
+                        intervalSeconds?: number;
+                    };
+                };
+            };
+            /**
+             * The ROSTER sync: each synced sport league's roster for its current Season, in a league whose provider names its positions. It has no switch.
+             */
+            ROSTER: {
                 /**
                  * A sync kind's interval for each Season state.
                  */
@@ -31942,7 +32428,7 @@ export type ProviderSyncRunDto = {
     /**
      * What a sync run syncs: a sport league's EVENTS, an event's FIELD, or an event's SCORES.
      */
-    kind: 'EVENTS' | 'FIELD' | 'SCORES';
+    kind: 'EVENTS' | 'FIELD' | 'SCORES' | 'ROSTER';
     /**
      * What started a job or sync run: a SCHEDULE, the provider's WEBHOOK, a person acting through a root ADMIN route (Sync now, Release) or a league's COMMISSIONER tools, or the SYSTEM (another job, or upkeep such as a stale board's rebuild). A person's trigger is the role the route requires, not their highest role. A sync run has its job's.
      */
@@ -32016,7 +32502,7 @@ export type ProviderSyncRunDetailDto = {
     /**
      * What a sync run syncs: a sport league's EVENTS, an event's FIELD, or an event's SCORES.
      */
-    kind: 'EVENTS' | 'FIELD' | 'SCORES';
+    kind: 'EVENTS' | 'FIELD' | 'SCORES' | 'ROSTER';
     /**
      * What started a job or sync run: a SCHEDULE, the provider's WEBHOOK, a person acting through a root ADMIN route (Sync now, Release) or a league's COMMISSIONER tools, or the SYSTEM (another job, or upkeep such as a stale board's rebuild). A person's trigger is the role the route requires, not their highest role. A sync run has its job's.
      */
@@ -32265,7 +32751,7 @@ export type ProviderSyncRunListResponse = {
         /**
          * What a sync run syncs: a sport league's EVENTS, an event's FIELD, or an event's SCORES.
          */
-        kind: 'EVENTS' | 'FIELD' | 'SCORES';
+        kind: 'EVENTS' | 'FIELD' | 'SCORES' | 'ROSTER';
         /**
          * What started a job or sync run: a SCHEDULE, the provider's WEBHOOK, a person acting through a root ADMIN route (Sync now, Release) or a league's COMMISSIONER tools, or the SYSTEM (another job, or upkeep such as a stale board's rebuild). A person's trigger is the role the route requires, not their highest role. A sync run has its job's.
          */
@@ -32354,7 +32840,7 @@ export type ProviderManualSyncSubmissionResponse = {
         /**
          * What a sync run syncs: a sport league's EVENTS, an event's FIELD, or an event's SCORES.
          */
-        kind: 'EVENTS' | 'FIELD' | 'SCORES';
+        kind: 'EVENTS' | 'FIELD' | 'SCORES' | 'ROSTER';
         /**
          * What started a job or sync run: a SCHEDULE, the provider's WEBHOOK, a person acting through a root ADMIN route (Sync now, Release) or a league's COMMISSIONER tools, or the SYSTEM (another job, or upkeep such as a stale board's rebuild). A person's trigger is the role the route requires, not their highest role. A sync run has its job's.
          */
@@ -32423,7 +32909,7 @@ export type ActivityJobDto = {
     /**
      * The job's handler. Its kind follows from it.
      */
-    type: 'SYNC_EVENT_FIELD' | 'SYNC_EVENT_SCORES' | 'CONTEST_STARTED_EMAILS' | 'CONTEST_SETTLED_EMAILS' | 'CONTEST_EVENT_CHANGED_EMAILS' | 'CONTEST_REOPENED_EMAILS' | 'SETTLE_SPORT_EVENT_CONTESTS' | 'SETTLE_GAME_CONTESTS' | 'REBUILD_LEADERBOARDS' | 'SYNC_LEAGUE_EVENTS' | 'RELEASE_SPORT_EVENT' | 'SYNC_EVENT_GAMES_AND_TIERS' | 'ACTIVATE_EVENT_CONTESTS' | 'FOLLOW_POSTPONED_EVENT_CONTESTS' | 'RESOLVE_MAPPED_PARTICIPANT_FINDINGS' | 'REFRESH_SLOT_TIEBREAKERS' | 'REFRESH_SLOT_STATUS' | 'REFRESH_EVENT_STATUS';
+    type: 'SYNC_EVENT_FIELD' | 'SYNC_EVENT_SCORES' | 'CONTEST_STARTED_EMAILS' | 'CONTEST_SETTLED_EMAILS' | 'CONTEST_EVENT_CHANGED_EMAILS' | 'CONTEST_REOPENED_EMAILS' | 'SETTLE_SPORT_EVENT_CONTESTS' | 'SETTLE_GAME_CONTESTS' | 'REBUILD_LEADERBOARDS' | 'SYNC_LEAGUE_EVENTS' | 'RELEASE_SPORT_EVENT' | 'SYNC_EVENT_GAMES_AND_TIERS' | 'ACTIVATE_EVENT_CONTESTS' | 'FOLLOW_POSTPONED_EVENT_CONTESTS' | 'RESOLVE_MAPPED_PARTICIPANT_FINDINGS' | 'REFRESH_SLOT_TIEBREAKERS' | 'SYNC_LEAGUE_ROSTER' | 'REFRESH_SLOT_STATUS' | 'REFRESH_EVENT_STATUS';
     /**
      * What a job is about: a provider SYNC, EMAIL to a league, contest SETTLEMENT, an event's RELEASE, or OTHER.
      */
@@ -32552,7 +33038,7 @@ export type ActivityListResponse = {
         /**
          * The job's handler. Its kind follows from it.
          */
-        type: 'SYNC_EVENT_FIELD' | 'SYNC_EVENT_SCORES' | 'CONTEST_STARTED_EMAILS' | 'CONTEST_SETTLED_EMAILS' | 'CONTEST_EVENT_CHANGED_EMAILS' | 'CONTEST_REOPENED_EMAILS' | 'SETTLE_SPORT_EVENT_CONTESTS' | 'SETTLE_GAME_CONTESTS' | 'REBUILD_LEADERBOARDS' | 'SYNC_LEAGUE_EVENTS' | 'RELEASE_SPORT_EVENT' | 'SYNC_EVENT_GAMES_AND_TIERS' | 'ACTIVATE_EVENT_CONTESTS' | 'FOLLOW_POSTPONED_EVENT_CONTESTS' | 'RESOLVE_MAPPED_PARTICIPANT_FINDINGS' | 'REFRESH_SLOT_TIEBREAKERS' | 'REFRESH_SLOT_STATUS' | 'REFRESH_EVENT_STATUS';
+        type: 'SYNC_EVENT_FIELD' | 'SYNC_EVENT_SCORES' | 'CONTEST_STARTED_EMAILS' | 'CONTEST_SETTLED_EMAILS' | 'CONTEST_EVENT_CHANGED_EMAILS' | 'CONTEST_REOPENED_EMAILS' | 'SETTLE_SPORT_EVENT_CONTESTS' | 'SETTLE_GAME_CONTESTS' | 'REBUILD_LEADERBOARDS' | 'SYNC_LEAGUE_EVENTS' | 'RELEASE_SPORT_EVENT' | 'SYNC_EVENT_GAMES_AND_TIERS' | 'ACTIVATE_EVENT_CONTESTS' | 'FOLLOW_POSTPONED_EVENT_CONTESTS' | 'RESOLVE_MAPPED_PARTICIPANT_FINDINGS' | 'REFRESH_SLOT_TIEBREAKERS' | 'SYNC_LEAGUE_ROSTER' | 'REFRESH_SLOT_STATUS' | 'REFRESH_EVENT_STATUS';
         /**
          * What a job is about: a provider SYNC, EMAIL to a league, contest SETTLEMENT, an event's RELEASE, or OTHER.
          */
@@ -32658,7 +33144,7 @@ export type ActivityJobResponse = {
         /**
          * The job's handler. Its kind follows from it.
          */
-        type: 'SYNC_EVENT_FIELD' | 'SYNC_EVENT_SCORES' | 'CONTEST_STARTED_EMAILS' | 'CONTEST_SETTLED_EMAILS' | 'CONTEST_EVENT_CHANGED_EMAILS' | 'CONTEST_REOPENED_EMAILS' | 'SETTLE_SPORT_EVENT_CONTESTS' | 'SETTLE_GAME_CONTESTS' | 'REBUILD_LEADERBOARDS' | 'SYNC_LEAGUE_EVENTS' | 'RELEASE_SPORT_EVENT' | 'SYNC_EVENT_GAMES_AND_TIERS' | 'ACTIVATE_EVENT_CONTESTS' | 'FOLLOW_POSTPONED_EVENT_CONTESTS' | 'RESOLVE_MAPPED_PARTICIPANT_FINDINGS' | 'REFRESH_SLOT_TIEBREAKERS' | 'REFRESH_SLOT_STATUS' | 'REFRESH_EVENT_STATUS';
+        type: 'SYNC_EVENT_FIELD' | 'SYNC_EVENT_SCORES' | 'CONTEST_STARTED_EMAILS' | 'CONTEST_SETTLED_EMAILS' | 'CONTEST_EVENT_CHANGED_EMAILS' | 'CONTEST_REOPENED_EMAILS' | 'SETTLE_SPORT_EVENT_CONTESTS' | 'SETTLE_GAME_CONTESTS' | 'REBUILD_LEADERBOARDS' | 'SYNC_LEAGUE_EVENTS' | 'RELEASE_SPORT_EVENT' | 'SYNC_EVENT_GAMES_AND_TIERS' | 'ACTIVATE_EVENT_CONTESTS' | 'FOLLOW_POSTPONED_EVENT_CONTESTS' | 'RESOLVE_MAPPED_PARTICIPANT_FINDINGS' | 'REFRESH_SLOT_TIEBREAKERS' | 'SYNC_LEAGUE_ROSTER' | 'REFRESH_SLOT_STATUS' | 'REFRESH_EVENT_STATUS';
         /**
          * What a job is about: a provider SYNC, EMAIL to a league, contest SETTLEMENT, an event's RELEASE, or OTHER.
          */
@@ -32802,7 +33288,7 @@ export type ProviderSyncFindingDto = {
     /**
      * The sync a SYNC_FAILED finding is about: the event list (EVENTS), the field (FIELD) or live scores and results (SCORES); null for every other kind.
      */
-    syncKind: 'EVENTS' | 'FIELD' | 'SCORES' | null;
+    syncKind: 'EVENTS' | 'FIELD' | 'SCORES' | 'ROSTER' | null;
     /**
      * Why it was waived; set only while WAIVED.
      */
@@ -32959,7 +33445,7 @@ export type ProviderSyncFindingListResponse = {
         /**
          * The sync a SYNC_FAILED finding is about: the event list (EVENTS), the field (FIELD) or live scores and results (SCORES); null for every other kind.
          */
-        syncKind: 'EVENTS' | 'FIELD' | 'SCORES' | null;
+        syncKind: 'EVENTS' | 'FIELD' | 'SCORES' | 'ROSTER' | null;
         /**
          * Why it was waived; set only while WAIVED.
          */
@@ -33051,7 +33537,7 @@ export type ProviderSyncFindingResponse = {
         /**
          * The sync a SYNC_FAILED finding is about: the event list (EVENTS), the field (FIELD) or live scores and results (SCORES); null for every other kind.
          */
-        syncKind: 'EVENTS' | 'FIELD' | 'SCORES' | null;
+        syncKind: 'EVENTS' | 'FIELD' | 'SCORES' | 'ROSTER' | null;
         /**
          * Why it was waived; set only while WAIVED.
          */

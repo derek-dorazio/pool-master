@@ -116,23 +116,25 @@ export class PlatformSettingsService {
   }
 
   /**
-   * A change whose stored values no longer pass the group's schema (saved by an older release,
-   * before a field was added) is logged and left out, the way a stale stored value is: the
-   * published history types each value by its group, and one old row must not fail the rest.
+   * Each change's values are read as the group reads a stored value: over its defaults, so a field
+   * added since the change was saved reads as its default (#2025) and the stored rows stay as
+   * saved. A change whose values do not pass the group's schema even then (a field whose shape
+   * changed) is logged and left out, the way a stale stored value is: the published history types
+   * each value by its group, and one old row must not fail the rest.
    */
   async history(key: string): Promise<SettingsChangeView[]> {
     const group = this.group(key);
     const stored = await this.deps.runtimeConfigs.findRecentChanges(group.key, SETTINGS_HISTORY_LIMIT);
-    const changes = stored.filter((change) => {
-      const valid = group.schema.safeParse(change.newJson).success
-        && (change.previousJson === null || group.schema.safeParse(change.previousJson).success);
-      if (!valid) {
-        this.deps.logger?.warn({
-          action: 'adminSettings.history.changeSkipped',
-          data: { key, changeId: change.id },
-        }, 'Left a settings change out of the history: its stored values no longer validate');
-      }
-      return valid;
+    const changes = stored.flatMap((change) => {
+      const newJson = this.deps.settings.readStored(group, change.newJson);
+      const previousJson = change.previousJson === null ? null : this.deps.settings.readStored(group, change.previousJson);
+      const valid = newJson !== null && (change.previousJson === null || previousJson !== null);
+      if (valid) return [{ ...change, newJson, previousJson }];
+      this.deps.logger?.warn({
+        action: 'adminSettings.history.changeSkipped',
+        data: { key, changeId: change.id },
+      }, 'Left a settings change out of the history: its stored values no longer validate');
+      return [];
     });
     const actors = await this.actors(changes.map((change) => change.changedById));
     return changes.map((change) => ({ change, changedBy: actorFor(actors, change.changedById) }));

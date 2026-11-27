@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { ProviderGameState, Sport } from '../../../../packages/shared/domain';
 import { BalldontlieAdapter } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/balldontlie-adapter';
-import { ProviderLeagueUnknownError } from '../../../../packages/core-api/src/modules/ingestion/core/provider-interface';
+import { ProviderLeagueRefusedError, ProviderLeagueUnknownError } from '../../../../packages/core-api/src/modules/ingestion/core/provider-interface';
 import { createFakeBalldontlie, pagedRoute, type FakeBalldontlie, type FakeRoute } from '../../../support/balldontlie-fake-api';
 import { readBalldontlieFixture } from '../../../support/balldontlie-vendor-spec';
 import { BALLDONTLIE_TEST_LEAGUES } from '../../../support/balldontlie-provider-rows';
@@ -45,6 +45,7 @@ const defaultRoutes: Record<string, FakeRoute> = {
   '/nfl/v1/games': gamesRoute,
   '/nfl/v1/standings': standingsRoute,
   '/nfl/v1/teams': () => ({ body: readBalldontlieFixture('nfl', 'teams.json') }),
+  '/nfl/v1/players/active': pagedRoute(z.object({ data: z.array(z.looseObject({ id: z.number() })) }).parse(readBalldontlieFixture('nfl', 'players-active.json')).data),
   '/ncaaf/v1/games': pagedRoute([]),
   '/ncaaf/v1/teams': () => ({ body: { data: [] } }),
 };
@@ -231,5 +232,43 @@ describe('BalldontlieAdapter (NFL)', () => {
 
     expect(result.category === 'GAME' ? result.games : []).toHaveLength(101);
     expect(harness.api.requests).toHaveLength(2);
+  });
+
+  it('reads the NFL roster as every active player, each with their team\'s feed id and name and their position code, and none for a player on no team', async () => {
+    const harness = setup();
+    restore = harness.restore;
+
+    const roster = await harness.adapter.getRoster(Sport.FOOTBALL, { providerLeagueCode: 'nfl', providerSeasonId: '2026' });
+
+    expect(roster).toHaveLength(7);
+    expect(roster[0]).toEqual({ externalId: '33', name: 'Patrick Mahomes', teamExternalId: '17', teamName: 'Kansas City Chiefs', positionCode: 'QB' });
+    expect(roster.find((player) => player.name === 'Free Agent')).toMatchObject({ teamExternalId: null, teamName: null, positionCode: 'WR' });
+    expect(requestLine(harness.api)).toEqual(['/nfl/v1/players/active?per_page=100']);
+  });
+
+  it('reads every page of the active players', async () => {
+    const player = { id: 1, first_name: 'Pat', last_name: 'One', position_abbreviation: 'QB', team: { id: 17 } };
+    const many = Array.from({ length: 101 }, (_, index) => ({ ...player, id: 1000 + index }));
+    const harness = setup({ ...defaultRoutes, '/nfl/v1/players/active': pagedRoute(many) });
+    restore = harness.restore;
+
+    await expect(harness.adapter.getRoster(Sport.FOOTBALL, { providerLeagueCode: 'nfl', providerSeasonId: '2026' })).resolves.toHaveLength(101);
+    expect(requestLine(harness.api)).toHaveLength(2);
+  });
+
+  it('reads no roster for a league whose roster it does not read, and refuses a league code it does not read', async () => {
+    const harness = setup();
+    restore = harness.restore;
+
+    await expect(harness.adapter.getRoster(Sport.FOOTBALL, { providerLeagueCode: 'ncaaf', providerSeasonId: '2026' })).resolves.toEqual([]);
+    await expect(harness.adapter.getRoster(Sport.FOOTBALL, { providerLeagueCode: 'cfl', providerSeasonId: '2026' })).rejects.toBeInstanceOf(ProviderLeagueUnknownError);
+    expect(harness.api.requests).toHaveLength(0);
+  });
+
+  it('says the plan refuses the league when the active players read is refused', async () => {
+    const harness = setup({ ...defaultRoutes, '/nfl/v1/players/active': () => ({ status: 401, body: { error: 'Unauthorized' } }) });
+    restore = harness.restore;
+
+    await expect(harness.adapter.getRoster(Sport.FOOTBALL, { providerLeagueCode: 'nfl', providerSeasonId: '2026' })).rejects.toBeInstanceOf(ProviderLeagueRefusedError);
   });
 });

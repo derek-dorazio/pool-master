@@ -146,7 +146,7 @@ describe('PlatformSettingsService', () => {
     expect(change.newValue).toEqual(expect.objectContaining({ allowedRecipients: ['help@example.test'] }));
   });
 
-  it('leaves a change whose stored value no longer validates out of the history and logs it, keeping the valid ones', async () => {
+  it('leaves a change whose stored value does not validate even over the group\'s defaults out of the history and logs it, keeping the valid ones', async () => {
     const { logger, runtimeConfigs, service } = await buildService();
     const defaults = (await service.get('EMAIL_CONFIG')).state.defaults as object;
     await service.save('EMAIL_CONFIG', {
@@ -156,7 +156,7 @@ describe('PlatformSettingsService', () => {
       id: 'change-old-release',
       configKey: 'EMAIL_CONFIG',
       previousJson: null,
-      newJson: { enabled: true },
+      newJson: { allowedRecipients: 'help@example.test' },
       changedById: null,
       changedAt: new Date('2026-01-01T00:00:00.000Z'),
     });
@@ -168,6 +168,25 @@ describe('PlatformSettingsService', () => {
       expect.objectContaining({ action: 'adminSettings.history.changeSkipped' }),
       expect.any(String),
     );
+  });
+
+  it('reads a schedule change saved before the roster sync existed with the roster sync\'s default, leaving the stored change as it was saved', async () => {
+    const { runtimeConfigs, service } = await buildService();
+    const { ROSTER, ...beforeRosters } = INGESTION_SCHEDULE_SETTINGS.defaults({});
+    runtimeConfigs.history.push({
+      id: '5d2a8c1e-3b4f-4a6d-9e7c-1f2a3b4c5d6e',
+      configKey: 'INGESTION_SCHEDULE_CONFIG',
+      previousJson: beforeRosters,
+      newJson: beforeRosters,
+      changedById: null,
+      changedAt: new Date('2026-01-01T00:00:00.000Z'),
+    });
+
+    const [change] = (await service.history('INGESTION_SCHEDULE_CONFIG')).map(toSettingsChangeDto);
+
+    expect(change.newValue).toEqual({ ...beforeRosters, ROSTER });
+    expect(change.previousValue).toEqual({ ...beforeRosters, ROSTER });
+    expect(runtimeConfigs.history[0].newJson).toEqual(beforeRosters);
   });
 
   it('refuses to publish a stored change whose value does not match its group\'s schema, rather than passing it through untyped', () => {
