@@ -64,8 +64,6 @@ They come from the owner's league-by-league template review of November 2026.
   - Where it has none (World Cup, Euro, Copa América), offer only Straight up and Escalating,
     with Escalating as the default.
 - **A bye counts as a win.** A series win counts as one win.
-- **A slate of one-off games (bowl games): Straight up alone** *(checked)*. With one round there is
-  nothing to escalate, and the league's sweepstakes default stays on its playoff.
 - Golf and finish-position random draws keep their own scoring.
 - Call it "Sweepstakes" on screen in every sport. It is the classic office pool.
 

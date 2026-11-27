@@ -6,7 +6,6 @@ import {
   enterContest,
   generateInviteLink,
   getContest,
-  getContestLeaderboard,
   getGamePicks,
   listContestConfigTemplates,
   listEventParticipants,
@@ -14,28 +13,28 @@ import {
   listEvents,
   listSportLeagues,
   openContest,
-  runContestDraw,
+  recordEventMatchResult,
   saveGamePicks,
   submitGamePicks,
   transitionEvent,
 } from '@poolmaster/shared/generated/hey-api';
-import { ContestFormat, ContestStatus, PredictedResult, SelectionType, Sport } from '@poolmaster/shared/domain';
+import { ContestFormat, ContestStatus, MatchSide, PredictedResult, SelectionType, Sport } from '@poolmaster/shared/domain';
 import { loadSportData } from '../../packages/core-api/scripts/seed-golf/seed-golf';
 import { LoadMode } from '../../packages/core-api/scripts/seed-golf/load-report';
 import { parseSportDataFile, type SportDataFile } from '../../packages/core-api/scripts/seed-golf/sport-data-file';
 import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, type RegisteredUserContext } from './builders';
 import { cleanupFunctionalData, disconnectFunctionalPrisma, getFunctionalPrisma } from './setup';
 import { expectDefined } from '../support/expect-defined';
-import { EVERY_GAME_PLAYED } from '../support/sport-test-seed';
 import { sportRowKeys } from '../support/sport-rows';
 import { unlinkContestsFromSportEvents } from '../support/contest-event-links';
 import { AWAY_SIDE, HOME_SIDE } from '../support/match-sides';
 import { rowSideTeam } from '../support/match-rows';
+import { resultBody } from '../support/match-requests';
 
 // NCAA Men's Football's bowl games end to end over HTTP (#2154): two played bowls load into the
-// league's BOWLS slot as one event of one round, a game each. A commissioner runs the bowls'
-// seeded templates on it: a pick'em straight up that scores a point for each right pick, squares
-// on one bowl game, and a sweepstakes where a dealt team's bowl win scores 1.
+// league's BOWLS slot as one event, a game each, released though its unseeded field fills no seed tier, because no
+// tiered or budget setup covers the bowls. A commissioner runs the bowls' seeded templates on it:
+// a pick'em straight up that scores a point for each right pick, and squares on one bowl game.
 
 const RUN = `bowls-${Date.now()}`;
 const SEED_DIR = join(__dirname, '../../packages/core-api/scripts/seed-golf');
@@ -45,7 +44,6 @@ const BOWLS = [
   { away: 'alabama-crimson-tide', home: 'oklahoma-sooners', awayScore: 34, homeScore: 24, at: '2025-12-20T01:00:00Z' },
   { away: 'miami-hurricanes', home: 'texas-am-aggies', awayScore: 10, homeScore: 3, at: '2025-12-20T17:00:00Z' },
 ] as const;
-const WINNERS = ['Alabama Crimson Tide', 'Miami Hurricanes'];
 
 const created = { sportEventIds: new Set<string>() };
 
@@ -115,10 +113,9 @@ function bowlsSeed(): SportDataFile {
   return file;
 }
 
-/** Loads the bowls dated from today (release refuses an event that has started), and finds their event. */
-async function loadBowls(admin: RegisteredUserContext) {
-  const file = bowlsSeed();
-  await loadSportData(file, { getClient: () => Promise.resolve(admin.client), now: new Date(), mode: LoadMode.APPLY, resultsThrough: EVERY_GAME_PLAYED });
+/** Loads the bowls dated from today (release refuses an event that has started), unplayed, and finds their event. */
+async function loadBowls(admin: RegisteredUserContext, file: SportDataFile) {
+  await loadSportData(file, { getClient: () => Promise.resolve(admin.client), now: new Date(), mode: LoadMode.APPLY, resultsThrough: new Date() });
   const leagueName = file.sportLeagues[0].name;
   const sportLeague = expectDefined(expectDefined((await listSportLeagues({ client: admin.client, query: { sport: Sport.FOOTBALL } })).data).sportLeagues
     .find((league) => league.name === leagueName), leagueName);
@@ -139,16 +136,20 @@ describe('SDK Functional: bowl games (#2154)', () => {
     });
   });
 
-  it('runs the bowls\' seeded pick\'em, squares on one bowl game and sweepstakes on the bowls event, the pick\'em settling a point a right pick and the sweepstakes a point for a dealt team\'s bowl win', async () => {
+  it('releases the bowls event though its unseeded field fills none of the league\'s seed tiers, then runs the bowls\' seeded pick\'em and squares on one bowl game on it, the pick\'em settling a point for each right pick', async () => {
     const admin = await buildRegisteredUser({ displayName: 'Bowl Director' });
     await promoteToRootAdmin(admin);
     const a = admin.client;
-    const { sportLeague, event } = await loadBowls(admin);
-    // One round, played in the BOWLS slot, a TOURNAMENT slot of single games.
-    expect(expectDefined((await listEventRounds({ client: a, path: { eventId: event.id } })).data).rounds.map((round) => round.slot.slotKind)).toEqual(['TOURNAMENT']);
+    const file = bowlsSeed();
+    const { sportLeague, event } = await loadBowls(admin, file);
+    // Played in a slot of the BOWLS definition, a TOURNAMENT slot of single games.
+    const eventSlots = await getFunctionalPrisma().sportEventSlot.findMany({ where: { sportEventId: event.id }, select: { seasonSlot: { select: { definition: { select: { key: true } } } } } });
+    expect(eventSlots.map((slot) => slot.seasonSlot.definition.key)).toEqual(['BOWLS']);
+    expect(new Set(expectDefined((await listEventRounds({ client: a, path: { eventId: event.id } })).data).rounds.map((round) => round.slot.slotKind))).toEqual(new Set(['TOURNAMENT']));
 
-    const field = expectDefined((await listEventParticipants({ client: a, path: { eventId: event.id } })).data).participants;
-    const nameOf = (rowId: string) => expectDefined(field.find((row) => row.id === rowId), rowId).participant.name;
+    // Released, though its unseeded field fills none of the league's seed tiers.
+    expect(event.status).toBe('SCHEDULED');
+    expect(expectDefined((await listEventParticipants({ client: a, path: { eventId: event.id } })).data).participants).toHaveLength(4);
 
     const { commissioner, league } = await buildLeagueWithCommissioner({ displayName: 'Bowl Commissioner', leagueName: `Bowl Season ${RUN}` });
     const member = await buildRegisteredUser({ displayName: 'Bowl Member' });
@@ -205,26 +206,15 @@ describe('SDK Functional: bowl games (#2154)', () => {
     });
     expect(squares.response?.status).toBe(201);
 
-    // --- Sweepstakes: one bowl team each -------------------------------------------------------------
-    const sweepstakes = await createContest({
-      client: commissioner.client,
-      path: { id: league.id },
-      body: { name: `Bowl Sweepstakes ${RUN}`, sportEventIds: [event.id], contestFormat: ContestFormat.ROSTER, selectionType: SelectionType.RANDOM_DRAW, templateId: template('bowls-random-draw-straight-up').id },
-    });
-    expect(sweepstakes.response?.status).toBe(201);
-    const sweepstakesId = expectDefined(sweepstakes.data).contest.id;
-    expect((await openContest({ client: commissioner.client, path: { id: league.id, contestId: sweepstakesId } })).data?.contest.status).toBe(ContestStatus.OPEN);
-    await enterContest({ client: commissioner.client, path: { contestId: sweepstakesId } });
-    await enterContest({ client: member.client, path: { contestId: sweepstakesId } });
-    expect((await runContestDraw({ client: commissioner.client, path: { contestId: sweepstakesId } })).data?.entries.map((entry) => entry.status)).toEqual(['SUBMITTED', 'SUBMITTED']);
-
-    // --- Kickoff, then settled -----------------------------------------------------------------------
+    // --- Both bowls kick off and are played, the away team winning each, then settled --------------
+    const kickedOff = new Date(Date.now() - 60 * 60 * 1000);
+    await getFunctionalPrisma().sportEvent.update({ where: { id: event.id }, data: { startDate: kickedOff } });
+    await getFunctionalPrisma().sportEventRoundMatch.updateMany({ where: { sportEventId: event.id }, data: { scheduledDate: kickedOff } });
     expect((await transitionEvent({ client: a, path: { eventId: event.id }, body: { toStatus: 'IN_PROGRESS' } })).data?.event.status).toBe('IN_PROGRESS');
-    const board = expectDefined((await getContestLeaderboard({ client: member.client, path: { contestId: sweepstakesId } })).data);
-    const dealt = board.entries.flatMap((entry) => entry.picks).map((pick) => ({ name: nameOf(pick.sportEventParticipantId), points: pick.knockout?.points }));
-    expect(dealt).toHaveLength(2);
-    expect(dealt).toEqual(dealt.map(({ name }) => ({ name, points: WINNERS.includes(name) ? 1 : 0 })));
-
+    for (const [index, bowl] of BOWLS.entries()) {
+      const recorded = await recordEventMatchResult({ client: a, path: { eventId: event.id, roundNumber: 1, matchNumber: index + 1 }, body: resultBody({ winnerSide: MatchSide.AWAY, homeScore: bowl.homeScore, awayScore: bowl.awayScore }) });
+      expect([recorded.error, recorded.response?.status]).toEqual([undefined, 200]);
+    }
     expect((await transitionEvent({ client: a, path: { eventId: event.id }, body: { toStatus: 'COMPLETED' } })).data?.event.status).toBe('COMPLETED');
     expect(expectDefined((await getContest({ client: member.client, path: { contestId: pickEmId } })).data).contest.status).toBe(ContestStatus.COMPLETED);
     const settled = await getFunctionalPrisma().contestEntryStanding.findUniqueOrThrow({ where: { contestEntryId: pickEmEntryId } });

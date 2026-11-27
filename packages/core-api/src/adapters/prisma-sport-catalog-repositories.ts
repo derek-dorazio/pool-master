@@ -66,7 +66,7 @@ import type {
   SportLeagueProviderMapping,
   SportLeagueSeasonSlot,
 } from '@poolmaster/shared/domain';
-import { compareCoveredSlots, compareMatchPlaces, compareSeasonSlots, StoredEventPricingSchema, StoredEventTierLayoutSchema, providerCodeOfSourceId, providerSourceIdOf, requireProviderCodeOfSourceId, slotPeriodsOf, SportEventParticipantStatus, SportEventStatus, ValuationSource } from '@poolmaster/shared/domain';
+import { compareCoveredSlots, SelectionType, compareMatchPlaces, compareSeasonSlots, StoredEventPricingSchema, StoredEventTierLayoutSchema, providerCodeOfSourceId, providerSourceIdOf, requireProviderCodeOfSourceId, slotPeriodsOf, SportEventParticipantStatus, SportEventStatus, ValuationSource } from '@poolmaster/shared/domain';
 import { forgettingReads, memoizedRead, memoizedReadMany, ReadMemoKey } from '../core/request-read-memo';
 import { backgroundJobsInsert, insertBackgroundJobs } from './prisma-background-job-repository';
 import { toGolfRound, toGolfStanding } from './prisma-golf-repositories';
@@ -594,12 +594,21 @@ export class PrismaSportEventRepository implements SportEventRepository {
   }
 
   async findReleaseFacts(event: { id: string; sportLeagueId: string }): Promise<SportEventReleaseFacts> {
-    const [scheduledRoundCount, contestSetupCount] = await Promise.all([
+    const [scheduledRoundCount, contestSetupCount, rosterSetupCount] = await Promise.all([
       this.prisma.sportEventRound.count({ where: { sportEventId: event.id } }),
       // The setups a commissioner could make a contest on the event from: every setup belongs to one sport league (#1825).
       this.prisma.contestConfigTemplate.count({ where: { active: true, sportLeagueId: event.sportLeagueId } }),
+      // Those that pick from its tiers or under its price cap: tiered and budget, over one of its slots.
+      this.prisma.contestConfigTemplate.count({
+        where: {
+          active: true,
+          sportLeagueId: event.sportLeagueId,
+          selectionType: { in: [SelectionType.TIERED, SelectionType.BUDGET_PICK] },
+          slots: { some: { definition: { seasonSlots: { some: { eventSlot: { sportEventId: event.id } } } } } },
+        },
+      }),
     ]);
-    return { scheduledRoundCount, contestSetupCount };
+    return { scheduledRoundCount, contestSetupCount, rosterSetupCount };
   }
 
   async findAutoReleaseCandidates(now: Date, horizon: Date): Promise<SportEventAutoReleaseCandidate[]> {

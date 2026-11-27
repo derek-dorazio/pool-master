@@ -339,6 +339,8 @@ export class InMemorySportEvents {
   backgroundJobs: BackgroundJobRequest[] = [];
   /** Active contest setups each sport league offers (#1823); a league not listed offers one. */
   contestSetupCounts = new Map<string, number>();
+  /** Each event's tiered and budget setups, by event id; an event not listed has one. */
+  rosterSetupCounts = new Map<string, number>();
   /** Each Season's championship year (#2003), which an event reads through its Season. */
   seasonYears = new Map<string, number>([[IN_MEMORY_SEASON_ID, IN_MEMORY_SEASON_YEAR]]);
 
@@ -709,6 +711,7 @@ export class InMemorySportEvents {
       findReleaseFacts: async (event) => ({
         scheduledRoundCount: this.roundRows.filter((round) => round.sportEventId === event.id).length,
         contestSetupCount: this.contestSetupCounts.get(event.sportLeagueId) ?? 1,
+        rosterSetupCount: this.rosterSetupCounts.get(event.id) ?? 1,
       }),
       findAutoReleaseCandidates: async (now, horizon) => this.events.flatMap((row) => {
         const league = this.sportLeagues.find((candidate) => candidate.id === row.sportLeagueId);
