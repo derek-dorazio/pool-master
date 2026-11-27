@@ -7,64 +7,83 @@ import {
   EmailTemplateKey,
   LeaguePlan,
   ProviderSyncKind,
+  SyncSeasonState,
   type PlanCap,
   type PlanFeature,
   type SwitchableEmailTemplateKey,
 } from '@poolmaster/shared/domain';
 
 
-/** How often a sync runs, and over which events: what every sync kind's policy holds. */
+/** How often a sync runs in one Season state. */
 const IngestionScheduleIntervalSchema = z.object({
   intervalMinutes: z.number().int().min(1).optional().describe(
-    'How often the feed should run, in minutes, for interval-driven orchestration.',
+    'How often the sync runs, in minutes.',
   ),
   intervalSeconds: z.number().int().min(1).optional().describe(
-    'How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.',
+    'How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes.',
   ),
-  lookaheadDays: z.number().int().min(0).optional().describe(
-    'How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).',
-  ),
-});
+}).refine((interval) => interval.intervalMinutes !== undefined || interval.intervalSeconds !== undefined, {
+  message: 'Give the interval in minutes or in seconds.',
+}).describe('How often a sync runs in one Season state: in minutes or in seconds, at least one.');
+
+/**
+ * A sync kind's interval for each Season state (#2009): in season, while one of a league's
+ * Seasons' spans holds now, and off season otherwise (`syncSeasonStateOf`).
+ */
+const IngestionSeasonIntervalsSchema = z.object({
+  [SyncSeasonState.IN_SEASON]: IngestionScheduleIntervalSchema.describe('How often the sync runs for a league in season.'),
+  [SyncSeasonState.OFFSEASON]: IngestionScheduleIntervalSchema.describe('How often the sync runs for a league off season.'),
+}).describe('A sync kind\'s interval for each Season state.');
+
+const IngestionSeasonIntervalsPatchSchema = z.object({
+  [SyncSeasonState.IN_SEASON]: IngestionScheduleIntervalSchema.optional(),
+  [SyncSeasonState.OFFSEASON]: IngestionScheduleIntervalSchema.optional(),
+}).describe('The Season states whose interval changes.');
 
 /** A sync kind's policy with a switch: an admin can turn it off. */
-export const IngestionFeedSchedulePolicySchema = IngestionScheduleIntervalSchema.extend({
-  enabled: z.boolean().describe('Whether the feed should be scheduled automatically.'),
-}).describe('Feed-specific ingestion scheduling policy.');
+export const IngestionFeedSchedulePolicySchema = z.object({
+  enabled: z.boolean().describe('Whether the sync is scheduled automatically.'),
+  intervals: IngestionSeasonIntervalsSchema,
+}).describe('A sync kind\'s scheduling policy, with a switch.');
 export type IngestionFeedSchedulePolicy = z.infer<typeof IngestionFeedSchedulePolicySchema>;
 
 /**
  * The FIELD sync's policy (#2086): it has no switch. It always runs, for synced sport leagues
  * only, since every active league is provider-synced.
  */
-export const IngestionAlwaysOnSchedulePolicySchema = IngestionScheduleIntervalSchema
-  .describe('A sync kind\'s scheduling policy that has no switch: it always runs.');
+export const IngestionAlwaysOnSchedulePolicySchema = z.object({
+  intervals: IngestionSeasonIntervalsSchema,
+}).describe('A sync kind\'s scheduling policy that has no switch: it always runs.');
 export type IngestionAlwaysOnSchedulePolicy = z.infer<typeof IngestionAlwaysOnSchedulePolicySchema>;
 
 const atLeastOneProperty = (value: object) => Object.keys(value).length > 0;
-const AT_LEAST_ONE_PROPERTY = { message: 'At least one feed scheduling property must be provided.' };
+const AT_LEAST_ONE_PROPERTY = { message: 'At least one scheduling property must be provided.' };
 
-export const IngestionFeedSchedulePolicyPatchSchema = IngestionFeedSchedulePolicySchema.partial()
-  .refine(atLeastOneProperty, AT_LEAST_ONE_PROPERTY)
-  .describe('Partial feed-scheduling update payload.');
+export const IngestionFeedSchedulePolicyPatchSchema = z.object({
+  enabled: z.boolean().optional(),
+  intervals: IngestionSeasonIntervalsPatchSchema.optional(),
+}).refine(atLeastOneProperty, AT_LEAST_ONE_PROPERTY)
+  .describe('Partial scheduling update for a sync kind with a switch.');
 export type IngestionFeedSchedulePolicyPatch = z.infer<typeof IngestionFeedSchedulePolicyPatchSchema>;
 
-const IngestionAlwaysOnSchedulePolicyPatchSchema = IngestionAlwaysOnSchedulePolicySchema.partial()
-  .refine(atLeastOneProperty, AT_LEAST_ONE_PROPERTY)
-  .describe('Partial scheduling update for a sync kind with no switch.');
+const IngestionAlwaysOnSchedulePolicyPatchSchema = z.object({
+  intervals: IngestionSeasonIntervalsPatchSchema,
+}).describe('Partial scheduling update for a sync kind with no switch.');
 
 /**
  * One schedule for every sport league (#1871), keyed by `ProviderSyncKind` (#1999): there are no
- * per-sport overrides, and which sports sync is which provider leagues are enabled (#1997).
+ * per-sport overrides, and which sports sync is which provider leagues are enabled (#1997). Each
+ * kind has an interval per Season state (#2009).
  */
 export const IngestionScheduleConfigSchema = z.object({
   [ProviderSyncKind.EVENTS]: IngestionFeedSchedulePolicySchema.describe(
     'The EVENTS sync: how often each synced sport league\'s events sync is queued.',
   ),
   [ProviderSyncKind.FIELD]: IngestionAlwaysOnSchedulePolicySchema.describe(
-    'The FIELD sync: event participants and event-scoped odds before the field locks, for synced sport leagues. It has no switch. Candidate events must be field-available and not field-locked.',
+    'The FIELD sync: the field and event-scoped odds of each event in a synced sport league\'s next slot. It has no switch.',
   ),
   [ProviderSyncKind.SCORES]: IngestionFeedSchedulePolicySchema.describe(
-    'The SCORES sync: live score polling.',
+    'The SCORES sync: live score polling for each event with a Game due or in play.',
   ),
 }).describe('Feed-aware ingestion scheduling configuration, one schedule for every sport league, keyed by sync kind.');
 export type IngestionScheduleConfig = z.infer<typeof IngestionScheduleConfigSchema>;
@@ -75,18 +94,15 @@ export const IngestionScheduleConfigPatchSchema = z.object({
   [ProviderSyncKind.SCORES]: IngestionFeedSchedulePolicyPatchSchema.optional(),
 }).refine((value) => Object.keys(value).length > 0, {
   message: 'At least one ingestion schedule change must be provided.',
-}).describe('Partial ingestion schedule update: only the sync kinds and properties it names change.');
+}).describe('Partial ingestion schedule update: only the sync kinds, states and properties it names change.');
 export type IngestionScheduleConfigPatch = z.infer<typeof IngestionScheduleConfigPatchSchema>;
 
-/** What the schedule read says of each sync kind beside its policy (#2086), so no client re-derives it. */
-const IngestionSyncScheduleStateSchema = z.object({
+export const IngestionSyncScheduleSchema = z.object({
+  enabled: z.boolean().optional().describe('The sync\'s switch; absent for a sync with none.'),
+  intervals: IngestionSeasonIntervalsSchema,
   runs: z.boolean().describe('Whether the sync runs on its interval now.'),
   switchable: z.boolean().describe('Whether the sync has a switch an admin can turn off; a sync with none always runs.'),
-});
-
-export const IngestionSyncScheduleSchema = IngestionScheduleIntervalSchema.extend({
-  enabled: z.boolean().optional().describe('The sync\'s switch; absent for a sync with none.'),
-}).extend(IngestionSyncScheduleStateSchema.shape).describe('One sync kind\'s schedule as the read answers it: its policy, whether it runs, and whether it has a switch.');
+}).describe('One sync kind\'s schedule as the read answers it: its intervals per Season state, whether it runs, and whether it has a switch.');
 export type IngestionSyncSchedule = z.infer<typeof IngestionSyncScheduleSchema>;
 
 /** The schedule read (#2086): each sync kind's policy, whether it runs and whether it has a switch. */

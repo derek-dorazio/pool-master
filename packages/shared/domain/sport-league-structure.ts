@@ -43,6 +43,8 @@ export interface SportLeagueSlotDefinition {
   name: string | null;
   awardsTrophy: boolean;
   squaresEligible: boolean;
+  /** Whether its games are played at a neutral site, neither side at home; each Game of the slot takes it. */
+  isNeutralSite: boolean;
   seriesFormat: SeriesFormat;
   seriesGames: number;
   pairing: SlotPairing;

@@ -37,7 +37,7 @@ async function testLeague() {
 }
 
 const SLOT_DEFAULTS = {
-  awardsTrophy: false, squaresEligible: false, seriesFormat: SeriesFormat.SINGLE_GAME, seriesGames: 1, pairing: SlotPairing.FIXED,
+  awardsTrophy: false, squaresEligible: false, isNeutralSite: false, seriesFormat: SeriesFormat.SINGLE_GAME, seriesGames: 1, pairing: SlotPairing.FIXED,
   matchFormat: MatchFormat.HEAD_TO_HEAD, canEndTied: false, periodUnit: PeriodUnit.QUARTER, periodCount: 4,
 } as const;
 
@@ -88,6 +88,43 @@ describe('the seeded phase and slot definitions', () => {
     const final = phases.find((phase) => phase.phase === LeaguePhase.POSTSEASON)?.competitions[0]?.slots.at(-1);
     expect(regular?.slots[0]?.providerMappings).toEqual([expect.objectContaining({ matchType: SlotProviderMatchType.CALENDAR_WEEK, providerValue: null })]);
     expect(final).toEqual(expect.objectContaining({ name: 'NBA Finals', seriesFormat: SeriesFormat.BEST_OF, seriesGames: 7, squaresEligible: false }));
+  });
+});
+
+describe('where the seeded slots\' games are played (#2154)', () => {
+  /** Each seeded slot of these leagues, by URL segment, competition code and key, with whether it is a neutral site. */
+  async function neutralSites(urlSegments: readonly string[]) {
+    const slots = await getPrisma().sportLeagueCompetitionSlot.findMany({
+      where: { sportLeague: { urlSegment: { in: [...urlSegments] } } },
+      select: { key: true, isNeutralSite: true, competition: { select: { code: true } }, sportLeague: { select: { urlSegment: true } } },
+    });
+    return new Map(slots.map((slot) => [`${slot.sportLeague.urlSegment} ${slot.competition.code} ${slot.key}`, slot.isNeutralSite]));
+  }
+
+  it('seed the Super Bowl, the bowl games, the conference title games and the CFP from its quarterfinals neutral, and the NFL\'s and the CFP first round\'s home games not', async () => {
+    const site = await neutralSites(['nfl', 'ncaamf']);
+
+    expect(['nfl POSTSEASON FINAL', 'ncaamf BOWLS BOWLS', 'ncaamf CONFERENCE_CHAMPIONSHIPS CONFERENCE_CHAMPIONSHIPS', 'ncaamf CFP QUARTERFINAL', 'ncaamf CFP FINAL'].map((key) => site.get(key))).toEqual([true, true, true, true, true]);
+    expect(['nfl REGULAR WEEK_1', 'nfl POSTSEASON ROUND_OF_16', 'nfl POSTSEASON SEMIFINAL', 'ncaamf CFP ROUND_OF_16'].map((key) => site.get(key))).toEqual([false, false, false, false]);
+  });
+
+  it('seed every slot of a soccer world tournament and the NCAA men\'s basketball tournament neutral, group matchdays and First Four included, the women\'s tournament from its round of 16 on, and a series league\'s none', async () => {
+    const site = await neutralSites(['world-cup', 'ncaamb', 'ncaawb', 'nba']);
+
+    expect([...site].filter(([key]) => key.startsWith('world-cup ')).every(([, neutral]) => neutral)).toBe(true);
+    expect(site.get('world-cup POSTSEASON WEEK_1')).toBe(true);
+    expect([...site].filter(([key]) => key.startsWith('ncaamb POSTSEASON ')).every(([, neutral]) => neutral)).toBe(true);
+    expect(site.get('ncaamb POSTSEASON PLAY_IN')).toBe(true);
+    expect(['PLAY_IN', 'ROUND_OF_64', 'ROUND_OF_32', 'ROUND_OF_16', 'QUARTERFINAL', 'SEMIFINAL', 'FINAL'].map((key) => site.get(`ncaawb POSTSEASON ${key}`)))
+      .toEqual([false, false, false, true, true, true, true]);
+    expect([...site].filter(([key]) => key.startsWith('nba ')).some(([, neutral]) => neutral)).toBe(false);
+  });
+
+  it('send whether each slot is a neutral site on the League page\'s Structure read', async () => {
+    const { phases } = SportLeagueStructureResponseSchema.parse((await get(`/api/v1/sport-leagues/${NFL_ID}/structure`)).json());
+
+    const postseason = phases.find((phase) => phase.phase === LeaguePhase.POSTSEASON)?.competitions[0];
+    expect(postseason?.slots.map((slot) => [slot.key, slot.isNeutralSite])).toEqual([['ROUND_OF_16', false], ['QUARTERFINAL', false], ['SEMIFINAL', false], ['FINAL', true]]);
   });
 });
 

@@ -8,7 +8,6 @@ import type {
 import { buildLeaderboardView, type LeaderboardPickRow, type LeaderboardView } from './contest-leaderboard';
 import {
   formatCurrentRoundLabel,
-  resolveCurrentRound,
   resolveRoundNumbers,
 } from './contest-leaderboard-rounds';
 import { formatThru } from './scoring-family-ui/stroke-play';
@@ -38,7 +37,8 @@ function roundFixture(
   return {
     id: `round-${overrides.roundNumber}`,
     sportEventRoundId: `event-round-${overrides.roundNumber}`,
-    status: 'IN_PROGRESS',
+    status: null,
+    periodsCompleted: null,
     completedAt: null,
     golf: null,
     ...overrides,
@@ -87,7 +87,7 @@ function standingFixture(eventScoreToPar: number) {
     status: 'IN_PROGRESS' as const,
     asOf: '2026-04-11T18:00:00.000Z',
     currentRound: 2,
-    golf: { eventScoreToPar, eventStrokes: 140, currentRoundThru: 18 },
+    golf: { eventScoreToPar, eventStrokes: 140 },
   };
 }
 
@@ -118,75 +118,14 @@ function responseFixture(
     scoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL',
     countingRule: { type: 'BEST_N', count: 2, pickCount: 6 },
     upsetBonus: false,
+    unplayedRoundToPar: 8,
+    currentRound: null,
     participants: [],
     entries: [],
     asOf: null,
     ...overrides,
   };
 }
-
-describe('resolveCurrentRound', () => {
-  it('names no round when the field is empty', () => {
-    expect(resolveCurrentRound([])).toBeNull();
-  });
-
-  it('names no round when the field has no round rows at all', () => {
-    expect(resolveCurrentRound([participantFixture({ id: 'sep-1' })])).toBeNull();
-  });
-
-  it('names the highest in-progress round', () => {
-    expect(resolveCurrentRound([
-      participantFixture({
-        id: 'sep-1',
-        rounds: [
-          roundFixture({ roundNumber: 1, status: 'COMPLETED' }),
-          roundFixture({ roundNumber: 2, status: 'IN_PROGRESS' }),
-        ],
-      }),
-    ])).toEqual({ roundNumber: 2, isComplete: false });
-  });
-
-  it('prefers an in-progress round over a higher round another golfer has already finished', () => {
-    // An early-tee-time golfer can finish round 3 while the field's late wave is still on
-    // round 2. The leaderboard is on the round still being played.
-    expect(resolveCurrentRound([
-      participantFixture({
-        id: 'sep-1',
-        rounds: [roundFixture({ roundNumber: 3, status: 'COMPLETED' })],
-      }),
-      participantFixture({
-        id: 'sep-2',
-        rounds: [roundFixture({ roundNumber: 2, status: 'IN_PROGRESS' })],
-      }),
-    ])).toEqual({ roundNumber: 2, isComplete: false });
-  });
-
-  it('falls back to the highest completed round when nothing is in progress', () => {
-    expect(resolveCurrentRound([
-      participantFixture({
-        id: 'sep-1',
-        rounds: [
-          roundFixture({ roundNumber: 1, status: 'COMPLETED' }),
-          roundFixture({ roundNumber: 2, status: 'COMPLETED' }),
-        ],
-      }),
-    ])).toEqual({ roundNumber: 2, isComplete: true });
-  });
-
-  it('treats a round that ended short as neither in progress nor complete', () => {
-    // A withdrawal or a missed cut does not mean the field is on that round.
-    expect(resolveCurrentRound([
-      participantFixture({
-        id: 'sep-1',
-        rounds: [
-          roundFixture({ roundNumber: 1, status: 'COMPLETED' }),
-          roundFixture({ roundNumber: 2, status: 'MISSED_CUT' }),
-          roundFixture({ roundNumber: 3, status: 'DNF' }),
-        ],
-      }),
-    ])).toEqual({ roundNumber: 1, isComplete: true });
-  });
-});
 
 describe('formatCurrentRoundLabel', () => {
   const numberedRound = (roundNumber: number) => `Round ${String(roundNumber)}`;
@@ -232,13 +171,15 @@ describe('buildLeaderboardView', () => {
     rounds: [
       roundFixture({
         roundNumber: 1,
-        status: 'COMPLETED',
-        golf: { strokes: 68, scoreToPar: -3, thru: 18 },
+        status: 'FINISHED',
+        periodsCompleted: 18,
+        golf: { strokes: 68, scoreToPar: -3 },
       }),
       roundFixture({
         roundNumber: 2,
-        status: 'IN_PROGRESS',
-        golf: { strokes: 34, scoreToPar: -2, thru: 9 },
+        status: null,
+        periodsCompleted: 9,
+        golf: { strokes: 34, scoreToPar: -2 },
       }),
     ],
   });
@@ -249,8 +190,9 @@ describe('buildLeaderboardView', () => {
     rounds: [
       roundFixture({
         roundNumber: 1,
-        status: 'COMPLETED',
-        golf: { strokes: 71, scoreToPar: 0, thru: 18 },
+        status: 'FINISHED',
+        periodsCompleted: 18,
+        golf: { strokes: 71, scoreToPar: 0 },
       }),
     ],
   });
@@ -299,14 +241,14 @@ describe('buildLeaderboardView', () => {
     expect(view.footnote).toBeNull();
   });
 
-  it('shows a cut golfer\'s contest score with 80 in each unplayed round, adding columns for rounds nobody has played yet', () => {
+  it('shows a cut golfer\'s contest score with the contest\'s unplayed-round score against par in each unplayed round, adding columns for rounds nobody has played yet', () => {
     const cut = participantFixture({
       id: 'sep-cut',
       name: 'Cut Golfer',
       standing: { ...standingFixture(2), status: 'ELIMINATED' },
       rounds: [
-        roundFixture({ roundNumber: 1, status: 'COMPLETED', golf: { strokes: 72, scoreToPar: 0, thru: 18 } }),
-        roundFixture({ roundNumber: 2, status: 'MISSED_CUT', golf: { strokes: 74, scoreToPar: 2, thru: 18 } }),
+        roundFixture({ roundNumber: 1, status: 'FINISHED', periodsCompleted: 18, golf: { strokes: 72, scoreToPar: 0 } }),
+        roundFixture({ roundNumber: 2, status: 'FINISHED', periodsCompleted: 18, golf: { strokes: 74, scoreToPar: 2 } }),
       ],
     });
     const view = buildLeaderboardView(responseFixture({
@@ -321,12 +263,13 @@ describe('buildLeaderboardView', () => {
     }));
 
     expect(roundNumbersOf(view)).toEqual([1, 2, 3, 4]);
-    // Played rounds still render through the scoring definition; only the unplayed ones read 80.
+    // Played rounds still render through the scoring definition; the unplayed ones read the
+    // contest's unplayed-round score against par.
     expect(roundCellsOf(view.entries[0].picks[0])[0]).toBe('72');
-    expect(roundCellsOf(view.entries[0].picks[0]).slice(2)).toEqual(['80', '80']);
+    expect(roundCellsOf(view.entries[0].picks[0]).slice(2)).toEqual(['+8', '+8']);
     expect(view.entries[0].picks[0].total).toBe('+18');
     expect(unplayedRoundsOf(view.entries[0].picks[0])).toEqual([3, 4]);
-    expect(view.footnote?.text).toContain('count as 80 strokes');
+    expect(view.footnote?.text).toContain('count as +8 against par');
   });
 
   it('keeps the server\'s order and its tie-aware display positions', () => {
@@ -469,10 +412,10 @@ describe('buildLeaderboardView', () => {
     expect(roundCellsOf(view.entries[0].picks[1])).toEqual(['71', null]);
   });
 
-  it('carries the current-round cue off the same response', () => {
-    expect(buildLeaderboardView(responseFixture({ participants: [rory] })).currentRoundLabel)
+  it('names the round the API says the field is on in the current-round cue, and none when it names none', () => {
+    expect(buildLeaderboardView(responseFixture({ participants: [rory], currentRound: { roundNumber: 2, isComplete: false } })).currentRoundLabel)
       .toBe('Round 2 — In Progress');
-    expect(buildLeaderboardView(responseFixture({ participants: [unscored] })).currentRoundLabel)
+    expect(buildLeaderboardView(responseFixture({ participants: [rory], currentRound: null })).currentRoundLabel)
       .toBeNull();
   });
 
@@ -487,45 +430,54 @@ describe('buildLeaderboardView', () => {
 describe('formatThru', () => {
   function golferOnRound2(
     status: 'ACTIVE' | 'IN_PROGRESS' | 'COMPLETE' | 'WITHDRAWN' | 'ELIMINATED',
-    currentRoundThru: number | null,
+    round2PeriodsCompleted: number | null,
     round2Status: SportEventParticipantRoundDto['status'],
   ) {
     return participantFixture({
       id: 'sep-1',
-      standing: { ...standingFixture(-3), status, golf: { eventScoreToPar: -3, eventStrokes: 105, currentRoundThru } },
+      standing: { ...standingFixture(-3), status, currentRound: 2 },
       rounds: [
-        roundFixture({ roundNumber: 1, status: 'COMPLETED' }),
-        roundFixture({ roundNumber: 2, status: round2Status }),
+        roundFixture({ roundNumber: 1, status: 'FINISHED', periodsCompleted: 18 }),
+        roundFixture({ roundNumber: 2, status: round2Status, periodsCompleted: round2PeriodsCompleted }),
       ],
     });
   }
 
-  it('shows the last hole completed while the golfer is mid-round', () => {
-    expect(formatThru(golferOnRound2('IN_PROGRESS', 12, 'IN_PROGRESS'))).toBe('12');
+  it('shows the holes the feed says the golfer has completed while their round is still being played', () => {
+    expect(formatThru(golferOnRound2('IN_PROGRESS', 12, null), 'GOLF')).toBe('12');
   });
 
-  it('shows F once the golfer\'s current round is complete', () => {
-    expect(formatThru(golferOnRound2('IN_PROGRESS', 18, 'COMPLETED'))).toBe('F');
+  it('shows F once the current round\'s side status says the golfer finished it', () => {
+    expect(formatThru(golferOnRound2('IN_PROGRESS', 18, 'FINISHED'), 'GOLF')).toBe('F');
+  });
+
+  it('shows the short form of how a round ended short, such as DNF, while the standing still has the golfer in', () => {
+    expect(formatThru(golferOnRound2('IN_PROGRESS', 9, 'DID_NOT_FINISH'), 'GOLF')).toBe('DNF');
   });
 
   it('shows F for a golfer whose event is complete', () => {
-    expect(formatThru(golferOnRound2('COMPLETE', 18, 'COMPLETED'))).toBe('F');
+    expect(formatThru(golferOnRound2('COMPLETE', 18, 'FINISHED'), 'GOLF')).toBe('F');
   });
 
-  it('shows CUT for an eliminated golfer, even with holes recorded on the round', () => {
-    expect(formatThru(golferOnRound2('ELIMINATED', 18, 'MISSED_CUT'))).toBe('CUT');
+  it('shows CUT for a golfer the standing has eliminated, even with their last round finished', () => {
+    expect(formatThru(golferOnRound2('ELIMINATED', 18, 'FINISHED'), 'GOLF')).toBe('CUT');
+  });
+
+  it('names a FIELD participant who is out of the event with their own sport\'s short word, not golf\'s', () => {
+    expect(formatThru(golferOnRound2('ELIMINATED', 18, 'FINISHED'), null)).toBe('Out');
+    expect(formatThru(golferOnRound2('WITHDRAWN', 7, null), null)).toBe('WD');
   });
 
   it('shows WD for a withdrawn golfer, even mid-round', () => {
-    expect(formatThru(golferOnRound2('WITHDRAWN', 7, 'IN_PROGRESS'))).toBe('WD');
+    expect(formatThru(golferOnRound2('WITHDRAWN', 7, null), 'GOLF')).toBe('WD');
   });
 
-  it('shows a dash before the golfer tees off, whether thru is unset or zero', () => {
-    expect(formatThru(golferOnRound2('ACTIVE', null, 'IN_PROGRESS'))).toBeNull();
-    expect(formatThru(golferOnRound2('ACTIVE', 0, 'IN_PROGRESS'))).toBeNull();
+  it('shows a dash before the golfer tees off, whether the feed reports no holes or zero', () => {
+    expect(formatThru(golferOnRound2('ACTIVE', null, null), 'GOLF')).toBeNull();
+    expect(formatThru(golferOnRound2('ACTIVE', 0, null), 'GOLF')).toBeNull();
   });
 
   it('shows a dash for a golfer with no standing yet', () => {
-    expect(formatThru(participantFixture({ id: 'sep-1' }))).toBeNull();
+    expect(formatThru(participantFixture({ id: 'sep-1' }), 'GOLF')).toBeNull();
   });
 });

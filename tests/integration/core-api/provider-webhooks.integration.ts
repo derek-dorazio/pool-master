@@ -90,8 +90,12 @@ function findingsOf(sportLeagueId?: string) {
   });
 }
 
+/** The key a webhook's sync of the event waits under, and its reconciling sync's. */
+const syncKey = (sportEventId: string) => `SYNC_EVENT_SCORES:SYNC:${sportEventId}`;
+const reconcileKey = (sportEventId: string) => `SYNC_EVENT_SCORES:RECONCILE:${sportEventId}`;
+
 async function queuedSyncs() {
-  const jobs = await getPrisma().backgroundJob.findMany({ where: { type: BackgroundJobType.PROVIDER_EVENT_SYNC }, orderBy: [{ runAt: 'asc' }, { createdAt: 'asc' }] });
+  const jobs = await getPrisma().backgroundJob.findMany({ where: { type: BackgroundJobType.SYNC_EVENT_SCORES }, orderBy: [{ runAt: 'asc' }, { createdAt: 'asc' }] });
   return jobs.map((job) => ({ payload: job.payload, dedupeKey: job.dedupeKey, runAt: job.runAt, createdAt: job.createdAt, trigger: job.trigger, startedByUserId: job.startedByUserId }));
 }
 
@@ -105,10 +109,10 @@ describe('BALLDONTLIE webhook receiver', () => {
     expect(response.statusCode).toBe(200);
     expectMatchesSchema(SuccessResponseSchema, response.json());
     const syncs = await queuedSyncs();
-    const payload = { sport: Sport.FOOTBALL, providerId: PROVIDER, eventId: 'nfl-2026-week-11', sportEventId: week.id };
+    const payload = { sportEventId: week.id };
     expect(syncs).toEqual([
-      expect.objectContaining({ payload, dedupeKey: 'provider-event-sync:balldontlie:nfl-2026-week-11', trigger: 'WEBHOOK', startedByUserId: null }),
-      expect.objectContaining({ payload, dedupeKey: 'provider-event-reconcile:balldontlie:nfl-2026-week-11', trigger: 'WEBHOOK', startedByUserId: null }),
+      expect.objectContaining({ payload, dedupeKey: syncKey(week.id), trigger: 'WEBHOOK', startedByUserId: null }),
+      expect.objectContaining({ payload, dedupeKey: reconcileKey(week.id), trigger: 'WEBHOOK', startedByUserId: null }),
     ]);
     const delaysMs = syncs.map((sync) => sync.runAt.getTime() - sync.createdAt.getTime());
     expect(delaysMs[0]).toBeGreaterThanOrEqual(55_000);
@@ -137,12 +141,12 @@ describe('BALLDONTLIE webhook receiver', () => {
     expect((await post(signedBalldontlieDelivery(PAYLOADS.pgaRoundStarted))).statusCode).toBe(200);
 
     expect(await queuedSyncs()).toEqual([expect.objectContaining({
-      payload: { sport: Sport.GOLF, providerId: PROVIDER, eventId: '1133', sportEventId: tournament.id },
+      payload: { sportEventId: tournament.id },
     })]);
   });
 
   it('accepts a delivery with non-ASCII text, signed over its bytes, whose header also carries a retiring secret\'s signature', async () => {
-    await linkedEvent({ sport: Sport.SOCCER, providerLeagueCode: 'epl', externalId: 'epl-2026-matchweek-11', gameId: String(PAYLOADS.eplGameHalftime.game.id) });
+    const matchweek = await linkedEvent({ sport: Sport.SOCCER, providerLeagueCode: 'epl', externalId: 'epl-2026-matchweek-11', gameId: String(PAYLOADS.eplGameHalftime.game.id) });
     const body = { ...PAYLOADS.eplGameHalftime, game: { ...PAYLOADS.eplGameHalftime.game, home_team: { id: 13, name: 'Atlético São Paulo ⚽' } } };
     const at = new Date();
     const current = signedBalldontlieDelivery(body, { at });
@@ -154,11 +158,11 @@ describe('BALLDONTLIE webhook receiver', () => {
     });
 
     expect(response.statusCode).toBe(200);
-    expect((await queuedSyncs()).map((sync) => sync.dedupeKey)).toEqual(['provider-event-sync:balldontlie:epl-2026-matchweek-11']);
+    expect((await queuedSyncs()).map((sync) => sync.dedupeKey)).toEqual([syncKey(matchweek.id)]);
   });
 
   it('shares one waiting sync among a burst of notifications and a duplicate delivery of the same one, the game\'s end adding its one reconciling sync', async () => {
-    await linkedEvent({ sport: Sport.FOOTBALL, providerLeagueCode: 'nfl', externalId: 'nfl-2026-week-11', gameId: '424095' });
+    const week = await linkedEvent({ sport: Sport.FOOTBALL, providerLeagueCode: 'nfl', externalId: 'nfl-2026-week-11', gameId: '424095' });
     const delivery = signedBalldontlieDelivery(PAYLOADS.nflGamePeriodEnded);
 
     const answers = [
@@ -169,14 +173,14 @@ describe('BALLDONTLIE webhook receiver', () => {
 
     expect(answers.map((answer) => answer.statusCode)).toEqual([200, 200, 200]);
     expect((await queuedSyncs()).map((sync) => sync.dedupeKey)).toEqual([
-      'provider-event-sync:balldontlie:nfl-2026-week-11',
-      'provider-event-reconcile:balldontlie:nfl-2026-week-11',
+      syncKey(week.id),
+      reconcileKey(week.id),
     ]);
   });
 
   it('syncs an event still SCHEDULED past its start when its game starts, six minutes out once the lifecycle sweep has moved it, and records the notification on its Game', async () => {
     const started = new Date(Date.now() - 2 * 60_000);
-    await linkedEvent({
+    const week = await linkedEvent({
       sport: Sport.FOOTBALL,
       providerLeagueCode: 'nfl',
       externalId: 'nfl-2026-week-11',
@@ -192,7 +196,7 @@ describe('BALLDONTLIE webhook receiver', () => {
     expect((await post(signedBalldontlieDelivery(PAYLOADS.nflGameStarted))).statusCode).toBe(200);
 
     const syncs = await queuedSyncs();
-    expect(syncs.map((sync) => sync.dedupeKey)).toEqual(['provider-event-sync:balldontlie:nfl-2026-week-11']);
+    expect(syncs.map((sync) => sync.dedupeKey)).toEqual([syncKey(week.id)]);
     const delayMs = (syncs[0]?.runAt.getTime() ?? 0) - (syncs[0]?.createdAt.getTime() ?? 0);
     expect(delayMs).toBeGreaterThanOrEqual(355_000);
     expect(delayMs).toBeLessThanOrEqual(365_000);
@@ -204,14 +208,14 @@ describe('BALLDONTLIE webhook receiver', () => {
   });
 
   it('syncs the NBA playoffs\' event holding the ended game\'s Game, as for every league with a reader', async () => {
-    await linkedEvent({ sport: Sport.BASKETBALL, providerLeagueCode: 'nba', externalId: 'nba-2025-postseason-round-1', gameId: String(PAYLOADS.nbaGameEnded.game.id) });
+    const round = await linkedEvent({ sport: Sport.BASKETBALL, providerLeagueCode: 'nba', externalId: 'nba-2025-postseason-round-1', gameId: String(PAYLOADS.nbaGameEnded.game.id) });
     await linkedEvent({ sport: Sport.BASKETBALL, providerLeagueCode: 'ncaab', externalId: 'ncaab-2025-tournament' });
 
     expect((await post(signedBalldontlieDelivery(PAYLOADS.nbaGameEnded))).statusCode).toBe(200);
 
     expect((await queuedSyncs()).map((sync) => sync.dedupeKey)).toEqual([
-      'provider-event-sync:balldontlie:nba-2025-postseason-round-1',
-      'provider-event-reconcile:balldontlie:nba-2025-postseason-round-1',
+      syncKey(round.id),
+      reconcileKey(round.id),
     ]);
   });
 

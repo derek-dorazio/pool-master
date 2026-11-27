@@ -20,6 +20,7 @@ export function LeagueSlotDialog({ onClose, slot }: { onClose: () => void; slot:
     { id: 'pairing', label: 'Pairing', value: enumLabel('SlotPairing', slot.pairing) },
     { id: 'trophy', label: 'Trophy', value: slot.awardsTrophy ? 'Yes' : 'No' },
     { id: 'squares', label: 'Squares', value: slot.squaresEligible ? 'Yes' : 'No' },
+    { id: 'neutral-site', label: 'Neutral site', value: slot.isNeutralSite ? 'Yes' : 'No' },
     {
       id: 'mappings',
       label: 'Matched by',

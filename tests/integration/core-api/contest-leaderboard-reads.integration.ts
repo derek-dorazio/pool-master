@@ -128,7 +128,7 @@ async function fourMajors(status: ContestStatus, lastSettled: boolean) {
       templateId: await contestTemplateId(prisma, contest.id),
       selectionType: 'TIERED',
       configJson: { selectionType: 'TIERED', picksPerTier: 1, countedScores: 2 },
-      participantScoringRules: { create: { participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', sortOrder: 1 } },
+      participantScoringRules: { create: { participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', sortOrder: 1, config: { unplayedRoundToPar: 8 } } },
     },
   });
   const settledAt = new Date();
@@ -216,7 +216,7 @@ async function golfContest(events: ReadonlyArray<{ event: { id: string } }>) {
       templateId: await contestTemplateId(prisma, contest.id),
       selectionType: 'TIERED',
       configJson: { selectionType: 'TIERED', picksPerTier: 1, countedScores: 2 },
-      participantScoringRules: { create: { participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', sortOrder: 1 } },
+      participantScoringRules: { create: { participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', sortOrder: 1, config: { unplayedRoundToPar: 8 } } },
     },
   });
   /** An entry named `name` that submitted each event in `picks`, picking those field rows there. */

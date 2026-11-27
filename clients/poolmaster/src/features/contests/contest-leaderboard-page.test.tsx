@@ -110,10 +110,10 @@ function participant(overrides: {
   eventScoreToPar?: number | null;
   standingStatus?: 'ACTIVE' | 'IN_PROGRESS' | 'COMPLETE' | 'WITHDRAWN' | 'ELIMINATED';
   displayPosition?: string;
-  currentRoundThru?: number | null;
   rounds?: Array<{
     roundNumber: number;
-    status: string;
+    status: 'FINISHED' | 'DID_NOT_FINISH' | 'DISQUALIFIED' | 'DID_NOT_START' | null;
+    periodsCompleted?: number | null;
     strokes?: number;
     scoreToPar?: number;
   }>;
@@ -158,7 +158,6 @@ function participant(overrides: {
         golf: {
           eventScoreToPar: overrides.eventScoreToPar,
           eventStrokes: 140,
-          currentRoundThru: overrides.currentRoundThru === undefined ? 9 : overrides.currentRoundThru,
         },
       },
     rounds: (overrides.rounds ?? []).map((round) => ({
@@ -166,10 +165,11 @@ function participant(overrides: {
       sportEventRoundId: `event-round-${round.roundNumber}`,
       roundNumber: round.roundNumber,
       status: round.status,
+      periodsCompleted: round.periodsCompleted === undefined ? (round.status === null ? null : 18) : round.periodsCompleted,
       completedAt: null,
       golf: round.strokes === undefined || round.scoreToPar === undefined
         ? null
-        : { strokes: round.strokes, scoreToPar: round.scoreToPar, thru: 18 },
+        : { strokes: round.strokes, scoreToPar: round.scoreToPar },
     })),
     affiliatedWithSportLeague: true,
     createdAt: '2026-04-01T00:00:00.000Z',
@@ -216,21 +216,23 @@ function leaderboardResponse(entryTotalScore = -5) {
       scoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL',
       countingRule: { type: 'BEST_N', count: 1, pickCount: 6 },
       upsetBonus: false,
+      unplayedRoundToPar: 8,
+      currentRound: null,
       participants: [
         participant({
           id: 'sep-1',
           name: 'Rory McIlroy',
           eventScoreToPar: -5,
           rounds: [
-            { roundNumber: 1, status: 'COMPLETED', strokes: 68, scoreToPar: -3 },
-            { roundNumber: 2, status: 'IN_PROGRESS', strokes: 34, scoreToPar: -2 },
+            { roundNumber: 1, status: 'FINISHED', strokes: 68, scoreToPar: -3 },
+            { roundNumber: 2, status: null, strokes: 34, scoreToPar: -2 },
           ],
         }),
         participant({
           id: 'sep-2',
           name: 'Scottie Scheffler',
           eventScoreToPar: 1,
-          rounds: [{ roundNumber: 1, status: 'COMPLETED', strokes: 72, scoreToPar: 1 }],
+          rounds: [{ roundNumber: 1, status: 'FINISHED', strokes: 72, scoreToPar: 1 }],
         }),
       ],
       entries: [{
@@ -400,6 +402,8 @@ describe('ContestLeaderboardPage', () => {
       ...sportPlay(Sport.BASKETBALL),
       scoringDefinitionId: 'KNOCKOUT_ROUND_POINTS',
       upsetBonus: true,
+      unplayedRoundToPar: null,
+      currentRound: null,
       participants: [teamRow('sep-1', 'Vermont'), teamRow('sep-2', 'Gonzaga'), teamRow('sep-3', 'Arizona'), teamRow('sep-4', 'Duke')],
       entries: [{
         ...base.entries[0],
@@ -674,14 +678,14 @@ describe('ContestLeaderboardPage', () => {
     expect(screen.getByTestId('contest-leaderboard-position-entry-1')).toHaveTextContent('T1');
   });
 
-  it('shows THR as the hole number mid-round, F when done, CUT when eliminated, WD when withdrawn and a dash before tee-off', async () => {
+  it('shows THR as the holes the feed reports mid-round, F when the round\'s side status is finished, CUT when eliminated, WD when withdrawn and a dash before tee-off', async () => {
     primeMocks({
       leaderboard: leaderboardWithGolfers([
-        { id: 'sep-1', name: 'Mid Round', eventScoreToPar: -2, currentRoundThru: 12, rounds: [{ roundNumber: 2, status: 'IN_PROGRESS', strokes: 40, scoreToPar: -2 }] },
-        { id: 'sep-2', name: 'Finished', eventScoreToPar: -1, currentRoundThru: 18, rounds: [{ roundNumber: 2, status: 'COMPLETED', strokes: 71, scoreToPar: -1 }] },
+        { id: 'sep-1', name: 'Mid Round', eventScoreToPar: -2, rounds: [{ roundNumber: 2, status: null, periodsCompleted: 12, strokes: 40, scoreToPar: -2 }] },
+        { id: 'sep-2', name: 'Finished', eventScoreToPar: -1, rounds: [{ roundNumber: 2, status: 'FINISHED', periodsCompleted: 18, strokes: 71, scoreToPar: -1 }] },
         { id: 'sep-3', name: 'Missed Cut', eventScoreToPar: 6, standingStatus: 'ELIMINATED' },
-        { id: 'sep-4', name: 'Withdrew', eventScoreToPar: 3, standingStatus: 'WITHDRAWN', currentRoundThru: 7 },
-        { id: 'sep-5', name: 'Not Started', eventScoreToPar: 0, standingStatus: 'ACTIVE', currentRoundThru: null, rounds: [{ roundNumber: 2, status: 'PENDING' }] },
+        { id: 'sep-4', name: 'Withdrew', eventScoreToPar: 3, standingStatus: 'WITHDRAWN', rounds: [{ roundNumber: 2, status: null, periodsCompleted: 7, strokes: 30, scoreToPar: 3 }] },
+        { id: 'sep-5', name: 'Not Started', eventScoreToPar: 0, standingStatus: 'ACTIVE', rounds: [{ roundNumber: 2, status: null, periodsCompleted: null }] },
       ]),
     });
 
@@ -779,7 +783,7 @@ describe('ContestLeaderboardPage', () => {
     }
   });
 
-  it('shows a cut golfer\'s unplayed rounds as 80 in italics, their contest total, and a note explaining the 80s', async () => {
+  it('shows a cut golfer\'s unplayed rounds in italics as the contest\'s unplayed-round score against par, their contest total, and a note explaining it', async () => {
     const leaderboard = leaderboardWithGolfers([
       {
         id: 'sep-1',
@@ -787,24 +791,25 @@ describe('ContestLeaderboardPage', () => {
         eventScoreToPar: 2,
         standingStatus: 'ELIMINATED',
         rounds: [
-          { roundNumber: 1, status: 'COMPLETED', strokes: 72, scoreToPar: 0 },
-          { roundNumber: 2, status: 'MISSED_CUT', strokes: 74, scoreToPar: 2 },
+          { roundNumber: 1, status: 'FINISHED', strokes: 72, scoreToPar: 0 },
+          { roundNumber: 2, status: 'FINISHED', strokes: 74, scoreToPar: 2 },
         ],
       },
     ]);
-    leaderboard.entries[0].picks[0].golf = { scoreToPar: 18, unplayedRoundNumbers: [3, 4] };
-    primeMocks({ leaderboard });
+    leaderboard.entries[0].picks[0].golf = { scoreToPar: 22, unplayedRoundNumbers: [3, 4] };
+    // The contest's own setting, not 80 strokes: each unplayed round reads +10.
+    primeMocks({ leaderboard: { ...leaderboard, unplayedRoundToPar: 10 } });
 
     renderLeaderboard();
 
     const row = await screen.findByTestId('contest-leaderboard-pick-entry-1-pick-1');
-    expect(row).toHaveTextContent('+18');
+    expect(row).toHaveTextContent('+22');
     const roundThree = screen.getByTestId('contest-leaderboard-pick-round-entry-1-pick-1-3');
-    expect(roundThree).toHaveTextContent('80');
+    expect(roundThree).toHaveTextContent('+10');
     expect(roundThree).toHaveClass('italic');
-    expect(roundThree).toHaveAccessibleName('Round 3 not played, counts as 80 strokes');
+    expect(roundThree).toHaveAccessibleName('Round 3 not played, counts as +10 against par');
     expect(screen.getByTestId('contest-leaderboard-pick-round-entry-1-pick-1-2')).not.toHaveClass('italic');
-    expect(screen.getByTestId('contest-leaderboard-unplayed-note')).toHaveTextContent('count as 80 strokes');
+    expect(screen.getByTestId('contest-leaderboard-unplayed-note')).toHaveTextContent('count as +10 against par');
   });
 
   it('shows no unplayed-rounds note when every golfer played their rounds', async () => {
@@ -900,8 +905,8 @@ describe('ContestLeaderboardPage', () => {
     }
   });
 
-  it('shows the current-round cue derived from the response it already fetched', async () => {
-    primeMocks();
+  it('shows the current-round cue the response it already fetched names', async () => {
+    primeMocks({ leaderboard: { ...leaderboardResponse().data, currentRound: { roundNumber: 2, isComplete: false } } });
 
     renderLeaderboard();
 
@@ -937,10 +942,12 @@ describe('ContestLeaderboardPage', () => {
         scoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL',
         countingRule: { type: 'BEST_N', count: 1, pickCount: 6 },
         upsetBonus: false,
+        unplayedRoundToPar: 8,
+        currentRound: null,
         participants: [participant({
           id: 'sep-1',
           name: 'Rory McIlroy',
-          rounds: [{ roundNumber: 1, status: 'PENDING' }],
+          rounds: [{ roundNumber: 1, status: null }],
         })],
         entries: [],
         asOf: null,
@@ -963,6 +970,8 @@ describe('ContestLeaderboardPage', () => {
         scoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL',
         countingRule: { type: 'BEST_N', count: 1, pickCount: 6 },
         upsetBonus: false,
+        unplayedRoundToPar: 8,
+        currentRound: null,
         participants: [],
         entries: [],
         asOf: null,

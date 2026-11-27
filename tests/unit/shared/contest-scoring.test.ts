@@ -21,19 +21,19 @@ describe('participant scoring definitions', () => {
   describe('formatRound (golf)', () => {
     const { formatRound } = PARTICIPANT_SCORING_DEFINITIONS.GOLF_RELATIVE_TO_PAR_TOTAL;
 
-    it('renders a completed round as its strokes', () => {
-      expect(formatRound({ status: 'COMPLETED', strokes: 69, scoreToPar: -3 })).toBe('69');
+    it('renders a round the golfer finished as its strokes', () => {
+      expect(formatRound({ status: 'FINISHED', strokes: 69, scoreToPar: -3 })).toBe('69');
     });
 
-    it('renders a round still in progress against par, with level par as "E"', () => {
-      expect(formatRound({ status: 'IN_PROGRESS', strokes: 47, scoreToPar: -2 })).toBe('-2');
-      expect(formatRound({ status: 'IN_PROGRESS', strokes: 36, scoreToPar: 0 })).toBe('E');
-      expect(formatRound({ status: 'IN_PROGRESS', strokes: 40, scoreToPar: 3 })).toBe('+3');
+    it('renders a round the golfer is still playing (no side status yet) against par, with level par as "E"', () => {
+      expect(formatRound({ status: null, strokes: 47, scoreToPar: -2 })).toBe('-2');
+      expect(formatRound({ status: null, strokes: 36, scoreToPar: 0 })).toBe('E');
+      expect(formatRound({ status: null, strokes: 40, scoreToPar: 3 })).toBe('+3');
     });
 
-    it('renders a round that ended short of completion against par', () => {
-      expect(formatRound({ status: 'MISSED_CUT', strokes: 78, scoreToPar: 6 })).toBe('+6');
-      expect(formatRound({ status: 'DNF', strokes: 40, scoreToPar: 1 })).toBe('+1');
+    it('renders a round that ended short of its last hole (a withdrawal or a disqualification) against par', () => {
+      expect(formatRound({ status: 'DID_NOT_FINISH', strokes: 40, scoreToPar: 1 })).toBe('+1');
+      expect(formatRound({ status: 'DISQUALIFIED', strokes: 78, scoreToPar: 6 })).toBe('+6');
     });
   });
 });
@@ -82,16 +82,24 @@ describe('participant scoring settings', () => {
     expect(Object.keys(PARTICIPANT_SCORING_SETTINGS_SCHEMAS).sort()).toEqual(Object.keys(PARTICIPANT_SCORING_DEFINITIONS).sort());
   });
 
-  it('reads golf\'s to-par total settings as the empty object, dropping keys retired before settings were typed', () => {
-    expect(parseContestScoringSettings('GOLF_RELATIVE_TO_PAR_TOTAL', {})).toEqual({
+  it('reads golf\'s to-par total settings as their unplayed-round score, dropping keys retired before settings were typed', () => {
+    expect(parseContestScoringSettings('GOLF_RELATIVE_TO_PAR_TOTAL', { unplayedRoundToPar: 8 })).toEqual({
       success: true,
-      data: { participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', config: {} },
+      data: { participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', config: { unplayedRoundToPar: 8 } },
     });
-    expect(parseContestScoringSettings('GOLF_RELATIVE_TO_PAR_TOTAL', { cutRule: { type: 'FIXED_SCORE', fixedScore: 80 }, playoffHandling: 'EXCLUDE_PLAYOFF_HOLES' }))
-      .toEqual({ success: true, data: { participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', config: {} } });
+    expect(parseContestScoringSettings('GOLF_RELATIVE_TO_PAR_TOTAL', { unplayedRoundToPar: 8, cutRule: { type: 'FIXED_SCORE', fixedScore: 80 }, playoffHandling: 'EXCLUDE_PLAYOFF_HOLES' }))
+      .toEqual({ success: true, data: { participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', config: { unplayedRoundToPar: 8 } } });
   });
 
-  it.each([['an array', []], ['a string', 'points'], ['null', null]])('refuses golf settings stored as %s with SETTINGS_INVALID', (_label, config) => {
+  it.each([
+    ['an array', []],
+    ['a string', 'points'],
+    ['null', null],
+    ['an object with no unplayed-round score', {}],
+    ['an unplayed-round score below 0', { unplayedRoundToPar: -1 }],
+    ['an unplayed-round score above 20', { unplayedRoundToPar: 21 }],
+    ['a fractional unplayed-round score', { unplayedRoundToPar: 8.5 }],
+  ])('refuses golf settings stored as %s with SETTINGS_INVALID', (_label, config) => {
     expect(parseContestScoringSettings('GOLF_RELATIVE_TO_PAR_TOTAL', config)).toEqual({
       success: false,
       reason: 'SETTINGS_INVALID',

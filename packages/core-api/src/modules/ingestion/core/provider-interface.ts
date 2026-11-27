@@ -207,7 +207,6 @@ export interface ProviderBracketMatch {
   matchNumber: number;
   homeTeamExternalId: string | null;
   awayTeamExternalId: string | null;
-  isNeutralSite: boolean;
   scheduledAt: Date | null;
   /** The match and side its winner goes to; null for the final, and for a match before a reseed. */
   advancesTo: { roundNumber: number; matchNumber: number; side: MatchSide } | null;
@@ -228,7 +227,6 @@ export interface ProviderScheduledGame {
   homeTeamExternalId: string;
   awayTeamExternalId: string;
   scheduledAt: Date | null;
-  isNeutralSite: boolean;
 }
 
 /** A provider's id for one game of a match, with the game's number in it. */

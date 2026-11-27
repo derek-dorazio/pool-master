@@ -4656,84 +4656,159 @@ export interface components {
                 }[];
             };
         };
-        /** @description Partial ingestion schedule update: only the sync kinds and properties it names change. */
+        /** @description Partial ingestion schedule update: only the sync kinds, states and properties it names change. */
         IngestionScheduleConfigPatch: {
-            /** @description Partial feed-scheduling update payload. */
+            /** @description Partial scheduling update for a sync kind with a switch. */
             EVENTS?: {
-                /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
-                intervalMinutes?: number;
-                /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
-                intervalSeconds?: number;
-                /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
-                lookaheadDays?: number;
-                /** @description Whether the feed should be scheduled automatically. */
                 enabled?: boolean;
+                /** @description The Season states whose interval changes. */
+                intervals?: {
+                    /** @description How often a sync runs in one Season state: in minutes or in seconds, at least one. */
+                    IN_SEASON?: {
+                        /** @description How often the sync runs, in minutes. */
+                        intervalMinutes?: number;
+                        /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                        intervalSeconds?: number;
+                    };
+                    /** @description How often a sync runs in one Season state: in minutes or in seconds, at least one. */
+                    OFFSEASON?: {
+                        /** @description How often the sync runs, in minutes. */
+                        intervalMinutes?: number;
+                        /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                        intervalSeconds?: number;
+                    };
+                };
             };
             /** @description Partial scheduling update for a sync kind with no switch. */
             FIELD?: {
-                /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
-                intervalMinutes?: number;
-                /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
-                intervalSeconds?: number;
-                /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
-                lookaheadDays?: number;
+                /** @description The Season states whose interval changes. */
+                intervals: {
+                    /** @description How often a sync runs in one Season state: in minutes or in seconds, at least one. */
+                    IN_SEASON?: {
+                        /** @description How often the sync runs, in minutes. */
+                        intervalMinutes?: number;
+                        /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                        intervalSeconds?: number;
+                    };
+                    /** @description How often a sync runs in one Season state: in minutes or in seconds, at least one. */
+                    OFFSEASON?: {
+                        /** @description How often the sync runs, in minutes. */
+                        intervalMinutes?: number;
+                        /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                        intervalSeconds?: number;
+                    };
+                };
             };
-            /** @description Partial feed-scheduling update payload. */
+            /** @description Partial scheduling update for a sync kind with a switch. */
             SCORES?: {
-                /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
-                intervalMinutes?: number;
-                /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
-                intervalSeconds?: number;
-                /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
-                lookaheadDays?: number;
-                /** @description Whether the feed should be scheduled automatically. */
                 enabled?: boolean;
+                /** @description The Season states whose interval changes. */
+                intervals?: {
+                    /** @description How often a sync runs in one Season state: in minutes or in seconds, at least one. */
+                    IN_SEASON?: {
+                        /** @description How often the sync runs, in minutes. */
+                        intervalMinutes?: number;
+                        /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                        intervalSeconds?: number;
+                    };
+                    /** @description How often a sync runs in one Season state: in minutes or in seconds, at least one. */
+                    OFFSEASON?: {
+                        /** @description How often the sync runs, in minutes. */
+                        intervalMinutes?: number;
+                        /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                        intervalSeconds?: number;
+                    };
+                };
             };
         };
         /** @description Feed-aware ingestion scheduling configuration, one schedule for every sport league, keyed by sync kind. */
         IngestionScheduleConfig: {
             /** @description The EVENTS sync: how often each synced sport league's events sync is queued. */
             EVENTS: {
-                /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
-                intervalMinutes?: number;
-                /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
-                intervalSeconds?: number;
-                /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
-                lookaheadDays?: number;
-                /** @description Whether the feed should be scheduled automatically. */
+                /** @description Whether the sync is scheduled automatically. */
                 enabled: boolean;
+                /** @description A sync kind's interval for each Season state. */
+                intervals: {
+                    /** @description How often the sync runs for a league in season. */
+                    IN_SEASON: {
+                        /** @description How often the sync runs, in minutes. */
+                        intervalMinutes?: number;
+                        /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                        intervalSeconds?: number;
+                    };
+                    /** @description How often the sync runs for a league off season. */
+                    OFFSEASON: {
+                        /** @description How often the sync runs, in minutes. */
+                        intervalMinutes?: number;
+                        /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                        intervalSeconds?: number;
+                    };
+                };
             };
-            /** @description The FIELD sync: event participants and event-scoped odds before the field locks, for synced sport leagues. It has no switch. Candidate events must be field-available and not field-locked. */
+            /** @description The FIELD sync: the field and event-scoped odds of each event in a synced sport league's next slot. It has no switch. */
             FIELD: {
-                /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
-                intervalMinutes?: number;
-                /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
-                intervalSeconds?: number;
-                /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
-                lookaheadDays?: number;
+                /** @description A sync kind's interval for each Season state. */
+                intervals: {
+                    /** @description How often the sync runs for a league in season. */
+                    IN_SEASON: {
+                        /** @description How often the sync runs, in minutes. */
+                        intervalMinutes?: number;
+                        /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                        intervalSeconds?: number;
+                    };
+                    /** @description How often the sync runs for a league off season. */
+                    OFFSEASON: {
+                        /** @description How often the sync runs, in minutes. */
+                        intervalMinutes?: number;
+                        /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                        intervalSeconds?: number;
+                    };
+                };
             };
-            /** @description The SCORES sync: live score polling. */
+            /** @description The SCORES sync: live score polling for each event with a Game due or in play. */
             SCORES: {
-                /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
-                intervalMinutes?: number;
-                /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
-                intervalSeconds?: number;
-                /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
-                lookaheadDays?: number;
-                /** @description Whether the feed should be scheduled automatically. */
+                /** @description Whether the sync is scheduled automatically. */
                 enabled: boolean;
+                /** @description A sync kind's interval for each Season state. */
+                intervals: {
+                    /** @description How often the sync runs for a league in season. */
+                    IN_SEASON: {
+                        /** @description How often the sync runs, in minutes. */
+                        intervalMinutes?: number;
+                        /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                        intervalSeconds?: number;
+                    };
+                    /** @description How often the sync runs for a league off season. */
+                    OFFSEASON: {
+                        /** @description How often the sync runs, in minutes. */
+                        intervalMinutes?: number;
+                        /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                        intervalSeconds?: number;
+                    };
+                };
             };
         };
-        /** @description One sync kind's schedule as the read answers it: its policy, whether it runs, and whether it has a switch. */
+        /** @description One sync kind's schedule as the read answers it: its intervals per Season state, whether it runs, and whether it has a switch. */
         IngestionSyncSchedule: {
-            /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
-            intervalMinutes?: number;
-            /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
-            intervalSeconds?: number;
-            /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
-            lookaheadDays?: number;
             /** @description The sync's switch; absent for a sync with none. */
             enabled?: boolean;
+            /** @description A sync kind's interval for each Season state. */
+            intervals: {
+                /** @description How often the sync runs for a league in season. */
+                IN_SEASON: {
+                    /** @description How often the sync runs, in minutes. */
+                    intervalMinutes?: number;
+                    /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                    intervalSeconds?: number;
+                };
+                /** @description How often the sync runs for a league off season. */
+                OFFSEASON: {
+                    /** @description How often the sync runs, in minutes. */
+                    intervalMinutes?: number;
+                    /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                    intervalSeconds?: number;
+                };
+            };
             /** @description Whether the sync runs on its interval now. */
             runs: boolean;
             /** @description Whether the sync has a switch an admin can turn off; a sync with none always runs. */
@@ -4741,46 +4816,79 @@ export interface components {
         };
         /** @description The ingestion schedule as the API answers it: per sync kind, its policy, whether it runs and whether it has a switch. */
         IngestionSchedule: {
-            /** @description One sync kind's schedule as the read answers it: its policy, whether it runs, and whether it has a switch. */
+            /** @description One sync kind's schedule as the read answers it: its intervals per Season state, whether it runs, and whether it has a switch. */
             EVENTS: {
-                /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
-                intervalMinutes?: number;
-                /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
-                intervalSeconds?: number;
-                /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
-                lookaheadDays?: number;
                 /** @description The sync's switch; absent for a sync with none. */
                 enabled?: boolean;
+                /** @description A sync kind's interval for each Season state. */
+                intervals: {
+                    /** @description How often the sync runs for a league in season. */
+                    IN_SEASON: {
+                        /** @description How often the sync runs, in minutes. */
+                        intervalMinutes?: number;
+                        /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                        intervalSeconds?: number;
+                    };
+                    /** @description How often the sync runs for a league off season. */
+                    OFFSEASON: {
+                        /** @description How often the sync runs, in minutes. */
+                        intervalMinutes?: number;
+                        /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                        intervalSeconds?: number;
+                    };
+                };
                 /** @description Whether the sync runs on its interval now. */
                 runs: boolean;
                 /** @description Whether the sync has a switch an admin can turn off; a sync with none always runs. */
                 switchable: boolean;
             };
-            /** @description One sync kind's schedule as the read answers it: its policy, whether it runs, and whether it has a switch. */
+            /** @description One sync kind's schedule as the read answers it: its intervals per Season state, whether it runs, and whether it has a switch. */
             FIELD: {
-                /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
-                intervalMinutes?: number;
-                /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
-                intervalSeconds?: number;
-                /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
-                lookaheadDays?: number;
                 /** @description The sync's switch; absent for a sync with none. */
                 enabled?: boolean;
+                /** @description A sync kind's interval for each Season state. */
+                intervals: {
+                    /** @description How often the sync runs for a league in season. */
+                    IN_SEASON: {
+                        /** @description How often the sync runs, in minutes. */
+                        intervalMinutes?: number;
+                        /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                        intervalSeconds?: number;
+                    };
+                    /** @description How often the sync runs for a league off season. */
+                    OFFSEASON: {
+                        /** @description How often the sync runs, in minutes. */
+                        intervalMinutes?: number;
+                        /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                        intervalSeconds?: number;
+                    };
+                };
                 /** @description Whether the sync runs on its interval now. */
                 runs: boolean;
                 /** @description Whether the sync has a switch an admin can turn off; a sync with none always runs. */
                 switchable: boolean;
             };
-            /** @description One sync kind's schedule as the read answers it: its policy, whether it runs, and whether it has a switch. */
+            /** @description One sync kind's schedule as the read answers it: its intervals per Season state, whether it runs, and whether it has a switch. */
             SCORES: {
-                /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
-                intervalMinutes?: number;
-                /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
-                intervalSeconds?: number;
-                /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
-                lookaheadDays?: number;
                 /** @description The sync's switch; absent for a sync with none. */
                 enabled?: boolean;
+                /** @description A sync kind's interval for each Season state. */
+                intervals: {
+                    /** @description How often the sync runs for a league in season. */
+                    IN_SEASON: {
+                        /** @description How often the sync runs, in minutes. */
+                        intervalMinutes?: number;
+                        /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                        intervalSeconds?: number;
+                    };
+                    /** @description How often the sync runs for a league off season. */
+                    OFFSEASON: {
+                        /** @description How often the sync runs, in minutes. */
+                        intervalMinutes?: number;
+                        /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                        intervalSeconds?: number;
+                    };
+                };
                 /** @description Whether the sync runs on its interval now. */
                 runs: boolean;
                 /** @description Whether the sync has a switch an admin can turn off; a sync with none always runs. */
@@ -7126,11 +7234,15 @@ export interface components {
             countedScores: number;
             /** @description Maximum entries a Squad may create. Null means unlimited. */
             maxEntriesPerSquad?: number | null;
-            /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+            /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
             scoring?: {
                 /** @enum {string} */
                 participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
-                config: Record<string, never>;
+                /** @description Golf to-par total settings: what an unplayed round scores against par. */
+                config: {
+                    /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
+                    unplayedRoundToPar: number;
+                };
             } | {
                 /** @enum {string} */
                 participantScoringDefinitionId: "FINISH_POSITION_POINTS";
@@ -7169,11 +7281,15 @@ export interface components {
             countedScores: number;
             /** @description Maximum entries a Squad may create. Null means unlimited. */
             maxEntriesPerSquad?: number | null;
-            /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+            /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
             scoring?: {
                 /** @enum {string} */
                 participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
-                config: Record<string, never>;
+                /** @description Golf to-par total settings: what an unplayed round scores against par. */
+                config: {
+                    /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
+                    unplayedRoundToPar: number;
+                };
             } | {
                 /** @enum {string} */
                 participantScoringDefinitionId: "FINISH_POSITION_POINTS";
@@ -7212,11 +7328,15 @@ export interface components {
             countedScores: number;
             /** @description Maximum entries a Squad may create. Null means unlimited. */
             maxEntriesPerSquad?: number | null;
-            /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+            /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
             scoring?: {
                 /** @enum {string} */
                 participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
-                config: Record<string, never>;
+                /** @description Golf to-par total settings: what an unplayed round scores against par. */
+                config: {
+                    /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
+                    unplayedRoundToPar: number;
+                };
             } | {
                 /** @enum {string} */
                 participantScoringDefinitionId: "FINISH_POSITION_POINTS";
@@ -7258,11 +7378,15 @@ export interface components {
             againstTheSpread: boolean;
             /** @description Maximum entries a Squad may create. Null means unlimited. */
             maxEntriesPerSquad?: number | null;
-            /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+            /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
             scoring?: {
                 /** @enum {string} */
                 participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
-                config: Record<string, never>;
+                /** @description Golf to-par total settings: what an unplayed round scores against par. */
+                config: {
+                    /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
+                    unplayedRoundToPar: number;
+                };
             } | {
                 /** @enum {string} */
                 participantScoringDefinitionId: "FINISH_POSITION_POINTS";
@@ -7299,11 +7423,15 @@ export interface components {
             maxSquaresPerEntry: number;
             /** @description Maximum entries a Squad may create. Null means unlimited. */
             maxEntriesPerSquad?: number | null;
-            /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+            /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
             scoring?: {
                 /** @enum {string} */
                 participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
-                config: Record<string, never>;
+                /** @description Golf to-par total settings: what an unplayed round scores against par. */
+                config: {
+                    /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
+                    unplayedRoundToPar: number;
+                };
             } | {
                 /** @enum {string} */
                 participantScoringDefinitionId: "FINISH_POSITION_POINTS";
@@ -7342,11 +7470,15 @@ export interface components {
             reuseTeamsOnceAllUsed?: boolean;
             /** @description Maximum entries a Squad may create. Null means unlimited. */
             maxEntriesPerSquad?: number | null;
-            /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+            /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
             scoring?: {
                 /** @enum {string} */
                 participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
-                config: Record<string, never>;
+                /** @description Golf to-par total settings: what an unplayed round scores against par. */
+                config: {
+                    /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
+                    unplayedRoundToPar: number;
+                };
             } | {
                 /** @enum {string} */
                 participantScoringDefinitionId: "FINISH_POSITION_POINTS";
@@ -7381,11 +7513,15 @@ export interface components {
             selectionType: "BRACKET";
             /** @description Maximum entries a Squad may create. Null means unlimited. */
             maxEntriesPerSquad?: number | null;
-            /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+            /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
             scoring?: {
                 /** @enum {string} */
                 participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
-                config: Record<string, never>;
+                /** @description Golf to-par total settings: what an unplayed round scores against par. */
+                config: {
+                    /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
+                    unplayedRoundToPar: number;
+                };
             } | {
                 /** @enum {string} */
                 participantScoringDefinitionId: "FINISH_POSITION_POINTS";
@@ -7732,11 +7868,15 @@ export interface components {
                 countedScores: number;
                 /** @description Maximum entries a Squad may create. Null means unlimited. */
                 maxEntriesPerSquad?: number | null;
-                /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+                /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                 scoring?: {
                     /** @enum {string} */
                     participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
-                    config: Record<string, never>;
+                    /** @description Golf to-par total settings: what an unplayed round scores against par. */
+                    config: {
+                        /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
+                        unplayedRoundToPar: number;
+                    };
                 } | {
                     /** @enum {string} */
                     participantScoringDefinitionId: "FINISH_POSITION_POINTS";
@@ -7775,11 +7915,15 @@ export interface components {
                 countedScores: number;
                 /** @description Maximum entries a Squad may create. Null means unlimited. */
                 maxEntriesPerSquad?: number | null;
-                /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+                /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                 scoring?: {
                     /** @enum {string} */
                     participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
-                    config: Record<string, never>;
+                    /** @description Golf to-par total settings: what an unplayed round scores against par. */
+                    config: {
+                        /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
+                        unplayedRoundToPar: number;
+                    };
                 } | {
                     /** @enum {string} */
                     participantScoringDefinitionId: "FINISH_POSITION_POINTS";
@@ -7818,11 +7962,15 @@ export interface components {
                 countedScores: number;
                 /** @description Maximum entries a Squad may create. Null means unlimited. */
                 maxEntriesPerSquad?: number | null;
-                /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+                /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                 scoring?: {
                     /** @enum {string} */
                     participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
-                    config: Record<string, never>;
+                    /** @description Golf to-par total settings: what an unplayed round scores against par. */
+                    config: {
+                        /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
+                        unplayedRoundToPar: number;
+                    };
                 } | {
                     /** @enum {string} */
                     participantScoringDefinitionId: "FINISH_POSITION_POINTS";
@@ -7864,11 +8012,15 @@ export interface components {
                 againstTheSpread: boolean;
                 /** @description Maximum entries a Squad may create. Null means unlimited. */
                 maxEntriesPerSquad?: number | null;
-                /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+                /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                 scoring?: {
                     /** @enum {string} */
                     participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
-                    config: Record<string, never>;
+                    /** @description Golf to-par total settings: what an unplayed round scores against par. */
+                    config: {
+                        /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
+                        unplayedRoundToPar: number;
+                    };
                 } | {
                     /** @enum {string} */
                     participantScoringDefinitionId: "FINISH_POSITION_POINTS";
@@ -7905,11 +8057,15 @@ export interface components {
                 maxSquaresPerEntry: number;
                 /** @description Maximum entries a Squad may create. Null means unlimited. */
                 maxEntriesPerSquad?: number | null;
-                /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+                /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                 scoring?: {
                     /** @enum {string} */
                     participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
-                    config: Record<string, never>;
+                    /** @description Golf to-par total settings: what an unplayed round scores against par. */
+                    config: {
+                        /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
+                        unplayedRoundToPar: number;
+                    };
                 } | {
                     /** @enum {string} */
                     participantScoringDefinitionId: "FINISH_POSITION_POINTS";
@@ -7948,11 +8104,15 @@ export interface components {
                 reuseTeamsOnceAllUsed?: boolean;
                 /** @description Maximum entries a Squad may create. Null means unlimited. */
                 maxEntriesPerSquad?: number | null;
-                /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+                /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                 scoring?: {
                     /** @enum {string} */
                     participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
-                    config: Record<string, never>;
+                    /** @description Golf to-par total settings: what an unplayed round scores against par. */
+                    config: {
+                        /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
+                        unplayedRoundToPar: number;
+                    };
                 } | {
                     /** @enum {string} */
                     participantScoringDefinitionId: "FINISH_POSITION_POINTS";
@@ -7987,11 +8147,15 @@ export interface components {
                 selectionType: "BRACKET";
                 /** @description Maximum entries a Squad may create. Null means unlimited. */
                 maxEntriesPerSquad?: number | null;
-                /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+                /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                 scoring?: {
                     /** @enum {string} */
                     participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
-                    config: Record<string, never>;
+                    /** @description Golf to-par total settings: what an unplayed round scores against par. */
+                    config: {
+                        /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
+                        unplayedRoundToPar: number;
+                    };
                 } | {
                     /** @enum {string} */
                     participantScoringDefinitionId: "FINISH_POSITION_POINTS";
@@ -8276,11 +8440,15 @@ export interface components {
                     countedScores: number;
                     /** @description Maximum entries a Squad may create. Null means unlimited. */
                     maxEntriesPerSquad?: number | null;
-                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                     scoring?: {
                         /** @enum {string} */
                         participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
-                        config: Record<string, never>;
+                        /** @description Golf to-par total settings: what an unplayed round scores against par. */
+                        config: {
+                            /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
+                            unplayedRoundToPar: number;
+                        };
                     } | {
                         /** @enum {string} */
                         participantScoringDefinitionId: "FINISH_POSITION_POINTS";
@@ -8319,11 +8487,15 @@ export interface components {
                     countedScores: number;
                     /** @description Maximum entries a Squad may create. Null means unlimited. */
                     maxEntriesPerSquad?: number | null;
-                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                     scoring?: {
                         /** @enum {string} */
                         participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
-                        config: Record<string, never>;
+                        /** @description Golf to-par total settings: what an unplayed round scores against par. */
+                        config: {
+                            /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
+                            unplayedRoundToPar: number;
+                        };
                     } | {
                         /** @enum {string} */
                         participantScoringDefinitionId: "FINISH_POSITION_POINTS";
@@ -8362,11 +8534,15 @@ export interface components {
                     countedScores: number;
                     /** @description Maximum entries a Squad may create. Null means unlimited. */
                     maxEntriesPerSquad?: number | null;
-                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                     scoring?: {
                         /** @enum {string} */
                         participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
-                        config: Record<string, never>;
+                        /** @description Golf to-par total settings: what an unplayed round scores against par. */
+                        config: {
+                            /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
+                            unplayedRoundToPar: number;
+                        };
                     } | {
                         /** @enum {string} */
                         participantScoringDefinitionId: "FINISH_POSITION_POINTS";
@@ -8408,11 +8584,15 @@ export interface components {
                     againstTheSpread: boolean;
                     /** @description Maximum entries a Squad may create. Null means unlimited. */
                     maxEntriesPerSquad?: number | null;
-                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                     scoring?: {
                         /** @enum {string} */
                         participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
-                        config: Record<string, never>;
+                        /** @description Golf to-par total settings: what an unplayed round scores against par. */
+                        config: {
+                            /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
+                            unplayedRoundToPar: number;
+                        };
                     } | {
                         /** @enum {string} */
                         participantScoringDefinitionId: "FINISH_POSITION_POINTS";
@@ -8449,11 +8629,15 @@ export interface components {
                     maxSquaresPerEntry: number;
                     /** @description Maximum entries a Squad may create. Null means unlimited. */
                     maxEntriesPerSquad?: number | null;
-                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                     scoring?: {
                         /** @enum {string} */
                         participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
-                        config: Record<string, never>;
+                        /** @description Golf to-par total settings: what an unplayed round scores against par. */
+                        config: {
+                            /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
+                            unplayedRoundToPar: number;
+                        };
                     } | {
                         /** @enum {string} */
                         participantScoringDefinitionId: "FINISH_POSITION_POINTS";
@@ -8492,11 +8676,15 @@ export interface components {
                     reuseTeamsOnceAllUsed?: boolean;
                     /** @description Maximum entries a Squad may create. Null means unlimited. */
                     maxEntriesPerSquad?: number | null;
-                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                     scoring?: {
                         /** @enum {string} */
                         participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
-                        config: Record<string, never>;
+                        /** @description Golf to-par total settings: what an unplayed round scores against par. */
+                        config: {
+                            /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
+                            unplayedRoundToPar: number;
+                        };
                     } | {
                         /** @enum {string} */
                         participantScoringDefinitionId: "FINISH_POSITION_POINTS";
@@ -8531,11 +8719,15 @@ export interface components {
                     selectionType: "BRACKET";
                     /** @description Maximum entries a Squad may create. Null means unlimited. */
                     maxEntriesPerSquad?: number | null;
-                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                     scoring?: {
                         /** @enum {string} */
                         participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
-                        config: Record<string, never>;
+                        /** @description Golf to-par total settings: what an unplayed round scores against par. */
+                        config: {
+                            /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
+                            unplayedRoundToPar: number;
+                        };
                     } | {
                         /** @enum {string} */
                         participantScoringDefinitionId: "FINISH_POSITION_POINTS";
@@ -8590,11 +8782,15 @@ export interface components {
                 countedScores: number;
                 /** @description Maximum entries a Squad may create. Null means unlimited. */
                 maxEntriesPerSquad?: number | null;
-                /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+                /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                 scoring?: {
                     /** @enum {string} */
                     participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
-                    config: Record<string, never>;
+                    /** @description Golf to-par total settings: what an unplayed round scores against par. */
+                    config: {
+                        /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
+                        unplayedRoundToPar: number;
+                    };
                 } | {
                     /** @enum {string} */
                     participantScoringDefinitionId: "FINISH_POSITION_POINTS";
@@ -8633,11 +8829,15 @@ export interface components {
                 countedScores: number;
                 /** @description Maximum entries a Squad may create. Null means unlimited. */
                 maxEntriesPerSquad?: number | null;
-                /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+                /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                 scoring?: {
                     /** @enum {string} */
                     participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
-                    config: Record<string, never>;
+                    /** @description Golf to-par total settings: what an unplayed round scores against par. */
+                    config: {
+                        /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
+                        unplayedRoundToPar: number;
+                    };
                 } | {
                     /** @enum {string} */
                     participantScoringDefinitionId: "FINISH_POSITION_POINTS";
@@ -8676,11 +8876,15 @@ export interface components {
                 countedScores: number;
                 /** @description Maximum entries a Squad may create. Null means unlimited. */
                 maxEntriesPerSquad?: number | null;
-                /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+                /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                 scoring?: {
                     /** @enum {string} */
                     participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
-                    config: Record<string, never>;
+                    /** @description Golf to-par total settings: what an unplayed round scores against par. */
+                    config: {
+                        /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
+                        unplayedRoundToPar: number;
+                    };
                 } | {
                     /** @enum {string} */
                     participantScoringDefinitionId: "FINISH_POSITION_POINTS";
@@ -8722,11 +8926,15 @@ export interface components {
                 againstTheSpread: boolean;
                 /** @description Maximum entries a Squad may create. Null means unlimited. */
                 maxEntriesPerSquad?: number | null;
-                /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+                /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                 scoring?: {
                     /** @enum {string} */
                     participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
-                    config: Record<string, never>;
+                    /** @description Golf to-par total settings: what an unplayed round scores against par. */
+                    config: {
+                        /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
+                        unplayedRoundToPar: number;
+                    };
                 } | {
                     /** @enum {string} */
                     participantScoringDefinitionId: "FINISH_POSITION_POINTS";
@@ -8763,11 +8971,15 @@ export interface components {
                 maxSquaresPerEntry: number;
                 /** @description Maximum entries a Squad may create. Null means unlimited. */
                 maxEntriesPerSquad?: number | null;
-                /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+                /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                 scoring?: {
                     /** @enum {string} */
                     participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
-                    config: Record<string, never>;
+                    /** @description Golf to-par total settings: what an unplayed round scores against par. */
+                    config: {
+                        /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
+                        unplayedRoundToPar: number;
+                    };
                 } | {
                     /** @enum {string} */
                     participantScoringDefinitionId: "FINISH_POSITION_POINTS";
@@ -8806,11 +9018,15 @@ export interface components {
                 reuseTeamsOnceAllUsed?: boolean;
                 /** @description Maximum entries a Squad may create. Null means unlimited. */
                 maxEntriesPerSquad?: number | null;
-                /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+                /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                 scoring?: {
                     /** @enum {string} */
                     participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
-                    config: Record<string, never>;
+                    /** @description Golf to-par total settings: what an unplayed round scores against par. */
+                    config: {
+                        /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
+                        unplayedRoundToPar: number;
+                    };
                 } | {
                     /** @enum {string} */
                     participantScoringDefinitionId: "FINISH_POSITION_POINTS";
@@ -8845,11 +9061,15 @@ export interface components {
                 selectionType: "BRACKET";
                 /** @description Maximum entries a Squad may create. Null means unlimited. */
                 maxEntriesPerSquad?: number | null;
-                /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+                /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                 scoring?: {
                     /** @enum {string} */
                     participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
-                    config: Record<string, never>;
+                    /** @description Golf to-par total settings: what an unplayed round scores against par. */
+                    config: {
+                        /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
+                        unplayedRoundToPar: number;
+                    };
                 } | {
                     /** @enum {string} */
                     participantScoringDefinitionId: "FINISH_POSITION_POINTS";
@@ -8979,11 +9199,15 @@ export interface components {
                     countedScores: number;
                     /** @description Maximum entries a Squad may create. Null means unlimited. */
                     maxEntriesPerSquad?: number | null;
-                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                     scoring?: {
                         /** @enum {string} */
                         participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
-                        config: Record<string, never>;
+                        /** @description Golf to-par total settings: what an unplayed round scores against par. */
+                        config: {
+                            /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
+                            unplayedRoundToPar: number;
+                        };
                     } | {
                         /** @enum {string} */
                         participantScoringDefinitionId: "FINISH_POSITION_POINTS";
@@ -9022,11 +9246,15 @@ export interface components {
                     countedScores: number;
                     /** @description Maximum entries a Squad may create. Null means unlimited. */
                     maxEntriesPerSquad?: number | null;
-                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                     scoring?: {
                         /** @enum {string} */
                         participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
-                        config: Record<string, never>;
+                        /** @description Golf to-par total settings: what an unplayed round scores against par. */
+                        config: {
+                            /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
+                            unplayedRoundToPar: number;
+                        };
                     } | {
                         /** @enum {string} */
                         participantScoringDefinitionId: "FINISH_POSITION_POINTS";
@@ -9065,11 +9293,15 @@ export interface components {
                     countedScores: number;
                     /** @description Maximum entries a Squad may create. Null means unlimited. */
                     maxEntriesPerSquad?: number | null;
-                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                     scoring?: {
                         /** @enum {string} */
                         participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
-                        config: Record<string, never>;
+                        /** @description Golf to-par total settings: what an unplayed round scores against par. */
+                        config: {
+                            /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
+                            unplayedRoundToPar: number;
+                        };
                     } | {
                         /** @enum {string} */
                         participantScoringDefinitionId: "FINISH_POSITION_POINTS";
@@ -9111,11 +9343,15 @@ export interface components {
                     againstTheSpread: boolean;
                     /** @description Maximum entries a Squad may create. Null means unlimited. */
                     maxEntriesPerSquad?: number | null;
-                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                     scoring?: {
                         /** @enum {string} */
                         participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
-                        config: Record<string, never>;
+                        /** @description Golf to-par total settings: what an unplayed round scores against par. */
+                        config: {
+                            /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
+                            unplayedRoundToPar: number;
+                        };
                     } | {
                         /** @enum {string} */
                         participantScoringDefinitionId: "FINISH_POSITION_POINTS";
@@ -9152,11 +9388,15 @@ export interface components {
                     maxSquaresPerEntry: number;
                     /** @description Maximum entries a Squad may create. Null means unlimited. */
                     maxEntriesPerSquad?: number | null;
-                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                     scoring?: {
                         /** @enum {string} */
                         participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
-                        config: Record<string, never>;
+                        /** @description Golf to-par total settings: what an unplayed round scores against par. */
+                        config: {
+                            /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
+                            unplayedRoundToPar: number;
+                        };
                     } | {
                         /** @enum {string} */
                         participantScoringDefinitionId: "FINISH_POSITION_POINTS";
@@ -9195,11 +9435,15 @@ export interface components {
                     reuseTeamsOnceAllUsed?: boolean;
                     /** @description Maximum entries a Squad may create. Null means unlimited. */
                     maxEntriesPerSquad?: number | null;
-                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                     scoring?: {
                         /** @enum {string} */
                         participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
-                        config: Record<string, never>;
+                        /** @description Golf to-par total settings: what an unplayed round scores against par. */
+                        config: {
+                            /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
+                            unplayedRoundToPar: number;
+                        };
                     } | {
                         /** @enum {string} */
                         participantScoringDefinitionId: "FINISH_POSITION_POINTS";
@@ -9234,11 +9478,15 @@ export interface components {
                     selectionType: "BRACKET";
                     /** @description Maximum entries a Squad may create. Null means unlimited. */
                     maxEntriesPerSquad?: number | null;
-                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                     scoring?: {
                         /** @enum {string} */
                         participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
-                        config: Record<string, never>;
+                        /** @description Golf to-par total settings: what an unplayed round scores against par. */
+                        config: {
+                            /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
+                            unplayedRoundToPar: number;
+                        };
                     } | {
                         /** @enum {string} */
                         participantScoringDefinitionId: "FINISH_POSITION_POINTS";
@@ -12246,6 +12494,8 @@ export interface components {
             awardsTrophy: boolean;
             /** @description Whether a squares pool can be played on its games. */
             squaresEligible: boolean;
+            /** @description Whether its games are played at a neutral site, neither side at home (a Super Bowl, a bowl game). Each game of the slot takes it, and screens then say "vs" rather than "at". */
+            isNeutralSite: boolean;
             /** @enum {string} */
             seriesFormat: "SINGLE_GAME" | "BEST_OF" | "AGGREGATE";
             /** @description Games in one meeting: 1 for SINGLE_GAME, the series length for BEST_OF, the legs for AGGREGATE. */
@@ -12308,6 +12558,8 @@ export interface components {
                 awardsTrophy: boolean;
                 /** @description Whether a squares pool can be played on its games. */
                 squaresEligible: boolean;
+                /** @description Whether its games are played at a neutral site, neither side at home (a Super Bowl, a bowl game). Each game of the slot takes it, and screens then say "vs" rather than "at". */
+                isNeutralSite: boolean;
                 /** @enum {string} */
                 seriesFormat: "SINGLE_GAME" | "BEST_OF" | "AGGREGATE";
                 /** @description Games in one meeting: 1 for SINGLE_GAME, the series length for BEST_OF, the legs for AGGREGATE. */
@@ -12379,6 +12631,8 @@ export interface components {
                     awardsTrophy: boolean;
                     /** @description Whether a squares pool can be played on its games. */
                     squaresEligible: boolean;
+                    /** @description Whether its games are played at a neutral site, neither side at home (a Super Bowl, a bowl game). Each game of the slot takes it, and screens then say "vs" rather than "at". */
+                    isNeutralSite: boolean;
                     /** @enum {string} */
                     seriesFormat: "SINGLE_GAME" | "BEST_OF" | "AGGREGATE";
                     /** @description Games in one meeting: 1 for SINGLE_GAME, the series length for BEST_OF, the legs for AGGREGATE. */
@@ -12453,6 +12707,8 @@ export interface components {
                         awardsTrophy: boolean;
                         /** @description Whether a squares pool can be played on its games. */
                         squaresEligible: boolean;
+                        /** @description Whether its games are played at a neutral site, neither side at home (a Super Bowl, a bowl game). Each game of the slot takes it, and screens then say "vs" rather than "at". */
+                        isNeutralSite: boolean;
                         /** @enum {string} */
                         seriesFormat: "SINGLE_GAME" | "BEST_OF" | "AGGREGATE";
                         /** @description Games in one meeting: 1 for SINGLE_GAME, the series length for BEST_OF, the legs for AGGREGATE. */
@@ -15096,8 +15352,6 @@ export interface components {
             golf: {
                 eventScoreToPar: number;
                 eventStrokes: number;
-                /** @description Holes completed in the current round. */
-                currentRoundThru: number | null;
             } | null;
         };
         /** @description A field row's part in one round. */
@@ -15108,10 +15362,12 @@ export interface components {
             sportEventRoundId: string;
             roundNumber: number;
             /**
-             * @description Progress through the round.
-             * @enum {string}
+             * @description How the participant's part in the round ended, as the round's Game records it; null while they are still playing it. A missed cut is not a round status: it is the standing's ELIMINATED.
+             * @enum {string|null}
              */
-            status: "IN_PROGRESS" | "COMPLETED" | "DNF" | "DSQ" | "MISSED_CUT";
+            status: "FINISHED" | "DID_NOT_FINISH" | "DISQUALIFIED" | "DID_NOT_START" | null;
+            /** @description How many of the round's periods the participant has completed (holes, in golf), as the feed reports it; null when it reports none. */
+            periodsCompleted: number | null;
             /**
              * Format: date-time
              * @description ISO 8601 datetime string.
@@ -15121,7 +15377,6 @@ export interface components {
             golf: {
                 strokes: number;
                 scoreToPar: number;
-                thru: number | null;
             } | null;
         };
         /** @description A participant on an event's field, with everything the event records about them. */
@@ -15267,8 +15522,6 @@ export interface components {
                 golf: {
                     eventScoreToPar: number;
                     eventStrokes: number;
-                    /** @description Holes completed in the current round. */
-                    currentRoundThru: number | null;
                 } | null;
             } | null;
             /** @description By round number. */
@@ -15279,10 +15532,12 @@ export interface components {
                 sportEventRoundId: string;
                 roundNumber: number;
                 /**
-                 * @description Progress through the round.
-                 * @enum {string}
+                 * @description How the participant's part in the round ended, as the round's Game records it; null while they are still playing it. A missed cut is not a round status: it is the standing's ELIMINATED.
+                 * @enum {string|null}
                  */
-                status: "IN_PROGRESS" | "COMPLETED" | "DNF" | "DSQ" | "MISSED_CUT";
+                status: "FINISHED" | "DID_NOT_FINISH" | "DISQUALIFIED" | "DID_NOT_START" | null;
+                /** @description How many of the round's periods the participant has completed (holes, in golf), as the feed reports it; null when it reports none. */
+                periodsCompleted: number | null;
                 /**
                  * Format: date-time
                  * @description ISO 8601 datetime string.
@@ -15292,7 +15547,6 @@ export interface components {
                 golf: {
                     strokes: number;
                     scoreToPar: number;
-                    thru: number | null;
                 } | null;
             }[];
             /** @description Present once a race result is entered for a finish-position event (a horse race); null otherwise. */
@@ -15467,8 +15721,6 @@ export interface components {
                     golf: {
                         eventScoreToPar: number;
                         eventStrokes: number;
-                        /** @description Holes completed in the current round. */
-                        currentRoundThru: number | null;
                     } | null;
                 } | null;
                 /** @description By round number. */
@@ -15479,10 +15731,12 @@ export interface components {
                     sportEventRoundId: string;
                     roundNumber: number;
                     /**
-                     * @description Progress through the round.
-                     * @enum {string}
+                     * @description How the participant's part in the round ended, as the round's Game records it; null while they are still playing it. A missed cut is not a round status: it is the standing's ELIMINATED.
+                     * @enum {string|null}
                      */
-                    status: "IN_PROGRESS" | "COMPLETED" | "DNF" | "DSQ" | "MISSED_CUT";
+                    status: "FINISHED" | "DID_NOT_FINISH" | "DISQUALIFIED" | "DID_NOT_START" | null;
+                    /** @description How many of the round's periods the participant has completed (holes, in golf), as the feed reports it; null when it reports none. */
+                    periodsCompleted: number | null;
                     /**
                      * Format: date-time
                      * @description ISO 8601 datetime string.
@@ -15492,7 +15746,6 @@ export interface components {
                     golf: {
                         strokes: number;
                         scoreToPar: number;
-                        thru: number | null;
                     } | null;
                 }[];
                 /** @description Present once a race result is entered for a finish-position event (a horse race); null otherwise. */
@@ -15701,8 +15954,6 @@ export interface components {
                     golf: {
                         eventScoreToPar: number;
                         eventStrokes: number;
-                        /** @description Holes completed in the current round. */
-                        currentRoundThru: number | null;
                     } | null;
                 } | null;
                 /** @description By round number. */
@@ -15713,10 +15964,12 @@ export interface components {
                     sportEventRoundId: string;
                     roundNumber: number;
                     /**
-                     * @description Progress through the round.
-                     * @enum {string}
+                     * @description How the participant's part in the round ended, as the round's Game records it; null while they are still playing it. A missed cut is not a round status: it is the standing's ELIMINATED.
+                     * @enum {string|null}
                      */
-                    status: "IN_PROGRESS" | "COMPLETED" | "DNF" | "DSQ" | "MISSED_CUT";
+                    status: "FINISHED" | "DID_NOT_FINISH" | "DISQUALIFIED" | "DID_NOT_START" | null;
+                    /** @description How many of the round's periods the participant has completed (holes, in golf), as the feed reports it; null when it reports none. */
+                    periodsCompleted: number | null;
                     /**
                      * Format: date-time
                      * @description ISO 8601 datetime string.
@@ -15726,7 +15979,6 @@ export interface components {
                     golf: {
                         strokes: number;
                         scoreToPar: number;
-                        thru: number | null;
                     } | null;
                 }[];
                 /** @description Present once a race result is entered for a finish-position event (a horse race); null otherwise. */
@@ -15788,11 +16040,15 @@ export interface components {
                 countedScores: number;
                 /** @description Maximum entries a Squad may create. Null means unlimited. */
                 maxEntriesPerSquad?: number | null;
-                /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+                /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                 scoring?: {
                     /** @enum {string} */
                     participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
-                    config: Record<string, never>;
+                    /** @description Golf to-par total settings: what an unplayed round scores against par. */
+                    config: {
+                        /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
+                        unplayedRoundToPar: number;
+                    };
                 } | {
                     /** @enum {string} */
                     participantScoringDefinitionId: "FINISH_POSITION_POINTS";
@@ -15831,11 +16087,15 @@ export interface components {
                 countedScores: number;
                 /** @description Maximum entries a Squad may create. Null means unlimited. */
                 maxEntriesPerSquad?: number | null;
-                /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+                /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                 scoring?: {
                     /** @enum {string} */
                     participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
-                    config: Record<string, never>;
+                    /** @description Golf to-par total settings: what an unplayed round scores against par. */
+                    config: {
+                        /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
+                        unplayedRoundToPar: number;
+                    };
                 } | {
                     /** @enum {string} */
                     participantScoringDefinitionId: "FINISH_POSITION_POINTS";
@@ -15874,11 +16134,15 @@ export interface components {
                 countedScores: number;
                 /** @description Maximum entries a Squad may create. Null means unlimited. */
                 maxEntriesPerSquad?: number | null;
-                /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+                /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                 scoring?: {
                     /** @enum {string} */
                     participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
-                    config: Record<string, never>;
+                    /** @description Golf to-par total settings: what an unplayed round scores against par. */
+                    config: {
+                        /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
+                        unplayedRoundToPar: number;
+                    };
                 } | {
                     /** @enum {string} */
                     participantScoringDefinitionId: "FINISH_POSITION_POINTS";
@@ -15920,11 +16184,15 @@ export interface components {
                 againstTheSpread: boolean;
                 /** @description Maximum entries a Squad may create. Null means unlimited. */
                 maxEntriesPerSquad?: number | null;
-                /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+                /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                 scoring?: {
                     /** @enum {string} */
                     participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
-                    config: Record<string, never>;
+                    /** @description Golf to-par total settings: what an unplayed round scores against par. */
+                    config: {
+                        /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
+                        unplayedRoundToPar: number;
+                    };
                 } | {
                     /** @enum {string} */
                     participantScoringDefinitionId: "FINISH_POSITION_POINTS";
@@ -15961,11 +16229,15 @@ export interface components {
                 maxSquaresPerEntry: number;
                 /** @description Maximum entries a Squad may create. Null means unlimited. */
                 maxEntriesPerSquad?: number | null;
-                /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+                /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                 scoring?: {
                     /** @enum {string} */
                     participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
-                    config: Record<string, never>;
+                    /** @description Golf to-par total settings: what an unplayed round scores against par. */
+                    config: {
+                        /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
+                        unplayedRoundToPar: number;
+                    };
                 } | {
                     /** @enum {string} */
                     participantScoringDefinitionId: "FINISH_POSITION_POINTS";
@@ -16004,11 +16276,15 @@ export interface components {
                 reuseTeamsOnceAllUsed?: boolean;
                 /** @description Maximum entries a Squad may create. Null means unlimited. */
                 maxEntriesPerSquad?: number | null;
-                /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+                /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                 scoring?: {
                     /** @enum {string} */
                     participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
-                    config: Record<string, never>;
+                    /** @description Golf to-par total settings: what an unplayed round scores against par. */
+                    config: {
+                        /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
+                        unplayedRoundToPar: number;
+                    };
                 } | {
                     /** @enum {string} */
                     participantScoringDefinitionId: "FINISH_POSITION_POINTS";
@@ -16043,11 +16319,15 @@ export interface components {
                 selectionType: "BRACKET";
                 /** @description Maximum entries a Squad may create. Null means unlimited. */
                 maxEntriesPerSquad?: number | null;
-                /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+                /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                 scoring?: {
                     /** @enum {string} */
                     participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
-                    config: Record<string, never>;
+                    /** @description Golf to-par total settings: what an unplayed round scores against par. */
+                    config: {
+                        /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
+                        unplayedRoundToPar: number;
+                    };
                 } | {
                     /** @enum {string} */
                     participantScoringDefinitionId: "FINISH_POSITION_POINTS";
@@ -16461,9 +16741,9 @@ export interface components {
         ParticipantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL" | "FINISH_POSITION_POINTS" | "KNOCKOUT_ROUND_POINTS";
         /** @description Golf extension of a scored pick: the golfer's contest score and the rounds in it scored as 80 strokes. */
         ScoredContestEntryPickGolfDto: {
-            /** @description The golfer's score in this contest against par: their event total, with every round they did not play scored as 80 strokes (80 minus that round's par). Differs from the event standing's eventScoreToPar only when unplayedRoundNumbers is non-empty. Null while unscored. */
+            /** @description The golfer's score in this contest against par: their event total, with every round they did not play scored as the leaderboard's unplayedRoundToPar. Differs from the event standing's eventScoreToPar only when unplayedRoundNumbers is non-empty. Null while unscored. */
             scoreToPar: number | null;
-            /** @description Rounds scored as 80 strokes because the golfer did not play them: cut, withdrawn, removed from the field, or no score once the field moved past the round. Empty when none. */
+            /** @description Rounds scored as the leaderboard's unplayedRoundToPar because the golfer did not play them: cut, withdrawn, removed from the field, or no score once the field moved past the round. Empty when none. */
             unplayedRoundNumbers: number[];
         };
         /** @description One pick on a contest entry, with whether it counts. */
@@ -16485,9 +16765,9 @@ export interface components {
             isDropped: boolean;
             /** @description Present for a golf contest; null otherwise. */
             golf: {
-                /** @description The golfer's score in this contest against par: their event total, with every round they did not play scored as 80 strokes (80 minus that round's par). Differs from the event standing's eventScoreToPar only when unplayedRoundNumbers is non-empty. Null while unscored. */
+                /** @description The golfer's score in this contest against par: their event total, with every round they did not play scored as the leaderboard's unplayedRoundToPar. Differs from the event standing's eventScoreToPar only when unplayedRoundNumbers is non-empty. Null while unscored. */
                 scoreToPar: number | null;
-                /** @description Rounds scored as 80 strokes because the golfer did not play them: cut, withdrawn, removed from the field, or no score once the field moved past the round. Empty when none. */
+                /** @description Rounds scored as the leaderboard's unplayedRoundToPar because the golfer did not play them: cut, withdrawn, removed from the field, or no score once the field moved past the round. Empty when none. */
                 unplayedRoundNumbers: number[];
             } | null;
             /** @description Present for a finish-position contest (a horse race); null otherwise. */
@@ -16559,9 +16839,9 @@ export interface components {
                 isDropped: boolean;
                 /** @description Present for a golf contest; null otherwise. */
                 golf: {
-                    /** @description The golfer's score in this contest against par: their event total, with every round they did not play scored as 80 strokes (80 minus that round's par). Differs from the event standing's eventScoreToPar only when unplayedRoundNumbers is non-empty. Null while unscored. */
+                    /** @description The golfer's score in this contest against par: their event total, with every round they did not play scored as the leaderboard's unplayedRoundToPar. Differs from the event standing's eventScoreToPar only when unplayedRoundNumbers is non-empty. Null while unscored. */
                     scoreToPar: number | null;
-                    /** @description Rounds scored as 80 strokes because the golfer did not play them: cut, withdrawn, removed from the field, or no score once the field moved past the round. Empty when none. */
+                    /** @description Rounds scored as the leaderboard's unplayedRoundToPar because the golfer did not play them: cut, withdrawn, removed from the field, or no score once the field moved past the round. Empty when none. */
                     unplayedRoundNumbers: number[];
                 } | null;
                 /** @description Present for a finish-position contest (a horse race); null otherwise. */
@@ -16634,6 +16914,15 @@ export interface components {
             };
             /** @description Whether the contest scores an upset bonus (#1748): a knockout contest whose bonus rule is on, so a client shows each pick's bonus in its own column even before any team has earned one. False for every other contest. */
             upsetBonus: boolean;
+            /** @description What each round a golfer did not play adds to their contest score, in strokes over par: the contest's setting, so a client states it in its footnote and shows an unplayed round as this to-par. Null for a contest not scored by golf's to-par total. */
+            unplayedRoundToPar: number | null;
+            /** @description The round the shown event's field is on, for the leaderboard header. Null before a single round is scored, and for an event scored by match or by finish, which has no rounds. */
+            currentRound: {
+                /** @description The round the shown event's field is on: the highest round any participant is still playing, else the highest any has finished. */
+                roundNumber: number;
+                /** @description Whether that round has finished: no participant is still playing it. */
+                isComplete: boolean;
+            } | null;
             /** @description The shown event's field, as the event publishes it: in seed order, unseeded last. Picks point into it by sportEventParticipantId. */
             participants: {
                 /**
@@ -16777,8 +17066,6 @@ export interface components {
                     golf: {
                         eventScoreToPar: number;
                         eventStrokes: number;
-                        /** @description Holes completed in the current round. */
-                        currentRoundThru: number | null;
                     } | null;
                 } | null;
                 /** @description By round number. */
@@ -16789,10 +17076,12 @@ export interface components {
                     sportEventRoundId: string;
                     roundNumber: number;
                     /**
-                     * @description Progress through the round.
-                     * @enum {string}
+                     * @description How the participant's part in the round ended, as the round's Game records it; null while they are still playing it. A missed cut is not a round status: it is the standing's ELIMINATED.
+                     * @enum {string|null}
                      */
-                    status: "IN_PROGRESS" | "COMPLETED" | "DNF" | "DSQ" | "MISSED_CUT";
+                    status: "FINISHED" | "DID_NOT_FINISH" | "DISQUALIFIED" | "DID_NOT_START" | null;
+                    /** @description How many of the round's periods the participant has completed (holes, in golf), as the feed reports it; null when it reports none. */
+                    periodsCompleted: number | null;
                     /**
                      * Format: date-time
                      * @description ISO 8601 datetime string.
@@ -16802,7 +17091,6 @@ export interface components {
                     golf: {
                         strokes: number;
                         scoreToPar: number;
-                        thru: number | null;
                     } | null;
                 }[];
                 /** @description Present once a race result is entered for a finish-position event (a horse race); null otherwise. */
@@ -16884,9 +17172,9 @@ export interface components {
                     isDropped: boolean;
                     /** @description Present for a golf contest; null otherwise. */
                     golf: {
-                        /** @description The golfer's score in this contest against par: their event total, with every round they did not play scored as 80 strokes (80 minus that round's par). Differs from the event standing's eventScoreToPar only when unplayedRoundNumbers is non-empty. Null while unscored. */
+                        /** @description The golfer's score in this contest against par: their event total, with every round they did not play scored as the leaderboard's unplayedRoundToPar. Differs from the event standing's eventScoreToPar only when unplayedRoundNumbers is non-empty. Null while unscored. */
                         scoreToPar: number | null;
-                        /** @description Rounds scored as 80 strokes because the golfer did not play them: cut, withdrawn, removed from the field, or no score once the field moved past the round. Empty when none. */
+                        /** @description Rounds scored as the leaderboard's unplayedRoundToPar because the golfer did not play them: cut, withdrawn, removed from the field, or no score once the field moved past the round. Empty when none. */
                         unplayedRoundNumbers: number[];
                     } | null;
                     /** @description Present for a finish-position contest (a horse race); null otherwise. */
@@ -18668,68 +18956,134 @@ export interface components {
             value: {
                 /** @description The EVENTS sync: how often each synced sport league's events sync is queued. */
                 EVENTS: {
-                    /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
-                    intervalMinutes?: number;
-                    /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
-                    intervalSeconds?: number;
-                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
-                    lookaheadDays?: number;
-                    /** @description Whether the feed should be scheduled automatically. */
+                    /** @description Whether the sync is scheduled automatically. */
                     enabled: boolean;
+                    /** @description A sync kind's interval for each Season state. */
+                    intervals: {
+                        /** @description How often the sync runs for a league in season. */
+                        IN_SEASON: {
+                            /** @description How often the sync runs, in minutes. */
+                            intervalMinutes?: number;
+                            /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                            intervalSeconds?: number;
+                        };
+                        /** @description How often the sync runs for a league off season. */
+                        OFFSEASON: {
+                            /** @description How often the sync runs, in minutes. */
+                            intervalMinutes?: number;
+                            /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                            intervalSeconds?: number;
+                        };
+                    };
                 };
-                /** @description The FIELD sync: event participants and event-scoped odds before the field locks, for synced sport leagues. It has no switch. Candidate events must be field-available and not field-locked. */
+                /** @description The FIELD sync: the field and event-scoped odds of each event in a synced sport league's next slot. It has no switch. */
                 FIELD: {
-                    /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
-                    intervalMinutes?: number;
-                    /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
-                    intervalSeconds?: number;
-                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
-                    lookaheadDays?: number;
+                    /** @description A sync kind's interval for each Season state. */
+                    intervals: {
+                        /** @description How often the sync runs for a league in season. */
+                        IN_SEASON: {
+                            /** @description How often the sync runs, in minutes. */
+                            intervalMinutes?: number;
+                            /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                            intervalSeconds?: number;
+                        };
+                        /** @description How often the sync runs for a league off season. */
+                        OFFSEASON: {
+                            /** @description How often the sync runs, in minutes. */
+                            intervalMinutes?: number;
+                            /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                            intervalSeconds?: number;
+                        };
+                    };
                 };
-                /** @description The SCORES sync: live score polling. */
+                /** @description The SCORES sync: live score polling for each event with a Game due or in play. */
                 SCORES: {
-                    /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
-                    intervalMinutes?: number;
-                    /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
-                    intervalSeconds?: number;
-                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
-                    lookaheadDays?: number;
-                    /** @description Whether the feed should be scheduled automatically. */
+                    /** @description Whether the sync is scheduled automatically. */
                     enabled: boolean;
+                    /** @description A sync kind's interval for each Season state. */
+                    intervals: {
+                        /** @description How often the sync runs for a league in season. */
+                        IN_SEASON: {
+                            /** @description How often the sync runs, in minutes. */
+                            intervalMinutes?: number;
+                            /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                            intervalSeconds?: number;
+                        };
+                        /** @description How often the sync runs for a league off season. */
+                        OFFSEASON: {
+                            /** @description How often the sync runs, in minutes. */
+                            intervalMinutes?: number;
+                            /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                            intervalSeconds?: number;
+                        };
+                    };
                 };
             };
             /** @description The value a reset would store. */
             defaults: {
                 /** @description The EVENTS sync: how often each synced sport league's events sync is queued. */
                 EVENTS: {
-                    /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
-                    intervalMinutes?: number;
-                    /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
-                    intervalSeconds?: number;
-                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
-                    lookaheadDays?: number;
-                    /** @description Whether the feed should be scheduled automatically. */
+                    /** @description Whether the sync is scheduled automatically. */
                     enabled: boolean;
+                    /** @description A sync kind's interval for each Season state. */
+                    intervals: {
+                        /** @description How often the sync runs for a league in season. */
+                        IN_SEASON: {
+                            /** @description How often the sync runs, in minutes. */
+                            intervalMinutes?: number;
+                            /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                            intervalSeconds?: number;
+                        };
+                        /** @description How often the sync runs for a league off season. */
+                        OFFSEASON: {
+                            /** @description How often the sync runs, in minutes. */
+                            intervalMinutes?: number;
+                            /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                            intervalSeconds?: number;
+                        };
+                    };
                 };
-                /** @description The FIELD sync: event participants and event-scoped odds before the field locks, for synced sport leagues. It has no switch. Candidate events must be field-available and not field-locked. */
+                /** @description The FIELD sync: the field and event-scoped odds of each event in a synced sport league's next slot. It has no switch. */
                 FIELD: {
-                    /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
-                    intervalMinutes?: number;
-                    /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
-                    intervalSeconds?: number;
-                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
-                    lookaheadDays?: number;
+                    /** @description A sync kind's interval for each Season state. */
+                    intervals: {
+                        /** @description How often the sync runs for a league in season. */
+                        IN_SEASON: {
+                            /** @description How often the sync runs, in minutes. */
+                            intervalMinutes?: number;
+                            /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                            intervalSeconds?: number;
+                        };
+                        /** @description How often the sync runs for a league off season. */
+                        OFFSEASON: {
+                            /** @description How often the sync runs, in minutes. */
+                            intervalMinutes?: number;
+                            /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                            intervalSeconds?: number;
+                        };
+                    };
                 };
-                /** @description The SCORES sync: live score polling. */
+                /** @description The SCORES sync: live score polling for each event with a Game due or in play. */
                 SCORES: {
-                    /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
-                    intervalMinutes?: number;
-                    /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
-                    intervalSeconds?: number;
-                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
-                    lookaheadDays?: number;
-                    /** @description Whether the feed should be scheduled automatically. */
+                    /** @description Whether the sync is scheduled automatically. */
                     enabled: boolean;
+                    /** @description A sync kind's interval for each Season state. */
+                    intervals: {
+                        /** @description How often the sync runs for a league in season. */
+                        IN_SEASON: {
+                            /** @description How often the sync runs, in minutes. */
+                            intervalMinutes?: number;
+                            /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                            intervalSeconds?: number;
+                        };
+                        /** @description How often the sync runs for a league off season. */
+                        OFFSEASON: {
+                            /** @description How often the sync runs, in minutes. */
+                            intervalMinutes?: number;
+                            /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                            intervalSeconds?: number;
+                        };
+                    };
                 };
             };
         } | {
@@ -19364,68 +19718,134 @@ export interface components {
                 value: {
                     /** @description The EVENTS sync: how often each synced sport league's events sync is queued. */
                     EVENTS: {
-                        /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
-                        intervalMinutes?: number;
-                        /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
-                        intervalSeconds?: number;
-                        /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
-                        lookaheadDays?: number;
-                        /** @description Whether the feed should be scheduled automatically. */
+                        /** @description Whether the sync is scheduled automatically. */
                         enabled: boolean;
+                        /** @description A sync kind's interval for each Season state. */
+                        intervals: {
+                            /** @description How often the sync runs for a league in season. */
+                            IN_SEASON: {
+                                /** @description How often the sync runs, in minutes. */
+                                intervalMinutes?: number;
+                                /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                                intervalSeconds?: number;
+                            };
+                            /** @description How often the sync runs for a league off season. */
+                            OFFSEASON: {
+                                /** @description How often the sync runs, in minutes. */
+                                intervalMinutes?: number;
+                                /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                                intervalSeconds?: number;
+                            };
+                        };
                     };
-                    /** @description The FIELD sync: event participants and event-scoped odds before the field locks, for synced sport leagues. It has no switch. Candidate events must be field-available and not field-locked. */
+                    /** @description The FIELD sync: the field and event-scoped odds of each event in a synced sport league's next slot. It has no switch. */
                     FIELD: {
-                        /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
-                        intervalMinutes?: number;
-                        /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
-                        intervalSeconds?: number;
-                        /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
-                        lookaheadDays?: number;
+                        /** @description A sync kind's interval for each Season state. */
+                        intervals: {
+                            /** @description How often the sync runs for a league in season. */
+                            IN_SEASON: {
+                                /** @description How often the sync runs, in minutes. */
+                                intervalMinutes?: number;
+                                /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                                intervalSeconds?: number;
+                            };
+                            /** @description How often the sync runs for a league off season. */
+                            OFFSEASON: {
+                                /** @description How often the sync runs, in minutes. */
+                                intervalMinutes?: number;
+                                /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                                intervalSeconds?: number;
+                            };
+                        };
                     };
-                    /** @description The SCORES sync: live score polling. */
+                    /** @description The SCORES sync: live score polling for each event with a Game due or in play. */
                     SCORES: {
-                        /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
-                        intervalMinutes?: number;
-                        /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
-                        intervalSeconds?: number;
-                        /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
-                        lookaheadDays?: number;
-                        /** @description Whether the feed should be scheduled automatically. */
+                        /** @description Whether the sync is scheduled automatically. */
                         enabled: boolean;
+                        /** @description A sync kind's interval for each Season state. */
+                        intervals: {
+                            /** @description How often the sync runs for a league in season. */
+                            IN_SEASON: {
+                                /** @description How often the sync runs, in minutes. */
+                                intervalMinutes?: number;
+                                /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                                intervalSeconds?: number;
+                            };
+                            /** @description How often the sync runs for a league off season. */
+                            OFFSEASON: {
+                                /** @description How often the sync runs, in minutes. */
+                                intervalMinutes?: number;
+                                /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                                intervalSeconds?: number;
+                            };
+                        };
                     };
                 };
                 /** @description The value a reset would store. */
                 defaults: {
                     /** @description The EVENTS sync: how often each synced sport league's events sync is queued. */
                     EVENTS: {
-                        /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
-                        intervalMinutes?: number;
-                        /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
-                        intervalSeconds?: number;
-                        /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
-                        lookaheadDays?: number;
-                        /** @description Whether the feed should be scheduled automatically. */
+                        /** @description Whether the sync is scheduled automatically. */
                         enabled: boolean;
+                        /** @description A sync kind's interval for each Season state. */
+                        intervals: {
+                            /** @description How often the sync runs for a league in season. */
+                            IN_SEASON: {
+                                /** @description How often the sync runs, in minutes. */
+                                intervalMinutes?: number;
+                                /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                                intervalSeconds?: number;
+                            };
+                            /** @description How often the sync runs for a league off season. */
+                            OFFSEASON: {
+                                /** @description How often the sync runs, in minutes. */
+                                intervalMinutes?: number;
+                                /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                                intervalSeconds?: number;
+                            };
+                        };
                     };
-                    /** @description The FIELD sync: event participants and event-scoped odds before the field locks, for synced sport leagues. It has no switch. Candidate events must be field-available and not field-locked. */
+                    /** @description The FIELD sync: the field and event-scoped odds of each event in a synced sport league's next slot. It has no switch. */
                     FIELD: {
-                        /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
-                        intervalMinutes?: number;
-                        /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
-                        intervalSeconds?: number;
-                        /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
-                        lookaheadDays?: number;
+                        /** @description A sync kind's interval for each Season state. */
+                        intervals: {
+                            /** @description How often the sync runs for a league in season. */
+                            IN_SEASON: {
+                                /** @description How often the sync runs, in minutes. */
+                                intervalMinutes?: number;
+                                /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                                intervalSeconds?: number;
+                            };
+                            /** @description How often the sync runs for a league off season. */
+                            OFFSEASON: {
+                                /** @description How often the sync runs, in minutes. */
+                                intervalMinutes?: number;
+                                /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                                intervalSeconds?: number;
+                            };
+                        };
                     };
-                    /** @description The SCORES sync: live score polling. */
+                    /** @description The SCORES sync: live score polling for each event with a Game due or in play. */
                     SCORES: {
-                        /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
-                        intervalMinutes?: number;
-                        /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
-                        intervalSeconds?: number;
-                        /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
-                        lookaheadDays?: number;
-                        /** @description Whether the feed should be scheduled automatically. */
+                        /** @description Whether the sync is scheduled automatically. */
                         enabled: boolean;
+                        /** @description A sync kind's interval for each Season state. */
+                        intervals: {
+                            /** @description How often the sync runs for a league in season. */
+                            IN_SEASON: {
+                                /** @description How often the sync runs, in minutes. */
+                                intervalMinutes?: number;
+                                /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                                intervalSeconds?: number;
+                            };
+                            /** @description How often the sync runs for a league off season. */
+                            OFFSEASON: {
+                                /** @description How often the sync runs, in minutes. */
+                                intervalMinutes?: number;
+                                /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                                intervalSeconds?: number;
+                            };
+                        };
                     };
                 };
             } | {
@@ -20035,34 +20455,67 @@ export interface components {
             value: {
                 /** @description The EVENTS sync: how often each synced sport league's events sync is queued. */
                 EVENTS: {
-                    /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
-                    intervalMinutes?: number;
-                    /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
-                    intervalSeconds?: number;
-                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
-                    lookaheadDays?: number;
-                    /** @description Whether the feed should be scheduled automatically. */
+                    /** @description Whether the sync is scheduled automatically. */
                     enabled: boolean;
+                    /** @description A sync kind's interval for each Season state. */
+                    intervals: {
+                        /** @description How often the sync runs for a league in season. */
+                        IN_SEASON: {
+                            /** @description How often the sync runs, in minutes. */
+                            intervalMinutes?: number;
+                            /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                            intervalSeconds?: number;
+                        };
+                        /** @description How often the sync runs for a league off season. */
+                        OFFSEASON: {
+                            /** @description How often the sync runs, in minutes. */
+                            intervalMinutes?: number;
+                            /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                            intervalSeconds?: number;
+                        };
+                    };
                 };
-                /** @description The FIELD sync: event participants and event-scoped odds before the field locks, for synced sport leagues. It has no switch. Candidate events must be field-available and not field-locked. */
+                /** @description The FIELD sync: the field and event-scoped odds of each event in a synced sport league's next slot. It has no switch. */
                 FIELD: {
-                    /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
-                    intervalMinutes?: number;
-                    /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
-                    intervalSeconds?: number;
-                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
-                    lookaheadDays?: number;
+                    /** @description A sync kind's interval for each Season state. */
+                    intervals: {
+                        /** @description How often the sync runs for a league in season. */
+                        IN_SEASON: {
+                            /** @description How often the sync runs, in minutes. */
+                            intervalMinutes?: number;
+                            /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                            intervalSeconds?: number;
+                        };
+                        /** @description How often the sync runs for a league off season. */
+                        OFFSEASON: {
+                            /** @description How often the sync runs, in minutes. */
+                            intervalMinutes?: number;
+                            /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                            intervalSeconds?: number;
+                        };
+                    };
                 };
-                /** @description The SCORES sync: live score polling. */
+                /** @description The SCORES sync: live score polling for each event with a Game due or in play. */
                 SCORES: {
-                    /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
-                    intervalMinutes?: number;
-                    /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
-                    intervalSeconds?: number;
-                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
-                    lookaheadDays?: number;
-                    /** @description Whether the feed should be scheduled automatically. */
+                    /** @description Whether the sync is scheduled automatically. */
                     enabled: boolean;
+                    /** @description A sync kind's interval for each Season state. */
+                    intervals: {
+                        /** @description How often the sync runs for a league in season. */
+                        IN_SEASON: {
+                            /** @description How often the sync runs, in minutes. */
+                            intervalMinutes?: number;
+                            /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                            intervalSeconds?: number;
+                        };
+                        /** @description How often the sync runs for a league off season. */
+                        OFFSEASON: {
+                            /** @description How often the sync runs, in minutes. */
+                            intervalMinutes?: number;
+                            /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                            intervalSeconds?: number;
+                        };
+                    };
                 };
             };
             /**
@@ -20378,68 +20831,134 @@ export interface components {
             previousValue: {
                 /** @description The EVENTS sync: how often each synced sport league's events sync is queued. */
                 EVENTS: {
-                    /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
-                    intervalMinutes?: number;
-                    /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
-                    intervalSeconds?: number;
-                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
-                    lookaheadDays?: number;
-                    /** @description Whether the feed should be scheduled automatically. */
+                    /** @description Whether the sync is scheduled automatically. */
                     enabled: boolean;
+                    /** @description A sync kind's interval for each Season state. */
+                    intervals: {
+                        /** @description How often the sync runs for a league in season. */
+                        IN_SEASON: {
+                            /** @description How often the sync runs, in minutes. */
+                            intervalMinutes?: number;
+                            /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                            intervalSeconds?: number;
+                        };
+                        /** @description How often the sync runs for a league off season. */
+                        OFFSEASON: {
+                            /** @description How often the sync runs, in minutes. */
+                            intervalMinutes?: number;
+                            /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                            intervalSeconds?: number;
+                        };
+                    };
                 };
-                /** @description The FIELD sync: event participants and event-scoped odds before the field locks, for synced sport leagues. It has no switch. Candidate events must be field-available and not field-locked. */
+                /** @description The FIELD sync: the field and event-scoped odds of each event in a synced sport league's next slot. It has no switch. */
                 FIELD: {
-                    /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
-                    intervalMinutes?: number;
-                    /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
-                    intervalSeconds?: number;
-                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
-                    lookaheadDays?: number;
+                    /** @description A sync kind's interval for each Season state. */
+                    intervals: {
+                        /** @description How often the sync runs for a league in season. */
+                        IN_SEASON: {
+                            /** @description How often the sync runs, in minutes. */
+                            intervalMinutes?: number;
+                            /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                            intervalSeconds?: number;
+                        };
+                        /** @description How often the sync runs for a league off season. */
+                        OFFSEASON: {
+                            /** @description How often the sync runs, in minutes. */
+                            intervalMinutes?: number;
+                            /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                            intervalSeconds?: number;
+                        };
+                    };
                 };
-                /** @description The SCORES sync: live score polling. */
+                /** @description The SCORES sync: live score polling for each event with a Game due or in play. */
                 SCORES: {
-                    /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
-                    intervalMinutes?: number;
-                    /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
-                    intervalSeconds?: number;
-                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
-                    lookaheadDays?: number;
-                    /** @description Whether the feed should be scheduled automatically. */
+                    /** @description Whether the sync is scheduled automatically. */
                     enabled: boolean;
+                    /** @description A sync kind's interval for each Season state. */
+                    intervals: {
+                        /** @description How often the sync runs for a league in season. */
+                        IN_SEASON: {
+                            /** @description How often the sync runs, in minutes. */
+                            intervalMinutes?: number;
+                            /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                            intervalSeconds?: number;
+                        };
+                        /** @description How often the sync runs for a league off season. */
+                        OFFSEASON: {
+                            /** @description How often the sync runs, in minutes. */
+                            intervalMinutes?: number;
+                            /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                            intervalSeconds?: number;
+                        };
+                    };
                 };
             } | null;
             /** @description The value the save stored. */
             newValue: {
                 /** @description The EVENTS sync: how often each synced sport league's events sync is queued. */
                 EVENTS: {
-                    /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
-                    intervalMinutes?: number;
-                    /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
-                    intervalSeconds?: number;
-                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
-                    lookaheadDays?: number;
-                    /** @description Whether the feed should be scheduled automatically. */
+                    /** @description Whether the sync is scheduled automatically. */
                     enabled: boolean;
+                    /** @description A sync kind's interval for each Season state. */
+                    intervals: {
+                        /** @description How often the sync runs for a league in season. */
+                        IN_SEASON: {
+                            /** @description How often the sync runs, in minutes. */
+                            intervalMinutes?: number;
+                            /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                            intervalSeconds?: number;
+                        };
+                        /** @description How often the sync runs for a league off season. */
+                        OFFSEASON: {
+                            /** @description How often the sync runs, in minutes. */
+                            intervalMinutes?: number;
+                            /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                            intervalSeconds?: number;
+                        };
+                    };
                 };
-                /** @description The FIELD sync: event participants and event-scoped odds before the field locks, for synced sport leagues. It has no switch. Candidate events must be field-available and not field-locked. */
+                /** @description The FIELD sync: the field and event-scoped odds of each event in a synced sport league's next slot. It has no switch. */
                 FIELD: {
-                    /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
-                    intervalMinutes?: number;
-                    /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
-                    intervalSeconds?: number;
-                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
-                    lookaheadDays?: number;
+                    /** @description A sync kind's interval for each Season state. */
+                    intervals: {
+                        /** @description How often the sync runs for a league in season. */
+                        IN_SEASON: {
+                            /** @description How often the sync runs, in minutes. */
+                            intervalMinutes?: number;
+                            /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                            intervalSeconds?: number;
+                        };
+                        /** @description How often the sync runs for a league off season. */
+                        OFFSEASON: {
+                            /** @description How often the sync runs, in minutes. */
+                            intervalMinutes?: number;
+                            /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                            intervalSeconds?: number;
+                        };
+                    };
                 };
-                /** @description The SCORES sync: live score polling. */
+                /** @description The SCORES sync: live score polling for each event with a Game due or in play. */
                 SCORES: {
-                    /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
-                    intervalMinutes?: number;
-                    /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
-                    intervalSeconds?: number;
-                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
-                    lookaheadDays?: number;
-                    /** @description Whether the feed should be scheduled automatically. */
+                    /** @description Whether the sync is scheduled automatically. */
                     enabled: boolean;
+                    /** @description A sync kind's interval for each Season state. */
+                    intervals: {
+                        /** @description How often the sync runs for a league in season. */
+                        IN_SEASON: {
+                            /** @description How often the sync runs, in minutes. */
+                            intervalMinutes?: number;
+                            /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                            intervalSeconds?: number;
+                        };
+                        /** @description How often the sync runs for a league off season. */
+                        OFFSEASON: {
+                            /** @description How often the sync runs, in minutes. */
+                            intervalMinutes?: number;
+                            /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                            intervalSeconds?: number;
+                        };
+                    };
                 };
             };
         } | {
@@ -21046,68 +21565,134 @@ export interface components {
                 previousValue: {
                     /** @description The EVENTS sync: how often each synced sport league's events sync is queued. */
                     EVENTS: {
-                        /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
-                        intervalMinutes?: number;
-                        /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
-                        intervalSeconds?: number;
-                        /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
-                        lookaheadDays?: number;
-                        /** @description Whether the feed should be scheduled automatically. */
+                        /** @description Whether the sync is scheduled automatically. */
                         enabled: boolean;
+                        /** @description A sync kind's interval for each Season state. */
+                        intervals: {
+                            /** @description How often the sync runs for a league in season. */
+                            IN_SEASON: {
+                                /** @description How often the sync runs, in minutes. */
+                                intervalMinutes?: number;
+                                /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                                intervalSeconds?: number;
+                            };
+                            /** @description How often the sync runs for a league off season. */
+                            OFFSEASON: {
+                                /** @description How often the sync runs, in minutes. */
+                                intervalMinutes?: number;
+                                /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                                intervalSeconds?: number;
+                            };
+                        };
                     };
-                    /** @description The FIELD sync: event participants and event-scoped odds before the field locks, for synced sport leagues. It has no switch. Candidate events must be field-available and not field-locked. */
+                    /** @description The FIELD sync: the field and event-scoped odds of each event in a synced sport league's next slot. It has no switch. */
                     FIELD: {
-                        /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
-                        intervalMinutes?: number;
-                        /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
-                        intervalSeconds?: number;
-                        /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
-                        lookaheadDays?: number;
+                        /** @description A sync kind's interval for each Season state. */
+                        intervals: {
+                            /** @description How often the sync runs for a league in season. */
+                            IN_SEASON: {
+                                /** @description How often the sync runs, in minutes. */
+                                intervalMinutes?: number;
+                                /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                                intervalSeconds?: number;
+                            };
+                            /** @description How often the sync runs for a league off season. */
+                            OFFSEASON: {
+                                /** @description How often the sync runs, in minutes. */
+                                intervalMinutes?: number;
+                                /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                                intervalSeconds?: number;
+                            };
+                        };
                     };
-                    /** @description The SCORES sync: live score polling. */
+                    /** @description The SCORES sync: live score polling for each event with a Game due or in play. */
                     SCORES: {
-                        /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
-                        intervalMinutes?: number;
-                        /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
-                        intervalSeconds?: number;
-                        /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
-                        lookaheadDays?: number;
-                        /** @description Whether the feed should be scheduled automatically. */
+                        /** @description Whether the sync is scheduled automatically. */
                         enabled: boolean;
+                        /** @description A sync kind's interval for each Season state. */
+                        intervals: {
+                            /** @description How often the sync runs for a league in season. */
+                            IN_SEASON: {
+                                /** @description How often the sync runs, in minutes. */
+                                intervalMinutes?: number;
+                                /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                                intervalSeconds?: number;
+                            };
+                            /** @description How often the sync runs for a league off season. */
+                            OFFSEASON: {
+                                /** @description How often the sync runs, in minutes. */
+                                intervalMinutes?: number;
+                                /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                                intervalSeconds?: number;
+                            };
+                        };
                     };
                 } | null;
                 /** @description The value the save stored. */
                 newValue: {
                     /** @description The EVENTS sync: how often each synced sport league's events sync is queued. */
                     EVENTS: {
-                        /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
-                        intervalMinutes?: number;
-                        /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
-                        intervalSeconds?: number;
-                        /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
-                        lookaheadDays?: number;
-                        /** @description Whether the feed should be scheduled automatically. */
+                        /** @description Whether the sync is scheduled automatically. */
                         enabled: boolean;
+                        /** @description A sync kind's interval for each Season state. */
+                        intervals: {
+                            /** @description How often the sync runs for a league in season. */
+                            IN_SEASON: {
+                                /** @description How often the sync runs, in minutes. */
+                                intervalMinutes?: number;
+                                /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                                intervalSeconds?: number;
+                            };
+                            /** @description How often the sync runs for a league off season. */
+                            OFFSEASON: {
+                                /** @description How often the sync runs, in minutes. */
+                                intervalMinutes?: number;
+                                /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                                intervalSeconds?: number;
+                            };
+                        };
                     };
-                    /** @description The FIELD sync: event participants and event-scoped odds before the field locks, for synced sport leagues. It has no switch. Candidate events must be field-available and not field-locked. */
+                    /** @description The FIELD sync: the field and event-scoped odds of each event in a synced sport league's next slot. It has no switch. */
                     FIELD: {
-                        /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
-                        intervalMinutes?: number;
-                        /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
-                        intervalSeconds?: number;
-                        /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
-                        lookaheadDays?: number;
+                        /** @description A sync kind's interval for each Season state. */
+                        intervals: {
+                            /** @description How often the sync runs for a league in season. */
+                            IN_SEASON: {
+                                /** @description How often the sync runs, in minutes. */
+                                intervalMinutes?: number;
+                                /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                                intervalSeconds?: number;
+                            };
+                            /** @description How often the sync runs for a league off season. */
+                            OFFSEASON: {
+                                /** @description How often the sync runs, in minutes. */
+                                intervalMinutes?: number;
+                                /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                                intervalSeconds?: number;
+                            };
+                        };
                     };
-                    /** @description The SCORES sync: live score polling. */
+                    /** @description The SCORES sync: live score polling for each event with a Game due or in play. */
                     SCORES: {
-                        /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
-                        intervalMinutes?: number;
-                        /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
-                        intervalSeconds?: number;
-                        /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
-                        lookaheadDays?: number;
-                        /** @description Whether the feed should be scheduled automatically. */
+                        /** @description Whether the sync is scheduled automatically. */
                         enabled: boolean;
+                        /** @description A sync kind's interval for each Season state. */
+                        intervals: {
+                            /** @description How often the sync runs for a league in season. */
+                            IN_SEASON: {
+                                /** @description How often the sync runs, in minutes. */
+                                intervalMinutes?: number;
+                                /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                                intervalSeconds?: number;
+                            };
+                            /** @description How often the sync runs for a league off season. */
+                            OFFSEASON: {
+                                /** @description How often the sync runs, in minutes. */
+                                intervalMinutes?: number;
+                                /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                                intervalSeconds?: number;
+                            };
+                        };
                     };
                 };
             } | {
@@ -23321,11 +23906,15 @@ export interface components {
                     countedScores: number;
                     /** @description Maximum entries a Squad may create. Null means unlimited. */
                     maxEntriesPerSquad?: number | null;
-                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                     scoring?: {
                         /** @enum {string} */
                         participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
-                        config: Record<string, never>;
+                        /** @description Golf to-par total settings: what an unplayed round scores against par. */
+                        config: {
+                            /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
+                            unplayedRoundToPar: number;
+                        };
                     } | {
                         /** @enum {string} */
                         participantScoringDefinitionId: "FINISH_POSITION_POINTS";
@@ -23364,11 +23953,15 @@ export interface components {
                     countedScores: number;
                     /** @description Maximum entries a Squad may create. Null means unlimited. */
                     maxEntriesPerSquad?: number | null;
-                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                     scoring?: {
                         /** @enum {string} */
                         participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
-                        config: Record<string, never>;
+                        /** @description Golf to-par total settings: what an unplayed round scores against par. */
+                        config: {
+                            /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
+                            unplayedRoundToPar: number;
+                        };
                     } | {
                         /** @enum {string} */
                         participantScoringDefinitionId: "FINISH_POSITION_POINTS";
@@ -23407,11 +24000,15 @@ export interface components {
                     countedScores: number;
                     /** @description Maximum entries a Squad may create. Null means unlimited. */
                     maxEntriesPerSquad?: number | null;
-                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                     scoring?: {
                         /** @enum {string} */
                         participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
-                        config: Record<string, never>;
+                        /** @description Golf to-par total settings: what an unplayed round scores against par. */
+                        config: {
+                            /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
+                            unplayedRoundToPar: number;
+                        };
                     } | {
                         /** @enum {string} */
                         participantScoringDefinitionId: "FINISH_POSITION_POINTS";
@@ -23453,11 +24050,15 @@ export interface components {
                     againstTheSpread: boolean;
                     /** @description Maximum entries a Squad may create. Null means unlimited. */
                     maxEntriesPerSquad?: number | null;
-                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                     scoring?: {
                         /** @enum {string} */
                         participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
-                        config: Record<string, never>;
+                        /** @description Golf to-par total settings: what an unplayed round scores against par. */
+                        config: {
+                            /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
+                            unplayedRoundToPar: number;
+                        };
                     } | {
                         /** @enum {string} */
                         participantScoringDefinitionId: "FINISH_POSITION_POINTS";
@@ -23494,11 +24095,15 @@ export interface components {
                     maxSquaresPerEntry: number;
                     /** @description Maximum entries a Squad may create. Null means unlimited. */
                     maxEntriesPerSquad?: number | null;
-                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                     scoring?: {
                         /** @enum {string} */
                         participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
-                        config: Record<string, never>;
+                        /** @description Golf to-par total settings: what an unplayed round scores against par. */
+                        config: {
+                            /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
+                            unplayedRoundToPar: number;
+                        };
                     } | {
                         /** @enum {string} */
                         participantScoringDefinitionId: "FINISH_POSITION_POINTS";
@@ -23537,11 +24142,15 @@ export interface components {
                     reuseTeamsOnceAllUsed?: boolean;
                     /** @description Maximum entries a Squad may create. Null means unlimited. */
                     maxEntriesPerSquad?: number | null;
-                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                     scoring?: {
                         /** @enum {string} */
                         participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
-                        config: Record<string, never>;
+                        /** @description Golf to-par total settings: what an unplayed round scores against par. */
+                        config: {
+                            /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
+                            unplayedRoundToPar: number;
+                        };
                     } | {
                         /** @enum {string} */
                         participantScoringDefinitionId: "FINISH_POSITION_POINTS";
@@ -23576,11 +24185,15 @@ export interface components {
                     selectionType: "BRACKET";
                     /** @description Maximum entries a Squad may create. Null means unlimited. */
                     maxEntriesPerSquad?: number | null;
-                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                     scoring?: {
                         /** @enum {string} */
                         participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
-                        config: Record<string, never>;
+                        /** @description Golf to-par total settings: what an unplayed round scores against par. */
+                        config: {
+                            /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
+                            unplayedRoundToPar: number;
+                        };
                     } | {
                         /** @enum {string} */
                         participantScoringDefinitionId: "FINISH_POSITION_POINTS";
@@ -23791,11 +24404,15 @@ export interface components {
                         countedScores: number;
                         /** @description Maximum entries a Squad may create. Null means unlimited. */
                         maxEntriesPerSquad?: number | null;
-                        /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+                        /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                         scoring?: {
                             /** @enum {string} */
                             participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
-                            config: Record<string, never>;
+                            /** @description Golf to-par total settings: what an unplayed round scores against par. */
+                            config: {
+                                /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
+                                unplayedRoundToPar: number;
+                            };
                         } | {
                             /** @enum {string} */
                             participantScoringDefinitionId: "FINISH_POSITION_POINTS";
@@ -23834,11 +24451,15 @@ export interface components {
                         countedScores: number;
                         /** @description Maximum entries a Squad may create. Null means unlimited. */
                         maxEntriesPerSquad?: number | null;
-                        /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+                        /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                         scoring?: {
                             /** @enum {string} */
                             participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
-                            config: Record<string, never>;
+                            /** @description Golf to-par total settings: what an unplayed round scores against par. */
+                            config: {
+                                /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
+                                unplayedRoundToPar: number;
+                            };
                         } | {
                             /** @enum {string} */
                             participantScoringDefinitionId: "FINISH_POSITION_POINTS";
@@ -23877,11 +24498,15 @@ export interface components {
                         countedScores: number;
                         /** @description Maximum entries a Squad may create. Null means unlimited. */
                         maxEntriesPerSquad?: number | null;
-                        /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+                        /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                         scoring?: {
                             /** @enum {string} */
                             participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
-                            config: Record<string, never>;
+                            /** @description Golf to-par total settings: what an unplayed round scores against par. */
+                            config: {
+                                /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
+                                unplayedRoundToPar: number;
+                            };
                         } | {
                             /** @enum {string} */
                             participantScoringDefinitionId: "FINISH_POSITION_POINTS";
@@ -23923,11 +24548,15 @@ export interface components {
                         againstTheSpread: boolean;
                         /** @description Maximum entries a Squad may create. Null means unlimited. */
                         maxEntriesPerSquad?: number | null;
-                        /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+                        /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                         scoring?: {
                             /** @enum {string} */
                             participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
-                            config: Record<string, never>;
+                            /** @description Golf to-par total settings: what an unplayed round scores against par. */
+                            config: {
+                                /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
+                                unplayedRoundToPar: number;
+                            };
                         } | {
                             /** @enum {string} */
                             participantScoringDefinitionId: "FINISH_POSITION_POINTS";
@@ -23964,11 +24593,15 @@ export interface components {
                         maxSquaresPerEntry: number;
                         /** @description Maximum entries a Squad may create. Null means unlimited. */
                         maxEntriesPerSquad?: number | null;
-                        /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+                        /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                         scoring?: {
                             /** @enum {string} */
                             participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
-                            config: Record<string, never>;
+                            /** @description Golf to-par total settings: what an unplayed round scores against par. */
+                            config: {
+                                /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
+                                unplayedRoundToPar: number;
+                            };
                         } | {
                             /** @enum {string} */
                             participantScoringDefinitionId: "FINISH_POSITION_POINTS";
@@ -24007,11 +24640,15 @@ export interface components {
                         reuseTeamsOnceAllUsed?: boolean;
                         /** @description Maximum entries a Squad may create. Null means unlimited. */
                         maxEntriesPerSquad?: number | null;
-                        /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+                        /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                         scoring?: {
                             /** @enum {string} */
                             participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
-                            config: Record<string, never>;
+                            /** @description Golf to-par total settings: what an unplayed round scores against par. */
+                            config: {
+                                /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
+                                unplayedRoundToPar: number;
+                            };
                         } | {
                             /** @enum {string} */
                             participantScoringDefinitionId: "FINISH_POSITION_POINTS";
@@ -24046,11 +24683,15 @@ export interface components {
                         selectionType: "BRACKET";
                         /** @description Maximum entries a Squad may create. Null means unlimited. */
                         maxEntriesPerSquad?: number | null;
-                        /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+                        /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                         scoring?: {
                             /** @enum {string} */
                             participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
-                            config: Record<string, never>;
+                            /** @description Golf to-par total settings: what an unplayed round scores against par. */
+                            config: {
+                                /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
+                                unplayedRoundToPar: number;
+                            };
                         } | {
                             /** @enum {string} */
                             participantScoringDefinitionId: "FINISH_POSITION_POINTS";
@@ -24264,11 +24905,15 @@ export interface components {
                             countedScores: number;
                             /** @description Maximum entries a Squad may create. Null means unlimited. */
                             maxEntriesPerSquad?: number | null;
-                            /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+                            /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                             scoring?: {
                                 /** @enum {string} */
                                 participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
-                                config: Record<string, never>;
+                                /** @description Golf to-par total settings: what an unplayed round scores against par. */
+                                config: {
+                                    /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
+                                    unplayedRoundToPar: number;
+                                };
                             } | {
                                 /** @enum {string} */
                                 participantScoringDefinitionId: "FINISH_POSITION_POINTS";
@@ -24307,11 +24952,15 @@ export interface components {
                             countedScores: number;
                             /** @description Maximum entries a Squad may create. Null means unlimited. */
                             maxEntriesPerSquad?: number | null;
-                            /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+                            /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                             scoring?: {
                                 /** @enum {string} */
                                 participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
-                                config: Record<string, never>;
+                                /** @description Golf to-par total settings: what an unplayed round scores against par. */
+                                config: {
+                                    /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
+                                    unplayedRoundToPar: number;
+                                };
                             } | {
                                 /** @enum {string} */
                                 participantScoringDefinitionId: "FINISH_POSITION_POINTS";
@@ -24350,11 +24999,15 @@ export interface components {
                             countedScores: number;
                             /** @description Maximum entries a Squad may create. Null means unlimited. */
                             maxEntriesPerSquad?: number | null;
-                            /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+                            /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                             scoring?: {
                                 /** @enum {string} */
                                 participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
-                                config: Record<string, never>;
+                                /** @description Golf to-par total settings: what an unplayed round scores against par. */
+                                config: {
+                                    /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
+                                    unplayedRoundToPar: number;
+                                };
                             } | {
                                 /** @enum {string} */
                                 participantScoringDefinitionId: "FINISH_POSITION_POINTS";
@@ -24396,11 +25049,15 @@ export interface components {
                             againstTheSpread: boolean;
                             /** @description Maximum entries a Squad may create. Null means unlimited. */
                             maxEntriesPerSquad?: number | null;
-                            /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+                            /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                             scoring?: {
                                 /** @enum {string} */
                                 participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
-                                config: Record<string, never>;
+                                /** @description Golf to-par total settings: what an unplayed round scores against par. */
+                                config: {
+                                    /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
+                                    unplayedRoundToPar: number;
+                                };
                             } | {
                                 /** @enum {string} */
                                 participantScoringDefinitionId: "FINISH_POSITION_POINTS";
@@ -24437,11 +25094,15 @@ export interface components {
                             maxSquaresPerEntry: number;
                             /** @description Maximum entries a Squad may create. Null means unlimited. */
                             maxEntriesPerSquad?: number | null;
-                            /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+                            /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                             scoring?: {
                                 /** @enum {string} */
                                 participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
-                                config: Record<string, never>;
+                                /** @description Golf to-par total settings: what an unplayed round scores against par. */
+                                config: {
+                                    /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
+                                    unplayedRoundToPar: number;
+                                };
                             } | {
                                 /** @enum {string} */
                                 participantScoringDefinitionId: "FINISH_POSITION_POINTS";
@@ -24480,11 +25141,15 @@ export interface components {
                             reuseTeamsOnceAllUsed?: boolean;
                             /** @description Maximum entries a Squad may create. Null means unlimited. */
                             maxEntriesPerSquad?: number | null;
-                            /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+                            /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                             scoring?: {
                                 /** @enum {string} */
                                 participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
-                                config: Record<string, never>;
+                                /** @description Golf to-par total settings: what an unplayed round scores against par. */
+                                config: {
+                                    /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
+                                    unplayedRoundToPar: number;
+                                };
                             } | {
                                 /** @enum {string} */
                                 participantScoringDefinitionId: "FINISH_POSITION_POINTS";
@@ -24519,11 +25184,15 @@ export interface components {
                             selectionType: "BRACKET";
                             /** @description Maximum entries a Squad may create. Null means unlimited. */
                             maxEntriesPerSquad?: number | null;
-                            /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+                            /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                             scoring?: {
                                 /** @enum {string} */
                                 participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
-                                config: Record<string, never>;
+                                /** @description Golf to-par total settings: what an unplayed round scores against par. */
+                                config: {
+                                    /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
+                                    unplayedRoundToPar: number;
+                                };
                             } | {
                                 /** @enum {string} */
                                 participantScoringDefinitionId: "FINISH_POSITION_POINTS";
@@ -24748,11 +25417,15 @@ export interface components {
                             countedScores: number;
                             /** @description Maximum entries a Squad may create. Null means unlimited. */
                             maxEntriesPerSquad?: number | null;
-                            /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+                            /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                             scoring?: {
                                 /** @enum {string} */
                                 participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
-                                config: Record<string, never>;
+                                /** @description Golf to-par total settings: what an unplayed round scores against par. */
+                                config: {
+                                    /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
+                                    unplayedRoundToPar: number;
+                                };
                             } | {
                                 /** @enum {string} */
                                 participantScoringDefinitionId: "FINISH_POSITION_POINTS";
@@ -24791,11 +25464,15 @@ export interface components {
                             countedScores: number;
                             /** @description Maximum entries a Squad may create. Null means unlimited. */
                             maxEntriesPerSquad?: number | null;
-                            /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+                            /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                             scoring?: {
                                 /** @enum {string} */
                                 participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
-                                config: Record<string, never>;
+                                /** @description Golf to-par total settings: what an unplayed round scores against par. */
+                                config: {
+                                    /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
+                                    unplayedRoundToPar: number;
+                                };
                             } | {
                                 /** @enum {string} */
                                 participantScoringDefinitionId: "FINISH_POSITION_POINTS";
@@ -24834,11 +25511,15 @@ export interface components {
                             countedScores: number;
                             /** @description Maximum entries a Squad may create. Null means unlimited. */
                             maxEntriesPerSquad?: number | null;
-                            /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+                            /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                             scoring?: {
                                 /** @enum {string} */
                                 participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
-                                config: Record<string, never>;
+                                /** @description Golf to-par total settings: what an unplayed round scores against par. */
+                                config: {
+                                    /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
+                                    unplayedRoundToPar: number;
+                                };
                             } | {
                                 /** @enum {string} */
                                 participantScoringDefinitionId: "FINISH_POSITION_POINTS";
@@ -24880,11 +25561,15 @@ export interface components {
                             againstTheSpread: boolean;
                             /** @description Maximum entries a Squad may create. Null means unlimited. */
                             maxEntriesPerSquad?: number | null;
-                            /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+                            /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                             scoring?: {
                                 /** @enum {string} */
                                 participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
-                                config: Record<string, never>;
+                                /** @description Golf to-par total settings: what an unplayed round scores against par. */
+                                config: {
+                                    /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
+                                    unplayedRoundToPar: number;
+                                };
                             } | {
                                 /** @enum {string} */
                                 participantScoringDefinitionId: "FINISH_POSITION_POINTS";
@@ -24921,11 +25606,15 @@ export interface components {
                             maxSquaresPerEntry: number;
                             /** @description Maximum entries a Squad may create. Null means unlimited. */
                             maxEntriesPerSquad?: number | null;
-                            /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+                            /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                             scoring?: {
                                 /** @enum {string} */
                                 participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
-                                config: Record<string, never>;
+                                /** @description Golf to-par total settings: what an unplayed round scores against par. */
+                                config: {
+                                    /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
+                                    unplayedRoundToPar: number;
+                                };
                             } | {
                                 /** @enum {string} */
                                 participantScoringDefinitionId: "FINISH_POSITION_POINTS";
@@ -24964,11 +25653,15 @@ export interface components {
                             reuseTeamsOnceAllUsed?: boolean;
                             /** @description Maximum entries a Squad may create. Null means unlimited. */
                             maxEntriesPerSquad?: number | null;
-                            /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+                            /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                             scoring?: {
                                 /** @enum {string} */
                                 participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
-                                config: Record<string, never>;
+                                /** @description Golf to-par total settings: what an unplayed round scores against par. */
+                                config: {
+                                    /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
+                                    unplayedRoundToPar: number;
+                                };
                             } | {
                                 /** @enum {string} */
                                 participantScoringDefinitionId: "FINISH_POSITION_POINTS";
@@ -25003,11 +25696,15 @@ export interface components {
                             selectionType: "BRACKET";
                             /** @description Maximum entries a Squad may create. Null means unlimited. */
                             maxEntriesPerSquad?: number | null;
-                            /** @description The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
+                            /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                             scoring?: {
                                 /** @enum {string} */
                                 participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
-                                config: Record<string, never>;
+                                /** @description Golf to-par total settings: what an unplayed round scores against par. */
+                                config: {
+                                    /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
+                                    unplayedRoundToPar: number;
+                                };
                             } | {
                                 /** @enum {string} */
                                 participantScoringDefinitionId: "FINISH_POSITION_POINTS";
@@ -27266,7 +27963,7 @@ export interface components {
              * @description The job's handler. Its kind follows from it.
              * @enum {string}
              */
-            type: "MANUAL_EVENT_SYNC" | "PROVIDER_EVENT_SYNC" | "CONTEST_STARTED_EMAILS" | "CONTEST_SETTLED_EMAILS" | "CONTEST_EVENT_CHANGED_EMAILS" | "CONTEST_REOPENED_EMAILS" | "SETTLE_SPORT_EVENT_CONTESTS" | "SETTLE_GAME_CONTESTS" | "REBUILD_LEADERBOARDS" | "SYNC_LEAGUE_EVENTS" | "RELEASE_SPORT_EVENT" | "SYNC_EVENT_GAMES_AND_TIERS" | "ACTIVATE_EVENT_CONTESTS" | "FOLLOW_POSTPONED_EVENT_CONTESTS" | "RESOLVE_MAPPED_PARTICIPANT_FINDINGS" | "REFRESH_SLOT_TIEBREAKERS";
+            type: "SYNC_EVENT_FIELD" | "SYNC_EVENT_SCORES" | "CONTEST_STARTED_EMAILS" | "CONTEST_SETTLED_EMAILS" | "CONTEST_EVENT_CHANGED_EMAILS" | "CONTEST_REOPENED_EMAILS" | "SETTLE_SPORT_EVENT_CONTESTS" | "SETTLE_GAME_CONTESTS" | "REBUILD_LEADERBOARDS" | "SYNC_LEAGUE_EVENTS" | "RELEASE_SPORT_EVENT" | "SYNC_EVENT_GAMES_AND_TIERS" | "ACTIVATE_EVENT_CONTESTS" | "FOLLOW_POSTPONED_EVENT_CONTESTS" | "RESOLVE_MAPPED_PARTICIPANT_FINDINGS" | "REFRESH_SLOT_TIEBREAKERS";
             /**
              * @description What a job is about: a provider SYNC, EMAIL to a league, contest SETTLEMENT, an event's RELEASE, or OTHER.
              * @enum {string}
@@ -27390,7 +28087,7 @@ export interface components {
                  * @description The job's handler. Its kind follows from it.
                  * @enum {string}
                  */
-                type: "MANUAL_EVENT_SYNC" | "PROVIDER_EVENT_SYNC" | "CONTEST_STARTED_EMAILS" | "CONTEST_SETTLED_EMAILS" | "CONTEST_EVENT_CHANGED_EMAILS" | "CONTEST_REOPENED_EMAILS" | "SETTLE_SPORT_EVENT_CONTESTS" | "SETTLE_GAME_CONTESTS" | "REBUILD_LEADERBOARDS" | "SYNC_LEAGUE_EVENTS" | "RELEASE_SPORT_EVENT" | "SYNC_EVENT_GAMES_AND_TIERS" | "ACTIVATE_EVENT_CONTESTS" | "FOLLOW_POSTPONED_EVENT_CONTESTS" | "RESOLVE_MAPPED_PARTICIPANT_FINDINGS" | "REFRESH_SLOT_TIEBREAKERS";
+                type: "SYNC_EVENT_FIELD" | "SYNC_EVENT_SCORES" | "CONTEST_STARTED_EMAILS" | "CONTEST_SETTLED_EMAILS" | "CONTEST_EVENT_CHANGED_EMAILS" | "CONTEST_REOPENED_EMAILS" | "SETTLE_SPORT_EVENT_CONTESTS" | "SETTLE_GAME_CONTESTS" | "REBUILD_LEADERBOARDS" | "SYNC_LEAGUE_EVENTS" | "RELEASE_SPORT_EVENT" | "SYNC_EVENT_GAMES_AND_TIERS" | "ACTIVATE_EVENT_CONTESTS" | "FOLLOW_POSTPONED_EVENT_CONTESTS" | "RESOLVE_MAPPED_PARTICIPANT_FINDINGS" | "REFRESH_SLOT_TIEBREAKERS";
                 /**
                  * @description What a job is about: a provider SYNC, EMAIL to a league, contest SETTLEMENT, an event's RELEASE, or OTHER.
                  * @enum {string}
@@ -27486,7 +28183,7 @@ export interface components {
                  * @description The job's handler. Its kind follows from it.
                  * @enum {string}
                  */
-                type: "MANUAL_EVENT_SYNC" | "PROVIDER_EVENT_SYNC" | "CONTEST_STARTED_EMAILS" | "CONTEST_SETTLED_EMAILS" | "CONTEST_EVENT_CHANGED_EMAILS" | "CONTEST_REOPENED_EMAILS" | "SETTLE_SPORT_EVENT_CONTESTS" | "SETTLE_GAME_CONTESTS" | "REBUILD_LEADERBOARDS" | "SYNC_LEAGUE_EVENTS" | "RELEASE_SPORT_EVENT" | "SYNC_EVENT_GAMES_AND_TIERS" | "ACTIVATE_EVENT_CONTESTS" | "FOLLOW_POSTPONED_EVENT_CONTESTS" | "RESOLVE_MAPPED_PARTICIPANT_FINDINGS" | "REFRESH_SLOT_TIEBREAKERS";
+                type: "SYNC_EVENT_FIELD" | "SYNC_EVENT_SCORES" | "CONTEST_STARTED_EMAILS" | "CONTEST_SETTLED_EMAILS" | "CONTEST_EVENT_CHANGED_EMAILS" | "CONTEST_REOPENED_EMAILS" | "SETTLE_SPORT_EVENT_CONTESTS" | "SETTLE_GAME_CONTESTS" | "REBUILD_LEADERBOARDS" | "SYNC_LEAGUE_EVENTS" | "RELEASE_SPORT_EVENT" | "SYNC_EVENT_GAMES_AND_TIERS" | "ACTIVATE_EVENT_CONTESTS" | "FOLLOW_POSTPONED_EVENT_CONTESTS" | "RESOLVE_MAPPED_PARTICIPANT_FINDINGS" | "REFRESH_SLOT_TIEBREAKERS";
                 /**
                  * @description What a job is about: a provider SYNC, EMAIL to a league, contest SETTLEMENT, an event's RELEASE, or OTHER.
                  * @enum {string}

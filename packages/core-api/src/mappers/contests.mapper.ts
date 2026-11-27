@@ -140,6 +140,10 @@ export interface ContestLeaderboardModel {
   countingRule: ContestLeaderboardCountingRule;
   /** Whether the contest scores an upset bonus: a knockout contest with its bonus on (#1748). */
   upsetBonus: boolean;
+  /** What an unplayed golf round adds to par, the contest's setting; null when not golf's to-par total. */
+  unplayedRoundToPar: number | null;
+  /** The round the shown event's field is on; null before one is scored, or with no rounds. */
+  currentRound: { roundNumber: number; isComplete: boolean } | null;
   /** The shown event's field rows, published as the event's own canonical DTO. */
   participants: SportEventParticipantView[];
   entries: ContestLeaderboardEntryRow[];
@@ -399,6 +403,8 @@ export function toContestLeaderboardResponse(
     scoringDefinitionId: leaderboard.scoringDefinitionId,
     countingRule: leaderboard.countingRule,
     upsetBonus: leaderboard.upsetBonus,
+    unplayedRoundToPar: leaderboard.unplayedRoundToPar,
+    currentRound: leaderboard.currentRound,
     participants: leaderboard.participants.map(mapSportEventParticipantToDto),
     entries: leaderboard.entries.map((entry) => ({
       entryId: entry.entryId,

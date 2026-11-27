@@ -90,7 +90,6 @@ import { ProviderSeasonScheduleReader } from '../../../packages/core-api/src/mod
 import { activityModule } from '../../../packages/core-api/src/modules/activity/routes';
 import { ActivityService } from '../../../packages/core-api/src/modules/activity/activity-service';
 import { ProviderRegistry } from '../../../packages/core-api/src/modules/ingestion/core/provider-registry';
-import { IngestionScheduler } from '../../../packages/core-api/src/modules/ingestion/core/ingestion-scheduler';
 import { emptySyncWriteDiagnostics } from '../../../packages/core-api/src/modules/ingestion/core/sync-write-diagnostics';
 import {
   cleanupTestData,
@@ -99,6 +98,7 @@ import {
   getAppPrisma,
   getPrisma,
   integrationBackgroundJobs,
+  integrationEventSyncJobs,
   setupIntegrationTests,
   teardownIntegrationTests,
   withoutJsonBodyHeaders, integrationSportEventServices, integrationEventLifecycle, integrationProviderSettings, integrationSyncFindings,
@@ -122,7 +122,7 @@ import { sportLeagueRowDefaults } from '../../support/league-profiles';
 import { SYNCED_PROVIDER_ID, syncLeagueTo, syncSeasonsTo } from '../../support/league-sync';
 import { sportRowKeys } from '../../support/sport-rows';
 import { PrismaSportLeagueSeasonRepository } from '../../../packages/core-api/src/adapters/prisma-sport-league-season-repository';
-import { ProviderCode, Sport, SportEventParticipantStatus, SportEventStatus } from '@poolmaster/shared/domain';
+import { ProviderCode, ProviderSyncKind, Sport, SportEventParticipantStatus, SportEventStatus } from '@poolmaster/shared/domain';
 import { sportPlay } from '../../support/sport-play';
 import { insertTestSportLeague } from '../../support/test-sport-league';
 
@@ -320,11 +320,9 @@ async function buildIngestionApp(provider: SportDataProvider | null): Promise<Fa
   const app = Fastify({ logger: false, ajv: FASTIFY_AJV_OPTIONS });
   const registry = new ProviderRegistry();
   if (provider) registry.register(provider);
-  const scheduler = new IngestionScheduler(registry, {
+  const eventSyncJobs = integrationEventSyncJobs(registry, {
     onEventDetail: async () => ({ writeDiagnostics: emptySyncWriteDiagnostics() }),
     onLiveScores: async () => emptyLiveScorePersistenceResult(),
-  }, undefined, {
-    now: () => new Date('2026-04-05T12:00:00.000Z'),
   });
   const prisma = getPrisma();
   const backgroundJobs = integrationBackgroundJobs();
@@ -333,7 +331,6 @@ async function buildIngestionApp(provider: SportDataProvider | null): Promise<Fa
     registry,
     sportEvents: new PrismaSportEventRepository(getAppPrisma()),
     syncRuns: new PrismaProviderSyncRunRepository(getAppPrisma()),
-    scheduler,
     sportLeagues: new PrismaSportLeagueRepository(getAppPrisma()),
     providerSettings: providerRows.store,
     webhooks: providerRows.webhooks,
@@ -350,7 +347,8 @@ async function buildIngestionApp(provider: SportDataProvider | null): Promise<Fa
     findings: integrationSyncFindings(getAppPrisma(), providerRows.store),
   });
   backgroundJobs.runWith({
-    MANUAL_EVENT_SYNC: (payload, context) => ingestionService.runManualEventSync(payload, context),
+    SYNC_EVENT_FIELD: (payload, context) => eventSyncJobs.run(ProviderSyncKind.FIELD, payload, context),
+    SYNC_EVENT_SCORES: (payload, context) => eventSyncJobs.run(ProviderSyncKind.SCORES, payload, context),
     SYNC_LEAGUE_EVENTS: (payload, context) => leagueEventsSync.run(payload, context),
   });
 
@@ -702,13 +700,13 @@ describe('Contract verification (root admin)', () => {
       headers: rootAdmin.headers,
       payload: {
         SCORES: {
-          intervalSeconds: 45,
+          intervals: { IN_SEASON: { intervalSeconds: 45 } },
         },
       },
     });
     expect(ingestionUpdateRes.statusCode).toBe(200);
     expect(IngestionScheduleSchema.safeParse(ingestionUpdateRes.json()).success).toBe(true);
-    expect(ingestionUpdateRes.json<IngestionSchedule>().SCORES.intervalSeconds).toBe(45);
+    expect(ingestionUpdateRes.json<IngestionSchedule>().SCORES.intervals.IN_SEASON.intervalSeconds).toBe(45);
 
     const templateListRes = await getApp().inject({
       method: 'GET',

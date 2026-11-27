@@ -23,7 +23,7 @@ import { mapSportLeagueStructureToDto } from '../../../packages/core-api/src/map
 function slot(key: string, slotKind: SlotKind, overrides: Partial<SportLeagueSlotDefinition> = {}): SportLeagueSlotDefinition {
   return {
     id: `00000000-0000-4000-8000-${key.length.toString().padStart(12, '0')}`, key, slotKind, weekNumber: null, name: null, awardsTrophy: false, squaresEligible: false,
-    seriesFormat: SeriesFormat.SINGLE_GAME, seriesGames: 1, pairing: SlotPairing.FIXED,
+    isNeutralSite: false, seriesFormat: SeriesFormat.SINGLE_GAME, seriesGames: 1, pairing: SlotPairing.FIXED,
     matchFormat: MatchFormat.HEAD_TO_HEAD, canEndTied: false, periodUnit: PeriodUnit.QUARTER, periodCount: 4, providerMappings: [], ...overrides,
   };
 }

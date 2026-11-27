@@ -29,7 +29,7 @@ describe('league structure rows', () => {
 
   it('flattens phases and their competitions into slot rows that carry their phase and competition code, in the order given', () => {
     const final: SportLeaguePhaseDefinitionDto['competitions'][number]['slots'][number] = {
-      id: 's', key: 'FINAL', slotKind: 'FINAL', weekNumber: null, name: null, awardsTrophy: true, squaresEligible: true,
+      id: 's', key: 'FINAL', slotKind: 'FINAL', weekNumber: null, name: null, awardsTrophy: true, squaresEligible: true, isNeutralSite: true,
       seriesFormat: 'SINGLE_GAME', seriesGames: 1, pairing: 'FIXED',
       matchFormat: 'HEAD_TO_HEAD', canEndTied: false, periodUnit: 'QUARTER', periodCount: 4, providerMappings: [],
     };

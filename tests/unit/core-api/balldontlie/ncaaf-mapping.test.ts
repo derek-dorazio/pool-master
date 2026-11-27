@@ -60,7 +60,6 @@ describe('a college football season as one provider event', () => {
       homeTeamExternalId: String(first.home_team?.id),
       awayTeamExternalId: String(first.visitor_team?.id),
       scheduledAt: new Date(first.date as string),
-      isNeutralSite: false,
     }]);
   });
 

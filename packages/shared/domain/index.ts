@@ -21,6 +21,7 @@ export * from './email-images';
 export * from './providers';
 export * from './provider-settings';
 export * from './provider-sync-findings';
+export * from './sync-due-work';
 export * from './sport-catalog-types';
 export * from './match-place';
 export * from './match-sides';
@@ -56,7 +57,7 @@ export {
   ContestScoringSettingsSchema,
   FINISH_POSITION_POINTS_TABLE_MAX_PLACES,
   FinishPositionPointsSettingsSchema,
-  isRoundComplete,
+  formatParticipantScore,
   KnockoutRoundPointsSettingsSchema,
   PARTICIPANT_SCORING_DEFINITIONS,
   PARTICIPANT_SCORING_SETTINGS_SCHEMAS,

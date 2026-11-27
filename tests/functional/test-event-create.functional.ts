@@ -77,7 +77,7 @@ describe('createTestSlot', () => {
     const competition = await db.sportLeagueCompetition.create({ data: { sportLeagueId, sportLeaguePhaseId: phase.id, code: 'POSTSEASON', orderIndex: 1 }, select: { id: true } });
     const definition = await db.sportLeagueCompetitionSlot.create({
       data: {
-        sportLeagueId, sportLeagueCompetitionId: competition.id, key: 'FINAL', slotKind: 'TOURNAMENT', awardsTrophy: false, squaresEligible: true,
+        sportLeagueId, sportLeagueCompetitionId: competition.id, key: 'FINAL', slotKind: 'TOURNAMENT', awardsTrophy: false, squaresEligible: true, isNeutralSite: false,
         seriesFormat: 'SINGLE_GAME', seriesGames: 1, pairing: 'FIXED', matchFormat: 'HEAD_TO_HEAD', canEndTied: false,
       },
       select: { id: true },

@@ -345,6 +345,7 @@ export const SportLeagueSlotDefinitionDtoSchema = z.object({
   name: z.string().nullable().describe('The league\'s own proper name for the slot (Super Bowl, Sweet 16); null when screens show the word for its kind.'),
   awardsTrophy: z.boolean(),
   squaresEligible: z.boolean().describe('Whether a squares pool can be played on its games.'),
+  isNeutralSite: z.boolean().describe('Whether its games are played at a neutral site, neither side at home (a Super Bowl, a bowl game). Each game of the slot takes it, and screens then say "vs" rather than "at".'),
   seriesFormat: z.enum(SeriesFormat),
   seriesGames: z.number().int().min(1).describe('Games in one meeting: 1 for SINGLE_GAME, the series length for BEST_OF, the legs for AGGREGATE.'),
   pairing: z.enum(SlotPairing),

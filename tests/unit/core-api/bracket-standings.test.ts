@@ -344,7 +344,7 @@ describe('ContestSettlementService — a bracket contest (#721)', () => {
     const context = setup({
       rules: (configurationId) => [{
         ...knockoutScoringRule(configurationId, { roundValues: [1], upsetBonus: { rule: UpsetBonusRule.NONE } }),
-        scoring: parseContestScoringSettings('GOLF_RELATIVE_TO_PAR_TOTAL', {}),
+        scoring: parseContestScoringSettings('GOLF_RELATIVE_TO_PAR_TOTAL', { unplayedRoundToPar: 8 }),
       }],
     });
     context.completeEvent();
@@ -412,7 +412,7 @@ describe('ContestService.getBracketLeaderboard', () => {
     const golf = setup({
       rules: (configurationId) => [{
         ...knockoutScoringRule(configurationId, { roundValues: [1], upsetBonus: { rule: UpsetBonusRule.NONE } }),
-        scoring: parseContestScoringSettings('GOLF_RELATIVE_TO_PAR_TOTAL', {}),
+        scoring: parseContestScoringSettings('GOLF_RELATIVE_TO_PAR_TOTAL', { unplayedRoundToPar: 8 }),
       }],
     });
     expect(await refusal(golf.contestService.getBracketLeaderboard(golf.contest.id, golf.viewer.id)))

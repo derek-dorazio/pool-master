@@ -169,10 +169,10 @@ export const enUS = {
       LEAGUE: 'League',
     },
     GameSideStatus: {
-      FINISHED: 'Finished',
-      DID_NOT_FINISH: 'Did not finish',
-      DISQUALIFIED: 'Disqualified',
-      DID_NOT_START: 'Did not start',
+      FINISHED: { name: 'Finished', short: 'F' },
+      DID_NOT_FINISH: { name: 'Did not finish', short: 'DNF' },
+      DISQUALIFIED: { name: 'Disqualified', short: 'DQ' },
+      DID_NOT_START: { name: 'Did not start', short: 'DNS' },
     },
     RaceResultRowError: {
       DUPLICATE_PARTICIPANT: 'Named on another row too',
@@ -258,6 +258,10 @@ export const enUS = {
       EVENTS: 'Event list',
       FIELD: 'Field',
       SCORES: 'Live scores and results',
+    },
+    SyncSeasonState: {
+      IN_SEASON: 'In season',
+      OFFSEASON: 'Off season',
     },
     AutoReleaseCheckOutcome: {
       RELEASED: 'Released',
@@ -394,7 +398,8 @@ export const enUS = {
     ParticipantStandingStatus: {
       ACTIVE: 'Active',
       IN_PROGRESS: 'In progress',
-      COMPLETE: 'Complete',
+      COMPLETE: { name: 'Complete', short: 'F' },
+      // Out of the event: a screen names these with the sport's words (`eliminated`, `withdrawn`).
       WITHDRAWN: 'Withdrawn',
       ELIMINATED: 'Eliminated',
     },
@@ -744,8 +749,8 @@ export const enUS = {
       ALWAYS_ON: 'Always on',
     },
     BackgroundJobType: {
-      MANUAL_EVENT_SYNC: 'Event feeds',
-      PROVIDER_EVENT_SYNC: 'Live scores',
+      SYNC_EVENT_FIELD: 'Field',
+      SYNC_EVENT_SCORES: 'Live scores',
       CONTEST_STARTED_EMAILS: 'Contest is live',
       CONTEST_SETTLED_EMAILS: 'Results',
       CONTEST_EVENT_CHANGED_EMAILS: 'Event changed',
@@ -1300,8 +1305,8 @@ export const enUS = {
     match_other: 'matches',
     game_one: 'game',
     game_other: 'games',
-    eliminated: 'Eliminated',
-    withdrawn: 'Withdrawn',
+    eliminated: { name: 'Eliminated', short: 'Out' },
+    withdrawn: { name: 'Withdrawn', short: 'WD' },
     eventStart: 'start',
     overtime: 'overtime',
     tie: 'Tie',
@@ -1429,8 +1434,8 @@ export const enUS = {
       sportLeague_other: 'tours',
       round_one: 'round',
       round_other: 'rounds',
-      eliminated: 'Cut',
-      withdrawn: 'Withdrawn',
+      eliminated: { name: 'Cut', short: 'CUT' },
+      withdrawn: { name: 'Withdrawn', short: 'WD' },
       eventStart: 'first tee time',
     },
     HORSE_RACING: {

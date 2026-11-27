@@ -370,11 +370,11 @@ describe('PrismaSportEventRoundMatchRepository', () => {
     const [first] = await repos().matches.findBySportEvent(event.id);
 
     await repos().matches.saveGamePeriodScores({ sportEventRoundMatchId: first.id, gameId: gameOneOf(first).id, sides: regularPeriods([[1, 8, 10]]) }, [
-      { type: BackgroundJobType.MANUAL_EVENT_SYNC, payload: { syncRunIds: [randomUUID()], sport: Sport.BASKETBALL, eventId: event.id }, start: { trigger: JobTrigger.SYSTEM } },
+      { type: BackgroundJobType.SYNC_EVENT_SCORES, payload: { sportEventId: event.id }, start: { trigger: JobTrigger.SYSTEM } },
     ]);
 
     expect(periodScoresOf(expectDefined(await repos().matches.findById(first.id))).map((side) => side.periodScores.map((period) => period.score))).toEqual([[8], [10]]);
-    await expect(getPrisma().backgroundJob.count({ where: { type: BackgroundJobType.MANUAL_EVENT_SYNC } })).resolves.toBe(1);
+    await expect(getPrisma().backgroundJob.count({ where: { type: BackgroundJobType.SYNC_EVENT_SCORES } })).resolves.toBe(1);
   });
 
   it('places both sides of each named match in one write and leaves the other matches as they were', async () => {

@@ -118,7 +118,8 @@ Two readings of this chain have both been held at once, so it is worth stating p
   round takes one pick before its first game or the entry is out, and running out of unused teams
   means out. Its score is the weeks (rounds) it survived; it has no tiebreaker.
 - **An entry that misses an event of a multi-event contest still scores it** (#714): as if each
-  counted pick were unplayed (golf: 80 a round), so missing a major costs, never helps.
+  counted pick were unplayed (golf: the contest's unplayed-round score a round), so missing a
+  major costs, never helps.
 - **A week of games is not a knockout** (#768). An event whose matches form no bracket (an NFL
   regular-season week) ranks no team and crowns no champion: each team's standing is neutral,
   complete once its game is played or cancelled.
@@ -340,7 +341,7 @@ operations and their codes are in `docs/DOMAIN-OPERATIONS.md`.
 | **lock a contest**, **entries close** | There is no lock action. Entries are created, renamed or left only while the contest is `OPEN` and its first event has not started (`areContestEntriesOpen`). An event's picks change while the contest is `OPEN` or `ACTIVE` and that event's scheduled start has not passed (`areEventPicksOpen`). Settings locked earlier, when the contest opened |
 | **start**, **go live** | The contest's first event moves to `IN_PROGRESS` (by the lifecycle scheduler from the round schedule, or by an admin) and the `OPEN` contest becomes `ACTIVE`. **Picks are revealed** event by event: an event's picks are visible to the league once that event starts; before it each entry's owners see only their own |
 | **score a round**, **scores come in** | The golfer's side result in the round's FIELD Game is written (#2008), by the provider sync for a linked event or by an admin's correction, and the event standings are recomputed. Scoring stops at the event's scheduled round count; playoff holes are not a round |
-| **unplayed round** | In contest scoring only, a round a golfer did not play (cut, withdrawn, disqualified, or the event ended) scores 80 strokes, counted against that round's par. The event's own standing keeps the golfer's real score |
+| **unplayed round** | In contest scoring only, a round a golfer did not play (cut, withdrawn, disqualified, or the event ended) adds the contest's `unplayedRoundToPar` to their to-par (+8, an 80 on a par 72, as every golf template presets it), never read off the course's par. The event's own standing keeps the golfer's real score |
 | **correct a score** | Root admin enters the round's values directly; the server does not derive to-par |
 | **sync**, **link an event** | An event is linked to a provider by a `SportEventProviderMapping`: the provider's id for it, under the league's provider mapping. A synced league's sync creates its events with that mapping and loads their fields and live scores by it (ADR-0011); only the sync writes one (#2004), and no admin links or unlinks an event by hand. An event an admin makes has none: it is a test event, which no feed syncs |
 | **load test data** | The "Load test data" workflow applies a test data file to QA or a local site: a few re-dated "Test-" events of last season as played, with made-up odds, and their test players, matched to the sync's participants by feed id. Real events and fields come only from the sync (`docs/SPORT-DATA-LOADING.md`) |

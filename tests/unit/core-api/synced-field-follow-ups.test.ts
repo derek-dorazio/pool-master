@@ -14,7 +14,7 @@ const PAYLOAD: SyncEventGamesAndTiersJobPayload = {
   sportEventId: 'sport-event-1',
   providerId: 'balldontlie',
   externalId: 'week-2',
-  games: [{ games: [{ providerGameId: 'g1', gameNumber: 1 }], roundNumber: 1, homeTeamExternalId: 'bears', awayTeamExternalId: 'lions', scheduledAt: KICKOFF, isNeutralSite: false }],
+  games: [{ games: [{ providerGameId: 'g1', gameNumber: 1 }], roundNumber: 1, homeTeamExternalId: 'bears', awayTeamExternalId: 'lions', scheduledAt: KICKOFF }],
 };
 
 const UNCHANGED_VALUATION = {
@@ -47,14 +47,14 @@ describe('SyncedFieldFollowUps, a field sync\'s follow-up job', () => {
       sportEventId: 'sport-event-1',
       providerId: 'balldontlie',
       externalId: 'week-2',
-      games: [{ games: [{ providerGameId: 'g1', gameNumber: 1 }], roundNumber: 1, homeTeamExternalId: 'bears', awayTeamExternalId: 'lions', scheduledAt: new Date(KICKOFF), isNeutralSite: false }],
+      games: [{ games: [{ providerGameId: 'g1', gameNumber: 1 }], roundNumber: 1, homeTeamExternalId: 'bears', awayTeamExternalId: 'lions', scheduledAt: new Date(KICKOFF) }],
     });
     expect(valuation.afterFieldLoad).toHaveBeenCalledWith({ sportEventId: 'sport-event-1', providerId: 'balldontlie', externalId: 'week-2' });
   });
 
   it('passes a bracket with no kickoff yet as null, and lists no games when the provider listed none', async () => {
     const { providerGames, service } = followUps();
-    const bracket = [{ matchNumber: 1, roundNumber: 1, homeTeamExternalId: null, awayTeamExternalId: 'lions', isNeutralSite: false, scheduledAt: null, advancesTo: { roundNumber: 2, matchNumber: 1, side: 'HOME' as const }, regionLabel: 'NFC' }];
+    const bracket = [{ matchNumber: 1, roundNumber: 1, homeTeamExternalId: null, awayTeamExternalId: 'lions', scheduledAt: null, advancesTo: { roundNumber: 2, matchNumber: 1, side: 'HOME' as const }, regionLabel: 'NFC' }];
 
     await service.run({ sportEventId: 'sport-event-1', providerId: 'balldontlie', externalId: 'postseason', bracket });
 

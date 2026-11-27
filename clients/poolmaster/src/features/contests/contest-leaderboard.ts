@@ -18,7 +18,6 @@ import type { ApiErrorCode } from '@poolmaster/shared/dto';
 import type { ContestLeaderboardResponse } from '@/lib/api';
 import {
   formatCurrentRoundLabel,
-  resolveCurrentRound,
 } from './contest-leaderboard-rounds';
 import { getScoringFamilyUi } from './scoring-family-ui/registry';
 import type {
@@ -147,7 +146,7 @@ export function buildLeaderboardView(
   return {
     detailColumns: family.detailColumns,
     footnote: family.footnote,
-    currentRoundLabel: formatCurrentRoundLabel(resolveCurrentRound(response.participants), roundName),
+    currentRoundLabel: formatCurrentRoundLabel(response.currentRound, roundName),
     entries,
     isUnscored,
   };

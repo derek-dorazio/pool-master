@@ -61,7 +61,7 @@ const ADMIN_SYNC = job({
 });
 const FAILED_SCORES = job({
   id: '00000000-0000-4000-8000-000000000003',
-  type: 'PROVIDER_EVENT_SYNC',
+  type: 'SYNC_EVENT_SCORES',
   status: 'FAILED',
   sportLeagueId: null,
   sportEventId: EVENT_ID,

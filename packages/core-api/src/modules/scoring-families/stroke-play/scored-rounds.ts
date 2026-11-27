@@ -31,3 +31,32 @@ export function roundStatusOfSide(status: GameSideStatus | null): ParticipantRou
       return ParticipantRoundStatus.DSQ;
   }
 }
+
+/** The round a field is on, and whether it has finished. */
+export interface FieldCurrentRound {
+  roundNumber: number;
+  isComplete: boolean;
+}
+
+/**
+ * The round a field is on: the highest round any golfer is still playing (on the course, no side
+ * status yet), else the highest any golfer has finished. Null before a single round is scored,
+ * and for a field scored by match or by finish, which has no rounds.
+ */
+export function currentRoundOfField(field: readonly Pick<SportEventParticipantView, 'fieldResults'>[]): FieldCurrentRound | null {
+  let highestInProgress: number | null = null;
+  let highestFinished: number | null = null;
+  for (const row of field) {
+    for (const round of scoredRoundsOf(row)) {
+      if (round.result.status === null) {
+        highestInProgress = Math.max(highestInProgress ?? 0, round.roundNumber);
+      } else if (round.result.status === GameSideStatus.FINISHED) {
+        highestFinished = Math.max(highestFinished ?? 0, round.roundNumber);
+      }
+    }
+  }
+  if (highestInProgress !== null) {
+    return { roundNumber: highestInProgress, isComplete: false };
+  }
+  return highestFinished === null ? null : { roundNumber: highestFinished, isComplete: true };
+}

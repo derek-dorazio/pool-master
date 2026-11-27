@@ -105,10 +105,10 @@ Done when both routes are under the budget of 25 and their entries leave
 `tests/functional/query-budget-allow-list.ts`. Trade-off accepted in #1387: the emails go out
 seconds after the click instead of during it.
 
-**Manual event sync.** `syncEventData` still writes the `SUBMITTED` sync runs (the ledger
-the admin screen shows) and enqueues `MANUAL_EVENT_SYNC` (payload: sync run ids, scope) in the same
-transaction. The handler runs `executeSubmittedEventSync`. A run already `IN_PROGRESS` or done is
-skipped on retry, so the ledger makes it idempotent. The `outsideRequest(setImmediate(...))` call goes away.
+**Manual event sync.** Built, then reshaped by #2009: Sync now writes one `SUBMITTED` sync run per
+kind asked for (the ledger the admin screen shows) and, with each, its `SYNC_EVENT_FIELD` or
+`SYNC_EVENT_SCORES` job naming the event and the run. A run already `IN_PROGRESS` or done is
+skipped on retry, so the ledger makes it idempotent. See `docs/LIVE-SPORTS-DATA-SYNC.md` §4.
 
 **#1448, settling a finished event's contests.** A COMPLETED or CANCELLED transition writes
 `SETTLE_SPORT_EVENT_CONTESTS` (payload: event id, settle time) in the write that moves the event,

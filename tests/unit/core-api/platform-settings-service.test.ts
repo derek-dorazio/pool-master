@@ -4,6 +4,7 @@ import { SettingsGroupKeySchema } from '@poolmaster/shared/dto/settings.dto';
 import { AppSettingsService } from '../../../packages/core-api/src/modules/platform/app-settings-service';
 import { PlatformSettingsService } from '../../../packages/core-api/src/modules/platform/platform-settings-service';
 import { SETTINGS_GROUPS } from '../../../packages/core-api/src/modules/platform/settings-groups';
+import { INGESTION_SCHEDULE_SETTINGS } from '../../../packages/core-api/src/modules/platform/ingestion-config-service';
 import {
   toSettingsChangeDto,
   toSettingsChangeListDto,
@@ -83,6 +84,17 @@ describe('PlatformSettingsService', () => {
       value: {},
       expectedUpdatedAt: null,
     }, ADMIN.id)).rejects.toMatchObject({ statusCode: 400, code: 'SETTINGS_KEY_MISMATCH' });
+    expect(runtimeConfigs.rows.size).toBe(0);
+  });
+
+  it('refuses a sync schedule change naming a Season state with no interval, so no sync can be set to run every minute', async () => {
+    const { runtimeConfigs, service } = await buildService();
+
+    await expect(service.save('INGESTION_SCHEDULE_CONFIG', {
+      key: 'INGESTION_SCHEDULE_CONFIG',
+      value: { ...INGESTION_SCHEDULE_SETTINGS.defaults({}), EVENTS: { enabled: true, intervals: { IN_SEASON: { intervalMinutes: 360 }, OFFSEASON: {} } } },
+      expectedUpdatedAt: null,
+    }, ADMIN.id)).rejects.toMatchObject({ statusCode: 400, code: 'SETTINGS_INVALID' });
     expect(runtimeConfigs.rows.size).toBe(0);
   });
 

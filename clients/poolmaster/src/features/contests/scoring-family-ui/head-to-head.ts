@@ -4,14 +4,14 @@
  * is still in, or the round it went out in. Where the board has read the event's games, a
  * team's Wins open every game it played and its next one, and the entry's Stats switch puts its
  * latest game under its name. A pick's total is its knockout round points, rendered through the
- * contest's participant scoring definition (`PARTICIPANT_SCORING_DEFINITIONS`). Until the bracket
+ * contest's participant scoring definition (`formatParticipantScore`). Until the bracket
  * has a result no team has points.
  */
 
 import {
   MatchSideOutcome,
   MatchStatus,
-  PARTICIPANT_SCORING_DEFINITIONS,
+  formatParticipantScore,
   ParticipantStandingStatus,
   type SportDefinition,
   sportVocabulary,
@@ -90,7 +90,6 @@ export const headToHeadUi: ScoringFamilyUi = {
   // The tiebreaker (one total-points prediction) arrives with bracket pools.
   entryTiebreaker: null,
   leaderboard(response, sport, context) {
-    const definition = PARTICIPANT_SCORING_DEFINITIONS[response.scoringDefinitionId];
     const showsBonus = response.upsetBonus;
     // Opponents go by their short name where the field has one, so a result fits a phone row.
     const names = new Map(response.participants.map((row) => [row.id, row.participant.shortName ?? row.participant.name]));
@@ -126,7 +125,7 @@ export const headToHeadUi: ScoringFamilyUi = {
         ] : [];
         const winsText = knockout && points !== null ? String(knockout.wins) : null;
         return {
-          total: points === null ? null : definition.format(points),
+          total: points === null ? null : formatParticipantScore(response.scoringDefinitionId, points),
           detailCells: [
             {
               key: 'wins',

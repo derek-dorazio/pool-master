@@ -146,7 +146,7 @@ describe('BalldontlieAdapter (soccer: the Premier League)', () => {
         ['9', 'Fulham'],
       ]);
       expect(detail?.games).toHaveLength(5);
-      expect(detail?.games?.[0]).toMatchObject({ roundNumber: 1, homeTeamExternalId: '12', awayTeamExternalId: '9', isNeutralSite: false });
+      expect(detail?.games?.[0]).toMatchObject({ roundNumber: 1, homeTeamExternalId: '12', awayTeamExternalId: '9' });
       expect(detail?.games?.[0].games[0]?.providerGameId).toMatch(/^\d+$/);
       expect(detail?.games?.[0].scheduledAt).toBeInstanceOf(Date);
       expect(requestLine(harness.api)).toEqual(['/epl/v2/matches?season=2026&per_page=100', '/epl/v2/teams?season=2026']);

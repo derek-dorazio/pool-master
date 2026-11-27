@@ -3,48 +3,52 @@
  * through stroke play's participant scoring definition. `PARTICIPANT_SCORING_DEFINITIONS` owns
  * how a score reads — `format` for a total, `formatRound` for the strokes-once-complete /
  * to-par-while-in-progress round rule (#248) — and this module calls those; it never
- * reimplements them. The 80-strokes rule for an unplayed round (#478) is stroke play's.
+ * reimplements them. What an unplayed round scores (#478) is the contest's setting, read off the
+ * leaderboard response.
  */
 
 import {
-  isRoundComplete,
   PARTICIPANT_SCORING_DEFINITIONS,
   ParticipantStandingStatus,
 } from '@poolmaster/shared/domain';
-import { displayString } from '@poolmaster/shared/display-strings';
+import { displayString, enumLabel, sportWord, type SportWordSource } from '@poolmaster/shared/display-strings';
 import type { SportEventParticipantDto } from '@/lib/api';
 import { resolveRoundNumbers } from '../contest-leaderboard-rounds';
 import type { LeaderboardDetailCell, ScoringFamilyUi } from './types';
 
-/** What a round the golfer did not play counts as, shown in its cell (#478). */
-export const UNPLAYED_ROUND_CELL = '80';
-
 /**
- * The THR cell (#389): how far the golfer is through their current round. `CUT` and `WD`
- * outrank everything — a golfer out of the event has no round in progress — then `F` once the
- * current round is complete, then the last hole completed. Null (a dash) before they tee off.
+ * The THR cell (#389): how far the golfer is through their current round. A golfer out of the
+ * event reads the sport's short word for it (golf: `CUT`, `WD`) — they have no round in progress
+ * — and one who has played every round reads the standing's short form (`F`). Otherwise the
+ * current round reads its side status's short form once it has ended (`F`), then the periods
+ * (holes) the feed says they have completed. Null (a dash) before they tee off.
  */
-export function formatThru(participant: SportEventParticipantDto): string | null {
+export function formatThru(participant: SportEventParticipantDto, sport: SportWordSource): string | null {
   const standing = participant.standing;
   if (!standing) {
     return null;
   }
-  if (standing.status === ParticipantStandingStatus.ELIMINATED) {
-    return 'CUT';
-  }
-  if (standing.status === ParticipantStandingStatus.WITHDRAWN) {
-    return 'WD';
-  }
-  if (standing.status === ParticipantStandingStatus.COMPLETE) {
-    return 'F';
+  switch (standing.status) {
+    case ParticipantStandingStatus.ELIMINATED:
+      return sportWord(sport, 'eliminated', { form: 'short' });
+    case ParticipantStandingStatus.WITHDRAWN:
+      return sportWord(sport, 'withdrawn', { form: 'short' });
+    case ParticipantStandingStatus.COMPLETE:
+      return enumLabel('ParticipantStandingStatus', standing.status, { form: 'short' });
+    case ParticipantStandingStatus.ACTIVE:
+    case ParticipantStandingStatus.IN_PROGRESS:
+      break;
   }
   const currentRound = participant.rounds.find(
     (round) => round.roundNumber === standing.currentRound,
   );
-  if (currentRound && isRoundComplete(currentRound)) {
-    return 'F';
+  if (!currentRound) {
+    return null;
   }
-  const thru = standing.golf?.currentRoundThru ?? null;
+  if (currentRound.status !== null) {
+    return enumLabel('GameSideStatus', currentRound.status, { form: 'short' });
+  }
+  const thru = currentRound.periodsCompleted;
   return thru === null || thru <= 0 ? null : String(thru);
 }
 
@@ -60,10 +64,11 @@ export const strokePlayUi: ScoringFamilyUi = {
     format: PARTICIPANT_SCORING_DEFINITIONS.GOLF_RELATIVE_TO_PAR_TOTAL.format,
     describe: (value) => `Winning score relative to par: ${PARTICIPANT_SCORING_DEFINITIONS.GOLF_RELATIVE_TO_PAR_TOTAL.format(value)}`,
   },
-  leaderboard(response) {
+  leaderboard(response, sport) {
     // Stroke play has one scoring definition: golf's total relative to par.
     const definition = PARTICIPANT_SCORING_DEFINITIONS.GOLF_RELATIVE_TO_PAR_TOTAL;
-    // A withdrawn golfer's 80s can fall on rounds nobody has played yet, so those get columns too.
+    // A withdrawn golfer's unplayed rounds can fall on rounds nobody has played yet, so those get
+    // columns too.
     const unplayedRoundNumbers = response.entries.flatMap((entry) =>
       entry.picks.flatMap((pick) => pick.golf?.unplayedRoundNumbers ?? []),
     );
@@ -72,6 +77,8 @@ export const strokePlayUi: ScoringFamilyUi = {
       ...fieldRoundNumbers,
       ...unplayedRoundNumbers,
     ])].sort((left, right) => left - right);
+    // What each unplayed round counts as, against par: the contest's setting (#478).
+    const unplayedCell = response.unplayedRoundToPar === null ? null : definition.format(response.unplayedRoundToPar);
 
     return {
       detailColumns: [
@@ -83,10 +90,10 @@ export const strokePlayUi: ScoringFamilyUi = {
           width: 'minmax(44px,0.3fr)',
         })),
       ],
-      footnote: unplayedRoundNumbers.length > 0
+      footnote: unplayedRoundNumbers.length > 0 && unplayedCell !== null
         ? {
           testId: 'contest-leaderboard-unplayed-note',
-          text: 'Rounds in italics were not played (missed cut, withdrawal, or no score) and count as 80 strokes against that round\'s par.',
+          text: `Rounds in italics were not played (missed cut, withdrawal, or no score) and count as ${unplayedCell} against par.`,
         }
         : null,
       pickDetail(entryId, pick, participant) {
@@ -94,7 +101,8 @@ export const strokePlayUi: ScoringFamilyUi = {
           participant.rounds.map((round) => [round.roundNumber, round]),
         );
         // The contest score, not the event's: a cut or withdrawn golfer's unplayed rounds count
-        // as 80 strokes here (#478), while the event standing keeps their real to-par.
+        // as the contest's unplayed-round score here (#478), while the event standing keeps their
+        // real to-par.
         const contestScore = pick.golf?.scoreToPar ?? null;
         const pickUnplayedRounds = pick.golf?.unplayedRoundNumbers ?? [];
         const roundCells = roundNumbers.map((roundNumber): LeaderboardDetailCell => {
@@ -105,9 +113,9 @@ export const strokePlayUi: ScoringFamilyUi = {
           if (pickUnplayedRounds.includes(roundNumber)) {
             return {
               ...cell,
-              text: UNPLAYED_ROUND_CELL,
+              text: unplayedCell,
               unplayed: {
-                ariaLabel: `${displayString('word.roundNumber', { n: roundNumber })} not played, counts as 80 strokes`,
+                ariaLabel: `${displayString('word.roundNumber', { n: roundNumber })} not played, counts as ${unplayedCell ?? ''} against par`,
               },
             };
           }
@@ -129,7 +137,7 @@ export const strokePlayUi: ScoringFamilyUi = {
             {
               key: 'thru',
               testId: `contest-leaderboard-pick-thru-${entryId}-${pick.pickId}`,
-              text: formatThru(participant),
+              text: formatThru(participant, sport),
             },
             ...roundCells,
           ],

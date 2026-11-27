@@ -15,11 +15,11 @@ describe('background job retention (#1440)', () => {
       failedLastWeek: { status: BackgroundJobStatus.FAILED, daysAgo: 8 },
     };
     for (const [key, { status, daysAgo }] of Object.entries(finished)) {
-      await jobs.enqueue({ type: BackgroundJobType.MANUAL_EVENT_SYNC, payload: { key }, dedupeKey: key, start: TEST_JOB_START });
+      await jobs.enqueue({ type: BackgroundJobType.SYNC_EVENT_FIELD, payload: { key }, dedupeKey: key, start: TEST_JOB_START });
       const row = jobs.rows[jobs.rows.length - 1];
       Object.assign(row, { status, completedAt: new Date(NOW.getTime() - daysAgo * DAY_MS) });
     }
-    await jobs.enqueue({ type: BackgroundJobType.MANUAL_EVENT_SYNC, payload: { key: 'queued' }, dedupeKey: 'queued', start: TEST_JOB_START });
+    await jobs.enqueue({ type: BackgroundJobType.SYNC_EVENT_FIELD, payload: { key: 'queued' }, dedupeKey: 'queued', start: TEST_JOB_START });
 
     await expect(new BackgroundJobRetention(jobs).purge(NOW)).resolves.toBe(2);
 

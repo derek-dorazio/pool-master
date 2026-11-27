@@ -187,8 +187,8 @@ export type ContestEntryDto = z.infer<typeof ContestEntryDtoSchema>;
  * them through `PARTICIPANT_SCORING_DEFINITIONS[scoringDefinitionId]`.
  */
 export const ScoredContestEntryPickGolfDtoSchema = z.object({
-  scoreToPar: z.number().int().nullable().describe('The golfer\'s score in this contest against par: their event total, with every round they did not play scored as 80 strokes (80 minus that round\'s par). Differs from the event standing\'s eventScoreToPar only when unplayedRoundNumbers is non-empty. Null while unscored.'),
-  unplayedRoundNumbers: z.array(z.number().int().min(1)).describe('Rounds scored as 80 strokes because the golfer did not play them: cut, withdrawn, removed from the field, or no score once the field moved past the round. Empty when none.'),
+  scoreToPar: z.number().int().nullable().describe('The golfer\'s score in this contest against par: their event total, with every round they did not play scored as the leaderboard\'s unplayedRoundToPar. Differs from the event standing\'s eventScoreToPar only when unplayedRoundNumbers is non-empty. Null while unscored.'),
+  unplayedRoundNumbers: z.array(z.number().int().min(1)).describe('Rounds scored as the leaderboard\'s unplayedRoundToPar because the golfer did not play them: cut, withdrawn, removed from the field, or no score once the field moved past the round. Empty when none.'),
 }).describe('Golf extension of a scored pick: the golfer\'s contest score and the rounds in it scored as 80 strokes.');
 export type ScoredContestEntryPickGolfDto = z.infer<typeof ScoredContestEntryPickGolfDtoSchema>;
 
@@ -262,6 +262,11 @@ export const ContestLeaderboardResponseSchema = z.object({
   ),
   countingRule: ContestCountingRuleDtoSchema,
   upsetBonus: z.boolean().describe('Whether the contest scores an upset bonus (#1748): a knockout contest whose bonus rule is on, so a client shows each pick\'s bonus in its own column even before any team has earned one. False for every other contest.'),
+  unplayedRoundToPar: z.number().int().nullable().describe('What each round a golfer did not play adds to their contest score, in strokes over par: the contest\'s setting, so a client states it in its footnote and shows an unplayed round as this to-par. Null for a contest not scored by golf\'s to-par total.'),
+  currentRound: z.object({
+    roundNumber: z.number().int().min(1).describe('The round the shown event\'s field is on: the highest round any participant is still playing, else the highest any has finished.'),
+    isComplete: z.boolean().describe('Whether that round has finished: no participant is still playing it.'),
+  }).nullable().describe('The round the shown event\'s field is on, for the leaderboard header. Null before a single round is scored, and for an event scored by match or by finish, which has no rounds.'),
   participants: z.array(SportEventParticipantDtoSchema).describe('The shown event\'s field, as the event publishes it: in seed order, unseeded last. Picks point into it by sportEventParticipantId.'),
   entries: z.array(ContestEntryStandingDtoSchema).describe('Contest entries that submitted at least one revealed event, best total first.'),
   asOf: z.iso.datetime().nullable().describe('Latest standing timestamp the leaderboard reflects, or null when there is none.'),

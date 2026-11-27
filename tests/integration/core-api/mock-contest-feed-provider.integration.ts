@@ -2,17 +2,20 @@ import { BALLDONTLIE_TEST_PROVIDER_ID } from '../../support/balldontlie-provider
 import { expect } from '@jest/globals';
 import { NO_CONTEST_ACTIVATION, testDomainEvents } from '../../support/domain-events';
 import { randomUUID } from 'node:crypto';
-import { ProviderCode, Sport } from '@poolmaster/shared/domain';
+import { fieldWindowEventIds, ProviderCode, ProviderSyncKind, Sport } from '@poolmaster/shared/domain';
+import type { SyncedLeagueRef } from '@poolmaster/shared/db';
 import { ContestLeaderboardResponseSchema, type ContestLeaderboardResponse } from '@poolmaster/shared/dto';
 import { IngestionPersistence } from '../../../packages/core-api/src/modules/ingestion/persistence/ingestion-persistence';
 import { createEventLifecycleService } from '../../../packages/core-api/src/modules/events/wiring';
 import { MockContestFeedAdapter } from '../../support/mock-contest-feed-provider';
 import { ProviderRegistry } from '../../../packages/core-api/src/modules/ingestion/core/provider-registry';
-import { IngestionScheduler, publishLiveScoreUpdate } from '../../../packages/core-api/src/modules/ingestion/core';
+import { EventFeedSync, publishLiveScoreUpdate } from '../../../packages/core-api/src/modules/ingestion/core';
 import { scoringFamilyForEvent } from '../../../packages/core-api/src/modules/scoring-families';
 import { createContestSettlementService } from '../../../packages/core-api/src/modules/contests/wiring';
 import type { IngestionScheduleConfig } from '../../../packages/shared/dto/config.dto';
-import { createScheduledEventReader } from '../../../packages/core-api/src/modules/ingestion/core/scheduled-event-reader';
+import { SyncTick } from '../../../packages/core-api/src/modules/ingestion/sync-tick';
+import { PrismaSyncDueWorkReader } from '../../../packages/core-api/src/adapters/prisma-sync-due-work-reader';
+import { heldHere } from '../../support/job-locks';
 import { IngestionService } from '../../../packages/core-api/src/modules/ingestion/ingestion-service';
 import { ProviderSyncRunLedger } from '../../../packages/core-api/src/modules/ingestion/persistence/provider-sync-run-ledger';
 import {
@@ -22,6 +25,7 @@ import {
   getAppPrisma,
   getPrisma,
   integrationBackgroundJobs,
+  integrationEventSyncJobs,
   setupIntegrationTests,
   teardownIntegrationTests,
   integrationSyncFindings,
@@ -46,11 +50,9 @@ const MOCK_FEED_EVENTS = providerEventWhere(providerId, { startsWith: 'golf-' })
 const eventExternalId = 'golf-masters-2026';
 const syncVerificationNow = new Date('2026-05-30T12:00:00.000Z');
 const syncVerificationConfig: IngestionScheduleConfig = {
-  // Every unstarted event in the lookahead takes field syncs (#431 removed the release
-  // window), so a week keeps the scheduled pass to the one event this suite asserts on.
-  FIELD: { intervalMinutes: 360, lookaheadDays: 7 },
-  SCORES: { enabled: false, intervalSeconds: 30 },
-  EVENTS: { enabled: true, intervalMinutes: 360 },
+  FIELD: { intervals: { IN_SEASON: { intervalMinutes: 360 }, OFFSEASON: { intervalMinutes: 360 } } },
+  SCORES: { enabled: false, intervals: { IN_SEASON: { intervalSeconds: 30 }, OFFSEASON: { intervalSeconds: 30 } } },
+  EVENTS: { enabled: true, intervals: { IN_SEASON: { intervalMinutes: 360 }, OFFSEASON: { intervalMinutes: 360 } } },
 };
 
 function emptyLiveScorePersistenceResult() {
@@ -166,6 +168,33 @@ async function syncLinkedEventsLeagues(prisma: ReturnType<typeof getPrisma>): Pr
     // poolmaster-allow-query-in-loop: test setup, once per league the linked events are in.
     await prisma.sportLeague.update({ where: { id: mapping.sportLeagueId }, data: { selectedProviderMappingId: mapping.id, isActive: true } });
   }
+}
+
+/** Starts each linked event's synced slot when its event starts, as the events sync sets it (#2009). */
+async function startSlotsAtEventStarts(prisma: ReturnType<typeof getPrisma>): Promise<void> {
+  const slots = await prisma.sportEventSlot.findMany({
+    where: { sportEvent: providerEventWhere(providerId, { not: '' }), seasonSlot: { isTestData: false } },
+    select: { sportLeagueSeasonCompetitionSlotId: true, sportEvent: { select: { startDate: true } } },
+  });
+  for (const slot of slots) {
+    // poolmaster-allow-query-in-loop: test setup, once per linked event.
+    await prisma.sportLeagueSeasonCompetitionSlot.update({ where: { id: slot.sportLeagueSeasonCompetitionSlotId }, data: { startsAt: slot.sportEvent.startDate } });
+  }
+}
+
+/** The golf leagues the linked events are mapped under, as the sync tick names them. */
+async function linkedEventsLeagues(prisma: ReturnType<typeof getPrisma>): Promise<SyncedLeagueRef[]> {
+  const mappings = await prisma.sportEventProviderMapping.findMany({
+    where: { provider: { code: ProviderCode.BALLDONTLIE }, sportEvent: { sportLeagueSeason: { sportLeague: { sport: { sport: Sport.GOLF } } } } },
+    distinct: ['sportLeagueProviderMappingId'],
+    select: { sportLeagueProviderMapping: { select: { id: true, sportLeagueId: true } } },
+  });
+  return mappings.map(({ sportLeagueProviderMapping: mapping }) => ({ sportLeagueId: mapping.sportLeagueId, sportLeagueProviderMappingId: mapping.id }));
+}
+
+/** The linked event's id here, which a Sync now names. */
+async function linkedEventId(externalId: string): Promise<string> {
+  return (await getPrisma().sportEvent.findFirstOrThrow({ where: providerEventWhere(providerId, externalId), select: { id: true } })).id;
 }
 
 const SYNC_RUN_WAIT_MS = 10_000;
@@ -363,7 +392,7 @@ async function createGolfLiveContestConfiguration(contestId: string) {
       },
       // Every configuration carries its scoring rule (#246); there is no golf fallback.
       participantScoringRules: {
-        create: { participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', sortOrder: 1 },
+        create: { participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', sortOrder: 1, config: { unplayedRoundToPar: 8 } },
       },
     },
   });
@@ -669,21 +698,15 @@ describe('mock contest feed provider event-first verification', () => {
     const registry = new ProviderRegistry();
     registry.register(provider);
     const persistence = new IngestionPersistence(getAppPrisma(), testDomainEvents());
-    // A run's event is the SportEvent it links (#2040), found as the app finds it.
-    const syncRunLedger = new ProviderSyncRunLedger(new PrismaProviderSyncRunRepository(getAppPrisma()), undefined, new PrismaSportEventRepository(getAppPrisma()));
-    const eventReader = createScheduledEventReader({ prisma: getAppPrisma(), registry });
+    const syncRunLedger = new ProviderSyncRunLedger(new PrismaProviderSyncRunRepository(getAppPrisma()));
     const configReader = {
       getConfig: async () => syncVerificationConfig,
     };
-    const scheduler = new IngestionScheduler(registry, {
+    const eventSyncJobs = integrationEventSyncJobs(registry, {
       onEventDetail: (detail) => persistence.persistEventDetailWithDiagnostics(detail),
       onLiveScores: async () => emptyLiveScorePersistenceResult(),
-    }, undefined, {
-      configReader,
-      eventReader,
-      now: () => syncVerificationNow,
-      syncRunLedger,
-    });
+    }, { schedule: configReader });
+    const dueWork = new PrismaSyncDueWorkReader(getAppPrisma());
     const rootAdmin = await createTestUser({
       displayName: 'Golf Sync Verification Root Admin',
       isRootAdmin: true,
@@ -693,7 +716,6 @@ describe('mock contest feed provider event-first verification', () => {
       registry,
       sportEvents: new PrismaSportEventRepository(getAppPrisma()),
       syncRuns: new PrismaProviderSyncRunRepository(getAppPrisma()),
-      scheduler,
       sportLeagues: new PrismaSportLeagueRepository(getAppPrisma()),
       providerSettings: { all: () => [], bySourceId: () => undefined },
       webhooks: { isOn: () => false, isSecretSet: () => false },
@@ -701,34 +723,32 @@ describe('mock contest feed provider event-first verification', () => {
       syncRunLedger,
       jobs: backgroundJobs.queue,
     });
-    backgroundJobs.runWith({ MANUAL_EVENT_SYNC: (payload, context) => providerService.runManualEventSync(payload, context) });
+    const runner = backgroundJobs.runWith({ SYNC_EVENT_FIELD: (payload, context) => eventSyncJobs.run(ProviderSyncKind.FIELD, payload, context) });
+    const syncTick = new SyncTick({
+      sportLeagues: new PrismaSportLeagueRepository(getAppPrisma()),
+      dueWork,
+      jobHistory: new PrismaBackgroundJobRepository(getAppPrisma()),
+      jobs: backgroundJobs.queue,
+      registry,
+      // The tick here queues only fields: the leagues' events sync is not this test's.
+      schedule: { getConfig: async () => ({ ...syncVerificationConfig, EVENTS: { ...syncVerificationConfig.EVENTS, enabled: false } }) },
+      notifiedProviderCadence: () => undefined,
+      jobLock: heldHere(),
+      now: () => syncVerificationNow,
+    });
 
     const linked = await linkProviderGolfEvents(new Date('2026-04-01T00:00:00.000Z'), new Date('2026-06-30T23:59:59.999Z'));
     expect(linked).toBeGreaterThan(0);
     // The field sync reads only synced leagues' events (#2086): the linked events' leagues are
     // synced from the provider league their events are mapped under.
     await syncLinkedEventsLeagues(prisma);
+    await startSlotsAtEventStarts(prisma);
 
-    const eligibleEvents = await eventReader.listFieldSyncEvents({
-      sport: Sport.GOLF,
-      from: syncVerificationNow,
-      to: new Date(syncVerificationNow.getTime() + 7 * 24 * 60 * 60 * 1000),
-      now: syncVerificationNow,
-    });
-    expect(eligibleEvents).toEqual([
-      { providerId: 'balldontlie', externalId: 'golf-genesis-scottish-open-2026' },
-    ]);
+    // The field the tick syncs is the next slot's, the one event starting first after now.
+    const nextSlots = await dueWork.findNextSlots({ leagues: await linkedEventsLeagues(prisma), now: syncVerificationNow });
+    expect(fieldWindowEventIds(nextSlots, syncVerificationNow)).toEqual([await linkedEventId('golf-genesis-scottish-open-2026')]);
 
-    const manualField = await providerService.syncEventData(
-      {
-        sport: Sport.GOLF,
-        providerId: 'balldontlie',
-        eventId: eventExternalId,
-        kinds: ['FIELD'],
-      },
-      rootAdmin.user.id,
-      rootAdmin.user.email,
-    );
+    const manualField = await providerService.syncSportEvent(await linkedEventId(eventExternalId), [ProviderSyncKind.FIELD], rootAdmin.user.id, rootAdmin.user.email);
     const firstFieldRuns = await waitForProviderSyncRuns(manualField.syncRuns.map((run) => run.id));
     expect(firstFieldRuns[0].detailsJson).toEqual(expect.objectContaining({
       writeDiagnostics: expect.objectContaining({
@@ -742,16 +762,7 @@ describe('mock contest feed provider event-first verification', () => {
       }),
     }));
 
-    const manualFieldRefresh = await providerService.syncEventData(
-      {
-        sport: Sport.GOLF,
-        providerId: 'balldontlie',
-        eventId: eventExternalId,
-        kinds: ['FIELD'],
-      },
-      rootAdmin.user.id,
-      rootAdmin.user.email,
-    );
+    const manualFieldRefresh = await providerService.syncSportEvent(await linkedEventId(eventExternalId), [ProviderSyncKind.FIELD], rootAdmin.user.id, rootAdmin.user.email);
     const fieldRuns = await waitForProviderSyncRuns(manualFieldRefresh.syncRuns.map((run) => run.id));
     expect(fieldRuns[0]).toMatchObject({ kind: 'FIELD', changedCount: 0 });
     expect(fieldRuns[0].detailsJson).toEqual(expect.objectContaining({
@@ -763,13 +774,9 @@ describe('mock contest feed provider event-first verification', () => {
       },
     }));
 
-    scheduler.start();
-    let scheduledRuns: Awaited<ReturnType<typeof waitForScheduledProviderSyncRuns>>;
-    try {
-      scheduledRuns = await waitForScheduledProviderSyncRuns(BALLDONTLIE_TEST_PROVIDER_ID, 1);
-    } finally {
-      scheduler.stop();
-    }
+    await syncTick.tick();
+    await runner.drain();
+    const scheduledRuns = await waitForScheduledProviderSyncRuns(BALLDONTLIE_TEST_PROVIDER_ID, 1);
 
     const scottieEventParticipant = await findEventParticipantByExternalIds({
       providerId,
@@ -824,16 +831,11 @@ describe('mock contest feed provider event-first verification', () => {
       contestSettlement: settlement,
     });
     const persistence = new IngestionPersistence(getAppPrisma(), testDomainEvents());
-    // A run's event is the SportEvent it links (#2040), found as the app finds it.
-    const syncRunLedger = new ProviderSyncRunLedger(new PrismaProviderSyncRunRepository(getAppPrisma()), undefined, new PrismaSportEventRepository(getAppPrisma()));
-    const eventReader = createScheduledEventReader({ prisma: getAppPrisma(), registry });
-    const scheduler = new IngestionScheduler(registry, {
+    const syncRunLedger = new ProviderSyncRunLedger(new PrismaProviderSyncRunRepository(getAppPrisma()));
+    const eventSyncJobs = integrationEventSyncJobs(registry, {
       onEventDetail: (detail) => persistence.persistEventDetailWithDiagnostics(detail),
       onLiveScores: async (result, providerIdForResult) =>
         publishLiveScoreUpdate(result, { contestActivation: NO_CONTEST_ACTIVATION, prisma, providerId: providerIdForResult, domainEvents: testDomainEvents(), scoringFamilyForEvent, findings: integrationSyncFindings() }),
-    }, undefined, {
-      eventReader,
-      syncRunLedger,
     });
     const rootAdmin = await createTestUser({
       displayName: 'Golf Live E2E Root Admin',
@@ -843,7 +845,6 @@ describe('mock contest feed provider event-first verification', () => {
       registry,
       sportEvents: new PrismaSportEventRepository(getAppPrisma()),
       syncRuns: new PrismaProviderSyncRunRepository(getAppPrisma()),
-      scheduler,
       sportLeagues: new PrismaSportLeagueRepository(getAppPrisma()),
       providerSettings: { all: () => [], bySourceId: () => undefined },
       webhooks: { isOn: () => false, isSecretSet: () => false },
@@ -853,23 +854,17 @@ describe('mock contest feed provider event-first verification', () => {
     });
     // Completing the event queues the job that settles its contests (#1448); this runs it.
     const settleRunner = backgroundJobs.runWith({
-      MANUAL_EVENT_SYNC: (payload, context) => providerService.runManualEventSync(payload, context),
+      SYNC_EVENT_FIELD: (payload, context) => eventSyncJobs.run(ProviderSyncKind.FIELD, payload, context),
+      SYNC_EVENT_SCORES: (payload, context) => eventSyncJobs.run(ProviderSyncKind.SCORES, payload, context),
       SETTLE_SPORT_EVENT_CONTESTS: (payload) => eventLifecycleService.settleFinishedEventContests(payload),
     });
 
     await linkProviderGolfEvents(new Date('2026-04-01T00:00:00.000Z'), new Date('2026-06-30T23:59:59.999Z'));
+    // A Sync now runs on an event of a synced league (#2009): its league's provider has the id.
+    await syncLinkedEventsLeagues(prisma);
 
     provider.pinEventState(eventExternalId, 'locked');
-    const field = await providerService.syncEventData(
-      {
-        sport: Sport.GOLF,
-        providerId: 'balldontlie',
-        eventId: eventExternalId,
-        kinds: ['FIELD'],
-      },
-      rootAdmin.user.id,
-      rootAdmin.user.email,
-    );
+    const field = await providerService.syncSportEvent(await linkedEventId(eventExternalId), [ProviderSyncKind.FIELD], rootAdmin.user.id, rootAdmin.user.email);
     await waitForProviderSyncRuns(field.syncRuns.map((run) => run.id));
 
     const event = await prisma.sportEvent.findFirstOrThrow({
@@ -920,16 +915,7 @@ describe('mock contest feed provider event-first verification', () => {
     });
 
     provider.pinEventState(eventExternalId, 'golf-r2-complete');
-    const r2Complete = await providerService.syncEventData(
-      {
-        sport: Sport.GOLF,
-        providerId: 'balldontlie',
-        eventId: eventExternalId,
-        kinds: ['SCORES'],
-      },
-      rootAdmin.user.id,
-      rootAdmin.user.email,
-    );
+    const r2Complete = await providerService.syncSportEvent(await linkedEventId(eventExternalId), [ProviderSyncKind.SCORES], rootAdmin.user.id, rootAdmin.user.email);
     await waitForProviderSyncRuns(r2Complete.syncRuns.map((run) => run.id));
 
     const leaderboardAfterR2 = await readGolfLeaderboard(directContest.id, rootAdmin.headers);
@@ -952,16 +938,7 @@ describe('mock contest feed provider event-first verification', () => {
     ]);
 
     provider.pinEventState(eventExternalId, 'golf-correction');
-    const corrected = await providerService.syncEventData(
-      {
-        sport: Sport.GOLF,
-        providerId: 'balldontlie',
-        eventId: eventExternalId,
-        kinds: ['SCORES'],
-      },
-      rootAdmin.user.id,
-      rootAdmin.user.email,
-    );
+    const corrected = await providerService.syncSportEvent(await linkedEventId(eventExternalId), [ProviderSyncKind.SCORES], rootAdmin.user.id, rootAdmin.user.email);
     await waitForProviderSyncRuns(corrected.syncRuns.map((run) => run.id));
 
     const leaderboardAfterCorrection = await readGolfLeaderboard(directContest.id, rootAdmin.headers);
@@ -972,16 +949,7 @@ describe('mock contest feed provider event-first verification', () => {
     expect(leaderAfterCorrection?.picks.filter((pick) => pick.isDropped)).toHaveLength(1);
 
     provider.pinEventState(eventExternalId, 'golf-completed');
-    const finalLive = await providerService.syncEventData(
-      {
-        sport: Sport.GOLF,
-        providerId: 'balldontlie',
-        eventId: eventExternalId,
-        kinds: ['SCORES'],
-      },
-      rootAdmin.user.id,
-      rootAdmin.user.email,
-    );
+    const finalLive = await providerService.syncSportEvent(await linkedEventId(eventExternalId), [ProviderSyncKind.SCORES], rootAdmin.user.id, rootAdmin.user.email);
     await waitForProviderSyncRuns(finalLive.syncRuns.map((run) => run.id));
     await expect(prisma.contestEntryStanding.count({
       where: { contestId: { in: [directContest.id] } },
@@ -1034,23 +1002,15 @@ describe('mock contest feed provider event-first verification', () => {
     });
     const settledOnce = await readSettlement();
 
-    const completedLiveCandidates = await eventReader.listLiveScoreEvents({
-      sport: Sport.GOLF,
+    // A finished event's Games are no longer due, so the tick syncs its scores no more.
+    const completedLiveCandidates = await new PrismaSyncDueWorkReader(getAppPrisma()).findLiveEvents({
+      leagues: await linkedEventsLeagues(prisma),
       now: new Date('2026-05-31T23:00:00.000Z'),
     });
-    expect(completedLiveCandidates.map((event) => event.externalId)).not.toContain(eventExternalId);
+    expect(completedLiveCandidates.map((live) => live.sportEventId)).not.toContain(event.id);
 
     provider.pinEventState(eventExternalId, 'golf-completed');
-    const rerunCompletedDetail = await providerService.syncEventData(
-      {
-        sport: Sport.GOLF,
-        providerId: 'balldontlie',
-        eventId: eventExternalId,
-        kinds: ['FIELD'],
-      },
-      rootAdmin.user.id,
-      rootAdmin.user.email,
-    );
+    const rerunCompletedDetail = await providerService.syncSportEvent(await linkedEventId(eventExternalId), [ProviderSyncKind.FIELD], rootAdmin.user.id, rootAdmin.user.email);
     await waitForProviderSyncRuns(rerunCompletedDetail.syncRuns.map((run) => run.id));
     await expect(prisma.contestEntryStanding.count({
       where: {
@@ -1074,7 +1034,7 @@ describe('mock contest feed provider event-first verification', () => {
     registry.register(provider);
 
     const persistence = new IngestionPersistence(getAppPrisma(), testDomainEvents());
-    const scheduler = new IngestionScheduler(registry, {
+    const feeds = new EventFeedSync(registry, {
       onEventDetail: (detail) => persistence.persistEventDetailWithDiagnostics(detail),
       onLiveScores: async () => emptyLiveScorePersistenceResult(),
     });
@@ -1092,7 +1052,7 @@ describe('mock contest feed provider event-first verification', () => {
 
     // #205 deleted the one-off re-ingest; the event field sync (`submitEventSync`) is how an
     // event's field is loaded on demand.
-    const [fieldJob] = await scheduler.runEventSync({
+    const [fieldJob] = await feeds.runEventSync({
       sport: Sport.GOLF,
       providerId: 'balldontlie',
       eventId: eventExternalId,
