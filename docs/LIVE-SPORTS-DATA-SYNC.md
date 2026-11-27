@@ -469,7 +469,8 @@ Game is in. There is no prefix match and no fan-out to a league's other events. 
 mapped to queues nothing and raises a `GAME_UNKNOWN` finding (WARNING) on each league synced from
 the provider league its event type names (`nfl.game.ended`); the sync maps Games as it loads the
 event's slate, so the next sync usually closes it. The notification time goes on the Game
-(`last_provider_notification_at`); a golf notification's goes on its event. The job runs the
+(`last_provider_notification_at`); a golf notification, found through the event's provider
+mapping, goes on the event's Games in play, today the current round's Game. The job runs the
 normal scores sync. **The delivery is a trigger, never a record**: only the notification time is
 written.
 
