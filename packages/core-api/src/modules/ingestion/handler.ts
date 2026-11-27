@@ -131,7 +131,7 @@ export function createIngestionHandlers(
       return reply.code(202).send(toProviderManualSyncSubmissionResponse(result));
     } catch (err) {
       if (err instanceof SportEventNotSyncedError) {
-        logger.warn({ eventId, code: err.code }, 'Manual event sync refused: the event is not one its provider syncs');
+        logger.warn({ eventId, code: err.code }, 'Manual event sync refused: the event is not one its provider syncs, or cannot run that kind now');
         return sendError(reply, err.statusCode, err.code, err.message);
       }
       if (err instanceof SportProviderNotFoundError) {

@@ -132,7 +132,7 @@ export function ingestionModule(fastify: FastifyInstance, opts: IngestionModuleO
       tags: ['Ingestion'],
       summary: 'Sync an event now',
       description: 'Queues one sync run per requested event-level feed for the event, read from its sport league\'s provider by the id the events sync gave it, and answers at once (202); the runs execute in a background job. '
-        + '404 EVENT_NOT_FOUND, or SPORT_PROVIDER_NOT_FOUND when that provider is not running here; 409 EVENT_NOT_LINKED for a test event, which no provider syncs.',
+        + '404 EVENT_NOT_FOUND, or SPORT_PROVIDER_NOT_FOUND when that provider is not running here; 409 EVENT_NOT_LINKED for a test event, which no provider syncs; 422 EVENT_SYNC_KIND_UNAVAILABLE for a kind outside the event\'s syncKinds (#2238).',
       operationId: 'submitEventSync',
       params: {
         type: 'object',

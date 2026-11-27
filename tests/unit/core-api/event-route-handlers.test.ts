@@ -258,6 +258,26 @@ describe('field refresh from the provider', () => {
     expect(ingestion.syncEventData).not.toHaveBeenCalled();
   });
 
+  it('queues a field sync for a linked draft event, whose field is loaded before release', async () => {
+    const { services, ingestion, handlers } = fakes();
+    services.sportEvents.requireEvent.mockResolvedValueOnce(sportEvent({ status: SportEventStatus.DRAFT }));
+
+    const reply = await callHandler(handlers.refreshEventParticipants, stubRequest({ params, authUser: admin }));
+
+    expect(reply).toMatchObject({ statusCode: 202 });
+    expect(ingestion.syncEventData).toHaveBeenCalledWith(expect.objectContaining({ kinds: ['FIELD'] }), 'admin', 'admin@example.test');
+  });
+
+  it('refuses a field sync for a cancelled event, which no field sync runs on, with 422 EVENT_SYNC_KIND_UNAVAILABLE and syncs nothing', async () => {
+    const { services, ingestion, handlers } = fakes();
+    services.sportEvents.requireEvent.mockResolvedValueOnce(sportEvent({ status: SportEventStatus.CANCELLED }));
+
+    const reply = await callHandler(handlers.refreshEventParticipants, stubRequest({ params }));
+
+    expect(reply).toMatchObject({ statusCode: 422, body: { error: { code: 'EVENT_SYNC_KIND_UNAVAILABLE' } } });
+    expect(ingestion.syncEventData).not.toHaveBeenCalled();
+  });
+
   it.each<[string, Error, number, string]>([
     ['no provider with 404 SPORT_PROVIDER_NOT_FOUND', new SportProviderNotFoundError('GOLF', 'mock-provider'), 404, 'SPORT_PROVIDER_NOT_FOUND'],
   ])('answers a field sync refused for %s, with no session read as no actor', async (_label, error, status, code) => {
