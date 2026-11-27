@@ -368,7 +368,8 @@ export class RaceResultService {
       }
       if (unchanged) continue;
       games.push({ roundNumber, status, completedAt: session.isOfficial ? asOf : null, sides });
-      // The event's standing is its race's finishing order (one race per event, #2008).
+      // The event's standing is its last played session's finishing order: sessions run in start
+      // order, so a weekend playing the sprint and the race stands on the race.
       const places = finishingPlaces(finishes.map((finish) => ({ resultStatus: finish.status, finishPosition: finish.position })));
       standings = finishes.map((side) => ({
         sportEventParticipantId: side.sportEventParticipantId,
@@ -387,9 +388,13 @@ export class RaceResultService {
       );
     }
     if (games.length > 0) {
+      // A Game's status moved with its results, so the slot's status is refreshed in the same write
+      // and a race the feed calls final completes its slot.
       const rebuild = await this.deps.domainEvents.collect({ type: DomainEventType.SPORT_EVENT_RESULTS_CHANGED, sportEventId });
-      await this.deps.fieldGames.applyResults(sportEventId, { games, standings, jobs: rebuild.jobs });
+      const statusChanged = await this.deps.domainEvents.collect({ type: DomainEventType.MATCH_STATUS_CHANGED, sportEventId });
+      await this.deps.fieldGames.applyResults(sportEventId, { games, standings, jobs: [...rebuild.jobs, ...statusChanged.jobs] });
       rebuild.queued();
+      statusChanged.queued();
     }
     return {
       updatesReturned,

@@ -1,5 +1,5 @@
 -- #2045: a league's provider session types (inclusion only), and the NONE webhook event set for a
--- provider league that publishes no notifications. The Formula 1 rows follow in 030710, since a new
+-- provider league that publishes no notifications. The Formula 1 rows follow in 031110, since a new
 -- enum value cannot be used in the transaction that adds it.
 
 -- AlterEnum

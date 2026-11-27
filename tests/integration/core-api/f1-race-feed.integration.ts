@@ -1,9 +1,12 @@
 import { expect } from '@jest/globals';
 import { randomUUID } from 'node:crypto';
-import { GameSideStatus, JobTrigger, Sport } from '@poolmaster/shared/domain';
+import { BackgroundJobType, GameSideStatus, JobTrigger, SeasonSlotStatus, Sport } from '@poolmaster/shared/domain';
 import type { RaceSessionUpdate } from '@poolmaster/shared/dto';
 import { PrismaProviderSyncRunRepository, PrismaSportLeagueRepository } from '../../../packages/core-api/src/adapters';
+import { PrismaSlotStatusRepository } from '../../../packages/core-api/src/adapters/prisma-slot-status-repository';
 import { PrismaSportLeagueSeasonRepository } from '../../../packages/core-api/src/adapters/prisma-sport-league-season-repository';
+import { PrismaSportEventRepository } from '../../../packages/core-api/src/adapters';
+import { SlotStatusService } from '../../../packages/core-api/src/modules/events/slot-status-service';
 import { createRaceResultService } from '../../../packages/core-api/src/modules/events/wiring';
 import { LeagueEventsSync } from '../../../packages/core-api/src/modules/events/league-events-sync';
 import type { ProviderEventDetailSummary } from '../../../packages/core-api/src/modules/events/provider-season-schedule-reader';
@@ -19,6 +22,7 @@ import {
   getAppPrisma,
   getPrisma,
   integrationBackgroundJobs,
+  integrationEventLifecycle,
   integrationSportEventServices,
   integrationSyncFindings,
   setupIntegrationTests,
@@ -190,5 +194,28 @@ describe('Formula 1 race results from the feed (#2045)', () => {
       [piastri.id, GameSideStatus.DID_NOT_FINISH, null, 1, 'COMPLETED'],
     ]);
     expect(outcome).toMatchObject({ updatesReturned: 5, updatesPersisted: 3, updatesSkipped: 2, unmappedExternalIds: [] });
+  });
+
+  it('queues the slot status refresh with an official race, and the refresh completes the Grand Prix\'s Season slot', async () => {
+    const { league } = await formulaOne();
+    await runEventsSync(league.id, [monaco()]);
+    const [event] = await eventsOf(league.id);
+    const prisma = getPrisma();
+    await gridOf(event.id, league.id, ['31', '32']);
+
+    await createRaceResultService(getAppPrisma(), testDomainEvents()).persistSessionUpdatesForSportEvent(event.id, [
+      session({ runners: [runner('31', 1), runner('32', 2)] }),
+    ], SYNCED_PROVIDER_ID);
+
+    const queued = await prisma.backgroundJob.findMany({ where: { sportEventId: event.id, status: 'QUEUED' }, select: { type: true } });
+    expect(queued.map((job) => job.type)).toContain(BackgroundJobType.REFRESH_SLOT_STATUS);
+    await new SlotStatusService({
+      slots: new PrismaSlotStatusRepository(getAppPrisma()),
+      sportEvents: new PrismaSportEventRepository(getAppPrisma()),
+      eventLifecycle: integrationEventLifecycle(),
+      domainEvents: testDomainEvents(),
+    }).refreshSlots(event.id);
+    const slot = await prisma.sportEventSlot.findFirstOrThrow({ where: { sportEventId: event.id }, select: { seasonSlot: { select: { status: true } } } });
+    expect(slot.seasonSlot.status).toBe(SeasonSlotStatus.COMPLETED);
   });
 });
