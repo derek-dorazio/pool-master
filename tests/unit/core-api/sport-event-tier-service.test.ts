@@ -1,4 +1,4 @@
-import { FieldOrderBasis, SeasonSlotStatus, SlotKind, Sport, SportEventStatus, SportEventParticipantStatus } from '@poolmaster/shared/domain';
+import { FieldOrderBasis, SeasonSlotStatus, SlotKind, Sport, SportEventStatus, SportEventParticipantStatus, TemplateCoverageMode } from '@poolmaster/shared/domain';
 import { SportEventTierService } from '../../../packages/core-api/src/modules/events/sport-event-tier-service';
 import { IN_MEMORY_PLATFORM_TIER_PROFILE_ID, InMemorySportEvents } from '../../support/in-memory-sport-events';
 import { inMemoryStandardPricing } from '../../support/budget-pricing';
@@ -742,7 +742,8 @@ describe('SportEventTierService — a set on each slot a tiered or budget templa
       { slotKind: SlotKind.ROUND_OF_64, slotDefinitionId: 'def-r64' },
       { slotKind: SlotKind.ROUND_OF_32, slotDefinitionId: 'def-r32' },
     ]);
-    store.tierSetTemplateDefinitionIds = new Set(['def-r64', 'def-r32']);
+    // A tiered template a contest may start at either round with (one slot), so each holds a set.
+    store.tierSetTemplates = [{ templateId: 'tiered', coverageMode: TemplateCoverageMode.ONE_SLOT, slotDefinitionIds: ['def-r64', 'def-r32'] }];
     const service = new SportEventTierService({
       sportEvents: store.sportEventRepo(),
       tiers: store.tierRepo(),

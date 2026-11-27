@@ -46,7 +46,7 @@ import type {
 } from '@poolmaster/shared/db';
 import { TEST_PROVIDER_ROWS } from './balldontlie-provider-rows';
 import type { SportEventBracketServiceDeps } from '../../packages/core-api/src/modules/events/sport-event-bracket-service';
-import { chooseTierSetSlots, compareMatchPlaces, compareSeasonSlots, slotTierLayoutOf, MatchEnding, SeasonSlotStatus, SeriesFormat, SlotKind, SlotPairing, SlotWindowStatus, type SlotWindow, findSportRow, providerSourceIdOf, requireProviderCodeOfSourceId, type ProviderEventRef, type SportEventProviderMapping, HomeAway, isMatchUnplayed, MatchSideOutcome, MatchStatus, PeriodKind, PeriodKindOrder, Sport, FieldOrderBasis, TierProfileType, SportEventParticipantStatus } from '@poolmaster/shared/domain';
+import { chooseTierSetSlots, compareMatchPlaces, compareSeasonSlots, slotTierLayoutOf, MatchEnding, SeasonSlotStatus, SeriesFormat, SlotKind, SlotPairing, SlotWindowStatus, type SlotWindow, findSportRow, providerSourceIdOf, requireProviderCodeOfSourceId, type ProviderEventRef, type SportEventProviderMapping, HomeAway, isMatchUnplayed, MatchSideOutcome, MatchStatus, PeriodKind, PeriodKindOrder, Sport, FieldOrderBasis, TierProfileType, SportEventParticipantStatus, type TierSetTemplateListing } from '@poolmaster/shared/domain';
 import { sportEventSlots, sportPlay } from './sport-play';
 import type {
   AutoReleaseCheck,
@@ -510,8 +510,8 @@ export class InMemorySportEvents {
     return this.tierRepo().createMany(tiers.map((tier) => ({ sportEventSlotId: slot.id, ...tier })));
   }
 
-  /** The slot definitions an active tiered or budget template lists, which the tier-set rule reads (#2044). */
-  tierSetTemplateDefinitionIds = new Set<string>();
+  /** The active tiered or budget templates, with their coverage and the slot definitions each lists, which the tier-set rule reads (#2044). */
+  tierSetTemplates: Array<TierSetTemplateListing & { slotDefinitionIds: readonly string[] }> = [];
 
   /**
    * The event's slots as their tier sets read them (#2044), in play order, those holding a set
@@ -519,7 +519,12 @@ export class InMemorySportEvents {
    */
   tierSlotsOf(sportEventId: string): SportEventTierSlot[] {
     const ordered = [...(this.slotsByEvent.get(sportEventId) ?? [])].sort(compareSeasonSlots)
-      .map((slot) => ({ slot, listedByTierSetTemplate: this.tierSetTemplateDefinitionIds.has(slot.slotDefinitionId) }));
+      .map((slot) => ({
+        slot,
+        tierSetTemplates: this.tierSetTemplates
+          .filter((template) => template.slotDefinitionIds.includes(slot.slotDefinitionId))
+          .map(({ templateId, coverageMode }) => ({ templateId, coverageMode })),
+      }));
     const holding = chooseTierSetSlots(ordered);
     return ordered.map((entry) => {
       const { slot } = entry;

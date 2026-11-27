@@ -80,4 +80,46 @@ describe('tier sets on listed slots migration (#2044)', () => {
     const keysOf = (sportEventSlotId: string) => tiersBySlot.filter((tier) => tier.sportEventSlotId === sportEventSlotId).map((tier) => tier.tierKey);
     expect([keysOf(playInSlotId), keysOf(roundOf64SlotId), keysOf(roundOf32SlotId), keysOf(sweet16SlotId)]).toEqual([[], ['tier-1', 'tier-2'], ['tier-1', 'tier-2'], ['tier-1']]);
   });
+  it('copies nothing onto the later rounds a whole-playoffs tiered template lists, whose one contest starts at the first, but copies onto a final a one-slot template also lists', async () => {
+    const prisma = getPrisma();
+    const event = await createSportEventRow(new PrismaSportEventRepository(getAppPrisma()), {
+      ...(await freshEventEdition(prisma)),
+      name: `Whole Playoffs ${randomUUID().slice(0, 8)}`,
+      startDate: new Date('2026-12-19T12:00:00.000Z'),
+      status: 'DRAFT',
+      rounds: 4,
+      autoLifecycleEnabled: false,
+    });
+    const slotIds = await eventRoundSlots(prisma, event.id, [{ slotKind: 'ROUND_OF_16' }, { slotKind: 'QUARTERFINAL' }, { slotKind: 'SEMIFINAL' }, { slotKind: 'FINAL' }]);
+    const [roundOf16SlotId, quarterfinalSlotId, semifinalSlotId, finalSlotId] = slotIds;
+    const definitions = await Promise.all(slotIds.map(async (sportEventSlotId) => (await prisma.sportEventSlot.findUniqueOrThrow({
+      where: { id: sportEventSlotId }, select: { seasonSlot: { select: { sportLeagueCompetitionSlotId: true } } },
+    })).seasonSlot.sportLeagueCompetitionSlotId));
+    const template = { sportLeagueId: event.sportLeagueId, contestFormat: 'ROSTER', selectionType: 'TIERED', name: 'Pick 3', description: 'Pick 3', sortOrder: 1, configJson: {} } as const;
+
+    const tiersBySlot = await prisma.$transaction(async (tx) => {
+      await tx.contestConfigTemplate.create({
+        data: { ...template, coverageMode: 'ALL_LISTED', templateKey: `whole-${randomUUID()}`, slots: { create: definitions.map((sportLeagueCompetitionSlotId) => ({ sportLeagueCompetitionSlotId })) } },
+      });
+      await tx.contestConfigTemplate.create({
+        data: { ...template, coverageMode: 'ONE_SLOT', templateKey: `final-${randomUUID()}`, slots: { create: { sportLeagueCompetitionSlotId: definitions[3] ?? '' } } },
+      });
+      await tx.sportEventSlotTier.createMany({
+        data: [1, 2, 3].map((tierNumber) => ({ sportEventSlotId: roundOf16SlotId, tierKey: `tier-${String(tierNumber)}`, tierNumber })),
+      });
+      for (const statement of statementsOf(readFileSync(MIGRATION, 'utf8'))) {
+        // poolmaster-allow-query-in-loop: the migration's own statements, in order
+        await tx.$executeRawUnsafe(statement);
+      }
+      const rows = await tx.sportEventSlotTier.findMany({ where: { slot: { sportEventId: event.id } }, select: { sportEventSlotId: true, tierKey: true }, orderBy: [{ tierNumber: 'asc' }] });
+      throw new Rollback(JSON.stringify(rows));
+    }, { timeout: 60_000 }).catch((error: unknown) => {
+      if (error instanceof Rollback) return JSON.parse(error.message) as Array<{ sportEventSlotId: string; tierKey: string }>;
+      throw error;
+    });
+
+    const keysOf = (sportEventSlotId: string | undefined) => tiersBySlot.filter((tier) => tier.sportEventSlotId === sportEventSlotId).map((tier) => tier.tierKey);
+    const threeTiers = ['tier-1', 'tier-2', 'tier-3'];
+    expect([roundOf16SlotId, quarterfinalSlotId, semifinalSlotId, finalSlotId].map(keysOf)).toEqual([threeTiers, [], [], threeTiers]);
+  });
 });

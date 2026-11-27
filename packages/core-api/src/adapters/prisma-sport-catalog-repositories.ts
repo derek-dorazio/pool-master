@@ -49,6 +49,7 @@ import type {
   ValuedSlot,
 } from '@poolmaster/shared/db';
 import type {
+  TierSetTemplateListing,
   AutoReleaseCheck,
   BackgroundJobRequest,
   MatchStatus,
@@ -920,15 +921,15 @@ const FIELD_ORDER = [
 ] satisfies Prisma.SportEventParticipantOrderByWithRelationInput[];
 
 /**
- * A Season slot as the tier-set rule reads it (#2044): its place in play, and whether an active
- * tiered or budget template of its league lists its definition (`TIER_SET_SELECTION_TYPES`).
+ * A Season slot as the tier-set rule reads it (#2044): its place in play, and the active tiered or
+ * budget templates of its league that list its definition (`TIER_SET_SELECTION_TYPES`), with their coverage.
  */
 const TIER_SET_SEASON_SLOT_SELECT = {
   ...SEASON_SLOT_SELECT,
   definition: {
     select: {
       ...SEASON_SLOT_SELECT.definition.select,
-      templateSlots: { where: { template: { active: true, selectionType: { in: [...TIER_SET_SELECTION_TYPES] } } }, select: { id: true }, take: 1 },
+      templateSlots: { where: { template: { active: true, selectionType: { in: [...TIER_SET_SELECTION_TYPES] } } }, select: { template: { select: { id: true, coverageMode: true } } } },
     },
   },
 } as const satisfies Prisma.SportLeagueSeasonCompetitionSlotSelect;
@@ -1202,14 +1203,14 @@ type TierSlotRow = Prisma.SportEventSlotGetPayload<{ select: typeof TIER_SLOT_SE
 
 /**
  * One event's slots in play order (`compareSeasonSlots`), each with its Season slot and whether a
- * tiered or budget template of its league lists it: what `chooseTierSetSlots` picks the slots
+ * tiered or budget templates of its league that list it: what `chooseTierSetSlots` picks the slots
  * holding a tier set from, and `chooseTierSetSlot` the event's tier-set slot (#2044).
  */
-function inPlayOrder<Row extends { seasonSlot: TierSetSeasonSlotRow }>(rows: readonly Row[]): Array<{ row: Row; seasonSlot: SportLeagueSeasonSlot; listedByTierSetTemplate: boolean }> {
+function inPlayOrder<Row extends { seasonSlot: TierSetSeasonSlotRow }>(rows: readonly Row[]): Array<{ row: Row; seasonSlot: SportLeagueSeasonSlot; tierSetTemplates: TierSetTemplateListing[] }> {
   return rows
     .map((row) => {
       const { definition: { templateSlots, ...definition }, ...seasonSlot } = row.seasonSlot;
-      return { row, seasonSlot: toSeasonSlot({ ...seasonSlot, definition }), listedByTierSetTemplate: templateSlots.length > 0 };
+      return { row, seasonSlot: toSeasonSlot({ ...seasonSlot, definition }), tierSetTemplates: templateSlots.map(({ template }) => ({ templateId: template.id, coverageMode: template.coverageMode })) };
     })
     .sort((a, b) => compareSeasonSlots(a.seasonSlot, b.seasonSlot));
 }

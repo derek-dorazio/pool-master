@@ -1,4 +1,4 @@
-import { SeasonSlotStatus, SelectionType, SportEventStatus } from './enums';
+import { SeasonSlotStatus, SelectionType, SportEventStatus, TemplateCoverageMode } from './enums';
 import type { SportEventTierSlot } from './sport-catalog-types';
 
 /**
@@ -20,14 +20,41 @@ export const TIER_SET_SELECTION_TYPES: readonly SelectionType[] = Object.values(
   .filter((selectionType) => READS_TIER_SET_BY_SELECTION_TYPE[selectionType]);
 
 /**
- * Which of an event's slots, in play order, hold a tier set (#2044): every one a tiered or budget
- * template of its league lists, since such a template covers one slot the commissioner picks from
- * those it lists, so each is a possible starting point; the first slot alone when no such template
- * lists any; none for an event covering no slot. The one rule for which slots hold a set.
+ * Whether a contest of a template with each coverage may start at any slot the template lists
+ * (#2044): ONE_SLOT covers the one slot the commissioner picks, FROM_SLOT a starting slot the
+ * commissioner picks and every later one; ALL_LISTED covers every listed slot of one event at
+ * once, so it starts only at the first of them.
  */
-export function chooseTierSetSlots<Slot extends { listedByTierSetTemplate: boolean }>(slotsInPlayOrder: readonly Slot[]): Slot[] {
-  const listed = slotsInPlayOrder.filter((slot) => slot.listedByTierSetTemplate);
-  return listed.length > 0 ? listed : slotsInPlayOrder.slice(0, 1);
+const STARTS_AT_EACH_LISTED_SLOT_BY_COVERAGE = {
+  [TemplateCoverageMode.ONE_SLOT]: true,
+  [TemplateCoverageMode.ALL_LISTED]: false,
+  [TemplateCoverageMode.FROM_SLOT]: true,
+} as const satisfies Readonly<Record<TemplateCoverageMode, boolean>>;
+
+/** An active tiered or budget template that lists a slot (`TIER_SET_SELECTION_TYPES`), as the tier-set rule reads it. */
+export interface TierSetTemplateListing {
+  templateId: string;
+  coverageMode: TemplateCoverageMode;
+}
+
+/**
+ * Which of an event's slots, in play order, hold a tier set (#2044): every slot a contest of an
+ * active tiered or budget template of its league may start at, as that template's coverage allows
+ * (`STARTS_AT_EACH_LISTED_SLOT_BY_COVERAGE`): each listed slot for a template covering one slot or
+ * a slot onwards, the first of the event's listed slots for a template covering them all. The
+ * first slot alone when no such template lists any; none for an event covering no slot. The one
+ * rule for which slots hold a set.
+ */
+export function chooseTierSetSlots<Slot extends { tierSetTemplates: readonly TierSetTemplateListing[] }>(slotsInPlayOrder: readonly Slot[]): Slot[] {
+  const firstListing = new Map<string, Slot>();
+  for (const slot of slotsInPlayOrder) {
+    for (const template of slot.tierSetTemplates) {
+      if (!firstListing.has(template.templateId)) firstListing.set(template.templateId, slot);
+    }
+  }
+  const starting = slotsInPlayOrder.filter((slot) => slot.tierSetTemplates.some((template) =>
+    STARTS_AT_EACH_LISTED_SLOT_BY_COVERAGE[template.coverageMode] || firstListing.get(template.templateId) === slot));
+  return starting.length > 0 ? starting : slotsInPlayOrder.slice(0, 1);
 }
 
 /**
@@ -35,7 +62,7 @@ export function chooseTierSetSlots<Slot extends { listedByTierSetTemplate: boole
  * of those holding a set (`chooseTierSetSlots`), so a league's play-in, which no tiered or budget
  * template covers, is passed over; undefined for an event covering no slot.
  */
-export function chooseTierSetSlot<Slot extends { listedByTierSetTemplate: boolean }>(slotsInPlayOrder: readonly Slot[]): Slot | undefined {
+export function chooseTierSetSlot<Slot extends { tierSetTemplates: readonly TierSetTemplateListing[] }>(slotsInPlayOrder: readonly Slot[]): Slot | undefined {
   return chooseTierSetSlots(slotsInPlayOrder).at(0);
 }
 
