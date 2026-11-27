@@ -35,6 +35,7 @@ import { backgroundJobsInsert, insertBackgroundJobs } from '../../../adapters/pr
 import { DomainEventType, type DomainEvents } from '../../domain-events';
 import { PublicReadPath } from '../../../core/public-cache';
 import type { ProviderSyncFindingService } from '../findings/provider-sync-finding-service';
+import { writeSeasonTeamConferences } from './season-team-conferences';
 
 interface PersistenceDiagnosticsResult<T> {
   count: number;
@@ -57,8 +58,11 @@ export class IngestionPersistence {
     private readonly logger?: FastifyBaseLogger,
     private readonly fieldCache?: Pick<EventFieldCache, 'forget'>,
     private readonly cdn?: CdnInvalidator,
-    /** A released rest-of-phase event's teams with no game left in its slots are a finding (#2223). */
-    private readonly findings?: Pick<ProviderSyncFindingService, 'checkEventParticipantsOfSource'>,
+    /**
+     * A released rest-of-phase event's teams with no game left in its slots are a finding (#2223),
+     * and so is a team's conference or division code the league has no row for (#2052).
+     */
+    private readonly findings?: Pick<ProviderSyncFindingService, 'checkEventParticipantsOfSource' | 'raiseOfSource'>,
   ) {}
 
   async persistEventsWithDiagnostics(
@@ -352,6 +356,17 @@ export class IngestionPersistence {
       id: sportLeague.id,
       participantType: sportLeague.participantType,
     });
+    // Each team's conference and division in the event's Season, from the same team payload (#2052).
+    const conferences = await writeSeasonTeamConferences(this.prisma, {
+      sportLeagueId: sportLeague.id,
+      sportLeagueSeasonId: firstEvent.sportLeagueSeasonId,
+      providerSourceId: detail.providerId,
+      teams: detail.participants.flatMap((participant) => {
+        const participantId = participantIdByKey.get(providerKey(participant));
+        return participantId === undefined ? [] : [{ participantId, participant }];
+      }),
+    });
+    if (conferences.findings.length > 0) await this.findings?.raiseOfSource(detail.providerId, conferences.findings);
     let sportEventParticipantsPersisted = 0;
     for (const persistedEvent of persistedEvents) {
       const seedsLocked = seedsLockedOn(persistedEvent);

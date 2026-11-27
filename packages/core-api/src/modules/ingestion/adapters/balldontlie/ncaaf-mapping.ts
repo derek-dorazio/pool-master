@@ -22,6 +22,7 @@ import { BalldontlieContractError } from './balldontlie-client';
 import { CompetitionStatusState, eventStatusOf, GAME_STATE_BY_STATUS, hasStarted, PROGRESS_BY_STATE } from './competition-status';
 import type { NcaafGame, NcaafTeam } from './ncaaf-contract';
 import { BALLDONTLIE_PROVIDER_ID } from './pga-mapping';
+import { teamConference } from './team-conference';
 import { participantFeedId } from './participant-feed-id';
 
 export const NCAAF_GAMES_PATH = '/ncaaf/v1/games';
@@ -132,7 +133,8 @@ export function toNcaafTeamParticipant(team: NcaafTeam, path: string): ProviderP
     name: required(team.full_name, path, `team ${String(id)}`, 'full_name'),
     status: SportEventParticipantStatus.ACTIVE,
     ...(team.abbreviation ? { abbreviation: team.abbreviation } : {}),
-    metadata: team.conference ? { conference: team.conference } : {},
+    ...teamConference(team.conference),
+    metadata: {},
   };
 }
 

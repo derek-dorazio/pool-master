@@ -35,7 +35,7 @@ export async function competitionFor(
   }
   const code = input.code ?? phase;
   await prisma.sportLeagueCompetition.createMany({
-    data: [{ sportLeagueId, sportLeaguePhaseId: phaseRow.id, code, orderIndex: input.orderIndex ?? 1 }],
+    data: [{ sportLeagueId, sportLeaguePhaseId: phaseRow.id, leaguePhase: phase, code, orderIndex: input.orderIndex ?? 1 }],
     skipDuplicates: true,
   });
   const competition = await prisma.sportLeagueCompetition.findUniqueOrThrow({ where: { sportLeagueId_code: { sportLeagueId, code } }, select: { id: true } });

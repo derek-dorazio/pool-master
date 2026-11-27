@@ -282,7 +282,21 @@ export interface ProviderParticipant {
   seed?: number;
   /** Odds to win, valid only for the event the provider quoted them for. */
   odds?: ProviderParticipantOdds;
+  /** A team's conference and division as the feed codes them; none where the feed names none (#2052). */
+  conference?: ProviderTeamConference;
   metadata: ProviderParticipantMetadata;
+}
+
+/**
+ * A team's conference, and its division within it, by the provider's own codes exactly as the
+ * feed sends them (#2052): BALLDONTLIE's NFL AFC and EAST. The events sync reads them through the
+ * league's conference provider mappings into the team's Season row; an adapter never names the
+ * league's own conference.
+ */
+export interface ProviderTeamConference {
+  providerCode: string;
+  /** Read within the conference: the NFL's EAST names the AFC East only with AFC. */
+  divisionProviderCode?: string;
 }
 
 /** A participant's odds to win, and the provider's id of the event they were quoted for. */
@@ -293,7 +307,7 @@ export interface ProviderParticipantOdds {
 
 /**
  * Provider-specific extras on a participant that an adapter reads while it maps a feed, such
- * as a team's conference. Nothing stores them.
+ * as a golfer's competitor id. Nothing stores them.
  */
 export interface ProviderParticipantMetadata {
   [key: string]: unknown;

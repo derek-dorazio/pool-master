@@ -88,7 +88,8 @@ describe('a college football season as one provider event', () => {
       name: 'Navy Midshipmen',
       status: 'ACTIVE',
       abbreviation: 'NAVY',
-      metadata: { conference: 'American' },
+      conference: { providerCode: 'American' },
+      metadata: {},
     });
   });
 
@@ -99,7 +100,7 @@ describe('a college football season as one provider event', () => {
 
   it('carries no abbreviation or conference the vendor leaves out', () => {
     const team = toNcaafTeamParticipant({ id: 64, full_name: 'Indiana Hoosiers' }, '/ncaaf/v1/teams');
-    expect([team.abbreviation, team.metadata]).toEqual([undefined, {}]);
+    expect([team.abbreviation, team.conference]).toEqual([undefined, undefined]);
   });
 });
 

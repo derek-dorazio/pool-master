@@ -74,7 +74,7 @@ describe('createTestSlot', () => {
   it('refuses a definition whose competition the current Season does not have with 422 SLOT_COMPETITION_NOT_IN_SEASON, not a 500', async () => {
     const db = getFunctionalPrisma();
     const phase = await db.sportLeaguePhase.create({ data: { sportLeagueId, phase: 'POSTSEASON', isSynced: true }, select: { id: true } });
-    const competition = await db.sportLeagueCompetition.create({ data: { sportLeagueId, sportLeaguePhaseId: phase.id, code: 'POSTSEASON', orderIndex: 1 }, select: { id: true } });
+    const competition = await db.sportLeagueCompetition.create({ data: { sportLeagueId, sportLeaguePhaseId: phase.id, leaguePhase: 'POSTSEASON', code: 'POSTSEASON', orderIndex: 1 }, select: { id: true } });
     const definition = await db.sportLeagueCompetitionSlot.create({
       data: {
         sportLeagueId, sportLeagueCompetitionId: competition.id, key: 'FINAL', slotKind: 'TOURNAMENT', awardsTrophy: false, squaresEligible: true, isNeutralSite: false,

@@ -190,7 +190,7 @@ describe('the test fixture tour', () => {
 async function phaseOf(sportLeagueId: string) {
   const prisma = getPrisma();
   const phase = await prisma.sportLeaguePhase.create({ data: { sportLeagueId, phase: LeaguePhase.REGULAR, isSynced: true } });
-  return prisma.sportLeagueCompetition.create({ data: { sportLeagueId, sportLeaguePhaseId: phase.id, code: 'REGULAR', orderIndex: 1 } });
+  return prisma.sportLeagueCompetition.create({ data: { sportLeagueId, sportLeaguePhaseId: phase.id, leaguePhase: phase.phase, code: 'REGULAR', orderIndex: 1 } });
 }
 
 describe('the database checks on slot definitions', () => {
@@ -249,7 +249,7 @@ describe('the database checks on slot definitions', () => {
     const league = await testLeague();
     const first = await phaseOf(league.id);
     const prisma = getPrisma();
-    const second = await prisma.sportLeagueCompetition.create({ data: { sportLeagueId: league.id, sportLeaguePhaseId: first.sportLeaguePhaseId, code: 'PLAYOFF', orderIndex: 2 } });
+    const second = await prisma.sportLeagueCompetition.create({ data: { sportLeagueId: league.id, sportLeaguePhaseId: first.sportLeaguePhaseId, leaguePhase: first.leaguePhase, code: 'PLAYOFF', orderIndex: 2 } });
     const base = { ...SLOT_DEFAULTS, sportLeagueId: league.id, slotKind: SlotKind.FINAL };
 
     await prisma.sportLeagueCompetitionSlot.create({ data: { ...base, sportLeagueCompetitionId: first.id, key: 'FINAL' } });
@@ -297,7 +297,7 @@ describe('the database checks on competitions', () => {
     const league = await testLeague();
     const phase = await regularPhase(league.id);
     const competitions = getPrisma().sportLeagueCompetition;
-    const base = { sportLeagueId: league.id, sportLeaguePhaseId: phase.id };
+    const base = { sportLeagueId: league.id, sportLeaguePhaseId: phase.id, leaguePhase: phase.phase };
     await competitions.create({ data: { ...base, code: 'REGULAR', orderIndex: 1 } });
 
     await expect(competitions.create({ data: { ...base, code: 'conference tournament', orderIndex: 2 } })).rejects.toThrow(/sport_league_competitions_code_format/);
@@ -310,7 +310,7 @@ describe('the database checks on competitions', () => {
     const league = await testLeague();
     const otherPhase = await regularPhase((await testLeague()).id);
 
-    await expect(getPrisma().sportLeagueCompetition.create({ data: { sportLeagueId: league.id, sportLeaguePhaseId: otherPhase.id, code: 'REGULAR', orderIndex: 1 } }))
+    await expect(getPrisma().sportLeagueCompetition.create({ data: { sportLeagueId: league.id, sportLeaguePhaseId: otherPhase.id, leaguePhase: otherPhase.phase, code: 'REGULAR', orderIndex: 1 } }))
       .rejects.toThrow(Prisma.PrismaClientKnownRequestError);
   });
 
@@ -319,8 +319,8 @@ describe('the database checks on competitions', () => {
     const league = await testLeague();
     const regular = await regularPhase(league.id);
     const postseason = await prisma.sportLeaguePhase.create({ data: { sportLeagueId: league.id, phase: LeaguePhase.POSTSEASON, isSynced: true } });
-    const regularCompetition = await prisma.sportLeagueCompetition.create({ data: { sportLeagueId: league.id, sportLeaguePhaseId: regular.id, code: 'REGULAR', orderIndex: 1 } });
-    const playoff = await prisma.sportLeagueCompetition.create({ data: { sportLeagueId: league.id, sportLeaguePhaseId: postseason.id, code: 'PLAYOFF', orderIndex: 1 } });
+    const regularCompetition = await prisma.sportLeagueCompetition.create({ data: { sportLeagueId: league.id, sportLeaguePhaseId: regular.id, leaguePhase: regular.phase, code: 'REGULAR', orderIndex: 1 } });
+    const playoff = await prisma.sportLeagueCompetition.create({ data: { sportLeagueId: league.id, sportLeaguePhaseId: postseason.id, leaguePhase: postseason.phase, code: 'PLAYOFF', orderIndex: 1 } });
     const sportLeagueSeasonId = await fixtureSeasonId(prisma, league.id, 2026);
     await prisma.sportLeagueSeasonPhase.create({ data: { sportLeagueId: league.id, sportLeagueSeasonId, sportLeaguePhaseId: regular.id } });
     const base = { sportLeagueId: league.id, sportLeagueSeasonId };
@@ -340,11 +340,11 @@ describe('GET /api/v1/sport-leagues/{sportLeagueId}/structure', () => {
     const prisma = getPrisma();
     const postseason = await prisma.sportLeaguePhase.create({ data: { sportLeagueId: league.id, phase: LeaguePhase.POSTSEASON, isSynced: true } });
     const regular = await prisma.sportLeaguePhase.create({ data: { sportLeagueId: league.id, phase: LeaguePhase.REGULAR, isSynced: true } });
-    const competition = (sportLeaguePhaseId: string, code: string, orderIndex: number) =>
-      prisma.sportLeagueCompetition.create({ data: { sportLeagueId: league.id, sportLeaguePhaseId, code, orderIndex } });
-    const playoff = await competition(postseason.id, 'PLAYOFF', 2);
-    const bowls = await competition(postseason.id, 'BOWLS', 1);
-    const season = await competition(regular.id, 'REGULAR', 1);
+    const competition = (phase: { id: string; phase: LeaguePhase }, code: string, orderIndex: number) =>
+      prisma.sportLeagueCompetition.create({ data: { sportLeagueId: league.id, sportLeaguePhaseId: phase.id, leaguePhase: phase.phase, code, orderIndex } });
+    const playoff = await competition(postseason, 'PLAYOFF', 2);
+    const bowls = await competition(postseason, 'BOWLS', 1);
+    const season = await competition(regular, 'REGULAR', 1);
     const base = { ...SLOT_DEFAULTS, sportLeagueId: league.id };
     await prisma.sportLeagueCompetitionSlot.createMany({ data: [
       { ...base, sportLeagueCompetitionId: playoff.id, key: 'FINAL', slotKind: SlotKind.FINAL, name: 'The Final' },
