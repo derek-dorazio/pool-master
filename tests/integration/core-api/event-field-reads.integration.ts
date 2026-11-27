@@ -141,15 +141,16 @@ describe('An event\'s field', () => {
       ['SELECT sport_event_rounds', 1],
       // A field row's price is its first slot's set's (#2044).
       ['SELECT sport_event_slot_participant_valuations', 1],
-      // The event's slot definitions (#2010), where templates are offered, and its slots, whose
-      // first prices the field (#2044): one slot is its first, with no play order to read.
+      // The event's slot definitions (#2010), where templates are offered; and in the field's own
+      // query, its event's slots in their places in play, whose first prices the field (#2044).
       ['SELECT sport_event_slots', 2],
-      ['SELECT sport_events', 1],
-      // The event's rounds are played in its slot (#2006): the slot's definition and its place in play.
-      ['SELECT sport_league_competition_slots', 1],
+      ['SELECT sport_events', 2],
+      // The event's rounds are played in its slot (#2006): the slot's definition and its place in
+      // play, read for the event and again in the field's query.
+      ['SELECT sport_league_competition_slots', 2],
       ['SELECT sport_league_competitions', 1],
       ['SELECT sport_league_phases', 1],
-      ['SELECT sport_league_season_competition_slots', 1],
+      ['SELECT sport_league_season_competition_slots', 2],
       ['SELECT sport_league_seasons', 1],
       ['SELECT sport_leagues', 1],
       // The event's sport, read through its league (#2042).

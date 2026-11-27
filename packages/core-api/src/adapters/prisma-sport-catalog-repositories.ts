@@ -925,29 +925,30 @@ const FIELD_ORDER = [
  * statement on one connection, so the whole field is a handful of sequential queries; empty
  * relations, such as a golf event's race results, return nothing.
  */
-function fieldRowInclude(firstSlotIds: readonly string[]) {
-  return {
-    participant: true,
-    // Only the first slot's set's (#2044): the one valuation a field row is read with.
-    valuations: { where: { sportEventSlotId: { in: [...firstSlotIds] } } },
-    standing: { include: { golf: true } },
-    rounds: {
-      include: { sportEventRound: { select: { roundNumber: true } }, golf: true },
-      orderBy: { sportEventRound: { roundNumber: 'asc' } },
-    },
-    raceResult: true,
-    matchSides: { select: { match: { include: MATCH_INCLUDE } } },
-  } satisfies Prisma.SportEventParticipantInclude;
-}
+const FIELD_ROW_INCLUDE = {
+  participant: true,
+  // Its valuation in each slot's set, and its event's slots in their places in play, read in the
+  // same query: a field row is read with its first slot's (#2044).
+  valuations: true,
+  sportEvent: { select: { slots: { select: { id: true, seasonSlot: { select: SEASON_SLOT_SELECT } } } } },
+  standing: { include: { golf: true } },
+  rounds: {
+    include: { sportEventRound: { select: { roundNumber: true } }, golf: true },
+    orderBy: { sportEventRound: { roundNumber: 'asc' } },
+  },
+  raceResult: true,
+  matchSides: { select: { match: { include: MATCH_INCLUDE } } },
+} as const satisfies Prisma.SportEventParticipantInclude;
 
-type FieldRow = Prisma.SportEventParticipantGetPayload<{ include: ReturnType<typeof fieldRowInclude> }>;
+type FieldRow = Prisma.SportEventParticipantGetPayload<{ include: typeof FIELD_ROW_INCLUDE }>;
 
 /**
  * A field row, flagged when its participant belongs to `sportLeagueId`, its event's, with its
- * valuation in `firstSlotId`'s set, its event's first slot's.
+ * valuation in its event's first slot's set (`inPlayOrder`).
  */
-function toFieldRow(row: FieldRow, sportLeagueId: string, firstSlotId: string | undefined): SportEventParticipantView {
-  const { participant, valuations, standing, rounds, raceResult, matchSides, ...entry } = row;
+function toFieldRow(row: FieldRow, sportLeagueId: string): SportEventParticipantView {
+  const { participant, valuations, sportEvent, standing, rounds, raceResult, matchSides, ...entry } = row;
+  const firstSlotId = inPlayOrder(sportEvent.slots).at(0)?.row.id;
   return {
     entry: toSportEventParticipant(entry),
     participant: mapToParticipant(participant),
@@ -1017,36 +1018,32 @@ export class PrismaSportEventParticipantRepository implements SportEventParticip
   }
 
   async findFieldForEvent(sportEventId: string, sportLeagueId: string): Promise<SportEventParticipantView[]> {
-    const firstSlotId = (await findFirstSlotIds(this.prisma, [sportEventId])).get(sportEventId);
     const rows = await this.prisma.sportEventParticipant.findMany({
       where: { sportEventId },
-      include: fieldRowInclude(firstSlotId === undefined ? [] : [firstSlotId]),
+      include: FIELD_ROW_INCLUDE,
       orderBy: FIELD_ORDER,
     });
-    return rows.map((row) => toFieldRow(row, sportLeagueId, firstSlotId));
+    return rows.map((row) => toFieldRow(row, sportLeagueId));
   }
 
   async findFieldsForEvents(events: readonly { sportEventId: string; sportLeagueId: string }[]): Promise<SportEventParticipantView[]> {
     if (events.length === 0) return [];
-    const sportEventIds = events.map((event) => event.sportEventId);
-    const firstSlotIds = await findFirstSlotIds(this.prisma, sportEventIds);
     const rows = await this.prisma.sportEventParticipant.findMany({
-      where: { sportEventId: { in: sportEventIds } },
-      include: fieldRowInclude([...firstSlotIds.values()]),
+      where: { sportEventId: { in: events.map((event) => event.sportEventId) } },
+      include: FIELD_ROW_INCLUDE,
       orderBy: FIELD_ORDER,
     });
     return events.flatMap(({ sportEventId, sportLeagueId }) => rows
       .filter((row) => row.sportEventId === sportEventId)
-      .map((row) => toFieldRow(row, sportLeagueId, firstSlotIds.get(sportEventId))));
+      .map((row) => toFieldRow(row, sportLeagueId)));
   }
 
   async findFieldRow(sportEventId: string, sportEventParticipantId: string, sportLeagueId: string): Promise<SportEventParticipantView | null> {
-    const firstSlotId = (await findFirstSlotIds(this.prisma, [sportEventId])).get(sportEventId);
     const row = await this.prisma.sportEventParticipant.findFirst({
       where: { id: sportEventParticipantId, sportEventId },
-      include: fieldRowInclude(firstSlotId === undefined ? [] : [firstSlotId]),
+      include: FIELD_ROW_INCLUDE,
     });
-    return row ? toFieldRow(row, sportLeagueId, firstSlotId) : null;
+    return row ? toFieldRow(row, sportLeagueId) : null;
   }
 
   async countDistinctParticipants(sportEventIds: readonly string[]): Promise<number> {
@@ -1149,30 +1146,6 @@ function inPlayOrder<Row extends { seasonSlot: SeasonSlotRow }>(rows: readonly R
   return rows
     .map((row) => ({ row, seasonSlot: toSeasonSlot(row.seasonSlot) }))
     .sort((a, b) => compareSeasonSlots(a.seasonSlot, b.seasonSlot));
-}
-
-/**
- * Each event's first slot's id (`inPlayOrder`), for the events covering any. An event covering one
- * slot has it first, so only the events covering several read their slots' places in play.
- */
-async function findFirstSlotIds(prisma: Db, sportEventIds: readonly string[]): Promise<Map<string, string>> {
-  const slots = await prisma.sportEventSlot.findMany({
-    where: { sportEventId: { in: [...sportEventIds] } },
-    select: { id: true, sportEventId: true },
-  });
-  const slotCounts = new Map<string, number>();
-  for (const slot of slots) slotCounts.set(slot.sportEventId, (slotCounts.get(slot.sportEventId) ?? 0) + 1);
-  const firstSlotIds = new Map(slots.filter((slot) => slotCounts.get(slot.sportEventId) === 1).map((slot) => [slot.sportEventId, slot.id]));
-  const severalSlots = [...slotCounts].flatMap(([sportEventId, count]) => count > 1 ? [sportEventId] : []);
-  if (severalSlots.length === 0) return firstSlotIds;
-  const rows = await prisma.sportEventSlot.findMany({
-    where: { sportEventId: { in: severalSlots } },
-    select: { id: true, sportEventId: true, seasonSlot: { select: SEASON_SLOT_SELECT } },
-  });
-  for (const { row } of inPlayOrder(rows)) {
-    if (!firstSlotIds.has(row.sportEventId)) firstSlotIds.set(row.sportEventId, row.id);
-  }
-  return firstSlotIds;
 }
 
 function toTierSlot(row: TierSlotRow, seasonSlot: SportLeagueSeasonSlot, isFirstSlot: boolean): SportEventTierSlot {
