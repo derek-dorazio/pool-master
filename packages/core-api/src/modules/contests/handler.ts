@@ -139,17 +139,18 @@ export function createContestHandlers(contestService: ContestService) {
       logger.warn({ contestId: request.params.contestId }, 'contest get route missing contest');
       return sendError(reply, 404, 'CONTEST_NOT_FOUND', 'Contest not found');
     }
-    const [eventsById, entryCaps, entrySummary] = await Promise.all([
+    const [eventsById, entryCaps, entrySummary, tierSetSeasonSlots] = await Promise.all([
       contestService.findEventsForContests([contest]),
       contestService.findEntryCaps([contest]),
       contestService.getContestEntrySummary(contest, request.authUser?.userId as string),
+      contestService.findTierSetSeasonSlots(contest),
     ]);
     logger.info({
       contestId: request.params.contestId,
       entryCount: entrySummary.totals.allEntryCount,
       myEntryCount: entrySummary.myEntryIds.length,
     }, 'contest get route completed');
-    return reply.send(toContestResponse(contest, eventsById, entryCaps.get(contest.id) ?? null, entrySummary));
+    return reply.send(toContestResponse(contest, eventsById, entryCaps.get(contest.id) ?? null, { ...entrySummary, tierSetSeasonSlots }));
   }
 
   async function listEntries(

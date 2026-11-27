@@ -155,8 +155,9 @@ export interface ContestSportEventRow {
   scoringFamily: ScoringFamily;
 }
 
-function toContestSportEventDto(event: ContestSportEventRow, sequence: number): ContestSportEventDto {
+function toContestSportEventDto(event: ContestSportEventRow, sequence: number, tierSetSeasonSlots?: ReadonlyMap<string, string>): ContestSportEventDto {
   return {
+    ...(tierSetSeasonSlots === undefined ? {} : { tierSetSeasonSlotId: tierSetSeasonSlots.get(event.id) ?? null }),
     sportEventId: event.id,
     sequence,
     name: event.name,
@@ -172,7 +173,7 @@ function toContestSportEventDto(event: ContestSportEventRow, sequence: number): 
 export function toContestDto(
   contest: ContestRow,
   eventsById: ReadonlyMap<string, ContestSportEventRow>,
-  opts: { entriesPerContest: number | null; entryCount?: number; allEntryCount?: number; progress?: ContestProgressDto | null; detail?: ContestEntrySummaryRow },
+  opts: { entriesPerContest: number | null; entryCount?: number; allEntryCount?: number; progress?: ContestProgressDto | null; detail?: ContestEntrySummaryRow; tierSetSeasonSlots?: ReadonlyMap<string, string> },
 ): ContestDto {
   return {
     id: contest.id,
@@ -183,7 +184,7 @@ export function toContestDto(
     leagueId: contest.leagueId,
     sportEvents: contest.sportEventIds.flatMap((sportEventId, index) => {
       const event = eventsById.get(sportEventId);
-      return event ? [toContestSportEventDto(event, index + 1)] : [];
+      return event ? [toContestSportEventDto(event, index + 1, opts.tierSetSeasonSlots)] : [];
     }),
     sport: contest.sport ?? null,
     sportUrlSegment: contest.sportUrlSegment ?? null,
@@ -201,10 +202,14 @@ export function toContestDto(
   };
 }
 
-/** What the single-contest read adds (#1197): the contest's entry totals and the viewer's entry ids. */
+/**
+ * What the single-contest read adds (#1197): the contest's entry totals and the viewer's entry
+ * ids, and the Season slot whose set each event's picks come from (#2044), by event id.
+ */
 export interface ContestEntrySummaryRow {
   totals: ContestEntryTotals;
   myEntryIds: string[];
+  tierSetSeasonSlots?: ReadonlyMap<string, string>;
 }
 
 /** One contest; the single-contest read passes its entry summary (#1197), the writes do not. */
@@ -214,7 +219,7 @@ export function toContestResponse(
   entriesPerContest: number | null,
   detail?: ContestEntrySummaryRow,
 ): ContestResponse {
-  return { contest: toContestDto(contest, eventsById, { entriesPerContest, detail }) };
+  return { contest: toContestDto(contest, eventsById, { entriesPerContest, detail, tierSetSeasonSlots: detail?.tierSetSeasonSlots }) };
 }
 
 /**

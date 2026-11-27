@@ -18,6 +18,7 @@ import { participantLeagueIdForSport } from '../../support/participant-league';
 import { sportRowKeys } from '../../support/sport-rows';
 import { sportPlay } from '../../support/sport-play';
 import { linkTestSlot, oneEventSlotId } from '../../support/test-slots';
+import { createMatchRow } from '../../support/match-rows';
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
@@ -620,6 +621,64 @@ describe('each slot a tiered or budget template lists holds its own tier set (#2
     } finally {
       // The setups have no rules of their own: other tests list every template.
       await prisma.contestConfigTemplate.deleteMany({ where: { id: { in: templateIds } } });
+    }
+  });
+
+  it('tiers a later slot from the teams that lost no decided game in an earlier slot, in Postgres: a loser is left out, a team on a bye and both teams of an unplayed game are in', async () => {
+    const prisma = getPrisma();
+    const admin = await createTestUser({ displayName: 'Still In Admin', isRootAdmin: true });
+    const event = await prisma.sportEvent.create({
+      data: { ...(await freshEventEdition(prisma, { onPgaTour: true })), id: randomUUID(), name: 'Still In Open', startDate: new Date('2099-04-20T15:00:00.000Z'), endDate: null, status: 'DRAFT' },
+    });
+    const [roundOf64SlotId, roundOf32SlotId] = await eventRoundSlots(prisma, event.id, [{ slotKind: 'ROUND_OF_64' }, { slotKind: 'ROUND_OF_32' }]);
+    const slots = await prisma.sportEventSlot.findMany({
+      where: { sportEventId: event.id },
+      select: { id: true, sportLeagueSeasonCompetitionSlotId: true, seasonSlot: { select: { sportLeagueCompetitionSlotId: true } } },
+    });
+    const later = slots.find((slot) => slot.id === roundOf32SlotId);
+    if (!later) throw new Error('The round of 32 slot was not made');
+    // A tiered contest may start at either round, so each holds a set.
+    const template = await prisma.contestConfigTemplate.create({
+      data: {
+        sportLeagueId: event.sportLeagueId, coverageMode: 'ONE_SLOT', contestFormat: 'ROSTER', name: 'Setup', description: 'Setup', sortOrder: 1, configJson: {},
+        selectionType: 'TIERED', active: true, templateKey: `still-in-${randomUUID()}`,
+        slots: { create: slots.map((slot) => ({ sportLeagueCompetitionSlotId: slot.seasonSlot.sportLeagueCompetitionSlotId })) },
+      },
+      select: { id: true },
+    });
+    const participantLeagueId = await participantLeagueIdForSport(prisma, Sport.GOLF);
+    const names = ['Loser', 'Winner', 'Unplayed One', 'Unplayed Two', 'Bye'];
+    const rows = new Map<string, string>();
+    const row = (name: string) => {
+      const id = rows.get(name);
+      if (id === undefined) throw new Error(`No field row for ${name}`);
+      return id;
+    };
+    for (const [index, name] of names.entries()) {
+      // poolmaster-allow-query-in-loop: five teams, each with its field row
+      const participant = await prisma.participant.create({ data: { sportLeagueId: participantLeagueId, participantType: 'INDIVIDUAL', name: `Still In ${name}` } });
+      rows.set(name, (await prisma.sportEventParticipant.create({ data: { sportEventId: event.id, participantId: participant.id, ranking: index + 1 } })).id);
+    }
+    const round = await prisma.sportEventRound.create({ data: { sportEventId: event.id, sportEventSlotId: roundOf64SlotId, roundNumber: 1, scheduledDate: new Date('2099-04-20T15:00:00.000Z') } });
+    const game = (matchNumber: number, teams: readonly [string, string], result?: { winnerSideNumber: number; scores: readonly [number, number] }) => createMatchRow(prisma, {
+      sportEventId: event.id, sportEventRoundId: round.id, sportEventSlotId: round.sportEventSlotId, matchNumber, teams, isNeutralSite: true, ...(result ? { result } : {}),
+    });
+    await game(1, [row('Loser'), row('Winner')], { winnerSideNumber: 2, scores: [1, 3] });
+    await game(2, [row('Unplayed One'), row('Unplayed Two')]);
+    const slotRoute = (path: string) => `/api/v1/events/${event.id}/slots/${later.sportLeagueSeasonCompetitionSlotId}/${path}`;
+
+    try {
+      expect((await getApp().inject({ method: 'PUT', url: slotRoute('tiers'), headers: admin.headers, payload: { tiers: [{ tierKey: 'A', tierNumber: 1 }] } })).statusCode).toBe(200);
+      expect((await getApp().inject({ method: 'POST', url: slotRoute('tiers/auto-assign'), headers: admin.headers, payload: {} })).statusCode).toBe(200);
+
+      const tiered = await prisma.sportEventSlotParticipantValuation.findMany({
+        where: { sportEventSlotId: later.id, sportEventSlotTierId: { not: null } },
+        select: { sportEventParticipantId: true },
+      });
+      const nameOf = new Map([...rows].map(([name, id]) => [id, name]));
+      expect(tiered.map((row) => nameOf.get(row.sportEventParticipantId) ?? '').sort((left, right) => left.localeCompare(right))).toEqual(['Bye', 'Unplayed One', 'Unplayed Two', 'Winner']);
+    } finally {
+      await prisma.contestConfigTemplate.deleteMany({ where: { id: template.id } });
     }
   });
 
