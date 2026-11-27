@@ -10,7 +10,7 @@ import { SELECTED_PROVIDER_MAPPING_INCLUDE, toSelectedProviderMapping } from '..
 import { LeagueProviderNotResolvedError, ProviderRegistry, type LeagueProviderSource } from '../ingestion/core/provider-registry';
 import { ProviderLeagueRefusedError, ProviderLeagueUnknownError, type ProviderRosterPlayer, type SportDataProvider } from '../ingestion/core/provider-interface';
 import type { ApiErrorCode } from '@poolmaster/shared/dto';
-import type { ProviderSlotPlay, SportLeagueProviderMapping } from '@poolmaster/shared/domain';
+import type { ProviderSession, ProviderSlotPlay, SportLeagueProviderMapping } from '@poolmaster/shared/domain';
 
 export class ProviderSeasonScheduleError extends Error {
   constructor(
@@ -30,6 +30,8 @@ export interface ProviderEventDetailSummary {
   startDate: Date;
   endDate: Date | null;
   providerSlots: ProviderSlotPlay[];
+  /** Its sessions, where the provider lists them (#2045). */
+  sessions?: ProviderSession[];
 }
 
 export class ProviderSeasonScheduleReader {
@@ -71,6 +73,7 @@ export class ProviderSeasonScheduleReader {
         startDate: event.startDate,
         endDate: event.endDate ?? null,
         providerSlots: event.providerSlots,
+        ...(event.sessions !== undefined && { sessions: event.sessions }),
       }));
   }
 

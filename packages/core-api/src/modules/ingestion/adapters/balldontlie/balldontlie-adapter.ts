@@ -109,6 +109,8 @@ import {
   toSportEvent,
   toTourParticipant,
 } from './pga-mapping';
+import { F1Reader } from './f1-reader';
+import { parseF1Scope } from './f1-mapping';
 
 export interface BalldontlieAdapterOptions {
   /** The BALLDONTLIE Provider row's base URL and rate, read for each request (#1997). */
@@ -254,6 +256,10 @@ export class BalldontlieAdapter implements SportDataProvider, ProviderPayloadDia
       mlb: () => playoffsReader(MLB_POSTSEASON, new PlayoffsReader(mlbPostseasonSource(this.client), options.logger)),
       epl: () => scopedReader(parseEplScope, new EplReader(this.client)),
       worldcup: () => scopedReader(parseWorldCupScope, new WorldCupReader(this.client)),
+      f1: () => {
+        const f1 = new F1Reader(this.client);
+        return scopedReader(parseF1Scope, { upcomingEvents: (dateRange, season) => f1.upcomingEvents(dateRange, season), teams: () => f1.drivers(), eventDetails: (eventId) => f1.eventDetails(eventId), liveScores: (eventId) => f1.liveScores(eventId) });
+      },
     };
     const leagues: EnabledLeague[] = [];
     for (const league of options.leagues) {

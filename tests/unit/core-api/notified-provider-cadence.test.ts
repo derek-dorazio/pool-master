@@ -1,5 +1,5 @@
 import { ProviderCode, type ProviderSettings } from '@poolmaster/shared/domain';
-import { notifiedProviderCadenceOf, providerLeagueQuietAfterMs } from '../../../packages/core-api/src/modules/ingestion/notified-provider-cadence';
+import { notifiedProviderCadenceOf, providerLeagueQuietAfterMs, providerLeagueSendsNotifications } from '../../../packages/core-api/src/modules/ingestion/notified-provider-cadence';
 import { ProviderSettingsStore } from '../../../packages/core-api/src/modules/ingestion/provider-settings-store';
 import { ProviderWebhookSwitch } from '../../../packages/core-api/src/modules/ingestion/provider-webhook-switch';
 import { balldontlieTestProvider } from '../../support/balldontlie-provider-rows';
@@ -52,6 +52,7 @@ describe('each provider league\'s quiet window (#1499, #2094)', () => {
     expect(quietMinutes('epl')).toBe(90);
     expect(quietMinutes('worldcup')).toBe(150);
     expect(quietMinutes('pga')).toBe(360);
+    expect(quietMinutes('f1')).toBe(180);
   });
 
   it('takes the window from the league\'s row, so an edit on the Providers page changes it, and gives zero, never, for a league no row has', async () => {
@@ -61,5 +62,20 @@ describe('each provider league\'s quiet window (#1499, #2094)', () => {
 
     expect(quietMinutes('nfl')).toBe(120);
     expect(quietMinutes('mls')).toBe(0);
+  });
+});
+
+describe('whether each provider league is notified (#2045)', () => {
+  it('counts every league subscribed to a webhook event set as notified, and Formula 1, subscribed to none, and a league no row has as not', async () => {
+    const provider = balldontlieTestProvider();
+    const store = new ProviderSettingsStore({ findAll: () => Promise.resolve([provider]) });
+    await store.load();
+    const sendsNotifications = providerLeagueSendsNotifications(store);
+    const idOf = (code: string) => provider.leagues.find((league) => league.code === code)?.id ?? 'no-such-league';
+
+    expect(sendsNotifications(idOf('pga'))).toBe(true);
+    expect(sendsNotifications(idOf('nfl'))).toBe(true);
+    expect(sendsNotifications(idOf('f1'))).toBe(false);
+    expect(sendsNotifications(idOf('mls'))).toBe(false);
   });
 });

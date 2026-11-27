@@ -5,8 +5,8 @@ adapter was built before any account existed, so everything here comes from the 
 published OpenAPI document, not from recorded traffic.
 
 - `openapi/pga.yml`, `openapi/nfl.yml`, `openapi/ncaaf.yml`, `openapi/ncaab.yml`, `openapi/ncaaw.yml`,
-  `openapi/nba.yml`, `openapi/nhl.yml`, `openapi/mlb.yml`, `openapi/wnba.yml`, `openapi/epl.yml` and `openapi/fifa.yml` are the vendor's PGA TOUR, NFL, college football,
-  NCAA men's and women's basketball, NBA, NHL, MLB, WNBA, Premier League and FIFA World Cup documents, each vendored unchanged below a three-line header that
+  `openapi/nba.yml`, `openapi/nhl.yml`, `openapi/mlb.yml`, `openapi/wnba.yml`, `openapi/epl.yml`, `openapi/fifa.yml` and `openapi/f1.yml` are the vendor's PGA TOUR, NFL, college football,
+  NCAA men's and women's basketball, NBA, NHL, MLB, WNBA, Premier League, FIFA World Cup and Formula 1 documents, each vendored unchanged below a three-line header that
   names its source, date and hash. `npm run balldontlie:contract-check` says when the live
   document differs; `-- --update-spec` refreshes the copy, and the contract tests then
   show whether anything the adapter reads moved.
@@ -213,3 +213,10 @@ The first things to check once a key exists, each read by `npm run balldontlie:c
 
 When an account exists, replace or add fixtures with recorded responses and keep the
 doc-example files: the pair shows where the vendor's document and its API disagree.
+- `f1/*.json` are written to the Formula 1 document's schemas, which give no response examples
+  (#2045): the 2025 season as a final Monaco weekend, a scheduled Abu Dhabi weekend, one whose
+  state the vendor calls `unknown` and one with no start; their sessions (practice, qualifying,
+  the race, and a sprint with no start yet); the Monaco race's results with a winner, a second
+  place, a retirement and a driver with no place; the 2025 driver standings and an empty 2026
+  list, as at a season's start; and the drivers. Every one must fit the document
+  (`f1-contract.test.ts`).

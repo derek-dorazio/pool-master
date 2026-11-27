@@ -26,6 +26,8 @@ const GAME_EVENTS_BY_SET: Readonly<Record<ProviderWebhookEventSet, readonly stri
   [ProviderWebhookEventSet.GAME_HALVES]: ['game.started', 'game.halftime', 'game.ended'],
   // Golf's events name a tournament, not a league's game.
   [ProviderWebhookEventSet.GOLF_ROUNDS]: [],
+  // A league with no notifications subscribes to none.
+  [ProviderWebhookEventSet.NONE]: [],
 };
 
 /** Where in play each subscribed game event falls (#1499). */

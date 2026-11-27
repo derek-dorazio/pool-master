@@ -2627,6 +2627,7 @@ enum PrismaProviderWebhookEventSet {
   GAME_PERIODS
   GAME_HALVES
   GOLF_ROUNDS
+  NONE
 }
 
 /// One data provider (#1997, plans/league-model-redesign.md §4), with the settings each
@@ -2710,6 +2711,7 @@ model SportLeagueProviderMapping {
   providerLeague  ProviderLeague                                    @relation(fields: [providerLeagueId], references: [id], onDelete: Restrict)
   selectedBy      SportLeague?                                      @relation("SelectedSportLeagueProviderMapping")
   positionCodes   SportLeaguePositionProviderMapping[]
+  sessionTypes    SportLeagueProviderSessionTypeMapping[]
   slotMappings    SportLeagueCompetitionSlotProviderMapping[]
   seasonMappings  SportLeagueSeasonProviderMapping[]
   eventMappings   SportEventProviderMapping[]
@@ -2772,6 +2774,26 @@ model SportLeaguePositionProviderMapping {
   @@index([sportLeagueId, sportLeaguePositionId])
   @@index([sportLeagueId, sportLeagueProviderMappingId], map: "sport_league_position_provider_mappings_provider_mapping_idx")
   @@map("sport_league_position_provider_mappings")
+}
+
+/// A provider's session type a sport league's events play as Rounds (#2045, plan §3): BALLDONTLIE's
+/// F1 `Race`, so a Grand Prix's one Round is its race and its practice, qualifying and sprint are
+/// not synced. Inclusion only: a session of a type with no row is not played. A league whose feed
+/// lists no sessions (golf's rounds, a game's periods) has none. Set by migration.
+model SportLeagueProviderSessionTypeMapping {
+  id                           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sportLeagueId                String   @map("sport_league_id") @db.Uuid
+  sportLeagueProviderMappingId String   @map("sport_league_provider_mapping_id") @db.Uuid
+  /// The provider's own session type, exactly as its feed sends it.
+  providerSessionType          String   @map("provider_session_type") @db.VarChar(50)
+  createdAt                    DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt                    DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  sportLeagueProviderMapping SportLeagueProviderMapping @relation(fields: [sportLeagueId, sportLeagueProviderMappingId], references: [sportLeagueId, id], onDelete: Cascade, map: "provider_session_type_mappings_provider_mapping_fkey")
+
+  @@unique([sportLeagueProviderMappingId, providerSessionType], map: "provider_session_type_mappings_value_key")
+  @@index([sportLeagueId, sportLeagueProviderMappingId], map: "provider_session_type_mappings_provider_mapping_idx")
+  @@map("sport_league_provider_session_type_mappings")
 }
 
 /// The three phases a sport league's Season can have (#2002, plans/league-model-redesign.md §1).

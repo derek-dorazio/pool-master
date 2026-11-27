@@ -46,6 +46,7 @@ export const enUS = {
       GAME_PERIODS: 'Start, each period, end',
       GAME_HALVES: 'Start, half-time, end',
       GOLF_ROUNDS: 'Tournament, rounds, players',
+      NONE: 'None (schedule only)',
     },
     LeaguePhase: {
       PRESEASON: 'Preseason',
