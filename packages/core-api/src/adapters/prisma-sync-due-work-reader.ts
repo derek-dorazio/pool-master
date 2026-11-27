@@ -6,7 +6,8 @@
 
 import type { Prisma, PrismaClient } from '@prisma/client';
 import type { LiveEventView, SeasonSpanView, SyncDueWorkReader, SyncedLeagueRef } from '@poolmaster/shared/db';
-import { MatchFormat, MatchStatus, ProviderSyncKind, ProviderSyncRunStatus, scoresDueSince, type FieldWindowSlot } from '@poolmaster/shared/domain';
+import { MatchFormat, ProviderSyncKind, ProviderSyncRunStatus, type FieldWindowSlot } from '@poolmaster/shared/domain';
+import { gameInPlayWhere } from './prisma-game-in-play';
 
 /** An event of one of the leagues, linked under the league's provider mapping. */
 function linkedEventOf(leagues: readonly SyncedLeagueRef[]): Prisma.SportEventWhereInput {
@@ -58,14 +59,7 @@ export class PrismaSyncDueWorkReader implements SyncDueWorkReader {
   async findLiveEvents(input: { leagues: readonly SyncedLeagueRef[]; now: Date }): Promise<LiveEventView[]> {
     if (input.leagues.length === 0) return [];
     const games = await this.prisma.sportEventRoundMatchGame.findMany({
-      where: {
-        // `isGameScoresDue`, as a filter: in play, or scheduled to have started, not overdue.
-        OR: [
-          { status: MatchStatus.IN_PROGRESS },
-          { status: MatchStatus.SCHEDULED, scheduledDate: { lte: input.now, gte: scoresDueSince(input.now) } },
-        ],
-        eventSlot: { sportEvent: linkedEventOf(input.leagues) },
-      },
+      where: { ...gameInPlayWhere(input.now), eventSlot: { sportEvent: linkedEventOf(input.leagues) } },
       select: {
         sportEventId: true,
         status: true,
@@ -74,7 +68,7 @@ export class PrismaSyncDueWorkReader implements SyncDueWorkReader {
         eventSlot: {
           select: {
             seasonSlot: { select: { definition: { select: { matchFormat: true } } } },
-            sportEvent: { select: { sportLeagueId: true, lastProviderNotificationAt: true } },
+            sportEvent: { select: { sportLeagueId: true } },
           },
         },
       },
@@ -87,7 +81,7 @@ export class PrismaSyncDueWorkReader implements SyncDueWorkReader {
         sportEventId: game.sportEventId,
         sportLeagueId: sportEvent.sportLeagueId,
         games: [],
-        lastHeardAt: sportEvent.lastProviderNotificationAt,
+        lastHeardAt: null,
         lastScoresChangedAt: null,
       };
       event.games.push({ status: game.status, scheduledDate: game.scheduledDate, playedAsField: seasonSlot.definition.matchFormat === MatchFormat.FIELD });

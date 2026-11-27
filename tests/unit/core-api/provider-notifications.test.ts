@@ -1,5 +1,5 @@
 import { BackgroundJobType, MatchStatus, ProviderSyncFindingKind, ProviderSyncFindingSeverity, Sport, type SportLeague, HomeAway } from '@poolmaster/shared/domain';
-import type { ProviderMappedGame, ProviderNotificationReceipt, ProviderNotifiedEvent, ProviderNotifiedEventQuery } from '@poolmaster/shared/db';
+import type { ProviderMappedGame, ProviderNotifiedEvent, ProviderNotifiedEventQuery } from '@poolmaster/shared/db';
 import { BackgroundJobQueue } from '../../../packages/core-api/src/modules/background-jobs';
 import {
   PROVIDER_NOTIFICATION_COALESCE_MS,
@@ -69,13 +69,13 @@ function setup(
   const jobs = inMemoryBackgroundJobs(() => NOW);
   const queue = new BackgroundJobQueue({ jobs, currentStart: testCurrentJobStart });
   const findLiveNotifiedEvents = jest.fn((_query: ProviderNotifiedEventQuery) => Promise.resolve(live));
-  const recordProviderNotification = jest.fn((_receipt: ProviderNotificationReceipt) => Promise.resolve());
+  const recordEventNotification = jest.fn((_sportEventIds: readonly string[], _at: Date) => Promise.resolve());
   const findByProviderExternalIds = jest.fn((_code: string, ids: readonly string[]) => Promise.resolve(mapped.filter((each) => each.externalId !== null && ids.includes(each.externalId))));
   const recordGameNotification = jest.fn((_gameIds: readonly string[], _at: Date) => Promise.resolve());
   const raiseOfSource = jest.fn((_providerId: string, _raises: readonly unknown[]) => Promise.resolve());
   const service = new ProviderNotificationService({
-    sportEvents: { findLiveNotifiedEvents, recordProviderNotification },
-    games: { findByProviderExternalIds, recordProviderNotification: recordGameNotification },
+    sportEvents: { findLiveNotifiedEvents },
+    games: { findByProviderExternalIds, recordProviderNotification: recordGameNotification, recordEventNotification },
     sportLeagues: { findEventSynced: async () => SYNCED_LEAGUES },
     findings: { raiseOfSource },
     jobs: queue,
@@ -83,7 +83,7 @@ function setup(
     ...delays,
     logger: fakeLogger(),
   });
-  return { jobs, service, findLiveNotifiedEvents, recordProviderNotification, findByProviderExternalIds, recordGameNotification, raiseOfSource };
+  return { jobs, service, findLiveNotifiedEvents, recordEventNotification, findByProviderExternalIds, recordGameNotification, raiseOfSource };
 }
 
 describe('provider notifications (#1498)', () => {
@@ -235,15 +235,16 @@ describe('provider notifications as play starts and ends (#1499)', () => {
     ]);
   });
 
-  it('records when a game\'s notification arrived on the Game it is about, and an event\'s own notification on its event, so a quiet one can be told apart', async () => {
+  it('records when a game\'s notification arrived on the Game it is about, and an event\'s own notification on the Games in play of the event its provider mapping names, so a quiet one can be told apart', async () => {
     const game = setup([liveEvent('nfl-2026-week-11', Sport.FOOTBALL)]);
     await game.service.receive(nflPeriodEnded);
     expect(game.recordGameNotification).toHaveBeenCalledWith(['game-1'], NOW);
-    expect(game.recordProviderNotification).not.toHaveBeenCalled();
+    expect(game.recordEventNotification).not.toHaveBeenCalled();
 
     const golf = setup([liveEvent('1133', Sport.GOLF)]);
     await golf.service.receive(golfRoundStarted);
-    expect(golf.recordProviderNotification).toHaveBeenCalledWith({ providerId: 'balldontlie', externalIds: ['1133'], receivedAt: NOW });
+    expect(golf.findLiveNotifiedEvents).toHaveBeenCalledWith(expect.objectContaining({ providerId: 'balldontlie', externalId: '1133' }));
+    expect(golf.recordEventNotification).toHaveBeenCalledWith([LIVE_EVENT_ID], NOW);
     expect(golf.recordGameNotification).not.toHaveBeenCalled();
   });
 

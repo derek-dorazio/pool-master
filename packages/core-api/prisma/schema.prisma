@@ -2110,9 +2110,6 @@ model SportEvent {
   // from ever touching this event's status, no matter what the recorded
   // round schedule says — a rain delay, a dispute, etc.
   autoLifecycleEnabled       Boolean                        @default(true) @map("auto_lifecycle_enabled")
-  // When the event's provider last sent a webhook notification about the event itself (#1499): a
-  // golf round's. Null until one arrives. A game's notification is recorded on its Game (#2007).
-  lastProviderNotificationAt DateTime?                      @map("last_provider_notification_at") @db.Timestamptz
   // The latest automatic release check (#1847): when the release job last judged the event,
   // whether it released or held it, and the checks that held it. Null and empty until the first
   // check; each check overwrites the one before, and a root admin's release by hand clears it. A
@@ -2397,8 +2394,9 @@ model SportEventRoundMatchGame {
   /// The Game a provider moved this one to (another week's): set once, never re-parented. This
   /// Game keeps its picks; the provider's id moves to the new Game.
   movedToGameId              String?           @map("moved_to_game_id") @db.Uuid
-  /// When a provider last sent a webhook notification about this game (#1499). Null until one
-  /// arrives. The scheduler warns when play is under way and none has arrived for a while.
+  /// When a provider last sent a webhook notification about this game (#1499), or about its event
+  /// while the game was in play, as a golf tournament's is about its current round (#2008). Null
+  /// until one arrives. The scheduler warns when play is under way and none has arrived for a while.
   lastProviderNotificationAt DateTime?         @map("last_provider_notification_at") @db.Timestamptz
   createdAt                  DateTime          @default(now()) @map("created_at") @db.Timestamptz
   updatedAt                  DateTime          @updatedAt @map("updated_at") @db.Timestamptz

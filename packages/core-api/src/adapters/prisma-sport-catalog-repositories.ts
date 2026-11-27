@@ -29,7 +29,6 @@ import type {
   SportEventReleaseFacts,
   ProviderNotifiedEvent,
   ProviderNotifiedEventQuery,
-  ProviderNotificationReceipt,
   AutoLifecycleCandidate,
   AutoLifecycleStatus,
   SportEventRepository,
@@ -774,14 +773,6 @@ export class PrismaSportEventRepository implements SportEventRepository {
       externalId: mapping.externalId,
       inProgress: row.status === SportEventStatus.IN_PROGRESS,
     })));
-  }
-
-  async recordProviderNotification(receipt: ProviderNotificationReceipt): Promise<void> {
-    if (receipt.externalIds.length === 0) return;
-    await this.prisma.sportEvent.updateMany({
-      where: { providerMappings: { some: { provider: { code: requireProviderCodeOfSourceId(receipt.providerId) }, externalId: { in: [...receipt.externalIds] } } } },
-      data: { lastProviderNotificationAt: receipt.receivedAt },
-    });
   }
 
   async findAutoLifecycleCandidates(): Promise<AutoLifecycleCandidate[]> {
