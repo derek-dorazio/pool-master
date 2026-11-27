@@ -99,13 +99,6 @@ describe('events routes', () => {
       );
       expect(events.map((event) => event.id)).not.toContain(filteredOutEventId);
     } finally {
-      await prisma.sportEventParticipantGolfStanding.deleteMany({
-        where: {
-          standing: {
-            sportEventParticipant: { sportEventId: eligibleEventId },
-          },
-        },
-      });
       await prisma.sportEventParticipantStanding.deleteMany({
         where: {
           sportEventParticipant: { sportEventId: eligibleEventId },
@@ -205,13 +198,6 @@ describe('events routes', () => {
       expect(viewerIds).toContain(lockedEventId);
       expect(viewerIds).not.toContain(notReleasedEventId);
     } finally {
-      await prisma.sportEventParticipantGolfStanding.deleteMany({
-        where: {
-          standing: {
-            sportEventParticipant: { sportEventId: lockedEventId },
-          },
-        },
-      });
       await prisma.sportEventParticipantStanding.deleteMany({
         where: {
           sportEventParticipant: { sportEventId: lockedEventId },

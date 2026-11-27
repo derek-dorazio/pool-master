@@ -5,6 +5,8 @@ import {
   toParticipantScores,
 } from '../../../packages/core-api/src/modules/contests/contest-leaderboard-reads';
 import type { ContestScoringSettings } from '@poolmaster/shared/domain';
+import { GameSideStatus, type ParticipantStandingStatus } from '@poolmaster/shared/domain';
+import { golfRound, golfStanding } from '../../support/golf-rounds';
 import {
   fakeContestConfigurationRepo,
   fakeContestEntryPickRepo,
@@ -91,10 +93,10 @@ describe('contest leaderboard reads', () => {
       {
         entry: { id: 'sep-1', status: 'ACTIVE' },
         participant: { name: 'Ana Park' },
-        standing: { standing: { asOf, status: 'ACTIVE' }, golf: { eventScoreToPar: 0 } },
-        rounds: [],
+        standing: golfStanding({ asOf, scoreToPar: 0 }),
+        fieldResults: [],
       },
-      { entry: { id: 'sep-2', status: 'ACTIVE' }, participant: { name: 'Ben Cole' }, standing: null, rounds: [] },
+      { entry: { id: 'sep-2', status: 'ACTIVE' }, participant: { name: 'Ben Cole' }, standing: null, fieldResults: [] },
     ] as unknown as Parameters<typeof toParticipantScores>[0], scoringEvent({ rounds: 4, roundsPar: 72 }), GOLF_SCORING, { slotDefinitionIds: null });
 
     expect(scores).toEqual([
@@ -238,7 +240,8 @@ describe('contest scoring of unplayed rounds', () => {
       [3, 'COMPLETED', 70, -2],
       [4, 'IN_PROGRESS', 71, -1],
     ]);
-    lastGroup.rounds[3].golf = { strokes: 71, scoreToPar: -1, thru: 18 };
+    const lastRound = lastGroup.fieldResults.find((round) => round.roundNumber === 4);
+    if (lastRound) lastRound.result = { ...lastRound.result, periodsCompleted: 18 };
 
     const [, score] = toParticipantScores(field(leader, lastGroup), scoringEvent({ rounds: 4, roundsPar: null, status: 'COMPLETED' }), GOLF_SCORING, { slotDefinitionIds: null });
 
@@ -304,12 +307,24 @@ function golfer(
     participant: { name: id },
     standing: standingStatus === null
       ? null
-      : { standing: { asOf: null, status: standingStatus }, golf: { eventScoreToPar } },
-    rounds: rounds.map(([roundNumber, status, strokes, scoreToPar]) => ({
-      round: { roundNumber, status },
-      golf: { strokes, scoreToPar, thru: status === 'IN_PROGRESS' ? 9 : 18 },
+      : golfStanding({ asOf: null, status: standingStatus as ParticipantStandingStatus, scoreToPar: eventScoreToPar }),
+    // Each round is the golfer's side in that round's FIELD Game (#2008).
+    fieldResults: rounds.map(([roundNumber, status, strokes, scoreToPar]) => golfRound({
+      roundNumber,
+      strokes,
+      scoreToPar,
+      thru: status === 'IN_PROGRESS' ? 9 : 18,
+      status: sideStatusOfRound(status),
     })),
   };
+}
+
+/** The side status the stroke-play writer stores for each feed round status. */
+function sideStatusOfRound(status: string): GameSideStatus | null {
+  if (status === 'IN_PROGRESS') return null;
+  if (status === 'DNF') return GameSideStatus.DID_NOT_FINISH;
+  if (status === 'DSQ') return GameSideStatus.DISQUALIFIED;
+  return GameSideStatus.FINISHED;
 }
 
 function field(...golfers: ReturnType<typeof golfer>[]) {

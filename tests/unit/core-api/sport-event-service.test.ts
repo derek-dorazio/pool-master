@@ -14,7 +14,7 @@ import { SportEventRoundService } from '../../../packages/core-api/src/modules/e
 import { SportEventTierService } from '../../../packages/core-api/src/modules/events/sport-event-tier-service';
 import { SportEventParticipantService } from '../../../packages/core-api/src/modules/events/sport-event-participant-service';
 import { createEventHandlers } from '../../../packages/core-api/src/modules/events/handler';
-import { GolfScoreService } from '../../../packages/core-api/src/modules/golf/golf-score-service';
+import { StrokePlayResultService } from '../../../packages/core-api/src/modules/scoring-families/stroke-play/stroke-play-result-service';
 import { IngestionService } from '../../../packages/core-api/src/modules/ingestion/ingestion-service';
 import { RaceResultService } from '../../../packages/core-api/src/modules/scoring-families/finish-position/race-result-service';
 import { MatchResultService } from '../../../packages/core-api/src/modules/scoring-families/head-to-head/match-result-service';
@@ -1282,7 +1282,7 @@ describe('PATCH /events/:eventId handler passes tellMembers on to the event serv
         bracket: stubInstance(SportEventBracketService, {}),
         tiers: stubInstance(SportEventTierService, {}),
         field: stubInstance(SportEventParticipantService, {}),
-        golfScores: stubInstance(GolfScoreService, {}),
+        strokePlayResults: stubInstance(StrokePlayResultService, {}),
         raceResults: stubInstance(RaceResultService, {}),
         matchResults: stubInstance(MatchResultService, {}),
         sportLeagues: stubInstance(SportLeagueService, {}),
@@ -1353,7 +1353,7 @@ describe('event read handlers count admin numbers for a root admin only (#1198)'
         bracket: stubInstance(SportEventBracketService, { listBracket }),
         tiers: stubInstance(SportEventTierService, {}),
         field: stubInstance(SportEventParticipantService, {}),
-        golfScores: stubInstance(GolfScoreService, {}),
+        strokePlayResults: stubInstance(StrokePlayResultService, {}),
         raceResults: stubInstance(RaceResultService, {}),
         matchResults: stubInstance(MatchResultService, {}),
         sportLeagues: stubInstance(SportLeagueService, {}),

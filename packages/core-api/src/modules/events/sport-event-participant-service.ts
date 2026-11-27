@@ -43,7 +43,7 @@ import { EventFieldReader, type EventFieldReads } from './event-field-reader';
 import { assertTiersAndPricesEditable } from './sport-event-tier-service';
 
 // The field row a reader sees lives with the port that reads it (#1163).
-export type { ParticipantRoundView, ParticipantStandingView, SportEventParticipantView } from '@poolmaster/shared/db';
+export type { SportEventParticipantView } from '@poolmaster/shared/db';
 
 export interface AddFieldResult {
   added: number;

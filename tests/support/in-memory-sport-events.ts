@@ -1,5 +1,5 @@
 /**
- * An in-memory implementation of the event-core, golf and race extension ports (#236, #622), for
+ * An in-memory implementation of the event-core and FIELD Game ports (#236, #622, #2008), for
  * service tests that assert what a service leaves behind rather than which repository
  * calls it made (testing-rules §1D, the plan's test layering). The Prisma adapters
  * behind the same ports are tested against Postgres in sport-event-repositories.integration.
@@ -9,18 +9,14 @@
  */
 
 import type {
-  GolfRoundWrite,
-  GolfStandingWrite,
   ParticipantProviderMappingRepository,
   ProviderMappingScope,
   ParticipantRepository,
   SportEventCreate,
   SportEventParticipantCreate,
-  SportEventParticipantGolfRoundRepository,
-  SportEventParticipantGolfStandingRepository,
   SportEventParticipantPatch,
-  RaceOrderRepository,
-  RaceOrderResult,
+  FieldGameRepository,
+  FieldSideResult,
   ProviderNotificationReceipt,
   SportEventParticipantRepository,
   SportEventParticipantValuationRepository,
@@ -49,8 +45,6 @@ import { sportEventSlots, sportPlay } from './sport-play';
 import type {
   AutoReleaseCheck,
   BackgroundJobRequest,
-  GolfRoundResult,
-  GolfStandingResult,
   Participant,
   ParticipantProviderMapping,
   SportConfig,
@@ -58,9 +52,6 @@ import type {
   SportEventRoundMatch,
   SportEventRoundMatchGame,
   SportEventParticipant,
-  SportEventParticipantGolfRound,
-  SportEventParticipantGolfStanding,
-  SportEventParticipantRound,
   SportEventParticipantStanding,
   SportEventParticipantValuation,
   SportEventRound,
@@ -115,7 +106,7 @@ function withSideScores(match: SportEventRoundMatch, game: SportEventRoundMatchG
     const side = match.sides.find((each) => each.sideNumber === sideNumber);
     if (!side) throw new Error('unknown side');
     const index = results.findIndex((result) => result.sideNumber === sideNumber);
-    const stored = index === -1 ? { sportEventRoundMatchSideId: side.id, sideNumber, score: null, homeAway: HomeAway.NONE, position: null, startPosition: null, status: null, periodScores: [] } : results[index];
+    const stored = index === -1 ? { sportEventRoundMatchSideId: side.id, sideNumber, score: null, homeAway: HomeAway.NONE, position: null, startPosition: null, scoreToPar: null, periodsCompleted: null, status: null, periodScores: [] } : results[index];
     const written = {
       ...stored,
       score,
@@ -321,12 +312,12 @@ export class InMemorySportEvents {
   field: SportEventParticipant[] = [];
   tierRows: SportEventTier[] = [];
   valuationRows: SportEventParticipantValuation[] = [];
-  participantRoundRows: Array<Omit<SportEventParticipantRound, 'roundNumber'>> = [];
   standingRows: SportEventParticipantStanding[] = [];
-  golfRoundRows: SportEventParticipantGolfRound[] = [];
-  golfStandingRows: SportEventParticipantGolfStanding[] = [];
-  /** Each runner's result in its event's race (#2008): its side result in the race's one Game. */
-  raceOrderRows: RaceOrderResult[] = [];
+  /**
+   * Each competitor's side result in its event's FIELD Games (#2008): a race's one Game, a golf
+   * round's, with the round and the Game's status it is read with.
+   */
+  fieldSideRows: Array<FieldSideResult & { sportEventId: string; sportEventRoundId: string; gameCompletedAt: Date | null }> = [];
   /** Each match with its sides and its Games (#2007, #2046). */
   matchRows: SportEventRoundMatch[] = [];
   /** Every match's Games (#2007): read from `matchRows`, where they are kept. */
@@ -993,123 +984,32 @@ export class InMemorySportEvents {
   /** One field row with everything the field read carries, as copies. */
   private fieldRow(entry: SportEventParticipant, sportLeagueId: string): SportEventParticipantView {
     const standing = this.standingRows.find((row) => row.sportEventParticipantId === entry.id);
-    const standingGolf = standing && this.golfStandingRows.find((row) => row.standingId === standing.id);
     const valuation = this.valuationRows.find((row) => row.sportEventParticipantId === entry.id);
-    const raced = this.raceOrderRows.find((row) => row.sportEventParticipantId === entry.id);
     return {
       entry: { ...entry },
       participant: { ...(this.participants.find((participant) => participant.id === entry.participantId) as Participant) },
       valuation: valuation ? { ...valuation } : null,
-      standing: standing ? { standing: { ...standing }, golf: standingGolf ? { ...standingGolf } : null } : null,
-      rounds: this.participantRoundRows
+      standing: standing ? { ...standing } : null,
+      fieldResults: this.fieldSideRows
         .filter((row) => row.sportEventParticipantId === entry.id)
-        .map((row) => ({ ...row, roundNumber: this.roundNumberOf(row.sportEventRoundId) }))
         .sort((left, right) => left.roundNumber - right.roundNumber)
-        .map((round) => {
-          const golf = this.golfRoundRows.find((row) => row.participantRoundId === round.id);
-          return {
-            round,
-            golf: golf ? { ...golf } : null,
-          };
-        }),
-      fieldResults: raced
-        ? [{
-          roundNumber: 1,
-          gameStatus: raced.isOfficial ? MatchStatus.COMPLETED : MatchStatus.IN_PROGRESS,
+        .map((row) => ({
+          sportEventRoundId: row.sportEventRoundId,
+          roundNumber: row.roundNumber,
+          gameStatus: row.gameStatus,
+          gameCompletedAt: row.gameCompletedAt,
           result: {
-            sportEventRoundMatchSideId: `race-side-${entry.id}`, sideNumber: 1, score: null, homeAway: HomeAway.NONE,
-            position: raced.position, startPosition: raced.startPosition, status: raced.status, periodScores: [],
+            sportEventRoundMatchSideId: `field-side-${entry.id}-${row.roundNumber}`, sideNumber: 1, score: row.score, homeAway: HomeAway.NONE,
+            position: row.position, startPosition: row.startPosition, scoreToPar: row.scoreToPar, periodsCompleted: row.periodsCompleted, status: row.status, periodScores: [],
           },
-          updatedAt: raced.updatedAt,
-        }]
-        : [],
+          updatedAt: row.updatedAt,
+        })),
       matches: this.matchRows
         .filter((match) => match.sides.some((side) => side.sportEventParticipantId === entry.id))
         .sort(compareMatchPlaces)
         .map(copyMatch),
       affiliatedWithSportLeague: this.participants.some((row) => row.id === entry.participantId && row.sportLeagueId === sportLeagueId),
     };
-  }
-
-  // Reads and writes hand back copies, as a database does: a caller holding an earlier read
-  // must not see it change under a later write.
-  private golfRoundResults(): GolfRoundResult[] {
-    return this.participantRoundRows.flatMap((row) => {
-      const golf = this.golfRoundRows.find((candidate) => candidate.participantRoundId === row.id);
-      return golf ? [{ participantRound: { ...row, roundNumber: this.roundNumberOf(row.sportEventRoundId) }, golf: { ...golf } }] : [];
-    }).sort((left, right) => left.participantRound.roundNumber - right.participantRound.roundNumber);
-  }
-
-  private golfStandingResults(): GolfStandingResult[] {
-    return this.standingRows.flatMap((standing) => {
-      const golf = this.golfStandingRows.find((candidate) => candidate.standingId === standing.id);
-      return golf ? [{ standing: { ...standing }, golf: { ...golf } }] : [];
-    });
-  }
-
-  private writeGolfRound(write: GolfRoundWrite): GolfRoundResult {
-    let core = this.participantRoundRows.find((row) => row.sportEventParticipantId === write.sportEventParticipantId && row.sportEventRoundId === write.sportEventRoundId);
-    if (!core) {
-      core = stamp({ id: this.id('participant-round'), sportEventParticipantId: write.sportEventParticipantId, sportEventRoundId: write.sportEventRoundId, status: write.status, completedAt: write.completedAt });
-      this.participantRoundRows.push(core);
-    }
-    Object.assign(core, { status: write.status, completedAt: write.completedAt });
-    let golf = this.golfRoundRows.find((row) => row.participantRoundId === core.id);
-    if (!golf) {
-      golf = stamp({ id: this.id('golf-round'), participantRoundId: core.id, strokes: 0, scoreToPar: 0, thru: null });
-      this.golfRoundRows.push(golf);
-    }
-    Object.assign(golf, { strokes: write.strokes, scoreToPar: write.scoreToPar, thru: write.thru });
-    return { participantRound: { ...core, roundNumber: this.roundNumberOf(core.sportEventRoundId) }, golf: { ...golf } };
-  }
-
-  golfRoundRepo(): SportEventParticipantGolfRoundRepository {
-    return {
-      findBySportEventRound: async (id) => this.golfRoundResults().filter((result) => result.participantRound.sportEventRoundId === id),
-      findBySportEventParticipants: async (ids) => this.golfRoundResults().filter((result) => ids.includes(result.participantRound.sportEventParticipantId)),
-      upsert: async (write) => this.writeGolfRound(write),
-      upsertMany: async (writes) => {
-        if (writes.some((write) => !this.field.some((row) => row.id === write.sportEventParticipantId))) {
-          throw new Error('unknown field row');
-        }
-        return writes.map((write) => this.writeGolfRound(write));
-      },
-    };
-  }
-
-  golfStandingRepo(): SportEventParticipantGolfStandingRepository {
-    return {
-      findBySportEvent: async (sportEventId) => {
-        const entryIds = new Set(this.field.filter((row) => row.sportEventId === sportEventId).map((row) => row.id));
-        return this.golfStandingResults().filter((result) => entryIds.has(result.standing.sportEventParticipantId));
-      },
-      findBySportEventParticipants: async (ids) => this.golfStandingResults().filter((result) => ids.includes(result.standing.sportEventParticipantId)),
-      upsertMany: async (writes) => writes.map((write) => this.writeGolfStanding(write)),
-      updateRanks: async (ranks, jobs) => {
-        this.backgroundJobs.push(...(jobs ?? []));
-        for (const rank of ranks) {
-          const standing = this.standingRows.find((row) => row.id === rank.standingId);
-          if (!standing) throw new Error('unknown standing');
-          Object.assign(standing, { position: rank.position, displayPosition: rank.displayPosition });
-        }
-      },
-    };
-  }
-
-  private writeGolfStanding(write: GolfStandingWrite): GolfStandingResult {
-    let standing = this.standingRows.find((row) => row.sportEventParticipantId === write.sportEventParticipantId);
-    if (!standing) {
-      standing = stamp({ id: this.id('standing'), sportEventParticipantId: write.sportEventParticipantId, position: null, displayPosition: null, status: write.status, asOf: write.asOf });
-      this.standingRows.push(standing);
-    }
-    Object.assign(standing, { status: write.status, asOf: write.asOf });
-    let golf = this.golfStandingRows.find((row) => row.standingId === standing.id);
-    if (!golf) {
-      golf = stamp({ id: this.id('golf-standing'), standingId: standing.id, eventScoreToPar: 0, eventStrokes: 0, currentRoundThru: null });
-      this.golfStandingRows.push(golf);
-    }
-    Object.assign(golf, { eventScoreToPar: write.eventScoreToPar, eventStrokes: write.eventStrokes, currentRoundThru: write.currentRoundThru });
-    return { standing: { ...standing }, golf: { ...golf } };
   }
 
   /** The match a Game is on, and the Game. */
@@ -1217,7 +1117,7 @@ export class InMemorySportEvents {
               games: [stamp({
                 id: `${match.id}-g1`, sportEventId, sportEventRoundMatchId: match.id, sportEventSlotId: `event-slot-${String(match.roundNumber)}`, gameNumber: 1,
                 scheduledDate: match.scheduledDate, isNeutralSite, venue: null, location: null, status: MatchStatus.SCHEDULED, completedAt: null, movedToGameId: null, lastProviderNotificationAt: null,
-                sideResults: sides.map((side, index) => ({ sportEventRoundMatchSideId: stored[index].id, sideNumber: side.sideNumber, score: null, homeAway: side.homeAway, position: null, startPosition: null, status: null, periodScores: [] })),
+                sideResults: sides.map((side, index) => ({ sportEventRoundMatchSideId: stored[index].id, sideNumber: side.sideNumber, score: null, homeAway: side.homeAway, position: null, startPosition: null, scoreToPar: null, periodsCompleted: null, status: null, periodScores: [] })),
               })],
             });
           }),
@@ -1261,7 +1161,7 @@ export class InMemorySportEvents {
         for (const { sportEventParticipantId, ...standing } of standings) {
           let stored = this.standingRows.find((candidate) => candidate.sportEventParticipantId === sportEventParticipantId);
           if (!stored) {
-            stored = stamp({ id: this.id('standing'), sportEventParticipantId, ...standing });
+            stored = stamp({ id: this.id('standing'), sportEventParticipantId, total: null, scoreToPar: null, ...standing });
             this.standingRows.push(stored);
           }
           Object.assign(stored, standing);
@@ -1279,7 +1179,7 @@ export class InMemorySportEvents {
           const side = row.sides.find((each) => each.sideNumber === sideNumber);
           if (!side) throw new Error('unknown side');
           const index = results.findIndex((each) => each.sideNumber === sideNumber);
-          const stored = index === -1 ? { sportEventRoundMatchSideId: side.id, sideNumber, score: null, homeAway: HomeAway.NONE, position: null, startPosition: null, status: null, periodScores: [] } : results[index];
+          const stored = index === -1 ? { sportEventRoundMatchSideId: side.id, sideNumber, score: null, homeAway: HomeAway.NONE, position: null, startPosition: null, scoreToPar: null, periodsCompleted: null, status: null, periodScores: [] } : results[index];
           const written = { ...stored, periodScores: [...stored.periodScores.filter((period) => period.kind === PeriodKind.SHOOTOUT), ...periodScores.map((period) => ({ ...period }))] };
           if (index === -1) results.push(written);
           else results[index] = written;
@@ -1289,30 +1189,39 @@ export class InMemorySportEvents {
     };
   }
 
-  raceOrderRepo(): RaceOrderRepository {
+  /** The FIELD Game port (#2008): a race's or a golf round's side results, and the event's standings. */
+  fieldGameRepo(): FieldGameRepository {
     const entryIdsOf = (sportEventId: string) => new Set(this.field.filter((row) => row.sportEventId === sportEventId).map((row) => row.id));
     return {
-      findBySportEvent: async (sportEventId) => {
+      findResults: async (sportEventId) => this.fieldSideRows
+        .filter((row) => row.sportEventId === sportEventId)
+        .sort((left, right) => left.roundNumber - right.roundNumber || left.sportEventParticipantId.localeCompare(right.sportEventParticipantId))
+        .map(({ sportEventId: _event, sportEventRoundId: _round, gameCompletedAt: _completed, ...row }) => ({ ...row })),
+      findStandings: async (sportEventId) => {
         const entryIds = entryIdsOf(sportEventId);
-        return this.raceOrderRows
+        return this.standingRows
           .filter((row) => entryIds.has(row.sportEventParticipantId))
           .sort((left, right) => left.sportEventParticipantId.localeCompare(right.sportEventParticipantId))
-          .map((row) => ({ ...row }));
+          .map(({ createdAt: _created, updatedAt: _updated, ...row }) => ({ ...row }));
       },
-      applyOrder: async (sportEventId, { sides, isOfficial, at, standings, jobs }) => {
-        this.backgroundJobs.push(...(jobs ?? []));
+      applyResults: async (sportEventId, { games, standings, jobs }) => {
         const entryIds = entryIdsOf(sportEventId);
-        if ([...sides, ...standings].some((write) => !entryIds.has(write.sportEventParticipantId))) {
+        if ([...games.flatMap((game) => game.sides), ...standings].some((write) => !entryIds.has(write.sportEventParticipantId))) {
           throw new Error('unknown field row');
         }
-        for (const side of sides) {
-          const index = this.raceOrderRows.findIndex((candidate) => candidate.sportEventParticipantId === side.sportEventParticipantId);
-          const row = { ...side, isOfficial, updatedAt: at };
-          if (index === -1) this.raceOrderRows.push(row);
-          else this.raceOrderRows[index] = row;
-        }
-        for (const row of this.raceOrderRows) {
-          if (entryIds.has(row.sportEventParticipantId)) row.isOfficial = isOfficial;
+        const now = new Date();
+        for (const game of games) {
+          const round = this.roundRows.find((row) => row.sportEventId === sportEventId && row.roundNumber === game.roundNumber);
+          if (!round) throw new Error(`no round ${game.roundNumber}`);
+          for (const side of game.sides) {
+            const row = { ...side, sportEventId, sportEventRoundId: round.id, roundNumber: game.roundNumber, gameStatus: game.status, gameCompletedAt: game.completedAt, updatedAt: now };
+            const index = this.fieldSideRows.findIndex((candidate) => candidate.sportEventParticipantId === side.sportEventParticipantId && candidate.roundNumber === game.roundNumber);
+            if (index === -1) this.fieldSideRows.push(row);
+            else this.fieldSideRows[index] = row;
+          }
+          for (const row of this.fieldSideRows) {
+            if (row.sportEventId === sportEventId && row.roundNumber === game.roundNumber) Object.assign(row, { gameStatus: game.status, gameCompletedAt: game.completedAt });
+          }
         }
         for (const { sportEventParticipantId, ...values } of standings) {
           let standing = this.standingRows.find((row) => row.sportEventParticipantId === sportEventParticipantId);
@@ -1322,6 +1231,7 @@ export class InMemorySportEvents {
           }
           Object.assign(standing, values);
         }
+        this.backgroundJobs.push(...(jobs ?? []));
       },
     };
   }

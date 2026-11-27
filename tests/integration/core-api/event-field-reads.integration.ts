@@ -4,11 +4,12 @@ import { randomUUID } from 'node:crypto';
 import { GameSideStatus, MatchStatus, PeriodKind, Sport, SportEventStatus, gameNumbered, matchParticipantIds, matchSpread } from '@poolmaster/shared/domain';
 import type { SportEventParticipantListResponse, SportEventParticipantResponse } from '@poolmaster/shared/dto';
 import {
-  PrismaRaceOrderRepository,
+  PrismaFieldGameRepository,
   PrismaSportEventRoundMatchRepository,
   PrismaSportEventRoundRepository,
 } from '../../../packages/core-api/src/adapters';
 import { createRoundRows } from '../../support/sport-event-rows';
+import { writeGolfRounds } from '../golf-rounds';
 import { createSportEventParticipantService } from '../../../packages/core-api/src/modules/events/wiring';
 import {
   cleanupTestData,
@@ -82,18 +83,12 @@ async function golfEvent() {
   const bea = await golfer('Bea', 2, true);
   const ana = await golfer('Ana', 1, true);
   await prisma.sportEventParticipantValuation.create({ data: { sportEventParticipantId: ana.id, price: 12, priceAssignedSource: 'MANUAL' } });
-  for (const [round, strokes] of [[round2, 70], [round1, 68]] as const) {
-    await prisma.sportEventParticipantRound.create({
-      data: { sportEventParticipantId: ana.id, sportEventRoundId: round.id, status: 'COMPLETED', golf: { create: { strokes, scoreToPar: strokes - 72 } } },
-    });
-  }
+  await writeGolfRounds(prisma, event.id, ([[round2, 70], [round1, 68]] as const).map(([round, strokes]) => ({
+    roundNumber: round.roundNumber,
+    scores: [{ sportEventParticipantId: ana.id, strokes, scoreToPar: strokes - 72 }],
+  })));
   await prisma.sportEventParticipantStanding.create({
-    data: {
-      sportEventParticipantId: ana.id,
-      position: 1,
-      status: 'ACTIVE',
-      golf: { create: { eventScoreToPar: -6, eventStrokes: 138, currentRoundThru: 18 } },
-    },
+    data: { sportEventParticipantId: ana.id, position: 1, status: 'ACTIVE', scoreToPar: -6, total: 138 },
   });
   return { event, ana, bea, cal };
 }
@@ -128,19 +123,21 @@ describe('An event\'s field', () => {
 
     // The event's own row, then the field and each of its relations in one statement: no read per
     // row, and nothing else. A field row's games are read through the match sides naming it (#2046);
-    // a field with no matches reads no further. The event's FIELD matches (a race, #2008) are read
-    // first by the event, and a field with none reads no side results.
+    // a field with no matches reads no further. The event's FIELD matches (a race, a golf round,
+    // #2008) are read first by the event, then their side results in one statement.
     expect(statementCounts(statements)).toEqual([
       ['SELECT participants', 1],
-      ['SELECT sport_event_participant_golf_rounds', 1],
-      ['SELECT sport_event_participant_golf_standings', 1],
-      ['SELECT sport_event_participant_rounds', 1],
       ['SELECT sport_event_participant_standings', 1],
       ['SELECT sport_event_participant_valuations', 1],
       ['SELECT sport_event_participants', 1],
       ['SELECT sport_event_provider_mappings', 1],
-      ['SELECT sport_event_round_match_sides', 1],
-      ['SELECT sport_event_round_matches', 1],
+      // The golfers' rounds: their side results in the rounds' FIELD Games (#2008), with each Game.
+      ['SELECT sport_event_round_match_game_side_result_period_scores', 1],
+      ['SELECT sport_event_round_match_game_side_results', 1],
+      ['SELECT sport_event_round_match_games', 1],
+      // Once for the head-to-head matches naming a row, once for the event's FIELD matches.
+      ['SELECT sport_event_round_match_sides', 2],
+      ['SELECT sport_event_round_matches', 2],
       ['SELECT sport_event_rounds', 1],
       // The event's slot definitions (#2010), where templates are offered.
       ['SELECT sport_event_slots', 1],
@@ -158,11 +155,11 @@ describe('An event\'s field', () => {
     expect(field.map((row) => [row.entry.id, row.affiliatedWithSportLeague])).toEqual([[ana.id, true], [bea.id, true], [cal.id, false]]);
     const [anaRow, beaRow] = field;
     expect(anaRow.valuation).toMatchObject({ price: 12 });
-    expect(anaRow.standing).toMatchObject({ standing: { position: 1 }, golf: { eventScoreToPar: -6, eventStrokes: 138 } });
-    expect(anaRow.rounds.map(({ round, golf }) => [round.roundNumber, golf?.strokes])).toEqual([[1, 68], [2, 70]]);
-    expect(anaRow.fieldResults).toEqual([]);
+    expect(anaRow.standing).toMatchObject({ position: 1, scoreToPar: -6, total: 138 });
+    // Each golf round is the golfer's side result in that round's FIELD Game (#2008), in round order.
+    expect(anaRow.fieldResults.map(({ roundNumber, result }) => [roundNumber, result.score, result.scoreToPar])).toEqual([[1, 68, -4], [2, 70, -2]]);
     expect(anaRow.matches).toEqual([]);
-    expect(beaRow).toMatchObject({ valuation: null, standing: null, rounds: [] });
+    expect(beaRow).toMatchObject({ valuation: null, standing: null, fieldResults: [] });
   });
 
   it('is read once for every contest and pick screen on the event within 30 seconds, and again after', async () => {
@@ -285,19 +282,23 @@ describe('An event\'s field, for every scoring family', () => {
     const prisma = getPrisma();
     const { event, field: [winner, scratched, unplaced] } = await eventWithField(Sport.HORSE_RACING, ['Secretariat', 'Sham', 'Twice A Prince']);
     await createRoundRows(prisma, new PrismaSportEventRoundRepository(getAppPrisma()), event, [{ roundNumber: 1, scheduledDate: event.startDate }]);
-    const raceOrder = new PrismaRaceOrderRepository(getAppPrisma());
-    await raceOrder.applyOrder(event.id, {
-      sides: [
-        { sportEventParticipantId: winner.id, position: 1, startPosition: 2, status: GameSideStatus.FINISHED },
-        { sportEventParticipantId: scratched.id, position: null, startPosition: null, status: GameSideStatus.DID_NOT_START },
-      ],
-      isOfficial: true,
-      at: new Date('2026-05-07T12:05:00.000Z'),
+    const fieldGames = new PrismaFieldGameRepository(getAppPrisma());
+    const raced = { score: null, scoreToPar: null, periodsCompleted: null };
+    await fieldGames.applyResults(event.id, {
+      games: [{
+        roundNumber: 1,
+        status: MatchStatus.COMPLETED,
+        completedAt: new Date('2026-05-07T12:05:00.000Z'),
+        sides: [
+          { ...raced, sportEventParticipantId: winner.id, position: 1, startPosition: 2, status: GameSideStatus.FINISHED },
+          { ...raced, sportEventParticipantId: scratched.id, position: null, startPosition: null, status: GameSideStatus.DID_NOT_START },
+        ],
+      }],
       standings: [],
     });
 
     const rows = await createSportEventParticipantService(getAppPrisma(), testDomainEvents()).listEventParticipants(event.id);
-    const results = await raceOrder.findBySportEvent(event.id);
+    const results = await fieldGames.findResults(event.id);
 
     const byRow = new Map(rows.map((row) => [row.entry.id, row]));
     expect(byRow.get(winner.id)?.fieldResults.map(({ roundNumber, gameStatus, result }) => [roundNumber, gameStatus, result.position, result.startPosition, result.status]))

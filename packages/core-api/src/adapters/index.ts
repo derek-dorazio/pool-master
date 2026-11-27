@@ -38,12 +38,8 @@ export {
   PrismaSportLeagueRepository,
   PrismaSportRepository,
 } from './prisma-sport-catalog-repositories';
-export {
-  PrismaSportEventParticipantGolfRoundRepository,
-  PrismaSportEventParticipantGolfStandingRepository,
-} from './prisma-golf-repositories';
 export { PrismaSportEventRoundMatchGameRepository, PrismaSportEventRoundMatchRepository } from './prisma-match-repositories';
-export { PrismaRaceOrderRepository } from './prisma-race-repositories';
+export { PrismaFieldGameRepository } from './prisma-field-game-repositories';
 export { lockContestEntryRow, lockContestRow, lockContestRows } from './contest-row-lock';
 export { lockMemberRow } from './member-row-lock';
 export { PrismaSquaresRepository } from './prisma-squares-repository';

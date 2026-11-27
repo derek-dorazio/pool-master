@@ -539,9 +539,8 @@ table set for every variant.
     belongs to the Season, so no standing row is written for them. A new sport adds data and,
     at most, columns every row of the shape can carry, never a `…GolfRound` or `…RaceResult`
     beside the shared shape.
-  - *Status:* today's schema still has the per-family tables (`SportEventRoundMatch` with home
-    and away columns, `SportEventParticipantGolfRound`, `…RaceResult`). Code that touches
-    them extends nothing new onto them; the league model redesign replaces them (ADR 0012).
+  - *Status:* golf rounds and races are Game side results since #2008, and match sides
+    replaced the home and away columns (#2046); no per-family result table is left.
 - **A new shape goes with its scoring family, not its sport.** Where a family scores
   differently (matches decided by games won, stroke play by strokes), the difference is one
   function per family over the shared result shape, never a table set

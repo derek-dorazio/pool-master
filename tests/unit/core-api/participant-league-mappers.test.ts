@@ -15,6 +15,7 @@ import {
 } from '../../../packages/core-api/src/mappers/participants.mapper';
 import { mapSportEventParticipantToDto } from '../../../packages/core-api/src/mappers/sport-event-participants.mapper';
 import type { SportEventParticipantView } from '../../../packages/core-api/src/modules/events/sport-event-participant-service';
+import { golfRound } from '../../support/golf-rounds';
 
 const created = new Date('2026-01-01T00:00:00.000Z');
 const updated = new Date('2026-02-01T00:00:00.000Z');
@@ -112,26 +113,21 @@ describe('field row mappers', () => {
     });
   });
 
-  it('nests a scored row\'s valuation, its standing with golf detail and its current round read off its rounds, each round with golf, and its race result', () => {
+  it('nests a scored row\'s valuation, its standing with golf detail and its current round read off its rounds, each round from its FIELD Game side', () => {
     const view = {
       entry: { ...entry, status: 'WITHDRAWN', ranking: 1, oddsToWin: 450, seedNumber: 3 },
       participant: scottie,
       valuation: { id: 'v-1', sportEventTierId: 'tier-a', tierOrderIndex: 0, tierAssignedSource: 'MANUAL', price: 12000, priceAssignedSource: 'UPLOAD' },
-      standing: {
-        standing: { id: 's-1', position: 1, displayPosition: 'T1', status: 'ACTIVE', asOf: new Date('2026-04-12T20:00:00.000Z') },
-        golf: { eventScoreToPar: -12, eventStrokes: 276, currentRoundThru: 18 },
-      },
-      rounds: [
-        { round: { id: 'r-1', sportEventRoundId: 'er-1', roundNumber: 1, status: 'COMPLETE', completedAt: new Date('2026-04-09T23:00:00.000Z') }, golf: { strokes: 68, scoreToPar: -4, thru: 18 } },
-        { round: { id: 'r-2', sportEventRoundId: 'er-2', roundNumber: 2, status: 'IN_PROGRESS', completedAt: null }, golf: null },
+      standing: { id: 's-1', position: 1, displayPosition: 'T1', status: 'ACTIVE', asOf: new Date('2026-04-12T20:00:00.000Z'), total: 276, scoreToPar: -12 },
+      // Each golf round is the row's side result in that round's FIELD Game (#2008).
+      fieldResults: [
+        {
+          ...golfRound({ roundNumber: 1, strokes: 68, scoreToPar: -4, completedAt: new Date('2026-04-09T23:00:00.000Z') }),
+          sportEventRoundId: 'er-1',
+          result: { ...golfRound({ roundNumber: 1, strokes: 68, scoreToPar: -4 }).result, sportEventRoundMatchSideId: 'side-r1' },
+        },
+        { ...golfRound({ roundNumber: 2, strokes: 33, scoreToPar: -1, thru: 9, status: null }), sportEventRoundId: 'er-2' },
       ],
-      // The race's one FIELD Game is official: its result is the row's side result there (#2008).
-      fieldResults: [{
-        roundNumber: 1,
-        gameStatus: 'COMPLETED',
-        result: { sportEventRoundMatchSideId: 'side-1', sideNumber: 1, score: null, homeAway: 'NONE', position: 2, startPosition: 5, status: 'FINISHED', periodScores: [] },
-        updatedAt: new Date('2026-04-12T20:00:00.000Z'),
-      }],
       affiliatedWithSportLeague: false,
     } as unknown as SportEventParticipantView;
 
@@ -145,24 +141,45 @@ describe('field row mappers', () => {
       displayPosition: 'T1',
       status: 'ACTIVE',
       asOf: '2026-04-12T20:00:00.000Z',
-      // The highest round it has a score in, read off its rounds.
+      // The highest round it has a score in, read off its rounds, and its holes thru there.
       currentRound: 2,
-      golf: { eventScoreToPar: -12, eventStrokes: 276, currentRoundThru: 18 },
+      golf: { eventScoreToPar: -12, eventStrokes: 276, currentRoundThru: 9 },
     });
     expect(dto.rounds).toEqual([
-      { id: 'r-1', sportEventRoundId: 'er-1', roundNumber: 1, status: 'COMPLETE', completedAt: '2026-04-09T23:00:00.000Z', golf: { strokes: 68, scoreToPar: -4, thru: 18 } },
-      { id: 'r-2', sportEventRoundId: 'er-2', roundNumber: 2, status: 'IN_PROGRESS', completedAt: null, golf: null },
+      { id: 'side-r1', sportEventRoundId: 'er-1', roundNumber: 1, status: 'COMPLETED', completedAt: '2026-04-09T23:00:00.000Z', golf: { strokes: 68, scoreToPar: -4, thru: 18 } },
+      { id: 'side-2', sportEventRoundId: 'er-2', roundNumber: 2, status: 'IN_PROGRESS', completedAt: null, golf: { strokes: 33, scoreToPar: -1, thru: 9 } },
     ]);
-    expect(dto.race).toEqual({ finishPosition: 2, startPosition: 5, resultStatus: 'FINISHED', isOfficial: true });
+    // A row scored in rounds is a golfer's: it has no race.
+    expect(dto.race).toBeNull();
   });
 
-  it('gives a standing with no time and no golf detail a null as-of and null golf', () => {
+  it('gives a runner its race from the race\'s one FIELD Game, official once the Game is COMPLETED, and no rounds', () => {
     const dto = mapSportEventParticipantToDto({
       entry,
       participant: scottie,
       valuation: null,
-      standing: { standing: { id: 's-1', position: null, displayPosition: null, status: 'ACTIVE', asOf: null }, golf: null },
-      rounds: [],
+      standing: null,
+      fieldResults: [{
+        sportEventRoundId: 'er-1',
+        roundNumber: 1,
+        gameStatus: 'COMPLETED',
+        gameCompletedAt: null,
+        result: { sportEventRoundMatchSideId: 'side-1', sideNumber: 1, score: null, homeAway: 'NONE', position: 2, startPosition: 5, scoreToPar: null, periodsCompleted: null, status: 'FINISHED', periodScores: [] },
+        updatedAt: new Date('2026-04-12T20:00:00.000Z'),
+      }],
+      affiliatedWithSportLeague: true,
+    } as unknown as SportEventParticipantView);
+
+    expect(dto.rounds).toEqual([]);
+    expect(dto.race).toEqual({ finishPosition: 2, startPosition: 5, resultStatus: 'FINISHED', isOfficial: true });
+  });
+
+  it('gives a standing with no time and no golf totals a null as-of and null golf', () => {
+    const dto = mapSportEventParticipantToDto({
+      entry,
+      participant: scottie,
+      valuation: null,
+      standing: { id: 's-1', position: null, displayPosition: null, status: 'ACTIVE', asOf: null, total: null, scoreToPar: null },
       fieldResults: [],
       affiliatedWithSportLeague: true,
     } as unknown as SportEventParticipantView);

@@ -1,7 +1,7 @@
 import { sportPlay } from '../../support/sport-play';
 import { testDomainEvents } from '../../support/domain-events';
 import { PeriodUnit, Sport } from '@poolmaster/shared/domain';
-import { GolfScoreService } from '../../../packages/core-api/src/modules/golf/golf-score-service';
+import { StrokePlayResultService } from '../../../packages/core-api/src/modules/scoring-families/stroke-play/stroke-play-result-service';
 import { eventStoresGolfRoundScores } from '../../../packages/core-api/src/modules/scoring-families/golf-round-scores';
 import { InMemorySportEvents } from '../../support/in-memory-sport-events';
 import { fakeLogger } from '../../support/fake-logger';
@@ -12,9 +12,12 @@ import { BALLDONTLIE_TEST_PROVIDER_ID } from '../../support/balldontlie-provider
 /** A test participant's id, fixed by its name, so a row names it by id as the feed does (#2114). */
 const idOf = (name: string): string => `participant-${name.toLowerCase().replace(/\s+/g, '-')}`;
 
-// The golf score-correction rules against an in-memory store: what a preview reports, that
-// apply is all or none, how a correction merges, and how a standing is totalled. The sync
-// path's writes against Postgres are in golf-round-scores.integration.
+// Stroke-play results against an in-memory store (#2008): a golfer's round is their side result in
+// the round's FIELD Game, and their standing carries the event totals and the rank. What a preview
+// reports, that apply is all or none, how a correction merges, how a standing is totalled and
+// ranked, and what the sync writes. The writes against Postgres are in golf-round-scores.integration.
+
+const SCHEDULED = new Date('2026-06-04T12:00:00.000Z');
 
 function setup(eventOverrides: { rounds?: number; sport?: Sport } = {}) {
   const store = new InMemorySportEvents();
@@ -25,23 +28,31 @@ function setup(eventOverrides: { rounds?: number; sport?: Sport } = {}) {
   const anaEntry = store.addToField(event.id, ana.id);
   const benEntry = store.addToField(event.id, ben.id);
   const domainEvents = new RecordingDomainEvents();
-  const service = new GolfScoreService({
+  const fieldGames = store.fieldGameRepo();
+  const service = new StrokePlayResultService({
     events: store.sportEventRepo(),
     rounds: store.roundRepo(),
     field: store.fieldRepo(),
     participants: store.participantRepo(),
     mappings: store.mappingRepo(),
-    golfRounds: store.golfRoundRepo(),
-    golfStandings: store.golfStandingRepo(),
+    fieldGames,
     storesGolfRoundScores: eventStoresGolfRoundScores,
     domainEvents,
   });
-  return { store, service, event, anaEntry, benEntry, sport, domainEvents };
+  return { store, service, event, anaEntry, benEntry, sport, domainEvents, fieldGames };
 }
+
+/** A golfer's rounds as stored: their side results in the event's FIELD Games, in round order. */
+const roundsOf = (store: InMemorySportEvents, entryId: string) => store.fieldSideRows
+  .filter((row) => row.sportEventParticipantId === entryId)
+  .sort((left, right) => left.roundNumber - right.roundNumber)
+  .map(({ roundNumber, score, scoreToPar, periodsCompleted, status, gameStatus, gameCompletedAt }) => ({ roundNumber, score, scoreToPar, periodsCompleted, status, gameStatus, gameCompletedAt }));
+
+const standingOf = (store: InMemorySportEvents, entryId: string) => store.standingRows.find((row) => row.sportEventParticipantId === entryId);
 
 const row = (overrides = {}) => ({ strokes: 70, scoreToPar: -2, thru: 18, status: 'COMPLETED' as const, ...overrides });
 
-describe('GolfScoreService — events of another scoring family', () => {
+describe('StrokePlayResultService — events of another scoring family', () => {
   it('takes golf round scores for a golf event, whose stroke-play family keeps them', () => {
     expect(eventStoresGolfRoundScores({ sport: Sport.GOLF, ...sportPlay(Sport.GOLF) })).toBe(true);
   });
@@ -54,11 +65,11 @@ describe('GolfScoreService — events of another scoring family', () => {
     await expect(service.previewRoundScores(event.id, 1, [{ participantId: anaEntry.participantId, ...row() }])).rejects.toMatchObject(mismatch);
     await expect(service.applyRoundScores(event.id, 1, [{ participantId: anaEntry.participantId, ...row() }])).rejects.toMatchObject(mismatch);
     await expect(service.updateRoundScore(event.id, 1, anaEntry.id, { strokes: 70, scoreToPar: -2 })).rejects.toMatchObject(mismatch);
-    await expect(store.golfRoundRepo().findBySportEventParticipants([anaEntry.id])).resolves.toEqual([]);
+    expect(store.fieldSideRows).toEqual([]);
   });
 });
 
-describe('GolfScoreService — preview', () => {
+describe('StrokePlayResultService — preview', () => {
   it('resolves rows within the event\'s field and reports CREATE, UPDATE or UNCHANGED against what is stored', async () => {
     const { service, event } = setup();
     await service.applyRoundScores(event.id, 1, [{ participantId: undefined, externalId: 'ext-ana', ...row() }]);
@@ -75,6 +86,7 @@ describe('GolfScoreService — preview', () => {
       ['UNRESOLVED', null, 'CREATE'],
     ]);
   });
+
   it('a row with no strokes previews as SKIPPED, because apply never stores it', async () => {
     const { service, event } = setup();
     await service.applyRoundScores(event.id, 1, [{ participantId: idOf('Ana Park'), ...row() }]);
@@ -91,41 +103,54 @@ describe('GolfScoreService — preview', () => {
   });
 });
 
-describe('GolfScoreService — apply', () => {
+describe('StrokePlayResultService — apply', () => {
   it('writes nothing when any row is unresolved, 422 ROUND_SCORE_ROWS_UNRESOLVED', async () => {
     const { store, service, event } = setup();
 
     await expect(service.applyRoundScores(event.id, 1, [{ participantId: idOf('Ana Park'), ...row() }, { participantId: idOf('Nobody'), ...row() }]))
       .rejects.toMatchObject({ code: 'ROUND_SCORE_ROWS_UNRESOLVED', statusCode: 422 });
-    expect(store.golfRoundRows).toEqual([]);
+    expect(store.fieldSideRows).toEqual([]);
   });
 
-  it('creates the round if needed, skips rows with no strokes, and totals each standing', async () => {
-    const { store, service, event, anaEntry } = setup();
+  it('creates the round if needed, stores each golfer\'s round on its FIELD Game, skips rows with no strokes, and totals each standing', async () => {
+    const { store, service, event, anaEntry, benEntry } = setup();
 
     await service.applyRoundScores(event.id, 1, [{ participantId: idOf('Ana Park'), ...row() }, { participantId: idOf('Ben Cole'), ...row({ strokes: null }) }]);
     await service.applyRoundScores(event.id, 2, [{ participantId: idOf('Ana Park'), ...row({ strokes: 68, scoreToPar: -4, status: 'IN_PROGRESS', thru: 9 }) }]);
 
     expect(store.roundRows.map((round) => round.roundNumber)).toEqual([1, 2]);
-    expect(store.golfRoundRows).toHaveLength(2);
-    const [standing] = await store.golfStandingRepo().findBySportEventParticipants([anaEntry.id]);
-    expect(standing).toMatchObject({
-      standing: { status: 'IN_PROGRESS' },
-      golf: { eventScoreToPar: -6, eventStrokes: 138, currentRoundThru: 9 },
-    });
+    expect(roundsOf(store, anaEntry.id)).toEqual([
+      expect.objectContaining({ roundNumber: 1, score: 70, scoreToPar: -2, periodsCompleted: 18, status: 'FINISHED' }),
+      expect.objectContaining({ roundNumber: 2, score: 68, scoreToPar: -4, periodsCompleted: 9, status: null }),
+    ]);
+    expect(roundsOf(store, benEntry.id)).toEqual([]);
+    expect(standingOf(store, anaEntry.id)).toMatchObject({ status: 'IN_PROGRESS', scoreToPar: -6, total: 138 });
   });
 
-  it('marks a golfer who missed the cut ELIMINATED on the cross-sport standing', async () => {
+  it('marks a golfer who missed the cut ELIMINATED on the standing, with the round itself finished', async () => {
     const { service, store, event, anaEntry } = setup();
 
     await service.applyRoundScores(event.id, 1, [{ participantId: idOf('Ana Park'), ...row({ status: 'MISSED_CUT' }) }]);
 
-    const [standing] = await store.golfStandingRepo().findBySportEventParticipants([anaEntry.id]);
-    expect(standing.standing.status).toBe('ELIMINATED');
+    expect(standingOf(store, anaEntry.id)?.status).toBe('ELIMINATED');
+    expect(roundsOf(store, anaEntry.id)).toEqual([expect.objectContaining({ status: 'FINISHED' })]);
+  });
+
+  it('keeps a round\'s Game in progress while any golfer in it is on the course, and completes it at the latest finish sent once every golfer has finished', async () => {
+    const { service, store, event, anaEntry, benEntry } = setup();
+
+    await service.applyRoundScores(event.id, 1, [
+      { participantId: idOf('Ana Park'), ...row({ completedAt: '2026-06-04T17:00:00.000Z' }) },
+      { participantId: idOf('Ben Cole'), ...row({ status: 'IN_PROGRESS', thru: 12 }) },
+    ]);
+    expect(roundsOf(store, anaEntry.id)).toEqual([expect.objectContaining({ gameStatus: 'IN_PROGRESS', gameCompletedAt: null })]);
+
+    await service.applyRoundScores(event.id, 1, [{ participantId: idOf('Ben Cole'), ...row({ completedAt: '2026-06-04T18:30:00.000Z' }) }]);
+    expect(roundsOf(store, benEntry.id)).toEqual([expect.objectContaining({ gameStatus: 'COMPLETED', gameCompletedAt: new Date('2026-06-04T18:30:00.000Z') })]);
   });
 });
 
-describe('GolfScoreService — single-cell correction', () => {
+describe('StrokePlayResultService — single-cell correction', () => {
   it('a correction that sends strokes and to par updates the round, the event to-par and the rank', async () => {
     const { service, store, event, anaEntry, benEntry } = setup();
     await service.applyRoundScores(event.id, 1, [
@@ -135,33 +160,12 @@ describe('GolfScoreService — single-cell correction', () => {
 
     await service.updateRoundScore(event.id, 1, anaEntry.id, { strokes: 73, scoreToPar: 1 });
 
-    const [round] = await store.golfRoundRepo().findBySportEventParticipants([anaEntry.id]);
-    expect(round).toMatchObject({ participantRound: { status: 'COMPLETED' }, golf: { strokes: 73, scoreToPar: 1, thru: 18 } });
-    const standings = Object.fromEntries((await store.golfStandingRepo().findBySportEvent(event.id)).map((result) => [
-      result.standing.sportEventParticipantId,
-      { position: result.standing.position, eventStrokes: result.golf.eventStrokes, eventScoreToPar: result.golf.eventScoreToPar },
-    ]));
-    expect(standings).toEqual({
-      [benEntry.id]: { position: 1, eventStrokes: 71, eventScoreToPar: -1 },
-      [anaEntry.id]: { position: 2, eventStrokes: 73, eventScoreToPar: 1 },
-    });
-  });
-
-  it('a correction stores completedAt exactly as sent, and never derives it from the status', async () => {
-    const { service, store, event, anaEntry } = setup();
-    await service.applyRoundScores(event.id, 1, [{ participantId: idOf('Ana Park'), ...row({ status: 'IN_PROGRESS', thru: 12 }) }]);
-
-    await service.updateRoundScore(event.id, 1, anaEntry.id, { status: 'COMPLETED', thru: 18 });
-    let [round] = await store.golfRoundRepo().findBySportEventParticipants([anaEntry.id]);
-    expect(round.participantRound).toMatchObject({ status: 'COMPLETED', completedAt: null });
-
-    await service.updateRoundScore(event.id, 1, anaEntry.id, { completedAt: '2026-04-10T22:15:00.000Z' });
-    [round] = await store.golfRoundRepo().findBySportEventParticipants([anaEntry.id]);
-    expect(round.participantRound.completedAt?.toISOString()).toBe('2026-04-10T22:15:00.000Z');
-
-    await service.updateRoundScore(event.id, 1, anaEntry.id, { completedAt: null });
-    [round] = await store.golfRoundRepo().findBySportEventParticipants([anaEntry.id]);
-    expect(round.participantRound.completedAt).toBeNull();
+    expect(roundsOf(store, anaEntry.id)).toEqual([expect.objectContaining({ status: 'FINISHED', score: 73, scoreToPar: 1, periodsCompleted: 18 })]);
+    expect([benEntry.id, anaEntry.id].map((id) => standingOf(store, id)))
+      .toEqual([
+        expect.objectContaining({ position: 1, total: 71, scoreToPar: -1 }),
+        expect.objectContaining({ position: 2, total: 73, scoreToPar: 1 }),
+      ]);
   });
 
   it('refuses a field row that is not on this event with 404 EVENT_PARTICIPANT_NOT_FOUND', async () => {
@@ -184,7 +188,7 @@ describe('GolfScoreService — single-cell correction', () => {
     await expect(service.updateRoundScore(event.id, 1, anaEntry.id, patch))
       .rejects.toMatchObject({ code: 'ROUND_VALUES_REQUIRED', statusCode: 422 });
     expect(store.roundRows).toEqual([]);
-    expect(store.golfRoundRows).toEqual([]);
+    expect(store.fieldSideRows).toEqual([]);
   });
 
   it('a correction with strokes and to par for a golfer with no stored round creates the round with exactly those values', async () => {
@@ -192,22 +196,21 @@ describe('GolfScoreService — single-cell correction', () => {
 
     await service.updateRoundScore(event.id, 1, anaEntry.id, { strokes: 71, scoreToPar: -1 });
 
-    const [round] = await store.golfRoundRepo().findBySportEventParticipants([anaEntry.id]);
-    expect(round).toMatchObject({ participantRound: { status: 'IN_PROGRESS' }, golf: { strokes: 71, scoreToPar: -1, thru: null } });
+    expect(roundsOf(store, anaEntry.id)).toEqual([expect.objectContaining({ status: null, score: 71, scoreToPar: -1, periodsCompleted: null })]);
   });
 });
 
 // #375 — nothing is scored after the 18th hole of the event's last scheduled round. An admin
 // cannot create a round the event does not have; an event with no round count keeps today's
 // behaviour.
-describe('GolfScoreService — admin rounds are bounded by the event schedule', () => {
+describe('StrokePlayResultService — admin rounds are bounded by the event schedule', () => {
   it('refuses to apply scores for a round beyond the event\'s scheduled rounds with 422 ROUND_BEYOND_SCHEDULE, writing nothing', async () => {
     const { store, service, event } = setup({ rounds: 4 });
 
     await expect(service.applyRoundScores(event.id, 5, [{ participantId: idOf('Ana Park'), ...row() }]))
       .rejects.toMatchObject({ code: 'ROUND_BEYOND_SCHEDULE', statusCode: 422 });
     expect(store.roundRows).toEqual([]);
-    expect(store.golfRoundRows).toEqual([]);
+    expect(store.fieldSideRows).toEqual([]);
   });
 
   it('refuses a single-cell correction for a round beyond the event\'s scheduled rounds with 422 ROUND_BEYOND_SCHEDULE, writing nothing', async () => {
@@ -216,7 +219,7 @@ describe('GolfScoreService — admin rounds are bounded by the event schedule', 
     await expect(service.updateRoundScore(event.id, 5, anaEntry.id, { strokes: 70 }))
       .rejects.toMatchObject({ code: 'ROUND_BEYOND_SCHEDULE', statusCode: 422 });
     expect(store.roundRows).toEqual([]);
-    expect(store.golfRoundRows).toEqual([]);
+    expect(store.fieldSideRows).toEqual([]);
   });
 
   it('refuses holes completed past the round\'s last, its slot\'s 18, with 422 ROUND_THRU_BEYOND_HOLES, as a correction and in an upload, writing no score', async () => {
@@ -227,24 +230,22 @@ describe('GolfScoreService — admin rounds are bounded by the event schedule', 
       .rejects.toMatchObject({ code: 'ROUND_THRU_BEYOND_HOLES', statusCode: 422 });
     await expect(service.applyRoundScores(event.id, 1, [{ participantId: anaEntry.participantId, strokes: 70, scoreToPar: -2, thru: 19, status: 'COMPLETED' }]))
       .rejects.toMatchObject({ code: 'ROUND_THRU_BEYOND_HOLES', statusCode: 422 });
-    expect(store.golfRoundRows).toEqual([]);
+    expect(store.fieldSideRows).toEqual([]);
 
     await service.updateRoundScore(event.id, 1, anaEntry.id, { strokes: 70, scoreToPar: -2, thru: 18 });
-    expect(store.golfRoundRows.map((round) => round.thru)).toEqual([18]);
+    expect(roundsOf(store, anaEntry.id).map((round) => round.periodsCompleted)).toEqual([18]);
   });
 
-  it('reads a completed round reported with no holes as played through every hole its slot gives a round, and leaves it unknown on a slot with no hole count', async () => {
+  it('stores a finished round reported with no holes as played through every hole its slot gives a round, and leaves it unknown on a slot with no hole count', async () => {
     const { store, service, event, anaEntry } = setup({ rounds: 4 });
     store.slotPeriods.set(store.eventSlotOf(event.id).id, { unit: PeriodUnit.HOLE, count: 9 });
 
     await service.updateRoundScore(event.id, 1, anaEntry.id, { strokes: 35, scoreToPar: -1, status: 'COMPLETED' });
-    const [nine] = await store.golfStandingRepo().findBySportEventParticipants([anaEntry.id]);
-    expect(nine.golf.currentRoundThru).toBe(9);
+    expect(roundsOf(store, anaEntry.id).map((round) => round.periodsCompleted)).toEqual([9]);
 
     const noHoles = setup({ rounds: 4 });
     await noHoles.service.updateRoundScore(noHoles.event.id, 1, noHoles.anaEntry.id, { strokes: 35, scoreToPar: -1, status: 'COMPLETED' });
-    const [unknown] = await noHoles.store.golfStandingRepo().findBySportEventParticipants([noHoles.anaEntry.id]);
-    expect(unknown.golf.currentRoundThru).toBeNull();
+    expect(roundsOf(noHoles.store, noHoles.anaEntry.id).map((round) => round.periodsCompleted)).toEqual([null]);
   });
 
   it('refuses to preview a round beyond the event\'s scheduled rounds with 422 ROUND_BEYOND_SCHEDULE', async () => {
@@ -272,13 +273,10 @@ describe('GolfScoreService — admin rounds are bounded by the event schedule', 
 });
 
 // #246 — event-side position: the provider supplies no live rank, so every score write
-// re-ranks the whole event from eventScoreToPar, once, instead of each reader deriving it.
-describe('GolfScoreService — event-side position', () => {
-  const positions = async (store: InMemorySportEvents, eventId: string) =>
-    Object.fromEntries((await store.golfStandingRepo().findBySportEvent(eventId)).map((result) => [
-      result.standing.sportEventParticipantId,
-      [result.standing.position, result.standing.displayPosition],
-    ]));
+// re-ranks the whole event from its to-par, once, instead of each reader deriving it.
+describe('StrokePlayResultService — event-side position', () => {
+  const positions = (store: InMemorySportEvents) =>
+    Object.fromEntries(store.standingRows.map((standing) => [standing.sportEventParticipantId, [standing.position, standing.displayPosition]]));
 
   it('ranks the field lower-is-better with ties shown as "T", and re-ranks everyone when one golfer is corrected', async () => {
     const { store, service, event, anaEntry, benEntry, sport } = setup();
@@ -290,7 +288,7 @@ describe('GolfScoreService — event-side position', () => {
       { participantId: idOf('Ben Cole'), ...row({ scoreToPar: -2 }) },
       { participantId: idOf('Cara Diaz'), ...row({ scoreToPar: 1 }) },
     ]);
-    await expect(positions(store, event.id)).resolves.toEqual({
+    expect(positions(store)).toEqual({
       [anaEntry.id]: [1, 'T1'],
       [benEntry.id]: [1, 'T1'],
       [caraEntry.id]: [3, '3'],
@@ -298,7 +296,7 @@ describe('GolfScoreService — event-side position', () => {
 
     // One golfer's correction moves the others: only Cara's score changes, every rank moves.
     await service.updateRoundScore(event.id, 1, caraEntry.id, { scoreToPar: -5 });
-    await expect(positions(store, event.id)).resolves.toEqual({
+    expect(positions(store)).toEqual({
       [caraEntry.id]: [1, '1'],
       [anaEntry.id]: [2, 'T2'],
       [benEntry.id]: [2, 'T2'],
@@ -313,17 +311,16 @@ describe('GolfScoreService — event-side position', () => {
       { participantId: idOf('Ben Cole'), ...row({ scoreToPar: -4, status: 'MISSED_CUT' }) },
     ]);
 
-    await expect(positions(store, event.id)).resolves.toEqual({
+    expect(positions(store)).toEqual({
       [anaEntry.id]: [1, '1'],
       [benEntry.id]: [null, null],
     });
   });
 });
 
-// #118, #435 — a playoff is not a round. Provider sync writes only the rounds an admin
-// scheduled, so a stray round 5 from a feed never becomes a fifth round row or moves anyone's
-// 72-hole score. Every event is admin-owned; a feed never creates a round.
-describe('GolfScoreService — provider sync', () => {
+// #118, #435 — a playoff is not a round. Provider sync writes only the event's own rounds, so a
+// stray round 5 from a feed never becomes a fifth round or moves anyone's 72-hole score.
+describe('StrokePlayResultService — provider sync', () => {
   async function syncSetup() {
     const store = new InMemorySportEvents();
     const sport = store.addSport(Sport.GOLF);
@@ -336,29 +333,28 @@ describe('GolfScoreService — provider sync', () => {
     await store.mappingRepo().bind({ providerId: BALLDONTLIE_TEST_PROVIDER_ID, externalId: 'ext-ana', participantId: ana.id, sportLeagueId: ana.sportLeagueId, participantType: 'INDIVIDUAL', mappedAt });
     await store.mappingRepo().bind({ providerId: BALLDONTLIE_TEST_PROVIDER_ID, externalId: 'ext-ben', participantId: ben.id, sportLeagueId: ben.sportLeagueId, participantType: 'INDIVIDUAL', mappedAt });
     const logger = fakeLogger();
-    const golfRounds = store.golfRoundRepo();
-    const golfStandings = store.golfStandingRepo();
-    const service = new GolfScoreService({ domainEvents: testDomainEvents(),
+    const fieldGames = store.fieldGameRepo();
+    const service = new StrokePlayResultService({ domainEvents: testDomainEvents(),
       events: store.sportEventRepo(),
       rounds: store.roundRepo(),
       field: store.fieldRepo(),
       participants: store.participantRepo(),
       mappings: store.mappingRepo(),
-      golfRounds,
-      golfStandings,
+      fieldGames,
       storesGolfRoundScores: eventStoresGolfRoundScores,
       logger,
     });
-    return { store, service, event, anaEntry, benEntry, logger, golfRounds, golfStandings };
+    return { store, service, event, anaEntry, benEntry, logger, fieldGames };
   }
 
   const update = (participantExternalId: string, round: number, scoreToPar: number) => ({
     participantExternalId, round, strokes: 72 + scoreToPar, scoreToPar, thru: 18, status: 'COMPLETED' as const,
   });
+  const fourRounds = [1, 2, 3, 4].map((roundNumber) => ({ roundNumber, scheduledDate: SCHEDULED }));
 
-  it('skips and logs a round an admin did not schedule on a linked event, so the golfer keeps their 72-hole score', async () => {
+  it('skips and logs a round the event does not have, so the golfer keeps their 72-hole score', async () => {
     const { store, service, event, anaEntry, logger } = await syncSetup();
-    await store.addRounds(event.id, [1, 2, 3, 4].map((roundNumber) => ({ roundNumber, scheduledDate: new Date('2026-06-04T12:00:00.000Z') })));
+    await store.addRounds(event.id, fourRounds);
 
     const result = await service.persistRoundUpdatesForSportEvent(
       event.id,
@@ -369,8 +365,7 @@ describe('GolfScoreService — provider sync', () => {
 
     expect(result).toMatchObject({ updatesReturned: 5, updatesPersisted: 4, updatesSkipped: 1 });
     expect(store.roundRows.filter((round) => round.sportEventId === event.id).map((round) => round.roundNumber)).toEqual([1, 2, 3, 4]);
-    const [standing] = await store.golfStandingRepo().findBySportEventParticipants([anaEntry.id]);
-    expect(standing.golf.eventScoreToPar).toBe(-8);
+    expect(standingOf(store, anaEntry.id)?.scoreToPar).toBe(-8);
     expect(logger.warn).toHaveBeenCalledWith(
       { action: 'liveScore.golf.unscheduledRoundSkipped', data: { sportEventId: event.id, roundNumbers: [5] } },
       expect.any(String),
@@ -392,20 +387,33 @@ describe('GolfScoreService — provider sync', () => {
 
   it('gives two golfers tied after 72 holes the same event score and both "T1"', async () => {
     const { store, service, event, anaEntry, benEntry } = await syncSetup();
-    await store.addRounds(event.id, [1, 2, 3, 4].map((roundNumber) => ({ roundNumber, scheduledDate: new Date('2026-06-04T12:00:00.000Z') })));
+    await store.addRounds(event.id, fourRounds);
 
     await service.persistRoundUpdatesForSportEvent(event.id, [
       update('ext-ana', 1, -3), update('ext-ana', 2, -3), update('ext-ana', 3, -3), update('ext-ana', 4, -3),
       update('ext-ben', 1, -6), update('ext-ben', 2, -2), update('ext-ben', 3, -2), update('ext-ben', 4, -2),
     ], 'balldontlie', null);
 
-    const standings = await store.golfStandingRepo().findBySportEventParticipants([anaEntry.id, benEntry.id]);
-    expect(standings.map((result) => [result.golf.eventScoreToPar, result.standing.displayPosition])).toEqual([[-12, 'T1'], [-12, 'T1']]);
+    expect([anaEntry.id, benEntry.id].map((id) => [standingOf(store, id)?.scoreToPar, standingOf(store, id)?.displayPosition])).toEqual([[-12, 'T1'], [-12, 'T1']]);
+  });
+
+  it('gives a cut golfer no side in the rounds after the cut: their sides come only from the rounds the feed reports them in', async () => {
+    const { store, service, event, anaEntry, benEntry } = await syncSetup();
+    await store.addRounds(event.id, fourRounds);
+
+    await service.persistRoundUpdatesForSportEvent(event.id, [
+      update('ext-ana', 1, -1), update('ext-ana', 2, -1), update('ext-ana', 3, -1),
+      update('ext-ben', 1, 4), { ...update('ext-ben', 2, 5), status: 'MISSED_CUT' as const },
+    ], 'balldontlie', 4);
+
+    expect(roundsOf(store, benEntry.id).map((round) => round.roundNumber)).toEqual([1, 2]);
+    expect(roundsOf(store, anaEntry.id).map((round) => round.roundNumber)).toEqual([1, 2, 3]);
+    expect(standingOf(store, benEntry.id)).toMatchObject({ status: 'ELIMINATED', position: null });
   });
 
   it('skips and logs a round beyond the event\'s scheduled round count, so a playoff never becomes round 5', async () => {
     const { store, service, event, anaEntry, logger } = await syncSetup();
-    await store.addRounds(event.id, [1, 2, 3, 4].map((roundNumber) => ({ roundNumber, scheduledDate: new Date('2026-06-04T12:00:00.000Z') })));
+    await store.addRounds(event.id, fourRounds);
 
     const result = await service.persistRoundUpdatesForSportEvent(
       event.id,
@@ -415,9 +423,7 @@ describe('GolfScoreService — provider sync', () => {
     );
 
     expect(result).toMatchObject({ updatesReturned: 5, updatesPersisted: 4, updatesSkipped: 1 });
-    expect(store.roundRows.filter((round) => round.sportEventId === event.id).map((round) => round.roundNumber)).toEqual([1, 2, 3, 4]);
-    const [standing] = await store.golfStandingRepo().findBySportEventParticipants([anaEntry.id]);
-    expect(standing.golf.eventScoreToPar).toBe(-8);
+    expect(standingOf(store, anaEntry.id)?.scoreToPar).toBe(-8);
     expect(logger.warn).toHaveBeenCalledWith(
       { action: 'liveScore.golf.roundBeyondScheduleSkipped', data: { sportEventId: event.id, scheduledRounds: 4, roundNumbers: [5] } },
       expect.any(String),
@@ -427,7 +433,7 @@ describe('GolfScoreService — provider sync', () => {
   it('skips and logs an update past the round\'s last hole, its slot\'s 18, so playoff holes never reach a round score', async () => {
     const { store, service, event, logger } = await syncSetup();
     store.slotPeriods.set(store.eventSlotOf(event.id).id, { unit: PeriodUnit.HOLE, count: 18 });
-    await store.addRounds(event.id, [1, 2, 3, 4].map((roundNumber) => ({ roundNumber, scheduledDate: new Date('2026-06-04T12:00:00.000Z') })));
+    await store.addRounds(event.id, fourRounds);
 
     const result = await service.persistRoundUpdatesForSportEvent(
       event.id,
@@ -437,7 +443,7 @@ describe('GolfScoreService — provider sync', () => {
     );
 
     expect(result).toMatchObject({ updatesReturned: 2, updatesPersisted: 1, updatesSkipped: 1 });
-    expect(store.golfRoundRows).toHaveLength(1);
+    expect(store.fieldSideRows).toHaveLength(1);
     expect(logger.warn).toHaveBeenCalledWith(
       { action: 'liveScore.golf.holeBeyondRoundSkipped', data: { sportEventId: event.id, externalId: 'ext-ben', round: 4, thru: 19, holes: 18 } },
       expect.any(String),
@@ -447,117 +453,99 @@ describe('GolfScoreService — provider sync', () => {
   describe('a live tick writes only what changed (#1164)', () => {
     async function scheduledSyncSetup() {
       const setup = await syncSetup();
-      await setup.store.addRounds(setup.event.id, [1, 2, 3, 4].map((roundNumber) => ({ roundNumber, scheduledDate: new Date('2026-06-04T12:00:00.000Z') })));
+      await setup.store.addRounds(setup.event.id, fourRounds);
       return setup;
     }
 
-    it('a tick that repeats the last scores writes no round and no standing, and reports every row UNCHANGED', async () => {
-      const { store, service, event, golfRounds, golfStandings } = await scheduledSyncSetup();
+    it('a tick that repeats the last scores writes nothing and reports every row UNCHANGED', async () => {
+      const { store, service, event, fieldGames } = await scheduledSyncSetup();
       const tick = [update('ext-ana', 1, -2), update('ext-ben', 1, 1)];
       await service.persistRoundUpdatesForSportEvent(event.id, tick, 'balldontlie', 4);
       const standingsAfterFirstTick = store.standingRows.map((row) => ({ ...row }));
-      const roundWrites = jest.spyOn(golfRounds, 'upsertMany');
-      const standingWrites = jest.spyOn(golfStandings, 'upsertMany');
-      const rankWrites = jest.spyOn(golfStandings, 'updateRanks');
+      const writes = jest.spyOn(fieldGames, 'applyResults');
 
       const result = await service.persistRoundUpdatesForSportEvent(event.id, tick, 'balldontlie', 4);
 
-      expect(roundWrites).toHaveBeenCalledWith([]);
-      expect(standingWrites).toHaveBeenCalledWith([]);
-      // The rank write still carries the event's rebuild, as every score write's last statement does (#1466).
-      expect(rankWrites).toHaveBeenCalledWith([], [eventRebuildJob(event.id)]);
+      expect(writes).not.toHaveBeenCalled();
       expect(result.writeDiagnostics.summary).toEqual({ total: 4, unchanged: 4, created: 0, updated: 0, deleted: 0 });
-      expect(result.writeDiagnostics.rows.every((row) => row.internalId)).toBe(true);
       expect(store.standingRows).toEqual(standingsAfterFirstTick);
     });
 
-    it('writes only the golfer whose round changed, in one round write and one standing write, and re-ranks the field', async () => {
-      const { service, event, anaEntry, benEntry, golfRounds, golfStandings } = await scheduledSyncSetup();
+    it('writes only the golfer whose round changed, in one write with every standing it moves, and re-ranks the field', async () => {
+      const { store, service, event, anaEntry, benEntry, fieldGames } = await scheduledSyncSetup();
       await service.persistRoundUpdatesForSportEvent(event.id, [update('ext-ana', 1, -2), update('ext-ben', 1, 1)], 'balldontlie', 4);
-      const roundWrites = jest.spyOn(golfRounds, 'upsertMany');
-      const standingWrites = jest.spyOn(golfStandings, 'upsertMany');
+      const writes = jest.spyOn(fieldGames, 'applyResults');
 
       const result = await service.persistRoundUpdatesForSportEvent(event.id, [update('ext-ana', 1, -2), update('ext-ben', 1, -4)], 'balldontlie', 4);
 
-      expect(roundWrites).toHaveBeenCalledTimes(1);
-      expect(roundWrites.mock.calls[0][0]).toEqual([expect.objectContaining({ sportEventParticipantId: benEntry.id, scoreToPar: -4 })]);
-      expect(standingWrites).toHaveBeenCalledTimes(1);
-      expect(standingWrites.mock.calls[0][0]).toEqual([expect.objectContaining({ sportEventParticipantId: benEntry.id, eventScoreToPar: -4 })]);
-      expect(result.writeDiagnostics.summary).toMatchObject({ unchanged: 2, updated: 2, created: 0 });
-      const standings = await golfStandings.findBySportEventParticipants([anaEntry.id, benEntry.id]);
-      expect(standings.map((standing) => [standing.standing.sportEventParticipantId, standing.standing.displayPosition])).toEqual(
-        [[anaEntry.id, '2'], [benEntry.id, '1']].sort(([left], [right]) => left.localeCompare(right)),
-      );
+      expect(writes).toHaveBeenCalledTimes(1);
+      const [, apply] = writes.mock.calls[0];
+      expect(apply.games.flatMap((game) => game.sides)).toEqual([expect.objectContaining({ sportEventParticipantId: benEntry.id, scoreToPar: -4 })]);
+      // Ben's new score moves both ranks, so both standings are written.
+      expect(apply.standings.map((standing) => [standing.sportEventParticipantId, standing.displayPosition]))
+        .toEqual(expect.arrayContaining([[anaEntry.id, '2'], [benEntry.id, '1']]));
+      expect(apply.standings).toHaveLength(2);
+      // Ana's round is unchanged; Ben's round, and both standings (Ana's rank moved), are updated.
+      expect(result.writeDiagnostics.summary).toMatchObject({ unchanged: 1, updated: 3, created: 0 });
+      expect([anaEntry.id, benEntry.id].map((id) => standingOf(store, id)?.displayPosition)).toEqual(['2', '1']);
     });
 
     it.each([
       [
-        'only holes played (thru) changed, so the standing\'s current-round thru moves',
+        'only holes played (thru) changed, so the round\'s holes thru moves',
         { thru: 10 },
-        { golf: { currentRoundThru: 10 }, standing: { status: 'IN_PROGRESS', displayPosition: '1' } },
+        { periodsCompleted: 10 },
+        { status: 'IN_PROGRESS', displayPosition: '1' },
+        // A standing keeps no holes thru (#2008), so it is unchanged.
+        { updated: 1, unchanged: 1 },
       ],
       [
         'only the status changed, to a withdrawal (DNF), so the standing is WITHDRAWN and unranked',
         { status: 'DNF' as const },
-        { standing: { status: 'WITHDRAWN', position: null, displayPosition: null } },
+        { status: 'DID_NOT_FINISH' },
+        { status: 'WITHDRAWN', position: null, displayPosition: null },
+        { updated: 2, unchanged: 0 },
       ],
-    ])('rewrites a round and its standing when %s', async (_label, change, expectedStanding) => {
+    ])('rewrites a round, and its standing where it moves, when %s', async (_label, change, expectedRound, expectedStanding, expectedSummary) => {
       const first = { strokes: 34, scoreToPar: -2, thru: 9, status: 'IN_PROGRESS' as const };
-      const { service, event, anaEntry, golfRounds, golfStandings } = await scheduledSyncSetup();
+      const { store, service, event, anaEntry } = await scheduledSyncSetup();
       const tick = (values: object) => service.persistRoundUpdatesForSportEvent(event.id, [{ participantExternalId: 'ext-ana', round: 1, ...first, ...values }], 'balldontlie', 4);
       await tick({});
-      const roundWrites = jest.spyOn(golfRounds, 'upsertMany');
-      const standingWrites = jest.spyOn(golfStandings, 'upsertMany');
 
       const result = await tick(change);
 
-      expect(roundWrites.mock.calls[0][0]).toEqual([expect.objectContaining({ sportEventParticipantId: anaEntry.id, ...change })]);
-      expect(standingWrites.mock.calls[0][0]).toHaveLength(1);
-      expect(result.writeDiagnostics.summary).toMatchObject({ updated: 2, unchanged: 0 });
-      const [standing] = await golfStandings.findBySportEventParticipants([anaEntry.id]);
-      expect(standing).toMatchObject(expectedStanding);
+      expect(roundsOf(store, anaEntry.id)).toEqual([expect.objectContaining(expectedRound)]);
+      expect(result.writeDiagnostics.summary).toMatchObject(expectedSummary);
+      expect(standingOf(store, anaEntry.id)).toMatchObject(expectedStanding);
     });
 
     it('when a payload carries the same golfer\'s round twice, stores the later one with a single write', async () => {
-      const { store, service, event, anaEntry, golfRounds } = await scheduledSyncSetup();
-      const roundWrites = jest.spyOn(golfRounds, 'upsertMany');
+      const { store, service, event, anaEntry, fieldGames } = await scheduledSyncSetup();
+      const writes = jest.spyOn(fieldGames, 'applyResults');
 
       const result = await service.persistRoundUpdatesForSportEvent(event.id, [update('ext-ana', 1, -1), update('ext-ana', 1, -3)], 'balldontlie', 4);
 
-      expect(roundWrites.mock.calls[0][0]).toEqual([expect.objectContaining({ scoreToPar: -3 })]);
+      expect(writes).toHaveBeenCalledTimes(1);
       expect(result).toMatchObject({ updatesReturned: 2, updatesPersisted: 1, updatesSkipped: 0 });
-      expect(store.golfRoundRows.map((row) => row.scoreToPar)).toEqual([-3]);
-      const [standing] = await store.golfStandingRepo().findBySportEventParticipants([anaEntry.id]);
-      expect(standing.golf.eventScoreToPar).toBe(-3);
+      expect(roundsOf(store, anaEntry.id).map((round) => round.scoreToPar)).toEqual([-3]);
+      expect(standingOf(store, anaEntry.id)?.scoreToPar).toBe(-3);
       expect(result.writeDiagnostics.summary).toMatchObject({ created: 2, total: 2 });
-    });
-
-    it('treats a completion time sent without milliseconds as the instant already stored, so the round is not rewritten', async () => {
-      const { service, event, golfRounds } = await scheduledSyncSetup();
-      await service.persistRoundUpdatesForSportEvent(event.id, [{ ...update('ext-ana', 1, -2), completedAt: '2026-06-04T18:00:00.000Z' }], 'balldontlie', 4);
-      const roundWrites = jest.spyOn(golfRounds, 'upsertMany');
-
-      await service.persistRoundUpdatesForSportEvent(event.id, [{ ...update('ext-ana', 1, -2), completedAt: '2026-06-04T18:00:00Z' }], 'balldontlie', 4);
-
-      expect(roundWrites).toHaveBeenCalledWith([]);
     });
 
     it('recreates a missing standing on a tick whose rounds did not change, so a standing a failed tick lost is put right', async () => {
       const { store, service, event, anaEntry } = await scheduledSyncSetup();
       await service.persistRoundUpdatesForSportEvent(event.id, [update('ext-ana', 1, -2)], 'balldontlie', 4);
-      store.golfStandingRows = [];
       store.standingRows = [];
 
       await service.persistRoundUpdatesForSportEvent(event.id, [update('ext-ana', 1, -2)], 'balldontlie', 4);
 
-      const [standing] = await store.golfStandingRepo().findBySportEventParticipants([anaEntry.id]);
-      expect(standing).toMatchObject({ golf: { eventScoreToPar: -2 }, standing: { displayPosition: '1' } });
+      expect(standingOf(store, anaEntry.id)).toMatchObject({ scoreToPar: -2, displayPosition: '1' });
     });
   });
 });
 
-describe('GolfScoreService — leaderboard rebuild (#1466)', () => {
-  it('writes the event\'s leaderboard rebuild job with the ranks, the score write\'s last statement, and wakes the runner after it', async () => {
+describe('StrokePlayResultService — leaderboard rebuild (#1466)', () => {
+  it('writes the event\'s leaderboard rebuild job with the results, and wakes the runner after it', async () => {
     const { store, service, event, anaEntry, domainEvents } = setup();
 
     await service.applyRoundScores(event.id, 1, [{ participantId: anaEntry.participantId, ...row() }]);
@@ -566,22 +554,20 @@ describe('GolfScoreService — leaderboard rebuild (#1466)', () => {
     expect(domainEvents.changedSportEventIds).toEqual([event.id]);
   });
 
-  it('wakes no runner when the rank write carrying the rebuild fails, and the failure reaches the caller', async () => {
-    const { store, event, anaEntry, domainEvents } = setup();
-    const golfStandings = store.golfStandingRepo();
-    const failing = new GolfScoreService({
+  it('wakes no runner when the write carrying the rebuild fails, and the failure reaches the caller', async () => {
+    const { store, event, anaEntry, domainEvents, fieldGames } = setup();
+    const failing = new StrokePlayResultService({
       events: store.sportEventRepo(),
       rounds: store.roundRepo(),
       field: store.fieldRepo(),
       participants: store.participantRepo(),
       mappings: store.mappingRepo(),
-      golfRounds: store.golfRoundRepo(),
-      golfStandings: { ...golfStandings, updateRanks: () => Promise.reject(new Error('rank write failed')) },
+      fieldGames: { ...fieldGames, applyResults: () => Promise.reject(new Error('results write failed')) },
       storesGolfRoundScores: eventStoresGolfRoundScores,
       domainEvents,
     });
 
-    await expect(failing.applyRoundScores(event.id, 1, [{ participantId: anaEntry.participantId, ...row() }])).rejects.toThrow('rank write failed');
+    await expect(failing.applyRoundScores(event.id, 1, [{ participantId: anaEntry.participantId, ...row() }])).rejects.toThrow('results write failed');
     expect(domainEvents.handedOutSportEventIds).toEqual([event.id]);
     expect(domainEvents.changedSportEventIds).toEqual([]);
   });

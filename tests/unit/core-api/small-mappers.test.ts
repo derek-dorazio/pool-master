@@ -53,7 +53,7 @@ import {
 import { mapSportEventRoundMatchToDto } from '../../../packages/core-api/src/mappers/sport-event-matches.mapper';
 import { toSquaresBoardResponse } from '../../../packages/core-api/src/mappers/squares.mapper';
 import { toSurvivorLeaderboardResponse, toSurvivorLeaderboardSnapshotResponse } from '../../../packages/core-api/src/mappers/survivor-leaderboard.mapper';
-import type { GolfScorePreviewRow } from '../../../packages/core-api/src/modules/golf/golf-score-service';
+import type { GolfScorePreviewRow } from '../../../packages/core-api/src/modules/scoring-families/stroke-play/stroke-play-result-service';
 import type { PlanEntitlements } from '../../../packages/core-api/src/modules/plans/plan-entitlements-service';
 import type { RaceResultPreviewRow } from '../../../packages/core-api/src/modules/scoring-families/finish-position/race-result-service';
 import type { GamePickGame, GamePicksView, GamesPreview } from '../../../packages/core-api/src/modules/selections/prediction-service';

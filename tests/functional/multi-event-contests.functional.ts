@@ -75,9 +75,8 @@ async function cleanup(): Promise<void> {
     const field = { sportEventParticipant: { sportEventId: { in: eventIds } } };
     await unlinkContestsFromSportEvents(db, eventIds);
     await db.contestEntryPick.deleteMany({ where: field });
-    await db.sportEventParticipantGolfRound.deleteMany({ where: { participantRound: field } });
-    await db.sportEventParticipantRound.deleteMany({ where: field });
-    await db.sportEventParticipantGolfStanding.deleteMany({ where: { standing: field } });
+    // The rounds' FIELD matches name the golfers as sides (#2008).
+    await db.sportEventRoundMatch.deleteMany({ where: { sportEventId: { in: eventIds } } });
     await db.sportEventParticipantStanding.deleteMany({ where: field });
     await db.sportEventParticipantValuation.deleteMany({ where: field });
     await db.sportEventParticipant.deleteMany({ where: { sportEventId: { in: eventIds } } });

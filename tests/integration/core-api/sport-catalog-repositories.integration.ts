@@ -6,6 +6,7 @@ import {
   setupIntegrationTests,
   teardownIntegrationTests,
 } from '../helpers';
+import { writeGolfRounds } from '../golf-rounds';
 import { MatchFormat, ParticipantType, ProviderCode, ScoringFamily, Sport, isLeaguePlayValid } from '@poolmaster/shared/domain';
 import {
   PrismaParticipantProviderMappingRepository,
@@ -615,19 +616,20 @@ describe('SportEvent core repositories', () => {
     for (const [sep, position] of [[leader, 1], [unranked, null], [second, 2], [outsider, 1]] as const) {
       await getPrisma().sportEventParticipantStanding.create({ data: { sportEventParticipantId: sep.id, position, status: 'ACTIVE' } });
     }
-    for (const round of [round2, round1]) {
-      await getPrisma().sportEventParticipantRound.create({ data: { sportEventParticipantId: leader.id, sportEventRoundId: round.id, status: 'COMPLETED' } });
-    }
+    await writeGolfRounds(getPrisma(), event.id, [round2, round1].map((round) => ({
+      roundNumber: round.roundNumber,
+      scores: [{ sportEventParticipantId: leader.id, strokes: 70, scoreToPar: -2 }],
+    })));
 
     expect((await new PrismaSportEventRoundRepository(getAppPrisma()).findBySportEvent(event.id)).map((row) => row.roundNumber)).toEqual([1, 2]);
     const { sportLeagueId } = event;
     const field = await new PrismaSportEventParticipantRepository(getAppPrisma()).findFieldForEvent(event.id, sportLeagueId);
     expect(field.map((row) => [
       row.participant.name,
-      row.standing?.standing.position,
-      row.rounds.map(({ round }) => [round.sportEventParticipantId, round.roundNumber]),
+      row.standing?.position,
+      row.fieldResults.map(({ sportEventRoundId, roundNumber }) => [sportEventRoundId, roundNumber]),
     ])).toEqual([
-      ['Leader', 1, [[leader.id, 1], [leader.id, 2]]],
+      ['Leader', 1, [[round1.id, 1], [round2.id, 2]]],
       ['Second', 2, []],
       ['Unranked', null, []],
     ]);

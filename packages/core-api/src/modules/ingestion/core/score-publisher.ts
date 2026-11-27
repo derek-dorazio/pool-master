@@ -9,7 +9,7 @@
  *   3. Skip the update unless the event is IN_PROGRESS, and unless the
  *      event's scoring family accepts the batch's live-score category.
  *   4. Persist the batch through the event's scoring family, which writes
- *      its own result rows (stroke play: `GolfScoreService`).
+ *      its own result rows (stroke play: `StrokePlayResultService`).
  *
  * It used to emit a `live_score.persisted` event as a fourth step. Nothing
  * ever subscribed, so #261 removed the event bus with it: the persisted rows

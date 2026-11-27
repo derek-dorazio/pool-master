@@ -45,15 +45,6 @@ function feedIdOf(participant: { providerMappings: Array<{ externalId: string }>
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
   const prisma = getPrisma();
-  await prisma.sportEventParticipantGolfStanding.deleteMany({
-    where: {
-      standing: {
-        sportEventParticipant: {
-          sportEvent: providerEventWhere('balldontlie', 'integration-ingestion-event'),
-        },
-      },
-    },
-  });
   await prisma.sportEventParticipantStanding.deleteMany({
     where: {
       sportEventParticipant: {

@@ -13,11 +13,9 @@ import {
   PrismaParticipantProviderMappingRepository,
   PrismaParticipantRepository,
   PrismaPlatformPricingProfileRepository,
-  PrismaSportEventParticipantGolfRoundRepository,
-  PrismaSportEventParticipantGolfStandingRepository,
   PrismaSportEventRoundMatchGameRepository,
   PrismaSportEventRoundMatchRepository,
-  PrismaRaceOrderRepository,
+  PrismaFieldGameRepository,
   PrismaSportEventParticipantRepository,
   PrismaSportEventParticipantValuationRepository,
   PrismaSportEventRepository,
@@ -27,7 +25,7 @@ import {
   PrismaSportRepository,
   PrismaPlatformTierProfileRepository,
 } from '../../adapters';
-import { GolfScoreService } from '../golf/golf-score-service';
+import { StrokePlayResultService } from '../scoring-families/stroke-play/stroke-play-result-service';
 import type { GameScoreWriterDeps } from '../scoring-families/head-to-head/game-score-writer';
 import { RaceResultService } from '../scoring-families/finish-position/race-result-service';
 import { MatchResultService } from '../scoring-families/head-to-head/match-result-service';
@@ -63,19 +61,19 @@ export function createSportEventTierService(prisma: PrismaClient, logger?: Fasti
   });
 }
 
-export function createGolfScoreService(
+/** Stroke-play round results, from the feed and the test-event admin (#2008). */
+export function createStrokePlayResultService(
   prisma: PrismaClient,
   domainEvents: Pick<DomainEvents, 'collect'>,
   logger?: FastifyBaseLogger,
-): GolfScoreService {
-  return new GolfScoreService({
+): StrokePlayResultService {
+  return new StrokePlayResultService({
     events: new PrismaSportEventRepository(prisma),
     rounds: new PrismaSportEventRoundRepository(prisma),
     field: new PrismaSportEventParticipantRepository(prisma),
     participants: new PrismaParticipantRepository(prisma),
     mappings: new PrismaParticipantProviderMappingRepository(prisma),
-    golfRounds: new PrismaSportEventParticipantGolfRoundRepository(prisma),
-    golfStandings: new PrismaSportEventParticipantGolfStandingRepository(prisma),
+    fieldGames: new PrismaFieldGameRepository(prisma),
     storesGolfRoundScores: eventStoresGolfRoundScores,
     domainEvents,
     logger,
@@ -93,7 +91,7 @@ export function createRaceResultService(
     field: new PrismaSportEventParticipantRepository(prisma),
     participants: new PrismaParticipantRepository(prisma),
     mappings: new PrismaParticipantProviderMappingRepository(prisma),
-    raceOrder: new PrismaRaceOrderRepository(prisma),
+    fieldGames: new PrismaFieldGameRepository(prisma),
     storesRaceResults: eventStoresRaceResults,
     domainEvents,
     logger,
@@ -126,7 +124,7 @@ export interface SportEventServices {
   bracket: SportEventBracketService;
   tiers: SportEventTierService;
   field: SportEventParticipantService;
-  golfScores: GolfScoreService;
+  strokePlayResults: StrokePlayResultService;
   raceResults: RaceResultService;
   matchResults: MatchResultService;
   sportLeagues: SportLeagueService;
@@ -265,7 +263,7 @@ export function createSportEventServices(
       rounds,
       logger,
     }),
-    golfScores: createGolfScoreService(prisma, domainEvents, logger),
+    strokePlayResults: createStrokePlayResultService(prisma, domainEvents, logger),
     raceResults: createRaceResultService(prisma, domainEvents, logger),
     matchResults: createMatchResultService(prisma, domainEvents, lifecycle, logger),
     sportLeagues: buildSportLeagueService(prisma, logger, providers),

@@ -14,6 +14,7 @@ import {
   LeagueMembershipStatus,
   LeagueRole,
   MatchStatus,
+  GameSideStatus,
   ParticipantRoundStatus,
   PickOutcome,
   ParticipantStandingStatus,
@@ -41,6 +42,7 @@ import { inMemoryEmailMessages, inMemoryEmailOptOuts, inMemoryEmailSuppressions,
 import { TEST_UNSUBSCRIBE, TEST_PLAN_ENTITLEMENTS } from '../../support/email-service';
 import { InMemoryContestWorld } from '../../support/in-memory-contest-world';
 import { roundSlot } from '../../support/round-slots';
+import { golfRound } from '../../support/golf-rounds';
 
 const MINUTE = 60_000;
 const ROUND_1_DONE = new Date('2026-04-09T23:10:00.000Z');
@@ -63,18 +65,34 @@ function golfer(id: string, rounds: RoundSpec[], options: { standing?: Participa
   return {
     entry: { id, status: options.withdrawn === true ? 'WITHDRAWN' : 'ACTIVE' },
     participant: { name: `Golfer ${id}` },
-    standing: options.standing === undefined ? null : { standing: { status: options.standing }, golf: null },
-    rounds: rounds.map((round) => ({
-      round: {
-        roundNumber: round.roundNumber,
-        status: round.status,
-        completedAt: round.completedAt === undefined ? null : round.completedAt,
-        updatedAt: round.updatedAt ?? new Date(0),
-      },
-      golf: { strokes: 70, scoreToPar: -2, thru: round.thru === undefined ? 18 : round.thru },
+    standing: options.standing === undefined ? null : { status: options.standing },
+    // Each round is the golfer's side in that round's FIELD Game (#2008), finished when its Game was.
+    fieldResults: rounds.map((round) => golfRound({
+      roundNumber: round.roundNumber,
+      strokes: 70,
+      scoreToPar: -2,
+      thru: round.thru === undefined ? 18 : round.thru,
+      status: sideStatusOf(round.status),
+      completedAt: round.completedAt === undefined ? null : round.completedAt,
+      updatedAt: round.updatedAt ?? new Date(0),
     })),
     matches: [],
   } as unknown as SportEventParticipantView;
+}
+
+/** The side status the stroke-play writer stores for a feed round status. */
+function sideStatusOf(status: ParticipantRoundStatus): GameSideStatus | null {
+  switch (status) {
+    case ParticipantRoundStatus.IN_PROGRESS:
+      return null;
+    case ParticipantRoundStatus.COMPLETED:
+    case ParticipantRoundStatus.MISSED_CUT:
+      return GameSideStatus.FINISHED;
+    case ParticipantRoundStatus.DNF:
+      return GameSideStatus.DID_NOT_FINISH;
+    case ParticipantRoundStatus.DSQ:
+      return GameSideStatus.DISQUALIFIED;
+  }
 }
 
 function done(roundNumber: number, completedAt: Date): RoundSpec {

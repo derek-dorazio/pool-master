@@ -97,9 +97,8 @@ async function cleanup(): Promise<void> {
 
   if (sepIds.length) {
     await db.contestEntryPick.deleteMany({ where: { sportEventParticipantId: { in: sepIds } } });
-    await db.sportEventParticipantGolfRound.deleteMany({ where: { participantRound: { sportEventParticipantId: { in: sepIds } } } });
-    await db.sportEventParticipantRound.deleteMany({ where: { sportEventParticipantId: { in: sepIds } } });
-    await db.sportEventParticipantGolfStanding.deleteMany({ where: { standing: { sportEventParticipantId: { in: sepIds } } } });
+    // The rounds' FIELD matches name the golfers as sides (#2008).
+    await db.sportEventRoundMatch.deleteMany({ where: { sportEventId: { in: eventIds } } });
     await db.sportEventParticipantStanding.deleteMany({ where: { sportEventParticipantId: { in: sepIds } } });
     await db.sportEventParticipantValuation.deleteMany({ where: { sportEventParticipantId: { in: sepIds } } });
     await db.sportEventParticipant.deleteMany({ where: { id: { in: sepIds } } });

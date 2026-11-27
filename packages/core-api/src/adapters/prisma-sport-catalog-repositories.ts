@@ -4,7 +4,7 @@
  * SportEventRound, SportEventParticipant, SportEventTier,
  * and SportEventParticipantValuation.
  *
- * Sport extension rows (golf rounds and standings, race results, matches) have
+ * Event result rows (standings, matches) have
  * their own adapters. The one exception is the field read (#1163): a field row comes with
  * every extension at once, mapped by those adapters' own mappers.
  */
@@ -53,7 +53,6 @@ import type {
   EventPricingConfig,
   EventTierConfig,
   MatchStatus,
-  ParticipantRoundStatus,
   RoundResultFacts,
   RoundResultGroup,
   Sport,
@@ -70,7 +69,6 @@ import type {
 import { compareCoveredSlots, SelectionType, compareMatchPlaces, compareSeasonSlots, StoredEventPricingSchema, StoredEventTierLayoutSchema, providerCodeOfSourceId, providerSourceIdOf, requireProviderCodeOfSourceId, slotPeriodsOf, SportEventParticipantStatus, SportEventStatus, ValuationSource } from '@poolmaster/shared/domain';
 import { forgettingReads, memoizedRead, memoizedReadMany, ReadMemoKey } from '../core/request-read-memo';
 import { backgroundJobsInsert, insertBackgroundJobs } from './prisma-background-job-repository';
-import { toGolfRound, toGolfStanding } from './prisma-golf-repositories';
 import { GAME_SIDE_RESULTS_INCLUDE, MATCH_INCLUDE, toGameSideResult, toSportEventRoundMatch } from './prisma-match-repositories';
 import { mapToParticipant } from './prisma-participant-repository';
 import { SYNC_PROVIDER_SELECT, syncProviderIdOf, syncProviderNameOf } from './prisma-sync-provider';
@@ -488,9 +486,6 @@ export class PrismaSportEventRepository implements SportEventRepository {
     return [
       // The bracket first: its matches name field rows and rounds.
       this.prisma.sportEventRoundMatch.deleteMany({ where: { sportEventId: id } }),
-      this.prisma.sportEventParticipantGolfRound.deleteMany({ where: { participantRound: field } }),
-      this.prisma.sportEventParticipantRound.deleteMany({ where: field }),
-      this.prisma.sportEventParticipantGolfStanding.deleteMany({ where: { standing: field } }),
       this.prisma.sportEventParticipantStanding.deleteMany({ where: field }),
       this.prisma.sportEventParticipantValuation.deleteMany({ where: field }),
       this.prisma.sportEventParticipant.deleteMany({ where: { sportEventId: id } }),
@@ -785,24 +780,16 @@ export class PrismaSportEventRoundRepository implements SportEventRoundRepositor
   constructor(private readonly prisma: Db) {}
 
   async findResultFacts(sportEventId: string): Promise<Map<string, RoundResultFacts>> {
-    const [matches, participantRounds] = await Promise.all([
-      // A match keeps no completion time (#2047): its Games' are read with it.
-      this.prisma.sportEventRoundMatch.findMany({
-        where: { sportEventId },
-        select: { sportEventRoundId: true, status: true, games: { select: { completedAt: true } } },
-      }),
-      this.prisma.sportEventParticipantRound.groupBy({
-        by: ['sportEventRoundId', 'status'],
-        where: { sportEventRound: { sportEventId } },
-        _count: { _all: true },
-        _max: { completedAt: true },
-      }),
-    ]);
-    const facts = new Map<string, { matches: RoundResultGroup<MatchStatus>[]; participantRounds: RoundResultGroup<ParticipantRoundStatus>[] }>();
+    // A match keeps no completion time (#2047): its Games' are read with it.
+    const matches = await this.prisma.sportEventRoundMatch.findMany({
+      where: { sportEventId },
+      select: { sportEventRoundId: true, status: true, games: { select: { completedAt: true } } },
+    });
+    const facts = new Map<string, { matches: RoundResultGroup<MatchStatus>[] }>();
     const factsOf = (roundId: string) => {
       const existing = facts.get(roundId);
       if (existing) return existing;
-      const created = { matches: [], participantRounds: [] };
+      const created = { matches: [] };
       facts.set(roundId, created);
       return created;
     };
@@ -817,9 +804,6 @@ export class PrismaSportEventRoundRepository implements SportEventRoundRepositor
       for (const { completedAt } of match.games) {
         if (completedAt !== null && (group.lastCompletedAt === null || completedAt > group.lastCompletedAt)) group.lastCompletedAt = completedAt;
       }
-    }
-    for (const group of participantRounds) {
-      factsOf(group.sportEventRoundId).participantRounds.push({ status: group.status, count: group._count._all, lastCompletedAt: group._max.completedAt });
     }
     return facts;
   }
@@ -905,17 +889,13 @@ const FIELD_ORDER = [
 /**
  * Everything a field row is read with (#1163). Prisma 6 reads each relation with its own
  * statement on one connection, so the whole field is a handful of sequential queries; empty
- * relations, such as a golf event's race results, return nothing.
+ * relations return nothing.
  */
 function fieldRowInclude(fieldMatchIds: readonly string[]) {
   return {
     participant: true,
     valuation: true,
-    standing: { include: { golf: true } },
-    rounds: {
-      include: { sportEventRound: { select: { roundNumber: true } }, golf: true },
-      orderBy: { sportEventRound: { roundNumber: 'asc' } },
-    },
+    standing: true,
     // FIELD matches (a golf round, a race) name every runner: their side results are read by
     // `readFieldResults`, the row's own only, rather than each match whole for every row.
     matchSides: { where: { sportEventRoundMatchId: { notIn: [...fieldMatchIds] } }, select: { match: { include: MATCH_INCLUDE } } },
@@ -939,7 +919,7 @@ async function readFieldResults(db: Db, fieldMatchIds: readonly string[], sportE
     include: {
       ...GAME_SIDE_RESULTS_INCLUDE.sideResults.include,
       side: { select: { sideNumber: true, sportEventParticipantId: true } },
-      game: { select: { status: true, gameNumber: true, match: { select: { sportEventRound: { select: { roundNumber: true } } } } } },
+      game: { select: { status: true, gameNumber: true, completedAt: true, match: { select: { sportEventRoundId: true, sportEventRound: { select: { roundNumber: true } } } } } },
     },
   });
   const roundNumberOf = (row: (typeof rows)[number]): number => row.game.match.sportEventRound.roundNumber;
@@ -948,8 +928,10 @@ async function readFieldResults(db: Db, fieldMatchIds: readonly string[], sportE
     const entryId = row.side.sportEventParticipantId;
     if (!entryId || !wanted.has(entryId)) continue;
     byEntry.set(entryId, [...(byEntry.get(entryId) ?? []), {
+      sportEventRoundId: row.game.match.sportEventRoundId,
       roundNumber: roundNumberOf(row),
       gameStatus: row.game.status,
+      gameCompletedAt: row.game.completedAt,
       result: toGameSideResult(row),
       updatedAt: row.updatedAt,
     }]);
@@ -958,39 +940,25 @@ async function readFieldResults(db: Db, fieldMatchIds: readonly string[], sportE
 }
 
 function toFieldRow(row: FieldRow, sportLeagueId: string, fieldResults: ReadonlyMap<string, FieldGameResultView[]>): SportEventParticipantView {
-  const { participant, valuation, standing, rounds, matchSides, ...entry } = row;
+  const { participant, valuation, standing, matchSides, ...entry } = row;
   return {
     entry: toSportEventParticipant(entry),
     participant: mapToParticipant(participant),
     valuation: valuation ? toValuation(valuation) : null,
     standing: standing
       ? {
-        standing: {
-          id: standing.id,
-          sportEventParticipantId: standing.sportEventParticipantId,
-          position: standing.position,
-          displayPosition: standing.displayPosition,
-          status: standing.status,
-          asOf: standing.asOf,
-          createdAt: standing.createdAt,
-          updatedAt: standing.updatedAt,
-        },
-        golf: standing.golf ? toGolfStanding(standing.golf) : null,
+        id: standing.id,
+        sportEventParticipantId: standing.sportEventParticipantId,
+        position: standing.position,
+        displayPosition: standing.displayPosition,
+        status: standing.status,
+        asOf: standing.asOf,
+        total: standing.total,
+        scoreToPar: standing.scoreToPar,
+        createdAt: standing.createdAt,
+        updatedAt: standing.updatedAt,
       }
       : null,
-    rounds: rounds.map((round) => ({
-      round: {
-        id: round.id,
-        sportEventParticipantId: round.sportEventParticipantId,
-        sportEventRoundId: round.sportEventRoundId,
-        roundNumber: round.sportEventRound.roundNumber,
-        status: round.status,
-        completedAt: round.completedAt,
-        createdAt: round.createdAt,
-        updatedAt: round.updatedAt,
-      },
-      golf: round.golf ? toGolfRound(round.golf) : null,
-    })),
     fieldResults: fieldResults.get(row.id) ?? [],
     matches: matchSides
       .map((side) => toSportEventRoundMatch(side.match))
@@ -1118,11 +1086,8 @@ export class PrismaSportEventParticipantRepository implements SportEventParticip
     const entry = await this.prisma.sportEventParticipant.findUnique({ where: { id }, select: { sportEventId: true } });
     const fieldMatchIds = entry ? await readFieldMatchIds(this.prisma, [entry.sportEventId]) : [];
     await this.prisma.$transaction([
-      // Its sides in the event's FIELD matches (a race), with their results; a head-to-head side still holds it.
+      // Its sides in the event's FIELD matches (a race, a golf round), with their results; a head-to-head side still holds it.
       this.prisma.sportEventRoundMatchSide.deleteMany({ where: { ...own, sportEventRoundMatchId: { in: fieldMatchIds } } }),
-      this.prisma.sportEventParticipantGolfRound.deleteMany({ where: { participantRound: own } }),
-      this.prisma.sportEventParticipantRound.deleteMany({ where: own }),
-      this.prisma.sportEventParticipantGolfStanding.deleteMany({ where: { standing: own } }),
       this.prisma.sportEventParticipantStanding.deleteMany({ where: own }),
       this.prisma.sportEventParticipantValuation.deleteMany({ where: own }),
       this.prisma.sportEventParticipant.delete({ where: { id } }),

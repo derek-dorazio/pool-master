@@ -107,7 +107,7 @@ export interface EventHandlerDeps {
  * the provider-sync errors, which carry neither, are mapped here.
  */
 export function createEventHandlers({ services, eventLifecycle, ingestion, leaderboards, eventOverviews, slotTiebreakers }: EventHandlerDeps) {
-  const { sportEvents, rounds, field, tiers, golfScores, raceResults, matchResults, bracket, contests } = services;
+  const { sportEvents, rounds, field, tiers, strokePlayResults, raceResults, matchResults, bracket, contests } = services;
 
   /** An admin action's answer: the event with the root admin's counts. */
   async function eventResponse(eventId: string): Promise<SportEventResponse> {
@@ -321,7 +321,7 @@ export function createEventHandlers({ services, eventLifecycle, ingestion, leade
       request: FastifyRequest<RoundParams & { Body: GolfRoundScoreUploadRequest }>,
     ): Promise<GolfRoundScorePreviewResponse> => {
       await requireEvent(request.params.eventId);
-      const rows = await golfScores.previewRoundScores(request.params.eventId, request.params.roundNumber, request.body.rows);
+      const rows = await strokePlayResults.previewRoundScores(request.params.eventId, request.params.roundNumber, request.body.rows);
       return mapGolfRoundScorePreviewToDto(rows);
     },
 
@@ -329,7 +329,7 @@ export function createEventHandlers({ services, eventLifecycle, ingestion, leade
       request: FastifyRequest<RoundParams & { Body: GolfRoundScoreUploadRequest }>,
     ): Promise<SportEventParticipantListResponse> => {
       await sportEvents.requireTestEvent(request.params.eventId);
-      await golfScores.applyRoundScores(request.params.eventId, request.params.roundNumber, request.body.rows);
+      await strokePlayResults.applyRoundScores(request.params.eventId, request.params.roundNumber, request.body.rows);
       return fieldResponse(request.params.eventId);
     },
 
@@ -353,7 +353,7 @@ export function createEventHandlers({ services, eventLifecycle, ingestion, leade
     ): Promise<SportEventParticipantResponse> => {
       const { eventId, roundNumber, sportEventParticipantId } = request.params;
       await sportEvents.requireTestEvent(eventId);
-      await golfScores.updateRoundScore(eventId, roundNumber, sportEventParticipantId, request.body);
+      await strokePlayResults.updateRoundScore(eventId, roundNumber, sportEventParticipantId, request.body);
       return fieldRowResponse(eventId, sportEventParticipantId);
     },
 

@@ -580,7 +580,7 @@ link with `maxUses` / `currentUses`.
 ## Events and participants (the cross-sport core)
 
 Cluster: `Sport`, `SportLeague`, `SportEvent`, `SportEventRound`,
-`SportEventParticipant`, `SportEventParticipantRound`, `SportEventParticipantStanding`,
+`SportEventParticipant`, `SportEventParticipantStanding`,
 `SportEventTier`, `SportEventParticipantValuation`, `SportEventRoundMatch`, `Participant`,
 `ParticipantProviderMapping`. A `Participant` belongs to one `SportLeague` (#1853).
 The tree is `SportLeague → SportLeagueSeason → SportEvent`: an event sits in one of its
@@ -752,16 +752,29 @@ otherwise, and refuses an event whose games form no bracket (a regular-season we
 422 `CONTEST_EVENT_NOT_A_BRACKET`, since no team goes a round further. Until the bracket has a
 result, no team is scored.
 
-### SportEventParticipantRound, SportEventParticipantStanding — base rows
+### A golf round — a FIELD Game's side results, and SportEventParticipantStanding
 
-The per-round join and the running standing. **The score lives in the sport extension**
-(`SportEventParticipantGolfRound`, `SportEventParticipantGolfStanding`), keyed 1:1 to these.
+A golfer's round is their side result in that round's FIELD Game (#2008): each round of a golf
+event holds one FIELD Match with every golfer who played it as a side, and one Game. The side
+result's `score` is the golfer's strokes, `scoreToPar` their to-par, and `periodsCompleted`
+their holes thru; a finished round with no thru sent stores the round's full holes (its slot's
+period count), so no reader derives it. Its `status` is null while the golfer is on the course,
+`FINISHED` once through (a missed cut too: the cut is on the standing), `DID_NOT_FINISH` or
+`DISQUALIFIED`. The Game is `COMPLETED` once every golfer in it has a status, at the latest
+completion time sent (the time of the write when none is): a round's completion time is its
+Game's, not a golfer's. A golfer cut after round 2 has no side in rounds 3 and 4. The field
+read carries the row's side results as `fieldResults`; the API still shows them as the row's
+`rounds` (`MISSED_CUT` no longer appears there).
+
+The standing is the running result in the event: `position`, `displayPosition`, `status`, and
+for golf the event totals `total` (strokes) and `scoreToPar`. The current round's holes thru is
+read off that round, never stored.
 
 | Operation | Role | Notes |
 |---|---|---|
-| Read for an event | `authenticated` | Through `listEventParticipants`. Standing `position` is the cross-sport rank key and is direction-free: **1 is best in every sport.** A reader ranks on it and joins the extension only to display a score |
-| Write | *(scoring feed or `rootAdmin`)* | Written base-then-extension in one nested write. Golf corrections: `previewEventGolfRoundScores`, `applyEventGolfRoundScores`, `updateEventParticipantGolfRoundScore` — 422 for a non-golf event. A race's standings are written by its finishing order (below) |
-| Rank | *(every score write)* | `position` and `displayPosition` are computed from the extension's score after each write — the feed or a correction — across the whole event, so no reader re-derives them (#246). Ties share a position and display as "T3"; a withdrawn or eliminated golfer is unranked. The provider supplies no live rank to copy |
+| Read for an event | `authenticated` | Through `listEventParticipants`. Standing `position` is the cross-sport rank key and is direction-free: **1 is best in every sport.** A reader ranks on it and reads the totals only to display a score |
+| Write | *(scoring feed or `rootAdmin`)* | The rounds, their Games' statuses and every standing in one transaction, in a fixed number of statements however big the field, two more for each round written (#1252). A write that changes nothing writes nothing and queues no leaderboard rebuild. Golf corrections, on a test slot only (#2074): `previewEventGolfRoundScores`, `applyEventGolfRoundScores`, `updateEventParticipantGolfRoundScore` — 422 for a non-golf event. A race's standings are written by its finishing order (below) |
+| Rank | *(every score write)* | `position` and `displayPosition` are computed from the totals after each write — the feed or a correction — across the whole event, and written with it, so no reader re-derives them (#246). Ties share a position and display as "T3"; a withdrawn or eliminated golfer is unranked. The provider supplies no live rank to copy |
 
 ### A race's result — a FIELD Game's side results
 

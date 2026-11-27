@@ -72,9 +72,6 @@ async function cleanup(): Promise<void> {
   const eventIds = (await db.sportEvent.findMany({ where: { name: { contains: RUN } }, select: { id: true } })).map((event) => event.id);
   const fieldIds = (await db.sportEventParticipant.findMany({ where: { sportEventId: { in: eventIds } }, select: { id: true } })).map((row) => row.id);
   await db.sportEventRoundMatch.deleteMany({ where: { sportEventId: { in: eventIds } } });
-  await db.sportEventParticipantGolfRound.deleteMany({ where: { participantRound: { sportEventParticipantId: { in: fieldIds } } } });
-  await db.sportEventParticipantRound.deleteMany({ where: { sportEventParticipantId: { in: fieldIds } } });
-  await db.sportEventParticipantGolfStanding.deleteMany({ where: { standing: { sportEventParticipantId: { in: fieldIds } } } });
   await db.sportEventParticipantStanding.deleteMany({ where: { sportEventParticipantId: { in: fieldIds } } });
   await db.sportEventParticipantValuation.deleteMany({ where: { sportEventParticipantId: { in: fieldIds } } });
   await db.sportEventParticipant.deleteMany({ where: { id: { in: fieldIds } } });

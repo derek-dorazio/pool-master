@@ -1,18 +1,22 @@
 /**
  * Event-participant mapper (#236) — one field row's view (the row, its participant,
- * valuation, standing and rounds) → the canonical SportEventParticipantDto. At the
- * standing and each round the sport's extension is nested under its sport's key, the
- * shape the schema has; a race result (the finish-position extension) under `race`.
+ * valuation, standing and its FIELD Game results) → the canonical SportEventParticipantDto.
+ * A golf round is the row's scored side result in that round's FIELD Game (#2008), shown under
+ * `rounds` with its golf block; a race result under `race`.
  */
 
 import { latestParticipantRound } from '@poolmaster/shared/domain';
 import type { SportEventParticipantDto } from '@poolmaster/shared/dto/events.dto';
 import type { SportEventParticipantView } from '../modules/events/sport-event-participant-service';
 import { isRaceOfficial, raceResultOf } from '../modules/scoring-families/finish-position/score-runner';
+import { roundStatusOfSide, scoredRoundsOf } from '../modules/scoring-families/stroke-play/scored-rounds';
 import { mapParticipantToDto } from './participants.mapper';
 
 export function mapSportEventParticipantToDto(view: SportEventParticipantView): SportEventParticipantDto {
   const { entry, valuation, standing } = view;
+  const rounds = scoredRoundsOf(view);
+  // The highest round it has a score in (#2047): read off its rounds, never stored.
+  const current = latestParticipantRound(rounds, (round) => round);
   return {
     id: entry.id,
     sportEventId: entry.sportEventId,
@@ -34,31 +38,31 @@ export function mapSportEventParticipantToDto(view: SportEventParticipantView): 
       : null,
     standing: standing
       ? {
-          id: standing.standing.id,
-          position: standing.standing.position,
-          displayPosition: standing.standing.displayPosition,
-          status: standing.standing.status,
-          asOf: standing.standing.asOf?.toISOString() ?? null,
-          // The highest round it has a score in (#2047): read off its rounds, never stored.
-          currentRound: latestParticipantRound(view.rounds, ({ round }) => round)?.round.roundNumber ?? null,
-          golf: standing.golf
+          id: standing.id,
+          position: standing.position,
+          displayPosition: standing.displayPosition,
+          status: standing.status,
+          asOf: standing.asOf?.toISOString() ?? null,
+          currentRound: current?.roundNumber ?? null,
+          golf: standing.total !== null && standing.scoreToPar !== null
             ? {
-                eventScoreToPar: standing.golf.eventScoreToPar,
-                eventStrokes: standing.golf.eventStrokes,
-                currentRoundThru: standing.golf.currentRoundThru,
+                eventScoreToPar: standing.scoreToPar,
+                eventStrokes: standing.total,
+                currentRoundThru: current?.result.periodsCompleted ?? null,
               }
             : null,
         }
       : null,
-    rounds: view.rounds.map(({ round, golf }) => ({
-      id: round.id,
+    rounds: rounds.map((round) => ({
+      id: round.result.sportEventRoundMatchSideId,
       sportEventRoundId: round.sportEventRoundId,
       roundNumber: round.roundNumber,
-      status: round.status,
-      completedAt: round.completedAt?.toISOString() ?? null,
-      golf: golf ? { strokes: golf.strokes, scoreToPar: golf.scoreToPar, thru: golf.thru } : null,
+      status: roundStatusOfSide(round.result.status),
+      completedAt: round.result.status === null ? null : round.gameCompletedAt?.toISOString() ?? null,
+      golf: { strokes: round.result.score, scoreToPar: round.result.scoreToPar, thru: round.result.periodsCompleted },
     })),
-    race: raceBlockOf(view),
+    // One FIELD result list holds either a golfer's rounds or a runner's race: a row scored in rounds has no race.
+    race: rounds.length > 0 ? null : raceBlockOf(view),
     affiliatedWithSportLeague: view.affiliatedWithSportLeague,
     createdAt: entry.createdAt.toISOString(),
     updatedAt: entry.updatedAt.toISOString(),
