@@ -9,7 +9,6 @@ import type {
   ContestRepository,
   ContestSeasonFull,
   ContestSeasonLimits,
-  ContestSeasonMoveResult,
   ContestStatusFilter,
   ContestStatusTransition,
   ContestUpdate,
@@ -147,16 +146,6 @@ export class PrismaContestRepository implements ContestRepository {
       });
       return { status: 'created', contest: mapToContest(row) };
     });
-  }
-
-  async moveToSeason(id: string, seasonYear: number, limits: ContestSeasonLimits): Promise<ContestSeasonMoveResult> {
-    return forgettingReads(ReadMemoKey.contest, () => this.prisma.$transaction(async (tx) => {
-      const { leagueId } = await tx.contest.findUniqueOrThrow({ where: { id }, select: { leagueId: true } });
-      const full = await seasonWithoutRoom(tx, leagueId, seasonYear, limits);
-      if (full) return full;
-      await tx.contest.update({ where: { id }, data: { seasonYear } });
-      return { status: 'moved' };
-    }));
   }
 
   async findBySportEvent(

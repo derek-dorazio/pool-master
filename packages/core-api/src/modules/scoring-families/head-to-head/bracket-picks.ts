@@ -10,9 +10,12 @@
  * - **A pick stands** only while it names a team the entry's picks put in its game. Changing an
  *   earlier pick strands the later picks that depended on it, and `resolveBracketPicks` drops them,
  *   round by round, so a stranded pick also strands the picks that followed from it.
+ * - **The bracket is the contest's covered rounds** (#2014, `contestBracketGames`): an event's
+ *   play-in, which a bracket template leaves out, takes no pick.
  * - **Scoring** reuses the knockout round points (`KnockoutRoundPointsSettings`): a pick in round N
  *   is correct when its team won its round-N game, wherever the reseeding placed that game, and earns
- *   `roundValues[N - 1]` plus the upset bonus of the game it won. A pick whose team is out is
+ *   the value of round N's place among the bracket's rounds (`coveredRoundValue`: `roundValues[0]`
+ *   for its first round, whatever its number in the event) plus the upset bonus of the game it won. A pick whose team is out is
  *   busted. Max possible points (design Q3.10) adds the round value of every pick still pending; it
  *   is an upper bound, since two teams still in can meet before the round the entry picked them to win.
  * - **A team withdrawn after the draw** (#704) and replaced in its first-round place is no longer
@@ -32,6 +35,9 @@ import {
   MatchStatus,
   PickOutcome,
   finalRoundsOfMatches,
+  coveredRoundValue,
+  coversMatchRound,
+  type ContestRoundCoverage,
   type KnockoutRoundPointsSettings,
   type SportEventRoundMatch,
 } from '@poolmaster/shared/domain';
@@ -62,9 +68,21 @@ export interface ResolvedBracket<Pick extends BracketPick> {
 
 const SIDES = [MatchSide.HOME, MatchSide.AWAY] as const;
 
-/** The games a bracket contest picks: every game of the event, with cancelled games left out. */
-export function contestBracketGames<Match extends Pick<SportEventRoundMatch, 'status'>>(matches: readonly Match[]): Match[] {
-  return matches.filter((match) => match.status !== MatchStatus.CANCELLED);
+/**
+ * The games a bracket contest picks: every game of the rounds it covers (#2014), with cancelled
+ * games left out. A play-in its template leaves out is no part of its bracket: its winner fills
+ * a first covered round side, as a real team.
+ */
+export function contestBracketGames<Match extends Pick<SportEventRoundMatch, 'status' | 'slot'>>(
+  matches: readonly Match[],
+  coverage: ContestRoundCoverage,
+): Match[] {
+  return matches.filter((match) => match.status !== MatchStatus.CANCELLED && coversMatchRound(coverage, match));
+}
+
+/** A contest bracket's rounds by number, lowest first: the covered rounds `contestBracketGames` keeps. */
+function bracketRoundNumbers(bracket: readonly Pick<SportEventRoundMatch, 'roundNumber'>[]): number[] {
+  return [...new Set(bracket.map((match) => match.roundNumber))].sort((left, right) => left - right);
 }
 
 function storedSide(match: SportEventRoundMatch, side: MatchSide): string | null {
@@ -225,8 +243,8 @@ export interface BracketScore {
 }
 
 /**
- * Scores an entry's standing picks against the bracket's results. `bracket` holds every game of
- * the event, with each completed game's winner; a team in `withdrawn` lost in its first round.
+ * Scores an entry's standing picks against the bracket's results. `bracket` holds the contest's
+ * games (`contestBracketGames`), with each completed game's winner; a team in `withdrawn` lost in its first round.
  */
 export function scoreBracketPicks(
   bracket: readonly SportEventRoundMatch[],
@@ -236,6 +254,7 @@ export function scoreBracketPicks(
   withdrawn: ReadonlySet<string> = new Set(),
 ): BracketScore {
   const roundByMatchId = new Map(bracket.map((match) => [match.id, match.roundNumber]));
+  const rounds = bracketRoundNumbers(bracket);
   /** For each team, the games it won by round (with the team it beat), and the round it lost in. */
   const wins = new Map<string, Map<number, string | null>>();
   const firstRound = Math.min(...bracket.map((match) => match.roundNumber));
@@ -260,7 +279,7 @@ export function scoreBracketPicks(
   for (const pick of picks) {
     const roundNumber = roundByMatchId.get(pick.sportEventRoundMatchId);
     if (roundNumber === undefined) continue;
-    const roundValue = settings.roundValues.at(roundNumber - 1) ?? 0;
+    const roundValue = coveredRoundValue(settings.roundValues, rounds, roundNumber) ?? 0;
     const beaten = wins.get(pick.sportEventParticipantId);
     const lostRound = lostIn.get(pick.sportEventParticipantId);
     if (beaten?.has(roundNumber)) {

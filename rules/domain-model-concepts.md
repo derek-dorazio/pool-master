@@ -66,7 +66,9 @@ Two readings of this chain have both been held at once, so it is worth stating p
   clears the later picks that followed from it. A correct pick scores its round's value under the
   knockout round points, as a knockout roster pool does.
 - **A knockout roster pick scores per match it wins** (`KNOCKOUT_ROUND_POINTS`, #699): that
-  round's value from the contest's table, plus an upset bonus when the contest has one on. A
+  round's value from the contest's table, counted only in the rounds the contest covers (those
+  whose slot its template lists, #2014) and indexed by the round's place among them, so a
+  play-in the template leaves out scores nothing, plus an upset bonus when the contest has one on. A
   team placed straight into a later round (a bye) counts the bye as a win: it scores the value
   of each round it skipped once that round is decided, with no upset bonus (#2170).
 - **A match's winner is its own fact** (`winnerSide`), and every scorer reads it, never the
