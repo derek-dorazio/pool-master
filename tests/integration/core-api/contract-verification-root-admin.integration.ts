@@ -29,7 +29,6 @@ import {
   ParticipantResponseSchema,
   SportEventListResponseSchema,
   SportEventParticipantListResponseSchema,
-  SportEventParticipantUploadPreviewResponseSchema,
   RaceResultPreviewResponseSchema,
   SportEventResponseSchema,
   SportLeagueSeasonSlotDtoSchema,
@@ -40,7 +39,6 @@ import {
   SportEventTierListResponseSchema,
   SportLeagueListResponseSchema,
   SportLeagueResponseSchema,
-  SportLeagueRankingUploadPreviewResponseSchema,
   SportLeagueOverviewListResponseSchema,
   SportLeagueSyncListResponseSchema,
   SportLeagueEventOverviewListResponseSchema,
@@ -1313,25 +1311,12 @@ describe('Contract verification (root admin)', () => {
       expect(ParticipantListResponseSchema.safeParse(rankRes.json()).success).toBe(true);
       expect(rankRes.json<ParticipantListResponse>().participants.find((p) => p.id === created.participantIds[0])?.ranking).toBe(1);
 
-      // --- previewSportLeagueRankingUpload (200), then apply (200) ---------------
-      const rankUpload = { rows: [{ externalId: `z3l-contract-${stamp}-p1`, ranking: 2 }, { playerName: 'Nobody Of This Tour', ranking: 3 }] };
-      const rankPreviewRes = await getApp().inject({
-        method: 'POST',
-        url: `/api/v1/sport-leagues/${leagueId}/participants/rankings/upload/preview`,
-        headers: rootAdmin.headers,
-        payload: rankUpload,
-      });
-      expect(rankPreviewRes.statusCode).toBe(200);
-      expect(SportLeagueRankingUploadPreviewResponseSchema.safeParse(rankPreviewRes.json()).success).toBe(true);
-      expect(rankPreviewRes.json<{ rows: { resolution: string }[] }>().rows.map((row) => row.resolution)).toEqual(['MATCHED', 'UNRESOLVED']);
-      const rankApplyRes = await getApp().inject({
-        method: 'POST',
-        url: `/api/v1/sport-leagues/${leagueId}/participants/rankings/upload`,
-        headers: rootAdmin.headers,
-        payload: { rows: [rankUpload.rows[0]] },
-      });
-      expect(rankApplyRes.statusCode).toBe(200);
-      expect(ParticipantListResponseSchema.safeParse(rankApplyRes.json()).success).toBe(true);
+      // The sport league's ranking upload is gone: rankings come from the feed (#2008).
+      for (const url of [`/api/v1/sport-leagues/${leagueId}/participants/rankings/upload/preview`, `/api/v1/sport-leagues/${leagueId}/participants/rankings/upload`]) {
+        // poolmaster-allow-query-in-loop: two removed routes, each asked once
+        const removed = await getApp().inject({ method: 'POST', url, headers: rootAdmin.headers, payload: { rows: [{ participantId: created.participantIds[0], ranking: 2 }] } });
+        expect(removed.statusCode).toBe(404);
+      }
 
       // #1180 — the search is trimmed before it reaches the repository: a leading space still
       // finds names that start with the term, without a sport.
@@ -1414,9 +1399,7 @@ describe('Contract verification (root admin)', () => {
       expect(fieldRes.statusCode).toBe(200);
       expect(SportEventParticipantListResponseSchema.safeParse(fieldRes.json()).success).toBe(true);
 
-      // --- previewEventParticipantUpload (200) / applyEventParticipantUpload (200, 422) ---
-      // Two golfers on the field, the third only in the catalog: the upload adjusts the field
-      // and refuses a golfer not on it.
+      // The field upload is gone: a field's rankings, seeds and withdrawals come from the feed (#2008).
       const addRes = await getApp().inject({
         method: 'POST',
         url: `/api/v1/events/${eventId}/participants`,
@@ -1424,49 +1407,21 @@ describe('Contract verification (root admin)', () => {
         payload: { participantIds: created.participantIds.slice(0, 2) },
       });
       expect(addRes.statusCode).toBe(200);
-      const uploadPreviewRes = await getApp().inject({
-        method: 'POST',
-        url: `/api/v1/events/${eventId}/participants/upload/preview`,
-        headers: rootAdmin.headers,
-        payload: {
-          rows: [
-            { participantId: created.participantIds[0], ranking: 3, oddsToWin: 7.5 },
-            { externalId: `z3l-contract-${stamp}-p1`, status: 'WITHDRAWN' },
-            { externalId: `z3l-contract-${stamp}-p2`, ranking: 1 },
-          ],
-        },
-      });
-      expect(uploadPreviewRes.statusCode).toBe(200);
-      const uploadPreview = SportEventParticipantUploadPreviewResponseSchema.safeParse(uploadPreviewRes.json());
-      expect(uploadPreview.success).toBe(true);
-      expect(uploadPreview.data?.rollup).toMatchObject({ total: 3, matched: 2, unresolved: 1, update: 2 });
+      for (const url of [`/api/v1/events/${eventId}/participants/upload/preview`, `/api/v1/events/${eventId}/participants/upload`]) {
+        // poolmaster-allow-query-in-loop: two removed routes, each asked once
+        const removed = await getApp().inject({ method: 'POST', url, headers: rootAdmin.headers, payload: { rows: [{ participantId: created.participantIds[0], ranking: 3 }] } });
+        expect(removed.statusCode).toBe(404);
+      }
 
-      const uploadRefusedRes = await getApp().inject({
-        method: 'POST',
-        url: `/api/v1/events/${eventId}/participants/upload`,
-        headers: rootAdmin.headers,
-        payload: { rows: [{ externalId: `z3l-contract-${stamp}-p2`, ranking: 1 }] },
-      });
-      expect(uploadRefusedRes.statusCode).toBe(422);
-      expect(ErrorEnvelopeSchema.safeParse(uploadRefusedRes.json()).success).toBe(true);
-      expect(uploadRefusedRes.json<ErrorEnvelope>().error.code).toBe('EVENT_PARTICIPANT_UPLOAD_ROWS_UNRESOLVED');
-
-      // A ranking or seed past a 32-bit integer is refused as validation (400), not a 500 from
-      // the database, on both the upload preview and the grid save.
-      const oversizedPreviewRes = await getApp().inject({
-        method: 'POST',
-        url: `/api/v1/events/${eventId}/participants/upload/preview`,
-        headers: rootAdmin.headers,
-        payload: { rows: [{ participantId: created.participantIds[0], ranking: 2 ** 31 }] },
-      });
-      expect(oversizedPreviewRes.statusCode).toBe(400);
-      expect(ErrorEnvelopeSchema.safeParse(oversizedPreviewRes.json()).success).toBe(true);
+      // A ranking or seed past a 32-bit integer is refused by the grid save as validation (400),
+      // not a 500 from the database.
       const loadedFieldRes = await getApp().inject({
         method: 'GET',
         url: `/api/v1/events/${eventId}/participants`,
         headers: rootAdmin.headers,
       });
-      const fieldRowId = loadedFieldRes.json<{ participants: Array<{ id: string }> }>().participants[0].id;
+      const loadedField = loadedFieldRes.json<{ participants: Array<{ id: string; participantId: string }> }>().participants;
+      const fieldRowId = loadedField[0].id;
       const oversizedSaveRes = await getApp().inject({
         method: 'PATCH',
         url: `/api/v1/events/${eventId}/participants`,
@@ -1496,14 +1451,15 @@ describe('Contract verification (root admin)', () => {
       expect(reinstated.success).toBe(true);
       expect(reinstated.data?.participants.find((row) => row.id === fieldRowId)).toMatchObject({ status: 'ACTIVE' });
 
-      const uploadApplyRes = await getApp().inject({
-        method: 'POST',
-        url: `/api/v1/events/${eventId}/participants/upload`,
+      const firstGolferRowId = loadedField.find((row) => row.participantId === created.participantIds[0])?.id;
+      const rankSaveRes = await getApp().inject({
+        method: 'PATCH',
+        url: `/api/v1/events/${eventId}/participants`,
         headers: rootAdmin.headers,
-        payload: { rows: [{ participantId: created.participantIds[0], ranking: 3, oddsToWin: 7.5 }] },
+        payload: { participants: [{ sportEventParticipantId: firstGolferRowId, ranking: 3 }] },
       });
-      expect(uploadApplyRes.statusCode).toBe(200);
-      expect(SportEventParticipantListResponseSchema.safeParse(uploadApplyRes.json()).success).toBe(true);
+      expect(rankSaveRes.statusCode).toBe(200);
+      expect(SportEventParticipantListResponseSchema.safeParse(rankSaveRes.json()).success).toBe(true);
 
       const tiersRes = await getApp().inject({
         method: 'GET',
@@ -1733,6 +1689,8 @@ describe('Contract verification (root admin)', () => {
       create: { sport: 'GOLF', ...sportRowKeys('GOLF') },
       update: {},
     });
+    // A result row names its runner by id (#2114); a name no runner has stands for one not in the field.
+    const participantIdByName = new Map<string, string>();
     const createEvent = async (sport: 'HORSE_RACING' | 'GOLF', sportId: string, names: string[], { testEvent = true } = {}) => {
       const event = await prisma.sportEvent.create({
         data: {
@@ -1746,6 +1704,7 @@ describe('Contract verification (root admin)', () => {
       if (testEvent) await linkTestSlot(prisma, event);
       for (const name of names) {
         const participant = await prisma.participant.create({ data: { sportLeagueId: await participantLeagueId(prisma, sportId), name: `${name} ${stamp}`, participantType: 'INDIVIDUAL' } });
+        participantIdByName.set(name, participant.id);
         await prisma.sportEventParticipant.create({ data: { sportEventId: event.id, participantId: participant.id } });
       }
       return event;
@@ -1753,7 +1712,7 @@ describe('Contract verification (root admin)', () => {
     const race = await createEvent('HORSE_RACING', horseRacing.id, ['Arrow', 'Bolt']);
     const golfEvent = await createEvent('GOLF', golf.id, ['Golfer']);
     const finisher = (name: string, finishPosition: number | null) => ({
-      playerName: `${name} ${stamp}`, resultStatus: 'FINISHED', finishPosition, startPosition: null, riderName: null,
+      participantId: participantIdByName.get(name) ?? randomUUID(), resultStatus: 'FINISHED', finishPosition, startPosition: null, riderName: null,
     });
     const send = (method: 'POST' | 'PUT', eventId: string, payload: object, headers = rootAdmin.headers) => getApp().inject({
       method,

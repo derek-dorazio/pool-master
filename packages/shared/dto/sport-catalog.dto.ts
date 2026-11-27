@@ -151,35 +151,9 @@ export const SportLeagueParticipantRankingsRequestSchema = z.object({
 }).describe('Re-ranks participants of the sport league.');
 export type SportLeagueParticipantRankingsRequest = z.infer<typeof SportLeagueParticipantRankingsRequestSchema>;
 
-export const SportLeagueRankingUploadRowSchema = z.object({
-  participantId: z.uuid().optional(),
-  externalId: z.string().optional(),
-  playerName: z.string().optional(),
-  ranking: z.number().int().optional(),
-}).describe('One uploaded rank. The first identifier present is used: participantId, then externalId, then an exact case-insensitive playerName, among the sport league\'s participants.');
-export type SportLeagueRankingUploadRow = z.infer<typeof SportLeagueRankingUploadRowSchema>;
-
-export const SportLeagueRankingUploadRequestSchema = z.object({
-  rows: z.array(SportLeagueRankingUploadRowSchema).min(1).max(2000),
-}).describe('A ranking upload for a sport league\'s participants.');
-export type SportLeagueRankingUploadRequest = z.infer<typeof SportLeagueRankingUploadRequestSchema>;
-
 export const UploadRowResolutionDtoSchema = z.enum(['MATCHED', 'UNRESOLVED', 'AMBIGUOUS'])
   .describe('How an uploaded row resolved to a participant: one match, none, or several.');
 export type UploadRowResolutionDto = z.infer<typeof UploadRowResolutionDtoSchema>;
-
-export const SportLeagueRankingUploadPreviewRowDtoSchema = z.object({
-  row: SportLeagueRankingUploadRowSchema,
-  resolution: UploadRowResolutionDtoSchema,
-  participantId: z.uuid().nullable().describe('Set only when MATCHED.'),
-  participantName: z.string().nullable().describe('Set only when MATCHED.'),
-}).describe('What applying one uploaded row would do.');
-export type SportLeagueRankingUploadPreviewRowDto = z.infer<typeof SportLeagueRankingUploadPreviewRowDtoSchema>;
-
-export const SportLeagueRankingUploadPreviewResponseSchema = z.object({
-  rows: z.array(SportLeagueRankingUploadPreviewRowDtoSchema).describe('One per uploaded row, in upload order.'),
-}).describe('A dry run of a ranking upload. Nothing is written.');
-export type SportLeagueRankingUploadPreviewResponse = z.infer<typeof SportLeagueRankingUploadPreviewResponseSchema>;
 
 // --- Sport league overview: the root admin's Sports page (#1847) -----------------
 
@@ -566,6 +540,4 @@ registerSchema('SportLeagueSeasonPhaseDto', SportLeagueSeasonPhaseDtoSchema);
 registerSchema('SportLeagueSeasonDto', SportLeagueSeasonDtoSchema);
 registerSchema('SportLeagueSeasonListResponse', SportLeagueSeasonListResponseSchema);
 registerSchema('SportLeagueParticipantRankingsRequest', SportLeagueParticipantRankingsRequestSchema);
-registerSchema('SportLeagueRankingUploadRequest', SportLeagueRankingUploadRequestSchema);
 registerSchema('UploadRowResolutionDto', UploadRowResolutionDtoSchema);
-registerSchema('SportLeagueRankingUploadPreviewResponse', SportLeagueRankingUploadPreviewResponseSchema);

@@ -161,9 +161,19 @@ test('act 1: the root admin releases a four-team basketball tournament of two ro
       participantIds.push(participant.id);
     }
     await postJson(api, headers, `/api/v1/events/${eventId}/participants`, { participantIds });
-    await postJson(api, headers, `/api/v1/events/${eventId}/participants/upload`, {
-      rows: FIELD.map((team) => ({ playerName: teamName(run, team.name), seedNumber: team.seed })),
-    });
+    // Each team's seed goes in through the grid save, by field row id (the field upload is gone, #2008).
+    const added = await (await expectOk(api.get(`/api/v1/events/${eventId}/participants`, { headers }), 'read the added field')).json() as {
+      participants: Array<{ id: string; participantId: string }>;
+    };
+    await expectOk(api.patch(`/api/v1/events/${eventId}/participants`, {
+      headers,
+      data: {
+        participants: FIELD.map((team, index) => ({
+          sportEventParticipantId: added.participants.find((row) => row.participantId === participantIds[index])?.id,
+          seedNumber: team.seed,
+        })),
+      },
+    }), 'seed the field');
     await postJson(api, headers, `/api/v1/events/${eventId}/tiers/auto-assign`, {});
     await postJson(api, headers, `/api/v1/events/${eventId}/prices/auto-assign`, await standardPricingRequest(api, headers));
 

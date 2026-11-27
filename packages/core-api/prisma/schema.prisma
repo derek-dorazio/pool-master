@@ -1426,8 +1426,8 @@ model ParticipantProviderMapping {
   @@unique([providerId, externalId, sportLeagueId, participantType])
   /// One provider's feed ids in one sport league: the test data load's read, and the sync's within an event's league.
   @@index([sportLeagueId, providerId])
-  /// A feed id in one sport league at any provider: a ranking upload's row that names a feed id
-  /// (`findMatchingAny`, #2040). The candidates' own feed ids are read by participant id.
+  /// A feed id in one sport league at any provider. Its reader went with the ranking upload
+  /// (#2008); part 3 of #2008 drops it in its migration. Candidates' feed ids are read by participant id.
   @@index([sportLeagueId, externalId])
   @@index([participantId])
   @@map("participant_provider_mappings")

@@ -384,7 +384,7 @@ test('act 3: a new member joins by the link and submits one driver from each tie
   });
 });
 
-test('act 4: the root admin starts the race, loads its official finishing order, and completing it settles the contest on the edited points table', async ({ page }) => {
+test('act 4: the root admin starts the race, its official finishing order comes in, and completing it settles the contest on the edited points table', async ({ page }) => {
   test.setTimeout(180_000);
   const state = requireJourney();
   const { run } = state;
@@ -394,27 +394,35 @@ test('act 4: the root admin starts the race, loads its official finishing order,
     await moveRaceTo(page, state.raceId, 'IN_PROGRESS');
   });
 
-  await test.step('the race\'s Rounds and matches tab offers the finishing-order card, not golf round scores', async () => {
+  await test.step('the race\'s Rounds and matches tab shows its result, with no upload and no golf round scores', async () => {
     await page.goto(`/manage/sports/auto-racing/events/${state.raceId}/results`);
     await expect(page.getByTestId('root-admin-race-results-panel')).toBeVisible();
     // The old results link opens the Rounds and matches tab, which holds the results.
     await expect(page.getByTestId('root-admin-event-tab-rounds')).toHaveAttribute('aria-current', 'page');
     await expect(page.getByTestId('root-admin-race-result-empty')).toBeVisible();
-    await expect(page.getByTestId('root-admin-golf-scores-upload-textarea')).toHaveCount(0);
+    // A race's result comes from the feed (#2008): the page offers no paste or upload.
+    await expect(page.getByTestId('root-admin-race-result-upload-textarea')).toHaveCount(0);
+    await expect(page.getByTestId('root-admin-golf-tournament-scores-page')).toHaveCount(0);
   });
 
-  await test.step('paste the finishing order, mark it official, preview, and apply', async () => {
-    await page.getByTestId('root-admin-race-result-mark-official').check();
-    const rows = FINISHING_ORDER.map(({ driver, place, status }) =>
-      `,${driverName(run, driver)},${place ?? ''},${status},${driver},`);
-    await page
-      .getByTestId('root-admin-race-result-upload-textarea')
-      .fill(['externalId,playerName,finishPosition,resultStatus,startPosition,riderName', ...rows].join('\n'));
-    await page.getByTestId('root-admin-race-result-upload-preview').click();
-    await expect(page.getByTestId('root-admin-race-result-upload-preview-table')).toBeVisible();
-    await expect(page.getByTestId('root-admin-race-result-upload-unresolved')).toHaveCount(0);
-    await submitAndRead(page, 'root-admin-race-result-upload-apply', 'PUT', `/api/v1/events/${state.raceId}/race-results`);
+  await test.step('the official finishing order goes in on the test race, by driver id, as the feed would send it', async () => {
+    // A test event takes its result through the test-slot result route the test-data loader uses (#2074).
+    const response = await page.request.put(`/api/v1/events/${state.raceId}/race-results`, {
+      headers: { 'x-csrf-token': await readCsrfToken(page) },
+      data: {
+        isOfficial: true,
+        rows: FINISHING_ORDER.map(({ driver, place, status }) => ({
+          participantId: state.driverIds[driver - 1],
+          finishPosition: place,
+          resultStatus: status === 'DNF' ? 'DID_NOT_FINISH' : 'FINISHED',
+          startPosition: driver,
+          riderName: null,
+        })),
+      },
+    });
+    expect(response.ok(), `PUT the race result answered ${response.status()}`).toBe(true);
 
+    await page.reload();
     await expect(page.getByTestId('root-admin-race-result-official')).toHaveText('Official');
     const winner = state.fieldEntryIds[FINISHING_ORDER[0].driver - 1];
     const nonFinisher = state.fieldEntryIds[7 - 1];

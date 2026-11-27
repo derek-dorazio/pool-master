@@ -2,7 +2,6 @@ import { deleteTestSportLeagues } from '../support/test-slots';
 import {
   acceptInvitation,
   addEventParticipants,
-  applyEventParticipantUpload,
   autoAssignEventPrices,
   autoAssignEventTiers,
   clearGamePick,
@@ -64,6 +63,7 @@ import { insertTestSportLeague } from '../support/test-sport-league';
 import type { TestRoundSlot } from '../support/event-edition';
 import { bracketMatch, readHomeAway, resultBody } from '../support/match-requests';
 import { HOME_SIDE, pickSideOf, predictedHomeAndAway, type PickSides } from '../support/match-sides';
+import { setFieldRows } from './field-rows';
 
 // Bracket pools end to end over HTTP (#721). An admin releases a knockout; a commissioner runs a
 // BRACKET contest on it scored by knockout round points; each team fills in the winner of every
@@ -166,7 +166,7 @@ async function releasedKnockout(options: {
     teamIds.push(id);
   }
   expect((await addEventParticipants({ client: a, path: { eventId }, body: { participantIds: teamIds } })).data?.added).toBe(options.seeds.length);
-  expect((await applyEventParticipantUpload({
+  expect((await setFieldRows({
     client: a,
     path: { eventId },
     body: { rows: options.seeds.map((seed) => ({ playerName: `Seed ${seed} ${options.label} ${RUN}`, seedNumber: seed })) },

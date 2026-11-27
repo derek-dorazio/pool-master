@@ -5,8 +5,6 @@ import type {
   SportLeagueParticipantListQuery,
   SportLeagueListResponse,
   SportLeagueParticipantRankingsRequest,
-  SportLeagueRankingUploadPreviewResponse,
-  SportLeagueRankingUploadRequest,
   SportLeagueEventOverviewListResponse,
   SportLeagueOverviewListResponse,
   SportLeagueParticipantOverviewListResponse,
@@ -23,7 +21,6 @@ import { sendError } from '../../core/error-handler';
 import type { ReadCache } from '../../core/read-cache';
 import {
   mapParticipantToDto,
-  mapRankingUploadPreviewRowToDto,
   mapSportLeagueEventOverviewToDto,
   mapSportLeagueOverviewToDto,
   mapSportLeagueParticipantOverviewToDto,
@@ -144,18 +141,5 @@ export function buildSportLeagueHandlers(
       return { participants: participants.map(mapParticipantToDto) };
     },
 
-    previewRankingUpload: async (
-      request: FastifyRequest<SportLeagueParams & { Body: SportLeagueRankingUploadRequest }>,
-    ): Promise<SportLeagueRankingUploadPreviewResponse> => {
-      const rows = await sportLeagues.previewRankingUpload(request.params.sportLeagueId, request.body.rows);
-      return { rows: rows.map(mapRankingUploadPreviewRowToDto) };
-    },
-
-    applyRankingUpload: async (
-      request: FastifyRequest<SportLeagueParams & { Body: SportLeagueRankingUploadRequest }>,
-    ): Promise<ParticipantListResponse> => {
-      const participants = await sportLeagues.applyRankingUpload(request.params.sportLeagueId, request.body.rows);
-      return { participants: participants.map(mapParticipantToDto) };
-    },
   };
 }

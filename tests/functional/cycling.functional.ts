@@ -1,7 +1,6 @@
 import {
   acceptInvitation,
   addEventParticipants,
-  applyEventParticipantUpload,
   applyEventRaceResults,
   autoAssignEventPrices,
   autoAssignEventTiers,
@@ -29,6 +28,7 @@ import {
 } from './setup';
 import { expectDefined } from '../support/expect-defined';
 import { standardPricingRequest } from './standard-pricing';
+import { byParticipantId, setFieldRows } from './field-rows';
 
 // Cycling end to end over HTTP (#626): an admin builds a race in the seeded UCI WorldTour and loads
 // its field's rankings by upload, a commissioner runs a contest from the tour's default tiered template
@@ -105,7 +105,7 @@ describe('SDK Functional: Cycling UCI WorldTour Top 10 points', () => {
     expect((await addEventParticipants({ client: a, path: { eventId }, body: { participantIds: riderIds } })).data?.added).toBe(6);
 
     // The admin uploads each rider's ranking (odds come only from the feed), then tiers and prices follow from it.
-    const upload = await applyEventParticipantUpload({
+    const upload = await setFieldRows({
       client: a,
       path: { eventId },
       body: { rows: RIDERS.map((rider, index) => ({ playerName: `${rider} ${RUN}`, ranking: index + 1 })) },
@@ -177,13 +177,13 @@ describe('SDK Functional: Cycling UCI WorldTour Top 10 points', () => {
 
     // --- The race runs, and the final overall order goes in, Ayuso's abandon as a DNF ----------
     expect((await transitionEvent({ client: a, path: { eventId }, body: { toStatus: 'IN_PROGRESS' } })).data?.event.status).toBe('IN_PROGRESS');
-    const rows = RIDERS.map((rider) => ({
+    const rows = await byParticipantId(a, eventId, RIDERS.map((rider) => ({
       playerName: `${rider} ${RUN}`,
       resultStatus: FINISH[rider] === null ? 'DID_NOT_FINISH' as const : 'FINISHED' as const,
       finishPosition: FINISH[rider],
       startPosition: null,
       riderName: null,
-    }));
+    })));
     const official = await applyEventRaceResults({ client: a, path: { eventId }, body: { isOfficial: true, rows } });
     expect(official.response?.status).toBe(200);
     expect(Object.fromEntries(expectDefined(official.data).participants.map((row) => [riderOf(row.id), row.race?.finishPosition ?? null])))

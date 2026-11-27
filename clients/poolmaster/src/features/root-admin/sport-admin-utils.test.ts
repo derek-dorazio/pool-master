@@ -3,7 +3,6 @@ import type { ParticipantRoundStatus } from '@poolmaster/shared/domain';
 import {
   formatSportEventStatus,
   sportEventStatusTone,
-  parseGolfRoundScoreUpload,
   golfRoundScoreRows,
 } from './sport-admin-utils';
 import { fieldEntryFixture, participantFixture } from './sport-test-fixtures';
@@ -25,87 +24,6 @@ describe('pool-master-3dg sport-admin-utils: status formatting', () => {
   });
 });
 
-
-describe('pool-master-r11 sport-admin-utils: parseGolfRoundScoreUpload', () => {
-  it('pool-master-r11 parses CSV rows and upper-cases the status enum', () => {
-    const rows = parseGolfRoundScoreUpload(
-      'externalId,playerName,strokes,scoreToPar,thru,status\next-1,Rory McIlroy,70,-2,18,completed\n,Scottie Scheffler,68,-4,18,COMPLETED',
-      'CSV',
-    );
-    expect(rows).toEqual([
-      { externalId: 'ext-1', playerName: 'Rory McIlroy', strokes: 70, scoreToPar: -2, thru: 18, status: 'COMPLETED' },
-      { playerName: 'Scottie Scheffler', strokes: 68, scoreToPar: -4, thru: 18, status: 'COMPLETED' },
-    ]);
-  });
-
-  it('pool-master-r11 parses a JSON array with participantId and omitted thru', () => {
-    expect(
-      parseGolfRoundScoreUpload(
-        '[{"participantId":"p-1","strokes":71,"scoreToPar":-1,"status":"IN_PROGRESS"}]',
-        'JSON',
-      ),
-    ).toEqual([
-      { participantId: 'p-1', strokes: 71, scoreToPar: -1, status: 'IN_PROGRESS' },
-    ]);
-  });
-
-  it('pool-master-r11 rejects an unknown status', () => {
-    expect(() =>
-      parseGolfRoundScoreUpload(
-        'playerName,strokes,scoreToPar,status\nRory McIlroy,70,-2,FINISHED',
-        'CSV',
-      ),
-    ).toThrow(/Row 1 \(status\)/);
-  });
-
-  it('pool-master-r11 rejects a row with no identifier and a non-integer strokes', () => {
-    expect(() =>
-      parseGolfRoundScoreUpload(
-        'externalId,playerName,strokes,scoreToPar,status\n,,70.5,-2,COMPLETED',
-        'CSV',
-      ),
-    ).toThrow(/Row 1/);
-  });
-
-  it('rejects a negative thru, and leaves a thru past the round\'s holes for the server to refuse by the round\'s slot', () => {
-    expect(() =>
-      parseGolfRoundScoreUpload(
-        'playerName,strokes,scoreToPar,thru,status\nRory McIlroy,70,-2,-1,COMPLETED',
-        'CSV',
-      ),
-    ).toThrow(/Row 1 \(thru\)/);
-    expect(parseGolfRoundScoreUpload('playerName,strokes,scoreToPar,thru,status\nRory McIlroy,70,-2,25,COMPLETED', 'CSV'))
-      .toEqual([expect.objectContaining({ thru: 25 })]);
-  });
-
-  it('rejects a row with 0 strokes, since a stored round has at least one stroke', () => {
-    expect(() =>
-      parseGolfRoundScoreUpload(
-        'playerName,strokes,scoreToPar,thru,status\nRory McIlroy,0,-2,18,COMPLETED',
-        'CSV',
-      ),
-    ).toThrow(/Row 1 \(strokes\)/);
-  });
-
-  it('pool-master-r11 skips template rows left with no score, keeping only the scored ones', () => {
-    const rows = parseGolfRoundScoreUpload(
-      'externalId,playerName,strokes,scoreToPar,thru,status\n,Rory McIlroy,,,,\n,Scottie Scheffler,68,-4,18,COMPLETED\n,Jon Rahm,,,,',
-      'CSV',
-    );
-    expect(rows).toEqual([
-      { playerName: 'Scottie Scheffler', strokes: 68, scoreToPar: -4, thru: 18, status: 'COMPLETED' },
-    ]);
-  });
-
-  it('pool-master-r11 throws when every row is left blank', () => {
-    expect(() =>
-      parseGolfRoundScoreUpload(
-        'externalId,playerName,strokes,scoreToPar,thru,status\n,Rory McIlroy,,,,\n,Jon Rahm,,,,',
-        'CSV',
-      ),
-    ).toThrow('No scores were entered on any row.');
-  });
-});
 
 describe('sport-admin-utils: golfRoundScoreRows (issue 236)', () => {
   function result(roundNumber: number, strokes: number, status: ParticipantRoundStatus = 'COMPLETED') {
@@ -142,11 +60,5 @@ describe('sport-admin-utils: golfRoundScoreRows (issue 236)', () => {
       fieldEntryFixture({ rounds: [{ ...result(1, 70), golf: null }] }),
     ];
     expect(golfRoundScoreRows(field, 1)).toEqual([]);
-  });
-});
-
-describe('sport-admin-utils: parseGolfRoundScoreUpload with no rows', () => {
-  it('refuses an empty JSON array as having no rows', () => {
-    expect(() => parseGolfRoundScoreUpload('[]', 'JSON')).toThrow('No rows found.');
   });
 });

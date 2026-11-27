@@ -46,7 +46,6 @@ import { toPickEmLeaderboardSnapshotResponse } from '../../../packages/core-api/
 import { mapRaceResultPreviewToDto } from '../../../packages/core-api/src/mappers/race-results.mapper';
 import { toSelectionGroupDto } from '../../../packages/core-api/src/mappers/selections.mapper';
 import {
-  mapRankingUploadPreviewRowToDto,
   mapSportLeaguePositionToDto,
   mapSportLeagueToDto,
   mapSportToDto,
@@ -423,11 +422,6 @@ describe('sport catalog mappers', () => {
     expect(synced.selectedProviderMapping).not.toBe(mapping);
     expect(synced.selectedProviderMapping?.providerName).toBe('BALLDONTLIE');
     expect(mapSportLeagueToDto({ ...base, selectedProviderMapping: null } as unknown as SportLeagueSummary).selectedProviderMapping).toBeNull();
-  });
-
-  it('sends a ranking upload row\'s resolution and participant', () => {
-    expect(mapRankingUploadPreviewRowToDto({ row: 2, resolution: 'MATCHED', participantId: 'p1', participantName: 'Scottie' } as never))
-      .toEqual({ row: 2, resolution: 'MATCHED', participantId: 'p1', participantName: 'Scottie' });
   });
 });
 

@@ -5,7 +5,6 @@ import { FieldOrderBasis, ProviderCode, Sport } from '@poolmaster/shared/domain'
 import type { Participant, SportLeague, SportLeagueSeasonSlot } from '@poolmaster/shared/domain';
 import { SportLeagueService, type SportDataProviderLookup } from '../../../packages/core-api/src/modules/sport-catalog/sport-league-service';
 import {
-  fakeParticipantProviderMappingRepo,
   fakeParticipantRepo,
   fakeSportEventRepo,
   fakeSportLeagueRepo,
@@ -77,7 +76,6 @@ function buildService(overrides: {
   sportLeagues?: Parameters<typeof fakeSportLeagueRepo>[0];
   sportEvents?: Parameters<typeof fakeSportEventRepo>[0];
   participants?: Parameters<typeof fakeParticipantRepo>[0];
-  mappings?: Parameters<typeof fakeParticipantProviderMappingRepo>[0];
   providers?: SportDataProviderLookup;
   seasons?: Partial<Pick<SportLeagueSeasonRepository, 'createTestSlot' | 'findSlot'>>;
   platformTierProfiles?: { findById: jest.Mock; findBySportLeague?: jest.Mock };
@@ -94,7 +92,6 @@ function buildService(overrides: {
     sportEvents: fakeSportEventRepo(overrides.sportEvents),
     participants: fakeParticipantRepo(overrides.participants),
     seasons: { createTestSlot: jest.fn(), findSlot: jest.fn().mockResolvedValue(null), ...overrides.seasons },
-    mappings: fakeParticipantProviderMappingRepo(overrides.mappings),
     providers: overrides.providers ?? registeredProviders({}),
     platformTierProfiles: {
       findById: jest.fn().mockImplementation(async (id: string) => ({ id, name: '6 tiers of 10', sources: [FieldOrderBasis.ODDS] })),
@@ -296,87 +293,12 @@ describe('SportLeagueService — the sport league\'s participants', () => {
   });
 });
 
-describe('SportLeagueService — ranking upload', () => {
-  it('resolves by participantId, then a feed id one of its provider mappings holds, then exact case-insensitive name, within the sport league', async () => {
-    const candidates = [
-      participant('p-1', 'Scottie Scheffler'),
-      participant('p-2', 'Rory McIlroy'),
-      participant('p-3', 'Jon Rahm'),
-    ];
-    const findMatchingAny = jest.fn().mockImplementation(async (sportLeagueId: string) => (sportLeagueId === 'sl-pga' ? candidates : []));
-    const findByParticipantIds = jest.fn().mockResolvedValue([{ participantId: 'p-2', externalId: 'owgr-2' }]);
-    const { service } = buildService({ participants: { findMatchingAny }, mappings: { findByParticipantIds } });
+describe('SportLeagueService — rankings come from the feed (#2008)', () => {
+  it('offers no ranking upload: a root admin sets one ranking at a time, and a participant is never matched by name', () => {
+    const methods = Object.getOwnPropertyNames(SportLeagueService.prototype);
 
-    const preview = await service.previewRankingUpload('sl-pga', [
-      { participantId: 'p-1', externalId: 'ignored', ranking: 1 },
-      { externalId: 'owgr-2', ranking: 2 },
-      { playerName: 'jon rahm', ranking: 3 },
-    ]);
-
-    expect(preview.map((row) => [row.resolution, row.participantId, row.participantName])).toEqual([
-      ['MATCHED', 'p-1', 'Scottie Scheffler'],
-      ['MATCHED', 'p-2', 'Rory McIlroy'],
-      ['MATCHED', 'p-3', 'Jon Rahm'],
-    ]);
-  });
-
-  it('reads every row\'s candidates in one query, asking only for each row\'s first identifier', async () => {
-    const findMatchingAny = jest.fn().mockResolvedValue([]);
-    const { service } = buildService({ participants: { findMatchingAny } });
-
-    await service.previewRankingUpload('sl-pga', [
-      { participantId: 'p-1', externalId: 'ignored' },
-      { externalId: 'owgr-2' },
-      { playerName: 'jon rahm' },
-      { ranking: 5 },
-    ]);
-
-    expect(findMatchingAny).toHaveBeenCalledTimes(1);
-    expect(findMatchingAny).toHaveBeenCalledWith('sl-pga', [{ id: 'p-1' }, { externalId: 'owgr-2' }, { name: 'jon rahm' }]);
-  });
-
-  it('marks a row AMBIGUOUS when several participants match, and UNRESOLVED when none do or no identifier is given', async () => {
-    const findMatchingAny = jest.fn().mockResolvedValue([participant('p-a', 'Smith'), participant('p-b', 'Smith')]);
-    const { service } = buildService({ participants: { findMatchingAny } });
-
-    const preview = await service.previewRankingUpload('sl-pga', [
-      { playerName: 'Smith' },
-      { playerName: 'Nobody' },
-      { ranking: 5 },
-    ]);
-
-    expect(preview.map((row) => row.resolution)).toEqual(['AMBIGUOUS', 'UNRESOLVED', 'UNRESOLVED']);
-    expect(preview.every((row) => row.participantId === null)).toBe(true);
-  });
-
-  it('fails with 404 SPORT_LEAGUE_NOT_FOUND for an unknown sport league', async () => {
-    const { service } = buildService({ sportLeagues: { findById: jest.fn().mockResolvedValue(null) } });
-
-    await expect(service.previewRankingUpload('missing', [{ participantId: 'p-1' }]))
-      .rejects.toMatchObject({ code: 'SPORT_LEAGUE_NOT_FOUND', statusCode: 404 });
-  });
-
-  it('refuses to apply an upload with any unresolved row with 422, handing nothing to the repository', async () => {
-    const { service, deps } = buildService();
-
-    await expect(service.applyRankingUpload('sl-pga', [{ participantId: 'missing' }]))
-      .rejects.toMatchObject({ code: 'SPORT_LEAGUE_RANKING_UPLOAD_UNRESOLVED_ROWS', statusCode: 422 });
-    expect(deps.participants.updateRankings).not.toHaveBeenCalled();
-  });
-
-  it('applies a fully resolved upload as one set of rankings, unranked rows as null', async () => {
-    const { service, deps } = buildService({
-      participants: {
-        findMatchingAny: jest.fn().mockResolvedValue([participant('p-1', 'x'), participant('p-2', 'y')]),
-      },
-    });
-
-    await service.applyRankingUpload('sl-pga', [{ participantId: 'p-1', ranking: 4 }, { participantId: 'p-2' }]);
-
-    expect(deps.participants.updateRankings).toHaveBeenCalledWith('sl-pga', [
-      { participantId: 'p-1', ranking: 4 },
-      { participantId: 'p-2', ranking: null },
-    ]);
+    expect(methods.filter((name) => /upload/i.test(name))).toEqual([]);
+    expect(methods).toContain('updateRankings');
   });
 });
 
