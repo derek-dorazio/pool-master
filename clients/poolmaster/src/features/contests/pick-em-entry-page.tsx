@@ -24,7 +24,7 @@ import { extractErrorMessage } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
 import { formatEntryScore } from './bracket-layout';
 import { ContestEventSwitcher } from './contest-event-switcher';
-import { currentContestEvent, entryEventStatus } from './contest-events';
+import { entryEventStatus, eventOfCurrentSlot } from './contest-events';
 import { ContestEntryFrame } from './contest-header';
 import { EntryFinishCard } from './entry-finish-card';
 import { entryFinishStatus, entryStatusLine } from './entry-status-line';
@@ -77,7 +77,7 @@ export function PickEmEntryPage({ contest }: { contest: ContestDto }) {
   const contestId = contest.id;
   // The week being picked, else the latest played, until the member switches.
   const [requestedEventId, setRequestedEventId] = useState<string | null>(null);
-  const sportEventId = requestedEventId ?? currentContestEvent(contest)?.sportEventId ?? '';
+  const sportEventId = requestedEventId ?? eventOfCurrentSlot(contest)?.sportEventId ?? '';
   // A playoff survivor pool's round on screen (#785), until the member switches: the one being picked.
   const [requestedRound, setRequestedRound] = useState<number | null>(null);
   const eventRounds = useEventRoundNames(sportEventId);

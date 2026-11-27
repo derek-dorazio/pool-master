@@ -1,6 +1,6 @@
 import { sportPlay } from '../../support/sport-play';
 import { expect } from '@jest/globals';
-import { ParticipantType, ScoringFamily, Sport, SportEventStatus } from '@poolmaster/shared/domain';
+import { ParticipantType, ScoringFamily, SeasonSlotStatus, SlotKind, Sport, SportEventStatus } from '@poolmaster/shared/domain';
 import { ContestLeaderboardResponseSchema } from '@poolmaster/shared/dto';
 import {
   type ContestSportEventRow,
@@ -16,7 +16,7 @@ import {
   toContestResponse,
   toMyContestEntriesResponse,
 } from '../../../packages/core-api/src/mappers/contests.mapper';
-import { buildContest } from '../../factories';
+import { buildContest, buildCoveredSlot } from '../../factories';
 
 describe('toContestListResponse', () => {
   const masters = {
@@ -37,7 +37,7 @@ describe('toContestListResponse', () => {
   it('gives each listed contest its entry count and its event\'s id, sequence, name, start and status', () => {
     const response = toContestListResponse(
       [buildContest({ id: 'contest-1', sportEventIds: ['event-1'] })],
-      { allEntryCounts: new Map(), entryCaps: new Map([['contest-1', 50]]), entryCounts: new Map([['contest-1', 3]]), progress: new Map() },
+      { allEntryCounts: new Map(), entryCaps: new Map([['contest-1', 50]]), entryCounts: new Map([['contest-1', 3]]), progress: new Map(), currentSlotIds: new Map() },
       new Map([['event-1', masters]]),
     );
 
@@ -46,7 +46,6 @@ describe('toContestListResponse', () => {
       entriesPerContest: 50,
       sportEvents: [{
         sportEventId: 'event-1',
-        sequence: 1,
         name: 'The Masters',
         startDate: '2026-04-09T12:40:00.000Z',
         status: SportEventStatus.SCHEDULED,
@@ -57,28 +56,32 @@ describe('toContestListResponse', () => {
   it('carries each event\'s scheduled end, and null for an event with none, so a contest\'s schedule needs no event read (#1198)', () => {
     const response = toContestListResponse(
       [buildContest({ id: 'majors', sportEventIds: ['event-1', 'event-2'] })],
-      { allEntryCounts: new Map(), entryCaps: new Map(), entryCounts: new Map(), progress: new Map() },
+      { allEntryCounts: new Map(), entryCaps: new Map(), entryCounts: new Map(), progress: new Map(), currentSlotIds: new Map() },
       new Map<string, ContestSportEventRow>([['event-1', { ...masters, endDate: new Date('2026-04-12T23:00:00.000Z') }], ['event-2', pga]]),
     );
 
     expect(response.contests[0]?.sportEvents.map((event) => event.endDate)).toEqual(['2026-04-12T23:00:00.000Z', null]);
   });
 
-  it('lists a multi-event contest\'s events in its sequence order, numbered from 1', () => {
+  it('lists a contest\'s covered slots in play order, each with its event, kind, status and competition, and dates as ISO strings (#2014)', () => {
+    const week14 = buildCoveredSlot({ seasonSlotId: 'slot-14', slotDefinitionId: 'def-14', key: 'WEEK_14', slotKind: SlotKind.WEEK, weekNumber: 14, sportEventId: 'event-1', startsAt: new Date('2026-12-06T18:00:00.000Z') });
+    const week15 = buildCoveredSlot({ seasonSlotId: 'slot-15', slotDefinitionId: 'def-15', key: 'WEEK_15', slotKind: SlotKind.WEEK, weekNumber: 15, status: SeasonSlotStatus.IN_PROGRESS, competitionName: 'Regular season' });
     const response = toContestListResponse(
-      [buildContest({ id: 'majors', sportEventIds: ['event-1', 'event-2'] })],
-      { allEntryCounts: new Map(), entryCaps: new Map(), entryCounts: new Map(), progress: new Map() },
-      new Map([['event-2', pga], ['event-1', masters]]),
+      [buildContest({ id: 'pickem', sportEventIds: ['event-1'], coveredSlots: [week14, week15] })],
+      { allEntryCounts: new Map(), entryCaps: new Map(), entryCounts: new Map(), progress: new Map(), currentSlotIds: new Map() },
+      new Map([['event-1', masters]]),
     );
 
-    expect(response.contests[0]?.sportEvents.map((event) => [event.sequence, event.name]))
-      .toEqual([[1, 'The Masters'], [2, 'PGA Championship']]);
+    expect(response.contests[0]?.coveredSlots).toEqual([
+      { seasonSlotId: 'slot-14', slotDefinitionId: 'def-14', key: 'WEEK_14', name: null, slotKind: SlotKind.WEEK, weekNumber: 14, status: SeasonSlotStatus.SCHEDULED, startsAt: '2026-12-06T18:00:00.000Z', endsAt: null, sportEventId: 'event-1', competitionCode: 'REGULAR', competitionName: null },
+      { seasonSlotId: 'slot-15', slotDefinitionId: 'def-15', key: 'WEEK_15', name: null, slotKind: SlotKind.WEEK, weekNumber: 15, status: SeasonSlotStatus.IN_PROGRESS, startsAt: null, endsAt: null, sportEventId: null, competitionCode: 'REGULAR', competitionName: 'Regular season' },
+    ]);
   });
 
   it('gives each listed contest every entry it holds, drafts included, so a list knows when its cap is reached (#1781)', () => {
     const response = toContestListResponse(
       [buildContest({ id: 'contest-1', sportEventIds: ['event-1'] })],
-      { allEntryCounts: new Map([['contest-1', 10]]), entryCaps: new Map([['contest-1', 10]]), entryCounts: new Map([['contest-1', 4]]), progress: new Map() },
+      { allEntryCounts: new Map([['contest-1', 10]]), entryCaps: new Map([['contest-1', 10]]), entryCounts: new Map([['contest-1', 4]]), progress: new Map(), currentSlotIds: new Map() },
       new Map([['event-1', masters]]),
     );
 
@@ -88,7 +91,7 @@ describe('toContestListResponse', () => {
   it('gives a live contest its progress and every other contest null (#1782)', () => {
     const response = toContestListResponse(
       [buildContest({ id: 'live', sportEventIds: ['event-1'] }), buildContest({ id: 'open', sportEventIds: ['event-1'] })],
-      { allEntryCounts: new Map(), entryCaps: new Map(), entryCounts: new Map(), progress: new Map([['live', { played: 9, total: 14, unit: 'GAMES' as const }]]) },
+      { allEntryCounts: new Map(), entryCaps: new Map(), entryCounts: new Map(), progress: new Map([['live', { played: 9, total: 14, unit: 'GAMES' as const }]]), currentSlotIds: new Map() },
       new Map([['event-1', masters]]),
     );
 
@@ -98,7 +101,7 @@ describe('toContestListResponse', () => {
   it('leaves an event that was not found out of the contest\'s events rather than inventing one', () => {
     const response = toContestListResponse(
       [buildContest({ id: 'lost-event', sportEventIds: ['event-gone'] })],
-      { allEntryCounts: new Map(), entryCaps: new Map(), entryCounts: new Map(), progress: new Map() },
+      { allEntryCounts: new Map(), entryCaps: new Map(), entryCounts: new Map(), progress: new Map(), currentSlotIds: new Map() },
       new Map([['event-1', masters]]),
     );
 
@@ -108,7 +111,7 @@ describe('toContestListResponse', () => {
 
 describe('toContestResponse events', () => {
   it('gives a single-contest read its events too, so a page reads each event\'s name and status from it', () => {
-    expect(toContestResponse(buildContest({ id: 'contest-1', sportEventIds: ['event-1'] }), new Map([['event-1', masters()]]), 20).contest.sportEvents)
+    expect(toContestResponse(buildContest({ id: 'contest-1', sportEventIds: ['event-1'] }), new Map([['event-1', masters()]]), { entriesPerContest: 20, currentSlotId: null }).contest.sportEvents)
       .toEqual([expect.objectContaining({ sportEventId: 'event-1', name: 'The Masters' })]);
   });
 
@@ -117,16 +120,16 @@ describe('toContestResponse events', () => {
       id: 'event-1', name: 'World Series', startDate: new Date('2026-10-23T00:08:00.000Z'), status: SportEventStatus.SCHEDULED,
       participantType: ParticipantType.TEAM, scoringFamily: ScoringFamily.HEAD_TO_HEAD,
     };
-    const [golfEvent] = toContestResponse(buildContest({ id: 'contest-1', sportEventIds: ['event-1'] }), new Map([['event-1', masters()]]), 20).contest.sportEvents;
-    const [bracketEvent] = toContestResponse(buildContest({ id: 'contest-2', sportEventIds: ['event-1'] }), new Map([['event-1', worldSeries]]), 20).contest.sportEvents;
+    const [golfEvent] = toContestResponse(buildContest({ id: 'contest-1', sportEventIds: ['event-1'] }), new Map([['event-1', masters()]]), { entriesPerContest: 20, currentSlotId: null }).contest.sportEvents;
+    const [bracketEvent] = toContestResponse(buildContest({ id: 'contest-2', sportEventIds: ['event-1'] }), new Map([['event-1', worldSeries]]), { entriesPerContest: 20, currentSlotId: null }).contest.sportEvents;
 
     expect([golfEvent.participantType, golfEvent.scoringFamily]).toEqual([ParticipantType.INDIVIDUAL, ScoringFamily.STROKE_PLAY]);
     expect([bracketEvent.participantType, bracketEvent.scoringFamily]).toEqual([ParticipantType.TEAM, ScoringFamily.HEAD_TO_HEAD]);
   });
 
   it('gives a single-contest read its entry cap, and a contest with no cap none', () => {
-    expect(toContestResponse(buildContest({ id: 'contest-1' }), new Map(), 200).contest.entriesPerContest).toBe(200);
-    expect(toContestResponse(buildContest({ id: 'contest-1' }), new Map(), null).contest.entriesPerContest).toBeNull();
+    expect(toContestResponse(buildContest({ id: 'contest-1' }), new Map(), { entriesPerContest: 200, currentSlotId: null }).contest.entriesPerContest).toBe(200);
+    expect(toContestResponse(buildContest({ id: 'contest-1' }), new Map(), { entriesPerContest: null, currentSlotId: null }).contest.entriesPerContest).toBeNull();
   });
 
   function masters() {

@@ -8,6 +8,7 @@
 
 import type {
   Contest,
+  ContestCoveredSlot,
   League,
   LeagueInvitation,
   LeagueMembership,
@@ -29,6 +30,8 @@ import {
   LeagueMembershipStatus,
   LeagueRole,
   SelectionType,
+  SeasonSlotStatus,
+  SlotKind,
   ProviderCode,
   type SportLeague,
   type SportLeagueProviderMapping,
@@ -152,6 +155,26 @@ export function buildInvitation(overrides: Partial<LeagueInvitation> = {}): Leag
   };
 }
 
+/** One Season slot a contest covers: a scheduled tournament slot of the REGULAR competition, unless overridden. */
+export function buildCoveredSlot(overrides: Partial<ContestCoveredSlot> = {}): ContestCoveredSlot {
+  const slotDefinitionId = overrides.slotDefinitionId ?? nextId();
+  return {
+    seasonSlotId: `season-slot-${slotDefinitionId}`,
+    slotDefinitionId,
+    key: 'TOURNAMENT',
+    name: null,
+    slotKind: SlotKind.TOURNAMENT,
+    weekNumber: null,
+    status: SeasonSlotStatus.SCHEDULED,
+    startsAt: null,
+    endsAt: null,
+    sportEventId: null,
+    competitionCode: 'REGULAR',
+    competitionName: null,
+    ...overrides,
+  };
+}
+
 export function buildContest(overrides: Partial<Contest> = {}): Contest {
   return {
     id: nextId(),
@@ -159,6 +182,7 @@ export function buildContest(overrides: Partial<Contest> = {}): Contest {
     sportEventIds: [],
     coveredSeasonSlotIds: [],
     coveredSlotDefinitionIds: [],
+    coveredSlots: [],
     name: 'Masters Pool 2026',
     sportLeagueSeasonId: 'season-2026',
     seasonYear: 2026,

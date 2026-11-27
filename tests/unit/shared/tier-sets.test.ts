@@ -119,7 +119,7 @@ describe('contestTierSetSlot', () => {
     expect([contestTierSetSlot(slots, ['def-r32', 'def-s16']), contestTierSetSlot(slots, ['def-r64', 'def-s16'])]).toEqual([sweet16, roundOf64]);
   });
 
-  it('falls back to the event\'s tier-set slot for a contest whose coverage is unknown or covers no slot holding a set, and to none for an event with no slot', () => {
-    expect([contestTierSetSlot(slots, null), contestTierSetSlot(slots, ['def-r32']), contestTierSetSlot<typeof sweet16>([], ['def-s16'])]).toEqual([roundOf64, roundOf64, undefined]);
+  it('falls back to the event\'s tier-set slot for a contest that covers no slot holding a set, and to none for an event with no slot', () => {
+    expect([contestTierSetSlot(slots, ['def-r32']), contestTierSetSlot<typeof sweet16>([], ['def-s16'])]).toEqual([roundOf64, undefined]);
   });
 });

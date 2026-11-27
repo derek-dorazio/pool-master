@@ -22,7 +22,7 @@ import {
   formatNumber,
   useDisplayPreferences,
 } from '@/features/shared/ui';
-import { firstContestEvent, type ContestSportEvent } from './contest-events';
+import { eventOfFirstSlot, type ContestEvent } from './contest-events';
 import { ContestHistoryYearPicker } from './contest-history-year-picker';
 import { ContestStatusBadge } from './contest-status-badge';
 import { ManageContestsRowActions } from './manage-contests-row-actions';
@@ -37,7 +37,7 @@ type ContestFilter = 'active' | 'history';
 
 type ContestRow = {
   contest: ContestDto;
-  event: ContestSportEvent | null;
+  event: ContestEvent | null;
   eventName: string;
   formatName: string;
 };
@@ -59,7 +59,7 @@ function compareHistoryRows(left: ContestRow, right: ContestRow) {
   return compareContestRows(right, left);
 }
 
-function EventCell({ contest, event }: { contest: ContestDto; event: ContestSportEvent | null }) {
+function EventCell({ contest, event }: { contest: ContestDto; event: ContestEvent | null }) {
   if (!event) {
     return <span className="text-muted-foreground">No event</span>;
   }
@@ -119,7 +119,7 @@ export function ManageContestsPage() {
   // The first event's name and start sort and search the table; the contest list carries them (#577).
   const rows = useMemo<ContestRow[]>(() => {
     const built = shownContests.map((contest) => {
-      const event = firstContestEvent(contest);
+      const event = eventOfFirstSlot(contest);
       return {
         contest,
         event,

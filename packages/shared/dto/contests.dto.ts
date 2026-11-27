@@ -11,7 +11,9 @@ import {
   ParticipantScoringDefinitionIdSchema,
   ParticipantType,
   ScoringFamily,
+  SeasonSlotStatus,
   SelectionType,
+  SlotKind,
   Sport,
   SportEventStatus,
 } from '@poolmaster/shared/domain';
@@ -68,7 +70,6 @@ export type UpdateContestEntryRequest = z.infer<typeof UpdateContestEntryRequest
 
 export const ContestSportEventDtoSchema = z.object({
   sportEventId: z.string().describe('The event.'),
-  sequence: z.number().int().min(1).describe('The event\'s place in the contest, 1 first: the contest\'s events in start-date order.'),
   name: z.string().describe('The event\'s name.'),
   startDate: z.iso.datetime().describe('The event\'s scheduled start: when its picks close.'),
   endDate: z.iso.datetime().nullable().describe('The event\'s scheduled end when known; null otherwise. The last event\'s end is when the contest is expected to finish.'),
@@ -79,11 +80,21 @@ export const ContestSportEventDtoSchema = z.object({
 }).describe('One event a contest covers, enough to name, order and pick it without reading the event (#713).');
 export type ContestSportEventDto = z.infer<typeof ContestSportEventDtoSchema>;
 
-/** Body of the commissioner's "events in this contest" save (#713). */
-export const SetContestSportEventsRequestSchema = z.object({
-  sportEventIds: z.array(z.uuid()).min(1).describe('Every event the contest should cover: the ones it keeps and the ones added. An event left out is removed. Kept in start-date order.'),
-}).describe('Request payload for setting the events a contest covers.');
-export type SetContestSportEventsRequest = z.infer<typeof SetContestSportEventsRequestSchema>;
+export const ContestCoveredSlotDtoSchema = z.object({
+  seasonSlotId: z.uuid().describe('The Season slot (SportLeagueSeasonSlotDto.id).'),
+  slotDefinitionId: z.uuid().describe('Its slot definition (SportLeagueCompetitionSlot).'),
+  key: z.string().describe('The definition\'s code in its league, such as WEEK_14, FINAL or MASTERS. An identifier; nothing parses it.'),
+  name: z.string().nullable().describe('The league\'s proper name for the slot, such as "Super Bowl", or a test slot\'s label; null: screens use the word for its kind.'),
+  slotKind: z.enum(SlotKind).describe('What kind of slot it is: a WEEK of games, a postseason ROUND, a TOURNAMENT of its own, a PLAY_IN.'),
+  weekNumber: z.number().int().nullable().describe('For a WEEK slot, its week; null otherwise.'),
+  status: z.enum(SeasonSlotStatus).describe('The Season slot\'s own status.'),
+  startsAt: z.iso.datetime().nullable().describe('The earliest start of the slot\'s games; null until the sync has placed one.'),
+  endsAt: z.iso.datetime().nullable().describe('The latest end of the slot\'s games; null until the sync has placed one.'),
+  sportEventId: z.uuid().nullable().describe('The event that plays the slot, one of the contest\'s `sportEvents`; null until an event does.'),
+  competitionCode: z.string().describe('The competition the slot is in, such as REGULAR or CFP; nothing parses it.'),
+  competitionName: z.string().nullable().describe('That competition\'s name, such as "Bowls", when it has one.'),
+}).describe('One Season slot a contest covers (#2014): what a screen names it by, its status and the event that plays it.');
+export type ContestCoveredSlotDto = z.infer<typeof ContestCoveredSlotDtoSchema>;
 
 /** Body of the commissioner's cup weight save (#841). */
 export const SetContestCupWeightRequestSchema = z.object({
@@ -110,7 +121,9 @@ export const ContestDtoSchema = z.object({
   contestFormat: z.enum(Object.values(ContestFormat) as [string, ...string[]]),
   selectionType: z.enum(SelectionType),
   leagueId: z.string(),
-  sportEvents: z.array(ContestSportEventDtoSchema).describe('The events the contest covers, in sequence order (#713). One for a golf or race contest.'),
+  sportEvents: z.array(ContestSportEventDtoSchema).describe('The events that play the contest\'s covered slots, each once, in the order their slots are played (#713). One for a golf or race contest.'),
+  coveredSlots: z.array(ContestCoveredSlotDtoSchema).describe('The Season slots the contest covers, in play order (#2014), fixed at creation.'),
+  currentSlotId: z.uuid().nullable().describe('The covered slot the contest\'s pages open on when none is named (#2014): its first covered slot that has not started, the one being picked, else its last. A slot has started once its event has and, when its games give it a start, that start has passed. Null only for a contest that covers no slot.'),
   sport: z.enum(Sport).nullable().optional(),
   sportUrlSegment: z.string().nullable().optional().describe('The URL segment of the contest\'s sport, read through its events\' sport league: what a link to its sport\'s How to Play names it by. Null or absent as `sport` is.'),
   entryCount: z.number().optional().describe('Number of entries that have submitted at least one event. Present on the list and single-contest reads; omitted on the contest writes.'),
@@ -331,7 +344,7 @@ registerSchema('CreateContestRequest', CreateContestRequestSchema);
 registerSchema('UpdateContestRequest', UpdateContestRequestSchema);
 registerSchema('UpdateContestEntryRequest', UpdateContestEntryRequestSchema);
 registerSchema('ContestSportEventDto', ContestSportEventDtoSchema);
-registerSchema('SetContestSportEventsRequest', SetContestSportEventsRequestSchema);
+registerSchema('ContestCoveredSlotDto', ContestCoveredSlotDtoSchema);
 registerSchema('SetContestCupWeightRequest', SetContestCupWeightRequestSchema);
 registerSchema('ContestEntryEventDto', ContestEntryEventDtoSchema);
 registerSchema('ContestEntryEventResultDto', ContestEntryEventResultDtoSchema);

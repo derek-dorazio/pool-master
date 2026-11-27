@@ -176,7 +176,7 @@ describe('abandoned draft contest retention (#1195)', () => {
     const holder = holdContestLocks(prisma, [draft.id]);
     const holderPid = await holder.ready;
     const purged = retention().purge(new Date());
-    // The swap `replaceCoveredSlots` makes under the same lock: the old event's slots out, the new one's in.
+    // A write under the same lock moves the draft onto an upcoming event's slots: the old ones out, the new one's in.
     const upcomingSlots = await contestOnEvents(prisma, [upcoming.id]);
     await waitUntilBlockedBy(prisma, holderPid).finally(() =>
       holder.release(async (tx) => {

@@ -1,5 +1,5 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
-import type { ContestConfigurationRequest, SetContestCupWeightRequest, SetContestSportEventsRequest } from '@poolmaster/shared/dto';
+import type { ContestConfigurationRequest, SetContestCupWeightRequest } from '@poolmaster/shared/dto';
 import { createRequestContextLogger } from '../../core/logger';
 import { sendError } from '../../core/error-handler';
 import {
@@ -14,7 +14,6 @@ export function createContestManagementHandlers(
     getContest,
     updateContestConfiguration,
     openContest,
-    setContestSportEvents,
     setContestCupWeight,
   };
 
@@ -127,38 +126,6 @@ export function createContestManagementHandlers(
         return sendError(reply, error.statusCode, error.code, error.message);
       }
       logger.error({ contestId: request.params.contestId, err: error }, 'contest management set cup weight route failed');
-      throw error;
-    }
-  }
-
-  async function setContestSportEvents(
-    request: FastifyRequest<{
-      Params: { id: string; contestId: string };
-      Body: SetContestSportEventsRequest;
-    }>,
-    reply: FastifyReply,
-  ): Promise<void> {
-    const logger = createRequestContextLogger(request);
-    logger.debug({ contestId: request.params.contestId }, 'contest management set sport events route start');
-    try {
-      const contest = await contestManagementService.setContestSportEvents(
-        request.params.id,
-        request.params.contestId,
-        request.body.sportEventIds,
-      );
-      logger.info({ contestId: request.params.contestId, sportEventCount: contest.sportEvents.length }, 'contest management set sport events route completed');
-      return reply.send({ contest });
-    } catch (error) {
-      if (error instanceof ContestManagementError) {
-        logger.warn({
-          contestId: request.params.contestId,
-          error: error.message,
-          code: error.code,
-          statusCode: error.statusCode,
-        }, 'contest management set sport events route rejected');
-        return sendError(reply, error.statusCode, error.code, error.message);
-      }
-      logger.error({ contestId: request.params.contestId, err: error }, 'contest management set sport events route failed');
       throw error;
     }
   }

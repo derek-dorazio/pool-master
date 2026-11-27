@@ -28,7 +28,6 @@ import {
   CONTEST_DRAW_SINGLE_EVENT,
   CONTEST_EVENTS_LEAGUE_MISMATCH,
   CONTEST_EVENTS_SEASON_MISMATCH,
-  CONTEST_EVENTS_LOCKED,
   CONTEST_COVERAGE_NO_LISTED_SLOT,
   CONTEST_COVERAGE_SLOT_NOT_CHOSEN,
   CONTEST_COVERAGE_SLOT_NOT_COVERABLE,
@@ -215,15 +214,6 @@ const COVERAGE_REFUSALS: Readonly<Record<ContestCoverageProblem, { message: stri
     code: CONTEST_COVERAGE_SLOT_NOT_COVERABLE,
   },
 };
-
-/** The definitions of the chosen Season slots, in their order: a contest's coverage before it is written. */
-function definitionsOf(seasonSlots: readonly CoverableSeasonSlot[], seasonSlotIds: readonly string[]): string[] {
-  const byId = new Map(seasonSlots.map((slot) => [slot.id, slot.slotDefinitionId]));
-  return seasonSlotIds.flatMap((seasonSlotId) => {
-    const definitionId = byId.get(seasonSlotId);
-    return definitionId === undefined ? [] : [definitionId];
-  });
-}
 
 /** What the server says when a one-event contest is given more events, one line per such type. */
 const ONE_EVENT_REFUSALS: Readonly<Record<OneEventSelectionType, { message: string; code: ApiErrorCode }>> = {
@@ -610,121 +600,6 @@ export class ContestManagementService {
   }
 
   /**
-   * "Events in this contest" (#713): sets the events the contest covers to `sportEventIds` and
-   * returns the contest as getContest does. An added event must be eligible as at create
-   * (released, field loaded, not started) and from the contest's sport league, and the contest's
-   * rules must fit it. Events can be added while the contest is a draft, open or live; one can be
-   * removed only while none of the contest's events has started, and removing it deletes the
-   * picks made on it. The contest keeps its events in start-date order.
-   */
-  async setContestSportEvents(
-    leagueId: string,
-    contestId: string,
-    sportEventIds: readonly string[],
-  ): Promise<ContestManagementDetailDto> {
-    this.logger.debug({ leagueId, contestId, sportEventIds }, 'contest management set sport events start');
-    const contest = await this.contestRepo.findById(contestId);
-    if (!contest || contest.leagueId !== leagueId) {
-      this.logger.warn({ leagueId, contestId }, 'contest management set sport events missing contest');
-      throw new ContestManagementError('Contest not found', 'CONTEST_NOT_FOUND', 404);
-    }
-    await this.changeSportEvents(contest, sportEventIds);
-    return this.getContest(contestId);
-  }
-
-  /** Gives `contest`, as read, these events, under the rules a commissioner's edit keeps. */
-  private async changeSportEvents(contest: Contest, sportEventIds: readonly string[]): Promise<void> {
-    const contestId = contest.id;
-    if (contest.status === ContestStatus.COMPLETED || contest.drawnAt !== undefined) {
-      this.logger.warn({ contestId, status: contest.status, drawn: contest.drawnAt !== undefined }, 'contest management set sport events refused for a settled or drawn contest');
-      throw new ContestManagementError(
-        contest.drawnAt ? 'This contest\'s draw has been dealt, so its event can no longer change.' : 'This contest is finished, so its events can no longer change.',
-        CONTEST_EVENTS_LOCKED,
-        409,
-      );
-    }
-    const configuration = await this.contestConfigurationRepo.findByContest(contestId);
-    if (!configuration) {
-      this.logger.warn({ contestId }, 'contest management set sport events missing configuration');
-      throw new ContestManagementError('Contest configuration not found', 'CONTEST_NOT_FOUND', 404);
-    }
-
-    const current = await this.findContestSportEvents(contest);
-    const requestedIds = [...new Set(sportEventIds)];
-    const removed = current.filter((sportEvent) => !requestedIds.includes(sportEvent.id));
-    const startedEvent = current.find((sportEvent) => hasSportEventStarted(sportEvent, this.now()));
-    if (removed.length > 0 && startedEvent) {
-      this.logger.warn({
-        contestId,
-        removedSportEventIds: removed.map((sportEvent) => sportEvent.id),
-        startedSportEventId: startedEvent.id,
-      }, 'contest management set sport events refused a removal once an event has started');
-      throw new ContestManagementError(
-        'One of this contest\'s events has started, so events can be added but not removed.',
-        CONTEST_EVENTS_LOCKED,
-        409,
-      );
-    }
-    const kept = current.filter((sportEvent) => requestedIds.includes(sportEvent.id));
-    const added = await this.assertSportEventsContestEligible(
-      requestedIds.filter((sportEventId) => !current.some((sportEvent) => sportEvent.id === sportEventId)),
-      contestCutoff(configuration.configJson, contest.squaresGameMatchId),
-    );
-    const sportEvents = [...kept, ...added];
-    // The contest's league is its first event's; the new list must keep to it.
-    this.assertOneSportLeague([...current.slice(0, 1), ...sportEvents]);
-    this.assertEventCountFitsSelectionType(contest.selectionType, sportEvents.length);
-
-    // A contest's Season is fixed at creation (#2014): its events change only inside it, so it
-    // never moves to another season's cup or past the plan's sports leagues a year there.
-    const otherSeason = sportEvents.find((sportEvent) => sportEvent.sportLeagueSeasonId !== contest.sportLeagueSeasonId);
-    if (otherSeason) {
-      this.logger.warn({ contestId, sportEventId: otherSeason.id, sportLeagueSeasonId: contest.sportLeagueSeasonId, eventSportLeagueSeasonId: otherSeason.sportLeagueSeasonId }, 'contest management set sport events refused an event of another season');
-      throw new ContestManagementError(
-        `This contest is in the ${contest.seasonYear} season, so its events must be too.`,
-        CONTEST_EVENTS_SEASON_MISMATCH,
-      );
-    }
-    // The covered slots are resolved again for the new events, as at creation (#2014), keeping
-    // the contest's first covered slot where one of the events still holds it.
-    const template = await this.findConfigurationTemplate(configuration);
-    const coverable = await this.coverableSlots(template, contest.sportLeagueSeasonId);
-    const keptStart = contest.coveredSeasonSlotIds.find((seasonSlotId) => coverable.some((slot) => slot.id === seasonSlotId
-      && slot.sportEventId !== null && requestedIds.includes(slot.sportEventId)));
-    const seasonSlotIds = this.coveredSlotsOrRefuse(template, coverable, requestedIds, keptStart);
-    const storedRules = ensureTypedConfiguration(configuration);
-    const { configJson } = await this.resolveContestRules(sportEvents, storedRules, {
-      kept: currentScoring(await this.participantContestScoringRuleRepo.findByContestConfiguration(configuration.id)),
-    }, { slotDefinitionIds: definitionsOf(coverable, seasonSlotIds) });
-    // Only a budget contest's rules depend on its events, through their salary cap. A draft takes
-    // the new events' cap; an open contest's members entered under the old one.
-    if (configJson.selectionType === SelectionType.BUDGET_PICK
-      && storedRules.selectionType === SelectionType.BUDGET_PICK
-      && configJson.salaryCap !== storedRules.salaryCap) {
-      if (contest.status !== ContestStatus.DRAFT) {
-        this.logger.warn({ contestId, salaryCap: storedRules.salaryCap, eventSalaryCap: configJson.salaryCap }, 'contest management set sport events refused another salary cap on an open contest');
-        throw new ContestManagementError(
-          `These events were priced against a $${configJson.salaryCap.toLocaleString('en-US')} salary cap, but this contest's entries are built under $${storedRules.salaryCap.toLocaleString('en-US')}.`,
-          CONTEST_BUDGET_SALARY_CAP_MISMATCH,
-          409,
-        );
-      }
-      await this.contestConfigurationRepo.update(configuration.id, { configJson });
-    }
-
-    await this.contestRepo.replaceCoveredSlots(contestId, seasonSlotIds);
-    // New events move the reminders of a contest already open (#1170).
-    await this.contestRepo.recheckReminders({ contestIds: [contestId] }, this.now());
-    this.logger.info({
-      contestId,
-      sportEventIds: requestedIds,
-      coveredSlotCount: seasonSlotIds.length,
-      addedCount: added.length,
-      removedCount: removed.length,
-    }, 'contest management set sport events completed');
-  }
-
-  /**
    * The Season slots a new contest covers (#2014), resolved once by `resolveCoveredSeasonSlots`
    * from its template and the chosen events; a problem is refused with 422.
    */
@@ -770,16 +645,6 @@ export class ContestManagementService {
       throw new ContestManagementError(refusal.message, refusal.code);
     }
     return resolved.seasonSlotIds;
-  }
-
-  /** The active template a contest's configuration names (#2014: every contest has one). */
-  private async findConfigurationTemplate(configuration: ContestConfiguration): Promise<ContestConfigTemplate> {
-    const template = await this.contestConfigTemplateRepo.findById(configuration.templateId);
-    if (!template) {
-      this.logger.error({ contestId: configuration.contestId, templateId: configuration.templateId }, 'contest management configuration template missing');
-      throw new ContestManagementError('Contest configuration template not found', 'CONTEST_CONFIG_TEMPLATE_NOT_FOUND', 404);
-    }
-    return template;
   }
 
   /** Every event of a contest is in its one Season (#2014), which the contest is created in. */

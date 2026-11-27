@@ -114,7 +114,7 @@ describe('readTiersOnce', () => {
       tiers.getEffectiveTiersForSportEvent('event-1', { seasonSlotId: 'slot-2' }),
       tiers.getEffectiveTiersForSportEvent('event-1', { coveredSlotDefinitionIds: ['def-b', 'def-a'] }),
       tiers.getEffectiveTiersForSportEvent('event-1', { coveredSlotDefinitionIds: ['def-a', 'def-b'] }),
-      tiers.getEffectiveTiersForSportEvent('event-1', { coveredSlotDefinitionIds: null }),
+      tiers.getEffectiveTiersForSportEvent('event-1', { coveredSlotDefinitionIds: ['def-c'] }),
       tiers.getEffectiveTiersForSportEvent('event-2'),
     ]);
 
@@ -122,7 +122,7 @@ describe('readTiersOnce', () => {
       ['event-1', undefined],
       ['event-1', { seasonSlotId: 'slot-2' }],
       ['event-1', { coveredSlotDefinitionIds: ['def-b', 'def-a'] }],
-      ['event-1', { coveredSlotDefinitionIds: null }],
+      ['event-1', { coveredSlotDefinitionIds: ['def-c'] }],
       ['event-2', undefined],
     ]);
   });

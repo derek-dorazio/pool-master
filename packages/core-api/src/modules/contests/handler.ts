@@ -102,7 +102,8 @@ export function createContestHandlers(contestService: ContestService) {
       contestCount: contests.length,
       entryCount: Array.from(entryCounts.values()).reduce((sum, count) => sum + count, 0),
     }, 'contest list route completed');
-    return toContestListResponse(contests, { allEntryCounts, entryCaps, entryCounts, progress }, eventsById);
+    const currentSlotIds = contestService.findCurrentSlotIds(contests, eventsById);
+    return toContestListResponse(contests, { allEntryCounts, entryCaps, entryCounts, progress, currentSlotIds }, eventsById);
   }
 
   async function listFinishedYears(
@@ -150,7 +151,8 @@ export function createContestHandlers(contestService: ContestService) {
       entryCount: entrySummary.totals.allEntryCount,
       myEntryCount: entrySummary.myEntryIds.length,
     }, 'contest get route completed');
-    return reply.send(toContestResponse(contest, eventsById, entryCaps.get(contest.id) ?? null, { ...entrySummary, tierSetSeasonSlots }));
+    const currentSlotId = contestService.findCurrentSlotIds([contest], eventsById).get(contest.id) ?? null;
+    return reply.send(toContestResponse(contest, eventsById, { entriesPerContest: entryCaps.get(contest.id) ?? null, currentSlotId }, { ...entrySummary, tierSetSeasonSlots }));
   }
 
   async function listEntries(
@@ -472,7 +474,7 @@ export function createContestHandlers(contestService: ContestService) {
         contestService.findEventsForContests([contest]),
         contestService.findEntryCaps([contest]),
       ]);
-      return reply.send(toContestResponse(contest, eventsById, entryCaps.get(contest.id) ?? null));
+      return reply.send(toContestResponse(contest, eventsById, { entriesPerContest: entryCaps.get(contest.id) ?? null, currentSlotId: contestService.findCurrentSlotIds([contest], eventsById).get(contest.id) ?? null }));
     } catch (err) {
       if (err instanceof ContestNotFoundError) {
         logger.warn({ contestId: request.params.contestId }, 'contest update route missing contest');
@@ -554,7 +556,7 @@ export function createCreateContestHandler(
         contestService.findEventsForContests([created]),
         contestService.findEntryCaps([created]),
       ]);
-      return reply.status(201).send(toContestResponse(created, eventsById, entryCaps.get(created.id) ?? null));
+      return reply.status(201).send(toContestResponse(created, eventsById, { entriesPerContest: entryCaps.get(created.id) ?? null, currentSlotId: contestService.findCurrentSlotIds([created], eventsById).get(created.id) ?? null }));
     } catch (error) {
       if (error instanceof ContestManagementError) {
         logger.warn({ leagueId: request.params.id, code: error.code }, 'contest create route rejected');

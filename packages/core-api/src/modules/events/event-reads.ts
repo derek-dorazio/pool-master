@@ -95,7 +95,7 @@ export function readTiersOnce(tiers: Pick<SportEventTierService, 'getEffectiveTi
       let set = 'tier-set slot';
       if (choice !== undefined && 'seasonSlotId' in choice) set = `slot ${choice.seasonSlotId}`;
       if (choice !== undefined && 'coveredSlotDefinitionIds' in choice) {
-        set = choice.coveredSlotDefinitionIds === null ? 'covering all' : `covering ${[...choice.coveredSlotDefinitionIds].sort().join(',')}`;
+        set = `covering ${[...choice.coveredSlotDefinitionIds].sort().join(',')}`;
       }
       return remember(answers, `${sportEventId} ${set}`, () => tiers.getEffectiveTiersForSportEvent(sportEventId, choice));
     },

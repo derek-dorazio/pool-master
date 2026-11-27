@@ -72,6 +72,7 @@ import {
   opposingSideOf,
   matchHomeAwayOf,
   matchScoreOf,
+  currentCoveredSlot,
 } from '@poolmaster/shared/domain';
 import {
   CONTEST_EVENT_NOT_IN_CONTEST,
@@ -473,6 +474,19 @@ export class ContestService {
   /** Every entry each contest holds, drafts included, as its cap counts them (#1781). */
   async countAllEntriesByContest(contestIds: string[]): Promise<Map<string, number>> {
     return this.deps.entries.countByContests(contestIds);
+  }
+
+  /**
+   * Each contest's current covered slot (#2014), by contest id: the one its pages open on, by
+   * `currentCoveredSlot` at this service's clock. `eventsById` holds the contests' events, already
+   * read; a contest covering no slot is left out.
+   */
+  findCurrentSlotIds(contests: readonly Contest[], eventsById: ReadonlyMap<string, SportEvent>): Map<string, string> {
+    const now = this.now();
+    return new Map(contests.flatMap((contest) => {
+      const current = currentCoveredSlot(contest.coveredSlots, eventsById, now);
+      return current ? [[contest.id, current.seasonSlotId] as const] : [];
+    }));
   }
 
   /**

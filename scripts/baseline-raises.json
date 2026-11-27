@@ -726,6 +726,84 @@
       "key": "useRowCorrections",
       "now": 0,
       "reason": "retired by #2008"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "scoreMissedLineup",
+      "now": 0,
+      "reason": "retired by #2014"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "receiptsPendingSportEventId",
+      "now": 0,
+      "reason": "retired by #2014"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "ContestSportEventRepository",
+      "now": 0,
+      "reason": "retired by #2014"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "ContestSportEvent",
+      "now": 0,
+      "reason": "retired by #2014"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "setContestSportEvents",
+      "now": 0,
+      "reason": "retired by #2014"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "SetContestSportEventsRequest",
+      "now": 0,
+      "reason": "retired by #2014"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "replaceCoveredSlots",
+      "now": 0,
+      "reason": "retired by #2014"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "CONTEST_EVENTS_LOCKED",
+      "now": 0,
+      "reason": "retired by #2014"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "ContestEventsPage",
+      "now": 0,
+      "reason": "retired by #2014"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "buildLeagueAdminContestEventsPath",
+      "now": 0,
+      "reason": "retired by #2014"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "firstContestEvent",
+      "now": 0,
+      "reason": "retired by #2014"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "lastContestEvent",
+      "now": 0,
+      "reason": "retired by #2014"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "currentContestEvent",
+      "now": 0,
+      "reason": "retired by #2014"
     }
   ]
 }

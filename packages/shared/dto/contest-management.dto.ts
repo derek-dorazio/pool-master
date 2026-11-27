@@ -163,12 +163,6 @@ export const CONTEST_COVERAGE_SLOT_NOT_CHOSEN = 'CONTEST_COVERAGE_SLOT_NOT_CHOSE
 /** Error code for a starting slot that is not one of the event's slots the template lists (#2014). */
 export const CONTEST_COVERAGE_SLOT_NOT_COVERABLE = 'CONTEST_COVERAGE_SLOT_NOT_COVERABLE';
 
-/**
- * Error code for removing an event from a contest once one of its events has started (#713):
- * entries have been played against the list, so it can only grow.
- */
-export const CONTEST_EVENTS_LOCKED = 'CONTEST_EVENTS_LOCKED';
-
 /** Error code for a random-draw contest given more than one event: the draw deals one field (#713). */
 export const CONTEST_DRAW_SINGLE_EVENT = 'CONTEST_DRAW_SINGLE_EVENT';
 

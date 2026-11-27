@@ -16,7 +16,7 @@ import type {
   PendingDrawReceipts,
   ReminderCheck,
 } from '@poolmaster/shared/db';
-import { championshipYear, ContestStatus, SelectionType, SportEventStatus, type Contest, type ContestFormat, type CupWeight, FINISHED_SPORT_EVENT_STATUSES } from '@poolmaster/shared/domain';
+import { championshipYear, ContestStatus, SelectionType, SportEventStatus, type Contest, type ContestCoveredSlot, type ContestFormat, type CupWeight, FINISHED_SPORT_EVENT_STATUSES, type SeasonSlotStatus, type SlotKind } from '@poolmaster/shared/domain';
 import { forgettingReads, memoizedRead, memoizedReadMany, ReadMemoKey } from '../core/request-read-memo';
 import { lockContestRow, lockContestRowsAtOnce } from './contest-row-lock';
 import { insertBackgroundJobs } from './prisma-background-job-repository';
@@ -37,6 +37,17 @@ export function coversEventWhere(sportEventId: string | { in: string[] }): Prism
   return { seasonSlots: { some: { seasonSlot: { eventSlot: { sportEventId } } } } };
 }
 
+/** What a contest read shows of each covered Season slot (#2014): its definition, competition and event. */
+const COVERED_SEASON_SLOT_SELECT = {
+  sportLeagueCompetitionSlotId: true,
+  status: true,
+  startsAt: true,
+  endsAt: true,
+  label: true,
+  definition: { select: { key: true, name: true, slotKind: true, weekNumber: true, competition: { select: { code: true, name: true } } } },
+  eventSlot: { select: { sportEventId: true } },
+} as const;
+
 /**
  * What every contest read joins: its Season with its sport (#2014), its covered slots in play order
  * with each slot's definition and event, its draw when it has one (#601), and a squares contest's
@@ -47,7 +58,7 @@ const CONTEST_INCLUDE = {
   seasonSlots: {
     select: {
       sportLeagueSeasonCompetitionSlotId: true,
-      seasonSlot: { select: { sportLeagueCompetitionSlotId: true, eventSlot: { select: { sportEventId: true } } } },
+      seasonSlot: { select: COVERED_SEASON_SLOT_SELECT },
     },
     orderBy: COVERED_SLOT_ORDER,
   },
@@ -337,51 +348,6 @@ export class PrismaContestRepository implements ContestRepository {
     return mapToContest(row);
   }
 
-  async replaceCoveredSlots(id: string, seasonSlotIds: readonly string[]): Promise<void> {
-    // The contest row lock comes first, as every entry write and the draw take it (#644), so an
-    // entry created meanwhile is either seen here or created after with the new events.
-    return forgettingReads(ReadMemoKey.contest, () => this.prisma.$transaction(async (tx) => {
-      await lockContestRow(tx, id);
-      const contest = await tx.contest.findUniqueOrThrow({ where: { id }, select: { sportLeagueSeasonId: true } });
-      const current = await tx.contestSeasonSlot.findMany({
-        where: { contestId: id },
-        select: { seasonSlot: { select: { eventSlot: { select: { sportEventId: true } } } } },
-      });
-      const next = seasonSlotIds.length === 0 ? [] : await tx.sportEventSlot.findMany({
-        where: { sportLeagueSeasonId: contest.sportLeagueSeasonId, sportLeagueSeasonCompetitionSlotId: { in: [...seasonSlotIds] } },
-        select: { sportEventId: true },
-      });
-      const sportEventIds = [...new Set(next.map((slot) => slot.sportEventId))];
-      const removed = [...new Set(current.flatMap((row) => (row.seasonSlot.eventSlot ? [row.seasonSlot.eventSlot.sportEventId] : [])))]
-        .filter((eventId) => !sportEventIds.includes(eventId));
-      if (removed.length > 0) {
-        await tx.contestEntryPick.deleteMany({
-          where: { entry: { contestId: id }, sportEventParticipant: { sportEventId: { in: removed } } },
-        });
-        await tx.contestEntryMatchPrediction.deleteMany({
-          where: { contestEntry: { contestId: id }, sportEventRoundMatch: { sportEventId: { in: removed } } },
-        });
-        await tx.contestEntryEvent.deleteMany({
-          where: { contestEntry: { contestId: id }, sportEventId: { in: removed } },
-        });
-      }
-      // The covered slots are resolved again whole, as at creation (#2014).
-      await tx.contestSeasonSlot.deleteMany({ where: { contestId: id } });
-      await tx.contestSeasonSlot.createMany({
-        data: seasonSlotIds.map((sportLeagueSeasonCompetitionSlotId) => ({
-          contestId: id,
-          sportLeagueSeasonId: contest.sportLeagueSeasonId,
-          sportLeagueSeasonCompetitionSlotId,
-        })),
-      });
-      const entries = await tx.contestEntry.findMany({ where: { contestId: id }, select: { id: true } });
-      await tx.contestEntryEvent.createMany({
-        data: entries.flatMap((entry) => sportEventIds.map((sportEventId) => ({ contestEntryId: entry.id, sportEventId }))),
-        skipDuplicates: true,
-      });
-    }));
-  }
-
   async delete(id: string): Promise<void> {
     // Delete child records in dependency order before removing the contest
     // The configuration's scoring rules and prize definitions reference it without a cascade,
@@ -436,12 +402,40 @@ function abandonedDraftWhere(lastEventStartedBefore: Date): Prisma.ContestWhereI
   };
 }
 
+type CoveredSeasonSlotRow = {
+  sportLeagueCompetitionSlotId: string;
+  status: SeasonSlotStatus;
+  startsAt: Date | null;
+  endsAt: Date | null;
+  label: string | null;
+  definition: { key: string; name: string | null; slotKind: SlotKind; weekNumber: number | null; competition: { code: string; name: string | null } };
+  eventSlot: { sportEventId: string } | null;
+};
+
+function toCoveredSlot(seasonSlotId: string, slot: CoveredSeasonSlotRow): ContestCoveredSlot {
+  return {
+    seasonSlotId,
+    slotDefinitionId: slot.sportLeagueCompetitionSlotId,
+    key: slot.definition.key,
+    // A test slot is told apart from its definition's other test slots by its label.
+    name: slot.label ?? slot.definition.name,
+    slotKind: slot.definition.slotKind,
+    weekNumber: slot.definition.weekNumber,
+    status: slot.status,
+    startsAt: slot.startsAt,
+    endsAt: slot.endsAt,
+    sportEventId: slot.eventSlot?.sportEventId ?? null,
+    competitionCode: slot.definition.competition.code,
+    competitionName: slot.definition.competition.name,
+  };
+}
+
 function mapToContest(row: {
   id: string;
   leagueId: string;
   sportLeagueSeasonId: string;
   sportLeagueSeason: { championshipYear: number; sportLeague: SportLeagueSportRow };
-  seasonSlots: { sportLeagueSeasonCompetitionSlotId: string; seasonSlot: { sportLeagueCompetitionSlotId: string; eventSlot: { sportEventId: string } | null } }[];
+  seasonSlots: { sportLeagueSeasonCompetitionSlotId: string; seasonSlot: CoveredSeasonSlotRow }[];
   name: string;
   status: ContestStatus;
   contestFormat: ContestFormat;
@@ -464,6 +458,7 @@ function mapToContest(row: {
     sportEventIds: [...new Set(row.seasonSlots.flatMap(({ seasonSlot }) => (seasonSlot.eventSlot ? [seasonSlot.eventSlot.sportEventId] : [])))],
     coveredSlotDefinitionIds: row.seasonSlots.map(({ seasonSlot }) => seasonSlot.sportLeagueCompetitionSlotId),
     coveredSeasonSlotIds: row.seasonSlots.map((covered) => covered.sportLeagueSeasonCompetitionSlotId),
+    coveredSlots: row.seasonSlots.map(({ sportLeagueSeasonCompetitionSlotId, seasonSlot }) => toCoveredSlot(sportLeagueSeasonCompetitionSlotId, seasonSlot)),
     name: row.name,
     status: row.status,
     contestFormat: row.contestFormat,

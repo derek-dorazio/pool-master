@@ -655,23 +655,7 @@ describe('Commissioner tools › Contests › one random-draw contest', () => {
   });
 });
 
-describe('Commissioner tools › Contests › one contest › its events', () => {
-  it.each([
-    ['squares', buildManagedContest({
-      configuration: { id: 'config-1', contestId: 'contest-1', maxEntriesPerSquad: 1, selectionType: SelectionType.SQUARES, maxSquaresPerEntry: 10 },
-    })],
-    ['bracket', buildManagedContest({
-      configuration: { id: 'config-1', contestId: 'contest-1', maxEntriesPerSquad: 1, selectionType: SelectionType.BRACKET },
-    })],
-  ] as const)('offers no way to add or change events on a %s contest, since it covers one event', async (_label, managedContest) => {
-    primeMocks({ contest: buildContest({ selectionType: managedContest.configuration.selectionType }), managedContest });
-
-    renderAt('/league/BIGDAWGS/admin/contests/contest-1');
-
-    expect(await screen.findByTestId('manage-contest-event-row')).toBeInTheDocument();
-    expect(screen.queryByTestId('manage-contest-events-edit')).not.toBeInTheDocument();
-  });
-
+describe('Commissioner tools › Contests › one contest › what it covers', () => {
   it.each([
     ['tiered', SelectionType.TIERED, buildManagedContest()],
     ['budget', SelectionType.BUDGET_PICK, buildManagedContest({
@@ -680,55 +664,53 @@ describe('Commissioner tools › Contests › one contest › its events', () =>
         selectionType: SelectionType.BUDGET_PICK, rosterSize: 6, countedScores: 4, salaryCap: 50_000,
       },
     })],
-  ] as const)('offers "Add events" on a single-event %s contest, linking to its event picker', async (_label, selectionType, managedContest) => {
+    ['bracket', SelectionType.BRACKET, buildManagedContest({
+      configuration: { id: 'config-1', contestId: 'contest-1', maxEntriesPerSquad: 1, selectionType: SelectionType.BRACKET },
+    })],
+  ] as const)('marks a set-up %s contest\'s event Fixed, with no way to change it, since a contest\'s event is set when it is created', async (_label, selectionType, managedContest) => {
     primeMocks({ contest: buildContest({ selectionType }), managedContest });
 
     renderAt('/league/BIGDAWGS/admin/contests/contest-1');
 
-    const link = await screen.findByTestId('manage-contest-events-edit');
-    expect(link).toHaveTextContent('Add events');
-    expect(link).toHaveAttribute('href', '/league/BIGDAWGS/admin/contests/contest-1/events');
-    expect(screen.getByTestId('manage-contest-event-row')).toHaveTextContent('Event');
+    const row = await screen.findByTestId('manage-contest-event-row');
+    expect(row).toHaveTextContent('Event');
+    expect(row).toHaveTextContent('Fixed');
+    expect(screen.queryByTestId('manage-contest-events-edit')).not.toBeInTheDocument();
   });
 
-  it('lists every event of a multi-event contest in order and offers "Change events"', async () => {
+  it('lists every slot a contest covers in play order, named as the league names it, under Covers, in order', async () => {
+    const [round] = buildContest().coveredSlots;
     primeMocks({
       contest: buildContest({
-        sportEvents: [
-          buildContestSportEvent(),
-          buildContestSportEvent({ sportEventId: 'event-2', sequence: 2, name: 'PGA Championship', startDate: '2099-05-14T12:00:00.000Z' }),
-        ],
-      }),
-      managedContest: buildManagedContest({
-        sportEvents: [
-          { sportEventId: 'event-1', effectiveTiers: [buildTier(1, 8)] },
-          { sportEventId: 'event-2', effectiveTiers: [buildTier(1, 9)] },
+        selectionType: SelectionType.BRACKET,
+        coveredSlots: [
+          { ...round, seasonSlotId: 'slot-r16', key: 'ROUND_OF_16', name: null, slotKind: 'ROUND_OF_16' },
+          { ...round, seasonSlotId: 'slot-qf', key: 'QUARTERFINAL', name: null, slotKind: 'QUARTERFINAL' },
+          { ...round, seasonSlotId: 'slot-final', key: 'FINAL', name: 'Championship Game', slotKind: 'FINAL' },
         ],
       }),
     });
 
     renderAt('/league/BIGDAWGS/admin/contests/contest-1');
 
-    expect(await screen.findByTestId('manage-contest-events-edit')).toHaveTextContent('Change events');
-    const row = screen.getByTestId('manage-contest-event-row');
-    expect(row).toHaveTextContent('2 events, listed below');
-    const listed = within(screen.getByRole('region', { name: 'Events, in order' })).getAllByRole('listitem');
+    const listed = within(await screen.findByRole('region', { name: 'Covers, in order' })).getAllByRole('listitem');
     expect(listed.map((item) => item.textContent)).toEqual([
-      expect.stringMatching(/^The Masters.*1$/),
-      expect.stringMatching(/^PGA Championship.*2$/),
+      expect.stringMatching(/^Round of 16.*1$/),
+      expect.stringMatching(/^Quarterfinal.*2$/),
+      expect.stringMatching(/^Championship Game.*3$/),
     ]);
   });
 
-  it('lists no separate events section for a contest on one event', async () => {
+  it('lists no separate coverage section for a contest that covers one slot', async () => {
     primeMocks();
 
     renderAt('/league/BIGDAWGS/admin/contests/contest-1');
 
     expect(await screen.findByTestId('manage-contest-event-row')).toHaveTextContent('The Masters');
-    expect(screen.queryByTestId('manage-contest-event-list')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('manage-contest-slot-list')).not.toBeInTheDocument();
   });
 
-  it('offers no way to add or change events once the contest is final', async () => {
+  it('shows a final contest\'s event with no way to change it', async () => {
     primeMocks({
       contest: buildContest({ status: 'COMPLETED' }),
       managedContest: buildManagedContest({ status: 'COMPLETED' }),

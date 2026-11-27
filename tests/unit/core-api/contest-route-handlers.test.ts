@@ -43,6 +43,7 @@ function contestService(overrides: Record<string, unknown> = {}) {
     findEntryCaps: jest.fn((..._args: unknown[]) => Promise.resolve(new Map([['contest-1', 50]]))),
     countAllEntriesByContest: jest.fn((..._args: unknown[]) => Promise.resolve(new Map([['contest-1', 5]]))),
     findLiveProgress: jest.fn((..._args: unknown[]) => Promise.resolve(new Map([['contest-1', { played: 2, total: 4, unit: 'WEEKS' }]]))),
+    findCurrentSlotIds: jest.fn((..._args: unknown[]) => new Map([['contest-1', 'slot-1']])),
     listFinishedYears: jest.fn((..._args: unknown[]) => Promise.resolve([2026, 2025])),
     listMyLeagueEntries: jest.fn((..._args: unknown[]) => Promise.resolve({ entries: [entry], places: [{ entryId: entry.id, position: 3, displayPosition: 'T3' }] })),
     getContest: jest.fn((..._args: unknown[]) => Promise.resolve(contest)),
@@ -85,8 +86,9 @@ describe('contest read handlers', () => {
 
     expect(fake.listByLeague).toHaveBeenCalledWith('league-1', { userId: 'user-1', isRootAdmin: false }, 2025);
     expect(reply.body).toMatchObject({ contests: [{
-      id: 'contest-1', entryCount: 3, allEntryCount: 5, entriesPerContest: 50, progress: { played: 2, total: 4, unit: 'WEEKS' }, sportEvents: [{ name: 'The Masters' }],
+      id: 'contest-1', entryCount: 3, allEntryCount: 5, entriesPerContest: 50, progress: { played: 2, total: 4, unit: 'WEEKS' }, sportEvents: [{ name: 'The Masters' }], currentSlotId: 'slot-1',
     }] });
+    expect(fake.findCurrentSlotIds).toHaveBeenCalledWith([contest], new Map([['event-1', masters]]));
     expect(fake.findLiveProgress).toHaveBeenCalledWith([contest], new Map([['event-1', masters]]));
   });
 

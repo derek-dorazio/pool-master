@@ -43,7 +43,7 @@ export type ExtractErrorMessageOptions = {
   fallback?: string;
   /**
    * The screen's own wording of some codes (`errorContext` in the display strings), tried in
-   * order before the code's own message: `'pickEm'`, or `['contestEvents', 'contestSetup']`.
+   * order before the code's own message: `'pickEm'`, or `['bracketEntry', 'contestSetup']`.
    */
   context?: ErrorContext | readonly ErrorContext[];
   /** The words a context's placeholders take, such as the sport's `{{match}}`. */

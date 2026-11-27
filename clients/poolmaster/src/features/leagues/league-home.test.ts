@@ -1,3 +1,4 @@
+import { withCoverage } from '@/features/contests/test/covered-slots';
 import { describe, expect, it } from 'vitest';
 import type { ContestDto, ContestLeaderboardResponse } from '@/lib/api';
 import { buildBracketTopStandings, buildTopStandings, describeLiveProgress, splitHomeContests } from './league-home';
@@ -6,7 +7,7 @@ import { bracketLeaderboardFixture } from '@/features/contests/test/bracket-fixt
 type LeaderboardEntry = ContestLeaderboardResponse['entries'][number];
 
 function contestFixture(overrides: Partial<ContestDto> & { id: string }): ContestDto {
-  return {
+  return withCoverage({
     name: `Contest ${overrides.id}`,
     status: 'OPEN',
     contestFormat: 'ROSTER',
@@ -15,14 +16,14 @@ function contestFixture(overrides: Partial<ContestDto> & { id: string }): Contes
     entriesPerContest: null,
     sportEvents: [],
     ...overrides,
-  };
+  });
 }
 
 /** A listed contest whose event starts at `startDate`, as the contest list carries it. */
 function onEvent(id: string, startDate: string, overrides: Partial<ContestDto> = {}): ContestDto {
   return contestFixture({
     id,
-    sportEvents: [{ sportEventId: `event-${id}`, sequence: 1, name: `Event ${id}`, startDate, endDate: null, status: 'SCHEDULED', participantType: 'INDIVIDUAL', scoringFamily: 'STROKE_PLAY' }],
+    sportEvents: [{ sportEventId: `event-${id}`, name: `Event ${id}`, startDate, endDate: null, status: 'SCHEDULED', participantType: 'INDIVIDUAL', scoringFamily: 'STROKE_PLAY' }],
     ...overrides,
   });
 }

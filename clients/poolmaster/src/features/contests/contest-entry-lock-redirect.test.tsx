@@ -48,7 +48,7 @@ function renderPickScreen(contest: ContestDto) {
 }
 
 const startedEvent = (sportEventId: string) => ({
-  sportEventId, sequence: 1, name: sportEventId, startDate: STARTED, endDate: null, status: 'IN_PROGRESS' as const, participantType: 'INDIVIDUAL' as const, scoringFamily: 'STROKE_PLAY' as const,
+  sportEventId, name: sportEventId, startDate: STARTED, endDate: null, status: 'IN_PROGRESS' as const, participantType: 'INDIVIDUAL' as const, scoringFamily: 'STROKE_PLAY' as const,
 });
 
 afterEach(() => {
