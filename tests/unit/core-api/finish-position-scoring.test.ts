@@ -146,7 +146,7 @@ describe('finish position — unofficial and unscorable results', () => {
   it('leaves every runner unscored under another family\'s scoring definition instead of guessing points', () => {
     expect(scores(
       [{ name: 'Arrow', result: { finishPosition: 1 } }],
-      { participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', config: {} },
+      { participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', config: { unplayedRoundToPar: 8 } },
     )).toEqual({ Arrow: null });
   });
 
@@ -194,6 +194,6 @@ describe('finish position — guards', () => {
 
   it('scores a missed lineup as each counted pick not finishing, and leaves it unscored under another definition', () => {
     expect(family.scoreMissedLineup([], RACE, WIN_PLACE_SHOW, 3)).toBe(-3);
-    expect(family.scoreMissedLineup([], RACE, { participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', config: {} }, 3)).toBeNull();
+    expect(family.scoreMissedLineup([], RACE, { participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', config: { unplayedRoundToPar: 8 } }, 3)).toBeNull();
   });
 });

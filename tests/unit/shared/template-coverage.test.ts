@@ -115,7 +115,7 @@ describe('templateCoverageProblem', () => {
     });
 
     it('holds a template scored by another definition to no round count', () => {
-      const tiered = { ...allListed, configJson: { scoring: { participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL' as const, config: {} } } };
+      const tiered = { ...allListed, configJson: { scoring: { participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL' as const, config: { unplayedRoundToPar: 8 } } } };
       expect(templateCoverageProblem(tiered, ROUND_OF_32_TO_FINAL)).toBeNull();
     });
   });

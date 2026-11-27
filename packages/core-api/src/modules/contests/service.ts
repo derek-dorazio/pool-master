@@ -109,6 +109,8 @@ import {
 } from './leaderboard-snapshots';
 import { loadPickEmScoring, loadPickEmWeekStandings, pickEmWeekGames, type PickEmWeekGames } from './pick-em-standings';
 import { scoreGamePicks } from '../scoring-families/head-to-head/game-picks';
+import { currentRoundOfField } from '../scoring-families/stroke-play/scored-rounds';
+import { unplayedRoundToParOf } from '../scoring-families/stroke-play/unplayed-rounds';
 import type { BracketScore } from '../scoring-families/head-to-head/bracket-picks';
 import { loadSurvivorSeason, survivorWeekKey, type SurvivorSeasonPick } from './survivor-standings';
 import { toSurvivorLeaderboardResponse, type SurvivorLeaderboardModel, type SurvivorLeaderboardPickGameRow } from '../../mappers/survivor-leaderboard.mapper';
@@ -1068,6 +1070,8 @@ export class ContestService {
       countingRule: { ...shownCountingRule, pickCount: resolveLineupSize(configuration?.configJson, shown.field) },
       // #1748 — whether the board has an Upset column, which members cannot read from the settings.
       upsetBonus: hasUpsetBonus(scoring.scoring),
+      unplayedRoundToPar: unplayedRoundToParOf(scoring.scoring),
+      currentRound: currentRoundOfField(shown.field),
       participants: shown.field,
       entries: leaderboardEntries,
       asOf: shown.asOf,

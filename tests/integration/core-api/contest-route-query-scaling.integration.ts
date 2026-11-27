@@ -100,7 +100,7 @@ async function seedRosterContest({ entries, events, golfers = 2, tiers = 2 }: { 
       contestId: contest.id,
       selectionType: SelectionType.TIERED,
       configJson: { selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 2 },
-      participantScoringRules: { create: { participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', sortOrder: 1 } },
+      participantScoringRules: { create: { participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', sortOrder: 1, config: { unplayedRoundToPar: 8 } } },
     },
   });
   const settledAt = new Date();
@@ -194,7 +194,7 @@ async function seedMyLiveEntries({ contests, boards }: { contests: number; board
         contestId: contest.id,
         selectionType: SelectionType.TIERED,
         configJson: { selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 2 },
-        participantScoringRules: { create: { participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', sortOrder: 1 } },
+        participantScoringRules: { create: { participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', sortOrder: 1, config: { unplayedRoundToPar: 8 } } },
       },
     });
     const settledAt = new Date();

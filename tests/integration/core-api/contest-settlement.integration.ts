@@ -461,7 +461,7 @@ describe('golf contest settlement — unplayed rounds score 80 strokes', () => {
         contestId: contest.id,
         selectionType: 'TIERED',
         configJson: { selectionType: 'TIERED', picksPerTier: 1, countedScores: 2 },
-        participantScoringRules: { create: { participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', sortOrder: 1 } },
+        participantScoringRules: { create: { participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', sortOrder: 1, config: { unplayedRoundToPar: 8 } } },
       },
     });
     const entry = await prisma.contestEntry.create({

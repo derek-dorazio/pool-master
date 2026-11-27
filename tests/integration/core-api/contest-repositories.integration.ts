@@ -582,7 +582,7 @@ describe('ContestRepository', () => {
         contestId: contest.id,
         selectionType: 'TIERED',
         participantScoringRules: {
-          create: { participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', sortOrder: 1 },
+          create: { participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', sortOrder: 1, config: { unplayedRoundToPar: 8 } },
         },
       },
     });
@@ -854,17 +854,17 @@ describe('ParticipantContestScoringRuleRepository', () => {
     await repo.create({
       contestConfigurationId: configuration.id,
       sortOrder: 1,
-      scoring: { participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', config: {} },
+      scoring: { participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', config: { unplayedRoundToPar: 8 } },
       active: true,
     });
 
     const stored = await getPrisma().participantContestScoringRule.findFirstOrThrow({ where: { contestConfigurationId: configuration.id } });
-    expect(stored).toMatchObject({ participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', config: {} });
+    expect(stored).toMatchObject({ participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', config: { unplayedRoundToPar: 8 } });
     await expect(repo.findByContestConfiguration(configuration.id)).resolves.toEqual([
       expect.objectContaining({
         sortOrder: 1,
         active: true,
-        scoring: { success: true, data: { participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', config: {} } },
+        scoring: { success: true, data: { participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', config: { unplayedRoundToPar: 8 } } },
       }),
     ]);
   });
@@ -874,9 +874,9 @@ describe('ParticipantContestScoringRuleRepository', () => {
     const kept = await configurationFor('Kept scoring');
     await getPrisma().participantContestScoringRule.createMany({
       data: [
-        { contestConfigurationId: replaced.id, participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', sortOrder: 1, config: {} },
-        { contestConfigurationId: replaced.id, participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', sortOrder: 2, config: {} },
-        { contestConfigurationId: kept.id, participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', sortOrder: 1, config: {} },
+        { contestConfigurationId: replaced.id, participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', sortOrder: 1, config: { unplayedRoundToPar: 8 } },
+        { contestConfigurationId: replaced.id, participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', sortOrder: 2, config: { unplayedRoundToPar: 8 } },
+        { contestConfigurationId: kept.id, participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', sortOrder: 1, config: { unplayedRoundToPar: 8 } },
       ],
     });
     const repo = new PrismaParticipantContestScoringRuleRepository(getAppPrisma());
@@ -900,7 +900,7 @@ describe('ParticipantContestScoringRuleRepository', () => {
     const rules = await new PrismaParticipantContestScoringRuleRepository(getAppPrisma()).findByContestConfiguration(configuration.id);
 
     expect(rules.map((rule) => rule.scoring)).toEqual([
-      { success: true, data: { participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', config: {} } },
+      { success: true, data: { participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', config: { unplayedRoundToPar: 8 } } },
       { success: false, reason: 'DEFINITION_UNKNOWN', participantScoringDefinitionId: 'STABLEFORD_POINTS' },
       { success: false, reason: 'SETTINGS_INVALID', participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL' },
     ]);

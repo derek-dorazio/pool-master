@@ -209,7 +209,7 @@ function createParticipantScoringRuleRepo(): ParticipantContestScoringRuleReposi
         id: 'rule-old',
         contestConfigurationId: 'config-1',
         sortOrder: 1,
-        scoring: { success: true, data: { participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', config: {} } },
+        scoring: { success: true, data: { participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', config: { unplayedRoundToPar: 8 } } },
         active: true,
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -405,7 +405,7 @@ describe('ContestManagementService', () => {
     expect(participantContestScoringRuleRepo.create).toHaveBeenCalledWith({
       contestConfigurationId: 'config-1',
       sortOrder: 1,
-      scoring: { participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', config: {} },
+      scoring: { participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', config: { unplayedRoundToPar: 8 } },
       active: true,
     });
   });
@@ -1822,7 +1822,7 @@ describe('ContestManagementService finish-position scoring (#622)', () => {
     const { contestCoreRepo, service } = raceService();
 
     await expect(service.createContest({ leagueId: 'league-1' }, raceRequest({
-      configuration: { ...drawRules, scoring: { participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', config: {} } },
+      configuration: { ...drawRules, scoring: { participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', config: { unplayedRoundToPar: 8 } } },
     }))).rejects.toMatchObject({ code: CONTEST_SCORING_DEFINITION_NOT_ALLOWED, statusCode: 422 });
     expect(contestCoreRepo.create).not.toHaveBeenCalled();
   });
@@ -2444,7 +2444,7 @@ describe('ContestManagementService pick\'em rules (#716)', () => {
     const { contestCoreRepo, service } = pickEmService({ gameCount: 3 });
 
     await expect(service.createContest({ leagueId: 'league-1' }, pickEmRequest({
-      configuration: { ...pickEmRules, scoring: { participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', config: {} } },
+      configuration: { ...pickEmRules, scoring: { participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', config: { unplayedRoundToPar: 8 } } },
     }))).rejects.toMatchObject({ code: 'CONTEST_SCORING_DEFINITION_NOT_ALLOWED', statusCode: 422 });
     expect(contestCoreRepo.create).not.toHaveBeenCalled();
   });

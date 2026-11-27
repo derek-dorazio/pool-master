@@ -1116,7 +1116,7 @@ describe('ContestService', () => {
       // Every configuration carries its scoring rule (#246); there is no golf fallback.
       const scoringRuleRepo = fakeParticipantContestScoringRuleRepo({
         findByContestConfiguration: jest.fn().mockResolvedValue([
-          storedScoringRule({ participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', sortOrder: 1, active: true }),
+          storedScoringRule({ participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', config: { unplayedRoundToPar: 8 }, sortOrder: 1, active: true }),
         ]),
       });
       const listEventParticipants = jest.fn().mockResolvedValue([
@@ -2010,7 +2010,7 @@ describe('ContestService.getLeaderboard — refusals and the settled read', () =
   });
   const rules = (rows: StoredScoringRuleInput[]) =>
     fakeParticipantContestScoringRuleRepo({ findByContestConfiguration: jest.fn().mockResolvedValue(rows.map(storedScoringRule)) });
-  const golfRule = [{ participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', sortOrder: 1, active: true }];
+  const golfRule = [{ participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', config: { unplayedRoundToPar: 8 }, sortOrder: 1, active: true }];
 
   it.each([ContestStatus.DRAFT, ContestStatus.OPEN])('refuses to show a %s contest\'s leaderboard while picks are hidden', async (status) => {
     const service = buildService({ contests: contestRepoFor({ status }), memberships: member() });
@@ -2422,7 +2422,7 @@ describe('ContestService boards read for emails and my entries', () => {
       }),
       scoringRules: fakeParticipantContestScoringRuleRepo({
         findByContestConfiguration: jest.fn().mockResolvedValue([
-          storedScoringRule({ participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', sortOrder: 1, active: true }),
+          storedScoringRule({ participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', config: { unplayedRoundToPar: 8 }, sortOrder: 1, active: true }),
         ]),
       }),
       eventParticipants: fieldReads(listEventParticipants),

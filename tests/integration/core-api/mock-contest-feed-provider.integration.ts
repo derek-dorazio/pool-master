@@ -362,7 +362,7 @@ async function createGolfLiveContestConfiguration(contestId: string) {
       },
       // Every configuration carries its scoring rule (#246); there is no golf fallback.
       participantScoringRules: {
-        create: { participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', sortOrder: 1 },
+        create: { participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', sortOrder: 1, config: { unplayedRoundToPar: 8 } },
       },
     },
   });

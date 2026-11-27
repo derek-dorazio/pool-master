@@ -1,20 +1,22 @@
 /**
  * Stroke play (golf): a golfer's contest score is their event total against par, read off the
- * standing's golf extension, with every round they did not play scored as 80 strokes (#478).
- * Results are stored in the golf round and standing extension rows. Its one scoring definition
- * (to-par total) takes no contest settings, so `scoreField` reads none. It accepts GOLF live
+ * standing, with every round they did not play scored as the contest's `unplayedRoundToPar`
+ * (#478). Results are each golfer's side result in the round's FIELD Game. It accepts GOLF live
  * scores.
  */
 import { ScoringFamily } from '@poolmaster/shared/domain';
 import { createStrokePlayResultService } from '../../events/wiring';
 import type { ScoringFamilyModule } from '../scoring-family-module';
-import { buildUnplayedRoundContext, scoreGolferForContest, scoreUnplayedLineup } from './unplayed-rounds';
+import { buildUnplayedRoundContext, scoreGolferForContest, scoreUnplayedLineup, unplayedRoundToParOf } from './unplayed-rounds';
 
 export const strokePlayScoringFamily: ScoringFamilyModule = {
-  scoreField(field, event) {
-    const context = buildUnplayedRoundContext(field, event);
+  scoreField(field, event, scoring) {
+    const unplayedRoundToPar = unplayedRoundToParOf(scoring);
+    const context = unplayedRoundToPar === null ? null : buildUnplayedRoundContext(field, event, unplayedRoundToPar);
     return field.map((row) => {
-      const { score, unplayedRoundNumbers } = scoreGolferForContest(row, context);
+      const { score, unplayedRoundNumbers } = context
+        ? scoreGolferForContest(row, context)
+        : { score: null, unplayedRoundNumbers: [] };
       return {
         sportEventParticipantId: row.entry.id,
         name: row.participant.name,
@@ -25,8 +27,11 @@ export const strokePlayScoringFamily: ScoringFamilyModule = {
     });
   },
 
-  scoreMissedLineup(field, event, _scoring, countingPickLimit) {
-    return scoreUnplayedLineup(buildUnplayedRoundContext(field, event), countingPickLimit);
+  scoreMissedLineup(field, event, scoring, countingPickLimit) {
+    const unplayedRoundToPar = unplayedRoundToParOf(scoring);
+    return unplayedRoundToPar === null
+      ? null
+      : scoreUnplayedLineup(buildUnplayedRoundContext(field, event, unplayedRoundToPar), countingPickLimit);
   },
 
   liveScores: {

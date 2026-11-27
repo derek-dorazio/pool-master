@@ -82,16 +82,24 @@ describe('participant scoring settings', () => {
     expect(Object.keys(PARTICIPANT_SCORING_SETTINGS_SCHEMAS).sort()).toEqual(Object.keys(PARTICIPANT_SCORING_DEFINITIONS).sort());
   });
 
-  it('reads golf\'s to-par total settings as the empty object, dropping keys retired before settings were typed', () => {
-    expect(parseContestScoringSettings('GOLF_RELATIVE_TO_PAR_TOTAL', {})).toEqual({
+  it('reads golf\'s to-par total settings as their unplayed-round score, dropping keys retired before settings were typed', () => {
+    expect(parseContestScoringSettings('GOLF_RELATIVE_TO_PAR_TOTAL', { unplayedRoundToPar: 8 })).toEqual({
       success: true,
-      data: { participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', config: {} },
+      data: { participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', config: { unplayedRoundToPar: 8 } },
     });
-    expect(parseContestScoringSettings('GOLF_RELATIVE_TO_PAR_TOTAL', { cutRule: { type: 'FIXED_SCORE', fixedScore: 80 }, playoffHandling: 'EXCLUDE_PLAYOFF_HOLES' }))
-      .toEqual({ success: true, data: { participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', config: {} } });
+    expect(parseContestScoringSettings('GOLF_RELATIVE_TO_PAR_TOTAL', { unplayedRoundToPar: 8, cutRule: { type: 'FIXED_SCORE', fixedScore: 80 }, playoffHandling: 'EXCLUDE_PLAYOFF_HOLES' }))
+      .toEqual({ success: true, data: { participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', config: { unplayedRoundToPar: 8 } } });
   });
 
-  it.each([['an array', []], ['a string', 'points'], ['null', null]])('refuses golf settings stored as %s with SETTINGS_INVALID', (_label, config) => {
+  it.each([
+    ['an array', []],
+    ['a string', 'points'],
+    ['null', null],
+    ['an object with no unplayed-round score', {}],
+    ['an unplayed-round score below 0', { unplayedRoundToPar: -1 }],
+    ['an unplayed-round score above 20', { unplayedRoundToPar: 21 }],
+    ['a fractional unplayed-round score', { unplayedRoundToPar: 8.5 }],
+  ])('refuses golf settings stored as %s with SETTINGS_INVALID', (_label, config) => {
     expect(parseContestScoringSettings('GOLF_RELATIVE_TO_PAR_TOTAL', config)).toEqual({
       success: false,
       reason: 'SETTINGS_INVALID',

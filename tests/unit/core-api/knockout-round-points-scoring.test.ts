@@ -468,7 +468,7 @@ describe('knockout round points — edges', () => {
   });
 
   it('scores a missed lineup 0 under knockout round points and leaves it unscored under another definition', () => {
-    const golf: ContestScoringSettings = { participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', config: {} } as unknown as ContestScoringSettings;
+    const golf: ContestScoringSettings = { participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', config: { unplayedRoundToPar: 8 } } as unknown as ContestScoringSettings;
 
     expect(family.scoreMissedLineup([], TOURNAMENT, knockout([1]), 3)).toBe(0);
     expect(family.scoreMissedLineup([], TOURNAMENT, golf, 3)).toBeNull();

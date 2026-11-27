@@ -15,7 +15,7 @@ import {
 } from '../../support/repo-fakes';
 
 /** A golf contest's scoring: the to-par total, which takes no settings. */
-const GOLF_SCORING: ContestScoringSettings = { participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', config: {} };
+const GOLF_SCORING: ContestScoringSettings = { participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', config: { unplayedRoundToPar: 8 } };
 
 // What the live leaderboard and settlement both read: a missing configuration, a configuration
 // with its optional counts unset, an entry with no picks, and a golfer with no standing yet.
@@ -147,15 +147,26 @@ describe('contest scoring of unplayed rounds', () => {
     expect(score).toMatchObject({ score: 32, detail: { scoringFamily: 'STROKE_PLAY', unplayedRoundNumbers: [1, 2, 3, 4] } });
   });
 
-  it('leaves a golfer who withdrew before the event unscored while no round\'s par is known yet', () => {
+  it('scores a golfer who withdrew before anyone teed off +8 for every scheduled round, needing no round\'s par', () => {
     const removed = golfer('sep-removed', null, [], { status: 'WITHDRAWN' });
 
     const [score] = toParticipantScores(field(removed), scoringEvent({ roundCount: 4 }), GOLF_SCORING, { slotDefinitionIds: null });
 
-    expect(score).toMatchObject({ score: null, detail: { scoringFamily: 'STROKE_PLAY', unplayedRoundNumbers: [] } });
+    expect(score).toMatchObject({ score: 32, detail: { scoringFamily: 'STROKE_PLAY', unplayedRoundNumbers: [1, 2, 3, 4] } });
   });
 
-  it('scores a golfer removed from the field after round 1 for that round plus 80 for each round after it', () => {
+  it('scores each unplayed round the contest\'s own unplayed-round score, not 80 strokes against the course\'s par', () => {
+    // A par-71 course: 80 strokes would be +9 a round. The contest scores +10, its own setting.
+    const parSeventyOne = golfer('sep-leader', 'COMPLETE', [[1, 'COMPLETED', 70, -1], [2, 'COMPLETED', 70, -1]]);
+    const cut = golfer('sep-cut', 'ELIMINATED', [[1, 'COMPLETED', 72, 1], [2, 'COMPLETED', 74, 3]]);
+    const scoring: ContestScoringSettings = { participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', config: { unplayedRoundToPar: 10 } };
+
+    const [, score] = toParticipantScores(field(parSeventyOne, cut), scoringEvent({ roundCount: 4 }), scoring, { slotDefinitionIds: null });
+
+    expect(score).toMatchObject({ score: 24, detail: { scoringFamily: 'STROKE_PLAY', unplayedRoundNumbers: [3, 4] } });
+  });
+
+  it('scores a golfer removed from the field after round 1 for that round plus +8 for each round after it', () => {
     const removed = golfer('sep-removed', 'COMPLETE', [[1, 'COMPLETED', 75, 3]], { status: 'WITHDRAWN' });
 
     const [, score] = toParticipantScores(field(leader, removed), scoringEvent({ roundCount: 4 }), GOLF_SCORING, { slotDefinitionIds: null });
@@ -163,7 +174,7 @@ describe('contest scoring of unplayed rounds', () => {
     expect(score).toMatchObject({ score: 27, detail: { scoringFamily: 'STROKE_PLAY', unplayedRoundNumbers: [2, 3, 4] } });
   });
 
-  it('adds no penalty for a round whose par is not known yet: nobody has finished it', () => {
+  it('scores a cut golfer +8 for a round nobody has finished yet, as for every other round they will not play', () => {
     const midRound3 = golfer('sep-leader', 'IN_PROGRESS', [
       [1, 'COMPLETED', 70, -2],
       [2, 'COMPLETED', 70, -2],
@@ -177,7 +188,7 @@ describe('contest scoring of unplayed rounds', () => {
 
     const [, score] = toParticipantScores(field(midRound3, cut), scoringEvent({ roundCount: 4 }), GOLF_SCORING, { slotDefinitionIds: null });
 
-    expect(score).toMatchObject({ score: 10, detail: { scoringFamily: 'STROKE_PLAY', unplayedRoundNumbers: [3] } });
+    expect(score).toMatchObject({ score: 18, detail: { scoringFamily: 'STROKE_PLAY', unplayedRoundNumbers: [3, 4] } });
   });
 
   it('never scores a round past the event\'s scheduled rounds', () => {
@@ -188,7 +199,7 @@ describe('contest scoring of unplayed rounds', () => {
     expect(score).toMatchObject({ score: 16, detail: { scoringFamily: 'STROKE_PLAY', unplayedRoundNumbers: [1, 2] } });
   });
 
-  it('leaves a golfer with no score unscored while the field is still on the round, then scores 80 once the field moves past it', () => {
+  it('leaves a golfer with no score unscored while the field is still on the round, then scores +8 once the field moves past it', () => {
     const roundOneLeader = golfer('sep-leader', 'COMPLETE', [[1, 'COMPLETED', 70, -2]]);
     const noScore = golfer('sep-none', null, []);
 
@@ -203,7 +214,7 @@ describe('contest scoring of unplayed rounds', () => {
       .toMatchObject({ score: 8, detail: { scoringFamily: 'STROKE_PLAY', unplayedRoundNumbers: [1] } });
   });
 
-  it('scores a golfer with no score 80 for every round once the event is complete', () => {
+  it('scores a golfer with no score +8 for every round once the event is complete', () => {
     const noScore = golfer('sep-none', null, []);
 
     const [, score] = toParticipantScores(field(leader, noScore), scoringEvent({ roundCount: 4, status: 'COMPLETED' }), GOLF_SCORING, { slotDefinitionIds: null });
@@ -261,12 +272,25 @@ describe('contest scoring of a missed lineup', () => {
     [4, 'COMPLETED', 72, 0],
   ]);
 
-  it('scores a missed golf lineup as 80 strokes a round for each counted golfer: three golfers over four par-72 rounds is +96', () => {
+  it('scores a missed golf lineup +8 a round for each counted golfer once rounds have finished: three golfers over four rounds is +96', () => {
     expect(scoreMissedLineup(field(finisher), scoringEvent({ roundCount: 4, status: 'COMPLETED' }), GOLF_SCORING, 3)).toBe(96);
   });
 
-  it('leaves a missed golf lineup unscored while a round\'s par is unknown, never scoring it lighter than it will be', () => {
-    expect(scoreMissedLineup(field(), scoringEvent({ roundCount: 4, status: 'COMPLETED' }), GOLF_SCORING, 3)).toBeNull();
+  it('scores a missed golf lineup +8 a round for each counted golfer before any round has finished: three golfers over four rounds is +96', () => {
+    expect(scoreMissedLineup(field(), scoringEvent({ roundCount: 4, status: 'COMPLETED' }), GOLF_SCORING, 3)).toBe(96);
+  });
+
+  it('leaves a missed golf lineup unscored while the event has no rounds', () => {
+    expect(scoreMissedLineup(field(), scoringEvent({ roundCount: 0 }), GOLF_SCORING, 3)).toBeNull();
+  });
+
+  it('leaves golfers and a missed lineup unscored under scoring that is not golf\'s, rather than score them under rules they lack', () => {
+    const raceScoring: ContestScoringSettings = { participantScoringDefinitionId: 'FINISH_POSITION_POINTS', config: { pointsTable: [1], didNotFinishPoints: 0 } };
+    const cut = golfer('sep-cut', 'ELIMINATED', [[1, 'COMPLETED', 72, 0]]);
+
+    expect(toParticipantScores(field(cut), scoringEvent({ roundCount: 4 }), raceScoring, { slotDefinitionIds: null })[0])
+      .toMatchObject({ score: null, detail: { scoringFamily: 'STROKE_PLAY', unplayedRoundNumbers: [] } });
+    expect(scoreMissedLineup(field(), scoringEvent({ roundCount: 4 }), raceScoring, 3)).toBeNull();
   });
 
   it('scores a missed race lineup as each counted pick not finishing', () => {

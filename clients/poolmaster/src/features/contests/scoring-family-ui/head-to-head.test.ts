@@ -89,6 +89,8 @@ function bracketLeaderboard(picks: ScoredContestEntryPickDto[]): ContestLeaderbo
     scoringDefinitionId: 'KNOCKOUT_ROUND_POINTS',
     countingRule: { type: 'BEST_N', count: 4, pickCount: 6 },
     upsetBonus: false,
+    unplayedRoundToPar: null,
+    currentRound: null,
     participants: [team()],
     entries: [entry],
     asOf: null,

@@ -1375,9 +1375,17 @@ async function syncDerivedScoring(
 }
 
 /**
+ * What an unplayed golf round adds to par in a contest made without a template or golf settings:
+ * the usual rule, an 80 on a par 72. Every stroke-play template presets the same (migration
+ * 20271218029500); a commissioner may set another.
+ */
+const USUAL_UNPLAYED_ROUND_TO_PAR = 8;
+
+/**
  * The settings a contest's scoring rule is written with when nobody chose any, per scoring
  * definition: its `config` column, typed by `PARTICIPANT_SCORING_SETTINGS_SCHEMAS`. Golf's to-par
- * total takes none, so it writes the empty object. (cutRule/playoffHandling/displayScoring/
+ * total scores each unplayed round +8 (`USUAL_UNPLAYED_ROUND_TO_PAR`), as its templates preset.
+ * (cutRule/playoffHandling/displayScoring/
  * tiebreaker were dropped in plans/124 §4.6a: each was locked to one value and never changed a
  * score.) Finish-position and knockout round points have no default: the table is the
  * commissioner's choice, or the template's preset, never one the server picks (null).
@@ -1387,7 +1395,7 @@ function defaultContestScoringSettings(
 ): ContestScoringSettings | null {
   switch (participantScoringDefinitionId) {
     case 'GOLF_RELATIVE_TO_PAR_TOTAL':
-      return { participantScoringDefinitionId, config: {} };
+      return { participantScoringDefinitionId, config: { unplayedRoundToPar: USUAL_UNPLAYED_ROUND_TO_PAR } };
     // A points table, and a knockout table of one value per round of the event, come from the
     // commissioner or a template, never from the server.
     case 'FINISH_POSITION_POINTS':

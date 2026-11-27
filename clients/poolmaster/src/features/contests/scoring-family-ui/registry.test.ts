@@ -47,7 +47,7 @@ const cutGolfer: SportEventParticipantDto = {
   updatedAt: '2026-04-01T00:00:00.000Z',
 };
 
-/** A pick on the cut golfer whose rounds 1 and 2 count as 80 strokes. */
+/** A pick on the cut golfer whose rounds 1 and 2 count as the contest's unplayed-round score. */
 const unplayedPick: ScoredContestEntryPickDto = {
   pickId: 'pick-1',
   sportEventParticipantId: 'sep-1',
@@ -84,6 +84,8 @@ const golfLeaderboard: ContestLeaderboardResponse = {
   scoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL',
   countingRule: { type: 'BEST_N', count: 1, pickCount: 6 },
   upsetBonus: false,
+  unplayedRoundToPar: 8,
+  currentRound: null,
   participants: [cutGolfer],
   entries: [entry],
   asOf: null,
@@ -122,16 +124,16 @@ describe('stroke-play leaderboard', () => {
     expect(board.pickDetail('entry-1', unplayedPick, cutGolfer).total).toBe('+16');
   });
 
-  it('shows 80 in an unplayed round and names that round by its number, as its column header does', () => {
+  it('shows the contest\'s unplayed-round score against par in an unplayed round and names that round by its number, as its column header does', () => {
     const board = strokePlayUi.leaderboard(golfLeaderboard, golf);
 
     const [, firstRound] = board.pickDetail('entry-1', unplayedPick, cutGolfer).detailCells;
 
-    expect(firstRound.text).toBe('80');
-    expect(firstRound.unplayed?.ariaLabel).toBe('Round 1 not played, counts as 80 strokes');
+    expect(firstRound.text).toBe('+8');
+    expect(firstRound.unplayed?.ariaLabel).toBe('Round 1 not played, counts as +8 against par');
   });
 
-  it('explains the 80s in a footnote only when a pick on the board has an unplayed round', () => {
+  it('explains the unplayed rounds in a footnote only when a pick on the board has an unplayed round', () => {
     expect(strokePlayUi.leaderboard(golfLeaderboard, golf).footnote?.testId)
       .toBe('contest-leaderboard-unplayed-note');
     expect(strokePlayUi.leaderboard({ ...golfLeaderboard, entries: [] }, golf).footnote).toBeNull();

@@ -162,7 +162,10 @@ const knockoutRoundPointsUi: ScoringSettingsUi = {
     : null),
 };
 
-/** Golf's total against par takes no settings: nothing to show, nothing to send. */
+/**
+ * No settings to show or send: pick'em and squares score by their mode, and golf's total against
+ * par takes its unplayed-round score from the template's preset.
+ */
 const noSettingsUi: ScoringSettingsUi = {
   Fields: null,
   toValues: (_scoring, current) => current,

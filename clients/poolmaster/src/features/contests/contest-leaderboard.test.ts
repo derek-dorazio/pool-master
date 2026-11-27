@@ -8,7 +8,6 @@ import type {
 import { buildLeaderboardView, type LeaderboardPickRow, type LeaderboardView } from './contest-leaderboard';
 import {
   formatCurrentRoundLabel,
-  resolveCurrentRound,
   resolveRoundNumbers,
 } from './contest-leaderboard-rounds';
 import { formatThru } from './scoring-family-ui/stroke-play';
@@ -118,75 +117,14 @@ function responseFixture(
     scoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL',
     countingRule: { type: 'BEST_N', count: 2, pickCount: 6 },
     upsetBonus: false,
+    unplayedRoundToPar: 8,
+    currentRound: null,
     participants: [],
     entries: [],
     asOf: null,
     ...overrides,
   };
 }
-
-describe('resolveCurrentRound', () => {
-  it('names no round when the field is empty', () => {
-    expect(resolveCurrentRound([])).toBeNull();
-  });
-
-  it('names no round when the field has no round rows at all', () => {
-    expect(resolveCurrentRound([participantFixture({ id: 'sep-1' })])).toBeNull();
-  });
-
-  it('names the highest in-progress round', () => {
-    expect(resolveCurrentRound([
-      participantFixture({
-        id: 'sep-1',
-        rounds: [
-          roundFixture({ roundNumber: 1, status: 'COMPLETED' }),
-          roundFixture({ roundNumber: 2, status: 'IN_PROGRESS' }),
-        ],
-      }),
-    ])).toEqual({ roundNumber: 2, isComplete: false });
-  });
-
-  it('prefers an in-progress round over a higher round another golfer has already finished', () => {
-    // An early-tee-time golfer can finish round 3 while the field's late wave is still on
-    // round 2. The leaderboard is on the round still being played.
-    expect(resolveCurrentRound([
-      participantFixture({
-        id: 'sep-1',
-        rounds: [roundFixture({ roundNumber: 3, status: 'COMPLETED' })],
-      }),
-      participantFixture({
-        id: 'sep-2',
-        rounds: [roundFixture({ roundNumber: 2, status: 'IN_PROGRESS' })],
-      }),
-    ])).toEqual({ roundNumber: 2, isComplete: false });
-  });
-
-  it('falls back to the highest completed round when nothing is in progress', () => {
-    expect(resolveCurrentRound([
-      participantFixture({
-        id: 'sep-1',
-        rounds: [
-          roundFixture({ roundNumber: 1, status: 'COMPLETED' }),
-          roundFixture({ roundNumber: 2, status: 'COMPLETED' }),
-        ],
-      }),
-    ])).toEqual({ roundNumber: 2, isComplete: true });
-  });
-
-  it('treats a round that ended short as neither in progress nor complete', () => {
-    // A withdrawal or a missed cut does not mean the field is on that round.
-    expect(resolveCurrentRound([
-      participantFixture({
-        id: 'sep-1',
-        rounds: [
-          roundFixture({ roundNumber: 1, status: 'COMPLETED' }),
-          roundFixture({ roundNumber: 2, status: 'MISSED_CUT' }),
-          roundFixture({ roundNumber: 3, status: 'DNF' }),
-        ],
-      }),
-    ])).toEqual({ roundNumber: 1, isComplete: true });
-  });
-});
 
 describe('formatCurrentRoundLabel', () => {
   const numberedRound = (roundNumber: number) => `Round ${String(roundNumber)}`;
@@ -299,7 +237,7 @@ describe('buildLeaderboardView', () => {
     expect(view.footnote).toBeNull();
   });
 
-  it('shows a cut golfer\'s contest score with 80 in each unplayed round, adding columns for rounds nobody has played yet', () => {
+  it('shows a cut golfer\'s contest score with the contest\'s unplayed-round score against par in each unplayed round, adding columns for rounds nobody has played yet', () => {
     const cut = participantFixture({
       id: 'sep-cut',
       name: 'Cut Golfer',
@@ -321,12 +259,13 @@ describe('buildLeaderboardView', () => {
     }));
 
     expect(roundNumbersOf(view)).toEqual([1, 2, 3, 4]);
-    // Played rounds still render through the scoring definition; only the unplayed ones read 80.
+    // Played rounds still render through the scoring definition; the unplayed ones read the
+    // contest's unplayed-round score against par.
     expect(roundCellsOf(view.entries[0].picks[0])[0]).toBe('72');
-    expect(roundCellsOf(view.entries[0].picks[0]).slice(2)).toEqual(['80', '80']);
+    expect(roundCellsOf(view.entries[0].picks[0]).slice(2)).toEqual(['+8', '+8']);
     expect(view.entries[0].picks[0].total).toBe('+18');
     expect(unplayedRoundsOf(view.entries[0].picks[0])).toEqual([3, 4]);
-    expect(view.footnote?.text).toContain('count as 80 strokes');
+    expect(view.footnote?.text).toContain('count as +8 against par');
   });
 
   it('keeps the server\'s order and its tie-aware display positions', () => {
@@ -469,10 +408,10 @@ describe('buildLeaderboardView', () => {
     expect(roundCellsOf(view.entries[0].picks[1])).toEqual(['71', null]);
   });
 
-  it('carries the current-round cue off the same response', () => {
-    expect(buildLeaderboardView(responseFixture({ participants: [rory] })).currentRoundLabel)
+  it('names the round the API says the field is on in the current-round cue, and none when it names none', () => {
+    expect(buildLeaderboardView(responseFixture({ participants: [rory], currentRound: { roundNumber: 2, isComplete: false } })).currentRoundLabel)
       .toBe('Round 2 — In Progress');
-    expect(buildLeaderboardView(responseFixture({ participants: [unscored] })).currentRoundLabel)
+    expect(buildLeaderboardView(responseFixture({ participants: [rory], currentRound: null })).currentRoundLabel)
       .toBeNull();
   });
 
