@@ -70,7 +70,7 @@ import type {
   SlotPricing,
   SlotTierSettings,
 } from '@poolmaster/shared/domain';
-import { chooseTierSetSlot, chooseTierSetSlots, compareCoveredSlots, TIER_SET_SELECTION_TYPES, compareMatchPlaces, compareSeasonSlots, providerCodeOfSourceId, providerSourceIdOf, requireProviderCodeOfSourceId, slotPeriodsOf, slotTierLayoutOf, SportEventParticipantStatus, SportEventStatus, ValuationSource } from '@poolmaster/shared/domain';
+import { chooseTierSetSlot, chooseTierSetSlots, compareCoveredSlots, TIER_SET_SELECTION_TYPES, compareMatchPlaces, compareSeasonSlots, isTestEvent, providerCodeOfSourceId, providerSourceIdOf, requireProviderCodeOfSourceId, slotPeriodsOf, slotTierLayoutOf, SportEventParticipantStatus, SportEventStatus, ValuationSource } from '@poolmaster/shared/domain';
 import { forgettingReads, memoizedRead, memoizedReadMany, ReadMemoKey } from '../core/request-read-memo';
 import { backgroundJobsInsert, insertBackgroundJobs } from './prisma-background-job-repository';
 import { TIER_PROFILE_INCLUDE, toPlatformTierProfile } from './prisma-profile-repositories';
@@ -557,14 +557,13 @@ export class PrismaSportEventRepository implements SportEventRepository {
 
   async isTestEvent(sportEventId: string): Promise<boolean | null> {
     // One read answers both: the event row, remembered for the request's later point reads of it
-    // (the write behind the guard reads the event again), and whether it covers a test slot.
-    const row = await this.prisma.sportEvent.findUnique({
-      where: { id: sportEventId },
-      include: { ...SPORT_EVENT_INCLUDE, _count: { select: { slots: { where: COVERS_TEST_SLOT } } } },
-    });
+    // (the write behind the guard reads the event again), and whether it covers a test slot, from
+    // the slots that read already takes by the event's id. Not a relation `_count`, which groups
+    // the whole slot table and joins the groups back (#2253).
+    const row = await this.prisma.sportEvent.findUnique({ where: { id: sportEventId }, include: SPORT_EVENT_INCLUDE });
     if (row === null) return null;
     await memoizedReadMany(this.prisma, ReadMemoKey.sportEvent, [sportEventId], () => Promise.resolve([toSportEvent(row)]));
-    return row._count.slots > 0;
+    return isTestEvent(row.slots.map((slot) => slot.seasonSlot));
   }
 
   async findSlots(sportEventIds: readonly string[]): Promise<Map<string, SportLeagueSeasonSlot[]>> {
@@ -1497,8 +1496,9 @@ const SPORT_EVENT_INCLUDE = {
     select: { externalId: true, provider: { select: { code: true, name: true } } },
     orderBy: { provider: { name: 'asc' } },
   },
-  // The slot definitions it covers (#2010): where contest templates are offered on it.
-  slots: { select: { seasonSlot: { select: { definition: { select: { id: true, key: true, slotKind: true, weekNumber: true, canEndTied: true, matchFormat: true, periodUnit: true, periodCount: true, ...SLOT_PLACE_SELECT } } } } } },
+  // The slot definitions it covers (#2010): where contest templates are offered on it; and whether
+  // each is a test slot, which makes it a test event (#2074), read by event rather than counted.
+  slots: { select: { seasonSlot: { select: { isTestData: true, definition: { select: { id: true, key: true, slotKind: true, weekNumber: true, canEndTied: true, matchFormat: true, periodUnit: true, periodCount: true, ...SLOT_PLACE_SELECT } } } } } },
   // Its round count (#2008): its Round rows' ids, read by event, so the count is theirs. Not a
   // relation `_count`, which groups every row of sport_event_rounds and joins the groups back,
   // reading the whole round table on every event read.
