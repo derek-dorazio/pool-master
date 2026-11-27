@@ -377,6 +377,8 @@ describe('Opening a contest (#1355)', () => {
     expect(requestCounts(statements)).toEqual([
       ['INSERT background_jobs', 1], // the opened contest's board rebuild, written with the move (#1973)
       ['SELECT contest_config_template_slots', 1], // the templates listing the tier slots, which pick the tier-set slot (#2044)
+      // Those templates themselves, read with their listings once a PGA TOUR template lists the slot (#2014).
+      ['SELECT contest_config_templates', 1],
       ['SELECT contest_configurations', 1],
       ['SELECT contest_draws', 2],
       ['SELECT contest_season_slots', 2], // the contest's covered Season slots, which give its events (#2014)
