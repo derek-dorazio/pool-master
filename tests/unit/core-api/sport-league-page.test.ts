@@ -49,7 +49,7 @@ const at = (iso: string) => new Date(iso);
 function league(overrides: Partial<SportLeaguePageLeague> = {}): SportLeaguePageLeague {
   return {
     id: 'mlb', sport: Sport.BASEBALL, isActive: true,
-    syncProviderId: 'balldontlie', syncsRoster: false, autoReleaseDaysBeforeStart: 7,
+    syncProviderId: 'balldontlie', autoReleaseDaysBeforeStart: 7,
     tierSources: [FieldOrderBasis.ODDS, FieldOrderBasis.SEED, FieldOrderBasis.RANKING], ...overrides,
   };
 }
@@ -81,7 +81,7 @@ function eventPageFacts(overrides: Partial<SportEventPageFacts> = {}): SportEven
   return { league: league(), event: pageEvent(), latestRuns: [], overdueCandidates: [], field: [], eventPagePath: null, ...overrides };
 }
 
-const context = { webhookProviderIds: [] as string[], now: NOW };
+const context = { webhookProviderIds: [] as string[], syncsRoster: false, now: NOW };
 
 describe('buildSportLeagueSyncs', () => {
   it('reports every sync kind in order, each with its latest run and its health from that run', () => {
@@ -100,7 +100,7 @@ describe('buildSportLeagueSyncs', () => {
   });
 
   it('lists the roster sync after the others for a league whose provider mapping names position codes, and not for one whose mapping names none', () => {
-    expect(buildSportLeagueSyncs(league({ syncsRoster: true }), [], context).map((sync) => sync.kind)).toEqual([
+    expect(buildSportLeagueSyncs(league(), [], { ...context, syncsRoster: true }).map((sync) => sync.kind)).toEqual([
       ProviderSyncKind.EVENTS, ProviderSyncKind.FIELD, ProviderSyncKind.SCORES, ProviderSyncKind.ROSTER,
     ]);
     expect(buildSportLeagueSyncs(league(), [], context).map((sync) => sync.kind)).not.toContain(ProviderSyncKind.ROSTER);
@@ -363,7 +363,7 @@ describe('SportLeaguePageService', () => {
 function makeReader(participants: SportLeaguePageParticipant[] | null): SportLeaguePageReader {
   const exists = participants !== null;
   return {
-    readSyncFacts: () => Promise.resolve(exists ? { league: league(), latestRuns: [] } : null),
+    readSyncFacts: () => Promise.resolve(exists ? { league: league(), latestRuns: [], syncsRoster: false } : null),
     readEventFacts: () => Promise.resolve(exists ? eventFacts() : null),
     readParticipants: () => Promise.resolve(participants),
     readStructure: () => Promise.resolve(exists ? [] : null),

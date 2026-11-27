@@ -255,12 +255,12 @@ describe('sport league handlers', () => {
     now: () => AT,
   });
   const pageLeague = {
-    id: 'sl1', sport: Sport.GOLF, isActive: true, syncProviderId: 'balldontlie', syncsRoster: false, autoReleaseDaysBeforeStart: null, tierSources: [FieldOrderBasis.ODDS],
+    id: 'sl1', sport: Sport.GOLF, isActive: true, syncProviderId: 'balldontlie', autoReleaseDaysBeforeStart: null, tierSources: [FieldOrderBasis.ODDS],
   };
   const known = <T>(sportLeagueId: string, facts: T) => Promise.resolve(sportLeagueId === 'sl1' ? facts : null);
   const page = new SportLeaguePageService({
     reader: {
-      readSyncFacts: (sportLeagueId) => known(sportLeagueId, { league: pageLeague, latestRuns: [] }),
+      readSyncFacts: (sportLeagueId) => known(sportLeagueId, { league: pageLeague, latestRuns: [], syncsRoster: false }),
       readEventPageFacts: () => Promise.resolve(null),
       readPositions: (sportLeagueId) => known(sportLeagueId, [{
         id: 'pos1', code: 'QB', displayOrder: 1, isFieldEligible: true,

@@ -9,7 +9,7 @@ import type {
   ParticipantRepository,
   ParticipantSearchFilters,
 } from '@poolmaster/shared/db';
-import type { BackgroundJobRequest, Participant, InjuryStatus, ParticipantType, ParticipantStatus } from '@poolmaster/shared/domain';
+import { ParticipantType, type BackgroundJobRequest, type Participant, type InjuryStatus, type ParticipantStatus } from '@poolmaster/shared/domain';
 import { backgroundJobsInsert } from './prisma-background-job-repository';
 
 export class PrismaParticipantRepository implements ParticipantRepository {
@@ -25,35 +25,48 @@ export class PrismaParticipantRepository implements ParticipantRepository {
       ...(filters.sportLeagueId && { sportLeagueId: filters.sportLeagueId }),
       ...(filters.status && { status: filters.status }),
     };
-
-    // Full-text search on name fields
-    if (query.trim()) {
-      where.OR = [
-        { name: { contains: query, mode: 'insensitive' } },
-        { firstName: { contains: query, mode: 'insensitive' } },
-        { lastName: { contains: query, mode: 'insensitive' } },
-        { shortName: { contains: query, mode: 'insensitive' } },
-        { abbreviation: { contains: query, mode: 'insensitive' } },
-        // A player is found by their team's name, short name or abbreviation on their league's current Season's roster (#2025).
-        {
-          rosterRows: {
-            some: {
-              season: { currentOf: { isNot: null } },
-              team: {
-                OR: [
-                  { name: { contains: query, mode: 'insensitive' } },
-                  { shortName: { contains: query, mode: 'insensitive' } },
-                  { abbreviation: { contains: query, mode: 'insensitive' } },
-                ],
-              },
-            },
-          },
-        },
-      ];
+    if (!query.trim()) {
+      const rows = await this.prisma.participant.findMany({ where, orderBy: { name: 'asc' } });
+      return rows.map(mapToParticipant);
     }
 
-    const rows = await this.prisma.participant.findMany({ where, orderBy: { name: 'asc' } });
-    return rows.map(mapToParticipant);
+    // Full-text search on name fields, each with its trigram index.
+    const matches = await this.prisma.participant.findMany({
+      where: {
+        ...where,
+        OR: [
+          { name: { contains: query, mode: 'insensitive' } },
+          { firstName: { contains: query, mode: 'insensitive' } },
+          { lastName: { contains: query, mode: 'insensitive' } },
+          { shortName: { contains: query, mode: 'insensitive' } },
+          { abbreviation: { contains: query, mode: 'insensitive' } },
+        ],
+      },
+      orderBy: { name: 'asc' },
+    });
+    // A player is also found by their team on their league's current Season's roster (#2025): the
+    // rows of the teams found, by league and team so the roster's team index serves it, then those
+    // players. Two more statements, only when a team matched.
+    const teamsByLeague = new Map<string, string[]>();
+    for (const team of matches) {
+      if (team.participantType !== ParticipantType.TEAM) continue;
+      teamsByLeague.set(team.sportLeagueId, [...(teamsByLeague.get(team.sportLeagueId) ?? []), team.id]);
+    }
+    if (teamsByLeague.size === 0) return matches.map(mapToParticipant);
+    const rostered = await this.prisma.sportLeagueSeasonParticipantTeam.findMany({
+      where: {
+        OR: [...teamsByLeague].map(([sportLeagueId, teamIds]) => ({ sportLeagueId, teamParticipantId: { in: teamIds } })),
+        season: { currentOf: { isNot: null } },
+      },
+      select: { participantId: true },
+    });
+    const found = new Set(matches.map((participant) => participant.id));
+    const playerIds = [...new Set(rostered.map((row) => row.participantId))].filter((id) => !found.has(id));
+    if (playerIds.length === 0) return matches.map(mapToParticipant);
+    const players = await this.prisma.participant.findMany({ where: { ...where, id: { in: playerIds } } });
+    return [...matches, ...players]
+      .sort((left, right) => left.name.localeCompare(right.name))
+      .map(mapToParticipant);
   }
 
   async findBySportLeague(sportLeagueId: string, testData = false): Promise<Participant[]> {

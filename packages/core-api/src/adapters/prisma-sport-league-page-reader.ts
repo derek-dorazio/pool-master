@@ -52,11 +52,18 @@ export class PrismaSportLeaguePageReader implements SportLeaguePageReader {
   async readSyncFacts(sportLeagueId: string): Promise<SportLeagueSyncFacts | null> {
     const league = await this.league(sportLeagueId);
     if (league === null) return null;
-    const latest = await this.prisma.providerSyncRun.groupBy({
-      by: ['kind'],
-      where: { sportLeagueId },
-      _max: { createdAt: true },
-    });
+    const [latest, positionCode] = await Promise.all([
+      this.prisma.providerSyncRun.groupBy({
+        by: ['kind'],
+        where: { sportLeagueId },
+        _max: { createdAt: true },
+      }),
+      // The roster sync runs where the selected mapping names a position code (#2025).
+      this.prisma.sportLeaguePositionProviderMapping.findFirst({
+        where: { sportLeagueId, sportLeagueProviderMapping: { selectedBy: { isNot: null } } },
+        select: { id: true },
+      }),
+    ]);
     const keys = latest.flatMap((group) => (group._max.createdAt === null
       ? []
       : [{ sportLeagueId, kind: group.kind, createdAt: group._max.createdAt }]));
@@ -65,7 +72,7 @@ export class PrismaSportLeaguePageReader implements SportLeaguePageReader {
       select: RUN_SELECT,
       orderBy: { id: 'asc' },
     });
-    return { league, latestRuns: oneRunPerKind(rows.map(toRun)) };
+    return { league, latestRuns: oneRunPerKind(rows.map(toRun)), syncsRoster: positionCode !== null };
   }
 
   async readEventFacts(sportLeagueId: string, now: Date): Promise<SportLeagueEventFacts | null> {
@@ -365,8 +372,7 @@ export class PrismaSportLeaguePageReader implements SportLeaguePageReader {
     const row = await this.prisma.sportLeague.findUnique({
       where: { id: sportLeagueId },
       select: {
-        id: true, isActive: true, autoReleaseDaysBeforeStart: true,
-        selectedProviderMapping: { select: { ...SYNC_PROVIDER_SELECT.selectedProviderMapping.select, positionCodes: { select: { id: true }, take: 1 } } },
+        id: true, isActive: true, ...SYNC_PROVIDER_SELECT, autoReleaseDaysBeforeStart: true,
         sport: { select: { sport: true } },
         platformTierProfile: { select: { sources: { orderBy: { orderIndex: 'asc' }, select: { basis: true } } } },
       },
@@ -377,7 +383,6 @@ export class PrismaSportLeaguePageReader implements SportLeaguePageReader {
       ...league,
       sport: sport.sport,
       syncProviderId: syncProviderIdOf({ selectedProviderMapping }),
-      syncsRoster: (selectedProviderMapping?.positionCodes.length ?? 0) > 0,
       tierSources: platformTierProfile.sources.map(({ basis }) => basis),
     };
   }

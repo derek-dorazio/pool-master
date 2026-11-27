@@ -26,7 +26,7 @@ import { asPrismaClient } from '../../support/prisma-double';
 const NOW = new Date('2027-04-15T12:00:00.000Z');
 const at = (iso: string) => new Date(iso);
 
-const SYNCED_TO_BALLDONTLIE = { providerLeague: { provider: { code: 'BALLDONTLIE' } }, positionCodes: [] };
+const SYNCED_TO_BALLDONTLIE = { providerLeague: { provider: { code: 'BALLDONTLIE' } } };
 const LEAGUE_ROW = {
   id: 'tour', isActive: true, selectedProviderMapping: SYNCED_TO_BALLDONTLIE, autoReleaseDaysBeforeStart: 7, sport: { sport: Sport.GOLF },
   platformTierProfile: { sources: [{ basis: 'ODDS' }, { basis: 'SEED' }] },
@@ -47,6 +47,7 @@ function prismaDouble(options: { league?: unknown } = {}) {
     participant: { findMany: jest.fn().mockResolvedValue([]) },
     participantProviderMapping: { findMany: jest.fn().mockResolvedValue([]) },
     sportLeagueSeasonParticipantTeam: { findMany: jest.fn().mockResolvedValue([]) },
+    sportLeaguePositionProviderMapping: { findFirst: jest.fn().mockResolvedValue(null) },
     providerLeague: { findMany: jest.fn().mockResolvedValue([]) },
     sportLeaguePhase: { findMany: jest.fn().mockResolvedValue([]) },
     sportLeagueCompetition: { findMany: jest.fn().mockResolvedValue([]) },
@@ -67,7 +68,7 @@ describe('PrismaSportLeaguePageReader.readSyncFacts', () => {
 
     const facts = await new PrismaSportLeaguePageReader(asPrismaClient(prisma)).readSyncFacts('tour');
 
-    expect(facts).toEqual({ league: { id: 'tour', sport: Sport.GOLF, isActive: true, syncProviderId: 'balldontlie', syncsRoster: false, autoReleaseDaysBeforeStart: 7, tierSources: ['ODDS', 'SEED'] }, latestRuns: [] });
+    expect(facts).toEqual({ league: { id: 'tour', sport: Sport.GOLF, isActive: true, syncProviderId: 'balldontlie', autoReleaseDaysBeforeStart: 7, tierSources: ['ODDS', 'SEED'] }, latestRuns: [], syncsRoster: false });
     expect(prisma.providerSyncRun.findMany).not.toHaveBeenCalled();
   });
 

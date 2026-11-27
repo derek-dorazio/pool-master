@@ -635,8 +635,6 @@ export interface SportLeaguePageLeague {
   sport: Sport;
   isActive: boolean;
   syncProviderId: string | null;
-  /** Whether its selected provider mapping names any position codes, so the roster sync runs for it (#2025). */
-  syncsRoster: boolean;
   autoReleaseDaysBeforeStart: number | null;
   /** The values its tier profile orders a field by, first deciding (#2160). */
   tierSources: FieldOrderBasis[];
@@ -658,6 +656,8 @@ export interface SportLeagueSyncFacts {
   league: SportLeaguePageLeague;
   /** The league's latest run of each kind. */
   latestRuns: SportLeaguePageRun[];
+  /** Whether its selected provider mapping names any position codes, so the roster sync runs for it (#2025). */
+  syncsRoster: boolean;
 }
 
 /** One event of the league as its Events grid reads it. */

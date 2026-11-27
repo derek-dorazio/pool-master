@@ -55,7 +55,7 @@ export class SportLeaguePageService {
   async listSyncs(sportLeagueId: string): Promise<SportLeagueSync[] | null> {
     const facts = await this.deps.reader.readSyncFacts(sportLeagueId);
     if (facts === null) return null;
-    return buildSportLeagueSyncs(facts.league, facts.latestRuns, { webhookProviderIds: this.deps.webhookProviderIds() });
+    return buildSportLeagueSyncs(facts.league, facts.latestRuns, { webhookProviderIds: this.deps.webhookProviderIds(), syncsRoster: facts.syncsRoster });
   }
 
   /** Null when the league does not exist. */
@@ -124,11 +124,11 @@ export class SportLeaguePageService {
 export function buildSportLeagueSyncs(
   league: SportLeaguePageLeague,
   latestRuns: readonly SportLeaguePageRun[],
-  context: { webhookProviderIds: readonly string[] },
+  context: { webhookProviderIds: readonly string[]; syncsRoster: boolean },
 ): SportLeagueSync[] {
   const providerId = league.syncProviderId;
   return Object.values(ProviderSyncKind)
-    .filter((kind) => kind !== ProviderSyncKind.ROSTER || league.syncsRoster)
+    .filter((kind) => kind !== ProviderSyncKind.ROSTER || context.syncsRoster)
     .sort(compareByEnumOrder(ProviderSyncKindOrder))
     .map((kind): SportLeagueSync => {
       const run = latestRuns.find((candidate) => candidate.kind === kind) ?? null;
@@ -221,7 +221,7 @@ export function buildSportEventOverview(
   // An event no provider syncs reads as a league no provider syncs: every row OFF, nothing scheduled.
   const syncLeague = synced ? league : { ...league, syncProviderId: null };
   const eventRuns = latestRuns.filter((run) => EVENT_SYNC_KINDS.includes(run.kind));
-  const syncs = buildSportLeagueSyncs(syncLeague, eventRuns, context).filter((sync) => EVENT_SYNC_KINDS.includes(sync.kind));
+  const syncs = buildSportLeagueSyncs(syncLeague, eventRuns, { ...context, syncsRoster: false }).filter((sync) => EVENT_SYNC_KINDS.includes(sync.kind));
   const failedRuns = eventRuns.filter((run) => run.status === ProviderSyncRunStatus.FAILED);
   const check = event.lastReleaseCheck;
   const held = event.status === SportEventStatus.DRAFT && check?.outcome === AutoReleaseCheckOutcome.HELD
