@@ -149,9 +149,9 @@ export interface ContestCreateSportEventReader {
   countGamesWithoutSpread(sportEventId: string): Promise<number>;
   /** Why the event's games cannot be filled in as a bracket, or null when they can (#721). */
   findBracketProblem(sportEventId: string): Promise<string | null>;
-  /** Why knockout round points cannot score the event's games (no bracket, nor a slate of one-off games), or null when they can (#2225). */
+  /** Why knockout round points cannot score the event (no knockout round, or knockout games forming no bracket nor a slate of one-off games), or null when they can (#2225, #2241). */
   findKnockoutProblem(sportEventId: string): Promise<string | null>;
-  /** How many of the event's rounds, by its games' slots, a contest of this coverage covers (#2014). */
+  /** How many of the event's knockout rounds, by its rounds' slots, a contest of this coverage covers (#2014, #2241): known before any game is placed. */
   countCoveredRounds(sportEventId: string, coverage: ContestRoundCoverage): Promise<number>;
   /** The status and round of one of the event's games, or null when the game is not the event's (#711). */
   findGame(sportEventId: string, sportEventRoundMatchId: string): Promise<{ status: MatchStatus; roundNumber: number } | null>;
@@ -1178,7 +1178,7 @@ export class ContestManagementService {
         const valueCount = scoring.config.roundValues.length;
         // A contest covering every slot of an event played in knockout rounds only covers all its
         // rounds; one whose template leaves a slot out (a play-in), or an event with group
-        // matchdays (#2241), reads which knockout rounds its games' slots cover.
+        // matchdays (#2241), reads which knockout rounds its rounds' slots cover.
         const listed = coverage.slotDefinitionIds;
         const coversAll = listed === null || sportEvent.slotDefinitionIds.every((id) => listed.includes(id));
         const rounds = coversAll && sportEvent.playsOnlyKnockoutRounds

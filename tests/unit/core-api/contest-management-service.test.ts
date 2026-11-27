@@ -2760,6 +2760,7 @@ describe('ContestManagementService — a bracket on a knockout already under way
         tiers: store.tierRepo(),
         valuations: store.valuationRepo(),
         matches: store.matchRepo(),
+        rounds: store.roundRepo(),
       }),
       now: () => now,
       cups: createCupKeeper(),
@@ -3078,6 +3079,7 @@ describe('createContestSportEventReader.findByIds (#1355, #2008)', () => {
       tiers: store.tierRepo(),
       valuations: store.valuationRepo(),
       matches: store.matchRepo(),
+      rounds: store.roundRepo(),
     });
 
     const states = await reader.findByIds([golf.id, tennis.id]);
@@ -3099,6 +3101,7 @@ describe('createContestSportEventReader field, game and price reads', () => {
       tiers: { findTierSlots: async () => new Map([[EVENT, [{ id: 'event-slot-1', sportEventId: EVENT, seasonSlotId: 'season-slot-1', slotDefinitionId: 'slot-definition-1', seasonSlotStatus: SeasonSlotStatus.SCHEDULED, holdsTierSet: true, isTierSetSlot: true, tierLayout: null, pricing: null }]]]) },
       valuations: { findBySlot: async () => ports.valuations ?? [] } as unknown as Parameters<typeof createContestSportEventReader>[0]['valuations'],
       matches: { findBySportEvent: async () => ports.games ?? [] } as unknown as Parameters<typeof createContestSportEventReader>[0]['matches'],
+      rounds: { findBySportEvent: async () => [] },
     });
   }
 
@@ -3143,6 +3146,7 @@ describe('createContestSportEventReader event and game counts', () => {
       tiers: store.tierRepo(),
       valuations: store.valuationRepo(),
       matches: store.matchRepo(),
+      rounds: store.roundRepo(),
     });
   }
 
@@ -3195,6 +3199,7 @@ describe('createBatchedContestOpeningReader', () => {
         tiers: store.tierRepo(),
         valuations: store.valuationRepo(),
         matches: store.matchRepo(),
+        rounds: store.roundRepo(),
       }),
     };
   }
