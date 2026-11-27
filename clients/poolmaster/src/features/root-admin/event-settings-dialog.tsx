@@ -30,7 +30,7 @@ import { describeBudgetPricing } from './budget-pricing-format';
 import { EventTiersDialog } from './event-tiers-dialog';
 import { formatSportEventStatus, type SportEventDtoStatus } from './sport-admin-utils';
 import { useDetailEditDialog } from './use-detail-edit-dialog';
-import { useSportEventFieldQuery, useSportEventTiersQuery } from './use-sport-event';
+import { useSportEventSlotFieldQuery, useSportEventSlotTiersQuery } from './use-sport-event';
 import { settingsRequestBody, settingsSchema, valuesOf, type SettingsValues } from './event-settings-form';
 import { usePlatformPricingProfilesQuery, usePlatformTierProfilesQuery } from './use-profiles';
 
@@ -58,8 +58,10 @@ export function EventSettingsDialog({
   const [transitionTarget, setTransitionTarget] = useState<SportEventDtoStatus | null>(null);
   const [autoToggleOpen, setAutoToggleOpen] = useState(false);
   const [tiersOpen, setTiersOpen] = useState(false);
-  const tiersQuery = useSportEventTiersQuery(event.id);
-  const fieldQuery = useSportEventFieldQuery(event.id);
+  // The tiers it edits are the tier-set slot's (#2044), released with the event; a later slot's are edited on the Field tab.
+  const tierSetSlot = event.tierSets.find((set) => set.isTierSetSlot);
+  const tiersQuery = useSportEventSlotTiersQuery(event.id, tierSetSlot?.seasonSlotId ?? '');
+  const fieldQuery = useSportEventSlotFieldQuery(event.id, tierSetSlot?.seasonSlotId ?? '');
   const current = valuesOf(event);
 
   const form = useForm<SettingsValues>({ resolver: zodResolver(settingsSchema), defaultValues: current, mode: 'onChange' });
@@ -171,7 +173,7 @@ export function EventSettingsDialog({
         </LinkButton>
       ),
     }]),
-    ...(event.tiersLocked || tiersQuery.data === undefined || fieldQuery.data === undefined ? [] : [{
+    ...(tierSetSlot === undefined || tierSetSlot.tiersLocked || tiersQuery.data === undefined || fieldQuery.data === undefined ? [] : [{
       id: 'tiers',
       name: 'Tiers',
       description: 'Override the tiers copied from the sport league\'s tier profile, for this event only.',
@@ -241,8 +243,8 @@ export function EventSettingsDialog({
           </FormField>
         </div>
       </DetailEditModal>
-      {tiersOpen && tiersQuery.data !== undefined && fieldQuery.data !== undefined ? (
-        <EventTiersDialog event={event} field={fieldQuery.data} onClose={() => setTiersOpen(false)} tiers={tiersQuery.data} />
+      {tiersOpen && tierSetSlot !== undefined && tiersQuery.data !== undefined && fieldQuery.data !== undefined ? (
+        <EventTiersDialog event={event} field={fieldQuery.data} onClose={() => setTiersOpen(false)} seasonSlotId={tierSetSlot.seasonSlotId} tiers={tiersQuery.data} />
       ) : null}
       <ConfirmDialog
         confirmLabel={transitionTarget ? `Move to ${formatSportEventStatus(transitionTarget)}` : 'Confirm'}

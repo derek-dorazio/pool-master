@@ -2,8 +2,8 @@ import {
   acceptInvitation,
   addEventParticipants,
   applyEventRaceResults,
-  autoAssignEventPrices,
-  autoAssignEventTiers,
+  autoAssignEventSlotPrices,
+  autoAssignEventSlotTiers,
   createContest,
   createParticipant,
   enterContest,
@@ -29,6 +29,7 @@ import {
 import { expectDefined } from '../support/expect-defined';
 import { standardPricingFor } from './standard-pricing';
 import { byParticipantId, setFieldRows } from './field-rows';
+import { tierSetSlotPath } from './tier-set-slot';
 
 // Cycling end to end over HTTP (#626): an admin builds a race in the seeded UCI WorldTour and loads
 // its field's rankings by upload, a commissioner runs a contest from the tour's default tiered template
@@ -113,8 +114,8 @@ describe('SDK Functional: Cycling UCI WorldTour Top 10 points', () => {
       body: { rows: RIDERS.map((rider, index) => ({ playerName: `${rider} ${RUN}`, ranking: index + 1 })) },
     });
     expect(upload.response?.status).toBe(200);
-    expect((await autoAssignEventTiers({ client: a, path: { eventId }, body: { tierSize: 1 } })).response?.status).toBe(200);
-    expect((await autoAssignEventPrices({ client: a, path: { eventId }, body: await standardPricingFor(a) })).response?.status).toBe(200);
+    expect((await autoAssignEventSlotTiers({ client: a, path: await tierSetSlotPath(a, eventId), body: { tierSize: 1 } })).response?.status).toBe(200);
+    expect((await autoAssignEventSlotPrices({ client: a, path: await tierSetSlotPath(a, eventId), body: await standardPricingFor(a) })).response?.status).toBe(200);
     expect((await releaseEvent({ client: a, path: { eventId } })).data?.event.status).toBe('SCHEDULED');
 
     const field = expectDefined((await listEventParticipants({ client: a, path: { eventId } })).data).participants;

@@ -35,9 +35,9 @@ const {
   getEventOverviewMock,
   listActivityMock,
   listEventContestsMock,
-  listEventParticipantsMock,
+  listEventSlotParticipantsMock,
   listEventRoundsMock,
-  listEventTiersMock,
+  listEventSlotTiersMock,
   listPlatformPricingProfilesMock,
   listSportLeagueOverviewsMock,
   listSportLeaguesMock,
@@ -58,9 +58,9 @@ const {
     getEventOverviewMock: vi.fn(),
     listActivityMock: vi.fn(),
     listEventContestsMock: vi.fn(),
-    listEventParticipantsMock: vi.fn(),
+    listEventSlotParticipantsMock: vi.fn(),
     listEventRoundsMock: vi.fn(),
-    listEventTiersMock: vi.fn(),
+    listEventSlotTiersMock: vi.fn(),
     listPlatformPricingProfilesMock: vi.fn(),
     listSportLeagueOverviewsMock: vi.fn(),
     listSportLeaguesMock: vi.fn(),
@@ -81,9 +81,9 @@ bindApiMocks({
   getEventOverview: getEventOverviewMock,
   listActivity: listActivityMock,
   listEventContests: listEventContestsMock,
-  listEventParticipants: listEventParticipantsMock,
+  listEventSlotParticipants: listEventSlotParticipantsMock,
   listEventRounds: listEventRoundsMock,
-  listEventTiers: listEventTiersMock,
+  listEventSlotTiers: listEventSlotTiersMock,
   listPlatformPricingProfiles: listPlatformPricingProfilesMock,
   listSportLeagueOverviews: listSportLeagueOverviewsMock,
   listSportLeagues: listSportLeaguesMock,
@@ -211,10 +211,10 @@ function renderEventPage(path: string, {
   listPlatformTierProfilesMock.mockResolvedValue({ data: { platformTierProfiles: [{ id: PGA.platformTierProfileId, name: 'Six tiers', tiers: [], sportLeagueCount: 1, createdAt: '2026-01-01T00:00:00.000Z', updatedAt: '2026-01-01T00:00:00.000Z' }] } });
   listPlatformPricingProfilesMock.mockResolvedValue({ data: { platformPricingProfiles: platformPricingProfilesFixture() } });
   listActivityMock.mockResolvedValue({ data: { jobs: [] } });
-  listEventParticipantsMock.mockResolvedValue({ data: { participants: [] } });
+  listEventSlotParticipantsMock.mockResolvedValue({ data: { participants: [] } });
   listEventRoundsMock.mockResolvedValue({ data: { rounds: [] } });
   // Out of tier order, as a read may answer: the ⚙ lists them by tier number.
-  listEventTiersMock.mockResolvedValue({ data: { tiers: [tierFixture({ id: 'tier-2', tierKey: 'tier-2', tierNumber: 2 }), tierFixture({ id: 'tier-1', tierKey: 'tier-1', tierNumber: 1 })] } });
+  listEventSlotTiersMock.mockResolvedValue({ data: { tiers: [tierFixture({ id: 'tier-2', tierKey: 'tier-2', tierNumber: 2 }), tierFixture({ id: 'tier-1', tierKey: 'tier-1', tierNumber: 1 })] } });
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={queryClient}>

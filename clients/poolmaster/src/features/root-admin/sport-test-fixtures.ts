@@ -39,7 +39,17 @@ export function seasonSlotFixture(overrides: Partial<SportLeagueSeasonSlotDto> =
   };
 }
 
+type TierSetDto = SportEventDto['tierSets'][number];
+
+/** One slot's tier set as the event read lists it (#2044): the tier-set slot of the fixture's slot by default. */
+export function tierSetFixture(overrides: Partial<TierSetDto> = {}): TierSetDto {
+  return { seasonSlotId: 'slot-1', isTierSetSlot: true, tiersLocked: false, tierCount: 6, pricing: null, tierLayout: null, ...overrides };
+}
+
 export function sportEventFixture(overrides: Partial<SportEventDto> = {}): SportEventDto {
+  const pricing: SportEventDto['pricing'] = overrides.pricing === undefined
+    ? { platformPricingProfileId: STANDARD_PLATFORM_PRICING_PROFILE_ID, salaryCap: 50000, unit: 100, topSharePercent: 24, floorSharePercent: 12, steepness: 4 }
+    : overrides.pricing;
   return {
     id: 'event-1',
     providerMappings: [],
@@ -54,7 +64,7 @@ export function sportEventFixture(overrides: Partial<SportEventDto> = {}): Sport
     endDate: '2026-05-10T22:00:00.000Z',
     roundCount: 4,
     participantCount: 0,
-    pricing: { platformPricingProfileId: STANDARD_PLATFORM_PRICING_PROFILE_ID, salaryCap: 50000, unit: 100, topSharePercent: 24, floorSharePercent: 12, steepness: 4 },
+    pricing,
     tierLayout: null,
     readinessStatus: 'NOT_RELEASED',
     readinessReasons: ['EVENT_NOT_RELEASED', 'FIELD_NOT_LOADED'],
@@ -65,7 +75,8 @@ export function sportEventFixture(overrides: Partial<SportEventDto> = {}): Sport
       { selectionType: 'RANDOM_DRAW', opening: 'NOT_YET' },
     ],
     tiersLocked: false,
-    tierSets: [],
+    // The event's one slot holds its tier set, locked with the event's own tiers.
+    tierSets: [tierSetFixture({ tiersLocked: overrides.tiersLocked ?? false, tierCount: overrides.tierCount ?? 6, pricing })],
     sportLeagueSeasonId: 'season-2026',
     slotDefinitionIds: [],
     championshipYear: 2026,

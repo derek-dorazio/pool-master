@@ -123,7 +123,12 @@
     "ROUNDS_PAR_MIN": "#2008 (10b): par per round retired",
     "ROUNDS_PAR_MAX": "#2008 (10b): par per round retired",
     "extendTo": "#2008 (10b): a test event's rounds are set when it is made",
-    "scoresUnplayedRoundsAgainstPar": "#2008 (10b): par per round retired"
+    "scoresUnplayedRoundsAgainstPar": "#2008 (10b): par per round retired",
+    "listEventTiers": "#2044 (7b): the slot route, on the set of the slot named",
+    "replaceEventTiers": "#2044 (7b): the slot route, on the set of the slot named",
+    "autoAssignEventTiers": "#2044 (7b): the slot route, on the set of the slot named",
+    "replaceEventTierAssignments": "#2044 (7b): the slot route, on the set of the slot named",
+    "autoAssignEventPrices": "#2044 (7b): the slot route, on the set of the slot named"
   },
   "ROUND_NAMES_FROM_FINAL": 0,
   "roundLabel": 0,
@@ -247,5 +252,10 @@
   "ROUNDS_PAR_MIN": 0,
   "ROUNDS_PAR_MAX": 0,
   "extendTo": 0,
-  "scoresUnplayedRoundsAgainstPar": 0
+  "scoresUnplayedRoundsAgainstPar": 0,
+  "listEventTiers": 0,
+  "replaceEventTiers": 0,
+  "autoAssignEventTiers": 0,
+  "replaceEventTierAssignments": 0,
+  "autoAssignEventPrices": 0
 }

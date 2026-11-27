@@ -103,6 +103,7 @@ function fakes() {
       autoAssignTiers: fn(undefined),
       replaceTierAssignments: fn(undefined),
       autoAssignPrices: fn(undefined),
+      previewPrices: fn({ activeParticipantCount: 3, bestPrice: 12000, worstPrice: 6000 }),
     },
     strokePlayResults: { previewRoundScores: fn([]), applyRoundScores: fn(undefined), updateRoundScore: fn(undefined) },
     raceResults: { previewResults: fn({ rows: [], orderErrors: [] }), applyResults: fn(undefined) },
@@ -403,22 +404,6 @@ describe('rounds, field and tiers', () => {
     expect(removed.statusCode).toBe(204);
   });
 
-  it('lists and replaces tiers, and answers each tier or price assignment with the field', async () => {
-    const { services, handlers } = fakes();
-
-    expect((await callHandler(handlers.listEventTiers, stubRequest({ params }))).body).toEqual({ tiers: [] });
-    expect((await callHandler(handlers.replaceEventTiers, stubRequest({ params, body: { tiers: [] } }))).body).toEqual({ tiers: [] });
-    for (const [handler, body] of [
-      [handlers.autoAssignEventTiers, { tierCount: 3 }],
-      [handlers.replaceEventTierAssignments, { assignments: [] }],
-      [handlers.autoAssignEventPrices, { salaryCap: 50000 }],
-    ] as const) {
-      expect((await callHandler(handler, stubRequest({ params, body }))).body).toMatchObject({ participants: [{ id: 'sep-1' }] });
-    }
-    expect(services.tiers.replaceTiers).toHaveBeenCalledWith({ sportEventId: EVENT_ID, tiers: [] });
-    expect(services.tiers.autoAssignPrices).toHaveBeenCalledWith({ sportEventId: EVENT_ID, pricing: { salaryCap: 50000 } });
-  });
-
   it('reads and writes the set of the slot a slot route names, answering each write with the field valued in that slot (#2044)', async () => {
     const { services, handlers } = fakes();
     const slotParams = { eventId: EVENT_ID, seasonSlotId: 'season-slot-r32' };
@@ -439,6 +424,16 @@ describe('rounds, field and tiers', () => {
     expect(services.tiers.replaceTierAssignments).toHaveBeenCalledWith({ sportEventId: EVENT_ID, seasonSlotId: 'season-slot-r32', assignments: [] });
     expect(services.tiers.autoAssignPrices).toHaveBeenCalledWith({ sportEventId: EVENT_ID, seasonSlotId: 'season-slot-r32', pricing: { salaryCap: 50000 } });
     expect(services.field.listEventParticipants).toHaveBeenLastCalledWith(EVENT_ID, 'season-slot-r32');
+  });
+
+  it('answers a slot\'s price preview with what the service prices, from the values in the query (#2107)', async () => {
+    const { services, handlers } = fakes();
+    const query = { salaryCap: 50000, unit: 100, topSharePercent: 24, floorSharePercent: 12, steepness: 4 };
+
+    const previewed = await callHandler(handlers.previewEventSlotPrices, stubRequest({ params: { eventId: EVENT_ID, seasonSlotId: 'season-slot-r32' }, query }));
+
+    expect(previewed.body).toEqual({ activeParticipantCount: 3, bestPrice: 12000, worstPrice: 6000 });
+    expect(services.tiers.previewPrices).toHaveBeenCalledWith({ sportEventId: EVENT_ID, seasonSlotId: 'season-slot-r32', pricing: query });
   });
 });
 

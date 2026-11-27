@@ -672,6 +672,36 @@
       "key": "scoresUnplayedRoundsAgainstPar",
       "now": 0,
       "reason": "retired by #2008"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "listEventTiers",
+      "now": 0,
+      "reason": "retired by #2044"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "replaceEventTiers",
+      "now": 0,
+      "reason": "retired by #2044"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "autoAssignEventTiers",
+      "now": 0,
+      "reason": "retired by #2044"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "replaceEventTierAssignments",
+      "now": 0,
+      "reason": "retired by #2044"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "autoAssignEventPrices",
+      "now": 0,
+      "reason": "retired by #2044"
     }
   ]
 }

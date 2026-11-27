@@ -1,8 +1,8 @@
 import {
   acceptInvitation,
   addEventParticipants,
-  autoAssignEventPrices,
-  autoAssignEventTiers,
+  autoAssignEventSlotPrices,
+  autoAssignEventSlotTiers,
   createContest,
   createParticipant,
   enterContest,
@@ -24,6 +24,7 @@ import { cleanupFunctionalData, disconnectFunctionalPrisma, getFunctionalPrisma 
 import { expectDefined } from '../support/expect-defined';
 import { standardPricingFor } from './standard-pricing';
 import { setFieldRows } from './field-rows';
+import { tierSetSlotPath } from './tier-set-slot';
 
 // A plan's caps end to end (#947). With Free's sports leagues a year saved as one, a league's 2099
 // contests may be in one sports league: its first men's Majors contest is made, a women's one is
@@ -107,8 +108,8 @@ describe('SDK Functional: plan caps (#947)', () => {
         path: { eventId },
         body: { rows: RUNNERS.map((runner, index) => ({ playerName: `${runner} ${RUN}`, ranking: index + 1, seedNumber: index + 1 })) },
       });
-      await autoAssignEventTiers({ client: a, path: { eventId }, body: { tierSize: 1 } });
-      await autoAssignEventPrices({ client: a, path: { eventId }, body: await standardPricingFor(a) });
+      await autoAssignEventSlotTiers({ client: a, path: await tierSetSlotPath(a, eventId), body: { tierSize: 1 } });
+      await autoAssignEventSlotPrices({ client: a, path: await tierSetSlotPath(a, eventId), body: await standardPricingFor(a) });
       expect((await releaseEvent({ client: a, path: { eventId } })).data?.event.status).toBe('SCHEDULED');
       return eventId;
     };

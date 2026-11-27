@@ -8,6 +8,7 @@ import { createTestEventThroughApi, findSeededSportLeagueThroughApi } from './he
 import { registerFreshUser } from './helpers/user-session';
 import { newRunId, e2eName, e2eEmail, e2eUsername, e2eLeagueCode } from './helpers/test-marker';
 import { AWAY_SIDE, HOME_SIDE, bracketLoadMatch } from './helpers/match-sides';
+import { tierSetSlotUrl } from './helpers/tier-set-slot';
 
 /**
  * #721 — the bracket pool journey: the root admin sets up a released four-team basketball
@@ -174,8 +175,9 @@ test('act 1: the root admin releases a four-team basketball tournament of two ro
         })),
       },
     }), 'seed the field');
-    await postJson(api, headers, `/api/v1/events/${eventId}/tiers/auto-assign`, {});
-    await postJson(api, headers, `/api/v1/events/${eventId}/prices/auto-assign`, await standardPricingRequest(api, headers));
+    const slotUrl = await tierSetSlotUrl(api, eventId, headers);
+    await postJson(api, headers, `${slotUrl}/tiers/auto-assign`, {});
+    await postJson(api, headers, `${slotUrl}/prices/auto-assign`, await standardPricingRequest(api, headers));
 
     const { participants } = await (await expectOk(api.get(`/api/v1/events/${eventId}/participants`, { headers }), 'read the field')).json() as {
       participants: Array<{ id: string; participant: { name: string } }>;

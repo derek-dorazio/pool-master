@@ -437,12 +437,6 @@ export class StrokePlayResultService {
     }]);
   }
 
-  /**
-   * The event an admin golf score is for, refused with 422 EVENT_SCORING_FAMILY_MISMATCH when
-   * its sport's scoring family does not keep golf round scores: writing golf results onto it
-   * would leave results its leaderboard never reads. Null when there is no such event; the
-   * handler has already answered 404 for that.
-   */
   /** The event's round of this number; an admin cannot score a round the event does not have (#375). */
   private async requireRound(sportEventId: string, roundNumber: number): Promise<SportEventRound> {
     const round = (await this.deps.rounds.findBySportEvent(sportEventId)).find((candidate) => candidate.roundNumber === roundNumber);
@@ -456,6 +450,12 @@ export class StrokePlayResultService {
     return round;
   }
 
+  /**
+   * The event an admin golf score is for, refused with 422 EVENT_SCORING_FAMILY_MISMATCH when
+   * its sport's scoring family does not keep golf round scores: writing golf results onto it
+   * would leave results its leaderboard never reads. Null when there is no such event; the
+   * handler has already answered 404 for that.
+   */
   private async requireGolfScoredEvent(sportEventId: string): Promise<SportEvent | null> {
     const event = await this.deps.events.findById(sportEventId);
     if (event && !this.deps.storesGolfRoundScores(event)) {
