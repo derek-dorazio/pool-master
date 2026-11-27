@@ -32,6 +32,7 @@ const finding: ProviderSyncFinding = {
   provider: null,
   providerValue: null,
   providerValueName: null,
+  syncKind: null,
   waiveNote: null,
   firstSeenAt: new Date('2026-11-01T00:00:00.000Z'),
   lastSeenAt: new Date('2026-11-02T00:00:00.000Z'),

@@ -733,6 +733,9 @@ describe('mock contest feed provider event-first verification', () => {
       // The tick here queues only fields: the leagues' events sync is not this test's.
       schedule: { getConfig: async () => ({ ...syncVerificationConfig, EVENTS: { ...syncVerificationConfig.EVENTS, enabled: false } }) },
       notifiedProviderCadence: () => undefined,
+      // No provider league is quiet-checked here: the quiet live scores finding has its own tests.
+      quietAfterMs: () => 0,
+      findings: { raiseOfSource: () => Promise.resolve() },
       jobLock: heldHere(),
       now: () => syncVerificationNow,
     });

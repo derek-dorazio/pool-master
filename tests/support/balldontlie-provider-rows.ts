@@ -20,7 +20,8 @@ export const TEST_PROVIDER_ROWS: Readonly<Record<ProviderCode, { id: string; nam
 };
 
 function league(code: string, name: string, sport: Sport, webhookEventSet: ProviderWebhookEventSet, quietAfterMinutes: number, typicalGameMinutes: number): ProviderLeagueSettings {
-  return { id: `00000000-0000-4000-8000-${code.padStart(12, '0').replace(/[^0-9a-f]/g, 'a')}`, providerId: PROVIDER_ID, code, name, sport, webhookEventSet, quietAfterMinutes, typicalGameMinutes, isEnabled: true };
+  // Each league's own id, from its code's bytes, so no two leagues share one.
+  return { id: `00000000-0000-4000-8000-${Buffer.from(code).toString('hex').padStart(12, '0').slice(-12)}`, providerId: PROVIDER_ID, code, name, sport, webhookEventSet, quietAfterMinutes, typicalGameMinutes, isEnabled: true };
 }
 
 /** Every BALLDONTLIE league, enabled. */

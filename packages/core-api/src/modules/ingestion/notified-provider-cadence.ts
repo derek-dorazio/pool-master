@@ -8,7 +8,6 @@
 
 import { ProviderCode } from '@poolmaster/shared/domain';
 import type { NotifiedProviderCadence } from './sync-tick';
-import { balldontlieQuietAfterMs } from './adapters/balldontlie/balldontlie-webhooks';
 import type { ProviderSettingsStore } from './provider-settings-store';
 import type { ProviderWebhookSwitch } from './provider-webhook-switch';
 
@@ -17,19 +16,25 @@ import type { ProviderWebhookSwitch } from './provider-webhook-switch';
  * BALLDONTLIE sends webhooks, so its row sets the pace.
  */
 export function notifiedProviderCadenceOf(
-  store: Pick<ProviderSettingsStore, 'byCode' | 'enabledLeagues'>,
+  store: Pick<ProviderSettingsStore, 'byCode'>,
   webhooks: Pick<ProviderWebhookSwitch, 'onProviderIds'>,
 ): NotifiedProviderCadence | undefined {
   const providerIds = webhooks.onProviderIds();
   const provider = store.byCode(ProviderCode.BALLDONTLIE);
   if (providerIds.length === 0 || provider === undefined) return undefined;
-  const leagues = store.enabledLeagues(ProviderCode.BALLDONTLIE);
   return {
     providerIds,
     pollIntervalMs: provider.webhookPollMinutes * 60_000,
     roundPollIntervalMs: provider.webhookRoundPollMinutes * 60_000,
-    // Each league's own gap between notifications, not one window: a quarter of football
-    // and a golf round's wait for its first finisher differ by hours.
-    quietAfterMs: (providerLeagueCode) => balldontlieQuietAfterMs(leagues, providerLeagueCode),
   };
+}
+
+/**
+ * Each provider league's quiet window (`quietAfterMinutes`), by its row's id: how long one of its
+ * events may be in play with nothing from its provider. Each league has its own, not one window:
+ * a quarter of football and a golf round's wait for its first finisher differ by hours. A league
+ * no Provider row has gives zero, which says never.
+ */
+export function providerLeagueQuietAfterMs(store: Pick<ProviderSettingsStore, 'findLeague'>): (providerLeagueId: string) => number {
+  return (providerLeagueId) => (store.findLeague(providerLeagueId)?.league.quietAfterMinutes ?? 0) * 60_000;
 }

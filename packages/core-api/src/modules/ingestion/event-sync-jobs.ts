@@ -33,7 +33,7 @@ import { SyncRunOutcomeUnrecordedError, type ProviderSyncRunLedger } from './per
 export interface EventSyncJobsDependencies {
   sportEvents: Pick<SportEventRepository, 'findById'>;
   feeds: Pick<EventFeedSync, 'runEventSync'>;
-  syncRuns: Pick<ProviderSyncRunRepository, 'findManyByIds' | 'findByBackgroundJobIds' | 'update'>;
+  syncRuns: Pick<ProviderSyncRunRepository, 'findManyByIds' | 'findByBackgroundJobIds'>;
   syncRunLedger: Pick<ProviderSyncRunLedger, 'createSubmissions' | 'executeFeedRun' | 'failSubmittedRun'>;
   registry: Pick<ProviderRegistry, 'bySourceId'>;
   /** The ingestion schedule: a webhook's or the tick's scores job runs only while live scores are on. */
@@ -44,6 +44,7 @@ export interface EventSyncJobsDependencies {
 }
 
 const NOTHING_CHANGED: BackgroundJobOutcome = { changedCount: 0 };
+const INTERRUPTED = 'Interrupted: an earlier try of this sync stopped before the feed finished';
 
 export class EventSyncJobs {
   private readonly syncOrchestrator: Pick<SyncOrchestrator, 'normalizeRequest'>;
@@ -113,7 +114,7 @@ export class EventSyncJobs {
     if (syncRun?.status === ProviderSyncRunStatus.IN_PROGRESS && context.attempt > 1) {
       await this.deps.syncRunLedger.failSubmittedRun(
         syncRun,
-        new Error('Interrupted: an earlier try of this sync stopped before the feed finished'),
+        new Error(INTERRUPTED),
         syncRun.startedAt,
       );
       return NOTHING_CHANGED;
@@ -135,20 +136,15 @@ export class EventSyncJobs {
     }
   }
 
-  /** The run an earlier try of a scheduled or webhook job left IN_PROGRESS: marked FAILED as interrupted. */
+  /**
+   * The run an earlier try of a scheduled or webhook job left IN_PROGRESS: marked FAILED as
+   * interrupted through the ledger, so it opens its SYNC_FAILED finding like any failed run.
+   */
   private async failInterruptedRuns(jobId: string): Promise<void> {
     const interrupted = (await this.deps.syncRuns.findByBackgroundJobIds([jobId]))
       .filter((run: ProviderSyncRun) => run.status === ProviderSyncRunStatus.IN_PROGRESS);
     for (const run of interrupted) {
-      // poolmaster-allow-query-in-loop: at most one interrupted run per earlier try, four tries at most
-      await this.deps.syncRuns.update(run.id, {
-        status: ProviderSyncRunStatus.FAILED,
-        completedAt: this.now(),
-        summary: 'Interrupted: an earlier try of this sync stopped before it finished.',
-        stats: run.stats,
-        changedCount: null,
-        errorCount: 1,
-      });
+      await this.deps.syncRunLedger.failSubmittedRun(run, new Error(INTERRUPTED), run.startedAt);
     }
   }
 

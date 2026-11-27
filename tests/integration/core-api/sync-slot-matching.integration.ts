@@ -228,7 +228,7 @@ function seasonSlate(plays: ReturnType<typeof kickoff>[]): SlateEvent {
 }
 
 describe('The events sync places games with no code by their Season slot\'s date window (#2012)', () => {
-  const findingsOf = (sportLeagueId: string) => getPrisma().providerSyncFinding.findMany({ where: { sportLeagueId }, orderBy: { kind: 'asc' } });
+  const findingsOf = (sportLeagueId: string) => getPrisma().providerSyncFinding.findMany({ where: { sportLeagueId } });
 
   it('places the season\'s slate on its windowed slots, and dates a slot and confirms its tentative window only by games between seeds on the event\'s field, never by another bowl in its dates', async () => {
     const prisma = getPrisma();
@@ -446,7 +446,7 @@ describe('The events sync\'s findings name the Provider by its row', () => {
 });
 
 describe('The events sync reads only a league its provider reads (#2005)', () => {
-  it('raises one PROVIDER_LEAGUE_UNKNOWN ERROR finding against the Provider row, reads nothing and fails the job for good, when the provider has no enabled league with the mapping\'s code', async () => {
+  it('raises one PROVIDER_LEAGUE_UNKNOWN ERROR finding against the Provider row, and the failed run\'s SYNC_FAILED finding, reads nothing and fails the job for good, when the provider has no enabled league with the mapping\'s code', async () => {
     const prisma = getPrisma();
     const { league } = await footballLeague([{ code: 'REG:5' }]);
     // BALLDONTLIE with golf alone enabled: the league's mapping names the NFL, which it does not read.
@@ -470,11 +470,15 @@ describe('The events sync reads only a league its provider reads (#2005)', () =>
 
     const provider = await prisma.provider.findFirstOrThrow({ where: { code: 'BALLDONTLIE' }, select: { id: true } });
     expect((await prisma.providerSyncFinding.findMany({ where: { sportLeagueId: league.id } })).map((finding) => [finding.kind, finding.severity, finding.providerId, finding.seenCount]))
-      .toEqual([[ProviderSyncFindingKind.PROVIDER_LEAGUE_UNKNOWN, ProviderSyncFindingSeverity.ERROR, provider.id, 2]]);
+      .toEqual(expect.arrayContaining([
+        [ProviderSyncFindingKind.PROVIDER_LEAGUE_UNKNOWN, ProviderSyncFindingSeverity.ERROR, provider.id, 2],
+        [ProviderSyncFindingKind.SYNC_FAILED, ProviderSyncFindingSeverity.ERROR, provider.id, 2],
+      ]));
+    expect(await prisma.providerSyncFinding.count({ where: { sportLeagueId: league.id } })).toBe(2);
     expect(requests).toEqual([]);
     expect(await eventsWithSlots(league.id)).toEqual([]);
   });
-  it('resolves the league\'s open PROVIDER_LEAGUE_UNKNOWN finding when a later events sync of it completes', async () => {
+  it('resolves the league\'s open PROVIDER_LEAGUE_UNKNOWN and SYNC_FAILED findings when a later events sync of it completes', async () => {
     const prisma = getPrisma();
     const { league } = await footballLeague([{ code: 'REG:5' }]);
     const provider = await prisma.provider.findFirstOrThrow({ where: { code: 'BALLDONTLIE' }, select: { id: true } });
@@ -489,7 +493,11 @@ describe('The events sync reads only a league its provider reads (#2005)', () =>
     await runSync(buildSync({ events: [] }), league.id);
 
     expect((await prisma.providerSyncFinding.findMany({ where: { sportLeagueId: league.id } })).map((finding) => [finding.kind, finding.providerId, finding.status]))
-      .toEqual([[ProviderSyncFindingKind.PROVIDER_LEAGUE_UNKNOWN, provider.id, ProviderSyncFindingStatus.RESOLVED]]);
+      .toEqual(expect.arrayContaining([
+        [ProviderSyncFindingKind.PROVIDER_LEAGUE_UNKNOWN, provider.id, ProviderSyncFindingStatus.RESOLVED],
+        [ProviderSyncFindingKind.SYNC_FAILED, provider.id, ProviderSyncFindingStatus.RESOLVED],
+      ]));
+    expect(await prisma.providerSyncFinding.count({ where: { sportLeagueId: league.id } })).toBe(2);
   });
 });
 

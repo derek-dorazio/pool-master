@@ -8,7 +8,7 @@ function finding(overrides: Partial<ProviderSyncFindingDto> = {}): ProviderSyncF
   return {
     id: 'finding-1', kind: 'SLOT_NAME_UNMATCHED', severity: 'INFO', status: 'OPEN',
     sportLeague: { id: 'pga', name: 'PGA TOUR', sport: 'GOLF' }, sportEvent: null, provider: { id: 'provider-1', name: 'BALLDONTLIE' },
-    providerValue: 'the new open', providerValueName: 'The 2027 New Open', waiveNote: null,
+    providerValue: 'the new open', providerValueName: 'The 2027 New Open', syncKind: null, waiveNote: null,
     firstSeenAt: '2026-11-20T12:00:00.000Z', lastSeenAt: '2026-11-23T12:00:00.000Z', seenCount: 1,
     statusChangedAt: '2026-11-20T12:00:00.000Z', statusChangedBy: null, actions: ['LINK_SLOT', 'RESOLVE', 'WAIVE'],
     ...overrides,

@@ -20,6 +20,8 @@ export interface LiveEventView {
   games: ReadonlyArray<ScoresGame & { playedAsField: boolean }>;
   /** The latest webhook notification about the event or any of its Games; null before the first. */
   lastHeardAt: Date | null;
+  /** When a completed scores sync of the event last changed something (#2094); null before the first. */
+  lastScoresChangedAt: Date | null;
 }
 
 /** One Season's span, as the tick reads it to tell whether its league is in season (`syncSeasonStateOf`). */
@@ -40,7 +42,7 @@ export interface SyncDueWorkReader {
   findNextSlots(input: { leagues: readonly SyncedLeagueRef[]; now: Date }): Promise<FieldWindowSlot[]>;
   /**
    * The leagues' linked events with a Game whose scores are due at `now` (`isGameScoresDue`), each
-   * with those Games, in one read.
+   * with those Games and when its scores last changed, in two reads.
    */
   findLiveEvents(input: { leagues: readonly SyncedLeagueRef[]; now: Date }): Promise<LiveEventView[]>;
 }

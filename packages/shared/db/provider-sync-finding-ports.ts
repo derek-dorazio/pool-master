@@ -5,15 +5,18 @@ import type {
   ProviderSyncFindingRaise,
   ProviderSyncFindingSeverity,
   ProviderSyncFindingStatusChange,
+  ProviderSyncKind,
 } from '../domain';
 
 /** The OPEN findings of one kind to resolve: every part given narrows it. */
 export interface ProviderSyncFindingResolveFilter {
   kind: ProviderSyncFindingKind;
   sportLeagueId?: string;
-  sportEventId?: string;
+  /** Null reaches the findings with no event (a league's events sync, #2092). */
+  sportEventId?: string | null;
   providerId?: string;
   providerValue?: string;
+  syncKind?: ProviderSyncKind;
   /** Any of these provider values (#2069): the feed ids one mapping write named. */
   providerValues?: readonly string[];
   /** Every league but these (#2070): the leagues a Provider no longer syncs. */
