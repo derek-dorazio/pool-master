@@ -85,7 +85,7 @@ describe('areContestEntriesOpen', () => {
 });
 
 describe('isContestPickingOver', () => {
-  const started = { sportEventId: 'event-1', sequence: 1, name: 'Event', startDate: '2026-01-10T18:00:00.000Z', endDate: null, status: 'IN_PROGRESS' as const, participantType: 'INDIVIDUAL' as const, scoringFamily: 'STROKE_PLAY' as const };
+  const started = { sportEventId: 'event-1', name: 'Event', startDate: '2026-01-10T18:00:00.000Z', endDate: null, status: 'IN_PROGRESS' as const, participantType: 'INDIVIDUAL' as const, scoringFamily: 'STROKE_PLAY' as const };
 
   it('calls a live lineup contest over once its events have started, and never one with no events at all', () => {
     expect(isContestPickingOver({ selectionType: SelectionType.TIERED, status: ContestStatus.ACTIVE, sportEvents: [started] })).toBe(true);

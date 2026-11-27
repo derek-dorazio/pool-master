@@ -1,7 +1,6 @@
 import {
   ContestStatus,
   countParticipants,
-  coversOneEvent,
   formatContestRules,
   formatEntriesPerTeam,
   formatSelectionTypeName,
@@ -10,7 +9,7 @@ import {
   type SportNoun,
   sportVocabulary,
 } from '@poolmaster/shared/domain';
-import { enumLabel } from '@poolmaster/shared/display-strings';
+import { enumLabel, slotLabel } from '@poolmaster/shared/display-strings';
 import { useQuery } from '@tanstack/react-query';
 import { Lock, Trophy } from 'lucide-react';
 import { useState } from 'react';
@@ -21,7 +20,6 @@ import { ContestExpansionSection } from '@/features/billing/contest-expansion-se
 import {
   buildLeagueAdminContestCupWeightPath,
   buildLeagueAdminContestEditPath,
-  buildLeagueAdminContestEventsPath,
   buildLeagueAdminContestsPath,
 } from '@/features/leagues/league-routing';
 import { useLeagueContext } from '@/features/leagues/use-league-context';
@@ -44,9 +42,10 @@ import {
   SectionRows,
   Text,
 } from '@/features/shared/ui';
-import { firstContestEvent } from './contest-events';
+import { eventOfFirstSlot, eventOfSlot } from './contest-events';
 import { ContestStatusBadge } from './contest-status-badge';
 import { ContestStatusCard } from './contest-status-card';
+import { ChangeContestEventDialog } from './change-contest-event-dialog';
 import { DeleteContestDialog } from './delete-contest-dialog';
 import { sportEventQueryOptions } from './use-contest-schedule';
 import { useContestQuery } from './use-contest-query';
@@ -116,10 +115,11 @@ export function ManageContestPage() {
   const managedContestQuery = useManagedContestQuery(league?.id, contestId);
   const contest = contestQuery.data ?? null;
   // The first event: its start is when entries close, and the status card counts down to it.
-  const firstEventId = (contest ? firstContestEvent(contest)?.sportEventId : undefined)
+  const firstEventId = (contest ? eventOfFirstSlot(contest)?.sportEventId : undefined)
     ?? managedContestQuery.data?.sportEvents.at(0)?.sportEventId;
   const eventQuery = useQuery(sportEventQueryOptions(firstEventId ?? ''));
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [isChangeEventOpen, setIsChangeEventOpen] = useState(false);
   const contestsPath = buildLeagueAdminContestsPath(leagueCode);
 
   if (!league) {
@@ -169,10 +169,7 @@ export function ManageContestPage() {
   );
   const eventLabel = event.venue ? `${event.name} · ${event.venue}` : event.name;
   const isMultiEvent = contest.sportEvents.length > 1;
-  // Events can change until the contest is final, unless its selection type covers one event.
-  const canChangeEvents = league.isActive
-    && contest.status !== ContestStatus.COMPLETED
-    && !coversOneEvent(contest.selectionType);
+  const canChangeEvent = !isMultiEvent && contest.selectionType !== SelectionType.SQUARES;
   const eventNamesById = new Map(contest.sportEvents.map((sportEvent) => [sportEvent.sportEventId, sportEvent.name]));
 
   return (
@@ -226,16 +223,19 @@ export function ManageContestPage() {
           <SectionRow layout="setting" name="Name" testId="manage-contest-name" value={<span className="font-semibold">{contest.name}</span>} />
           <SectionRow
             layout="setting"
-            aside={canChangeEvents ? (
-              <LinkButton
-                data-testid="manage-contest-events-edit"
+            // In Set up a one-event contest can move to another event of its Season (#2014); a
+            // squares contest's event came with its game, so it stays.
+            aside={isNotOpen ? (!canChangeEvent ? <FixedNote /> : (
+              <Button
+                data-testid="manage-contest-change-event"
+                disabled={!league.isActive}
+                onClick={() => setIsChangeEventOpen(true)}
                 size="sm"
-                to={buildLeagueAdminContestEventsPath(leagueCode, contest.id)}
                 variant="secondary"
               >
-                {isMultiEvent ? 'Change events' : 'Add events'}
-              </LinkButton>
-            ) : isNotOpen ? <FixedNote /> : undefined}
+                Change
+              </Button>
+            )) : undefined}
             name={isMultiEvent ? 'Events' : 'Event'}
             testId="manage-contest-event-row"
             value={(
@@ -268,18 +268,21 @@ export function ManageContestPage() {
         </SectionRows>
       </SectionCard>
 
-      {isMultiEvent ? (
-        <SectionCard testId="manage-contest-event-list" title="Events, in order">
+      {contest.coveredSlots.length > 1 ? (
+        <SectionCard help="Set when the contest was created." testId="manage-contest-slot-list" title="Covers, in order">
           <SectionRows>
-            {contest.sportEvents.map((sportEvent, index) => (
-              <SectionRow
-                facts={<DateDisplay tone="inherit" value={sportEvent.startDate} />}
-                key={sportEvent.sportEventId}
-                name={sportEvent.name}
-                testId={`manage-contest-event-${sportEvent.sportEventId}`}
-                value={index + 1}
-              />
-            ))}
+            {contest.coveredSlots.map((slot, index) => {
+              const slotEvent = eventOfSlot(contest, slot);
+              return (
+                <SectionRow
+                  facts={slotEvent ? <DateDisplay tone="inherit" value={slot.startsAt ?? slotEvent.startDate} /> : undefined}
+                  key={slot.seasonSlotId}
+                  name={slotLabel(slot)}
+                  testId={`manage-contest-slot-${slot.seasonSlotId}`}
+                  value={index + 1}
+                />
+              );
+            })}
           </SectionRows>
         </SectionCard>
       ) : null}
@@ -355,6 +358,17 @@ export function ManageContestPage() {
             />
           </SectionRows>
         </SectionCard>
+      ) : null}
+
+      {isNotOpen && canChangeEvent ? (
+        <ChangeContestEventDialog
+          contestId={contestId}
+          currentEvent={event}
+          leagueCode={leagueCode}
+          leagueId={leagueId}
+          onOpenChange={setIsChangeEventOpen}
+          open={isChangeEventOpen}
+        />
       ) : null}
 
       <DeleteContestDialog

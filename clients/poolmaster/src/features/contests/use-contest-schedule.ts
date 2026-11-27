@@ -1,14 +1,14 @@
 import { getEvent, type ContestDto, type SportEventDto } from '@/lib/api';
 import { throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
-import { firstContestEvent, lastContestEvent } from './contest-events';
+import { eventOfFirstSlot, eventOfLastSlot } from './contest-events';
 
 export type ContestSchedule = {
   startsAt: string;
   endsAt: string | null;
 };
 
-type ScheduledContest = Pick<ContestDto, 'sportEvents' | 'startsAt' | 'endsAt'>;
+type ScheduledContest = Pick<ContestDto, 'sportEvents' | 'coveredSlots' | 'startsAt' | 'endsAt'>;
 
 /**
  * One sport event, read through the event's shared key: the event is cached whole, and every
@@ -44,17 +44,17 @@ export function contestSchedule(contest: ScheduledContest | undefined): ContestS
   if (!contest) {
     return null;
   }
-  const startsAt = contest.startsAt ?? firstContestEvent(contest)?.startDate;
+  const startsAt = contest.startsAt ?? eventOfFirstSlot(contest)?.startDate;
   if (!startsAt) {
     return null;
   }
-  return { startsAt, endsAt: contest.endsAt ?? lastContestEvent(contest)?.endDate ?? null };
+  return { startsAt, endsAt: contest.endsAt ?? eventOfLastSlot(contest)?.endDate ?? null };
 }
 
 /**
  * When a listed contest starts: its own `startsAt` once set, else its first event's start, which
  * the contest list carries (#577), so a list never reads its events one by one.
  */
-export function listedContestStartsAt(contest: Pick<ContestDto, 'startsAt' | 'sportEvents'>): string | null {
-  return contest.startsAt ?? firstContestEvent(contest)?.startDate ?? null;
+export function listedContestStartsAt(contest: Pick<ContestDto, 'startsAt' | 'sportEvents' | 'coveredSlots'>): string | null {
+  return contest.startsAt ?? eventOfFirstSlot(contest)?.startDate ?? null;
 }

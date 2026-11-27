@@ -1,3 +1,4 @@
+import { withCoverage } from './covered-slots';
 import { SlotKind } from '@poolmaster/shared/domain';
 import type {
   ContestDto,
@@ -13,7 +14,7 @@ export const SQUARES_KICKOFF = '2099-02-07T23:30:00.000Z';
 
 /** A squares contest on the Super Bowl, open for claims. */
 export function squaresContestFixture(overrides: Partial<ContestDto> = {}): ContestDto {
-  return {
+  return withCoverage({
     id: 'contest-1',
     leagueId: 'league-1',
     entriesPerContest: null,
@@ -23,9 +24,9 @@ export function squaresContestFixture(overrides: Partial<ContestDto> = {}): Cont
     contestFormat: 'SQUARES',
     selectionType: 'SQUARES',
     myEntryIds: ['entry-1'],
-    sportEvents: [{ sportEventId: 'event-1', sequence: 1, name: 'NFL Playoffs', startDate: '2099-01-10T18:00:00.000Z', endDate: null, status: 'IN_PROGRESS', participantType: 'TEAM', scoringFamily: 'HEAD_TO_HEAD' }],
+    sportEvents: [{ sportEventId: 'event-1', name: 'NFL Playoffs', startDate: '2099-01-10T18:00:00.000Z', endDate: null, status: 'IN_PROGRESS', participantType: 'TEAM', scoringFamily: 'HEAD_TO_HEAD' }],
     ...overrides,
-  };
+  });
 }
 
 /** One game of the event as the contract carries it: the Chiefs on side 1, the Eagles on side 2. */

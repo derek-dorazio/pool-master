@@ -1,3 +1,4 @@
+import { withCoverage } from './covered-slots';
 import { ContestOpening, SelectionType, eventSportDefinition } from '@poolmaster/shared/domain';
 import { sportPlay } from '@/test/sport-play';
 import type {
@@ -137,7 +138,6 @@ export function buildContestSportEvent(
 ): ContestSportEventDto {
   return {
     sportEventId: 'event-1',
-    sequence: 1,
     name: 'The Masters',
     startDate: FUTURE_START,
     endDate: null,
@@ -149,7 +149,7 @@ export function buildContestSportEvent(
 }
 
 export function buildContest(overrides: Partial<ContestDto> = {}): ContestDto {
-  return {
+  return withCoverage({
     id: 'contest-1',
     name: 'Masters One-and-Done',
     status: 'DRAFT',
@@ -164,7 +164,7 @@ export function buildContest(overrides: Partial<ContestDto> = {}): ContestDto {
     allEntryCount: 0,
     myEntryIds: [],
     ...overrides,
-  };
+  });
 }
 
 export function buildTier(tierNumber: number, golferCount: number): EffectiveTierDto {

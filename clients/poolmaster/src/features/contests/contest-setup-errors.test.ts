@@ -8,10 +8,4 @@ describe('contest setup error wording', () => {
       expect(errorCodeMessage(code, { context: 'contestSetup' })).toMatch(/can’t take another event\.$/);
     },
   );
-
-  it('words the events page\'s own refusals first and falls back to the setup screens\' wording', () => {
-    const context = ['contestEvents', 'contestSetup'] as const;
-    expect(errorCodeMessage('CONTEST_EVENTS_LEAGUE_MISMATCH', { context })).toBe('Every event in a contest comes from the same league.');
-    expect(errorCodeMessage('CONTEST_SQUARES_SINGLE_EVENT', { context })).toBe('A squares contest is played on one game, so it can’t take another event.');
-  });
 });

@@ -157,8 +157,7 @@ export class PrismaContestEntryRepository implements ContestEntryRepository {
         && await tx.contestEntry.count({ where: { contestId: entry.contestId } }) >= entriesPerContest) {
         return { status: 'contestFull', entriesPerContest };
       }
-      // Read under the lock, so an event added meanwhile is either here or given to the entry by
-      // the event change that runs after (`replaceCoveredSlots`): the events of its covered slots.
+      // The events of the contest's covered slots, fixed at creation (#2014).
       const contestEvents = await tx.sportEventSlot.findMany({
         where: { seasonSlot: { contestSlots: { some: { contestId: entry.contestId } } } },
         select: { sportEventId: true },

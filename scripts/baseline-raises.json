@@ -1,5 +1,5 @@
 {
-  "$comment": "The one sanctioned way to raise a rule-scanner baseline, for a PR that makes a scanner stricter: one entry per raised baseline entry, { file, key, now, reason }. rules:check:baseline-ratchet lets that exact count through, and the reviewer sees it in the diff. Delete the entry once the baseline is back at or below its base. See rules/react-ui-rules.md §5 Shared-Component and Helper Adoption Gate.",
+  "$comment": "The one sanctioned way to raise a rule-scanner baseline, for a PR that makes a scanner stricter: one entry per raised baseline entry, { file, key, now, reason }. rules:check:baseline-ratchet lets that exact count through, and the reviewer sees it in the diff. Delete the entry once the baseline is back at or below its base. See rules/react-ui-rules.md \u00a75 Shared-Component and Helper Adoption Gate.",
   "raises": [
     {
       "file": "scripts/retired-names.json",
@@ -804,6 +804,72 @@
       "key": "useRowCorrections",
       "now": 0,
       "reason": "retired by #2008"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "scoreMissedLineup",
+      "now": 0,
+      "reason": "retired by #2014"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "receiptsPendingSportEventId",
+      "now": 0,
+      "reason": "retired by #2014"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "ContestSportEventRepository",
+      "now": 0,
+      "reason": "retired by #2014"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "ContestSportEvent",
+      "now": 0,
+      "reason": "retired by #2014"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "setContestSportEvents",
+      "now": 0,
+      "reason": "retired by #2014"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "SetContestSportEventsRequest",
+      "now": 0,
+      "reason": "retired by #2014"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "ContestEventsPage",
+      "now": 0,
+      "reason": "retired by #2014"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "buildLeagueAdminContestEventsPath",
+      "now": 0,
+      "reason": "retired by #2014"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "firstContestEvent",
+      "now": 0,
+      "reason": "retired by #2014"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "lastContestEvent",
+      "now": 0,
+      "reason": "retired by #2014"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "currentContestEvent",
+      "now": 0,
+      "reason": "retired by #2014"
     },
     {
       "file": "scripts/retired-names.json",

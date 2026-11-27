@@ -1,3 +1,4 @@
+import { buildCoveredSlot } from '../../factories';
 import { sportEventSlots } from '../../support/sport-play';
 import { ContestEntryStatus, ContestStatus, SelectionType, Sport, SportEventParticipantStatus } from '@poolmaster/shared/domain';
 import type {
@@ -120,6 +121,7 @@ function buildWorld(options: WorldOptions = {}) {
     id: CONTEST_ID,
     leagueId: LEAGUE_ID,
     sportEventIds: [EVENT_ID],
+    coveredSlots: [buildCoveredSlot({ sportEventId: EVENT_ID })],
     name: 'Masters Pool',
     status: options.status ?? ContestStatus.OPEN,
     contestFormat: 'ROSTER',

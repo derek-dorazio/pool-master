@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { ContestEntryStatus, ContestStatus } from '@poolmaster/shared/domain';
 import { enumLabel } from '@poolmaster/shared/display-strings';
 import type { ContestDto, ContestEntryDto, ContestEntryPlaceDto } from '@/lib/api';
-import { currentContestEvent, entryEventStatus } from '@/features/contests/contest-events';
+import { entryEventStatus, eventOfCurrentSlot } from '@/features/contests/contest-events';
 import { areContestEntriesOpen } from '@/features/contests/contest-status';
 import { orderCurrentContests } from '@/features/contests/current-contests';
 import { useMyContestEntries } from '@/features/contests/use-contest-entries';
@@ -79,7 +79,7 @@ function EntryRows({
         const testId = `my-team-entry-${entry.id}`;
         const startsAt = listedContestStartsAt(contest);
         const isOpen = areContestEntriesOpen(contest, startsAt, now);
-        const status = entryEventStatus(entry, currentContestEvent(contest, now)?.sportEventId);
+        const status = entryEventStatus(entry, eventOfCurrentSlot(contest)?.sportEventId);
         const place = placeByEntryId.get(entry.id);
         let facts: ReactNode;
         if (contest.status === ContestStatus.ACTIVE) {

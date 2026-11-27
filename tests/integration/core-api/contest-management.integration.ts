@@ -230,7 +230,8 @@ describe('Contest management integration', () => {
     const createdContest = createRes.json<ContestResponse>().contest;
     contestId = createdContest.id;
     expect(createdContest.status).toBe(ContestStatus.DRAFT);
-    expect(createdContest.sportEvents.map((event) => [event.sportEventId, event.sequence])).toEqual([[sportEventId, 1]]);
+    expect(createdContest.sportEvents.map((event) => event.sportEventId)).toEqual([sportEventId]);
+    expect(createdContest.coveredSlots.map((slot) => slot.sportEventId)).toEqual([sportEventId]);
 
     const getRes = await getApp().inject({
       method: 'GET',

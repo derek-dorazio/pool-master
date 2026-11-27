@@ -1,18 +1,20 @@
 import { describe, expect, it } from 'vitest';
 import {
-  currentContestEvent,
   entryEventStatus,
-  firstContestEvent,
+  eventOfCurrentSlot,
+  eventOfFirstSlot,
+  eventOfLastSlot,
+  eventOfSlot,
   hasContestEventStarted,
-  lastContestEvent,
 } from './contest-events';
 import { buildContestSportEvent } from './test/contest-admin-fixtures';
+import { coverageOfEvents } from './test/covered-slots';
 
 const NOW = new Date('2026-09-15T12:00:00.000Z');
 
-const week1 = buildContestSportEvent({ sportEventId: 'week-1', sequence: 1, name: 'Week 1', startDate: '2026-09-06T17:00:00.000Z', status: 'COMPLETED' });
-const week2 = buildContestSportEvent({ sportEventId: 'week-2', sequence: 2, name: 'Week 2', startDate: '2026-09-20T17:00:00.000Z' });
-const week3 = buildContestSportEvent({ sportEventId: 'week-3', sequence: 3, name: 'Week 3', startDate: '2026-09-27T17:00:00.000Z' });
+const week1 = buildContestSportEvent({ sportEventId: 'week-1', name: 'Week 1', startDate: '2026-09-06T17:00:00.000Z', status: 'COMPLETED' });
+const week2 = buildContestSportEvent({ sportEventId: 'week-2', name: 'Week 2', startDate: '2026-09-20T17:00:00.000Z' });
+const week3 = buildContestSportEvent({ sportEventId: 'week-3', name: 'Week 3', startDate: '2026-09-27T17:00:00.000Z' });
 
 describe('hasContestEventStarted', () => {
   it('counts a scheduled event as started once its start time has passed, though its status still says scheduled', () => {
@@ -42,34 +44,46 @@ describe('hasContestEventStarted', () => {
   );
 });
 
-describe('currentContestEvent', () => {
-  it('opens on the first event that has not started, skipping the ones already played', () => {
-    expect(currentContestEvent({ sportEvents: [week1, week2, week3] }, NOW)?.sportEventId).toBe('week-2');
+describe('the contest\'s current slot and its event', () => {
+  it('opens on the event that plays the covered slot the API names current', () => {
+    const sportEvents = [week1, week2, week3];
+    const contest = { sportEvents, ...coverageOfEvents({ sportEvents }), currentSlotId: 'slot-week-2' };
+
+    expect(eventOfCurrentSlot(contest)?.sportEventId).toBe('week-2');
   });
 
-  it('opens on the first event when none has started yet', () => {
-    expect(currentContestEvent({ sportEvents: [week2, week3] }, NOW)?.sportEventId).toBe('week-2');
-  });
+  it('names no current event when the API names no current slot', () => {
+    const sportEvents = [week1];
+    const contest = { sportEvents, ...coverageOfEvents({ sportEvents }), currentSlotId: null };
 
-  it('opens on the last event once every event has started', () => {
-    const later = new Date('2026-10-01T00:00:00.000Z');
-    expect(currentContestEvent({ sportEvents: [week1, week2, week3] }, later)?.sportEventId).toBe('week-3');
-  });
-
-  it('returns null for a contest with no events', () => {
-    expect(currentContestEvent({ sportEvents: [] }, NOW)).toBeNull();
+    expect(eventOfCurrentSlot(contest)).toBeNull();
   });
 });
 
-describe('firstContestEvent and lastContestEvent', () => {
-  it('name the contest\'s first and last events in its order', () => {
-    expect(firstContestEvent({ sportEvents: [week1, week2, week3] })?.sportEventId).toBe('week-1');
-    expect(lastContestEvent({ sportEvents: [week1, week2, week3] })?.sportEventId).toBe('week-3');
+describe('eventOfFirstSlot and eventOfLastSlot', () => {
+  it('name the events of the contest\'s first and last covered slots, in play order', () => {
+    const sportEvents = [week1, week2, week3];
+    const contest = { sportEvents, ...coverageOfEvents({ sportEvents }) };
+
+    expect(eventOfFirstSlot(contest)?.sportEventId).toBe('week-1');
+    expect(eventOfLastSlot(contest)?.sportEventId).toBe('week-3');
   });
 
-  it('return null for a contest with no events', () => {
-    expect(firstContestEvent({ sportEvents: [] })).toBeNull();
-    expect(lastContestEvent({ sportEvents: [] })).toBeNull();
+  it('name one event for both when several covered slots are rounds of one event', () => {
+    const sportEvents = [week1];
+    const [round] = coverageOfEvents({ sportEvents }).coveredSlots;
+    const rounds = [round, { ...round, seasonSlotId: 'slot-r2' }];
+
+    expect(eventOfFirstSlot({ sportEvents, coveredSlots: rounds })?.sportEventId).toBe('week-1');
+    expect(eventOfLastSlot({ sportEvents, coveredSlots: rounds })?.sportEventId).toBe('week-1');
+  });
+
+  it('return null for a contest that covers no slot, or a slot no event plays yet', () => {
+    const [slot] = coverageOfEvents({ sportEvents: [week1] }).coveredSlots;
+
+    expect(eventOfFirstSlot({ sportEvents: [], coveredSlots: [] })).toBeNull();
+    expect(eventOfLastSlot({ sportEvents: [], coveredSlots: [] })).toBeNull();
+    expect(eventOfSlot({ sportEvents: [week1] }, { ...slot, sportEventId: null })).toBeNull();
   });
 });
 
