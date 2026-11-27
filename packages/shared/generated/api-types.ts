@@ -22059,8 +22059,13 @@ export interface components {
                 scoreToPar: number;
                 /** @description Holes completed in the round, at most the holes its slot gives a round (18 in golf); more is refused with 422 ROUND_THRU_BEYOND_HOLES. Playoff holes are never scored. */
                 thru?: number;
-                /** @enum {string} */
-                status: "IN_PROGRESS" | "COMPLETED" | "DNF" | "DSQ" | "MISSED_CUT";
+                /**
+                 * @description How the golfer's round ended, as its FIELD Game side records it; null while they are still playing it. A withdrawal is DID_NOT_FINISH, a disqualification DISQUALIFIED.
+                 * @enum {string|null}
+                 */
+                status: "FINISHED" | "DID_NOT_FINISH" | "DISQUALIFIED" | "DID_NOT_START" | null;
+                /** @description True on the last round of a golfer the cut eliminated: that round is FINISHED, and the cut is their standing's (ELIMINATED). Left out otherwise. */
+                missedCut?: boolean;
                 /** Format: date-time */
                 completedAt?: string;
             }[];
@@ -22078,8 +22083,13 @@ export interface components {
                     scoreToPar: number;
                     /** @description Holes completed in the round, at most the holes its slot gives a round (18 in golf); more is refused with 422 ROUND_THRU_BEYOND_HOLES. Playoff holes are never scored. */
                     thru?: number;
-                    /** @enum {string} */
-                    status: "IN_PROGRESS" | "COMPLETED" | "DNF" | "DSQ" | "MISSED_CUT";
+                    /**
+                     * @description How the golfer's round ended, as its FIELD Game side records it; null while they are still playing it. A withdrawal is DID_NOT_FINISH, a disqualification DISQUALIFIED.
+                     * @enum {string|null}
+                     */
+                    status: "FINISHED" | "DID_NOT_FINISH" | "DISQUALIFIED" | "DID_NOT_START" | null;
+                    /** @description True on the last round of a golfer the cut eliminated: that round is FINISHED, and the cut is their standing's (ELIMINATED). Left out otherwise. */
+                    missedCut?: boolean;
                     /** Format: date-time */
                     completedAt?: string;
                 };
@@ -22104,16 +22114,22 @@ export interface components {
                     strokes: number | null;
                     scoreToPar: number;
                     thru: number | null;
-                    /** @enum {string} */
-                    status: "IN_PROGRESS" | "COMPLETED" | "DNF" | "DSQ" | "MISSED_CUT";
+                    /**
+                     * @description How the golfer's round ended, as its FIELD Game side records it; null while they are still playing it. A withdrawal is DID_NOT_FINISH, a disqualification DISQUALIFIED.
+                     * @enum {string|null}
+                     */
+                    status: "FINISHED" | "DID_NOT_FINISH" | "DISQUALIFIED" | "DID_NOT_START" | null;
                 } | null;
                 /** @description A golfer's round values. */
                 after: {
                     strokes: number | null;
                     scoreToPar: number;
                     thru: number | null;
-                    /** @enum {string} */
-                    status: "IN_PROGRESS" | "COMPLETED" | "DNF" | "DSQ" | "MISSED_CUT";
+                    /**
+                     * @description How the golfer's round ended, as its FIELD Game side records it; null while they are still playing it. A withdrawal is DID_NOT_FINISH, a disqualification DISQUALIFIED.
+                     * @enum {string|null}
+                     */
+                    status: "FINISHED" | "DID_NOT_FINISH" | "DISQUALIFIED" | "DID_NOT_START" | null;
                 };
             }[];
             /** @description Counts by resolution. */
@@ -22124,14 +22140,19 @@ export interface components {
                 ambiguous: number;
             };
         };
-        /** @description A correction to one golfer's round. Each value sent is stored exactly as sent and nothing is derived from another: to par is not computed from strokes, and completedAt is not set by a COMPLETED status. Omitted values keep what is stored. */
+        /** @description A correction to one golfer's round. Each value sent is stored exactly as sent and nothing is derived from another: to par is not computed from strokes, and completedAt is not set by a FINISHED status. Omitted values keep what is stored. */
         UpdateGolfRoundScoreRequest: {
             strokes?: number;
             scoreToPar?: number;
             /** @description Holes completed in the round, at most the holes its slot gives a round (18 in golf); more is refused with 422 ROUND_THRU_BEYOND_HOLES. Playoff holes are never scored. Null clears it, for a golfer who has not started. */
             thru?: number | null;
-            /** @enum {string} */
-            status?: "IN_PROGRESS" | "COMPLETED" | "DNF" | "DSQ" | "MISSED_CUT";
+            /**
+             * @description How the golfer's round ended, as its FIELD Game side records it; null while they are still playing it. A withdrawal is DID_NOT_FINISH, a disqualification DISQUALIFIED.
+             * @enum {string|null}
+             */
+            status?: "FINISHED" | "DID_NOT_FINISH" | "DISQUALIFIED" | "DID_NOT_START" | null;
+            /** @description True on the last round of a golfer the cut eliminated: that round is FINISHED, and the cut is their standing's (ELIMINATED). Left out otherwise. */
+            missedCut?: boolean;
             /**
              * Format: date-time
              * @description Null clears it.

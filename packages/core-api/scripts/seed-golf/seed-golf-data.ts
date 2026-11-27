@@ -3,7 +3,7 @@
  * move, which of a test seed's events a run loads, and what each stored round looks like. No I/O, so it is unit tested alone.
  */
 
-import { compareMatchPlaces, type MatchPlace, MatchPlaceMap, matchPlaceOf, MatchStatus, SportEventStatus } from '@poolmaster/shared/domain';
+import { compareMatchPlaces, GameSideStatus, type MatchPlace, MatchPlaceMap, matchPlaceOf, MatchStatus, SportEventStatus } from '@poolmaster/shared/domain';
 import { isTestEventName, TEST_EVENT_NAME_PREFIX, type SportDataEvent, type SportDataFieldEntry, type SportDataFile, type SportDataLeague } from './sport-data-file';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -60,24 +60,26 @@ export function shiftedMatchTimes(file: SportDataFile, offsetDays: number): Spor
   };
 }
 
-type RoundStatus = 'COMPLETED' | 'MISSED_CUT' | 'DNF';
-
-/** One golfer's round as the score upload takes it, or null when they did not play it. */
+/**
+ * One golfer's round as the score upload takes it, or null when they did not play it: its side
+ * status (a withdrawal DID_NOT_FINISH), and on a cut golfer's last round `missedCut`.
+ */
 export function golferRoundScore(golfer: Pick<SportDataFieldEntry, 'rounds' | 'finish' | 'withdrawnThru'>, roundNumber: number, roundsPar: number): {
   strokes: number;
   scoreToPar: number;
   thru: number;
-  status: RoundStatus;
+  status: typeof GameSideStatus.FINISHED | typeof GameSideStatus.DID_NOT_FINISH;
+  missedCut?: true;
 } | null {
   const strokes = golfer.rounds?.at(roundNumber - 1);
   if (strokes === undefined) return null;
   const isLast = roundNumber === golfer.rounds?.length;
   if (isLast && golfer.finish === 'WD') {
     const thru = golfer.withdrawnThru ?? 9;
-    return { strokes, scoreToPar: strokes - Math.round((roundsPar * thru) / 18), thru, status: 'DNF' };
+    return { strokes, scoreToPar: strokes - Math.round((roundsPar * thru) / 18), thru, status: GameSideStatus.DID_NOT_FINISH };
   }
-  const status: RoundStatus = isLast && golfer.finish === 'MC' ? 'MISSED_CUT' : 'COMPLETED';
-  return { strokes, scoreToPar: strokes - roundsPar, thru: 18, status };
+  const round = { strokes, scoreToPar: strokes - roundsPar, thru: 18, status: GameSideStatus.FINISHED };
+  return isLast && golfer.finish === 'MC' ? { ...round, missedCut: true } : round;
 }
 
 /** A test event already on the site: its name and where it stands. */

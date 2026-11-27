@@ -28,7 +28,7 @@ describe('pool-master-rop.78.3 — no synthetic golf strokes', () => {
       round: 1,
       strokes: null,
       scoreToPar: -2,
-      status: 'IN_PROGRESS',
+      status: null,
     });
     expect(parsed.success).toBe(true);
   });

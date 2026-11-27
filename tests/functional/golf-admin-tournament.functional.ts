@@ -355,7 +355,7 @@ describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8;
       strokes: 70 + i,
       scoreToPar: i - 1,
       thru: 18,
-      status: 'COMPLETED' as const,
+      status: 'FINISHED' as const,
     }));
     const preview = await previewEventGolfRoundScores({ client: c, path: { eventId, roundNumber: 1 }, body: { rows: scoreRows } });
     expect(preview.response?.status).toBe(200);
@@ -370,7 +370,7 @@ describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8;
     const correction = await updateEventParticipantGolfRoundScore({
       client: c,
       path: { eventId, roundNumber: 1, sportEventParticipantId: expectDefined(field.data).participants[0].id },
-      body: { strokes: 65, status: 'COMPLETED' },
+      body: { strokes: 65, status: 'FINISHED' },
     });
     expect(correction.response?.status).toBe(200);
     expect(expectMatchesSchema(SportEventParticipantResponseSchema, correction.data).participant.rounds[0].golf).toMatchObject({ strokes: 65, scoreToPar: -1 });

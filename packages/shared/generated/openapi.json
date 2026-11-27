@@ -54739,14 +54739,22 @@
                   "maximum": 9007199254740991
                 },
                 "status": {
-                  "type": "string",
+                  "description": "How the golfer's round ended, as its FIELD Game side records it; null while they are still playing it. A withdrawal is DID_NOT_FINISH, a disqualification DISQUALIFIED.",
+                  "type": [
+                    "string",
+                    "null"
+                  ],
                   "enum": [
-                    "IN_PROGRESS",
-                    "COMPLETED",
-                    "DNF",
-                    "DSQ",
-                    "MISSED_CUT"
+                    "FINISHED",
+                    "DID_NOT_FINISH",
+                    "DISQUALIFIED",
+                    "DID_NOT_START",
+                    null
                   ]
+                },
+                "missedCut": {
+                  "description": "True on the last round of a golfer the cut eliminated: that round is FINISHED, and the cut is their standing's (ELIMINATED). Left out otherwise.",
+                  "type": "boolean"
                 },
                 "completedAt": {
                   "type": "string",
@@ -54807,14 +54815,22 @@
                       "maximum": 9007199254740991
                     },
                     "status": {
-                      "type": "string",
+                      "description": "How the golfer's round ended, as its FIELD Game side records it; null while they are still playing it. A withdrawal is DID_NOT_FINISH, a disqualification DISQUALIFIED.",
+                      "type": [
+                        "string",
+                        "null"
+                      ],
                       "enum": [
-                        "IN_PROGRESS",
-                        "COMPLETED",
-                        "DNF",
-                        "DSQ",
-                        "MISSED_CUT"
+                        "FINISHED",
+                        "DID_NOT_FINISH",
+                        "DISQUALIFIED",
+                        "DID_NOT_START",
+                        null
                       ]
+                    },
+                    "missedCut": {
+                      "description": "True on the last round of a golfer the cut eliminated: that round is FINISHED, and the cut is their standing's (ELIMINATED). Left out otherwise.",
+                      "type": "boolean"
                     },
                     "completedAt": {
                       "type": "string",
@@ -54891,13 +54907,17 @@
                       "maximum": 9007199254740991
                     },
                     "status": {
-                      "type": "string",
+                      "description": "How the golfer's round ended, as its FIELD Game side records it; null while they are still playing it. A withdrawal is DID_NOT_FINISH, a disqualification DISQUALIFIED.",
+                      "type": [
+                        "string",
+                        "null"
+                      ],
                       "enum": [
-                        "IN_PROGRESS",
-                        "COMPLETED",
-                        "DNF",
-                        "DSQ",
-                        "MISSED_CUT"
+                        "FINISHED",
+                        "DID_NOT_FINISH",
+                        "DISQUALIFIED",
+                        "DID_NOT_START",
+                        null
                       ]
                     }
                   },
@@ -54934,13 +54954,17 @@
                       "maximum": 9007199254740991
                     },
                     "status": {
-                      "type": "string",
+                      "description": "How the golfer's round ended, as its FIELD Game side records it; null while they are still playing it. A withdrawal is DID_NOT_FINISH, a disqualification DISQUALIFIED.",
+                      "type": [
+                        "string",
+                        "null"
+                      ],
                       "enum": [
-                        "IN_PROGRESS",
-                        "COMPLETED",
-                        "DNF",
-                        "DSQ",
-                        "MISSED_CUT"
+                        "FINISHED",
+                        "DID_NOT_FINISH",
+                        "DISQUALIFIED",
+                        "DID_NOT_START",
+                        null
                       ]
                     }
                   },
@@ -55032,14 +55056,22 @@
             "maximum": 9007199254740991
           },
           "status": {
-            "type": "string",
+            "description": "How the golfer's round ended, as its FIELD Game side records it; null while they are still playing it. A withdrawal is DID_NOT_FINISH, a disqualification DISQUALIFIED.",
+            "type": [
+              "string",
+              "null"
+            ],
             "enum": [
-              "IN_PROGRESS",
-              "COMPLETED",
-              "DNF",
-              "DSQ",
-              "MISSED_CUT"
+              "FINISHED",
+              "DID_NOT_FINISH",
+              "DISQUALIFIED",
+              "DID_NOT_START",
+              null
             ]
+          },
+          "missedCut": {
+            "description": "True on the last round of a golfer the cut eliminated: that round is FINISHED, and the cut is their standing's (ELIMINATED). Left out otherwise.",
+            "type": "boolean"
           },
           "completedAt": {
             "description": "Null clears it.",
@@ -55051,7 +55083,7 @@
           }
         },
         "additionalProperties": false,
-        "description": "A correction to one golfer's round. Each value sent is stored exactly as sent and nothing is derived from another: to par is not computed from strokes, and completedAt is not set by a COMPLETED status. Omitted values keep what is stored."
+        "description": "A correction to one golfer's round. Each value sent is stored exactly as sent and nothing is derived from another: to par is not computed from strokes, and completedAt is not set by a FINISHED status. Omitted values keep what is stored."
       },
       "RaceResultUploadRequest": {
         "type": "object",

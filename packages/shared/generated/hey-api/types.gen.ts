@@ -24367,7 +24367,14 @@ export type GolfRoundScoreUploadRequest = {
          * Holes completed in the round, at most the holes its slot gives a round (18 in golf); more is refused with 422 ROUND_THRU_BEYOND_HOLES. Playoff holes are never scored.
          */
         thru?: number;
-        status: 'IN_PROGRESS' | 'COMPLETED' | 'DNF' | 'DSQ' | 'MISSED_CUT';
+        /**
+         * How the golfer's round ended, as its FIELD Game side records it; null while they are still playing it. A withdrawal is DID_NOT_FINISH, a disqualification DISQUALIFIED.
+         */
+        status: 'FINISHED' | 'DID_NOT_FINISH' | 'DISQUALIFIED' | 'DID_NOT_START' | null;
+        /**
+         * True on the last round of a golfer the cut eliminated: that round is FINISHED, and the cut is their standing's (ELIMINATED). Left out otherwise.
+         */
+        missedCut?: boolean;
         completedAt?: string;
     }>;
 };
@@ -24395,7 +24402,14 @@ export type GolfRoundScorePreviewResponse = {
              * Holes completed in the round, at most the holes its slot gives a round (18 in golf); more is refused with 422 ROUND_THRU_BEYOND_HOLES. Playoff holes are never scored.
              */
             thru?: number;
-            status: 'IN_PROGRESS' | 'COMPLETED' | 'DNF' | 'DSQ' | 'MISSED_CUT';
+            /**
+             * How the golfer's round ended, as its FIELD Game side records it; null while they are still playing it. A withdrawal is DID_NOT_FINISH, a disqualification DISQUALIFIED.
+             */
+            status: 'FINISHED' | 'DID_NOT_FINISH' | 'DISQUALIFIED' | 'DID_NOT_START' | null;
+            /**
+             * True on the last round of a golfer the cut eliminated: that round is FINISHED, and the cut is their standing's (ELIMINATED). Left out otherwise.
+             */
+            missedCut?: boolean;
             completedAt?: string;
         };
         /**
@@ -24418,7 +24432,10 @@ export type GolfRoundScorePreviewResponse = {
             strokes: number | null;
             scoreToPar: number;
             thru: number | null;
-            status: 'IN_PROGRESS' | 'COMPLETED' | 'DNF' | 'DSQ' | 'MISSED_CUT';
+            /**
+             * How the golfer's round ended, as its FIELD Game side records it; null while they are still playing it. A withdrawal is DID_NOT_FINISH, a disqualification DISQUALIFIED.
+             */
+            status: 'FINISHED' | 'DID_NOT_FINISH' | 'DISQUALIFIED' | 'DID_NOT_START' | null;
         } | null;
         /**
          * A golfer's round values.
@@ -24427,7 +24444,10 @@ export type GolfRoundScorePreviewResponse = {
             strokes: number | null;
             scoreToPar: number;
             thru: number | null;
-            status: 'IN_PROGRESS' | 'COMPLETED' | 'DNF' | 'DSQ' | 'MISSED_CUT';
+            /**
+             * How the golfer's round ended, as its FIELD Game side records it; null while they are still playing it. A withdrawal is DID_NOT_FINISH, a disqualification DISQUALIFIED.
+             */
+            status: 'FINISHED' | 'DID_NOT_FINISH' | 'DISQUALIFIED' | 'DID_NOT_START' | null;
         };
     }>;
     /**
@@ -24442,7 +24462,7 @@ export type GolfRoundScorePreviewResponse = {
 };
 
 /**
- * A correction to one golfer's round. Each value sent is stored exactly as sent and nothing is derived from another: to par is not computed from strokes, and completedAt is not set by a COMPLETED status. Omitted values keep what is stored.
+ * A correction to one golfer's round. Each value sent is stored exactly as sent and nothing is derived from another: to par is not computed from strokes, and completedAt is not set by a FINISHED status. Omitted values keep what is stored.
  */
 export type UpdateGolfRoundScoreRequest = {
     strokes?: number;
@@ -24451,7 +24471,14 @@ export type UpdateGolfRoundScoreRequest = {
      * Holes completed in the round, at most the holes its slot gives a round (18 in golf); more is refused with 422 ROUND_THRU_BEYOND_HOLES. Playoff holes are never scored. Null clears it, for a golfer who has not started.
      */
     thru?: number | null;
-    status?: 'IN_PROGRESS' | 'COMPLETED' | 'DNF' | 'DSQ' | 'MISSED_CUT';
+    /**
+     * How the golfer's round ended, as its FIELD Game side records it; null while they are still playing it. A withdrawal is DID_NOT_FINISH, a disqualification DISQUALIFIED.
+     */
+    status?: 'FINISHED' | 'DID_NOT_FINISH' | 'DISQUALIFIED' | 'DID_NOT_START' | null;
+    /**
+     * True on the last round of a golfer the cut eliminated: that round is FINISHED, and the cut is their standing's (ELIMINATED). Left out otherwise.
+     */
+    missedCut?: boolean;
     /**
      * Null clears it.
      */
