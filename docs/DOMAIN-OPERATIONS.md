@@ -749,8 +749,10 @@ into a later covered round scores the value of each covered round it skipped onc
 decided, with no upset bonus (#2170). Contest setup
 requires one round value per round the contest covers: 422 `CONTEST_SCORING_ROUNDS_MISMATCH`
 otherwise, and refuses an event whose games form no bracket (a regular-season week, #715) with
-422 `CONTEST_EVENT_NOT_A_BRACKET`, since no team goes a round further. Until the bracket has a
-result, no team is scored.
+422 `CONTEST_EVENT_NOT_A_BRACKET`, since no team goes a round further. A slate of one-off games is
+scored (#2225): every game in one round of a TOURNAMENT slot, none leading to another (a
+season's bowl games; a week's games or a knockout's first round alone are not one), each game its own final, so a win scores the round's one value. A bracket
+pick'em still needs a bracket. Until the bracket has a result, no team is scored.
 
 ### SportEventParticipantRound, SportEventParticipantStanding — base rows
 
