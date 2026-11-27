@@ -58,7 +58,7 @@ export interface ChampionshipRepository {
 
 /** Whether a league's year in review was sent (#872 slice 4). */
 export interface LeagueYearReviewRepository {
-  findByLeagueYear(leagueId: string, year: number): Promise<LeagueYearReview | null>;
+  findByLeagueYear(leagueId: string, championshipYear: number): Promise<LeagueYearReview | null>;
   /** Records the send; null when one is already recorded for the league and year. */
   create(review: Omit<LeagueYearReview, 'sentAt'>): Promise<LeagueYearReview | null>;
 }

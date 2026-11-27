@@ -296,11 +296,12 @@ export async function seedContestFixture(leagueId: string, options: {
   const prisma = getFunctionalPrisma();
   // A contest is in a Season (#2014); one seeded before its event takes the event's when it is
   // attached (`attachContestEvent`), so any 2026 Season holds it meanwhile.
-  const season = await prisma.sportLeagueSeason.findFirstOrThrow({ where: { championshipYear: 2026 }, orderBy: { id: 'asc' }, select: { id: true, sportLeagueId: true } });
+  const season = await prisma.sportLeagueSeason.findFirstOrThrow({ where: { championshipYear: 2026 }, orderBy: { id: 'asc' }, select: { id: true, sportLeagueId: true, championshipYear: true } });
   const contest = await prisma.contest.create({
     data: {
       leagueId,
       sportLeagueSeasonId: season.id,
+      championshipYear: season.championshipYear,
       name: options.name,
       status: options.status ?? 'OPEN',
       contestFormat: 'ROSTER',

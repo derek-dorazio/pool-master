@@ -117,7 +117,7 @@ async function leagueWithSeasons(seasonCount: number) {
         const ranked = places.map(([squadId, position]) => ({ squadId, position }));
         cups.rankedEntries.push(...ranked.map((entry) => ({ ...entry, contestId: id })));
         cups.settle(id, completedAt);
-        await championship.recordContest({ id, leagueId: LEAGUE, cupWeight: CupWeight.NORMAL }, completedAt, ranked);
+        await championship.recordContest({ id, leagueId: LEAGUE, cupWeight: CupWeight.NORMAL, championshipYear: seasonYear }, completedAt, ranked);
       }
     }
     const pgaCup = cups.cups.find((cup) => cup.seasonYear === seasonYear && cup.sportLeagueId === 'pga');
@@ -142,7 +142,7 @@ async function leagueWithSeasons(seasonCount: number) {
   });
   cups.rankedEntries.push({ contestId: `fun-${String(quietYear)}`, squadId: 'bogeys', position: 1 });
   cups.settle(`fun-${String(quietYear)}`, quietAt);
-  await championship.recordContest({ id: `fun-${String(quietYear)}`, leagueId: LEAGUE, cupWeight: CupWeight.NOT_COUNTED }, quietAt, [{ squadId: 'bogeys', position: 1 }]);
+  await championship.recordContest({ id: `fun-${String(quietYear)}`, leagueId: LEAGUE, cupWeight: CupWeight.NOT_COUNTED, championshipYear: quietYear }, quietAt, [{ squadId: 'bogeys', position: 1 }]);
   reads.count = 0;
   return { history, championship, cupService, reads };
 }

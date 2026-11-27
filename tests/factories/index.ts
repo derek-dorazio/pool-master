@@ -184,7 +184,7 @@ export function buildContest(overrides: Partial<Contest> = {}): Contest {
     coveredSlots: [],
     name: 'Masters Pool 2026',
     sportLeagueSeasonId: 'season-2026',
-    seasonYear: 2026,
+    championshipYear: 2026,
     cupWeight: CupWeight.NORMAL,
     status: ContestStatus.DRAFT,
     contestFormat: ContestFormat.ROSTER,

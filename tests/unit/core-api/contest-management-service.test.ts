@@ -104,7 +104,7 @@ function createContestRepo(): ContestRepository {
       contestFormat: ContestFormat.ROSTER,
       selectionType: 'TIERED',
       sportLeagueSeasonId: 'season-2026',
-      seasonYear: 2026,
+      championshipYear: 2026,
       cupWeight: CupWeight.NORMAL,
       createdAt: new Date('2026-04-07T12:00:00.000Z'),
       updatedAt: new Date('2026-04-07T12:00:00.000Z'),
@@ -450,7 +450,7 @@ describe('ContestManagementService', () => {
       selectionType: 'TIERED',
       contestFormat: ContestFormat.ROSTER,
       status: ContestStatus.DRAFT,
-      seasonYear: 2026,
+      championshipYear: 2026,
     }, PLATINUM_SEASON_LIMIT);
     expect(result).toBe('contest-1');
     // Its season is its event's year, and its league gets that season's PGA Tour cup (#841).
@@ -2274,7 +2274,7 @@ describe('ContestManagementService — a contest of several events', () => {
         contestFormat: ContestFormat.ROSTER,
         selectionType: SelectionType.TIERED,
         sportLeagueSeasonId: 'season-2026',
-        seasonYear: 2026,
+        championshipYear: 2026,
         cupWeight: CupWeight.NORMAL,
         createdAt: new Date('2026-04-07T12:00:00.000Z'),
         updatedAt: new Date('2026-04-07T12:00:00.000Z'),
@@ -3244,7 +3244,7 @@ describe('ContestManagementService sports leagues a year (#947)', () => {
     await expect(service.createContest({ leagueId: 'league-1' }, MASTERS_CONTEST))
       .rejects.toMatchObject({ code: 'PLAN_SPORTS_LEAGUE_LIMIT_REACHED', statusCode: 409 });
     expect(contests.create).toHaveBeenCalledWith(
-      expect.objectContaining({ leagueId: 'league-1', seasonYear: 2026 }),
+      expect.objectContaining({ leagueId: 'league-1', championshipYear: 2026 }),
       { sportLeaguesPerYear: 5, sportLeagueId: PGA_TOUR_LEAGUE_ID },
     );
     expect(configurations.create).not.toHaveBeenCalled();

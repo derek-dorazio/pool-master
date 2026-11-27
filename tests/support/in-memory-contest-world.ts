@@ -249,7 +249,7 @@ export class InMemoryContestWorld {
       leagueId,
       name: 'Masters Pool',
       sportLeagueSeasonId: 'season-2026',
-      seasonYear: 2026,
+      championshipYear: 2026,
       cupWeight: CupWeight.NORMAL,
       status: ContestStatus.OPEN,
       contestFormat: ContestFormat.ROSTER,
@@ -382,7 +382,7 @@ export class InMemoryContestWorld {
 
   private sportLeagueIdsBySeason(leagueId: string, seasonYear: number): string[] {
     return [...new Set([...this.contests.values()]
-      .filter((contest) => contest.leagueId === leagueId && contest.seasonYear === seasonYear)
+      .filter((contest) => contest.leagueId === leagueId && contest.championshipYear === seasonYear)
       .flatMap((contest) => contest.sportEventIds.flatMap((id) => this.sportEvents.get(id)?.sportLeagueId ?? [])))];
   }
 
@@ -457,7 +457,7 @@ export class InMemoryContestWorld {
       // The world records no draw rows, so none owes its receipts.
       findDrawReceiptsPending: async () => [],
       clearDrawReceiptsPending: async () => undefined,
-      create: async ({ seasonSlotIds, ...input }, limits) => this.seasonFull(input.leagueId, input.seasonYear, limits)
+      create: async ({ seasonSlotIds, ...input }, limits) => this.seasonFull(input.leagueId, input.championshipYear, limits)
         ?? { status: 'created', contest: this.addContest(input.leagueId, { ...input, coveredSeasonSlotIds: [...seasonSlotIds] }) },
       update: async (id, updates) => {
         const existing = this.contests.get(id);

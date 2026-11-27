@@ -112,7 +112,7 @@ async function seedLeague() {
   const league = await prisma.league.create({ data: { cupName: 'Coverage Cup', leagueCode: `COV${suffix.toUpperCase()}`, name: `Coverage League ${suffix}` } });
   const contest = async (name: string, covered: readonly string[]) => (await prisma.contest.create({
     data: {
-      leagueId: league.id, sportLeagueSeasonId, name, status: 'OPEN', selectionType: 'TIERED',
+      leagueId: league.id, sportLeagueSeasonId, championshipYear: 2026, name, status: 'OPEN', selectionType: 'TIERED',
       seasonSlots: { create: covered.map((sportLeagueSeasonCompetitionSlotId) => ({ sportLeagueSeasonCompetitionSlotId })) },
       configuration: { create: { templateId: template.id, selectionType: 'TIERED' } },
     },

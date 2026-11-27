@@ -5,7 +5,7 @@
  */
 import { randomUUID } from 'node:crypto';
 import { cleanupTestData, createTestUser, getPrisma, setupIntegrationTests, teardownIntegrationTests } from '../helpers';
-import { anySeasonId } from '../../support/contest-rows';
+import { anySeason } from '../../support/contest-rows';
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
@@ -22,7 +22,7 @@ describe('cleanupTestData', () => {
     const league = await prisma.league.create({ data: { cupName: 'Test Cup', leagueCode: `NOMEM${suffix.toUpperCase()}`, name: `No Members ${suffix}` } });
     const team = await prisma.squad.create({ data: { leagueId: league.id, name: `Team ${suffix}`, createdBy: owner.user.id } });
     const contest = await prisma.contest.create({
-      data: { leagueId: league.id, sportLeagueSeasonId: await anySeasonId(prisma, 2026), name: `Contest ${suffix}`, status: 'OPEN', selectionType: 'TIERED' },
+      data: { leagueId: league.id, ...await anySeason(prisma, 2026), name: `Contest ${suffix}`, status: 'OPEN', selectionType: 'TIERED' },
     });
     await prisma.contestEntry.create({ data: { contestId: contest.id, squadId: team.id, entryNumber: 1, name: `${team.name} 1` } });
 

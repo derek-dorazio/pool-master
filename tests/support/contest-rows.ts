@@ -13,9 +13,12 @@ type Db = PrismaClient | Prisma.TransactionClient;
  * yet is given the one `createRoundRows` would give it, so its rounds are placed in that slot. No
  * events at all puts the contest in a Season of this year (`anySeasonId`), covering nothing.
  */
-export async function coverageOfEvents(prisma: Db, sportEventIds: readonly string[]): Promise<{ sportLeagueSeasonId: string; seasonSlotIds: string[] }> {
+export async function coverageOfEvents(prisma: Db, sportEventIds: readonly string[]): Promise<{ sportLeagueSeasonId: string; championshipYear: number; seasonSlotIds: string[] }> {
   // A draft on no event yet still sits in a Season, as the commissioner's form leaves one.
-  if (sportEventIds.length === 0) return { sportLeagueSeasonId: await anySeasonId(prisma, new Date().getUTCFullYear()), seasonSlotIds: [] };
+  if (sportEventIds.length === 0) {
+    const championshipYear = new Date().getUTCFullYear();
+    return { sportLeagueSeasonId: await anySeasonId(prisma, championshipYear), championshipYear, seasonSlotIds: [] };
+  }
   const events = await prisma.sportEvent.findMany({
     where: { id: { in: [...sportEventIds] } },
     select: { id: true, sportLeagueSeasonId: true, startDate: true, slots: { select: { sportLeagueSeasonCompetitionSlotId: true } } },
@@ -34,20 +37,26 @@ export async function coverageOfEvents(prisma: Db, sportEventIds: readonly strin
     }
   }
   const [sportLeagueSeasonId] = seasons;
-  return { sportLeagueSeasonId, seasonSlotIds };
+  return { sportLeagueSeasonId, championshipYear: await seasonYearOf(prisma, sportLeagueSeasonId), seasonSlotIds };
+}
+
+/** A Season's championship year, which a fixture contest copies as creation does (#2021). */
+export async function seasonYearOf(prisma: Db, sportLeagueSeasonId: string): Promise<number> {
+  return (await prisma.sportLeagueSeason.findUniqueOrThrow({ where: { id: sportLeagueSeasonId }, select: { championshipYear: true } })).championshipYear;
 }
 
 /** `prisma.contest.create` data for a fixture contest covering these events whole (`coverageOfEvents`). */
 export async function contestOnEvents(prisma: Db, sportEventIds: readonly string[]): Promise<{
   sportLeagueSeasonId: string;
+  championshipYear: number;
   seasonSlots: { create: { sportLeagueSeasonCompetitionSlotId: string }[] };
 }> {
-  const { sportLeagueSeasonId, seasonSlotIds } = await coverageOfEvents(prisma, sportEventIds);
-  return { sportLeagueSeasonId, seasonSlots: { create: seasonSlotIds.map((sportLeagueSeasonCompetitionSlotId) => ({ sportLeagueSeasonCompetitionSlotId })) } };
+  const { sportLeagueSeasonId, championshipYear, seasonSlotIds } = await coverageOfEvents(prisma, sportEventIds);
+  return { sportLeagueSeasonId, championshipYear, seasonSlots: { create: seasonSlotIds.map((sportLeagueSeasonCompetitionSlotId) => ({ sportLeagueSeasonCompetitionSlotId })) } };
 }
 
 /** A fixture contest as tests describe it: on its events, its Season and covered slots worked out. */
-export type ContestOnEvents = Omit<ContestCreate, 'sportLeagueSeasonId' | 'seasonSlotIds' | 'seasonYear'> & { sportEventIds: readonly string[] };
+export type ContestOnEvents = Omit<ContestCreate, 'sportLeagueSeasonId' | 'seasonSlotIds' | 'championshipYear'> & { sportEventIds: readonly string[] };
 
 /**
  * A contest written with no plan limit on its season's sports leagues (#947), for fixtures whose
@@ -56,8 +65,7 @@ export type ContestOnEvents = Omit<ContestCreate, 'sportLeagueSeasonId' | 'seaso
 export async function createContestRow(prisma: Db, contests: Pick<ContestRepository, 'create'>, contest: ContestOnEvents): Promise<Contest> {
   const { sportEventIds, ...rest } = contest;
   const coverage = await coverageOfEvents(prisma, sportEventIds);
-  const { championshipYear } = await prisma.sportLeagueSeason.findUniqueOrThrow({ where: { id: coverage.sportLeagueSeasonId }, select: { championshipYear: true } });
-  const result = await contests.create({ ...rest, ...coverage, seasonYear: championshipYear }, { sportLeaguesPerYear: null });
+  const result = await contests.create({ ...rest, ...coverage }, { sportLeaguesPerYear: null });
   if (result.status !== 'created') throw new Error(`seed: contest refused (${result.status})`);
   return result.contest;
 }
@@ -89,6 +97,11 @@ export async function fixtureTemplateId(prisma: Db, template: { sportLeagueId: s
  */
 export async function anySeasonId(prisma: Db, championshipYear: number): Promise<string> {
   return fixtureSeasonId(prisma, await fixtureTourId(prisma), championshipYear);
+}
+
+/** `anySeasonId` with its year, as a fixture contest row needs both (#2021: the year is held to the Season). */
+export async function anySeason(prisma: Db, championshipYear: number): Promise<{ sportLeagueSeasonId: string; championshipYear: number }> {
+  return { sportLeagueSeasonId: await anySeasonId(prisma, championshipYear), championshipYear };
 }
 
 /** The fixture template (`fixtureTemplateId`) for a contest's configuration: its Season league's, of its type. */

@@ -58,7 +58,7 @@ import { sportRowKeys } from '../../support/sport-rows';
 import { makeSlotTiebreaker } from '../../support/slot-tiebreaker-rows';
 import { oneEventSlotId } from '../../support/test-slots';
 import { createMatchRow } from '../../support/match-rows';
-import { contestTemplateId, coverEvents, placeEventForTemplate } from '../../support/contest-rows';
+import { contestTemplateId, coverEvents, placeEventForTemplate, seasonYearOf } from '../../support/contest-rows';
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
@@ -826,6 +826,7 @@ describe('Contract verification (web)', () => {
       data: {
         leagueId,
         sportLeagueSeasonId: edition.sportLeagueSeasonId,
+        championshipYear: await seasonYearOf(getPrisma(), edition.sportLeagueSeasonId),
         name: 'Contract Draft Contest',
         status: 'DRAFT',
         contestFormat: ContestFormat.ROSTER,
@@ -889,6 +890,7 @@ describe('Contract verification (web)', () => {
       data: {
         leagueId,
         sportLeagueSeasonId: edition.sportLeagueSeasonId,
+        championshipYear: await seasonYearOf(getPrisma(), edition.sportLeagueSeasonId),
         name: 'Contract Draw Contest',
         status: 'OPEN',
         contestFormat: ContestFormat.ROSTER,
@@ -964,6 +966,7 @@ describe('Contract verification (web)', () => {
       data: {
         leagueId,
         sportLeagueSeasonId: edition.sportLeagueSeasonId,
+        championshipYear: await seasonYearOf(getPrisma(), edition.sportLeagueSeasonId),
         name: 'Contract Pickem Contest',
         status: 'OPEN',
         contestFormat: ContestFormat.PREDICTION,
