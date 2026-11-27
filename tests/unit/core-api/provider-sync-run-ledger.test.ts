@@ -371,7 +371,7 @@ describe('ProviderSyncRunLedger checks each completed run\'s event for its sync\
     ['FIELD', 'NO_PROVIDER_PARTICIPANTS'],
     ['SCORES', 'NO_PROVIDER_LIVE_SCORES'],
   ] as const)('raises the %s run\'s %s finding on its event when the run warned of it', async (kind, findingKind) => {
-    const findings = { checkEvent: jest.fn(async (_check: unknown) => undefined) };
+    const findings = { checkEvent: jest.fn(async (_check: unknown) => undefined), checkRunOutcome: jest.fn(async (_run: unknown, _outcome: unknown) => undefined) };
     const ledger = new ProviderSyncRunLedger(syncRunsIgnoringWrites(), undefined, findings);
 
     await ledger.executeFeedRun(createSyncRun({ kind, ...linked }), async () => createJob({ warnings: [{ code: findingKind, message: 'Nothing came back.' }] }));
@@ -380,7 +380,7 @@ describe('ProviderSyncRunLedger checks each completed run\'s event for its sync\
   });
 
   it('resolves the event\'s finding when a completed run did not warn of it', async () => {
-    const findings = { checkEvent: jest.fn(async (_check: unknown) => undefined) };
+    const findings = { checkEvent: jest.fn(async (_check: unknown) => undefined), checkRunOutcome: jest.fn(async (_run: unknown, _outcome: unknown) => undefined) };
     const ledger = new ProviderSyncRunLedger(syncRunsIgnoringWrites(), undefined, findings);
 
     await ledger.executeFeedRun(createSyncRun(linked), async () => createJob());
@@ -389,7 +389,7 @@ describe('ProviderSyncRunLedger checks each completed run\'s event for its sync\
   });
 
   it('checks nothing for a run whose job failed, or a run linked to no event of ours', async () => {
-    const findings = { checkEvent: jest.fn(async (_check: unknown) => undefined) };
+    const findings = { checkEvent: jest.fn(async (_check: unknown) => undefined), checkRunOutcome: jest.fn(async (_run: unknown, _outcome: unknown) => undefined) };
     const ledger = new ProviderSyncRunLedger(syncRunsIgnoringWrites(), undefined, findings);
 
     await ledger.executeFeedRun(createSyncRun(linked), async () => createJob({ status: 'FAILED', errors: 1, errorLog: [{ error: 'down', at: new Date() }] }));
@@ -399,7 +399,7 @@ describe('ProviderSyncRunLedger checks each completed run\'s event for its sync\
   });
 
   it('returns the completed job and logs the failure when the findings check throws after the run is recorded', async () => {
-    const findings = { checkEvent: jest.fn(async (_check: unknown) => { throw new Error('connection reset'); }) };
+    const findings = { checkEvent: jest.fn(async (_check: unknown) => { throw new Error('connection reset'); }), checkRunOutcome: jest.fn(async (_run: unknown, _outcome: unknown) => undefined) };
     const logger = { debug: jest.fn(), info: jest.fn(), warn: jest.fn(), error: jest.fn() };
     const ledger = new ProviderSyncRunLedger(syncRunsIgnoringWrites(), logger as unknown as FastifyBaseLogger, findings);
     const job = createJob();
@@ -407,5 +407,54 @@ describe('ProviderSyncRunLedger checks each completed run\'s event for its sync\
     await expect(ledger.executeFeedRun(createSyncRun(linked), async () => job)).resolves.toBe(job);
 
     expect(logger.error).toHaveBeenCalledWith(expect.objectContaining({ action: 'ingestion.syncFinding.checkFailed' }), expect.any(String));
+  });
+});
+
+describe('ProviderSyncRunLedger checks each run\'s outcome for its failed-sync finding (#2092)', () => {
+  const linked = { sportLeagueId: 'nfl', sportEventId: 'week-1' };
+  const syncRunsIgnoringWrites = () => ({ ...inMemorySyncRuns(), update: mockFn<ProviderSyncRunRepository['update']>(async () => undefined) });
+  const checks = () => ({ checkEvent: jest.fn(async (_check: unknown) => undefined), checkRunOutcome: jest.fn(async (_run: unknown, _outcome: unknown) => undefined) });
+
+  it('checks a completed run as COMPLETED, so its failed-sync finding resolves', async () => {
+    const findings = checks();
+    const ledger = new ProviderSyncRunLedger(syncRunsIgnoringWrites(), undefined, findings);
+    const run = createSyncRun(linked);
+
+    await ledger.executeFeedRun(run, async () => createJob());
+
+    expect(findings.checkRunOutcome).toHaveBeenCalledTimes(1);
+    expect(findings.checkRunOutcome).toHaveBeenCalledWith(run, 'COMPLETED');
+  });
+
+  it('checks a run whose job failed as FAILED, and checks its event for nothing else', async () => {
+    const findings = checks();
+    const ledger = new ProviderSyncRunLedger(syncRunsIgnoringWrites(), undefined, findings);
+    const run = createSyncRun(linked);
+
+    await ledger.executeFeedRun(run, async () => createJob({ status: 'FAILED', errors: 1, errorLog: [{ error: 'down', at: new Date() }] }));
+
+    expect(findings.checkRunOutcome).toHaveBeenCalledWith(run, 'FAILED');
+    expect(findings.checkEvent).not.toHaveBeenCalled();
+  });
+
+  it('checks a run whose feed threw as FAILED once, and still throws the feed\'s error', async () => {
+    const findings = checks();
+    const ledger = new ProviderSyncRunLedger(syncRunsIgnoringWrites(), undefined, findings);
+    const run = createSyncRun(linked);
+
+    await expect(ledger.executeFeedRun(run, async () => { throw new Error('provider down'); })).rejects.toThrow('provider down');
+
+    expect(findings.checkRunOutcome).toHaveBeenCalledTimes(1);
+    expect(findings.checkRunOutcome).toHaveBeenCalledWith(run, 'FAILED');
+  });
+
+  it('checks a submitted run it fails without a feed as FAILED', async () => {
+    const findings = checks();
+    const ledger = new ProviderSyncRunLedger(syncRunsIgnoringWrites(), undefined, findings);
+    const run = createSyncRun(linked);
+
+    await ledger.failSubmittedRun(run, new Error('Interrupted'));
+
+    expect(findings.checkRunOutcome).toHaveBeenCalledWith(run, 'FAILED');
   });
 });

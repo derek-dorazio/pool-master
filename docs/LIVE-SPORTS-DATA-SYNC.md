@@ -469,7 +469,8 @@ column. Each finding names its sport league; its event, Provider row and the fee
 (`provider_value`) are there when its kind has them.
 
 - **One row per kind and subject.** A NULLS NOT DISTINCT unique index on (kind, league, event,
-  Provider, value) dedupes: a finding seen again counts the sighting and takes the new severity.
+  Provider, value, sync kind) dedupes: a finding seen again counts the sighting and takes the new
+  severity. Only `SYNC_FAILED` has a sync kind (a check constraint says so).
 - **Status.** `OPEN`, `RESOLVED` or `WAIVED` (a waive needs a note, a CHECK constraint). A resolved
   finding the sync sees again opens again; a waived one stays waived.
 - **Kinds.** `PROVIDER_RATE_LIMITED` (WARNING after 15 minutes of every call rate limited, ERROR
@@ -495,6 +496,16 @@ column. Each finding names its sport league; its event, Provider row and the fee
   rest-of-phase event's games and field* above). The ledger turns a feed
   run's warning into its finding, so a run carries no warnings of its own; the tier and price
   warnings stay in the follow-up job's result.
+- **Failed syncs (#2092).** Every run that ends `FAILED` (its feed threw, its job failed, or an
+  earlier try stopped mid-run and the retry marks it interrupted) raises `SYNC_FAILED`, an ERROR on
+  its league, event (none for a league's events sync), Provider and sync kind, naming the latest
+  run that failed. The next `COMPLETED` run of the same sync resolves it, so a field sync that
+  completes leaves the event's failed scores sync open. The ledger checks every feed run's outcome;
+  the league events sync checks its own. A findings write that fails is logged
+  (`ingestion.syncFinding.checkFailed`), never thrown, since the run's outcome is already written.
+  The Sports page's Sync chip lists a league's open `SYNC_FAILED` findings, each opening its run,
+  and its health is ERROR while any is open; the Findings chip counts the rest, a `SYNC_FAILED`
+  whose run the history has cleared among them.
 - **Alert.** An ERROR that opens logs `ingestion.syncFinding.errorOpened`; a CloudWatch metric
   filter and alarm (`infrastructure/terraform/monitoring.tf`) send it to the alerts topic.
 - **Retention.** The nightly cleanup deletes RESOLVED findings 90 days after they were resolved,

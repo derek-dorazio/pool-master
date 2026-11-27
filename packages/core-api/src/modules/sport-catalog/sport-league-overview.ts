@@ -5,8 +5,8 @@
  */
 import type {
   ProviderSyncFindingOpenCount,
+  SportLeagueFailedSync,
   SportLeagueOverdueCandidate,
-  SportLeagueLatestSyncRun,
   SportLeagueOverviewFacts,
   SportLeagueOverviewReader,
 } from '@poolmaster/shared/db';
@@ -15,11 +15,11 @@ import {
   overdueExpectedEnd,
   ProviderSyncFindingSeverityOrder,
   ProviderSyncKindOrder,
-  ProviderSyncRunStatus,
   SportLeagueIssueTargetType,
   SportLeagueIssueType,
   SportLeagueSyncHealth,
   type OverdueEventFacts,
+  type ProviderSyncKind,
   type SportLeagueFindingsIssueItem,
   type SportLeagueIssue,
   type SportLeagueOverdueIssueItem,
@@ -38,15 +38,14 @@ export class SportLeagueOverviewService {
 
 /** Every sport league's overview, by sport (most popular first), then by name. */
 export function buildSportLeagueOverviews(facts: SportLeagueOverviewFacts, now: Date): SportLeagueOverview[] {
-  const runsByLeague = groupBy(facts.latestSyncRuns, (run) => run.sportLeagueId);
+  const failedByLeague = groupBy(facts.failedSyncs, (sync) => sync.sportLeagueId);
   const heldByLeague = groupBy(facts.heldEvents, (event) => event.sportLeagueId);
   const overdueByLeague = groupBy<SportLeagueOverdueCandidate>(facts.overdueCandidates, (event) => event.sportLeagueId);
   const findingsByLeague = groupBy(facts.openFindings, (count) => count.sportLeagueId);
 
   const overviews = facts.leagues.map((league): SportLeagueOverview => {
     const providerId = league.syncProviderId;
-    const runs = runsByLeague.get(league.id) ?? [];
-    const failedRuns = runs.filter((run) => run.status === ProviderSyncRunStatus.FAILED);
+    const failed = failedByLeague.get(league.id) ?? [];
     return {
       id: league.id,
       sport: league.sport,
@@ -56,10 +55,15 @@ export function buildSportLeagueOverviews(facts: SportLeagueOverviewFacts, now: 
       providerId,
       providerName: league.syncProviderName,
       isActive: league.isActive,
-      syncHealth: syncHealthOf({ isActive: league.isActive, providerId, runCount: runs.length, failedRunCount: failedRuns.length }),
+      syncHealth: syncHealthOf({
+        isActive: league.isActive,
+        providerId,
+        runCount: facts.leaguesWithSyncRuns.has(league.id) ? 1 : 0,
+        failedRunCount: failed.length,
+      }),
       issues: [
         ...findingsIssuesOf(findingsByLeague.get(league.id) ?? []),
-        ...issuesOf(failedRuns, heldByLeague.get(league.id) ?? [], overdueByLeague.get(league.id) ?? [], now),
+        ...issuesOf(failedSyncItemsOf(failed), heldByLeague.get(league.id) ?? [], overdueByLeague.get(league.id) ?? [], now),
       ],
       season: facts.currentSeasonSpans.get(league.id) ?? null,
       nextEventStartsAt: facts.nextEventStarts.get(league.id) ?? null,
@@ -70,9 +74,9 @@ export function buildSportLeagueOverviews(facts: SportLeagueOverviewFacts, now: 
 }
 
 /**
- * OFF while the league is off or no provider syncs it; else ERROR when the latest run of any of
- * its syncs failed, NOT_RUN_YET before any sync has run, and OK otherwise. A run still under way
- * counts as not failed: it is the sync trying again.
+ * OFF while the league is off or no provider syncs it; else ERROR when any of its syncs failed and
+ * has not completed since, NOT_RUN_YET before any sync has run, and OK otherwise. A run still under
+ * way counts as not failed: it is the sync trying again.
  */
 export function syncHealthOf(input: { isActive: boolean; providerId: string | null; runCount: number; failedRunCount: number }): SportLeagueSyncHealth {
   if (!input.isActive || input.providerId === null) return SportLeagueSyncHealth.OFF;
@@ -94,27 +98,54 @@ export function findingsIssuesOf(counts: readonly Pick<ProviderSyncFindingOpenCo
   return [{ type: SportLeagueIssueType.FINDINGS, count: items.reduce((total, entry) => total + entry.count, 0), items }];
 }
 
+/** A failed run's Sync item: the run's own summary, when it failed, the run and its sync. */
+export interface FailedSyncRun {
+  id: string;
+  kind: ProviderSyncKind;
+  createdAt: Date;
+  summary: string | null;
+}
+
+/** The Sync items of an event's failed latest runs (the League and event pages): one per run, by sync kind. */
+export function failedRunItemsOf(failedRuns: readonly FailedSyncRun[]): SportLeagueSyncIssueItem[] {
+  return [...failedRuns]
+    .sort((left, right) => compareByEnumOrder(ProviderSyncKindOrder)(left.kind, right.kind))
+    .map(failedRunItem);
+}
+
+function failedRunItem(run: FailedSyncRun): SportLeagueSyncIssueItem {
+  return {
+    label: run.summary ?? run.kind,
+    occurredAt: run.createdAt,
+    target: { type: SportLeagueIssueTargetType.SYNC_RUN, id: run.id },
+    syncKind: run.kind,
+  };
+}
+
+/**
+ * The Sports page's Sync items (#2092): a league's failed syncs whose latest failed run is kept,
+ * by sync kind, then most recent first. One whose run is cleared is counted with the Findings.
+ */
+function failedSyncItemsOf(failedSyncs: readonly Omit<SportLeagueFailedSync, 'sportLeagueId'>[]): SportLeagueSyncIssueItem[] {
+  return failedSyncs
+    .flatMap((sync) => (sync.run === null ? [] : [{ id: sync.run.id, kind: sync.syncKind, createdAt: sync.lastFailedAt, summary: sync.run.summary }]))
+    .sort((left, right) => compareByEnumOrder(ProviderSyncKindOrder)(left.kind, right.kind) || right.createdAt.getTime() - left.createdAt.getTime())
+    .map(failedRunItem);
+}
+
 /**
  * The issue types with something to do, in their fixed order: SYNC, RELEASE, OVERDUE. The League
  * page's events read gives each event its own, from that event's runs, hold and dates.
  */
 export function issuesOf(
-  failedRuns: readonly Omit<SportLeagueLatestSyncRun, 'sportLeagueId'>[],
+  syncItems: readonly SportLeagueSyncIssueItem[],
   heldEvents: readonly Omit<SportLeagueOverviewFacts['heldEvents'][number], 'sportLeagueId'>[],
   overdueCandidates: readonly OverdueEventFacts[],
   now: Date,
 ): SportLeagueIssue[] {
   const issues: SportLeagueIssue[] = [];
-  if (failedRuns.length > 0) {
-    const items = [...failedRuns]
-      .sort((left, right) => compareByEnumOrder(ProviderSyncKindOrder)(left.kind, right.kind))
-      .map((run): SportLeagueSyncIssueItem => ({
-        label: run.summary ?? run.kind,
-        occurredAt: run.createdAt,
-        target: { type: SportLeagueIssueTargetType.SYNC_RUN, id: run.id },
-        syncKind: run.kind,
-      }));
-    issues.push({ type: SportLeagueIssueType.SYNC, count: items.length, items });
+  if (syncItems.length > 0) {
+    issues.push({ type: SportLeagueIssueType.SYNC, count: syncItems.length, items: [...syncItems] });
   }
   if (heldEvents.length > 0) {
     const items = [...heldEvents]

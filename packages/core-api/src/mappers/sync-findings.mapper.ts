@@ -15,6 +15,7 @@ export function toProviderSyncFindingDto(finding: ProviderSyncFinding): Provider
     provider: finding.provider === null ? null : { id: finding.provider.id, name: finding.provider.name },
     providerValue: finding.providerValue,
     providerValueName: finding.providerValueName,
+    syncKind: finding.syncKind,
     waiveNote: finding.waiveNote,
     firstSeenAt: finding.firstSeenAt.toISOString(),
     lastSeenAt: finding.lastSeenAt.toISOString(),

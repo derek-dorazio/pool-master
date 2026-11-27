@@ -66,7 +66,7 @@ export interface LeagueEventsSyncOptions {
   seasons: Pick<SportLeagueSeasonRepository, 'findForSync'>;
   seasonSchedule: Pick<ProviderSeasonScheduleReader, 'listSeasonEvents'>;
   sportEvents: Pick<SportEventService, 'importProviderSeason' | 'keepProviderEventsCurrent'>;
-  findings: Pick<ProviderSyncFindingService, 'raiseOfSource' | 'resolveOfSource'>;
+  findings: Pick<ProviderSyncFindingService, 'raiseOfSource' | 'resolveOfSource' | 'checkRunOutcome'>;
   syncRuns: Pick<ProviderSyncRunRepository, 'create' | 'update' | 'findByBackgroundJobIds'>;
   jobs: Pick<BackgroundJobQueue, 'request' | 'enqueueAll' | 'enqueueRequestReturning'>;
   logger?: FastifyBaseLogger;
@@ -201,6 +201,7 @@ export class LeagueEventsSync {
       errorCount: 0,
       details: { seasons: synced.map(seasonDetails) },
     });
+    await this.options.findings.checkRunOutcome(run, ProviderSyncRunStatus.COMPLETED);
     this.options.logger?.info({
       action: 'events.leagueSync.completed',
       data: { sportLeagueId: sportLeague.id, sportLeague: sportLeague.name, providerId, syncRunId: run.id, trigger: context.trigger, seasons: seasons.map((season) => season.id), ...counts },
@@ -385,7 +386,10 @@ export class LeagueEventsSync {
     }]);
   }
 
-  /** An earlier try of this job that stopped mid-run left its run IN_PROGRESS: it is FAILED as interrupted. */
+  /**
+   * An earlier try of this job that stopped mid-run left its run IN_PROGRESS: it is FAILED as
+   * interrupted, and opens its SYNC_FAILED finding like any failed run.
+   */
   private async failInterruptedRuns(jobId: string): Promise<void> {
     const interrupted = (await this.options.syncRuns.findByBackgroundJobIds([jobId]))
       .filter((run) => run.status === ProviderSyncRunStatus.IN_PROGRESS);
@@ -399,6 +403,7 @@ export class LeagueEventsSync {
         changedCount: null,
         errorCount: 1,
       });
+      await this.options.findings.checkRunOutcome(run, ProviderSyncRunStatus.FAILED);
     }
   }
 
@@ -428,6 +433,7 @@ export class LeagueEventsSync {
         },
       },
     });
+    await this.options.findings.checkRunOutcome(run, ProviderSyncRunStatus.FAILED);
   }
 }
 

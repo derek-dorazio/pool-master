@@ -23,6 +23,7 @@ function finding(overrides: Partial<ProviderSyncFinding> = {}): ProviderSyncFind
     provider: null,
     providerValue: 'golfer-9',
     providerValueName: null,
+    syncKind: null,
     waiveNote: null,
     firstSeenAt: AT,
     lastSeenAt: AT,

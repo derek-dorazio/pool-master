@@ -6,11 +6,11 @@
  */
 import type { PrismaClient } from '@prisma/client';
 import type {
-  SportLeagueLatestSyncRun,
+  SportLeagueFailedSync,
   SportLeagueOverviewFacts,
   SportLeagueOverviewReader,
 } from '@poolmaster/shared/db';
-import { AutoReleaseCheckOutcome, ProviderSyncFindingStatus, SportEventStatus } from '@poolmaster/shared/domain';
+import { AutoReleaseCheckOutcome, ProviderSyncFindingKind, ProviderSyncFindingStatus, SportEventStatus } from '@poolmaster/shared/domain';
 import { readOverdueCandidates } from './prisma-overdue-event-reads';
 import { SYNC_PROVIDER_SELECT, syncProviderIdOf, syncProviderNameOf } from './prisma-sync-provider';
 
@@ -19,7 +19,7 @@ export class PrismaSportLeagueOverviewReader implements SportLeagueOverviewReade
 
   async readFacts(now: Date): Promise<SportLeagueOverviewFacts> {
     const notCancelled = { not: SportEventStatus.CANCELLED };
-    const [leagues, latestSyncRuns, heldEvents, countGroups, nextGroups, overdueCandidates, findingGroups] = await Promise.all([
+    const [leagues, runGroups, failedSyncs, heldEvents, countGroups, nextGroups, overdueCandidates, findingGroups] = await Promise.all([
       this.prisma.sportLeague.findMany({
         select: {
           id: true,
@@ -30,7 +30,9 @@ export class PrismaSportLeagueOverviewReader implements SportLeagueOverviewReade
           currentSeason: { select: { startsAt: true, endsAt: true } },
         },
       }),
-      this.latestSyncRuns(),
+      // The leagues with any run, on the (sport league, kind, created at) index.
+      this.prisma.providerSyncRun.groupBy({ by: ['sportLeagueId'], where: { sportLeagueId: { not: null } } }),
+      this.failedSyncs(),
       this.prisma.sportEvent.findMany({
         where: { status: SportEventStatus.DRAFT, autoReleaseOutcome: AutoReleaseCheckOutcome.HELD },
         select: { id: true, name: true, sportLeagueSeasonId: true, autoReleaseCheckedAt: true, autoReleaseFailedChecks: true },
@@ -46,9 +48,10 @@ export class PrismaSportLeagueOverviewReader implements SportLeagueOverviewReade
       }),
       readOverdueCandidates(this.prisma, now),
       // Each league's OPEN sync findings by severity (#1999), on the (league, status, severity) index.
+      // A failed sync whose run is kept is counted by the Sync chip instead (#2092).
       this.prisma.providerSyncFinding.groupBy({
         by: ['sportLeagueId', 'severity'],
-        where: { status: ProviderSyncFindingStatus.OPEN },
+        where: { status: ProviderSyncFindingStatus.OPEN, NOT: { kind: ProviderSyncFindingKind.SYNC_FAILED, syncRunId: { not: null } } },
         _count: { _all: true },
       }),
     ]);
@@ -67,7 +70,8 @@ export class PrismaSportLeagueOverviewReader implements SportLeagueOverviewReade
         syncProviderId: syncProviderIdOf(league),
         syncProviderName: syncProviderNameOf(league),
       })),
-      latestSyncRuns,
+      leaguesWithSyncRuns: new Set(runGroups.flatMap((group) => (group.sportLeagueId === null ? [] : [group.sportLeagueId]))),
+      failedSyncs,
       heldEvents: heldEvents.flatMap((event) => {
         // The check constraint sets the time with the outcome.
         if (event.autoReleaseCheckedAt === null) return [];
@@ -83,34 +87,23 @@ export class PrismaSportLeagueOverviewReader implements SportLeagueOverviewReade
     };
   }
 
-  /**
-   * Each sport league's latest run of each sync kind: the latest time per (league, kind), then
-   * those runs. Both reads use the (sport league, kind, created at) index.
-   */
-  private async latestSyncRuns(): Promise<SportLeagueLatestSyncRun[]> {
-    const latest = await this.prisma.providerSyncRun.groupBy({
-      by: ['sportLeagueId', 'kind'],
-      where: { sportLeagueId: { not: null } },
-      _max: { createdAt: true },
-    });
-    const keys = latest.flatMap((group) => (group.sportLeagueId === null || group._max.createdAt === null
-      ? []
-      : [{ sportLeagueId: group.sportLeagueId, kind: group.kind, createdAt: group._max.createdAt }]));
-    if (keys.length === 0) return [];
-    const rows = await this.prisma.providerSyncRun.findMany({
-      where: { OR: keys },
-      select: { id: true, sportLeagueId: true, kind: true, status: true, createdAt: true, summary: true },
+  /** Every OPEN SYNC_FAILED finding (#2092), with its latest failed run while it is kept. */
+  private async failedSyncs(): Promise<SportLeagueFailedSync[]> {
+    const rows = await this.prisma.providerSyncFinding.findMany({
+      where: { kind: ProviderSyncFindingKind.SYNC_FAILED, status: ProviderSyncFindingStatus.OPEN },
+      select: { sportLeagueId: true, syncKind: true, lastSeenAt: true, syncRun: { select: { id: true, summary: true } } },
       orderBy: { id: 'asc' },
     });
-    // Two runs written in the same instant: either is the latest; keep one.
-    const byKey = new Map<string, SportLeagueLatestSyncRun>();
-    for (const row of rows) {
-      if (row.sportLeagueId === null) continue;
-      const key = `${row.sportLeagueId}:${row.kind}`;
-      if (byKey.has(key)) continue;
-      byKey.set(key, { id: row.id, sportLeagueId: row.sportLeagueId, kind: row.kind, status: row.status, createdAt: row.createdAt, summary: row.summary === '' ? null : row.summary });
-    }
-    return [...byKey.values()];
+    return rows.map((row) => {
+      // The migration's check gives every SYNC_FAILED finding its sync kind.
+      if (row.syncKind === null) throw new Error(`A SYNC_FAILED finding of sport league ${row.sportLeagueId} has no sync kind`);
+      return {
+        sportLeagueId: row.sportLeagueId,
+        syncKind: row.syncKind,
+        lastFailedAt: row.lastSeenAt,
+        run: row.syncRun === null ? null : { id: row.syncRun.id, summary: row.syncRun.summary === '' ? null : row.syncRun.summary },
+      };
+    });
   }
 }
 

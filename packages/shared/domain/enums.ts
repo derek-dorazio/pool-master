@@ -1112,6 +1112,13 @@ export const ProviderSyncFindingKind = {
    * resolves it.
    */
   FIELD_TEAM_WITHOUT_GAME: 'FIELD_TEAM_WITHOUT_GAME',
+  /**
+   * A sync run ended FAILED (#2092): its feed threw, its job failed, or an earlier try stopped
+   * mid-run. ERROR. Subject: league, event (none for a league's events sync), Provider and the
+   * run's sync kind; the finding names the latest run that failed. The next COMPLETED run of the
+   * same subject resolves it. The Sports page's Sync chip lists these.
+   */
+  SYNC_FAILED: 'SYNC_FAILED',
 } as const;
 export type ProviderSyncFindingKind = (typeof ProviderSyncFindingKind)[keyof typeof ProviderSyncFindingKind];
 export const ProviderSyncFindingKindOrder = alphabeticalOrder('ProviderSyncFindingKind');

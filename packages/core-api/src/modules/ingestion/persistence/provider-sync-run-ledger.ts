@@ -36,12 +36,13 @@ export class SyncRunOutcomeUnrecordedError extends Error {
 export class ProviderSyncRunLedger {
   /**
    * `findings` takes each completed run's check of its event (#1999): a field with no
-   * participants, or a scores sync with no updates.
+   * participants, or a scores sync with no updates; and every run's outcome (#2092): a FAILED
+   * run opens its SYNC_FAILED finding, a COMPLETED one resolves it.
    */
   constructor(
     private readonly syncRuns: ProviderSyncRunRepository,
     private readonly logger?: FastifyBaseLogger,
-    private readonly findings?: Pick<ProviderSyncFindingService, 'checkEvent'>,
+    private readonly findings?: Pick<ProviderSyncFindingService, 'checkEvent' | 'checkRunOutcome'>,
   ) {}
 
   async createSubmissions(input: SubmissionInput): Promise<ProviderSyncRun[]> {
@@ -128,8 +129,10 @@ export class ProviderSyncRunLedger {
     const logEntry = { syncRunId: syncRun.id, providerId: syncRun.providerId, sport: syncRun.sport, kind: syncRun.kind, job: toSerializableJob(job) };
     if (job.status === IngestionJobStatus.FAILED) {
       this.logger?.error(logEntry, 'Provider sync feed run failed.');
+      await this.findings?.checkRunOutcome(syncRun, ProviderSyncRunStatus.FAILED);
     } else {
       this.logger?.info(logEntry, 'Provider sync feed run completed.');
+      await this.findings?.checkRunOutcome(syncRun, ProviderSyncRunStatus.COMPLETED);
       await this.checkEvent(syncRun, job);
     }
     return job;
@@ -193,6 +196,7 @@ export class ProviderSyncRunLedger {
       },
       'Provider sync feed run failed unexpectedly.',
     );
+    await this.findings?.checkRunOutcome(syncRun, ProviderSyncRunStatus.FAILED);
   }
 }
 
