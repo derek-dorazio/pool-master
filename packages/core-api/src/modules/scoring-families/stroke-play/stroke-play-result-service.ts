@@ -338,8 +338,13 @@ export class StrokePlayResultService {
 
   /** Dry run — resolves every row against the event's field and reports the change it would make. Writes nothing. */
   async previewRoundScores(sportEventId: string, roundNumber: number, rows: GolfScoreRowInput[]): Promise<GolfScorePreviewRow[]> {
+    return (await this.previewOnRound(sportEventId, roundNumber, rows)).preview;
+  }
+
+  /** The preview, with the round it is for: apply writes onto that round without reading it again. */
+  private async previewOnRound(sportEventId: string, roundNumber: number, rows: GolfScoreRowInput[]): Promise<{ round: SportEventRound; preview: GolfScorePreviewRow[] }> {
     await this.requireGolfScoredEvent(sportEventId);
-    await this.requireRound(sportEventId, roundNumber);
+    const round = await this.requireRound(sportEventId, roundNumber);
     const [field, stored] = await Promise.all([
       this.deps.field.findBySportEvent(sportEventId),
       this.deps.fieldGames.findResults(sportEventId),
@@ -349,7 +354,7 @@ export class StrokePlayResultService {
     const entryIdByParticipantId = new Map(field.map((entry) => [entry.participantId, entry.id]));
     const existingByEntry = new Map(stored.filter((result) => result.roundNumber === roundNumber).map((result) => [result.sportEventParticipantId, result]));
 
-    return Promise.all(rows.map(async (row): Promise<GolfScorePreviewRow> => {
+    const preview = await Promise.all(rows.map(async (row): Promise<GolfScorePreviewRow> => {
       const resolved = await resolveParticipantRow(row, matchAmong(participants, feedIds));
       const after: GolfRoundValues = { strokes: row.strokes, scoreToPar: row.scoreToPar, thru: row.thru ?? null, status: row.status };
       const sportEventParticipantId = resolved.participant ? entryIdByParticipantId.get(resolved.participant.id) ?? null : null;
@@ -364,11 +369,12 @@ export class StrokePlayResultService {
         : !before ? 'CREATE' : golfRoundValuesEqual(before, after) ? 'UNCHANGED' : 'UPDATE';
       return { row, resolution: 'MATCHED' as const, sportEventParticipantId, participantName: resolved.participant?.name ?? null, change, before, after };
     }));
+    return { round, preview };
   }
 
   /** Applies a previewed upload — all or none, 422 when any row is unresolved — with the standings, as the sync path does. */
   async applyRoundScores(sportEventId: string, roundNumber: number, rows: GolfScoreRowInput[]): Promise<void> {
-    const preview = await this.previewRoundScores(sportEventId, roundNumber, rows);
+    const { round, preview } = await this.previewOnRound(sportEventId, roundNumber, rows);
     const unresolved = preview.filter((row) => row.resolution !== 'MATCHED' || !row.sportEventParticipantId);
     if (unresolved.length > 0) {
       throw new StrokePlayResultError(
@@ -377,7 +383,6 @@ export class StrokePlayResultService {
         422,
       );
     }
-    const round = await this.requireRound(sportEventId, roundNumber);
     for (const row of preview) requireThruWithinRound(round, row.row.thru ?? null);
     const writes = preview.flatMap((row): RoundWrite[] => (row.row.strokes === null || row.sportEventParticipantId === null ? [] : [{
       sportEventParticipantId: row.sportEventParticipantId,

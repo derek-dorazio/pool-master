@@ -945,16 +945,18 @@ export class SportEventService {
     }
     // Each event's rounds are played in its slots, read back in play order (#2006): one read for them all.
     const slotsByEvent = await this.deps.sportEvents.findSlots(events.map((event) => event.id));
-    await this.deps.rounds.createSchedules(events.map((event, index) => ({
+    const schedules = events.map((event, index) => ({
       sportEventId: event.id,
       rounds: roundsInSlots(editions[index]?.rounds ?? [], slotsByEvent.get(event.id) ?? []),
-    })));
+    }));
+    await this.deps.rounds.createSchedules(schedules);
     const tiersByEvent = await this.deps.tiers.createDefaultTiers(sportLeague, events.map((event) => event.id));
     return events.map((event, index): SportEventAdminSummary => {
       const made = tiersByEvent.get(event.id);
       const tiers = made?.tiers ?? [];
       return {
-        event,
+        // Its round count is the rounds just written (#2008), as a read back would count them.
+        event: { ...event, roundCount: schedules[index]?.rounds.length ?? 0 },
         participantCount: 0,
         tierCount: tiers.length,
         tierSetSlot: made?.slot ?? null,

@@ -123,12 +123,12 @@ describe('RootAdminSportEventCreatePage', () => {
     expect(screen.queryByTestId('root-admin-sport-event-create-tours-link')).not.toBeInTheDocument();
   });
 
-  it('defaults the only active tour when the URL names none, and asks for no dates or rounds: they are the slot\'s and the tour\'s', async () => {
+  it('defaults the only active tour when the URL names none, asks for no dates: they are the slot\'s, and offers one round by default', async () => {
     renderPage('/manage/sports/golf/events/new', [sportLeagueFixture({ id: 'league-1' })]);
 
     await waitFor(() => expect(screen.getByTestId('root-admin-sport-event-create-tour')).toHaveValue('league-1'));
     expect(screen.queryByTestId('root-admin-sport-event-create-start')).not.toBeInTheDocument();
-    expect(screen.queryByTestId('root-admin-sport-event-create-rounds')).not.toBeInTheDocument();
+    expect(screen.getByTestId('root-admin-sport-event-create-rounds')).toHaveValue('1');
     expect(screen.getByTestId('root-admin-sport-event-create-header')).toHaveTextContent('New test tournament');
   });
 

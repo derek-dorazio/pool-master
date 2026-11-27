@@ -182,7 +182,7 @@ export const SportEventResponseSchema = z.object({
 export type SportEventResponse = z.infer<typeof SportEventResponseSchema>;
 
 /** The most rounds a test event on one slot may play in it: a bound on the rows a create writes. */
-export const TEST_EVENT_ROUNDS_MAX = 8;
+const TEST_EVENT_ROUNDS_MAX = 8;
 
 export const CreateSportEventRequestSchema = z.object({
   seasonSlotIds: z.array(z.uuid()).min(1).describe('The test slots the event is played on (SportLeagueSeasonSlotDto), all of one sport league\'s current Season: they decide the event\'s league, Season and dates. One slot plays `rounds` rounds in it; several play one round in each, in play order (a test bracket\'s rounds, its FINAL slot last, #2006). 404 SEASON_SLOT_NOT_FOUND; 422 SEASON_SLOT_NOT_TEST for a slot the sync keeps, SEASON_SLOT_NOT_CURRENT for one outside its league\'s current Season, SEASON_SLOTS_NOT_ONE_SEASON for slots of two Seasons; 409 SEASON_SLOT_TAKEN when one already has an event.'),
