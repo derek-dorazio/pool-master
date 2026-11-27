@@ -80,7 +80,6 @@ export type SharedEnums = {
   JobTrigger: Enums.JobTrigger;
   JobErrorType: Enums.JobErrorType;
   IngestionJobStatus: Enums.IngestionJobStatus;
-  ParticipantRoundStatus: Enums.ParticipantRoundStatus;
   RoundStatus: Enums.RoundStatus;
   ProviderGameState: Enums.ProviderGameState;
   SportEventParticipantStatus: Enums.SportEventParticipantStatus;

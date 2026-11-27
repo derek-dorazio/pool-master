@@ -1308,28 +1308,6 @@ export const IngestionJobStatusOrder = explicitOrder<IngestionJobStatus>({
 });
 
 /**
- * A golfer's progress through one round, as the score source reports it and the API shows it
- * (#2008). It is stored as the golfer's side status in the round's FIELD Game, and a missed cut
- * on their standing; there is no "not started" value, because a round with no scores has no side.
- */
-export const ParticipantRoundStatus = {
-  IN_PROGRESS: 'IN_PROGRESS',
-  COMPLETED: 'COMPLETED',
-  DNF: 'DNF',
-  DSQ: 'DSQ',
-  MISSED_CUT: 'MISSED_CUT',
-} as const;
-export type ParticipantRoundStatus = (typeof ParticipantRoundStatus)[keyof typeof ParticipantRoundStatus];
-/** The order the values are declared in. */
-export const ParticipantRoundStatusOrder = explicitOrder<ParticipantRoundStatus>({
-  [ParticipantRoundStatus.IN_PROGRESS]: 0,
-  [ParticipantRoundStatus.COMPLETED]: 1,
-  [ParticipantRoundStatus.DNF]: 2,
-  [ParticipantRoundStatus.DSQ]: 3,
-  [ParticipantRoundStatus.MISSED_CUT]: 4,
-});
-
-/**
  * Where one round of an event stands (#1889), read off the results recorded in it: its matches',
  * or its participants' rounds where it has no matches. Not stored.
  */

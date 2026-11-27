@@ -41,7 +41,6 @@ import {
   latestParticipantRound,
   MatchStatus,
   PARTICIPANT_SCORING_DEFINITIONS,
-  ParticipantRoundStatus,
   ParticipantStandingStatus,
   rankSortedScores,
   type SportEvent,
@@ -52,7 +51,6 @@ import type { SyncWriteDetailRow, SyncWriteDiagnostics } from '../../ingestion/c
 import { emptySyncWriteDiagnostics, mergeSyncWriteDiagnostics, summarizeSyncWriteRows } from '../../ingestion/core/sync-write-diagnostics';
 import { feedIdsOfCandidates, matchAmong, resolveParticipantRow, type ParticipantRowResolution } from '../../sport-catalog/participant-row-resolver';
 import type { ScoringFamilyEvent } from '../scoring-family-module';
-import { roundStatusOfSide } from './scored-rounds';
 import { DomainEventType, type DomainEvents } from '../../domain-events';
 
 export class StrokePlayResultError extends Error {
@@ -84,6 +82,8 @@ export interface GolfScoreRowInput {
   scoreToPar: number;
   thru?: number;
   status: GolfRoundStatus;
+  /** True on the round the cut ended the golfer's event in: the standing turns ELIMINATED. */
+  missedCut?: boolean;
   completedAt?: string;
 }
 
@@ -112,6 +112,7 @@ export interface GolfRoundScorePatch {
   scoreToPar?: number;
   thru?: number | null;
   status?: GolfRoundStatus;
+  missedCut?: boolean;
   completedAt?: string | null;
 }
 
@@ -141,6 +142,7 @@ interface RoundWrite {
   scoreToPar: number;
   thru: number | null;
   status: GolfRoundStatus;
+  missedCut: boolean;
   completedAt: Date | null;
 }
 
@@ -235,6 +237,7 @@ export class StrokePlayResultService {
         scoreToPar: round.scoreToPar,
         thru: round.thru ?? null,
         status: round.status,
+        missedCut: round.missedCut ?? false,
         completedAt: round.completedAt ? new Date(round.completedAt) : null,
       });
     }
@@ -391,6 +394,7 @@ export class StrokePlayResultService {
       scoreToPar: row.row.scoreToPar,
       thru: row.row.thru ?? null,
       status: row.row.status,
+      missedCut: row.row.missedCut ?? false,
       completedAt: row.row.completedAt ? new Date(row.row.completedAt) : null,
     }]));
     await this.writeRounds(sportEventId, writes);
@@ -432,7 +436,8 @@ export class StrokePlayResultService {
       strokes,
       scoreToPar,
       thru,
-      status: patch.status ?? before?.status ?? ParticipantRoundStatus.IN_PROGRESS,
+      status: patch.status !== undefined ? patch.status : before?.status ?? null,
+      missedCut: patch.missedCut ?? false,
       completedAt: patch.completedAt ? new Date(patch.completedAt) : null,
     }]);
   }
@@ -479,7 +484,7 @@ function roundKey(sportEventParticipantId: string, roundNumber: number): string 
  * is FINISHED with every hole of the round thru; a cut is the standing's, never the round's.
  */
 function sideWriteOf(write: RoundWrite): FieldSideWrite {
-  const status = sideStatusOf(write.status);
+  const { status } = write;
   const holes = write.round.slot.periods?.count ?? null;
   return {
     sportEventParticipantId: write.sportEventParticipantId,
@@ -492,23 +497,9 @@ function sideWriteOf(write: RoundWrite): FieldSideWrite {
   };
 }
 
-function sideStatusOf(status: GolfRoundStatus): GameSideStatus | null {
-  switch (status) {
-    case ParticipantRoundStatus.IN_PROGRESS:
-      return null;
-    case ParticipantRoundStatus.COMPLETED:
-    case ParticipantRoundStatus.MISSED_CUT:
-      return GameSideStatus.FINISHED;
-    case ParticipantRoundStatus.DNF:
-      return GameSideStatus.DID_NOT_FINISH;
-    case ParticipantRoundStatus.DSQ:
-      return GameSideStatus.DISQUALIFIED;
-  }
-}
-
 /** A stored round as the admin preview shows it. */
 function roundValuesOf(result: FieldSideResult): GolfRoundValues {
-  return { strokes: result.score, scoreToPar: result.scoreToPar ?? 0, thru: result.periodsCompleted, status: roundStatusOfSide(result.status) };
+  return { strokes: result.score, scoreToPar: result.scoreToPar ?? 0, thru: result.periodsCompleted, status: result.status };
 }
 
 /** Each round the write changes: its Game is COMPLETED once every golfer in it has finished, at the latest finish sent. */
@@ -546,7 +537,7 @@ function standingWritesOf(writes: readonly RoundWrite[], merged: ReadonlyArray<F
       sportEventParticipantId: entryId,
       position: before?.position ?? null,
       displayPosition: before?.displayPosition ?? null,
-      status: latestWrite ? standingStatusOf(latestWrite.status) : before?.status ?? ParticipantStandingStatus.IN_PROGRESS,
+      status: latestWrite ? standingStatusOf(latestWrite) : before?.status ?? ParticipantStandingStatus.IN_PROGRESS,
       asOf,
       total: rounds.reduce((sum, result) => sum + (result.score ?? 0), 0),
       scoreToPar: rounds.reduce((sum, result) => sum + (result.scoreToPar ?? 0), 0),
@@ -564,17 +555,20 @@ function standingWritesOf(writes: readonly RoundWrite[], merged: ReadonlyArray<F
   return sorted.map((standing, index) => ({ ...standing, ...ranks[index] }));
 }
 
-function standingStatusOf(roundStatus: GolfRoundStatus): ParticipantStandingStatus {
-  switch (roundStatus) {
-    case ParticipantRoundStatus.IN_PROGRESS:
+/** A golfer's standing after the round the write names last: cut, withdrawn, done, or still playing. */
+function standingStatusOf(write: Pick<RoundWrite, 'status' | 'missedCut'>): ParticipantStandingStatus {
+  if (write.missedCut) {
+    return ParticipantStandingStatus.ELIMINATED;
+  }
+  switch (write.status) {
+    case null:
       return ParticipantStandingStatus.IN_PROGRESS;
-    case ParticipantRoundStatus.COMPLETED:
+    case GameSideStatus.FINISHED:
       return ParticipantStandingStatus.COMPLETE;
-    case ParticipantRoundStatus.DNF:
-    case ParticipantRoundStatus.DSQ:
+    case GameSideStatus.DID_NOT_FINISH:
+    case GameSideStatus.DISQUALIFIED:
+    case GameSideStatus.DID_NOT_START:
       return ParticipantStandingStatus.WITHDRAWN;
-    case ParticipantRoundStatus.MISSED_CUT:
-      return ParticipantStandingStatus.ELIMINATED;
   }
 }
 

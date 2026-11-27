@@ -55,7 +55,7 @@ const roundsOf = (store: InMemorySportEvents, entryId: string) => store.fieldSid
 
 const standingOf = (store: InMemorySportEvents, entryId: string) => store.standingRows.find((row) => row.sportEventParticipantId === entryId);
 
-const row = (overrides = {}) => ({ strokes: 70, scoreToPar: -2, thru: 18, status: 'COMPLETED' as const, ...overrides });
+const row = (overrides = {}) => ({ strokes: 70, scoreToPar: -2, thru: 18, status: 'FINISHED' as const, ...overrides });
 
 describe('StrokePlayResultService — events of another scoring family', () => {
   it('takes golf round scores for a golf event, whose stroke-play family keeps them', () => {
@@ -121,7 +121,7 @@ describe('StrokePlayResultService — apply', () => {
     const { store, service, event, anaEntry, benEntry } = setup();
 
     await service.applyRoundScores(event.id, 1, [{ participantId: idOf('Ana Park'), ...row() }, { participantId: idOf('Ben Cole'), ...row({ strokes: null }) }]);
-    await service.applyRoundScores(event.id, 2, [{ participantId: idOf('Ana Park'), ...row({ strokes: 68, scoreToPar: -4, status: 'IN_PROGRESS', thru: 9 }) }]);
+    await service.applyRoundScores(event.id, 2, [{ participantId: idOf('Ana Park'), ...row({ strokes: 68, scoreToPar: -4, status: null, thru: 9 }) }]);
 
     expect(roundsOf(store, anaEntry.id)).toEqual([
       expect.objectContaining({ roundNumber: 1, score: 70, scoreToPar: -2, periodsCompleted: 18, status: 'FINISHED' }),
@@ -134,7 +134,7 @@ describe('StrokePlayResultService — apply', () => {
   it('marks a golfer who missed the cut ELIMINATED on the standing, with the round itself finished', async () => {
     const { service, store, event, anaEntry } = setup();
 
-    await service.applyRoundScores(event.id, 1, [{ participantId: idOf('Ana Park'), ...row({ status: 'MISSED_CUT' }) }]);
+    await service.applyRoundScores(event.id, 1, [{ participantId: idOf('Ana Park'), ...row({ status: 'FINISHED', missedCut: true }) }]);
 
     expect(standingOf(store, anaEntry.id)?.status).toBe('ELIMINATED');
     expect(roundsOf(store, anaEntry.id)).toEqual([expect.objectContaining({ status: 'FINISHED' })]);
@@ -145,7 +145,7 @@ describe('StrokePlayResultService — apply', () => {
 
     await service.applyRoundScores(event.id, 1, [
       { participantId: idOf('Ana Park'), ...row({ completedAt: '2026-06-04T17:00:00.000Z' }) },
-      { participantId: idOf('Ben Cole'), ...row({ status: 'IN_PROGRESS', thru: 12 }) },
+      { participantId: idOf('Ben Cole'), ...row({ status: null, thru: 12 }) },
     ]);
     expect(roundsOf(store, anaEntry.id)).toEqual([expect.objectContaining({ gameStatus: 'IN_PROGRESS', gameCompletedAt: null })]);
 
@@ -160,7 +160,7 @@ describe('StrokePlayResultService — apply, round completion', () => {
     const { service, store, event, anaEntry } = setup({ holes: 18 }, () => asOf);
 
     await service.applyRoundScores(event.id, 1, [
-      { participantId: idOf('Ana Park'), strokes: 70, scoreToPar: -2, status: 'COMPLETED' },
+      { participantId: idOf('Ana Park'), strokes: 70, scoreToPar: -2, status: 'FINISHED' },
       { participantId: idOf('Ben Cole'), ...row() },
     ]);
 
@@ -190,10 +190,10 @@ describe('StrokePlayResultService — single-cell correction', () => {
     const { service, store, event, anaEntry, benEntry } = setup();
     await service.applyRoundScores(event.id, 1, [
       { participantId: idOf('Ana Park'), ...row({ completedAt: '2026-06-04T17:00:00.000Z' }) },
-      { participantId: idOf('Ben Cole'), ...row({ status: 'IN_PROGRESS', thru: 12 }) },
+      { participantId: idOf('Ben Cole'), ...row({ status: null, thru: 12 }) },
     ]);
 
-    await service.updateRoundScore(event.id, 1, benEntry.id, { thru: 18, status: 'COMPLETED', completedAt: '2026-06-04T18:45:00.000Z' });
+    await service.updateRoundScore(event.id, 1, benEntry.id, { thru: 18, status: 'FINISHED', completedAt: '2026-06-04T18:45:00.000Z' });
 
     expect(roundsOf(store, anaEntry.id)).toEqual([expect.objectContaining({ gameStatus: 'COMPLETED', gameCompletedAt: new Date('2026-06-04T18:45:00.000Z') })]);
   });
@@ -209,7 +209,7 @@ describe('StrokePlayResultService — single-cell correction', () => {
   // create a golfer's round must carry both.
   it.each([
     ['thru only', { thru: 9 }],
-    ['status only', { status: 'COMPLETED' as const }],
+    ['status only', { status: 'FINISHED' as const }],
     ['strokes without to par', { strokes: 70 }],
     ['to par without strokes', { scoreToPar: -2 }],
   ])('refuses a correction with %s for a golfer with no stored round with 422 ROUND_VALUES_REQUIRED, writing nothing', async (_label, patch) => {
@@ -256,7 +256,7 @@ describe('StrokePlayResultService — admin rounds are bounded by the event sche
 
     await expect(service.updateRoundScore(event.id, 1, anaEntry.id, { strokes: 70, scoreToPar: -2, thru: 19 }))
       .rejects.toMatchObject({ code: 'ROUND_THRU_BEYOND_HOLES', statusCode: 422 });
-    await expect(service.applyRoundScores(event.id, 1, [{ participantId: anaEntry.participantId, strokes: 70, scoreToPar: -2, thru: 19, status: 'COMPLETED' }]))
+    await expect(service.applyRoundScores(event.id, 1, [{ participantId: anaEntry.participantId, strokes: 70, scoreToPar: -2, thru: 19, status: 'FINISHED' }]))
       .rejects.toMatchObject({ code: 'ROUND_THRU_BEYOND_HOLES', statusCode: 422 });
     expect(store.fieldSideRows).toEqual([]);
 
@@ -267,11 +267,11 @@ describe('StrokePlayResultService — admin rounds are bounded by the event sche
   it('stores a finished round reported with no holes as played through every hole its slot gives a round, and leaves it unknown on a slot with no hole count', async () => {
     const { store, service, event, anaEntry } = setup({ holes: 9 });
 
-    await service.updateRoundScore(event.id, 1, anaEntry.id, { strokes: 35, scoreToPar: -1, status: 'COMPLETED' });
+    await service.updateRoundScore(event.id, 1, anaEntry.id, { strokes: 35, scoreToPar: -1, status: 'FINISHED' });
     expect(roundsOf(store, anaEntry.id).map((round) => round.periodsCompleted)).toEqual([9]);
 
     const noHoles = setup();
-    await noHoles.service.updateRoundScore(noHoles.event.id, 1, noHoles.anaEntry.id, { strokes: 35, scoreToPar: -1, status: 'COMPLETED' });
+    await noHoles.service.updateRoundScore(noHoles.event.id, 1, noHoles.anaEntry.id, { strokes: 35, scoreToPar: -1, status: 'FINISHED' });
     expect(roundsOf(noHoles.store, noHoles.anaEntry.id).map((round) => round.periodsCompleted)).toEqual([null]);
   });
 
@@ -336,7 +336,7 @@ describe('StrokePlayResultService — event-side position', () => {
 
     await service.applyRoundScores(event.id, 1, [
       { participantId: idOf('Ana Park'), ...row({ scoreToPar: 3 }) },
-      { participantId: idOf('Ben Cole'), ...row({ scoreToPar: -4, status: 'MISSED_CUT' }) },
+      { participantId: idOf('Ben Cole'), ...row({ scoreToPar: -4, status: 'FINISHED', missedCut: true }) },
     ]);
 
     expect(positions(store)).toEqual({
@@ -376,7 +376,7 @@ describe('StrokePlayResultService — provider sync', () => {
   }
 
   const update = (participantExternalId: string, round: number, scoreToPar: number) => ({
-    participantExternalId, round, strokes: 72 + scoreToPar, scoreToPar, thru: 18, status: 'COMPLETED' as const,
+    participantExternalId, round, strokes: 72 + scoreToPar, scoreToPar, thru: 18, status: 'FINISHED' as const,
   });
   const fourRounds = [1, 2, 3, 4].map((roundNumber) => ({ roundNumber, scheduledDate: SCHEDULED }));
 
@@ -442,7 +442,7 @@ describe('StrokePlayResultService — provider sync', () => {
 
     await service.persistRoundUpdatesForSportEvent(event.id, [
       update('ext-ana', 1, -1), update('ext-ana', 2, -1), update('ext-ana', 3, -1),
-      update('ext-ben', 1, 4), { ...update('ext-ben', 2, 5), status: 'MISSED_CUT' as const },
+      update('ext-ben', 1, 4), { ...update('ext-ben', 2, 5), status: 'FINISHED', missedCut: true as const },
     ], 'balldontlie');
 
     expect(roundsOf(store, benEntry.id).map((round) => round.roundNumber)).toEqual([1, 2]);
@@ -519,14 +519,14 @@ describe('StrokePlayResultService — provider sync', () => {
         { updated: 1, unchanged: 1 },
       ],
       [
-        'only the status changed, to a withdrawal (DNF), so the standing is WITHDRAWN and unranked',
-        { status: 'DNF' as const },
+        'only the status changed, to a withdrawal (DID_NOT_FINISH), so the standing is WITHDRAWN and unranked',
+        { status: 'DID_NOT_FINISH' as const },
         { status: 'DID_NOT_FINISH' },
         { status: 'WITHDRAWN', position: null, displayPosition: null },
         { updated: 2, unchanged: 0 },
       ],
     ])('rewrites a round, and its standing where it moves, when %s', async (_label, change, expectedRound, expectedStanding, expectedSummary) => {
-      const first = { strokes: 34, scoreToPar: -2, thru: 9, status: 'IN_PROGRESS' as const };
+      const first = { strokes: 34, scoreToPar: -2, thru: 9, status: null };
       const { store, service, event, anaEntry } = await scheduledSyncSetup();
       const tick = (values: object) => service.persistRoundUpdatesForSportEvent(event.id, [{ participantExternalId: 'ext-ana', round: 1, ...first, ...values }], 'balldontlie');
       await tick({});

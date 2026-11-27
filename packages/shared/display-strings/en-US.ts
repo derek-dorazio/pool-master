@@ -370,13 +370,6 @@ export const enUS = {
       COMPLETED: 'Completed',
       FAILED: 'Failed',
     },
-    ParticipantRoundStatus: {
-      IN_PROGRESS: 'In progress',
-      COMPLETED: 'Completed',
-      DNF: 'Did not finish',
-      DSQ: 'Disqualified',
-      MISSED_CUT: 'Missed cut',
-    },
     RoundStatus: {
       SCHEDULED: 'Scheduled',
       IN_PROGRESS: 'In progress',

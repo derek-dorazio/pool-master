@@ -77,7 +77,7 @@ async function createField(suffix: string) {
 }
 
 function row(participantId: string, overrides: Partial<GolfScoreRowInput> = {}): GolfScoreRowInput {
-  return { participantId, strokes: 68, scoreToPar: -4, thru: 18, status: 'COMPLETED', ...overrides };
+  return { participantId, strokes: 68, scoreToPar: -4, thru: 18, status: 'FINISHED', ...overrides };
 }
 
 /** The golfer's side results in the event's FIELD Games: their rounds as stored. */
@@ -135,7 +135,7 @@ describe('Golf round scores — admin correction surface', () => {
       ['MATCHED', 'UPDATE'],
       ['UNRESOLVED', 'CREATE'],
     ]);
-    expect(preview[2].before).toEqual({ strokes: 68, scoreToPar: -4, thru: 18, status: 'COMPLETED' });
+    expect(preview[2].before).toEqual({ strokes: 68, scoreToPar: -4, thru: 18, status: 'FINISHED' });
     expect(preview[3]).toMatchObject({ sportEventParticipantId: null, participantName: null, before: null });
     expect(await getPrisma().sportEventRoundMatchGameSideResult.count({ where: { game: { sportEventId: event.id } } })).toBe(1);
   });
@@ -250,7 +250,7 @@ describe('Golf round scores — admin correction surface', () => {
   it('a PATCH with thru null clears the stored thru, so the golfer no longer shows as mid-round', async () => {
     const { event, rory } = await createField('patch-clear-thru');
     await createStrokePlayResultService(getAppPrisma(), testDomainEvents()).applyRoundScores(event.id, 1, [
-      row(rory.participant.id, { thru: 12, status: 'IN_PROGRESS' }),
+      row(rory.participant.id, { thru: 12, status: null }),
     ]);
     const admin = await createTestUser({ isRootAdmin: true });
 
@@ -347,7 +347,7 @@ describe('Golf round scores — bounded by the event\'s scheduled rounds', () =>
       ],
     });
     const update = (participantExternalId: string, round: number, thru = 18) => ({
-      participantExternalId, round, strokes: 70, scoreToPar: -2, thru, status: 'COMPLETED' as const,
+      participantExternalId, round, strokes: 70, scoreToPar: -2, thru, status: 'FINISHED' as const,
     });
 
     const result = await publishLiveScoreUpdate({
@@ -402,8 +402,8 @@ describe('Golf round scores — a live sync writes only what changed', () => {
       category: 'GOLF',
       externalEventId: event.externalId,
       rounds: [
-        { participantExternalId: 'ext-rory', round: 1, strokes: 33, scoreToPar: -3, thru: 9, status: 'IN_PROGRESS' as const },
-        { participantExternalId: 'ext-jordan', round: 1, strokes: 36 + jordanToPar, scoreToPar: jordanToPar, thru: 9, status: 'IN_PROGRESS' as const },
+        { participantExternalId: 'ext-rory', round: 1, strokes: 33, scoreToPar: -3, thru: 9, status: null },
+        { participantExternalId: 'ext-jordan', round: 1, strokes: 36 + jordanToPar, scoreToPar: jordanToPar, thru: 9, status: null },
       ],
     }, { contestActivation: NO_CONTEST_ACTIVATION, prisma, providerId: 'balldontlie', domainEvents: testDomainEvents(), scoringFamilyForEvent, findings: integrationSyncFindings() });
     const stamps = async (): Promise<Record<string, Array<string | undefined>>> => {
@@ -473,7 +473,7 @@ describe('Golf round scores — a live tick\'s leaderboard rebuild (#1466)', () 
     await publishLiveScoreUpdate({
       category: 'GOLF',
       externalEventId: event.externalId,
-      rounds: [{ participantExternalId: 'ext-rory-live', round: 1, strokes: 33, scoreToPar: -3, thru: 9, status: 'IN_PROGRESS' as const }],
+      rounds: [{ participantExternalId: 'ext-rory-live', round: 1, strokes: 33, scoreToPar: -3, thru: 9, status: null }],
     }, { prisma: getAppPrisma(), providerId: 'balldontlie', domainEvents: testDomainEvents({ queue: integrationBackgroundJobs().queue }), contestActivation: NO_CONTEST_ACTIVATION, scoringFamilyForEvent, findings: integrationSyncFindings() });
 
     await expect(prisma.backgroundJob.count({ where: { dedupeKey: eventRebuildJob(event.id).dedupeKey } })).resolves.toBe(1);
