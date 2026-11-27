@@ -29,7 +29,7 @@ import {
   Text,
   useDisplayPreferences,
 } from '@/features/shared/ui';
-import { firstContestEvent } from './contest-events';
+import { eventOfFirstSlot } from './contest-events';
 import { ContestRulesFields } from './contest-rules-fields';
 import {
   CONTEST_RULES_FORM_SHAPE,
@@ -246,7 +246,7 @@ export function EditContestPage() {
   const contestQuery = useContestQuery(contestId);
   const managedContestQuery = useManagedContestQuery(league?.id, contestId);
   const contest = contestQuery.data ?? null;
-  const eventQuery = useQuery(sportEventQueryOptions((contest ? firstContestEvent(contest)?.sportEventId : undefined) ?? ''));
+  const eventQuery = useQuery(sportEventQueryOptions((contest ? eventOfFirstSlot(contest)?.sportEventId : undefined) ?? ''));
   const contestPath = buildLeagueAdminContestPath(leagueCode, contestId);
 
   if (!league) {

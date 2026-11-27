@@ -221,8 +221,8 @@ describe('ContestPageFrame schedule notice', () => {
   it('says under the header, in one line, when an event is postponed and that a cancelled one scores nothing', async () => {
     renderFrame({ contestOverrides: {
       sportEvents: [
-        { endDate: null, name: 'BUF @ KC', participantType: 'TEAM', scoringFamily: 'HEAD_TO_HEAD', sequence: 1, sportEventId: 'e1', startDate: '2026-11-25T01:15:00.000Z', status: 'POSTPONED' },
-        { endDate: null, name: 'SEA @ SF', participantType: 'TEAM', scoringFamily: 'HEAD_TO_HEAD', sequence: 2, sportEventId: 'e2', startDate: '2026-11-25T21:00:00.000Z', status: 'CANCELLED' },
+        { endDate: null, name: 'BUF @ KC', participantType: 'TEAM', scoringFamily: 'HEAD_TO_HEAD', sportEventId: 'e1', startDate: '2026-11-25T01:15:00.000Z', status: 'POSTPONED' },
+        { endDate: null, name: 'SEA @ SF', participantType: 'TEAM', scoringFamily: 'HEAD_TO_HEAD', sportEventId: 'e2', startDate: '2026-11-25T21:00:00.000Z', status: 'CANCELLED' },
       ],
     } });
 

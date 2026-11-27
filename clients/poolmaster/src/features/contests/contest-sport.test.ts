@@ -13,7 +13,6 @@ function golfContest(sportEvents: ContestDto['sportEvents']): ContestSportFacts 
 
 const MASTERS: ContestDto['sportEvents'][number] = {
   sportEventId: 'event-1',
-  sequence: 1,
   name: 'The Masters',
   startDate: '2026-04-09T12:00:00.000Z',
   endDate: null,

@@ -37,7 +37,7 @@ import {
   useDisplayPreferences,
   useMinuteClock,
 } from '@/features/shared/ui';
-import { currentContestEvent, entryEventStatus } from './contest-events';
+import { entryEventStatus, eventOfCurrentSlot } from './contest-events';
 import { ContestPageFrame } from './contest-header';
 import { ContestEntryListSquaresPendingSection } from './contest-entry-list-squares-pending-section';
 import { ContestPagePending } from './contest-page-pending';
@@ -279,7 +279,7 @@ export function ContestEntryListPage() {
   const linkedEntry = useLinkedEntry();
   const landOn = useLandOnEntry();
   // Each event takes its own submitted picks (#713): an entry's status is the current event's.
-  const currentEvent = contestQuery.data ? currentContestEvent(contestQuery.data) : null;
+  const currentEvent = contestQuery.data ? eventOfCurrentSlot(contestQuery.data) : null;
   const currentEventId = currentEvent?.sportEventId;
   const lineupValues = useLineupPickValues(
     contestQuery.data?.selectionType,

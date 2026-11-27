@@ -1,3 +1,4 @@
+import { withCoverage } from './covered-slots';
 import type {
   ContestDto,
   ContestEntryDetailResponse,
@@ -128,7 +129,7 @@ export function pickEmWeekFixture(overrides: Partial<GamePicksResponse> = {}): G
 
 /** A two-week NFL pick'em contest, open and not started unless told otherwise. */
 export function pickEmContestFixture(overrides: Partial<ContestDto> = {}): ContestDto {
-  return {
+  return withCoverage({
     id: 'contest-1',
     leagueId: 'league-1',
     entriesPerContest: null,
@@ -139,11 +140,11 @@ export function pickEmContestFixture(overrides: Partial<ContestDto> = {}): Conte
     selectionType: 'PICK_EM',
     myEntryIds: ['entry-1'],
     sportEvents: [
-      { sportEventId: 'week-1', sequence: 1, name: 'Week 1', startDate: WEEK_1_START, endDate: null, status: 'SCHEDULED', participantType: 'TEAM', scoringFamily: 'HEAD_TO_HEAD' },
-      { sportEventId: 'week-2', sequence: 2, name: 'Week 2', startDate: WEEK_2_START, endDate: null, status: 'SCHEDULED', participantType: 'TEAM', scoringFamily: 'HEAD_TO_HEAD' },
+      { sportEventId: 'week-1', name: 'Week 1', startDate: WEEK_1_START, endDate: null, status: 'SCHEDULED', participantType: 'TEAM', scoringFamily: 'HEAD_TO_HEAD' },
+      { sportEventId: 'week-2', name: 'Week 2', startDate: WEEK_2_START, endDate: null, status: 'SCHEDULED', participantType: 'TEAM', scoringFamily: 'HEAD_TO_HEAD' },
     ],
     ...overrides,
-  };
+  });
 }
 
 /**
@@ -303,7 +304,7 @@ export function playoffSurvivorContestFixture(overrides: Partial<ContestDto> = {
   return pickEmContestFixture({
     selectionType: 'SURVIVOR',
     status: 'ACTIVE',
-    sportEvents: [{ sportEventId: 'playoffs', sequence: 1, name: 'Playoffs', startDate: WEEK_1_START, endDate: null, status: 'IN_PROGRESS', participantType: 'TEAM', scoringFamily: 'HEAD_TO_HEAD' }],
+    sportEvents: [{ sportEventId: 'playoffs', name: 'Playoffs', startDate: WEEK_1_START, endDate: null, status: 'IN_PROGRESS', participantType: 'TEAM', scoringFamily: 'HEAD_TO_HEAD' }],
     ...overrides,
   });
 }

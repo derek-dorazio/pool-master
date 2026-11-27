@@ -164,8 +164,8 @@ export const CONTEST_COVERAGE_SLOT_NOT_CHOSEN = 'CONTEST_COVERAGE_SLOT_NOT_CHOSE
 export const CONTEST_COVERAGE_SLOT_NOT_COVERABLE = 'CONTEST_COVERAGE_SLOT_NOT_COVERABLE';
 
 /**
- * Error code for removing an event from a contest once one of its events has started (#713):
- * entries have been played against the list, so it can only grow.
+ * Error code for changing a contest's event or starting slot once it has left Set up (#2014):
+ * its coverage is fixed from the moment it opens.
  */
 export const CONTEST_EVENTS_LOCKED = 'CONTEST_EVENTS_LOCKED';
 

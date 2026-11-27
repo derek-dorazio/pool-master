@@ -401,8 +401,10 @@ describe('Opening a contest (#1355)', () => {
       // and the events read with them, two fewer.
       ['SELECT sport_event_slots', 4],
       ['SELECT sport_events', 1],
-      ['SELECT sport_league_competition_slots', 2],
-      ['SELECT sport_league_competitions', 1],
+      // The covered slots' definitions and their competitions, read with each contest read
+      // (#2014 part B), two reads more each.
+      ['SELECT sport_league_competition_slots', 4],
+      ['SELECT sport_league_competitions', 3],
       ['SELECT sport_league_phases', 1],
       ['SELECT sport_league_season_competition_slots', 4], // with the covered slots, and the tier slots'
   ['SELECT sport_league_seasons', 3], // a sport is read through each contest read's event's Season and league (#2042, #2004)
@@ -765,9 +767,10 @@ const PINNED_POSTPONE_COUNTS: Array<[string, number]> = [
   // slots its contests are found through and cover (#2014).
   ['SELECT sport_event_slots', 5],
   ['SELECT sport_events', 2],
-  // The event's slot takes its definition and its place in play, as its tier slots do (#2006, #2044).
-  ['SELECT sport_league_competition_slots', 4],
-  ['SELECT sport_league_competitions', 2],
+  // The event's slot takes its definition and its place in play, as its tier slots do (#2006, #2044),
+  // and the contests' covered slots take theirs, read together for every contest (#2014 part B).
+  ['SELECT sport_league_competition_slots', 5],
+  ['SELECT sport_league_competitions', 3],
   ['SELECT sport_league_phases', 2],
   ['SELECT sport_league_season_competition_slots', 6], // the answer's, the event reads' and the contests' Season slots
   ['SELECT sport_league_seasons', 3], // a sport is read through its event's Season and league (#2042, #2004)

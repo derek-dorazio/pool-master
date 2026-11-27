@@ -20,7 +20,7 @@ import { entryFinishStatus, entryStatusLine } from './entry-status-line';
 import { buildLeagueContestPath } from '@/features/leagues/league-routing';
 import { useContestLeagueCode } from './use-contest-league';
 import { contestEventStart, contestMatchNoun, contestParticipantNoun, contestScoreUnit, gamePickErrorValues } from './contest-sport';
-import { firstContestEvent } from './contest-events';
+import { eventOfFirstSlot } from './contest-events';
 import { canRenameEntries } from './contest-status';
 import { useContestEntryQuery } from './use-contest-entries';
 import { gameEntryFinish, SUBMIT_CLOSED } from './game-entry-finish';
@@ -38,7 +38,7 @@ export function BracketEntryPage({ contest }: { contest: ContestDto }) {
   const { entryId = '' } = useParams<{ entryId: string }>();
   const contestId = contest.id;
   // A bracket covers one event (#721).
-  const sportEventId = firstContestEvent(contest)?.sportEventId ?? '';
+  const sportEventId = eventOfFirstSlot(contest)?.sportEventId ?? '';
 
   const { gamePicksQuery, saveMutation, setTiebreakerDraft, submitMutation, tiebreakerDraft } = useGamePicks({
     action: 'bracket',

@@ -769,10 +769,11 @@ describe('A poll of a stored prediction leaderboard (#1435)', () => {
       expect(statementsOn(statements, StatementVerb.SELECT, table)).toEqual([]);
     }
     expect(statementsOn(statements, StatementVerb.SELECT, 'contest_leaderboard_snapshots')).toHaveLength(1);
-    // The contest (10: its Season, league and sport, and its covered slots with each one's Season
-    // slot and event slot since #2014), the reader's squad membership (1; the task keeps the league
-    // membership, #1438) and the snapshot (1): the same 12 for every prediction board, as for a lineup board.
-    expect(statements).toHaveLength(12);
+    // The contest (12: its Season, league and sport, and its covered slots with each one's Season
+    // slot, event slot, slot definition and competition since #2014), the reader's squad membership
+    // (1; the task keeps the league membership, #1438) and the snapshot (1): the same 14 for every
+    // prediction board, as for a lineup board.
+    expect(statements).toHaveLength(14);
   });
 
   it.each([

@@ -4,7 +4,7 @@ import {
   buildLeagueContestEntryPath,
   buildLeagueContestPath,
 } from '@/features/leagues/league-routing';
-import { currentContestEvent, entryEventStatus } from './contest-events';
+import { entryEventStatus, eventOfCurrentSlot } from './contest-events';
 import { areContestEntriesOpen } from './contest-status';
 import { listedContestStartsAt } from './use-contest-schedule';
 
@@ -58,9 +58,9 @@ export function contestCapacityCount(contest: Pick<ContestDto, 'allEntryCount' |
  * Where an entered viewer edits: their one entry's pick screen, or the contest page, where each
  * of their entries has its ✎, when they have more than one (#1763).
  */
-function describeEditStep(leagueCode: string, contest: ContestDto, myEntries: readonly ContestEntryDto[], now: Date): EntryEditStep {
+function describeEditStep(leagueCode: string, contest: ContestDto, myEntries: readonly ContestEntryDto[]): EntryEditStep {
   // A contest of several events asks for picks event by event: this is about the current one.
-  const currentEventId = currentContestEvent(contest, now)?.sportEventId;
+  const currentEventId = eventOfCurrentSlot(contest)?.sportEventId;
   const isSubmitted = (entry: ContestEntryDto) => entryEventStatus(entry, currentEventId) === ContestEntryStatus.SUBMITTED;
   const label = myEntries.some(isSubmitted) ? 'Edit picks' : 'Finish your picks';
   const onlyEntry = myEntries.length === 1 ? myEntries[0] : undefined;
@@ -105,7 +105,7 @@ export function describeContestNextStep({
   }
   const isFull = isContestFull(contest, contestCapacityCount(contest));
   if (myEntries?.length) {
-    return { kind: 'entered', canAddEntry: !isFull, edit: describeEditStep(leagueCode, contest, myEntries, now) };
+    return { kind: 'entered', canAddEntry: !isFull, edit: describeEditStep(leagueCode, contest, myEntries) };
   }
   return isFull ? { kind: 'full' } : { kind: 'start' };
 }
