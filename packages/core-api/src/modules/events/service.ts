@@ -371,6 +371,13 @@ export class SportEventService {
     const slotDates: SyncedSlotsRecord['slotDates'][number][] = [];
     const confirmedWindows = new Set<string>();
     const placed: ProviderSeasonImport['placed'] = [];
+    /**
+     * The provider games each matched rest-of-phase slot now holds, for a feed that names its games
+     * (#2154): its event's Matches and field come from them. A date-window slot's event is a bracket
+     * on the seeds placed on it, whose games link by their teams, so it records none.
+     */
+    const placedGames = new Map<string, string[]>();
+    let namesGames = false;
     const unplaced: ProviderSeasonImport['unplaced'] = [];
     /** Slots an event of this slate takes, so a second provider event cannot take one too. */
     const taken = new Set(slots.flatMap((slot) => (slot.sportEventId === null ? [] : [slot.seasonSlotId])));
@@ -379,7 +386,8 @@ export class SportEventService {
       const linkedIds = linkedIdsByExternalId.get(externalId) ?? [];
       /**
        * The linked event of a competition: its games' event there, and the field its window slots
-       * read. A linked event holding no slot yet is the first competition's to reach it, and no other's.
+       * read. A linked event holding no slot yet is the first competition's to reach it (see
+       * `competitionsOf`), and no other's.
        */
       const linkedIn = (seasonCompetitionId: string) => linkedIds.find((id) => competitionsByEvent.get(id)?.has(seasonCompetitionId) === true)
         ?? linkedIds.find((id) => !competitionsByEvent.has(id));
@@ -388,13 +396,16 @@ export class SportEventService {
         return (linkedId === undefined ? undefined : fields.get(linkedId)) ?? new Set<string>();
       };
       const { matched, unmatched: missed, unplaced: unplacedGames } = matchProviderSlots(providerEvent.providerSlots, slots, fieldOf);
+      if (providerEvent.providerSlots.some((play) => play.gameIds !== undefined)) namesGames = true;
       for (const play of missed) {
         // A tournament name matching handled is reported by its name, not again by its code.
         if (!unmatched.has(play.code) && !named.handledCodes.has(play.code)) unmatched.set(play.code, { code: play.code, eventName: name });
       }
       unplaced.push(...unplacedGames.map((game) => ({ ...game, eventName: name })));
-      for (const { slot, play, fromGames } of matched) {
+      for (const { slot, play, fromGames, games } of matched) {
         placed.push({ ...play, eventName: name });
+        const gameIds = games.flatMap((game) => game.gameIds ?? []);
+        if (slot.restOfPhase) placedGames.set(slot.seasonSlotId, [...(placedGames.get(slot.seasonSlotId) ?? []), ...gameIds]);
         // A window holding no game of the event's own teams is no evidence of its dates (#2012).
         if (!fromGames) continue;
         const change = slotDatesChange(slot, play);
@@ -443,7 +454,14 @@ export class SportEventService {
       }
     }
     const written = await this.createEditions(sportLeague, editions);
-    await this.deps.seasons.recordSyncedSlots({ eventSlots, slotDates, confirmedWindows: [...confirmedWindows] });
+    await this.deps.seasons.recordSyncedSlots({
+      eventSlots,
+      slotDates,
+      confirmedWindows: [...confirmedWindows],
+      placedGames: namesGames
+        ? { sportLeagueId: sportLeague.id, sportLeagueProviderMappingId: input.sportLeagueProviderMappingId, bySlot: [...placedGames].map(([seasonSlotId, externalIds]) => ({ seasonSlotId, externalIds })) }
+        : null,
+    });
     // The new events' slots as they now stand, with the dates just written: one read for them all.
     const slotsByEvent = written.length === 0 ? new Map<string, SportLeagueSeasonSlot[]>() : await this.deps.sportEvents.findSlots(written.map(({ event }) => event.id));
     const created = written.map((summary) => ({ ...summary, slots: slotsByEvent.get(summary.event.id) ?? [] }));
@@ -1048,9 +1066,15 @@ function providerEdition(
   };
 }
 
-/** The Season competitions matched slots are in, each once, in the order first matched. */
+/**
+ * The Season competitions matched slots are in, each once: those with no rest-of-phase slot first,
+ * then in the order first matched. A linked event holding no slot yet goes to the first (#2154), so
+ * a playoff's own event is never taken for the rest of its phase.
+ */
 function competitionsOf(matched: ReadonlyArray<{ slot: SyncSeasonSlot }>): string[] {
-  return [...new Set(matched.map(({ slot }) => slot.seasonCompetitionId))];
+  const rest = new Set(matched.flatMap(({ slot }) => (slot.restOfPhase ? [slot.seasonCompetitionId] : [])));
+  const all = [...new Set(matched.map(({ slot }) => slot.seasonCompetitionId))];
+  return [...all.filter((id) => !rest.has(id)), ...all.filter((id) => rest.has(id))];
 }
 
 /**

@@ -886,6 +886,16 @@ export interface SyncedSlotsRecord {
   slotDates: ReadonlyArray<{ seasonSlotId: string; startsAt: Date; endsAt: Date }>;
   /** Season slots whose TENTATIVE window the feed has now placed a game in: they become CONFIRMED (#2012). */
   confirmedWindows: readonly string[];
+  /**
+   * The provider's games each slot now holds (#2154), for a sync whose feed names its games: each
+   * listed game moves to its slot, and a listed slot keeps only its listed games. Null when the feed
+   * names no game ids.
+   */
+  placedGames?: {
+    sportLeagueId: string;
+    sportLeagueProviderMappingId: string;
+    bySlot: ReadonlyArray<{ seasonSlotId: string; externalIds: readonly string[] }>;
+  } | null;
 }
 
 /** What adding a test slot did: the slot, or why there is none. */

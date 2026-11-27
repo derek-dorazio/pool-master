@@ -25,6 +25,11 @@ export interface ProviderSlotPlay {
    * from it, and is confirmed by it, only when every one is on the event's field (#2012).
    */
   teams?: readonly string[];
+  /**
+   * The provider's ids for the play's games, where its feed names them: the sync records which
+   * slot each game is placed in, so an event playing a slot gets that slot's games (#2154).
+   */
+  gameIds?: readonly string[];
 }
 
 /** A Season slot as the events sync reads it: what it is matched by, who covers it, and who plays it. */
