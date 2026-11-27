@@ -218,13 +218,13 @@ const OPPONENT_SEED_SUM = 17;
 
 /**
  * The tournament's whole bracket (#1728), numbered as an admin loads it. Round 1 is the First
- * Four (#2184): its games in region order, then by seed, each at a neutral site and each advancing
+ * Four (#2184): its games in region order, then by seed, each advancing
  * into the side of the round of 64 game its pairing's seed plays in. Round 2 is the round of 64:
  * each region's eight games in bracket order (1 v 16, 8 v 9, 5 v 12, 4 v 13, 6 v 11, 3 v 14,
  * 7 v 10, 2 v 15), the better seed home, regions in the vendor's `region_id` order, then each
  * round's games below them, each pair of games linking to the next round's game, the first two
  * regions' champions meeting in the first national semifinal and the last two in the second, and
- * the championship last. Every game is at a neutral site. A side a First Four game fills is empty
+ * the championship last. Every slot of it says neutral site (#2154). A side a First Four game fills is empty
  * until its winner advances into it. Null unless the vendor lists four regions of eight round of 64
  * games with their seeds, every side placed: the women's bracket, which names no region, never has
  * a shape here.
@@ -264,7 +264,6 @@ export function toNcaaBracket(scope: NcaaTournamentScope, games: readonly NcaaBr
         roundNumber: 1,
         homeTeamExternalId: home ? participantFeedId(home.id) : null,
         awayTeamExternalId: away ? participantFeedId(away.id) : null,
-        isNeutralSite: true,
         scheduledAt: game.date ? new Date(game.date) : null,
         advancesTo: null,
         regionLabel: game.region_label,
@@ -299,7 +298,6 @@ export function toNcaaBracket(scope: NcaaTournamentScope, games: readonly NcaaBr
           roundNumber: 2,
           homeTeamExternalId: home.team,
           awayTeamExternalId: away.team,
-          isNeutralSite: true,
           scheduledAt: game.date ? new Date(game.date) : null,
           advancesTo: null,
           regionLabel: region,
@@ -329,7 +327,6 @@ export function toNcaaBracket(scope: NcaaTournamentScope, games: readonly NcaaBr
         ...next,
         homeTeamExternalId: null,
         awayTeamExternalId: null,
-        isNeutralSite: true,
         scheduledAt: null,
         advancesTo: null,
         regionLabel: left.regionLabel === right.regionLabel ? left.regionLabel : null,
@@ -360,7 +357,6 @@ export function toNcaaScheduledGames(league: NcaaTournamentLeague, games: readon
       homeTeamExternalId: participantFeedId(home.id),
       awayTeamExternalId: participantFeedId(away.id),
       scheduledAt: game.date ? new Date(game.date) : null,
-      isNeutralSite: true,
     }];
   });
 }

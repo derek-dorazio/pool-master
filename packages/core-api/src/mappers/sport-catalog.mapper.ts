@@ -227,6 +227,7 @@ export function mapSportLeagueStructureToDto(structure: SportLeagueStructure): S
           name: slot.name,
           awardsTrophy: slot.awardsTrophy,
           squaresEligible: slot.squaresEligible,
+          isNeutralSite: slot.isNeutralSite,
           seriesFormat: slot.seriesFormat,
           seriesGames: slot.seriesGames,
           pairing: slot.pairing,

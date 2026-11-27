@@ -25,7 +25,6 @@ const ProviderScheduledGameSchema = z.object({
   homeTeamExternalId: z.string().min(1),
   awayTeamExternalId: z.string().min(1),
   scheduledAt: z.iso.datetime().nullable(),
-  isNeutralSite: z.boolean(),
 });
 
 const ProviderBracketMatchSchema = z.object({
@@ -33,7 +32,6 @@ const ProviderBracketMatchSchema = z.object({
   matchNumber: z.number().int(),
   homeTeamExternalId: z.string().min(1).nullable(),
   awayTeamExternalId: z.string().min(1).nullable(),
-  isNeutralSite: z.boolean(),
   scheduledAt: z.iso.datetime().nullable(),
   advancesTo: z.object({ roundNumber: z.number().int(), matchNumber: z.number().int(), side: z.enum(MatchSide) }).nullable(),
   regionLabel: z.string().nullable(),

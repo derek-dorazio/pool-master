@@ -112,6 +112,8 @@ export interface SportEventRoundSlot {
    * score is then a tie; where it cannot, only a shoot-out decides a level score (#2046).
    */
   canEndTied: boolean;
+  /** Whether the slot's games are played at a neutral site (#2154), read from its definition: each Game of it takes it. */
+  isNeutralSite: boolean;
   /** What a game of the slot is played in (#2047), from its definition; null for a game kept by no period. */
   periods: SlotPeriods | null;
   /**

@@ -202,9 +202,8 @@ describe('NFL postseason bracket', () => {
     ]);
   });
 
-  it('puts each postseason game in its round by its week\'s place, the Super Bowl fourth and neutral despite the vendor\'s week 5', () => {
+  it('puts each postseason game in its round by its week\'s place, the Super Bowl fourth despite the vendor\'s week 5', () => {
     expect(games.map((game) => game.roundNumber)).toEqual([1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 4]);
-    expect(games.filter((game) => game.isNeutralSite).map((game) => game.roundNumber)).toEqual([4]);
   });
 
   it('leaves out a game with a team outside the field, such as an all-star game, and a game whose teams are not decided', () => {
@@ -218,20 +217,20 @@ describe('NFL postseason bracket', () => {
 
   it('lays out the whole bracket: the Wild Card by seed, the 1 seeds waiting in the Divisional round, the championships linked to the Super Bowl', () => {
     const bracket = toNflPlayoffBracket(field, games);
-    expect(bracket?.map((match) => [match.matchNumber, match.roundNumber, match.regionLabel, match.homeTeamExternalId, match.awayTeamExternalId, match.advancesTo, match.isNeutralSite])).toEqual([
-      [1, 1, 'AFC', team('BUF'), team('DEN'), null, false],
-      [2, 1, 'AFC', team('BAL'), team('PIT'), null, false],
-      [3, 1, 'AFC', team('HOU'), team('LAC'), null, false],
-      [4, 1, 'NFC', team('PHI'), team('GB'), null, false],
-      [5, 1, 'NFC', team('TB'), team('WAS'), null, false],
-      [6, 1, 'NFC', team('LAR'), team('MIN'), null, false],
-      [1, 2, 'AFC', team('KC'), null, null, false],
-      [2, 2, 'AFC', null, null, null, false],
-      [3, 2, 'NFC', team('DET'), null, null, false],
-      [4, 2, 'NFC', null, null, null, false],
-      [1, 3, 'AFC', null, null, { roundNumber: 4, matchNumber: 1, side: MatchSide.HOME }, false],
-      [2, 3, 'NFC', null, null, { roundNumber: 4, matchNumber: 1, side: MatchSide.AWAY }, false],
-      [1, 4, null, null, null, null, true],
+    expect(bracket?.map((match) => [match.matchNumber, match.roundNumber, match.regionLabel, match.homeTeamExternalId, match.awayTeamExternalId, match.advancesTo])).toEqual([
+      [1, 1, 'AFC', team('BUF'), team('DEN'), null],
+      [2, 1, 'AFC', team('BAL'), team('PIT'), null],
+      [3, 1, 'AFC', team('HOU'), team('LAC'), null],
+      [4, 1, 'NFC', team('PHI'), team('GB'), null],
+      [5, 1, 'NFC', team('TB'), team('WAS'), null],
+      [6, 1, 'NFC', team('LAR'), team('MIN'), null],
+      [1, 2, 'AFC', team('KC'), null, null],
+      [2, 2, 'AFC', null, null, null],
+      [3, 2, 'NFC', team('DET'), null, null],
+      [4, 2, 'NFC', null, null, null],
+      [1, 3, 'AFC', null, null, { roundNumber: 4, matchNumber: 1, side: MatchSide.HOME }],
+      [2, 3, 'NFC', null, null, { roundNumber: 4, matchNumber: 1, side: MatchSide.AWAY }],
+      [1, 4, null, null, null, null],
     ]);
   });
 

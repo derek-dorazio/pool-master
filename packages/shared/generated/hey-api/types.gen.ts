@@ -11006,6 +11006,10 @@ export type SportLeagueSlotDefinitionDto = {
      * Whether a squares pool can be played on its games.
      */
     squaresEligible: boolean;
+    /**
+     * Whether its games are played at a neutral site, neither side at home (a Super Bowl, a bowl game). Each game of the slot takes it, and screens then say "vs" rather than "at".
+     */
+    isNeutralSite: boolean;
     seriesFormat: 'SINGLE_GAME' | 'BEST_OF' | 'AGGREGATE';
     /**
      * Games in one meeting: 1 for SINGLE_GAME, the series length for BEST_OF, the legs for AGGREGATE.
@@ -11087,6 +11091,10 @@ export type SportLeagueCompetitionDefinitionDto = {
          * Whether a squares pool can be played on its games.
          */
         squaresEligible: boolean;
+        /**
+         * Whether its games are played at a neutral site, neither side at home (a Super Bowl, a bowl game). Each game of the slot takes it, and screens then say "vs" rather than "at".
+         */
+        isNeutralSite: boolean;
         seriesFormat: 'SINGLE_GAME' | 'BEST_OF' | 'AGGREGATE';
         /**
          * Games in one meeting: 1 for SINGLE_GAME, the series length for BEST_OF, the legs for AGGREGATE.
@@ -11179,6 +11187,10 @@ export type SportLeaguePhaseDefinitionDto = {
              * Whether a squares pool can be played on its games.
              */
             squaresEligible: boolean;
+            /**
+             * Whether its games are played at a neutral site, neither side at home (a Super Bowl, a bowl game). Each game of the slot takes it, and screens then say "vs" rather than "at".
+             */
+            isNeutralSite: boolean;
             seriesFormat: 'SINGLE_GAME' | 'BEST_OF' | 'AGGREGATE';
             /**
              * Games in one meeting: 1 for SINGLE_GAME, the series length for BEST_OF, the legs for AGGREGATE.
@@ -11276,6 +11288,10 @@ export type SportLeagueStructureResponse = {
                  * Whether a squares pool can be played on its games.
                  */
                 squaresEligible: boolean;
+                /**
+                 * Whether its games are played at a neutral site, neither side at home (a Super Bowl, a bowl game). Each game of the slot takes it, and screens then say "vs" rather than "at".
+                 */
+                isNeutralSite: boolean;
                 seriesFormat: 'SINGLE_GAME' | 'BEST_OF' | 'AGGREGATE';
                 /**
                  * Games in one meeting: 1 for SINGLE_GAME, the series length for BEST_OF, the legs for AGGREGATE.
