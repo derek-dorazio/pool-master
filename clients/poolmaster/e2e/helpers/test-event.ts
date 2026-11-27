@@ -30,9 +30,10 @@ export async function findSeededSportLeagueThroughApi(api: APIRequestContext, he
 /**
  * The slot definition a test slot plays: the league's first definition of that kind (a golf
  * tournament, a race, a knockout round) in a competition its current Season has, as the Structure
- * tab and the Season list read them.
+ * tab and the Season list read them, or the one with `slotKey` when a league has several of the
+ * kind (NCAA men's football's bowls and conference title games are both TOURNAMENT slots).
  */
-async function currentSeasonDefinitionId(api: APIRequestContext, headers: AuthHeaders, sportLeagueId: string, slotKind: string): Promise<string> {
+async function currentSeasonDefinitionId(api: APIRequestContext, headers: AuthHeaders, sportLeagueId: string, slotKind: string, slotKey?: string): Promise<string> {
   const [structureResponse, seasonsResponse] = await Promise.all([
     expectOk(api.get(`/api/v1/sport-leagues/${sportLeagueId}/structure`, { headers }), 'read the league structure'),
     expectOk(api.get(`/api/v1/sport-leagues/${sportLeagueId}/seasons`, { headers }), 'list Seasons'),
@@ -46,8 +47,8 @@ async function currentSeasonDefinitionId(api: APIRequestContext, headers: AuthHe
     .flatMap((phase) => phase.competitions)
     .filter((competition) => seasonCompetitions.has(competition.id))
     .flatMap((competition) => competition.slots)
-    .find((candidate) => candidate.slotKind === slotKind);
-  if (!definition) throw new Error(`sport league ${sportLeagueId}'s current Season has no ${slotKind} slot definition`);
+    .find((candidate) => candidate.slotKind === slotKind && (slotKey === undefined || candidate.key === slotKey));
+  if (!definition) throw new Error(`sport league ${sportLeagueId}'s current Season has no ${slotKind} slot definition${slotKey === undefined ? '' : ` ${slotKey}`}`);
   return definition.id;
 }
 
@@ -100,9 +101,9 @@ export async function createTestEvent(
 export async function createTestEventThroughApi(
   api: APIRequestContext,
   headers: AuthHeaders,
-  input: { sportLeagueId: string; slotKind: string; slotLabel: string; startsAt: string; name: string; rounds?: number; autoLifecycleEnabled?: boolean },
+  input: { sportLeagueId: string; slotKind: string; slotKey?: string; slotLabel: string; startsAt: string; name: string; rounds?: number; autoLifecycleEnabled?: boolean },
 ): Promise<{ id: string }> {
-  const slotDefinitionId = await currentSeasonDefinitionId(api, headers, input.sportLeagueId, input.slotKind);
+  const slotDefinitionId = await currentSeasonDefinitionId(api, headers, input.sportLeagueId, input.slotKind, input.slotKey);
   const slotResponse = await expectOk(
     api.post(`/api/v1/sport-leagues/${input.sportLeagueId}/test-slots`, { headers, data: { slotDefinitionId, label: input.slotLabel, startsAt: input.startsAt } }),
     `add test slot ${input.slotLabel}`,
