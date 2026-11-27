@@ -115,6 +115,12 @@ export interface ContestCreateSportEventState {
   rounds: number | null;
   /** The slot definitions its Season slots play (#2010): a contest whose template lists every one covers all its rounds (#2014). */
   slotDefinitionIds: string[];
+  /**
+   * Whether every slot it plays is a knockout round's (`playsKnockoutRounds`, #2241): then its round
+   * count is its knockout's. A soccer tournament's group matchdays are rounds that knockout round
+   * points do not score.
+   */
+  playsOnlyKnockoutRounds: boolean;
   /** The salary cap the event's field was priced against, or null when it never was (#93). */
   salaryCap: number | null;
   /** Its sport league's first round of single games a squares contest can be played on; null for every round (#787). */
@@ -143,9 +149,9 @@ export interface ContestCreateSportEventReader {
   countGamesWithoutSpread(sportEventId: string): Promise<number>;
   /** Why the event's games cannot be filled in as a bracket, or null when they can (#721). */
   findBracketProblem(sportEventId: string): Promise<string | null>;
-  /** Why knockout round points cannot score the event's games (no bracket, nor a slate of one-off games), or null when they can (#2225). */
+  /** Why knockout round points cannot score the event (no knockout round, or knockout games forming no bracket nor a slate of one-off games), or null when they can (#2225, #2241). */
   findKnockoutProblem(sportEventId: string): Promise<string | null>;
-  /** How many of the event's rounds, by its games' slots, a contest of this coverage covers (#2014). */
+  /** How many of the event's knockout rounds, by its rounds' slots, a contest of this coverage covers (#2014, #2241): known before any game is placed. */
   countCoveredRounds(sportEventId: string, coverage: ContestRoundCoverage): Promise<number>;
   /** The status and round of one of the event's games, or null when the game is not the event's (#711). */
   findGame(sportEventId: string, sportEventRoundMatchId: string): Promise<{ status: MatchStatus; roundNumber: number } | null>;
@@ -977,13 +983,14 @@ export class ContestManagementService {
     }
     const scoring = this.resolveContestScoring(sportEvent, scoringInput);
     for (const each of sportEvents) {
-      await this.assertScoringFitsEvent(each, scoring, coverage);
-      // Knockout round points score how far a team went (#715): a regular-season week's games form
-      // no bracket, so there is no round to reach. A bracket makes the same check below, in its own
-      // words, since its entry picks every game.
+      // Knockout round points score how far a team went (#715): a regular-season week plays no
+      // knockout round, so there is no round to reach. Checked before the round values, which a
+      // week, with no knockout round to give one to, could never match. A bracket makes the same
+      // check below, in its own words, since its entry picks every game.
       if (scoring.participantScoringDefinitionId === 'KNOCKOUT_ROUND_POINTS' && rules.selectionType !== SelectionType.BRACKET) {
         await this.assertEventIsKnockout(each.id);
       }
+      await this.assertScoringFitsEvent(each, scoring, coverage);
     }
     switch (rules.selectionType) {
       case SelectionType.TIERED:
@@ -1170,10 +1177,12 @@ export class ContestManagementService {
         return;
       case 'KNOCKOUT_ROUND_POINTS': {
         const valueCount = scoring.config.roundValues.length;
-        // A contest covering every slot of the event covers all its rounds; only one whose
-        // template leaves a slot out (a play-in) reads which rounds its games' slots cover.
+        // A contest covering every slot of an event played in knockout rounds only covers all its
+        // rounds; one whose template leaves a slot out (a play-in), or an event with group
+        // matchdays (#2241), reads which knockout rounds its rounds' slots cover.
         const listed = coverage.slotDefinitionIds;
-        const rounds = listed === null || sportEvent.slotDefinitionIds.every((id) => listed.includes(id))
+        const coversAll = listed === null || sportEvent.slotDefinitionIds.every((id) => listed.includes(id));
+        const rounds = coversAll && sportEvent.playsOnlyKnockoutRounds
           ? sportEvent.rounds
           : await this.sportEventReader.countCoveredRounds(sportEvent.id, coverage);
         if (valueCount === rounds) {

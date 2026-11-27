@@ -13,6 +13,7 @@ import {
   PrismaContestRepository,
   PrismaParticipantContestScoringRuleRepository,
   PrismaSportEventRoundMatchRepository,
+  PrismaSportEventRoundRepository,
   PrismaSportEventParticipantRepository,
   PrismaSportEventSlotParticipantValuationRepository,
   PrismaSportEventSlotTierRepository,
@@ -50,6 +51,7 @@ export function createContestManagementService(
       tiers: new PrismaSportEventSlotTierRepository(prisma),
       valuations: new PrismaSportEventSlotParticipantValuationRepository(prisma),
       matches: new PrismaSportEventRoundMatchRepository(prisma),
+      rounds: new PrismaSportEventRoundRepository(prisma),
     }),
     cups: createCupService(prisma, logger, planEntitlements),
     planEntitlements,
@@ -71,5 +73,6 @@ export function createContestOpeningReader(prisma: PrismaClient): ContestOpening
     tiers: new PrismaSportEventSlotTierRepository(prisma),
     valuations: new PrismaSportEventSlotParticipantValuationRepository(prisma),
     matches: new PrismaSportEventRoundMatchRepository(prisma),
+    rounds: new PrismaSportEventRoundRepository(prisma),
   });
 }

@@ -6,12 +6,14 @@ import {
   MatchStatus,
   SportEventParticipantStatus,
   ScoringFamily,
+  SlotKind,
   Sport,
   SportEventStatus,
   UpsetBonusRule,
   type ContestRoundCoverage,
   type ContestScoringSettings,
   type SportEventRoundMatch,
+  type SportEventRoundSlot,
   type UpsetBonus,
 } from '@poolmaster/shared/domain';
 import { getScoringFamilyModule } from '../../../packages/core-api/src/modules/scoring-families';
@@ -19,7 +21,7 @@ import { upsetBonusFor } from '../../../packages/core-api/src/modules/scoring-fa
 import type { FieldScoringEvent } from '../../../packages/core-api/src/modules/scoring-families/scoring-family-module';
 import type { SportEventParticipantView } from '../../../packages/core-api/src/modules/events/sport-event-participant-service';
 import { InMemorySportEvents } from '../../support/in-memory-sport-events';
-import { bracketRoundSlots } from '../../support/round-slots';
+import { bracketRoundSlots, roundSlot, weekRoundSlot } from '../../support/round-slots';
 
 // Knockout round points (#699): what each team scores from the bracket's results under a
 // contest's round values and upset bonus, and when a team is left unscored.
@@ -50,6 +52,8 @@ interface MatchInput {
   winner?: MatchSide;
   /** The match number and side its winner advances to. */
   advancesTo?: number;
+  /** The round's slot, when not the bracket's own round of that number (a group matchday). */
+  slot?: SportEventRoundSlot;
 }
 
 /** The field of teams, each row carrying the bracket matches it is in, as the field read attaches them. */
@@ -70,7 +74,7 @@ function bracketField(teams: TeamInput[], matchInputs: MatchInput[]): SportEvent
     id: `match-${input.matchNumber}`,
     sportEventId: event.id,
     roundNumber: input.round,
-    slot: bracketRoundSlots(Math.max(2, ...matchInputs.map((each) => each.round)))[input.round - 1],
+    slot: input.slot ?? bracketRoundSlots(Math.max(2, ...matchInputs.map((each) => each.round)))[input.round - 1],
     matchNumber: input.matchNumber,
     homeSportEventParticipantId: idOf(input.home),
     awaySportEventParticipantId: idOf(input.away),
@@ -468,5 +472,49 @@ describe('knockout round points — edges', () => {
 
     expect(family.scoreMissedLineup([], TOURNAMENT, knockout([1]), 3)).toBe(0);
     expect(family.scoreMissedLineup([], TOURNAMENT, golf, 3)).toBeNull();
+  });
+});
+
+// A soccer tournament's sweepstake covers its group matchdays and its knockout (#2241): the
+// matchdays are WEEK slots, where a team plays on after a loss, so only the knockout scores.
+describe('knockout round points — a tournament with a group stage (#2241)', () => {
+  const SEMIFINAL = roundSlot(SlotKind.SEMIFINAL);
+  const FINAL = roundSlot(SlotKind.FINAL);
+  const THIRD_PLACE = roundSlot(SlotKind.THIRD_PLACE);
+  /** Two matchdays of a group of five, then a semifinal round, a third-place play-off and the final; Erie goes out in the group. */
+  function groupStageField(): SportEventParticipantView[] {
+    return bracketField([{ name: 'Argentina' }, { name: 'Brazil' }, { name: 'Chile' }, { name: 'Denmark' }, { name: 'Erie' }], [
+      { matchNumber: 1, round: 1, slot: weekRoundSlot(1), home: 'Argentina', away: 'Brazil', winner: MatchSide.AWAY },
+      { matchNumber: 2, round: 1, slot: weekRoundSlot(1), home: 'Chile', away: 'Erie', winner: MatchSide.HOME },
+      { matchNumber: 3, round: 2, slot: weekRoundSlot(2), home: 'Erie', away: 'Denmark', winner: MatchSide.AWAY },
+      { matchNumber: 4, round: 2, slot: weekRoundSlot(2), home: 'Argentina', away: 'Chile' },
+      { matchNumber: 5, round: 3, slot: SEMIFINAL, home: 'Argentina', away: 'Denmark', winner: MatchSide.HOME, advancesTo: 8 },
+      { matchNumber: 6, round: 3, slot: SEMIFINAL, home: 'Brazil', away: 'Chile', winner: MatchSide.AWAY, advancesTo: 8 },
+      { matchNumber: 7, round: 4, slot: THIRD_PLACE, home: 'Denmark', away: 'Brazil', winner: MatchSide.HOME },
+      { matchNumber: 8, round: 5, slot: FINAL, home: 'Argentina', away: 'Chile', winner: MatchSide.HOME },
+    ]);
+  }
+
+  it('scores the knockout rounds by their values from the first knockout round, a group matchday win and the third-place play-off scoring nothing', () => {
+    expect(scores(groupStageField(), knockout([1, 2]))).toEqual({ Argentina: 3, Brazil: 0, Chile: 1, Denmark: 0, Erie: 0 });
+  });
+
+  it('keeps a team that lost a group matchday in the running until it loses a knockout match, and puts out a team left out of the knockout', () => {
+    const field = groupStageField().map((row) => ({ ...row, matches: row.matches.filter((match) => match.roundNumber <= 3) }));
+    const records = Object.fromEntries(family.scoreField(field, TOURNAMENT, knockout([1, 2]), EVERY_ROUND).map((row) => [row.name, row.detail]));
+
+    expect(records).toMatchObject({
+      Argentina: { wins: 1, isAlive: true },
+      Brazil: { wins: 0, isAlive: false },
+      Chile: { wins: 1, isAlive: true },
+      Denmark: { wins: 0, isAlive: false },
+      Erie: { wins: 0, isAlive: false },
+    });
+  });
+
+  it('scores no team while only the group stage has results, as no knockout round is decided', () => {
+    const field = groupStageField().map((row) => ({ ...row, matches: row.matches.filter((match) => match.roundNumber <= 2) }));
+
+    expect(scores(field, knockout([1, 2]))).toEqual({ Argentina: null, Brazil: null, Chile: null, Denmark: null, Erie: null });
   });
 });
