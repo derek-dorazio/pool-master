@@ -15264,8 +15264,6 @@ export interface components {
             golf: {
                 eventScoreToPar: number;
                 eventStrokes: number;
-                /** @description Holes completed in the current round. */
-                currentRoundThru: number | null;
             } | null;
         };
         /** @description A field row's part in one round. */
@@ -15276,10 +15274,12 @@ export interface components {
             sportEventRoundId: string;
             roundNumber: number;
             /**
-             * @description Progress through the round.
-             * @enum {string}
+             * @description How the participant's part in the round ended, as the round's Game records it; null while they are still playing it. A missed cut is not a round status: it is the standing's ELIMINATED.
+             * @enum {string|null}
              */
-            status: "IN_PROGRESS" | "COMPLETED" | "DNF" | "DSQ" | "MISSED_CUT";
+            status: "FINISHED" | "DID_NOT_FINISH" | "DISQUALIFIED" | "DID_NOT_START" | null;
+            /** @description How many of the round's periods the participant has completed (holes, in golf), as the feed reports it; null when it reports none. */
+            periodsCompleted: number | null;
             /**
              * Format: date-time
              * @description ISO 8601 datetime string.
@@ -15289,7 +15289,6 @@ export interface components {
             golf: {
                 strokes: number;
                 scoreToPar: number;
-                thru: number | null;
             } | null;
         };
         /** @description A participant on an event's field, with everything the event records about them. */
@@ -15435,8 +15434,6 @@ export interface components {
                 golf: {
                     eventScoreToPar: number;
                     eventStrokes: number;
-                    /** @description Holes completed in the current round. */
-                    currentRoundThru: number | null;
                 } | null;
             } | null;
             /** @description By round number. */
@@ -15447,10 +15444,12 @@ export interface components {
                 sportEventRoundId: string;
                 roundNumber: number;
                 /**
-                 * @description Progress through the round.
-                 * @enum {string}
+                 * @description How the participant's part in the round ended, as the round's Game records it; null while they are still playing it. A missed cut is not a round status: it is the standing's ELIMINATED.
+                 * @enum {string|null}
                  */
-                status: "IN_PROGRESS" | "COMPLETED" | "DNF" | "DSQ" | "MISSED_CUT";
+                status: "FINISHED" | "DID_NOT_FINISH" | "DISQUALIFIED" | "DID_NOT_START" | null;
+                /** @description How many of the round's periods the participant has completed (holes, in golf), as the feed reports it; null when it reports none. */
+                periodsCompleted: number | null;
                 /**
                  * Format: date-time
                  * @description ISO 8601 datetime string.
@@ -15460,7 +15459,6 @@ export interface components {
                 golf: {
                     strokes: number;
                     scoreToPar: number;
-                    thru: number | null;
                 } | null;
             }[];
             /** @description Present once a race result is entered for a finish-position event (a horse race); null otherwise. */
@@ -15635,8 +15633,6 @@ export interface components {
                     golf: {
                         eventScoreToPar: number;
                         eventStrokes: number;
-                        /** @description Holes completed in the current round. */
-                        currentRoundThru: number | null;
                     } | null;
                 } | null;
                 /** @description By round number. */
@@ -15647,10 +15643,12 @@ export interface components {
                     sportEventRoundId: string;
                     roundNumber: number;
                     /**
-                     * @description Progress through the round.
-                     * @enum {string}
+                     * @description How the participant's part in the round ended, as the round's Game records it; null while they are still playing it. A missed cut is not a round status: it is the standing's ELIMINATED.
+                     * @enum {string|null}
                      */
-                    status: "IN_PROGRESS" | "COMPLETED" | "DNF" | "DSQ" | "MISSED_CUT";
+                    status: "FINISHED" | "DID_NOT_FINISH" | "DISQUALIFIED" | "DID_NOT_START" | null;
+                    /** @description How many of the round's periods the participant has completed (holes, in golf), as the feed reports it; null when it reports none. */
+                    periodsCompleted: number | null;
                     /**
                      * Format: date-time
                      * @description ISO 8601 datetime string.
@@ -15660,7 +15658,6 @@ export interface components {
                     golf: {
                         strokes: number;
                         scoreToPar: number;
-                        thru: number | null;
                     } | null;
                 }[];
                 /** @description Present once a race result is entered for a finish-position event (a horse race); null otherwise. */
@@ -15869,8 +15866,6 @@ export interface components {
                     golf: {
                         eventScoreToPar: number;
                         eventStrokes: number;
-                        /** @description Holes completed in the current round. */
-                        currentRoundThru: number | null;
                     } | null;
                 } | null;
                 /** @description By round number. */
@@ -15881,10 +15876,12 @@ export interface components {
                     sportEventRoundId: string;
                     roundNumber: number;
                     /**
-                     * @description Progress through the round.
-                     * @enum {string}
+                     * @description How the participant's part in the round ended, as the round's Game records it; null while they are still playing it. A missed cut is not a round status: it is the standing's ELIMINATED.
+                     * @enum {string|null}
                      */
-                    status: "IN_PROGRESS" | "COMPLETED" | "DNF" | "DSQ" | "MISSED_CUT";
+                    status: "FINISHED" | "DID_NOT_FINISH" | "DISQUALIFIED" | "DID_NOT_START" | null;
+                    /** @description How many of the round's periods the participant has completed (holes, in golf), as the feed reports it; null when it reports none. */
+                    periodsCompleted: number | null;
                     /**
                      * Format: date-time
                      * @description ISO 8601 datetime string.
@@ -15894,7 +15891,6 @@ export interface components {
                     golf: {
                         strokes: number;
                         scoreToPar: number;
-                        thru: number | null;
                     } | null;
                 }[];
                 /** @description Present once a race result is entered for a finish-position event (a horse race); null otherwise. */
@@ -16890,8 +16886,6 @@ export interface components {
                     golf: {
                         eventScoreToPar: number;
                         eventStrokes: number;
-                        /** @description Holes completed in the current round. */
-                        currentRoundThru: number | null;
                     } | null;
                 } | null;
                 /** @description By round number. */
@@ -16902,10 +16896,12 @@ export interface components {
                     sportEventRoundId: string;
                     roundNumber: number;
                     /**
-                     * @description Progress through the round.
-                     * @enum {string}
+                     * @description How the participant's part in the round ended, as the round's Game records it; null while they are still playing it. A missed cut is not a round status: it is the standing's ELIMINATED.
+                     * @enum {string|null}
                      */
-                    status: "IN_PROGRESS" | "COMPLETED" | "DNF" | "DSQ" | "MISSED_CUT";
+                    status: "FINISHED" | "DID_NOT_FINISH" | "DISQUALIFIED" | "DID_NOT_START" | null;
+                    /** @description How many of the round's periods the participant has completed (holes, in golf), as the feed reports it; null when it reports none. */
+                    periodsCompleted: number | null;
                     /**
                      * Format: date-time
                      * @description ISO 8601 datetime string.
@@ -16915,7 +16911,6 @@ export interface components {
                     golf: {
                         strokes: number;
                         scoreToPar: number;
-                        thru: number | null;
                     } | null;
                 }[];
                 /** @description Present once a race result is entered for a finish-position event (a horse race); null otherwise. */

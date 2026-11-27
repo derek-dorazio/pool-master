@@ -8,43 +8,48 @@
  */
 
 import {
-  isRoundComplete,
   PARTICIPANT_SCORING_DEFINITIONS,
   ParticipantStandingStatus,
 } from '@poolmaster/shared/domain';
-import { displayString } from '@poolmaster/shared/display-strings';
+import { displayString, enumLabel } from '@poolmaster/shared/display-strings';
 import type { SportEventParticipantDto } from '@/lib/api';
 import { resolveRoundNumbers } from '../contest-leaderboard-rounds';
 import type { LeaderboardDetailCell, ScoringFamilyUi } from './types';
 
 /**
- * The THR cell (#389): how far the golfer is through their current round. `CUT` and `WD`
- * outrank everything — a golfer out of the event has no round in progress — then `F` once the
- * current round is complete, then the last hole completed. Null (a dash) before they tee off.
+ * The THR cell (#389): how far the golfer is through their current round. A golfer whose event
+ * is over for them reads their standing's short form (`CUT`, `WD`, or `F` once they have played
+ * every round) — a golfer out of the event has no round in progress. Otherwise the current round
+ * reads its side status's short form once it has ended (`F`), then the periods (holes) the feed
+ * says they have completed. Null (a dash) before they tee off.
  */
 export function formatThru(participant: SportEventParticipantDto): string | null {
   const standing = participant.standing;
   if (!standing) {
     return null;
   }
-  if (standing.status === ParticipantStandingStatus.ELIMINATED) {
-    return 'CUT';
-  }
-  if (standing.status === ParticipantStandingStatus.WITHDRAWN) {
-    return 'WD';
-  }
-  if (standing.status === ParticipantStandingStatus.COMPLETE) {
-    return 'F';
+  if (OUT_OF_EVENT.has(standing.status)) {
+    return enumLabel('ParticipantStandingStatus', standing.status, { form: 'short' });
   }
   const currentRound = participant.rounds.find(
     (round) => round.roundNumber === standing.currentRound,
   );
-  if (currentRound && isRoundComplete(currentRound)) {
-    return 'F';
+  if (!currentRound) {
+    return null;
   }
-  const thru = standing.golf?.currentRoundThru ?? null;
+  if (currentRound.status !== null) {
+    return enumLabel('GameSideStatus', currentRound.status, { form: 'short' });
+  }
+  const thru = currentRound.periodsCompleted;
   return thru === null || thru <= 0 ? null : String(thru);
 }
+
+/** The standings that end a golfer's event: THR shows the standing, not a round. */
+const OUT_OF_EVENT: ReadonlySet<ParticipantStandingStatus> = new Set([
+  ParticipantStandingStatus.ELIMINATED,
+  ParticipantStandingStatus.WITHDRAWN,
+  ParticipantStandingStatus.COMPLETE,
+]);
 
 /** The winning scores an entry may predict, relative to par: +10 down to -30. */
 const WINNING_SCORE_OPTIONS = Array.from({ length: 41 }, (_, index) => 10 - index);

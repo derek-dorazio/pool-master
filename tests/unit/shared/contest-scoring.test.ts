@@ -21,19 +21,19 @@ describe('participant scoring definitions', () => {
   describe('formatRound (golf)', () => {
     const { formatRound } = PARTICIPANT_SCORING_DEFINITIONS.GOLF_RELATIVE_TO_PAR_TOTAL;
 
-    it('renders a completed round as its strokes', () => {
-      expect(formatRound({ status: 'COMPLETED', strokes: 69, scoreToPar: -3 })).toBe('69');
+    it('renders a round the golfer finished as its strokes', () => {
+      expect(formatRound({ status: 'FINISHED', strokes: 69, scoreToPar: -3 })).toBe('69');
     });
 
-    it('renders a round still in progress against par, with level par as "E"', () => {
-      expect(formatRound({ status: 'IN_PROGRESS', strokes: 47, scoreToPar: -2 })).toBe('-2');
-      expect(formatRound({ status: 'IN_PROGRESS', strokes: 36, scoreToPar: 0 })).toBe('E');
-      expect(formatRound({ status: 'IN_PROGRESS', strokes: 40, scoreToPar: 3 })).toBe('+3');
+    it('renders a round the golfer is still playing (no side status yet) against par, with level par as "E"', () => {
+      expect(formatRound({ status: null, strokes: 47, scoreToPar: -2 })).toBe('-2');
+      expect(formatRound({ status: null, strokes: 36, scoreToPar: 0 })).toBe('E');
+      expect(formatRound({ status: null, strokes: 40, scoreToPar: 3 })).toBe('+3');
     });
 
-    it('renders a round that ended short of completion against par', () => {
-      expect(formatRound({ status: 'MISSED_CUT', strokes: 78, scoreToPar: 6 })).toBe('+6');
-      expect(formatRound({ status: 'DNF', strokes: 40, scoreToPar: 1 })).toBe('+1');
+    it('renders a round that ended short of its last hole (a withdrawal or a disqualification) against par', () => {
+      expect(formatRound({ status: 'DID_NOT_FINISH', strokes: 40, scoreToPar: 1 })).toBe('+1');
+      expect(formatRound({ status: 'DISQUALIFIED', strokes: 78, scoreToPar: 6 })).toBe('+6');
     });
   });
 });

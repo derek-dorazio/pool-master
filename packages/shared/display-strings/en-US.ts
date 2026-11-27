@@ -169,10 +169,10 @@ export const enUS = {
       LEAGUE: 'League',
     },
     GameSideStatus: {
-      FINISHED: 'Finished',
-      DID_NOT_FINISH: 'Did not finish',
-      DISQUALIFIED: 'Disqualified',
-      DID_NOT_START: 'Did not start',
+      FINISHED: { name: 'Finished', short: 'F' },
+      DID_NOT_FINISH: { name: 'Did not finish', short: 'DNF' },
+      DISQUALIFIED: { name: 'Disqualified', short: 'DQ' },
+      DID_NOT_START: { name: 'Did not start', short: 'DNS' },
     },
     RaceResultRowError: {
       DUPLICATE_PARTICIPANT: 'Named on another row too',
@@ -394,9 +394,10 @@ export const enUS = {
     ParticipantStandingStatus: {
       ACTIVE: 'Active',
       IN_PROGRESS: 'In progress',
-      COMPLETE: 'Complete',
-      WITHDRAWN: 'Withdrawn',
-      ELIMINATED: 'Eliminated',
+      COMPLETE: { name: 'Complete', short: 'F' },
+      WITHDRAWN: { name: 'Withdrawn', short: 'WD' },
+      // A FIELD event eliminates by its cut, so the short form is the cut's.
+      ELIMINATED: { name: 'Eliminated', short: 'CUT' },
     },
     ContestStatus: {
       DRAFT: 'Set up',

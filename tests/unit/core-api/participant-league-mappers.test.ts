@@ -141,13 +141,15 @@ describe('field row mappers', () => {
       displayPosition: 'T1',
       status: 'ACTIVE',
       asOf: '2026-04-12T20:00:00.000Z',
-      // The highest round it has a score in, read off its rounds, and its holes thru there.
+      // The highest round it has a score in, read off its rounds.
       currentRound: 2,
-      golf: { eventScoreToPar: -12, eventStrokes: 276, currentRoundThru: 9 },
+      golf: { eventScoreToPar: -12, eventStrokes: 276 },
     });
     expect(dto.rounds).toEqual([
-      { id: 'side-r1', sportEventRoundId: 'er-1', roundNumber: 1, status: 'COMPLETED', completedAt: '2026-04-09T23:00:00.000Z', golf: { strokes: 68, scoreToPar: -4, thru: 18 } },
-      { id: 'side-2', sportEventRoundId: 'er-2', roundNumber: 2, status: 'IN_PROGRESS', completedAt: null, golf: { strokes: 33, scoreToPar: -1, thru: 9 } },
+      // Each round says how it ended in its Game side's own status (null while still being
+      // played) and the periods (holes) completed, so THR reads them without re-deriving.
+      { id: 'side-r1', sportEventRoundId: 'er-1', roundNumber: 1, status: 'FINISHED', periodsCompleted: 18, completedAt: '2026-04-09T23:00:00.000Z', golf: { strokes: 68, scoreToPar: -4 } },
+      { id: 'side-2', sportEventRoundId: 'er-2', roundNumber: 2, status: null, periodsCompleted: 9, completedAt: null, golf: { strokes: 33, scoreToPar: -1 } },
     ]);
     // A row scored in rounds is a golfer's: it has no race.
     expect(dto.race).toBeNull();

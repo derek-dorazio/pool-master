@@ -225,10 +225,13 @@ describe('pool-master-eux.4: Golf leaderboard read API', () => {
     const rory = parsed.participants.find((participant) => participant.id === participants[0].id);
     expect(rory?.standing).toEqual(expect.objectContaining({
       status: 'IN_PROGRESS',
-      golf: expect.objectContaining({ eventScoreToPar: -5, currentRoundThru: 9 }),
+      golf: expect.objectContaining({ eventScoreToPar: -5 }),
     }));
+    // How far into round two Rory is lives on the round: its side status (null, still playing)
+    // and the holes the feed reported.
     const roundTwo = rory?.rounds.find((round) => round.roundNumber === 2);
-    expect(roundTwo?.golf).toEqual(expect.objectContaining({ scoreToPar: -2, thru: 9 }));
+    expect(roundTwo).toEqual(expect.objectContaining({ status: null, periodsCompleted: 9 }));
+    expect(roundTwo?.golf).toEqual(expect.objectContaining({ scoreToPar: -2 }));
     expect(expectDefined(PARTICIPANT_SCORING_DEFINITIONS[parsed.scoringDefinitionId].formatRound)({
       status: expectDefined(roundTwo).status,
       strokes: expectDefined(expectDefined(roundTwo).golf).strokes,

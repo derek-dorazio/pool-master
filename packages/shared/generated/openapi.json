@@ -34108,21 +34108,11 @@
                 "type": "integer",
                 "minimum": -9007199254740991,
                 "maximum": 9007199254740991
-              },
-              "currentRoundThru": {
-                "description": "Holes completed in the current round.",
-                "type": [
-                  "integer",
-                  "null"
-                ],
-                "minimum": -9007199254740991,
-                "maximum": 9007199254740991
               }
             },
             "required": [
               "eventScoreToPar",
-              "eventStrokes",
-              "currentRoundThru"
+              "eventStrokes"
             ],
             "additionalProperties": false
           }
@@ -34156,15 +34146,27 @@
             "maximum": 9007199254740991
           },
           "status": {
-            "type": "string",
-            "enum": [
-              "IN_PROGRESS",
-              "COMPLETED",
-              "DNF",
-              "DSQ",
-              "MISSED_CUT"
+            "description": "How the participant's part in the round ended, as the round's Game records it; null while they are still playing it. A missed cut is not a round status: it is the standing's ELIMINATED.",
+            "type": [
+              "string",
+              "null"
             ],
-            "description": "Progress through the round."
+            "enum": [
+              "FINISHED",
+              "DID_NOT_FINISH",
+              "DISQUALIFIED",
+              "DID_NOT_START",
+              null
+            ]
+          },
+          "periodsCompleted": {
+            "description": "How many of the round's periods the participant has completed (holes, in golf), as the feed reports it; null when it reports none.",
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
           },
           "completedAt": {
             "type": [
@@ -34190,20 +34192,11 @@
                 "type": "integer",
                 "minimum": -9007199254740991,
                 "maximum": 9007199254740991
-              },
-              "thru": {
-                "type": [
-                  "integer",
-                  "null"
-                ],
-                "minimum": -9007199254740991,
-                "maximum": 9007199254740991
               }
             },
             "required": [
               "strokes",
-              "scoreToPar",
-              "thru"
+              "scoreToPar"
             ],
             "additionalProperties": false
           }
@@ -34213,6 +34206,7 @@
           "sportEventRoundId",
           "roundNumber",
           "status",
+          "periodsCompleted",
           "completedAt",
           "golf"
         ],
@@ -34574,21 +34568,11 @@
                     "type": "integer",
                     "minimum": -9007199254740991,
                     "maximum": 9007199254740991
-                  },
-                  "currentRoundThru": {
-                    "description": "Holes completed in the current round.",
-                    "type": [
-                      "integer",
-                      "null"
-                    ],
-                    "minimum": -9007199254740991,
-                    "maximum": 9007199254740991
                   }
                 },
                 "required": [
                   "eventScoreToPar",
-                  "eventStrokes",
-                  "currentRoundThru"
+                  "eventStrokes"
                 ],
                 "additionalProperties": false
               }
@@ -34623,15 +34607,27 @@
                   "maximum": 9007199254740991
                 },
                 "status": {
-                  "type": "string",
-                  "enum": [
-                    "IN_PROGRESS",
-                    "COMPLETED",
-                    "DNF",
-                    "DSQ",
-                    "MISSED_CUT"
+                  "description": "How the participant's part in the round ended, as the round's Game records it; null while they are still playing it. A missed cut is not a round status: it is the standing's ELIMINATED.",
+                  "type": [
+                    "string",
+                    "null"
                   ],
-                  "description": "Progress through the round."
+                  "enum": [
+                    "FINISHED",
+                    "DID_NOT_FINISH",
+                    "DISQUALIFIED",
+                    "DID_NOT_START",
+                    null
+                  ]
+                },
+                "periodsCompleted": {
+                  "description": "How many of the round's periods the participant has completed (holes, in golf), as the feed reports it; null when it reports none.",
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
                 },
                 "completedAt": {
                   "type": [
@@ -34657,20 +34653,11 @@
                       "type": "integer",
                       "minimum": -9007199254740991,
                       "maximum": 9007199254740991
-                    },
-                    "thru": {
-                      "type": [
-                        "integer",
-                        "null"
-                      ],
-                      "minimum": -9007199254740991,
-                      "maximum": 9007199254740991
                     }
                   },
                   "required": [
                     "strokes",
-                    "scoreToPar",
-                    "thru"
+                    "scoreToPar"
                   ],
                   "additionalProperties": false
                 }
@@ -34680,6 +34667,7 @@
                 "sportEventRoundId",
                 "roundNumber",
                 "status",
+                "periodsCompleted",
                 "completedAt",
                 "golf"
               ],
@@ -35131,21 +35119,11 @@
                           "type": "integer",
                           "minimum": -9007199254740991,
                           "maximum": 9007199254740991
-                        },
-                        "currentRoundThru": {
-                          "description": "Holes completed in the current round.",
-                          "type": [
-                            "integer",
-                            "null"
-                          ],
-                          "minimum": -9007199254740991,
-                          "maximum": 9007199254740991
                         }
                       },
                       "required": [
                         "eventScoreToPar",
-                        "eventStrokes",
-                        "currentRoundThru"
+                        "eventStrokes"
                       ],
                       "additionalProperties": false
                     }
@@ -35180,15 +35158,27 @@
                         "maximum": 9007199254740991
                       },
                       "status": {
-                        "type": "string",
-                        "enum": [
-                          "IN_PROGRESS",
-                          "COMPLETED",
-                          "DNF",
-                          "DSQ",
-                          "MISSED_CUT"
+                        "description": "How the participant's part in the round ended, as the round's Game records it; null while they are still playing it. A missed cut is not a round status: it is the standing's ELIMINATED.",
+                        "type": [
+                          "string",
+                          "null"
                         ],
-                        "description": "Progress through the round."
+                        "enum": [
+                          "FINISHED",
+                          "DID_NOT_FINISH",
+                          "DISQUALIFIED",
+                          "DID_NOT_START",
+                          null
+                        ]
+                      },
+                      "periodsCompleted": {
+                        "description": "How many of the round's periods the participant has completed (holes, in golf), as the feed reports it; null when it reports none.",
+                        "type": [
+                          "integer",
+                          "null"
+                        ],
+                        "minimum": -9007199254740991,
+                        "maximum": 9007199254740991
                       },
                       "completedAt": {
                         "type": [
@@ -35214,20 +35204,11 @@
                             "type": "integer",
                             "minimum": -9007199254740991,
                             "maximum": 9007199254740991
-                          },
-                          "thru": {
-                            "type": [
-                              "integer",
-                              "null"
-                            ],
-                            "minimum": -9007199254740991,
-                            "maximum": 9007199254740991
                           }
                         },
                         "required": [
                           "strokes",
-                          "scoreToPar",
-                          "thru"
+                          "scoreToPar"
                         ],
                         "additionalProperties": false
                       }
@@ -35237,6 +35218,7 @@
                       "sportEventRoundId",
                       "roundNumber",
                       "status",
+                      "periodsCompleted",
                       "completedAt",
                       "golf"
                     ],
@@ -35815,21 +35797,11 @@
                         "type": "integer",
                         "minimum": -9007199254740991,
                         "maximum": 9007199254740991
-                      },
-                      "currentRoundThru": {
-                        "description": "Holes completed in the current round.",
-                        "type": [
-                          "integer",
-                          "null"
-                        ],
-                        "minimum": -9007199254740991,
-                        "maximum": 9007199254740991
                       }
                     },
                     "required": [
                       "eventScoreToPar",
-                      "eventStrokes",
-                      "currentRoundThru"
+                      "eventStrokes"
                     ],
                     "additionalProperties": false
                   }
@@ -35864,15 +35836,27 @@
                       "maximum": 9007199254740991
                     },
                     "status": {
-                      "type": "string",
-                      "enum": [
-                        "IN_PROGRESS",
-                        "COMPLETED",
-                        "DNF",
-                        "DSQ",
-                        "MISSED_CUT"
+                      "description": "How the participant's part in the round ended, as the round's Game records it; null while they are still playing it. A missed cut is not a round status: it is the standing's ELIMINATED.",
+                      "type": [
+                        "string",
+                        "null"
                       ],
-                      "description": "Progress through the round."
+                      "enum": [
+                        "FINISHED",
+                        "DID_NOT_FINISH",
+                        "DISQUALIFIED",
+                        "DID_NOT_START",
+                        null
+                      ]
+                    },
+                    "periodsCompleted": {
+                      "description": "How many of the round's periods the participant has completed (holes, in golf), as the feed reports it; null when it reports none.",
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
                     },
                     "completedAt": {
                       "type": [
@@ -35898,20 +35882,11 @@
                           "type": "integer",
                           "minimum": -9007199254740991,
                           "maximum": 9007199254740991
-                        },
-                        "thru": {
-                          "type": [
-                            "integer",
-                            "null"
-                          ],
-                          "minimum": -9007199254740991,
-                          "maximum": 9007199254740991
                         }
                       },
                       "required": [
                         "strokes",
-                        "scoreToPar",
-                        "thru"
+                        "scoreToPar"
                       ],
                       "additionalProperties": false
                     }
@@ -35921,6 +35896,7 @@
                     "sportEventRoundId",
                     "roundNumber",
                     "status",
+                    "periodsCompleted",
                     "completedAt",
                     "golf"
                   ],
@@ -39195,21 +39171,11 @@
                           "type": "integer",
                           "minimum": -9007199254740991,
                           "maximum": 9007199254740991
-                        },
-                        "currentRoundThru": {
-                          "description": "Holes completed in the current round.",
-                          "type": [
-                            "integer",
-                            "null"
-                          ],
-                          "minimum": -9007199254740991,
-                          "maximum": 9007199254740991
                         }
                       },
                       "required": [
                         "eventScoreToPar",
-                        "eventStrokes",
-                        "currentRoundThru"
+                        "eventStrokes"
                       ],
                       "additionalProperties": false
                     }
@@ -39244,15 +39210,27 @@
                         "maximum": 9007199254740991
                       },
                       "status": {
-                        "type": "string",
-                        "enum": [
-                          "IN_PROGRESS",
-                          "COMPLETED",
-                          "DNF",
-                          "DSQ",
-                          "MISSED_CUT"
+                        "description": "How the participant's part in the round ended, as the round's Game records it; null while they are still playing it. A missed cut is not a round status: it is the standing's ELIMINATED.",
+                        "type": [
+                          "string",
+                          "null"
                         ],
-                        "description": "Progress through the round."
+                        "enum": [
+                          "FINISHED",
+                          "DID_NOT_FINISH",
+                          "DISQUALIFIED",
+                          "DID_NOT_START",
+                          null
+                        ]
+                      },
+                      "periodsCompleted": {
+                        "description": "How many of the round's periods the participant has completed (holes, in golf), as the feed reports it; null when it reports none.",
+                        "type": [
+                          "integer",
+                          "null"
+                        ],
+                        "minimum": -9007199254740991,
+                        "maximum": 9007199254740991
                       },
                       "completedAt": {
                         "type": [
@@ -39278,20 +39256,11 @@
                             "type": "integer",
                             "minimum": -9007199254740991,
                             "maximum": 9007199254740991
-                          },
-                          "thru": {
-                            "type": [
-                              "integer",
-                              "null"
-                            ],
-                            "minimum": -9007199254740991,
-                            "maximum": 9007199254740991
                           }
                         },
                         "required": [
                           "strokes",
-                          "scoreToPar",
-                          "thru"
+                          "scoreToPar"
                         ],
                         "additionalProperties": false
                       }
@@ -39301,6 +39270,7 @@
                       "sportEventRoundId",
                       "roundNumber",
                       "status",
+                      "periodsCompleted",
                       "completedAt",
                       "golf"
                     ],
