@@ -975,7 +975,7 @@ grouped by the slice that owns them. Each slice ticket carries its lines.
   contest, 21 the roster, 26 the pick list over covered slots.
 - Each slice carries its docs from *Docs that change with their slice*, and retires the plans
   it supersedes: `championship-stat-pools.md` and `stat-pools-expansion.md` (1b),
-  `live-sports-data-balldontlie.md` (10c), `super-bowl-squares.md` (18c).
+  `live-sports-data-balldontlie.md` (10c, retired), `super-bowl-squares.md` (18c).
 - Defects fixed with a failing test first: 6 the five "current year" rules; 8 the unknown
   tour read as PGA; 10 webhook routing by id prefix and a series result at Game 1 (#1722);
   13 the CFP field is every bowl team (#1715); 17 a postponed game's picks stay locked;

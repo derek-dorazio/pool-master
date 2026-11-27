@@ -801,6 +801,12 @@
       "key": "useRowCorrections",
       "now": 0,
       "reason": "retired by #2008"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "lookaheadDays",
+      "now": 0,
+      "reason": "retired by #2009"
     }
   ]
 }

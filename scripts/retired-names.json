@@ -145,7 +145,8 @@
     "SCORING_FAMILY_ADMIN_UI": "#2008 (10b part 4b): no per-family results page in Manage; results come from the feed or the test-data loader",
     "getScoringFamilyAdminUi": "#2008 (10b part 4b): no per-family results page in Manage; results come from the feed or the test-data loader",
     "ScoreSyncNotice": "#2008 (10b part 4b): no per-family results page in Manage; results come from the feed or the test-data loader",
-    "useRowCorrections": "#2008 (10b part 4b): no per-family results page in Manage; results come from the feed or the test-data loader"
+    "useRowCorrections": "#2008 (10b part 4b): no per-family results page in Manage; results come from the feed or the test-data loader",
+    "lookaheadDays": "#2009 (10c part B): the field sync covers the league's next slot; each sync kind has an interval per Season state"
   },
   "ROUND_NAMES_FROM_FINAL": 0,
   "roundLabel": 0,
@@ -288,8 +289,12 @@
   "providerEventReconcileKey": 0,
   "SCHEDULED_FIELD_SYNC_STATUSES": 0,
   "isEventSyncKind": 0,
+<<<<<<< HEAD
   "SCORING_FAMILY_ADMIN_UI": 0,
   "getScoringFamilyAdminUi": 0,
   "ScoreSyncNotice": 0,
   "useRowCorrections": 0
+=======
+  "lookaheadDays": 0
+>>>>>>> 9acbccc7a (10c part B: web schedule by Season state, docs, BALLDONTLIE plan retired)
 }

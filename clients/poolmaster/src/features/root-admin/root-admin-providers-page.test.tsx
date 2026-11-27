@@ -26,19 +26,23 @@ function provider(overrides: Partial<ProviderSummaryDto> = {}): ProviderSummaryD
   return providerSummaryFixture(overrides);
 }
 
+const seasonal = (inSeason: Record<string, number>, offseason: Record<string, number>) => ({ IN_SEASON: inSeason, OFFSEASON: offseason });
+const HOURLY = seasonal({ intervalMinutes: 360 }, { intervalMinutes: 1440 });
+const LIVE = seasonal({ intervalSeconds: 300 }, { intervalSeconds: 300 });
+
 const SCHEDULE: IngestionScheduleConfig = {
-  EVENTS: { enabled: true, intervalMinutes: 360 },
-  FIELD: { intervalMinutes: 360, lookaheadDays: 14 },
-  SCORES: { enabled: true, intervalSeconds: 300 },
+  EVENTS: { enabled: true, intervals: HOURLY },
+  FIELD: { intervals: HOURLY },
+  SCORES: { enabled: true, intervals: LIVE },
 };
 
 // The schedule as the API reads it (#2086): whether each sync runs and has a switch is the API's word.
 const SCHEDULE_READ: IngestionSchedule = {
-  EVENTS: { enabled: true, intervalMinutes: 360, runs: true, switchable: true },
-  FIELD: { intervalMinutes: 360, lookaheadDays: 14, runs: true, switchable: false },
-  SCORES: { enabled: true, intervalSeconds: 300, runs: true, switchable: true },
+  EVENTS: { enabled: true, intervals: HOURLY, runs: true, switchable: true },
+  FIELD: { intervals: HOURLY, runs: true, switchable: false },
+  SCORES: { enabled: true, intervals: LIVE, runs: true, switchable: true },
 };
-const EVENTS_OFF: IngestionSchedule = { ...SCHEDULE_READ, EVENTS: { enabled: false, intervalMinutes: 360, runs: false, switchable: true } };
+const EVENTS_OFF: IngestionSchedule = { ...SCHEDULE_READ, EVENTS: { enabled: false, intervals: HOURLY, runs: false, switchable: true } };
 
 function scheduleGroup(value: IngestionScheduleConfig = SCHEDULE, saved = true): SettingsGroup {
   return {
@@ -276,7 +280,7 @@ describe('RootAdminProvidersPage', () => {
     expect(await screen.findByText('Enter a whole number')).toBeInTheDocument();
   });
 
-  it('shows a row per sync with how often it runs and which events it covers, Field always running and a switched-off sync as Off', async () => {
+  it('shows a row per sync with how often it runs in season and off season and which events it covers, Field always running and a switched-off sync as Off', async () => {
     seed({ schedule: EVENTS_OFF });
     renderPage();
 
@@ -285,49 +289,52 @@ describe('RootAdminProvidersPage', () => {
     const field = within(screen.getByTestId('root-admin-sync-schedule-FIELD'));
     expect(field.getByText('Field')).toBeInTheDocument();
     expect(field.getByText('6 h')).toBeInTheDocument();
-    expect(field.getByText('Events starting in the next 14 days')).toBeInTheDocument();
-    expect(within(screen.getByTestId('root-admin-sync-schedule-SCORES')).getByText('5 min')).toBeInTheDocument();
+    expect(field.getByText('24 h')).toBeInTheDocument();
+    expect(field.getByText("The events of each league's next slot")).toBeInTheDocument();
+    expect(within(screen.getByTestId('root-admin-sync-schedule-SCORES')).getAllByText('5 min')).toHaveLength(2);
     expect(within(screen.getByTestId('root-admin-sync-schedule-SCORES')).getByText('Events in progress; webhooks arrive between runs')).toBeInTheDocument();
-    expect(within(screen.getByTestId('root-admin-sync-schedule-EVENTS')).getByText('Off')).toBeInTheDocument();
+    expect(within(screen.getByTestId('root-admin-sync-schedule-EVENTS')).getAllByText('Off')).toHaveLength(2);
+    expect(screen.getByRole('columnheader', { name: /In season/ })).toBeInTheDocument();
+    expect(screen.getByRole('columnheader', { name: /Off season/ })).toBeInTheDocument();
     expect(screen.queryByText('Health check')).not.toBeInTheDocument();
   });
 
-  it('opens a sync in view with who last changed the schedule, then Edit saves only that sync\'s interval and comes back to the view', async () => {
+  it('opens a sync in view with who last changed the schedule, then Edit saves only that sync\'s two intervals and comes back to the view', async () => {
     seed();
-    mocks.updateIngestionSchedule.mockResolvedValue({ data: { ...SCHEDULE_READ, EVENTS: { enabled: true, intervalMinutes: 120, runs: true, switchable: true } } });
+    mocks.updateIngestionSchedule.mockResolvedValue({ data: { ...SCHEDULE_READ, EVENTS: { enabled: true, intervals: seasonal({ intervalMinutes: 120 }, { intervalMinutes: 1440 }), runs: true, switchable: true } } });
     renderPage();
 
     await userEvent.click(await screen.findByTestId('root-admin-sync-schedule-EVENTS'));
     expect(await screen.findByTestId('root-admin-sync-schedule-dialog-last-changed')).toHaveTextContent('by Derek');
-    expect(screen.getByTestId('root-admin-sync-schedule-dialog-every')).toHaveTextContent('6 h');
+    expect(screen.getByTestId('root-admin-sync-schedule-dialog-every-IN_SEASON')).toHaveTextContent('6 h');
+    expect(screen.getByTestId('root-admin-sync-schedule-dialog-every-OFFSEASON')).toHaveTextContent('24 h');
 
     await userEvent.click(screen.getByTestId('root-admin-sync-schedule-dialog-edit'));
-    expect(screen.queryByTestId('root-admin-sync-schedule-dialog-lookahead-days')).not.toBeInTheDocument();
-    const interval = screen.getByTestId('root-admin-sync-schedule-dialog-interval');
+    const interval = screen.getByTestId('root-admin-sync-schedule-dialog-interval-IN_SEASON');
     await userEvent.clear(interval);
     await userEvent.type(interval, '120');
     await userEvent.click(screen.getByTestId('root-admin-sync-schedule-dialog-save'));
 
     await waitFor(() => expect(mocks.updateIngestionSchedule).toHaveBeenCalledWith(expect.objectContaining({
-      body: { EVENTS: { enabled: true, intervalMinutes: 120 } },
+      body: { EVENTS: { enabled: true, intervals: seasonal({ intervalMinutes: 120 }, { intervalMinutes: 1440 }) } },
     })));
     expect(await screen.findByTestId('root-admin-sync-schedule-dialog-edit')).toBeInTheDocument();
   });
 
-  it('switches a sync that is off back on, saving its switch with its interval, while Field has no switch', async () => {
+  it('switches a sync that is off back on, saving its switch with its intervals, while Field has no switch', async () => {
     seed({ schedule: EVENTS_OFF });
     mocks.updateIngestionSchedule.mockResolvedValue({ data: SCHEDULE_READ });
     renderPage();
 
     await userEvent.click(await screen.findByTestId('root-admin-sync-schedule-EVENTS'));
-    expect(await screen.findByTestId('root-admin-sync-schedule-dialog-every')).toHaveTextContent('Off');
+    expect(await screen.findByTestId('root-admin-sync-schedule-dialog-every-IN_SEASON')).toHaveTextContent('Off');
     await userEvent.click(screen.getByTestId('root-admin-sync-schedule-dialog-edit'));
     const enabled = screen.getByTestId('root-admin-sync-schedule-dialog-enabled');
     expect(enabled).not.toBeChecked();
     await userEvent.click(enabled);
     await userEvent.click(screen.getByTestId('root-admin-sync-schedule-dialog-save'));
     await waitFor(() => expect(mocks.updateIngestionSchedule).toHaveBeenCalledWith(expect.objectContaining({
-      body: { EVENTS: { enabled: true, intervalMinutes: 360 } },
+      body: { EVENTS: { enabled: true, intervals: HOURLY } },
     })));
     await userEvent.click(await screen.findByRole('button', { name: 'Close' }));
 
@@ -337,67 +344,66 @@ describe('RootAdminProvidersPage', () => {
   });
 
   it('shows no switch for a sync the API says has none, whichever sync it is, and saves it without one', async () => {
-    seed({ schedule: { ...SCHEDULE_READ, SCORES: { intervalSeconds: 300, runs: true, switchable: false } } });
+    seed({ schedule: { ...SCHEDULE_READ, SCORES: { intervals: LIVE, runs: true, switchable: false } } });
     mocks.updateIngestionSchedule.mockResolvedValue({ data: SCHEDULE_READ });
     renderPage();
 
     await userEvent.click(await screen.findByTestId('root-admin-sync-schedule-SCORES'));
     await userEvent.click(await screen.findByTestId('root-admin-sync-schedule-dialog-edit'));
     expect(screen.queryByTestId('root-admin-sync-schedule-dialog-enabled')).not.toBeInTheDocument();
-    await userEvent.clear(screen.getByTestId('root-admin-sync-schedule-dialog-interval'));
-    await userEvent.type(screen.getByTestId('root-admin-sync-schedule-dialog-interval'), '60');
+    await userEvent.clear(screen.getByTestId('root-admin-sync-schedule-dialog-interval-IN_SEASON'));
+    await userEvent.type(screen.getByTestId('root-admin-sync-schedule-dialog-interval-IN_SEASON'), '60');
     await userEvent.click(screen.getByTestId('root-admin-sync-schedule-dialog-save'));
 
-    await waitFor(() => expect(mocks.updateIngestionSchedule).toHaveBeenCalledWith(expect.objectContaining({ body: { SCORES: { intervalSeconds: 60 } } })));
+    await waitFor(() => expect(mocks.updateIngestionSchedule).toHaveBeenCalledWith(expect.objectContaining({
+      body: { SCORES: { intervals: seasonal({ intervalSeconds: 60 }, { intervalSeconds: 300 }) } },
+    })));
   });
 
-  it('saves the live score interval in seconds and Field\'s interval with its days ahead', async () => {
+  it('saves the live score intervals in seconds and Field\'s in minutes, each Season state its own', async () => {
     seed();
     mocks.updateIngestionSchedule.mockResolvedValue({ data: SCHEDULE_READ });
     renderPage();
 
     await userEvent.click(await screen.findByTestId('root-admin-sync-schedule-SCORES'));
     await userEvent.click(await screen.findByTestId('root-admin-sync-schedule-dialog-edit'));
-    expect(screen.getByText('Every, seconds')).toBeInTheDocument();
-    await userEvent.clear(screen.getByTestId('root-admin-sync-schedule-dialog-interval'));
-    await userEvent.type(screen.getByTestId('root-admin-sync-schedule-dialog-interval'), '60');
+    expect(screen.getByText('In season, every seconds')).toBeInTheDocument();
+    await userEvent.clear(screen.getByTestId('root-admin-sync-schedule-dialog-interval-IN_SEASON'));
+    await userEvent.type(screen.getByTestId('root-admin-sync-schedule-dialog-interval-IN_SEASON'), '60');
     await userEvent.click(screen.getByTestId('root-admin-sync-schedule-dialog-save'));
     await waitFor(() => expect(mocks.updateIngestionSchedule).toHaveBeenLastCalledWith(expect.objectContaining({
-      body: { SCORES: { enabled: true, intervalSeconds: 60 } },
+      body: { SCORES: { enabled: true, intervals: seasonal({ intervalSeconds: 60 }, { intervalSeconds: 300 }) } },
     })));
     await userEvent.click(await screen.findByRole('button', { name: 'Close' }));
 
     await userEvent.click(screen.getByTestId('root-admin-sync-schedule-FIELD'));
     await userEvent.click(await screen.findByTestId('root-admin-sync-schedule-dialog-edit'));
-    expect(screen.getByText('Every, minutes')).toBeInTheDocument();
-    await userEvent.clear(screen.getByTestId('root-admin-sync-schedule-dialog-lookahead-days'));
-    await userEvent.type(screen.getByTestId('root-admin-sync-schedule-dialog-lookahead-days'), '21');
+    expect(screen.getByText('Off season, every minutes')).toBeInTheDocument();
+    await userEvent.clear(screen.getByTestId('root-admin-sync-schedule-dialog-interval-OFFSEASON'));
+    await userEvent.type(screen.getByTestId('root-admin-sync-schedule-dialog-interval-OFFSEASON'), '720');
     await userEvent.click(screen.getByTestId('root-admin-sync-schedule-dialog-save'));
     await waitFor(() => expect(mocks.updateIngestionSchedule).toHaveBeenLastCalledWith(expect.objectContaining({
-      body: { FIELD: { intervalMinutes: 360, lookaheadDays: 21 } },
+      body: { FIELD: { intervals: seasonal({ intervalMinutes: 360 }, { intervalMinutes: 720 }) } },
     })));
   });
 
-  it('refuses an interval that is not a whole number of at least 1, and days ahead below 0, keeping Save off', async () => {
+  it('refuses an interval in either Season state that is not a whole number of at least 1, keeping Save off', async () => {
     seed();
     renderPage();
 
     await userEvent.click(await screen.findByTestId('root-admin-sync-schedule-FIELD'));
     await userEvent.click(await screen.findByTestId('root-admin-sync-schedule-dialog-edit'));
-    const interval = screen.getByTestId('root-admin-sync-schedule-dialog-interval');
-    for (const bad of ['0', '1.5', 'abc']) {
+    for (const state of ['IN_SEASON', 'OFFSEASON']) {
+      const interval = screen.getByTestId(`root-admin-sync-schedule-dialog-interval-${state}`);
+      for (const bad of ['0', '1.5', 'abc']) {
+        await userEvent.clear(interval);
+        await userEvent.type(interval, bad);
+        expect(await screen.findByText('Enter a whole number, 1 or more')).toBeInTheDocument();
+        expect(screen.getByTestId('root-admin-sync-schedule-dialog-save')).toBeDisabled();
+      }
       await userEvent.clear(interval);
-      await userEvent.type(interval, bad);
-      expect(await screen.findByText('Enter a whole number, 1 or more')).toBeInTheDocument();
-      expect(screen.getByTestId('root-admin-sync-schedule-dialog-save')).toBeDisabled();
+      await userEvent.type(interval, '30');
     }
-    await userEvent.clear(interval);
-    await userEvent.type(interval, '30');
-    const days = screen.getByTestId('root-admin-sync-schedule-dialog-lookahead-days');
-    await userEvent.clear(days);
-    await userEvent.type(days, '-1');
-    expect(await screen.findByText('Enter a whole number of days, 0 or more')).toBeInTheDocument();
-    expect(screen.getByTestId('root-admin-sync-schedule-dialog-save')).toBeDisabled();
     expect(mocks.updateIngestionSchedule).not.toHaveBeenCalled();
   });
 
@@ -408,11 +414,11 @@ describe('RootAdminProvidersPage', () => {
     await userEvent.click(await screen.findByTestId('root-admin-sync-schedule-SCORES'));
     expect(await screen.findByTestId('root-admin-sync-schedule-dialog-last-changed')).toHaveTextContent('Never: on the defaults');
     await userEvent.click(screen.getByTestId('root-admin-sync-schedule-dialog-edit'));
-    await userEvent.clear(screen.getByTestId('root-admin-sync-schedule-dialog-interval'));
-    await userEvent.type(screen.getByTestId('root-admin-sync-schedule-dialog-interval'), '9');
+    await userEvent.clear(screen.getByTestId('root-admin-sync-schedule-dialog-interval-IN_SEASON'));
+    await userEvent.type(screen.getByTestId('root-admin-sync-schedule-dialog-interval-IN_SEASON'), '9');
     await userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
 
-    expect(screen.getByTestId('root-admin-sync-schedule-dialog-every')).toHaveTextContent('5 min');
+    expect(screen.getByTestId('root-admin-sync-schedule-dialog-every-IN_SEASON')).toHaveTextContent('5 min');
     expect(mocks.updateIngestionSchedule).not.toHaveBeenCalled();
   });
 
@@ -423,12 +429,12 @@ describe('RootAdminProvidersPage', () => {
 
     await userEvent.click(await screen.findByTestId('root-admin-sync-schedule-EVENTS'));
     await userEvent.click(await screen.findByTestId('root-admin-sync-schedule-dialog-edit'));
-    await userEvent.clear(screen.getByTestId('root-admin-sync-schedule-dialog-interval'));
-    await userEvent.type(screen.getByTestId('root-admin-sync-schedule-dialog-interval'), '10');
+    await userEvent.clear(screen.getByTestId('root-admin-sync-schedule-dialog-interval-IN_SEASON'));
+    await userEvent.type(screen.getByTestId('root-admin-sync-schedule-dialog-interval-IN_SEASON'), '10');
     await userEvent.click(screen.getByTestId('root-admin-sync-schedule-dialog-save'));
 
     expect(await screen.findByText('Save failed')).toBeInTheDocument();
-    expect(screen.getByTestId('root-admin-sync-schedule-dialog-interval')).toBeInTheDocument();
+    expect(screen.getByTestId('root-admin-sync-schedule-dialog-interval-IN_SEASON')).toBeInTheDocument();
   });
 
   it('says so when the providers cannot be checked or the schedule cannot be read', async () => {
