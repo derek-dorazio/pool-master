@@ -190,8 +190,11 @@ export interface SportEventTierSlot {
   /** The Season slot it is. */
   seasonSlotId: string;
   seasonSlotStatus: SeasonSlotStatus;
-  /** Whether it is its event's first slot in play order (`compareSeasonSlots`), whose set is built while the event is a draft. */
-  isFirstSlot: boolean;
+  /**
+   * Whether it is its event's tier-set slot (`chooseTierSetSlot`): the slot today's tiered and budget
+   * contests read, whose set is built while the event is a draft.
+   */
+  isTierSetSlot: boolean;
   /** The layout the set was last auto-tiered with; null until it first is. */
   tierLayout: SlotTierLayout | null;
   /** The values the set was last priced with, and the profile they started from; null until it is priced. */

@@ -97,7 +97,7 @@ describe('SportEventTierService — tiers', () => {
       ['afc-5', 'afc-6', 'afc-7', 'nfc-5', 'nfc-6', 'nfc-7'],
     ]);
     expect(store.valuationRows.every((valuation) => valuation.tierAssignedSource === 'AUTO_SEED')).toBe(true);
-    expect(store.firstTierSlotOf(playoff.id).tierLayout).toMatchObject({ type: 'RANGES' });
+    expect(store.tierSetSlotOf(playoff.id).tierLayout).toMatchObject({ type: 'RANGES' });
   });
 
   it('refuses (422 TIER_SIZE_NOT_FOR_RANGES) a tier size sent for a league whose tier profile is ranges, placing no one', async () => {
@@ -148,7 +148,7 @@ describe('SportEventTierService — tiers', () => {
     addFieldByOdds(store, event.id, 2);
     const [tier1, tier2] = store.tierRows;
     const [first, second] = store.field;
-    await store.valuationRepo().assignTiers(store.firstTierSlotOf(event.id), [
+    await store.valuationRepo().assignTiers(store.tierSetSlotOf(event.id), [
       { sportEventParticipantId: first.id, sportEventSlotTierId: tier2.id, tierOrderIndex: 0, source: 'MANUAL' },
       { sportEventParticipantId: second.id, sportEventSlotTierId: tier1.id, tierOrderIndex: 0, source: 'AUTO_ODDS' },
     ]);
@@ -169,7 +169,7 @@ describe('SportEventTierService — tiers', () => {
     await store.addTiers(event.id, TWO_TIERS);
     const entry = store.addToField(event.id, 'p-1');
     const [, tier2] = store.tierRows;
-    await store.valuationRepo().assignTiers(store.firstTierSlotOf(event.id), [{ sportEventParticipantId: entry.id, sportEventSlotTierId: tier2.id, tierOrderIndex: 1, source: 'MANUAL' }]);
+    await store.valuationRepo().assignTiers(store.tierSetSlotOf(event.id), [{ sportEventParticipantId: entry.id, sportEventSlotTierId: tier2.id, tierOrderIndex: 1, source: 'MANUAL' }]);
 
     await expect(service.replaceTiers({ sportEventId: event.id, tiers: [TWO_TIERS[0]] }))
       .rejects.toMatchObject({ code: 'TIER_REPLACE_WOULD_ORPHAN_ASSIGNMENTS', statusCode: 409 });
@@ -367,10 +367,10 @@ describe('SportEventTierService — assignment', () => {
     const outOfTiers = store.valuationRows.filter((row) => row.sportEventSlotTierId === null);
     expect(outOfTiers).toHaveLength(3);
     expect(outOfTiers.every((row) => row.tierAssignedSource === 'AUTO_ODDS')).toBe(true);
-    expect(store.firstTierSlotOf(event.id).tierLayout).toEqual({
+    expect(store.tierSetSlotOf(event.id).tierLayout).toEqual({
       platformTierProfileId: league.platformTierProfileId, type: 'EQUAL_GROUPS', tierCount: 3, tierSize: 2, lastTier: 'CAPPED', lastTierMax: 2,
     });
-    const slot = store.firstTierSlotOf(event.id);
+    const slot = store.tierSetSlotOf(event.id);
     await expect(store.sportEventRepo().countUntieredActiveParticipants([slot])).resolves.toEqual(new Map([[slot.id, 0]]));
   });
 
@@ -384,7 +384,7 @@ describe('SportEventTierService — assignment', () => {
     const groups = await service.autoAssignTiers({ sportEventId: event.id });
 
     expect(groups.map((group) => group.participants.length)).toEqual([1, 4]);
-    expect(store.firstTierSlotOf(event.id).tierLayout?.platformTierProfileId).toBe(league.platformTierProfileId);
+    expect(store.tierSetSlotOf(event.id).tierLayout?.platformTierProfileId).toBe(league.platformTierProfileId);
   });
 
   it('records the tier size an admin sent on the event\'s layout, with the league\'s profile', async () => {
@@ -394,7 +394,7 @@ describe('SportEventTierService — assignment', () => {
 
     await service.autoAssignTiers({ sportEventId: event.id, tierSize: 3 });
 
-    expect(store.firstTierSlotOf(event.id).tierLayout).toMatchObject({ platformTierProfileId: IN_MEMORY_PLATFORM_TIER_PROFILE_ID, tierSize: 3 });
+    expect(store.tierSetSlotOf(event.id).tierLayout).toMatchObject({ platformTierProfileId: IN_MEMORY_PLATFORM_TIER_PROFILE_ID, tierSize: 3 });
   });
 
   it('refuses to auto-tier an event whose sport league names no tier profile with 404 SPORT_LEAGUE_NOT_FOUND, tiering no one', async () => {
@@ -527,7 +527,7 @@ describe('SportEventTierService — prices and the contest-side read', () => {
     await service.autoAssignPrices({ sportEventId: event.id, pricing: inMemoryStandardPricing() });
     await service.autoAssignPrices({ sportEventId: event.id, pricing: small });
 
-    expect(store.firstTierSlotOf(event.id).pricing).toEqual(small);
+    expect(store.tierSetSlotOf(event.id).pricing).toEqual(small);
     expect(store.valuationRows.map((row) => row.price)).toEqual([1200]);
   });
 
@@ -538,7 +538,7 @@ describe('SportEventTierService — prices and the contest-side read', () => {
     await expect(service.autoAssignPrices({ sportEventId: event.id, pricing: { ...inMemoryStandardPricing(), platformPricingProfileId: 'no-such-profile' } }))
       .rejects.toMatchObject({ code: 'PLATFORM_PRICING_PROFILE_NOT_FOUND', statusCode: 404 });
     expect(store.valuationRows.map((row) => row.price ?? null)).toEqual(store.valuationRows.map(() => null));
-    expect(store.firstTierSlotOf(event.id).pricing).toBeNull();
+    expect(store.tierSetSlotOf(event.id).pricing).toBeNull();
   });
 
   it.each([
@@ -553,14 +553,14 @@ describe('SportEventTierService — prices and the contest-side read', () => {
     await expect(service.autoAssignPrices({ sportEventId: event.id, pricing: { ...inMemoryStandardPricing(), ...change } }))
       .rejects.toMatchObject({ code: 'PRICING_CONFIG_INVALID', statusCode: 422 });
     expect(store.valuationRows).toEqual([]);
-    expect(store.firstTierSlotOf(event.id).pricing).toBeNull();
+    expect(store.tierSetSlotOf(event.id).pricing).toBeNull();
   });
 
   it('reads a price-only valuation with no tier, which a read starting from the tiers would miss', async () => {
     const { store, event, service } = setup();
     const entry = store.addToField(event.id, 'p-budget');
     await store.valuationRepo().assignSlotPrices({
-      slot: store.firstTierSlotOf(event.id),
+      slot: store.tierSetSlotOf(event.id),
       pricing: inMemoryStandardPricing(),
       assignments: [{ sportEventParticipantId: entry.id, price: 12, source: 'MANUAL' }],
     });
@@ -576,7 +576,7 @@ describe('SportEventTierService — prices and the contest-side read', () => {
     await store.addTiers(event.id, [TWO_TIERS[0]]);
     const [tier] = store.tierRows;
     const entry = store.addToField(event.id, 'p-1');
-    await store.valuationRepo().assignTiers(store.firstTierSlotOf(event.id), [{ sportEventParticipantId: entry.id, sportEventSlotTierId: tier.id, tierOrderIndex: 1, source: 'MANUAL' }]);
+    await store.valuationRepo().assignTiers(store.tierSetSlotOf(event.id), [{ sportEventParticipantId: entry.id, sportEventSlotTierId: tier.id, tierOrderIndex: 1, source: 'MANUAL' }]);
     const field = store.fieldRepo();
     const findBySportEvent = jest.spyOn(field, 'findBySportEvent');
     const tiers = store.tierRepo();
@@ -602,11 +602,11 @@ describe('SportEventTierService — prices and the contest-side read', () => {
     const firstEntry = store.addToField(event.id, 'p-1');
     const secondEntry = store.addToField(event.id, 'p-2');
     const otherEntry = store.addToField(second.id, 'p-3');
-    await store.valuationRepo().assignTiers(store.firstTierSlotOf(event.id), [
+    await store.valuationRepo().assignTiers(store.tierSetSlotOf(event.id), [
       { sportEventParticipantId: firstEntry.id, sportEventSlotTierId: first2.id, tierOrderIndex: 1, source: 'MANUAL' },
       { sportEventParticipantId: secondEntry.id, sportEventSlotTierId: first1.id, tierOrderIndex: 1, source: 'MANUAL' },
     ]);
-    await store.valuationRepo().assignTiers(store.firstTierSlotOf(second.id), [
+    await store.valuationRepo().assignTiers(store.tierSetSlotOf(second.id), [
       { sportEventParticipantId: otherEntry.id, sportEventSlotTierId: second1.id, tierOrderIndex: 1, source: 'MANUAL' },
     ]);
     const tiers = store.tierRepo();
@@ -697,7 +697,7 @@ describe('SportEventTierService — the field changing between assignments', () 
     const unordered = store.addToField(event.id, 'p-unordered');
     const second = store.addToField(event.id, 'p-second');
     const first = store.addToField(event.id, 'p-first');
-    await store.valuationRepo().assignTiers(store.firstTierSlotOf(event.id), [
+    await store.valuationRepo().assignTiers(store.tierSetSlotOf(event.id), [
       { sportEventParticipantId: unordered.id, sportEventSlotTierId: tier.id, tierOrderIndex: null as unknown as number, source: 'MANUAL' },
       { sportEventParticipantId: second.id, sportEventSlotTierId: tier.id, tierOrderIndex: 2, source: 'MANUAL' },
       { sportEventParticipantId: first.id, sportEventSlotTierId: tier.id, tierOrderIndex: 1, source: 'MANUAL' },
@@ -713,7 +713,7 @@ describe('SportEventTierService — the field changing between assignments', () 
     await store.addTiers(event.id, TWO_TIERS);
     const entry = store.addToField(event.id, 'p-1');
     const [tier1] = store.tierRows;
-    await store.valuationRepo().assignTiers(store.firstTierSlotOf(event.id), [{ sportEventParticipantId: entry.id, sportEventSlotTierId: tier1.id, tierOrderIndex: 1, source: 'MANUAL' }]);
+    await store.valuationRepo().assignTiers(store.tierSetSlotOf(event.id), [{ sportEventParticipantId: entry.id, sportEventSlotTierId: tier1.id, tierOrderIndex: 1, source: 'MANUAL' }]);
 
     const groups = await service.replaceTiers({ sportEventId: event.id, tiers: [TWO_TIERS[0]] });
 

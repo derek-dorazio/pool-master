@@ -186,4 +186,40 @@ describe('the tier set migration', () => {
     });
     expect(migrated.eventColumns).toEqual([]);
   });
+
+  it('moves a play-in league\'s tiers onto the first slot its tiered template lists, not the play-in slot before it', async () => {
+    const prisma = getPrisma();
+    const tournament = await eventOf('Play-in Tournament');
+    // The play-in comes first in play order; the league's tiered template lists only the round of 64.
+    const [, roundOf64SlotId] = await eventRoundSlots(prisma, tournament.id, [{ slotKind: 'PLAY_IN' }, { slotKind: 'ROUND_OF_64' }]);
+    const { seasonSlot: { sportLeagueCompetitionSlotId: roundOf64Definition } } = await prisma.sportEventSlot.findUniqueOrThrow({
+      where: { id: roundOf64SlotId }, select: { seasonSlot: { select: { sportLeagueCompetitionSlotId: true } } },
+    });
+    const tierId = randomUUID();
+
+    const moved = await prisma.$transaction(async (tx) => {
+      for (const statement of statementsOf(PUT_BACK)) {
+        // poolmaster-allow-query-in-loop: the put-back statements, in order
+        await tx.$executeRawUnsafe(statement);
+      }
+      await tx.contestConfigTemplate.create({
+        data: {
+          sportLeagueId: tournament.sportLeagueId, coverageMode: 'FROM_SLOT', contestFormat: 'ROSTER', selectionType: 'TIERED', name: 'Pick 4', description: 'Pick 4',
+          sortOrder: 1, configJson: {}, templateKey: `play-in-${randomUUID()}`, slots: { create: { sportLeagueCompetitionSlotId: roundOf64Definition } },
+        },
+      });
+      await tx.$executeRaw`${uncachedStatement()} INSERT INTO "sport_event_tiers" ("id", "sport_event_id", "tier_key", "tier_number", "updated_at") VALUES (${tierId}::uuid, ${tournament.id}::uuid, 'tier-1', 1, now())`;
+      for (const statement of statementsOf(readFileSync(MIGRATION, 'utf8'))) {
+        // poolmaster-allow-query-in-loop: the migration's own statements, in order
+        await tx.$executeRawUnsafe(statement);
+      }
+      const tiers = await tx.sportEventSlotTier.findMany({ where: { id: tierId }, select: { sportEventSlotId: true } });
+      throw new Rollback(JSON.stringify(tiers));
+    }, { timeout: 60_000 }).catch((error: unknown) => {
+      if (error instanceof Rollback) return JSON.parse(error.message) as Array<{ sportEventSlotId: string }>;
+      throw error;
+    });
+
+    expect(moved).toEqual([{ sportEventSlotId: roundOf64SlotId }]);
+  });
 });

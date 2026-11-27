@@ -45,7 +45,7 @@ import type {
 } from '@poolmaster/shared/db';
 import { TEST_PROVIDER_ROWS } from './balldontlie-provider-rows';
 import type { SportEventBracketServiceDeps } from '../../packages/core-api/src/modules/events/sport-event-bracket-service';
-import { compareMatchPlaces, compareSeasonSlots, slotTierLayoutOf, MatchEnding, SeasonSlotStatus, SeriesFormat, SlotKind, SlotPairing, SlotWindowStatus, type SlotWindow, findSportRow, providerSourceIdOf, requireProviderCodeOfSourceId, type ProviderEventRef, type SportEventProviderMapping, HomeAway, isMatchUnplayed, MatchSideOutcome, MatchStatus, PeriodKind, PeriodKindOrder, Sport, FieldOrderBasis, TierProfileType, SportEventParticipantStatus } from '@poolmaster/shared/domain';
+import { chooseTierSetSlot, compareMatchPlaces, compareSeasonSlots, slotTierLayoutOf, MatchEnding, SeasonSlotStatus, SeriesFormat, SlotKind, SlotPairing, SlotWindowStatus, type SlotWindow, findSportRow, providerSourceIdOf, requireProviderCodeOfSourceId, type ProviderEventRef, type SportEventProviderMapping, HomeAway, isMatchUnplayed, MatchSideOutcome, MatchStatus, PeriodKind, PeriodKindOrder, Sport, FieldOrderBasis, TierProfileType, SportEventParticipantStatus } from '@poolmaster/shared/domain';
 import { sportEventSlots, sportPlay } from './sport-play';
 import type {
   AutoReleaseCheck,
@@ -492,16 +492,23 @@ export class InMemorySportEvents {
 
   /** Gives an event's first slot these tiers (#2044), through the tier repository's one insert. */
   async addTiers(sportEventId: string, tiers: readonly SportEventSlotTierDefinition[]): Promise<void> {
-    const slot = this.firstTierSlotOf(sportEventId);
+    const slot = this.tierSetSlotOf(sportEventId);
     return this.tierRepo().createMany(tiers.map((tier) => ({ sportEventSlotId: slot.id, ...tier })));
   }
 
+  /** The slot definitions an active tiered or budget template lists, which the tier-set rule reads (#2044). */
+  tierSetTemplateDefinitionIds = new Set<string>();
+
   /**
-   * The event's slots as their tier sets read them (#2044), in play order, the first marked; none
-   * for an event covering no slot.
+   * The event's slots as their tier sets read them (#2044), in play order, its tier-set slot
+   * (`chooseTierSetSlot`) marked; none for an event covering no slot.
    */
   tierSlotsOf(sportEventId: string): SportEventTierSlot[] {
-    return [...(this.slotsByEvent.get(sportEventId) ?? [])].sort(compareSeasonSlots).map((slot, index) => {
+    const ordered = [...(this.slotsByEvent.get(sportEventId) ?? [])].sort(compareSeasonSlots)
+      .map((slot) => ({ slot, listedByTierSetTemplate: this.tierSetTemplateDefinitionIds.has(slot.slotDefinitionId) }));
+    const tierSetSlot = chooseTierSetSlot(ordered);
+    return ordered.map((entry) => {
+      const { slot } = entry;
       const tierSettings = this.slotTierSettings.get(slot.id);
       const tierProfile = tierSettings && this.platformTierProfiles.find((profile) => profile.id === tierSettings.platformTierProfileId);
       const pricing = this.slotPricings.get(slot.id);
@@ -510,7 +517,7 @@ export class InMemorySportEvents {
         sportEventId,
         seasonSlotId: slot.id,
         seasonSlotStatus: slot.status,
-        isFirstSlot: index === 0,
+        isTierSetSlot: entry === tierSetSlot,
         tierLayout: tierProfile ? slotTierLayoutOf(tierProfile, tierSettings.tierSize) : null,
         pricing: pricing ?? null,
       };
@@ -521,9 +528,9 @@ export class InMemorySportEvents {
    * The event's first slot (`tierSlotsOf`). An event a test added straight to the store with no
    * slot is given its one slot now, as `eventSlotOf` does.
    */
-  firstTierSlotOf(sportEventId: string): SportEventTierSlot {
+  tierSetSlotOf(sportEventId: string): SportEventTierSlot {
     if ((this.slotsByEvent.get(sportEventId) ?? []).length === 0) this.eventSlotOf(sportEventId);
-    const first = this.tierSlotsOf(sportEventId).find((slot) => slot.isFirstSlot);
+    const first = this.tierSlotsOf(sportEventId).find((slot) => slot.isTierSetSlot);
     if (!first) throw new Error(`Sport event ${sportEventId} has no slot.`);
     return first;
   }
@@ -1016,7 +1023,7 @@ export class InMemorySportEvents {
     const standing = this.standingRows.find((row) => row.sportEventParticipantId === entry.id);
     const standingGolf = standing && this.golfStandingRows.find((row) => row.standingId === standing.id);
     // The first slot's set's (#2044), as a field read shows it.
-    const firstSlotId = this.tierSlotsOf(entry.sportEventId).find((slot) => slot.isFirstSlot)?.id;
+    const firstSlotId = this.tierSlotsOf(entry.sportEventId).find((slot) => slot.isTierSetSlot)?.id;
     const valuation = this.valuationRows.find((row) => row.sportEventSlotId === firstSlotId && row.sportEventParticipantId === entry.id);
     const raceResult = this.raceResultRows.find((row) => row.sportEventParticipantId === entry.id);
     return {

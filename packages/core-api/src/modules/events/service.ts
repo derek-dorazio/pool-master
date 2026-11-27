@@ -88,13 +88,13 @@ export interface SportEventAdminCounts {
 export interface SportEventSummary {
   event: SportEvent;
   participantCount: number;
-  /** Tiers in its first slot's set (#2044). */
+  /** Tiers in its tier-set slot's set (#2044). */
   tierCount: number;
   /**
-   * Its first slot in play order (#2044), whose set its tiers, prices and lock are today; null for
+   * Its tier-set slot (#2044), whose set its tiers, prices and lock are today; null for
    * an event covering no slot.
    */
-  firstTierSlot: SportEventTierSlot | null;
+  tierSetSlot: SportEventTierSlot | null;
   /** The Season slots it covers (#2004), in play order; empty for an event with none yet. */
   slots: SportLeagueSeasonSlot[];
   /** Null unless the read asked for them: see `SportEventAdminCounts`. */
@@ -789,7 +789,7 @@ export class SportEventService {
       participantCount: summary.participantCount,
       untieredParticipantCount: summary.adminCounts.untieredParticipantCount,
       emptyTierNumbers: summary.adminCounts.emptyTierNumbers,
-      isPriced: (summary.firstTierSlot?.pricing ?? null) !== null,
+      isPriced: (summary.tierSetSlot?.pricing ?? null) !== null,
       unpricedParticipantCount: summary.adminCounts.unpricedParticipantCount,
       bracketBlockers,
       contestSetupCount: facts.contestSetupCount,
@@ -893,7 +893,7 @@ export class SportEventService {
         event,
         participantCount: 0,
         tierCount: tiers.length,
-        firstTierSlot: made?.slot ?? null,
+        tierSetSlot: made?.slot ?? null,
         slots: slots.filter((slot) => editions[index]?.event.seasonSlotIds?.includes(slot.id)),
         adminCounts: {
           untieredParticipantCount: 0,
@@ -923,24 +923,24 @@ export class SportEventService {
   }
 
   /**
-   * The counts every reader of an event needs, its slots and its first slot's set (#2044): a fixed
+   * The counts every reader of an event needs, its slots and its tier-set slot's set (#2044): a fixed
    * number of reads for the whole list.
    */
   private async summarize(events: SportEvent[]): Promise<SportEventSummary[]> {
     const ids = events.map((event) => event.id);
-    const [participants, slots, firstTierSlots] = await Promise.all([
+    const [participants, slots, tierSetSlots] = await Promise.all([
       this.deps.sportEvents.countParticipants(ids),
       this.deps.sportEvents.findSlots(ids),
-      this.deps.tiers.firstTierSlots(ids),
+      this.deps.tiers.tierSetSlots(ids),
     ]);
-    const tiers = await this.deps.sportEvents.countTiers([...firstTierSlots.values()].map((slot) => slot.id));
+    const tiers = await this.deps.sportEvents.countTiers([...tierSetSlots.values()].map((slot) => slot.id));
     return events.map((event) => {
-      const firstTierSlot = firstTierSlots.get(event.id) ?? null;
+      const tierSetSlot = tierSetSlots.get(event.id) ?? null;
       return {
         event,
         participantCount: participants.get(event.id) ?? 0,
-        tierCount: firstTierSlot === null ? 0 : tiers.get(firstTierSlot.id) ?? 0,
-        firstTierSlot,
+        tierCount: tierSetSlot === null ? 0 : tiers.get(tierSetSlot.id) ?? 0,
+        tierSetSlot,
         slots: slots.get(event.id) ?? [],
         adminCounts: null,
       };
@@ -955,7 +955,7 @@ export class SportEventService {
       this.deps.sportEvents.countContests(ids),
     ]);
     // An event covering no slot has no set: its counts are the empty set's.
-    const firstSlots = summaries.flatMap((summary) => (summary.firstTierSlot === null ? [] : [summary.firstTierSlot]));
+    const firstSlots = summaries.flatMap((summary) => (summary.tierSetSlot === null ? [] : [summary.tierSetSlot]));
     const firstSlotIds = firstSlots.map((slot) => slot.id);
     const [untiered, unpriced, emptyTiers] = await Promise.all([
       this.deps.sportEvents.countUntieredActiveParticipants(firstSlots),
@@ -963,7 +963,7 @@ export class SportEventService {
       this.deps.sportEvents.findEmptyTierNumbers(firstSlotIds),
     ]);
     return summaries.map((summary) => {
-      const slotId = summary.firstTierSlot?.id;
+      const slotId = summary.tierSetSlot?.id;
       return {
         ...summary,
         adminCounts: {

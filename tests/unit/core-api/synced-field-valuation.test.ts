@@ -62,7 +62,7 @@ describe('SyncedFieldValuationService — a field sync makes tiers and prices on
     expect(store.valuationRows.every((row) => row.tierAssignedSource === 'AUTO_ODDS' && row.priceAssignedSource === 'AUTO_ODDS')).toBe(true);
     const prices = store.valuationRows.map((row) => row.price as number);
     expect(prices).toEqual([...prices].sort((left, right) => right - left));
-    expect(store.firstTierSlotOf(event.id).pricing).toEqual(inMemoryStandardPricing());
+    expect(store.tierSetSlotOf(event.id).pricing).toEqual(inMemoryStandardPricing());
   });
 
   it('re-makes the tiers when a later sync moves the odds, so the new favourite leads tier 1', async () => {
@@ -108,7 +108,7 @@ describe('SyncedFieldValuationService — a field sync makes tiers and prices on
     const outcome = await valuation.afterFieldLoad(SYNCED);
 
     expect(outcome).toMatchObject({ prices: { result: 'MADE', platformPricingProfileId: profileId } });
-    expect(store.firstTierSlotOf(event.id).pricing).toEqual({ platformPricingProfileId: profileId, ...values });
+    expect(store.tierSetSlotOf(event.id).pricing).toEqual({ platformPricingProfileId: profileId, ...values });
     expect(store.valuationRows.every((row) => (row.price as number) <= 5000 && (row.price as number) % 10 === 0)).toBe(true);
   });
 
@@ -117,7 +117,7 @@ describe('SyncedFieldValuationService — a field sync makes tiers and prices on
 
     await valuation.afterFieldLoad(SYNCED);
 
-    expect(store.firstTierSlotOf(event.id).tierLayout).toEqual({
+    expect(store.tierSetSlotOf(event.id).tierLayout).toEqual({
       platformTierProfileId: IN_MEMORY_PLATFORM_TIER_PROFILE_ID, type: 'EQUAL_GROUPS', tierCount: 6, tierSize: 10, lastTier: 'ALL_REMAINING', lastTierMax: null,
     });
   });
@@ -130,7 +130,7 @@ describe('SyncedFieldValuationService — a field sync makes tiers and prices on
 
     await valuation.afterFieldLoad(SYNCED);
 
-    expect(store.firstTierSlotOf(event.id).pricing).toEqual(handPriced);
+    expect(store.tierSetSlotOf(event.id).pricing).toEqual(handPriced);
     expect(Math.max(...store.valuationRows.map((row) => row.price as number))).toBeLessThanOrEqual(5000);
   });
 });
@@ -164,7 +164,7 @@ describe('SyncedFieldValuationService — what a field sync leaves alone', () =>
     await valuation.afterFieldLoad(SYNCED);
     const favourite = expectDefined(store.field.find((row) => row.participantId === 'p-01'));
     await store.valuationRepo().assignSlotPrices({
-      slot: store.firstTierSlotOf(event.id),
+      slot: store.tierSetSlotOf(event.id),
       pricing: inMemoryStandardPricing(),
       assignments: [{ sportEventParticipantId: favourite.id, price: 777, source: 'MANUAL' }],
     });
@@ -181,7 +181,7 @@ describe('SyncedFieldValuationService — what a field sync leaves alone', () =>
     const favourite = expectDefined(store.field.find((row) => row.participantId === 'p-01'));
     await tiers.replaceTierAssignments({ sportEventId: event.id, assignments: [{ sportEventParticipantId: favourite.id, tierKey: 'tier-2', tierOrderIndex: 1 }] });
     await store.valuationRepo().assignSlotPrices({
-      slot: store.firstTierSlotOf(event.id),
+      slot: store.tierSetSlotOf(event.id),
       pricing: inMemoryStandardPricing(),
       assignments: [{ sportEventParticipantId: favourite.id, price: 777, source: 'MANUAL' }],
     });

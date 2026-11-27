@@ -10,7 +10,7 @@ import type {
   SportEventSlotTierRepository,
   SportEventRepository,
 } from '@poolmaster/shared/db';
-import { firstTierSlotOf, type SportEventTierSlot, MatchStatus, SportEventParticipantStatus, coveredRoundNumbers, eventPlaysMatches, isSquaresRound, hasSportEventStarted, matchSpread } from '@poolmaster/shared/domain';
+import { tierSetSlotOf, type SportEventTierSlot, MatchStatus, SportEventParticipantStatus, coveredRoundNumbers, eventPlaysMatches, isSquaresRound, hasSportEventStarted, matchSpread } from '@poolmaster/shared/domain';
 import { findBracketProblem } from '../scoring-families/head-to-head/bracket-picks';
 import { ContestCutoffKind, cutoffTiming } from '../contests/entry-window';
 import { knockoutSeeds } from '../scoring-families/head-to-head/score-team';
@@ -56,7 +56,7 @@ export function createContestSportEventReader({ sportEvents, field, tiers, valua
       participantCount: loaded.get(event.id) ?? 0,
       rounds: event.rounds ?? null,
       slotDefinitionIds: event.slotDefinitions.map((definition) => definition.id),
-      salaryCap: firstTierSlotOf(tierSlots.get(event.id) ?? [])?.pricing?.salaryCap ?? null,
+      salaryCap: tierSetSlotOf(tierSlots.get(event.id) ?? [])?.pricing?.salaryCap ?? null,
       squaresFromRound: event.squaresFromRound ?? null,
       participantType: event.participantType,
       scoringFamily: event.scoringFamily,
@@ -66,7 +66,7 @@ export function createContestSportEventReader({ sportEvents, field, tiers, valua
     findById: async (sportEventId) => (await findByIds([sportEventId])).at(0) ?? null,
     findByIds,
     findActiveFieldPrices: async (sportEventId) => {
-      const firstSlot = firstTierSlotOf((await tiers.findTierSlots([sportEventId])).get(sportEventId) ?? []);
+      const firstSlot = tierSetSlotOf((await tiers.findTierSlots([sportEventId])).get(sportEventId) ?? []);
       if (firstSlot === undefined) return [];
       const [entries, eventValuations] = await Promise.all([
         field.findBySportEvent(sportEventId),

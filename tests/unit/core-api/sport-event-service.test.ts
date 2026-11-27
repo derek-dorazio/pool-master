@@ -793,7 +793,7 @@ describe('SportEventService.releaseEvent (#431)', () => {
     await store.addTiers(event.id, [{ tierKey: 'tier-1', tierNumber: 1 }]);
     const tierId = store.tierRows[0].id;
     const entries = Array.from({ length: golfers }, (_, index) => store.addToField(event.id, `participant-${index}`));
-    await store.valuationRepo().assignTiers(store.firstTierSlotOf(event.id), entries.slice(0, tiered).map((entry, index) => ({
+    await store.valuationRepo().assignTiers(store.tierSetSlotOf(event.id), entries.slice(0, tiered).map((entry, index) => ({
       sportEventParticipantId: entry.id,
       sportEventSlotTierId: tierId,
       tierOrderIndex: index + 1,
@@ -801,7 +801,7 @@ describe('SportEventService.releaseEvent (#431)', () => {
     })));
     if (priced !== null) {
       await store.valuationRepo().assignSlotPrices({
-        slot: store.firstTierSlotOf(event.id),
+        slot: store.tierSetSlotOf(event.id),
         pricing: inMemoryStandardPricing(),
         assignments: entries.slice(0, priced).map((entry) => ({ sportEventParticipantId: entry.id, price: 6000, source: 'AUTO_RANKING' })),
       });
@@ -896,7 +896,7 @@ describe('SportEventService.releaseEvent (#431)', () => {
     const withdrawn = store.addToField(event.id, 'participant-withdrawn');
     withdrawn.status = SportEventParticipantStatus.WITHDRAWN;
     const tier2Id = store.tierRows.filter((tier) => tier.tierKey === 'tier-2').map((tier) => tier.id)[0];
-    await store.valuationRepo().assignTiers(store.firstTierSlotOf(event.id), [{ sportEventParticipantId: withdrawn.id, sportEventSlotTierId: tier2Id, tierOrderIndex: 3, source: 'MANUAL' }]);
+    await store.valuationRepo().assignTiers(store.tierSetSlotOf(event.id), [{ sportEventParticipantId: withdrawn.id, sportEventSlotTierId: tier2Id, tierOrderIndex: 3, source: 'MANUAL' }]);
 
     await expect(service.releaseEvent(event.id)).rejects.toMatchObject({
       code: 'SPORT_EVENT_NOT_READY',

@@ -257,7 +257,7 @@ export const SportEventContestListResponseSchema = z.object({
 }).describe('The customer contests on one event.');
 export type SportEventContestListResponse = z.infer<typeof SportEventContestListResponseSchema>;
 
-// --- SportEventTier --------------------------------------------------------------
+// --- SportEventTier: a SportEventSlotTier on the wire (#2044) ----------------------
 
 export const SportEventTierDtoSchema = z.object({
   id: z.uuid(),

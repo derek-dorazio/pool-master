@@ -90,8 +90,8 @@ async function cleanupContestArtifacts(): Promise<void> {
   }
 
   if (createdSportEventIds.length > 0) {
-    // SportEventTier and SportEventRound both have RESTRICT FKs to
-    // SportEvent, so they must clear before the SportEvent delete below.
+    // A slot's tiers (SportEventSlotTier) and the rounds must clear
+    // before the SportEvent delete below.
     await prisma.sportEventSlotTier.deleteMany({
       where: {
         slot: { sportEventId: {
@@ -1114,7 +1114,7 @@ describe('SDK Functional: Contests and Entries', () => {
     createdSportEventParticipantIds.push(sportEventParticipant.id);
 
     // Tiers are event-owned (plans/124 §4.5/§4.6): the pick-submission flow requires a real
-    // tier assignment (TIER_MISSING otherwise), so this fixture needs a SportEventTier.
+    // tier assignment (TIER_MISSING otherwise), so this fixture needs a SportEventSlotTier.
     const tier = await prisma.sportEventSlotTier.create({
       data: {
         sportEventSlotId: (await tierSetSlot(prisma, sportEvent.id)).id,

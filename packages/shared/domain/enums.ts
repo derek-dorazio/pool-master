@@ -1534,7 +1534,7 @@ export const ColorSchemeOrder = explicitOrder<ColorScheme>({
 
 
 /**
- * How a SportEventParticipantValuation's tier/price was set. See plans/124 §4.5. An automatic one
+ * How a SportEventSlotParticipantValuation's tier/price was set. See plans/124 §4.5. An automatic one
  * names the value that decided the field's order (#1807, `orderField`): the feed's odds, the seed
  * or the rank. A field with none of them is never tiered or priced automatically (#2040): a name
  * orders nothing (`rules/domain-model-conventions-rules.md` §17).

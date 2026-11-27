@@ -1033,8 +1033,8 @@ export async function cleanupTestData(): Promise<void> {
   await prisma.sportEventParticipant.deleteMany();
   await prisma.participantProviderMapping.deleteMany();
   await prisma.participant.deleteMany();
-  // SportEventTier and SportEventRound both have RESTRICT FKs to
-  // SportEvent, so they must clear before the SportEvent delete below.
+  // A slot's tiers (SportEventSlotTier) and the rounds must clear
+  // before the SportEvent delete below.
   await prisma.sportEventSlotTier.deleteMany();
   await prisma.sportEventRound.deleteMany();
   // Every event goes, so every contest's link to one goes first (#713): those rows hold RESTRICT

@@ -88,14 +88,14 @@ async function readySyncedDraft(store: InMemorySportEvents, sportLeagueId: strin
   });
   await store.addRounds(event.id, [{ roundNumber: 1, scheduledDate: event.startDate }]);
   await store.addTiers(event.id, [{ tierKey: 'tier-1', tierNumber: 1 }]);
-  const tierId = store.tierRows.find((tier) => tier.sportEventSlotId === store.firstTierSlotOf(event.id).id)?.id ?? '';
+  const tierId = store.tierRows.find((tier) => tier.sportEventSlotId === store.tierSetSlotOf(event.id).id)?.id ?? '';
   const entries = ['a', 'b', 'c'].map((name) => {
     const participantId = `participant-${event.id}-${name}`;
     return store.addToField(event.id, participantId);
   });
-  await store.valuationRepo().assignTiers(store.firstTierSlotOf(event.id), entries.map((entry, index) => ({ sportEventParticipantId: entry.id, sportEventSlotTierId: tierId, tierOrderIndex: index + 1, source: 'MANUAL' })));
+  await store.valuationRepo().assignTiers(store.tierSetSlotOf(event.id), entries.map((entry, index) => ({ sportEventParticipantId: entry.id, sportEventSlotTierId: tierId, tierOrderIndex: index + 1, source: 'MANUAL' })));
   await store.valuationRepo().assignSlotPrices({
-    slot: store.firstTierSlotOf(event.id),
+    slot: store.tierSetSlotOf(event.id),
     pricing: inMemoryStandardPricing(),
     assignments: entries.map((entry) => ({ sportEventParticipantId: entry.id, price: 6000, source: 'AUTO_RANKING' })),
   });

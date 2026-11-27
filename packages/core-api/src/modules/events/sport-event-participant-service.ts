@@ -31,7 +31,7 @@ import type {
 import {
   eventPlaysMatches,
   SportEventStatus,
-  firstTierSlotOf,
+  tierSetSlotOf,
   type SportEvent,
   type SportEventTierSlot,
   type SportEventParticipant,
@@ -42,7 +42,7 @@ import { DomainEventType, type DomainEvents } from '../domain-events';
 import { SportEventError } from './errors';
 import type { EventFieldCache } from './event-field-cache';
 import { EventFieldReader, type EventFieldReads } from './event-field-reader';
-import { assertTierSetEditable, requireFirstTierSlot } from './sport-event-tier-service';
+import { assertTierSetEditable, requireTierSetSlot } from './sport-event-tier-service';
 
 // The field row a reader sees lives with the port that reads it (#1163).
 export type { ParticipantRoundView, ParticipantStandingView, SportEventParticipantView } from '@poolmaster/shared/db';
@@ -76,7 +76,7 @@ export interface SportEventParticipantServiceDeps {
   participants: ParticipantRepository;
   matches: Pick<SportEventRoundMatchRepository, 'findBySportEvent'>;
   /**
-   * The event's first slot, whose set a price or tier in a save goes into (#2044), and that set's
+   * The event's tier-set slot, whose set a price or tier in a save goes into (#2044), and that set's
    * tiers and valuations, read when a save moves a participant into another tier.
    */
   tiers: Pick<SportEventSlotTierRepository, 'findTierSlots' | 'findBySlot'>;
@@ -154,7 +154,7 @@ export class SportEventParticipantService implements EventFieldReads {
 
   /**
    * One save of the field grid: every patched row and its manual price, all or none; a price or a
-   * tier move goes into the event's first slot's set (#2044). Rank, odds, seed and withdrawals
+   * tier move goes into the event's tier-set slot's set (#2044). Rank, odds, seed and withdrawals
    * stay editable after release; a price does not (409
    * SPORT_EVENT_TIERS_LOCKED, #431), and neither does a seed on an event played as a bracket,
    * whose upset bonus reads the seeds as they stood at release (409 SPORT_EVENT_SEEDS_LOCKED,
@@ -207,13 +207,13 @@ export class SportEventParticipantService implements EventFieldReads {
   }
 
   /**
-   * The event's first slot (#2044), when the save sets a price or moves a tier: the set they go
+   * The event's tier-set slot (#2044), when the save sets a price or moves a tier: the set they go
    * into, checked editable (409 SPORT_EVENT_TIERS_LOCKED, 409 SPORT_EVENT_HAS_NO_SLOT). Null for a
    * save that touches neither, which reads nothing.
    */
   private async valuedSlot(event: SportEvent, updates: readonly FieldEntryUpdate[]): Promise<SportEventTierSlot | null> {
     if (!updates.some((update) => update.price !== undefined || update.tierKey !== undefined)) return null;
-    const slot = requireFirstTierSlot(event.id, firstTierSlotOf((await this.deps.tiers.findTierSlots([event.id])).get(event.id) ?? []));
+    const slot = requireTierSetSlot(event.id, tierSetSlotOf((await this.deps.tiers.findTierSlots([event.id])).get(event.id) ?? []));
     try {
       assertTierSetEditable(event, slot);
     } catch (error) {

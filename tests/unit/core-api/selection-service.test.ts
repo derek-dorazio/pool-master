@@ -320,7 +320,7 @@ function setup(options: SetupOptions = {}) {
         .fn()
         .mockResolvedValue({ tiers: options.tierGroups ?? TIER_GROUPS, valuations: options.valuations ?? VALUATIONS }),
       // The event's first slot, never priced unless a test prices it.
-      firstTierSlot: jest.fn().mockResolvedValue({ pricing: null }),
+      tierSetSlot: jest.fn().mockResolvedValue({ pricing: null }),
     } as unknown as SportEventTierService,
     // An event that starts long after every test's clock, so only contest status gates picks.
     sportEvents: {
@@ -1556,7 +1556,7 @@ describe('SelectionService.previewLineup: a roster setup\'s pick screen before i
   function previewSetup(salaryCap: number | null = 250) {
     const built = setup();
     const pricing = salaryCap === null ? null : { platformPricingProfileId: 'pricing-profile-1', salaryCap, unit: 10, topSharePercent: 24, floorSharePercent: 12, steepness: 4 };
-    (built.deps.tiers as unknown as { firstTierSlot: jest.Mock }).firstTierSlot.mockResolvedValue({ pricing });
+    (built.deps.tiers as unknown as { tierSetSlot: jest.Mock }).tierSetSlot.mockResolvedValue({ pricing });
     return built;
   }
 

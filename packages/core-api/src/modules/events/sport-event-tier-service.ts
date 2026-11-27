@@ -4,15 +4,15 @@
  * prices are pool mechanics, not golf (#203 stage 2, decision 3).
  *
  * A set belongs to an event slot (#2044), never to a contest (plans/124 §4.6). Every template's
- * starting point today is its event's first slot in play order, so the event-level methods here
- * act on that slot's set, found by `firstTierSlots`, the one resolver every reader goes through.
+ * starting point today is its event's tier-set slot (`chooseTierSetSlot`), so the event-level methods here
+ * act on that slot's set, found by `tierSetSlots`, the one resolver every reader goes through.
  * `getEffectiveTiersAndValuations` (and its two one-view shorthands) is the one path every
  * contest-side reader (selections, contest configuration, the entry email) takes.
  * The valuation view reads valuations directly rather than through the tiers, because a
  * valuation can carry a price with no tier (a budget-format contest), and a query that
  * starts from the tiers would never see it.
  *
- * The first slot's set is built while the event is a DRAFT and locks for good when it is released
+ * The tier-set slot's set is built while the event is a DRAFT and locks for good when it is released
  * (#431; `isTierSetEditable`, the one lock rule): every write here refuses with 409
  * SPORT_EVENT_TIERS_LOCKED after that, so a saved entry can never be broken by a tier or price
  * moving under it. A participant added to the field after release stays untiered and can't be
@@ -33,7 +33,7 @@ import type {
 } from '@poolmaster/shared/db';
 import {
   findBudgetPricingProblem,
-  firstTierSlotOf,
+  tierSetSlotOf,
   isTierSetEditable,
   FieldOrderBasis,
   fieldOrderValue,
@@ -110,7 +110,7 @@ export type SyncedFieldValuation =
  * Refuses a tier or price change once the slot's set is locked (#431, #2044: `isTierSetEditable`).
  * The field grid's price column goes through this too, so there is one lock rule.
  */
-export function assertTierSetEditable(event: SportEvent, slot: Pick<SportEventTierSlot, 'isFirstSlot' | 'seasonSlotStatus'>): void {
+export function assertTierSetEditable(event: SportEvent, slot: Pick<SportEventTierSlot, 'isTierSetSlot' | 'seasonSlotStatus'>): void {
   if (!isTierSetEditable(event, slot)) {
     throw new SportEventError(
       `Sport event ${event.id} has been released for contests, so its tiers and prices are locked.`,
@@ -121,7 +121,7 @@ export function assertTierSetEditable(event: SportEvent, slot: Pick<SportEventTi
 }
 
 /** 409 SPORT_EVENT_HAS_NO_SLOT: an event covering no Season slot has no set to tier or price. */
-export function requireFirstTierSlot(sportEventId: string, slot: SportEventTierSlot | undefined): SportEventTierSlot {
+export function requireTierSetSlot(sportEventId: string, slot: SportEventTierSlot | undefined): SportEventTierSlot {
   if (slot === undefined) {
     throw new SportEventError(
       `Sport event ${sportEventId} covers no Season slot, so it has no tiers or prices to set.`,
@@ -150,32 +150,32 @@ export class SportEventTierService {
   constructor(private readonly deps: SportEventTierServiceDeps) {}
 
   /**
-   * Each event's first slot in play order (#2044), with what its set was tiered and priced with:
+   * Each event's tier-set slot (#2044), with what its set was tiered and priced with:
    * today's only starting point, so the set every event-level reader and write here acts on. An
    * event covering no slot is left out. A fixed number of reads however many events.
    */
-  async firstTierSlots(sportEventIds: readonly string[]): Promise<Map<string, SportEventTierSlot>> {
+  async tierSetSlots(sportEventIds: readonly string[]): Promise<Map<string, SportEventTierSlot>> {
     const slotsByEvent = await this.deps.tiers.findTierSlots(sportEventIds);
     return new Map([...slotsByEvent].flatMap(([sportEventId, slots]): Array<[string, SportEventTierSlot]> => {
-      const first = firstTierSlotOf(slots);
+      const first = tierSetSlotOf(slots);
       return first === undefined ? [] : [[sportEventId, first]];
     }));
   }
 
-  /** The event's first slot (`firstTierSlots`), or undefined when it covers none. */
-  async firstTierSlot(sportEventId: string): Promise<SportEventTierSlot | undefined> {
-    return (await this.firstTierSlots([sportEventId])).get(sportEventId);
+  /** The event's tier-set slot (`tierSetSlots`), or undefined when it covers none. */
+  async tierSetSlot(sportEventId: string): Promise<SportEventTierSlot | undefined> {
+    return (await this.tierSetSlots([sportEventId])).get(sportEventId);
   }
 
-  /** The tiers of the event's first slot's set, in tier order; none when it covers no slot. */
+  /** The tiers of the event's tier-set slot's set, in tier order; none when it covers no slot. */
   async listTiers(sportEventId: string): Promise<SetTier[]> {
-    const slot = await this.firstTierSlot(sportEventId);
+    const slot = await this.tierSetSlot(sportEventId);
     return slot === undefined ? [] : setTiers(slot, await this.deps.tiers.findBySlot(slot.id));
   }
 
   /** Every event's first-slot tiers from one read (#1355), each in tier order. */
   async listTiersOfEvents(sportEventIds: readonly string[]): Promise<SetTier[]> {
-    const slots = await this.firstTierSlots(sportEventIds);
+    const slots = await this.tierSetSlots(sportEventIds);
     const slotById = new Map([...slots.values()].map((slot) => [slot.id, slot]));
     const tiers = await this.deps.tiers.findBySlots([...slotById.keys()]);
     return tiers.flatMap((tier) => {
@@ -185,11 +185,11 @@ export class SportEventTierService {
   }
 
   /**
-   * New events' default tiers, every event's in one insert (#1253), on each event's first slot
+   * New events' default tiers, every event's in one insert (#1253), on each event's tier-set slot
    * (#2044): its sport league's tier profile's count (#1844: the College Football Playoff's six,
    * golf's six). A default, fully editable afterwards; the tier count is however many rows exist,
    * not a stored parameter (plans/124 §4.5a). The slots have no tiers yet: an event is created
-   * with them. Answers each event's first slot and its tiers as written; an event covering no slot
+   * with them. Answers each event's tier-set slot and its tiers as written; an event covering no slot
    * gets none and is left out. The
    * caller has the league, so the profile is one read by its id. 404
    * PLATFORM_TIER_PROFILE_NOT_FOUND for a profile that is gone.
@@ -201,7 +201,7 @@ export class SportEventTierService {
     if (sportEventIds.length === 0) return new Map();
     const [profile, slots] = await Promise.all([
       this.deps.platformTierProfiles.findById(sportLeague.platformTierProfileId),
-      this.firstTierSlots(sportEventIds),
+      this.tierSetSlots(sportEventIds),
     ]);
     if (!profile) {
       throw new SportEventError(`Tier profile ${sportLeague.platformTierProfileId} of sport league ${sportLeague.id} was not found.`, 'PLATFORM_TIER_PROFILE_NOT_FOUND', 404);
@@ -241,7 +241,7 @@ export class SportEventTierService {
     sportEventId: string,
     field?: readonly SportEventParticipant[],
   ): Promise<{ tiers: SportEventTierGroup[]; valuations: ParticipantValuationView[] }> {
-    const slot = await this.firstTierSlot(sportEventId);
+    const slot = await this.tierSetSlot(sportEventId);
     if (slot === undefined) return { tiers: [], valuations: [] };
     const [slotTiers, valuations, fieldRows] = await Promise.all([
       this.deps.tiers.findBySlot(slot.id),
@@ -273,7 +273,7 @@ export class SportEventTierService {
    * events' fields (#1201), keyed by event; an event with no tiers has an empty list.
    */
   async getEffectiveTiersForSportEvents(sportEventIds: readonly string[]): Promise<Map<string, SportEventTierGroup[]>> {
-    const slots = await this.firstTierSlots(sportEventIds);
+    const slots = await this.tierSetSlots(sportEventIds);
     const slotIds = [...slots.values()].map((slot) => slot.id);
     const [tiers, valuations, fieldRows] = await Promise.all([
       this.deps.tiers.findBySlots(slotIds),
@@ -298,7 +298,7 @@ export class SportEventTierService {
    * in no tier. An event whose tier count is not the profile's, or whose field is too small for
    * it, gets the field spread evenly, larger tiers first (22 drivers on four tiers is 6/6/5/5).
    * Recomputed from the current tiers and field every run, and the profile and tier size used are
-   * recorded on the event's first slot with the tiers (#2044).
+   * recorded on the event's tier-set slot with the tiers (#2044).
    */
   async autoAssignTiers(input: { sportEventId: string; tierSize?: number }): Promise<SportEventTierGroup[]> {
     const { event, slot } = await this.requireEditableSet(input.sportEventId);
@@ -439,7 +439,7 @@ export class SportEventTierService {
   /**
    * Prices the active field on the budget curve (#93) with `pricing`'s values, in the field's one
    * order, the same auto-assigned tiers use (#1807), and records those values and their profile on
-   * the event's first slot (#2044), in one write. A separate, later action from seeding (plans/124
+   * the event's tier-set slot (#2044), in one write. A separate, later action from seeding (plans/124
    * §4.7a), repeatable with other values until release. Tiers are untouched. 422
    * PRICING_CONFIG_INVALID when the values contradict each other; 404
    * PLATFORM_PRICING_PROFILE_NOT_FOUND when the profile named is not one.
@@ -475,8 +475,8 @@ export class SportEventTierService {
   /**
    * Tiers and prices the field a provider sync just wrote (#1822), the way the two auto-assign
    * buttons would: in the field's one order (#1807), on the event's own tiers by its sport league's
-   * tier profile (#1844), priced with the values the event's first slot was last priced with, or
-   * else its sport league's pricing profile (#2044: the first slot's set, today's only one).
+   * tier profile (#1844), priced with the values the event's tier-set slot was last priced with, or
+   * else its sport league's pricing profile (#2044: the tier-set slot's set, today's only one).
    *
    * An admin's correction is kept: once any field row's tier was placed by hand (MANUAL, the
    * drag-and-drop save), the sync leaves every tier alone, and once any price was typed by hand
@@ -492,7 +492,7 @@ export class SportEventTierService {
    * or prices already match, so a sync of an unchanged field writes nothing.
    */
   async valueSyncedField(event: SportEvent): Promise<SyncedFieldValuation> {
-    const slot = await this.firstTierSlot(event.id);
+    const slot = await this.tierSetSlot(event.id);
     if (slot === undefined) {
       return { outcome: 'SKIPPED', reason: 'NO_SLOT' };
     }
@@ -605,19 +605,19 @@ export class SportEventTierService {
   }
 
   /**
-   * The event and its first slot, whose set a write changes (#2044). 404 EVENT_NOT_FOUND for an
+   * The event and its tier-set slot, whose set a write changes (#2044). 404 EVENT_NOT_FOUND for an
    * unknown event; 409 SPORT_EVENT_HAS_NO_SLOT when it covers no slot; 409
    * SPORT_EVENT_TIERS_LOCKED once the set is locked.
    */
   private async requireEditableSet(sportEventId: string): Promise<{ event: SportEvent; slot: SportEventTierSlot }> {
     const [event, firstSlot] = await Promise.all([
       this.deps.sportEvents.findById(sportEventId),
-      this.firstTierSlot(sportEventId),
+      this.tierSetSlot(sportEventId),
     ]);
     if (!event) {
       throw new SportEventError(`Sport event ${sportEventId} was not found.`, 'EVENT_NOT_FOUND', 404);
     }
-    const slot = requireFirstTierSlot(sportEventId, firstSlot);
+    const slot = requireTierSetSlot(sportEventId, firstSlot);
     try {
       assertTierSetEditable(event, slot);
     } catch (error) {

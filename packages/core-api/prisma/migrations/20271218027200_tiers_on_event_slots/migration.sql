@@ -1,6 +1,6 @@
 -- #2044 (slice 7b): team tiers, valuations and the tier and pricing settings move from the event
--- to the event slot. Every template's starting point today is its event's first slot in play
--- order, so each event's tiers, valuations and settings move onto that slot. The slot keeps the
+-- to the event slot. Each event's tiers, valuations and settings move onto its tier-set slot, the
+-- slot its tiered and budget templates start at (below). The slot keeps the
 -- settings as typed columns: the tier profile (the layout is the profile's) with any tier size an
 -- admin sent, and the pricing profile with the five values the field was priced with. The old
 -- event named its profiles by id (#2205); the slot keeps those, or its sport league's where one
@@ -68,21 +68,29 @@ ALTER TABLE "sport_event_slots" ADD CONSTRAINT "sport_event_slots_pricing_togeth
 );
 ALTER TABLE "sport_event_slots" ADD CONSTRAINT "sport_event_slots_tier_size_with_profile" CHECK ("tier_size" IS NULL OR "platform_tier_profile_id" IS NOT NULL);
 
--- Each event's first slot in play order (compareSeasonSlots): tournaments by start date, then by
--- slot kind (the enum's order is play order), week number and key.
-CREATE TEMP TABLE "first_event_slots" AS
+-- Each event's tier-set slot (chooseTierSetSlot): the first slot in play order that an active
+-- tiered or budget template of its league lists, since a template starts at its first listed slot
+-- (a league's play-in comes first, but no such template covers it); the first slot in play order
+-- when no such template lists any. Play order is compareSeasonSlots': tournaments by start date,
+-- then by slot kind (the enum's order is play order), week number and key.
+CREATE TEMP TABLE "tier_set_slots" AS
 SELECT DISTINCT ON (es."sport_event_id") es."sport_event_id", es."id" AS "sport_event_slot_id"
 FROM "sport_event_slots" es
 JOIN "sport_league_season_competition_slots" ss ON ss."id" = es."sport_league_season_competition_slot_id"
 JOIN "sport_league_competition_slots" d ON d."id" = ss."sport_league_competition_slot_id"
 ORDER BY es."sport_event_id",
+  NOT EXISTS (
+    SELECT 1 FROM "contest_config_template_slots" ts
+    JOIN "contest_config_templates" t ON t."id" = ts."template_id"
+    WHERE ts."sport_league_competition_slot_id" = d."id" AND t."active" AND t."selection_type" IN ('TIERED', 'BUDGET_PICK')
+  ),
   CASE WHEN d."slot_kind" = 'TOURNAMENT' THEN ss."starts_at" END ASC NULLS LAST,
   d."slot_kind", COALESCE(d."week_number", 0), ss."is_test_data", d."key", COALESCE(ss."label", '');
 
 INSERT INTO "sport_event_slot_tiers" ("id", "sport_event_slot_id", "tier_key", "tier_number", "created_at", "updated_at")
 SELECT t."id", f."sport_event_slot_id", t."tier_key", t."tier_number", t."created_at", t."updated_at"
 FROM "sport_event_tiers" t
-JOIN "first_event_slots" f ON f."sport_event_id" = t."sport_event_id";
+JOIN "tier_set_slots" f ON f."sport_event_id" = t."sport_event_id";
 
 INSERT INTO "sport_event_slot_participant_valuations" (
   "id", "sport_event_id", "sport_event_slot_id", "sport_event_participant_id", "sport_event_slot_tier_id",
@@ -92,7 +100,7 @@ SELECT v."id", p."sport_event_id", f."sport_event_slot_id", v."sport_event_parti
   v."tier_order_index", v."tier_assigned_source", v."price", v."price_assigned_source", v."created_at", v."updated_at"
 FROM "sport_event_participant_valuations" v
 JOIN "sport_event_participants" p ON p."id" = v."sport_event_participant_id"
-JOIN "first_event_slots" f ON f."sport_event_id" = p."sport_event_id";
+JOIN "tier_set_slots" f ON f."sport_event_id" = p."sport_event_id";
 
 -- The settings: the profiles the event recorded by id (#2205), its sport league's where that
 -- profile has since been deleted, any tier size the admin sent, and the pricing values used.
@@ -108,14 +116,14 @@ SET "platform_tier_profile_id" = CASE WHEN e."tier_config" IS NULL THEN NULL ELS
     "top_share_percent" = (e."pricing_config"->>'topSharePercent')::double precision,
     "floor_share_percent" = (e."pricing_config"->>'floorSharePercent')::double precision,
     "steepness" = (e."pricing_config"->>'steepness')::double precision
-FROM "first_event_slots" f
+FROM "tier_set_slots" f
 JOIN "sport_events" e ON e."id" = f."sport_event_id"
 JOIN "sport_leagues" l ON l."id" = e."sport_league_id"
 JOIN "platform_tier_profiles" tp ON tp."id" = COALESCE(e."platform_tier_profile_id", l."platform_tier_profile_id")
 WHERE es."id" = f."sport_event_slot_id"
   AND (e."tier_config" IS NOT NULL OR e."pricing_config" IS NOT NULL);
 
-DROP TABLE "first_event_slots";
+DROP TABLE "tier_set_slots";
 
 -- An event with no slot has nowhere to keep tiers: its tiers and valuations go with the old tables.
 DROP TABLE "sport_event_participant_valuations";

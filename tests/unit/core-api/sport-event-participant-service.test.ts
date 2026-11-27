@@ -41,7 +41,7 @@ describe('SportEventParticipantService.listEventParticipants', () => {
     await store.golfRoundRepo().upsert({ sportEventParticipantId: entry.id, sportEventRoundId: round.id, status: 'COMPLETED', completedAt: null, strokes: 70, scoreToPar: -2, thru: 18 });
     await store.golfStandingRepo().upsertMany([{ sportEventParticipantId: entry.id, status: 'COMPLETE', asOf: new Date(), eventScoreToPar: -2, eventStrokes: 70, currentRoundThru: 18 }]);
     await store.valuationRepo().assignSlotPrices({
-      slot: store.firstTierSlotOf(event.id),
+      slot: store.tierSetSlotOf(event.id),
       pricing: inMemoryStandardPricing(),
       assignments: [{ sportEventParticipantId: entry.id, price: 9, source: 'MANUAL' }],
     });
@@ -240,7 +240,7 @@ describe('SportEventParticipantService — changing the field', () => {
       const context = setup();
       const { store, sport, event } = context;
       await store.addTiers(event.id, [{ tierKey: 'tier-1', tierNumber: 1 }, { tierKey: 'tier-2', tierNumber: 2 }]);
-      const [tier1, tier2] = await store.tierRepo().findBySlot(store.firstTierSlotOf(event.id).id);
+      const [tier1, tier2] = await store.tierRepo().findBySlot(store.tierSetSlotOf(event.id).id);
       const add = (name: string) => store.addToField(event.id, store.addParticipant(sport.id, name).id);
       return { ...context, tier1, tier2, add };
     }
@@ -248,7 +248,7 @@ describe('SportEventParticipantService — changing the field', () => {
     it('places the moved participant after the highest place in its new tier, so a tier with gaps never repeats a place, and marks the tier and price manual', async () => {
       const { store, service, event, tier1, tier2, add } = await tiered();
       const [first, third, moving] = [add('First'), add('Third'), add('Moving')];
-      await store.valuationRepo().assignTiers(store.firstTierSlotOf(event.id), [
+      await store.valuationRepo().assignTiers(store.tierSetSlotOf(event.id), [
         { sportEventParticipantId: first.id, sportEventSlotTierId: tier2.id, tierOrderIndex: 0, source: 'AUTO_ODDS' },
         { sportEventParticipantId: third.id, sportEventSlotTierId: tier2.id, tierOrderIndex: 2, source: 'AUTO_ODDS' },
         { sportEventParticipantId: moving.id, sportEventSlotTierId: tier1.id, tierOrderIndex: 0, source: 'AUTO_ODDS' },
