@@ -149,6 +149,7 @@ export class SyncTick {
       type: BackgroundJobType.SYNC_LEAGUE_EVENTS,
       by: 'sportLeagueId',
       ids: leagues.map((league) => league.sportLeagueId),
+      dueBy: now,
     });
     return leagues
       .filter((league) => isSyncDue(lastRunAt.get(league.sportLeagueId), intervalMs, now))
@@ -159,7 +160,7 @@ export class SyncTick {
     const slots = await this.options.dueWork.findNextSlots({ leagues, now });
     const eventIds = fieldWindowEventIds(slots, now);
     const leagueOfEvent = new Map(slots.map((slot) => [slot.sportEventId, slot.sportLeagueId]));
-    const lastRunAt = await this.latestEventJobs(ProviderSyncKind.FIELD, eventIds);
+    const lastRunAt = await this.latestEventJobs(ProviderSyncKind.FIELD, eventIds, now);
     const leaguesById = new Map(leagues.map((league) => [league.sportLeagueId, league]));
     return eventIds.flatMap((sportEventId) => {
       const league = leaguesById.get(leagueOfEvent.get(sportEventId) ?? '');
@@ -170,7 +171,7 @@ export class SyncTick {
 
   private async scoresJobs(leagues: readonly TickLeague[], intervalMs: number, now: Date): Promise<BackgroundJobRequest[]> {
     const live = await this.options.dueWork.findLiveEvents({ leagues, now });
-    const lastRunAt = await this.latestEventJobs(ProviderSyncKind.SCORES, live.map((event) => event.sportEventId));
+    const lastRunAt = await this.latestEventJobs(ProviderSyncKind.SCORES, live.map((event) => event.sportEventId), now);
     const cadence = this.options.notifiedProviderCadence();
     const leaguesById = new Map(leagues.map((league) => [league.sportLeagueId, league]));
     return live.flatMap((event) => {
@@ -186,8 +187,8 @@ export class SyncTick {
     });
   }
 
-  private latestEventJobs(kind: EventSyncKind, sportEventIds: readonly string[]): Promise<Map<string, Date>> {
-    return this.options.jobHistory.findLatestRunAt({ type: EVENT_SYNC_JOB_TYPES[kind], by: 'sportEventId', ids: sportEventIds });
+  private latestEventJobs(kind: EventSyncKind, sportEventIds: readonly string[], now: Date): Promise<Map<string, Date>> {
+    return this.options.jobHistory.findLatestRunAt({ type: EVENT_SYNC_JOB_TYPES[kind], by: 'sportEventId', ids: sportEventIds, dueBy: now });
   }
 
   /**

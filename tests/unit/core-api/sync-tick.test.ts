@@ -6,9 +6,11 @@
 
 import { randomUUID } from 'node:crypto';
 import type { LiveEventView, SyncDueWorkReader } from '@poolmaster/shared/db';
-import { BackgroundJobType, JobTrigger, MatchStatus, ProviderCode, type FieldWindowSlot, type SportLeague } from '@poolmaster/shared/domain';
+import { BackgroundJobType, JobTrigger, MatchStatus, ProviderCode, ProviderSyncKind, type FieldWindowSlot, type SportLeague } from '@poolmaster/shared/domain';
 import { BackgroundJobQueue } from '../../../packages/core-api/src/modules/background-jobs/background-job-queue';
 import { SyncTick, type NotifiedProviderCadence } from '../../../packages/core-api/src/modules/ingestion/sync-tick';
+import { eventSyncJob, EventSyncWait } from '../../../packages/core-api/src/modules/ingestion/event-sync-job-requests';
+import { SCHEDULE_START } from '../../../packages/core-api/src/core/job-start';
 import { buildProviderMapping, buildSportLeague } from '../../factories';
 import { fakeLogger } from '../../support/fake-logger';
 import { fakeSportDataProvider, registryWith } from '../../support/fake-sport-data-provider';
@@ -77,6 +79,7 @@ function tickOf(options: {
   return {
     tick,
     jobs,
+    queue,
     dueWork,
     logger,
     advance: (ms: number) => { now = new Date(now.getTime() + ms); },
@@ -120,6 +123,19 @@ describe('SyncTick', () => {
 
     expect(await tick.tick()).toBe(0);
     expect(jobs.rows).toHaveLength(3);
+  });
+
+  it("still queues an event's scores while a follow-up scores sync waits for later, so a webhook's reconcile never pauses live polling", async () => {
+    const nfl = league();
+    const live = liveEvent(nfl.id);
+    const { tick, queue, queued } = tickOf({ leagues: [nfl], live: [live] });
+    await queue.enqueueAll([eventSyncJob(queue, ProviderSyncKind.SCORES, { sportEventId: live.sportEventId }, {
+      start: SCHEDULE_START, providerCode: ProviderCode.BALLDONTLIE, runAt: at(minutes(10)), wait: EventSyncWait.RECONCILE,
+    })]);
+
+    await tick.tick();
+
+    expect(queued().filter((job) => job.type === BackgroundJobType.SYNC_EVENT_SCORES)).toHaveLength(2);
   });
 
   it('queues the scores again once the SCORES interval has passed, and the field and events only after their own', async () => {

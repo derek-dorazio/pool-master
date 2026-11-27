@@ -106,11 +106,11 @@ export function inMemoryBackgroundJobs(now: () => Date = () => new Date()): InMe
     },
     findActivity: () => Promise.reject(new Error('Activity reads are tested against Postgres in background-jobs.integration')),
     countByScope: () => Promise.reject(new Error('Job counts by scope are tested against Postgres in background-jobs.integration')),
-    findLatestRunAt: ({ type, by, ids }) => {
+    findLatestRunAt: ({ type, by, ids, dueBy }) => {
       const latest = new Map<string, Date>();
       for (const row of rows) {
         const id = row[by];
-        if (row.type !== type || id === undefined || !ids.includes(id)) continue;
+        if (row.type !== type || id === undefined || !ids.includes(id) || row.runAt > dueBy) continue;
         const seen = latest.get(id);
         if (seen === undefined || row.runAt > seen) latest.set(id, row.runAt);
       }

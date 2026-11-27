@@ -102,11 +102,11 @@ export class PrismaBackgroundJobRepository implements BackgroundJobRepository {
     }));
   }
 
-  async findLatestRunAt(filter: { type: BackgroundJobType; by: 'sportLeagueId' | 'sportEventId'; ids: readonly string[] }): Promise<Map<string, Date>> {
+  async findLatestRunAt(filter: { type: BackgroundJobType; by: 'sportLeagueId' | 'sportEventId'; ids: readonly string[]; dueBy: Date }): Promise<Map<string, Date>> {
     if (filter.ids.length === 0) return new Map();
     const groups = await this.prisma.backgroundJob.groupBy({
       by: [filter.by],
-      where: { type: filter.type, [filter.by]: { in: [...filter.ids] } },
+      where: { type: filter.type, [filter.by]: { in: [...filter.ids] }, runAt: { lte: filter.dueBy } },
       _max: { runAt: true },
     });
     const latest = new Map<string, Date>();

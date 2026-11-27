@@ -138,7 +138,7 @@ describe('the linked events whose Games are due or in play', () => {
 });
 
 describe("each subject's latest job", () => {
-  it("answers each event's latest run time for one job type, leaving out another type's jobs and an event with none", async () => {
+  it("answers each event's latest run time due by now for one job type, leaving out a job due later, another type's jobs and an event with none", async () => {
     const prisma = getPrisma();
     const [first, second, none] = [randomUUID(), randomUUID(), randomUUID()];
     const job = (type: BackgroundJobType, sportEventId: string, runAt: Date) => ({ type, sportEventId, runAt, trigger: JobTrigger.SCHEDULE, payload: { sportEventId } });
@@ -146,13 +146,14 @@ describe("each subject's latest job", () => {
       data: [
         job(BackgroundJobType.SYNC_EVENT_SCORES, first, at(-10 * 60_000)),
         job(BackgroundJobType.SYNC_EVENT_SCORES, first, at(-2 * 60_000)),
+        job(BackgroundJobType.SYNC_EVENT_SCORES, first, at(10 * 60_000)),
         job(BackgroundJobType.SYNC_EVENT_SCORES, second, at(-HOUR)),
         job(BackgroundJobType.SYNC_EVENT_FIELD, second, at(-60_000)),
       ],
     });
 
     const latest = await new PrismaBackgroundJobRepository(getAppPrisma()).findLatestRunAt({
-      type: BackgroundJobType.SYNC_EVENT_SCORES, by: 'sportEventId', ids: [first, second, none],
+      type: BackgroundJobType.SYNC_EVENT_SCORES, by: 'sportEventId', ids: [first, second, none], dueBy: at(0),
     });
 
     expect(latest).toEqual(new Map([[first, at(-2 * 60_000)], [second, at(-HOUR)]]));
@@ -213,7 +214,7 @@ describe('one sync tick', () => {
 });
 
 describe('the migration retiring the old event sync jobs', () => {
-  const MIGRATION = join(__dirname, '../../../packages/core-api/prisma/migrations/20271218029100_event_sync_jobs/migration.sql');
+  const MIGRATION = join(__dirname, '../../../packages/core-api/prisma/migrations/20271218029400_event_sync_jobs/migration.sql');
   const OLD_TYPES = [
     'MANUAL_EVENT_SYNC', 'PROVIDER_EVENT_SYNC', 'CONTEST_STARTED_EMAILS', 'CONTEST_SETTLED_EMAILS', 'CONTEST_EVENT_CHANGED_EMAILS',
     'SETTLE_SPORT_EVENT_CONTESTS', 'SETTLE_GAME_CONTESTS', 'REBUILD_LEADERBOARDS', 'CONTEST_REOPENED_EMAILS', 'SYNC_LEAGUE_EVENTS',
