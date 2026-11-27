@@ -141,7 +141,11 @@
     "providerEventSyncKey": "#2009 (10c): the dedupe key is built from our own ids in eventSyncJob",
     "providerEventReconcileKey": "#2009 (10c): the dedupe key is built from our own ids in eventSyncJob",
     "SCHEDULED_FIELD_SYNC_STATUSES": "#2009 (10c): the field window is judged by the slot's start, never by status",
-    "isEventSyncKind": "#2009 (10c): each event sync job names its kind"
+    "isEventSyncKind": "#2009 (10c): each event sync job names its kind",
+    "SCORING_FAMILY_ADMIN_UI": "#2008 (10b part 4b): no per-family results page in Manage; results come from the feed or the test-data loader",
+    "getScoringFamilyAdminUi": "#2008 (10b part 4b): no per-family results page in Manage; results come from the feed or the test-data loader",
+    "ScoreSyncNotice": "#2008 (10b part 4b): no per-family results page in Manage; results come from the feed or the test-data loader",
+    "useRowCorrections": "#2008 (10b part 4b): no per-family results page in Manage; results come from the feed or the test-data loader"
   },
   "ROUND_NAMES_FROM_FINAL": 0,
   "roundLabel": 0,
@@ -283,5 +287,9 @@
   "providerEventSyncKey": 0,
   "providerEventReconcileKey": 0,
   "SCHEDULED_FIELD_SYNC_STATUSES": 0,
-  "isEventSyncKind": 0
+  "isEventSyncKind": 0,
+  "SCORING_FAMILY_ADMIN_UI": 0,
+  "getScoringFamilyAdminUi": 0,
+  "ScoreSyncNotice": 0,
+  "useRowCorrections": 0
 }

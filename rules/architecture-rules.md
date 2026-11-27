@@ -468,10 +468,9 @@ family, never by finding guards scattered through the code:
   `Record<ScoringFamily, …>`, reached through the response's event's own `scoringFamily` (on a
   leaderboard and on each of a contest's `sportEvents`, from its sport league), read with its
   `sport` by `eventSportDefinition`.
-  How an admin enters a family's results in Manage is its entry in `SCORING_FAMILY_ADMIN_UI`
-  (`clients/poolmaster/src/features/root-admin/scoring-family-admin.ts`), the same kind of
-  record: one set of Manage event, field, tier, participant and sport league pages serves every
-  sport under `/manage/sports/:sport/`, and only the results page body comes from the family.
+  Manage has no per-family results entry: one set of Manage event, field, tier, participant
+  and sport league pages serves every sport under `/manage/sports/:sport/`, and an event's
+  results come from its feed, or from the test-data loader on a test event (#2008).
 
 The rules that keep it that way:
 

@@ -83,7 +83,7 @@ const PINNED_GAME_RESULT_COUNTS: Array<[string, number]> = [
   ['SELECT sport_event_round_match_games', 1],
   ['SELECT sport_event_round_match_sides', 3],
   ['SELECT sport_event_round_matches', 1],
-  ['SELECT sport_event_rounds', 1],
+  ['SELECT sport_event_rounds', 2], // the result's own round read, and the event read counting its Round rows (#2008)
   // The slot definitions the event plays, read with it (#2010), and the slot the game's round is
   // played in, read with the games (#2006).
   ['SELECT sport_event_slots', 2],
@@ -120,6 +120,7 @@ const PINNED_TRANSITION_COUNTS: Array<[string, number]> = [
   ['SELECT contest_season_slots', 1],
   ['SELECT sport_event_participants', 3],
   ['SELECT sport_event_provider_mappings', 2],
+  ['SELECT sport_event_rounds', 2], // each read of the event counts its Round rows (#2008)
   ['SELECT sport_event_slot_tiers', 2],
   // The slot definitions the event plays, read with it (#2010), its tier slots (#2044), and the
   // slots its contests are found through (#2014).
@@ -390,6 +391,7 @@ describe('Opening a contest (#1355)', () => {
       ['SELECT participant_contest_scoring_rules', 1],
       ['SELECT sport_event_participants', 3],
       ['SELECT sport_event_provider_mappings', 1],
+      ['SELECT sport_event_rounds', 1], // the event read counts its Round rows (#2008)
       ['SELECT sport_event_slot_participant_valuations', 2],
       ['SELECT sport_event_slot_tiers', 3],
       // The slot definitions the event plays, read with it (#2010), and one read of both events'
@@ -757,6 +759,7 @@ const PINNED_POSTPONE_COUNTS: Array<[string, number]> = [
   // The answer's field count, and its tier set's (#2044): the event plays the slot its contests cover.
   ['SELECT sport_event_participants', 3],
   ['SELECT sport_event_provider_mappings', 2],
+  ['SELECT sport_event_rounds', 2], // each read of the event counts its Round rows (#2008)
   ['SELECT sport_event_slot_tiers', 2],
   // The slot definitions the event plays, read with it (#2010), its tier slots (#2044), and the
   // slots its contests are found through and cover (#2014).

@@ -422,7 +422,7 @@ describe('Event page Rounds and matches tab', () => {
     return screen.findByTestId('root-admin-event-round-dialog');
   }
 
-  it('lists each round with its start, status, results and when it settled, and the event\'s results tools on an event no provider syncs', async () => {
+  it('lists each round with its start, status, results and when it settled, and no results entry on an event no provider syncs', async () => {
     renderEventPage('/manage/sports/golf/events/tour-1/rounds');
     seedRounds();
 
@@ -430,7 +430,7 @@ describe('Event page Rounds and matches tab', () => {
     expect(roundOne).toHaveTextContent('Completed');
     expect(roundOne).toHaveTextContent('70');
     expect(screen.getByTestId('root-admin-event-round-2')).toHaveTextContent('Scheduled');
-    expect(await screen.findByTestId('root-admin-golf-tournament-scores-page')).toBeInTheDocument();
+    expect(screen.queryByTestId('root-admin-golf-tournament-scores-page')).not.toBeInTheDocument();
   });
 
   it('opens a round\'s dialog with its facts, and Edit reschedules that one round, a blank end cleared', async () => {
