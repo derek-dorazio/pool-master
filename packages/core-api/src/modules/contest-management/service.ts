@@ -983,13 +983,14 @@ export class ContestManagementService {
     }
     const scoring = this.resolveContestScoring(sportEvent, scoringInput);
     for (const each of sportEvents) {
-      await this.assertScoringFitsEvent(each, scoring, coverage);
-      // Knockout round points score how far a team went (#715): a regular-season week's games form
-      // no bracket, so there is no round to reach. A bracket makes the same check below, in its own
-      // words, since its entry picks every game.
+      // Knockout round points score how far a team went (#715): a regular-season week plays no
+      // knockout round, so there is no round to reach. Checked before the round values, which a
+      // week, with no knockout round to give one to, could never match. A bracket makes the same
+      // check below, in its own words, since its entry picks every game.
       if (scoring.participantScoringDefinitionId === 'KNOCKOUT_ROUND_POINTS' && rules.selectionType !== SelectionType.BRACKET) {
         await this.assertEventIsKnockout(each.id);
       }
+      await this.assertScoringFitsEvent(each, scoring, coverage);
     }
     switch (rules.selectionType) {
       case SelectionType.TIERED:
