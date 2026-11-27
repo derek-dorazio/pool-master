@@ -587,11 +587,12 @@ export interface ContestRepository {
   create(contest: ContestCreate, limits: ContestSeasonLimits): Promise<ContestCreateResult>;
   update(id: string, updates: ContestUpdate): Promise<Contest>;
   /**
-   * Sets the events the contest covers to `sportEventIds`, in that order (#713). In one
-   * transaction under the contest row lock: each entry gets a DRAFT status row for every added
-   * event, and loses its status row and its picks (roster and game picks) on every removed one.
+   * Sets the Season slots the contest covers to `seasonSlotIds` (#2014), resolved again as at
+   * creation. In one transaction under the contest row lock: each entry gets a DRAFT status row for
+   * every added event, and loses its status row and its picks (roster and game picks) on every
+   * event it no longer covers.
    */
-  replaceSportEvents(id: string, sportEventIds: readonly string[]): Promise<void>;
+  replaceCoveredSlots(id: string, seasonSlotIds: readonly string[]): Promise<void>;
   /**
    * Moves a contest to `to` (with its start or end time), but only while it is in one of the
    * `from` statuses. Returns whether this call made the change: a guarded single write, so two
@@ -647,14 +648,17 @@ export interface ContestStatusTransition {
   jobs?: (movedContestIds: readonly string[]) => readonly BackgroundJobRequest[];
 }
 
-/** A new contest; `sportEventIds` are its events in sequence order. */
+/**
+ * A new contest in its Season, with the Season slots it covers (#2014), resolved once by
+ * `resolveCoveredSeasonSlots`. `seasonYear` is that Season's year, which the plan's cap counts by.
+ */
 export type ContestCreate = Pick<
   Contest,
-  'leagueId' | 'sportEventIds' | 'name' | 'status' | 'contestFormat' | 'selectionType' | 'squaresGameMatchId' | 'seasonYear'
->;
+  'leagueId' | 'name' | 'status' | 'contestFormat' | 'selectionType' | 'squaresGameMatchId' | 'sportLeagueSeasonId' | 'seasonYear'
+> & { seasonSlotIds: readonly string[] };
 
 /**
- * What can change on a contest row itself; its events change through `replaceSportEvents`, its
+ * What can change on a contest row itself; its covered slots change through `replaceCoveredSlots`, its
  * season never (fixed at creation, #2014), and its status only through `ContestLifecycle` (#1949).
  */
 export type ContestUpdate = Partial<Pick<Contest, 'name' | 'startsAt' | 'endsAt'>>;

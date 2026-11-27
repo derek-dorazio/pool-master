@@ -62,7 +62,7 @@ export function CreateContestFormatSection({
       </div>
       <div className="grid gap-2">
         <Text variant="meta">Start from</Text>
-        {/* Each template by its own name and description (#802), then Custom for rules typed by hand. */}
+        {/* Each template by its own name and description (#802); every contest starts from one (#2014). */}
         <div aria-label="Start from" className="grid gap-2 md:grid-cols-2" role="radiogroup">
           {presets.map((template) => (
             <ChoiceCard
@@ -74,9 +74,6 @@ export function CreateContestFormatSection({
               <ChoiceCardText description={template.description} label={template.name} />
             </ChoiceCard>
           ))}
-          <ChoiceCard isSelected={!selectedTemplateId} onSelect={() => onSelectPreset('')} testId="contest-template-custom">
-            <ChoiceCardText description="Set every rule yourself." label="Custom" />
-          </ChoiceCard>
         </div>
       </div>
     </FormSection>

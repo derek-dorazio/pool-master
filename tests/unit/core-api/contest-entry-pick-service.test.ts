@@ -50,6 +50,7 @@ function fakeTx(options: {
       updateMany: jest.fn(() => Promise.resolve({ count: 0 })),
     },
     contest: { findUnique: jest.fn(() => Promise.resolve(options.contest === undefined ? null : options.contest)) },
+    contestSeasonSlot: { findFirst: jest.fn(() => Promise.resolve({ id: 'covered-slot-1' })) },
     contestDraw: { create: jest.fn(options.drawCreate ?? (() => Promise.resolve({ drawnAt: DRAWN_AT }))) },
   };
 }
@@ -206,7 +207,7 @@ describe('ContestEntryPickService.recordDraw', () => {
         fieldOrder: ['sep-a', 'sep-b', 'sep-c', 'sep-d'],
         entryOrder: ['entry-1', 'entry-2'],
         drawnByUserId: 'user-1',
-        receiptsPendingSportEventId: 'event-1',
+        receiptsPendingContestSeasonSlotId: 'covered-slot-1',
       },
       select: { drawnAt: true },
     });

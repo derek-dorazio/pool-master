@@ -5,7 +5,8 @@
  * Every rule here reads slot facts (competition, phase kind, slot kind, match format), never a name.
  */
 import { MatchFormat, SelectionType, SlotKind, TemplateCoverageMode } from './enums';
-import type { ContestConfiguration, ContestTemplateSlot } from './contest-management-types';
+import type { ContestTemplateSlot } from './contest-management-types';
+import type { Contest } from './types';
 import type { ContestScoringSettings } from './contest-scoring';
 import { compareSlotDefinitions, compareSlotPlaces } from './sport-league-structure';
 
@@ -119,19 +120,16 @@ export function compareCoveredSlots(left: CoveredSlot, right: CoveredSlot): numb
   return compareSlotPlaces(left, right) || compareSlotDefinitions(left, right);
 }
 
-/**
- * What a contest covers of its event (#2014): the slot definitions its template lists. Null for a
- * contest made with no template, which covers every round until #2014 makes the template required.
- */
+/** What a contest covers (#2014): the definitions of its covered Season slots. */
 export interface ContestRoundCoverage {
-  slotDefinitionIds: readonly string[] | null;
+  slotDefinitionIds: readonly string[];
 }
 
 type CoverableMatch = { roundNumber: number; slot: { slotDefinitionId: string; slotKind: SlotKind } };
 
 /** Whether a contest covers a match's round: its slot's definition is one the contest's template lists. */
 export function coversMatchRound(coverage: ContestRoundCoverage, match: Pick<CoverableMatch, 'slot'>): boolean {
-  return coverage.slotDefinitionIds === null || coverage.slotDefinitionIds.includes(match.slot.slotDefinitionId);
+  return coverage.slotDefinitionIds.includes(match.slot.slotDefinitionId);
 }
 
 /**
@@ -160,10 +158,70 @@ export function coveredRoundValue(roundValues: readonly number[], coveredRounds:
   return place === -1 ? undefined : roundValues.at(place);
 }
 
+/** A contest's coverage (#2014): the definitions of the Season slots it covers. */
+export function contestRoundCoverage(contest: Pick<Contest, 'coveredSlotDefinitionIds'>): ContestRoundCoverage {
+  return { slotDefinitionIds: contest.coveredSlotDefinitionIds };
+}
+
+/** Why a new contest covers none of its event's Season slots (#2014). */
+export const ContestCoverageProblem = {
+  /** The chosen event holds none of the slots the template lists. */
+  NO_LISTED_SLOT: 'NO_LISTED_SLOT',
+  /** A ONE_SLOT template lists several of the event's slots and the contest chose none of them. */
+  SLOT_NOT_CHOSEN: 'SLOT_NOT_CHOSEN',
+  /** The chosen starting slot is not a listed slot of the chosen event. */
+  SLOT_NOT_COVERABLE: 'SLOT_NOT_COVERABLE',
+} as const;
+export type ContestCoverageProblem = (typeof ContestCoverageProblem)[keyof typeof ContestCoverageProblem];
+
+/** A slot of the contest's Season, as coverage reads it: what it plays, where it sits, and its event. */
+export interface CoverableSeasonSlot extends CoveredSlot {
+  id: string;
+  /** The slot definition it plays. */
+  slotDefinitionId: string;
+  /** The Season competition it is in: FROM_SLOT never leaves it. */
+  seasonCompetitionId: string;
+  /** The event covering it; null while it is free. */
+  sportEventId: string | null;
+  /** A test slot (QA only): FROM_SLOT runs on through slots of its own kind only. */
+  isTestData: boolean;
+}
+
 /**
- * A contest's coverage from its configuration: the slots its template lists. A contest with no
- * configuration or no template covers every round, until #2014 makes the template required.
+ * The Season slots a new contest covers, in play order (#2014, plan §7): the template's listed
+ * slots ∩ the chosen events' Season slots under ONE_SLOT (the one chosen) and ALL_LISTED (all of
+ * them); under FROM_SLOT the listed Season slots from the starting slot on, ending with the
+ * starting slot's competition (a survivor started in the last regular week never runs into the
+ * postseason), whether or not an event holds them yet. The starting slot is the one chosen, or
+ * the events' first listed slot. Resolved once, at creation: no later slot joins a contest.
  */
-export function contestRoundCoverage(configuration: Pick<ContestConfiguration, 'coveredSlotDefinitionIds'> | null | undefined): ContestRoundCoverage {
-  return { slotDefinitionIds: configuration?.coveredSlotDefinitionIds ?? null };
+export function resolveCoveredSeasonSlots(
+  template: { coverageMode: TemplateCoverageMode; slotDefinitionIds: readonly string[] },
+  choice: { sportEventIds: readonly string[]; seasonSlots: readonly CoverableSeasonSlot[]; startingSlotId?: string | null },
+): { seasonSlotIds: string[] } | { problem: ContestCoverageProblem } {
+  const listed = [...choice.seasonSlots]
+    .filter((slot) => template.slotDefinitionIds.includes(slot.slotDefinitionId))
+    .sort(compareCoveredSlots);
+  const ofEvent = listed.filter((slot) => slot.sportEventId !== null && choice.sportEventIds.includes(slot.sportEventId));
+  const chosenId = choice.startingSlotId ?? null;
+  const chosen = chosenId === null ? undefined : ofEvent.find((slot) => slot.id === chosenId);
+  if (chosenId !== null && chosen === undefined) {
+    return { problem: ContestCoverageProblem.SLOT_NOT_COVERABLE };
+  }
+  if (ofEvent.length === 0) {
+    return { problem: ContestCoverageProblem.NO_LISTED_SLOT };
+  }
+  switch (template.coverageMode) {
+    case TemplateCoverageMode.ALL_LISTED:
+      return { seasonSlotIds: ofEvent.map((slot) => slot.id) };
+    case TemplateCoverageMode.ONE_SLOT: {
+      const only = chosen ?? (ofEvent.length === 1 ? ofEvent[0] : undefined);
+      return only === undefined ? { problem: ContestCoverageProblem.SLOT_NOT_CHOSEN } : { seasonSlotIds: [only.id] };
+    }
+    case TemplateCoverageMode.FROM_SLOT: {
+      const start = chosen ?? ofEvent[0];
+      const competition = listed.filter((slot) => slot.seasonCompetitionId === start.seasonCompetitionId && slot.isTestData === start.isTestData);
+      return { seasonSlotIds: competition.slice(competition.indexOf(start)).map((slot) => slot.id) };
+    }
+  }
 }

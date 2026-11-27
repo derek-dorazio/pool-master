@@ -15,6 +15,7 @@ import { ParticipantType } from '@poolmaster/shared/domain';
 import { freshEventEdition } from '../../support/event-edition';
 import { participantLeagueId } from '../../support/participant-league';
 import { sportRowKeys } from '../../support/sport-rows';
+import { contestOnEvents } from '../../support/contest-rows';
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
@@ -118,8 +119,7 @@ async function seedContestFixture(): Promise<FixtureContext> {
   const contest = await prisma.contest.create({
     data: {
       leagueId: league.id,
-      seasonYear: 2026,
-      sportEvents: { create: { sportEventId: sportEvent.id, sequence: 1 } },
+      ...(await contestOnEvents(prisma, [sportEvent.id])),
       name: `Partial Uniques Contest ${suffix}`,
       status: 'OPEN',
       contestFormat: 'ROSTER',

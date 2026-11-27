@@ -81,20 +81,17 @@ export class PrismaChampionshipRepository implements ChampionshipRepository {
         name: true,
         selectionType: true,
         endsAt: true,
-        sportEvents: { where: { sequence: 1 }, select: { sportEvent: { select: { sportLeagueSeason: { select: { sportLeague: { select: { name: true } } } } } } } },
+        // A contest's Season names its sports league (#2014).
+        sportLeagueSeason: { select: { sportLeague: { select: { name: true } } } },
       },
     });
-    // Every event of a contest is one sports league's, so the first event names it.
-    return rows.flatMap((row) => {
-      const firstEvent = row.sportEvents.at(0);
-      return firstEvent === undefined ? [] : [{
-        id: row.id,
-        name: row.name,
-        selectionType: row.selectionType,
-        sportLeagueName: firstEvent.sportEvent.sportLeagueSeason.sportLeague.name,
-        completedAt: row.endsAt,
-      }];
-    });
+    return rows.map((row) => ({
+      id: row.id,
+      name: row.name,
+      selectionType: row.selectionType,
+      sportLeagueName: row.sportLeagueSeason.sportLeague.name,
+      completedAt: row.endsAt,
+    }));
   }
 
   async findSeriesContests(leagueId: string): Promise<SeriesContest[]> {
@@ -105,25 +102,34 @@ export class PrismaChampionshipRepository implements ChampionshipRepository {
         selectionType: true,
         cupWeight: true,
         endsAt: true,
-        sportEvents: {
-          take: 2,
+        sportLeagueSeason: { select: { championshipYear: true, sportLeague: { select: { name: true } } } },
+        seasonSlots: {
           select: {
-            sportEvent: {
+            seasonSlot: {
               select: {
-                id: true,
-                name: true,
-                sportLeagueSeason: { select: { championshipYear: true, sportLeague: { select: { name: true } } } },
-                // The slot definitions the event covers key its trophy until #2024 (#2010).
-                slots: { select: { seasonSlot: { select: { definition: { select: TROPHY_DEFINITION_SELECT } } } } },
+                eventSlot: {
+                  select: {
+                    sportEvent: {
+                      select: {
+                        id: true,
+                        name: true,
+                        // The slot definitions the event covers key its trophy until #2024 (#2010).
+                        slots: { select: { seasonSlot: { select: { definition: { select: TROPHY_DEFINITION_SELECT } } } } },
+                      },
+                    },
+                  },
+                },
               },
             },
           },
         },
       },
     });
+    // Only a contest on one event has a series: its covered slots' events, each once.
     const contests = rows.flatMap((row) => {
-      const only = row.sportEvents.length === 1 ? row.sportEvents[0]?.sportEvent : undefined;
-      return only === undefined ? [] : [{ row, event: only }];
+      const events = [...new Map(row.seasonSlots.flatMap(({ seasonSlot }) => (seasonSlot.eventSlot ? [seasonSlot.eventSlot.sportEvent] : []))
+        .map((event) => [event.id, event])).values()];
+      return events.length === 1 ? events.map((event) => ({ row, event })) : [];
     });
     // The games are counted per event and round rather than read game by game.
     const rounds = contests.length === 0 ? [] : await this.prisma.sportEventRoundMatch.groupBy({
@@ -146,8 +152,8 @@ export class PrismaChampionshipRepository implements ChampionshipRepository {
       cupWeight: row.cupWeight,
       ...coveredDefinitions(event.slots.map(({ seasonSlot }) => ({ ...seasonSlot.definition, ...slotPlaceOf(seasonSlot.definition) }))),
       eventName: event.name,
-      sportLeagueName: event.sportLeagueSeason.sportLeague.name,
-      championshipYear: event.sportLeagueSeason.championshipYear,
+      sportLeagueName: row.sportLeagueSeason.sportLeague.name,
+      championshipYear: row.sportLeagueSeason.championshipYear,
       completedAt: row.endsAt,
       games: gamesByEvent.get(event.id) ?? { count: 0, roundCount: 0, sendingWinnerOn: 0 },
     }));

@@ -5,11 +5,12 @@
 import type { Prisma, PrismaClient } from '@prisma/client';
 import type { CupContest, CupContestFinish, CupKey, CupRepository, LeagueCupContest } from '@poolmaster/shared/db';
 import { ContestStatus, CupStatus, type Cup, type CupPointsTable, type CupStanding } from '@poolmaster/shared/domain';
+import { COVERED_SLOT_ORDER } from './prisma-contest-repository';
 
 const CUP_SELECT = {
   id: true,
   leagueId: true,
-  seasonYear: true,
+  sportLeagueSeason: { select: { championshipYear: true } },
   sportLeagueId: true,
   status: true,
   crownedAt: true,
@@ -24,7 +25,7 @@ function toCup(row: CupRow): Cup {
   return {
     id: row.id,
     leagueId: row.leagueId,
-    seasonYear: row.seasonYear,
+    seasonYear: row.sportLeagueSeason.championshipYear,
     sportLeagueId: row.sportLeagueId,
     status: row.status,
     crownedAt: row.crownedAt,
@@ -40,23 +41,25 @@ const CUP_CONTEST_SELECT = {
   selectionType: true,
   cupWeight: true,
   endsAt: true,
-  seasonYear: true,
-  sportEvents: { where: { sequence: 1 }, select: { sportEvent: { select: { startDate: true, sportLeagueSeason: { select: { sportLeagueId: true } } } } } },
-} as const;
+  sportLeagueSeason: { select: { championshipYear: true, sportLeagueId: true } },
+  // The first covered slot's event: when the contest starts in its cup's list.
+  seasonSlots: {
+    take: 1,
+    orderBy: COVERED_SLOT_ORDER,
+    select: { seasonSlot: { select: { eventSlot: { select: { sportEvent: { select: { startDate: true } } } } } } },
+  },
+} satisfies Prisma.ContestSelect;
 
 type CupContestRow = Prisma.ContestGetPayload<{ select: typeof CUP_CONTEST_SELECT }>;
 
-/**
- * Contests with the cup each counts toward, by first event start. Every event of a contest is one
- * sports league's (contest creation refuses a mix), so the first event's series names it.
- */
+/** Contests with the cup each counts toward, by first event start: the contest's Season names it (#2014). */
 function toCupContests(rows: readonly CupContestRow[]): LeagueCupContest[] {
   return rows
     .flatMap((row) => {
-      const firstEvent = row.sportEvents.at(0)?.sportEvent;
+      const firstEvent = row.seasonSlots.at(0)?.seasonSlot.eventSlot?.sportEvent;
       return firstEvent === undefined ? [] : [{
-        seasonYear: row.seasonYear,
-        sportLeagueId: firstEvent.sportLeagueSeason.sportLeagueId,
+        seasonYear: row.sportLeagueSeason.championshipYear,
+        sportLeagueId: row.sportLeagueSeason.sportLeagueId,
         contest: {
           id: row.id,
           name: row.name,
@@ -76,9 +79,14 @@ export class PrismaCupRepository implements CupRepository {
   constructor(private readonly prisma: PrismaClient) {}
 
   async ensure(key: CupKey): Promise<Cup> {
+    // A cup is keyed by its Season (#2014): the sports league's Season of the year.
+    const season = await this.prisma.sportLeagueSeason.findUniqueOrThrow({
+      where: { sportLeagueId_championshipYear: { sportLeagueId: key.sportLeagueId, championshipYear: key.seasonYear } },
+      select: { id: true },
+    });
     return toCup(await this.prisma.cup.upsert({
-      where: { leagueId_seasonYear_sportLeagueId: key },
-      create: key,
+      where: { leagueId_sportLeagueSeasonId: { leagueId: key.leagueId, sportLeagueSeasonId: season.id } },
+      create: { leagueId: key.leagueId, sportLeagueId: key.sportLeagueId, sportLeagueSeasonId: season.id },
       update: {},
       select: CUP_SELECT,
     }));
@@ -90,8 +98,8 @@ export class PrismaCupRepository implements CupRepository {
   }
 
   async findByKey(key: CupKey): Promise<Cup | null> {
-    const row = await this.prisma.cup.findUnique({
-      where: { leagueId_seasonYear_sportLeagueId: key },
+    const row = await this.prisma.cup.findFirst({
+      where: { leagueId: key.leagueId, sportLeagueId: key.sportLeagueId, sportLeagueSeason: { championshipYear: key.seasonYear } },
       select: CUP_SELECT,
     });
     return row === null ? null : toCup(row);
@@ -99,7 +107,7 @@ export class PrismaCupRepository implements CupRepository {
 
   async findByLeagueSeason(leagueId: string, seasonYear: number): Promise<Cup[]> {
     const rows = await this.prisma.cup.findMany({
-      where: { leagueId, seasonYear },
+      where: { leagueId, sportLeagueSeason: { championshipYear: seasonYear } },
       orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
       select: CUP_SELECT,
     });
@@ -116,24 +124,21 @@ export class PrismaCupRepository implements CupRepository {
   }
 
   async findSeasonYears(leagueId: string): Promise<number[]> {
-    // Every contest with an event has its season's cup (contest creation ensures it), so the
-    // seasons of the league's listed contests are the seasons with a cup to show.
-    const rows = await this.prisma.contest.findMany({
-      where: { leagueId, status: { not: ContestStatus.DRAFT }, sportEvents: { some: { sequence: 1 } } },
-      distinct: ['seasonYear'],
-      orderBy: { seasonYear: 'desc' },
-      select: { seasonYear: true },
+    // Every contest has its season's cup (contest creation ensures it), so the years of the
+    // Seasons of the league's listed contests are the seasons with a cup to show.
+    const rows = await this.prisma.sportLeagueSeason.findMany({
+      where: { contests: { some: { leagueId, status: { not: ContestStatus.DRAFT } } } },
+      select: { championshipYear: true },
     });
-    return rows.map((row) => row.seasonYear);
+    return [...new Set(rows.map((row) => row.championshipYear))].sort((left, right) => right - left);
   }
 
   async findContests(key: CupKey): Promise<CupContest[]> {
     const rows = await this.prisma.contest.findMany({
       where: {
         leagueId: key.leagueId,
-        seasonYear: key.seasonYear,
+        sportLeagueSeason: { sportLeagueId: key.sportLeagueId, championshipYear: key.seasonYear },
         status: { not: ContestStatus.DRAFT },
-        sportEvents: { some: { sequence: 1, sportEvent: { sportLeagueSeason: { sportLeagueId: key.sportLeagueId } } } },
       },
       select: CUP_CONTEST_SELECT,
     });
@@ -144,9 +149,8 @@ export class PrismaCupRepository implements CupRepository {
     const rows = await this.prisma.contest.findMany({
       where: {
         leagueId,
-        ...(seasonYear !== undefined && { seasonYear }),
+        ...(seasonYear !== undefined && { sportLeagueSeason: { championshipYear: seasonYear } }),
         status: { not: ContestStatus.DRAFT },
-        sportEvents: { some: { sequence: 1 } },
       },
       select: CUP_CONTEST_SELECT,
     });

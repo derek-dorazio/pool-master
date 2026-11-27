@@ -23,13 +23,14 @@ import {
 } from '@poolmaster/shared/dto';
 import { PrismaSportEventRoundRepository } from '../../../packages/core-api/src/adapters';
 import { resultBody } from '../../support/match-requests';
-import { cleanupTestData, createTestUser, getApp, getAppPrisma, getPrisma, setupIntegrationTests, teardownIntegrationTests, withoutJsonBodyHeaders, type TestUserResult } from '../helpers';
+import { cleanupTestData, createTestUser, deleteTestContests, getApp, getAppPrisma, getPrisma, setupIntegrationTests, teardownIntegrationTests, withoutJsonBodyHeaders, type TestUserResult } from '../helpers';
 import { DAY, get, okBody, seedEventWithField, seedFootballWeek, seedLeagueWithTeams } from '../list-route-seeds';
 import { expectConstantQueries } from '../query-scaling';
 import { writeGolfRounds } from '../golf-rounds';
 import { expectDefined } from '../../support/expect-defined';
 import { linkTestSlot } from '../../support/test-slots';
 import { oneEventSlotId } from '../../support/test-slots';
+import { contestOnEvents } from '../../support/contest-rows';
 
 // No mocks.
 
@@ -43,6 +44,8 @@ beforeEach(() => cleanupTestData());
 /** The templates a case made; templates are reference data the cleanup keeps, so each case removes its own. */
 const madeTemplateIds = new Set<string>();
 afterEach(async () => {
+  // A contest's configuration restricts its template's delete (#2014): the contests made from them go first.
+  await deleteTestContests({ configuration: { templateId: { in: [...madeTemplateIds] } } });
   await getPrisma().contestConfigTemplate.deleteMany({ where: { id: { in: [...madeTemplateIds] } } });
   madeTemplateIds.clear();
 });
@@ -82,13 +85,12 @@ async function seedEventContests(contests: number) {
     const contest = await prisma.contest.create({
       data: {
         leagueId: league.id,
-        seasonYear: event.startDate.getUTCFullYear(),
+        ...(await contestOnEvents(prisma, [event.id])),
         name: `Event Pool ${index}`,
         status: index === 0 ? ContestStatus.OPEN : ContestStatus.DRAFT,
         contestFormat: 'ROSTER',
         selectionType: SelectionType.TIERED,
         createdAt: new Date(Date.UTC(2026, 10, 1, 12, index)),
-        sportEvents: { create: { sportEventId: event.id, sequence: 1 } },
         entries: { create: squads.map((squad) => ({ squadId: squad.id, entryNumber: 1, name: squad.name })) },
       },
     });

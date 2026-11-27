@@ -39,7 +39,7 @@ import {
   SurvivorLeaderboardResponseSchema,
   type SurvivorLeaderboardResponse,
 } from '@poolmaster/shared/dto';
-import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, createTestEvent } from './builders';
+import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, createTestEvent, contestTemplateFor } from './builders';
 import {
   cleanupFunctionalData,
   disconnectFunctionalPrisma,
@@ -218,6 +218,7 @@ describe('SDK Functional: a survivor season (#719)', () => {
       body: {
         name: `Survivor ${RUN}`,
         sportEventIds: [week1.eventId, week2.eventId],
+        templateId: await contestTemplateFor([week1.eventId, week2.eventId], SelectionType.SURVIVOR),
         contestFormat: ContestFormat.PREDICTION,
         selectionType: SelectionType.SURVIVOR,
         configuration: { selectionType: SelectionType.SURVIVOR, maxEntriesPerSquad: 1 },
@@ -362,6 +363,7 @@ describe('SDK Functional: a survivor season (#719)', () => {
       body: {
         name: `Survivor Cancel ${run}`,
         sportEventIds: [week.eventId],
+        templateId: await contestTemplateFor([week.eventId], SelectionType.SURVIVOR),
         contestFormat: ContestFormat.PREDICTION,
         selectionType: SelectionType.SURVIVOR,
         configuration: { selectionType: SelectionType.SURVIVOR, maxEntriesPerSquad: 1 },

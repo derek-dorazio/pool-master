@@ -35,6 +35,7 @@ import { DAY, seedFootballWeek, seedLeagueWithTeams } from '../list-route-seeds'
 import { testDomainEvents } from '../../support/domain-events';
 import { HOME_SIDE } from '../../support/match-sides';
 import { rowSideId, rowSideTeam } from '../../support/match-rows';
+import { contestOnEvents, contestTemplateId } from '../../support/contest-rows';
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
@@ -108,8 +109,7 @@ async function seedPickedWeek() {
   const contest = await prisma.contest.create({
     data: {
       leagueId: seeded.league.id,
-      seasonYear: event.startDate.getUTCFullYear(),
-      sportEvents: { create: [{ sportEventId: event.id, sequence: 1 }] },
+      ...(await contestOnEvents(prisma, [event.id])),
       name: `Week lock ${seeded.suffix}`,
       status: ContestStatus.OPEN,
       contestFormat: 'PREDICTION',
@@ -119,6 +119,7 @@ async function seedPickedWeek() {
   await prisma.contestConfiguration.create({
     data: {
       contestId: contest.id,
+      templateId: await contestTemplateId(prisma, contest.id),
       selectionType: SelectionType.PICK_EM,
       configJson: { selectionType: SelectionType.PICK_EM, mode: PickEmMode.STRAIGHT_UP, againstTheSpread: false },
     },

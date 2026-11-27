@@ -30,7 +30,7 @@ import {
   SelectionType,
   Sport,
 } from '@poolmaster/shared/domain';
-import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, createTestEvent } from './builders';
+import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, createTestEvent, contestTemplateFor } from './builders';
 import {
   cleanupFunctionalData,
   disconnectFunctionalPrisma,
@@ -168,9 +168,11 @@ describe('SDK Functional: a pick\'em week (#716)', () => {
     const invite = await generateInviteLink({ client: commissioner.client, path: { id: league.id }, body: { maxUses: 1 } });
     await acceptInvitation({ client: member.client, body: { inviteCode: expectDefined(invite.data).invitation.inviteCode } });
 
+    const templateId = await contestTemplateFor([eventId], SelectionType.PICK_EM);
     const contestBody = {
       name: `Confidence ${RUN}`,
       sportEventIds: [eventId],
+      templateId,
       contestFormat: ContestFormat.PREDICTION,
       selectionType: SelectionType.PICK_EM,
       configuration: {

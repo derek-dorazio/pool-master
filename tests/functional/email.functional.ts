@@ -21,6 +21,7 @@ import { ContestFormat, ParticipantType, SelectionType } from '@poolmaster/share
 import {
   buildLeagueWithCommissioner,
   buildRegisteredUser,
+  placedTemplate,
   promoteToRootAdmin,
   type RegisteredUserContext,
 } from './builders';
@@ -172,7 +173,7 @@ async function enteredContest() {
       sportEventIds: [event.sportEventId],
       contestFormat: ContestFormat.ROSTER,
       selectionType: SelectionType.TIERED,
-      templateId: template?.id,
+      templateId: await placedTemplate([event.sportEventId], template?.id),
       configuration: { maxEntriesPerSquad: 1, selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 1 },
     },
   });

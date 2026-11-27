@@ -24,7 +24,7 @@ import {
   setupIntegrationTests,
   teardownIntegrationTests,
 } from '../helpers';
-import { createContestRow } from '../../support/contest-rows';
+import { contestTemplateId, createContestRow } from '../../support/contest-rows';
 import { freshEventEdition } from '../../support/event-edition';
 import { expectDefined } from '../../support/expect-defined';
 
@@ -70,8 +70,8 @@ async function seed() {
       status: 'SCHEDULED',
     },
   });
-  const contest = await createContestRow(repos().contests, {
-    leagueId: league.id, seasonYear: 2026, sportEventIds: [event.id], name: `Memo Contest ${suffix}`,
+  const contest = await createContestRow(getPrisma(), repos().contests, {
+    leagueId: league.id, sportEventIds: [event.id], name: `Memo Contest ${suffix}`,
     status: ContestStatus.DRAFT, contestFormat: ContestFormat.ROSTER, selectionType: SelectionType.TIERED,
   });
   return { user, league, squad, event, contest };
@@ -150,13 +150,14 @@ describe('request read memo over contests, teams and events (#1200)', () => {
   it('finds a configuration and a team membership created after a read in the same request found none', async () => {
     const { user, league, squad, contest } = await seed();
     const { configurations, squadMemberships } = repos();
+    const templateId = await contestTemplateId(getPrisma(), contest.id);
 
     const after = await runWithReadMemo(async () => {
       const before = {
         configuration: await configurations.findByContest(contest.id),
         team: await squadMemberships.findByLeagueAndUser(league.id, user.id),
       };
-      await configurations.create({ contestId: contest.id, selectionType: SelectionType.TIERED });
+      await configurations.create({ contestId: contest.id, templateId, selectionType: SelectionType.TIERED });
       await squadMemberships.create({
         squadId: squad.id, leagueId: league.id, userId: user.id, status: SquadMembershipStatus.ACTIVE, joinedAt: new Date(),
       });
@@ -175,7 +176,7 @@ describe('request read memo over contests, teams and events (#1200)', () => {
   it('reads no contest and no configuration after the request deletes the contest', async () => {
     const { contest } = await seed();
     const { contests, configurations } = repos();
-    await configurations.create({ contestId: contest.id, selectionType: SelectionType.TIERED });
+    await configurations.create({ contestId: contest.id, templateId: await contestTemplateId(getPrisma(), contest.id), selectionType: SelectionType.TIERED });
 
     const after = await runWithReadMemo(async () => {
       await contests.findById(contest.id);

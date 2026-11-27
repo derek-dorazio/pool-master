@@ -38,7 +38,7 @@ import {
 import { expectConstantQueries } from '../query-scaling';
 import { get, okBody, seedEventWithField, seedFootballWeek, seedLeagueWithTeams } from '../list-route-seeds';
 import { PrismaContestRepository } from '../../../packages/core-api/src/adapters';
-import { createContestRow } from '../../support/contest-rows';
+import { contestOnEvents, createContestRow } from '../../support/contest-rows';
 import { fixtureSeasonId, freshEventEdition, putEventInSlot, keyedSlotDefinitionId } from '../../support/event-edition';
 import { SYNCED_SLOT_KEY_PREFIX } from '../../support/test-slots';
 import { expectDefined } from '../../support/expect-defined';
@@ -61,9 +61,8 @@ async function seedLeagueWithContests(contests: number) {
   const contestRows = new PrismaContestRepository(getAppPrisma());
   for (let index = 0; index < contests; index += 1) {
     const { event } = await seedEventWithField(2);
-    await createContestRow(contestRows, {
+    await createContestRow(getPrisma(), contestRows, {
       leagueId: seeded.league.id,
-      seasonYear: event.startDate.getUTCFullYear(),
       sportEventIds: [event.id],
       name: `Contest ${seeded.suffix} ${index}`,
       status: ContestStatus.OPEN,
@@ -85,9 +84,8 @@ async function seedLeagueWithLivePickEms(contests: number) {
   const contestRows = new PrismaContestRepository(getAppPrisma());
   for (let index = 0; index < contests; index += 1) {
     const { event } = await seedFootballWeek({ games: 3, startDate: new Date(Date.now() - HOUR), status: SportEventStatus.IN_PROGRESS, played: 1 });
-    await createContestRow(contestRows, {
+    await createContestRow(getPrisma(), contestRows, {
       leagueId: seeded.league.id,
-      seasonYear: event.startDate.getUTCFullYear(),
       sportEventIds: [event.id],
       name: `Pick'em ${seeded.suffix} ${index}`,
       status: ContestStatus.ACTIVE,
@@ -145,12 +143,11 @@ async function seedTrophyRoom({ years, contestsPerYear, cupPerContest = false, r
       const contest = await prisma.contest.create({
         data: {
           leagueId: seeded.league.id,
-          seasonYear: year,
+          ...(await contestOnEvents(prisma, [event.id])),
           name: `Final ${String(year)} ${String(index)}`,
           status: ContestStatus.COMPLETED,
           selectionType: SelectionType.TIERED,
           endsAt,
-          sportEvents: { create: { sportEventId: event.id, sequence: 1 } },
         },
       });
       for (const [position, squad] of seeded.squads.entries()) {
@@ -167,7 +164,7 @@ async function seedTrophyRoom({ years, contestsPerYear, cupPerContest = false, r
       }
       if (cupPerContest || index === 0) {
         const { sportLeagueId } = edition;
-        await prisma.cup.create({ data: { leagueId: seeded.league.id, seasonYear: year, sportLeagueId } });
+        await prisma.cup.create({ data: { leagueId: seeded.league.id, sportLeagueSeasonId: await fixtureSeasonId(prisma, sportLeagueId, year), sportLeagueId } });
       }
     }
   }
@@ -201,7 +198,7 @@ async function seedSportLeagueWithSeasons(years: number) {
 
 /** The league's one cup of the last seeded year: the trophy room's cup when its contests share one. */
 async function onlyCup(leagueId: string) {
-  return getPrisma().cup.findFirstOrThrow({ where: { leagueId, seasonYear: LAST_SEEDED_YEAR } });
+  return getPrisma().cup.findFirstOrThrow({ where: { leagueId, sportLeagueSeason: { championshipYear: LAST_SEEDED_YEAR } }, include: { sportLeagueSeason: { select: { championshipYear: true } } } });
 }
 
 describe('list routes cost the same statements for 2 rows as for 20', () => {
@@ -362,7 +359,7 @@ describe('list routes cost the same statements for 2 rows as for 20', () => {
         return { ...seeded, cup: await onlyCup(seeded.league.id) };
       },
       call: ({ league, squads, cup, commissioner }) => get(
-        `/api/v1/leagues/${league.id}/cups/squads/${expectDefined(squads[0]).id}?seasonYear=${String(cup.seasonYear)}&sportLeagueId=${cup.sportLeagueId}`,
+        `/api/v1/leagues/${league.id}/cups/squads/${expectDefined(squads[0]).id}?seasonYear=${String(cup.sportLeagueSeason.championshipYear)}&sportLeagueId=${cup.sportLeagueId}`,
         commissioner,
       ),
       rowsShown: (response) => okBody(response, CupSquadPointsResponseSchema).squadPoints.contests.length,
