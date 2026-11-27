@@ -359,7 +359,7 @@ describe('IngestionPersistence', () => {
     });
 
     const rows = await prisma.sportEventParticipant.findMany({ where: { sportEventId: event.id }, include: { participant: { include: { providerMappings: true } } } });
-    expect(rows.map((row) => feedIdOf(row.participant)).sort((a, b) => a.localeCompare(b))).toEqual(['ingestion-bowl-away', 'ingestion-bowl-home']);
+    expect(rows.map((row) => feedIdOf(row.participant) ?? '').sort((a, b) => a.localeCompare(b))).toEqual(['ingestion-bowl-away', 'ingestion-bowl-home']);
     const [job] = await prisma.backgroundJob.findMany({ where: { type: 'SYNC_EVENT_GAMES_AND_TIERS', sportEventId: event.id } });
     expect((job.payload as { games: Array<{ games: Array<{ providerGameId: string }> }> }).games.map((each) => each.games[0].providerGameId)).toEqual(['bowl-game']);
     await prisma.backgroundJob.deleteMany({ where: { sportEventId: event.id } });
