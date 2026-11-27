@@ -11,7 +11,9 @@ ALTER TABLE "sport_league_competition_slots" ADD COLUMN "is_neutral_site" BOOLEA
 -- * NFL: the Super Bowl.
 -- * NCAA men's football: the bowl games, the conference title games, and the CFP from the
 --   quarterfinals on (its first round is played at the higher seed's home).
--- * NCAA men's and women's basketball: the whole tournament, the First Four included.
+-- * NCAA men's basketball: the whole tournament, the First Four included.
+-- * NCAA women's basketball: from the round of 16 on (the regionals and the Final Four); its
+--   First Four and first two rounds are played at the top 16 seeds' arenas.
 -- * NCAA men's ice hockey: the whole tournament (regional sites, then the Frozen Four).
 -- * NCAA women's ice hockey: the Frozen Four (its quarterfinals are played on campus).
 -- * NCAA men's and women's soccer: the College Cup (semifinals and final).
@@ -28,7 +30,8 @@ WHERE s."sport_league_id" = l."id"
     (l."url_segment" = 'nfl' AND s."key" = 'FINAL')
     OR (l."url_segment" = 'ncaamf' AND c."code" IN ('BOWLS', 'CONFERENCE_CHAMPIONSHIPS'))
     OR (l."url_segment" = 'ncaamf' AND c."code" = 'CFP' AND s."key" IN ('QUARTERFINAL', 'SEMIFINAL', 'FINAL'))
-    OR (l."url_segment" IN ('ncaamb', 'ncaawb', 'ncaamh') AND c."code" = 'POSTSEASON')
+    OR (l."url_segment" IN ('ncaamb', 'ncaamh') AND c."code" = 'POSTSEASON')
+    OR (l."url_segment" = 'ncaawb' AND s."key" IN ('ROUND_OF_16', 'QUARTERFINAL', 'SEMIFINAL', 'FINAL'))
     OR (l."url_segment" = 'ncaawh' AND s."key" IN ('SEMIFINAL', 'FINAL'))
     OR (l."url_segment" IN ('ncaams', 'ncaaws') AND s."key" IN ('SEMIFINAL', 'FINAL'))
     OR (l."url_segment" IN ('ncaamt', 'ncaawt') AND s."key" IN ('ROUND_OF_16', 'QUARTERFINAL', 'SEMIFINAL', 'FINAL'))
@@ -41,8 +44,10 @@ WHERE s."sport_league_id" = l."id"
 ALTER TABLE "sport_league_competition_slots" ALTER COLUMN "is_neutral_site" DROP DEFAULT;
 
 -- Games already stored in a neutral slot take it, and their sides play neither home nor away.
--- Every one of them was written as a home game before (the adapters marked only the Super Bowl,
--- the NCAA basketball tournament and the World Cup neutral), so no home game needs a side back.
+-- The adapters marked only the Super Bowl, the NCAA basketball tournaments and the World Cup
+-- neutral. One stored game is left as it was: a women's NCAA game of the First Four or the first
+-- two rounds stays neutral, since which side was at home was never stored; its sync from now on
+-- writes the home side.
 UPDATE "sport_event_round_match_games" g
 SET "is_neutral_site" = true
 FROM "sport_event_slots" es, "sport_league_season_competition_slots" ss, "sport_league_competition_slots" d

@@ -108,13 +108,15 @@ describe('where the seeded slots\' games are played (#2154)', () => {
     expect(['nfl REGULAR WEEK_1', 'nfl POSTSEASON ROUND_OF_16', 'nfl POSTSEASON SEMIFINAL', 'ncaamf CFP ROUND_OF_16'].map((key) => site.get(key))).toEqual([false, false, false, false]);
   });
 
-  it('seed every slot of a soccer world tournament and the NCAA basketball tournament neutral, group matchdays and First Four included, and a series league\'s none', async () => {
-    const site = await neutralSites(['world-cup', 'ncaamb', 'nba']);
+  it('seed every slot of a soccer world tournament and the NCAA men\'s basketball tournament neutral, group matchdays and First Four included, the women\'s tournament from its round of 16 on, and a series league\'s none', async () => {
+    const site = await neutralSites(['world-cup', 'ncaamb', 'ncaawb', 'nba']);
 
     expect([...site].filter(([key]) => key.startsWith('world-cup ')).every(([, neutral]) => neutral)).toBe(true);
     expect(site.get('world-cup POSTSEASON WEEK_1')).toBe(true);
     expect([...site].filter(([key]) => key.startsWith('ncaamb POSTSEASON ')).every(([, neutral]) => neutral)).toBe(true);
     expect(site.get('ncaamb POSTSEASON PLAY_IN')).toBe(true);
+    expect(['PLAY_IN', 'ROUND_OF_64', 'ROUND_OF_32', 'ROUND_OF_16', 'QUARTERFINAL', 'SEMIFINAL', 'FINAL'].map((key) => site.get(`ncaawb POSTSEASON ${key}`)))
+      .toEqual([false, false, false, true, true, true, true]);
     expect([...site].filter(([key]) => key.startsWith('nba ')).some(([, neutral]) => neutral)).toBe(false);
   });
 
