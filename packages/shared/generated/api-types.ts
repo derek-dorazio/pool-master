@@ -12204,11 +12204,11 @@ export interface components {
             providerLeagueCode: string;
             providerLeagueName: string;
             /**
-             * @description How a provider's game is matched to the slot; the sync tries PROVIDER_CODE, then NAME_PATTERN, then DATE_WINDOW.
+             * @description How a provider's game is matched to the slot; the sync tries PROVIDER_CODE, then NAME_PATTERN, then DATE_WINDOW, and REST_OF_PHASE last, for the games of its window no other slot places.
              * @enum {string}
              */
-            matchType: "PROVIDER_CODE" | "NAME_PATTERN" | "DATE_WINDOW" | "CALENDAR_WEEK";
-            /** @description The adapter's code (REG:5, POST:3) or the normalized tournament name a game is matched on; null for CALENDAR_WEEK, which matches by the global week rule. */
+            matchType: "PROVIDER_CODE" | "NAME_PATTERN" | "DATE_WINDOW" | "CALENDAR_WEEK" | "REST_OF_PHASE";
+            /** @description The adapter's code (REG:5, POST:3) or the normalized tournament name a game is matched on; null for CALENDAR_WEEK, which matches by the global week rule, and for DATE_WINDOW and REST_OF_PHASE, which match by the Season slot's window. */
             providerValue: string | null;
         };
         /** @description One slot definition: a week, a knockout round or a recurring tournament. Seasons, events and contest templates link on it. */
@@ -12257,11 +12257,11 @@ export interface components {
                 providerLeagueCode: string;
                 providerLeagueName: string;
                 /**
-                 * @description How a provider's game is matched to the slot; the sync tries PROVIDER_CODE, then NAME_PATTERN, then DATE_WINDOW.
+                 * @description How a provider's game is matched to the slot; the sync tries PROVIDER_CODE, then NAME_PATTERN, then DATE_WINDOW, and REST_OF_PHASE last, for the games of its window no other slot places.
                  * @enum {string}
                  */
-                matchType: "PROVIDER_CODE" | "NAME_PATTERN" | "DATE_WINDOW" | "CALENDAR_WEEK";
-                /** @description The adapter's code (REG:5, POST:3) or the normalized tournament name a game is matched on; null for CALENDAR_WEEK, which matches by the global week rule. */
+                matchType: "PROVIDER_CODE" | "NAME_PATTERN" | "DATE_WINDOW" | "CALENDAR_WEEK" | "REST_OF_PHASE";
+                /** @description The adapter's code (REG:5, POST:3) or the normalized tournament name a game is matched on; null for CALENDAR_WEEK, which matches by the global week rule, and for DATE_WINDOW and REST_OF_PHASE, which match by the Season slot's window. */
                 providerValue: string | null;
             }[];
         };
@@ -12319,11 +12319,11 @@ export interface components {
                     providerLeagueCode: string;
                     providerLeagueName: string;
                     /**
-                     * @description How a provider's game is matched to the slot; the sync tries PROVIDER_CODE, then NAME_PATTERN, then DATE_WINDOW.
+                     * @description How a provider's game is matched to the slot; the sync tries PROVIDER_CODE, then NAME_PATTERN, then DATE_WINDOW, and REST_OF_PHASE last, for the games of its window no other slot places.
                      * @enum {string}
                      */
-                    matchType: "PROVIDER_CODE" | "NAME_PATTERN" | "DATE_WINDOW" | "CALENDAR_WEEK";
-                    /** @description The adapter's code (REG:5, POST:3) or the normalized tournament name a game is matched on; null for CALENDAR_WEEK, which matches by the global week rule. */
+                    matchType: "PROVIDER_CODE" | "NAME_PATTERN" | "DATE_WINDOW" | "CALENDAR_WEEK" | "REST_OF_PHASE";
+                    /** @description The adapter's code (REG:5, POST:3) or the normalized tournament name a game is matched on; null for CALENDAR_WEEK, which matches by the global week rule, and for DATE_WINDOW and REST_OF_PHASE, which match by the Season slot's window. */
                     providerValue: string | null;
                 }[];
             }[];
@@ -12390,11 +12390,11 @@ export interface components {
                         providerLeagueCode: string;
                         providerLeagueName: string;
                         /**
-                         * @description How a provider's game is matched to the slot; the sync tries PROVIDER_CODE, then NAME_PATTERN, then DATE_WINDOW.
+                         * @description How a provider's game is matched to the slot; the sync tries PROVIDER_CODE, then NAME_PATTERN, then DATE_WINDOW, and REST_OF_PHASE last, for the games of its window no other slot places.
                          * @enum {string}
                          */
-                        matchType: "PROVIDER_CODE" | "NAME_PATTERN" | "DATE_WINDOW" | "CALENDAR_WEEK";
-                        /** @description The adapter's code (REG:5, POST:3) or the normalized tournament name a game is matched on; null for CALENDAR_WEEK, which matches by the global week rule. */
+                        matchType: "PROVIDER_CODE" | "NAME_PATTERN" | "DATE_WINDOW" | "CALENDAR_WEEK" | "REST_OF_PHASE";
+                        /** @description The adapter's code (REG:5, POST:3) or the normalized tournament name a game is matched on; null for CALENDAR_WEEK, which matches by the global week rule, and for DATE_WINDOW and REST_OF_PHASE, which match by the Season slot's window. */
                         providerValue: string | null;
                     }[];
                 }[];
@@ -12464,11 +12464,11 @@ export interface components {
                             providerLeagueCode: string;
                             providerLeagueName: string;
                             /**
-                             * @description How a provider's game is matched to the slot; the sync tries PROVIDER_CODE, then NAME_PATTERN, then DATE_WINDOW.
+                             * @description How a provider's game is matched to the slot; the sync tries PROVIDER_CODE, then NAME_PATTERN, then DATE_WINDOW, and REST_OF_PHASE last, for the games of its window no other slot places.
                              * @enum {string}
                              */
-                            matchType: "PROVIDER_CODE" | "NAME_PATTERN" | "DATE_WINDOW" | "CALENDAR_WEEK";
-                            /** @description The adapter's code (REG:5, POST:3) or the normalized tournament name a game is matched on; null for CALENDAR_WEEK, which matches by the global week rule. */
+                            matchType: "PROVIDER_CODE" | "NAME_PATTERN" | "DATE_WINDOW" | "CALENDAR_WEEK" | "REST_OF_PHASE";
+                            /** @description The adapter's code (REG:5, POST:3) or the normalized tournament name a game is matched on; null for CALENDAR_WEEK, which matches by the global week rule, and for DATE_WINDOW and REST_OF_PHASE, which match by the Season slot's window. */
                             providerValue: string | null;
                         }[];
                     }[];

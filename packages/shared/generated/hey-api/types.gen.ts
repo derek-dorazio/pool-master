@@ -10974,11 +10974,11 @@ export type SlotProviderMappingDto = {
     providerLeagueCode: string;
     providerLeagueName: string;
     /**
-     * How a provider's game is matched to the slot; the sync tries PROVIDER_CODE, then NAME_PATTERN, then DATE_WINDOW.
+     * How a provider's game is matched to the slot; the sync tries PROVIDER_CODE, then NAME_PATTERN, then DATE_WINDOW, and REST_OF_PHASE last, for the games of its window no other slot places.
      */
-    matchType: 'PROVIDER_CODE' | 'NAME_PATTERN' | 'DATE_WINDOW' | 'CALENDAR_WEEK';
+    matchType: 'PROVIDER_CODE' | 'NAME_PATTERN' | 'DATE_WINDOW' | 'CALENDAR_WEEK' | 'REST_OF_PHASE';
     /**
-     * The adapter's code (REG:5, POST:3) or the normalized tournament name a game is matched on; null for CALENDAR_WEEK, which matches by the global week rule.
+     * The adapter's code (REG:5, POST:3) or the normalized tournament name a game is matched on; null for CALENDAR_WEEK, which matches by the global week rule, and for DATE_WINDOW and REST_OF_PHASE, which match by the Season slot's window.
      */
     providerValue: string | null;
 };
@@ -11041,11 +11041,11 @@ export type SportLeagueSlotDefinitionDto = {
         providerLeagueCode: string;
         providerLeagueName: string;
         /**
-         * How a provider's game is matched to the slot; the sync tries PROVIDER_CODE, then NAME_PATTERN, then DATE_WINDOW.
+         * How a provider's game is matched to the slot; the sync tries PROVIDER_CODE, then NAME_PATTERN, then DATE_WINDOW, and REST_OF_PHASE last, for the games of its window no other slot places.
          */
-        matchType: 'PROVIDER_CODE' | 'NAME_PATTERN' | 'DATE_WINDOW' | 'CALENDAR_WEEK';
+        matchType: 'PROVIDER_CODE' | 'NAME_PATTERN' | 'DATE_WINDOW' | 'CALENDAR_WEEK' | 'REST_OF_PHASE';
         /**
-         * The adapter's code (REG:5, POST:3) or the normalized tournament name a game is matched on; null for CALENDAR_WEEK, which matches by the global week rule.
+         * The adapter's code (REG:5, POST:3) or the normalized tournament name a game is matched on; null for CALENDAR_WEEK, which matches by the global week rule, and for DATE_WINDOW and REST_OF_PHASE, which match by the Season slot's window.
          */
         providerValue: string | null;
     }>;
@@ -11122,11 +11122,11 @@ export type SportLeagueCompetitionDefinitionDto = {
             providerLeagueCode: string;
             providerLeagueName: string;
             /**
-             * How a provider's game is matched to the slot; the sync tries PROVIDER_CODE, then NAME_PATTERN, then DATE_WINDOW.
+             * How a provider's game is matched to the slot; the sync tries PROVIDER_CODE, then NAME_PATTERN, then DATE_WINDOW, and REST_OF_PHASE last, for the games of its window no other slot places.
              */
-            matchType: 'PROVIDER_CODE' | 'NAME_PATTERN' | 'DATE_WINDOW' | 'CALENDAR_WEEK';
+            matchType: 'PROVIDER_CODE' | 'NAME_PATTERN' | 'DATE_WINDOW' | 'CALENDAR_WEEK' | 'REST_OF_PHASE';
             /**
-             * The adapter's code (REG:5, POST:3) or the normalized tournament name a game is matched on; null for CALENDAR_WEEK, which matches by the global week rule.
+             * The adapter's code (REG:5, POST:3) or the normalized tournament name a game is matched on; null for CALENDAR_WEEK, which matches by the global week rule, and for DATE_WINDOW and REST_OF_PHASE, which match by the Season slot's window.
              */
             providerValue: string | null;
         }>;
@@ -11214,11 +11214,11 @@ export type SportLeaguePhaseDefinitionDto = {
                 providerLeagueCode: string;
                 providerLeagueName: string;
                 /**
-                 * How a provider's game is matched to the slot; the sync tries PROVIDER_CODE, then NAME_PATTERN, then DATE_WINDOW.
+                 * How a provider's game is matched to the slot; the sync tries PROVIDER_CODE, then NAME_PATTERN, then DATE_WINDOW, and REST_OF_PHASE last, for the games of its window no other slot places.
                  */
-                matchType: 'PROVIDER_CODE' | 'NAME_PATTERN' | 'DATE_WINDOW' | 'CALENDAR_WEEK';
+                matchType: 'PROVIDER_CODE' | 'NAME_PATTERN' | 'DATE_WINDOW' | 'CALENDAR_WEEK' | 'REST_OF_PHASE';
                 /**
-                 * The adapter's code (REG:5, POST:3) or the normalized tournament name a game is matched on; null for CALENDAR_WEEK, which matches by the global week rule.
+                 * The adapter's code (REG:5, POST:3) or the normalized tournament name a game is matched on; null for CALENDAR_WEEK, which matches by the global week rule, and for DATE_WINDOW and REST_OF_PHASE, which match by the Season slot's window.
                  */
                 providerValue: string | null;
             }>;
@@ -11311,11 +11311,11 @@ export type SportLeagueStructureResponse = {
                     providerLeagueCode: string;
                     providerLeagueName: string;
                     /**
-                     * How a provider's game is matched to the slot; the sync tries PROVIDER_CODE, then NAME_PATTERN, then DATE_WINDOW.
+                     * How a provider's game is matched to the slot; the sync tries PROVIDER_CODE, then NAME_PATTERN, then DATE_WINDOW, and REST_OF_PHASE last, for the games of its window no other slot places.
                      */
-                    matchType: 'PROVIDER_CODE' | 'NAME_PATTERN' | 'DATE_WINDOW' | 'CALENDAR_WEEK';
+                    matchType: 'PROVIDER_CODE' | 'NAME_PATTERN' | 'DATE_WINDOW' | 'CALENDAR_WEEK' | 'REST_OF_PHASE';
                     /**
-                     * The adapter's code (REG:5, POST:3) or the normalized tournament name a game is matched on; null for CALENDAR_WEEK, which matches by the global week rule.
+                     * The adapter's code (REG:5, POST:3) or the normalized tournament name a game is matched on; null for CALENDAR_WEEK, which matches by the global week rule, and for DATE_WINDOW and REST_OF_PHASE, which match by the Season slot's window.
                      */
                     providerValue: string | null;
                 }>;

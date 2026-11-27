@@ -35,9 +35,16 @@ export interface TestSlotWindow {
  */
 export async function syncSlotsFor(
   prisma: Db,
-  input: { sportLeagueId: string; sportLeagueProviderMappingId: string; code: string | null; seasonIds: readonly string[]; covered?: boolean; window?: TestSlotWindow },
+  input: {
+    sportLeagueId: string; sportLeagueProviderMappingId: string; code: string | null; seasonIds: readonly string[]; covered?: boolean; window?: TestSlotWindow;
+    /** Matched REST_OF_PHASE (#2154) rather than DATE_WINDOW; `code` must be null. */
+    restOfPhase?: boolean;
+    /** The POSTSEASON competition of this code the slot is in; by default the REGULAR phase's one. */
+    competitionCode?: string;
+  },
 ): Promise<string[]> {
-  return (await slotDefinitionFor(prisma, { ...input, matchType: input.code === null ? 'DATE_WINDOW' : 'PROVIDER_CODE', value: input.code })).seasonSlotIds;
+  const matchType = input.code !== null ? 'PROVIDER_CODE' : input.restOfPhase === true ? 'REST_OF_PHASE' : 'DATE_WINDOW';
+  return (await slotDefinitionFor(prisma, { ...input, matchType, value: input.code })).seasonSlotIds;
 }
 
 /**
@@ -53,15 +60,22 @@ export async function nameSlotDefinitionFor(
   return (await slotDefinitionFor(prisma, { ...input, matchType: 'NAME_PATTERN', value: input.pattern, seasonSlots: false })).definitionId;
 }
 
+/** The next free order index among the league's POSTSEASON competitions. */
+async function nextOrderIndex(prisma: Db, sportLeagueId: string): Promise<number> {
+  return await prisma.sportLeagueCompetition.count({ where: { sportLeagueId, phase: { phase: 'POSTSEASON' } } }) + 1;
+}
+
 async function slotDefinitionFor(
   prisma: Db,
   input: {
-    sportLeagueId: string; sportLeagueProviderMappingId: string; matchType: 'PROVIDER_CODE' | 'NAME_PATTERN' | 'DATE_WINDOW'; value: string | null;
-    seasonIds: readonly string[]; covered?: boolean; seasonSlots?: boolean; window?: TestSlotWindow;
+    sportLeagueId: string; sportLeagueProviderMappingId: string; matchType: 'PROVIDER_CODE' | 'NAME_PATTERN' | 'DATE_WINDOW' | 'REST_OF_PHASE'; value: string | null;
+    seasonIds: readonly string[]; covered?: boolean; seasonSlots?: boolean; window?: TestSlotWindow; competitionCode?: string;
   },
 ): Promise<{ definitionId: string; seasonSlotIds: string[] }> {
   const { sportLeagueId } = input;
-  const competition = await competitionFor(prisma, { sportLeagueId, phase: 'REGULAR' });
+  const competition = input.competitionCode === undefined
+    ? await competitionFor(prisma, { sportLeagueId, phase: 'REGULAR' })
+    : await competitionFor(prisma, { sportLeagueId, phase: 'POSTSEASON', code: input.competitionCode, orderIndex: await nextOrderIndex(prisma, sportLeagueId) });
   const definition = await prisma.sportLeagueCompetitionSlot.create({
     data: {
       sportLeagueId,

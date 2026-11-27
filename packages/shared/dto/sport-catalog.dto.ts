@@ -332,8 +332,8 @@ export const SlotProviderMappingDtoSchema = z.object({
   providerName: z.string(),
   providerLeagueCode: z.string().describe('The provider\'s own code for the league the mapping reads, such as nfl.'),
   providerLeagueName: z.string(),
-  matchType: z.enum(SlotProviderMatchType).describe('How a provider\'s game is matched to the slot; the sync tries PROVIDER_CODE, then NAME_PATTERN, then DATE_WINDOW.'),
-  providerValue: z.string().nullable().describe('The adapter\'s code (REG:5, POST:3) or the normalized tournament name a game is matched on; null for CALENDAR_WEEK, which matches by the global week rule.'),
+  matchType: z.enum(SlotProviderMatchType).describe('How a provider\'s game is matched to the slot; the sync tries PROVIDER_CODE, then NAME_PATTERN, then DATE_WINDOW, and REST_OF_PHASE last, for the games of its window no other slot places.'),
+  providerValue: z.string().nullable().describe('The adapter\'s code (REG:5, POST:3) or the normalized tournament name a game is matched on; null for CALENDAR_WEEK, which matches by the global week rule, and for DATE_WINDOW and REST_OF_PHASE, which match by the Season slot\'s window.'),
 }).describe('How one provider\'s games match a slot definition. Inclusion only: a provider value no mapping names is not synced.');
 export type SlotProviderMappingDto = z.infer<typeof SlotProviderMappingDtoSchema>;
 

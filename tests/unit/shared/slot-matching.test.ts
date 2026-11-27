@@ -3,12 +3,15 @@ import { matchProviderSlots, placeSlotsByName, playsOutsideSeason, slotDatesChan
 // The one matcher of a provider's codes and dates to Season slots (league model slices 8 and 13, #2005, #2012).
 
 const slot = (seasonSlotId: string, providerCode: string | null, dates: Partial<Pick<SyncSeasonSlot, 'startsAt' | 'endsAt' | 'window'>> = {}): SyncSeasonSlot => ({
-  seasonSlotId, slotDefinitionId: `definition-${seasonSlotId}`, key: seasonSlotId, providerCode, linkedCode: null, coveredByTemplate: true, placedByWindow: dates.window !== undefined && dates.window !== null, sportEventId: null, startsAt: dates.startsAt ?? null, endsAt: dates.endsAt ?? null, window: dates.window ?? null,
+  seasonSlotId, slotDefinitionId: `definition-${seasonSlotId}`, key: seasonSlotId, providerCode, linkedCode: null, coveredByTemplate: true, placedByWindow: dates.window !== undefined && dates.window !== null, sportEventId: null, seasonCompetitionId: 'competition', restOfPhase: false, startsAt: dates.startsAt ?? null, endsAt: dates.endsAt ?? null, window: dates.window ?? null,
 });
 const windowed = (seasonSlotId: string, from: string, to: string, status: SlotWindowStatus = SlotWindowStatus.CONFIRMED) =>
   slot(seasonSlotId, null, { window: { startsAt: new Date(from), endsAt: new Date(to), status } });
 const game = (kickoff: string, teams: readonly string[] = ['seed-1', 'seed-2']) => ({ code: null, startsAt: new Date(kickoff), endsAt: new Date(kickoff), teams });
 const SEEDS = new Set(['seed-1', 'seed-2', 'seed-3', 'seed-4']);
+const seeded = () => SEEDS;
+/** A REST_OF_PHASE slot: its window is its phase's span, and it takes the games no other slot places. */
+const restOf = (seasonSlotId: string, from: string, to: string) => ({ ...windowed(seasonSlotId, from, to, SlotWindowStatus.TENTATIVE), restOfPhase: true });
 const play = (code: string) => ({ code, startsAt: new Date('2027-01-10T18:00:00Z'), endsAt: new Date('2027-01-11T01:00:00Z') });
 
 describe('matchProviderSlots', () => {
@@ -38,7 +41,7 @@ describe('matchProviderSlots', () => {
       game('2027-01-14T23:00:00Z'),
       game('2027-01-02T12:00:00Z'),
       game('2026-12-27T20:00:00Z'),
-    ], slots, SEEDS);
+    ], slots, seeded);
 
     expect(matches.matched.map(({ slot: placed, play: placedPlay, fromGames }) => [placed.seasonSlotId, placedPlay.startsAt.toISOString(), placedPlay.endsAt.toISOString(), fromGames])).toEqual([
       ['quarterfinal', '2026-12-30T10:00:00.000Z', '2027-01-01T21:00:00.000Z', true],
@@ -52,19 +55,75 @@ describe('matchProviderSlots', () => {
     const firstRound = windowed('first-round', '2026-12-18T10:00:00Z', '2026-12-20T10:00:00Z', SlotWindowStatus.TENTATIVE);
     const bowls = [game('2026-12-19T17:00:00Z', ['other-1', 'other-2']), game('2026-12-19T21:00:00Z', ['seed-1', 'other-3'])];
 
-    expect(matchProviderSlots(bowls, [firstRound], SEEDS).matched).toEqual([
-      { slot: firstRound, play: { code: null, startsAt: new Date('2026-12-18T10:00:00Z'), endsAt: new Date('2026-12-20T10:00:00Z') }, fromGames: false },
+    expect(matchProviderSlots(bowls, [firstRound], seeded).matched).toEqual([
+      { slot: firstRound, play: { code: null, startsAt: new Date('2026-12-18T10:00:00Z'), endsAt: new Date('2026-12-20T10:00:00Z') }, fromGames: false, games: [] },
     ]);
     // Before the seeds are placed no game is the event's own.
     expect(matchProviderSlots([game('2026-12-19T17:00:00Z')], [firstRound]).matched.map(({ fromGames }) => fromGames)).toEqual([false]);
     // A game between two seeds in the same window is.
-    const seeded = matchProviderSlots([...bowls, game('2026-12-19T20:00:00Z', ['seed-3', 'seed-4'])], [firstRound], SEEDS).matched;
-    expect(seeded.map(({ play: placed, fromGames }) => [placed.startsAt.toISOString(), placed.endsAt.toISOString(), fromGames]))
+    const placed = matchProviderSlots([...bowls, game('2026-12-19T20:00:00Z', ['seed-3', 'seed-4'])], [firstRound], seeded).matched;
+    expect(placed.map(({ play: placed, fromGames }) => [placed.startsAt.toISOString(), placed.endsAt.toISOString(), fromGames]))
       .toEqual([['2026-12-19T20:00:00.000Z', '2026-12-19T20:00:00.000Z', true]]);
   });
 
   it('places no game with no code when no slot has a window', () => {
     expect(matchProviderSlots([game('2027-01-01T21:00:00Z')], [slot('coded', 'POST:1')])).toEqual({ matched: [], unmatched: [], unplaced: [game('2027-01-01T21:00:00Z')] });
+  });
+});
+
+describe('matchProviderSlots rest of phase (#2154)', () => {
+  const quarterfinal = windowed('quarterfinal', '2026-12-30T10:00:00Z', '2027-01-02T12:00:00Z');
+  const bowls = restOf('bowls', '2026-12-13T10:00:00Z', '2027-01-26T12:00:00Z');
+  const byKickoff = (games: readonly { startsAt: Date }[]) => games.map((each) => each.startsAt.toISOString());
+
+  it('puts a postseason game no other slot places in the rest-of-phase slot, whoever plays it, and a quarterfinal between seeds in the quarterfinal, never in the bowls', () => {
+    const cfpQuarterfinal = game('2026-12-31T21:00:00Z', ['seed-1', 'seed-4']);
+    const bowlInTheQuarterfinalWindow = game('2026-12-31T17:00:00Z', ['other-1', 'other-2']);
+    const earlyBowl = game('2026-12-19T17:00:00Z', ['other-3', 'other-4']);
+
+    const matches = matchProviderSlots([cfpQuarterfinal, bowlInTheQuarterfinalWindow, earlyBowl], [bowls, quarterfinal], seeded);
+
+    const gamesOf = new Map(matches.matched.map(({ slot: each, games }) => [each.seasonSlotId, byKickoff(games)]));
+    expect(gamesOf.get('quarterfinal')).toEqual(['2026-12-31T21:00:00.000Z']);
+    expect(gamesOf.get('bowls')).toEqual(['2026-12-31T17:00:00.000Z', '2026-12-19T17:00:00.000Z']);
+    expect(matches.unplaced).toEqual([]);
+  });
+
+  it('dates the rest-of-phase slot by its own games, from the first to the last', () => {
+    const matches = matchProviderSlots([game('2026-12-31T17:00:00Z', ['a', 'b']), game('2026-12-19T17:00:00Z', ['c', 'd'])], [bowls], seeded);
+
+    expect(matches.matched.map(({ slot: each, play: span, fromGames }) => [each.seasonSlotId, span.startsAt.toISOString(), span.endsAt.toISOString(), fromGames]))
+      .toEqual([['bowls', '2026-12-19T17:00:00.000Z', '2026-12-31T17:00:00.000Z', true]]);
+  });
+
+  it('gives a quarterfinal played before the seeds are placed to the bowls, and to the quarterfinal once both teams are on its field', () => {
+    const cfpQuarterfinal = game('2026-12-31T21:00:00Z', ['seed-1', 'seed-4']);
+
+    const before = matchProviderSlots([cfpQuarterfinal], [bowls, quarterfinal]);
+    const after = matchProviderSlots([cfpQuarterfinal], [bowls, quarterfinal], seeded);
+
+    expect(before.matched.map(({ slot: each, games }) => [each.seasonSlotId, games.length])).toEqual([['bowls', 1], ['quarterfinal', 0]]);
+    expect(after.matched.map(({ slot: each, games }) => [each.seasonSlotId, games.length])).toEqual([['quarterfinal', 1]]);
+  });
+
+  it('takes every game in a title weekend\'s window with no field to place, and leaves a game outside every window unplaced', () => {
+    const titleGames = restOf('conference-championships', '2026-12-04T10:00:00Z', '2026-12-06T12:00:00Z');
+    const secGame = game('2026-12-05T21:00:00Z', ['georgia', 'alabama']);
+    const regularSeasonGame = game('2026-11-28T17:00:00Z', ['ohio-state', 'michigan']);
+
+    const matches = matchProviderSlots([secGame, regularSeasonGame], [titleGames, bowls]);
+
+    expect(matches.matched.map(({ slot: each, games }) => [each.seasonSlotId, byKickoff(games)])).toEqual([['conference-championships', ['2026-12-05T21:00:00.000Z']]]);
+    expect(matches.unplaced).toEqual([regularSeasonGame]);
+  });
+
+  it('reads each slot\'s own field: a game between one slot\'s seeds is not another slot\'s', () => {
+    const semifinal = windowed('semifinal', '2027-01-14T10:00:00Z', '2027-01-16T12:00:00Z');
+    const fields = new Map([['quarterfinal', new Set(['seed-1', 'seed-2'])]]);
+
+    const matches = matchProviderSlots([game('2027-01-15T00:00:00Z', ['seed-1', 'seed-2'])], [semifinal, quarterfinal, bowls], (each) => fields.get(each.seasonSlotId) ?? new Set());
+
+    expect(matches.matched.map(({ slot: each, games }) => [each.seasonSlotId, games.length])).toEqual([['bowls', 1], ['semifinal', 0]]);
   });
 });
 
