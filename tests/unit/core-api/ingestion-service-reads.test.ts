@@ -341,7 +341,7 @@ describe('IngestionService manual sync job (#1441)', () => {
     const runs = syncRuns();
     const runEventSync = jest.fn().mockResolvedValue([COMPLETED_JOB]);
     const scheduler = stubInstance(IngestionScheduler, { runEventSync });
-    const sportEvents = fakeSportEventRepo({ findByProviderRef: jest.fn().mockResolvedValue(linkedEvent()) });
+    const sportEvents = fakeSportEventRepo({ findByProviderRefs: jest.fn().mockResolvedValue([linkedEvent()]) });
     const ingestion = service({ registry: registryWith(fakeSportDataProvider({ providerId: 'balldontlie' })), scheduler, syncRuns: runs, sportEvents });
 
     const submitted = await ingestion.syncEventData({
@@ -372,7 +372,7 @@ describe('IngestionService manual sync job (#1441)', () => {
       .mockResolvedValueOnce([COMPLETED_JOB]);
     const scheduler = stubInstance(IngestionScheduler, { runEventSync });
     const provider: SportDataProvider = fakeSportDataProvider({ providerId: 'balldontlie' });
-    const sportEvents = fakeSportEventRepo({ findByProviderRef: jest.fn().mockResolvedValue(linkedEvent()) });
+    const sportEvents = fakeSportEventRepo({ findByProviderRefs: jest.fn().mockResolvedValue([linkedEvent()]) });
     const ingestion = service({ registry: registryWith(provider), scheduler, syncRuns: runs, sportEvents });
 
     const submitted = await ingestion.syncEventData({
@@ -503,7 +503,7 @@ describe('IngestionService manual sync job (#1441)', () => {
       return [COMPLETED_JOB];
     });
     const scheduler = stubInstance(IngestionScheduler, { runEventSync });
-    const sportEvents = fakeSportEventRepo({ findByProviderRef: jest.fn().mockResolvedValue(linkedEvent()) });
+    const sportEvents = fakeSportEventRepo({ findByProviderRefs: jest.fn().mockResolvedValue([linkedEvent()]) });
     const ingestion = service({ registry: registryWith(fakeSportDataProvider({ providerId: 'balldontlie' })), scheduler, sportEvents });
 
     await runWithReadMemo(async () => {

@@ -2196,7 +2196,10 @@ model SportEventProviderMapping {
   provider                   Provider                   @relation(fields: [providerId], references: [id], onDelete: Restrict)
   sportLeagueProviderMapping SportLeagueProviderMapping @relation(fields: [sportLeagueProviderMappingId], references: [id], onDelete: Restrict)
 
-  @@unique([providerId, externalId])
+  /// Not unique (#2154): a provider event whose games reach several competitions of a Season (a
+  /// season's slate of college football games: its bowls, its title games, its CFP) is one event
+  /// per competition, each holding the provider's id. No event crosses competitions.
+  @@index([providerId, externalId])
   /// An event has one id per provider.
   @@unique([sportEventId, providerId])
   @@index([sportLeagueProviderMappingId])
@@ -2918,6 +2921,9 @@ model SportLeagueCompetition {
   code               String   @db.VarChar(64)
   /// Its place among its phase's competitions, from 1.
   orderIndex         Int      @map("order_index")
+  /// The league's own proper name for it (College Football Playoff, Bowl Games), which names the
+  /// event the sync makes for it (#2154). Null: the event takes the provider event's name.
+  name               String?  @db.VarChar(100)
   createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt          DateTime @updatedAt @map("updated_at") @db.Timestamptz
 

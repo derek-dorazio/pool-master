@@ -288,7 +288,6 @@ export function fakeSportEventRepo(overrides: Partial<SportEventRepository> = {}
     findById: one(),
     findByIds: many(),
     findLinks: many(),
-    findByProviderRef: one(),
     findByProviderRefs: many(),
     findFieldFeedIds: async () => new Map(),
     findAll: many(),

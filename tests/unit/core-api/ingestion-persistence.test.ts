@@ -66,11 +66,15 @@ function mappingOf(row: Record<string, unknown>) {
  */
 function eventReads(rows: ReadonlyArray<Record<string, unknown>>, linked?: Record<string, unknown> | null) {
   return {
-    findMany: jest.fn().mockResolvedValue(rows.map(mappingOf)),
-    findFirst: jest.fn(async (args: { where: { externalId: string } }) => {
-      const row = linked !== undefined ? linked : rows.find((candidate) => candidate['externalId'] === args.where.externalId);
-      return row === null || row === undefined ? null : { sportEvent: { slots: [], ...row } };
+    // The batch read of a sync's events names its feed ids in an OR; a field sync's read of the
+    // events one provider event is linked to names its one feed id.
+    findMany: jest.fn(async (args: { where: { externalId?: unknown } }) => {
+      if (typeof args.where.externalId !== 'string') return rows.map(mappingOf);
+      const { externalId } = args.where;
+      const row = linked !== undefined ? linked : rows.find((candidate) => candidate['externalId'] === externalId);
+      return row === null || row === undefined ? [] : [{ sportEvent: { slots: [], ...row } }];
     }),
+    findFirst: jest.fn(),
   };
 }
 

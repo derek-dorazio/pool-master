@@ -27,8 +27,13 @@ import { participantFeedId } from './participant-feed-id';
 export const NCAAF_GAMES_PATH = '/ncaaf/v1/games';
 export const NCAAF_TEAMS_PATH = '/ncaaf/v1/teams';
 
-/** The name the College Football Playoff's event is listed by: the vendor names none. */
-export const CFP_EVENT_NAME = 'College Football Playoff';
+/**
+ * The name a season's slate is listed by: the vendor names none. The events the sync makes from it
+ * are each named by their competition (#2154): the College Football Playoff, the bowl games.
+ */
+export function ncaafSlateName(scope: CfpScope): string {
+  return `College football ${String(scope.season)} season`;
+}
 
 /** One season's College Football Playoff, by the year its season starts. */
 export interface CfpScope {
@@ -71,7 +76,7 @@ export function toCfpEvent(scope: CfpScope, games: readonly NcaafGame[]): SportE
     externalId: cfpScopeId(scope),
     providerId: BALLDONTLIE_PROVIDER_ID,
     sport: Sport.FOOTBALL,
-    name: CFP_EVENT_NAME,
+    name: ncaafSlateName(scope),
     startDate: new Date(Math.min(...times)),
     endDate: new Date(Math.max(...times)),
     status,

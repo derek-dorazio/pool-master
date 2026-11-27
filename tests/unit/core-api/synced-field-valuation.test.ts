@@ -50,7 +50,7 @@ describe('SyncedFieldValuationService — a field sync makes tiers and prices on
   it('tiers a synced draft field by odds over the event\'s own tiers and prices it with its sport league\'s pricing profile (Standard)', async () => {
     const { store, event, valuation } = await setup();
 
-    const outcome = await valuation.afterFieldLoad(SYNCED);
+    const outcome = await valuation.afterFieldLoad({ sportEventId: event.id, ...SYNCED });
 
     expect(outcome).toEqual({
       outcome: 'VALUED',
@@ -66,12 +66,12 @@ describe('SyncedFieldValuationService — a field sync makes tiers and prices on
   });
 
   it('re-makes the tiers when a later sync moves the odds, so the new favourite leads tier 1', async () => {
-    const { store, valuation } = await setup();
-    await valuation.afterFieldLoad(SYNCED);
+    const { store, event, valuation } = await setup();
+    await valuation.afterFieldLoad({ sportEventId: event.id, ...SYNCED });
 
     const longest = store.field.find((row) => row.participantId === 'p-04');
     Object.assign(longest as object, { oddsToWin: 1 });
-    await valuation.afterFieldLoad(SYNCED);
+    await valuation.afterFieldLoad({ sportEventId: event.id, ...SYNCED });
 
     expect(tierOf(store, 'p-04')).toBe('tier-1');
     expect(tierOf(store, 'p-02')).toBe('tier-2');
@@ -79,7 +79,7 @@ describe('SyncedFieldValuationService — a field sync makes tiers and prices on
 
   it('writes nothing on a sync of an unchanged field, and reports the tiers and prices as unchanged', async () => {
     const { store, event, valuation } = await setup();
-    await valuation.afterFieldLoad(SYNCED);
+    await valuation.afterFieldLoad({ sportEventId: event.id, ...SYNCED });
     const valuations = store.valuationRepo();
     const assignTiers = jest.spyOn(valuations, 'assignEventTiers');
     const assignEventPrices = jest.spyOn(valuations, 'assignEventPrices');
@@ -105,7 +105,7 @@ describe('SyncedFieldValuationService — a field sync makes tiers and prices on
     const { store, event, valuation, league } = await setup({ pricing: small });
     const platformPricingProfileId = expectDefined(league).platformPricingProfileId;
 
-    const outcome = await valuation.afterFieldLoad(SYNCED);
+    const outcome = await valuation.afterFieldLoad({ sportEventId: event.id, ...SYNCED });
 
     expect(outcome).toMatchObject({ prices: { result: 'MADE', platformPricingProfileId } });
     expect((await store.sportEventRepo().findById(event.id))?.pricingConfig).toEqual({
@@ -117,7 +117,7 @@ describe('SyncedFieldValuationService — a field sync makes tiers and prices on
   it('records on the event the tier layout it was tiered with, named for the league\'s tier profile', async () => {
     const { store, event, valuation } = await setup();
 
-    await valuation.afterFieldLoad(SYNCED);
+    await valuation.afterFieldLoad({ sportEventId: event.id, ...SYNCED });
 
     expect((await store.sportEventRepo().findById(event.id))?.tierConfig).toEqual({
       platformTierProfileId: IN_MEMORY_PLATFORM_TIER_PROFILE_ID, type: 'EQUAL_GROUPS', tierCount: 6, tierSize: 10, lastTier: 'ALL_REMAINING', lastTierMax: null,
@@ -129,7 +129,7 @@ describe('SyncedFieldValuationService — a field sync makes tiers and prices on
     const small = { ...standardEventPricing(), salaryCap: 5000, unit: 10 };
     await tiers.autoAssignPrices({ sportEventId: event.id, pricingConfig: small });
 
-    const outcome = await valuation.afterFieldLoad(SYNCED);
+    const outcome = await valuation.afterFieldLoad({ sportEventId: event.id, ...SYNCED });
 
     expect(outcome).toMatchObject({ prices: { platformPricingProfileId: IN_MEMORY_PLATFORM_PRICING_PROFILE_ID, pricedCount: 4 } });
     expect((await store.sportEventRepo().findById(event.id))?.pricingConfig).toEqual(small);
@@ -139,9 +139,9 @@ describe('SyncedFieldValuationService — a field sync makes tiers and prices on
 
 describe('SyncedFieldValuationService — what a field sync leaves alone', () => {
   it('leaves a released event\'s tiers and prices untouched, since release locks them (#431)', async () => {
-    const { store, valuation } = await setup({ status: SportEventStatus.SCHEDULED });
+    const { store, event, valuation } = await setup({ status: SportEventStatus.SCHEDULED });
 
-    const outcome = await valuation.afterFieldLoad(SYNCED);
+    const outcome = await valuation.afterFieldLoad({ sportEventId: event.id, ...SYNCED });
 
     expect(outcome).toEqual({ outcome: 'SKIPPED', reason: 'LOCKED' });
     expect(store.valuationRows).toEqual([]);
@@ -149,12 +149,12 @@ describe('SyncedFieldValuationService — what a field sync leaves alone', () =>
 
   it('keeps every tier as an admin placed them once one was dragged by hand, while still pricing the field', async () => {
     const { store, event, tiers, valuation } = await setup();
-    await valuation.afterFieldLoad(SYNCED);
+    await valuation.afterFieldLoad({ sportEventId: event.id, ...SYNCED });
     const longest = expectDefined(store.field.find((row) => row.participantId === 'p-04'));
     await tiers.replaceTierAssignments({ sportEventId: event.id, assignments: [{ sportEventParticipantId: longest.id, tierKey: 'tier-1', tierOrderIndex: 1 }] });
     Object.assign(store.field.find((row) => row.participantId === 'p-03') as object, { oddsToWin: 1 });
 
-    const outcome = await valuation.afterFieldLoad(SYNCED);
+    const outcome = await valuation.afterFieldLoad({ sportEventId: event.id, ...SYNCED });
 
     expect(outcome).toMatchObject({ tiers: { result: 'KEPT_AS_EDITED' }, prices: { result: 'MADE' } });
     expect(tierOf(store, 'p-04')).toBe('tier-1');
@@ -163,7 +163,7 @@ describe('SyncedFieldValuationService — what a field sync leaves alone', () =>
 
   it('keeps every price as an admin typed them once one was set by hand in the field grid, while still tiering the field', async () => {
     const { store, event, valuation } = await setup();
-    await valuation.afterFieldLoad(SYNCED);
+    await valuation.afterFieldLoad({ sportEventId: event.id, ...SYNCED });
     const favourite = expectDefined(store.field.find((row) => row.participantId === 'p-01'));
     await store.valuationRepo().assignEventPrices({
       sportEventId: event.id,
@@ -171,7 +171,7 @@ describe('SyncedFieldValuationService — what a field sync leaves alone', () =>
       assignments: [{ sportEventParticipantId: favourite.id, price: 777, source: 'MANUAL' }],
     });
 
-    const outcome = await valuation.afterFieldLoad(SYNCED);
+    const outcome = await valuation.afterFieldLoad({ sportEventId: event.id, ...SYNCED });
 
     expect(outcome).toMatchObject({ tiers: { result: 'UNCHANGED' }, prices: { result: 'KEPT_AS_EDITED' } });
     expect(store.valuationRows.find((row) => row.sportEventParticipantId === favourite.id)?.price).toBe(777);
@@ -179,7 +179,7 @@ describe('SyncedFieldValuationService — what a field sync leaves alone', () =>
 
   it('warns that participants the field gains after a hand edit have no tier and no price, leaving them for an admin', async () => {
     const { store, event, tiers, valuation } = await setup();
-    await valuation.afterFieldLoad(SYNCED);
+    await valuation.afterFieldLoad({ sportEventId: event.id, ...SYNCED });
     const favourite = expectDefined(store.field.find((row) => row.participantId === 'p-01'));
     await tiers.replaceTierAssignments({ sportEventId: event.id, assignments: [{ sportEventParticipantId: favourite.id, tierKey: 'tier-2', tierOrderIndex: 1 }] });
     await store.valuationRepo().assignEventPrices({
@@ -189,7 +189,7 @@ describe('SyncedFieldValuationService — what a field sync leaves alone', () =>
     });
     store.addToField(event.id, 'p-late', { oddsToWin: 2 });
 
-    const outcome = await valuation.afterFieldLoad(SYNCED);
+    const outcome = await valuation.afterFieldLoad({ sportEventId: event.id, ...SYNCED });
 
     expect(outcome).toMatchObject({ tiers: { result: 'KEPT_AS_EDITED', untiered: 1 }, prices: { result: 'KEPT_AS_EDITED', unpriced: 1 } });
     expect(fieldValuationReport(outcome).warnings.map((warning) => warning.code)).toEqual(['FIELD_ROWS_UNTIERED', 'FIELD_ROWS_UNPRICED']);
@@ -200,17 +200,17 @@ describe('SyncedFieldValuationService — what a field sync leaves alone', () =>
     const { store, event, tiers, valuation } = await setup();
     await tiers.autoAssignTiers({ sportEventId: event.id, tierSize: 3 });
 
-    const outcome = await valuation.afterFieldLoad(SYNCED);
+    const outcome = await valuation.afterFieldLoad({ sportEventId: event.id, ...SYNCED });
 
     expect(outcome).toMatchObject({ tiers: { result: 'MADE' } });
     expect(tierOf(store, 'p-03')).toBe('tier-2');
   });
 
-  it('skips an event with no active field and one the provider\'s id names no event for', async () => {
-    const { store, valuation } = await setup({ fieldSize: 0 });
+  it('skips an event with no active field and an event that no longer exists', async () => {
+    const { store, event, valuation } = await setup({ fieldSize: 0 });
 
-    expect(await valuation.afterFieldLoad(SYNCED)).toEqual({ outcome: 'SKIPPED', reason: 'NO_FIELD' });
-    expect(await valuation.afterFieldLoad({ providerId: 'balldontlie', externalId: 'unknown' })).toEqual({ outcome: 'SKIPPED', reason: 'NO_EVENT' });
+    expect(await valuation.afterFieldLoad({ sportEventId: event.id, ...SYNCED })).toEqual({ outcome: 'SKIPPED', reason: 'NO_FIELD' });
+    expect(await valuation.afterFieldLoad({ sportEventId: 'an-event-not-in-the-store', ...SYNCED })).toEqual({ outcome: 'SKIPPED', reason: 'NO_EVENT' });
     expect(store.valuationRows).toEqual([]);
   });
 
@@ -218,21 +218,21 @@ describe('SyncedFieldValuationService — what a field sync leaves alone', () =>
     const { store, event, valuation } = await setup({ fieldSize: 0 });
     for (const id of ['p-01', 'p-02']) store.addToField(event.id, id);
 
-    expect(await valuation.afterFieldLoad(SYNCED)).toEqual({ outcome: 'SKIPPED', reason: 'NO_ORDER' });
+    expect(await valuation.afterFieldLoad({ sportEventId: event.id, ...SYNCED })).toEqual({ outcome: 'SKIPPED', reason: 'NO_ORDER' });
     expect(store.valuationRows).toEqual([]);
   });
 
   it('prices but does not tier an event that has no tiers', async () => {
-    const { valuation } = await setup({ tierCount: 0 });
+    const { event, valuation } = await setup({ tierCount: 0 });
 
-    expect(await valuation.afterFieldLoad(SYNCED)).toMatchObject({ tiers: { result: 'NO_TIERS' }, prices: { result: 'MADE' } });
+    expect(await valuation.afterFieldLoad({ sportEventId: event.id, ...SYNCED })).toMatchObject({ tiers: { result: 'NO_TIERS' }, prices: { result: 'MADE' } });
   });
 
   it('answers a bad pricing profile as a failure, writing no tier or price, instead of throwing, so the field sync that wrote the field still completes', async () => {
-    const { store, valuation } = await setup();
+    const { store, event, valuation } = await setup();
     Object.assign(expectDefined(store.platformPricingProfiles[0]), { floorSharePercent: 90 });
 
-    const outcome = await valuation.afterFieldLoad(SYNCED);
+    const outcome = await valuation.afterFieldLoad({ sportEventId: event.id, ...SYNCED });
 
     expect(outcome.outcome).toBe('FAILED');
     expect(outcome.outcome === 'FAILED' && outcome.message).toContain('share');

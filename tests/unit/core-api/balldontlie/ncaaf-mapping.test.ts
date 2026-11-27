@@ -32,14 +32,14 @@ describe('College Football Playoff scopes', () => {
   });
 });
 
-describe('a College Football Playoff as an event', () => {
+describe('a college football season as one provider event', () => {
   it('carries every game of its season as a play with no code and its two teams\' feed ids, for the sync to place by date window, spanning its first game to its last', () => {
     const event = toCfpEvent(CFP_2025, season2025);
     expect(event).toEqual({
       externalId: 'ncaaf-2025-cfp',
       providerId: 'balldontlie',
       sport: Sport.FOOTBALL,
-      name: 'College Football Playoff',
+      name: 'College football 2025 season',
       startDate: new Date('2025-11-29T17:00:00.000Z'),
       endDate: new Date('2026-01-20T00:30:00.000Z'),
       status: 'COMPLETED',

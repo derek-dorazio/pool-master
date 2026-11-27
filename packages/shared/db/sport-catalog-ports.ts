@@ -236,9 +236,10 @@ export interface SportEventRepository {
   findByIds(ids: readonly string[]): Promise<SportEvent[]>;
   /** The events with these ids, id, name, sport league and provider only, in one read; an unknown id is left out. */
   findLinks(ids: readonly string[]): Promise<SportEventLink[]>;
-  /** The event a provider knows by this identity, if one is linked to it. */
-  findByProviderRef(providerId: string, externalId: string): Promise<SportEvent | null>;
-  /** The events a provider knows by any of these identities, in one read (#1253). */
+  /**
+   * The events a provider knows by any of these identities, in one read (#1253). One identity can
+   * name several events, one per competition its games reach (#2154).
+   */
   findByProviderRefs(providerId: string, externalIds: readonly string[]): Promise<SportEvent[]>;
   /**
    * Each event's active field as the provider's feed ids for its teams in the sport league, by

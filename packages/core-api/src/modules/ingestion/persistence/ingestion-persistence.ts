@@ -289,22 +289,23 @@ export class IngestionPersistence {
     }, 'Persisting event detail from ingestion');
     const eventResult = await this.persistEventsWithDiagnostics([detail]);
     const eventsPersisted = eventResult.count;
-    // The event the provider has this id for (#2004), and its league through its Season.
+    // The events the provider has this id for (#2004), one per competition its games reach (#2154),
+    // and their league through their Season.
     const providerCode = providerCodeOfSourceId(detail.providerId);
-    const persistedEvent = providerCode === undefined ? null : (await this.prisma.sportEventProviderMapping.findFirst({
+    const persistedEvents = providerCode === undefined ? [] : (await this.prisma.sportEventProviderMapping.findMany({
       where: { provider: { code: providerCode }, externalId: detail.externalId },
       select: {
         sportEvent: {
           include: {
             sportLeagueSeason: { select: { sportLeague: { select: { id: true, participantType: true, scoringFamily: true, sport: { select: { sport: true } } } } } },
             // Each slot's match format (#2008), and whether this provider's games reach it by date
-            // window (#1715): one such mapping is enough to know.
+            // window (#1715) or as the rest of its phase (#2154): one such mapping is enough to know.
             slots: {
               select: { seasonSlot: { select: { definition: { select: {
                 matchFormat: true,
                 providerMappings: {
                   where: {
-                    matchType: PrismaSlotProviderMatchType.DATE_WINDOW,
+                    matchType: { in: [PrismaSlotProviderMatchType.DATE_WINDOW, PrismaSlotProviderMatchType.REST_OF_PHASE] },
                     sportLeagueProviderMapping: { providerLeague: { provider: { code: providerCode } } },
                   },
                   select: { id: true },
@@ -315,10 +316,11 @@ export class IngestionPersistence {
           },
         },
       },
-    }))?.sportEvent ?? null;
+    })).map((mapping) => mapping.sportEvent);
     const detailRows: SyncWriteDetailRow[] = [];
 
-    if (!persistedEvent) {
+    const [firstEvent] = persistedEvents;
+    if (persistedEvents.length === 0) {
       // No event is linked to this provider event, so there is no field to write and no sport
       // league for its participants to belong to (persistEventsWithDiagnostics above skipped it
       // too).
@@ -329,34 +331,37 @@ export class IngestionPersistence {
       };
     }
 
-    const { sportLeague } = persistedEvent.sportLeagueSeason;
+    // A provider event's events are all of its one league.
+    const { sportLeague } = firstEvent.sportLeagueSeason;
     const { count: participantsPersisted, participantIdByKey } = await this.persistParticipants(detail.participants, {
       id: sportLeague.id,
       participantType: sportLeague.participantType,
     });
-    let sportEventParticipantsPersisted: number;
-    const seedsLocked = seedsLockedOn(persistedEvent);
-    // What follows the field (#1952): the provider's games, then the tiers and prices, in a job
-    // written with the field, so a task that stops after the write still has them run.
-    const followUps = await this.domainEvents.collect({
-      type: DomainEventType.SPORT_EVENT_FIELD_SYNCED,
-      sportEvent: { id: persistedEvent.id, status: persistedEvent.status },
-      providerId: detail.providerId,
-      externalId: detail.externalId,
-      ...(detail.games !== undefined && { games: detail.games }),
-      ...(detail.bracket !== undefined && { bracket: detail.bracket }),
-    });
+    let sportEventParticipantsPersisted = 0;
+    for (const persistedEvent of persistedEvents) {
+      const seedsLocked = seedsLockedOn(persistedEvent);
+      // What follows the field (#1952): the provider's games, then the tiers and prices, in a job
+      // written with the field, so a task that stops after the write still has them run.
+      const followUps = await this.domainEvents.collect({
+        type: DomainEventType.SPORT_EVENT_FIELD_SYNCED,
+        sportEvent: { id: persistedEvent.id, status: persistedEvent.status },
+        providerId: detail.providerId,
+        externalId: detail.externalId,
+        ...(detail.games !== undefined && { games: detail.games }),
+        ...(detail.bracket !== undefined && { bracket: detail.bracket }),
+      });
 
-    try {
-      // A date window holds every game in its dates, other schools' too, so its feed names no field:
-      // the field is the one placed on the event, and the feed only refreshes it (#1715).
-      const fieldFromFeed = persistedEvent.slots.every(({ seasonSlot }) => seasonSlot.definition.providerMappings.length === 0);
-      sportEventParticipantsPersisted = await this.persistEventField(detail, persistedEvent.id, { seedsLocked, fieldFromFeed }, participantIdByKey, detailRows, followUps);
-    } finally {
-      this.fieldCache?.forget(persistedEvent.id);
-      this.cdn?.invalidate([PublicReadPath.EVENT_PAGES]);
+      try {
+        // A window holds every game in its dates, other schools' too, so its feed names no field: the
+        // field is the one placed on the event, and the feed only refreshes it (#1715, #2154).
+        const fieldFromFeed = persistedEvent.slots.every(({ seasonSlot }) => seasonSlot.definition.providerMappings.length === 0);
+        sportEventParticipantsPersisted += await this.persistEventField(detail, persistedEvent.id, { seedsLocked, fieldFromFeed }, participantIdByKey, detailRows, followUps);
+      } finally {
+        this.fieldCache?.forget(persistedEvent.id);
+        this.cdn?.invalidate([PublicReadPath.EVENT_PAGES]);
+      }
+      followUps.queued();
     }
-    followUps.queued();
 
     this.logger?.info({
       providerId: detail.providerId,

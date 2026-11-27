@@ -79,8 +79,8 @@ describe('BalldontlieAdapter (College Football Playoff)', () => {
       const events = await harness.adapter.getUpcomingEvents(Sport.FOOTBALL, { from: new Date('2025-06-01T00:00:00Z'), to: new Date('2026-12-31T23:59:59Z') }, { providerLeagueCode: 'ncaaf' });
 
       expect(events.map((event) => [event.externalId, event.name, event.status, event.providerLeagueCode])).toEqual([
-        ['ncaaf-2025-cfp', 'College Football Playoff', 'COMPLETED', 'ncaaf'],
-        ['ncaaf-2026-cfp', 'College Football Playoff', 'IN_PROGRESS', 'ncaaf'],
+        ['ncaaf-2025-cfp', 'College football 2025 season', 'COMPLETED', 'ncaaf'],
+        ['ncaaf-2026-cfp', 'College football 2026 season', 'IN_PROGRESS', 'ncaaf'],
       ]);
       expect(harness.api.requests.some((request) => request.path.startsWith('/nfl/'))).toBe(false);
       expect(collegeRequests(harness.api)).toEqual([
