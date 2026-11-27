@@ -369,7 +369,6 @@ describe('ProviderSyncRunLedger checks each completed run\'s event for its sync\
 
   it.each([
     ['FIELD', 'NO_PROVIDER_PARTICIPANTS'],
-    ['SCORES', 'NO_PROVIDER_LIVE_SCORES'],
   ] as const)('raises the %s run\'s %s finding on its event when the run warned of it', async (kind, findingKind) => {
     const findings = { checkEvent: jest.fn(async (_check: unknown) => undefined), checkRunOutcome: jest.fn(async (_run: unknown, _outcome: unknown) => undefined) };
     const ledger = new ProviderSyncRunLedger(syncRunsIgnoringWrites(), undefined, findings);
@@ -377,6 +376,17 @@ describe('ProviderSyncRunLedger checks each completed run\'s event for its sync\
     await ledger.executeFeedRun(createSyncRun({ kind, ...linked }), async () => createJob({ warnings: [{ code: findingKind, message: 'Nothing came back.' }] }));
 
     expect(findings.checkEvent).toHaveBeenCalledWith({ kind: findingKind, sportLeagueId: 'nfl', sportEventId: 'week-1', providerId: 'provider-row-1', found: true });
+  });
+
+  it('raises nothing for a scores run that brought no updates, since the sync tick raises that once the league\'s quiet window has passed, and resolves it on a run that brought some (#2094)', async () => {
+    const findings = { checkEvent: jest.fn(async (_check: unknown) => undefined), checkRunOutcome: jest.fn(async (_run: unknown, _outcome: unknown) => undefined) };
+    const ledger = new ProviderSyncRunLedger(syncRunsIgnoringWrites(), undefined, findings);
+
+    await ledger.executeFeedRun(createSyncRun({ kind: 'SCORES', ...linked }), async () => createJob({ warnings: [{ code: 'NO_PROVIDER_LIVE_SCORES', message: 'Nothing came back.' }] }));
+    expect(findings.checkEvent).not.toHaveBeenCalled();
+
+    await ledger.executeFeedRun(createSyncRun({ kind: 'SCORES', ...linked }), async () => createJob());
+    expect(findings.checkEvent).toHaveBeenCalledWith({ kind: 'NO_PROVIDER_LIVE_SCORES', sportLeagueId: 'nfl', sportEventId: 'week-1', providerId: 'provider-row-1', found: false });
   });
 
   it('resolves the event\'s finding when a completed run did not warn of it', async () => {

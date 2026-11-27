@@ -487,11 +487,15 @@ column. Each finding names its sport league; its event, Provider row and the fee
   matches more than one slot) and `SLOT_SEASON_COMPETITION_MISSING` (ERROR, a matched slot whose competition the
   Season lacks), all three *Tournaments matched by name* above, and `SLOT_OUTSIDE_SEASON` (WARNING),
   `GAMES_UNPLACED` (INFO) and `SLOT_DATES_NEEDED` (WARNING, resolved once the Season's windows are
-  confirmed), all three *Matching by date window* above. Three are checked on an event by each sync that
+  confirmed), all three *Matching by date window* above. Two are checked on an event by each sync that
   could see them, raised as a WARNING when it does and resolved when a later one does not:
-  `NO_PROVIDER_PARTICIPANTS` (a completed FIELD run whose provider sent no field),
-  `NO_PROVIDER_LIVE_SCORES` (a completed SCORES run with no updates) and `GAMES_NOT_SYNCED` (the
-  field's follow-up job could not load the games the provider listed). `FIELD_TEAM_WITHOUT_GAME`
+  `NO_PROVIDER_PARTICIPANTS` (a completed FIELD run whose provider sent no field) and
+  `GAMES_NOT_SYNCED` (the field's follow-up job could not load the games the provider listed).
+  `NO_PROVIDER_LIVE_SCORES` (#2094) is a WARNING the sync tick raises on an event in play whose
+  scores no completed run has changed, and whose provider has sent no notification, for its
+  provider league's `quietAfterMinutes` (counted from play getting under way, or the later of the
+  two), once per quiet window; a poll with no updates inside the window raises nothing, since a
+  game between scoring plays is quiet. The next SCORES run that brings updates resolves it. `FIELD_TEAM_WITHOUT_GAME`
   is checked the same way per team, by the field sync of a released rest-of-phase event (*A
   rest-of-phase event's games and field* above). The ledger turns a feed
   run's warning into its finding, so a run carries no warnings of its own; the tier and price

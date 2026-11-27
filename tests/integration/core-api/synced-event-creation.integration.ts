@@ -96,6 +96,9 @@ function buildScheduler(feed: { shiftDays: number; name?: string } = { shiftDays
     registry: registryWith(fakeSportDataProvider()),
     schedule: { getConfig: () => Promise.resolve(INGESTION_SCHEDULE_SETTINGS.defaults({})) },
     notifiedProviderCadence: () => undefined,
+    // No provider league is quiet-checked here: the quiet live scores finding has its own tests.
+    quietAfterMs: () => 0,
+    findings: { raiseOfSource: () => Promise.resolve() },
     jobLock: heldHere(),
     // A tick six hours after the last, so each league's events sync is due again.
     now: () => new Date(Date.now() + 6 * 60 * 60 * 1000),

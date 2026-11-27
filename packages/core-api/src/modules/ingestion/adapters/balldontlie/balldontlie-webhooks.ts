@@ -48,17 +48,6 @@ const GOLF_EVENT_PHASES: Readonly<Record<string, ProviderNotificationPhase>> = {
 };
 
 /**
- * How long an event of the provider may stay in play with no notification before its webhook is
- * taken to have stopped (#1499): the `quietAfterMinutes` of the provider league its sport league's
- * mapping names (#2004), or the longest of them all for an event of a league not listed.
- */
-export function balldontlieQuietAfterMs(leagues: readonly BalldontlieWebhookLeague[], providerLeagueCode: string): number {
-  const league = leagues.find((candidate) => candidate.code === providerLeagueCode);
-  const minutes = league?.quietAfterMinutes ?? Math.max(0, ...leagues.map((each) => each.quietAfterMinutes));
-  return minutes * 60_000;
-}
-
-/**
  * What a notification is about, or null for one PoolMaster does not act on: a league with no
  * enabled row, an event type not subscribed to, or one without the game or tournament it names.
  */

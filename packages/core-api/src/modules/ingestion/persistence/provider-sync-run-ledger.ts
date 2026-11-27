@@ -140,12 +140,16 @@ export class ProviderSyncRunLedger {
 
   /**
    * A completed run's check of its event (#1999): the problem its kind looks for (a field with
-   * no participants, a scores sync with no updates) is raised as a finding when the run warned of
-   * it, and resolved when it did not. A run with no event or league of ours checks nothing.
+   * no participants, a scores sync with no updates) is resolved when the run did not warn of it,
+   * and raised when it did if its kind's run raises it. A run with no event or league of ours
+   * checks nothing.
    */
   private async checkEvent(syncRun: ProviderSyncRun, job: IngestionJobRecord): Promise<void> {
-    const kind = EVENT_CHECK_OF_SYNC_KIND[syncRun.kind];
-    if (this.findings === undefined || kind === undefined || syncRun.sportLeagueId === null || syncRun.sportEventId === null) return;
+    const check = EVENT_CHECK_OF_SYNC_KIND[syncRun.kind];
+    if (this.findings === undefined || check === undefined || syncRun.sportLeagueId === null || syncRun.sportEventId === null) return;
+    const { kind } = check;
+    const found = (job.warnings ?? []).some((warning) => warning.code === kind);
+    if (found && !check.raisedByRun) return;
     // The run's outcome is already recorded: a findings write that fails is logged, never thrown,
     // so it cannot fail a run that succeeded (as the score publisher's, #2068).
     try {
@@ -154,7 +158,7 @@ export class ProviderSyncRunLedger {
         sportLeagueId: syncRun.sportLeagueId,
         sportEventId: syncRun.sportEventId,
         providerId: syncRun.providerId,
-        found: (job.warnings ?? []).some((warning) => warning.code === kind),
+        found,
       });
     } catch (error) {
       this.logger?.error(
@@ -276,10 +280,15 @@ function errorMessageOf(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
 
-/** The finding each event sync's run checks its event for (#1999). */
-const EVENT_CHECK_OF_SYNC_KIND: Readonly<Partial<Record<ProviderSyncKind, ProviderSyncFindingKind>>> = {
-  [ProviderSyncKind.FIELD]: ProviderSyncFindingKind.NO_PROVIDER_PARTICIPANTS,
-  [ProviderSyncKind.SCORES]: ProviderSyncFindingKind.NO_PROVIDER_LIVE_SCORES,
+/**
+ * The finding each event sync's run checks its event for (#1999), and whether a run that warned
+ * of it raises it. A scores run only resolves its finding (#2094): a poll with no updates is
+ * normal between scoring plays, so the sync tick raises it once the event's provider league has
+ * been quiet for its window.
+ */
+const EVENT_CHECK_OF_SYNC_KIND: Readonly<Partial<Record<ProviderSyncKind, { kind: ProviderSyncFindingKind; raisedByRun: boolean }>>> = {
+  [ProviderSyncKind.FIELD]: { kind: ProviderSyncFindingKind.NO_PROVIDER_PARTICIPANTS, raisedByRun: true },
+  [ProviderSyncKind.SCORES]: { kind: ProviderSyncFindingKind.NO_PROVIDER_LIVE_SCORES, raisedByRun: false },
 };
 
 interface SubmissionInput {

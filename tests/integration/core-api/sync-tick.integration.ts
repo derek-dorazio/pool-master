@@ -16,7 +16,10 @@ import { BackgroundJobQueue } from '../../../packages/core-api/src/modules/backg
 import { SyncTick } from '../../../packages/core-api/src/modules/ingestion/sync-tick';
 import { INGESTION_SCHEDULE_SETTINGS } from '../../../packages/core-api/src/modules/platform/ingestion-config-service';
 import { cleanupTestData, getAppPrisma, getPrisma, setupIntegrationTests, teardownIntegrationTests } from '../helpers';
+import { findUnindexedScans } from '../index-check';
 import { expectSameStatementCount } from '../query-scaling';
+import { recordStatements } from '../statement-log';
+import { BALLDONTLIE_TEST_PROVIDER_ID } from '../../support/balldontlie-provider-rows';
 import { linkedProviderEvent } from '../../support/event-edition';
 import { fakeSportDataProvider, registryWith } from '../../support/fake-sport-data-provider';
 import { heldHere } from '../../support/job-locks';
@@ -121,6 +124,7 @@ describe('the linked events whose Games are due or in play', () => {
         { status: MatchStatus.SCHEDULED, scheduledDate: at(-10 * 60_000), playedAsField: expect.any(Boolean) },
       ]),
       lastHeardAt: null,
+      lastScoresChangedAt: null,
     }]);
     expect(events[0]?.games).toHaveLength(2);
   });
@@ -159,6 +163,32 @@ describe('the linked events whose Games are due or in play', () => {
   });
 });
 
+describe('when a live event\'s scores last changed (#2094)', () => {
+  it('is its latest completed scores run that changed something, not a run that changed nothing, a failed one or a field run', async () => {
+    const league = await syncedLeague();
+    const live = await linkedEventStarting(league, at(-HOUR));
+    await gameOf(live, { status: MatchStatus.IN_PROGRESS, scheduledDate: at(-HOUR) });
+    const run = (kind: 'FIELD' | 'SCORES', status: 'COMPLETED' | 'FAILED', changedCount: number | null, createdAt: Date) => ({
+      kind, status, changedCount, createdAt, trigger: JobTrigger.SCHEDULE, providerId: BALLDONTLIE_TEST_PROVIDER_ID, sportLeagueId: league.sportLeagueId, sportEventId: live.id, summary: '',
+    });
+    await getPrisma().providerSyncRun.createMany({
+      data: [
+        run('SCORES', 'COMPLETED', 2, at(-40 * 60_000)),
+        run('SCORES', 'COMPLETED', 0, at(-10 * 60_000)),
+        run('SCORES', 'FAILED', null, at(-5 * 60_000)),
+        run('FIELD', 'COMPLETED', 3, at(-2 * 60_000)),
+      ],
+    });
+
+    const { result: events, statements } = await recordStatements(() => new PrismaSyncDueWorkReader(getAppPrisma()).findLiveEvents({ leagues: [league], now: NOW }));
+
+    expect(events.at(0)?.lastScoresChangedAt).toEqual(at(-40 * 60_000));
+    // The Games with their slots and events, then one grouped read of the runs.
+    expect(statements).toHaveLength(6);
+    await expect(findUnindexedScans(getPrisma(), statements.map(({ sql }) => ({ sql, test: 'PrismaSyncDueWorkReader.findLiveEvents' })))).resolves.toEqual([]);
+  });
+});
+
 describe("each subject's latest job", () => {
   it("answers each event's latest run time due by now for one job type, leaving out a job due later, another type's jobs and an event with none", async () => {
     const prisma = getPrisma();
@@ -193,6 +223,9 @@ describe('one sync tick', () => {
       registry: registryWith(fakeSportDataProvider()),
       schedule: { getConfig: () => Promise.resolve(INGESTION_SCHEDULE_SETTINGS.defaults({})) },
       notifiedProviderCadence: () => undefined,
+      // No provider league is quiet-checked here: the quiet live scores finding has its own tests.
+      quietAfterMs: () => 0,
+      findings: { raiseOfSource: () => Promise.resolve() },
       jobLock: heldHere(),
       now: () => NOW,
     });

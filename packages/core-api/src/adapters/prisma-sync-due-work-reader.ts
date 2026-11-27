@@ -6,7 +6,7 @@
 
 import type { Prisma, PrismaClient } from '@prisma/client';
 import type { LiveEventView, SyncDueWorkReader, SyncedLeagueRef } from '@poolmaster/shared/db';
-import { MatchFormat, MatchStatus, scoresDueSince, type FieldWindowSlot } from '@poolmaster/shared/domain';
+import { MatchFormat, MatchStatus, ProviderSyncKind, ProviderSyncRunStatus, scoresDueSince, type FieldWindowSlot } from '@poolmaster/shared/domain';
 
 /** An event of one of the leagues, linked under the league's provider mapping. */
 function linkedEventOf(leagues: readonly SyncedLeagueRef[]): Prisma.SportEventWhereInput {
@@ -19,7 +19,7 @@ function linkedEventOf(leagues: readonly SyncedLeagueRef[]): Prisma.SportEventWh
 }
 
 export class PrismaSyncDueWorkReader implements SyncDueWorkReader {
-  constructor(private readonly prisma: Pick<PrismaClient, 'sportLeagueSeasonCompetitionSlot' | 'sportEventRoundMatchGame'>) {}
+  constructor(private readonly prisma: Pick<PrismaClient, 'sportLeagueSeasonCompetitionSlot' | 'sportEventRoundMatchGame' | 'providerSyncRun'>) {}
 
   async findNextSlots(input: { leagues: readonly SyncedLeagueRef[]; now: Date }): Promise<FieldWindowSlot[]> {
     if (input.leagues.length === 0) return [];
@@ -79,10 +79,22 @@ export class PrismaSyncDueWorkReader implements SyncDueWorkReader {
         sportLeagueId: sportEvent.sportLeagueId,
         games: [],
         lastHeardAt: sportEvent.lastProviderNotificationAt,
+        lastScoresChangedAt: null,
       };
       event.games.push({ status: game.status, scheduledDate: game.scheduledDate, playedAsField: seasonSlot.definition.matchFormat === MatchFormat.FIELD });
       event.lastHeardAt = latest(event.lastHeardAt, game.lastProviderNotificationAt);
       events.set(game.sportEventId, event);
+    }
+    if (events.size === 0) return [];
+    // Each live event's latest scores sync that changed something, on the (event, kind, created at) index.
+    const changed = await this.prisma.providerSyncRun.groupBy({
+      by: ['sportEventId'],
+      where: { sportEventId: { in: [...events.keys()] }, kind: ProviderSyncKind.SCORES, status: ProviderSyncRunStatus.COMPLETED, changedCount: { gt: 0 } },
+      _max: { createdAt: true },
+    });
+    for (const group of changed) {
+      const event = group.sportEventId === null ? undefined : events.get(group.sportEventId);
+      if (event !== undefined) event.lastScoresChangedAt = group._max.createdAt;
     }
     return [...events.values()];
   }

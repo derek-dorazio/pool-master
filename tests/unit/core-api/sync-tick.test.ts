@@ -21,6 +21,8 @@ const NOW = new Date('2026-11-27T18:00:00.000Z');
 const minutes = (count: number) => count * 60_000;
 const at = (offsetMs: number) => new Date(NOW.getTime() + offsetMs);
 
+const PGA_PROVIDER_LEAGUE = 'pga-provider-league';
+
 const SCHEDULE = {
   EVENTS: { enabled: true, intervalMinutes: 360 },
   FIELD: { intervalMinutes: 360 },
@@ -42,6 +44,7 @@ function liveEvent(sportLeagueId: string, overrides: Partial<LiveEventView> = {}
     sportLeagueId,
     games: [{ status: MatchStatus.IN_PROGRESS, scheduledDate: at(-minutes(30)), playedAsField: false }],
     lastHeardAt: null,
+    lastScoresChangedAt: null,
     ...overrides,
   };
 }
@@ -55,6 +58,7 @@ function tickOf(options: {
   running?: boolean;
   lock?: 'here' | 'elsewhere';
 }) {
+  const findings = { raiseOfSource: jest.fn(async (_providerSourceId: string, _raises: unknown) => undefined) };
   let now = NOW;
   const jobs = inMemoryBackgroundJobs(() => now);
   const queue = new BackgroundJobQueue({ jobs, currentStart: testCurrentJobStart });
@@ -72,6 +76,9 @@ function tickOf(options: {
     registry: registryWith(options.running === false ? null : fakeSportDataProvider()),
     schedule: { getConfig: async () => options.schedule ?? SCHEDULE },
     notifiedProviderCadence: () => options.cadence,
+    // Each provider league's own quiet window: a golf round's is hours, a game's minutes.
+    quietAfterMs: (providerLeagueId) => (providerLeagueId === PGA_PROVIDER_LEAGUE ? minutes(240) : minutes(20)),
+    findings,
     jobLock: options.lock === 'elsewhere' ? heldElsewhere() : heldHere(),
     now: () => now,
     logger,
@@ -82,6 +89,7 @@ function tickOf(options: {
     queue,
     dueWork,
     logger,
+    findings,
     advance: (ms: number) => { now = new Date(now.getTime() + ms); },
     /** Every job's type and subject, as queued. */
     queued: () => jobs.rows.map((row) => ({ type: row.type, sportLeagueId: row.sportLeagueId, sportEventId: row.sportEventId })),
@@ -223,7 +231,6 @@ describe('SyncTick', () => {
       providerIds: [providerId],
       pollIntervalMs: minutes(15),
       roundPollIntervalMs: minutes(2),
-      quietAfterMs: (code) => (code === 'pga' ? minutes(240) : minutes(20)),
     });
     const scoresOnly = { ...SCHEDULE, EVENTS: { enabled: false, intervalMinutes: 360 } };
 
@@ -251,7 +258,7 @@ describe('SyncTick', () => {
     });
 
     it('syncs a notified event played as a FIELD (a golf round) every 2 minutes', async () => {
-      const pga = league({ selectedProviderMapping: buildProviderMapping({ id: randomUUID(), providerLeagueCode: 'pga' }) });
+      const pga = league({ selectedProviderMapping: buildProviderMapping({ id: randomUUID(), providerLeagueId: PGA_PROVIDER_LEAGUE, providerLeagueCode: 'pga' }) });
       const round = liveEvent(pga.id, { games: [{ status: MatchStatus.IN_PROGRESS, scheduledDate: at(-minutes(30)), playedAsField: true }] });
       const { tick, queued, advance, finishAll } = tickOf({ leagues: [pga], live: [round], schedule: scoresOnly, cadence: cadence() });
       await tick.tick();
@@ -277,7 +284,7 @@ describe('SyncTick', () => {
     });
 
     it('takes each league\'s own quiet window, and never warns about an event whose provider sends no notifications', async () => {
-      const pga = league({ selectedProviderMapping: buildProviderMapping({ id: randomUUID(), providerLeagueCode: 'pga' }) });
+      const pga = league({ selectedProviderMapping: buildProviderMapping({ id: randomUUID(), providerLeagueId: PGA_PROVIDER_LEAGUE, providerLeagueCode: 'pga' }) });
       const round = liveEvent(pga.id, { games: [{ status: MatchStatus.IN_PROGRESS, scheduledDate: at(-minutes(20)), playedAsField: true }] });
       const notified = tickOf({ leagues: [pga], live: [round], schedule: scoresOnly, cadence: cadence() });
       const unnotified = tickOf({ leagues: [league()], live: [liveEvent(randomUUID())], schedule: scoresOnly });
@@ -287,6 +294,71 @@ describe('SyncTick', () => {
 
       expect(notified.logger.warn).not.toHaveBeenCalled();
       expect(unnotified.logger.warn).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('the quiet live scores finding (#2094)', () => {
+    const scoresOnly = { ...SCHEDULE, EVENTS: { enabled: false, intervalMinutes: 360 } };
+    const raisedEvents = (findings: { raiseOfSource: jest.Mock }) => findings.raiseOfSource.mock.calls.flatMap(([, raises]) => (raises as { sportEventId: string }[]).map((raise) => raise.sportEventId));
+
+    it('raises nothing for an event in play whose scores have been quiet for less than its league\'s window, as between scoring plays', async () => {
+      const nfl = league();
+      const live = liveEvent(nfl.id, { games: [{ status: MatchStatus.IN_PROGRESS, scheduledDate: at(-minutes(45)), playedAsField: false }], lastScoresChangedAt: at(-minutes(10)) });
+      const { tick, findings } = tickOf({ leagues: [nfl], live: [live], schedule: scoresOnly });
+
+      await tick.tick();
+
+      expect(findings.raiseOfSource).not.toHaveBeenCalled();
+    });
+
+    it('raises a WARNING on the event under its provider once its scores have been quiet past its league\'s window, and not again on the next tick', async () => {
+      const nfl = league();
+      const live = liveEvent(nfl.id, { games: [{ status: MatchStatus.IN_PROGRESS, scheduledDate: at(-minutes(45)), playedAsField: false }], lastScoresChangedAt: at(-minutes(20)) });
+      const { tick, findings, advance } = tickOf({ leagues: [nfl], live: [live], schedule: scoresOnly });
+
+      await tick.tick();
+      advance(minutes(1));
+      await tick.tick();
+
+      expect(findings.raiseOfSource).toHaveBeenCalledTimes(1);
+      expect(findings.raiseOfSource).toHaveBeenCalledWith(nfl.selectedProviderMapping?.providerId, [{
+        kind: 'NO_PROVIDER_LIVE_SCORES', severity: 'WARNING', sportLeagueId: nfl.id, sportEventId: live.sportEventId, providerValue: null, providerValueName: null,
+      }]);
+    });
+
+    it('counts quiet from when play got under way when the scores never changed, and from a later notification when there was one', async () => {
+      const nfl = league();
+      const neverChanged = liveEvent(nfl.id, { games: [{ status: MatchStatus.IN_PROGRESS, scheduledDate: at(-minutes(20)), playedAsField: false }] });
+      const heardLately = liveEvent(nfl.id, { games: [{ status: MatchStatus.IN_PROGRESS, scheduledDate: at(-minutes(60)), playedAsField: false }], lastHeardAt: at(-minutes(5)) });
+      const { tick, findings } = tickOf({ leagues: [nfl], live: [neverChanged, heardLately], schedule: scoresOnly });
+
+      await tick.tick();
+
+      expect(raisedEvents(findings)).toEqual([neverChanged.sportEventId]);
+    });
+
+    it('takes each provider league\'s own window: a golf round quiet for an hour raises nothing', async () => {
+      const pga = league({ selectedProviderMapping: buildProviderMapping({ id: randomUUID(), providerLeagueId: PGA_PROVIDER_LEAGUE, providerLeagueCode: 'pga' }) });
+      const round = liveEvent(pga.id, { games: [{ status: MatchStatus.IN_PROGRESS, scheduledDate: at(-minutes(60)), playedAsField: true }] });
+      const { tick, findings } = tickOf({ leagues: [pga], live: [round], schedule: scoresOnly });
+
+      await tick.tick();
+
+      expect(findings.raiseOfSource).not.toHaveBeenCalled();
+    });
+
+    it('raises nothing for an event with no Game under way yet, nor while live score syncs are off', async () => {
+      const nfl = league();
+      const notStarted = liveEvent(nfl.id, { games: [{ status: MatchStatus.IN_PROGRESS, scheduledDate: null, playedAsField: false }] });
+      const quiet = liveEvent(nfl.id, { games: [{ status: MatchStatus.IN_PROGRESS, scheduledDate: at(-minutes(20)), playedAsField: false }] });
+      const started = tickOf({ leagues: [nfl], live: [notStarted], schedule: scoresOnly });
+      const off = tickOf({ leagues: [nfl], live: [quiet], schedule: { ...scoresOnly, SCORES: { enabled: false, intervalSeconds: 300 } } });
+
+      await started.tick.tick();
+      await off.tick.tick();
+
+      expect(started.findings.raiseOfSource).not.toHaveBeenCalled();
+      expect(off.findings.raiseOfSource).not.toHaveBeenCalled();
     });
   });
 });
