@@ -765,7 +765,7 @@ describe('ContestManagementService', () => {
       expect(reader.findByIds).toHaveBeenCalledTimes(1);
       expect(reader.findByIds).toHaveBeenCalledWith([masters, pga]);
       expect(tiers.listTiersOfEvents).toHaveBeenCalledTimes(1);
-      expect(tiers.listTiersOfEvents).toHaveBeenCalledWith([masters, pga], { coveredSlotDefinitionIds: null });
+      expect(jest.mocked(tiers.listTiersOfEvents).mock.calls[0]?.[0]).toEqual([masters, pga]);
     });
 
     it('moves a DRAFT contest to OPEN with a compare-and-set from DRAFT, records when it opened, has the reminder sweep look at it next (#1170), and returns it open', async () => {
@@ -1023,7 +1023,8 @@ describe('ContestManagementService', () => {
     expect(golfTierService.getEffectiveTiersForSportEvents).toHaveBeenCalledTimes(1);
     expect(golfTierService.getEffectiveTiersForSportEvents).toHaveBeenCalledWith(
       ['11111111-1111-1111-1111-111111111111'],
-      { coveredSlotDefinitionIds: null },
+      // The set the contest picks from is its covered slots' (#2014).
+      { coveredSlotDefinitionIds: ['definition-event-slot'] },
     );
     expect(result.sportEvents[0]?.effectiveTiers).toEqual([
       {
