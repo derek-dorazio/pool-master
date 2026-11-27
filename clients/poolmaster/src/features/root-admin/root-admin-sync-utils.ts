@@ -13,15 +13,6 @@ export type ProviderSyncRunDetail = ProviderSyncRunDetailDto;
 export type ProviderSummary = ProviderSummaryDto;
 export type EventSyncSubmission = ProviderManualSyncSubmissionResponse;
 
-export const SYNC_STATUS_OPTIONS = [
-  'SUBMITTED',
-  'IN_PROGRESS',
-  'COMPLETED',
-  'FAILED',
-  'CANCELLED',
-] as const;
-export type SyncStatus = (typeof SYNC_STATUS_OPTIONS)[number];
-
 export const EVENT_SYNC_PRESETS = [
   {
     id: 'EVENTPARTICIPANTS',

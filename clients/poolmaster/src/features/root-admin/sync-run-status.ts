@@ -1,8 +1,7 @@
 import type { ProviderSyncRunDetails } from './root-admin-sync-utils';
 import type { SyncRunEvidenceRow } from './sync-run-detail';
 
-// How a sync run reads in the Sync lists and its detail dialog: its status tone, its event and
-// the rows it wrote.
+// How a sync run reads in the Sync lists and its detail dialog: its event and the rows it wrote.
 
 export function formatEventValue(eventId: string | null | undefined) {
   if (!eventId || eventId.trim().length === 0) {
@@ -10,22 +9,6 @@ export function formatEventValue(eventId: string | null | undefined) {
   }
 
   return eventId;
-}
-
-export function getStatusTone(status: string) {
-  switch (status) {
-    case 'COMPLETED':
-    case 'HEALTHY':
-      return 'success';
-    case 'FAILED':
-    case 'UNHEALTHY':
-      return 'danger';
-    case 'IN_PROGRESS':
-    case 'SUBMITTED':
-      return 'warning';
-    default:
-      return 'neutral';
-  }
 }
 
 export function buildRunEvidenceRows(details: ProviderSyncRunDetails | null | undefined): SyncRunEvidenceRow[] {

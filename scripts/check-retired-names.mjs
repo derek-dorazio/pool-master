@@ -12,7 +12,8 @@
  * - more uses than the baseline: new code reached for a retired name. Read the fact from its
  *   model home instead (the owner ticket names it).
  * - fewer: a slice removed some uses, so the entry comes down in the same PR. `--update` only
- *   ever lowers entries and drops those that reach 0; it never adds or raises one.
+ *   ever lowers entries; it never adds, raises or drops one. A name at 0 stays listed with its
+ *   owner, as a guard: any use of it coming back fails the check.
  *
  * A name is added to the file, with its owner, when a plan or a code pass retires it, and the new
  * entry is declared in `scripts/baseline-raises.json` (reason "retired by #N"):
@@ -65,14 +66,9 @@ export function compareWithBaseline(counts, baseline, owners) {
   return { over, under, unowned };
 }
 
-/** The baseline after cleanups: each entry lowered to its count, entries at 0 dropped with their owner. */
+/** The baseline after cleanups: each entry lowered to its count. An entry at 0 stays, guarding the name. */
 export function ratchetBaseline(counts, baseline) {
-  const next = {};
-  for (const [name, allowed] of Object.entries(baseline)) {
-    const count = Math.min(counts[name] ?? 0, allowed);
-    if (count > 0) next[name] = count;
-  }
-  return next;
+  return Object.fromEntries(Object.entries(baseline).map(([name, allowed]) => [name, Math.min(counts[name] ?? 0, allowed)]));
 }
 
 function main() {
