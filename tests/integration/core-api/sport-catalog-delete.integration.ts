@@ -47,7 +47,7 @@ afterAll(async () => {
 async function golfSportId(): Promise<string> {
   const sport = await getPrisma().sport.upsert({
     where: { sport: Sport.GOLF },
-    create: { sport: Sport.GOLF, ...sportRowKeys(Sport.GOLF), tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+    create: { sport: Sport.GOLF, ...sportRowKeys(Sport.GOLF) },
     update: {},
   });
   return sport.id;

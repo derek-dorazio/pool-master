@@ -105,7 +105,7 @@ describe('SDK Functional: an NFL regular-season week (#715)', () => {
     // The migration's reference row, restored in case an earlier suite cleared the sports table.
     await db.sport.upsert({
       where: { sport: Sport.FOOTBALL },
-      create: { sport: Sport.FOOTBALL, ...sportRowKeys(Sport.FOOTBALL), tournamentFormat: 'MATCHES' },
+      create: { sport: Sport.FOOTBALL, ...sportRowKeys(Sport.FOOTBALL) },
       update: {},
     });
     const admin = await buildRegisteredUser({ displayName: 'Week Director' });

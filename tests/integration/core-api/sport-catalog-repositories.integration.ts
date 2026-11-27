@@ -6,7 +6,7 @@ import {
   setupIntegrationTests,
   teardownIntegrationTests,
 } from '../helpers';
-import { MatchFormat, ParticipantType, ProviderCode, ScoringFamily, Sport, TournamentFormat, getSportDefinition, isLeaguePlayValid } from '@poolmaster/shared/domain';
+import { MatchFormat, ParticipantType, ProviderCode, ScoringFamily, Sport, isLeaguePlayValid } from '@poolmaster/shared/domain';
 import {
   PrismaParticipantProviderMappingRepository,
   PrismaParticipantRepository,
@@ -39,7 +39,7 @@ beforeEach(() => cleanupTestData());
 async function golfSport() {
   return getPrisma().sport.upsert({
     where: { sport: Sport.GOLF },
-    create: { sport: Sport.GOLF, ...sportRowKeys(Sport.GOLF), tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+    create: { sport: Sport.GOLF, ...sportRowKeys(Sport.GOLF) },
     update: {},
   });
 }
@@ -128,16 +128,6 @@ describe('Sport and SportLeague repositories', () => {
     await expect(getPrisma().sportLeague.create({
       data: { ...(await sportLeagueRowDefaults(getPrisma())), ...sportPlay(Sport.HOCKEY), sportId: hockey.id, name: 'Segment clash', timeZone: 'UTC', urlSegment: 'nba' },
     })).rejects.toThrow(/Unique constraint failed on the fields: \(`url_segment`\)/);
-  });
-
-  // #715 renamed KNOCKOUT_BRACKET to MATCHES in place, so the sports rows seeded with it carry the new value.
-  it('stores each seeded sport\'s tournament format as its sport definition gives it, basketball, football, hockey, baseball, soccer and tennis as MATCHES', async () => {
-    const sports = await new PrismaSportRepository(getAppPrisma()).findAll();
-
-    expect(sports.map((row) => [row.sport, row.tournamentFormat]))
-      .toEqual(sports.map((row) => [row.sport, getSportDefinition(row.sport).tournamentFormat]));
-    expect(sports.filter((row) => row.tournamentFormat === TournamentFormat.MATCHES).map((row) => row.sport).sort())
-      .toEqual([Sport.BASEBALL, Sport.BASKETBALL, Sport.FOOTBALL, Sport.HOCKEY, Sport.SOCCER, Sport.TENNIS]);
   });
 
   // #2083: no API adds a sport league, so the migrations that seed them are checked against the

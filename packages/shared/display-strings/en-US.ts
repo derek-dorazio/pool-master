@@ -131,11 +131,6 @@ export const enUS = {
       PREDICTION: 'Prediction',
       SQUARES: 'Squares',
     },
-    TournamentFormat: {
-      STROKE_PLAY_TOURNAMENT: 'Stroke play tournament',
-      RACE: 'Race',
-      MATCHES: 'Matches',
-    },
     MatchStatus: {
       SCHEDULED: 'Scheduled',
       IN_PROGRESS: 'In progress',

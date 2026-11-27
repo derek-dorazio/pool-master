@@ -1,6 +1,7 @@
 import { MatchStatus, ProviderCode, Sport, SportEventStatus } from '@poolmaster/shared/domain';
 import { createScheduledEventReader, ROUND_WITHOUT_END_UNDERWAY_MS } from '../../../packages/core-api/src/modules/ingestion/core/scheduled-event-reader';
 import { fakeLogger } from '../../support/fake-logger';
+import { sportEventSlots } from '../../support/sport-play';
 
 // Which events a scheduled feed syncs: the events of leagues whose selected mapping names a running
 // provider (#2004, #2073), each provider's next two to load a field, or every event in progress for scores. The
@@ -11,17 +12,21 @@ const NOW = new Date('2026-11-09T12:00:00.000Z');
 type LiveRelations = { roundSchedule?: unknown[]; matches?: unknown[]; gameNotifiedAt?: Date | null };
 
 type MappingWhere = { some: { provider: { code: string | { in: string[] } } } };
+type SportWhere = { sportLeagueSeason?: { sportLeague?: { sport?: { sport?: Sport } } } };
 
 function reader(providerIds: string[], live: LiveRelations = {}) {
   // One event per provider row the query names, with that provider's id for it under the pga league.
-  const findMany = jest.fn(({ where, select }: { where: { providerMappings: MappingWhere }; select: Record<string, unknown> }) => {
+  const findMany = jest.fn(({ where, select }: { where: { providerMappings: MappingWhere } & SportWhere; select: Record<string, unknown> }) => {
     const code = where.providerMappings.some.provider.code;
+    // Each event covers the one slot its sport's play gives it (#2008): FIELD for golf, HEAD_TO_HEAD for football.
+    const sport = where.sportLeagueSeason?.sportLeague?.sport?.sport ?? Sport.GOLF;
     return Promise.resolve((typeof code === 'string' ? [code] : code.in).map((each) => ({
       id: `event-${each}`,
       providerMappings: [{ externalId: `${each}-ext`, provider: { code: each }, sportLeagueProviderMapping: { providerLeague: { code: 'pga' } } }],
       ...('lastProviderNotificationAt' in select && { lastProviderNotificationAt: null }),
       ...('roundSchedule' in select && { roundSchedule: live.roundSchedule ?? [] }),
       ...('matches' in select && { matches: live.matches ?? [] }),
+      ...('slots' in select && { slots: sportEventSlots(sport).map(({ matchFormat }) => ({ seasonSlot: { definition: { matchFormat } } })) }),
     })));
   });
   // The latest notification each event's Games heard, one row per event asked about.
@@ -122,6 +127,26 @@ describe('createScheduledEventReader', () => {
     const golf = reader(['balldontlie'], { gameNotifiedAt: heard });
     await expect(golf.read.listLiveScoreEvents({ sport: Sport.GOLF, now: NOW })).resolves.toEqual([expect.objectContaining({ lastProviderNotificationAt: null })]);
     expect(golf.groupBy).not.toHaveBeenCalled();
+  });
+
+  it('reads each event in play by its own slots in one read, an event of FIELD slots by its rounds and one with a HEAD_TO_HEAD slot by its Games (#2008)', async () => {
+    const row = (id: string, matchFormat: string) => ({
+      id,
+      providerMappings: [{ externalId: `${id}-ext`, provider: { code: ProviderCode.BALLDONTLIE }, sportLeagueProviderMapping: { providerLeague: { code: 'pga' } } }],
+      slots: [{ seasonSlot: { definition: { matchFormat } } }],
+      lastProviderNotificationAt: null,
+      roundSchedule: [],
+      matches: [],
+    });
+    const findMany = jest.fn().mockResolvedValue([row('field-event', 'FIELD'), row('match-event', 'HEAD_TO_HEAD')]);
+    const groupBy = jest.fn().mockResolvedValue([]);
+    const read = createScheduledEventReader({ prisma: { sportEvent: { findMany }, sportEventRoundMatchGame: { groupBy } } as never, registry: { all: () => [{ providerId: 'balldontlie' }] } as never });
+
+    const events = await read.listLiveScoreEvents({ sport: Sport.GOLF, now: NOW });
+
+    expect(events.map(({ externalId, playedInRounds }) => [externalId, playedInRounds])).toEqual([['field-event-ext', true], ['match-event-ext', false]]);
+    expect(findMany).toHaveBeenCalledTimes(1);
+    expect(groupBy).toHaveBeenCalledWith(expect.objectContaining({ where: { sportEventId: { in: ['match-event'] } } }));
   });
 
   describe('when play is under way in an event in progress (#1499)', () => {

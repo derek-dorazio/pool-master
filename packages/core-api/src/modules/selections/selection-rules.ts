@@ -17,7 +17,7 @@ import {
   type Contest,
   type ContestEntry,
   type Participant,
-  type SportLeagueEvent,
+  type SportEvent,
   type SportEventParticipant,
   type SquadMembership,
 } from '@poolmaster/shared/domain';
@@ -126,7 +126,7 @@ export function buildSelectionParticipants(input: {
    * number too (its tour ranking order), which is no bracket seed, so only an event played as
    * matches sends one. Null for a contest on no event.
    */
-  event: SportLeagueEvent | null;
+  event: Pick<SportEvent, 'slotDefinitions'> | null;
 }): SelectionParticipant[] {
   const showsSeeds = input.event !== null && eventPlaysMatches(input.event);
   return input.field
