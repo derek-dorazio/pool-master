@@ -274,8 +274,10 @@ export class StrokePlayResultService {
   private async writeRounds(
     sportEventId: string,
     writes: ReadonlyArray<RoundWrite & { participantExternalId?: string }>,
-    feedFinal = false,
+    final = false,
   ): Promise<SyncWriteDiagnostics> {
+    // The feed repeats FINAL on every tick after it; only its first call is news (#2013).
+    const feedFinal = final && !(await this.deps.fieldGames.hasFeedFinal(sportEventId));
     if (writes.length === 0 && !feedFinal) return emptySyncWriteDiagnostics();
     const [stored, standings] = await Promise.all([
       this.deps.fieldGames.findResults(sportEventId),

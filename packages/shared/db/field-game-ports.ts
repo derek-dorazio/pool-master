@@ -76,6 +76,8 @@ export interface FieldGameRepository {
   findResults(sportEventId: string): Promise<FieldSideResult[]>;
   /** Every standing in the event, by field row. */
   findStandings(sportEventId: string): Promise<FieldStanding[]>;
+  /** Whether the feed's final call is already recorded on the event's slots (`FieldResultsApply.feedFinalAt`, #2013). */
+  hasFeedFinal(sportEventId: string): Promise<boolean>;
   /**
    * All or none, in one transaction and in a fixed number of statements however big the field: a
    * round's Match and Game are created with its first result, and a competitor new to a round gets

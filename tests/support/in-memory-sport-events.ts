@@ -1256,6 +1256,7 @@ export class InMemorySportEvents {
           .sort((left, right) => left.sportEventParticipantId.localeCompare(right.sportEventParticipantId))
           .map(({ createdAt: _created, updatedAt: _updated, ...row }) => ({ ...row }));
       },
+      hasFeedFinal: async (sportEventId) => this.feedFinalAtByEvent.has(sportEventId),
       applyResults: async (sportEventId, { games, standings, jobs, feedFinalAt }) => {
         const entryIds = entryIdsOf(sportEventId);
         if ([...games.flatMap((game) => game.sides), ...standings].some((write) => !entryIds.has(write.sportEventParticipantId))) {

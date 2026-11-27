@@ -415,6 +415,20 @@ describe('StrokePlayResultService — provider sync', () => {
     expect(store.backgroundJobs).toEqual(expect.arrayContaining([slotStatusRefreshJob(event.id)]));
   });
 
+  it('writes nothing and queues no job on a later tick that repeats the feed\'s final call with no score moved', async () => {
+    const { store, service, event } = await syncSetup();
+    await store.addRounds(event.id, fourRounds);
+    const rounds = [1, 2, 3, 4].map((round) => update('ext-ana', round, -1));
+    await service.persistRoundUpdatesForSportEvent(event.id, rounds, 'balldontlie', { final: true });
+    const firstCall = store.feedFinalAtByEvent.get(event.id);
+    store.backgroundJobs.length = 0;
+
+    await service.persistRoundUpdatesForSportEvent(event.id, rounds, 'balldontlie', { final: true });
+
+    expect(store.backgroundJobs).toEqual([]);
+    expect(store.feedFinalAtByEvent.get(event.id)).toBe(firstCall);
+  });
+
   it('skips a score for a round on an event with no round schedule rather than creating the round', async () => {
     const { store, service, event, logger } = await syncSetup();
 

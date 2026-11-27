@@ -281,7 +281,7 @@ domain event queues the next step's refresh job:
   event's status, which raises `SPORT_EVENT_STATUS_CHANGED`. A draft stays a draft, and an event
   with `autoLifecycleEnabled` off keeps the status its admin set.
 
-An event completes when its slots do, never on the clock. The lifecycle sweep still starts a
+An event covering a slot completes when its slots do, never on the clock; one covering none, which has no slot to complete it, completes at its end date. The lifecycle sweep still starts a
 scheduled event at its first round's date, because a live score is accepted only for an event
 in progress; that start moves to the slots when the live-score gate does (#2013).
 

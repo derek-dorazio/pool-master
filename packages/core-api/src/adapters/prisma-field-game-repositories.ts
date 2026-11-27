@@ -57,6 +57,10 @@ export class PrismaFieldGameRepository implements FieldGameRepository {
       .sort((left, right) => left.roundNumber - right.roundNumber || left.sportEventParticipantId.localeCompare(right.sportEventParticipantId));
   }
 
+  async hasFeedFinal(sportEventId: string): Promise<boolean> {
+    return (await this.prisma.sportEventSlot.findFirst({ where: { sportEventId, feedFinalAt: { not: null } }, select: { id: true } })) !== null;
+  }
+
   async findStandings(sportEventId: string): Promise<FieldStanding[]> {
     const rows = await this.prisma.sportEventParticipantStanding.findMany({
       where: { sportEventParticipant: { sportEventId } },

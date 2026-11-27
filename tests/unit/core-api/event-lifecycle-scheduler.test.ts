@@ -120,7 +120,7 @@ describe('pool-master-k6q — EventLifecycleScheduler.runSweep', () => {
     );
   });
 
-  it('never completes an IN_PROGRESS event, however far past its last round\'s end and its own end date: it completes when its slots do', async () => {
+  it('never completes an IN_PROGRESS event that covers a slot, however far past its last round\'s end and its own end date: it completes when its slots do', async () => {
     const { sportEvents, rounds } = storeWith([
       {
         event: { id: 'evt-2', status: 'IN_PROGRESS', startDate: new Date('2026-06-01T00:00:00.000Z'), endDate: new Date('2026-06-02T20:00:00.000Z') },
@@ -136,6 +136,22 @@ describe('pool-master-k6q — EventLifecycleScheduler.runSweep', () => {
     await scheduler.runSweep();
 
     expect(eventLifecycleService.applySportEventStatusTransition).not.toHaveBeenCalled();
+  });
+
+  it('completes an IN_PROGRESS event that covers no slot once its end date has passed, as it has no slot to complete it', async () => {
+    const { sportEvents, rounds } = storeWith([
+      { event: { id: 'evt-slotless', status: 'IN_PROGRESS', startDate: new Date('2026-06-01T00:00:00.000Z'), endDate: new Date('2026-06-02T20:00:00.000Z'), slotDefinitions: [] }, rounds: [] },
+      { event: { id: 'evt-slotless-later', status: 'IN_PROGRESS', startDate: new Date('2026-06-01T00:00:00.000Z'), endDate: new Date('2026-06-09T20:00:00.000Z'), slotDefinitions: [] }, rounds: [] },
+    ]);
+    const eventLifecycleService = { activateContestsPastCutoff: jest.fn().mockResolvedValue(0), followPostponedStart: jest.fn().mockResolvedValue(0), applySportEventStatusTransition: jest.fn().mockResolvedValue(undefined) };
+    const scheduler = new EventLifecycleScheduler({ sportEvents, rounds, eventLifecycleService, jobLock: heldHere(), logger: fakeLogger(), now: () => new Date('2026-06-03T00:00:00.000Z') });
+
+    await scheduler.runSweep();
+
+    expect(eventLifecycleService.applySportEventStatusTransition).toHaveBeenCalledTimes(1);
+    expect(eventLifecycleService.applySportEventStatusTransition).toHaveBeenCalledWith({
+      sportEventId: 'evt-slotless', toStatus: 'COMPLETED', actor: { type: 'SYSTEM' }, fromStatus: 'IN_PROGRESS',
+    });
   });
 
   it('pool-master-k6q does not transition an IN_PROGRESS event with no rounds and no end date', async () => {
