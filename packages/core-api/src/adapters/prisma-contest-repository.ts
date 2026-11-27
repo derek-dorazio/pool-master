@@ -335,12 +335,14 @@ export class PrismaContestRepository implements ContestRepository {
     return result.count > 0;
   }
 
-  async replaceCoveredSlots(id: string, seasonSlotIds: readonly string[]): Promise<void> {
+  async replaceCoveredSlots(id: string, seasonSlotIds: readonly string[], whileIn: readonly Contest['status'][]): Promise<boolean> {
     // The contest row lock comes first, as every entry write and the draw take it (#644), so an
-    // entry created meanwhile is either seen here or created after with the new events.
+    // entry created meanwhile is either seen here or created after with the new events, and the
+    // status read under it is the one the change is made in.
     return forgettingReads(ReadMemoKey.contest, () => this.prisma.$transaction(async (tx) => {
       await lockContestRow(tx, id);
-      const contest = await tx.contest.findUniqueOrThrow({ where: { id }, select: { sportLeagueSeasonId: true } });
+      const contest = await tx.contest.findUniqueOrThrow({ where: { id }, select: { sportLeagueSeasonId: true, status: true } });
+      if (!whileIn.includes(contest.status)) return false;
       const current = await tx.contestSeasonSlot.findMany({
         where: { contestId: id },
         select: { seasonSlot: { select: { eventSlot: { select: { sportEventId: true } } } } },
@@ -377,6 +379,7 @@ export class PrismaContestRepository implements ContestRepository {
         data: entries.flatMap((entry) => sportEventIds.map((sportEventId) => ({ contestEntryId: entry.id, sportEventId }))),
         skipDuplicates: true,
       });
+      return true;
     }));
   }
 

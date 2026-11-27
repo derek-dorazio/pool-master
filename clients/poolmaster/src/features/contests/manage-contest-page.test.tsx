@@ -681,6 +681,21 @@ describe('Commissioner tools › Contests › one contest › what it covers', (
     expect(within(row).getByTestId('manage-contest-change-event')).toHaveTextContent('Change');
   });
 
+  it('marks a set-up squares contest\'s event Fixed, with no Change, since its event came with its game', async () => {
+    primeMocks({
+      contest: buildContest({ contestFormat: 'SQUARES', selectionType: SelectionType.SQUARES }),
+      managedContest: buildManagedContest({
+        configuration: { id: 'config-1', contestId: 'contest-1', maxEntriesPerSquad: 1, selectionType: SelectionType.SQUARES, maxSquaresPerEntry: 10 },
+      }),
+    });
+
+    renderAt('/league/BIGDAWGS/admin/contests/contest-1');
+
+    const row = await screen.findByTestId('manage-contest-event-row');
+    expect(row).toHaveTextContent('Fixed');
+    expect(screen.queryByTestId('manage-contest-change-event')).not.toBeInTheDocument();
+  });
+
   it('moves a set-up contest to another ready event of its Season, listing only the other events a contest can be built on', async () => {
     primeMocks();
     listEventsMock.mockResolvedValue(apiSuccess({ events: [

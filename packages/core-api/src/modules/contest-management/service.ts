@@ -619,8 +619,14 @@ export class ContestManagementService {
     }
     if (contest.status !== ContestStatus.DRAFT) {
       this.logger.warn({ contestId, status: contest.status }, 'contest management set coverage refused outside Set up');
+      throw coverageLockedError();
+    }
+    // A squares contest covers its game's slot, chosen with its game at create (#711): moving it
+    // would leave that game on an event it no longer covers, so its event stays.
+    if (contest.selectionType === SelectionType.SQUARES) {
+      this.logger.warn({ contestId }, 'contest management set coverage refused for a squares contest');
       throw new ContestManagementError(
-        'This contest is no longer in Set up, so its event and starting slot can no longer change.',
+        'A squares contest is built on one game, so its event cannot change. Delete it and create another on the right game.',
         CONTEST_EVENTS_LOCKED,
         409,
       );
@@ -670,14 +676,19 @@ export class ContestManagementService {
     const { configJson } = await this.resolveContestRules(sportEvents, storedRules, {
       kept: currentScoring(await this.participantContestScoringRuleRepo.findByContestConfiguration(configuration.id)),
     }, { slotDefinitionIds: template.slots.map((slot) => slot.id) });
+
+    // The write checks Set up again under the contest row lock, which opening's guarded status
+    // write waits on, so a contest opened since it was read keeps its coverage. A contest in Set up has no
+    // reminders to move: opening it sets them (#1170).
+    if (!await this.contestRepo.replaceCoveredSlots(contestId, seasonSlotIds, [ContestStatus.DRAFT])) {
+      this.logger.warn({ contestId }, 'contest management set coverage refused: the contest opened meanwhile');
+      throw coverageLockedError();
+    }
     if (configJson.selectionType === SelectionType.BUDGET_PICK
       && storedRules.selectionType === SelectionType.BUDGET_PICK
       && configJson.salaryCap !== storedRules.salaryCap) {
       await this.contestConfigurationRepo.update(configuration.id, { configJson });
     }
-
-    // A contest in Set up has no reminders to move: opening it sets them (#1170).
-    await this.contestRepo.replaceCoveredSlots(contestId, seasonSlotIds);
     this.logger.info({
       contestId,
       sportEventIds: requestedIds,
@@ -1374,6 +1385,14 @@ function sportsLeagueLimitError(cap: number, seasonYear: number, used: number, o
   return new ContestManagementError(
     `This league's plan allows ${cap} ${cap === 1 ? 'sports league' : 'sports leagues'} a year, and ${seasonYear} already has contests in ${used}. ${outcome}`,
     'PLAN_SPORTS_LEAGUE_LIMIT_REACHED',
+    409,
+  );
+}
+
+function coverageLockedError(): ContestManagementError {
+  return new ContestManagementError(
+    'This contest is no longer in Set up, so its event and starting slot can no longer change.',
+    CONTEST_EVENTS_LOCKED,
     409,
   );
 }

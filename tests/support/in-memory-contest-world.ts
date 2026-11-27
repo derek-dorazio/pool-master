@@ -468,9 +468,10 @@ export class InMemoryContestWorld {
         this.contests.set(id, updated);
         return updated;
       },
-      replaceCoveredSlots: async (id, seasonSlotIds) => {
+      replaceCoveredSlots: async (id, seasonSlotIds, whileIn) => {
         const existing = this.contests.get(id);
         if (!existing) throw new Error(`Record to update not found: contest ${id}`);
+        if (!whileIn.includes(existing.status)) return false;
         const coverage = this.coverageOf(seasonSlotIds);
         const { sportEventIds } = coverage;
         const removed = existing.sportEventIds.filter((eventId) => !sportEventIds.includes(eventId));
@@ -488,6 +489,7 @@ export class InMemoryContestWorld {
             .map((sportEventId) => ({ sportEventId, status: 'DRAFT' as const }));
           this.entries.set(entry.id, { ...entry, events: [...kept, ...added] });
         }
+        return true;
       },
       setCupWeight: async (id, cupWeight, whileIn) => {
         const existing = this.contests.get(id);

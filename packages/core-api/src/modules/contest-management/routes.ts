@@ -129,7 +129,7 @@ export function contestManagementModule(
         },
         409: {
           ...schemaRef('ErrorEnvelope'),
-          description: 'CONTEST_EVENTS_LOCKED — the contest is no longer in Set up. CONTEST_BUDGET_SALARY_CAP_MISMATCH, CONTEST_EVENT_NOT_PRICED or CONTEST_BUDGET_UNFILLABLE — budget rules the new events cannot fill.',
+          description: 'CONTEST_EVENTS_LOCKED — the contest is no longer in Set up (checked again under the contest row lock), or it is a squares contest, whose event came with its game. CONTEST_BUDGET_SALARY_CAP_MISMATCH, CONTEST_EVENT_NOT_PRICED or CONTEST_BUDGET_UNFILLABLE — budget rules the new events cannot fill.',
         },
         422: {
           ...schemaRef('ErrorEnvelope'),

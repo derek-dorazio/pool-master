@@ -36884,7 +36884,7 @@ export type SetContestCoverageErrors = {
      */
     404: ErrorEnvelope;
     /**
-     * CONTEST_EVENTS_LOCKED — the contest is no longer in Set up. CONTEST_BUDGET_SALARY_CAP_MISMATCH, CONTEST_EVENT_NOT_PRICED or CONTEST_BUDGET_UNFILLABLE — budget rules the new events cannot fill.
+     * CONTEST_EVENTS_LOCKED — the contest is no longer in Set up (checked again under the contest row lock), or it is a squares contest, whose event came with its game. CONTEST_BUDGET_SALARY_CAP_MISMATCH, CONTEST_EVENT_NOT_PRICED or CONTEST_BUDGET_UNFILLABLE — budget rules the new events cannot fill.
      */
     409: ErrorEnvelope;
     /**

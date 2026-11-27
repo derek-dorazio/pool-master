@@ -2380,7 +2380,7 @@ describe('ContestManagementService — a contest of several events', () => {
 
       await service.setContestCoverage('league-1', 'contest-1', { sportEventIds: [PGA] });
 
-      expect(contestRepo.replaceCoveredSlots).toHaveBeenCalledWith('contest-1', [PGA].map(slotOf));
+      expect(contestRepo.replaceCoveredSlots).toHaveBeenCalledWith('contest-1', [PGA].map(slotOf), [ContestStatus.DRAFT]);
     });
 
     it('refuses a change once the contest has left Set up with 409 CONTEST_EVENTS_LOCKED, changing nothing', async () => {
@@ -2392,6 +2392,32 @@ describe('ContestManagementService — a contest of several events', () => {
         expect(contestRepo.replaceCoveredSlots).not.toHaveBeenCalled();
         expect(configurationRepo.update).not.toHaveBeenCalled();
       }
+    });
+
+    it('refuses a contest that opened after it was read with 409 CONTEST_EVENTS_LOCKED, its rules unchanged, since the write checks Set up again under the contest row lock', async () => {
+      const { service, contestRepo, configurationRepo } = build({
+        reader: multiEventReader([
+          { id: MASTERS, startDate: '2026-05-01T12:00:00.000Z', salaryCap: 100 },
+          { id: PGA, startDate: '2026-05-14T12:00:00.000Z', salaryCap: 200 },
+        ]),
+        contest: { status: ContestStatus.DRAFT, selectionType: SelectionType.BUDGET_PICK },
+        storedConfigJson: { selectionType: SelectionType.BUDGET_PICK, rosterSize: 2, salaryCap: 100, countedScores: 2 },
+      });
+      jest.mocked(contestRepo.replaceCoveredSlots).mockResolvedValue(false);
+
+      await expect(service.setContestCoverage('league-1', 'contest-1', { sportEventIds: [PGA] }))
+        .rejects.toMatchObject({ code: CONTEST_EVENTS_LOCKED, statusCode: 409 });
+      expect(configurationRepo.update).not.toHaveBeenCalled();
+    });
+
+    it('refuses moving a squares contest, whose game was chosen with its event, with 409 CONTEST_EVENTS_LOCKED, changing nothing', async () => {
+      const { service, contestRepo } = build({
+        contest: { status: ContestStatus.DRAFT, contestFormat: ContestFormat.SQUARES, selectionType: SelectionType.SQUARES, squaresGameMatchId: 'game-1' },
+      });
+
+      await expect(service.setContestCoverage('league-1', 'contest-1', { sportEventIds: [PGA] }))
+        .rejects.toMatchObject({ code: CONTEST_EVENTS_LOCKED, statusCode: 409 });
+      expect(contestRepo.replaceCoveredSlots).not.toHaveBeenCalled();
     });
 
     it('keeps a contest in the Season it was created in: an event of another Season is refused with 422 CONTEST_EVENTS_SEASON_MISMATCH, its coverage and cups unchanged', async () => {
@@ -2444,7 +2470,7 @@ describe('ContestManagementService — a contest of several events', () => {
       await service.setContestCoverage('league-1', 'contest-1', { sportEventIds: [PGA] });
 
       expect(configurationRepo.update).toHaveBeenCalledWith('config-1', { configJson: expect.objectContaining({ salaryCap: 200 }) });
-      expect(contestRepo.replaceCoveredSlots).toHaveBeenCalledWith('contest-1', [PGA].map(slotOf));
+      expect(contestRepo.replaceCoveredSlots).toHaveBeenCalledWith('contest-1', [PGA].map(slotOf), [ContestStatus.DRAFT]);
     });
 
     it('answers 404 CONTEST_NOT_FOUND for another league\'s contest, changing nothing', async () => {

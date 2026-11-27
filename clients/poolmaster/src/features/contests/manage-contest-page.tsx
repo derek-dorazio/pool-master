@@ -169,6 +169,7 @@ export function ManageContestPage() {
   );
   const eventLabel = event.venue ? `${event.name} · ${event.venue}` : event.name;
   const isMultiEvent = contest.sportEvents.length > 1;
+  const canChangeEvent = !isMultiEvent && contest.selectionType !== SelectionType.SQUARES;
   const eventNamesById = new Map(contest.sportEvents.map((sportEvent) => [sportEvent.sportEventId, sportEvent.name]));
 
   return (
@@ -222,8 +223,9 @@ export function ManageContestPage() {
           <SectionRow layout="setting" name="Name" testId="manage-contest-name" value={<span className="font-semibold">{contest.name}</span>} />
           <SectionRow
             layout="setting"
-            // In Set up a one-event contest can move to another event of its Season (#2014).
-            aside={isNotOpen ? (isMultiEvent ? <FixedNote /> : (
+            // In Set up a one-event contest can move to another event of its Season (#2014); a
+            // squares contest's event came with its game, so it stays.
+            aside={isNotOpen ? (!canChangeEvent ? <FixedNote /> : (
               <Button
                 data-testid="manage-contest-change-event"
                 disabled={!league.isActive}
@@ -358,7 +360,7 @@ export function ManageContestPage() {
         </SectionCard>
       ) : null}
 
-      {isNotOpen && !isMultiEvent ? (
+      {isNotOpen && canChangeEvent ? (
         <ChangeContestEventDialog
           contestId={contestId}
           currentEvent={event}
