@@ -141,7 +141,8 @@ describe('An event\'s field', () => {
       // Once for the head-to-head matches naming a row, once for the event's FIELD matches.
       ['SELECT sport_event_round_match_sides', 2],
       ['SELECT sport_event_round_matches', 2],
-      ['SELECT sport_event_rounds', 1],
+      // The event's rounds, and the event read counting its Round rows by event id (#2008).
+      ['SELECT sport_event_rounds', 2],
       // A field row's price is its event's tier-set slot's (#2044).
       ['SELECT sport_event_slot_participant_valuations', 1],
       // The event's slot definitions (#2010), where templates are offered; and in the field's own
