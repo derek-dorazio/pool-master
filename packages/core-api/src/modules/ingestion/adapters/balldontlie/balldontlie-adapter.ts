@@ -105,6 +105,7 @@ import {
   requireStrokePlay,
   toFieldParticipants,
   toGolfRoundUpdates,
+  isTournamentFinal,
   toSportEvent,
   toTourParticipant,
 } from './pga-mapping';
@@ -441,7 +442,7 @@ export class BalldontlieAdapter implements SportDataProvider, ProviderPayloadDia
       { tournament_id: tournament.id },
       pgaTournamentResultListSchema,
     );
-    return { category: 'GOLF', externalEventId: eventId, rounds: toGolfRoundUpdates(tournament, results) };
+    return { category: 'GOLF', externalEventId: eventId, rounds: toGolfRoundUpdates(tournament, results), final: isTournamentFinal(tournament) };
   }
 
   private async pgaPlayers(): Promise<ProviderParticipant[]> {

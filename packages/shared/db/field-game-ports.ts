@@ -64,6 +64,11 @@ export interface FieldResultsApply {
   standings: readonly FieldStandingWrite[];
   /** Background jobs the results cause (the event's leaderboard rebuild, #1466), written with them. */
   jobs?: readonly BackgroundJobRequest[];
+  /**
+   * When the provider's feed called the event's play final (a golf tournament's FINAL, #2013):
+   * written to each of its slots that has no such time yet. Absent while the feed has not.
+   */
+  feedFinalAt?: Date;
 }
 
 export interface FieldGameRepository {
@@ -71,6 +76,8 @@ export interface FieldGameRepository {
   findResults(sportEventId: string): Promise<FieldSideResult[]>;
   /** Every standing in the event, by field row. */
   findStandings(sportEventId: string): Promise<FieldStanding[]>;
+  /** Whether the feed's final call is already recorded on the event's slots (`FieldResultsApply.feedFinalAt`, #2013). */
+  hasFeedFinal(sportEventId: string): Promise<boolean>;
   /**
    * All or none, in one transaction and in a fixed number of statements however big the field: a
    * round's Match and Game are created with its first result, and a competitor new to a round gets

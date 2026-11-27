@@ -8,6 +8,7 @@ import { eventStoresRaceResults } from '../../../packages/core-api/src/modules/s
 import { InMemorySportEvents } from '../../support/in-memory-sport-events';
 import { eventRebuildJob } from '../../support/recording-leaderboard-rebuilds';
 import { RecordingDomainEvents } from '../../support/recording-domain-events';
+import { slotStatusRefreshJob } from '../../support/slot-tiebreaker-jobs';
 
 /** A test participant's id, fixed by its name, so a row names it by id as the feed does (#2114). */
 const idOf = (name: string): string => `participant-${name.toLowerCase().replace(/\s+/g, '-')}`;
@@ -291,7 +292,8 @@ describe('RaceResultService — leaderboard rebuild (#1466)', () => {
 
     await service.applyResults(event.id, { isOfficial: true, rows: FULL_ORDER });
 
-    expect(store.backgroundJobs).toEqual([eventRebuildJob(event.id)]);
+    // The race's Game moved, so its slot's status is refreshed with it (#2013).
+    expect(store.backgroundJobs).toEqual([eventRebuildJob(event.id), slotStatusRefreshJob(event.id)]);
     expect(domainEvents.changedSportEventIds).toEqual([event.id]);
   });
 

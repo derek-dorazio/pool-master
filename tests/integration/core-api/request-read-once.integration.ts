@@ -540,6 +540,8 @@ describe('Settling a squares contest with its game (#1355, #1460)', () => {
       { type: 'REBUILD_LEADERBOARDS', payload: { subject: 'EVENT', id: eventId } },
       // A decided game runs its event's slots' tiebreaker rule again (#2048).
       { type: 'REFRESH_SLOT_TIEBREAKERS', payload: { sportEventId: eventId } },
+      // A decided game moves its Match, and its slot's status is refreshed (#2013).
+      { type: 'REFRESH_SLOT_STATUS', payload: { sportEventId: eventId } },
     ]);
 
     const { statements: jobStatements } = await recordStatements(() => drainBackgroundJobs());

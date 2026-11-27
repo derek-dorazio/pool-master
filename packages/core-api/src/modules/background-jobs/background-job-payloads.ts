@@ -22,6 +22,7 @@ import { EventContestsJobPayloadSchema } from '../events/event-contests-job-requ
 import { ResolveMappedParticipantFindingsJobPayloadSchema } from '../ingestion/findings/mapped-participant-findings-job';
 import { RefreshSlotTiebreakersJobPayloadSchema } from '../events/slot-tiebreaker-job';
 import { SyncLeagueRosterJobPayloadSchema } from '../ingestion/roster/league-roster-sync-job';
+import { RefreshStatusJobPayloadSchema } from '../events/status-refresh-job-requests';
 
 export const BACKGROUND_JOB_PAYLOADS = {
   [BackgroundJobType.SYNC_EVENT_FIELD]: EventSyncJobPayloadSchema,
@@ -41,6 +42,8 @@ export const BACKGROUND_JOB_PAYLOADS = {
   [BackgroundJobType.RESOLVE_MAPPED_PARTICIPANT_FINDINGS]: ResolveMappedParticipantFindingsJobPayloadSchema,
   [BackgroundJobType.REFRESH_SLOT_TIEBREAKERS]: RefreshSlotTiebreakersJobPayloadSchema,
   [BackgroundJobType.SYNC_LEAGUE_ROSTER]: SyncLeagueRosterJobPayloadSchema,
+  [BackgroundJobType.REFRESH_SLOT_STATUS]: RefreshStatusJobPayloadSchema,
+  [BackgroundJobType.REFRESH_EVENT_STATUS]: RefreshStatusJobPayloadSchema,
 } as const satisfies Record<BackgroundJobType, z.ZodType>;
 
 /** What a job of type `T` carries. */
@@ -73,4 +76,6 @@ export const BACKGROUND_JOB_SCOPES: {
   [BackgroundJobType.RESOLVE_MAPPED_PARTICIPANT_FINDINGS]: ({ sportLeagueId }) => ({ sportLeagueId }),
   [BackgroundJobType.REFRESH_SLOT_TIEBREAKERS]: ({ sportEventId }) => ({ sportEventId }),
   [BackgroundJobType.SYNC_LEAGUE_ROSTER]: ({ sportLeagueId }) => ({ sportLeagueId }),
+  [BackgroundJobType.REFRESH_SLOT_STATUS]: ({ sportEventId }) => ({ sportEventId }),
+  [BackgroundJobType.REFRESH_EVENT_STATUS]: ({ sportEventId }) => ({ sportEventId }),
 };

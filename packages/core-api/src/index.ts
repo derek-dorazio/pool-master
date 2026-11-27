@@ -41,6 +41,8 @@ import { contestConfigTemplatesModule } from './modules/contest-config-templates
 import { eventsModule } from './modules/events/routes';
 import { SlotTiebreakerService } from './modules/events/slot-tiebreaker-service';
 import { PrismaSlotTiebreakerRepository } from './adapters/prisma-slot-tiebreaker-repository';
+import { SlotStatusService } from './modules/events/slot-status-service';
+import { PrismaSlotStatusRepository } from './adapters/prisma-slot-status-repository';
 import { sportsModule } from './modules/sports/routes';
 import { sportLeaguesModule } from './modules/sport-leagues/routes';
 import { platformPricingProfilesModule, platformTierProfilesModule } from './modules/profiles/routes';
@@ -259,6 +261,14 @@ export function buildApp(options: BuildAppOptions = {}) {
     logger: app.log,
     contestSettlement,
   });
+  // Status bubbles up from Matches to slots to the event (#2013), on the refresh jobs' handlers.
+  const slotStatuses = new SlotStatusService({
+    slots: new PrismaSlotStatusRepository(prisma),
+    sportEvents: new PrismaSportEventRepository(prisma),
+    eventLifecycle: eventLifecycleService,
+    domainEvents,
+    logger: app.log,
+  });
   // One set of event services for the admin routes, the synced event creation sweep and the draft event notices.
   const sportEventServices = createSportEventServices(prisma, app.log.child({ module: 'events.service' }), eventLifecycleService, domainEvents, providers);
   const memberJoined = createMemberJoinedNotices(prisma, { email, readConfig: () => appSettings.get(EMAIL_SETTINGS), appBaseUrl, logger: app.log });
@@ -474,6 +484,8 @@ export function buildApp(options: BuildAppOptions = {}) {
       RESOLVE_MAPPED_PARTICIPANT_FINDINGS: resolveMappedParticipantFindingsJobHandler(syncFindings),
       REFRESH_SLOT_TIEBREAKERS: (payload) => slotTiebreakers.refresh(payload.sportEventId),
       SYNC_LEAGUE_ROSTER: (payload, context) => leagueRosterSync.run(payload, context),
+      REFRESH_SLOT_STATUS: (payload) => slotStatuses.refreshSlots(payload.sportEventId),
+      REFRESH_EVENT_STATUS: (payload) => slotStatuses.refreshEvent(payload.sportEventId),
     },
     pollMs: readBackgroundJobPollMs(process.env),
     logger: app.log,

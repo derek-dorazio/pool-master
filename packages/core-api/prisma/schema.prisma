@@ -236,6 +236,8 @@ enum PrismaBackgroundJobType {
   RESOLVE_MAPPED_PARTICIPANT_FINDINGS
   REFRESH_SLOT_TIEBREAKERS
   SYNC_LEAGUE_ROSTER
+  REFRESH_SLOT_STATUS
+  REFRESH_EVENT_STATUS
 }
 
 enum PrismaBackgroundJobStatus {
@@ -2254,6 +2256,9 @@ model SportEventSlot {
   topSharePercent              Float?   @map("top_share_percent")
   floorSharePercent            Float?   @map("floor_share_percent")
   steepness                    Float?
+  /// When the provider's feed called the slot's play final (a golf tournament's FINAL status,
+  /// #2013); null before. Stroke play completes its Season slot on it, having no known last round.
+  feedFinalAt                  DateTime? @map("feed_final_at") @db.Timestamptz
   createdAt                    DateTime @default(now()) @map("created_at") @db.Timestamptz
 
   sportEvent SportEvent                 @relation(fields: [sportEventId, sportLeagueSeasonId], references: [id, sportLeagueSeasonId], onDelete: Cascade, map: "sport_event_slots_event_fkey")

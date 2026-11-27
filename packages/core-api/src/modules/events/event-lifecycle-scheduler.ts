@@ -13,8 +13,11 @@
  * schedule no longer reflects reality.
  *
  * A DRAFT event is never touched: only an admin's release moves it (#431). This
- * scheduler's job is the two status writes below, and, while an event is in progress, starting
- * the contests whose cutoff comes after the event's start (a squares game, #711). A
+ * scheduler's job is starting an event at its first round's date, and, while an event is in
+ * progress, starting the contests whose cutoff comes after the event's start (a squares game,
+ * #711). An event completes when its slots do (#2013, `SlotStatusService`), never on the clock; one covering no slot completes at its end date.
+ * The clock's start stays while a live score is accepted only for an event in progress, so the
+ * feed's first score has an event to land on. A
  * POSTPONED event's status is left alone, but its contests follow its start (#1792): open while
  * it is ahead, wherever the start has moved to, and live once it has passed.
  *
@@ -28,7 +31,7 @@
 
 import type { FastifyBaseLogger } from 'fastify';
 import type { AutoLifecycleCandidate, SportEventRepository, SportEventRoundRepository } from '@poolmaster/shared/db';
-import { SportEventStatus, type SportEvent, type SportEventRound } from '@poolmaster/shared/domain';
+import { SportEventStatus, type SportEventRound } from '@poolmaster/shared/domain';
 import type { JobLock } from '../../core/job-lock';
 import { LockedSweep } from '../../core/locked-sweep';
 import type { EventLifecycleService } from './event-lifecycle-service';
@@ -128,8 +131,10 @@ export class EventLifecycleScheduler {
       case SportEventStatus.IN_PROGRESS: {
         // A squares contest goes live at its game's kickoff, mid-event (#711).
         await this.eventLifecycleService.activateContestsPastCutoff(candidate, now);
-        const dueAt = completionDueAt(candidate, roundSchedule);
-        if (dueAt === undefined || now < dueAt) return;
+        // An event covering a slot completes when its slots do (#2013, `SlotStatusService`). One
+        // covering none has no slot to complete it, and no round (every round is in a slot), so it
+        // completes at its end date.
+        if (candidate.slotDefinitions.length > 0 || candidate.endDate === undefined || now < candidate.endDate) return;
         await this.eventLifecycleService.applySportEventStatusTransition({
           sportEventId: candidate.id,
           toStatus: SportEventStatus.COMPLETED,
@@ -141,18 +146,7 @@ export class EventLifecycleScheduler {
   }
 }
 
-/** When an event's schedule ends: its last round's end, or its own end date. */
-function completionDueAt(event: SportEvent, roundSchedule: SportEventRound[]): Date | undefined {
-  const roundEnds = roundSchedule
-    .map((round) => round.scheduledEndAt)
-    .filter((date): date is Date => date !== null);
-  return maxDate(roundEnds) ?? event.endDate;
-}
-
 function minDate(dates: Date[]): Date | undefined {
   return dates.reduce<Date | undefined>((min, date) => (!min || date < min ? date : min), undefined);
 }
 
-function maxDate(dates: Date[]): Date | undefined {
-  return dates.reduce<Date | undefined>((max, date) => (!max || date > max ? date : max), undefined);
-}

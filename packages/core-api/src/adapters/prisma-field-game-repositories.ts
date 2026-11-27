@@ -57,6 +57,10 @@ export class PrismaFieldGameRepository implements FieldGameRepository {
       .sort((left, right) => left.roundNumber - right.roundNumber || left.sportEventParticipantId.localeCompare(right.sportEventParticipantId));
   }
 
+  async hasFeedFinal(sportEventId: string): Promise<boolean> {
+    return (await this.prisma.sportEventSlot.findFirst({ where: { sportEventId, feedFinalAt: { not: null } }, select: { id: true } })) !== null;
+  }
+
   async findStandings(sportEventId: string): Promise<FieldStanding[]> {
     const rows = await this.prisma.sportEventParticipantStanding.findMany({
       where: { sportEventParticipant: { sportEventId } },
@@ -98,6 +102,7 @@ export class PrismaFieldGameRepository implements FieldGameRepository {
         await writeSideResults(tx, sportEventId, rounds);
       }
       await rewriteStandings(tx, apply.standings.map(({ sportEventParticipantId, ...standing }) => ({ sportEventParticipantId, standing })));
+      if (apply.feedFinalAt) await tx.sportEventSlot.updateMany({ where: { sportEventId, feedFinalAt: null }, data: { feedFinalAt: apply.feedFinalAt } });
       await insertBackgroundJobs(tx, apply.jobs ?? []);
     });
   }

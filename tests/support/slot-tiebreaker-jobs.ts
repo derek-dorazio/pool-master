@@ -12,3 +12,15 @@ export function slotTiebreakersRefreshJob(sportEventId: string): BackgroundJobRe
     dedupeKey: `${BackgroundJobType.REFRESH_SLOT_TIEBREAKERS}:${sportEventId}`,
   };
 }
+
+/** The job a write that moves a Match's status carries to refresh its event's Season slot statuses (#2013). */
+export function slotStatusRefreshJob(sportEventId: string): BackgroundJobRequest {
+  return {
+    type: BackgroundJobType.REFRESH_SLOT_STATUS,
+    payload: { sportEventId },
+    sportEventId,
+    runAt: undefined,
+    start: TEST_JOB_START,
+    dedupeKey: `${BackgroundJobType.REFRESH_SLOT_STATUS}:${sportEventId}`,
+  };
+}
