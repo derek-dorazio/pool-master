@@ -163,6 +163,21 @@ export const KnockoutRoundPointsSettingsSchema = z.object({
 }).describe('Knockout round-points settings: the value of a win in each round and the upset bonus.');
 export type KnockoutRoundPointsSettings = z.infer<typeof KnockoutRoundPointsSettingsSchema>;
 
+/** The most strokes over par an unplayed golf round may score. */
+const UNPLAYED_ROUND_TO_PAR_MAX = 20;
+
+/**
+ * A golf to-par contest's settings: what each round a golfer did not play (a missed cut, a
+ * withdrawal, no score once the field moved past it) adds to their contest to-par. A fixed number
+ * against par, never read off a course's par: +8 is the usual rule, an 80 on a par 72.
+ */
+const GolfRelativeToParTotalSettingsSchema = z.object({
+  // Required rather than defaulted, like every other setting: the settings travel inside a
+  // discriminated union, where a JSON Schema default is not applied.
+  unplayedRoundToPar: z.number().int().min(0).max(UNPLAYED_ROUND_TO_PAR_MAX)
+    .describe(`What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to ${UNPLAYED_ROUND_TO_PAR_MAX}. 8 is the usual rule.`),
+}).describe('Golf to-par total settings: what an unplayed round scores against par.');
+
 /**
  * What a contest may set for its scoring definition: the Zod schema of a participant scoring
  * rule's `config` column, keyed by the definition id. Exhaustive over the definition ids, so a
@@ -170,13 +185,12 @@ export type KnockoutRoundPointsSettings = z.infer<typeof KnockoutRoundPointsSett
  * none. The column is written through these types and read back through these schemas
  * (`parseContestScoringSettings`), so it is typed on both sides.
  *
- * Golf's to-par total takes no settings: the empty object. Its schema strips unknown keys rather
+ * Golf's to-par total takes what an unplayed round scores. Its schema strips unknown keys rather
  * than refusing them, because rules written before the settings were typed can still carry the
- * retired `cutRule`/`playoffHandling` keys, which never changed a score. A value that is not an
- * object at all is refused.
+ * retired `cutRule`/`playoffHandling` keys, which never changed a score.
  */
 export const PARTICIPANT_SCORING_SETTINGS_SCHEMAS = {
-  GOLF_RELATIVE_TO_PAR_TOTAL: z.object({}),
+  GOLF_RELATIVE_TO_PAR_TOTAL: GolfRelativeToParTotalSettingsSchema,
   FINISH_POSITION_POINTS: FinishPositionPointsSettingsSchema,
   KNOCKOUT_ROUND_POINTS: KnockoutRoundPointsSettingsSchema,
 } as const satisfies Record<ParticipantScoringDefinitionId, z.ZodType>;

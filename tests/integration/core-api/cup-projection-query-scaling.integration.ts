@@ -111,7 +111,7 @@ function liveRosterContest(selectionType: RosterType, { tied = false }: { tied?:
         templateId: await contestTemplateId(prisma, contest.id),
         selectionType,
         configJson: ROSTER_RULES[selectionType],
-        participantScoringRules: { create: { participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', sortOrder: 1 } },
+        participantScoringRules: { create: { participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', sortOrder: 1, config: { unplayedRoundToPar: 8 } } },
       },
     });
     const entryIds: string[] = [];

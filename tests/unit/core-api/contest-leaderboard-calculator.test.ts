@@ -51,19 +51,19 @@ describe('contest scoring definition', () => {
   it('reads the definition off the first active participant scoring rule', () => {
     expect(resolveContestScoringDefinition(configuration([
       { participantScoringDefinitionId: 'RETIRED_DEFINITION', sortOrder: 1, active: false },
-      { participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', sortOrder: 2, active: true },
+      { participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', config: { unplayedRoundToPar: 8 }, sortOrder: 2, active: true },
     ]))).toEqual({
       ok: true,
       id: 'GOLF_RELATIVE_TO_PAR_TOTAL',
       definition: PARTICIPANT_SCORING_DEFINITIONS.GOLF_RELATIVE_TO_PAR_TOTAL,
       coverage: { slotDefinitionIds: ['def-tournament'] },
-      scoring: { participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', config: {} },
+      scoring: { participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', config: { unplayedRoundToPar: 8 } },
     });
   });
 
   it('reads the active rule with the lowest sort order when several are active, whatever their stored order', () => {
     const resolution = resolveContestScoringDefinition(configuration([
-      { participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', sortOrder: 2, active: true },
+      { participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', config: { unplayedRoundToPar: 8 }, sortOrder: 2, active: true },
       { participantScoringDefinitionId: 'FINISH_POSITION_POINTS', config: { pointsTable: [3, 2, 1], didNotFinishPoints: 0 }, sortOrder: 1, active: true },
     ]));
 
@@ -72,10 +72,10 @@ describe('contest scoring definition', () => {
 
   it('carries the rule\'s settings to scoring, with keys retired before settings were typed dropped', () => {
     const resolution = resolveContestScoringDefinition(configuration([
-      { participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', config: { cutRule: { type: 'FIXED_SCORE', fixedScore: 80 } }, sortOrder: 1, active: true },
+      { participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', config: { unplayedRoundToPar: 8, cutRule: { type: 'FIXED_SCORE', fixedScore: 80 } }, sortOrder: 1, active: true },
     ]));
 
-    expect(resolution).toMatchObject({ ok: true, scoring: { participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', config: {} } });
+    expect(resolution).toMatchObject({ ok: true, scoring: { participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', config: { unplayedRoundToPar: 8 } } });
   });
 
   it.each([['an array', []], ['a string', 'points'], ['null', null]])(
@@ -238,7 +238,7 @@ describe('whether a contest scores an upset bonus', () => {
   });
 
   it('is false for every other scoring definition, which has no upset bonus', () => {
-    expect(hasUpsetBonus({ participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', config: {} })).toBe(false);
+    expect(hasUpsetBonus({ participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', config: { unplayedRoundToPar: 8 } })).toBe(false);
   });
 });
 

@@ -4452,12 +4452,18 @@ export type ContestConfigurationRequest = {
      */
     maxEntriesPerSquad?: number | null;
     /**
-     * The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+     * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
      */
     scoring?: {
         participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
+        /**
+         * Golf to-par total settings: what an unplayed round scores against par.
+         */
         config: {
-            [key: string]: never;
+            /**
+             * What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule.
+             */
+            unplayedRoundToPar: number;
         };
     } | {
         participantScoringDefinitionId: 'FINISH_POSITION_POINTS';
@@ -4513,12 +4519,18 @@ export type ContestConfigurationRequest = {
      */
     maxEntriesPerSquad?: number | null;
     /**
-     * The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+     * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
      */
     scoring?: {
         participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
+        /**
+         * Golf to-par total settings: what an unplayed round scores against par.
+         */
         config: {
-            [key: string]: never;
+            /**
+             * What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule.
+             */
+            unplayedRoundToPar: number;
         };
     } | {
         participantScoringDefinitionId: 'FINISH_POSITION_POINTS';
@@ -4574,12 +4586,18 @@ export type ContestConfigurationRequest = {
      */
     maxEntriesPerSquad?: number | null;
     /**
-     * The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+     * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
      */
     scoring?: {
         participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
+        /**
+         * Golf to-par total settings: what an unplayed round scores against par.
+         */
         config: {
-            [key: string]: never;
+            /**
+             * What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule.
+             */
+            unplayedRoundToPar: number;
         };
     } | {
         participantScoringDefinitionId: 'FINISH_POSITION_POINTS';
@@ -4635,12 +4653,18 @@ export type ContestConfigurationRequest = {
      */
     maxEntriesPerSquad?: number | null;
     /**
-     * The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+     * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
      */
     scoring?: {
         participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
+        /**
+         * Golf to-par total settings: what an unplayed round scores against par.
+         */
         config: {
-            [key: string]: never;
+            /**
+             * What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule.
+             */
+            unplayedRoundToPar: number;
         };
     } | {
         participantScoringDefinitionId: 'FINISH_POSITION_POINTS';
@@ -4692,12 +4716,18 @@ export type ContestConfigurationRequest = {
      */
     maxEntriesPerSquad?: number | null;
     /**
-     * The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+     * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
      */
     scoring?: {
         participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
+        /**
+         * Golf to-par total settings: what an unplayed round scores against par.
+         */
         config: {
-            [key: string]: never;
+            /**
+             * What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule.
+             */
+            unplayedRoundToPar: number;
         };
     } | {
         participantScoringDefinitionId: 'FINISH_POSITION_POINTS';
@@ -4753,12 +4783,18 @@ export type ContestConfigurationRequest = {
      */
     maxEntriesPerSquad?: number | null;
     /**
-     * The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+     * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
      */
     scoring?: {
         participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
+        /**
+         * Golf to-par total settings: what an unplayed round scores against par.
+         */
         config: {
-            [key: string]: never;
+            /**
+             * What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule.
+             */
+            unplayedRoundToPar: number;
         };
     } | {
         participantScoringDefinitionId: 'FINISH_POSITION_POINTS';
@@ -4806,12 +4842,18 @@ export type ContestConfigurationRequest = {
      */
     maxEntriesPerSquad?: number | null;
     /**
-     * The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+     * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
      */
     scoring?: {
         participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
+        /**
+         * Golf to-par total settings: what an unplayed round scores against par.
+         */
         config: {
-            [key: string]: never;
+            /**
+             * What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule.
+             */
+            unplayedRoundToPar: number;
         };
     } | {
         participantScoringDefinitionId: 'FINISH_POSITION_POINTS';
@@ -5326,12 +5368,18 @@ export type ContestConfigTemplateDto = {
          */
         maxEntriesPerSquad?: number | null;
         /**
-         * The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+         * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
          */
         scoring?: {
             participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
+            /**
+             * Golf to-par total settings: what an unplayed round scores against par.
+             */
             config: {
-                [key: string]: never;
+                /**
+                 * What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule.
+                 */
+                unplayedRoundToPar: number;
             };
         } | {
             participantScoringDefinitionId: 'FINISH_POSITION_POINTS';
@@ -5387,12 +5435,18 @@ export type ContestConfigTemplateDto = {
          */
         maxEntriesPerSquad?: number | null;
         /**
-         * The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+         * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
          */
         scoring?: {
             participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
+            /**
+             * Golf to-par total settings: what an unplayed round scores against par.
+             */
             config: {
-                [key: string]: never;
+                /**
+                 * What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule.
+                 */
+                unplayedRoundToPar: number;
             };
         } | {
             participantScoringDefinitionId: 'FINISH_POSITION_POINTS';
@@ -5448,12 +5502,18 @@ export type ContestConfigTemplateDto = {
          */
         maxEntriesPerSquad?: number | null;
         /**
-         * The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+         * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
          */
         scoring?: {
             participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
+            /**
+             * Golf to-par total settings: what an unplayed round scores against par.
+             */
             config: {
-                [key: string]: never;
+                /**
+                 * What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule.
+                 */
+                unplayedRoundToPar: number;
             };
         } | {
             participantScoringDefinitionId: 'FINISH_POSITION_POINTS';
@@ -5509,12 +5569,18 @@ export type ContestConfigTemplateDto = {
          */
         maxEntriesPerSquad?: number | null;
         /**
-         * The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+         * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
          */
         scoring?: {
             participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
+            /**
+             * Golf to-par total settings: what an unplayed round scores against par.
+             */
             config: {
-                [key: string]: never;
+                /**
+                 * What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule.
+                 */
+                unplayedRoundToPar: number;
             };
         } | {
             participantScoringDefinitionId: 'FINISH_POSITION_POINTS';
@@ -5566,12 +5632,18 @@ export type ContestConfigTemplateDto = {
          */
         maxEntriesPerSquad?: number | null;
         /**
-         * The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+         * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
          */
         scoring?: {
             participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
+            /**
+             * Golf to-par total settings: what an unplayed round scores against par.
+             */
             config: {
-                [key: string]: never;
+                /**
+                 * What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule.
+                 */
+                unplayedRoundToPar: number;
             };
         } | {
             participantScoringDefinitionId: 'FINISH_POSITION_POINTS';
@@ -5627,12 +5699,18 @@ export type ContestConfigTemplateDto = {
          */
         maxEntriesPerSquad?: number | null;
         /**
-         * The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+         * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
          */
         scoring?: {
             participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
+            /**
+             * Golf to-par total settings: what an unplayed round scores against par.
+             */
             config: {
-                [key: string]: never;
+                /**
+                 * What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule.
+                 */
+                unplayedRoundToPar: number;
             };
         } | {
             participantScoringDefinitionId: 'FINISH_POSITION_POINTS';
@@ -5680,12 +5758,18 @@ export type ContestConfigTemplateDto = {
          */
         maxEntriesPerSquad?: number | null;
         /**
-         * The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+         * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
          */
         scoring?: {
             participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
+            /**
+             * Golf to-par total settings: what an unplayed round scores against par.
+             */
             config: {
-                [key: string]: never;
+                /**
+                 * What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule.
+                 */
+                unplayedRoundToPar: number;
             };
         } | {
             participantScoringDefinitionId: 'FINISH_POSITION_POINTS';
@@ -6100,12 +6184,18 @@ export type ContestConfigTemplateListResponse = {
              */
             maxEntriesPerSquad?: number | null;
             /**
-             * The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+             * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
              */
             scoring?: {
                 participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
+                /**
+                 * Golf to-par total settings: what an unplayed round scores against par.
+                 */
                 config: {
-                    [key: string]: never;
+                    /**
+                     * What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule.
+                     */
+                    unplayedRoundToPar: number;
                 };
             } | {
                 participantScoringDefinitionId: 'FINISH_POSITION_POINTS';
@@ -6161,12 +6251,18 @@ export type ContestConfigTemplateListResponse = {
              */
             maxEntriesPerSquad?: number | null;
             /**
-             * The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+             * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
              */
             scoring?: {
                 participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
+                /**
+                 * Golf to-par total settings: what an unplayed round scores against par.
+                 */
                 config: {
-                    [key: string]: never;
+                    /**
+                     * What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule.
+                     */
+                    unplayedRoundToPar: number;
                 };
             } | {
                 participantScoringDefinitionId: 'FINISH_POSITION_POINTS';
@@ -6222,12 +6318,18 @@ export type ContestConfigTemplateListResponse = {
              */
             maxEntriesPerSquad?: number | null;
             /**
-             * The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+             * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
              */
             scoring?: {
                 participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
+                /**
+                 * Golf to-par total settings: what an unplayed round scores against par.
+                 */
                 config: {
-                    [key: string]: never;
+                    /**
+                     * What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule.
+                     */
+                    unplayedRoundToPar: number;
                 };
             } | {
                 participantScoringDefinitionId: 'FINISH_POSITION_POINTS';
@@ -6283,12 +6385,18 @@ export type ContestConfigTemplateListResponse = {
              */
             maxEntriesPerSquad?: number | null;
             /**
-             * The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+             * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
              */
             scoring?: {
                 participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
+                /**
+                 * Golf to-par total settings: what an unplayed round scores against par.
+                 */
                 config: {
-                    [key: string]: never;
+                    /**
+                     * What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule.
+                     */
+                    unplayedRoundToPar: number;
                 };
             } | {
                 participantScoringDefinitionId: 'FINISH_POSITION_POINTS';
@@ -6340,12 +6448,18 @@ export type ContestConfigTemplateListResponse = {
              */
             maxEntriesPerSquad?: number | null;
             /**
-             * The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+             * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
              */
             scoring?: {
                 participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
+                /**
+                 * Golf to-par total settings: what an unplayed round scores against par.
+                 */
                 config: {
-                    [key: string]: never;
+                    /**
+                     * What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule.
+                     */
+                    unplayedRoundToPar: number;
                 };
             } | {
                 participantScoringDefinitionId: 'FINISH_POSITION_POINTS';
@@ -6401,12 +6515,18 @@ export type ContestConfigTemplateListResponse = {
              */
             maxEntriesPerSquad?: number | null;
             /**
-             * The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+             * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
              */
             scoring?: {
                 participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
+                /**
+                 * Golf to-par total settings: what an unplayed round scores against par.
+                 */
                 config: {
-                    [key: string]: never;
+                    /**
+                     * What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule.
+                     */
+                    unplayedRoundToPar: number;
                 };
             } | {
                 participantScoringDefinitionId: 'FINISH_POSITION_POINTS';
@@ -6454,12 +6574,18 @@ export type ContestConfigTemplateListResponse = {
              */
             maxEntriesPerSquad?: number | null;
             /**
-             * The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+             * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
              */
             scoring?: {
                 participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
+                /**
+                 * Golf to-par total settings: what an unplayed round scores against par.
+                 */
                 config: {
-                    [key: string]: never;
+                    /**
+                     * What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule.
+                     */
+                    unplayedRoundToPar: number;
                 };
             } | {
                 participantScoringDefinitionId: 'FINISH_POSITION_POINTS';
@@ -6546,12 +6672,18 @@ export type UpdateContestConfigTemplateRequest = {
          */
         maxEntriesPerSquad?: number | null;
         /**
-         * The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+         * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
          */
         scoring?: {
             participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
+            /**
+             * Golf to-par total settings: what an unplayed round scores against par.
+             */
             config: {
-                [key: string]: never;
+                /**
+                 * What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule.
+                 */
+                unplayedRoundToPar: number;
             };
         } | {
             participantScoringDefinitionId: 'FINISH_POSITION_POINTS';
@@ -6607,12 +6739,18 @@ export type UpdateContestConfigTemplateRequest = {
          */
         maxEntriesPerSquad?: number | null;
         /**
-         * The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+         * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
          */
         scoring?: {
             participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
+            /**
+             * Golf to-par total settings: what an unplayed round scores against par.
+             */
             config: {
-                [key: string]: never;
+                /**
+                 * What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule.
+                 */
+                unplayedRoundToPar: number;
             };
         } | {
             participantScoringDefinitionId: 'FINISH_POSITION_POINTS';
@@ -6668,12 +6806,18 @@ export type UpdateContestConfigTemplateRequest = {
          */
         maxEntriesPerSquad?: number | null;
         /**
-         * The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+         * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
          */
         scoring?: {
             participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
+            /**
+             * Golf to-par total settings: what an unplayed round scores against par.
+             */
             config: {
-                [key: string]: never;
+                /**
+                 * What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule.
+                 */
+                unplayedRoundToPar: number;
             };
         } | {
             participantScoringDefinitionId: 'FINISH_POSITION_POINTS';
@@ -6729,12 +6873,18 @@ export type UpdateContestConfigTemplateRequest = {
          */
         maxEntriesPerSquad?: number | null;
         /**
-         * The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+         * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
          */
         scoring?: {
             participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
+            /**
+             * Golf to-par total settings: what an unplayed round scores against par.
+             */
             config: {
-                [key: string]: never;
+                /**
+                 * What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule.
+                 */
+                unplayedRoundToPar: number;
             };
         } | {
             participantScoringDefinitionId: 'FINISH_POSITION_POINTS';
@@ -6786,12 +6936,18 @@ export type UpdateContestConfigTemplateRequest = {
          */
         maxEntriesPerSquad?: number | null;
         /**
-         * The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+         * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
          */
         scoring?: {
             participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
+            /**
+             * Golf to-par total settings: what an unplayed round scores against par.
+             */
             config: {
-                [key: string]: never;
+                /**
+                 * What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule.
+                 */
+                unplayedRoundToPar: number;
             };
         } | {
             participantScoringDefinitionId: 'FINISH_POSITION_POINTS';
@@ -6847,12 +7003,18 @@ export type UpdateContestConfigTemplateRequest = {
          */
         maxEntriesPerSquad?: number | null;
         /**
-         * The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+         * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
          */
         scoring?: {
             participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
+            /**
+             * Golf to-par total settings: what an unplayed round scores against par.
+             */
             config: {
-                [key: string]: never;
+                /**
+                 * What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule.
+                 */
+                unplayedRoundToPar: number;
             };
         } | {
             participantScoringDefinitionId: 'FINISH_POSITION_POINTS';
@@ -6900,12 +7062,18 @@ export type UpdateContestConfigTemplateRequest = {
          */
         maxEntriesPerSquad?: number | null;
         /**
-         * The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+         * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
          */
         scoring?: {
             participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
+            /**
+             * Golf to-par total settings: what an unplayed round scores against par.
+             */
             config: {
-                [key: string]: never;
+                /**
+                 * What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule.
+                 */
+                unplayedRoundToPar: number;
             };
         } | {
             participantScoringDefinitionId: 'FINISH_POSITION_POINTS';
@@ -7076,12 +7244,18 @@ export type ContestConfigTemplateResponse = {
              */
             maxEntriesPerSquad?: number | null;
             /**
-             * The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+             * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
              */
             scoring?: {
                 participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
+                /**
+                 * Golf to-par total settings: what an unplayed round scores against par.
+                 */
                 config: {
-                    [key: string]: never;
+                    /**
+                     * What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule.
+                     */
+                    unplayedRoundToPar: number;
                 };
             } | {
                 participantScoringDefinitionId: 'FINISH_POSITION_POINTS';
@@ -7137,12 +7311,18 @@ export type ContestConfigTemplateResponse = {
              */
             maxEntriesPerSquad?: number | null;
             /**
-             * The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+             * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
              */
             scoring?: {
                 participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
+                /**
+                 * Golf to-par total settings: what an unplayed round scores against par.
+                 */
                 config: {
-                    [key: string]: never;
+                    /**
+                     * What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule.
+                     */
+                    unplayedRoundToPar: number;
                 };
             } | {
                 participantScoringDefinitionId: 'FINISH_POSITION_POINTS';
@@ -7198,12 +7378,18 @@ export type ContestConfigTemplateResponse = {
              */
             maxEntriesPerSquad?: number | null;
             /**
-             * The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+             * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
              */
             scoring?: {
                 participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
+                /**
+                 * Golf to-par total settings: what an unplayed round scores against par.
+                 */
                 config: {
-                    [key: string]: never;
+                    /**
+                     * What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule.
+                     */
+                    unplayedRoundToPar: number;
                 };
             } | {
                 participantScoringDefinitionId: 'FINISH_POSITION_POINTS';
@@ -7259,12 +7445,18 @@ export type ContestConfigTemplateResponse = {
              */
             maxEntriesPerSquad?: number | null;
             /**
-             * The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+             * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
              */
             scoring?: {
                 participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
+                /**
+                 * Golf to-par total settings: what an unplayed round scores against par.
+                 */
                 config: {
-                    [key: string]: never;
+                    /**
+                     * What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule.
+                     */
+                    unplayedRoundToPar: number;
                 };
             } | {
                 participantScoringDefinitionId: 'FINISH_POSITION_POINTS';
@@ -7316,12 +7508,18 @@ export type ContestConfigTemplateResponse = {
              */
             maxEntriesPerSquad?: number | null;
             /**
-             * The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+             * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
              */
             scoring?: {
                 participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
+                /**
+                 * Golf to-par total settings: what an unplayed round scores against par.
+                 */
                 config: {
-                    [key: string]: never;
+                    /**
+                     * What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule.
+                     */
+                    unplayedRoundToPar: number;
                 };
             } | {
                 participantScoringDefinitionId: 'FINISH_POSITION_POINTS';
@@ -7377,12 +7575,18 @@ export type ContestConfigTemplateResponse = {
              */
             maxEntriesPerSquad?: number | null;
             /**
-             * The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+             * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
              */
             scoring?: {
                 participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
+                /**
+                 * Golf to-par total settings: what an unplayed round scores against par.
+                 */
                 config: {
-                    [key: string]: never;
+                    /**
+                     * What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule.
+                     */
+                    unplayedRoundToPar: number;
                 };
             } | {
                 participantScoringDefinitionId: 'FINISH_POSITION_POINTS';
@@ -7430,12 +7634,18 @@ export type ContestConfigTemplateResponse = {
              */
             maxEntriesPerSquad?: number | null;
             /**
-             * The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+             * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
              */
             scoring?: {
                 participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
+                /**
+                 * Golf to-par total settings: what an unplayed round scores against par.
+                 */
                 config: {
-                    [key: string]: never;
+                    /**
+                     * What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule.
+                     */
+                    unplayedRoundToPar: number;
                 };
             } | {
                 participantScoringDefinitionId: 'FINISH_POSITION_POINTS';
@@ -15667,12 +15877,18 @@ export type CreateContestRequest = {
          */
         maxEntriesPerSquad?: number | null;
         /**
-         * The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+         * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
          */
         scoring?: {
             participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
+            /**
+             * Golf to-par total settings: what an unplayed round scores against par.
+             */
             config: {
-                [key: string]: never;
+                /**
+                 * What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule.
+                 */
+                unplayedRoundToPar: number;
             };
         } | {
             participantScoringDefinitionId: 'FINISH_POSITION_POINTS';
@@ -15728,12 +15944,18 @@ export type CreateContestRequest = {
          */
         maxEntriesPerSquad?: number | null;
         /**
-         * The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+         * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
          */
         scoring?: {
             participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
+            /**
+             * Golf to-par total settings: what an unplayed round scores against par.
+             */
             config: {
-                [key: string]: never;
+                /**
+                 * What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule.
+                 */
+                unplayedRoundToPar: number;
             };
         } | {
             participantScoringDefinitionId: 'FINISH_POSITION_POINTS';
@@ -15789,12 +16011,18 @@ export type CreateContestRequest = {
          */
         maxEntriesPerSquad?: number | null;
         /**
-         * The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+         * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
          */
         scoring?: {
             participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
+            /**
+             * Golf to-par total settings: what an unplayed round scores against par.
+             */
             config: {
-                [key: string]: never;
+                /**
+                 * What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule.
+                 */
+                unplayedRoundToPar: number;
             };
         } | {
             participantScoringDefinitionId: 'FINISH_POSITION_POINTS';
@@ -15850,12 +16078,18 @@ export type CreateContestRequest = {
          */
         maxEntriesPerSquad?: number | null;
         /**
-         * The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+         * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
          */
         scoring?: {
             participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
+            /**
+             * Golf to-par total settings: what an unplayed round scores against par.
+             */
             config: {
-                [key: string]: never;
+                /**
+                 * What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule.
+                 */
+                unplayedRoundToPar: number;
             };
         } | {
             participantScoringDefinitionId: 'FINISH_POSITION_POINTS';
@@ -15907,12 +16141,18 @@ export type CreateContestRequest = {
          */
         maxEntriesPerSquad?: number | null;
         /**
-         * The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+         * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
          */
         scoring?: {
             participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
+            /**
+             * Golf to-par total settings: what an unplayed round scores against par.
+             */
             config: {
-                [key: string]: never;
+                /**
+                 * What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule.
+                 */
+                unplayedRoundToPar: number;
             };
         } | {
             participantScoringDefinitionId: 'FINISH_POSITION_POINTS';
@@ -15968,12 +16208,18 @@ export type CreateContestRequest = {
          */
         maxEntriesPerSquad?: number | null;
         /**
-         * The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+         * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
          */
         scoring?: {
             participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
+            /**
+             * Golf to-par total settings: what an unplayed round scores against par.
+             */
             config: {
-                [key: string]: never;
+                /**
+                 * What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule.
+                 */
+                unplayedRoundToPar: number;
             };
         } | {
             participantScoringDefinitionId: 'FINISH_POSITION_POINTS';
@@ -16021,12 +16267,18 @@ export type CreateContestRequest = {
          */
         maxEntriesPerSquad?: number | null;
         /**
-         * The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+         * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
          */
         scoring?: {
             participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
+            /**
+             * Golf to-par total settings: what an unplayed round scores against par.
+             */
             config: {
-                [key: string]: never;
+                /**
+                 * What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule.
+                 */
+                unplayedRoundToPar: number;
             };
         } | {
             participantScoringDefinitionId: 'FINISH_POSITION_POINTS';
@@ -16430,11 +16682,11 @@ export type ParticipantScoringDefinitionId = 'GOLF_RELATIVE_TO_PAR_TOTAL' | 'FIN
  */
 export type ScoredContestEntryPickGolfDto = {
     /**
-     * The golfer's score in this contest against par: their event total, with every round they did not play scored as 80 strokes (80 minus that round's par). Differs from the event standing's eventScoreToPar only when unplayedRoundNumbers is non-empty. Null while unscored.
+     * The golfer's score in this contest against par: their event total, with every round they did not play scored as the leaderboard's unplayedRoundToPar. Differs from the event standing's eventScoreToPar only when unplayedRoundNumbers is non-empty. Null while unscored.
      */
     scoreToPar: number | null;
     /**
-     * Rounds scored as 80 strokes because the golfer did not play them: cut, withdrawn, removed from the field, or no score once the field moved past the round. Empty when none.
+     * Rounds scored as the leaderboard's unplayedRoundToPar because the golfer did not play them: cut, withdrawn, removed from the field, or no score once the field moved past the round. Empty when none.
      */
     unplayedRoundNumbers: Array<number>;
 };
@@ -16472,11 +16724,11 @@ export type ScoredContestEntryPickDto = {
      */
     golf: {
         /**
-         * The golfer's score in this contest against par: their event total, with every round they did not play scored as 80 strokes (80 minus that round's par). Differs from the event standing's eventScoreToPar only when unplayedRoundNumbers is non-empty. Null while unscored.
+         * The golfer's score in this contest against par: their event total, with every round they did not play scored as the leaderboard's unplayedRoundToPar. Differs from the event standing's eventScoreToPar only when unplayedRoundNumbers is non-empty. Null while unscored.
          */
         scoreToPar: number | null;
         /**
-         * Rounds scored as 80 strokes because the golfer did not play them: cut, withdrawn, removed from the field, or no score once the field moved past the round. Empty when none.
+         * Rounds scored as the leaderboard's unplayedRoundToPar because the golfer did not play them: cut, withdrawn, removed from the field, or no score once the field moved past the round. Empty when none.
          */
         unplayedRoundNumbers: Array<number>;
     } | null;
@@ -16610,11 +16862,11 @@ export type ContestEntryStandingDto = {
          */
         golf: {
             /**
-             * The golfer's score in this contest against par: their event total, with every round they did not play scored as 80 strokes (80 minus that round's par). Differs from the event standing's eventScoreToPar only when unplayedRoundNumbers is non-empty. Null while unscored.
+             * The golfer's score in this contest against par: their event total, with every round they did not play scored as the leaderboard's unplayedRoundToPar. Differs from the event standing's eventScoreToPar only when unplayedRoundNumbers is non-empty. Null while unscored.
              */
             scoreToPar: number | null;
             /**
-             * Rounds scored as 80 strokes because the golfer did not play them: cut, withdrawn, removed from the field, or no score once the field moved past the round. Empty when none.
+             * Rounds scored as the leaderboard's unplayedRoundToPar because the golfer did not play them: cut, withdrawn, removed from the field, or no score once the field moved past the round. Empty when none.
              */
             unplayedRoundNumbers: Array<number>;
         } | null;
@@ -16718,6 +16970,23 @@ export type ContestLeaderboardResponse = {
      * Whether the contest scores an upset bonus (#1748): a knockout contest whose bonus rule is on, so a client shows each pick's bonus in its own column even before any team has earned one. False for every other contest.
      */
     upsetBonus: boolean;
+    /**
+     * What each round a golfer did not play adds to their contest score, in strokes over par: the contest's setting, so a client states it in its footnote and shows an unplayed round as this to-par. Null for a contest not scored by golf's to-par total.
+     */
+    unplayedRoundToPar: number | null;
+    /**
+     * The round the shown event's field is on, for the leaderboard header. Null before a single round is scored, and for an event scored by match or by finish, which has no rounds.
+     */
+    currentRound: {
+        /**
+         * The round the shown event's field is on: the highest round any participant is still playing, else the highest any has finished.
+         */
+        roundNumber: number;
+        /**
+         * Whether that round has finished: no participant is still playing it.
+         */
+        isComplete: boolean;
+    } | null;
     /**
      * The shown event's field, as the event publishes it: in seed order, unseeded last. Picks point into it by sportEventParticipantId.
      */
@@ -17055,11 +17324,11 @@ export type ContestLeaderboardResponse = {
              */
             golf: {
                 /**
-                 * The golfer's score in this contest against par: their event total, with every round they did not play scored as 80 strokes (80 minus that round's par). Differs from the event standing's eventScoreToPar only when unplayedRoundNumbers is non-empty. Null while unscored.
+                 * The golfer's score in this contest against par: their event total, with every round they did not play scored as the leaderboard's unplayedRoundToPar. Differs from the event standing's eventScoreToPar only when unplayedRoundNumbers is non-empty. Null while unscored.
                  */
                 scoreToPar: number | null;
                 /**
-                 * Rounds scored as 80 strokes because the golfer did not play them: cut, withdrawn, removed from the field, or no score once the field moved past the round. Empty when none.
+                 * Rounds scored as the leaderboard's unplayedRoundToPar because the golfer did not play them: cut, withdrawn, removed from the field, or no score once the field moved past the round. Empty when none.
                  */
                 unplayedRoundNumbers: Array<number>;
             } | null;
@@ -26382,12 +26651,18 @@ export type EventPageOfferDto = {
              */
             maxEntriesPerSquad?: number | null;
             /**
-             * The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+             * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
              */
             scoring?: {
                 participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
+                /**
+                 * Golf to-par total settings: what an unplayed round scores against par.
+                 */
                 config: {
-                    [key: string]: never;
+                    /**
+                     * What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule.
+                     */
+                    unplayedRoundToPar: number;
                 };
             } | {
                 participantScoringDefinitionId: 'FINISH_POSITION_POINTS';
@@ -26443,12 +26718,18 @@ export type EventPageOfferDto = {
              */
             maxEntriesPerSquad?: number | null;
             /**
-             * The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+             * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
              */
             scoring?: {
                 participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
+                /**
+                 * Golf to-par total settings: what an unplayed round scores against par.
+                 */
                 config: {
-                    [key: string]: never;
+                    /**
+                     * What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule.
+                     */
+                    unplayedRoundToPar: number;
                 };
             } | {
                 participantScoringDefinitionId: 'FINISH_POSITION_POINTS';
@@ -26504,12 +26785,18 @@ export type EventPageOfferDto = {
              */
             maxEntriesPerSquad?: number | null;
             /**
-             * The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+             * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
              */
             scoring?: {
                 participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
+                /**
+                 * Golf to-par total settings: what an unplayed round scores against par.
+                 */
                 config: {
-                    [key: string]: never;
+                    /**
+                     * What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule.
+                     */
+                    unplayedRoundToPar: number;
                 };
             } | {
                 participantScoringDefinitionId: 'FINISH_POSITION_POINTS';
@@ -26565,12 +26852,18 @@ export type EventPageOfferDto = {
              */
             maxEntriesPerSquad?: number | null;
             /**
-             * The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+             * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
              */
             scoring?: {
                 participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
+                /**
+                 * Golf to-par total settings: what an unplayed round scores against par.
+                 */
                 config: {
-                    [key: string]: never;
+                    /**
+                     * What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule.
+                     */
+                    unplayedRoundToPar: number;
                 };
             } | {
                 participantScoringDefinitionId: 'FINISH_POSITION_POINTS';
@@ -26622,12 +26915,18 @@ export type EventPageOfferDto = {
              */
             maxEntriesPerSquad?: number | null;
             /**
-             * The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+             * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
              */
             scoring?: {
                 participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
+                /**
+                 * Golf to-par total settings: what an unplayed round scores against par.
+                 */
                 config: {
-                    [key: string]: never;
+                    /**
+                     * What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule.
+                     */
+                    unplayedRoundToPar: number;
                 };
             } | {
                 participantScoringDefinitionId: 'FINISH_POSITION_POINTS';
@@ -26683,12 +26982,18 @@ export type EventPageOfferDto = {
              */
             maxEntriesPerSquad?: number | null;
             /**
-             * The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+             * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
              */
             scoring?: {
                 participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
+                /**
+                 * Golf to-par total settings: what an unplayed round scores against par.
+                 */
                 config: {
-                    [key: string]: never;
+                    /**
+                     * What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule.
+                     */
+                    unplayedRoundToPar: number;
                 };
             } | {
                 participantScoringDefinitionId: 'FINISH_POSITION_POINTS';
@@ -26736,12 +27041,18 @@ export type EventPageOfferDto = {
              */
             maxEntriesPerSquad?: number | null;
             /**
-             * The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+             * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
              */
             scoring?: {
                 participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
+                /**
+                 * Golf to-par total settings: what an unplayed round scores against par.
+                 */
                 config: {
-                    [key: string]: never;
+                    /**
+                     * What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule.
+                     */
+                    unplayedRoundToPar: number;
                 };
             } | {
                 participantScoringDefinitionId: 'FINISH_POSITION_POINTS';
@@ -27017,12 +27328,18 @@ export type EventPageDto = {
                  */
                 maxEntriesPerSquad?: number | null;
                 /**
-                 * The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+                 * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
                  */
                 scoring?: {
                     participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
+                    /**
+                     * Golf to-par total settings: what an unplayed round scores against par.
+                     */
                     config: {
-                        [key: string]: never;
+                        /**
+                         * What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule.
+                         */
+                        unplayedRoundToPar: number;
                     };
                 } | {
                     participantScoringDefinitionId: 'FINISH_POSITION_POINTS';
@@ -27078,12 +27395,18 @@ export type EventPageDto = {
                  */
                 maxEntriesPerSquad?: number | null;
                 /**
-                 * The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+                 * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
                  */
                 scoring?: {
                     participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
+                    /**
+                     * Golf to-par total settings: what an unplayed round scores against par.
+                     */
                     config: {
-                        [key: string]: never;
+                        /**
+                         * What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule.
+                         */
+                        unplayedRoundToPar: number;
                     };
                 } | {
                     participantScoringDefinitionId: 'FINISH_POSITION_POINTS';
@@ -27139,12 +27462,18 @@ export type EventPageDto = {
                  */
                 maxEntriesPerSquad?: number | null;
                 /**
-                 * The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+                 * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
                  */
                 scoring?: {
                     participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
+                    /**
+                     * Golf to-par total settings: what an unplayed round scores against par.
+                     */
                     config: {
-                        [key: string]: never;
+                        /**
+                         * What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule.
+                         */
+                        unplayedRoundToPar: number;
                     };
                 } | {
                     participantScoringDefinitionId: 'FINISH_POSITION_POINTS';
@@ -27200,12 +27529,18 @@ export type EventPageDto = {
                  */
                 maxEntriesPerSquad?: number | null;
                 /**
-                 * The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+                 * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
                  */
                 scoring?: {
                     participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
+                    /**
+                     * Golf to-par total settings: what an unplayed round scores against par.
+                     */
                     config: {
-                        [key: string]: never;
+                        /**
+                         * What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule.
+                         */
+                        unplayedRoundToPar: number;
                     };
                 } | {
                     participantScoringDefinitionId: 'FINISH_POSITION_POINTS';
@@ -27257,12 +27592,18 @@ export type EventPageDto = {
                  */
                 maxEntriesPerSquad?: number | null;
                 /**
-                 * The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+                 * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
                  */
                 scoring?: {
                     participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
+                    /**
+                     * Golf to-par total settings: what an unplayed round scores against par.
+                     */
                     config: {
-                        [key: string]: never;
+                        /**
+                         * What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule.
+                         */
+                        unplayedRoundToPar: number;
                     };
                 } | {
                     participantScoringDefinitionId: 'FINISH_POSITION_POINTS';
@@ -27318,12 +27659,18 @@ export type EventPageDto = {
                  */
                 maxEntriesPerSquad?: number | null;
                 /**
-                 * The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+                 * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
                  */
                 scoring?: {
                     participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
+                    /**
+                     * Golf to-par total settings: what an unplayed round scores against par.
+                     */
                     config: {
-                        [key: string]: never;
+                        /**
+                         * What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule.
+                         */
+                        unplayedRoundToPar: number;
                     };
                 } | {
                     participantScoringDefinitionId: 'FINISH_POSITION_POINTS';
@@ -27371,12 +27718,18 @@ export type EventPageDto = {
                  */
                 maxEntriesPerSquad?: number | null;
                 /**
-                 * The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+                 * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
                  */
                 scoring?: {
                     participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
+                    /**
+                     * Golf to-par total settings: what an unplayed round scores against par.
+                     */
                     config: {
-                        [key: string]: never;
+                        /**
+                         * What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule.
+                         */
+                        unplayedRoundToPar: number;
                     };
                 } | {
                     participantScoringDefinitionId: 'FINISH_POSITION_POINTS';
@@ -27657,12 +28010,18 @@ export type EventPageResponse = {
                      */
                     maxEntriesPerSquad?: number | null;
                     /**
-                     * The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+                     * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
                      */
                     scoring?: {
                         participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
+                        /**
+                         * Golf to-par total settings: what an unplayed round scores against par.
+                         */
                         config: {
-                            [key: string]: never;
+                            /**
+                             * What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule.
+                             */
+                            unplayedRoundToPar: number;
                         };
                     } | {
                         participantScoringDefinitionId: 'FINISH_POSITION_POINTS';
@@ -27718,12 +28077,18 @@ export type EventPageResponse = {
                      */
                     maxEntriesPerSquad?: number | null;
                     /**
-                     * The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+                     * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
                      */
                     scoring?: {
                         participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
+                        /**
+                         * Golf to-par total settings: what an unplayed round scores against par.
+                         */
                         config: {
-                            [key: string]: never;
+                            /**
+                             * What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule.
+                             */
+                            unplayedRoundToPar: number;
                         };
                     } | {
                         participantScoringDefinitionId: 'FINISH_POSITION_POINTS';
@@ -27779,12 +28144,18 @@ export type EventPageResponse = {
                      */
                     maxEntriesPerSquad?: number | null;
                     /**
-                     * The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+                     * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
                      */
                     scoring?: {
                         participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
+                        /**
+                         * Golf to-par total settings: what an unplayed round scores against par.
+                         */
                         config: {
-                            [key: string]: never;
+                            /**
+                             * What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule.
+                             */
+                            unplayedRoundToPar: number;
                         };
                     } | {
                         participantScoringDefinitionId: 'FINISH_POSITION_POINTS';
@@ -27840,12 +28211,18 @@ export type EventPageResponse = {
                      */
                     maxEntriesPerSquad?: number | null;
                     /**
-                     * The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+                     * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
                      */
                     scoring?: {
                         participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
+                        /**
+                         * Golf to-par total settings: what an unplayed round scores against par.
+                         */
                         config: {
-                            [key: string]: never;
+                            /**
+                             * What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule.
+                             */
+                            unplayedRoundToPar: number;
                         };
                     } | {
                         participantScoringDefinitionId: 'FINISH_POSITION_POINTS';
@@ -27897,12 +28274,18 @@ export type EventPageResponse = {
                      */
                     maxEntriesPerSquad?: number | null;
                     /**
-                     * The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+                     * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
                      */
                     scoring?: {
                         participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
+                        /**
+                         * Golf to-par total settings: what an unplayed round scores against par.
+                         */
                         config: {
-                            [key: string]: never;
+                            /**
+                             * What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule.
+                             */
+                            unplayedRoundToPar: number;
                         };
                     } | {
                         participantScoringDefinitionId: 'FINISH_POSITION_POINTS';
@@ -27958,12 +28341,18 @@ export type EventPageResponse = {
                      */
                     maxEntriesPerSquad?: number | null;
                     /**
-                     * The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+                     * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
                      */
                     scoring?: {
                         participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
+                        /**
+                         * Golf to-par total settings: what an unplayed round scores against par.
+                         */
                         config: {
-                            [key: string]: never;
+                            /**
+                             * What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule.
+                             */
+                            unplayedRoundToPar: number;
                         };
                     } | {
                         participantScoringDefinitionId: 'FINISH_POSITION_POINTS';
@@ -28011,12 +28400,18 @@ export type EventPageResponse = {
                      */
                     maxEntriesPerSquad?: number | null;
                     /**
-                     * The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+                     * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
                      */
                     scoring?: {
                         participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
+                        /**
+                         * Golf to-par total settings: what an unplayed round scores against par.
+                         */
                         config: {
-                            [key: string]: never;
+                            /**
+                             * What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule.
+                             */
+                            unplayedRoundToPar: number;
                         };
                     } | {
                         participantScoringDefinitionId: 'FINISH_POSITION_POINTS';
@@ -28312,12 +28707,18 @@ export type EventPageListResponse = {
                      */
                     maxEntriesPerSquad?: number | null;
                     /**
-                     * The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+                     * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
                      */
                     scoring?: {
                         participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
+                        /**
+                         * Golf to-par total settings: what an unplayed round scores against par.
+                         */
                         config: {
-                            [key: string]: never;
+                            /**
+                             * What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule.
+                             */
+                            unplayedRoundToPar: number;
                         };
                     } | {
                         participantScoringDefinitionId: 'FINISH_POSITION_POINTS';
@@ -28373,12 +28774,18 @@ export type EventPageListResponse = {
                      */
                     maxEntriesPerSquad?: number | null;
                     /**
-                     * The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+                     * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
                      */
                     scoring?: {
                         participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
+                        /**
+                         * Golf to-par total settings: what an unplayed round scores against par.
+                         */
                         config: {
-                            [key: string]: never;
+                            /**
+                             * What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule.
+                             */
+                            unplayedRoundToPar: number;
                         };
                     } | {
                         participantScoringDefinitionId: 'FINISH_POSITION_POINTS';
@@ -28434,12 +28841,18 @@ export type EventPageListResponse = {
                      */
                     maxEntriesPerSquad?: number | null;
                     /**
-                     * The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+                     * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
                      */
                     scoring?: {
                         participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
+                        /**
+                         * Golf to-par total settings: what an unplayed round scores against par.
+                         */
                         config: {
-                            [key: string]: never;
+                            /**
+                             * What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule.
+                             */
+                            unplayedRoundToPar: number;
                         };
                     } | {
                         participantScoringDefinitionId: 'FINISH_POSITION_POINTS';
@@ -28495,12 +28908,18 @@ export type EventPageListResponse = {
                      */
                     maxEntriesPerSquad?: number | null;
                     /**
-                     * The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+                     * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
                      */
                     scoring?: {
                         participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
+                        /**
+                         * Golf to-par total settings: what an unplayed round scores against par.
+                         */
                         config: {
-                            [key: string]: never;
+                            /**
+                             * What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule.
+                             */
+                            unplayedRoundToPar: number;
                         };
                     } | {
                         participantScoringDefinitionId: 'FINISH_POSITION_POINTS';
@@ -28552,12 +28971,18 @@ export type EventPageListResponse = {
                      */
                     maxEntriesPerSquad?: number | null;
                     /**
-                     * The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+                     * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
                      */
                     scoring?: {
                         participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
+                        /**
+                         * Golf to-par total settings: what an unplayed round scores against par.
+                         */
                         config: {
-                            [key: string]: never;
+                            /**
+                             * What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule.
+                             */
+                            unplayedRoundToPar: number;
                         };
                     } | {
                         participantScoringDefinitionId: 'FINISH_POSITION_POINTS';
@@ -28613,12 +29038,18 @@ export type EventPageListResponse = {
                      */
                     maxEntriesPerSquad?: number | null;
                     /**
-                     * The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+                     * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
                      */
                     scoring?: {
                         participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
+                        /**
+                         * Golf to-par total settings: what an unplayed round scores against par.
+                         */
                         config: {
-                            [key: string]: never;
+                            /**
+                             * What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule.
+                             */
+                            unplayedRoundToPar: number;
                         };
                     } | {
                         participantScoringDefinitionId: 'FINISH_POSITION_POINTS';
@@ -28666,12 +29097,18 @@ export type EventPageListResponse = {
                      */
                     maxEntriesPerSquad?: number | null;
                     /**
-                     * The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
+                     * The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.
                      */
                     scoring?: {
                         participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL';
+                        /**
+                         * Golf to-par total settings: what an unplayed round scores against par.
+                         */
                         config: {
-                            [key: string]: never;
+                            /**
+                             * What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule.
+                             */
+                            unplayedRoundToPar: number;
                         };
                     } | {
                         participantScoringDefinitionId: 'FINISH_POSITION_POINTS';

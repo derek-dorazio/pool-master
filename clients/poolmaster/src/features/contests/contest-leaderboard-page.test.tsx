@@ -217,6 +217,8 @@ function leaderboardResponse(entryTotalScore = -5) {
       scoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL',
       countingRule: { type: 'BEST_N', count: 1, pickCount: 6 },
       upsetBonus: false,
+      unplayedRoundToPar: 8,
+      currentRound: null,
       participants: [
         participant({
           id: 'sep-1',
@@ -401,6 +403,8 @@ describe('ContestLeaderboardPage', () => {
       ...sportPlay(Sport.BASKETBALL),
       scoringDefinitionId: 'KNOCKOUT_ROUND_POINTS',
       upsetBonus: true,
+      unplayedRoundToPar: null,
+      currentRound: null,
       participants: [teamRow('sep-1', 'Vermont'), teamRow('sep-2', 'Gonzaga'), teamRow('sep-3', 'Arizona'), teamRow('sep-4', 'Duke')],
       entries: [{
         ...base.entries[0],
@@ -780,7 +784,7 @@ describe('ContestLeaderboardPage', () => {
     }
   });
 
-  it('shows a cut golfer\'s unplayed rounds as 80 in italics, their contest total, and a note explaining the 80s', async () => {
+  it('shows a cut golfer\'s unplayed rounds in italics as the contest\'s unplayed-round score against par, their contest total, and a note explaining it', async () => {
     const leaderboard = leaderboardWithGolfers([
       {
         id: 'sep-1',
@@ -793,19 +797,20 @@ describe('ContestLeaderboardPage', () => {
         ],
       },
     ]);
-    leaderboard.entries[0].picks[0].golf = { scoreToPar: 18, unplayedRoundNumbers: [3, 4] };
-    primeMocks({ leaderboard });
+    leaderboard.entries[0].picks[0].golf = { scoreToPar: 22, unplayedRoundNumbers: [3, 4] };
+    // The contest's own setting, not 80 strokes: each unplayed round reads +10.
+    primeMocks({ leaderboard: { ...leaderboard, unplayedRoundToPar: 10 } });
 
     renderLeaderboard();
 
     const row = await screen.findByTestId('contest-leaderboard-pick-entry-1-pick-1');
-    expect(row).toHaveTextContent('+18');
+    expect(row).toHaveTextContent('+22');
     const roundThree = screen.getByTestId('contest-leaderboard-pick-round-entry-1-pick-1-3');
-    expect(roundThree).toHaveTextContent('80');
+    expect(roundThree).toHaveTextContent('+10');
     expect(roundThree).toHaveClass('italic');
-    expect(roundThree).toHaveAccessibleName('Round 3 not played, counts as 80 strokes');
+    expect(roundThree).toHaveAccessibleName('Round 3 not played, counts as +10 against par');
     expect(screen.getByTestId('contest-leaderboard-pick-round-entry-1-pick-1-2')).not.toHaveClass('italic');
-    expect(screen.getByTestId('contest-leaderboard-unplayed-note')).toHaveTextContent('count as 80 strokes');
+    expect(screen.getByTestId('contest-leaderboard-unplayed-note')).toHaveTextContent('count as +10 against par');
   });
 
   it('shows no unplayed-rounds note when every golfer played their rounds', async () => {
@@ -901,8 +906,8 @@ describe('ContestLeaderboardPage', () => {
     }
   });
 
-  it('shows the current-round cue derived from the response it already fetched', async () => {
-    primeMocks();
+  it('shows the current-round cue the response it already fetched names', async () => {
+    primeMocks({ leaderboard: { ...leaderboardResponse().data, currentRound: { roundNumber: 2, isComplete: false } } });
 
     renderLeaderboard();
 
@@ -938,6 +943,8 @@ describe('ContestLeaderboardPage', () => {
         scoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL',
         countingRule: { type: 'BEST_N', count: 1, pickCount: 6 },
         upsetBonus: false,
+        unplayedRoundToPar: 8,
+        currentRound: null,
         participants: [participant({
           id: 'sep-1',
           name: 'Rory McIlroy',
@@ -964,6 +971,8 @@ describe('ContestLeaderboardPage', () => {
         scoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL',
         countingRule: { type: 'BEST_N', count: 1, pickCount: 6 },
         upsetBonus: false,
+        unplayedRoundToPar: 8,
+        currentRound: null,
         participants: [],
         entries: [],
         asOf: null,

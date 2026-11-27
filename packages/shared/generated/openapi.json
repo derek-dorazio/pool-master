@@ -9385,7 +9385,7 @@
                 "maximum": 9007199254740991
               },
               "scoring": {
-                "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                 "anyOf": [
                   {
                     "type": "object",
@@ -9398,8 +9398,19 @@
                       },
                       "config": {
                         "type": "object",
-                        "properties": {},
-                        "additionalProperties": false
+                        "properties": {
+                          "unplayedRoundToPar": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 20,
+                            "description": "What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule."
+                          }
+                        },
+                        "required": [
+                          "unplayedRoundToPar"
+                        ],
+                        "additionalProperties": false,
+                        "description": "Golf to-par total settings: what an unplayed round scores against par."
                       }
                     },
                     "required": [
@@ -9574,7 +9585,7 @@
                 "maximum": 9007199254740991
               },
               "scoring": {
-                "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                 "anyOf": [
                   {
                     "type": "object",
@@ -9587,8 +9598,19 @@
                       },
                       "config": {
                         "type": "object",
-                        "properties": {},
-                        "additionalProperties": false
+                        "properties": {
+                          "unplayedRoundToPar": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 20,
+                            "description": "What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule."
+                          }
+                        },
+                        "required": [
+                          "unplayedRoundToPar"
+                        ],
+                        "additionalProperties": false,
+                        "description": "Golf to-par total settings: what an unplayed round scores against par."
                       }
                     },
                     "required": [
@@ -9763,7 +9785,7 @@
                 "maximum": 9007199254740991
               },
               "scoring": {
-                "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                 "anyOf": [
                   {
                     "type": "object",
@@ -9776,8 +9798,19 @@
                       },
                       "config": {
                         "type": "object",
-                        "properties": {},
-                        "additionalProperties": false
+                        "properties": {
+                          "unplayedRoundToPar": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 20,
+                            "description": "What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule."
+                          }
+                        },
+                        "required": [
+                          "unplayedRoundToPar"
+                        ],
+                        "additionalProperties": false,
+                        "description": "Golf to-par total settings: what an unplayed round scores against par."
                       }
                     },
                     "required": [
@@ -9952,7 +9985,7 @@
                 "maximum": 9007199254740991
               },
               "scoring": {
-                "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                 "anyOf": [
                   {
                     "type": "object",
@@ -9965,8 +9998,19 @@
                       },
                       "config": {
                         "type": "object",
-                        "properties": {},
-                        "additionalProperties": false
+                        "properties": {
+                          "unplayedRoundToPar": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 20,
+                            "description": "What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule."
+                          }
+                        },
+                        "required": [
+                          "unplayedRoundToPar"
+                        ],
+                        "additionalProperties": false,
+                        "description": "Golf to-par total settings: what an unplayed round scores against par."
                       }
                     },
                     "required": [
@@ -10135,7 +10179,7 @@
                 "maximum": 9007199254740991
               },
               "scoring": {
-                "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                 "anyOf": [
                   {
                     "type": "object",
@@ -10148,8 +10192,19 @@
                       },
                       "config": {
                         "type": "object",
-                        "properties": {},
-                        "additionalProperties": false
+                        "properties": {
+                          "unplayedRoundToPar": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 20,
+                            "description": "What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule."
+                          }
+                        },
+                        "required": [
+                          "unplayedRoundToPar"
+                        ],
+                        "additionalProperties": false,
+                        "description": "Golf to-par total settings: what an unplayed round scores against par."
                       }
                     },
                     "required": [
@@ -10321,7 +10376,7 @@
                 "maximum": 9007199254740991
               },
               "scoring": {
-                "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                 "anyOf": [
                   {
                     "type": "object",
@@ -10334,8 +10389,19 @@
                       },
                       "config": {
                         "type": "object",
-                        "properties": {},
-                        "additionalProperties": false
+                        "properties": {
+                          "unplayedRoundToPar": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 20,
+                            "description": "What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule."
+                          }
+                        },
+                        "required": [
+                          "unplayedRoundToPar"
+                        ],
+                        "additionalProperties": false,
+                        "description": "Golf to-par total settings: what an unplayed round scores against par."
                       }
                     },
                     "required": [
@@ -10496,7 +10562,7 @@
                 "maximum": 9007199254740991
               },
               "scoring": {
-                "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                 "anyOf": [
                   {
                     "type": "object",
@@ -10509,8 +10575,19 @@
                       },
                       "config": {
                         "type": "object",
-                        "properties": {},
-                        "additionalProperties": false
+                        "properties": {
+                          "unplayedRoundToPar": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 20,
+                            "description": "What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule."
+                          }
+                        },
+                        "required": [
+                          "unplayedRoundToPar"
+                        ],
+                        "additionalProperties": false,
+                        "description": "Golf to-par total settings: what an unplayed round scores against par."
                       }
                     },
                     "required": [
@@ -11592,7 +11669,7 @@
                     "maximum": 9007199254740991
                   },
                   "scoring": {
-                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                     "anyOf": [
                       {
                         "type": "object",
@@ -11605,8 +11682,19 @@
                           },
                           "config": {
                             "type": "object",
-                            "properties": {},
-                            "additionalProperties": false
+                            "properties": {
+                              "unplayedRoundToPar": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 20,
+                                "description": "What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule."
+                              }
+                            },
+                            "required": [
+                              "unplayedRoundToPar"
+                            ],
+                            "additionalProperties": false,
+                            "description": "Golf to-par total settings: what an unplayed round scores against par."
                           }
                         },
                         "required": [
@@ -11781,7 +11869,7 @@
                     "maximum": 9007199254740991
                   },
                   "scoring": {
-                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                     "anyOf": [
                       {
                         "type": "object",
@@ -11794,8 +11882,19 @@
                           },
                           "config": {
                             "type": "object",
-                            "properties": {},
-                            "additionalProperties": false
+                            "properties": {
+                              "unplayedRoundToPar": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 20,
+                                "description": "What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule."
+                              }
+                            },
+                            "required": [
+                              "unplayedRoundToPar"
+                            ],
+                            "additionalProperties": false,
+                            "description": "Golf to-par total settings: what an unplayed round scores against par."
                           }
                         },
                         "required": [
@@ -11970,7 +12069,7 @@
                     "maximum": 9007199254740991
                   },
                   "scoring": {
-                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                     "anyOf": [
                       {
                         "type": "object",
@@ -11983,8 +12082,19 @@
                           },
                           "config": {
                             "type": "object",
-                            "properties": {},
-                            "additionalProperties": false
+                            "properties": {
+                              "unplayedRoundToPar": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 20,
+                                "description": "What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule."
+                              }
+                            },
+                            "required": [
+                              "unplayedRoundToPar"
+                            ],
+                            "additionalProperties": false,
+                            "description": "Golf to-par total settings: what an unplayed round scores against par."
                           }
                         },
                         "required": [
@@ -12159,7 +12269,7 @@
                     "maximum": 9007199254740991
                   },
                   "scoring": {
-                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                     "anyOf": [
                       {
                         "type": "object",
@@ -12172,8 +12282,19 @@
                           },
                           "config": {
                             "type": "object",
-                            "properties": {},
-                            "additionalProperties": false
+                            "properties": {
+                              "unplayedRoundToPar": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 20,
+                                "description": "What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule."
+                              }
+                            },
+                            "required": [
+                              "unplayedRoundToPar"
+                            ],
+                            "additionalProperties": false,
+                            "description": "Golf to-par total settings: what an unplayed round scores against par."
                           }
                         },
                         "required": [
@@ -12342,7 +12463,7 @@
                     "maximum": 9007199254740991
                   },
                   "scoring": {
-                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                     "anyOf": [
                       {
                         "type": "object",
@@ -12355,8 +12476,19 @@
                           },
                           "config": {
                             "type": "object",
-                            "properties": {},
-                            "additionalProperties": false
+                            "properties": {
+                              "unplayedRoundToPar": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 20,
+                                "description": "What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule."
+                              }
+                            },
+                            "required": [
+                              "unplayedRoundToPar"
+                            ],
+                            "additionalProperties": false,
+                            "description": "Golf to-par total settings: what an unplayed round scores against par."
                           }
                         },
                         "required": [
@@ -12528,7 +12660,7 @@
                     "maximum": 9007199254740991
                   },
                   "scoring": {
-                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                     "anyOf": [
                       {
                         "type": "object",
@@ -12541,8 +12673,19 @@
                           },
                           "config": {
                             "type": "object",
-                            "properties": {},
-                            "additionalProperties": false
+                            "properties": {
+                              "unplayedRoundToPar": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 20,
+                                "description": "What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule."
+                              }
+                            },
+                            "required": [
+                              "unplayedRoundToPar"
+                            ],
+                            "additionalProperties": false,
+                            "description": "Golf to-par total settings: what an unplayed round scores against par."
                           }
                         },
                         "required": [
@@ -12703,7 +12846,7 @@
                     "maximum": 9007199254740991
                   },
                   "scoring": {
-                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                     "anyOf": [
                       {
                         "type": "object",
@@ -12716,8 +12859,19 @@
                           },
                           "config": {
                             "type": "object",
-                            "properties": {},
-                            "additionalProperties": false
+                            "properties": {
+                              "unplayedRoundToPar": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 20,
+                                "description": "What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule."
+                              }
+                            },
+                            "required": [
+                              "unplayedRoundToPar"
+                            ],
+                            "additionalProperties": false,
+                            "description": "Golf to-par total settings: what an unplayed round scores against par."
                           }
                         },
                         "required": [
@@ -13620,7 +13774,7 @@
                           "maximum": 9007199254740991
                         },
                         "scoring": {
-                          "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                          "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                           "anyOf": [
                             {
                               "type": "object",
@@ -13633,8 +13787,19 @@
                                 },
                                 "config": {
                                   "type": "object",
-                                  "properties": {},
-                                  "additionalProperties": false
+                                  "properties": {
+                                    "unplayedRoundToPar": {
+                                      "type": "integer",
+                                      "minimum": 0,
+                                      "maximum": 20,
+                                      "description": "What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule."
+                                    }
+                                  },
+                                  "required": [
+                                    "unplayedRoundToPar"
+                                  ],
+                                  "additionalProperties": false,
+                                  "description": "Golf to-par total settings: what an unplayed round scores against par."
                                 }
                               },
                               "required": [
@@ -13809,7 +13974,7 @@
                           "maximum": 9007199254740991
                         },
                         "scoring": {
-                          "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                          "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                           "anyOf": [
                             {
                               "type": "object",
@@ -13822,8 +13987,19 @@
                                 },
                                 "config": {
                                   "type": "object",
-                                  "properties": {},
-                                  "additionalProperties": false
+                                  "properties": {
+                                    "unplayedRoundToPar": {
+                                      "type": "integer",
+                                      "minimum": 0,
+                                      "maximum": 20,
+                                      "description": "What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule."
+                                    }
+                                  },
+                                  "required": [
+                                    "unplayedRoundToPar"
+                                  ],
+                                  "additionalProperties": false,
+                                  "description": "Golf to-par total settings: what an unplayed round scores against par."
                                 }
                               },
                               "required": [
@@ -13998,7 +14174,7 @@
                           "maximum": 9007199254740991
                         },
                         "scoring": {
-                          "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                          "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                           "anyOf": [
                             {
                               "type": "object",
@@ -14011,8 +14187,19 @@
                                 },
                                 "config": {
                                   "type": "object",
-                                  "properties": {},
-                                  "additionalProperties": false
+                                  "properties": {
+                                    "unplayedRoundToPar": {
+                                      "type": "integer",
+                                      "minimum": 0,
+                                      "maximum": 20,
+                                      "description": "What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule."
+                                    }
+                                  },
+                                  "required": [
+                                    "unplayedRoundToPar"
+                                  ],
+                                  "additionalProperties": false,
+                                  "description": "Golf to-par total settings: what an unplayed round scores against par."
                                 }
                               },
                               "required": [
@@ -14187,7 +14374,7 @@
                           "maximum": 9007199254740991
                         },
                         "scoring": {
-                          "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                          "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                           "anyOf": [
                             {
                               "type": "object",
@@ -14200,8 +14387,19 @@
                                 },
                                 "config": {
                                   "type": "object",
-                                  "properties": {},
-                                  "additionalProperties": false
+                                  "properties": {
+                                    "unplayedRoundToPar": {
+                                      "type": "integer",
+                                      "minimum": 0,
+                                      "maximum": 20,
+                                      "description": "What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule."
+                                    }
+                                  },
+                                  "required": [
+                                    "unplayedRoundToPar"
+                                  ],
+                                  "additionalProperties": false,
+                                  "description": "Golf to-par total settings: what an unplayed round scores against par."
                                 }
                               },
                               "required": [
@@ -14370,7 +14568,7 @@
                           "maximum": 9007199254740991
                         },
                         "scoring": {
-                          "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                          "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                           "anyOf": [
                             {
                               "type": "object",
@@ -14383,8 +14581,19 @@
                                 },
                                 "config": {
                                   "type": "object",
-                                  "properties": {},
-                                  "additionalProperties": false
+                                  "properties": {
+                                    "unplayedRoundToPar": {
+                                      "type": "integer",
+                                      "minimum": 0,
+                                      "maximum": 20,
+                                      "description": "What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule."
+                                    }
+                                  },
+                                  "required": [
+                                    "unplayedRoundToPar"
+                                  ],
+                                  "additionalProperties": false,
+                                  "description": "Golf to-par total settings: what an unplayed round scores against par."
                                 }
                               },
                               "required": [
@@ -14556,7 +14765,7 @@
                           "maximum": 9007199254740991
                         },
                         "scoring": {
-                          "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                          "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                           "anyOf": [
                             {
                               "type": "object",
@@ -14569,8 +14778,19 @@
                                 },
                                 "config": {
                                   "type": "object",
-                                  "properties": {},
-                                  "additionalProperties": false
+                                  "properties": {
+                                    "unplayedRoundToPar": {
+                                      "type": "integer",
+                                      "minimum": 0,
+                                      "maximum": 20,
+                                      "description": "What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule."
+                                    }
+                                  },
+                                  "required": [
+                                    "unplayedRoundToPar"
+                                  ],
+                                  "additionalProperties": false,
+                                  "description": "Golf to-par total settings: what an unplayed round scores against par."
                                 }
                               },
                               "required": [
@@ -14731,7 +14951,7 @@
                           "maximum": 9007199254740991
                         },
                         "scoring": {
-                          "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                          "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                           "anyOf": [
                             {
                               "type": "object",
@@ -14744,8 +14964,19 @@
                                 },
                                 "config": {
                                   "type": "object",
-                                  "properties": {},
-                                  "additionalProperties": false
+                                  "properties": {
+                                    "unplayedRoundToPar": {
+                                      "type": "integer",
+                                      "minimum": 0,
+                                      "maximum": 20,
+                                      "description": "What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule."
+                                    }
+                                  },
+                                  "required": [
+                                    "unplayedRoundToPar"
+                                  ],
+                                  "additionalProperties": false,
+                                  "description": "Golf to-par total settings: what an unplayed round scores against par."
                                 }
                               },
                               "required": [
@@ -14980,7 +15211,7 @@
                     "maximum": 9007199254740991
                   },
                   "scoring": {
-                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                     "anyOf": [
                       {
                         "type": "object",
@@ -14993,8 +15224,19 @@
                           },
                           "config": {
                             "type": "object",
-                            "properties": {},
-                            "additionalProperties": false
+                            "properties": {
+                              "unplayedRoundToPar": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 20,
+                                "description": "What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule."
+                              }
+                            },
+                            "required": [
+                              "unplayedRoundToPar"
+                            ],
+                            "additionalProperties": false,
+                            "description": "Golf to-par total settings: what an unplayed round scores against par."
                           }
                         },
                         "required": [
@@ -15169,7 +15411,7 @@
                     "maximum": 9007199254740991
                   },
                   "scoring": {
-                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                     "anyOf": [
                       {
                         "type": "object",
@@ -15182,8 +15424,19 @@
                           },
                           "config": {
                             "type": "object",
-                            "properties": {},
-                            "additionalProperties": false
+                            "properties": {
+                              "unplayedRoundToPar": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 20,
+                                "description": "What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule."
+                              }
+                            },
+                            "required": [
+                              "unplayedRoundToPar"
+                            ],
+                            "additionalProperties": false,
+                            "description": "Golf to-par total settings: what an unplayed round scores against par."
                           }
                         },
                         "required": [
@@ -15358,7 +15611,7 @@
                     "maximum": 9007199254740991
                   },
                   "scoring": {
-                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                     "anyOf": [
                       {
                         "type": "object",
@@ -15371,8 +15624,19 @@
                           },
                           "config": {
                             "type": "object",
-                            "properties": {},
-                            "additionalProperties": false
+                            "properties": {
+                              "unplayedRoundToPar": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 20,
+                                "description": "What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule."
+                              }
+                            },
+                            "required": [
+                              "unplayedRoundToPar"
+                            ],
+                            "additionalProperties": false,
+                            "description": "Golf to-par total settings: what an unplayed round scores against par."
                           }
                         },
                         "required": [
@@ -15547,7 +15811,7 @@
                     "maximum": 9007199254740991
                   },
                   "scoring": {
-                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                     "anyOf": [
                       {
                         "type": "object",
@@ -15560,8 +15824,19 @@
                           },
                           "config": {
                             "type": "object",
-                            "properties": {},
-                            "additionalProperties": false
+                            "properties": {
+                              "unplayedRoundToPar": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 20,
+                                "description": "What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule."
+                              }
+                            },
+                            "required": [
+                              "unplayedRoundToPar"
+                            ],
+                            "additionalProperties": false,
+                            "description": "Golf to-par total settings: what an unplayed round scores against par."
                           }
                         },
                         "required": [
@@ -15730,7 +16005,7 @@
                     "maximum": 9007199254740991
                   },
                   "scoring": {
-                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                     "anyOf": [
                       {
                         "type": "object",
@@ -15743,8 +16018,19 @@
                           },
                           "config": {
                             "type": "object",
-                            "properties": {},
-                            "additionalProperties": false
+                            "properties": {
+                              "unplayedRoundToPar": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 20,
+                                "description": "What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule."
+                              }
+                            },
+                            "required": [
+                              "unplayedRoundToPar"
+                            ],
+                            "additionalProperties": false,
+                            "description": "Golf to-par total settings: what an unplayed round scores against par."
                           }
                         },
                         "required": [
@@ -15916,7 +16202,7 @@
                     "maximum": 9007199254740991
                   },
                   "scoring": {
-                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                     "anyOf": [
                       {
                         "type": "object",
@@ -15929,8 +16215,19 @@
                           },
                           "config": {
                             "type": "object",
-                            "properties": {},
-                            "additionalProperties": false
+                            "properties": {
+                              "unplayedRoundToPar": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 20,
+                                "description": "What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule."
+                              }
+                            },
+                            "required": [
+                              "unplayedRoundToPar"
+                            ],
+                            "additionalProperties": false,
+                            "description": "Golf to-par total settings: what an unplayed round scores against par."
                           }
                         },
                         "required": [
@@ -16091,7 +16388,7 @@
                     "maximum": 9007199254740991
                   },
                   "scoring": {
-                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                     "anyOf": [
                       {
                         "type": "object",
@@ -16104,8 +16401,19 @@
                           },
                           "config": {
                             "type": "object",
-                            "properties": {},
-                            "additionalProperties": false
+                            "properties": {
+                              "unplayedRoundToPar": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 20,
+                                "description": "What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule."
+                              }
+                            },
+                            "required": [
+                              "unplayedRoundToPar"
+                            ],
+                            "additionalProperties": false,
+                            "description": "Golf to-par total settings: what an unplayed round scores against par."
                           }
                         },
                         "required": [
@@ -16481,7 +16789,7 @@
                         "maximum": 9007199254740991
                       },
                       "scoring": {
-                        "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                        "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                         "anyOf": [
                           {
                             "type": "object",
@@ -16494,8 +16802,19 @@
                               },
                               "config": {
                                 "type": "object",
-                                "properties": {},
-                                "additionalProperties": false
+                                "properties": {
+                                  "unplayedRoundToPar": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "maximum": 20,
+                                    "description": "What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule."
+                                  }
+                                },
+                                "required": [
+                                  "unplayedRoundToPar"
+                                ],
+                                "additionalProperties": false,
+                                "description": "Golf to-par total settings: what an unplayed round scores against par."
                               }
                             },
                             "required": [
@@ -16670,7 +16989,7 @@
                         "maximum": 9007199254740991
                       },
                       "scoring": {
-                        "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                        "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                         "anyOf": [
                           {
                             "type": "object",
@@ -16683,8 +17002,19 @@
                               },
                               "config": {
                                 "type": "object",
-                                "properties": {},
-                                "additionalProperties": false
+                                "properties": {
+                                  "unplayedRoundToPar": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "maximum": 20,
+                                    "description": "What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule."
+                                  }
+                                },
+                                "required": [
+                                  "unplayedRoundToPar"
+                                ],
+                                "additionalProperties": false,
+                                "description": "Golf to-par total settings: what an unplayed round scores against par."
                               }
                             },
                             "required": [
@@ -16859,7 +17189,7 @@
                         "maximum": 9007199254740991
                       },
                       "scoring": {
-                        "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                        "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                         "anyOf": [
                           {
                             "type": "object",
@@ -16872,8 +17202,19 @@
                               },
                               "config": {
                                 "type": "object",
-                                "properties": {},
-                                "additionalProperties": false
+                                "properties": {
+                                  "unplayedRoundToPar": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "maximum": 20,
+                                    "description": "What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule."
+                                  }
+                                },
+                                "required": [
+                                  "unplayedRoundToPar"
+                                ],
+                                "additionalProperties": false,
+                                "description": "Golf to-par total settings: what an unplayed round scores against par."
                               }
                             },
                             "required": [
@@ -17048,7 +17389,7 @@
                         "maximum": 9007199254740991
                       },
                       "scoring": {
-                        "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                        "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                         "anyOf": [
                           {
                             "type": "object",
@@ -17061,8 +17402,19 @@
                               },
                               "config": {
                                 "type": "object",
-                                "properties": {},
-                                "additionalProperties": false
+                                "properties": {
+                                  "unplayedRoundToPar": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "maximum": 20,
+                                    "description": "What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule."
+                                  }
+                                },
+                                "required": [
+                                  "unplayedRoundToPar"
+                                ],
+                                "additionalProperties": false,
+                                "description": "Golf to-par total settings: what an unplayed round scores against par."
                               }
                             },
                             "required": [
@@ -17231,7 +17583,7 @@
                         "maximum": 9007199254740991
                       },
                       "scoring": {
-                        "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                        "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                         "anyOf": [
                           {
                             "type": "object",
@@ -17244,8 +17596,19 @@
                               },
                               "config": {
                                 "type": "object",
-                                "properties": {},
-                                "additionalProperties": false
+                                "properties": {
+                                  "unplayedRoundToPar": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "maximum": 20,
+                                    "description": "What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule."
+                                  }
+                                },
+                                "required": [
+                                  "unplayedRoundToPar"
+                                ],
+                                "additionalProperties": false,
+                                "description": "Golf to-par total settings: what an unplayed round scores against par."
                               }
                             },
                             "required": [
@@ -17417,7 +17780,7 @@
                         "maximum": 9007199254740991
                       },
                       "scoring": {
-                        "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                        "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                         "anyOf": [
                           {
                             "type": "object",
@@ -17430,8 +17793,19 @@
                               },
                               "config": {
                                 "type": "object",
-                                "properties": {},
-                                "additionalProperties": false
+                                "properties": {
+                                  "unplayedRoundToPar": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "maximum": 20,
+                                    "description": "What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule."
+                                  }
+                                },
+                                "required": [
+                                  "unplayedRoundToPar"
+                                ],
+                                "additionalProperties": false,
+                                "description": "Golf to-par total settings: what an unplayed round scores against par."
                               }
                             },
                             "required": [
@@ -17592,7 +17966,7 @@
                         "maximum": 9007199254740991
                       },
                       "scoring": {
-                        "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                        "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                         "anyOf": [
                           {
                             "type": "object",
@@ -17605,8 +17979,19 @@
                               },
                               "config": {
                                 "type": "object",
-                                "properties": {},
-                                "additionalProperties": false
+                                "properties": {
+                                  "unplayedRoundToPar": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "maximum": 20,
+                                    "description": "What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule."
+                                  }
+                                },
+                                "required": [
+                                  "unplayedRoundToPar"
+                                ],
+                                "additionalProperties": false,
+                                "description": "Golf to-par total settings: what an unplayed round scores against par."
                               }
                             },
                             "required": [
@@ -36021,7 +36406,7 @@
                     "maximum": 9007199254740991
                   },
                   "scoring": {
-                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                     "anyOf": [
                       {
                         "type": "object",
@@ -36034,8 +36419,19 @@
                           },
                           "config": {
                             "type": "object",
-                            "properties": {},
-                            "additionalProperties": false
+                            "properties": {
+                              "unplayedRoundToPar": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 20,
+                                "description": "What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule."
+                              }
+                            },
+                            "required": [
+                              "unplayedRoundToPar"
+                            ],
+                            "additionalProperties": false,
+                            "description": "Golf to-par total settings: what an unplayed round scores against par."
                           }
                         },
                         "required": [
@@ -36210,7 +36606,7 @@
                     "maximum": 9007199254740991
                   },
                   "scoring": {
-                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                     "anyOf": [
                       {
                         "type": "object",
@@ -36223,8 +36619,19 @@
                           },
                           "config": {
                             "type": "object",
-                            "properties": {},
-                            "additionalProperties": false
+                            "properties": {
+                              "unplayedRoundToPar": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 20,
+                                "description": "What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule."
+                              }
+                            },
+                            "required": [
+                              "unplayedRoundToPar"
+                            ],
+                            "additionalProperties": false,
+                            "description": "Golf to-par total settings: what an unplayed round scores against par."
                           }
                         },
                         "required": [
@@ -36399,7 +36806,7 @@
                     "maximum": 9007199254740991
                   },
                   "scoring": {
-                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                     "anyOf": [
                       {
                         "type": "object",
@@ -36412,8 +36819,19 @@
                           },
                           "config": {
                             "type": "object",
-                            "properties": {},
-                            "additionalProperties": false
+                            "properties": {
+                              "unplayedRoundToPar": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 20,
+                                "description": "What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule."
+                              }
+                            },
+                            "required": [
+                              "unplayedRoundToPar"
+                            ],
+                            "additionalProperties": false,
+                            "description": "Golf to-par total settings: what an unplayed round scores against par."
                           }
                         },
                         "required": [
@@ -36588,7 +37006,7 @@
                     "maximum": 9007199254740991
                   },
                   "scoring": {
-                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                     "anyOf": [
                       {
                         "type": "object",
@@ -36601,8 +37019,19 @@
                           },
                           "config": {
                             "type": "object",
-                            "properties": {},
-                            "additionalProperties": false
+                            "properties": {
+                              "unplayedRoundToPar": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 20,
+                                "description": "What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule."
+                              }
+                            },
+                            "required": [
+                              "unplayedRoundToPar"
+                            ],
+                            "additionalProperties": false,
+                            "description": "Golf to-par total settings: what an unplayed round scores against par."
                           }
                         },
                         "required": [
@@ -36771,7 +37200,7 @@
                     "maximum": 9007199254740991
                   },
                   "scoring": {
-                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                     "anyOf": [
                       {
                         "type": "object",
@@ -36784,8 +37213,19 @@
                           },
                           "config": {
                             "type": "object",
-                            "properties": {},
-                            "additionalProperties": false
+                            "properties": {
+                              "unplayedRoundToPar": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 20,
+                                "description": "What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule."
+                              }
+                            },
+                            "required": [
+                              "unplayedRoundToPar"
+                            ],
+                            "additionalProperties": false,
+                            "description": "Golf to-par total settings: what an unplayed round scores against par."
                           }
                         },
                         "required": [
@@ -36957,7 +37397,7 @@
                     "maximum": 9007199254740991
                   },
                   "scoring": {
-                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                     "anyOf": [
                       {
                         "type": "object",
@@ -36970,8 +37410,19 @@
                           },
                           "config": {
                             "type": "object",
-                            "properties": {},
-                            "additionalProperties": false
+                            "properties": {
+                              "unplayedRoundToPar": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 20,
+                                "description": "What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule."
+                              }
+                            },
+                            "required": [
+                              "unplayedRoundToPar"
+                            ],
+                            "additionalProperties": false,
+                            "description": "Golf to-par total settings: what an unplayed round scores against par."
                           }
                         },
                         "required": [
@@ -37132,7 +37583,7 @@
                     "maximum": 9007199254740991
                   },
                   "scoring": {
-                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                     "anyOf": [
                       {
                         "type": "object",
@@ -37145,8 +37596,19 @@
                           },
                           "config": {
                             "type": "object",
-                            "properties": {},
-                            "additionalProperties": false
+                            "properties": {
+                              "unplayedRoundToPar": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 20,
+                                "description": "What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule."
+                              }
+                            },
+                            "required": [
+                              "unplayedRoundToPar"
+                            ],
+                            "additionalProperties": false,
+                            "description": "Golf to-par total settings: what an unplayed round scores against par."
                           }
                         },
                         "required": [
@@ -38084,7 +38546,7 @@
         "type": "object",
         "properties": {
           "scoreToPar": {
-            "description": "The golfer's score in this contest against par: their event total, with every round they did not play scored as 80 strokes (80 minus that round's par). Differs from the event standing's eventScoreToPar only when unplayedRoundNumbers is non-empty. Null while unscored.",
+            "description": "The golfer's score in this contest against par: their event total, with every round they did not play scored as the leaderboard's unplayedRoundToPar. Differs from the event standing's eventScoreToPar only when unplayedRoundNumbers is non-empty. Null while unscored.",
             "type": [
               "integer",
               "null"
@@ -38099,7 +38561,7 @@
               "minimum": 1,
               "maximum": 9007199254740991
             },
-            "description": "Rounds scored as 80 strokes because the golfer did not play them: cut, withdrawn, removed from the field, or no score once the field moved past the round. Empty when none."
+            "description": "Rounds scored as the leaderboard's unplayedRoundToPar because the golfer did not play them: cut, withdrawn, removed from the field, or no score once the field moved past the round. Empty when none."
           }
         },
         "required": [
@@ -38150,7 +38612,7 @@
             ],
             "properties": {
               "scoreToPar": {
-                "description": "The golfer's score in this contest against par: their event total, with every round they did not play scored as 80 strokes (80 minus that round's par). Differs from the event standing's eventScoreToPar only when unplayedRoundNumbers is non-empty. Null while unscored.",
+                "description": "The golfer's score in this contest against par: their event total, with every round they did not play scored as the leaderboard's unplayedRoundToPar. Differs from the event standing's eventScoreToPar only when unplayedRoundNumbers is non-empty. Null while unscored.",
                 "type": [
                   "integer",
                   "null"
@@ -38165,7 +38627,7 @@
                   "minimum": 1,
                   "maximum": 9007199254740991
                 },
-                "description": "Rounds scored as 80 strokes because the golfer did not play them: cut, withdrawn, removed from the field, or no score once the field moved past the round. Empty when none."
+                "description": "Rounds scored as the leaderboard's unplayedRoundToPar because the golfer did not play them: cut, withdrawn, removed from the field, or no score once the field moved past the round. Empty when none."
               }
             },
             "required": [
@@ -38403,7 +38865,7 @@
                   ],
                   "properties": {
                     "scoreToPar": {
-                      "description": "The golfer's score in this contest against par: their event total, with every round they did not play scored as 80 strokes (80 minus that round's par). Differs from the event standing's eventScoreToPar only when unplayedRoundNumbers is non-empty. Null while unscored.",
+                      "description": "The golfer's score in this contest against par: their event total, with every round they did not play scored as the leaderboard's unplayedRoundToPar. Differs from the event standing's eventScoreToPar only when unplayedRoundNumbers is non-empty. Null while unscored.",
                       "type": [
                         "integer",
                         "null"
@@ -38418,7 +38880,7 @@
                         "minimum": 1,
                         "maximum": 9007199254740991
                       },
-                      "description": "Rounds scored as 80 strokes because the golfer did not play them: cut, withdrawn, removed from the field, or no score once the field moved past the round. Empty when none."
+                      "description": "Rounds scored as the leaderboard's unplayedRoundToPar because the golfer did not play them: cut, withdrawn, removed from the field, or no score once the field moved past the round. Empty when none."
                     }
                   },
                   "required": [
@@ -38650,6 +39112,39 @@
           "upsetBonus": {
             "type": "boolean",
             "description": "Whether the contest scores an upset bonus (#1748): a knockout contest whose bonus rule is on, so a client shows each pick's bonus in its own column even before any team has earned one. False for every other contest."
+          },
+          "unplayedRoundToPar": {
+            "description": "What each round a golfer did not play adds to their contest score, in strokes over par: the contest's setting, so a client states it in its footnote and shows an unplayed round as this to-par. Null for a contest not scored by golf's to-par total.",
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "currentRound": {
+            "description": "The round the shown event's field is on, for the leaderboard header. Null before a single round is scored, and for an event scored by match or by finish, which has no rounds.",
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "roundNumber": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 9007199254740991,
+                "description": "The round the shown event's field is on: the highest round any participant is still playing, else the highest any has finished."
+              },
+              "isComplete": {
+                "type": "boolean",
+                "description": "Whether that round has finished: no participant is still playing it."
+              }
+            },
+            "required": [
+              "roundNumber",
+              "isComplete"
+            ],
+            "additionalProperties": false
           },
           "participants": {
             "type": "array",
@@ -39360,7 +39855,7 @@
                         ],
                         "properties": {
                           "scoreToPar": {
-                            "description": "The golfer's score in this contest against par: their event total, with every round they did not play scored as 80 strokes (80 minus that round's par). Differs from the event standing's eventScoreToPar only when unplayedRoundNumbers is non-empty. Null while unscored.",
+                            "description": "The golfer's score in this contest against par: their event total, with every round they did not play scored as the leaderboard's unplayedRoundToPar. Differs from the event standing's eventScoreToPar only when unplayedRoundNumbers is non-empty. Null while unscored.",
                             "type": [
                               "integer",
                               "null"
@@ -39375,7 +39870,7 @@
                               "minimum": 1,
                               "maximum": 9007199254740991
                             },
-                            "description": "Rounds scored as 80 strokes because the golfer did not play them: cut, withdrawn, removed from the field, or no score once the field moved past the round. Empty when none."
+                            "description": "Rounds scored as the leaderboard's unplayedRoundToPar because the golfer did not play them: cut, withdrawn, removed from the field, or no score once the field moved past the round. Empty when none."
                           }
                         },
                         "required": [
@@ -39502,6 +39997,8 @@
           "scoringDefinitionId",
           "countingRule",
           "upsetBonus",
+          "unplayedRoundToPar",
+          "currentRound",
           "participants",
           "entries",
           "asOf"
@@ -60453,7 +60950,7 @@
                         "maximum": 9007199254740991
                       },
                       "scoring": {
-                        "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                        "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                         "anyOf": [
                           {
                             "type": "object",
@@ -60466,8 +60963,19 @@
                               },
                               "config": {
                                 "type": "object",
-                                "properties": {},
-                                "additionalProperties": false
+                                "properties": {
+                                  "unplayedRoundToPar": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "maximum": 20,
+                                    "description": "What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule."
+                                  }
+                                },
+                                "required": [
+                                  "unplayedRoundToPar"
+                                ],
+                                "additionalProperties": false,
+                                "description": "Golf to-par total settings: what an unplayed round scores against par."
                               }
                             },
                             "required": [
@@ -60642,7 +61150,7 @@
                         "maximum": 9007199254740991
                       },
                       "scoring": {
-                        "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                        "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                         "anyOf": [
                           {
                             "type": "object",
@@ -60655,8 +61163,19 @@
                               },
                               "config": {
                                 "type": "object",
-                                "properties": {},
-                                "additionalProperties": false
+                                "properties": {
+                                  "unplayedRoundToPar": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "maximum": 20,
+                                    "description": "What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule."
+                                  }
+                                },
+                                "required": [
+                                  "unplayedRoundToPar"
+                                ],
+                                "additionalProperties": false,
+                                "description": "Golf to-par total settings: what an unplayed round scores against par."
                               }
                             },
                             "required": [
@@ -60831,7 +61350,7 @@
                         "maximum": 9007199254740991
                       },
                       "scoring": {
-                        "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                        "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                         "anyOf": [
                           {
                             "type": "object",
@@ -60844,8 +61363,19 @@
                               },
                               "config": {
                                 "type": "object",
-                                "properties": {},
-                                "additionalProperties": false
+                                "properties": {
+                                  "unplayedRoundToPar": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "maximum": 20,
+                                    "description": "What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule."
+                                  }
+                                },
+                                "required": [
+                                  "unplayedRoundToPar"
+                                ],
+                                "additionalProperties": false,
+                                "description": "Golf to-par total settings: what an unplayed round scores against par."
                               }
                             },
                             "required": [
@@ -61020,7 +61550,7 @@
                         "maximum": 9007199254740991
                       },
                       "scoring": {
-                        "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                        "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                         "anyOf": [
                           {
                             "type": "object",
@@ -61033,8 +61563,19 @@
                               },
                               "config": {
                                 "type": "object",
-                                "properties": {},
-                                "additionalProperties": false
+                                "properties": {
+                                  "unplayedRoundToPar": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "maximum": 20,
+                                    "description": "What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule."
+                                  }
+                                },
+                                "required": [
+                                  "unplayedRoundToPar"
+                                ],
+                                "additionalProperties": false,
+                                "description": "Golf to-par total settings: what an unplayed round scores against par."
                               }
                             },
                             "required": [
@@ -61203,7 +61744,7 @@
                         "maximum": 9007199254740991
                       },
                       "scoring": {
-                        "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                        "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                         "anyOf": [
                           {
                             "type": "object",
@@ -61216,8 +61757,19 @@
                               },
                               "config": {
                                 "type": "object",
-                                "properties": {},
-                                "additionalProperties": false
+                                "properties": {
+                                  "unplayedRoundToPar": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "maximum": 20,
+                                    "description": "What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule."
+                                  }
+                                },
+                                "required": [
+                                  "unplayedRoundToPar"
+                                ],
+                                "additionalProperties": false,
+                                "description": "Golf to-par total settings: what an unplayed round scores against par."
                               }
                             },
                             "required": [
@@ -61389,7 +61941,7 @@
                         "maximum": 9007199254740991
                       },
                       "scoring": {
-                        "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                        "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                         "anyOf": [
                           {
                             "type": "object",
@@ -61402,8 +61954,19 @@
                               },
                               "config": {
                                 "type": "object",
-                                "properties": {},
-                                "additionalProperties": false
+                                "properties": {
+                                  "unplayedRoundToPar": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "maximum": 20,
+                                    "description": "What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule."
+                                  }
+                                },
+                                "required": [
+                                  "unplayedRoundToPar"
+                                ],
+                                "additionalProperties": false,
+                                "description": "Golf to-par total settings: what an unplayed round scores against par."
                               }
                             },
                             "required": [
@@ -61564,7 +62127,7 @@
                         "maximum": 9007199254740991
                       },
                       "scoring": {
-                        "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                        "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                         "anyOf": [
                           {
                             "type": "object",
@@ -61577,8 +62140,19 @@
                               },
                               "config": {
                                 "type": "object",
-                                "properties": {},
-                                "additionalProperties": false
+                                "properties": {
+                                  "unplayedRoundToPar": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "maximum": 20,
+                                    "description": "What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule."
+                                  }
+                                },
+                                "required": [
+                                  "unplayedRoundToPar"
+                                ],
+                                "additionalProperties": false,
+                                "description": "Golf to-par total settings: what an unplayed round scores against par."
                               }
                             },
                             "required": [
@@ -62157,7 +62731,7 @@
                               "maximum": 9007199254740991
                             },
                             "scoring": {
-                              "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                              "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                               "anyOf": [
                                 {
                                   "type": "object",
@@ -62170,8 +62744,19 @@
                                     },
                                     "config": {
                                       "type": "object",
-                                      "properties": {},
-                                      "additionalProperties": false
+                                      "properties": {
+                                        "unplayedRoundToPar": {
+                                          "type": "integer",
+                                          "minimum": 0,
+                                          "maximum": 20,
+                                          "description": "What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule."
+                                        }
+                                      },
+                                      "required": [
+                                        "unplayedRoundToPar"
+                                      ],
+                                      "additionalProperties": false,
+                                      "description": "Golf to-par total settings: what an unplayed round scores against par."
                                     }
                                   },
                                   "required": [
@@ -62346,7 +62931,7 @@
                               "maximum": 9007199254740991
                             },
                             "scoring": {
-                              "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                              "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                               "anyOf": [
                                 {
                                   "type": "object",
@@ -62359,8 +62944,19 @@
                                     },
                                     "config": {
                                       "type": "object",
-                                      "properties": {},
-                                      "additionalProperties": false
+                                      "properties": {
+                                        "unplayedRoundToPar": {
+                                          "type": "integer",
+                                          "minimum": 0,
+                                          "maximum": 20,
+                                          "description": "What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule."
+                                        }
+                                      },
+                                      "required": [
+                                        "unplayedRoundToPar"
+                                      ],
+                                      "additionalProperties": false,
+                                      "description": "Golf to-par total settings: what an unplayed round scores against par."
                                     }
                                   },
                                   "required": [
@@ -62535,7 +63131,7 @@
                               "maximum": 9007199254740991
                             },
                             "scoring": {
-                              "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                              "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                               "anyOf": [
                                 {
                                   "type": "object",
@@ -62548,8 +63144,19 @@
                                     },
                                     "config": {
                                       "type": "object",
-                                      "properties": {},
-                                      "additionalProperties": false
+                                      "properties": {
+                                        "unplayedRoundToPar": {
+                                          "type": "integer",
+                                          "minimum": 0,
+                                          "maximum": 20,
+                                          "description": "What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule."
+                                        }
+                                      },
+                                      "required": [
+                                        "unplayedRoundToPar"
+                                      ],
+                                      "additionalProperties": false,
+                                      "description": "Golf to-par total settings: what an unplayed round scores against par."
                                     }
                                   },
                                   "required": [
@@ -62724,7 +63331,7 @@
                               "maximum": 9007199254740991
                             },
                             "scoring": {
-                              "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                              "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                               "anyOf": [
                                 {
                                   "type": "object",
@@ -62737,8 +63344,19 @@
                                     },
                                     "config": {
                                       "type": "object",
-                                      "properties": {},
-                                      "additionalProperties": false
+                                      "properties": {
+                                        "unplayedRoundToPar": {
+                                          "type": "integer",
+                                          "minimum": 0,
+                                          "maximum": 20,
+                                          "description": "What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule."
+                                        }
+                                      },
+                                      "required": [
+                                        "unplayedRoundToPar"
+                                      ],
+                                      "additionalProperties": false,
+                                      "description": "Golf to-par total settings: what an unplayed round scores against par."
                                     }
                                   },
                                   "required": [
@@ -62907,7 +63525,7 @@
                               "maximum": 9007199254740991
                             },
                             "scoring": {
-                              "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                              "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                               "anyOf": [
                                 {
                                   "type": "object",
@@ -62920,8 +63538,19 @@
                                     },
                                     "config": {
                                       "type": "object",
-                                      "properties": {},
-                                      "additionalProperties": false
+                                      "properties": {
+                                        "unplayedRoundToPar": {
+                                          "type": "integer",
+                                          "minimum": 0,
+                                          "maximum": 20,
+                                          "description": "What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule."
+                                        }
+                                      },
+                                      "required": [
+                                        "unplayedRoundToPar"
+                                      ],
+                                      "additionalProperties": false,
+                                      "description": "Golf to-par total settings: what an unplayed round scores against par."
                                     }
                                   },
                                   "required": [
@@ -63093,7 +63722,7 @@
                               "maximum": 9007199254740991
                             },
                             "scoring": {
-                              "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                              "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                               "anyOf": [
                                 {
                                   "type": "object",
@@ -63106,8 +63735,19 @@
                                     },
                                     "config": {
                                       "type": "object",
-                                      "properties": {},
-                                      "additionalProperties": false
+                                      "properties": {
+                                        "unplayedRoundToPar": {
+                                          "type": "integer",
+                                          "minimum": 0,
+                                          "maximum": 20,
+                                          "description": "What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule."
+                                        }
+                                      },
+                                      "required": [
+                                        "unplayedRoundToPar"
+                                      ],
+                                      "additionalProperties": false,
+                                      "description": "Golf to-par total settings: what an unplayed round scores against par."
                                     }
                                   },
                                   "required": [
@@ -63268,7 +63908,7 @@
                               "maximum": 9007199254740991
                             },
                             "scoring": {
-                              "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                              "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                               "anyOf": [
                                 {
                                   "type": "object",
@@ -63281,8 +63921,19 @@
                                     },
                                     "config": {
                                       "type": "object",
-                                      "properties": {},
-                                      "additionalProperties": false
+                                      "properties": {
+                                        "unplayedRoundToPar": {
+                                          "type": "integer",
+                                          "minimum": 0,
+                                          "maximum": 20,
+                                          "description": "What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule."
+                                        }
+                                      },
+                                      "required": [
+                                        "unplayedRoundToPar"
+                                      ],
+                                      "additionalProperties": false,
+                                      "description": "Golf to-par total settings: what an unplayed round scores against par."
                                     }
                                   },
                                   "required": [
@@ -63882,7 +64533,7 @@
                                   "maximum": 9007199254740991
                                 },
                                 "scoring": {
-                                  "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                                  "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                                   "anyOf": [
                                     {
                                       "type": "object",
@@ -63895,8 +64546,19 @@
                                         },
                                         "config": {
                                           "type": "object",
-                                          "properties": {},
-                                          "additionalProperties": false
+                                          "properties": {
+                                            "unplayedRoundToPar": {
+                                              "type": "integer",
+                                              "minimum": 0,
+                                              "maximum": 20,
+                                              "description": "What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule."
+                                            }
+                                          },
+                                          "required": [
+                                            "unplayedRoundToPar"
+                                          ],
+                                          "additionalProperties": false,
+                                          "description": "Golf to-par total settings: what an unplayed round scores against par."
                                         }
                                       },
                                       "required": [
@@ -64071,7 +64733,7 @@
                                   "maximum": 9007199254740991
                                 },
                                 "scoring": {
-                                  "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                                  "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                                   "anyOf": [
                                     {
                                       "type": "object",
@@ -64084,8 +64746,19 @@
                                         },
                                         "config": {
                                           "type": "object",
-                                          "properties": {},
-                                          "additionalProperties": false
+                                          "properties": {
+                                            "unplayedRoundToPar": {
+                                              "type": "integer",
+                                              "minimum": 0,
+                                              "maximum": 20,
+                                              "description": "What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule."
+                                            }
+                                          },
+                                          "required": [
+                                            "unplayedRoundToPar"
+                                          ],
+                                          "additionalProperties": false,
+                                          "description": "Golf to-par total settings: what an unplayed round scores against par."
                                         }
                                       },
                                       "required": [
@@ -64260,7 +64933,7 @@
                                   "maximum": 9007199254740991
                                 },
                                 "scoring": {
-                                  "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                                  "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                                   "anyOf": [
                                     {
                                       "type": "object",
@@ -64273,8 +64946,19 @@
                                         },
                                         "config": {
                                           "type": "object",
-                                          "properties": {},
-                                          "additionalProperties": false
+                                          "properties": {
+                                            "unplayedRoundToPar": {
+                                              "type": "integer",
+                                              "minimum": 0,
+                                              "maximum": 20,
+                                              "description": "What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule."
+                                            }
+                                          },
+                                          "required": [
+                                            "unplayedRoundToPar"
+                                          ],
+                                          "additionalProperties": false,
+                                          "description": "Golf to-par total settings: what an unplayed round scores against par."
                                         }
                                       },
                                       "required": [
@@ -64449,7 +65133,7 @@
                                   "maximum": 9007199254740991
                                 },
                                 "scoring": {
-                                  "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                                  "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                                   "anyOf": [
                                     {
                                       "type": "object",
@@ -64462,8 +65146,19 @@
                                         },
                                         "config": {
                                           "type": "object",
-                                          "properties": {},
-                                          "additionalProperties": false
+                                          "properties": {
+                                            "unplayedRoundToPar": {
+                                              "type": "integer",
+                                              "minimum": 0,
+                                              "maximum": 20,
+                                              "description": "What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule."
+                                            }
+                                          },
+                                          "required": [
+                                            "unplayedRoundToPar"
+                                          ],
+                                          "additionalProperties": false,
+                                          "description": "Golf to-par total settings: what an unplayed round scores against par."
                                         }
                                       },
                                       "required": [
@@ -64632,7 +65327,7 @@
                                   "maximum": 9007199254740991
                                 },
                                 "scoring": {
-                                  "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                                  "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                                   "anyOf": [
                                     {
                                       "type": "object",
@@ -64645,8 +65340,19 @@
                                         },
                                         "config": {
                                           "type": "object",
-                                          "properties": {},
-                                          "additionalProperties": false
+                                          "properties": {
+                                            "unplayedRoundToPar": {
+                                              "type": "integer",
+                                              "minimum": 0,
+                                              "maximum": 20,
+                                              "description": "What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule."
+                                            }
+                                          },
+                                          "required": [
+                                            "unplayedRoundToPar"
+                                          ],
+                                          "additionalProperties": false,
+                                          "description": "Golf to-par total settings: what an unplayed round scores against par."
                                         }
                                       },
                                       "required": [
@@ -64818,7 +65524,7 @@
                                   "maximum": 9007199254740991
                                 },
                                 "scoring": {
-                                  "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                                  "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                                   "anyOf": [
                                     {
                                       "type": "object",
@@ -64831,8 +65537,19 @@
                                         },
                                         "config": {
                                           "type": "object",
-                                          "properties": {},
-                                          "additionalProperties": false
+                                          "properties": {
+                                            "unplayedRoundToPar": {
+                                              "type": "integer",
+                                              "minimum": 0,
+                                              "maximum": 20,
+                                              "description": "What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule."
+                                            }
+                                          },
+                                          "required": [
+                                            "unplayedRoundToPar"
+                                          ],
+                                          "additionalProperties": false,
+                                          "description": "Golf to-par total settings: what an unplayed round scores against par."
                                         }
                                       },
                                       "required": [
@@ -64993,7 +65710,7 @@
                                   "maximum": 9007199254740991
                                 },
                                 "scoring": {
-                                  "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                                  "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                                   "anyOf": [
                                     {
                                       "type": "object",
@@ -65006,8 +65723,19 @@
                                         },
                                         "config": {
                                           "type": "object",
-                                          "properties": {},
-                                          "additionalProperties": false
+                                          "properties": {
+                                            "unplayedRoundToPar": {
+                                              "type": "integer",
+                                              "minimum": 0,
+                                              "maximum": 20,
+                                              "description": "What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule."
+                                            }
+                                          },
+                                          "required": [
+                                            "unplayedRoundToPar"
+                                          ],
+                                          "additionalProperties": false,
+                                          "description": "Golf to-par total settings: what an unplayed round scores against par."
                                         }
                                       },
                                       "required": [
@@ -65644,7 +66372,7 @@
                                     "maximum": 9007199254740991
                                   },
                                   "scoring": {
-                                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                                     "anyOf": [
                                       {
                                         "type": "object",
@@ -65657,8 +66385,19 @@
                                           },
                                           "config": {
                                             "type": "object",
-                                            "properties": {},
-                                            "additionalProperties": false
+                                            "properties": {
+                                              "unplayedRoundToPar": {
+                                                "type": "integer",
+                                                "minimum": 0,
+                                                "maximum": 20,
+                                                "description": "What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule."
+                                              }
+                                            },
+                                            "required": [
+                                              "unplayedRoundToPar"
+                                            ],
+                                            "additionalProperties": false,
+                                            "description": "Golf to-par total settings: what an unplayed round scores against par."
                                           }
                                         },
                                         "required": [
@@ -65833,7 +66572,7 @@
                                     "maximum": 9007199254740991
                                   },
                                   "scoring": {
-                                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                                     "anyOf": [
                                       {
                                         "type": "object",
@@ -65846,8 +66585,19 @@
                                           },
                                           "config": {
                                             "type": "object",
-                                            "properties": {},
-                                            "additionalProperties": false
+                                            "properties": {
+                                              "unplayedRoundToPar": {
+                                                "type": "integer",
+                                                "minimum": 0,
+                                                "maximum": 20,
+                                                "description": "What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule."
+                                              }
+                                            },
+                                            "required": [
+                                              "unplayedRoundToPar"
+                                            ],
+                                            "additionalProperties": false,
+                                            "description": "Golf to-par total settings: what an unplayed round scores against par."
                                           }
                                         },
                                         "required": [
@@ -66022,7 +66772,7 @@
                                     "maximum": 9007199254740991
                                   },
                                   "scoring": {
-                                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                                     "anyOf": [
                                       {
                                         "type": "object",
@@ -66035,8 +66785,19 @@
                                           },
                                           "config": {
                                             "type": "object",
-                                            "properties": {},
-                                            "additionalProperties": false
+                                            "properties": {
+                                              "unplayedRoundToPar": {
+                                                "type": "integer",
+                                                "minimum": 0,
+                                                "maximum": 20,
+                                                "description": "What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule."
+                                              }
+                                            },
+                                            "required": [
+                                              "unplayedRoundToPar"
+                                            ],
+                                            "additionalProperties": false,
+                                            "description": "Golf to-par total settings: what an unplayed round scores against par."
                                           }
                                         },
                                         "required": [
@@ -66211,7 +66972,7 @@
                                     "maximum": 9007199254740991
                                   },
                                   "scoring": {
-                                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                                     "anyOf": [
                                       {
                                         "type": "object",
@@ -66224,8 +66985,19 @@
                                           },
                                           "config": {
                                             "type": "object",
-                                            "properties": {},
-                                            "additionalProperties": false
+                                            "properties": {
+                                              "unplayedRoundToPar": {
+                                                "type": "integer",
+                                                "minimum": 0,
+                                                "maximum": 20,
+                                                "description": "What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule."
+                                              }
+                                            },
+                                            "required": [
+                                              "unplayedRoundToPar"
+                                            ],
+                                            "additionalProperties": false,
+                                            "description": "Golf to-par total settings: what an unplayed round scores against par."
                                           }
                                         },
                                         "required": [
@@ -66394,7 +67166,7 @@
                                     "maximum": 9007199254740991
                                   },
                                   "scoring": {
-                                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                                     "anyOf": [
                                       {
                                         "type": "object",
@@ -66407,8 +67179,19 @@
                                           },
                                           "config": {
                                             "type": "object",
-                                            "properties": {},
-                                            "additionalProperties": false
+                                            "properties": {
+                                              "unplayedRoundToPar": {
+                                                "type": "integer",
+                                                "minimum": 0,
+                                                "maximum": 20,
+                                                "description": "What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule."
+                                              }
+                                            },
+                                            "required": [
+                                              "unplayedRoundToPar"
+                                            ],
+                                            "additionalProperties": false,
+                                            "description": "Golf to-par total settings: what an unplayed round scores against par."
                                           }
                                         },
                                         "required": [
@@ -66580,7 +67363,7 @@
                                     "maximum": 9007199254740991
                                   },
                                   "scoring": {
-                                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                                     "anyOf": [
                                       {
                                         "type": "object",
@@ -66593,8 +67376,19 @@
                                           },
                                           "config": {
                                             "type": "object",
-                                            "properties": {},
-                                            "additionalProperties": false
+                                            "properties": {
+                                              "unplayedRoundToPar": {
+                                                "type": "integer",
+                                                "minimum": 0,
+                                                "maximum": 20,
+                                                "description": "What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule."
+                                              }
+                                            },
+                                            "required": [
+                                              "unplayedRoundToPar"
+                                            ],
+                                            "additionalProperties": false,
+                                            "description": "Golf to-par total settings: what an unplayed round scores against par."
                                           }
                                         },
                                         "required": [
@@ -66755,7 +67549,7 @@
                                     "maximum": 9007199254740991
                                   },
                                   "scoring": {
-                                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table). Omitted on create, the template's preset applies, else the sport's default definition with its default settings; a definition whose settings have no default (finish-position points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                                     "anyOf": [
                                       {
                                         "type": "object",
@@ -66768,8 +67562,19 @@
                                           },
                                           "config": {
                                             "type": "object",
-                                            "properties": {},
-                                            "additionalProperties": false
+                                            "properties": {
+                                              "unplayedRoundToPar": {
+                                                "type": "integer",
+                                                "minimum": 0,
+                                                "maximum": 20,
+                                                "description": "What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule."
+                                              }
+                                            },
+                                            "required": [
+                                              "unplayedRoundToPar"
+                                            ],
+                                            "additionalProperties": false,
+                                            "description": "Golf to-par total settings: what an unplayed round scores against par."
                                           }
                                         },
                                         "required": [
