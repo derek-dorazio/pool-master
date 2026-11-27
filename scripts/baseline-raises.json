@@ -702,6 +702,30 @@
       "key": "autoAssignEventPrices",
       "now": 0,
       "reason": "retired by #2044"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "SCORING_FAMILY_ADMIN_UI",
+      "now": 0,
+      "reason": "retired by #2008"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "getScoringFamilyAdminUi",
+      "now": 0,
+      "reason": "retired by #2008"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "ScoreSyncNotice",
+      "now": 0,
+      "reason": "retired by #2008"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "useRowCorrections",
+      "now": 0,
+      "reason": "retired by #2008"
     }
   ]
 }
