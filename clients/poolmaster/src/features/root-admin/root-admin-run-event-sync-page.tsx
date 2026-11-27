@@ -1,4 +1,4 @@
-import { displayString, enumLabel } from '@poolmaster/shared/display-strings';
+import { enumLabel } from '@poolmaster/shared/display-strings';
 import { useMemo, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { submitEventSync, listEvents, type SportEventDto } from '@/lib/api';
@@ -207,7 +207,7 @@ export function RootAdminRunEventSyncPage() {
 
       <SectionCard padded title="Event to sync">
         <div className="space-y-3">
-          <FormField label={displayString('word.eventSyncKindField')}>
+          <FormField label="Sync">
             <Select
               data-testid="root-admin-event-sync-kind"
               disabled={eventSyncMutation.isPending}
@@ -303,7 +303,8 @@ export function RootAdminRunEventSyncPage() {
 
           {eventSyncSport !== undefined && !eventsQuery.isLoading && !eventsQuery.isError && selectableEvents.length === 0 ? (
             <Notice>
-              {displayString('word.noEventsForSyncKind', { sport: enumLabel('Sport', eventSyncSport).toLowerCase() })}
+              No synced {enumLabel('Sport', eventSyncSport).toLowerCase()} events match this sync. A test event has
+              nothing to sync.
             </Notice>
           ) : null}
 

@@ -1423,9 +1423,6 @@ export const enUS = {
     sideToBeDecided: 'To be decided',
     // The price dialog, when no pricing profile is chosen for the values to start from (#2205).
     choosePricingProfile: 'Choose the pricing profile the values start from.',
-    // Run event sync: the field that picks the event's sync kind (#2093), and its empty list.
-    eventSyncKindField: 'Sync',
-    noEventsForSyncKind: 'No synced {{sport}} events match this sync. A test event has nothing to sync.',
   },
   // What each sport's audience calls things, by role (`SportWordRole`); a role a sport leaves
   // out reads the generic `word.<role>`. Proper names (Super Bowl, PGA Tour) are model columns.
