@@ -8,7 +8,9 @@ import {
   readEventMatchesOnce,
   readEventsOnce,
   readOncePerKey,
+  readTiersOnce,
 } from '../../../packages/core-api/src/modules/events/event-reads';
+import type { SportEventTierGroup } from '../../../packages/core-api/src/modules/events/sport-event-tier-service';
 
 function event(id: string): SportEvent {
   return { id, name: `Event ${id}` } as SportEvent;
@@ -97,5 +99,31 @@ describe('fan-out event reads', () => {
       await expect(matches.findBySportEvent('golf-major')).resolves.toEqual([]);
       expect(findBySportEvents).toHaveBeenCalledTimes(1);
     });
+  });
+});
+
+describe('readTiersOnce', () => {
+  it('reads each event\'s set once per choice of slot and gives later callers that answer, while a different slot or coverage reads again', async () => {
+    const load = jest.fn(async (sportEventId: string) => [{ sportEventId } as unknown as SportEventTierGroup]);
+    const tiers = readTiersOnce({ getEffectiveTiersForSportEvent: load });
+
+    await Promise.all([
+      tiers.getEffectiveTiersForSportEvent('event-1'),
+      tiers.getEffectiveTiersForSportEvent('event-1'),
+      tiers.getEffectiveTiersForSportEvent('event-1', { seasonSlotId: 'slot-2' }),
+      tiers.getEffectiveTiersForSportEvent('event-1', { seasonSlotId: 'slot-2' }),
+      tiers.getEffectiveTiersForSportEvent('event-1', { coveredSlotDefinitionIds: ['def-b', 'def-a'] }),
+      tiers.getEffectiveTiersForSportEvent('event-1', { coveredSlotDefinitionIds: ['def-a', 'def-b'] }),
+      tiers.getEffectiveTiersForSportEvent('event-1', { coveredSlotDefinitionIds: null }),
+      tiers.getEffectiveTiersForSportEvent('event-2'),
+    ]);
+
+    expect(load.mock.calls).toEqual([
+      ['event-1', undefined],
+      ['event-1', { seasonSlotId: 'slot-2' }],
+      ['event-1', { coveredSlotDefinitionIds: ['def-b', 'def-a'] }],
+      ['event-1', { coveredSlotDefinitionIds: null }],
+      ['event-2', undefined],
+    ]);
   });
 });
