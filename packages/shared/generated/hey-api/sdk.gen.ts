@@ -1597,7 +1597,7 @@ export const rebuildEventLeaderboards = <ThrowOnError extends boolean = false>(o
 /**
  * Reload a sport event's field from its provider
  *
- * Queues a provider sync of the field and returns at once; reload the field once the sync runs complete. 409 EVENT_NOT_LINKED for an event with no provider; 422 EVENT_SYNC_KIND_UNAVAILABLE while it has no field to load (a draft, postponed or cancelled event, #2238). Root admin only.
+ * Queues a provider sync of the field and returns at once; reload the field once the sync runs complete. 409 EVENT_NOT_LINKED for an event with no provider; 422 EVENT_SYNC_KIND_UNAVAILABLE for a postponed or cancelled event, which no field sync runs on (#2238). Root admin only.
  */
 export const refreshEventParticipants = <ThrowOnError extends boolean = false>(options: Options<RefreshEventParticipantsData, ThrowOnError>): RequestResult<RefreshEventParticipantsResponses, RefreshEventParticipantsErrors, ThrowOnError> => (options.client ?? client).post<RefreshEventParticipantsResponses, RefreshEventParticipantsErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],

@@ -208,7 +208,7 @@ export function createEventHandlers({ services, eventLifecycle, ingestion, leade
 
     /**
      * Queues a provider sync of the event's field. 409 EVENT_NOT_LINKED for an event with no provider
-     * link, 422 EVENT_SYNC_KIND_UNAVAILABLE while it has no field to load (#2238).
+     * link, 422 EVENT_SYNC_KIND_UNAVAILABLE for a postponed or cancelled event (#2238).
      */
     refreshEventParticipants: async (request: FastifyRequest<EventParams>, reply: FastifyReply) => {
       const event = await sportEvents.requireEvent(request.params.eventId);

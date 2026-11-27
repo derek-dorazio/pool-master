@@ -258,7 +258,17 @@ describe('field refresh from the provider', () => {
     expect(ingestion.syncEventData).not.toHaveBeenCalled();
   });
 
-  it('refuses a field sync for a cancelled event, which has no field to load, with 422 EVENT_SYNC_KIND_UNAVAILABLE and syncs nothing', async () => {
+  it('queues a field sync for a linked draft event, whose field is loaded before release', async () => {
+    const { services, ingestion, handlers } = fakes();
+    services.sportEvents.requireEvent.mockResolvedValueOnce(sportEvent({ status: SportEventStatus.DRAFT }));
+
+    const reply = await callHandler(handlers.refreshEventParticipants, stubRequest({ params, authUser: admin }));
+
+    expect(reply).toMatchObject({ statusCode: 202 });
+    expect(ingestion.syncEventData).toHaveBeenCalledWith(expect.objectContaining({ kinds: ['FIELD'] }), 'admin', 'admin@example.test');
+  });
+
+  it('refuses a field sync for a cancelled event, which no field sync runs on, with 422 EVENT_SYNC_KIND_UNAVAILABLE and syncs nothing', async () => {
     const { services, ingestion, handlers } = fakes();
     services.sportEvents.requireEvent.mockResolvedValueOnce(sportEvent({ status: SportEventStatus.CANCELLED }));
 
