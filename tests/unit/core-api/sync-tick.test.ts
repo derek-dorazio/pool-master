@@ -326,6 +326,18 @@ describe('SyncTick', () => {
       }]);
     });
 
+    it('still queues the scores sync and logs the failure when raising No live scores fails', async () => {
+      const nfl = league();
+      const live = liveEvent(nfl.id, { games: [{ status: MatchStatus.IN_PROGRESS, scheduledDate: at(-minutes(45)), playedAsField: false }], lastScoresChangedAt: at(-minutes(20)) });
+      const { tick, findings, logger, queued } = tickOf({ leagues: [nfl], live: [live], schedule: scoresOnly });
+      findings.raiseOfSource.mockRejectedValueOnce(new Error('findings write failed'));
+
+      await tick.tick();
+
+      expect(queued()).toContainEqual({ type: BackgroundJobType.SYNC_EVENT_SCORES, sportLeagueId: undefined, sportEventId: live.sportEventId });
+      expect(logger.error).toHaveBeenCalledWith(expect.objectContaining({ action: 'ingestion.syncFinding.quietLiveScoresFailed' }), expect.any(String));
+    });
+
     it('counts quiet from when play got under way when the scores never changed, and from a later notification when there was one', async () => {
       const nfl = league();
       const neverChanged = liveEvent(nfl.id, { games: [{ status: MatchStatus.IN_PROGRESS, scheduledDate: at(-minutes(20)), playedAsField: false }] });

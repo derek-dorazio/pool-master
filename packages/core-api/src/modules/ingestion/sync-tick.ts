@@ -233,7 +233,8 @@ export class SyncTick {
    * The events in play whose live scores have been quiet for their provider league's window
    * (#2094): nothing changed by a scores sync and no notification since play got under way, or
    * since the last of either. Raised on the tick that crosses each whole window, so a long quiet
-   * stretch counts its sightings without a raise every tick. One raise per provider.
+   * stretch counts its sightings without a raise every tick. One raise per provider. A findings
+   * write that fails is logged and never stops the tick scheduling live scores.
    */
   private async raiseQuietLiveScores(live: readonly LiveEventView[], leaguesById: ReadonlyMap<string, TickLeague>, now: Date): Promise<void> {
     const bySource = new Map<string, { sportLeagueId: string; sportEventId: string }[]>();
@@ -243,17 +244,26 @@ export class SyncTick {
       if (league === undefined || since === null) continue;
       const lastHeardAt = latestOf(event.lastHeardAt, event.lastScoresChangedAt);
       if (!isQuietWarningDue({ playUnderwaySince: since, lastHeardAt, quietAfterMs: league.quietAfterMs, now, tickMs: SYNC_TICK_MS })) continue;
-      bySource.set(league.providerId, [...(bySource.get(league.providerId) ?? []), { sportLeagueId: league.sportLeagueId, sportEventId: event.sportEventId }]);
+      const events = bySource.get(league.providerId) ?? [];
+      events.push({ sportLeagueId: league.sportLeagueId, sportEventId: event.sportEventId });
+      bySource.set(league.providerId, events);
     }
     for (const [providerId, events] of bySource) {
-      await this.options.findings.raiseOfSource(providerId, events.map((event) => ({
-        kind: ProviderSyncFindingKind.NO_PROVIDER_LIVE_SCORES,
-        severity: ProviderSyncFindingSeverity.WARNING,
-        sportLeagueId: event.sportLeagueId,
-        sportEventId: event.sportEventId,
-        providerValue: null,
-        providerValueName: null,
-      })));
+      try {
+        await this.options.findings.raiseOfSource(providerId, events.map((event) => ({
+          kind: ProviderSyncFindingKind.NO_PROVIDER_LIVE_SCORES,
+          severity: ProviderSyncFindingSeverity.WARNING,
+          sportLeagueId: event.sportLeagueId,
+          sportEventId: event.sportEventId,
+          providerValue: null,
+          providerValueName: null,
+        })));
+      } catch (error) {
+        this.options.logger?.error(
+          { action: 'ingestion.syncFinding.quietLiveScoresFailed', data: { providerId, sportEventIds: events.map((event) => event.sportEventId) }, err: error },
+          'Could not raise No live scores for the quiet events in play',
+        );
+      }
     }
   }
 }
