@@ -157,6 +157,7 @@ describe('manual event sync handler', () => {
     ['a sport with no provider with 404 SPORT_PROVIDER_NOT_FOUND', new SportProviderNotFoundError(Sport.GOLF, 'feed'), 404, 'SPORT_PROVIDER_NOT_FOUND'],
     ['a test event, which its provider has no id for, with 409 EVENT_NOT_LINKED', new SportEventNotSyncedError('Not synced', 'EVENT_NOT_LINKED', 409), 409, 'EVENT_NOT_LINKED'],
     ['an unknown event with 404 EVENT_NOT_FOUND', new SportEventNotSyncedError('Missing', 'EVENT_NOT_FOUND', 404), 404, 'EVENT_NOT_FOUND'],
+    ['a kind the event cannot run now with 422 EVENT_SYNC_KIND_UNAVAILABLE', new SportEventNotSyncedError('Not now', 'EVENT_SYNC_KIND_UNAVAILABLE', 422), 422, 'EVENT_SYNC_KIND_UNAVAILABLE'],
   ])('refuses a sync for %s', async (_label, error, status, code) => {
     const handlers = handlersOver(service({ syncSportEvent: () => Promise.reject(error) }));
 

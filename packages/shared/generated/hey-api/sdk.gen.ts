@@ -1597,7 +1597,7 @@ export const rebuildEventLeaderboards = <ThrowOnError extends boolean = false>(o
 /**
  * Reload a sport event's field from its provider
  *
- * Queues a provider sync of the field and returns at once; reload the field once the sync runs complete. 409 EVENT_NOT_LINKED for an event with no provider. Root admin only.
+ * Queues a provider sync of the field and returns at once; reload the field once the sync runs complete. 409 EVENT_NOT_LINKED for an event with no provider; 422 EVENT_SYNC_KIND_UNAVAILABLE for a postponed or cancelled event, which no field sync runs on (#2238). Root admin only.
  */
 export const refreshEventParticipants = <ThrowOnError extends boolean = false>(options: Options<RefreshEventParticipantsData, ThrowOnError>): RequestResult<RefreshEventParticipantsResponses, RefreshEventParticipantsErrors, ThrowOnError> => (options.client ?? client).post<RefreshEventParticipantsResponses, RefreshEventParticipantsErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -2622,7 +2622,7 @@ export const getProviderSyncRun = <ThrowOnError extends boolean = false>(options
 /**
  * Sync an event now
  *
- * Queues one sync run per requested event-level feed for the event, read from its sport league's provider by the id the events sync gave it, and answers at once (202); the runs execute in a background job. 404 EVENT_NOT_FOUND, or SPORT_PROVIDER_NOT_FOUND when that provider is not running here; 409 EVENT_NOT_LINKED for a test event, which no provider syncs.
+ * Queues one sync run per requested event-level feed for the event, read from its sport league's provider by the id the events sync gave it, and answers at once (202); the runs execute in a background job. 404 EVENT_NOT_FOUND, or SPORT_PROVIDER_NOT_FOUND when that provider is not running here; 409 EVENT_NOT_LINKED for a test event, which no provider syncs; 422 EVENT_SYNC_KIND_UNAVAILABLE for a kind outside the event's syncKinds (#2238).
  */
 export const submitEventSync = <ThrowOnError extends boolean = false>(options: Options<SubmitEventSyncData, ThrowOnError>): RequestResult<SubmitEventSyncResponses, SubmitEventSyncErrors, ThrowOnError> => (options.client ?? client).post<SubmitEventSyncResponses, SubmitEventSyncErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
