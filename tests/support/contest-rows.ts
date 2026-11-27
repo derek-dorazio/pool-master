@@ -154,9 +154,13 @@ export async function placeEventForTemplate(prisma: PrismaClient, sportEventId: 
     sportLeagueSeasonId: event.sportLeagueSeasonId,
     competition: { competitionId: first.sportLeagueCompetitionId, phaseId: first.competition.sportLeaguePhaseId },
   });
+  // A label of the event's own keeps it apart from a Season slot the definition already has.
+  const label = held.label ?? `event ${sportEventId}`;
+  const taken = await prisma.sportLeagueSeasonCompetitionSlot.count({
+    where: { sportLeagueSeasonId: event.sportLeagueSeasonId, sportLeagueCompetitionSlotId: first.id, label, id: { not: held.id } },
+  });
   await prisma.sportLeagueSeasonCompetitionSlot.update({
     where: { id: held.id },
-    // A label keeps it apart from a Season slot the definition already has.
-    data: { sportLeagueCompetitionSlotId: first.id, sportLeagueSeasonCompetitionId: seasonCompetitionId, label: held.label ?? `event ${sportEventId}`, isTestData: true },
+    data: { sportLeagueCompetitionSlotId: first.id, sportLeagueSeasonCompetitionId: seasonCompetitionId, label: taken === 0 ? label : `${label} (event ${sportEventId})`, isTestData: true },
   });
 }
