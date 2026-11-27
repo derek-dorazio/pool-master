@@ -151,6 +151,18 @@ export const CONTEST_EVENTS_LEAGUE_MISMATCH = 'CONTEST_EVENTS_LEAGUE_MISMATCH';
  */
 export const CONTEST_EVENTS_SEASON_MISMATCH = 'CONTEST_EVENTS_SEASON_MISMATCH';
 
+/** Error code for a new contest on an event holding none of the slots its template lists (#2014). */
+export const CONTEST_COVERAGE_NO_LISTED_SLOT = 'CONTEST_COVERAGE_NO_LISTED_SLOT';
+
+/**
+ * Error code for a one-slot contest on an event holding several of its template's slots with no
+ * starting slot chosen (#2014): name the slot it covers.
+ */
+export const CONTEST_COVERAGE_SLOT_NOT_CHOSEN = 'CONTEST_COVERAGE_SLOT_NOT_CHOSEN';
+
+/** Error code for a starting slot that is not one of the event's slots the template lists (#2014). */
+export const CONTEST_COVERAGE_SLOT_NOT_COVERABLE = 'CONTEST_COVERAGE_SLOT_NOT_COVERABLE';
+
 /**
  * Error code for removing an event from a contest once one of its events has started (#713):
  * entries have been played against the list, so it can only grow.

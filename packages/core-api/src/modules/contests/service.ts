@@ -906,7 +906,7 @@ export class ContestService {
         'CONTEST_FORMAT_MISMATCH',
       );
     }
-    const configuration = await loadContestScoringConfiguration(this.deps, contestId);
+    const configuration = await loadContestScoringConfiguration(this.deps, contest);
     const countingRule = resolveContestCountingRule(configuration);
     if (!countingRule) {
       throw new ContestOperationError(
@@ -1093,7 +1093,7 @@ export class ContestService {
     }
     let standings: Awaited<ReturnType<typeof loadBracketStandings>>;
     try {
-      standings = await loadBracketStandings(this.deps, contestId, event);
+      standings = await loadBracketStandings(this.deps, contest, event);
     } catch (error) {
       if (!(error instanceof BracketScoringUnavailableError)) throw error;
       this.logger.error({ contestId, reason: error.reason }, 'bracket leaderboard refused: the contest cannot be scored');

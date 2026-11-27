@@ -731,7 +731,7 @@ export class PredictionService {
     if (!sportEvent) throw selectionErrors.eventNotInContest(sportEventId, contestId);
     const rules = configuration?.configJson;
     if (rules?.selectionType !== selectionType) throw selectionErrors.selectionConfigInvalid(contestId);
-    const setup = this.weekSetup(rules, contestRoundCoverage(configuration), sportEvent, matches, field);
+    const setup = this.weekSetup(rules, contestRoundCoverage(contest), sportEvent, matches, field);
     const now = this.now();
 
     return {
@@ -911,9 +911,8 @@ export class PredictionService {
       this.deps.field.findBySportEvent(sportEvent.id),
     ]);
     const team = await this.teamLookup(field);
-    // A setup's preview names no template yet, so it previews every round of the event; the
-    // preview takes its template's coverage with #2014 part B.
-    const setup = this.weekSetup(rules, { slotDefinitionIds: null }, sportEvent, matches, field);
+    // A setup's preview names no template yet, so it previews every slot of the event.
+    const setup = this.weekSetup(rules, { slotDefinitionIds: sportEvent.slotDefinitions.map((definition) => definition.id) }, sportEvent, matches, field);
     const { engine, games } = setup;
     const gameIds = new Set(games.map((game) => game.id));
     const unknown = input.picks.find((pick) => !gameIds.has(pick.sportEventRoundMatchId));
@@ -982,7 +981,7 @@ export class PredictionService {
       : [];
     const scoring = resolveContestScoringDefinition({
       configJson: context.configuration?.configJson ?? null,
-      coverage: contestRoundCoverage(context.configuration),
+      coverage: contestRoundCoverage(context.contest),
       participantScoringRules: rules,
     });
     return context.engine.scorePicks({

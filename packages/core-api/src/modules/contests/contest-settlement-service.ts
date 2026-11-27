@@ -205,7 +205,7 @@ export class ContestSettlementService {
         }
         continue;
       }
-      const configuration = await loadContestScoringConfiguration(this.deps, contest.id);
+      const configuration = await loadContestScoringConfiguration(this.deps, contest);
       const countingRule = resolveContestCountingRule(configuration);
       if (!countingRule) {
         this.logger.error({
@@ -422,7 +422,7 @@ export class ContestSettlementService {
     }
     let standings: Awaited<ReturnType<typeof loadBracketStandings>>;
     try {
-      standings = await loadBracketStandings(reads, contest.id, sportEvent);
+      standings = await loadBracketStandings(reads, contest, sportEvent);
     } catch (error) {
       if (!(error instanceof BracketScoringUnavailableError)) throw error;
       this.logger.error({ contestId: contest.id, sportEventId, reason: error.reason }, 'Skipped bracket contest settlement because it cannot be scored');

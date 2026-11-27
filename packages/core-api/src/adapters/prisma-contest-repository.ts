@@ -45,7 +45,10 @@ export function coversEventWhere(sportEventId: string | { in: string[] }): Prism
 const CONTEST_INCLUDE = {
   sportLeagueSeason: { select: { championshipYear: true, sportLeague: { select: SPORT_LEAGUE_SPORT_SELECT } } },
   seasonSlots: {
-    select: { seasonSlot: { select: { sportLeagueCompetitionSlotId: true, eventSlot: { select: { sportEventId: true } } } } },
+    select: {
+      sportLeagueSeasonCompetitionSlotId: true,
+      seasonSlot: { select: { sportLeagueCompetitionSlotId: true, eventSlot: { select: { sportEventId: true } } } },
+    },
     orderBy: COVERED_SLOT_ORDER,
   },
   draw: { select: { drawnAt: true } },
@@ -445,7 +448,7 @@ function mapToContest(row: {
   leagueId: string;
   sportLeagueSeasonId: string;
   sportLeagueSeason: { championshipYear: number; sportLeague: SportLeagueSportRow };
-  seasonSlots: { seasonSlot: { sportLeagueCompetitionSlotId: string; eventSlot: { sportEventId: string } | null } }[];
+  seasonSlots: { sportLeagueSeasonCompetitionSlotId: string; seasonSlot: { sportLeagueCompetitionSlotId: string; eventSlot: { sportEventId: string } | null } }[];
   name: string;
   status: ContestStatus;
   contestFormat: ContestFormat;
@@ -467,6 +470,7 @@ function mapToContest(row: {
     // The covered slots' events, each once, in the order the slots are played.
     sportEventIds: [...new Set(row.seasonSlots.flatMap(({ seasonSlot }) => (seasonSlot.eventSlot ? [seasonSlot.eventSlot.sportEventId] : [])))],
     coveredSlotDefinitionIds: row.seasonSlots.map(({ seasonSlot }) => seasonSlot.sportLeagueCompetitionSlotId),
+    coveredSeasonSlotIds: row.seasonSlots.map((covered) => covered.sportLeagueSeasonCompetitionSlotId),
     name: row.name,
     status: row.status,
     contestFormat: row.contestFormat,

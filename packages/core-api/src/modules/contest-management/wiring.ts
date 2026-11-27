@@ -17,6 +17,7 @@ import {
   PrismaSportEventParticipantValuationRepository,
   PrismaSportEventRepository,
 } from '../../adapters';
+import { PrismaSportLeagueSeasonRepository } from '../../adapters/prisma-sport-league-season-repository';
 import { createSportEventTierService } from '../events/wiring';
 import { createCupService } from '../cups/wiring';
 import type { PlanEntitlementsService } from '../plans/plan-entitlements-service';
@@ -43,6 +44,7 @@ export function createContestManagementService(
     scoringRules: new PrismaParticipantContestScoringRuleRepository(prisma),
     tiers: sportEventTierService,
     logger,
+    seasons: new PrismaSportLeagueSeasonRepository(prisma),
     sportEventReader: createContestSportEventReader({
       sportEvents: new PrismaSportEventRepository(prisma),
       field: new PrismaSportEventParticipantRepository(prisma),

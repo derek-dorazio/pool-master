@@ -105,16 +105,16 @@ export function scoreMissedLineup(
  */
 export async function loadContestScoringConfiguration(
   deps: Pick<ContestLeaderboardReadDeps, 'configurations' | 'scoringRules'>,
-  contestId: string,
+  contest: Pick<Contest, 'id' | 'coveredSlotDefinitionIds'>,
 ): Promise<ContestScoringConfigurationRow | null> {
-  const configuration = await deps.configurations.findByContest(contestId);
+  const configuration = await deps.configurations.findByContest(contest.id);
   if (!configuration) {
     return null;
   }
   const rules = await deps.scoringRules.findByContestConfiguration(configuration.id);
   return {
     configJson: configuration.configJson ?? null,
-    coverage: contestRoundCoverage(configuration),
+    coverage: contestRoundCoverage(contest),
     participantScoringRules: rules.map((rule) => ({
       sortOrder: rule.sortOrder,
       scoring: rule.scoring,

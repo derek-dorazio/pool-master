@@ -243,7 +243,7 @@ export class EntryReminders implements DueNotifications {
   ): Promise<{ due: DueReminder[]; next: Date | null }> {
     const configuration = await deps.configurations.findByContest(contest.id);
     const rules = configuration?.configJson;
-    const coverage = contestRoundCoverage(configuration);
+    const coverage = contestRoundCoverage(contest);
     const cutoff = contestCutoff(rules, contest.squaresGameMatchId);
     // Each event's window closes at the contest's cutoff on it: a squares grid's is its game's kickoff.
     const games: SportEventRoundMatch[] = cutoff.kind === ContestCutoffKind.EVENT_START

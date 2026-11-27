@@ -318,6 +318,8 @@ export interface Contest extends DomainEntity {
    * order: what knockout round values, bracket games and coverage checks read.
    */
   coveredSlotDefinitionIds: string[];
+  /** The Season slots themselves, in the same order: a contest's coverage, written once at creation. */
+  coveredSeasonSlotIds: string[];
   /** The Season the contest plays in (#2014), fixed at creation: every covered slot is one of its. */
   sportLeagueSeasonId: string;
   /** That Season's championship year, read with it: the cup the contest counts toward (#841). */

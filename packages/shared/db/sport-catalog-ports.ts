@@ -788,6 +788,15 @@ export interface SportLeagueCurrentSeasonFacts {
   seasons: CurrentSeasonCandidate[];
 }
 
+/** A Season slot as coverage resolution reads it (#2014); its place comes from the template's slot. */
+export interface CoverableSeasonSlotRow {
+  id: string;
+  slotDefinitionId: string;
+  seasonCompetitionId: string;
+  sportEventId: string | null;
+  isTestData: boolean;
+}
+
 export interface SportLeagueSeasonRepository {
   findById(id: string): Promise<SportLeagueSeason | null>;
   /**
@@ -801,6 +810,12 @@ export interface SportLeagueSeasonRepository {
   setCurrentSeasons(changes: ReadonlyArray<{ sportLeagueId: string; currentSeasonId: string | null }>): Promise<void>;
   /** One Season slot with its Season and the event on it, or null for an unknown id (#2004). */
   findSlot(seasonSlotId: string): Promise<SeasonSlotWithEvent | null>;
+  /**
+   * The Season's slots that play any of the definitions, each with its competition, the event on
+   * it (null while free) and whether it is a test slot (#2014): what a new contest's coverage is
+   * resolved from. One read.
+   */
+  findCoverableSlots(sportLeagueSeasonId: string, slotDefinitionIds: readonly string[]): Promise<CoverableSeasonSlotRow[]>;
   /** Season slots by id, each with its Season and the event on it, in one read; an unknown id is left out (#2006). */
   findSlotsByIds(seasonSlotIds: readonly string[]): Promise<SeasonSlotWithEvent[]>;
   /**
