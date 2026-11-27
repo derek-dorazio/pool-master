@@ -68,6 +68,7 @@ export function sportEventFixture(overrides: Partial<SportEventDto> = {}): Sport
       { selectionType: 'RANDOM_DRAW', opening: 'NOT_YET' },
     ],
     tiersLocked: false,
+    tierSets: [],
     sportLeagueSeasonId: 'season-2026',
     slotDefinitionIds: [],
     championshipYear: 2026,

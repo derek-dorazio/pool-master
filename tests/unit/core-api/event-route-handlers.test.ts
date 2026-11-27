@@ -47,7 +47,7 @@ function sportEvent(overrides: Partial<SportEvent> = {}): SportEvent {
     ...overrides,
   };
 }
-const summary = { event: sportEvent(), participantCount: 88, tierCount: 0, tierSetSlot: null, adminCounts: null, slots: [] };
+const summary = { event: sportEvent(), participantCount: 88, tierCount: 0, tierSetSlot: null, tierSets: [], adminCounts: null, slots: [] };
 const fieldRow = {
   entry: { id: 'sep-1', sportEventId: EVENT_ID, participantId: 'p1', status: SportEventParticipantStatus.ACTIVE, createdAt: AT, updatedAt: AT },
   participant: { id: 'p1', name: 'Scottie', injuryStatus: { status: 'HEALTHY' }, externalIds: {}, createdAt: AT, updatedAt: AT },
@@ -416,6 +416,28 @@ describe('rounds, field and tiers', () => {
     }
     expect(services.tiers.replaceTiers).toHaveBeenCalledWith({ sportEventId: EVENT_ID, tiers: [] });
     expect(services.tiers.autoAssignPrices).toHaveBeenCalledWith({ sportEventId: EVENT_ID, pricing: { salaryCap: 50000 } });
+  });
+
+  it('reads and writes the set of the slot a slot route names, answering each write with the field valued in that slot (#2044)', async () => {
+    const { services, handlers } = fakes();
+    const slotParams = { eventId: EVENT_ID, seasonSlotId: 'season-slot-r32' };
+
+    expect((await callHandler(handlers.listEventSlotTiers, stubRequest({ params: slotParams }))).body).toEqual({ tiers: [] });
+    expect((await callHandler(handlers.replaceEventSlotTiers, stubRequest({ params: slotParams, body: { tiers: [] } }))).body).toEqual({ tiers: [] });
+    for (const [handler, body] of [
+      [handlers.listEventSlotParticipants, undefined],
+      [handlers.autoAssignEventSlotTiers, { tierSize: 3 }],
+      [handlers.replaceEventSlotTierAssignments, { assignments: [] }],
+      [handlers.autoAssignEventSlotPrices, { salaryCap: 50000 }],
+    ] as const) {
+      expect((await callHandler(handler, stubRequest({ params: slotParams, body }))).body).toMatchObject({ participants: [{ id: 'sep-1' }] });
+    }
+    expect(services.tiers.listTiers).toHaveBeenCalledWith(EVENT_ID, { seasonSlotId: 'season-slot-r32' });
+    expect(services.tiers.replaceTiers).toHaveBeenCalledWith({ sportEventId: EVENT_ID, seasonSlotId: 'season-slot-r32', tiers: [] });
+    expect(services.tiers.autoAssignTiers).toHaveBeenCalledWith({ sportEventId: EVENT_ID, seasonSlotId: 'season-slot-r32', tierSize: 3 });
+    expect(services.tiers.replaceTierAssignments).toHaveBeenCalledWith({ sportEventId: EVENT_ID, seasonSlotId: 'season-slot-r32', assignments: [] });
+    expect(services.tiers.autoAssignPrices).toHaveBeenCalledWith({ sportEventId: EVENT_ID, seasonSlotId: 'season-slot-r32', pricing: { salaryCap: 50000 } });
+    expect(services.field.listEventParticipants).toHaveBeenLastCalledWith(EVENT_ID, 'season-slot-r32');
   });
 });
 

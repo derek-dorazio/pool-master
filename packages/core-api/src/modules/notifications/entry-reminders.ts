@@ -84,7 +84,7 @@ import type { DueNotifications } from './due-notifications-scheduler';
 import type { SportEventTierService } from '../events/sport-event-tier-service';
 import { contestBracketGames } from '../scoring-families/head-to-head/bracket-picks';
 import { survivorRun } from '../scoring-families/head-to-head/survivor';
-import { readEventMatchesOnce, readEventsOnce, readOncePerKey } from '../events/event-reads';
+import { readEventMatchesOnce, readEventsOnce, readOncePerKey, readTiersOnce } from '../events/event-reads';
 import { summarizeContest } from './contest-summary';
 import { activeLeagueMembers, type LeagueMemberDeps } from './league-members';
 import { errorMessage } from '../../core/error-message';
@@ -226,7 +226,7 @@ export class EntryReminders implements DueNotifications {
       sportEvents: readEventsOnce(this.deps.sportEvents, sportEvents),
       matches: readEventMatchesOnce(this.deps.matches),
       sportLeagues: { findById: readOncePerKey((id) => this.deps.sportLeagues.findById(id)) },
-      tiers: { getEffectiveTiersForSportEvent: readOncePerKey((id) => this.deps.tiers.getEffectiveTiersForSportEvent(id)) },
+      tiers: readTiersOnce(this.deps.tiers),
     };
   }
 
@@ -427,7 +427,7 @@ export class EntryReminders implements DueNotifications {
         const picks = await this.deps.picks.findByEntriesWithParticipant(ids, { sportEventId: sportEvent.id });
         made = countBy(picks.map((pick) => pick.entryId));
         of = rules.selectionType === SelectionType.TIERED
-          ? getTieredRosterSize((await deps.tiers.getEffectiveTiersForSportEvent(sportEvent.id)).length, rules.picksPerTier)
+          ? getTieredRosterSize((await deps.tiers.getEffectiveTiersForSportEvent(sportEvent.id, { coveredSlotDefinitionIds: due.coverage.slotDefinitionIds })).length, rules.picksPerTier)
           : rules.rosterSize;
         break;
       }

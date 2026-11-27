@@ -48,6 +48,7 @@ export function mapSportEventToDto({
   participantCount,
   tierCount,
   tierSetSlot,
+  tierSets,
   adminCounts,
   releaseChecks,
   slots,
@@ -85,6 +86,14 @@ export function mapSportEventToDto({
     contestOpenings: eventContestOpenings({ ...event, participantCount }, now),
     // An event covering no slot has no set to edit.
     tiersLocked: tierSetSlot === null || !isTierSetEditable(event, tierSetSlot),
+    tierSets: tierSets.map(({ slot, tierCount: count }) => ({
+      seasonSlotId: slot.seasonSlotId,
+      isTierSetSlot: slot.isTierSetSlot,
+      tiersLocked: !isTierSetEditable(event, slot),
+      tierCount: count,
+      pricing: slot.pricing,
+      tierLayout: slot.tierLayout,
+    })),
     slotDefinitionIds: event.slotDefinitions.map((definition) => definition.id),
     sportLeagueSeasonId: event.sportLeagueSeasonId,
     championshipYear: event.championshipYear,
