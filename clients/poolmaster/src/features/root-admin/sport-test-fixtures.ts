@@ -84,6 +84,7 @@ export function sportEventFixture(overrides: Partial<SportEventDto> = {}): Sport
     releaseChecks: passingReleaseChecks(),
     lastAutoReleaseCheck: null,
     allowedTransitions: ['CANCELLED'],
+    syncKinds: [],
     createdAt: '2026-04-01T10:00:00.000Z',
     updatedAt: '2026-04-01T11:00:00.000Z',
     ...overrides,

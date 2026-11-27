@@ -1,8 +1,6 @@
 import { Sport } from '@poolmaster/shared/domain';
-import {
-  EventSyncKindSchema,
-  EventSyncRequestSchema,
-} from '@poolmaster/shared/dto/ingestion.dto';
+import { EventSyncKindSchema } from '@poolmaster/shared/dto/common.dto';
+import { EventSyncRequestSchema } from '@poolmaster/shared/dto/ingestion.dto';
 import * as ingestionDtos from '@poolmaster/shared/dto/ingestion.dto';
 import * as syncOrchestratorModule from '../../../packages/core-api/src/modules/ingestion/core/sync-orchestrator';
 import {

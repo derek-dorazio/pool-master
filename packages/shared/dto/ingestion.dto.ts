@@ -17,14 +17,10 @@ import {
   ProviderWebhookEventSet,
   Sport,
 } from '@poolmaster/shared/domain';
-import { DateTimeSchema, JsonObjectSchema } from './common.dto';
+import { DateTimeSchema, EventSyncKindSchema, JsonObjectSchema } from './common.dto';
 import { registerSchema } from './schema-registry';
 
 const SportDtoSchema = z.enum(Sport);
-
-export const EventSyncKindSchema = z.enum([ProviderSyncKind.FIELD, ProviderSyncKind.SCORES])
-  .describe('What an event sync syncs: the event\'s FIELD or its SCORES. A sport league\'s EVENTS are synced by league, not by event.');
-export type EventSyncKind = z.infer<typeof EventSyncKindSchema>;
 
 export const EventSyncRequestSchema = z.object({
   kinds: z.array(EventSyncKindSchema).min(1).describe(

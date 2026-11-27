@@ -29504,6 +29504,18 @@
             },
             "description": "Statuses the event may move to next, from the declared transition map. (Admin-only: operational detail no member surface reads.)"
           },
+          "syncKinds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "FIELD",
+                "SCORES"
+              ],
+              "description": "What an event sync syncs: the event's FIELD or its SCORES. A sport league's EVENTS are synced by league, not by event."
+            },
+            "description": "The sync kinds a root admin can run on the event now (#2234): its FIELD while it is scheduled, in play or completed, and its SCORES while it is in play. Empty for an event its league's provider has no id for, such as a test event. (Admin-only: operational detail no member surface reads.)"
+          },
           "createdAt": {
             "type": "string",
             "format": "date-time",
@@ -29554,6 +29566,7 @@
           "lastAutoReleaseCheck",
           "adminCounts",
           "allowedTransitions",
+          "syncKinds",
           "createdAt",
           "updatedAt"
         ],
@@ -30567,6 +30580,18 @@
                   },
                   "description": "Statuses the event may move to next, from the declared transition map. (Admin-only: operational detail no member surface reads.)"
                 },
+                "syncKinds": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "enum": [
+                      "FIELD",
+                      "SCORES"
+                    ],
+                    "description": "What an event sync syncs: the event's FIELD or its SCORES. A sport league's EVENTS are synced by league, not by event."
+                  },
+                  "description": "The sync kinds a root admin can run on the event now (#2234): its FIELD while it is scheduled, in play or completed, and its SCORES while it is in play. Empty for an event its league's provider has no id for, such as a test event. (Admin-only: operational detail no member surface reads.)"
+                },
                 "createdAt": {
                   "type": "string",
                   "format": "date-time",
@@ -30617,6 +30642,7 @@
                 "lastAutoReleaseCheck",
                 "adminCounts",
                 "allowedTransitions",
+                "syncKinds",
                 "createdAt",
                 "updatedAt"
               ],
@@ -31584,6 +31610,18 @@
                 },
                 "description": "Statuses the event may move to next, from the declared transition map. (Admin-only: operational detail no member surface reads.)"
               },
+              "syncKinds": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "FIELD",
+                    "SCORES"
+                  ],
+                  "description": "What an event sync syncs: the event's FIELD or its SCORES. A sport league's EVENTS are synced by league, not by event."
+                },
+                "description": "The sync kinds a root admin can run on the event now (#2234): its FIELD while it is scheduled, in play or completed, and its SCORES while it is in play. Empty for an event its league's provider has no id for, such as a test event. (Admin-only: operational detail no member surface reads.)"
+              },
               "createdAt": {
                 "type": "string",
                 "format": "date-time",
@@ -31634,6 +31672,7 @@
               "lastAutoReleaseCheck",
               "adminCounts",
               "allowedTransitions",
+              "syncKinds",
               "createdAt",
               "updatedAt"
             ],

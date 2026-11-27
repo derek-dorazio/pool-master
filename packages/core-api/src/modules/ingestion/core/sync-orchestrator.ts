@@ -1,5 +1,5 @@
-import { JobErrorType, type ProviderSyncKind, type Sport } from '@poolmaster/shared/domain';
-import { EventSyncKindSchema, type EventSyncKind, type SyncRequestSource } from '@poolmaster/shared/dto';
+import { EVENT_SYNC_KINDS, JobErrorType, type EventSyncKind, type ProviderSyncKind, type Sport } from '@poolmaster/shared/domain';
+import type { SyncRequestSource } from '@poolmaster/shared/dto';
 
 /**
  * Internal sync-intent boundary for pool-master-rop.68.2.
@@ -9,11 +9,11 @@ import { EventSyncKindSchema, type EventSyncKind, type SyncRequestSource } from 
  * by pool-master-rop.68.2.3.
  */
 
-export type { EventSyncKind } from '@poolmaster/shared/dto';
+export type { EventSyncKind } from '@poolmaster/shared/domain';
 
 /** Whether a run of this kind syncs one event (FIELD, SCORES), rather than a league's EVENTS. */
 export function isEventSyncKind(kind: ProviderSyncKind): kind is EventSyncKind {
-  return EventSyncKindSchema.options.some((eventKind) => eventKind === kind);
+  return EVENT_SYNC_KINDS.some((eventKind) => eventKind === kind);
 }
 
 export type { SyncRequestSource } from '@poolmaster/shared/dto';

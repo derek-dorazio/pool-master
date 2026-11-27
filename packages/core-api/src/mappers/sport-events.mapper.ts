@@ -6,6 +6,7 @@
 
 import {
   eventPlaysMatches,
+  eventSyncKindsOf,
   isTestEvent,
   ReleaseCheckKey,
   type ReleaseCheck,
@@ -101,6 +102,7 @@ export function mapSportEventToDto({
     adminCounts,
     releaseChecks: releaseChecks?.map(mapReleaseCheckToDto) ?? null,
     allowedTransitions: genericTransitionsFrom(event.status),
+    syncKinds: eventSyncKindsOf(event),
     createdAt: event.createdAt.toISOString(),
     updatedAt: event.updatedAt.toISOString(),
   };

@@ -21,7 +21,7 @@ import {
   ValuationSource,
 } from '@poolmaster/shared/domain';
 import { SportEventRoundSlotDtoSchema } from './bracket.dto';
-import { DateTimeSchema } from './common.dto';
+import { DateTimeSchema, EventSyncKindSchema } from './common.dto';
 import { ParticipantDtoSchema } from './participants.dto';
 import { SportLeagueSeasonSlotDtoSchema } from './sport-catalog.dto';
 
@@ -147,6 +147,7 @@ export const SportEventDtoSchema = z.object({
   lastAutoReleaseCheck: SportEventAutoReleaseCheckDtoSchema.nullable().describe(`The latest automatic release try, as the sweep stored it, so a page shows the last try without judging the checks again. Null until the first try, and once a root admin releases the event by hand. The checks as they stand now are releaseChecks. ${ADMIN_ONLY}`),
   adminCounts: SportEventAdminCountsDtoSchema.nullable().describe('The root admin\'s counts: release readiness and the contest count across every league. Null for anyone but a root admin, whose reads alone count them.'),
   allowedTransitions: z.array(EventStatusDtoSchema).describe(`Statuses the event may move to next, from the declared transition map. ${ADMIN_ONLY}`),
+  syncKinds: z.array(EventSyncKindSchema).describe(`The sync kinds a root admin can run on the event now (#2234): its FIELD while it is scheduled, in play or completed, and its SCORES while it is in play. Empty for an event its league's provider has no id for, such as a test event. ${ADMIN_ONLY}`),
   createdAt: DateTimeSchema.describe('When the event row was created.'),
   updatedAt: DateTimeSchema.describe('When the event row was last updated.'),
 }).describe('A real-world event a contest can be run on — a golf tournament, a race, a match.');

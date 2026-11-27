@@ -121,6 +121,7 @@ export function buildSportEvent(overrides: Partial<SportEventDto> = {}): SportEv
     releaseChecks: null,
     lastAutoReleaseCheck: null,
     allowedTransitions: [],
+    syncKinds: [],
     createdAt: '2026-04-01T00:00:00.000Z',
     updatedAt: '2026-04-01T00:00:00.000Z',
     ...overrides,

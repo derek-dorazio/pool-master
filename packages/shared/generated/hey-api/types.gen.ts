@@ -12754,6 +12754,10 @@ export type SportEventDto = {
      */
     allowedTransitions: Array<'DRAFT' | 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED'>;
     /**
+     * The sync kinds a root admin can run on the event now (#2234): its FIELD while it is scheduled, in play or completed, and its SCORES while it is in play. Empty for an event its league's provider has no id for, such as a test event. (Admin-only: operational detail no member surface reads.)
+     */
+    syncKinds: Array<'FIELD' | 'SCORES'>;
+    /**
      * When the event row was created.
      */
     createdAt: string;
@@ -13208,6 +13212,10 @@ export type SportEventListResponse = {
          */
         allowedTransitions: Array<'DRAFT' | 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED'>;
         /**
+         * The sync kinds a root admin can run on the event now (#2234): its FIELD while it is scheduled, in play or completed, and its SCORES while it is in play. Empty for an event its league's provider has no id for, such as a test event. (Admin-only: operational detail no member surface reads.)
+         */
+        syncKinds: Array<'FIELD' | 'SCORES'>;
+        /**
          * When the event row was created.
          */
         createdAt: string;
@@ -13636,6 +13644,10 @@ export type SportEventResponse = {
          * Statuses the event may move to next, from the declared transition map. (Admin-only: operational detail no member surface reads.)
          */
         allowedTransitions: Array<'DRAFT' | 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED'>;
+        /**
+         * The sync kinds a root admin can run on the event now (#2234): its FIELD while it is scheduled, in play or completed, and its SCORES while it is in play. Empty for an event its league's provider has no id for, such as a test event. (Admin-only: operational detail no member surface reads.)
+         */
+        syncKinds: Array<'FIELD' | 'SCORES'>;
         /**
          * When the event row was created.
          */
