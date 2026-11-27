@@ -455,13 +455,7 @@ export async function cleanupFunctionalData(): Promise<void> {
           },
         },
         {
-          sportEvents: {
-            some: {
-              sportEventId: {
-                in: providerSportEventIds,
-              },
-            },
-          },
+          seasonSlots: { some: { seasonSlot: { eventSlot: { sportEventId: { in: providerSportEventIds } } } } },
         },
       ],
     },

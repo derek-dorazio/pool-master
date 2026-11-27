@@ -182,9 +182,4 @@ describe('finish position — guards', () => {
     expect(() => scores([{ name: 'Arrow', result: { resultStatus: 'PHOTO_FINISH' as RaceResultStatus } }])).toThrow();
     expect(() => standingStatusForResult('PHOTO_FINISH' as RaceResultStatus)).toThrow();
   });
-
-  it('scores a missed lineup as each counted pick not finishing, and leaves it unscored under another definition', () => {
-    expect(family.scoreMissedLineup([], RACE, WIN_PLACE_SHOW, 3)).toBe(-3);
-    expect(family.scoreMissedLineup([], RACE, { participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', config: {} }, 3)).toBeNull();
-  });
 });

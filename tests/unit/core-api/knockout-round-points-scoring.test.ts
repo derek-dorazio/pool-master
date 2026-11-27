@@ -453,11 +453,4 @@ describe('knockout round points — edges', () => {
   it('throws on an upset bonus rule it does not know rather than scoring it', () => {
     expect(() => upsetBonusFor({ rule: 'DOUBLE_OR_NOTHING' } as unknown as UpsetBonus, 4, 1)).toThrow();
   });
-
-  it('scores a missed lineup 0 under knockout round points and leaves it unscored under another definition', () => {
-    const golf: ContestScoringSettings = { participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', config: {} } as unknown as ContestScoringSettings;
-
-    expect(family.scoreMissedLineup([], TOURNAMENT, knockout([1]), 3)).toBe(0);
-    expect(family.scoreMissedLineup([], TOURNAMENT, golf, 3)).toBeNull();
-  });
 });

@@ -38,7 +38,7 @@ import {
 import { expectConstantQueries } from '../query-scaling';
 import { get, okBody, seedEventWithField, seedFootballWeek, seedLeagueWithTeams } from '../list-route-seeds';
 import { PrismaContestRepository } from '../../../packages/core-api/src/adapters';
-import { anySeasonId, createContestRow } from '../../support/contest-rows';
+import { contestOnEvents, createContestRow } from '../../support/contest-rows';
 import { fixtureSeasonId, freshEventEdition, putEventInSlot, keyedSlotDefinitionId } from '../../support/event-edition';
 import { SYNCED_SLOT_KEY_PREFIX } from '../../support/test-slots';
 import { expectDefined } from '../../support/expect-defined';
@@ -143,12 +143,11 @@ async function seedTrophyRoom({ years, contestsPerYear, cupPerContest = false, r
       const contest = await prisma.contest.create({
         data: {
           leagueId: seeded.league.id,
-          sportLeagueSeasonId: await anySeasonId(prisma, year),
+          ...(await contestOnEvents(prisma, [event.id])),
           name: `Final ${String(year)} ${String(index)}`,
           status: ContestStatus.COMPLETED,
           selectionType: SelectionType.TIERED,
           endsAt,
-          sportEvents: { create: { sportEventId: event.id, sequence: 1 } },
         },
       });
       for (const [position, squad] of seeded.squads.entries()) {

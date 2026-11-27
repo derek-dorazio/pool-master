@@ -26,7 +26,7 @@ import { participantLeagueId } from '../../support/participant-league';
 import { testDomainEvents } from '../../support/domain-events';
 import { sportRowKeys } from '../../support/sport-rows';
 import { oneEventSlotId } from '../../support/test-slots';
-import { anySeasonId, contestTemplateId } from '../../support/contest-rows';
+import { contestOnEvents, contestTemplateId } from '../../support/contest-rows';
 
 // The roster contest leaderboard's reads against real Postgres (#1162): however many events the
 // contest has, its entries come from one query and its picks from one more, and only the picks
@@ -125,8 +125,7 @@ async function fourMajors(status: ContestStatus, lastSettled: boolean) {
   const contest = await prisma.contest.create({
     data: {
       leagueId: league.id,
-      sportLeagueSeasonId: await anySeasonId(prisma, 2026),
-      sportEvents: { create: majors.map(({ event }, index) => ({ sportEventId: event.id, sequence: index + 1 })) },
+      ...(await contestOnEvents(prisma, majors.map(({ event }) => event.id))),
       name: `Majors ${suffix}`,
       status,
       contestFormat: 'ROSTER',
@@ -214,8 +213,7 @@ async function golfContest(events: ReadonlyArray<{ event: { id: string } }>) {
   const contest = await prisma.contest.create({
     data: {
       leagueId: league.id,
-      sportLeagueSeasonId: await anySeasonId(prisma, 2026),
-      sportEvents: { create: events.map(({ event }, index) => ({ sportEventId: event.id, sequence: index + 1 })) },
+      ...(await contestOnEvents(prisma, events.map(({ event }) => event.id))),
       name: `Season ${suffix}`,
       status: ContestStatus.ACTIVE,
       contestFormat: 'ROSTER',

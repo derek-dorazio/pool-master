@@ -88,8 +88,7 @@ async function seedRosterContest({ entries, events, golfers = 2, tiers = 2 }: { 
   const contest = await prisma.contest.create({
     data: {
       leagueId: seeded.league.id,
-      sportLeagueSeasonId: await anySeasonId(prisma, expectDefined(majors[0]).event.startDate.getUTCFullYear()),
-      sportEvents: { create: majors.map(({ event }, index) => ({ sportEventId: event.id, sequence: index + 1 })) },
+      ...(await contestOnEvents(prisma, majors.map(({ event }) => event.id))),
       name: `Majors ${seeded.suffix}`,
       status: ContestStatus.ACTIVE,
       contestFormat: 'ROSTER',
@@ -146,8 +145,7 @@ async function seedMyEntries({ contests, events }: { contests: number; events: n
     await prisma.contest.create({
       data: {
         leagueId: seeded.league.id,
-        sportLeagueSeasonId: await anySeasonId(prisma, expectDefined(majors[0]).event.startDate.getUTCFullYear()),
-        sportEvents: { create: majors.map(({ event }, sequence) => ({ sportEventId: event.id, sequence: sequence + 1 })) },
+        ...(await contestOnEvents(prisma, majors.map(({ event }) => event.id))),
         name: `Contest ${seeded.suffix} ${index}`,
         status: ContestStatus.OPEN,
         contestFormat: 'ROSTER',
@@ -183,8 +181,7 @@ async function seedMyLiveEntries({ contests, boards }: { contests: number; board
     const contest = await prisma.contest.create({
       data: {
         leagueId: seeded.league.id,
-        sportLeagueSeasonId: await anySeasonId(prisma, played.event.startDate.getUTCFullYear()),
-        sportEvents: { create: majors.map(({ event }, sequence) => ({ sportEventId: event.id, sequence: sequence + 1 })) },
+        ...(await contestOnEvents(prisma, majors.map(({ event }) => event.id))),
         name: `Live ${seeded.suffix} ${index}`,
         status: ContestStatus.ACTIVE,
         contestFormat: 'ROSTER',
@@ -345,8 +342,7 @@ async function seedPredictionContest(selectionType: PredictionType, { entries, w
   const contest = await prisma.contest.create({
     data: {
       leagueId: seeded.league.id,
-      sportLeagueSeasonId: await anySeasonId(prisma, expectDefined(season[0]).event.startDate.getUTCFullYear()),
-      sportEvents: { create: season.map(({ event }, index) => ({ sportEventId: event.id, sequence: index + 1 })) },
+      ...(await contestOnEvents(prisma, season.map(({ event }) => event.id))),
       name: `Season ${seeded.suffix}`,
       status: ContestStatus.ACTIVE,
       contestFormat: 'PREDICTION',

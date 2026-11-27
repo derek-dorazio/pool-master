@@ -984,7 +984,7 @@ export async function cleanupTestData(): Promise<void> {
         where: {
           OR: [
             { leagueId: { in: leagueIds } },
-            { sportEvents: { some: { sportEventId: { in: providerSportEventIds } } } },
+            { seasonSlots: { some: { seasonSlot: { eventSlot: { sportEventId: { in: providerSportEventIds } } } } } },
           ],
         },
         select: { id: true },

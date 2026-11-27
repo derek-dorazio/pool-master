@@ -29,7 +29,7 @@ import { expectConstantQueries } from '../query-scaling';
 import { expectDefined } from '../../support/expect-defined';
 import { linkTestSlot } from '../../support/test-slots';
 import { oneEventSlotId } from '../../support/test-slots';
-import { anySeasonId } from '../../support/contest-rows';
+import { contestOnEvents } from '../../support/contest-rows';
 
 // No mocks.
 
@@ -82,13 +82,12 @@ async function seedEventContests(contests: number) {
     const contest = await prisma.contest.create({
       data: {
         leagueId: league.id,
-        sportLeagueSeasonId: await anySeasonId(prisma, event.startDate.getUTCFullYear()),
+        ...(await contestOnEvents(prisma, [event.id])),
         name: `Event Pool ${index}`,
         status: index === 0 ? ContestStatus.OPEN : ContestStatus.DRAFT,
         contestFormat: 'ROSTER',
         selectionType: SelectionType.TIERED,
         createdAt: new Date(Date.UTC(2026, 10, 1, 12, index)),
-        sportEvents: { create: { sportEventId: event.id, sequence: 1 } },
         entries: { create: squads.map((squad) => ({ squadId: squad.id, entryNumber: 1, name: squad.name })) },
       },
     });

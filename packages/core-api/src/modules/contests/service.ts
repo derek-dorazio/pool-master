@@ -127,7 +127,6 @@ import {
   loadContestScoringConfiguration,
   loadEventField,
   loadEventPicks,
-  missedEventEntries,
   rankContestEvent,
   submittedLeaderboardEntries,
   toLeaderboardEntryInput,
@@ -951,14 +950,7 @@ export class ContestService {
       let rows: ContestEntryStandingRow[] | null = null;
       if (isShown || (settled.length === 0 && event.status !== SportEventStatus.CANCELLED)) {
         const field = await readField(event.id);
-        // An entry that skipped a live event is ranked at its missed lineup's score (#714), as its
-        // settlement will rank it, so the last live board is the settled result. A settled event's
-        // frozen standings already hold it, and a cancelled event scores nobody (#743).
-        const missed = settled.length === 0 && event.status !== SportEventStatus.CANCELLED
-          ? missedEventEntries(contest, contestEntries, new Set(entries.map((entry) => entry.id)))
-          : [];
-        for (const entry of missed) entriesById.set(entry.id, entry);
-        const { rows: rankedRows, scores } = rankContestEvent({ field, event, scoring: scoring.scoring, coverage: scoring.coverage, countingRule, direction, submitted: entries, missed });
+        const { rows: rankedRows, scores } = rankContestEvent({ field, event, scoring: scoring.scoring, coverage: scoring.coverage, countingRule, direction, submitted: entries });
         rows = rankedRows;
         if (settled.length > 0) {
           rows = applySettledContestStandings(rows, settled.map(toSettledStanding));

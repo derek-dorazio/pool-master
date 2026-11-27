@@ -16,7 +16,7 @@ import { freshEventEdition } from '../../support/event-edition';
 import { expectDefined } from '../../support/expect-defined';
 import { sportLeagueRowDefaults } from '../../support/league-profiles';
 import { sportPlay } from '../../support/sport-play';
-import { anySeasonId } from '../../support/contest-rows';
+import { contestOnEvents } from '../../support/contest-rows';
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
@@ -53,12 +53,11 @@ async function seedLeague() {
     const row = await prisma.contest.create({
       data: {
         leagueId: league.id,
-        sportLeagueSeasonId: await anySeasonId(prisma, options.seasonYear ?? 2026),
+        ...(await contestOnEvents(prisma, [event.id])),
         name,
         status,
         selectionType: 'TIERED',
         endsAt: status === 'COMPLETED' ? new Date('2026-04-12T23:00:00.000Z') : null,
-        sportEvents: { create: { sportEventId: event.id, sequence: 1 } },
       },
     });
     for (const [index, [squadId, position]] of (options.places ?? []).entries()) {

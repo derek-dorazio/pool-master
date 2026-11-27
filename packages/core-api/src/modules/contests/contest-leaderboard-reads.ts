@@ -17,7 +17,6 @@ import type {
 } from '../events/sport-event-participant-service';
 import {
   buildContestEntryStanding,
-  buildMissedEventStanding,
   rankContestEntryStandings,
   type ContestCountingRule,
   type ContestLeaderboardEntryInput,
@@ -59,7 +58,7 @@ export function toParticipantScores(
 
 /**
  * One event's ranked standings for one contest (#1435): its submitted entries scored by their
- * picks against the field, and the entries that missed it at the missed lineup's score (#714).
+ * picks against the field. A field contest covers one event (#2014), so no entry misses one.
  * The live leaderboard and settlement both rank an event here and nowhere else, so the last board
  * a member sees before the event ends is the result its settlement freezes.
  */
@@ -72,30 +71,15 @@ export function rankContestEvent(input: {
   countingRule: ContestCountingRule;
   direction: ScoreDirection;
   submitted: readonly ContestLeaderboardEntryInput[];
-  missed: readonly ContestLeaderboardEntryInput[];
 }): { rows: ContestEntryStandingRow[]; scores: ParticipantScore[] } {
-  const { field, event, scoring, coverage, countingRule, direction, submitted, missed } = input;
+  const { field, event, scoring, coverage, countingRule, direction, submitted } = input;
   const scores = toParticipantScores(field, event, scoring, coverage);
   const scoreById = new Map(scores.map((score) => [score.sportEventParticipantId, score]));
-  const missedScore = missed.length > 0 ? scoreMissedLineup(field, event, scoring, countingRule.count) : null;
   const rows = rankContestEntryStandings(
-    [
-      ...submitted.map((entry) => buildContestEntryStanding(entry, scoreById, countingRule, direction)),
-      ...missed.map((entry) => buildMissedEventStanding(entry, missedScore, countingRule, direction)),
-    ],
+    submitted.map((entry) => buildContestEntryStanding(entry, scoreById, countingRule, direction)),
     direction,
   );
   return { rows, scores };
-}
-
-/** What a lineup scores in an event its entry missed (#714), by the event's scoring family. */
-export function scoreMissedLineup(
-  field: readonly SportEventParticipantView[],
-  event: FieldScoringEvent,
-  scoring: ContestScoringSettings,
-  countingPickLimit: number,
-): number | null {
-  return scoringFamilyForEvent(event).scoreMissedLineup(field, event, scoring, countingPickLimit);
 }
 
 /**
@@ -121,37 +105,6 @@ export async function loadContestScoringConfiguration(
       active: rule.active,
     })),
   };
-}
-
-/**
- * The entries of a contest of several events that did not submit a lineup for one of them (#714):
- * each is scored for that event as a missed lineup, on the live board while the event is under
- * way and in its settled standings after, so the two always agree. A one-event contest has none:
- * an entry that never submitted is simply not in it.
- */
-export function missedEventEntries(
-  contest: Pick<Contest, 'sportEventIds'>,
-  entries: readonly ContestEntryWithSquad[],
-  submittedEntryIds: ReadonlySet<string>,
-): ContestLeaderboardEntryInput[] {
-  if (contest.sportEventIds.length < 2) {
-    return [];
-  }
-  return entries
-    .filter((entry) => !submittedEntryIds.has(entry.id))
-    .map((entry) => toLeaderboardEntryInput(entry, []));
-}
-
-/** `missedEventEntries`, reading the contest's entries first. */
-export async function loadMissedEventEntries(
-  deps: Pick<ContestLeaderboardReadDeps, 'entries'>,
-  contest: Pick<Contest, 'id' | 'sportEventIds'>,
-  submittedEntryIds: ReadonlySet<string>,
-): Promise<ContestLeaderboardEntryInput[]> {
-  if (contest.sportEventIds.length < 2) {
-    return [];
-  }
-  return missedEventEntries(contest, await deps.entries.findByContestWithSquad(contest.id), submittedEntryIds);
 }
 
 /** A contest entry as the leaderboard reads it: its name, its squad, and its picks in one event. */

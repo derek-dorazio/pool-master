@@ -395,23 +395,6 @@ describe('ContestSettlementService — a contest of two events (#713)', () => {
     expect(summary).toMatchObject({ contestsSettled: 0, contestsCompleted: 0 });
     expect(w.eventStandings).toEqual([]);
   });
-
-  // #714: a missed event scores as a lineup whose every counted golfer played no round, 80 strokes
-  // a round, so skipping a major never beats playing it.
-  it('scores an entry that missed the first event as its counted golfer shooting 80 every round there, and totals it with that score', async () => {
-    const w = world();
-    w.entries[1] = entry('entry-b', 2, [PGA]);
-    w.complete(MASTERS);
-    await w.service.settleFinishedSportEvent(MASTERS, { completedAt: T });
-    w.complete(PGA);
-
-    await w.service.settleFinishedSportEvent(PGA, { completedAt: T });
-
-    // One counted golfer, four rounds of 80 on a par 72: +32.
-    expect(eventRows(w.eventStandings, MASTERS)).toEqual([['entry-a', -6, 1], ['entry-b', 32, 2]]);
-    expect(w.standings.map((row) => [row.contestEntryId, row.totalScore, row.position]))
-      .toEqual([['entry-a', -4, 1], ['entry-b', 24, 2]]);
-  });
 });
 
 describe('ContestSettlementService — a contest it cannot score', () => {

@@ -2174,7 +2174,7 @@ describe('ContestService.getLeaderboard — refusals and the settled read', () =
       });
     }
 
-    it('shows the latest live event: a settled event from its frozen standings, nothing from a cancelled one, an entry that skipped the live event ranked at its missed lineup, until the next event starts', async () => {
+    it('shows the latest live event: a settled event from its frozen standings, nothing from a cancelled one, and an entry that skipped the live event by its settled standing alone, until the next event starts', async () => {
       const snapshots = new InMemoryLeaderboardSnapshots<StoredLeaderboard>();
       const service = multiEventService({
         events: [SETTLED, CANCELLED, LIVE, NEXT, LATER],
@@ -2191,7 +2191,7 @@ describe('ContestService.getLeaderboard — refusals and the settled read', () =
       expect(first).toMatchObject({ squadId: 'squad-1', squadName: 'Team 1', totalScore: -11 });
       expect(first.events.map((result) => result.sportEventId)).toEqual(['event-1', 'event-3']);
       const skipped = expectDefined(board.entries.find((row) => row.entryId === 'entry-2'));
-      expect(skipped.events.map((result) => result.sportEventId)).toEqual(['event-1', 'event-3']);
+      expect(skipped.events.map((result) => result.sportEventId)).toEqual(['event-1']);
       expect([...snapshots.rows.values()].map((row) => row.validUntil)).toEqual([NEXT.startDate]);
     });
 
