@@ -52,7 +52,8 @@ describe('toNhlPlayoffTeam', () => {
     expect(toNhlPlayoffTeam(florida, '/nhl/v1/teams')).toEqual({
       id: 7,
       name: 'Florida Panthers',
-      metadata: { abbreviation: 'FLA', conference: 'Eastern', division: 'Atlantic' },
+      abbreviation: 'FLA',
+      metadata: { conference: 'Eastern', division: 'Atlantic' },
     });
   });
 

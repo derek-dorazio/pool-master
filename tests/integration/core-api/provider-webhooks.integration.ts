@@ -145,6 +145,34 @@ describe('BALLDONTLIE webhook receiver', () => {
     })]);
   });
 
+  it('records a golf tournament\'s notification on its current round\'s Game, the one in play, found through the event\'s provider mapping, and not on a round already played', async () => {
+    const prisma = getPrisma();
+    const tournament = await linkedEvent({ sport: Sport.GOLF, providerLeagueCode: 'pga', externalId: '1133' });
+    await createRoundRows(prisma, new PrismaSportEventRoundRepository(getAppPrisma()), tournament, [
+      { roundNumber: 1, scheduledDate: new Date(tournament.startDate.getTime() - 86_400_000) },
+      { roundNumber: 2, scheduledDate: tournament.startDate },
+    ]);
+    const rounds = await prisma.sportEventRound.findMany({ where: { sportEventId: tournament.id }, orderBy: { roundNumber: 'asc' } });
+    const [played, current] = await Promise.all(rounds.map(async (round) => {
+      const match = await prisma.sportEventRoundMatch.create({ data: { sportEventId: tournament.id, sportEventRoundId: round.id, matchNumber: 1 } });
+      return prisma.sportEventRoundMatchGame.create({
+        data: {
+          sportEventId: tournament.id, sportEventRoundMatchId: match.id, sportEventSlotId: round.sportEventSlotId, gameNumber: 1,
+          scheduledDate: round.scheduledDate, status: round.roundNumber === 1 ? 'COMPLETED' : 'IN_PROGRESS',
+        },
+      });
+    }));
+
+    const before = Date.now();
+    expect((await post(signedBalldontlieDelivery(PAYLOADS.pgaRoundStarted))).statusCode).toBe(200);
+
+    const notified = new Map((await prisma.sportEventRoundMatchGame.findMany({ where: { sportEventId: tournament.id }, select: { id: true, lastProviderNotificationAt: true } }))
+      .map((game) => [game.id, game.lastProviderNotificationAt]));
+    expect(notified.get(current.id)?.getTime()).toBeGreaterThanOrEqual(before - 1000);
+    expect(notified.get(played.id)).toBeNull();
+    expect(await queuedSyncs()).toEqual([expect.objectContaining({ payload: { sportEventId: tournament.id } })]);
+  });
+
   it('accepts a delivery with non-ASCII text, signed over its bytes, whose header also carries a retiring secret\'s signature', async () => {
     const matchweek = await linkedEvent({ sport: Sport.SOCCER, providerLeagueCode: 'epl', externalId: 'epl-2026-matchweek-11', gameId: String(PAYLOADS.eplGameHalftime.game.id) });
     const body = { ...PAYLOADS.eplGameHalftime, game: { ...PAYLOADS.eplGameHalftime.game, home_team: { id: 13, name: 'Atlético São Paulo ⚽' } } };
@@ -203,8 +231,6 @@ describe('BALLDONTLIE webhook receiver', () => {
     const games = await getPrisma().sportEventRoundMatchGame.findMany({ select: { lastProviderNotificationAt: true } });
     expect(games).toHaveLength(1);
     expect(games[0]?.lastProviderNotificationAt?.getTime()).toBeGreaterThanOrEqual(before - 1000);
-    // A game's notification is its Game's, never its events'.
-    expect(await getPrisma().sportEvent.findMany({ select: { lastProviderNotificationAt: true } })).toEqual([{ lastProviderNotificationAt: null }, { lastProviderNotificationAt: null }]);
   });
 
   it('syncs the NBA playoffs\' event holding the ended game\'s Game, as for every league with a reader', async () => {

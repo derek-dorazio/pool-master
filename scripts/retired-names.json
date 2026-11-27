@@ -114,6 +114,7 @@
     "SportEventParticipantGolfStanding": "#2008 (10b part 3b): total and scoreToPar on SportEventParticipantStanding",
     "sportEventParticipantGolfStanding": "#2008 (10b part 3b): total and scoreToPar on SportEventParticipantStanding",
     "GolfScoreService": "#2008 (10b part 3b): StrokePlayResultService",
+    "ProviderNotificationReceipt": "#2008 (10b part 5): a notification's time is recorded on the Games in play",
     "GolfScoreError": "#2008 (10b part 3b): StrokePlayResultError",
     "RaceOrderRepository": "#2008 (10b part 3b): FieldGameRepository, one writer for every FIELD Game",
     "PrismaRaceOrderRepository": "#2008 (10b part 3b): PrismaFieldGameRepository",
@@ -161,7 +162,11 @@
     "ParticipantRoundStatus": "#2008 (10b part 4e): a round's progress is its Game side's GameSideStatus (null while playing); the cut is the standing's ELIMINATED, sent as missedCut",
     "isSquaresRound": "#2050 (15b): the API's Game choices",
     "squaresGameMatchId": "#2050 (15b): squaresGameId, the contest's Game",
-    "MATCH_START": "#2050 (15b): GAME_START, the squares Game's kickoff"
+    "MATCH_START": "#2050 (15b): GAME_START, the squares Game's kickoff",
+    "teamAffiliation": "#2025 (21 part A): a player's team and position are their roster row's (SportLeagueSeasonParticipantTeam); a team's abbreviation is a Participant column",
+    "participantAffiliation": "#2025 (21 part A): a player's team and position are their roster row's (SportLeagueSeasonParticipantTeam); a team's abbreviation is a Participant column",
+    "pickAffiliation": "#2025 (21 part A): a player's team and position are their roster row's (SportLeagueSeasonParticipantTeam); a team's abbreviation is a Participant column",
+    "ParticipantRoundStatus": "#2008 (10b part 4e): a round's progress is its Game side's GameSideStatus (null while playing); the cut is the standing's ELIMINATED, sent as missedCut"
   },
   "ROUND_NAMES_FROM_FINAL": 0,
   "roundLabel": 0,
@@ -183,7 +188,7 @@
   "cupPointsScale": 37,
   "isCupSeasonOver": 5,
   "playoffYearOffset": 8,
-  "ROSTER_ROLLOVER_MONTH": 2,
+  "ROSTER_ROLLOVER_MONTH": 0,
   "useProviderName": 0,
   "getStatusTone": 0,
   "SYNC_STATUS_OPTIONS": 0,
@@ -276,6 +281,7 @@
   "SportEventParticipantGolfStanding": 0,
   "sportEventParticipantGolfStanding": 0,
   "GolfScoreService": 0,
+  "ProviderNotificationReceipt": 0,
   "GolfScoreError": 0,
   "RaceOrderRepository": 0,
   "PrismaRaceOrderRepository": 0,
@@ -323,5 +329,8 @@
   "lookaheadDays": 0,
   "isSquaresRound": 0,
   "squaresGameMatchId": 0,
-  "MATCH_START": 0
+  "MATCH_START": 0,
+  "teamAffiliation": 0,
+  "participantAffiliation": 0,
+  "pickAffiliation": 0
 }

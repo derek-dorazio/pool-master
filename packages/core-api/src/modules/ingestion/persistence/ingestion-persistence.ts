@@ -155,7 +155,7 @@ export class IngestionPersistence {
     // A provider naming the same participant twice is taken at its last word, as it was when
     // each was written in turn.
     const latestByKey = new Map(participants.map((participant) => [providerKey(participant), participant]));
-    const mappings = await this.findMappings([...latestByKey.values()], league.id);
+    const mappings = await this.findMappings([...latestByKey.values()], league);
     const mappingByKey = new Map(mappings.map((mapping) => [providerKey(mapping), mapping]));
     const participantIdByKey = new Map(mappings.map((mapping) => [providerKey(mapping), mapping.participantId]));
 
@@ -261,11 +261,11 @@ export class IngestionPersistence {
   }
 
   /**
-   * The sport league's provider mappings of these participants, with their participant, in one
-   * query. Each mapping is keyed to its Provider row (#2040), read here by the code of the adapter
+   * The sport league's provider mappings of these participants, of the league's participant type,
+   * with their participant, in one query. Each mapping is keyed to its Provider row (#2040), read here by the code of the adapter
    * that named the participant, and comes back under that adapter's id, as the feed names it.
    */
-  private async findMappings(participants: readonly ProviderParticipant[], sportLeagueId: string) {
+  private async findMappings(participants: readonly ProviderParticipant[], league: LeagueOfEvent) {
     const externalIdsByCode = new Map<ProviderCode, string[]>();
     for (const participant of participants) {
       const code = requireProviderCodeOfSourceId(participant.providerId);
@@ -273,7 +273,12 @@ export class IngestionPersistence {
     }
     if (externalIdsByCode.size === 0) return [];
     const rows = await this.prisma.participantProviderMapping.findMany({
-      where: { sportLeagueId, OR: [...externalIdsByCode].map(([code, externalIds]) => ({ provider: { code }, externalId: { in: externalIds } })) },
+      // The league's own competitors only: a team league's rostered players (#2025) carry feed ids too.
+      where: {
+        sportLeagueId: league.id,
+        participantType: league.participantType,
+        OR: [...externalIdsByCode].map(([code, externalIds]) => ({ provider: { code }, externalId: { in: externalIds } })),
+      },
       include: { participant: true, provider: { select: { code: true } } },
     });
     return rows.map(({ provider, ...mapping }) => ({ ...mapping, providerId: providerSourceIdOf(provider.code) }));
@@ -605,8 +610,7 @@ function participantValues(participant: ProviderParticipant) {
     firstName: participant.firstName ?? null,
     lastName: participant.lastName ?? null,
     nationality: participant.nationality ?? null,
-    role: participant.role ?? null,
-    teamAffiliation: participant.teamAffiliation ?? null,
+    abbreviation: participant.abbreviation ?? null,
     photoUrl: participant.photoUrl ?? null,
     status: participant.status === SportEventParticipantStatus.ACTIVE ? ParticipantStatus.ACTIVE : ParticipantStatus.INACTIVE,
   };

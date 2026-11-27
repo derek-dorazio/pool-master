@@ -1,5 +1,5 @@
 import { formatParticipantStatusLabel, type Sport, type SportNoun } from "@poolmaster/shared/domain";
-import { participantAffiliation, selectionParticipantLabel, unavailableParticipantLabel } from "./contest-sport";
+import { selectionParticipantLabel, unavailableParticipantLabel } from "./contest-sport";
 import { ParticipantLine } from "./participant-line";
 import type { EntryTiebreakerUi } from "./scoring-family-ui/types";
 import type { SelectionStateResponse } from "@/lib/api";
@@ -130,7 +130,7 @@ export function SelectionParticipantCard({
         <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
           <div className="min-w-0">
             <ParticipantLine
-              affiliation={participantAffiliation(participant) ?? participant.role ?? "In the field"}
+              affiliation="In the field"
               name={selectionParticipantLabel(participant)}
             />
           </div>
@@ -253,7 +253,7 @@ export function EditableSelectionGroup({
  */
 function getLockedParticipantFacts(participant: SelectionParticipant) {
   return [
-    participantAffiliation(participant) ?? participant.role ?? "In the field",
+    "In the field",
     participant.orderIndex ? `Contest\u00a0rank\u00a0#${participant.orderIndex}` : null,
     participant.ranking !== undefined && participant.ranking !== null ? `Ranking\u00a0#${participant.ranking}` : null,
   ].filter((part) => part !== null).join(" · ");

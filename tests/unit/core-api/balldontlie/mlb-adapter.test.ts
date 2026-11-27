@@ -113,7 +113,7 @@ describe('BalldontlieAdapter (MLB)', () => {
 
       expect(detail).toMatchObject({ externalId: 'mlb-2025-postseason', sport: Sport.BASEBALL, status: 'COMPLETED', fieldLocked: true });
       expect(detail?.participants).toHaveLength(12);
-      expect(detail?.participants[0]).toMatchObject({ externalId: '10', name: 'New York Yankees', metadata: { abbreviation: 'NYY' } });
+      expect(detail?.participants[0]).toMatchObject({ externalId: '10', name: 'New York Yankees', abbreviation: 'NYY' });
       expect(requestLine(harness.api)).toEqual(['/mlb/v1/games?seasons[]=2025&postseason=true&per_page=100', '/mlb/v1/standings?season=2025', '/mlb/v1/teams?']);
     });
 

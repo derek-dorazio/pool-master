@@ -67,8 +67,8 @@ export interface SportLeagueParticipantOverview {
   participantType: ParticipantType;
   shortName: string | null;
   nationality: string | null;
-  teamAffiliation: string | null;
-  role: string | null;
+  /** A team's abbreviation as its feed sends it; null for a player and a team with none. */
+  abbreviation: string | null;
   ranking: number | null;
   /** Its provider's id for it; null when it has no provider mapping. */
   feedId: string | null;
@@ -76,6 +76,8 @@ export interface SportLeagueParticipantOverview {
   lastInFeedAt: Date | null;
   addedBy: ParticipantAddedBy;
   createdAt: Date;
+  /** A player's team and position in the league's current Season, from their roster row (#2025); null for a team and a player on none. */
+  roster: { teamParticipantId: string; teamName: string; positionCode: string; lastSeenAt: Date } | null;
 }
 
 /** One field row's place in its provider's feed (#1889): the Event page's Last in feed column. */

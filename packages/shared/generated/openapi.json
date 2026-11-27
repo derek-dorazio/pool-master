@@ -1975,6 +1975,61 @@
             },
             "additionalProperties": false,
             "description": "Partial scheduling update for a sync kind with a switch."
+          },
+          "ROSTER": {
+            "type": "object",
+            "properties": {
+              "intervals": {
+                "type": "object",
+                "properties": {
+                  "IN_SEASON": {
+                    "type": "object",
+                    "properties": {
+                      "intervalMinutes": {
+                        "description": "How often the sync runs, in minutes.",
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 9007199254740991
+                      },
+                      "intervalSeconds": {
+                        "description": "How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes.",
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 9007199254740991
+                      }
+                    },
+                    "additionalProperties": false,
+                    "description": "How often a sync runs in one Season state: in minutes or in seconds, at least one."
+                  },
+                  "OFFSEASON": {
+                    "type": "object",
+                    "properties": {
+                      "intervalMinutes": {
+                        "description": "How often the sync runs, in minutes.",
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 9007199254740991
+                      },
+                      "intervalSeconds": {
+                        "description": "How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes.",
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 9007199254740991
+                      }
+                    },
+                    "additionalProperties": false,
+                    "description": "How often a sync runs in one Season state: in minutes or in seconds, at least one."
+                  }
+                },
+                "additionalProperties": false,
+                "description": "The Season states whose interval changes."
+              }
+            },
+            "required": [
+              "intervals"
+            ],
+            "additionalProperties": false,
+            "description": "Partial scheduling update for a sync kind with no switch."
           }
         },
         "additionalProperties": false,
@@ -2169,12 +2224,72 @@
             ],
             "additionalProperties": false,
             "description": "The SCORES sync: live score polling for each event with a Game due or in play."
+          },
+          "ROSTER": {
+            "type": "object",
+            "properties": {
+              "intervals": {
+                "type": "object",
+                "properties": {
+                  "IN_SEASON": {
+                    "type": "object",
+                    "properties": {
+                      "intervalMinutes": {
+                        "description": "How often the sync runs, in minutes.",
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 9007199254740991
+                      },
+                      "intervalSeconds": {
+                        "description": "How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes.",
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 9007199254740991
+                      }
+                    },
+                    "additionalProperties": false,
+                    "description": "How often the sync runs for a league in season."
+                  },
+                  "OFFSEASON": {
+                    "type": "object",
+                    "properties": {
+                      "intervalMinutes": {
+                        "description": "How often the sync runs, in minutes.",
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 9007199254740991
+                      },
+                      "intervalSeconds": {
+                        "description": "How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes.",
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 9007199254740991
+                      }
+                    },
+                    "additionalProperties": false,
+                    "description": "How often the sync runs for a league off season."
+                  }
+                },
+                "required": [
+                  "IN_SEASON",
+                  "OFFSEASON"
+                ],
+                "additionalProperties": false,
+                "description": "A sync kind's interval for each Season state."
+              }
+            },
+            "required": [
+              "intervals"
+            ],
+            "additionalProperties": false,
+            "description": "The ROSTER sync: each synced sport league's roster for its current Season, in a league whose provider names its positions. It has no switch."
           }
         },
         "required": [
           "EVENTS",
           "FIELD",
-          "SCORES"
+          "SCORES",
+          "ROSTER"
         ],
         "additionalProperties": false,
         "description": "Feed-aware ingestion scheduling configuration, one schedule for every sport league, keyed by sync kind."
@@ -2473,12 +2588,86 @@
             ],
             "additionalProperties": false,
             "description": "One sync kind's schedule as the read answers it: its intervals per Season state, whether it runs, and whether it has a switch."
+          },
+          "ROSTER": {
+            "type": "object",
+            "properties": {
+              "enabled": {
+                "description": "The sync's switch; absent for a sync with none.",
+                "type": "boolean"
+              },
+              "intervals": {
+                "type": "object",
+                "properties": {
+                  "IN_SEASON": {
+                    "type": "object",
+                    "properties": {
+                      "intervalMinutes": {
+                        "description": "How often the sync runs, in minutes.",
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 9007199254740991
+                      },
+                      "intervalSeconds": {
+                        "description": "How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes.",
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 9007199254740991
+                      }
+                    },
+                    "additionalProperties": false,
+                    "description": "How often the sync runs for a league in season."
+                  },
+                  "OFFSEASON": {
+                    "type": "object",
+                    "properties": {
+                      "intervalMinutes": {
+                        "description": "How often the sync runs, in minutes.",
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 9007199254740991
+                      },
+                      "intervalSeconds": {
+                        "description": "How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes.",
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 9007199254740991
+                      }
+                    },
+                    "additionalProperties": false,
+                    "description": "How often the sync runs for a league off season."
+                  }
+                },
+                "required": [
+                  "IN_SEASON",
+                  "OFFSEASON"
+                ],
+                "additionalProperties": false,
+                "description": "A sync kind's interval for each Season state."
+              },
+              "runs": {
+                "type": "boolean",
+                "description": "Whether the sync runs on its interval now."
+              },
+              "switchable": {
+                "type": "boolean",
+                "description": "Whether the sync has a switch an admin can turn off; a sync with none always runs."
+              }
+            },
+            "required": [
+              "intervals",
+              "runs",
+              "switchable"
+            ],
+            "additionalProperties": false,
+            "description": "One sync kind's schedule as the read answers it: its intervals per Season state, whether it runs, and whether it has a switch."
           }
         },
         "required": [
           "EVENTS",
           "FIELD",
-          "SCORES"
+          "SCORES",
+          "ROSTER"
         ],
         "additionalProperties": false,
         "description": "The ingestion schedule as the API answers it: per sync kind, its policy, whether it runs and whether it has a switch."
@@ -21548,15 +21737,8 @@
             "description": "Participant nationality or country code when known.",
             "type": "string"
           },
-          "role": {
-            "description": "Playing role when known (\"GOLFER\", \"QB\"). Not a rank: `position` means rank on the standing objects.",
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "teamAffiliation": {
-            "description": "Current team affiliation when the participant is not itself a team.",
+          "abbreviation": {
+            "description": "A team's abbreviation as its feed sends it (KC); null for a player and for a team its feed gives none. A player's team and position are their roster row's.",
             "type": [
               "string",
               "null"
@@ -21662,7 +21844,7 @@
         "type": "object",
         "properties": {
           "q": {
-            "description": "Case-insensitive text matched against name, first, last and short name, and team.",
+            "description": "Case-insensitive text matched against name, first, last and short name, and a team's abbreviation.",
             "type": "string"
           },
           "sportLeagueId": {
@@ -21742,15 +21924,8 @@
                   "description": "Participant nationality or country code when known.",
                   "type": "string"
                 },
-                "role": {
-                  "description": "Playing role when known (\"GOLFER\", \"QB\"). Not a rank: `position` means rank on the standing objects.",
-                  "type": [
-                    "string",
-                    "null"
-                  ]
-                },
-                "teamAffiliation": {
-                  "description": "Current team affiliation when the participant is not itself a team.",
+                "abbreviation": {
+                  "description": "A team's abbreviation as its feed sends it (KC); null for a player and for a team its feed gives none. A player's team and position are their roster row's.",
                   "type": [
                     "string",
                     "null"
@@ -21917,15 +22092,8 @@
                 "description": "Participant nationality or country code when known.",
                 "type": "string"
               },
-              "role": {
-                "description": "Playing role when known (\"GOLFER\", \"QB\"). Not a rank: `position` means rank on the standing objects.",
-                "type": [
-                  "string",
-                  "null"
-                ]
-              },
-              "teamAffiliation": {
-                "description": "Current team affiliation when the participant is not itself a team.",
+              "abbreviation": {
+                "description": "A team's abbreviation as its feed sends it (KC); null for a player and for a team its feed gives none. A player's team and position are their roster row's.",
                 "type": [
                   "string",
                   "null"
@@ -22082,16 +22250,6 @@
             "type": "string",
             "maxLength": 10
           },
-          "role": {
-            "description": "Playing role (\"GOLFER\", \"QB\").",
-            "type": "string",
-            "maxLength": 50
-          },
-          "teamAffiliation": {
-            "description": "Current team affiliation.",
-            "type": "string",
-            "maxLength": 255
-          },
           "feedId": {
             "description": "The sport league's sync provider's own id for the participant, mapped to it in the same write. A provider-synced sport league requires it (409 PARTICIPANT_FEED_ID_REQUIRED otherwise) unless isTestData is true. 422 SPORT_LEAGUE_NOT_SYNCED in a league with no feed; 409 PARTICIPANT_FEED_ID_TAKEN when another participant of the league has it.",
             "type": "string",
@@ -22139,16 +22297,6 @@
             "description": "Participant nationality or country code.",
             "type": "string",
             "maxLength": 10
-          },
-          "role": {
-            "description": "Playing role (\"GOLFER\", \"QB\").",
-            "type": "string",
-            "maxLength": 50
-          },
-          "teamAffiliation": {
-            "description": "Current team affiliation.",
-            "type": "string",
-            "maxLength": 255
           },
           "status": {
             "description": "Participant lifecycle or availability status.",
@@ -23420,7 +23568,8 @@
                             "enum": [
                               "EVENTS",
                               "FIELD",
-                              "SCORES"
+                              "SCORES",
+                              "ROSTER"
                             ],
                             "description": "Which sync failed: the event list (EVENTS), the field (FIELD) or live scores and results (SCORES)."
                           }
@@ -23857,7 +24006,8 @@
                                   "enum": [
                                     "EVENTS",
                                     "FIELD",
-                                    "SCORES"
+                                    "SCORES",
+                                    "ROSTER"
                                   ],
                                   "description": "Which sync failed: the event list (EVENTS), the field (FIELD) or live scores and results (SCORES)."
                                 }
@@ -24125,7 +24275,8 @@
             "enum": [
               "EVENTS",
               "FIELD",
-              "SCORES"
+              "SCORES",
+              "ROSTER"
             ],
             "description": "The event list (EVENTS, which creates its events), the fields (FIELD) or live scores and results (SCORES)."
           },
@@ -24232,7 +24383,8 @@
                   "enum": [
                     "EVENTS",
                     "FIELD",
-                    "SCORES"
+                    "SCORES",
+                    "ROSTER"
                   ],
                   "description": "The event list (EVENTS, which creates its events), the fields (FIELD) or live scores and results (SCORES)."
                 },
@@ -24572,7 +24724,8 @@
                             "enum": [
                               "EVENTS",
                               "FIELD",
-                              "SCORES"
+                              "SCORES",
+                              "ROSTER"
                             ],
                             "description": "Which sync failed: the event list (EVENTS), the field (FIELD) or live scores and results (SCORES)."
                           }
@@ -25035,7 +25188,8 @@
                                   "enum": [
                                     "EVENTS",
                                     "FIELD",
-                                    "SCORES"
+                                    "SCORES",
+                                    "ROSTER"
                                   ],
                                   "description": "Which sync failed: the event list (EVENTS), the field (FIELD) or live scores and results (SCORES)."
                                 }
@@ -25320,7 +25474,8 @@
                   "enum": [
                     "EVENTS",
                     "FIELD",
-                    "SCORES"
+                    "SCORES",
+                    "ROSTER"
                   ],
                   "description": "The event list (EVENTS, which creates its events), the fields (FIELD) or live scores and results (SCORES)."
                 },
@@ -25533,7 +25688,8 @@
                             "enum": [
                               "EVENTS",
                               "FIELD",
-                              "SCORES"
+                              "SCORES",
+                              "ROSTER"
                             ],
                             "description": "Which sync failed: the event list (EVENTS), the field (FIELD) or live scores and results (SCORES)."
                           }
@@ -25870,7 +26026,8 @@
                       "enum": [
                         "EVENTS",
                         "FIELD",
-                        "SCORES"
+                        "SCORES",
+                        "ROSTER"
                       ],
                       "description": "The event list (EVENTS, which creates its events), the fields (FIELD) or live scores and results (SCORES)."
                     },
@@ -26083,7 +26240,8 @@
                                 "enum": [
                                   "EVENTS",
                                   "FIELD",
-                                  "SCORES"
+                                  "SCORES",
+                                  "ROSTER"
                                 ],
                                 "description": "Which sync failed: the event list (EVENTS), the field (FIELD) or live scores and results (SCORES)."
                               }
@@ -26430,14 +26588,8 @@
               "null"
             ]
           },
-          "teamAffiliation": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "role": {
-            "description": "Playing role, such as a position; not a rank.",
+          "abbreviation": {
+            "description": "A team's abbreviation as its feed sends it (KC); null for a player and for a team its feed gives none.",
             "type": [
               "string",
               "null"
@@ -26479,6 +26631,40 @@
             "type": "string",
             "format": "date-time",
             "description": "ISO 8601 datetime string."
+          },
+          "roster": {
+            "description": "A player's team and position in the league's current Season, from their roster row; null for a team and for a player on no roster.",
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "teamParticipantId": {
+                "type": "string",
+                "format": "uuid",
+                "description": "The player's team: a TEAM participant of the league."
+              },
+              "teamName": {
+                "type": "string",
+                "description": "The team's name."
+              },
+              "positionCode": {
+                "type": "string",
+                "description": "The player's position's code in the league (QB). Screens read its words by this code."
+              },
+              "lastSeenAt": {
+                "type": "string",
+                "format": "date-time",
+                "description": "When the roster sync last saw the player on the roster."
+              }
+            },
+            "required": [
+              "teamParticipantId",
+              "teamName",
+              "positionCode",
+              "lastSeenAt"
+            ],
+            "additionalProperties": false
           }
         },
         "required": [
@@ -26487,13 +26673,13 @@
           "participantType",
           "shortName",
           "nationality",
-          "teamAffiliation",
-          "role",
+          "abbreviation",
           "ranking",
           "feedId",
           "lastInFeedAt",
           "addedBy",
-          "createdAt"
+          "createdAt",
+          "roster"
         ],
         "additionalProperties": false,
         "description": "One participant on the League page's Participants grid."
@@ -26532,14 +26718,8 @@
                     "null"
                   ]
                 },
-                "teamAffiliation": {
-                  "type": [
-                    "string",
-                    "null"
-                  ]
-                },
-                "role": {
-                  "description": "Playing role, such as a position; not a rank.",
+                "abbreviation": {
+                  "description": "A team's abbreviation as its feed sends it (KC); null for a player and for a team its feed gives none.",
                   "type": [
                     "string",
                     "null"
@@ -26581,6 +26761,40 @@
                   "type": "string",
                   "format": "date-time",
                   "description": "ISO 8601 datetime string."
+                },
+                "roster": {
+                  "description": "A player's team and position in the league's current Season, from their roster row; null for a team and for a player on no roster.",
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "properties": {
+                    "teamParticipantId": {
+                      "type": "string",
+                      "format": "uuid",
+                      "description": "The player's team: a TEAM participant of the league."
+                    },
+                    "teamName": {
+                      "type": "string",
+                      "description": "The team's name."
+                    },
+                    "positionCode": {
+                      "type": "string",
+                      "description": "The player's position's code in the league (QB). Screens read its words by this code."
+                    },
+                    "lastSeenAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "description": "When the roster sync last saw the player on the roster."
+                    }
+                  },
+                  "required": [
+                    "teamParticipantId",
+                    "teamName",
+                    "positionCode",
+                    "lastSeenAt"
+                  ],
+                  "additionalProperties": false
                 }
               },
               "required": [
@@ -26589,13 +26803,13 @@
                 "participantType",
                 "shortName",
                 "nationality",
-                "teamAffiliation",
-                "role",
+                "abbreviation",
                 "ranking",
                 "feedId",
                 "lastInFeedAt",
                 "addedBy",
-                "createdAt"
+                "createdAt",
+                "roster"
               ],
               "additionalProperties": false,
               "description": "One participant on the League page's Participants grid."
@@ -35482,15 +35696,8 @@
                 "description": "Participant nationality or country code when known.",
                 "type": "string"
               },
-              "role": {
-                "description": "Playing role when known (\"GOLFER\", \"QB\"). Not a rank: `position` means rank on the standing objects.",
-                "type": [
-                  "string",
-                  "null"
-                ]
-              },
-              "teamAffiliation": {
-                "description": "Current team affiliation when the participant is not itself a team.",
+              "abbreviation": {
+                "description": "A team's abbreviation as its feed sends it (KC); null for a player and for a team its feed gives none. A player's team and position are their roster row's.",
                 "type": [
                   "string",
                   "null"
@@ -36033,15 +36240,8 @@
                       "description": "Participant nationality or country code when known.",
                       "type": "string"
                     },
-                    "role": {
-                      "description": "Playing role when known (\"GOLFER\", \"QB\"). Not a rank: `position` means rank on the standing objects.",
-                      "type": [
-                        "string",
-                        "null"
-                      ]
-                    },
-                    "teamAffiliation": {
-                      "description": "Current team affiliation when the participant is not itself a team.",
+                    "abbreviation": {
+                      "description": "A team's abbreviation as its feed sends it (KC); null for a player and for a team its feed gives none. A player's team and position are their roster row's.",
                       "type": [
                         "string",
                         "null"
@@ -36711,15 +36911,8 @@
                     "description": "Participant nationality or country code when known.",
                     "type": "string"
                   },
-                  "role": {
-                    "description": "Playing role when known (\"GOLFER\", \"QB\"). Not a rank: `position` means rank on the standing objects.",
-                    "type": [
-                      "string",
-                      "null"
-                    ]
-                  },
-                  "teamAffiliation": {
-                    "description": "Current team affiliation when the participant is not itself a team.",
+                  "abbreviation": {
+                    "description": "A team's abbreviation as its feed sends it (KC); null for a player and for a team its feed gives none. A player's team and position are their roster row's.",
                     "type": [
                       "string",
                       "null"
@@ -39496,19 +39689,6 @@
                     "null"
                   ]
                 },
-                "role": {
-                  "description": "The participant's playing role, when known.",
-                  "type": [
-                    "string",
-                    "null"
-                  ]
-                },
-                "teamAffiliation": {
-                  "type": [
-                    "string",
-                    "null"
-                  ]
-                },
                 "pickedAt": {
                   "type": "string",
                   "format": "date-time",
@@ -39563,19 +39743,6 @@
             "type": "string"
           },
           "participantStatus": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "role": {
-            "description": "The participant's playing role, when known.",
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "teamAffiliation": {
             "type": [
               "string",
               "null"
@@ -40314,15 +40481,8 @@
                       "description": "Participant nationality or country code when known.",
                       "type": "string"
                     },
-                    "role": {
-                      "description": "Playing role when known (\"GOLFER\", \"QB\"). Not a rank: `position` means rank on the standing objects.",
-                      "type": [
-                        "string",
-                        "null"
-                      ]
-                    },
-                    "teamAffiliation": {
-                      "description": "Current team affiliation when the participant is not itself a team.",
+                    "abbreviation": {
+                      "description": "A team's abbreviation as its feed sends it (KC); null for a player and for a team its feed gives none. A player's team and position are their roster row's.",
                       "type": [
                         "string",
                         "null"
@@ -42005,19 +42165,6 @@
                         "null"
                       ]
                     },
-                    "role": {
-                      "description": "The participant's playing role, when known.",
-                      "type": [
-                        "string",
-                        "null"
-                      ]
-                    },
-                    "teamAffiliation": {
-                      "type": [
-                        "string",
-                        "null"
-                      ]
-                    },
                     "pickedAt": {
                       "type": "string",
                       "format": "date-time",
@@ -42177,19 +42324,6 @@
                       "type": "string"
                     },
                     "participantStatus": {
-                      "type": [
-                        "string",
-                        "null"
-                      ]
-                    },
-                    "role": {
-                      "description": "The participant's playing role, when known.",
-                      "type": [
-                        "string",
-                        "null"
-                      ]
-                    },
-                    "teamAffiliation": {
                       "type": [
                         "string",
                         "null"
@@ -42375,19 +42509,6 @@
                         "type": "string"
                       },
                       "participantStatus": {
-                        "type": [
-                          "string",
-                          "null"
-                        ]
-                      },
-                      "role": {
-                        "description": "The participant's playing role, when known.",
-                        "type": [
-                          "string",
-                          "null"
-                        ]
-                      },
-                      "teamAffiliation": {
                         "type": [
                           "string",
                           "null"
@@ -42590,19 +42711,6 @@
                         "type": "string"
                       },
                       "participantStatus": {
-                        "type": [
-                          "string",
-                          "null"
-                        ]
-                      },
-                      "role": {
-                        "description": "The participant's playing role, when known.",
-                        "type": [
-                          "string",
-                          "null"
-                        ]
-                      },
-                      "teamAffiliation": {
                         "type": [
                           "string",
                           "null"
@@ -42869,12 +42977,6 @@
                     "null"
                   ]
                 },
-                "role": {
-                  "type": "string"
-                },
-                "team": {
-                  "type": "string"
-                },
                 "price": {
                   "type": "number"
                 },
@@ -42972,18 +43074,6 @@
                       },
                       "participantName": {
                         "type": "string"
-                      },
-                      "role": {
-                        "type": [
-                          "string",
-                          "null"
-                        ]
-                      },
-                      "team": {
-                        "type": [
-                          "string",
-                          "null"
-                        ]
                       },
                       "status": {
                         "type": [
@@ -43180,12 +43270,6 @@
                     "string",
                     "null"
                   ]
-                },
-                "role": {
-                  "type": "string"
-                },
-                "team": {
-                  "type": "string"
                 },
                 "price": {
                   "type": "number"
@@ -44891,18 +44975,6 @@
                       "participantName": {
                         "type": "string"
                       },
-                      "role": {
-                        "type": [
-                          "string",
-                          "null"
-                        ]
-                      },
-                      "team": {
-                        "type": [
-                          "string",
-                          "null"
-                        ]
-                      },
                       "status": {
                         "type": [
                           "string",
@@ -46580,12 +46652,72 @@
                     ],
                     "additionalProperties": false,
                     "description": "The SCORES sync: live score polling for each event with a Game due or in play."
+                  },
+                  "ROSTER": {
+                    "type": "object",
+                    "properties": {
+                      "intervals": {
+                        "type": "object",
+                        "properties": {
+                          "IN_SEASON": {
+                            "type": "object",
+                            "properties": {
+                              "intervalMinutes": {
+                                "description": "How often the sync runs, in minutes.",
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 9007199254740991
+                              },
+                              "intervalSeconds": {
+                                "description": "How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes.",
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 9007199254740991
+                              }
+                            },
+                            "additionalProperties": false,
+                            "description": "How often the sync runs for a league in season."
+                          },
+                          "OFFSEASON": {
+                            "type": "object",
+                            "properties": {
+                              "intervalMinutes": {
+                                "description": "How often the sync runs, in minutes.",
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 9007199254740991
+                              },
+                              "intervalSeconds": {
+                                "description": "How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes.",
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 9007199254740991
+                              }
+                            },
+                            "additionalProperties": false,
+                            "description": "How often the sync runs for a league off season."
+                          }
+                        },
+                        "required": [
+                          "IN_SEASON",
+                          "OFFSEASON"
+                        ],
+                        "additionalProperties": false,
+                        "description": "A sync kind's interval for each Season state."
+                      }
+                    },
+                    "required": [
+                      "intervals"
+                    ],
+                    "additionalProperties": false,
+                    "description": "The ROSTER sync: each synced sport league's roster for its current Season, in a league whose provider names its positions. It has no switch."
                   }
                 },
                 "required": [
                   "EVENTS",
                   "FIELD",
-                  "SCORES"
+                  "SCORES",
+                  "ROSTER"
                 ],
                 "additionalProperties": false,
                 "description": "The value in use."
@@ -46779,12 +46911,72 @@
                     ],
                     "additionalProperties": false,
                     "description": "The SCORES sync: live score polling for each event with a Game due or in play."
+                  },
+                  "ROSTER": {
+                    "type": "object",
+                    "properties": {
+                      "intervals": {
+                        "type": "object",
+                        "properties": {
+                          "IN_SEASON": {
+                            "type": "object",
+                            "properties": {
+                              "intervalMinutes": {
+                                "description": "How often the sync runs, in minutes.",
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 9007199254740991
+                              },
+                              "intervalSeconds": {
+                                "description": "How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes.",
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 9007199254740991
+                              }
+                            },
+                            "additionalProperties": false,
+                            "description": "How often the sync runs for a league in season."
+                          },
+                          "OFFSEASON": {
+                            "type": "object",
+                            "properties": {
+                              "intervalMinutes": {
+                                "description": "How often the sync runs, in minutes.",
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 9007199254740991
+                              },
+                              "intervalSeconds": {
+                                "description": "How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes.",
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 9007199254740991
+                              }
+                            },
+                            "additionalProperties": false,
+                            "description": "How often the sync runs for a league off season."
+                          }
+                        },
+                        "required": [
+                          "IN_SEASON",
+                          "OFFSEASON"
+                        ],
+                        "additionalProperties": false,
+                        "description": "A sync kind's interval for each Season state."
+                      }
+                    },
+                    "required": [
+                      "intervals"
+                    ],
+                    "additionalProperties": false,
+                    "description": "The ROSTER sync: each synced sport league's roster for its current Season, in a league whose provider names its positions. It has no switch."
                   }
                 },
                 "required": [
                   "EVENTS",
                   "FIELD",
-                  "SCORES"
+                  "SCORES",
+                  "ROSTER"
                 ],
                 "additionalProperties": false,
                 "description": "The value a reset would store."
@@ -48810,12 +49002,72 @@
                           ],
                           "additionalProperties": false,
                           "description": "The SCORES sync: live score polling for each event with a Game due or in play."
+                        },
+                        "ROSTER": {
+                          "type": "object",
+                          "properties": {
+                            "intervals": {
+                              "type": "object",
+                              "properties": {
+                                "IN_SEASON": {
+                                  "type": "object",
+                                  "properties": {
+                                    "intervalMinutes": {
+                                      "description": "How often the sync runs, in minutes.",
+                                      "type": "integer",
+                                      "minimum": 1,
+                                      "maximum": 9007199254740991
+                                    },
+                                    "intervalSeconds": {
+                                      "description": "How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes.",
+                                      "type": "integer",
+                                      "minimum": 1,
+                                      "maximum": 9007199254740991
+                                    }
+                                  },
+                                  "additionalProperties": false,
+                                  "description": "How often the sync runs for a league in season."
+                                },
+                                "OFFSEASON": {
+                                  "type": "object",
+                                  "properties": {
+                                    "intervalMinutes": {
+                                      "description": "How often the sync runs, in minutes.",
+                                      "type": "integer",
+                                      "minimum": 1,
+                                      "maximum": 9007199254740991
+                                    },
+                                    "intervalSeconds": {
+                                      "description": "How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes.",
+                                      "type": "integer",
+                                      "minimum": 1,
+                                      "maximum": 9007199254740991
+                                    }
+                                  },
+                                  "additionalProperties": false,
+                                  "description": "How often the sync runs for a league off season."
+                                }
+                              },
+                              "required": [
+                                "IN_SEASON",
+                                "OFFSEASON"
+                              ],
+                              "additionalProperties": false,
+                              "description": "A sync kind's interval for each Season state."
+                            }
+                          },
+                          "required": [
+                            "intervals"
+                          ],
+                          "additionalProperties": false,
+                          "description": "The ROSTER sync: each synced sport league's roster for its current Season, in a league whose provider names its positions. It has no switch."
                         }
                       },
                       "required": [
                         "EVENTS",
                         "FIELD",
-                        "SCORES"
+                        "SCORES",
+                        "ROSTER"
                       ],
                       "additionalProperties": false,
                       "description": "The value in use."
@@ -49009,12 +49261,72 @@
                           ],
                           "additionalProperties": false,
                           "description": "The SCORES sync: live score polling for each event with a Game due or in play."
+                        },
+                        "ROSTER": {
+                          "type": "object",
+                          "properties": {
+                            "intervals": {
+                              "type": "object",
+                              "properties": {
+                                "IN_SEASON": {
+                                  "type": "object",
+                                  "properties": {
+                                    "intervalMinutes": {
+                                      "description": "How often the sync runs, in minutes.",
+                                      "type": "integer",
+                                      "minimum": 1,
+                                      "maximum": 9007199254740991
+                                    },
+                                    "intervalSeconds": {
+                                      "description": "How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes.",
+                                      "type": "integer",
+                                      "minimum": 1,
+                                      "maximum": 9007199254740991
+                                    }
+                                  },
+                                  "additionalProperties": false,
+                                  "description": "How often the sync runs for a league in season."
+                                },
+                                "OFFSEASON": {
+                                  "type": "object",
+                                  "properties": {
+                                    "intervalMinutes": {
+                                      "description": "How often the sync runs, in minutes.",
+                                      "type": "integer",
+                                      "minimum": 1,
+                                      "maximum": 9007199254740991
+                                    },
+                                    "intervalSeconds": {
+                                      "description": "How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes.",
+                                      "type": "integer",
+                                      "minimum": 1,
+                                      "maximum": 9007199254740991
+                                    }
+                                  },
+                                  "additionalProperties": false,
+                                  "description": "How often the sync runs for a league off season."
+                                }
+                              },
+                              "required": [
+                                "IN_SEASON",
+                                "OFFSEASON"
+                              ],
+                              "additionalProperties": false,
+                              "description": "A sync kind's interval for each Season state."
+                            }
+                          },
+                          "required": [
+                            "intervals"
+                          ],
+                          "additionalProperties": false,
+                          "description": "The ROSTER sync: each synced sport league's roster for its current Season, in a league whose provider names its positions. It has no switch."
                         }
                       },
                       "required": [
                         "EVENTS",
                         "FIELD",
-                        "SCORES"
+                        "SCORES",
+                        "ROSTER"
                       ],
                       "additionalProperties": false,
                       "description": "The value a reset would store."
@@ -50997,12 +51309,72 @@
                     ],
                     "additionalProperties": false,
                     "description": "The SCORES sync: live score polling for each event with a Game due or in play."
+                  },
+                  "ROSTER": {
+                    "type": "object",
+                    "properties": {
+                      "intervals": {
+                        "type": "object",
+                        "properties": {
+                          "IN_SEASON": {
+                            "type": "object",
+                            "properties": {
+                              "intervalMinutes": {
+                                "description": "How often the sync runs, in minutes.",
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 9007199254740991
+                              },
+                              "intervalSeconds": {
+                                "description": "How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes.",
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 9007199254740991
+                              }
+                            },
+                            "additionalProperties": false,
+                            "description": "How often the sync runs for a league in season."
+                          },
+                          "OFFSEASON": {
+                            "type": "object",
+                            "properties": {
+                              "intervalMinutes": {
+                                "description": "How often the sync runs, in minutes.",
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 9007199254740991
+                              },
+                              "intervalSeconds": {
+                                "description": "How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes.",
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 9007199254740991
+                              }
+                            },
+                            "additionalProperties": false,
+                            "description": "How often the sync runs for a league off season."
+                          }
+                        },
+                        "required": [
+                          "IN_SEASON",
+                          "OFFSEASON"
+                        ],
+                        "additionalProperties": false,
+                        "description": "A sync kind's interval for each Season state."
+                      }
+                    },
+                    "required": [
+                      "intervals"
+                    ],
+                    "additionalProperties": false,
+                    "description": "The ROSTER sync: each synced sport league's roster for its current Season, in a league whose provider names its positions. It has no switch."
                   }
                 },
                 "required": [
                   "EVENTS",
                   "FIELD",
-                  "SCORES"
+                  "SCORES",
+                  "ROSTER"
                 ],
                 "additionalProperties": false,
                 "description": "The whole new value."
@@ -52110,12 +52482,72 @@
                     ],
                     "additionalProperties": false,
                     "description": "The SCORES sync: live score polling for each event with a Game due or in play."
+                  },
+                  "ROSTER": {
+                    "type": "object",
+                    "properties": {
+                      "intervals": {
+                        "type": "object",
+                        "properties": {
+                          "IN_SEASON": {
+                            "type": "object",
+                            "properties": {
+                              "intervalMinutes": {
+                                "description": "How often the sync runs, in minutes.",
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 9007199254740991
+                              },
+                              "intervalSeconds": {
+                                "description": "How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes.",
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 9007199254740991
+                              }
+                            },
+                            "additionalProperties": false,
+                            "description": "How often the sync runs for a league in season."
+                          },
+                          "OFFSEASON": {
+                            "type": "object",
+                            "properties": {
+                              "intervalMinutes": {
+                                "description": "How often the sync runs, in minutes.",
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 9007199254740991
+                              },
+                              "intervalSeconds": {
+                                "description": "How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes.",
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 9007199254740991
+                              }
+                            },
+                            "additionalProperties": false,
+                            "description": "How often the sync runs for a league off season."
+                          }
+                        },
+                        "required": [
+                          "IN_SEASON",
+                          "OFFSEASON"
+                        ],
+                        "additionalProperties": false,
+                        "description": "A sync kind's interval for each Season state."
+                      }
+                    },
+                    "required": [
+                      "intervals"
+                    ],
+                    "additionalProperties": false,
+                    "description": "The ROSTER sync: each synced sport league's roster for its current Season, in a league whose provider names its positions. It has no switch."
                   }
                 },
                 "required": [
                   "EVENTS",
                   "FIELD",
-                  "SCORES"
+                  "SCORES",
+                  "ROSTER"
                 ],
                 "additionalProperties": false
               },
@@ -52308,12 +52740,72 @@
                     ],
                     "additionalProperties": false,
                     "description": "The SCORES sync: live score polling for each event with a Game due or in play."
+                  },
+                  "ROSTER": {
+                    "type": "object",
+                    "properties": {
+                      "intervals": {
+                        "type": "object",
+                        "properties": {
+                          "IN_SEASON": {
+                            "type": "object",
+                            "properties": {
+                              "intervalMinutes": {
+                                "description": "How often the sync runs, in minutes.",
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 9007199254740991
+                              },
+                              "intervalSeconds": {
+                                "description": "How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes.",
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 9007199254740991
+                              }
+                            },
+                            "additionalProperties": false,
+                            "description": "How often the sync runs for a league in season."
+                          },
+                          "OFFSEASON": {
+                            "type": "object",
+                            "properties": {
+                              "intervalMinutes": {
+                                "description": "How often the sync runs, in minutes.",
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 9007199254740991
+                              },
+                              "intervalSeconds": {
+                                "description": "How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes.",
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 9007199254740991
+                              }
+                            },
+                            "additionalProperties": false,
+                            "description": "How often the sync runs for a league off season."
+                          }
+                        },
+                        "required": [
+                          "IN_SEASON",
+                          "OFFSEASON"
+                        ],
+                        "additionalProperties": false,
+                        "description": "A sync kind's interval for each Season state."
+                      }
+                    },
+                    "required": [
+                      "intervals"
+                    ],
+                    "additionalProperties": false,
+                    "description": "The ROSTER sync: each synced sport league's roster for its current Season, in a league whose provider names its positions. It has no switch."
                   }
                 },
                 "required": [
                   "EVENTS",
                   "FIELD",
-                  "SCORES"
+                  "SCORES",
+                  "ROSTER"
                 ],
                 "additionalProperties": false,
                 "description": "The value the save stored."
@@ -54284,12 +54776,72 @@
                           ],
                           "additionalProperties": false,
                           "description": "The SCORES sync: live score polling for each event with a Game due or in play."
+                        },
+                        "ROSTER": {
+                          "type": "object",
+                          "properties": {
+                            "intervals": {
+                              "type": "object",
+                              "properties": {
+                                "IN_SEASON": {
+                                  "type": "object",
+                                  "properties": {
+                                    "intervalMinutes": {
+                                      "description": "How often the sync runs, in minutes.",
+                                      "type": "integer",
+                                      "minimum": 1,
+                                      "maximum": 9007199254740991
+                                    },
+                                    "intervalSeconds": {
+                                      "description": "How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes.",
+                                      "type": "integer",
+                                      "minimum": 1,
+                                      "maximum": 9007199254740991
+                                    }
+                                  },
+                                  "additionalProperties": false,
+                                  "description": "How often the sync runs for a league in season."
+                                },
+                                "OFFSEASON": {
+                                  "type": "object",
+                                  "properties": {
+                                    "intervalMinutes": {
+                                      "description": "How often the sync runs, in minutes.",
+                                      "type": "integer",
+                                      "minimum": 1,
+                                      "maximum": 9007199254740991
+                                    },
+                                    "intervalSeconds": {
+                                      "description": "How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes.",
+                                      "type": "integer",
+                                      "minimum": 1,
+                                      "maximum": 9007199254740991
+                                    }
+                                  },
+                                  "additionalProperties": false,
+                                  "description": "How often the sync runs for a league off season."
+                                }
+                              },
+                              "required": [
+                                "IN_SEASON",
+                                "OFFSEASON"
+                              ],
+                              "additionalProperties": false,
+                              "description": "A sync kind's interval for each Season state."
+                            }
+                          },
+                          "required": [
+                            "intervals"
+                          ],
+                          "additionalProperties": false,
+                          "description": "The ROSTER sync: each synced sport league's roster for its current Season, in a league whose provider names its positions. It has no switch."
                         }
                       },
                       "required": [
                         "EVENTS",
                         "FIELD",
-                        "SCORES"
+                        "SCORES",
+                        "ROSTER"
                       ],
                       "additionalProperties": false
                     },
@@ -54482,12 +55034,72 @@
                           ],
                           "additionalProperties": false,
                           "description": "The SCORES sync: live score polling for each event with a Game due or in play."
+                        },
+                        "ROSTER": {
+                          "type": "object",
+                          "properties": {
+                            "intervals": {
+                              "type": "object",
+                              "properties": {
+                                "IN_SEASON": {
+                                  "type": "object",
+                                  "properties": {
+                                    "intervalMinutes": {
+                                      "description": "How often the sync runs, in minutes.",
+                                      "type": "integer",
+                                      "minimum": 1,
+                                      "maximum": 9007199254740991
+                                    },
+                                    "intervalSeconds": {
+                                      "description": "How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes.",
+                                      "type": "integer",
+                                      "minimum": 1,
+                                      "maximum": 9007199254740991
+                                    }
+                                  },
+                                  "additionalProperties": false,
+                                  "description": "How often the sync runs for a league in season."
+                                },
+                                "OFFSEASON": {
+                                  "type": "object",
+                                  "properties": {
+                                    "intervalMinutes": {
+                                      "description": "How often the sync runs, in minutes.",
+                                      "type": "integer",
+                                      "minimum": 1,
+                                      "maximum": 9007199254740991
+                                    },
+                                    "intervalSeconds": {
+                                      "description": "How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes.",
+                                      "type": "integer",
+                                      "minimum": 1,
+                                      "maximum": 9007199254740991
+                                    }
+                                  },
+                                  "additionalProperties": false,
+                                  "description": "How often the sync runs for a league off season."
+                                }
+                              },
+                              "required": [
+                                "IN_SEASON",
+                                "OFFSEASON"
+                              ],
+                              "additionalProperties": false,
+                              "description": "A sync kind's interval for each Season state."
+                            }
+                          },
+                          "required": [
+                            "intervals"
+                          ],
+                          "additionalProperties": false,
+                          "description": "The ROSTER sync: each synced sport league's roster for its current Season, in a league whose provider names its positions. It has no switch."
                         }
                       },
                       "required": [
                         "EVENTS",
                         "FIELD",
-                        "SCORES"
+                        "SCORES",
+                        "ROSTER"
                       ],
                       "additionalProperties": false,
                       "description": "The value the save stored."
@@ -77393,7 +78005,8 @@
             "enum": [
               "EVENTS",
               "FIELD",
-              "SCORES"
+              "SCORES",
+              "ROSTER"
             ],
             "description": "What a sync run syncs: a sport league's EVENTS, an event's FIELD, or an event's SCORES."
           },
@@ -77561,7 +78174,8 @@
             "enum": [
               "EVENTS",
               "FIELD",
-              "SCORES"
+              "SCORES",
+              "ROSTER"
             ],
             "description": "What a sync run syncs: a sport league's EVENTS, an event's FIELD, or an event's SCORES."
           },
@@ -78056,7 +78670,8 @@
                   "enum": [
                     "EVENTS",
                     "FIELD",
-                    "SCORES"
+                    "SCORES",
+                    "ROSTER"
                   ],
                   "description": "What a sync run syncs: a sport league's EVENTS, an event's FIELD, or an event's SCORES."
                 },
@@ -78274,7 +78889,8 @@
                   "enum": [
                     "EVENTS",
                     "FIELD",
-                    "SCORES"
+                    "SCORES",
+                    "ROSTER"
                   ],
                   "description": "What a sync run syncs: a sport league's EVENTS, an event's FIELD, or an event's SCORES."
                 },
@@ -78443,7 +79059,8 @@
               "ACTIVATE_EVENT_CONTESTS",
               "FOLLOW_POSTPONED_EVENT_CONTESTS",
               "RESOLVE_MAPPED_PARTICIPANT_FINDINGS",
-              "REFRESH_SLOT_TIEBREAKERS"
+              "REFRESH_SLOT_TIEBREAKERS",
+              "SYNC_LEAGUE_ROSTER"
             ],
             "description": "The job's handler. Its kind follows from it."
           },
@@ -78752,7 +79369,8 @@
                     "ACTIVATE_EVENT_CONTESTS",
                     "FOLLOW_POSTPONED_EVENT_CONTESTS",
                     "RESOLVE_MAPPED_PARTICIPANT_FINDINGS",
-                    "REFRESH_SLOT_TIEBREAKERS"
+                    "REFRESH_SLOT_TIEBREAKERS",
+                    "SYNC_LEAGUE_ROSTER"
                   ],
                   "description": "The job's handler. Its kind follows from it."
                 },
@@ -79020,7 +79638,8 @@
                   "ACTIVATE_EVENT_CONTESTS",
                   "FOLLOW_POSTPONED_EVENT_CONTESTS",
                   "RESOLVE_MAPPED_PARTICIPANT_FINDINGS",
-                  "REFRESH_SLOT_TIEBREAKERS"
+                  "REFRESH_SLOT_TIEBREAKERS",
+                  "SYNC_LEAGUE_ROSTER"
                 ],
                 "description": "The job's handler. Its kind follows from it."
               },
@@ -79413,6 +80032,7 @@
               "EVENTS",
               "FIELD",
               "SCORES",
+              "ROSTER",
               null
             ]
           },
@@ -79816,6 +80436,7 @@
                     "EVENTS",
                     "FIELD",
                     "SCORES",
+                    "ROSTER",
                     null
                   ]
                 },
@@ -80072,6 +80693,7 @@
                   "EVENTS",
                   "FIELD",
                   "SCORES",
+                  "ROSTER",
                   null
                 ]
               },
@@ -95551,7 +96173,7 @@
             "in": "query",
             "name": "q",
             "required": false,
-            "description": "Case-insensitive text matched against name, first, last and short name, and team."
+            "description": "Case-insensitive text matched against name, first, last and short name, and a team's abbreviation."
           },
           {
             "schema": {

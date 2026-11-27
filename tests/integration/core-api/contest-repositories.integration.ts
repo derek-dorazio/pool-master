@@ -98,9 +98,9 @@ async function createLeagueAndEvent() {
     },
   });
   const field = [];
-  for (const [name, role] of [['Golfer One', 'GOLFER'], ['Golfer Two', null], ['Golfer Three', null]] as const) {
+  for (const name of ['Golfer One', 'Golfer Two', 'Golfer Three']) {
     const participant = await prisma.participant.create({
-      data: { sportLeagueId: await participantLeagueId(prisma, sport.id), name: `${name} ${suffix}`, participantType: 'INDIVIDUAL', status: 'ACTIVE', role },
+      data: { sportLeagueId: await participantLeagueId(prisma, sport.id), name: `${name} ${suffix}`, participantType: 'INDIVIDUAL', status: 'ACTIVE' },
     });
     field.push(await prisma.sportEventParticipant.create({
       data: { sportEventId: event.id, participantId: participant.id },
@@ -1487,15 +1487,11 @@ describe('ContestEntryPickRepository — read-only', () => {
         participantId: field[0].participantId,
         participantName: `Golfer One ${suffix}`,
         status: 'ACTIVE',
-        role: 'GOLFER',
-        teamAffiliation: null,
       },
       {
         participantId: field[1].participantId,
         participantName: `Golfer Two ${suffix}`,
         status: 'WITHDRAWN',
-        role: null,
-        teamAffiliation: null,
       },
     ]);
     // Each pick names the event its field row belongs to (#713).

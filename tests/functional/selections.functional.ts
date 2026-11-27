@@ -278,8 +278,6 @@ async function seedBudgetPickFixture(options: { rosterSize?: number; salaryCap?:
       sportLeagueId: await participantLeagueId(prisma, sport.id),
       name: `Draft Budget Player ${randomUUID().slice(0, 8)}`,
       participantType: 'INDIVIDUAL',
-      role: 'GOLFER',
-      teamAffiliation: null,
     },
   });
   createdParticipantIds.push(firstParticipant.id);
@@ -289,8 +287,6 @@ async function seedBudgetPickFixture(options: { rosterSize?: number; salaryCap?:
       sportLeagueId: await participantLeagueId(prisma, sport.id),
       name: `Draft Budget Player ${randomUUID().slice(0, 8)}`,
       participantType: 'INDIVIDUAL',
-      role: 'GOLFER',
-      teamAffiliation: null,
     },
   });
   createdParticipantIds.push(secondParticipant.id);
@@ -416,8 +412,6 @@ async function seedTieredDraftFixture(options: {
         sportLeagueId: await participantLeagueId(prisma, sport.id),
         name: `Draft Tiered Player ${index + 1} ${randomUUID().slice(0, 8)}`,
         participantType: 'INDIVIDUAL',
-        role: 'GOLFER',
-        teamAffiliation: null,
       },
     });
     createdParticipantIds.push(participant.id);
@@ -492,8 +486,6 @@ async function seedMultiTierGolfEvent(options: { tierCount: number; golfersPerTi
           sportLeagueId: await participantLeagueId(prisma, sport.id),
           name: `Multi Tier Golfer ${tierIndex + 1}-${golferIndex + 1} ${randomUUID().slice(0, 8)}`,
           participantType: 'INDIVIDUAL',
-          role: 'GOLFER',
-          teamAffiliation: null,
         },
       });
       createdParticipantIds.push(participant.id);

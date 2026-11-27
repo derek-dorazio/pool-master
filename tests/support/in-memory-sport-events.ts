@@ -17,7 +17,6 @@ import type {
   SportEventParticipantPatch,
   FieldGameRepository,
   FieldSideResult,
-  ProviderNotificationReceipt,
   SportEventParticipantRepository,
   SportEventSlotParticipantValuationRepository,
   SportEventParticipantView,
@@ -42,7 +41,7 @@ import type {
 } from '@poolmaster/shared/db';
 import { TEST_PROVIDER_ROWS } from './balldontlie-provider-rows';
 import type { SportEventBracketServiceDeps } from '../../packages/core-api/src/modules/events/sport-event-bracket-service';
-import { chooseTierSetSlot, chooseTierSetSlots, compareMatchPlaces, compareSeasonSlots, slotTierLayoutOf, MatchEnding, SeasonSlotStatus, SeriesFormat, SlotKind, SlotPairing, SlotWindowStatus, type SlotWindow, findSportRow, providerSourceIdOf, requireProviderCodeOfSourceId, type ProviderEventRef, type SportEventProviderMapping, HomeAway, isMatchUnplayed, MatchSideOutcome, MatchStatus, PeriodKind, PeriodKindOrder, Sport, FieldOrderBasis, TierProfileType, SportEventParticipantStatus, type TierSetTemplateListing } from '@poolmaster/shared/domain';
+import { chooseTierSetSlot, chooseTierSetSlots, compareMatchPlaces, compareSeasonSlots, slotTierLayoutOf, MatchEnding, SeasonSlotStatus, SeriesFormat, SlotKind, SlotPairing, SlotWindowStatus, type SlotWindow, findSportRow, providerSourceIdOf, requireProviderCodeOfSourceId, scoresDueSince, type ProviderEventRef, type SportEventProviderMapping, HomeAway, isMatchUnplayed, MatchSideOutcome, MatchStatus, PeriodKind, PeriodKindOrder, Sport, FieldOrderBasis, TierProfileType, SportEventParticipantStatus, type TierSetTemplateListing } from '@poolmaster/shared/domain';
 import { sportEventSlots, sportPlay } from './sport-play';
 import type {
   AutoReleaseCheck,
@@ -336,8 +335,6 @@ export class InMemorySportEvents {
     return this.matchRows.flatMap((match) => match.games);
   }
   gameMappings: Array<{ sportEventRoundMatchGameId: string; providerCode: string; externalId: string }> = [];
-  /** Each provider notification recorded against events (#1499). */
-  readonly providerNotifications: ProviderNotificationReceipt[] = [];
   /** The jobs each status move or edit wrote with it (#1448, #1464). */
   backgroundJobs: BackgroundJobRequest[] = [];
   /** Active contest setups each sport league offers (#1823); a league not listed offers one. */
@@ -769,9 +766,6 @@ export class InMemorySportEvents {
           externalId: this.externalIdAt(row.id, query.providerId) as string,
           inProgress: row.status === 'IN_PROGRESS',
         })),
-      recordProviderNotification: async (receipt) => {
-        this.providerNotifications.push(receipt);
-      },
       findReleaseFacts: async (event) => ({
         scheduledRoundCount: this.roundRows.filter((round) => round.sportEventId === event.id).length,
         contestSetupCount: this.contestSetupCounts.get(event.sportLeagueId) ?? 1,
@@ -1111,6 +1105,14 @@ export class InMemorySportEvents {
       recordProviderNotification: async (gameIds, receivedAt) => {
         for (const match of this.matchRows) {
           match.games = match.games.map((game) => (gameIds.includes(game.id) ? { ...game, lastProviderNotificationAt: receivedAt } : game));
+        }
+      },
+      recordEventNotification: async (sportEventIds, receivedAt) => {
+        // The Games in play, as `gameInPlayWhere` picks them.
+        const inPlay = (game: SportEventRoundMatchGame) => game.status === MatchStatus.IN_PROGRESS
+          || (game.status === MatchStatus.SCHEDULED && game.scheduledDate !== null && game.scheduledDate <= receivedAt && game.scheduledDate >= scoresDueSince(receivedAt));
+        for (const match of this.matchRows) {
+          match.games = match.games.map((game) => (sportEventIds.includes(game.sportEventId) && inPlay(game) ? { ...game, lastProviderNotificationAt: receivedAt } : game));
         }
       },
     };

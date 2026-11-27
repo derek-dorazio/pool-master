@@ -10,7 +10,6 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { SyncedLeagueRef } from '@poolmaster/shared/db';
 import { BackgroundJobType, fieldWindowEventIds, JobTrigger, MatchStatus, Sport, SyncSeasonState, syncSeasonStateOf } from '@poolmaster/shared/domain';
-import { IngestionScheduleConfigSchema } from '@poolmaster/shared/dto/config.dto';
 import { PrismaBackgroundJobRepository, PrismaSportLeagueRepository } from '../../../packages/core-api/src/adapters';
 import { PrismaSyncDueWorkReader } from '../../../packages/core-api/src/adapters/prisma-sync-due-work-reader';
 import { BackgroundJobQueue } from '../../../packages/core-api/src/modules/background-jobs';
@@ -65,7 +64,7 @@ async function linkedEventStarting(league: SyncedLeagueRef, startsAt: Date) {
 }
 
 /** A Game of the event's first round, in the status and at the start given. */
-async function gameOf(event: { id: string; sportEventSlotId: string }, game: { status: MatchStatus; scheduledDate: Date | null; lastProviderNotificationAt?: Date }) {
+async function gameOf(event: { id: string; sportEventSlotId: string }, game: { status: MatchStatus; scheduledDate: Date | null; lastProviderNotificationAt?: Date | null }) {
   const prisma = getPrisma();
   const round = await prisma.sportEventRound.findFirstOrThrow({ where: { sportEventId: event.id, roundNumber: 1 }, select: { id: true } });
   const match = await prisma.sportEventRoundMatch.create({ data: { sportEventId: event.id, sportEventRoundId: round.id, matchNumber: await prisma.sportEventRoundMatch.count({ where: { sportEventId: event.id } }) + 1 } });
@@ -154,30 +153,19 @@ describe('the linked events whose Games are due or in play', () => {
     expect(events[0]?.games).toHaveLength(2);
   });
 
-  it("hears an event last when the provider last notified about it or any of its due Games, whichever is later", async () => {
+  it('hears an event last when the provider last notified about any of its due Games, the latest of them', async () => {
     const league = await syncedLeague();
     const live = await linkedEventStarting(league, at(-HOUR));
-    await getPrisma().sportEvent.update({ where: { id: live.id }, data: { lastProviderNotificationAt: at(-40 * 60_000) } });
+    await gameOf(live, { status: MatchStatus.IN_PROGRESS, scheduledDate: at(-HOUR), lastProviderNotificationAt: at(-40 * 60_000) });
     await gameOf(live, { status: MatchStatus.IN_PROGRESS, scheduledDate: at(-HOUR), lastProviderNotificationAt: at(-5 * 60_000) });
-
-    const events = await new PrismaSyncDueWorkReader(getAppPrisma()).findLiveEvents({ leagues: [league], now: NOW });
-
-    expect(events.at(0)?.lastHeardAt).toEqual(at(-5 * 60_000));
-  });
-
-  it("hears an event last at its own notification when that is later than its Games', and at a Game's when the event itself was never notified", async () => {
-    const league = await syncedLeague();
-    const eventLater = await linkedEventStarting(league, at(-HOUR));
-    await getPrisma().sportEvent.update({ where: { id: eventLater.id }, data: { lastProviderNotificationAt: at(-2 * 60_000) } });
-    await gameOf(eventLater, { status: MatchStatus.IN_PROGRESS, scheduledDate: at(-HOUR), lastProviderNotificationAt: at(-30 * 60_000) });
-    const gameOnly = await linkedEventStarting(league, at(-HOUR));
-    await gameOf(gameOnly, { status: MatchStatus.IN_PROGRESS, scheduledDate: at(-HOUR), lastProviderNotificationAt: at(-7 * 60_000) });
+    const never = await linkedEventStarting(league, at(-HOUR));
+    await gameOf(never, { status: MatchStatus.IN_PROGRESS, scheduledDate: at(-HOUR), lastProviderNotificationAt: null });
 
     const events = await new PrismaSyncDueWorkReader(getAppPrisma()).findLiveEvents({ leagues: [league], now: NOW });
 
     const heard = new Map(events.map((event) => [event.sportEventId, event.lastHeardAt]));
-    expect(heard.get(eventLater.id)).toEqual(at(-2 * 60_000));
-    expect(heard.get(gameOnly.id)).toEqual(at(-7 * 60_000));
+    expect(heard.get(live.id)).toEqual(at(-5 * 60_000));
+    expect(heard.get(never.id)).toBeNull();
   });
 
   it('reads nothing, sending no statement, when the tick names no league', async () => {
@@ -363,6 +351,5 @@ describe('the migration giving each sync kind an interval per Season state', () 
       FIELD: { intervals: { IN_SEASON: { intervalMinutes: 360 }, OFFSEASON: { intervalMinutes: 1440 } } },
       SCORES: { enabled: true, intervals: { IN_SEASON: { intervalSeconds: 60 }, OFFSEASON: { intervalSeconds: 60 } } },
     });
-    expect(IngestionScheduleConfigSchema.safeParse(migrated).success).toBe(true);
   });
 });

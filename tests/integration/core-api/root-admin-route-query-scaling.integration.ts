@@ -70,6 +70,7 @@ import { participantLeagueId } from '../../support/participant-league';
 import { sportRowKeys } from '../../support/sport-rows';
 import { fixtureSeasonId, mapEventToProvider, withCurrentSeason } from '../../support/event-edition';
 import { sportPlay } from '../../support/sport-play';
+import { insertTestSportLeague } from '../../support/test-sport-league';
 import { oneEventSlotId } from '../../support/test-slots';
 
 // No mocks. The providers below are the test's own catalogs, registered on the shared app.
@@ -477,6 +478,24 @@ async function seedLeagueParticipantOverviews(participants: number) {
   return { sportLeagueId: sportLeague.id, rootAdmin: await createTestUser({ isRootAdmin: true }) };
 }
 
+/** A football league of its own with `participants` players, each on its current Season's roster on one team at one position (#2025). */
+async function seedRosteredParticipantOverviews(participants: number) {
+  const prisma = getPrisma();
+  const suffix = randomUUID().slice(0, 8);
+  const sportLeague = await insertTestSportLeague(prisma, { sport: Sport.FOOTBALL, name: `League Page Rostered ${suffix}` });
+  const { currentSeasonId } = await prisma.sportLeague.findUniqueOrThrow({ where: { id: sportLeague.id }, select: { currentSeasonId: true } });
+  if (currentSeasonId === null) throw new Error('A test sport league starts with a current Season.');
+  const team = await prisma.participant.create({ data: { sportLeagueId: sportLeague.id, name: `Rostered Team ${suffix}`, participantType: 'TEAM' } });
+  const position = await prisma.sportLeaguePosition.create({ data: { sportLeagueId: sportLeague.id, code: 'QB', displayOrder: 1, isFieldEligible: true } });
+  for (let index = 0; index < participants; index += 1) {
+    const player = await prisma.participant.create({ data: { sportLeagueId: sportLeague.id, name: `Rostered Player ${suffix} ${String(index)}`, participantType: 'INDIVIDUAL' } });
+    await prisma.sportLeagueSeasonParticipantTeam.create({
+      data: { sportLeagueId: sportLeague.id, sportLeagueSeasonId: currentSeasonId, participantId: player.id, teamParticipantId: team.id, sportLeaguePositionId: position.id, lastSeenAt: new Date() },
+    });
+  }
+  return { sportLeagueId: sportLeague.id, rootAdmin: await createTestUser({ isRootAdmin: true }) };
+}
+
 /** A sport league of `positions` positions, each named by two provider codes on the league's mapping. */
 async function seedLeaguePositions(positions: number) {
   const prisma = getPrisma();
@@ -622,6 +641,15 @@ describe('root admin reads cost the same statements for 2 rows as for 20', () =>
     });
   });
 
+  it('GET a sport league\'s participants with their current Season\'s team and position: the same statements for 2 rostered players as for 20', async () => {
+    await expectConstantQueries({
+      route: 'GET /api/v1/sport-leagues/{sportLeagueId}/participants/overview',
+      seed: seedRosteredParticipantOverviews,
+      call: ({ sportLeagueId, rootAdmin }) => get(`/api/v1/sport-leagues/${sportLeagueId}/participants/overview`, rootAdmin),
+      rowsShown: (response) => okBody(response, SportLeagueParticipantOverviewListResponseSchema).participants.filter((participant) => participant.roster !== null).length,
+    });
+  });
+
   it('GET a sport league\'s positions with their provider codes: the same statements for 2 positions as for 20 (#2001)', async () => {
     await expectConstantQueries({
       route: 'GET /api/v1/sport-leagues/{sportLeagueId}/positions',
@@ -648,7 +676,7 @@ describe('root admin reads cost the same statements for 2 rows as for 20', () =>
     });
   });
 
-  it('GET a sport league\'s syncs: one row per sync kind, from the league with its sport and its sync provider (its selected mapping, provider league and provider, one read each, #1997), its tier profile\'s sources (two reads, #2160) and the latest run of each kind in nine statements, however many runs (#1865)', async () => {
+  it('GET a sport league\'s syncs: one row per sync kind, from the league with its sport and its sync provider (its selected mapping, provider league and provider, one read each, #1997), whether its mapping names position codes (one read, #2025), its tier profile\'s sources (two reads, #2160) and the latest run of each kind in ten statements, however many runs (#1865)', async () => {
     const prisma = getPrisma();
     const sport = await golf();
     const sportLeague = await prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `League Page Syncs ${randomUUID().slice(0, 8)}` } });
@@ -670,7 +698,7 @@ describe('root admin reads cost the same statements for 2 rows as for 20', () =>
         expect(syncs.map((sync) => [sync.kind, sync.health])).toEqual([['EVENTS', 'OK'], ['FIELD', 'OK'], ['SCORES', 'OK']]);
         return syncs.length;
       },
-      statements: 9,
+      statements: 10,
     });
   });
 

@@ -138,7 +138,8 @@ describe('NFL teams', () => {
       sport: Sport.FOOTBALL,
       name: 'Detroit Lions',
       status: 'ACTIVE',
-      metadata: { abbreviation: 'DET', conference: 'NFC', division: 'NORTH' },
+      abbreviation: 'DET',
+      metadata: { conference: 'NFC', division: 'NORTH' },
     });
   });
 
@@ -190,13 +191,13 @@ describe('NFL postseason bracket', () => {
   const field = toNflPlayoffField(standings2025);
   const games = toNflPostseasonGames(postseason2025, new Set(field.map((team) => team.externalId)));
   const team = (abbreviation: string) => {
-    const found = field.find((participant) => participant.metadata['abbreviation'] === abbreviation);
+    const found = field.find((participant) => participant.abbreviation === abbreviation);
     if (found === undefined) throw new Error(`no ${abbreviation} in the field`);
     return found.externalId;
   };
 
   it('seeds each conference\'s top seven from the standings, AFC first and best seed first, and leaves out the eighth', () => {
-    expect(field.map((participant) => [participant.metadata['abbreviation'], participant.seed])).toEqual([
+    expect(field.map((participant) => [participant.abbreviation, participant.seed])).toEqual([
       ['KC', 1], ['BUF', 2], ['BAL', 3], ['HOU', 4], ['LAC', 5], ['PIT', 6], ['DEN', 7],
       ['DET', 1], ['PHI', 2], ['TB', 3], ['LAR', 4], ['MIN', 5], ['WAS', 6], ['GB', 7],
     ]);

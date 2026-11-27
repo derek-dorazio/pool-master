@@ -81,7 +81,7 @@ function eventPageFacts(overrides: Partial<SportEventPageFacts> = {}): SportEven
   return { league: league(), event: pageEvent(), latestRuns: [], overdueCandidates: [], field: [], eventPagePath: null, ...overrides };
 }
 
-const context = { webhookProviderIds: [] as string[], now: NOW };
+const context = { webhookProviderIds: [] as string[], syncsRoster: false, now: NOW };
 
 describe('buildSportLeagueSyncs', () => {
   it('reports every sync kind in order, each with its latest run and its health from that run', () => {
@@ -97,6 +97,13 @@ describe('buildSportLeagueSyncs', () => {
     ]);
     expect(syncs[0]).toMatchObject({ mode: SportLeagueSyncMode.SCHEDULE, lastRun: { id: 'events-run', summary: 'Rate limited.', changedCount: null } });
     expect(syncs[1]).toMatchObject({ lastRun: null });
+  });
+
+  it('lists the roster sync after the others for a league whose provider mapping names position codes, and not for one whose mapping names none', () => {
+    expect(buildSportLeagueSyncs(league(), [], { ...context, syncsRoster: true }).map((sync) => sync.kind)).toEqual([
+      ProviderSyncKind.EVENTS, ProviderSyncKind.FIELD, ProviderSyncKind.SCORES, ProviderSyncKind.ROSTER,
+    ]);
+    expect(buildSportLeagueSyncs(league(), [], context).map((sync) => sync.kind)).not.toContain(ProviderSyncKind.ROSTER);
   });
 
   it('leaves the live scores of a provider whose webhook is on to the webhook, and every other sync to the schedule', () => {
@@ -296,7 +303,7 @@ describe('buildSportEventOverview', () => {
 describe('SportLeaguePageService', () => {
   const participant = {
     id: '7b2eac0a-7c2a-4e3a-9f65-4b8a0a5a6d32', name: 'Aaron Judge', participantType: 'INDIVIDUAL' as const, shortName: null, nationality: 'USA',
-    teamAffiliation: 'Yankees', role: 'RF', ranking: 1, createdAt: NOW,
+    abbreviation: null, ranking: 1, createdAt: NOW,
   };
   const service = (rows: SportLeaguePageParticipant[] | null) => new SportLeaguePageService({
     reader: makeReader(rows),
@@ -307,8 +314,8 @@ describe('SportLeaguePageService', () => {
   it('marks a participant with a provider mapping added by the feed, with its feed id and when the feed last listed it, and one without added by an admin', async () => {
     const seen = at('2027-04-15T09:00:00.000Z');
     const rows = await service([
-      { participant, mapping: { externalId: 'mlb-player-592450', lastSeenAt: seen } },
-      { participant: { ...participant, id: 'admin-added' }, mapping: null },
+      { participant, mapping: { externalId: 'mlb-player-592450', lastSeenAt: seen }, roster: null },
+      { participant: { ...participant, id: 'admin-added' }, mapping: null, roster: null },
     ]).listParticipants('mlb');
 
     expect(rows?.map((row) => [row.addedBy, row.feedId, row.lastInFeedAt])).toEqual([
@@ -356,7 +363,7 @@ describe('SportLeaguePageService', () => {
 function makeReader(participants: SportLeaguePageParticipant[] | null): SportLeaguePageReader {
   const exists = participants !== null;
   return {
-    readSyncFacts: () => Promise.resolve(exists ? { league: league(), latestRuns: [] } : null),
+    readSyncFacts: () => Promise.resolve(exists ? { league: league(), latestRuns: [], syncsRoster: false } : null),
     readEventFacts: () => Promise.resolve(exists ? eventFacts() : null),
     readParticipants: () => Promise.resolve(participants),
     readStructure: () => Promise.resolve(exists ? [] : null),

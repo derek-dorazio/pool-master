@@ -260,7 +260,7 @@ describe('sport league handlers', () => {
   const known = <T>(sportLeagueId: string, facts: T) => Promise.resolve(sportLeagueId === 'sl1' ? facts : null);
   const page = new SportLeaguePageService({
     reader: {
-      readSyncFacts: (sportLeagueId) => known(sportLeagueId, { league: pageLeague, latestRuns: [] }),
+      readSyncFacts: (sportLeagueId) => known(sportLeagueId, { league: pageLeague, latestRuns: [], syncsRoster: false }),
       readEventPageFacts: () => Promise.resolve(null),
       readPositions: (sportLeagueId) => known(sportLeagueId, [{
         id: 'pos1', code: 'QB', displayOrder: 1, isFieldEligible: true,
@@ -281,8 +281,9 @@ describe('sport league handlers', () => {
         overdueCandidates: [],
       }),
       readParticipants: (sportLeagueId) => known(sportLeagueId, [{
-        participant: { id: 'p1', name: 'One', participantType: 'INDIVIDUAL' as const, shortName: null, nationality: null, teamAffiliation: null, role: null, ranking: 1, createdAt: AT },
+        participant: { id: 'p1', name: 'One', participantType: 'INDIVIDUAL' as const, shortName: null, nationality: null, abbreviation: null, ranking: 1, createdAt: AT },
         mapping: null,
+        roster: null,
       }]),
     },
     webhookProviderIds: () => [],

@@ -55,7 +55,8 @@ export function toNhlPlayoffTeam(team: NhlTeam, path: string): PlayoffTeam {
   return {
     id,
     name: required(team.full_name, path, `team ${String(id)}`, 'full_name'),
-    metadata: { abbreviation: team.tricode, conference: team.conference_name, division: team.division_name },
+    ...(team.tricode ? { abbreviation: team.tricode } : {}),
+    metadata: { conference: team.conference_name, division: team.division_name },
   };
 }
 

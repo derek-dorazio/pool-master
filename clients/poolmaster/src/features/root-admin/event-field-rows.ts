@@ -7,7 +7,8 @@ export type EventFieldRow = {
   entry: SportEventParticipantDto;
   id: string;
   name: string;
-  teamAffiliation: string | null;
+  /** A team's abbreviation as its feed sends it; null for a player and a team with none. */
+  abbreviation: string | null;
   nationality: string | null;
   seedNumber: number | null;
   ranking: number | null;
@@ -48,7 +49,7 @@ export function eventFieldRows(
       entry,
       id: entry.id,
       name: entry.participant.name,
-      teamAffiliation: entry.participant.teamAffiliation ?? null,
+      abbreviation: entry.participant.abbreviation ?? null,
       nationality: entry.participant.nationality ?? null,
       seedNumber: entry.seedNumber,
       ranking: entry.ranking,
@@ -66,7 +67,7 @@ export function eventFieldRows(
 /** Which optional columns the field has values for: a column nobody has a value in is left off. */
 export function eventFieldColumnsShown(rows: readonly EventFieldRow[], isSynced: boolean) {
   return {
-    team: rows.some((row) => row.teamAffiliation !== null),
+    abbreviation: rows.some((row) => row.abbreviation !== null),
     country: rows.some((row) => row.nationality !== null),
     seed: rows.some((row) => row.seedNumber !== null),
     lastInFeed: isSynced,

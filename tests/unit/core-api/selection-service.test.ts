@@ -192,8 +192,6 @@ function pick(
       participantId,
       participantName: `Golfer ${participantId}`,
       status: SportEventParticipantStatus.ACTIVE,
-      role: 'GOLFER',
-      teamAffiliation: null,
     },
   } as ContestEntryPickWithParticipant;
 }

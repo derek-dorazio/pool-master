@@ -33,8 +33,6 @@ export interface SelectionParticipant {
   sportEventParticipantId: string;
   participantId: string;
   participantName: string;
-  role?: string | null;
-  teamAffiliation?: string | null;
   status?: string | null;
   price?: number;
   ranking?: number;
@@ -92,8 +90,6 @@ export interface ResolvedPick {
   sportEventParticipantId: string;
   participantId: string;
   participantName: string | null;
-  role: string | null;
-  teamAffiliation: string | null;
   lineupSlot?: number;
   pickSequence?: number;
   isAutoPicked: boolean;
@@ -118,8 +114,6 @@ export interface PickHistoryRow {
   entryName: string;
   sportEventParticipantId: string;
   participantName: string;
-  role?: string;
-  teamAffiliation?: string;
   price?: number;
   tierId?: string;
   tierName?: string;

@@ -87,7 +87,8 @@ describe('a college football season as one provider event', () => {
       sport: Sport.FOOTBALL,
       name: 'Navy Midshipmen',
       status: 'ACTIVE',
-      metadata: { abbreviation: 'NAVY', conference: 'American' },
+      abbreviation: 'NAVY',
+      metadata: { conference: 'American' },
     });
   });
 
@@ -97,7 +98,8 @@ describe('a college football season as one provider event', () => {
   });
 
   it('carries no abbreviation or conference the vendor leaves out', () => {
-    expect(toNcaafTeamParticipant({ id: 64, full_name: 'Indiana Hoosiers' }, '/ncaaf/v1/teams').metadata).toEqual({});
+    const team = toNcaafTeamParticipant({ id: 64, full_name: 'Indiana Hoosiers' }, '/ncaaf/v1/teams');
+    expect([team.abbreviation, team.metadata]).toEqual([undefined, {}]);
   });
 });
 

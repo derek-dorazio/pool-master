@@ -29,11 +29,13 @@ function provider(overrides: Partial<ProviderSummaryDto> = {}): ProviderSummaryD
 const seasonal = (inSeason: Record<string, number>, offseason: Record<string, number>) => ({ IN_SEASON: inSeason, OFFSEASON: offseason });
 const HOURLY = seasonal({ intervalMinutes: 360 }, { intervalMinutes: 1440 });
 const LIVE = seasonal({ intervalSeconds: 300 }, { intervalSeconds: 300 });
+const DAILY = seasonal({ intervalMinutes: 1440 }, { intervalMinutes: 1440 });
 
 const SCHEDULE: IngestionScheduleConfig = {
   EVENTS: { enabled: true, intervals: HOURLY },
   FIELD: { intervals: HOURLY },
   SCORES: { enabled: true, intervals: LIVE },
+  ROSTER: { intervals: DAILY },
 };
 
 // The schedule as the API reads it (#2086): whether each sync runs and has a switch is the API's word.
@@ -41,6 +43,7 @@ const SCHEDULE_READ: IngestionSchedule = {
   EVENTS: { enabled: true, intervals: HOURLY, runs: true, switchable: true },
   FIELD: { intervals: HOURLY, runs: true, switchable: false },
   SCORES: { enabled: true, intervals: LIVE, runs: true, switchable: true },
+  ROSTER: { intervals: DAILY, runs: true, switchable: false },
 };
 const EVENTS_OFF: IngestionSchedule = { ...SCHEDULE_READ, EVENTS: { enabled: false, intervals: HOURLY, runs: false, switchable: true } };
 
@@ -280,12 +283,20 @@ describe('RootAdminProvidersPage', () => {
     expect(await screen.findByText('Enter a whole number')).toBeInTheDocument();
   });
 
-  it('shows a row per sync with how often it runs in season and off season and which events it covers, Field always running and a switched-off sync as Off', async () => {
+  it('shows a row per sync with how often it runs in season and off season and which events it covers, Field and Rosters always running and a switched-off sync as Off', async () => {
     seed({ schedule: EVENTS_OFF });
     renderPage();
 
-    const rows = await screen.findAllByTestId(/^root-admin-sync-schedule-(EVENTS|FIELD|SCORES)$/);
-    expect(rows.map((row) => row.getAttribute('data-testid'))).toEqual(['root-admin-sync-schedule-EVENTS', 'root-admin-sync-schedule-FIELD', 'root-admin-sync-schedule-SCORES']);
+    const rows = await screen.findAllByTestId(/^root-admin-sync-schedule-(EVENTS|FIELD|SCORES|ROSTER)$/);
+    expect(rows.map((row) => row.getAttribute('data-testid'))).toEqual([
+      'root-admin-sync-schedule-EVENTS',
+      'root-admin-sync-schedule-FIELD',
+      'root-admin-sync-schedule-SCORES',
+      'root-admin-sync-schedule-ROSTER',
+    ]);
+    const rosters = within(screen.getByTestId('root-admin-sync-schedule-ROSTER'));
+    expect(rosters.getByText('Rosters')).toBeInTheDocument();
+    expect(rosters.getAllByText('24 h')).toHaveLength(2);
     const field = within(screen.getByTestId('root-admin-sync-schedule-FIELD'));
     expect(field.getByText('Field')).toBeInTheDocument();
     expect(field.getByText('6 h')).toBeInTheDocument();

@@ -182,13 +182,13 @@ export function mapSportLeagueParticipantOverviewToDto(participant: SportLeagueP
     participantType: participant.participantType,
     shortName: participant.shortName,
     nationality: participant.nationality,
-    teamAffiliation: participant.teamAffiliation,
-    role: participant.role,
+    abbreviation: participant.abbreviation,
     ranking: participant.ranking,
     feedId: participant.feedId,
     lastInFeedAt: participant.lastInFeedAt?.toISOString() ?? null,
     addedBy: participant.addedBy,
     createdAt: participant.createdAt.toISOString(),
+    roster: participant.roster === null ? null : { ...participant.roster, lastSeenAt: participant.roster.lastSeenAt.toISOString() },
   };
 }
 

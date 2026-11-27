@@ -51,7 +51,8 @@ describe('toWnbaPlayoffTeam', () => {
     expect(toWnbaPlayoffTeam(aces, '/wnba/v1/teams')).toEqual({
       id: 7,
       name: 'Las Vegas Aces',
-      metadata: { abbreviation: 'LVA', conference: 'Western' },
+      abbreviation: 'LVA',
+      metadata: { conference: 'Western' },
     });
   });
 

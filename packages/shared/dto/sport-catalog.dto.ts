@@ -283,19 +283,27 @@ export const SportLeagueEventOverviewListResponseSchema = z.object({
 }).describe('A sport league\'s events.');
 export type SportLeagueEventOverviewListResponse = z.infer<typeof SportLeagueEventOverviewListResponseSchema>;
 
+const SportLeagueRosterRowDtoSchema = z.object({
+  teamParticipantId: z.uuid().describe('The player\'s team: a TEAM participant of the league.'),
+  teamName: z.string().describe('The team\'s name.'),
+  positionCode: z.string().describe('The player\'s position\'s code in the league (QB). Screens read its words by this code.'),
+  lastSeenAt: DateTimeSchema.describe('When the roster sync last saw the player on the roster.'),
+}).describe('A player\'s roster row in a Season: their team and position.');
+export type SportLeagueRosterRowDto = z.infer<typeof SportLeagueRosterRowDtoSchema>;
+
 export const SportLeagueParticipantOverviewDtoSchema = z.object({
   id: z.uuid(),
   name: z.string(),
   participantType: z.enum(ParticipantType),
   shortName: z.string().nullable(),
   nationality: z.string().nullable(),
-  teamAffiliation: z.string().nullable(),
-  role: z.string().nullable().describe('Playing role, such as a position; not a rank.'),
+  abbreviation: z.string().nullable().describe('A team\'s abbreviation as its feed sends it (KC); null for a player and for a team its feed gives none.'),
   ranking: z.number().int().nullable().describe('Its rank in the sport league, 1 best; null when unranked.'),
   feedId: z.string().nullable().describe('Its provider\'s id for it in the sport league; null when it has no provider mapping.'),
   lastInFeedAt: DateTimeSchema.nullable().describe('When a sync last saw it in its provider\'s feed; null when none has.'),
   addedBy: z.enum(ParticipantAddedBy).describe('FEED when it has a provider mapping, so a sync found it; ADMIN otherwise.'),
   createdAt: DateTimeSchema,
+  roster: SportLeagueRosterRowDtoSchema.nullable().describe('A player\'s team and position in the league\'s current Season, from their roster row; null for a team and for a player on no roster.'),
 }).describe('One participant on the League page\'s Participants grid.');
 export type SportLeagueParticipantOverviewDto = z.infer<typeof SportLeagueParticipantOverviewDtoSchema>;
 

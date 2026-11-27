@@ -22,13 +22,13 @@ function participant(overrides: Partial<SportLeagueParticipantOverviewDto> = {})
     participantType: 'INDIVIDUAL',
     shortName: null,
     nationality: null,
-    teamAffiliation: null,
-    role: null,
+    abbreviation: null,
     ranking: null,
     feedId: null,
     lastInFeedAt: null,
     addedBy: 'ADMIN',
     createdAt: '2027-01-01T00:00:00.000Z',
+    roster: null,
     ...overrides,
   };
 }
@@ -75,21 +75,28 @@ describe('leagueParticipantColumnIds', () => {
     expect(leagueParticipantColumnIds(teams)).toEqual(['shortName']);
   });
 
-  it('gives players with a team and position the Team and Position columns', () => {
-    const players = [participant({ teamAffiliation: 'Dodgers', role: 'SS', nationality: 'USA' })];
-    expect(leagueParticipantColumnIds(players)).toEqual(['nationality', 'teamAffiliation', 'role']);
+  it('gives teams with an abbreviation the Abbreviation column, and never a player', () => {
+    const teams = [participant({ participantType: 'TEAM', name: 'Boston Celtics', abbreviation: 'BOS' })];
+    expect(leagueParticipantColumnIds(teams)).toEqual(['abbreviation']);
+    expect(leagueParticipantColumnIds([participant({ abbreviation: 'SS' })])).toEqual([]);
   });
 
   it('leaves out a column no participant has a value for, so none is blank for the whole league', () => {
     expect(leagueParticipantColumnIds([participant(), participant({ id: 'p-2' })])).toEqual([]);
     expect(leagueParticipantColumnIds([participant(), participant({ id: 'p-2', ranking: 4 })])).toEqual(['ranking']);
   });
+
+  it('gives a league with rostered players Team and Position columns, and leaves them off where no player is on a roster', () => {
+    const roster = { teamParticipantId: 't-kc', teamName: 'Kansas City Chiefs', positionCode: 'QB', lastSeenAt: '2027-01-02T00:00:00.000Z' };
+    expect(leagueParticipantColumnIds([participant({ name: 'Patrick Mahomes', roster }), participant({ id: 'p-2' })])).toEqual(['team', 'position']);
+    expect(leagueParticipantColumnIds([participant({ participantType: 'TEAM', name: 'Kansas City Chiefs' })])).toEqual([]);
+  });
 });
 
 describe('participant dialog form', () => {
-  it('lets a feed participant\'s short name, country and rank change, and a hand-added one\'s name, team and position too', () => {
+  it('lets a feed participant\'s short name, country and rank change, and a hand-added one\'s name too, never a team or position', () => {
     expect(editableParticipantFields({ addedBy: 'FEED' })).toEqual(['shortName', 'nationality', 'ranking']);
-    expect(editableParticipantFields({ addedBy: 'ADMIN' })).toEqual(['name', 'shortName', 'nationality', 'ranking', 'teamAffiliation', 'role']);
+    expect(editableParticipantFields({ addedBy: 'ADMIN' })).toEqual(['name', 'shortName', 'nationality', 'ranking']);
   });
 
   it('sends only the changed fields, an emptied rank as unranked', () => {

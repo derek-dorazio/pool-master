@@ -9,7 +9,7 @@ import type {
   ParticipantRepository,
   ParticipantSearchFilters,
 } from '@poolmaster/shared/db';
-import type { BackgroundJobRequest, Participant, InjuryStatus, ParticipantType, ParticipantStatus } from '@poolmaster/shared/domain';
+import { ParticipantType, type BackgroundJobRequest, type Participant, type InjuryStatus, type ParticipantStatus } from '@poolmaster/shared/domain';
 import { backgroundJobsInsert } from './prisma-background-job-repository';
 
 export class PrismaParticipantRepository implements ParticipantRepository {
@@ -25,20 +25,48 @@ export class PrismaParticipantRepository implements ParticipantRepository {
       ...(filters.sportLeagueId && { sportLeagueId: filters.sportLeagueId }),
       ...(filters.status && { status: filters.status }),
     };
-
-    // Full-text search on name fields
-    if (query.trim()) {
-      where.OR = [
-        { name: { contains: query, mode: 'insensitive' } },
-        { firstName: { contains: query, mode: 'insensitive' } },
-        { lastName: { contains: query, mode: 'insensitive' } },
-        { shortName: { contains: query, mode: 'insensitive' } },
-        { teamAffiliation: { contains: query, mode: 'insensitive' } },
-      ];
+    if (!query.trim()) {
+      const rows = await this.prisma.participant.findMany({ where, orderBy: { name: 'asc' } });
+      return rows.map(mapToParticipant);
     }
 
-    const rows = await this.prisma.participant.findMany({ where, orderBy: { name: 'asc' } });
-    return rows.map(mapToParticipant);
+    // Full-text search on name fields, each with its trigram index.
+    const matches = await this.prisma.participant.findMany({
+      where: {
+        ...where,
+        OR: [
+          { name: { contains: query, mode: 'insensitive' } },
+          { firstName: { contains: query, mode: 'insensitive' } },
+          { lastName: { contains: query, mode: 'insensitive' } },
+          { shortName: { contains: query, mode: 'insensitive' } },
+          { abbreviation: { contains: query, mode: 'insensitive' } },
+        ],
+      },
+      orderBy: { name: 'asc' },
+    });
+    // A player is also found by their team on their league's current Season's roster (#2025): the
+    // rows of the teams found, by league and team so the roster's team index serves it, then those
+    // players. Two more statements, only when a team matched.
+    const teamsByLeague = new Map<string, string[]>();
+    for (const team of matches) {
+      if (team.participantType !== ParticipantType.TEAM) continue;
+      teamsByLeague.set(team.sportLeagueId, [...(teamsByLeague.get(team.sportLeagueId) ?? []), team.id]);
+    }
+    if (teamsByLeague.size === 0) return matches.map(mapToParticipant);
+    const rostered = await this.prisma.sportLeagueSeasonParticipantTeam.findMany({
+      where: {
+        OR: [...teamsByLeague].map(([sportLeagueId, teamIds]) => ({ sportLeagueId, teamParticipantId: { in: teamIds } })),
+        season: { currentOf: { isNot: null } },
+      },
+      select: { participantId: true },
+    });
+    const found = new Set(matches.map((participant) => participant.id));
+    const playerIds = [...new Set(rostered.map((row) => row.participantId))].filter((id) => !found.has(id));
+    if (playerIds.length === 0) return matches.map(mapToParticipant);
+    const players = await this.prisma.participant.findMany({ where: { ...where, id: { in: playerIds } } });
+    return [...matches, ...players]
+      .sort((left, right) => left.name.localeCompare(right.name))
+      .map(mapToParticipant);
   }
 
   async findBySportLeague(sportLeagueId: string, testData = false): Promise<Participant[]> {
@@ -136,8 +164,6 @@ export class PrismaParticipantRepository implements ParticipantRepository {
         ...(updates.lastName !== undefined && { lastName: updates.lastName }),
         ...(updates.shortName !== undefined && { shortName: updates.shortName }),
         ...(updates.nationality !== undefined && { nationality: updates.nationality }),
-        ...(updates.role !== undefined && { role: updates.role }),
-        ...(updates.teamAffiliation !== undefined && { teamAffiliation: updates.teamAffiliation }),
         ...(updates.status !== undefined && { status: updates.status }),
         ...(updates.ranking !== undefined && { ranking: updates.ranking }),
         // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion -- needed: Prisma's JSON input type has an index signature this interface lacks; the rule misreads it inside the conditional spread.
@@ -175,8 +201,7 @@ export function mapToParticipant(row: {
   lastName: string | null;
   shortName: string | null;
   nationality: string | null;
-  role: string | null;
-  teamAffiliation: string | null;
+  abbreviation: string | null;
   status: ParticipantStatus;
   injuryStatus: unknown;
   photoUrl: string | null;
@@ -195,8 +220,7 @@ export function mapToParticipant(row: {
     lastName: row.lastName ?? undefined,
     shortName: row.shortName ?? undefined,
     nationality: row.nationality ?? undefined,
-    role: row.role ?? undefined,
-    teamAffiliation: row.teamAffiliation ?? undefined,
+    abbreviation: row.abbreviation ?? undefined,
     status: row.status,
     injuryStatus: toInjuryStatus(row.injuryStatus),
     photoUrl: row.photoUrl ?? undefined,
@@ -232,8 +256,7 @@ function toParticipantCreateData(participant: Omit<Participant, 'id' | 'createdA
     lastName: participant.lastName,
     shortName: participant.shortName,
     nationality: participant.nationality,
-    role: participant.role,
-    teamAffiliation: participant.teamAffiliation,
+    abbreviation: participant.abbreviation,
     status: participant.status,
     injuryStatus: participant.injuryStatus as object,
     photoUrl: participant.photoUrl,

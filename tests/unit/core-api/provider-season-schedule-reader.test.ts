@@ -174,3 +174,35 @@ describe('ProviderSeasonScheduleError', () => {
     expect(error.name).toBe('ProviderSeasonScheduleError');
   });
 });
+
+describe('ProviderSeasonScheduleReader.listSeasonRoster', () => {
+  const nflLeague = leagueRow('nfl', { name: 'NFL', sport: { sport: 'FOOTBALL' } });
+  const prisma = () => ({ sportLeague: { findUnique: jest.fn().mockResolvedValue(nflLeague) } });
+  const PLAYER = { externalId: '33', name: 'Patrick Mahomes', teamExternalId: '17', teamName: 'Kansas City Chiefs', positionCode: 'QB' };
+
+  it('asks the league\'s provider for the roster of its provider league by the provider\'s own Season id', async () => {
+    const getRoster = jest.fn().mockResolvedValue([PLAYER]);
+    const provider = buildProvider({ providerId: SYNCED_PROVIDER, getRoster });
+
+    const roster = await new ProviderSeasonScheduleReader(asPrismaClient(prisma()), registryWith(provider)).listSeasonRoster('nfl', '2026');
+
+    expect(roster).toEqual([PLAYER]);
+    expect(getRoster).toHaveBeenCalledWith('FOOTBALL', { providerLeagueCode: 'nfl', providerSeasonId: '2026' });
+  });
+
+  it('reads no roster from a provider that has no roster read', async () => {
+    const provider = buildProvider({ providerId: SYNCED_PROVIDER, getRoster: undefined });
+
+    await expect(new ProviderSeasonScheduleReader(asPrismaClient(prisma()), registryWith(provider)).listSeasonRoster('nfl', '2026')).resolves.toEqual([]);
+  });
+
+  it('refuses with 422 PROVIDER_LEAGUE_REFUSED when the provider\'s plan refuses the league, and 404 SPORT_LEAGUE_NOT_FOUND for an unknown league', async () => {
+    const refused = buildProvider({ providerId: SYNCED_PROVIDER, getRoster: jest.fn().mockRejectedValue(new ProviderLeagueRefusedError('BALLDONTLIE', 'NFL', 401)) });
+    const missing = { sportLeague: { findUnique: jest.fn().mockResolvedValue(null) } };
+
+    await expect(new ProviderSeasonScheduleReader(asPrismaClient(prisma()), registryWith(refused)).listSeasonRoster('nfl', '2026'))
+      .rejects.toMatchObject({ code: 'PROVIDER_LEAGUE_REFUSED', statusCode: 422 });
+    await expect(new ProviderSeasonScheduleReader(asPrismaClient(missing), registryWith(refused)).listSeasonRoster('nope', '2026'))
+      .rejects.toMatchObject({ code: 'SPORT_LEAGUE_NOT_FOUND', statusCode: 404 });
+  });
+});

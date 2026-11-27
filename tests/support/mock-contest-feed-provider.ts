@@ -374,7 +374,6 @@ function toProviderParticipant(
     firstName,
     lastName: lastParts.join(' ') || undefined,
     nationality: contestant.countryCode,
-    teamAffiliation: contestant.teamName,
     status: toFieldStatus(contestant.participantStatus),
     ranking: contestant.ranking,
     seed: contestant.seed,

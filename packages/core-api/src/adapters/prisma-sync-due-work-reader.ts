@@ -6,7 +6,8 @@
 
 import type { Prisma, PrismaClient } from '@prisma/client';
 import type { LiveEventView, SeasonSpanView, SyncDueWorkReader, SyncedLeagueRef } from '@poolmaster/shared/db';
-import { MatchFormat, MatchStatus, ProviderSyncKind, ProviderSyncRunStatus, scoresDueSince, type FieldWindowSlot } from '@poolmaster/shared/domain';
+import { MatchFormat, ProviderSyncKind, ProviderSyncRunStatus, type FieldWindowSlot } from '@poolmaster/shared/domain';
+import { gameInPlayWhere } from './prisma-game-in-play';
 
 /** An event of one of the leagues, linked under the league's provider mapping. */
 function linkedEventOf(leagues: readonly SyncedLeagueRef[]): Prisma.SportEventWhereInput {
@@ -19,7 +20,7 @@ function linkedEventOf(leagues: readonly SyncedLeagueRef[]): Prisma.SportEventWh
 }
 
 export class PrismaSyncDueWorkReader implements SyncDueWorkReader {
-  constructor(private readonly prisma: Pick<PrismaClient, 'sportLeagueSeason' | 'sportLeagueSeasonCompetitionSlot' | 'sportEventRoundMatchGame' | 'providerSyncRun'>) {}
+  constructor(private readonly prisma: Pick<PrismaClient, 'sportLeagueSeason' | 'sportLeagueSeasonCompetitionSlot' | 'sportEventRoundMatchGame' | 'providerSyncRun' | 'sportLeaguePositionProviderMapping'>) {}
 
   async findSeasonSpans(input: { leagues: readonly SyncedLeagueRef[]; now: Date }): Promise<SeasonSpanView[]> {
     if (input.leagues.length === 0) return [];
@@ -28,6 +29,16 @@ export class PrismaSyncDueWorkReader implements SyncDueWorkReader {
       select: { sportLeagueId: true, startsAt: true, endsAt: true },
       orderBy: [{ sportLeagueId: 'asc' }, { startsAt: 'asc' }],
     });
+  }
+
+  async findRosteredLeagueIds(input: { leagues: readonly SyncedLeagueRef[] }): Promise<Set<string>> {
+    if (input.leagues.length === 0) return new Set();
+    const rows = await this.prisma.sportLeaguePositionProviderMapping.findMany({
+      where: { sportLeagueProviderMappingId: { in: input.leagues.map((league) => league.sportLeagueProviderMappingId) } },
+      select: { sportLeagueId: true },
+      distinct: ['sportLeagueId'],
+    });
+    return new Set(rows.map((row) => row.sportLeagueId));
   }
 
   async findNextSlots(input: { leagues: readonly SyncedLeagueRef[]; now: Date }): Promise<FieldWindowSlot[]> {
@@ -58,14 +69,7 @@ export class PrismaSyncDueWorkReader implements SyncDueWorkReader {
   async findLiveEvents(input: { leagues: readonly SyncedLeagueRef[]; now: Date }): Promise<LiveEventView[]> {
     if (input.leagues.length === 0) return [];
     const games = await this.prisma.sportEventRoundMatchGame.findMany({
-      where: {
-        // `isGameScoresDue`, as a filter: in play, or scheduled to have started, not overdue.
-        OR: [
-          { status: MatchStatus.IN_PROGRESS },
-          { status: MatchStatus.SCHEDULED, scheduledDate: { lte: input.now, gte: scoresDueSince(input.now) } },
-        ],
-        eventSlot: { sportEvent: linkedEventOf(input.leagues) },
-      },
+      where: { ...gameInPlayWhere(input.now), eventSlot: { sportEvent: linkedEventOf(input.leagues) } },
       select: {
         sportEventId: true,
         status: true,
@@ -74,7 +78,7 @@ export class PrismaSyncDueWorkReader implements SyncDueWorkReader {
         eventSlot: {
           select: {
             seasonSlot: { select: { definition: { select: { matchFormat: true } } } },
-            sportEvent: { select: { sportLeagueId: true, lastProviderNotificationAt: true } },
+            sportEvent: { select: { sportLeagueId: true } },
           },
         },
       },
@@ -87,11 +91,11 @@ export class PrismaSyncDueWorkReader implements SyncDueWorkReader {
         sportEventId: game.sportEventId,
         sportLeagueId: sportEvent.sportLeagueId,
         games: [],
-        lastHeardAt: sportEvent.lastProviderNotificationAt,
+        lastHeardAt: null,
         lastScoresChangedAt: null,
       };
       event.games.push({ status: game.status, scheduledDate: game.scheduledDate, playedAsField: seasonSlot.definition.matchFormat === MatchFormat.FIELD });
-      event.lastHeardAt = latest(event.lastHeardAt, game.lastProviderNotificationAt);
+      event.lastHeardAt = latest([event.lastHeardAt, game.lastProviderNotificationAt]);
       events.set(game.sportEventId, event);
     }
     if (events.size === 0) return [];
@@ -101,16 +105,14 @@ export class PrismaSyncDueWorkReader implements SyncDueWorkReader {
       where: { sportEventId: { in: [...events.keys()] }, kind: ProviderSyncKind.SCORES, status: ProviderSyncRunStatus.COMPLETED, changedCount: { gt: 0 } },
       _max: { createdAt: true },
     });
-    for (const group of changed) {
-      const event = group.sportEventId === null ? undefined : events.get(group.sportEventId);
-      if (event !== undefined) event.lastScoresChangedAt = group._max.createdAt;
-    }
+    const changedAt = new Map(changed.map((group) => [group.sportEventId, group._max.createdAt]));
+    for (const event of events.values()) event.lastScoresChangedAt = changedAt.get(event.sportEventId) ?? null;
     return [...events.values()];
   }
 }
 
-function latest(left: Date | null, right: Date | null): Date | null {
-  if (left === null) return right;
-  if (right === null) return left;
-  return left > right ? left : right;
+/** The latest of the times given, or null when none is set. */
+function latest(times: ReadonlyArray<Date | null>): Date | null {
+  const set = times.filter((time): time is Date => time !== null).map((time) => time.getTime());
+  return set.length === 0 ? null : new Date(Math.max(...set));
 }

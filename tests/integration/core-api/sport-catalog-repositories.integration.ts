@@ -397,6 +397,30 @@ describe('ParticipantRepository — search and matching', () => {
     expect(await participants.search('Search Golfer', { sportLeagueId: league })).toHaveLength(60);
   });
 
+  it('finds a player by their team\'s name or abbreviation on the current Season\'s roster, and not by a team from another Season', async () => {
+    const prisma = getPrisma();
+    const league = await insertTestSportLeague(prisma, { sport: Sport.FOOTBALL, name: `Roster Search ${randomUUID().slice(0, 8)}`, championshipYear: 2026 });
+    const { currentSeasonId } = await prisma.sportLeague.findUniqueOrThrow({ where: { id: league.id }, select: { currentSeasonId: true } });
+    if (currentSeasonId === null) throw new Error('A test sport league starts with a current Season.');
+    const earlierSeasonId = await fixtureSeasonId(prisma, league.id, 2025);
+    const chiefs = await prisma.participant.create({ data: { sportLeagueId: league.id, name: 'Kansas City Chiefs', abbreviation: 'KC', participantType: ParticipantType.TEAM } });
+    const bills = await prisma.participant.create({ data: { sportLeagueId: league.id, name: 'Buffalo Bills', abbreviation: 'BUF', participantType: ParticipantType.TEAM } });
+    const qb = await prisma.sportLeaguePosition.create({ data: { sportLeagueId: league.id, code: 'QB', displayOrder: 1, isFieldEligible: true } });
+    const mahomes = await prisma.participant.create({ data: { sportLeagueId: league.id, name: 'Patrick Mahomes', participantType: ParticipantType.INDIVIDUAL } });
+    await prisma.sportLeagueSeasonParticipantTeam.createMany({
+      data: [
+        { sportLeagueId: league.id, sportLeagueSeasonId: currentSeasonId, participantId: mahomes.id, teamParticipantId: chiefs.id, sportLeaguePositionId: qb.id, lastSeenAt: new Date() },
+        { sportLeagueId: league.id, sportLeagueSeasonId: earlierSeasonId, participantId: mahomes.id, teamParticipantId: bills.id, sportLeaguePositionId: qb.id, lastSeenAt: new Date() },
+      ],
+    });
+    const participants = new PrismaParticipantRepository(getAppPrisma());
+    const idsFor = async (query: string) => (await participants.search(query, { sportLeagueId: league.id })).map((participant) => participant.id);
+
+    await expect(idsFor('chiefs')).resolves.toEqual([chiefs.id, mahomes.id]);
+    await expect(idsFor('KC')).resolves.toEqual([chiefs.id, mahomes.id]);
+    await expect(idsFor('Bills')).resolves.toEqual([bills.id]);
+  });
+
   it('creates a participant, reads it by id, and updates only the fields given', async () => {
     const sport = await golfSport();
     const participants = new PrismaParticipantRepository(getAppPrisma());
@@ -408,7 +432,7 @@ describe('ParticipantRepository — search and matching', () => {
       participantType: 'INDIVIDUAL',
       isTestData: false,
       nationality: 'SWE',
-      role: 'GOLFER',
+      abbreviation: 'ABG',
       status: 'ACTIVE',
       injuryStatus: { status: 'HEALTHY' },
     });
@@ -420,7 +444,7 @@ describe('ParticipantRepository — search and matching', () => {
       status: 'INACTIVE',
       ranking: 12,
       nationality: 'SWE',
-      role: 'GOLFER',
+      abbreviation: 'ABG',
       injuryStatus: { status: 'HEALTHY' },
     }));
     await expect(participants.findById(created.id)).resolves.toEqual(updated);
@@ -454,8 +478,6 @@ describe('ParticipantRepository — search and matching', () => {
       lastName: 'Name',
       shortName: 'N. Name',
       nationality: 'USA',
-      role: 'GOLFER',
-      teamAffiliation: 'Team Blue',
       status: 'INACTIVE',
       injuryStatus: { status: 'OUT', detail: 'Wrist', expectedReturn, updatedAt: injuryUpdatedAt, source: 'feed' },
       photoUrl: 'https://example.test/photo.jpg',
@@ -463,8 +485,8 @@ describe('ParticipantRepository — search and matching', () => {
     });
 
     expect(updated).toEqual(expect.objectContaining({
-      name: 'New Name', firstName: 'New', lastName: 'Name', shortName: 'N. Name', nationality: 'USA', role: 'GOLFER',
-      teamAffiliation: 'Team Blue', status: 'INACTIVE', photoUrl: 'https://example.test/photo.jpg', photoLastUpdated,
+      name: 'New Name', firstName: 'New', lastName: 'Name', shortName: 'N. Name', nationality: 'USA',
+      status: 'INACTIVE', photoUrl: 'https://example.test/photo.jpg', photoLastUpdated,
       injuryStatus: { status: 'OUT', detail: 'Wrist', expectedReturn, updatedAt: injuryUpdatedAt, source: 'feed' },
     }));
     await expect(participants.findById(created.id)).resolves.toEqual(updated);

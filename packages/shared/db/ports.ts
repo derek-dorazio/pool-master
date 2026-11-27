@@ -490,7 +490,8 @@ export interface ParticipantProviderMappingRepository {
    * Every mapping a provider has for these of its identifiers within the scope (#1853): a feed id
    * names one participant per sport league, so a lookup is always scoped to a league, the league
    * of the event being synced, or every league of a sport. The provider is named by its Provider
-   * code, as a sync knows it from the adapter (#2040).
+   * code, as a sync knows it from the adapter (#2040). Only the league's own competitors, of its
+   * participant type: a team league's rostered players are left out (#2025).
    */
   findByProviderExternalIds(providerCode: ProviderCode, scope: ProviderMappingScope, externalIds: readonly string[]): Promise<ParticipantProviderMapping[]>;
   /** Every mapping a provider has for the participants of one sport league, in one read. Never paged. */

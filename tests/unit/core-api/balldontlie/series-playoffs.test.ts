@@ -26,7 +26,7 @@ const LEAGUE: PlayoffsLeague = {
   playoffYearOffset: 1,
 };
 
-const team = (id: number): PlayoffTeam => ({ id, name: `Team ${String(id)}`, metadata: { abbreviation: `T${String(id)}` } });
+const team = (id: number): PlayoffTeam => ({ id, name: `Team ${String(id)}`, abbreviation: `T${String(id)}`, metadata: {} });
 
 let nextId = 1;
 function game(day: number, home: number, away: number, homeScore: number | null, awayScore: number | null, state: CompetitionStatusState = CompetitionStatusState.FINAL, season = 2025): PlayoffGame {
@@ -108,7 +108,7 @@ describe('toPlayoffsFieldParticipants', () => {
     const participants = toPlayoffsFieldParticipants(LEAGUE, semifinals());
 
     expect(participants.map((participant) => participant.externalId)).toEqual(['1', '4', '2', '3']);
-    expect(participants[0]).toMatchObject({ name: 'Team 1', sport: Sport.BASKETBALL, status: 'ACTIVE', metadata: { abbreviation: 'T1' } });
+    expect(participants[0]).toMatchObject({ name: 'Team 1', sport: Sport.BASKETBALL, status: 'ACTIVE', abbreviation: 'T1' });
   });
 });
 

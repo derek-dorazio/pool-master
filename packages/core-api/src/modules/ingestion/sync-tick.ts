@@ -11,6 +11,9 @@
  * - SCORES: the scores of each linked event with a Game due or in play (`isGameScoresDue`), on the
  *   SCORES interval while that schedule is on, or, for a provider that sends webhooks, at its
  *   safety-net pace (#1499). The tick warns when such an event in play has gone quiet.
+ * - ROSTER (#2025): each active synced league with a roster, one whose provider mapping names the
+ *   provider's codes for its positions, its current Season's roster (`SYNC_LEAGUE_ROSTER`), on the
+ *   ROSTER interval. It has no switch.
  * - NO_PROVIDER_LIVE_SCORES (#2094): an event in play whose scores have not changed, nor its
  *   provider sent a notification, for its provider league's quiet window raises the finding, once
  *   per quiet stretch. An empty poll inside the window raises nothing: a game between scoring
@@ -48,6 +51,7 @@ import { LockedSweep } from '../../core/locked-sweep';
 import { schedulePolicyDelayMs } from '../../core/schedule-policy-delay';
 import type { BackgroundJobQueue } from '../background-jobs/background-job-queue';
 import { syncLeagueEventsJob } from '../events/league-events-sync-job';
+import { syncLeagueRosterJob } from './roster/league-roster-sync-job';
 import { EVENT_SYNC_JOB_TYPES, eventSyncJob } from './event-sync-job-requests';
 import type { EventSyncKind } from './core/sync-orchestrator';
 import type { ProviderRegistry } from './core/provider-registry';
@@ -143,16 +147,17 @@ export class SyncTick {
     const synced = this.syncedLeagues(await this.options.sportLeagues.findEventSynced());
     if (synced.length === 0) return 0;
     const leagues = await this.withSeasonStates(synced, now);
-    const [events, field, scores] = await Promise.all([
+    const [events, field, scores, rosters] = await Promise.all([
       config.EVENTS.enabled ? this.eventsJobs(leagues, intervalFor(config.EVENTS), now) : [],
       this.fieldJobs(leagues, intervalFor(config.FIELD), now),
       config.SCORES.enabled ? this.scoresJobs(leagues, intervalFor(config.SCORES), now) : [],
+      this.rosterJobs(leagues, intervalFor(config.ROSTER), now),
     ]);
     // poolmaster-allow-direct-job: the sync tick queues every due provider sync
-    const queued = await this.options.jobs.enqueueAll([...events, ...field, ...scores]);
+    const queued = await this.options.jobs.enqueueAll([...events, ...field, ...scores, ...rosters]);
     this.options.logger?.info({
       action: 'ingestion.syncTick.queued',
-      data: { leagues: leagues.length, events: events.length, field: field.length, scores: scores.length, queued },
+      data: { leagues: leagues.length, events: events.length, field: field.length, scores: scores.length, rosters: rosters.length, queued },
     }, 'Queued the provider syncs due this tick');
     return queued;
   }
@@ -192,6 +197,22 @@ export class SyncTick {
     return leagues
       .filter((league) => isSyncDue(lastRunAt.get(league.sportLeagueId), intervalMs(league), now))
       .map((league) => syncLeagueEventsJob(this.options.jobs, { sportLeagueId: league.sportLeagueId }, { start: SCHEDULE_START, providerCode: league.providerCode }));
+  }
+
+  /** Each league with a roster whose roster sync is due: the leagues are read for positions once. */
+  private async rosterJobs(leagues: readonly TickLeague[], intervalMs: LeagueInterval, now: Date): Promise<BackgroundJobRequest[]> {
+    const rostered = await this.options.dueWork.findRosteredLeagueIds({ leagues });
+    const withRosters = leagues.filter((league) => rostered.has(league.sportLeagueId));
+    if (withRosters.length === 0) return [];
+    const lastRunAt = await this.options.jobHistory.findLatestRunAt({
+      type: BackgroundJobType.SYNC_LEAGUE_ROSTER,
+      by: 'sportLeagueId',
+      ids: withRosters.map((league) => league.sportLeagueId),
+      dueBy: now,
+    });
+    return withRosters
+      .filter((league) => isSyncDue(lastRunAt.get(league.sportLeagueId), intervalMs(league), now))
+      .map((league) => syncLeagueRosterJob(this.options.jobs, { sportLeagueId: league.sportLeagueId }, { start: SCHEDULE_START, providerCode: league.providerCode }));
   }
 
   private async fieldJobs(leagues: readonly TickLeague[], intervalMs: LeagueInterval, now: Date): Promise<BackgroundJobRequest[]> {

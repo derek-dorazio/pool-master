@@ -276,8 +276,6 @@ function buildWorld(options: WorldOptions = {}) {
               participantId: participant.id,
               participantName: participant.name,
               status: row.status,
-              role: 'GOLFER',
-              teamAffiliation: null,
             },
           } as unknown as ContestEntryPickWithParticipant);
         }

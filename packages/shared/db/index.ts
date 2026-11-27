@@ -136,7 +136,6 @@ export type {
   SportEventAutoReleaseCandidate,
   SportEventReleaseFacts,
   ProviderNotifiedEvent,
-  ProviderNotificationReceipt,
   ProviderNotifiedEventQuery,
   SportEventRepository,
   SportEventRoundRepository,
@@ -238,3 +237,4 @@ export type {
   ProviderSyncFindingResolveFilter,
 } from './provider-sync-finding-ports';
 export type { LiveEventView, SeasonSpanView, SyncDueWorkReader, SyncedLeagueRef } from './sync-due-work-ports';
+export type { RosterIds, RosterPositionCode, RosterRowWrite, RosterWrite, SportLeagueRosterRepository } from './roster-ports';

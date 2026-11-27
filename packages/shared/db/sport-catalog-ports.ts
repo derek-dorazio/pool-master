@@ -200,13 +200,6 @@ export interface ProviderNotifiedEvent {
   inProgress: boolean;
 }
 
-/** A provider's notification about some of its events, recorded when it arrived (#1499). */
-export interface ProviderNotificationReceipt {
-  providerId: string;
-  externalIds: readonly string[];
-  receivedAt: Date;
-}
-
 /** The counts a release's ready checks read of one event besides its admin counts (#1823). */
 export interface SportEventReleaseFacts {
   scheduledRoundCount: number;
@@ -338,8 +331,6 @@ export interface SportEventRepository {
    * `startedBy`, also `SCHEDULED` with auto lifecycle on and a start by then. Unordered.
    */
   findLiveNotifiedEvents(query: ProviderNotifiedEventQuery): Promise<ProviderNotifiedEvent[]>;
-  /** Sets when the provider last sent a notification about each of these events themselves (#1499): a golf round's. */
-  recordProviderNotification(receipt: ProviderNotificationReceipt): Promise<void>;
   /**
    * The events the lifecycle scheduler may move on: auto lifecycle on, and `SCHEDULED`,
    * `IN_PROGRESS` or `POSTPONED`, whose contests follow its start (#1792). Unordered.
@@ -665,6 +656,8 @@ export interface SportLeagueSyncFacts {
   league: SportLeaguePageLeague;
   /** The league's latest run of each kind. */
   latestRuns: SportLeaguePageRun[];
+  /** Whether its selected provider mapping names any position codes, so the roster sync runs for it (#2025). */
+  syncsRoster: boolean;
 }
 
 /** One event of the league as its Events grid reads it. */
@@ -701,12 +694,21 @@ export interface SportLeaguePageParticipant {
     participantType: ParticipantType;
     shortName: string | null;
     nationality: string | null;
-    teamAffiliation: string | null;
-    role: string | null;
+    abbreviation: string | null;
     ranking: number | null;
     createdAt: Date;
   };
   mapping: { externalId: string; lastSeenAt: Date | null } | null;
+  /** A player's roster row in the league's current Season (#2025); null for a team and a player on none. */
+  roster: SportLeaguePageRosterRow | null;
+}
+
+/** A player's team and position in a Season, from their roster row. */
+export interface SportLeaguePageRosterRow {
+  teamParticipantId: string;
+  teamName: string;
+  positionCode: string;
+  lastSeenAt: Date;
 }
 
 /** One field row of an event as its Event page reads it (#1889). */

@@ -104,7 +104,7 @@ export function EventParticipantDialog({
   const facts: Fact[] = [
     { id: 'participant', label: 'Participant', value: entry.affiliatedWithSportLeague ? row.name : `${row.name} (guest)`, testId: `${testId}-participant` },
     { id: 'inField', label: 'In field', value: (entry.status === SportEventParticipantStatus.ACTIVE) ? 'Yes' : fieldOutLabel(entry), testId: `${testId}-in-field` },
-    ...(row.teamAffiliation === null ? [] : [{ id: 'team', label: 'Team', value: row.teamAffiliation }]),
+    ...(row.abbreviation === null ? [] : [{ id: 'abbreviation', label: 'Abbreviation', value: row.abbreviation }]),
     ...(row.nationality === null ? [] : [{ id: 'country', label: 'Country', value: row.nationality }]),
     { id: 'seed', label: 'Seed', value: shown(row.seedNumber), testId: `${testId}-seed` },
     { id: 'rank', label: 'Rank', value: shown(row.ranking), testId: `${testId}-rank` },
