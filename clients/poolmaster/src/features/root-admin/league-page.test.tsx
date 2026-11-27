@@ -252,7 +252,7 @@ const STRUCTURE: SportLeaguePhaseDefinitionDto[] = [
   {
     id: '00000000-0000-4000-8000-00000000c003', phase: 'POSTSEASON', isSynced: true, competitions: [{
       id: '00000000-0000-4000-8000-00000000a103', code: 'PLAYOFFS', orderIndex: 1, slots: [
-        { ...STRUCTURE_SLOT, id: '00000000-0000-4000-8000-00000000d002', key: 'SEMIFINAL', slotKind: 'SEMIFINAL', seriesFormat: 'BEST_OF', seriesGames: 7 },
+        { ...STRUCTURE_SLOT, id: '00000000-0000-4000-8000-00000000d002', key: 'SEMIFINAL', slotKind: 'SEMIFINAL', seriesFormat: 'BEST_OF', seriesGames: 7, isNeutralSite: true },
         {
           ...STRUCTURE_SLOT, id: '00000000-0000-4000-8000-00000000d003', key: 'FINAL', slotKind: 'FINAL', name: 'NBA Finals', awardsTrophy: true, seriesFormat: 'BEST_OF', seriesGames: 7,
           providerMappings: [{ ...STRUCTURE_MAPPING, id: '00000000-0000-4000-8000-00000000e002', matchType: 'PROVIDER_CODE', providerValue: 'POST:5' }],
@@ -465,6 +465,22 @@ describe('League page', () => {
 
     await userEvent.keyboard('{Escape}');
     await waitFor(() => expect(screen.queryByTestId('root-admin-league-structure-slot')).not.toBeInTheDocument());
+  });
+
+  it('shows a neutral-site slot as one, a slot no provider matches as matched by none, and a squares slot as one, each in its slot\'s view', async () => {
+    getSportLeagueStructureMock.mockResolvedValue({ data: { phases: STRUCTURE } });
+    listSportLeaguePositionsMock.mockResolvedValue({ data: { positions: [] } });
+    renderLeaguePage('/manage/sports/basketball/leagues/nba/structure');
+
+    await userEvent.click(within(await screen.findByTestId('root-admin-league-structure-slot-SEMIFINAL')).getByRole('button', { name: 'Open details' }));
+    const semifinal = await screen.findByTestId('root-admin-league-structure-slot');
+    expect(semifinal).toHaveTextContent(/Neutral site\s*Yes/);
+    expect(within(semifinal).getByTestId('root-admin-league-structure-slot-mappings')).toHaveTextContent('No provider');
+    await userEvent.keyboard('{Escape}');
+    await waitFor(() => expect(screen.queryByTestId('root-admin-league-structure-slot')).not.toBeInTheDocument());
+
+    await userEvent.click(within(screen.getByTestId('root-admin-league-structure-slot-WEEK_1')).getByRole('button', { name: 'Open details' }));
+    expect(await screen.findByTestId('root-admin-league-structure-slot')).toHaveTextContent(/Squares\s*Yes/);
   });
 
   it('lists the league\'s Seasons latest first under its time zone, opens one to read with its provider ids and no Edit, and lists the current Season\'s slots', async () => {
