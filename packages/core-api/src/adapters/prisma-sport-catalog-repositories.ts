@@ -611,12 +611,21 @@ export class PrismaSportEventRepository implements SportEventRepository {
   }
 
   async findReleaseFacts(event: { id: string; sportLeagueId: string }): Promise<SportEventReleaseFacts> {
-    const [scheduledRoundCount, contestSetupCount] = await Promise.all([
+    const [scheduledRoundCount, contestSetupCount, rosterSetupCount] = await Promise.all([
       this.prisma.sportEventRound.count({ where: { sportEventId: event.id } }),
       // The setups a commissioner could make a contest on the event from: every setup belongs to one sport league (#1825).
       this.prisma.contestConfigTemplate.count({ where: { active: true, sportLeagueId: event.sportLeagueId } }),
+      // Those that pick from its tiers or under its price cap: tiered and budget, over one of its slots.
+      this.prisma.contestConfigTemplate.count({
+        where: {
+          active: true,
+          sportLeagueId: event.sportLeagueId,
+          selectionType: { in: [...TIER_SET_SELECTION_TYPES] },
+          slots: { some: { definition: { seasonSlots: { some: { eventSlot: { sportEventId: event.id } } } } } },
+        },
+      }),
     ]);
-    return { scheduledRoundCount, contestSetupCount };
+    return { scheduledRoundCount, contestSetupCount, rosterSetupCount };
   }
 
   async findAutoReleaseCandidates(now: Date, horizon: Date): Promise<SportEventAutoReleaseCandidate[]> {
