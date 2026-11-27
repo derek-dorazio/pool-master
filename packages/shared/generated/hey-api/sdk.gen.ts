@@ -1690,7 +1690,7 @@ export const autoAssignEventPrices = <ThrowOnError extends boolean = false>(opti
 /**
  * List a sport event's field with a slot's valuations
  *
- * The field as listEventParticipants reads it, each row's valuation in the slot's set. The set of the slot the event plays in this Season slot (#2044): a slot holds one when a tiered or budget template lists it, or it is the event's first slot and none lists any.
+ * The field as listEventParticipants reads it, each row's valuation in the slot's set. The set of the slot the event plays in this Season slot (#2044): a slot holds one when a contest of a tiered or budget template may start there (each slot a one-slot or from-slot template lists, the first a whole-event template lists), or it is the event's first slot and no such template lists any.
  */
 export const listEventSlotParticipants = <ThrowOnError extends boolean = false>(options: Options<ListEventSlotParticipantsData, ThrowOnError>): RequestResult<ListEventSlotParticipantsResponses, ListEventSlotParticipantsErrors, ThrowOnError> => (options.client ?? client).get<ListEventSlotParticipantsResponses, ListEventSlotParticipantsErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -1701,7 +1701,7 @@ export const listEventSlotParticipants = <ThrowOnError extends boolean = false>(
 /**
  * List a sport event slot's tiers
  *
- * The set of the slot the event plays in this Season slot (#2044): a slot holds one when a tiered or budget template lists it, or it is the event's first slot and none lists any. Who is in each tier is on each field row's valuation (listEventSlotParticipants).
+ * The set of the slot the event plays in this Season slot (#2044): a slot holds one when a contest of a tiered or budget template may start there (each slot a one-slot or from-slot template lists, the first a whole-event template lists), or it is the event's first slot and no such template lists any. Who is in each tier is on each field row's valuation (listEventSlotParticipants).
  */
 export const listEventSlotTiers = <ThrowOnError extends boolean = false>(options: Options<ListEventSlotTiersData, ThrowOnError>): RequestResult<ListEventSlotTiersResponses, ListEventSlotTiersErrors, ThrowOnError> => (options.client ?? client).get<ListEventSlotTiersResponses, ListEventSlotTiersErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -1712,7 +1712,7 @@ export const listEventSlotTiers = <ThrowOnError extends boolean = false>(options
 /**
  * Replace a sport event slot's tiers
  *
- * replaceEventTiers on the slot's set. The set of the slot the event plays in this Season slot (#2044): a slot holds one when a tiered or budget template lists it, or it is the event's first slot and none lists any. 409 SPORT_EVENT_TIERS_LOCKED once the set is locked: the event's tier-set slot (its first slot holding a set) at release, any other slot once it starts. 409 SLOT_HOLDS_NO_TIER_SET for a slot holding no set. Root admin only.
+ * replaceEventTiers on the slot's set. The set of the slot the event plays in this Season slot (#2044): a slot holds one when a contest of a tiered or budget template may start there (each slot a one-slot or from-slot template lists, the first a whole-event template lists), or it is the event's first slot and no such template lists any. 409 SPORT_EVENT_TIERS_LOCKED once the set is locked: the event's tier-set slot (its first slot holding a set) at release, any other slot once it starts. 409 SLOT_HOLDS_NO_TIER_SET for a slot holding no set. Root admin only.
  */
 export const replaceEventSlotTiers = <ThrowOnError extends boolean = false>(options: Options<ReplaceEventSlotTiersData, ThrowOnError>): RequestResult<ReplaceEventSlotTiersResponses, ReplaceEventSlotTiersErrors, ThrowOnError> => (options.client ?? client).put<ReplaceEventSlotTiersResponses, ReplaceEventSlotTiersErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],

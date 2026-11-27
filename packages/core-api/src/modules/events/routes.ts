@@ -469,12 +469,12 @@ export async function eventsModule(fastify: FastifyInstance, opts: EventsModuleO
     handler: handler.autoAssignEventPrices,
   });
 
-  // --- A slot's tiers and valuations (#2044): every slot a tiered or budget template lists holds
-  // its own set, keyed by the Season slot the event is played in. The event routes above act on
+  // --- A slot's tiers and valuations (#2044): every slot a tiered or budget contest may start at
+  // holds its own set (chooseTierSetSlots), keyed by the Season slot the event is played in. The event routes above act on
   // the event's tier-set slot, the first of them. Each answers 404 SPORT_EVENT_SLOT_NOT_FOUND for a
   // Season slot the event is not played in.
 
-  const SLOT_SET = 'The set of the slot the event plays in this Season slot (#2044): a slot holds one when a tiered or budget template lists it, or it is the event\'s first slot and none lists any.';
+  const SLOT_SET = 'The set of the slot the event plays in this Season slot (#2044): a slot holds one when a contest of a tiered or budget template may start there (each slot a one-slot or from-slot template lists, the first a whole-event template lists), or it is the event\'s first slot and no such template lists any.';
   const SLOT_LOCK = '409 SPORT_EVENT_TIERS_LOCKED once the set is locked: the event\'s tier-set slot (its first slot holding a set) at release, any other slot once it starts. 409 SLOT_HOLDS_NO_TIER_SET for a slot holding no set.';
 
   fastify.get('/:eventId/slots/:seasonSlotId/participants', {

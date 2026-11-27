@@ -2348,7 +2348,7 @@ export interface paths {
         };
         /**
          * List a sport event's field with a slot's valuations
-         * @description The field as listEventParticipants reads it, each row's valuation in the slot's set. The set of the slot the event plays in this Season slot (#2044): a slot holds one when a tiered or budget template lists it, or it is the event's first slot and none lists any.
+         * @description The field as listEventParticipants reads it, each row's valuation in the slot's set. The set of the slot the event plays in this Season slot (#2044): a slot holds one when a contest of a tiered or budget template may start there (each slot a one-slot or from-slot template lists, the first a whole-event template lists), or it is the event's first slot and no such template lists any.
          */
         get: operations["listEventSlotParticipants"];
         put?: never;
@@ -2368,12 +2368,12 @@ export interface paths {
         };
         /**
          * List a sport event slot's tiers
-         * @description The set of the slot the event plays in this Season slot (#2044): a slot holds one when a tiered or budget template lists it, or it is the event's first slot and none lists any. Who is in each tier is on each field row's valuation (listEventSlotParticipants).
+         * @description The set of the slot the event plays in this Season slot (#2044): a slot holds one when a contest of a tiered or budget template may start there (each slot a one-slot or from-slot template lists, the first a whole-event template lists), or it is the event's first slot and no such template lists any. Who is in each tier is on each field row's valuation (listEventSlotParticipants).
          */
         get: operations["listEventSlotTiers"];
         /**
          * Replace a sport event slot's tiers
-         * @description replaceEventTiers on the slot's set. The set of the slot the event plays in this Season slot (#2044): a slot holds one when a tiered or budget template lists it, or it is the event's first slot and none lists any. 409 SPORT_EVENT_TIERS_LOCKED once the set is locked: the event's tier-set slot (its first slot holding a set) at release, any other slot once it starts. 409 SLOT_HOLDS_NO_TIER_SET for a slot holding no set. Root admin only.
+         * @description replaceEventTiers on the slot's set. The set of the slot the event plays in this Season slot (#2044): a slot holds one when a contest of a tiered or budget template may start there (each slot a one-slot or from-slot template lists, the first a whole-event template lists), or it is the event's first slot and no such template lists any. 409 SPORT_EVENT_TIERS_LOCKED once the set is locked: the event's tier-set slot (its first slot holding a set) at release, any other slot once it starts. 409 SLOT_HOLDS_NO_TIER_SET for a slot holding no set. Root admin only.
          */
         put: operations["replaceEventSlotTiers"];
         post?: never;
@@ -13661,7 +13661,7 @@ export interface components {
             }[];
             /** @description Whether the tiers and prices of the event's first slot are locked: true once the event is released (#431, #2044). A tier or price write on a locked set is refused with 409 SPORT_EVENT_TIERS_LOCKED. */
             tiersLocked: boolean;
-            /** @description Every slot of the event holding a tier set (#2044), in play order, its tier-set slot first: each slot a tiered or budget template of its league lists, or its first slot alone when none lists any. A slot's tiers and prices are read and written through the slot tier routes (listEventSlotTiers). Empty for an event covering no slot. */
+            /** @description Every slot of the event holding a tier set (#2044), in play order, its tier-set slot first: each slot a contest of a tiered or budget template of its league may start at (every slot a one-slot or from-slot template lists, the first a whole-event template lists), or its first slot alone when no such template lists any. A slot's tiers and prices are read and written through the slot tier routes (listEventSlotTiers). Empty for an event covering no slot. */
             tierSets: {
                 /**
                  * Format: uuid
@@ -14085,7 +14085,7 @@ export interface components {
                 }[];
                 /** @description Whether the tiers and prices of the event's first slot are locked: true once the event is released (#431, #2044). A tier or price write on a locked set is refused with 409 SPORT_EVENT_TIERS_LOCKED. */
                 tiersLocked: boolean;
-                /** @description Every slot of the event holding a tier set (#2044), in play order, its tier-set slot first: each slot a tiered or budget template of its league lists, or its first slot alone when none lists any. A slot's tiers and prices are read and written through the slot tier routes (listEventSlotTiers). Empty for an event covering no slot. */
+                /** @description Every slot of the event holding a tier set (#2044), in play order, its tier-set slot first: each slot a contest of a tiered or budget template of its league may start at (every slot a one-slot or from-slot template lists, the first a whole-event template lists), or its first slot alone when no such template lists any. A slot's tiers and prices are read and written through the slot tier routes (listEventSlotTiers). Empty for an event covering no slot. */
                 tierSets: {
                     /**
                      * Format: uuid
@@ -14488,7 +14488,7 @@ export interface components {
                 }[];
                 /** @description Whether the tiers and prices of the event's first slot are locked: true once the event is released (#431, #2044). A tier or price write on a locked set is refused with 409 SPORT_EVENT_TIERS_LOCKED. */
                 tiersLocked: boolean;
-                /** @description Every slot of the event holding a tier set (#2044), in play order, its tier-set slot first: each slot a tiered or budget template of its league lists, or its first slot alone when none lists any. A slot's tiers and prices are read and written through the slot tier routes (listEventSlotTiers). Empty for an event covering no slot. */
+                /** @description Every slot of the event holding a tier set (#2044), in play order, its tier-set slot first: each slot a contest of a tiered or budget template of its league may start at (every slot a one-slot or from-slot template lists, the first a whole-event template lists), or its first slot alone when no such template lists any. A slot's tiers and prices are read and written through the slot tier routes (listEventSlotTiers). Empty for an event covering no slot. */
                 tierSets: {
                     /**
                      * Format: uuid

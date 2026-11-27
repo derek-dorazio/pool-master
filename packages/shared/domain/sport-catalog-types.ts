@@ -192,7 +192,7 @@ export interface SportEventTierSlot {
   slotDefinitionId: string;
   seasonSlotStatus: SeasonSlotStatus;
   /**
-   * Whether the slot holds a tier set (`chooseTierSetSlots`): a tiered or budget template lists it,
+   * Whether the slot holds a tier set (`chooseTierSetSlots`): a contest of a tiered or budget template may start there,
    * or it is the event's first slot and none lists any. A slot holding none has no tiers or prices.
    */
   holdsTierSet: boolean;
