@@ -4676,84 +4676,159 @@ export interface components {
                 }[];
             };
         };
-        /** @description Partial ingestion schedule update: only the sync kinds and properties it names change. */
+        /** @description Partial ingestion schedule update: only the sync kinds, states and properties it names change. */
         IngestionScheduleConfigPatch: {
-            /** @description Partial feed-scheduling update payload. */
+            /** @description Partial scheduling update for a sync kind with a switch. */
             EVENTS?: {
-                /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
-                intervalMinutes?: number;
-                /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
-                intervalSeconds?: number;
-                /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
-                lookaheadDays?: number;
-                /** @description Whether the feed should be scheduled automatically. */
                 enabled?: boolean;
+                /** @description The Season states whose interval changes. */
+                intervals?: {
+                    /** @description How often a sync runs in one Season state: in minutes or in seconds, at least one. */
+                    IN_SEASON?: {
+                        /** @description How often the sync runs, in minutes. */
+                        intervalMinutes?: number;
+                        /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                        intervalSeconds?: number;
+                    };
+                    /** @description How often a sync runs in one Season state: in minutes or in seconds, at least one. */
+                    OFFSEASON?: {
+                        /** @description How often the sync runs, in minutes. */
+                        intervalMinutes?: number;
+                        /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                        intervalSeconds?: number;
+                    };
+                };
             };
             /** @description Partial scheduling update for a sync kind with no switch. */
             FIELD?: {
-                /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
-                intervalMinutes?: number;
-                /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
-                intervalSeconds?: number;
-                /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
-                lookaheadDays?: number;
+                /** @description The Season states whose interval changes. */
+                intervals: {
+                    /** @description How often a sync runs in one Season state: in minutes or in seconds, at least one. */
+                    IN_SEASON?: {
+                        /** @description How often the sync runs, in minutes. */
+                        intervalMinutes?: number;
+                        /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                        intervalSeconds?: number;
+                    };
+                    /** @description How often a sync runs in one Season state: in minutes or in seconds, at least one. */
+                    OFFSEASON?: {
+                        /** @description How often the sync runs, in minutes. */
+                        intervalMinutes?: number;
+                        /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                        intervalSeconds?: number;
+                    };
+                };
             };
-            /** @description Partial feed-scheduling update payload. */
+            /** @description Partial scheduling update for a sync kind with a switch. */
             SCORES?: {
-                /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
-                intervalMinutes?: number;
-                /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
-                intervalSeconds?: number;
-                /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
-                lookaheadDays?: number;
-                /** @description Whether the feed should be scheduled automatically. */
                 enabled?: boolean;
+                /** @description The Season states whose interval changes. */
+                intervals?: {
+                    /** @description How often a sync runs in one Season state: in minutes or in seconds, at least one. */
+                    IN_SEASON?: {
+                        /** @description How often the sync runs, in minutes. */
+                        intervalMinutes?: number;
+                        /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                        intervalSeconds?: number;
+                    };
+                    /** @description How often a sync runs in one Season state: in minutes or in seconds, at least one. */
+                    OFFSEASON?: {
+                        /** @description How often the sync runs, in minutes. */
+                        intervalMinutes?: number;
+                        /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                        intervalSeconds?: number;
+                    };
+                };
             };
         };
         /** @description Feed-aware ingestion scheduling configuration, one schedule for every sport league, keyed by sync kind. */
         IngestionScheduleConfig: {
             /** @description The EVENTS sync: how often each synced sport league's events sync is queued. */
             EVENTS: {
-                /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
-                intervalMinutes?: number;
-                /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
-                intervalSeconds?: number;
-                /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
-                lookaheadDays?: number;
-                /** @description Whether the feed should be scheduled automatically. */
+                /** @description Whether the sync is scheduled automatically. */
                 enabled: boolean;
+                /** @description A sync kind's interval for each Season state. */
+                intervals: {
+                    /** @description How often the sync runs for a league in season. */
+                    IN_SEASON: {
+                        /** @description How often the sync runs, in minutes. */
+                        intervalMinutes?: number;
+                        /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                        intervalSeconds?: number;
+                    };
+                    /** @description How often the sync runs for a league off season. */
+                    OFFSEASON: {
+                        /** @description How often the sync runs, in minutes. */
+                        intervalMinutes?: number;
+                        /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                        intervalSeconds?: number;
+                    };
+                };
             };
-            /** @description The FIELD sync: event participants and event-scoped odds before the field locks, for synced sport leagues. It has no switch. Candidate events must be field-available and not field-locked. */
+            /** @description The FIELD sync: the field and event-scoped odds of each event in a synced sport league's next slot. It has no switch. */
             FIELD: {
-                /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
-                intervalMinutes?: number;
-                /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
-                intervalSeconds?: number;
-                /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
-                lookaheadDays?: number;
+                /** @description A sync kind's interval for each Season state. */
+                intervals: {
+                    /** @description How often the sync runs for a league in season. */
+                    IN_SEASON: {
+                        /** @description How often the sync runs, in minutes. */
+                        intervalMinutes?: number;
+                        /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                        intervalSeconds?: number;
+                    };
+                    /** @description How often the sync runs for a league off season. */
+                    OFFSEASON: {
+                        /** @description How often the sync runs, in minutes. */
+                        intervalMinutes?: number;
+                        /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                        intervalSeconds?: number;
+                    };
+                };
             };
-            /** @description The SCORES sync: live score polling. */
+            /** @description The SCORES sync: live score polling for each event with a Game due or in play. */
             SCORES: {
-                /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
-                intervalMinutes?: number;
-                /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
-                intervalSeconds?: number;
-                /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
-                lookaheadDays?: number;
-                /** @description Whether the feed should be scheduled automatically. */
+                /** @description Whether the sync is scheduled automatically. */
                 enabled: boolean;
+                /** @description A sync kind's interval for each Season state. */
+                intervals: {
+                    /** @description How often the sync runs for a league in season. */
+                    IN_SEASON: {
+                        /** @description How often the sync runs, in minutes. */
+                        intervalMinutes?: number;
+                        /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                        intervalSeconds?: number;
+                    };
+                    /** @description How often the sync runs for a league off season. */
+                    OFFSEASON: {
+                        /** @description How often the sync runs, in minutes. */
+                        intervalMinutes?: number;
+                        /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                        intervalSeconds?: number;
+                    };
+                };
             };
         };
-        /** @description One sync kind's schedule as the read answers it: its policy, whether it runs, and whether it has a switch. */
+        /** @description One sync kind's schedule as the read answers it: its intervals per Season state, whether it runs, and whether it has a switch. */
         IngestionSyncSchedule: {
-            /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
-            intervalMinutes?: number;
-            /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
-            intervalSeconds?: number;
-            /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
-            lookaheadDays?: number;
             /** @description The sync's switch; absent for a sync with none. */
             enabled?: boolean;
+            /** @description A sync kind's interval for each Season state. */
+            intervals: {
+                /** @description How often the sync runs for a league in season. */
+                IN_SEASON: {
+                    /** @description How often the sync runs, in minutes. */
+                    intervalMinutes?: number;
+                    /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                    intervalSeconds?: number;
+                };
+                /** @description How often the sync runs for a league off season. */
+                OFFSEASON: {
+                    /** @description How often the sync runs, in minutes. */
+                    intervalMinutes?: number;
+                    /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                    intervalSeconds?: number;
+                };
+            };
             /** @description Whether the sync runs on its interval now. */
             runs: boolean;
             /** @description Whether the sync has a switch an admin can turn off; a sync with none always runs. */
@@ -4761,46 +4836,79 @@ export interface components {
         };
         /** @description The ingestion schedule as the API answers it: per sync kind, its policy, whether it runs and whether it has a switch. */
         IngestionSchedule: {
-            /** @description One sync kind's schedule as the read answers it: its policy, whether it runs, and whether it has a switch. */
+            /** @description One sync kind's schedule as the read answers it: its intervals per Season state, whether it runs, and whether it has a switch. */
             EVENTS: {
-                /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
-                intervalMinutes?: number;
-                /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
-                intervalSeconds?: number;
-                /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
-                lookaheadDays?: number;
                 /** @description The sync's switch; absent for a sync with none. */
                 enabled?: boolean;
+                /** @description A sync kind's interval for each Season state. */
+                intervals: {
+                    /** @description How often the sync runs for a league in season. */
+                    IN_SEASON: {
+                        /** @description How often the sync runs, in minutes. */
+                        intervalMinutes?: number;
+                        /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                        intervalSeconds?: number;
+                    };
+                    /** @description How often the sync runs for a league off season. */
+                    OFFSEASON: {
+                        /** @description How often the sync runs, in minutes. */
+                        intervalMinutes?: number;
+                        /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                        intervalSeconds?: number;
+                    };
+                };
                 /** @description Whether the sync runs on its interval now. */
                 runs: boolean;
                 /** @description Whether the sync has a switch an admin can turn off; a sync with none always runs. */
                 switchable: boolean;
             };
-            /** @description One sync kind's schedule as the read answers it: its policy, whether it runs, and whether it has a switch. */
+            /** @description One sync kind's schedule as the read answers it: its intervals per Season state, whether it runs, and whether it has a switch. */
             FIELD: {
-                /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
-                intervalMinutes?: number;
-                /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
-                intervalSeconds?: number;
-                /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
-                lookaheadDays?: number;
                 /** @description The sync's switch; absent for a sync with none. */
                 enabled?: boolean;
+                /** @description A sync kind's interval for each Season state. */
+                intervals: {
+                    /** @description How often the sync runs for a league in season. */
+                    IN_SEASON: {
+                        /** @description How often the sync runs, in minutes. */
+                        intervalMinutes?: number;
+                        /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                        intervalSeconds?: number;
+                    };
+                    /** @description How often the sync runs for a league off season. */
+                    OFFSEASON: {
+                        /** @description How often the sync runs, in minutes. */
+                        intervalMinutes?: number;
+                        /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                        intervalSeconds?: number;
+                    };
+                };
                 /** @description Whether the sync runs on its interval now. */
                 runs: boolean;
                 /** @description Whether the sync has a switch an admin can turn off; a sync with none always runs. */
                 switchable: boolean;
             };
-            /** @description One sync kind's schedule as the read answers it: its policy, whether it runs, and whether it has a switch. */
+            /** @description One sync kind's schedule as the read answers it: its intervals per Season state, whether it runs, and whether it has a switch. */
             SCORES: {
-                /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
-                intervalMinutes?: number;
-                /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
-                intervalSeconds?: number;
-                /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
-                lookaheadDays?: number;
                 /** @description The sync's switch; absent for a sync with none. */
                 enabled?: boolean;
+                /** @description A sync kind's interval for each Season state. */
+                intervals: {
+                    /** @description How often the sync runs for a league in season. */
+                    IN_SEASON: {
+                        /** @description How often the sync runs, in minutes. */
+                        intervalMinutes?: number;
+                        /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                        intervalSeconds?: number;
+                    };
+                    /** @description How often the sync runs for a league off season. */
+                    OFFSEASON: {
+                        /** @description How often the sync runs, in minutes. */
+                        intervalMinutes?: number;
+                        /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                        intervalSeconds?: number;
+                    };
+                };
                 /** @description Whether the sync runs on its interval now. */
                 runs: boolean;
                 /** @description Whether the sync has a switch an admin can turn off; a sync with none always runs. */
@@ -18679,68 +18787,134 @@ export interface components {
             value: {
                 /** @description The EVENTS sync: how often each synced sport league's events sync is queued. */
                 EVENTS: {
-                    /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
-                    intervalMinutes?: number;
-                    /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
-                    intervalSeconds?: number;
-                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
-                    lookaheadDays?: number;
-                    /** @description Whether the feed should be scheduled automatically. */
+                    /** @description Whether the sync is scheduled automatically. */
                     enabled: boolean;
+                    /** @description A sync kind's interval for each Season state. */
+                    intervals: {
+                        /** @description How often the sync runs for a league in season. */
+                        IN_SEASON: {
+                            /** @description How often the sync runs, in minutes. */
+                            intervalMinutes?: number;
+                            /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                            intervalSeconds?: number;
+                        };
+                        /** @description How often the sync runs for a league off season. */
+                        OFFSEASON: {
+                            /** @description How often the sync runs, in minutes. */
+                            intervalMinutes?: number;
+                            /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                            intervalSeconds?: number;
+                        };
+                    };
                 };
-                /** @description The FIELD sync: event participants and event-scoped odds before the field locks, for synced sport leagues. It has no switch. Candidate events must be field-available and not field-locked. */
+                /** @description The FIELD sync: the field and event-scoped odds of each event in a synced sport league's next slot. It has no switch. */
                 FIELD: {
-                    /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
-                    intervalMinutes?: number;
-                    /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
-                    intervalSeconds?: number;
-                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
-                    lookaheadDays?: number;
+                    /** @description A sync kind's interval for each Season state. */
+                    intervals: {
+                        /** @description How often the sync runs for a league in season. */
+                        IN_SEASON: {
+                            /** @description How often the sync runs, in minutes. */
+                            intervalMinutes?: number;
+                            /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                            intervalSeconds?: number;
+                        };
+                        /** @description How often the sync runs for a league off season. */
+                        OFFSEASON: {
+                            /** @description How often the sync runs, in minutes. */
+                            intervalMinutes?: number;
+                            /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                            intervalSeconds?: number;
+                        };
+                    };
                 };
-                /** @description The SCORES sync: live score polling. */
+                /** @description The SCORES sync: live score polling for each event with a Game due or in play. */
                 SCORES: {
-                    /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
-                    intervalMinutes?: number;
-                    /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
-                    intervalSeconds?: number;
-                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
-                    lookaheadDays?: number;
-                    /** @description Whether the feed should be scheduled automatically. */
+                    /** @description Whether the sync is scheduled automatically. */
                     enabled: boolean;
+                    /** @description A sync kind's interval for each Season state. */
+                    intervals: {
+                        /** @description How often the sync runs for a league in season. */
+                        IN_SEASON: {
+                            /** @description How often the sync runs, in minutes. */
+                            intervalMinutes?: number;
+                            /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                            intervalSeconds?: number;
+                        };
+                        /** @description How often the sync runs for a league off season. */
+                        OFFSEASON: {
+                            /** @description How often the sync runs, in minutes. */
+                            intervalMinutes?: number;
+                            /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                            intervalSeconds?: number;
+                        };
+                    };
                 };
             };
             /** @description The value a reset would store. */
             defaults: {
                 /** @description The EVENTS sync: how often each synced sport league's events sync is queued. */
                 EVENTS: {
-                    /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
-                    intervalMinutes?: number;
-                    /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
-                    intervalSeconds?: number;
-                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
-                    lookaheadDays?: number;
-                    /** @description Whether the feed should be scheduled automatically. */
+                    /** @description Whether the sync is scheduled automatically. */
                     enabled: boolean;
+                    /** @description A sync kind's interval for each Season state. */
+                    intervals: {
+                        /** @description How often the sync runs for a league in season. */
+                        IN_SEASON: {
+                            /** @description How often the sync runs, in minutes. */
+                            intervalMinutes?: number;
+                            /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                            intervalSeconds?: number;
+                        };
+                        /** @description How often the sync runs for a league off season. */
+                        OFFSEASON: {
+                            /** @description How often the sync runs, in minutes. */
+                            intervalMinutes?: number;
+                            /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                            intervalSeconds?: number;
+                        };
+                    };
                 };
-                /** @description The FIELD sync: event participants and event-scoped odds before the field locks, for synced sport leagues. It has no switch. Candidate events must be field-available and not field-locked. */
+                /** @description The FIELD sync: the field and event-scoped odds of each event in a synced sport league's next slot. It has no switch. */
                 FIELD: {
-                    /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
-                    intervalMinutes?: number;
-                    /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
-                    intervalSeconds?: number;
-                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
-                    lookaheadDays?: number;
+                    /** @description A sync kind's interval for each Season state. */
+                    intervals: {
+                        /** @description How often the sync runs for a league in season. */
+                        IN_SEASON: {
+                            /** @description How often the sync runs, in minutes. */
+                            intervalMinutes?: number;
+                            /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                            intervalSeconds?: number;
+                        };
+                        /** @description How often the sync runs for a league off season. */
+                        OFFSEASON: {
+                            /** @description How often the sync runs, in minutes. */
+                            intervalMinutes?: number;
+                            /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                            intervalSeconds?: number;
+                        };
+                    };
                 };
-                /** @description The SCORES sync: live score polling. */
+                /** @description The SCORES sync: live score polling for each event with a Game due or in play. */
                 SCORES: {
-                    /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
-                    intervalMinutes?: number;
-                    /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
-                    intervalSeconds?: number;
-                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
-                    lookaheadDays?: number;
-                    /** @description Whether the feed should be scheduled automatically. */
+                    /** @description Whether the sync is scheduled automatically. */
                     enabled: boolean;
+                    /** @description A sync kind's interval for each Season state. */
+                    intervals: {
+                        /** @description How often the sync runs for a league in season. */
+                        IN_SEASON: {
+                            /** @description How often the sync runs, in minutes. */
+                            intervalMinutes?: number;
+                            /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                            intervalSeconds?: number;
+                        };
+                        /** @description How often the sync runs for a league off season. */
+                        OFFSEASON: {
+                            /** @description How often the sync runs, in minutes. */
+                            intervalMinutes?: number;
+                            /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                            intervalSeconds?: number;
+                        };
+                    };
                 };
             };
         } | {
@@ -19375,68 +19549,134 @@ export interface components {
                 value: {
                     /** @description The EVENTS sync: how often each synced sport league's events sync is queued. */
                     EVENTS: {
-                        /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
-                        intervalMinutes?: number;
-                        /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
-                        intervalSeconds?: number;
-                        /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
-                        lookaheadDays?: number;
-                        /** @description Whether the feed should be scheduled automatically. */
+                        /** @description Whether the sync is scheduled automatically. */
                         enabled: boolean;
+                        /** @description A sync kind's interval for each Season state. */
+                        intervals: {
+                            /** @description How often the sync runs for a league in season. */
+                            IN_SEASON: {
+                                /** @description How often the sync runs, in minutes. */
+                                intervalMinutes?: number;
+                                /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                                intervalSeconds?: number;
+                            };
+                            /** @description How often the sync runs for a league off season. */
+                            OFFSEASON: {
+                                /** @description How often the sync runs, in minutes. */
+                                intervalMinutes?: number;
+                                /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                                intervalSeconds?: number;
+                            };
+                        };
                     };
-                    /** @description The FIELD sync: event participants and event-scoped odds before the field locks, for synced sport leagues. It has no switch. Candidate events must be field-available and not field-locked. */
+                    /** @description The FIELD sync: the field and event-scoped odds of each event in a synced sport league's next slot. It has no switch. */
                     FIELD: {
-                        /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
-                        intervalMinutes?: number;
-                        /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
-                        intervalSeconds?: number;
-                        /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
-                        lookaheadDays?: number;
+                        /** @description A sync kind's interval for each Season state. */
+                        intervals: {
+                            /** @description How often the sync runs for a league in season. */
+                            IN_SEASON: {
+                                /** @description How often the sync runs, in minutes. */
+                                intervalMinutes?: number;
+                                /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                                intervalSeconds?: number;
+                            };
+                            /** @description How often the sync runs for a league off season. */
+                            OFFSEASON: {
+                                /** @description How often the sync runs, in minutes. */
+                                intervalMinutes?: number;
+                                /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                                intervalSeconds?: number;
+                            };
+                        };
                     };
-                    /** @description The SCORES sync: live score polling. */
+                    /** @description The SCORES sync: live score polling for each event with a Game due or in play. */
                     SCORES: {
-                        /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
-                        intervalMinutes?: number;
-                        /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
-                        intervalSeconds?: number;
-                        /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
-                        lookaheadDays?: number;
-                        /** @description Whether the feed should be scheduled automatically. */
+                        /** @description Whether the sync is scheduled automatically. */
                         enabled: boolean;
+                        /** @description A sync kind's interval for each Season state. */
+                        intervals: {
+                            /** @description How often the sync runs for a league in season. */
+                            IN_SEASON: {
+                                /** @description How often the sync runs, in minutes. */
+                                intervalMinutes?: number;
+                                /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                                intervalSeconds?: number;
+                            };
+                            /** @description How often the sync runs for a league off season. */
+                            OFFSEASON: {
+                                /** @description How often the sync runs, in minutes. */
+                                intervalMinutes?: number;
+                                /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                                intervalSeconds?: number;
+                            };
+                        };
                     };
                 };
                 /** @description The value a reset would store. */
                 defaults: {
                     /** @description The EVENTS sync: how often each synced sport league's events sync is queued. */
                     EVENTS: {
-                        /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
-                        intervalMinutes?: number;
-                        /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
-                        intervalSeconds?: number;
-                        /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
-                        lookaheadDays?: number;
-                        /** @description Whether the feed should be scheduled automatically. */
+                        /** @description Whether the sync is scheduled automatically. */
                         enabled: boolean;
+                        /** @description A sync kind's interval for each Season state. */
+                        intervals: {
+                            /** @description How often the sync runs for a league in season. */
+                            IN_SEASON: {
+                                /** @description How often the sync runs, in minutes. */
+                                intervalMinutes?: number;
+                                /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                                intervalSeconds?: number;
+                            };
+                            /** @description How often the sync runs for a league off season. */
+                            OFFSEASON: {
+                                /** @description How often the sync runs, in minutes. */
+                                intervalMinutes?: number;
+                                /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                                intervalSeconds?: number;
+                            };
+                        };
                     };
-                    /** @description The FIELD sync: event participants and event-scoped odds before the field locks, for synced sport leagues. It has no switch. Candidate events must be field-available and not field-locked. */
+                    /** @description The FIELD sync: the field and event-scoped odds of each event in a synced sport league's next slot. It has no switch. */
                     FIELD: {
-                        /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
-                        intervalMinutes?: number;
-                        /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
-                        intervalSeconds?: number;
-                        /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
-                        lookaheadDays?: number;
+                        /** @description A sync kind's interval for each Season state. */
+                        intervals: {
+                            /** @description How often the sync runs for a league in season. */
+                            IN_SEASON: {
+                                /** @description How often the sync runs, in minutes. */
+                                intervalMinutes?: number;
+                                /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                                intervalSeconds?: number;
+                            };
+                            /** @description How often the sync runs for a league off season. */
+                            OFFSEASON: {
+                                /** @description How often the sync runs, in minutes. */
+                                intervalMinutes?: number;
+                                /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                                intervalSeconds?: number;
+                            };
+                        };
                     };
-                    /** @description The SCORES sync: live score polling. */
+                    /** @description The SCORES sync: live score polling for each event with a Game due or in play. */
                     SCORES: {
-                        /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
-                        intervalMinutes?: number;
-                        /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
-                        intervalSeconds?: number;
-                        /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
-                        lookaheadDays?: number;
-                        /** @description Whether the feed should be scheduled automatically. */
+                        /** @description Whether the sync is scheduled automatically. */
                         enabled: boolean;
+                        /** @description A sync kind's interval for each Season state. */
+                        intervals: {
+                            /** @description How often the sync runs for a league in season. */
+                            IN_SEASON: {
+                                /** @description How often the sync runs, in minutes. */
+                                intervalMinutes?: number;
+                                /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                                intervalSeconds?: number;
+                            };
+                            /** @description How often the sync runs for a league off season. */
+                            OFFSEASON: {
+                                /** @description How often the sync runs, in minutes. */
+                                intervalMinutes?: number;
+                                /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                                intervalSeconds?: number;
+                            };
+                        };
                     };
                 };
             } | {
@@ -20046,34 +20286,67 @@ export interface components {
             value: {
                 /** @description The EVENTS sync: how often each synced sport league's events sync is queued. */
                 EVENTS: {
-                    /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
-                    intervalMinutes?: number;
-                    /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
-                    intervalSeconds?: number;
-                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
-                    lookaheadDays?: number;
-                    /** @description Whether the feed should be scheduled automatically. */
+                    /** @description Whether the sync is scheduled automatically. */
                     enabled: boolean;
+                    /** @description A sync kind's interval for each Season state. */
+                    intervals: {
+                        /** @description How often the sync runs for a league in season. */
+                        IN_SEASON: {
+                            /** @description How often the sync runs, in minutes. */
+                            intervalMinutes?: number;
+                            /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                            intervalSeconds?: number;
+                        };
+                        /** @description How often the sync runs for a league off season. */
+                        OFFSEASON: {
+                            /** @description How often the sync runs, in minutes. */
+                            intervalMinutes?: number;
+                            /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                            intervalSeconds?: number;
+                        };
+                    };
                 };
-                /** @description The FIELD sync: event participants and event-scoped odds before the field locks, for synced sport leagues. It has no switch. Candidate events must be field-available and not field-locked. */
+                /** @description The FIELD sync: the field and event-scoped odds of each event in a synced sport league's next slot. It has no switch. */
                 FIELD: {
-                    /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
-                    intervalMinutes?: number;
-                    /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
-                    intervalSeconds?: number;
-                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
-                    lookaheadDays?: number;
+                    /** @description A sync kind's interval for each Season state. */
+                    intervals: {
+                        /** @description How often the sync runs for a league in season. */
+                        IN_SEASON: {
+                            /** @description How often the sync runs, in minutes. */
+                            intervalMinutes?: number;
+                            /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                            intervalSeconds?: number;
+                        };
+                        /** @description How often the sync runs for a league off season. */
+                        OFFSEASON: {
+                            /** @description How often the sync runs, in minutes. */
+                            intervalMinutes?: number;
+                            /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                            intervalSeconds?: number;
+                        };
+                    };
                 };
-                /** @description The SCORES sync: live score polling. */
+                /** @description The SCORES sync: live score polling for each event with a Game due or in play. */
                 SCORES: {
-                    /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
-                    intervalMinutes?: number;
-                    /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
-                    intervalSeconds?: number;
-                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
-                    lookaheadDays?: number;
-                    /** @description Whether the feed should be scheduled automatically. */
+                    /** @description Whether the sync is scheduled automatically. */
                     enabled: boolean;
+                    /** @description A sync kind's interval for each Season state. */
+                    intervals: {
+                        /** @description How often the sync runs for a league in season. */
+                        IN_SEASON: {
+                            /** @description How often the sync runs, in minutes. */
+                            intervalMinutes?: number;
+                            /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                            intervalSeconds?: number;
+                        };
+                        /** @description How often the sync runs for a league off season. */
+                        OFFSEASON: {
+                            /** @description How often the sync runs, in minutes. */
+                            intervalMinutes?: number;
+                            /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                            intervalSeconds?: number;
+                        };
+                    };
                 };
             };
             /**
@@ -20389,68 +20662,134 @@ export interface components {
             previousValue: {
                 /** @description The EVENTS sync: how often each synced sport league's events sync is queued. */
                 EVENTS: {
-                    /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
-                    intervalMinutes?: number;
-                    /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
-                    intervalSeconds?: number;
-                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
-                    lookaheadDays?: number;
-                    /** @description Whether the feed should be scheduled automatically. */
+                    /** @description Whether the sync is scheduled automatically. */
                     enabled: boolean;
+                    /** @description A sync kind's interval for each Season state. */
+                    intervals: {
+                        /** @description How often the sync runs for a league in season. */
+                        IN_SEASON: {
+                            /** @description How often the sync runs, in minutes. */
+                            intervalMinutes?: number;
+                            /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                            intervalSeconds?: number;
+                        };
+                        /** @description How often the sync runs for a league off season. */
+                        OFFSEASON: {
+                            /** @description How often the sync runs, in minutes. */
+                            intervalMinutes?: number;
+                            /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                            intervalSeconds?: number;
+                        };
+                    };
                 };
-                /** @description The FIELD sync: event participants and event-scoped odds before the field locks, for synced sport leagues. It has no switch. Candidate events must be field-available and not field-locked. */
+                /** @description The FIELD sync: the field and event-scoped odds of each event in a synced sport league's next slot. It has no switch. */
                 FIELD: {
-                    /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
-                    intervalMinutes?: number;
-                    /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
-                    intervalSeconds?: number;
-                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
-                    lookaheadDays?: number;
+                    /** @description A sync kind's interval for each Season state. */
+                    intervals: {
+                        /** @description How often the sync runs for a league in season. */
+                        IN_SEASON: {
+                            /** @description How often the sync runs, in minutes. */
+                            intervalMinutes?: number;
+                            /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                            intervalSeconds?: number;
+                        };
+                        /** @description How often the sync runs for a league off season. */
+                        OFFSEASON: {
+                            /** @description How often the sync runs, in minutes. */
+                            intervalMinutes?: number;
+                            /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                            intervalSeconds?: number;
+                        };
+                    };
                 };
-                /** @description The SCORES sync: live score polling. */
+                /** @description The SCORES sync: live score polling for each event with a Game due or in play. */
                 SCORES: {
-                    /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
-                    intervalMinutes?: number;
-                    /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
-                    intervalSeconds?: number;
-                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
-                    lookaheadDays?: number;
-                    /** @description Whether the feed should be scheduled automatically. */
+                    /** @description Whether the sync is scheduled automatically. */
                     enabled: boolean;
+                    /** @description A sync kind's interval for each Season state. */
+                    intervals: {
+                        /** @description How often the sync runs for a league in season. */
+                        IN_SEASON: {
+                            /** @description How often the sync runs, in minutes. */
+                            intervalMinutes?: number;
+                            /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                            intervalSeconds?: number;
+                        };
+                        /** @description How often the sync runs for a league off season. */
+                        OFFSEASON: {
+                            /** @description How often the sync runs, in minutes. */
+                            intervalMinutes?: number;
+                            /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                            intervalSeconds?: number;
+                        };
+                    };
                 };
             } | null;
             /** @description The value the save stored. */
             newValue: {
                 /** @description The EVENTS sync: how often each synced sport league's events sync is queued. */
                 EVENTS: {
-                    /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
-                    intervalMinutes?: number;
-                    /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
-                    intervalSeconds?: number;
-                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
-                    lookaheadDays?: number;
-                    /** @description Whether the feed should be scheduled automatically. */
+                    /** @description Whether the sync is scheduled automatically. */
                     enabled: boolean;
+                    /** @description A sync kind's interval for each Season state. */
+                    intervals: {
+                        /** @description How often the sync runs for a league in season. */
+                        IN_SEASON: {
+                            /** @description How often the sync runs, in minutes. */
+                            intervalMinutes?: number;
+                            /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                            intervalSeconds?: number;
+                        };
+                        /** @description How often the sync runs for a league off season. */
+                        OFFSEASON: {
+                            /** @description How often the sync runs, in minutes. */
+                            intervalMinutes?: number;
+                            /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                            intervalSeconds?: number;
+                        };
+                    };
                 };
-                /** @description The FIELD sync: event participants and event-scoped odds before the field locks, for synced sport leagues. It has no switch. Candidate events must be field-available and not field-locked. */
+                /** @description The FIELD sync: the field and event-scoped odds of each event in a synced sport league's next slot. It has no switch. */
                 FIELD: {
-                    /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
-                    intervalMinutes?: number;
-                    /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
-                    intervalSeconds?: number;
-                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
-                    lookaheadDays?: number;
+                    /** @description A sync kind's interval for each Season state. */
+                    intervals: {
+                        /** @description How often the sync runs for a league in season. */
+                        IN_SEASON: {
+                            /** @description How often the sync runs, in minutes. */
+                            intervalMinutes?: number;
+                            /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                            intervalSeconds?: number;
+                        };
+                        /** @description How often the sync runs for a league off season. */
+                        OFFSEASON: {
+                            /** @description How often the sync runs, in minutes. */
+                            intervalMinutes?: number;
+                            /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                            intervalSeconds?: number;
+                        };
+                    };
                 };
-                /** @description The SCORES sync: live score polling. */
+                /** @description The SCORES sync: live score polling for each event with a Game due or in play. */
                 SCORES: {
-                    /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
-                    intervalMinutes?: number;
-                    /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
-                    intervalSeconds?: number;
-                    /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
-                    lookaheadDays?: number;
-                    /** @description Whether the feed should be scheduled automatically. */
+                    /** @description Whether the sync is scheduled automatically. */
                     enabled: boolean;
+                    /** @description A sync kind's interval for each Season state. */
+                    intervals: {
+                        /** @description How often the sync runs for a league in season. */
+                        IN_SEASON: {
+                            /** @description How often the sync runs, in minutes. */
+                            intervalMinutes?: number;
+                            /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                            intervalSeconds?: number;
+                        };
+                        /** @description How often the sync runs for a league off season. */
+                        OFFSEASON: {
+                            /** @description How often the sync runs, in minutes. */
+                            intervalMinutes?: number;
+                            /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                            intervalSeconds?: number;
+                        };
+                    };
                 };
             };
         } | {
@@ -21057,68 +21396,134 @@ export interface components {
                 previousValue: {
                     /** @description The EVENTS sync: how often each synced sport league's events sync is queued. */
                     EVENTS: {
-                        /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
-                        intervalMinutes?: number;
-                        /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
-                        intervalSeconds?: number;
-                        /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
-                        lookaheadDays?: number;
-                        /** @description Whether the feed should be scheduled automatically. */
+                        /** @description Whether the sync is scheduled automatically. */
                         enabled: boolean;
+                        /** @description A sync kind's interval for each Season state. */
+                        intervals: {
+                            /** @description How often the sync runs for a league in season. */
+                            IN_SEASON: {
+                                /** @description How often the sync runs, in minutes. */
+                                intervalMinutes?: number;
+                                /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                                intervalSeconds?: number;
+                            };
+                            /** @description How often the sync runs for a league off season. */
+                            OFFSEASON: {
+                                /** @description How often the sync runs, in minutes. */
+                                intervalMinutes?: number;
+                                /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                                intervalSeconds?: number;
+                            };
+                        };
                     };
-                    /** @description The FIELD sync: event participants and event-scoped odds before the field locks, for synced sport leagues. It has no switch. Candidate events must be field-available and not field-locked. */
+                    /** @description The FIELD sync: the field and event-scoped odds of each event in a synced sport league's next slot. It has no switch. */
                     FIELD: {
-                        /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
-                        intervalMinutes?: number;
-                        /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
-                        intervalSeconds?: number;
-                        /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
-                        lookaheadDays?: number;
+                        /** @description A sync kind's interval for each Season state. */
+                        intervals: {
+                            /** @description How often the sync runs for a league in season. */
+                            IN_SEASON: {
+                                /** @description How often the sync runs, in minutes. */
+                                intervalMinutes?: number;
+                                /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                                intervalSeconds?: number;
+                            };
+                            /** @description How often the sync runs for a league off season. */
+                            OFFSEASON: {
+                                /** @description How often the sync runs, in minutes. */
+                                intervalMinutes?: number;
+                                /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                                intervalSeconds?: number;
+                            };
+                        };
                     };
-                    /** @description The SCORES sync: live score polling. */
+                    /** @description The SCORES sync: live score polling for each event with a Game due or in play. */
                     SCORES: {
-                        /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
-                        intervalMinutes?: number;
-                        /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
-                        intervalSeconds?: number;
-                        /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
-                        lookaheadDays?: number;
-                        /** @description Whether the feed should be scheduled automatically. */
+                        /** @description Whether the sync is scheduled automatically. */
                         enabled: boolean;
+                        /** @description A sync kind's interval for each Season state. */
+                        intervals: {
+                            /** @description How often the sync runs for a league in season. */
+                            IN_SEASON: {
+                                /** @description How often the sync runs, in minutes. */
+                                intervalMinutes?: number;
+                                /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                                intervalSeconds?: number;
+                            };
+                            /** @description How often the sync runs for a league off season. */
+                            OFFSEASON: {
+                                /** @description How often the sync runs, in minutes. */
+                                intervalMinutes?: number;
+                                /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                                intervalSeconds?: number;
+                            };
+                        };
                     };
                 } | null;
                 /** @description The value the save stored. */
                 newValue: {
                     /** @description The EVENTS sync: how often each synced sport league's events sync is queued. */
                     EVENTS: {
-                        /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
-                        intervalMinutes?: number;
-                        /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
-                        intervalSeconds?: number;
-                        /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
-                        lookaheadDays?: number;
-                        /** @description Whether the feed should be scheduled automatically. */
+                        /** @description Whether the sync is scheduled automatically. */
                         enabled: boolean;
+                        /** @description A sync kind's interval for each Season state. */
+                        intervals: {
+                            /** @description How often the sync runs for a league in season. */
+                            IN_SEASON: {
+                                /** @description How often the sync runs, in minutes. */
+                                intervalMinutes?: number;
+                                /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                                intervalSeconds?: number;
+                            };
+                            /** @description How often the sync runs for a league off season. */
+                            OFFSEASON: {
+                                /** @description How often the sync runs, in minutes. */
+                                intervalMinutes?: number;
+                                /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                                intervalSeconds?: number;
+                            };
+                        };
                     };
-                    /** @description The FIELD sync: event participants and event-scoped odds before the field locks, for synced sport leagues. It has no switch. Candidate events must be field-available and not field-locked. */
+                    /** @description The FIELD sync: the field and event-scoped odds of each event in a synced sport league's next slot. It has no switch. */
                     FIELD: {
-                        /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
-                        intervalMinutes?: number;
-                        /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
-                        intervalSeconds?: number;
-                        /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
-                        lookaheadDays?: number;
+                        /** @description A sync kind's interval for each Season state. */
+                        intervals: {
+                            /** @description How often the sync runs for a league in season. */
+                            IN_SEASON: {
+                                /** @description How often the sync runs, in minutes. */
+                                intervalMinutes?: number;
+                                /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                                intervalSeconds?: number;
+                            };
+                            /** @description How often the sync runs for a league off season. */
+                            OFFSEASON: {
+                                /** @description How often the sync runs, in minutes. */
+                                intervalMinutes?: number;
+                                /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                                intervalSeconds?: number;
+                            };
+                        };
                     };
-                    /** @description The SCORES sync: live score polling. */
+                    /** @description The SCORES sync: live score polling for each event with a Game due or in play. */
                     SCORES: {
-                        /** @description How often the feed should run, in minutes, for interval-driven orchestration. */
-                        intervalMinutes?: number;
-                        /** @description How often the feed should run, in seconds, for high-frequency orchestration such as live scoring. */
-                        intervalSeconds?: number;
-                        /** @description How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration). */
-                        lookaheadDays?: number;
-                        /** @description Whether the feed should be scheduled automatically. */
+                        /** @description Whether the sync is scheduled automatically. */
                         enabled: boolean;
+                        /** @description A sync kind's interval for each Season state. */
+                        intervals: {
+                            /** @description How often the sync runs for a league in season. */
+                            IN_SEASON: {
+                                /** @description How often the sync runs, in minutes. */
+                                intervalMinutes?: number;
+                                /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                                intervalSeconds?: number;
+                            };
+                            /** @description How often the sync runs for a league off season. */
+                            OFFSEASON: {
+                                /** @description How often the sync runs, in minutes. */
+                                intervalMinutes?: number;
+                                /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
+                                intervalSeconds?: number;
+                            };
+                        };
                     };
                 };
             } | {

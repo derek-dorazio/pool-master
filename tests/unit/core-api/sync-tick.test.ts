@@ -5,7 +5,7 @@
  */
 
 import { randomUUID } from 'node:crypto';
-import type { LiveEventView, SyncDueWorkReader } from '@poolmaster/shared/db';
+import type { LiveEventView, SeasonSpanView, SyncDueWorkReader } from '@poolmaster/shared/db';
 import { BackgroundJobType, JobTrigger, MatchStatus, ProviderCode, ProviderSyncKind, type FieldWindowSlot, type SportLeague } from '@poolmaster/shared/domain';
 import { BackgroundJobQueue } from '../../../packages/core-api/src/modules/background-jobs/background-job-queue';
 import { SyncTick, type NotifiedProviderCadence } from '../../../packages/core-api/src/modules/ingestion/sync-tick';
@@ -21,10 +21,12 @@ const NOW = new Date('2026-11-27T18:00:00.000Z');
 const minutes = (count: number) => count * 60_000;
 const at = (offsetMs: number) => new Date(NOW.getTime() + offsetMs);
 
+const seasonal = (inSeason: Record<string, number>, offseason: Record<string, number>) => ({ IN_SEASON: inSeason, OFFSEASON: offseason });
+
 const SCHEDULE = {
-  EVENTS: { enabled: true, intervalMinutes: 360 },
-  FIELD: { intervalMinutes: 360 },
-  SCORES: { enabled: true, intervalSeconds: 300 },
+  EVENTS: { enabled: true, intervals: seasonal({ intervalMinutes: 360 }, { intervalMinutes: 1440 }) },
+  FIELD: { intervals: seasonal({ intervalMinutes: 360 }, { intervalMinutes: 1440 }) },
+  SCORES: { enabled: true, intervals: seasonal({ intervalSeconds: 300 }, { intervalSeconds: 300 }) },
 };
 
 function league(overrides: Partial<SportLeague> = {}): SportLeague {
@@ -54,11 +56,15 @@ function tickOf(options: {
   cadence?: NotifiedProviderCadence;
   running?: boolean;
   lock?: 'here' | 'elsewhere';
+  /** The leagues' Seasons not yet ended; by default each league has one under way, so it is in season. */
+  seasons?: SeasonSpanView[];
 }) {
   let now = NOW;
   const jobs = inMemoryBackgroundJobs(() => now);
   const queue = new BackgroundJobQueue({ jobs, currentStart: testCurrentJobStart });
   const dueWork: SyncDueWorkReader = {
+    findSeasonSpans: jest.fn(async ({ leagues }) => options.seasons
+      ?? leagues.map((tickLeague) => ({ sportLeagueId: tickLeague.sportLeagueId, startsAt: at(-minutes(60 * 24 * 30)), endsAt: at(minutes(60 * 24 * 30)) }))),
     findNextSlots: jest.fn(async () => options.slots ?? []),
     findLiveEvents: jest.fn(async () => options.live ?? []),
   };
@@ -156,6 +162,41 @@ describe('SyncTick', () => {
     expect(queued().filter((job) => job.type !== BackgroundJobType.SYNC_EVENT_SCORES)).toHaveLength(2);
   });
 
+  it("syncs an off-season league's events and field on the off-season intervals, and an in-season league's on the in-season ones", async () => {
+    const inSeason = league();
+    const offSeason = league();
+    const { tick, queued, advance, finishAll } = tickOf({
+      leagues: [inSeason, offSeason],
+      slots: [
+        { sportLeagueId: inSeason.id, startsAt: at(minutes(60 * 24 * 7)), sportEventId: randomUUID() },
+        { sportLeagueId: offSeason.id, startsAt: at(minutes(60 * 24 * 90)), sportEventId: randomUUID() },
+      ],
+      seasons: [
+        { sportLeagueId: inSeason.id, startsAt: at(-minutes(60)), endsAt: at(minutes(60 * 24 * 60)) },
+        { sportLeagueId: offSeason.id, startsAt: at(minutes(60 * 24 * 80)), endsAt: at(minutes(60 * 24 * 200)) },
+      ],
+    });
+    await tick.tick();
+    finishAll();
+    advance(minutes(361));
+
+    await tick.tick();
+
+    const of = (sportLeagueId: string) => queued().filter((job) => job.sportLeagueId === sportLeagueId);
+    expect(of(inSeason.id)).toHaveLength(2);
+    expect(of(offSeason.id)).toHaveLength(1);
+    expect(queued().filter((job) => job.type === BackgroundJobType.SYNC_EVENT_FIELD)).toHaveLength(3);
+  });
+
+  it('reads whether each league is in season once per tick, for every synced league together', async () => {
+    const { tick, dueWork } = tickOf({ leagues: [league(), league()] });
+
+    await tick.tick();
+
+    expect(dueWork.findSeasonSpans).toHaveBeenCalledTimes(1);
+    expect(jest.mocked(dueWork.findSeasonSpans).mock.calls.at(0)?.[0].leagues).toHaveLength(2);
+  });
+
   it('records each job as started by the schedule, keyed to its league\'s Provider, holding only our own ids', async () => {
     const nfl = league();
     const live = liveEvent(nfl.id);
@@ -174,7 +215,7 @@ describe('SyncTick', () => {
       leagues: [nfl],
       slots: [{ sportLeagueId: nfl.id, startsAt: at(minutes(60)), sportEventId: randomUUID() }],
       live: [liveEvent(nfl.id)],
-      schedule: { ...SCHEDULE, EVENTS: { enabled: false, intervalMinutes: 360 }, SCORES: { enabled: false, intervalSeconds: 300 } },
+      schedule: { ...SCHEDULE, EVENTS: { ...SCHEDULE.EVENTS, enabled: false }, SCORES: { ...SCHEDULE.SCORES, enabled: false } },
     });
 
     await tick.tick();
@@ -197,7 +238,7 @@ describe('SyncTick', () => {
     const next = randomUUID();
     const { tick, queued } = tickOf({
       leagues: [nfl],
-      schedule: { ...SCHEDULE, EVENTS: { enabled: false, intervalMinutes: 360 }, SCORES: { enabled: false, intervalSeconds: 300 } },
+      schedule: { ...SCHEDULE, EVENTS: { ...SCHEDULE.EVENTS, enabled: false }, SCORES: { ...SCHEDULE.SCORES, enabled: false } },
       slots: [
         { sportLeagueId: nfl.id, startsAt: at(-minutes(60)), sportEventId: randomUUID() },
         { sportLeagueId: nfl.id, startsAt: at(minutes(60)), sportEventId: next },
@@ -225,7 +266,7 @@ describe('SyncTick', () => {
       roundPollIntervalMs: minutes(2),
       quietAfterMs: (code) => (code === 'pga' ? minutes(240) : minutes(20)),
     });
-    const scoresOnly = { ...SCHEDULE, EVENTS: { enabled: false, intervalMinutes: 360 } };
+    const scoresOnly = { ...SCHEDULE, EVENTS: { ...SCHEDULE.EVENTS, enabled: false } };
 
     it("syncs a notified provider's game event only every 15 minutes, while another provider's keeps the SCORES interval", async () => {
       const notified = league();

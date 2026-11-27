@@ -12,6 +12,7 @@ import {
   SlotKind,
   type LeaguePhase,
   SlotWindowStatus,
+  SyncSeasonState,
   type SeasonCompetitionStatus,
   type SeasonSlotStatus,
   type SeriesFormat,
@@ -145,6 +146,14 @@ export function currentSeasonOf(seasons: readonly CurrentSeasonCandidate[], now:
   if (next?.hasSyncedEvent) return next.id;
   const last = byStart.filter((season) => season.endsAt < now).at(-1);
   return (last ?? next)?.id ?? null;
+}
+
+/**
+ * Whether a league is in season for its syncs (#2009): IN_SEASON while one of its Seasons' spans
+ * holds `now`, else OFFSEASON. Each sync kind runs on its interval for the state.
+ */
+export function syncSeasonStateOf(seasons: ReadonlyArray<Pick<SportLeagueSeason, 'startsAt' | 'endsAt'>>, now: Date): SyncSeasonState {
+  return seasons.some((season) => season.startsAt <= now && now <= season.endsAt) ? SyncSeasonState.IN_SEASON : SyncSeasonState.OFFSEASON;
 }
 
 /**

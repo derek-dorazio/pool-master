@@ -2,8 +2,8 @@
 
 How a sport league's data gets from a provider (BALLDONTLIE) into PoolMaster: which leagues
 sync, what each sync writes, what starts it, and what a new league adds. It describes `main` and
-is written for reviewing provider PRs. The plan and Derek's decisions are in
-`plans/live-sports-data-balldontlie.md` (epic #1494); the background jobs named here are
+is written for reviewing provider PRs. Derek's standing decisions for the provider are in §8
+(also in the BALLDONTLIE plan, `plans/live-sports-data-balldontlie.md`, until epic #1494 closes); the background jobs named here are
 specified in [`BACKGROUND-JOBS.md`](BACKGROUND-JOBS.md).
 
 ## The short version
@@ -102,15 +102,18 @@ so the job is deferred rather than syncing a partial list (*Rate limit and retri
 **The schedule** is the `INGESTION_SCHEDULE_CONFIG` settings group
 (`platform/ingestion-config-service.ts`), edited on the root admin's Providers page. One schedule
 serves every sport league; there are no per-sport or per-league overrides, and every sport a
-registered provider covers is scheduled. Its keys are the sync kinds, `ProviderSyncKind` (#1999).
+registered provider covers is scheduled. Its keys are the sync kinds, `ProviderSyncKind` (#1999),
+and each kind has an interval per Season state, `SyncSeasonState` (#2009): `IN_SEASON` while one
+of the league's Seasons' spans holds now, `OFFSEASON` otherwise (`syncSeasonStateOf`, read from
+the league's Seasons on every tick).
 
-| Policy | Default | Runs |
-|---|---|---|
-| `EVENTS.intervalMinutes` | 6 h | the Events sync of every synced league (§2) |
-| `FIELD.intervalMinutes`, `lookaheadDays` | 6 h, 14 days | the Field sync (§3); it has no `enabled` switch and always runs (#2086) |
-| `SCORES.intervalSeconds` | 300 s | the Scores sweep (§5); webhooks arrive between runs |
+| Policy | In season | Off season | Runs |
+|---|---|---|---|
+| `EVENTS.intervals` | 6 h | 24 h | the Events sync of every synced league (§2) |
+| `FIELD.intervals` | 6 h | 24 h | the Field sync of each event in the league's next slot (§3); it has no `enabled` switch and always runs (#2086) |
+| `SCORES.intervals` | 300 s | 300 s | the Scores sync of each event with a Game due or in play (§5); webhooks arrive between runs |
 
-Each loop re-reads its interval after every run, so a saved change applies without a restart.
+The sync tick reads the schedule every minute, so a saved change applies without a restart.
 The schedule read (`GET /api/v1/platform/ingestion-schedule`) answers each kind's policy with
 `runs` and `switchable`, read from whether the policy has an `enabled` switch, so the Providers
 page draws its Sync schedules rows from those fields alone (#2086).
@@ -641,7 +644,23 @@ A new league usually touches only these:
 A change to `score-publisher.ts`, the schedulers, the writers or the persistence layer changes
 every league, and the PR must say so.
 
-## 8. Open items
+## 8. Standing decisions
+
+Derek's decisions for the provider (2026-11-09 to 11-12), as recorded in the BALLDONTLIE plan:
+
+- **A provider's final completes a match by itself**, advancing the winner. Each match records who
+  set its result (#1531): an admin's correction stands, and a later provider final that disagrees
+  is logged, not written. Results come from the provider (ADR 0013).
+- **Live scores show on brackets**, read-only: a live game puts `IN_PROGRESS` and its score on its
+  match with no winner.
+- **Webhooks**: start, period end (halftime for soccer) and end for a game league; tournament and
+  round start, a player's round completed and tournament end for golf; never per-play or per-hole
+  events, which would cost hundreds of deliveries a game and the job refetches the box score
+  anyway. The safety net's cadence and quiet gaps are in §4 *Webhooks*.
+- **No LPGA**: BALLDONTLIE has none. Out of scope with it: college hockey, PWHL, NWSL and the
+  Women's World Cup.
+
+## 9. Open items
 
 - **Unconfirmed webhook names** for college football, NHL, MLB and WNBA (assumed from the NFL's);
   MLB's `quietAfterMinutes` is 210 in case innings are not notified. Confirm during the paid trial
@@ -655,6 +674,5 @@ every league, and the PR must say so.
   only to refresh rows already on the field. Fine on the paid key; on the free key (5 requests a
   minute) one sync spends several minutes of the shared budget. Revisit with the paid trial (#1500).
 - **NCAA semifinal pairing** by `region_id` order: verify against a real bracket.
-- **Field and Scores syncs as jobs**, with event-level Sync now (#1835).
 - **Per-event tier override** from the event ⚙ dialog is in progress.
 - **Not read yet**: UCL two-leg ties, MLS best-of-three.

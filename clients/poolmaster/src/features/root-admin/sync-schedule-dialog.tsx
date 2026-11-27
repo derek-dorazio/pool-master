@@ -6,7 +6,9 @@ import { Checkbox, DateDisplay, DetailEditModal, FormField, Input, showToast, Te
 import { throwApiError } from '@/lib/errors';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
+import { enumLabel } from '@poolmaster/shared/display-strings';
 import {
+  SYNC_SEASON_STATES,
   syncScheduleFormSchema,
   syncScheduleFormValues,
   syncSchedulePatch,
@@ -15,10 +17,10 @@ import {
 } from './sync-schedule-rows';
 
 /**
- * One sync's schedule (#1873): how often it runs, which events it covers and who last changed the
- * schedule, with Close and Edit; Edit switches it on or off when it has a switch (the API says,
- * #2086), changes its interval, and its days ahead when it looks ahead, then comes
- * back to the view (rules/ux-rules.md §12 item 14).
+ * One sync's schedule (#1873): how often it runs in season and off season (#2009), which events
+ * it covers and who last changed the schedule, with Close and Edit; Edit switches it on or off
+ * when it has a switch (the API says, #2086) and changes its two intervals, then comes back to the
+ * view (rules/ux-rules.md §12 item 14).
  */
 export function SyncScheduleDialog({
   lastChange,
@@ -65,7 +67,12 @@ export function SyncScheduleDialog({
       error={saveMutation.error}
       errorFallback="We could not save this schedule."
       facts={[
-        { id: 'every', label: 'Every', value: row.every, testId: `${testId}-every` },
+        ...SYNC_SEASON_STATES.map((state) => ({
+          id: `every-${state}`,
+          label: enumLabel('SyncSeasonState', state),
+          value: row.intervals[state].label,
+          testId: `${testId}-every-${state}`,
+        })),
         { id: 'which-events', label: 'Which events', value: row.whichEvents, testId: `${testId}-which-events` },
         {
           id: 'last-changed',
@@ -99,14 +106,15 @@ export function SyncScheduleDialog({
             <Text as="span">Runs on its schedule</Text>
           </label>
         ) : null}
-        <FormField error={form.formState.errors.interval?.message} label={row.unit === 'seconds' ? 'Every, seconds' : 'Every, minutes'}>
-          <Input data-testid={`${testId}-interval`} inputMode="numeric" {...form.register('interval')} />
-        </FormField>
-        {row.lookaheadDays !== null ? (
-          <FormField error={form.formState.errors.lookaheadDays?.message} label="Days ahead">
-            <Input data-testid={`${testId}-lookahead-days`} inputMode="numeric" {...form.register('lookaheadDays')} />
+        {SYNC_SEASON_STATES.map((state) => (
+          <FormField
+            error={form.formState.errors[state]?.message}
+            key={state}
+            label={`${enumLabel('SyncSeasonState', state)}, every ${row.unit}`}
+          >
+            <Input data-testid={`${testId}-interval-${state}`} inputMode="numeric" {...form.register(state)} />
           </FormField>
-        ) : null}
+        ))}
       </div>
     </DetailEditModal>
   );
