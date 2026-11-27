@@ -97,8 +97,9 @@ function buildScheduler(feed: { shiftDays: number; name?: string } = { shiftDays
     schedule: { getConfig: () => Promise.resolve(INGESTION_SCHEDULE_SETTINGS.defaults({})) },
     notifiedProviderCadence: () => undefined,
     jobLock: heldHere(),
-    // A tick six hours after the last, so each league's events sync is due again.
-    now: () => new Date(Date.now() + 6 * 60 * 60 * 1000),
+    // A tick a day after the last, so each league's events sync is due again even off season,
+    // whose default interval is the longest (these leagues' Seasons have not started).
+    now: () => new Date(Date.now() + 24 * 60 * 60 * 1000),
   });
   /** One tick, and the jobs it queued run to the end. */
   const scheduler = {
