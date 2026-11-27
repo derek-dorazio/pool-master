@@ -900,6 +900,12 @@
       "key": "MATCH_START",
       "now": 0,
       "reason": "retired by #2050"
+    },
+    {
+      "file": "scripts/dead-exports.json",
+      "key": "own:packages/shared/dto/bracket.dto.ts",
+      "now": 15,
+      "reason": "#2050: SquaresGameChoicesResponseSchema, a registered response schema the contract checks parse, as the other bracket responses are"
     }
   ]
 }

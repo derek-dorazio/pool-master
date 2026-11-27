@@ -96,13 +96,12 @@ export const SportEventBracketResponseSchema = z.object({
 }).describe('An event\'s bracket.');
 export type SportEventBracketResponse = z.infer<typeof SportEventBracketResponseSchema>;
 
-export const SquaresGameChoiceDtoSchema = z.object({
+const SquaresGameChoiceDtoSchema = z.object({
   sportEventRoundMatchGameId: z.uuid().describe('The Game: what CreateContestRequest.sportEventRoundMatchGameId takes.'),
   gameNumber: z.number().int().min(1).describe('Its number in its match: 1 for a single game, a series\' games in the order they are played.'),
   scheduledDate: z.iso.datetime().nullable().describe('The Game\'s kickoff, which closes a squares contest on it; null while it is to be announced.'),
   match: SportEventRoundMatchDtoSchema.describe('The match it is a Game of: its round, its slot and its two sides.'),
 }).describe('A Game a squares contest can be played on.');
-export type SquaresGameChoiceDto = z.infer<typeof SquaresGameChoiceDtoSchema>;
 
 export const SquaresGameChoicesResponseSchema = z.object({
   games: z.array(SquaresGameChoiceDtoSchema).describe('The Games a squares contest can be played on now: each a Game of a slot that takes squares, still to kick off, with no period score in. The final\'s first, then by kickoff, round, match and game number. Empty when every game has kicked off.'),

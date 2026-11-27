@@ -63,6 +63,8 @@ describe('the round slot migration', () => {
       await tx.$executeRawUnsafe('ALTER TABLE "sport_event_rounds" ALTER COLUMN "sport_event_slot_id" DROP NOT NULL');
       // The match column the migration clears, which the later match sides migration replaced.
       await tx.$executeRawUnsafe('ALTER TABLE "sport_event_round_matches" ADD COLUMN "advances_to_side" TEXT');
+      // The squares column the migration clears, which a later migration (#2050) moved onto the Game.
+      await tx.$executeRawUnsafe('ALTER TABLE "contest_squares_games" ADD COLUMN "sport_event_round_match_id" UUID');
       // The golf round tables the migration clears, which a later migration (#2008) moved onto FIELD Games.
       await tx.$executeRawUnsafe('CREATE TABLE "sport_event_participant_rounds" ("id" UUID NOT NULL, "sport_event_round_id" UUID NOT NULL)');
       await tx.$executeRawUnsafe('CREATE TABLE "sport_event_participant_golf_rounds" ("participant_round_id" UUID NOT NULL)');

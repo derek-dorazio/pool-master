@@ -59,7 +59,7 @@ async function squaresContest(): Promise<{ contestId: string; matchId: string; g
   const round = await prisma.sportEventRound.create({
     data: { sportEventId: event.id, sportEventSlotId: await oneEventSlotId(prisma, event.id), roundNumber: 1, scheduledDate: event.startDate },
   });
-  const match = await createMatchRow(prisma, { sportEventId: event.id, sportEventRoundId: round.id, sportEventSlotId: round.sportEventSlotId, matchNumber: 1, teams: [null, null] });
+  const match = await createMatchRow(prisma, { sportEventId: event.id, sportEventRoundId: round.id, sportEventSlotId: round.sportEventSlotId, matchNumber: 1, teams: [null, null], isNeutralSite: false });
   const league = await prisma.league.create({ data: { cupName: 'Test Cup', leagueCode: `MSQ${suffix.toUpperCase()}`, name: `Migrated Squares ${suffix}`, iconKey: 'TROPHY' } });
   const squaresGame = await squaresGameCreate(prisma, match.id);
   const contest = await prisma.contest.create({
