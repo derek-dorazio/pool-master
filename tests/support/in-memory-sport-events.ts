@@ -268,6 +268,8 @@ export class InMemorySportEvents {
           endsAt: slot.endsAt,
           placedByWindow: this.slotWindows.has(slot.id),
           window: this.slotWindows.get(slot.id) ?? null,
+          // Conferences place games only in the Prisma repository's tests (#2052).
+          conferenceTeams: null,
         })),
       findSlotNamePatterns: async () => [...this.slotNamePatterns],
       linkNameMatchedSlots: async ({ sportLeagueId, sportLeagueSeasonId, links, creates }) => {
