@@ -48,7 +48,6 @@ async function syncedWeek() {
     name: 'NFL Week 11',
     startDate: KICKOFF,
     status: SportEventStatus.DRAFT,
-    rounds: 1,
     autoLifecycleEnabled: true,
   });
   await createRoundRows(getPrisma(), new PrismaSportEventRoundRepository(getAppPrisma()), event, [{ roundNumber: 1, scheduledDate: KICKOFF }]);
@@ -150,7 +149,6 @@ describe('Provider game slate (#1728)', () => {
       name: 'NFL Playoffs',
       startDate: KICKOFF,
       status: SportEventStatus.DRAFT,
-      rounds: 3,
         autoLifecycleEnabled: true,
     });
     const WEEK = 7 * 24 * HOUR;

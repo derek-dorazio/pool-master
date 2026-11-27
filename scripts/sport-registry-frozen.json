@@ -29,7 +29,6 @@
   "export:sport-vocabulary.ts:sportNoun",
   "export:sport-vocabulary.ts:sportVocabulary",
   "export:tennis.ts:tennisSportDefinition",
-  "field:defaultRounds",
   "field:name",
   "field:pickEm",
   "field:scoringDefinitions",

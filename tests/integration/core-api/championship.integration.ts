@@ -15,6 +15,7 @@ import {
 } from '../helpers';
 import { fixtureTourSlotId, freshEventEdition, putEventInSlot } from '../../support/event-edition';
 import { oneEventSlotId } from '../../support/test-slots';
+import { contestOnEvents } from '../../support/contest-rows';
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
@@ -30,8 +31,8 @@ async function seedLeague() {
   await prisma.leagueMembership.create({ data: { leagueId: league.id, userId: commissioner.user.id, role: 'COMMISSIONER' } });
   const squad = (name: string) => prisma.squad.create({ data: { leagueId: league.id, name: `${name} ${suffix}`, createdBy: commissioner.user.id } });
   const squads = { eagles: await squad('Eagles'), birdies: await squad('Birdies') };
-  /** A contest of `events` fresh editions of the fixture tour. */
-  const contest = async (name: string, options: { status?: 'OPEN' | 'ACTIVE' | 'COMPLETED' | 'DRAFT'; events?: number; cupWeight?: 'NORMAL' | 'NOT_COUNTED'; endsAt?: Date } = {}) => {
+  /** A contest of `events` fresh editions of the fixture tour, each in a slot of `slotDefinitionId` when given. */
+  const contest = async (name: string, options: { status?: 'OPEN' | 'ACTIVE' | 'COMPLETED' | 'DRAFT'; events?: number; cupWeight?: 'NORMAL' | 'NOT_COUNTED'; endsAt?: Date; slotDefinitionId?: string } = {}) => {
     const editions = [];
     for (let index = 0; index < (options.events ?? 1); index++) {
       const edition = await freshEventEdition(prisma, { championshipYear: 2026 });
@@ -43,19 +44,23 @@ async function seedLeague() {
         },
       }));
     }
-    return prisma.contest.create({
+    for (const edition of editions) {
+      // poolmaster-allow-query-in-loop: a fixture's few events, each put in its slot
+      if (options.slotDefinitionId !== undefined) await putEventInSlot(prisma, edition.id, options.slotDefinitionId);
+    }
+    const sportEventIds = editions.map((event) => event.id);
+    const created = await prisma.contest.create({
       data: {
         leagueId: league.id,
-        seasonYear: 2026,
+        ...(await contestOnEvents(prisma, sportEventIds)),
         name,
         status: options.status ?? 'COMPLETED',
         cupWeight: options.cupWeight ?? 'NORMAL',
         endsAt: options.endsAt ?? null,
         selectionType: 'TIERED',
-        sportEvents: { create: editions.map((event, index) => ({ sportEventId: event.id, sequence: index + 1 })) },
       },
-      include: { sportEvents: { include: { sportEvent: true } } },
     });
+    return { ...created, sportEventIds };
   };
   return { league, squads, contest };
 }
@@ -139,7 +144,7 @@ describe('PrismaChampionshipRepository (#863)', () => {
     const undated = await contest('Undated');
     await contest('Live', { status: 'ACTIVE', endsAt: new Date('2026-06-01T00:00:00.000Z') });
     const sportLeague = await getPrisma().sportEvent.findUniqueOrThrow({
-      where: { id: expectDefined(first.sportEvents[0]).sportEventId },
+      where: { id: expectDefined(first.sportEventIds[0]) },
       select: { sportLeague: { select: { name: true } } },
     });
 
@@ -156,7 +161,9 @@ describe('PrismaChampionshipRepository (#863)', () => {
     const prisma = getPrisma();
     const repo = new PrismaChampionshipRepository(getAppPrisma());
     const { league, contest } = await seedLeague();
-    const masters = await contest('Masters', { cupWeight: 'NOT_COUNTED' });
+    // The Masters plays the fixture tour's slot (#2010), so its contest is keyed by that definition.
+    const definitionId = await fixtureTourSlotId(prisma);
+    const masters = await contest('Masters', { cupWeight: 'NOT_COUNTED', slotDefinitionId: definitionId });
     const final = await contest('Final');
     const week = await contest('Week');
     await contest('Majors', { events: 2 });
@@ -165,18 +172,15 @@ describe('PrismaChampionshipRepository (#863)', () => {
     const game = (eventId: string, matchNumber: number, roundId: string, advancesToMatchId: string | null = null) => prisma.sportEventRoundMatch.create({
       data: { sportEventId: eventId, sportEventRoundId: roundId, matchNumber, advancesToMatchId, advancesToSideNumber: advancesToMatchId === null ? null : 2 },
     });
-    const finalEventId = expectDefined(final.sportEvents[0]).sportEventId;
+    const finalEventId = expectDefined(final.sportEventIds[0]);
     const [semis, decider] = [await round(finalEventId, 1), await round(finalEventId, 2)];
     const last = await game(finalEventId, 3, decider.id);
     await game(finalEventId, 1, semis.id, last.id);
-    const weekEventId = expectDefined(week.sportEvents[0]).sportEventId;
+    const weekEventId = expectDefined(week.sportEventIds[0]);
     const slate = await round(weekEventId, 1);
     for (const matchNumber of [1, 2, 3]) await game(weekEventId, matchNumber, slate.id);
 
-    // The Masters plays the fixture tour's slot (#2010), so its contest is keyed by that definition.
-    const mastersEventId = expectDefined(masters.sportEvents[0]).sportEventId;
-    const definitionId = await fixtureTourSlotId(prisma);
-    await putEventInSlot(prisma, mastersEventId, definitionId);
+    const mastersEventId = expectDefined(masters.sportEventIds[0]);
 
     const contests = await repo.findSeriesContests(league.id);
 

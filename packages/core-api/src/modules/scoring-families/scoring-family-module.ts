@@ -28,7 +28,7 @@ import type { LiveScorePersistenceResult } from '../ingestion/core/score-publish
 export type ScoringFamilyEvent = Pick<SportEvent, 'sport' | 'scoringFamily'>;
 
 /** What scoring a field reads off its event. */
-export type FieldScoringEvent = ScoringFamilyEvent & Pick<SportEvent, 'rounds' | 'roundsPar' | 'status' | 'slotDefinitions'>;
+export type FieldScoringEvent = ScoringFamilyEvent & Pick<SportEvent, 'roundCount' | 'status' | 'slotDefinitions'>;
 
 export interface LiveScoreWriteDeps {
   prisma: PrismaClient;
@@ -46,7 +46,6 @@ export interface LiveScoreWriteDeps {
 /** The in-progress event a provider's live scores are written to. */
 export interface LiveScoreTargetEvent {
   id: string;
-  rounds: number | null;
 }
 
 /** A live-score result category, the discriminant of a provider's `LiveScoreResult`. */
@@ -81,20 +80,6 @@ export interface ScoringFamilyModule {
     scoring: ContestScoringSettings,
     coverage: ContestRoundCoverage,
   ): ParticipantScore[];
-
-  /**
-   * What a lineup scores in an event its entry missed, in a contest of several events (#714): as
-   * if each of its `countingPickLimit` counting picks had no result at all. Golf scores each such
-   * pick 80 strokes a round, racing its "did not finish" value, a knockout nothing; so a missed
-   * event is never better than one played. Null while the event cannot say (a golf event with no
-   * known par yet), and the entry's event is then left unscored.
-   */
-  scoreMissedLineup(
-    field: readonly SportEventParticipantView[],
-    event: FieldScoringEvent,
-    scoring: ContestScoringSettings,
-    countingPickLimit: number,
-  ): number | null;
 
   /**
    * The live-score category the family accepts and how it writes one, or null when it takes

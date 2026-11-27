@@ -11,9 +11,9 @@
  *   (a later round has started). A golfer still in it with a score keeps their live to-par
  *   untouched until the event completes, so a round suspended overnight is never penalised.
  *
- * A round's par is the event's `roundsPar` when an admin set one, else strokes minus to-par
- * on any golfer's finished round of that number. With neither, the round is not penalised
- * yet. Rounds past the event's scheduled count are never scored (#375).
+ * A round's par is strokes minus to-par on any golfer's finished round of that number. Until
+ * one has finished it, the round is not penalised yet. Only the event's rounds (its Round rows,
+ * #2008) are scored (#375).
  */
 import {
   GameSideStatus,
@@ -29,7 +29,7 @@ import { scoredRoundsOf, type ScoredRound } from './scored-rounds';
 export const UNPLAYED_ROUND_STROKES = 80;
 
 /** What unplayed-round scoring reads off the event. */
-export type UnplayedRoundScoringEvent = Pick<SportEvent, 'rounds' | 'roundsPar' | 'status' | 'slotDefinitions'>;
+export type UnplayedRoundScoringEvent = Pick<SportEvent, 'roundCount' | 'status' | 'slotDefinitions'>;
 
 /**
  * How many holes each of a stroke-play event's rounds has (#2047): the period count of the slot
@@ -90,12 +90,12 @@ export function buildUnplayedRoundContext(
       }
     }
   }
-  // An event with no round count scores only the rounds the field has played.
-  const scheduledRounds = event.rounds ?? highestStartedRound;
+  // An event with no rounds yet scores only the rounds the field has played.
+  const scheduledRounds = event.roundCount > 0 ? event.roundCount : highestStartedRound;
   const scheduledRoundNumbers = Array.from({ length: scheduledRounds }, (_, index) => index + 1);
   const parByRound = new Map<number, number>();
   for (const roundNumber of scheduledRoundNumbers) {
-    const par = event.roundsPar ?? derivedPar.get(roundNumber);
+    const par = derivedPar.get(roundNumber);
     if (par !== undefined) {
       parByRound.set(roundNumber, par);
     }
@@ -154,19 +154,4 @@ export function scoreGolferForContest(
     context.scheduledRoundNumbers.filter((roundNumber) => roundNumber < context.highestStartedRound),
   );
   return { score: unplayedRoundNumbers.length > 0 ? penalty : null, unplayedRoundNumbers };
-}
-
-/**
- * A lineup that played no round (#714): each of its `pickCount` counting picks scores 80 strokes
- * for every scheduled round, against that round's par, as a golfer who never teed off does once
- * the event is complete. Null while the event has no scheduled rounds or a round's par is unknown,
- * so a missed major is never scored lighter than it will be.
- */
-export function scoreUnplayedLineup(context: UnplayedRoundContext, pickCount: number): number | null {
-  const pars = context.scheduledRoundNumbers.map((roundNumber) => context.parByRound.get(roundNumber));
-  if (pars.length === 0 || !pars.every((par): par is number => par !== undefined)) {
-    return null;
-  }
-  const perGolfer = pars.reduce((sum, par) => sum + UNPLAYED_ROUND_STROKES - par, 0);
-  return perGolfer * pickCount;
 }

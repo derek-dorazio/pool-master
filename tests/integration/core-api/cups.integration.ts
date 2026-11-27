@@ -12,10 +12,11 @@ import {
   setupIntegrationTests,
   teardownIntegrationTests,
 } from '../helpers';
-import { freshEventEdition } from '../../support/event-edition';
+import { fixtureSeasonId, freshEventEdition } from '../../support/event-edition';
 import { expectDefined } from '../../support/expect-defined';
 import { sportLeagueRowDefaults } from '../../support/league-profiles';
 import { sportPlay } from '../../support/sport-play';
+import { contestOnEvents } from '../../support/contest-rows';
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
@@ -52,12 +53,11 @@ async function seedLeague() {
     const row = await prisma.contest.create({
       data: {
         leagueId: league.id,
-        seasonYear: options.seasonYear ?? 2026,
+        ...(await contestOnEvents(prisma, [event.id])),
         name,
         status,
         selectionType: 'TIERED',
         endsAt: status === 'COMPLETED' ? new Date('2026-04-12T23:00:00.000Z') : null,
-        sportEvents: { create: { sportEventId: event.id, sequence: 1 } },
       },
     });
     for (const [index, [squadId, position]] of (options.places ?? []).entries()) {
@@ -65,6 +65,11 @@ async function seedLeague() {
       await prisma.contestEntryStanding.create({
         data: { contestId: row.id, contestEntryId: entry.id, position, countingPickLimit: 4, scoredPickCount: 4, settledAt: new Date() },
       });
+    }
+    // A cup is a Season's (#2014): each year these tests name a cup for has one.
+    for (const year of [2024, 2025, 2026, 2027]) {
+      // poolmaster-allow-query-in-loop: a fixture's four Seasons, made on first use
+      await fixtureSeasonId(prisma, edition.sportLeagueId, year);
     }
     return { contest: row, sportLeagueId: options.sportLeagueId ?? edition.sportLeagueId };
   };

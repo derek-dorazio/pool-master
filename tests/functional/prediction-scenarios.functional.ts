@@ -29,7 +29,7 @@ import {
 } from '@poolmaster/shared/dto';
 import { LoadMode } from '../../packages/core-api/scripts/seed-golf/load-report';
 import { loadSportData } from '../../packages/core-api/scripts/seed-golf/seed-golf';
-import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, type RegisteredUserContext } from './builders';
+import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, type RegisteredUserContext, contestTemplateFor } from './builders';
 import { cleanupFunctionalData, disconnectFunctionalPrisma, getFunctionalPrisma } from './setup';
 import { expectDefined } from '../support/expect-defined';
 import { HOME_SIDE, pickSideOf } from '../support/match-sides';
@@ -228,6 +228,7 @@ describe('SDK Functional: a bracket pool and a playoff survivor pool on every pl
         body: {
           name: `Playoff Scenario ${tag}`,
           sportEventIds: [eventId],
+          templateId: await contestTemplateFor([eventId], selectionType),
           contestFormat: ContestFormat.PREDICTION,
           selectionType,
           configuration: selectionType === SelectionType.BRACKET
@@ -359,6 +360,7 @@ describe('SDK Functional: a pick\'em pool on the NFL weeks test seed', () => {
       body: {
         name: `Pick'em Scenario ${tag}`,
         sportEventIds: [eventId],
+        templateId: await contestTemplateFor([eventId], SelectionType.PICK_EM),
         contestFormat: ContestFormat.PREDICTION,
         selectionType: SelectionType.PICK_EM,
         configuration: { selectionType: SelectionType.PICK_EM, mode: PickEmMode.STRAIGHT_UP, againstTheSpread: false, maxEntriesPerSquad: 1 },
@@ -439,6 +441,7 @@ describe('SDK Functional: soccer week pools with draw picks, on the Premier Leag
         body: {
           name: `Soccer Week ${tag}`,
           sportEventIds: [eventId],
+          templateId: await contestTemplateFor([eventId], SelectionType.PICK_EM),
           contestFormat: ContestFormat.PREDICTION,
           selectionType: SelectionType.PICK_EM,
           configuration: { selectionType: SelectionType.PICK_EM, mode: PickEmMode.STRAIGHT_UP, againstTheSpread: false, maxEntriesPerSquad: 1 },
@@ -490,6 +493,7 @@ describe('SDK Functional: soccer week pools with draw picks, on the Premier Leag
       body: {
         name: `Soccer Week ${tag}`,
         sportEventIds: [eventId],
+        templateId: await contestTemplateFor([eventId], SelectionType.SURVIVOR),
         contestFormat: ContestFormat.PREDICTION,
         selectionType: SelectionType.SURVIVOR,
         configuration: { selectionType: SelectionType.SURVIVOR, reuseTeamsOnceAllUsed: true, maxEntriesPerSquad: 1 },

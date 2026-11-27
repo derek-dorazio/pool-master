@@ -644,7 +644,7 @@ describe('IngestionPersistence', () => {
 
   // #118, #435 — the field sync never writes a linked event's header, rounds or status (the
   // events sync keeps those, #1727).
-  it('leaves a linked event\'s stored name, start, rounds and status as they were',
+  it('leaves a linked event\'s stored name, start and status as they were',
     async () => {
       const prisma = getPrisma();
       const persistence = new IngestionPersistence(getAppPrisma(), testDomainEvents());
@@ -663,7 +663,6 @@ describe('IngestionPersistence', () => {
         name: 'Provider Open',
         startDate: new Date('2026-07-01T12:00:00.000Z'),
         status: 'IN_PROGRESS',
-        rounds: 5,
         fieldLocked: true,
         providerSlots: [],
       }]);
@@ -672,7 +671,6 @@ describe('IngestionPersistence', () => {
       expect(row).toMatchObject({
         name: 'Admin Open',
         startDate,
-        rounds: created.rounds,
         status: created.status,
       });
     },

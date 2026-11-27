@@ -645,7 +645,6 @@ function normalizeSportEventRow(row: {
   startDate: Date;
   endDate: Date | null;
   status: SportEventStatus;
-  rounds: number | null;
 }): Record<string, unknown> {
   return {
     externalId: row.externalId,
@@ -656,7 +655,6 @@ function normalizeSportEventRow(row: {
     startDate: row.startDate.toISOString(),
     endDate: row.endDate?.toISOString() ?? null,
     status: row.status,
-    rounds: row.rounds,
   };
 }
 

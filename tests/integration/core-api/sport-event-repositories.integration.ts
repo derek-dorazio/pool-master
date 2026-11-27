@@ -41,6 +41,7 @@ import { syncLeagueTo } from '../../support/league-sync';
 import { participantLeagueId } from '../../support/participant-league';
 import { sportRowKeys } from '../../support/sport-rows';
 import { sportPlay } from '../../support/sport-play';
+import { contestOnEvents } from '../../support/contest-rows';
 
 // The event-core write ports and the FIELD Game port (#236, #2008) against real Postgres:
 // what each write leaves in the tables, that "all or none" is all or none, and that
@@ -105,7 +106,6 @@ async function createEvent(name = 'Repository Open', championshipYear?: number) 
     startDate: new Date('2026-06-04T12:00:00.000Z'),
     endDate: new Date('2026-06-07T12:00:00.000Z'),
     status: 'SCHEDULED',
-    rounds: 4,
     autoLifecycleEnabled: true,
   });
 }
@@ -151,7 +151,7 @@ describe('SportEventRepository — writes', () => {
 
     const updated = await events.update(event.id, { venue: null, endDate: null, name: 'Renamed Open', location: undefined });
 
-    expect(updated).toMatchObject({ name: 'Renamed Open', venue: undefined, endDate: undefined, rounds: 4 });
+    expect(updated).toMatchObject({ name: 'Renamed Open', venue: undefined, endDate: undefined, roundCount: 0 });
   });
 
   it('filters by a case-insensitive name substring', async () => {
@@ -300,19 +300,6 @@ describe('SportEventRoundRepository — writes', () => {
 
     const [round] = await rounds.findBySportEvent(event.id);
     expect(round.scheduledDate).toEqual(new Date('2026-06-04T12:00:00.000Z'));
-  });
-
-  it('finds or creates a round by number without disturbing an existing one', async () => {
-    const { rounds } = repos();
-    const event = await createEvent();
-    await createRoundRows(getPrisma(), rounds, event, [{ roundNumber: 1, scheduledDate: new Date('2026-06-04T12:00:00.000Z') }]);
-
-    const existing = await rounds.findOrCreate(event.id, 1);
-    const created = await rounds.findOrCreate(event.id, 2);
-
-    expect(existing.scheduledDate).toEqual(new Date('2026-06-04T12:00:00.000Z'));
-    expect((await rounds.findBySportEvent(event.id)).map((row) => row.roundNumber)).toEqual([1, 2]);
-    expect(created.roundNumber).toBe(2);
   });
 
   it('reads several events\' rounds at once, in round order, with an empty list for an event without rounds', async () => {
@@ -884,7 +871,7 @@ async function createContestFixture(sportEventId: string) {
   const squad = await prisma.squad.create({ data: { leagueId: league.id, name: `Repository Squad ${suffix}`, createdBy: user.id } });
   const contest = await prisma.contest.create({
     data: {
-      leagueId: league.id, seasonYear: 2026, sportEvents: { create: { sportEventId, sequence: 1 } }, name: `Repository Contest ${suffix}`, status: 'OPEN',
+      leagueId: league.id, ...(await contestOnEvents(prisma, [sportEventId])), name: `Repository Contest ${suffix}`, status: 'OPEN',
       contestFormat: 'ROSTER', selectionType: 'TIERED',
     },
   });

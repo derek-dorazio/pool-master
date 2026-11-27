@@ -1286,7 +1286,7 @@ export interface paths {
         put?: never;
         /**
          * Create a new contest in a league
-         * @description The one way a contest is created. Name a template, supply a configuration, or both: the template seeds the configuration and `configuration` replaces it. A request with neither is refused with 400 CONTEST_CONFIGURATION_REQUIRED — there is no platform default. A template that names a sport league (that league's own preset) makes contests only for that league's events: 422 CONTEST_CONFIG_TEMPLATE_LEAGUE_MISMATCH otherwise. Commissioners of the league only.
+         * @description The one way a contest is created, always from a template (#2014): the template seeds the configuration, and `configuration` replaces its rules. A request naming no template is refused with 400 CONTEST_CONFIGURATION_REQUIRED — there is no platform default. The contest covers the template's listed slots among its events' Season slots, as the template's coverage mode allows, fixed at creation: `startingSlotId` chooses the slot a one-slot or from-slot template starts at. A template that names a sport league (that league's own preset) makes contests only for that league's events: 422 CONTEST_CONFIG_TEMPLATE_LEAGUE_MISMATCH otherwise. Commissioners of the league only.
          */
         post: operations["createContest"];
         delete?: never;
@@ -2026,7 +2026,7 @@ export interface paths {
         put?: never;
         /**
          * Create a test event on a test slot
-         * @description A test event (QA only, #2004), DRAFT, on a free test slot of its league's current Season: the sync makes every other event. Its league, Season and dates are the slot's, with its league's default rounds and tiers. 404 SEASON_SLOT_NOT_FOUND; 422 SEASON_SLOT_NOT_TEST for a slot the sync keeps, SEASON_SLOT_NOT_CURRENT outside the current Season; 409 SEASON_SLOT_TAKEN when it has an event. Root admin only.
+         * @description A test event (QA only, #2004), DRAFT, on a free test slot of its league's current Season: the sync makes every other event. Its league, Season and dates are the slot's, with its league's tiers, and its rounds are the body's `rounds` in one slot or one in each of several. 404 SEASON_SLOT_NOT_FOUND; 422 SEASON_SLOT_NOT_TEST for a slot the sync keeps, SEASON_SLOT_NOT_CURRENT outside the current Season, EVENT_ROUNDS_FROM_SLOTS for `rounds` with several slots; 409 SEASON_SLOT_TAKEN when it has an event. Root admin only.
          */
         post: operations["createEvent"];
         delete?: never;
@@ -13515,14 +13515,8 @@ export interface components {
              * @description Scheduled or actual end time when known; null otherwise.
              */
             endDate: string | null;
-            /** @description Number of rounds when the format has them; null otherwise. */
-            rounds: number | null;
-            /** @description Par for every round, when an admin set it. Null: contest scoring derives each round's par from the field's finished rounds. Contest scoring uses it to turn an unplayed round's 80 strokes into to-par. */
-            roundsPar: number | null;
-            /** @description The lowest par per round an update takes; a lower one is refused with 400. */
-            roundsParMin: number;
-            /** @description The highest par per round an update takes; a higher one is refused with 400. */
-            roundsParMax: number;
+            /** @description How many rounds the event has (#2008): the count of its rounds (SportEventRoundDto), read on each request and never stored. A bracket has a round in each slot, so its count is its FINAL slot's round. 0 until the sync, or a test event, gives it any. */
+            roundCount: number;
             /** @description The event's field size: the teams or players on its field, counted on each read. 0 until the field loads. */
             participantCount: number;
             /** @description The values the event's first slot's set was last priced with for budget contests (#2044), or null until it is priced. Locked at release; its salaryCap is the cap of every budget contest on the event. */
@@ -13941,14 +13935,8 @@ export interface components {
                  * @description Scheduled or actual end time when known; null otherwise.
                  */
                 endDate: string | null;
-                /** @description Number of rounds when the format has them; null otherwise. */
-                rounds: number | null;
-                /** @description Par for every round, when an admin set it. Null: contest scoring derives each round's par from the field's finished rounds. Contest scoring uses it to turn an unplayed round's 80 strokes into to-par. */
-                roundsPar: number | null;
-                /** @description The lowest par per round an update takes; a lower one is refused with 400. */
-                roundsParMin: number;
-                /** @description The highest par per round an update takes; a higher one is refused with 400. */
-                roundsParMax: number;
+                /** @description How many rounds the event has (#2008): the count of its rounds (SportEventRoundDto), read on each request and never stored. A bracket has a round in each slot, so its count is its FINAL slot's round. 0 until the sync, or a test event, gives it any. */
+                roundCount: number;
                 /** @description The event's field size: the teams or players on its field, counted on each read. 0 until the field loads. */
                 participantCount: number;
                 /** @description The values the event's first slot's set was last priced with for budget contests (#2044), or null until it is priced. Locked at release; its salaryCap is the cap of every budget contest on the event. */
@@ -14346,14 +14334,8 @@ export interface components {
                  * @description Scheduled or actual end time when known; null otherwise.
                  */
                 endDate: string | null;
-                /** @description Number of rounds when the format has them; null otherwise. */
-                rounds: number | null;
-                /** @description Par for every round, when an admin set it. Null: contest scoring derives each round's par from the field's finished rounds. Contest scoring uses it to turn an unplayed round's 80 strokes into to-par. */
-                roundsPar: number | null;
-                /** @description The lowest par per round an update takes; a lower one is refused with 400. */
-                roundsParMin: number;
-                /** @description The highest par per round an update takes; a higher one is refused with 400. */
-                roundsParMax: number;
+                /** @description How many rounds the event has (#2008): the count of its rounds (SportEventRoundDto), read on each request and never stored. A bracket has a round in each slot, so its count is its FINAL slot's round. 0 until the sync, or a test event, gives it any. */
+                roundCount: number;
                 /** @description The event's field size: the teams or players on its field, counted on each read. 0 until the field loads. */
                 participantCount: number;
                 /** @description The values the event's first slot's set was last priced with for budget contests (#2044), or null until it is priced. Locked at release; its salaryCap is the cap of every budget contest on the event. */
@@ -14700,13 +14682,15 @@ export interface components {
                 updatedAt: string;
             };
         };
-        /** @description A test event, made by hand on test slots (QA only). Created DRAFT with a round in each slot (its league's default round count for one slot), its league's tiers, and its slots' dates; commissioners see it once it is released. */
+        /** @description A test event, made by hand on test slots (QA only). Created DRAFT with its rounds in its slots, its league's tiers, and its slots' dates; commissioners see it once it is released. */
         CreateSportEventRequest: {
-            /** @description The test slots the event is played on (SportLeagueSeasonSlotDto), all of one sport league's current Season: they decide the event's league, Season and dates. One slot plays the league's default round count in it; several play one round in each, in play order (a test bracket's rounds, its FINAL slot last, #2006). 404 SEASON_SLOT_NOT_FOUND; 422 SEASON_SLOT_NOT_TEST for a slot the sync keeps, SEASON_SLOT_NOT_CURRENT for one outside its league's current Season, SEASON_SLOTS_NOT_ONE_SEASON for slots of two Seasons; 409 SEASON_SLOT_TAKEN when one already has an event. */
+            /** @description The test slots the event is played on (SportLeagueSeasonSlotDto), all of one sport league's current Season: they decide the event's league, Season and dates. One slot plays `rounds` rounds in it; several play one round in each, in play order (a test bracket's rounds, its FINAL slot last, #2006). 404 SEASON_SLOT_NOT_FOUND; 422 SEASON_SLOT_NOT_TEST for a slot the sync keeps, SEASON_SLOT_NOT_CURRENT for one outside its league's current Season, SEASON_SLOTS_NOT_ONE_SEASON for slots of two Seasons; 409 SEASON_SLOT_TAKEN when one already has an event. */
             seasonSlotIds: string[];
             name: string;
             venue?: string;
             location?: string;
+            /** @description How many rounds a test event on one slot plays in it (a golf tournament's four), at most 8. Defaults to 1. 422 EVENT_ROUNDS_FROM_SLOTS with several slots, whose rounds are one in each. */
+            rounds?: number;
             autoLifecycleEnabled?: boolean;
         };
         /** @description Changes to an event; omitted fields are left alone. */
@@ -14726,10 +14710,6 @@ export interface components {
              * @description null clears it. 422 EVENT_DATES_FROM_SLOTS for an event with Season slots.
              */
             endDate?: string | null;
-            /** @description Raises an event played in one slot to this many rounds. 422 EVENT_ROUNDS_FROM_SLOTS for an event with several slots, which plays a round in each. */
-            rounds?: number;
-            /** @description Par for every round, 60 to 80. null clears it, so contest scoring derives each round's par from the field. */
-            roundsPar?: number | null;
             autoLifecycleEnabled?: boolean;
             /** @description false for a data correction, such as filling in the real start time of an event loaded with only its date: a released event's start moves without the "event moved" email to its leagues. Refused (400) when the start being moved is not the noon-UTC date-only placeholder. Defaults to true. */
             tellMembers?: boolean;
@@ -16126,6 +16106,11 @@ export interface components {
                     };
                 };
             };
+            /**
+             * Format: uuid
+             * @description The Season slot the contest starts at (#2014): for a template covering one slot, the slot it covers; for one covering from a slot on, its first. Left out, the event's first slot the template lists. It must be one of the events' slots the template lists: 422 CONTEST_COVERAGE_SLOT_NOT_COVERABLE otherwise, and 422 CONTEST_COVERAGE_SLOT_NOT_CHOSEN for a one-slot template on an event holding several of its slots with none chosen. An event holding none of them is refused with 422 CONTEST_COVERAGE_NO_LISTED_SLOT.
+             */
+            startingSlotId?: string;
             /**
              * Format: uuid
              * @description A squares contest's game (#711): one of its event's games not yet kicked off. Required for SQUARES (422 CONTEST_SQUARES_GAME_REQUIRED) and refused for every other selection type; 422 CONTEST_SQUARES_GAME_INVALID for a game not of the event, cancelled, or already started.
@@ -31980,7 +31965,7 @@ export interface operations {
                     "application/json": components["schemas"]["ContestResponse"];
                 };
             };
-            /** @description CONTEST_CONFIGURATION_REQUIRED when neither `templateId` nor `configuration` is supplied; otherwise a request that does not match the schema. */
+            /** @description CONTEST_CONFIGURATION_REQUIRED when no `templateId` is supplied; otherwise a request that does not match the schema. */
             400: {
                 headers: {
                     [name: string]: unknown;
@@ -32016,7 +32001,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
-            /** @description The event, format or template cannot make this contest. The event: SPORT_EVENT_NOT_FOUND, SPORT_EVENT_NOT_RELEASED, SPORT_EVENT_FIELD_NOT_LOADED, SPORT_EVENT_ALREADY_STARTED. The format: CONTEST_FORMAT_NOT_ALLOWED. The games of a pick'em or survivor contest: CONTEST_EVENT_HAS_NO_GAMES, CONTEST_EVENT_GAME_UNDECIDED, or CONTEST_EVENT_SPREAD_MISSING (a pick'em pool against the spread on a week with a game lacking its spread). CONTEST_SPREAD_NOT_OFFERED: a pick'em pool against the spread in a sport whose pools have no spread (#792). The selection type: CONTEST_SELECTION_TYPE_NOT_ALLOWED (the event's sport does not offer it). The configuration: CONTEST_RULES_SELECTION_TYPE_MISMATCH (rules of another selection type than the contest's), CONTEST_TIER_FIELD_OUT_OF_RANGE, CONTEST_BUDGET_FIELD_OUT_OF_RANGE (counted scores above the roster size), CONTEST_CONFIGURATION_INVALID (template missing, inactive, or for another format or selection type), or CONTEST_CONFIG_TEMPLATE_LEAGUE_MISMATCH (the template is one sport league's own preset and the event belongs to another league; a template with no sport league is offered for every league of its sport). */
+            /** @description The event, format or template cannot make this contest. The event: SPORT_EVENT_NOT_FOUND, SPORT_EVENT_NOT_RELEASED, SPORT_EVENT_FIELD_NOT_LOADED, SPORT_EVENT_ALREADY_STARTED. The format: CONTEST_FORMAT_NOT_ALLOWED. The games of a pick'em or survivor contest: CONTEST_EVENT_HAS_NO_GAMES, CONTEST_EVENT_GAME_UNDECIDED, or CONTEST_EVENT_SPREAD_MISSING (a pick'em pool against the spread on a week with a game lacking its spread). CONTEST_SPREAD_NOT_OFFERED: a pick'em pool against the spread in a sport whose pools have no spread (#792). The selection type: CONTEST_SELECTION_TYPE_NOT_ALLOWED (the event's sport does not offer it). The coverage: CONTEST_COVERAGE_NO_LISTED_SLOT (the events hold none of the slots the template lists), CONTEST_COVERAGE_SLOT_NOT_CHOSEN (a one-slot template lists several of them and no `startingSlotId` chooses one), CONTEST_COVERAGE_SLOT_NOT_COVERABLE (`startingSlotId` is not a listed slot of the events). The configuration: CONTEST_RULES_SELECTION_TYPE_MISMATCH (rules of another selection type than the contest's), CONTEST_TIER_FIELD_OUT_OF_RANGE, CONTEST_BUDGET_FIELD_OUT_OF_RANGE (counted scores above the roster size), CONTEST_CONFIGURATION_INVALID (template missing, inactive, or for another format or selection type), or CONTEST_CONFIG_TEMPLATE_LEAGUE_MISMATCH (the template is one sport league's own preset and the event belongs to another league; a template with no sport league is offered for every league of its sport). */
             422: {
                 headers: {
                     [name: string]: unknown;
@@ -32558,7 +32543,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
-            /** @description SPORT_EVENT_NOT_RELEASED, SPORT_EVENT_FIELD_NOT_LOADED or SPORT_EVENT_ALREADY_STARTED — an added event is not one contests can be built on. CONTEST_EVENTS_LEAGUE_MISMATCH — an event from another sport league. CONTEST_EVENTS_SEASON_MISMATCH — an event of another season than the contest's, fixed at creation. CONTEST_DRAW_SINGLE_EVENT — a random-draw contest given more than one event. CONTEST_BRACKET_SINGLE_EVENT — a bracket contest given more than one event. CONTEST_SQUARES_SINGLE_EVENT — a squares contest given more than one event. CONTEST_TIER_FIELD_OUT_OF_RANGE or CONTEST_SCORING_ROUNDS_MISMATCH — the rules do not fit an added event. CONTEST_EVENT_HAS_NO_GAMES, CONTEST_EVENT_GAME_UNDECIDED or CONTEST_EVENT_SPREAD_MISSING — an added week cannot be picked under the pick'em rules. CONTEST_SPREAD_NOT_OFFERED — a pick'em pool against the spread in a sport whose pools have no spread (#792). */
+            /** @description SPORT_EVENT_NOT_RELEASED, SPORT_EVENT_FIELD_NOT_LOADED or SPORT_EVENT_ALREADY_STARTED — an added event is not one contests can be built on. CONTEST_EVENTS_LEAGUE_MISMATCH — an event from another sport league. CONTEST_EVENTS_SEASON_MISMATCH — an event of another Season than the contest's, fixed at creation. CONTEST_COVERAGE_NO_LISTED_SLOT — the events hold none of the slots the contest's template lists. CONTEST_DRAW_SINGLE_EVENT — a random-draw contest given more than one event. CONTEST_BRACKET_SINGLE_EVENT — a bracket contest given more than one event. CONTEST_SQUARES_SINGLE_EVENT — a squares contest given more than one event. CONTEST_TIER_FIELD_OUT_OF_RANGE or CONTEST_SCORING_ROUNDS_MISMATCH — the rules do not fit an added event. CONTEST_EVENT_HAS_NO_GAMES, CONTEST_EVENT_GAME_UNDECIDED or CONTEST_EVENT_SPREAD_MISSING — an added week cannot be picked under the pick'em rules. CONTEST_SPREAD_NOT_OFFERED — a pick'em pool against the spread in a sport whose pools have no spread (#792). */
             422: {
                 headers: {
                     [name: string]: unknown;

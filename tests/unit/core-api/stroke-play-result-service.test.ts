@@ -19,10 +19,14 @@ const idOf = (name: string): string => `participant-${name.toLowerCase().replace
 
 const SCHEDULED = new Date('2026-06-04T12:00:00.000Z');
 
-function setup(eventOverrides: { rounds?: number; sport?: Sport } = {}, now?: () => Date) {
+/** A golf event with `rounds` Round rows (four unless given) of `holes` holes, a day apart from SCHEDULED, and two golfers. */
+function setup({ rounds = 4, holes, ...eventOverrides }: { rounds?: number; holes?: number; sport?: Sport } = {}, now?: () => Date) {
   const store = new InMemorySportEvents();
   const sport = store.addSport(Sport.GOLF);
   const event = store.addEvent({ providerRef: { providerId: 'balldontlie', externalId: 'golf-event-1' }, ...eventOverrides });
+  // A round takes its slot's hole count when it is made, so the count is set first.
+  if (holes !== undefined) store.slotPeriods.set(store.eventSlotOf(event.id).id, { unit: PeriodUnit.HOLE, count: holes });
+  void store.addRounds(event.id, Array.from({ length: rounds }, (_, index) => ({ roundNumber: index + 1, scheduledDate: new Date(SCHEDULED.getTime() + index * 24 * 60 * 60 * 1000) })));
   const ana = store.addParticipant(sport.id, 'Ana Park', { id: idOf('Ana Park'), externalId: 'ext-ana' });
   const ben = store.addParticipant(sport.id, 'Ben Cole', { id: idOf('Ben Cole') });
   const anaEntry = store.addToField(event.id, ana.id);
@@ -113,13 +117,12 @@ describe('StrokePlayResultService — apply', () => {
     expect(store.fieldSideRows).toEqual([]);
   });
 
-  it('creates the round if needed, stores each golfer\'s round on its FIELD Game, skips rows with no strokes, and totals each standing', async () => {
+  it('stores each golfer\'s round on its FIELD Game, skips rows with no strokes, and totals each standing', async () => {
     const { store, service, event, anaEntry, benEntry } = setup();
 
     await service.applyRoundScores(event.id, 1, [{ participantId: idOf('Ana Park'), ...row() }, { participantId: idOf('Ben Cole'), ...row({ strokes: null }) }]);
     await service.applyRoundScores(event.id, 2, [{ participantId: idOf('Ana Park'), ...row({ strokes: 68, scoreToPar: -4, status: 'IN_PROGRESS', thru: 9 }) }]);
 
-    expect(store.roundRows.map((round) => round.roundNumber)).toEqual([1, 2]);
     expect(roundsOf(store, anaEntry.id)).toEqual([
       expect.objectContaining({ roundNumber: 1, score: 70, scoreToPar: -2, periodsCompleted: 18, status: 'FINISHED' }),
       expect.objectContaining({ roundNumber: 2, score: 68, scoreToPar: -4, periodsCompleted: 9, status: null }),
@@ -154,8 +157,7 @@ describe('StrokePlayResultService — apply', () => {
 describe('StrokePlayResultService — apply, round completion', () => {
   it('completes a round\'s Game at the time of the write when every golfer has finished and none sent a finish time, and stores a round sent with no holes as played through its slot\'s 18', async () => {
     const asOf = new Date('2026-06-04T20:00:00.000Z');
-    const { service, store, event, anaEntry } = setup({}, () => asOf);
-    store.slotPeriods.set(store.eventSlotOf(event.id).id, { unit: PeriodUnit.HOLE, count: 18 });
+    const { service, store, event, anaEntry } = setup({ holes: 18 }, () => asOf);
 
     await service.applyRoundScores(event.id, 1, [
       { participantId: idOf('Ana Park'), strokes: 70, scoreToPar: -2, status: 'COMPLETED' },
@@ -215,7 +217,7 @@ describe('StrokePlayResultService — single-cell correction', () => {
 
     await expect(service.updateRoundScore(event.id, 1, anaEntry.id, patch))
       .rejects.toMatchObject({ code: 'ROUND_VALUES_REQUIRED', statusCode: 422 });
-    expect(store.roundRows).toEqual([]);
+    expect(store.roundRows).toHaveLength(4);
     expect(store.fieldSideRows).toEqual([]);
   });
 
@@ -228,31 +230,29 @@ describe('StrokePlayResultService — single-cell correction', () => {
   });
 });
 
-// #375 — nothing is scored after the 18th hole of the event's last scheduled round. An admin
-// cannot create a round the event does not have; an event with no round count keeps today's
-// behaviour.
+// #375, #2008 — nothing is scored after the 18th hole of the event's last round. An admin cannot
+// create a round the event does not have: its rounds are its Round rows.
 describe('StrokePlayResultService — admin rounds are bounded by the event schedule', () => {
   it('refuses to apply scores for a round beyond the event\'s scheduled rounds with 422 ROUND_BEYOND_SCHEDULE, writing nothing', async () => {
-    const { store, service, event } = setup({ rounds: 4 });
+    const { store, service, event } = setup();
 
     await expect(service.applyRoundScores(event.id, 5, [{ participantId: idOf('Ana Park'), ...row() }]))
       .rejects.toMatchObject({ code: 'ROUND_BEYOND_SCHEDULE', statusCode: 422 });
-    expect(store.roundRows).toEqual([]);
+    expect(store.roundRows).toHaveLength(4);
     expect(store.fieldSideRows).toEqual([]);
   });
 
   it('refuses a single-cell correction for a round beyond the event\'s scheduled rounds with 422 ROUND_BEYOND_SCHEDULE, writing nothing', async () => {
-    const { store, service, event, anaEntry } = setup({ rounds: 4 });
+    const { store, service, event, anaEntry } = setup();
 
     await expect(service.updateRoundScore(event.id, 5, anaEntry.id, { strokes: 70 }))
       .rejects.toMatchObject({ code: 'ROUND_BEYOND_SCHEDULE', statusCode: 422 });
-    expect(store.roundRows).toEqual([]);
+    expect(store.roundRows).toHaveLength(4);
     expect(store.fieldSideRows).toEqual([]);
   });
 
   it('refuses holes completed past the round\'s last, its slot\'s 18, with 422 ROUND_THRU_BEYOND_HOLES, as a correction and in an upload, writing no score', async () => {
-    const { store, service, event, anaEntry } = setup({ rounds: 4 });
-    store.slotPeriods.set(store.eventSlotOf(event.id).id, { unit: PeriodUnit.HOLE, count: 18 });
+    const { store, service, event, anaEntry } = setup({ holes: 18 });
 
     await expect(service.updateRoundScore(event.id, 1, anaEntry.id, { strokes: 70, scoreToPar: -2, thru: 19 }))
       .rejects.toMatchObject({ code: 'ROUND_THRU_BEYOND_HOLES', statusCode: 422 });
@@ -265,38 +265,38 @@ describe('StrokePlayResultService — admin rounds are bounded by the event sche
   });
 
   it('stores a finished round reported with no holes as played through every hole its slot gives a round, and leaves it unknown on a slot with no hole count', async () => {
-    const { store, service, event, anaEntry } = setup({ rounds: 4 });
-    store.slotPeriods.set(store.eventSlotOf(event.id).id, { unit: PeriodUnit.HOLE, count: 9 });
+    const { store, service, event, anaEntry } = setup({ holes: 9 });
 
     await service.updateRoundScore(event.id, 1, anaEntry.id, { strokes: 35, scoreToPar: -1, status: 'COMPLETED' });
     expect(roundsOf(store, anaEntry.id).map((round) => round.periodsCompleted)).toEqual([9]);
 
-    const noHoles = setup({ rounds: 4 });
+    const noHoles = setup();
     await noHoles.service.updateRoundScore(noHoles.event.id, 1, noHoles.anaEntry.id, { strokes: 35, scoreToPar: -1, status: 'COMPLETED' });
     expect(roundsOf(noHoles.store, noHoles.anaEntry.id).map((round) => round.periodsCompleted)).toEqual([null]);
   });
 
   it('refuses to preview a round beyond the event\'s scheduled rounds with 422 ROUND_BEYOND_SCHEDULE', async () => {
-    const { service, event } = setup({ rounds: 4 });
+    const { service, event } = setup();
 
     await expect(service.previewRoundScores(event.id, 5, [{ participantId: idOf('Ana Park'), ...row() }]))
       .rejects.toMatchObject({ code: 'ROUND_BEYOND_SCHEDULE', statusCode: 422 });
   });
 
   it('still accepts the event\'s last scheduled round', async () => {
-    const { store, service, event } = setup({ rounds: 4 });
+    const { store, service, event } = setup();
 
     await service.applyRoundScores(event.id, 4, [{ participantId: idOf('Ana Park'), ...row() }]);
 
-    expect(store.roundRows.map((round) => round.roundNumber)).toEqual([4]);
+    expect(store.fieldSideRows).toHaveLength(1);
+    expect(store.roundRows).toHaveLength(4);
   });
 
-  it('creates any round when the event has no scheduled round count', async () => {
-    const { store, service, event } = setup();
+  it('refuses scores for an event with no rounds yet with 422 ROUND_BEYOND_SCHEDULE, creating none: rounds come only from its schedule', async () => {
+    const { store, service, event } = setup({ rounds: 0 });
 
-    await service.applyRoundScores(event.id, 5, [{ participantId: idOf('Ana Park'), ...row() }]);
-
-    expect(store.roundRows.map((round) => round.roundNumber)).toEqual([5]);
+    await expect(service.applyRoundScores(event.id, 1, [{ participantId: idOf('Ana Park'), ...row() }]))
+      .rejects.toMatchObject({ code: 'ROUND_BEYOND_SCHEDULE', statusCode: 422 });
+    expect(store.roundRows).toEqual([]);
   });
 });
 
@@ -387,8 +387,7 @@ describe('StrokePlayResultService — provider sync', () => {
     const result = await service.persistRoundUpdatesForSportEvent(
       event.id,
       [1, 2, 3, 4].map((round) => update('ext-ana', round, -2)).concat(update('ext-ana', 5, -1)),
-      'balldontlie',
-      null,
+      'balldontlie'
     );
 
     expect(result).toMatchObject({ updatesReturned: 5, updatesPersisted: 4, updatesSkipped: 1 });
@@ -403,7 +402,7 @@ describe('StrokePlayResultService — provider sync', () => {
   it('skips a score for a round on an event with no round schedule rather than creating the round', async () => {
     const { store, service, event, logger } = await syncSetup();
 
-    const result = await service.persistRoundUpdatesForSportEvent(event.id, [update('ext-ana', 1, -2)], 'balldontlie', null);
+    const result = await service.persistRoundUpdatesForSportEvent(event.id, [update('ext-ana', 1, -2)], 'balldontlie');
 
     expect(result).toMatchObject({ updatesPersisted: 0, updatesSkipped: 1 });
     expect(store.roundRows.filter((round) => round.sportEventId === event.id)).toEqual([]);
@@ -420,7 +419,7 @@ describe('StrokePlayResultService — provider sync', () => {
     await service.persistRoundUpdatesForSportEvent(event.id, [
       { ...update('ext-ana', 1, -2), completedAt: '2026-06-04T17:10:00.000Z' },
       { ...update('ext-ben', 1, 1), completedAt: '2026-06-04T18:20:00.000Z' },
-    ], 'balldontlie', null);
+    ], 'balldontlie');
 
     expect(roundsOf(store, anaEntry.id)).toEqual([expect.objectContaining({ gameStatus: 'COMPLETED', gameCompletedAt: new Date('2026-06-04T18:20:00.000Z') })]);
   });
@@ -432,7 +431,7 @@ describe('StrokePlayResultService — provider sync', () => {
     await service.persistRoundUpdatesForSportEvent(event.id, [
       update('ext-ana', 1, -3), update('ext-ana', 2, -3), update('ext-ana', 3, -3), update('ext-ana', 4, -3),
       update('ext-ben', 1, -6), update('ext-ben', 2, -2), update('ext-ben', 3, -2), update('ext-ben', 4, -2),
-    ], 'balldontlie', null);
+    ], 'balldontlie');
 
     expect([anaEntry.id, benEntry.id].map((id) => [standingOf(store, id)?.scoreToPar, standingOf(store, id)?.displayPosition])).toEqual([[-12, 'T1'], [-12, 'T1']]);
   });
@@ -444,30 +443,11 @@ describe('StrokePlayResultService — provider sync', () => {
     await service.persistRoundUpdatesForSportEvent(event.id, [
       update('ext-ana', 1, -1), update('ext-ana', 2, -1), update('ext-ana', 3, -1),
       update('ext-ben', 1, 4), { ...update('ext-ben', 2, 5), status: 'MISSED_CUT' as const },
-    ], 'balldontlie', 4);
+    ], 'balldontlie');
 
     expect(roundsOf(store, benEntry.id).map((round) => round.roundNumber)).toEqual([1, 2]);
     expect(roundsOf(store, anaEntry.id).map((round) => round.roundNumber)).toEqual([1, 2, 3]);
     expect(standingOf(store, benEntry.id)).toMatchObject({ status: 'ELIMINATED', position: null });
-  });
-
-  it('skips and logs a round beyond the event\'s scheduled round count, so a playoff never becomes round 5', async () => {
-    const { store, service, event, anaEntry, logger } = await syncSetup();
-    await store.addRounds(event.id, fourRounds);
-
-    const result = await service.persistRoundUpdatesForSportEvent(
-      event.id,
-      [1, 2, 3, 4].map((round) => update('ext-ana', round, -2)).concat(update('ext-ana', 5, -1)),
-      'balldontlie',
-      4,
-    );
-
-    expect(result).toMatchObject({ updatesReturned: 5, updatesPersisted: 4, updatesSkipped: 1 });
-    expect(standingOf(store, anaEntry.id)?.scoreToPar).toBe(-8);
-    expect(logger.warn).toHaveBeenCalledWith(
-      { action: 'liveScore.golf.roundBeyondScheduleSkipped', data: { sportEventId: event.id, scheduledRounds: 4, roundNumbers: [5] } },
-      expect.any(String),
-    );
   });
 
   it('skips and logs an update past the round\'s last hole, its slot\'s 18, so playoff holes never reach a round score', async () => {
@@ -478,8 +458,7 @@ describe('StrokePlayResultService — provider sync', () => {
     const result = await service.persistRoundUpdatesForSportEvent(
       event.id,
       [update('ext-ana', 4, -2), { ...update('ext-ben', 4, -3), thru: 19 }],
-      'balldontlie',
-      4,
+      'balldontlie'
     );
 
     expect(result).toMatchObject({ updatesReturned: 2, updatesPersisted: 1, updatesSkipped: 1 });
@@ -500,11 +479,11 @@ describe('StrokePlayResultService — provider sync', () => {
     it('a tick that repeats the last scores writes nothing and reports every row UNCHANGED', async () => {
       const { store, service, event, fieldGames } = await scheduledSyncSetup();
       const tick = [update('ext-ana', 1, -2), update('ext-ben', 1, 1)];
-      await service.persistRoundUpdatesForSportEvent(event.id, tick, 'balldontlie', 4);
+      await service.persistRoundUpdatesForSportEvent(event.id, tick, 'balldontlie');
       const standingsAfterFirstTick = store.standingRows.map((row) => ({ ...row }));
       const writes = jest.spyOn(fieldGames, 'applyResults');
 
-      const result = await service.persistRoundUpdatesForSportEvent(event.id, tick, 'balldontlie', 4);
+      const result = await service.persistRoundUpdatesForSportEvent(event.id, tick, 'balldontlie');
 
       expect(writes).not.toHaveBeenCalled();
       expect(result.writeDiagnostics.summary).toEqual({ total: 4, unchanged: 4, created: 0, updated: 0, deleted: 0 });
@@ -513,10 +492,10 @@ describe('StrokePlayResultService — provider sync', () => {
 
     it('writes only the golfer whose round changed, in one write with every standing it moves, and re-ranks the field', async () => {
       const { store, service, event, anaEntry, benEntry, fieldGames } = await scheduledSyncSetup();
-      await service.persistRoundUpdatesForSportEvent(event.id, [update('ext-ana', 1, -2), update('ext-ben', 1, 1)], 'balldontlie', 4);
+      await service.persistRoundUpdatesForSportEvent(event.id, [update('ext-ana', 1, -2), update('ext-ben', 1, 1)], 'balldontlie');
       const writes = jest.spyOn(fieldGames, 'applyResults');
 
-      const result = await service.persistRoundUpdatesForSportEvent(event.id, [update('ext-ana', 1, -2), update('ext-ben', 1, -4)], 'balldontlie', 4);
+      const result = await service.persistRoundUpdatesForSportEvent(event.id, [update('ext-ana', 1, -2), update('ext-ben', 1, -4)], 'balldontlie');
 
       expect(writes).toHaveBeenCalledTimes(1);
       const [, apply] = writes.mock.calls[0];
@@ -549,7 +528,7 @@ describe('StrokePlayResultService — provider sync', () => {
     ])('rewrites a round, and its standing where it moves, when %s', async (_label, change, expectedRound, expectedStanding, expectedSummary) => {
       const first = { strokes: 34, scoreToPar: -2, thru: 9, status: 'IN_PROGRESS' as const };
       const { store, service, event, anaEntry } = await scheduledSyncSetup();
-      const tick = (values: object) => service.persistRoundUpdatesForSportEvent(event.id, [{ participantExternalId: 'ext-ana', round: 1, ...first, ...values }], 'balldontlie', 4);
+      const tick = (values: object) => service.persistRoundUpdatesForSportEvent(event.id, [{ participantExternalId: 'ext-ana', round: 1, ...first, ...values }], 'balldontlie');
       await tick({});
 
       const result = await tick(change);
@@ -563,7 +542,7 @@ describe('StrokePlayResultService — provider sync', () => {
       const { store, service, event, anaEntry, fieldGames } = await scheduledSyncSetup();
       const writes = jest.spyOn(fieldGames, 'applyResults');
 
-      const result = await service.persistRoundUpdatesForSportEvent(event.id, [update('ext-ana', 1, -1), update('ext-ana', 1, -3)], 'balldontlie', 4);
+      const result = await service.persistRoundUpdatesForSportEvent(event.id, [update('ext-ana', 1, -1), update('ext-ana', 1, -3)], 'balldontlie');
 
       expect(writes).toHaveBeenCalledTimes(1);
       expect(result).toMatchObject({ updatesReturned: 2, updatesPersisted: 1, updatesSkipped: 0 });
@@ -574,10 +553,10 @@ describe('StrokePlayResultService — provider sync', () => {
 
     it('recreates a missing standing on a tick whose rounds did not change, so a standing a failed tick lost is put right', async () => {
       const { store, service, event, anaEntry } = await scheduledSyncSetup();
-      await service.persistRoundUpdatesForSportEvent(event.id, [update('ext-ana', 1, -2)], 'balldontlie', 4);
+      await service.persistRoundUpdatesForSportEvent(event.id, [update('ext-ana', 1, -2)], 'balldontlie');
       store.standingRows = [];
 
-      await service.persistRoundUpdatesForSportEvent(event.id, [update('ext-ana', 1, -2)], 'balldontlie', 4);
+      await service.persistRoundUpdatesForSportEvent(event.id, [update('ext-ana', 1, -2)], 'balldontlie');
 
       expect(standingOf(store, anaEntry.id)).toMatchObject({ scoreToPar: -2, displayPosition: '1' });
     });

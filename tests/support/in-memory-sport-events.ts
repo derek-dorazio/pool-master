@@ -407,8 +407,8 @@ export class InMemorySportEvents {
    * Pass `sportLeagueId` (and `sportLeagueSeasonId`, `slotDefinitions`) to place it on a real one;
    * its championship year is its Season's.
    */
-  addEvent({ providerRef, ...overrides }: Partial<SportEvent> & { providerRef?: ProviderEventRef } = {}): SportEvent {
-    const event: SportEvent = stamp({
+  addEvent({ providerRef, ...overrides }: Partial<Omit<SportEvent, 'roundCount'>> & { providerRef?: ProviderEventRef } = {}): SportEvent {
+    const event = stamp({
       id: this.id('event'), providerMappings: providerRef === undefined ? [] : [providerMappingOf(providerRef)], sport: 'GOLF', sportUrlSegment: 'golf', name: 'Open',
       slotDefinitions: sportEventSlots(overrides.sport ?? Sport.GOLF), sportLeagueSeasonId: IN_MEMORY_SEASON_ID, sportLeagueId: UNPLACED_SPORT_LEAGUE_ID,
       startDate: new Date('2026-06-04T12:00:00.000Z'), status: 'SCHEDULED',
@@ -416,8 +416,13 @@ export class InMemorySportEvents {
       championshipYear: 0,
     });
     event.championshipYear = overrides.championshipYear ?? this.seasonYears.get(event.sportLeagueSeasonId) ?? IN_MEMORY_SEASON_YEAR;
-    this.events.push(event);
-    return event;
+    // Its round count is its Round rows, read with it (#2008), as the adapter's count does.
+    const counted = Object.defineProperty(event, 'roundCount', {
+      enumerable: true,
+      get: () => this.roundRows.filter((round) => round.sportEventId === event.id).length,
+    }) as SportEvent;
+    this.events.push(counted);
+    return counted;
   }
 
   /** The event's id at the provider with this adapter id, if the provider has one for it. */
@@ -466,11 +471,6 @@ export class InMemorySportEvents {
     const slot = this.seasonSlots.find((candidate) => candidate.id === id) as SportLeagueSeasonSlot;
     this.slotsByEvent.set(sportEventId, [slot]);
     return slot;
-  }
-
-  private roundSlotOfEvent(sportEventId: string): SportEventRoundSlot {
-    const slot = this.eventSlotOf(sportEventId);
-    return roundSlotOf(slot, this.slotPeriods.get(slot.id) ?? null, this.neutralSiteSlots.has(slot.id));
   }
 
   /**
@@ -832,14 +832,6 @@ export class InMemorySportEvents {
           row.scheduledDate = round.scheduledDate;
           if (round.scheduledEndAt !== undefined) row.scheduledEndAt = round.scheduledEndAt;
         }
-      },
-      findOrCreate: async (sportEventId, roundNumber) => {
-        let row = this.roundRows.find((candidate) => candidate.sportEventId === sportEventId && candidate.roundNumber === roundNumber);
-        if (!row) {
-          row = stamp({ id: this.id('round'), sportEventId, roundNumber, scheduledDate: T0, scheduledEndAt: null, slot: this.roundSlotOfEvent(sportEventId) });
-          this.roundRows.push(row);
-        }
-        return row;
       },
       // The in-memory store keeps no match or participant-round rows: every round reads as scheduled.
       findResultFacts: async () => new Map(),

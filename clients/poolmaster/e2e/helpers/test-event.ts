@@ -61,11 +61,11 @@ function dateTimeInput(date: Date): string {
 /**
  * On the New test event page: adds a test slot labelled `slotLabel` starting at `startsAt`, which
  * the form then picks, and creates the event `name` on it. The event takes the slot's dates and
- * its league's round count, and opens on its Field tab.
+ * plays `rounds` rounds in it (one unless given), and opens on its Field tab.
  */
 export async function createTestEvent(
   page: Page,
-  input: { sportUrlSegment: string; sportLeagueId: string; slotKind: string; slotLabel: string; startsAt: Date; name: string },
+  input: { sportUrlSegment: string; sportLeagueId: string; slotKind: string; slotLabel: string; startsAt: Date; name: string; rounds?: number },
 ): Promise<{ id: string; sport: string; championshipYear: number }> {
   const definitionId = await currentSeasonDefinitionId(page.request, {}, input.sportLeagueId, input.slotKind);
   await page.goto(`/manage/sports/${input.sportUrlSegment}/events/new`);
@@ -82,6 +82,7 @@ export async function createTestEvent(
   // The new slot is free, so the form offers it and picks it.
   await expect(page.getByTestId('root-admin-sport-event-create-slot')).toHaveValue(slot.id);
   await page.getByTestId('root-admin-sport-event-create-name').fill(input.name);
+  if (input.rounds !== undefined) await page.getByTestId('root-admin-sport-event-create-rounds').fill(String(input.rounds));
   const created = await submitAndRead<{ event: { id: string; sport: string; championshipYear: number } }>(
     page,
     'root-admin-sport-event-create-submit',
@@ -95,30 +96,34 @@ export async function createTestEvent(
 
 /**
  * Through the API, signed with the admin's token: adds a test slot labelled `slotLabel` from
- * `startsAt` to the league's current Season and creates the event `name` on it. The event takes the
- * slot's dates and puts its rounds in the slot; `rounds`, when given and different, is then set on it.
+ * `startsAt` to the league's current Season, and one more for each of `laterSlotKinds` a day apart,
+ * and creates the event `name` on them. The event takes the slots' dates and plays a round in each
+ * (#2008), so a bracket's rounds are its slots: a semifinal and a final are two. On one slot it
+ * plays `rounds` rounds (one unless given).
  */
 export async function createTestEventThroughApi(
   api: APIRequestContext,
   headers: AuthHeaders,
-  input: { sportLeagueId: string; slotKind: string; slotKey?: string; slotLabel: string; startsAt: string; name: string; rounds?: number; autoLifecycleEnabled?: boolean },
+  input: { sportLeagueId: string; slotKind: string; slotKey?: string; slotLabel: string; startsAt: string; name: string; rounds?: number; laterSlotKinds?: readonly string[]; autoLifecycleEnabled?: boolean },
 ): Promise<{ id: string }> {
-  const slotDefinitionId = await currentSeasonDefinitionId(api, headers, input.sportLeagueId, input.slotKind, input.slotKey);
-  const slotResponse = await expectOk(
-    api.post(`/api/v1/sport-leagues/${input.sportLeagueId}/test-slots`, { headers, data: { slotDefinitionId, label: input.slotLabel, startsAt: input.startsAt } }),
-    `add test slot ${input.slotLabel}`,
-  );
-  const { slot } = (await slotResponse.json()) as { slot: { id: string } };
+  const slotKinds = [input.slotKind, ...(input.laterSlotKinds ?? [])];
+  const seasonSlotIds: string[] = [];
+  for (const [index, slotKind] of slotKinds.entries()) {
+    const slotDefinitionId = await currentSeasonDefinitionId(api, headers, input.sportLeagueId, slotKind, index === 0 ? input.slotKey : undefined);
+    const startsAt = new Date(Date.parse(input.startsAt) + index * 24 * 60 * 60 * 1000).toISOString();
+    const slotResponse = await expectOk(
+      api.post(`/api/v1/sport-leagues/${input.sportLeagueId}/test-slots`, { headers, data: { slotDefinitionId, label: input.slotLabel, startsAt } }),
+      `add test slot ${input.slotLabel} (${slotKind})`,
+    );
+    seasonSlotIds.push(((await slotResponse.json()) as { slot: { id: string } }).slot.id);
+  }
   const eventResponse = await expectOk(
     api.post('/api/v1/events/', {
       headers,
-      data: { seasonSlotIds: [slot.id], name: input.name, ...(input.autoLifecycleEnabled === undefined ? {} : { autoLifecycleEnabled: input.autoLifecycleEnabled }) },
+      data: { seasonSlotIds, name: input.name, ...(input.rounds === undefined ? {} : { rounds: input.rounds }), ...(input.autoLifecycleEnabled === undefined ? {} : { autoLifecycleEnabled: input.autoLifecycleEnabled }) },
     }),
     `create test event ${input.name}`,
   );
-  const { event } = (await eventResponse.json()) as { event: { id: string; rounds: number | null } };
-  if (input.rounds !== undefined && input.rounds !== event.rounds) {
-    await expectOk(api.patch(`/api/v1/events/${event.id}`, { headers, data: { rounds: input.rounds } }), `set ${input.name} to ${input.rounds} rounds`);
-  }
+  const { event } = (await eventResponse.json()) as { event: { id: string } };
   return { id: event.id };
 }

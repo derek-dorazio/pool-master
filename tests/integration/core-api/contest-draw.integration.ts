@@ -26,6 +26,7 @@ import { fakeLogger } from '../../support/fake-logger';
 import { integrationPlanEntitlements } from '../plan-entitlements';
 import { participantLeagueId } from '../../support/participant-league';
 import { sportRowKeys } from '../../support/sport-rows';
+import { contestOnEvents, contestTemplateId, coverEvents } from '../../support/contest-rows';
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
@@ -90,8 +91,7 @@ async function seedRandomDrawContest(): Promise<DrawFixture> {
   const contest = await prisma.contest.create({
     data: {
       leagueId: league.id,
-      seasonYear: 2026,
-      sportEvents: { create: { sportEventId: sportEvent.id, sequence: 1 } },
+      ...(await contestOnEvents(prisma, [sportEvent.id])),
       name: `Draw Contest ${suffix}`,
       status: 'OPEN',
       contestFormat: 'ROSTER',
@@ -279,6 +279,7 @@ describe('sweepstakes receipts, queued by the draw for the lifecycle sweep (#117
     await prisma.contestConfiguration.create({
       data: {
         contestId: fixture.contestId,
+        templateId: await contestTemplateId(prisma, fixture.contestId),
         selectionType: 'RANDOM_DRAW',
         configJson: { selectionType: SelectionType.RANDOM_DRAW, picksPerEntry: 1, countedScores: 1 },
       },
@@ -331,7 +332,7 @@ describe('sweepstakes receipts, queued by the draw for the lifecycle sweep (#117
     await contests.clearDrawReceiptsPending([fixture.contestId]);
 
     expect((await contests.findDrawReceiptsPending()).map((draw) => draw.contestId)).not.toContain(fixture.contestId);
-    expect((await getPrisma().contestDraw.findUniqueOrThrow({ where: { contestId: fixture.contestId } })).receiptsPendingSportEventId).toBeNull();
+    expect((await getPrisma().contestDraw.findUniqueOrThrow({ where: { contestId: fixture.contestId } })).receiptsPendingContestSeasonSlotId).toBeNull();
   });
 
   it('answers the draw without queuing any receipt, then the sweep queues each entry owner one receipt, and a second sweep queues none', async () => {
@@ -365,7 +366,7 @@ describe('sweepstakes receipts, queued by the draw for the lifecycle sweep (#117
         status: 'SCHEDULED',
       },
     });
-    await prisma.contestSportEvent.create({ data: { contestId: fixture.contestId, sportEventId: later.id, sequence: 2 } });
+    await coverEvents(prisma, fixture.contestId, [later.id]);
     const { selections, drawReceipts } = wiring();
     await selections.runDraw({ contestId: fixture.contestId, actorUserId: fixture.userId });
     // The drawn event starts before the sweep runs.

@@ -35,13 +35,12 @@ function setup({ status = SportEventStatus.DRAFT, synced = true, rounds = 1, neu
     sportLeagueId: league.id,
     sport: Sport.FOOTBALL,
     status,
-    rounds,
     providerRef: { providerId: PROVIDER, externalId: WEEK_EVENT },
     ...(synced && { syncProviderId: PROVIDER }),
   });
   // The week's slot is played at a neutral site when its definition says so (#2154).
   if (neutralSite) store.neutralSiteSlots.add(store.eventSlotOf(event.id).id);
-  void store.addRounds(event.id, [{ roundNumber: 1, scheduledDate: KICKOFF }]);
+  void store.addRounds(event.id, Array.from({ length: rounds }, (_, index) => ({ roundNumber: index + 1, scheduledDate: KICKOFF })));
   const field = Object.fromEntries(TEAMS.map((name) => {
     const team = store.addParticipant(sport.id, name, { participantType: 'TEAM' });
     void store.mappingRepo().bind({ participantId: team.id, sportLeagueId: team.sportLeagueId, providerId: BALLDONTLIE_TEST_PROVIDER_ID, externalId: `team-${name}`, participantType: 'TEAM', mappedAt: KICKOFF });
@@ -323,7 +322,6 @@ describe('ProviderGameSlateService', () => {
         sportLeagueId: league.id,
         sport: Sport.FOOTBALL,
         status,
-        rounds: 3,
         providerRef: { providerId: PROVIDER, externalId: POSTSEASON_EVENT },
         syncProviderId: PROVIDER,
       });

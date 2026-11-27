@@ -16,7 +16,7 @@ import type {
   LockedEntryEvent,
   LockedEntryPick,
 } from './types';
-import { lockContestEntryRow, lockContestRow } from '../../adapters';
+import { COVERED_SLOT_ORDER, lockContestEntryRow, lockContestRow } from '../../adapters';
 import { forgettingReads, ReadMemoKey } from '../../core/request-read-memo';
 
 export class ContestEntryPickEntryMissingError extends Error {
@@ -158,6 +158,12 @@ export class ContestEntryPickService {
         throw new ContestDrawEntriesChangedError(contestId);
       }
 
+      // The dealt event's first covered slot is the one the receipts are owed on (#2014).
+      const dealtSlot = await tx.contestSeasonSlot.findFirst({
+        where: { contestId, seasonSlot: { eventSlot: { sportEventId: input.sportEventId } } },
+        orderBy: COVERED_SLOT_ORDER,
+        select: { id: true },
+      });
       let draw: { drawnAt: Date };
       try {
         draw = await tx.contestDraw.create({
@@ -168,7 +174,7 @@ export class ContestEntryPickService {
             entryOrder: [...input.entryOrder],
             drawnByUserId: input.drawnByUserId,
             // The dealt entries' receipts go out on the next receipts sweep (#1171).
-            receiptsPendingSportEventId: input.sportEventId,
+            receiptsPendingContestSeasonSlotId: dealtSlot?.id ?? null,
           },
           select: { drawnAt: true },
         });

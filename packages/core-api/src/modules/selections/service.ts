@@ -735,7 +735,7 @@ export class SelectionService {
     const [squadMemberships, { selectionParticipants, tierGroups, valuations }] = await Promise.all([
       this.deps.squadMemberships.findBySquads(squadIds),
       // The set the contest picks from: the first slot it covers holding one (#2044).
-      this.readEventField(sportEvent, field, { coveredSlotDefinitionIds: contestRoundCoverage(configuration).slotDefinitionIds }),
+      this.readEventField(sportEvent, field, { coveredSlotDefinitionIds: contestRoundCoverage(contest).slotDefinitionIds }),
     ]);
 
     return {

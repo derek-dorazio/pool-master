@@ -19,6 +19,7 @@ import {
 } from '../helpers';
 import { holdEntryLock, waitUntilBlockedBy } from '../contest-lock';
 import { seedEventWithField, seedLeagueWithTeams, seedTiers } from '../list-route-seeds';
+import { contestOnEvents, contestTemplateId } from '../../support/contest-rows';
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
@@ -41,8 +42,7 @@ async function seedFullEntry(status: ContestEntryStatus) {
   const contest = await prisma.contest.create({
     data: {
       leagueId: seeded.league.id,
-      seasonYear: event.startDate.getUTCFullYear(),
-      sportEvents: { create: { sportEventId: event.id, sequence: 1 } },
+      ...(await contestOnEvents(prisma, [event.id])),
       name: `Lock ${seeded.suffix}`,
       status: ContestStatus.OPEN,
       contestFormat: 'ROSTER',
@@ -52,6 +52,7 @@ async function seedFullEntry(status: ContestEntryStatus) {
   await prisma.contestConfiguration.create({
     data: {
       contestId: contest.id,
+      templateId: await contestTemplateId(prisma, contest.id),
       selectionType: SelectionType.TIERED,
       configJson: { selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 2 },
     },

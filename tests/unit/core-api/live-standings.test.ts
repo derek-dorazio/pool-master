@@ -324,7 +324,7 @@ describe('LiveStandings.queueDue', () => {
   /** A live golf contest on a 4-round event whose whole field finished round 1 at ROUND_1_DONE. */
   function liveMasters(overrides: Partial<SportEvent> = {}) {
     const league = world.addLeague({ name: 'Office League', leagueCode: 'OFFICE24' });
-    const masters = world.addSportEvent({ name: 'The Masters', startDate: new Date('2026-04-09T11:40:00.000Z'), status: SportEventStatus.IN_PROGRESS, rounds: 4, ...overrides });
+    const masters = world.addSportEvent({ name: 'The Masters', startDate: new Date('2026-04-09T11:40:00.000Z'), status: SportEventStatus.IN_PROGRESS, roundCount: 4, ...overrides });
     const contest = world.addContest(league.id, { name: 'Masters Pick 6', status: ContestStatus.ACTIVE, sportEventIds: [masters.id] });
     fields.set(masters.id, [golfer('g1', [done(1, ROUND_1_DONE)]), golfer('g2', [done(1, after(ROUND_1_DONE, -20))])]);
     return { league, masters, contest };
@@ -435,7 +435,7 @@ describe('LiveStandings.queueDue', () => {
   });
 
   it('sends nothing after the event\'s last round, which the event\'s result covers', async () => {
-    const { league, contest } = liveMasters({ rounds: 1 });
+    const { league, contest } = liveMasters({ roundCount: 1 });
     const ana = member(league.id, 'Ana');
     boards.set(contest.id, [row('e1', ana.squad, 1, -6)]);
 
@@ -449,7 +449,7 @@ describe('LiveStandings.queueDue', () => {
     const ana = member(league.id, 'Ana');
     boards.set(contest.id, [row('e1', ana.squad, 1, -6)]);
     world.contests.set(contest.id, { ...contest, status: ContestStatus.COMPLETED });
-    const race = world.addSportEvent({ name: 'Kentucky Derby', sport: 'HORSE_RACING', startDate: new Date('2026-05-02T22:57:00.000Z'), status: SportEventStatus.IN_PROGRESS, rounds: 2 });
+    const race = world.addSportEvent({ name: 'Kentucky Derby', sport: 'HORSE_RACING', startDate: new Date('2026-05-02T22:57:00.000Z'), status: SportEventStatus.IN_PROGRESS, roundCount: 2 });
     const derby = world.addContest(league.id, { status: ContestStatus.ACTIVE, sportEventIds: [race.id] });
     fields.set(race.id, fields.get(masters.id) ?? []);
     boards.set(derby.id, [row('e9', ana.squad, 1, 10)]);
@@ -500,8 +500,8 @@ describe('LiveStandings.queueDue', () => {
 
   it('sends a season contest\'s result for an event once it settles, with each entry\'s result in it and the next event, but not after the last event', async () => {
     const league = world.addLeague({ name: 'Office League', leagueCode: 'OFFICE24' });
-    const masters = world.addSportEvent({ name: 'The Masters', startDate: new Date('2026-04-09T11:40:00.000Z'), status: SportEventStatus.COMPLETED, rounds: 4 });
-    const pga = world.addSportEvent({ name: 'PGA Championship', startDate: new Date('2026-05-14T11:00:00.000Z'), status: SportEventStatus.SCHEDULED, rounds: 4 });
+    const masters = world.addSportEvent({ name: 'The Masters', startDate: new Date('2026-04-09T11:40:00.000Z'), status: SportEventStatus.COMPLETED, roundCount: 4 });
+    const pga = world.addSportEvent({ name: 'PGA Championship', startDate: new Date('2026-05-14T11:00:00.000Z'), status: SportEventStatus.SCHEDULED, roundCount: 4 });
     const contest = world.addContest(league.id, {
       name: 'Majors Pool',
       status: ContestStatus.ACTIVE,
@@ -772,9 +772,9 @@ describe('LiveStandings.queueDue', () => {
 
   it('names as a season contest\'s next event the one still to play, passing over an event that finished but has not settled', async () => {
     const league = world.addLeague({ name: 'Office League', leagueCode: 'OFFICE24' });
-    const masters = world.addSportEvent({ name: 'The Masters', startDate: new Date('2026-04-09T11:40:00.000Z'), status: SportEventStatus.COMPLETED, rounds: 4 });
-    const pga = world.addSportEvent({ name: 'PGA Championship', startDate: new Date('2026-05-14T11:00:00.000Z'), status: SportEventStatus.COMPLETED, rounds: 4 });
-    const open = world.addSportEvent({ name: 'The Open', startDate: new Date('2026-07-16T06:00:00.000Z'), status: SportEventStatus.SCHEDULED, rounds: 4 });
+    const masters = world.addSportEvent({ name: 'The Masters', startDate: new Date('2026-04-09T11:40:00.000Z'), status: SportEventStatus.COMPLETED, roundCount: 4 });
+    const pga = world.addSportEvent({ name: 'PGA Championship', startDate: new Date('2026-05-14T11:00:00.000Z'), status: SportEventStatus.COMPLETED, roundCount: 4 });
+    const open = world.addSportEvent({ name: 'The Open', startDate: new Date('2026-07-16T06:00:00.000Z'), status: SportEventStatus.SCHEDULED, roundCount: 4 });
     const contest = world.addContest(league.id, {
       name: 'Majors Pool',
       status: ContestStatus.ACTIVE,
@@ -797,7 +797,7 @@ describe('LiveStandings.queueDue', () => {
   /** A live bracket whose first round's last result went in at `done`, with round 2 set to start. */
   function liveBracket(done: Date) {
     const league = world.addLeague({ name: 'Office League', leagueCode: 'OFFICE24' });
-    const tournament = world.addSportEvent({ name: 'NCAA Tournament', sport: 'BASKETBALL', startDate: new Date('2026-03-19T16:00:00.000Z'), status: SportEventStatus.IN_PROGRESS, rounds: 6 });
+    const tournament = world.addSportEvent({ name: 'NCAA Tournament', sport: 'BASKETBALL', startDate: new Date('2026-03-19T16:00:00.000Z'), status: SportEventStatus.IN_PROGRESS, roundCount: 6 });
     const contest = world.addContest(league.id, {
       name: 'March Madness',
       status: ContestStatus.ACTIVE,
@@ -976,8 +976,8 @@ describe('LiveStandings.queueDue', () => {
 
   it('measures an event\'s settling from the first of its standings to freeze', async () => {
     const league = world.addLeague({ name: 'Office League', leagueCode: 'OFFICE24' });
-    const masters = world.addSportEvent({ name: 'The Masters', startDate: new Date('2026-04-09T11:40:00.000Z'), status: SportEventStatus.COMPLETED, rounds: 4 });
-    const pga = world.addSportEvent({ name: 'PGA Championship', startDate: new Date('2026-05-14T11:00:00.000Z'), status: SportEventStatus.SCHEDULED, rounds: 4 });
+    const masters = world.addSportEvent({ name: 'The Masters', startDate: new Date('2026-04-09T11:40:00.000Z'), status: SportEventStatus.COMPLETED, roundCount: 4 });
+    const pga = world.addSportEvent({ name: 'PGA Championship', startDate: new Date('2026-05-14T11:00:00.000Z'), status: SportEventStatus.SCHEDULED, roundCount: 4 });
     const contest = world.addContest(league.id, { name: 'Majors Pool', status: ContestStatus.ACTIVE, sportEventIds: [masters.id, pga.id] });
     const ana = member(league.id, 'Ana');
     const firstAt = new Date('2026-04-13T00:00:00.000Z');
@@ -995,8 +995,8 @@ describe('LiveStandings.queueDue', () => {
 
   it('shows no score for an entry the board has not placed, and no event score for an entry with none in the event', async () => {
     const league = world.addLeague({ name: 'Office League', leagueCode: 'OFFICE24' });
-    const masters = world.addSportEvent({ name: 'The Masters', startDate: new Date('2026-04-09T11:40:00.000Z'), status: SportEventStatus.COMPLETED, rounds: 4 });
-    const pga = world.addSportEvent({ name: 'PGA Championship', startDate: new Date('2026-05-14T11:00:00.000Z'), status: SportEventStatus.IN_PROGRESS, rounds: 4 });
+    const masters = world.addSportEvent({ name: 'The Masters', startDate: new Date('2026-04-09T11:40:00.000Z'), status: SportEventStatus.COMPLETED, roundCount: 4 });
+    const pga = world.addSportEvent({ name: 'PGA Championship', startDate: new Date('2026-05-14T11:00:00.000Z'), status: SportEventStatus.IN_PROGRESS, roundCount: 4 });
     const contest = world.addContest(league.id, { name: 'Majors Pool', status: ContestStatus.ACTIVE, sportEventIds: [masters.id, pga.id] });
     const ana = member(league.id, 'Ana');
     const settledAt = new Date('2026-04-13T00:00:00.000Z');

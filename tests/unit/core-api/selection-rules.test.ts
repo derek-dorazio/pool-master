@@ -49,7 +49,7 @@ function tier(overrides: Partial<SelectionTierConfig> = {}): SelectionTierConfig
 function configuration(overrides: Partial<ContestConfiguration> = {}): ContestConfiguration {
   return {
     id: 'config-1',
-    coveredSlotDefinitionIds: null,
+    templateId: 'template-1',
     contestId: 'contest-1',
     selectionType: SelectionType.TIERED,
     createdAt: new Date('2026-01-01T00:00:00.000Z'),

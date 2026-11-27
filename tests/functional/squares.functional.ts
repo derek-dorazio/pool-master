@@ -146,6 +146,7 @@ describe('SDK Functional: Super Bowl squares', () => {
         sportEventRoundMatchId: superBowl.id,
         contestFormat: ContestFormat.SQUARES,
         selectionType: SelectionType.SQUARES,
+        templateId: preset.id,
         configuration: { selectionType: SelectionType.SQUARES, maxSquaresPerEntry: 7, maxEntriesPerSquad: 1 },
       },
     });

@@ -58,7 +58,6 @@ async function homeGameIn(competitionCode: string, key: string): Promise<string>
     name: `Neutral Site Slots ${randomUUID().slice(0, 8)}`,
     startDate,
     status: 'SCHEDULED',
-    rounds: 1,
     autoLifecycleEnabled: false,
   });
   await putEventInSlot(prisma, event.id, definition.id);

@@ -28,7 +28,7 @@ import { SportEventBracketResponseSchema } from '@poolmaster/shared/dto';
 import { LoadMode } from '../../packages/core-api/scripts/seed-golf/load-report';
 import { loadSportData } from '../../packages/core-api/scripts/seed-golf/seed-golf';
 import { parseSportDataFile } from '../../packages/core-api/scripts/seed-golf/sport-data-file';
-import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, createTestEvent } from './builders';
+import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, createTestEvent, contestTemplateFor } from './builders';
 import {
   cleanupFunctionalData,
   disconnectFunctionalPrisma,
@@ -176,6 +176,7 @@ describe('SDK Functional: an NFL regular-season week (#715)', () => {
       body: {
         name: `Week Knockout ${RUN}`,
         sportEventIds: [eventId],
+        templateId: await contestTemplateFor([eventId], SelectionType.TIERED),
         contestFormat: ContestFormat.ROSTER,
         selectionType: SelectionType.TIERED,
         configuration: {
@@ -244,7 +245,7 @@ describe('SDK Functional: an NFL regular-season week (#715)', () => {
     const event = expectDefined(expectDefined((await listEvents({ client: a, query: { sportLeagueId: nfl.id } })).data).events
       .find((row) => row.name === week.name));
     created.sportEventIds.add(event.id);
-    expect([event.status, event.rounds]).toEqual(['SCHEDULED', 1]);
+    expect([event.status, event.roundCount]).toEqual(['SCHEDULED', 1]);
     const games = expectMatchesSchema(SportEventBracketResponseSchema, (await getEventBracket({ client: a, path: { eventId: event.id } })).data).matches.map(withHomeAwayRead);
     expect(games).toHaveLength(16);
     expect(games.every((game) => game.status === MatchStatus.COMPLETED && game.advancesToMatchId === null)).toBe(true);

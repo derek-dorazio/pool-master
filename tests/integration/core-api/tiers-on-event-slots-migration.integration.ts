@@ -74,7 +74,6 @@ async function eventOf(name: string) {
     name: `${name} ${randomUUID().slice(0, 8)}`,
     startDate: new Date('2026-06-04T12:00:00.000Z'),
     status: 'DRAFT',
-    rounds: 2,
     autoLifecycleEnabled: false,
   });
 }

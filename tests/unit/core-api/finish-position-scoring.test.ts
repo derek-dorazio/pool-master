@@ -24,7 +24,7 @@ import { InMemorySportEvents } from '../../support/in-memory-sport-events';
 // contest's points table, and when a runner is left unscored.
 
 const family = getScoringFamilyModule(ScoringFamily.FINISH_POSITION);
-const RACE: FieldScoringEvent = { sport: Sport.HORSE_RACING, ...sportPlay(Sport.HORSE_RACING), rounds: 1, roundsPar: undefined, status: SportEventStatus.COMPLETED, slotDefinitions: [] };
+const RACE: FieldScoringEvent = { sport: Sport.HORSE_RACING, ...sportPlay(Sport.HORSE_RACING), roundCount: 1, status: SportEventStatus.COMPLETED, slotDefinitions: [] };
 const WIN_PLACE_SHOW: ContestScoringSettings = {
   participantScoringDefinitionId: 'FINISH_POSITION_POINTS',
   config: { pointsTable: [5, 3, 1], didNotFinishPoints: -1 },
@@ -60,7 +60,7 @@ function field(runners: RunnerInput[]): SportEventParticipantView[] {
 }
 
 function scores(runners: RunnerInput[], scoring: ContestScoringSettings = WIN_PLACE_SHOW): Record<string, number | null> {
-  return Object.fromEntries(family.scoreField(field(runners), RACE, scoring, { slotDefinitionIds: null }).map((row) => [row.name, row.score]));
+  return Object.fromEntries(family.scoreField(field(runners), RACE, scoring, { slotDefinitionIds: [] }).map((row) => [row.name, row.score]));
 }
 
 describe('finish position — official finishers', () => {
@@ -151,7 +151,7 @@ describe('finish position — unofficial and unscorable results', () => {
   });
 
   it('tags every scored row with the finish-position detail and the result\'s time as its as-of', () => {
-    const [row] = family.scoreField(field([{ name: 'Arrow', result: { finishPosition: 1 } }]), RACE, WIN_PLACE_SHOW, { slotDefinitionIds: null });
+    const [row] = family.scoreField(field([{ name: 'Arrow', result: { finishPosition: 1 } }]), RACE, WIN_PLACE_SHOW, { slotDefinitionIds: [] });
     expect(row.detail).toEqual({ scoringFamily: ScoringFamily.FINISH_POSITION });
     expect(row.asOf).toEqual(new Date('2026-05-02T22:00:00.000Z'));
   });
@@ -190,10 +190,5 @@ describe('finish position — guards', () => {
   it('throws on a race result status it does not know, both when scoring and when placing the runner', () => {
     expect(() => scores([{ name: 'Arrow', result: { resultStatus: 'PHOTO_FINISH' as GameSideStatus } }])).toThrow();
     expect(() => standingStatusForResult('PHOTO_FINISH' as GameSideStatus)).toThrow();
-  });
-
-  it('scores a missed lineup as each counted pick not finishing, and leaves it unscored under another definition', () => {
-    expect(family.scoreMissedLineup([], RACE, WIN_PLACE_SHOW, 3)).toBe(-3);
-    expect(family.scoreMissedLineup([], RACE, { participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', config: {} }, 3)).toBeNull();
   });
 });

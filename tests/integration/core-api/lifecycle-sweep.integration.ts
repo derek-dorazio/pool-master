@@ -26,6 +26,7 @@ import { fakeLogger } from '../../support/fake-logger';
 import { cleanupTestData, createTestUser, getAppPrisma, getPrisma, integrationBackgroundJobs, setupIntegrationTests, teardownIntegrationTests } from '../helpers';
 import { DAY, HOUR, seedEventWithField, seedFootballWeek, seedLeagueWithTeams } from '../list-route-seeds';
 import { integrationPlanEntitlements } from '../plan-entitlements';
+import { contestOnEvents, contestTemplateId } from '../../support/contest-rows';
 
 let jobLock: PostgresJobLock;
 
@@ -112,8 +113,7 @@ async function contestOn(leagueId: string, sportEventIds: readonly string[], sta
   return getPrisma().contest.create({
     data: {
       leagueId,
-      seasonYear: 2026,
-      sportEvents: { create: sportEventIds.map((sportEventId, index) => ({ sportEventId, sequence: index + 1 })) },
+      ...(await contestOnEvents(getPrisma(), sportEventIds)),
       name: `Sweep ${randomUUID().slice(0, 8)}`,
       status,
       contestFormat: 'PREDICTION',
@@ -160,11 +160,12 @@ describe('event lifecycle sweep through the app client (#1303)', () => {
     }
     // Standings and reminders read the contest's rules.
     await getPrisma().contestConfiguration.createMany({
-      data: [season, reminded].map((contest) => ({
+      data: await Promise.all([season, reminded].map(async (contest) => ({
         contestId: contest.id,
+        templateId: await contestTemplateId(getPrisma(), contest.id),
         selectionType: SelectionType.PICK_EM,
         configJson: { selectionType: SelectionType.PICK_EM, mode: PickEmMode.STRAIGHT_UP, againstTheSpread: false },
-      })),
+      }))),
     });
     const seasonEntries = await getPrisma().contestEntry.findMany({ where: { contestId: season.id }, orderBy: { name: 'asc' } });
     await getPrisma().contestEntryEventStanding.createMany({

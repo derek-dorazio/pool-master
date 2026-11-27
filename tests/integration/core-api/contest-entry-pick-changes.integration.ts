@@ -20,6 +20,7 @@ import { freshEventEdition } from '../../support/event-edition';
 import { holdEntryLock, waitUntilBlockedBy } from '../contest-lock';
 import { participantLeagueId } from '../../support/participant-league';
 import { sportRowKeys } from '../../support/sport-rows';
+import { contestOnEvents } from '../../support/contest-rows';
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
@@ -106,8 +107,7 @@ async function seedFixture(): Promise<FormatFixture> {
   const contest = await prisma.contest.create({
     data: {
       leagueId: league.id,
-      seasonYear: 2026,
-      sportEvents: { create: { sportEventId: sportEvent.id, sequence: 1 } },
+      ...(await contestOnEvents(prisma, [sportEvent.id])),
       name: `Invariant Contest ${suffix}`,
       status: 'OPEN',
       contestFormat: 'ROSTER',

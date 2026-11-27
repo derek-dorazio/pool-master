@@ -31,6 +31,7 @@ import {
   teardownIntegrationTests,
 } from '../helpers';
 import { emailServiceInto } from '../../support/email-service';
+import { anySeasonId } from '../../support/contest-rows';
 
 // League and squad reads that only the HTTP contract tests reached before (#508): what each
 // query returns from Postgres, and which rows its filters leave out.
@@ -99,10 +100,11 @@ describe('LeagueService.countLeagueActivity', () => {
       ContestStatus.ACTIVE,
       ContestStatus.COMPLETED,
     ];
+    const sportLeagueSeasonId = await anySeasonId(prisma, 2026);
     await prisma.contest.createMany({
       data: statuses.map((status) => ({
         leagueId: busy.league.id,
-        seasonYear: 2026,
+        sportLeagueSeasonId,
         name: `Contest ${status}`,
         status,
         selectionType: 'TIERED' as const,

@@ -140,7 +140,6 @@ test('act 1: the root admin releases an American football event of one game betw
       slotLabel: run.tournamentName,
       name: run.tournamentName,
       startsAt: KICKOFF,
-      rounds: 1,
       autoLifecycleEnabled: false,
     });
     journey.eventId = event.id;

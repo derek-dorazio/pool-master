@@ -242,7 +242,7 @@ describe('Loading a golf test seed through the admin API', () => {
       { sportLeague: tour, subject: LoadSubject.FIELD, action: LoadAction.UPDATE, name: finale.name, detail: expect.stringContaining('8 added') as unknown },
     ]);
     const stored = expectDefined((await eventsOf(league.id, 2026)).find((event) => event.name === finale.name));
-    expect(stored).toMatchObject({ status: 'SCHEDULED', startDate: finaleStart, roundsPar: 70 });
+    expect(stored).toMatchObject({ status: 'SCHEDULED', startDate: finaleStart });
     expect((await fieldOf(stored.id)).size).toBe(8);
   });
 

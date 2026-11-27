@@ -46,9 +46,12 @@ export interface SportEvent extends DomainEntity {
   startDate: Date;
   endDate?: Date;
   status: SportEventStatus;
-  rounds?: number;
-  /** Par for every round, when an admin set it; unset, contest scoring derives each round's par from the field (#478). */
-  roundsPar?: number;
+  /**
+   * How many rounds the event has (#2008): the count of its Round rows, read with it and never
+   * stored. A bracket has a round per slot, so its count is its FINAL slot's round. 0 before the
+   * sync or a test event gives it any.
+   */
+  roundCount: number;
   /** The slot definitions of the Season slots the event covers, in play order (#2004, #2010): where templates are offered. */
   slotDefinitions: SportEventSlotDefinition[];
   /** The Season the event is played in (#2003). */
@@ -122,7 +125,8 @@ export interface SportEventParticipantSourceData extends DomainEntity {
 /** Commissioner-managed contest configuration persisted alongside the contest. */
 export interface ContestConfiguration extends DomainEntity {
   contestId: string;
-  templateId?: string | null;
+  /** The template the contest was made from (#2014): every contest has one. */
+  templateId: string;
   templateVersion?: number | null;
   selectionType: SelectionType;
   /** The contest's rules; its `selectionType` matches the contest's (#93). */
@@ -130,17 +134,10 @@ export interface ContestConfiguration extends DomainEntity {
   minimumEntries?: number;
   maxEntriesPerSquad?: number | null;
   totalPrizePoolAmount?: number | null;
-  /**
-   * The slot definitions the contest covers, read from its template's listed slots (#2014): which
-   * of its event's rounds it plays and scores (`ContestRoundCoverage`). Null for a contest made
-   * with no template, which covers every round until #2014 makes the template required. Read
-   * only: a contest's coverage is its template's, never written on the configuration.
-   */
-  coveredSlotDefinitionIds: string[] | null;
 }
 
-/** What a contest configuration is written from: everything but its ids, times and the coverage its template gives. */
-export type ContestConfigurationWrite = Omit<ContestConfiguration, 'id' | 'createdAt' | 'updatedAt' | 'coveredSlotDefinitionIds'>;
+/** What a contest configuration is written from: everything but its ids and times. */
+export type ContestConfigurationWrite = Omit<ContestConfiguration, 'id' | 'createdAt' | 'updatedAt'>;
 
 /** Seeded reusable contest template selected during commissioner create flow. */
 export interface ContestConfigTemplate extends DomainEntity {

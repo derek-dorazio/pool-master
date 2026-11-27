@@ -94,7 +94,10 @@ function contest(overrides: Partial<Contest> = {}): Contest {
     id: CONTEST_ID,
     leagueId: LEAGUE_ID,
     sportEventIds: [EVENT_ID],
+    coveredSlotDefinitionIds: ['def-tournament'],
+    coveredSeasonSlotIds: ['season-slot-tournament'],
     name: 'Masters Pool',
+    sportLeagueSeasonId: 'season-2026',
     seasonYear: 2026,
     cupWeight: CupWeight.NORMAL,
     status: ContestStatus.OPEN,
@@ -108,7 +111,7 @@ function contest(overrides: Partial<Contest> = {}): Contest {
 function configuration(overrides: Partial<ContestConfiguration> = {}): ContestConfiguration {
   return {
     id: 'config-1',
-    coveredSlotDefinitionIds: null,
+    templateId: 'template-1',
     contestId: CONTEST_ID,
     selectionType: SelectionType.TIERED,
     // Every tier takes the contest's picksPerTier (#479): two tiers × 2 is a roster of 4.
@@ -1520,7 +1523,7 @@ describe('SelectionService — what one pick reads (#1196)', () => {
 
     expect(deps.field.findBySportEvent).toHaveBeenCalledTimes(1);
     expect(deps.tiers.getEffectiveTiersAndValuations).toHaveBeenCalledTimes(1);
-    expect(deps.tiers.getEffectiveTiersAndValuations).toHaveBeenCalledWith(EVENT_ID, FIELD, { coveredSlotDefinitionIds: null });
+    expect(deps.tiers.getEffectiveTiersAndValuations).toHaveBeenCalledWith(EVENT_ID, FIELD, { coveredSlotDefinitionIds: ['def-tournament'] });
   });
 
   it('asks for only the event\'s picks on every pick read, so other events\' picks are filtered in the query', async () => {

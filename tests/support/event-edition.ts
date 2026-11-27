@@ -301,7 +301,6 @@ export async function linkedProviderEvent(
       ...(await freshEventEdition(prisma, { championshipYear: input.startDate.getUTCFullYear(), sportLeagueId: input.sportLeagueId })),
       name: input.name,
       startDate: input.startDate,
-      rounds: LINKED_EVENT_ROUNDS,
     },
   });
   // The event's one synced slot, its four rounds played in it (#2006).

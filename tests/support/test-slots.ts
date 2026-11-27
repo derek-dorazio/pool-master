@@ -55,9 +55,11 @@ export async function withTestDefinition(prisma: Db, sportLeagueId: string, key:
   return (existing ?? await createTestDefinition(prisma, sportLeagueId, key)).id;
 }
 
-/** Removes the league's test definitions and the test slots of them, once their events are gone. */
-export async function removeTestDefinition(prisma: Db & Pick<PrismaClient, 'sportLeagueSeasonCompetitionSlot'>, sportLeagueId: string): Promise<void> {
+/** Removes the league's test definitions, the test slots of them and template listings of them, once their events are gone. */
+export async function removeTestDefinition(prisma: Db & Pick<PrismaClient, 'sportLeagueSeasonCompetitionSlot' | 'contestConfigTemplateSlot'>, sportLeagueId: string): Promise<void> {
   const where = { sportLeagueId, key: { in: [TEST_DEFINITION_KEY, LEVEL_TEST_DEFINITION_KEY] } };
+  // A template a test fitted to its events lists the definition (#2014); that listing goes too.
+  await prisma.contestConfigTemplateSlot.deleteMany({ where: { definition: where } });
   await prisma.sportLeagueSeasonCompetitionSlot.deleteMany({ where: { definition: where } });
   await prisma.sportLeagueCompetitionSlot.deleteMany({ where });
 }
@@ -198,10 +200,22 @@ export async function linkTestSlot(
  * the league's cascade cannot take them: they go first, slots before competitions before phases (as the API's delete does).
  */
 export async function deleteTestSportLeagues(
-  prisma: Pick<PrismaClient, 'sportLeague' | 'sportLeagueSeasonPhase' | 'sportLeagueSeasonCompetition' | 'sportLeagueSeasonCompetitionSlot'>,
+  prisma: Pick<PrismaClient, 'sportLeague' | 'sportLeagueSeasonPhase' | 'sportLeagueSeasonCompetition' | 'sportLeagueSeasonCompetitionSlot' | 'contestConfigTemplate' | 'contest' | 'contestConfiguration' | 'participantContestScoringRule' | 'cup'>,
   sportLeagueIds: readonly string[],
 ): Promise<void> {
   const ids = [...sportLeagueIds];
+  // A contest and a cup are in a Season of the league (#2014), whose delete they restrict, and a
+  // contest's configuration restricts its template's: they go first.
+  const contestIds = (await prisma.contest.findMany({
+    where: { OR: [{ sportLeagueSeason: { sportLeagueId: { in: ids } } }, { configuration: { template: { sportLeagueId: { in: ids } } } }] },
+    select: { id: true },
+  })).map(({ id }) => id);
+  // A contest's own configuration, and that configuration's scoring rules, restrict its delete.
+  await prisma.participantContestScoringRule.deleteMany({ where: { contestConfiguration: { contestId: { in: contestIds } } } });
+  await prisma.contestConfiguration.deleteMany({ where: { contestId: { in: contestIds } } });
+  await prisma.contest.deleteMany({ where: { id: { in: contestIds } } });
+  await prisma.cup.deleteMany({ where: { sportLeagueId: { in: ids } } });
+  await prisma.contestConfigTemplate.deleteMany({ where: { sportLeagueId: { in: ids } } });
   await prisma.sportLeagueSeasonCompetitionSlot.deleteMany({ where: { sportLeagueId: { in: ids } } });
   await prisma.sportLeagueSeasonCompetition.deleteMany({ where: { sportLeagueId: { in: ids } } });
   await prisma.sportLeagueSeasonPhase.deleteMany({ where: { sportLeagueId: { in: ids } } });

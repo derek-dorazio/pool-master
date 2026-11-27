@@ -40,7 +40,6 @@ import {
   loadContestLeaderboardEntries,
   loadContestScoringConfiguration,
   loadEventField,
-  loadMissedEventEntries,
   rankContestEvent,
 } from './contest-leaderboard-reads';
 import { readEventMatchesOnce, readEventsOnce, readOncePerKey } from '../events/event-reads';
@@ -205,7 +204,7 @@ export class ContestSettlementService {
         }
         continue;
       }
-      const configuration = await loadContestScoringConfiguration(this.deps, contest.id);
+      const configuration = await loadContestScoringConfiguration(this.deps, contest);
       const countingRule = resolveContestCountingRule(configuration);
       if (!countingRule) {
         this.logger.error({
@@ -235,13 +234,10 @@ export class ContestSettlementService {
       const field = cancelled ? [] : await loadEventField(reads, sportEventId);
       if (!cancelled && !settledForEvent.has(contest.id)) {
         const entries = await loadContestLeaderboardEntries(this.deps, contest.id, sportEventId);
-        // In a contest of several events, an entry that missed this one is scored as a missed
-        // lineup (#714) and ranked with the rest, so skipping an event never helps its total.
-        const missed = await loadMissedEventEntries(this.deps, contest, new Set(entries.map((entry) => entry.id)));
         // Ranked by the one function the live leaderboard ranks an event with (#1435), from the
         // final scores: the standings frozen here are the board members saw as the event ended.
         const { rows: rankedEntries, scores: participants } = rankContestEvent({
-          field, event: sportEvent, scoring: scoring.scoring, coverage: scoring.coverage, countingRule, direction: scoringDefinition.direction, submitted: entries, missed,
+          field, event: sportEvent, scoring: scoring.scoring, coverage: scoring.coverage, countingRule, direction: scoringDefinition.direction, submitted: entries,
         });
         const asOf = resolveContestStandingAsOf(participants, completedAt);
         // The single writer of ContestEntryEventStanding: one transaction per contest settled.
@@ -422,7 +418,7 @@ export class ContestSettlementService {
     }
     let standings: Awaited<ReturnType<typeof loadBracketStandings>>;
     try {
-      standings = await loadBracketStandings(reads, contest.id, sportEvent);
+      standings = await loadBracketStandings(reads, contest, sportEvent);
     } catch (error) {
       if (!(error instanceof BracketScoringUnavailableError)) throw error;
       this.logger.error({ contestId: contest.id, sportEventId, reason: error.reason }, 'Skipped bracket contest settlement because it cannot be scored');

@@ -72,7 +72,6 @@ async function race(names: readonly string[]) {
       name: `Race Migration ${randomUUID().slice(0, 8)}`,
       startDate: new Date('2027-05-01T22:00:00.000Z'),
       status: 'COMPLETED',
-      rounds: 1,
     },
   });
   await createRoundRows(prisma, new PrismaSportEventRoundRepository(getAppPrisma()), event, [{ roundNumber: 1, scheduledDate: event.startDate }]);

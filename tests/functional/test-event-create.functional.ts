@@ -106,13 +106,19 @@ describe('createEvent on a season slot', () => {
     expect(read.slots.map((slot) => slot.id)).toEqual([seasonSlotId]);
   });
 
-  it('plays every round of a one-slot test event in its slot', async () => {
+  it('plays the rounds asked for in a one-slot test event\'s slot, and reads them back as its round count', async () => {
     const seasonSlotId = await newTestSlot('2026-10-01T12:00:00.000Z', '2026-10-04T22:00:00.000Z');
-    const event = expectDefined((await createEvent({ client, body: { seasonSlotIds: [seasonSlotId], name: `One Slot Open ${RUN}` } })).data).event;
+    const event = expectDefined((await createEvent({ client, body: { seasonSlotIds: [seasonSlotId], name: `One Slot Open ${RUN}`, rounds: 4 } })).data).event;
     created.sportEventIds.add(event.id);
+    expect(event.roundCount).toBe(4);
     const rounds = expectDefined((await listEventRounds({ client, path: { eventId: event.id } })).data).rounds;
-    expect(rounds.length).toBeGreaterThan(1);
-    expect(new Set(rounds.map((round) => round.slot.seasonSlotId))).toEqual(new Set([seasonSlotId]));
+    expect(rounds.map((round) => [round.roundNumber, round.slot.seasonSlotId])).toEqual([1, 2, 3, 4].map((roundNumber) => [roundNumber, seasonSlotId]));
+  });
+
+  it('refuses a round count for a multi-slot test event with 422 EVENT_ROUNDS_FROM_SLOTS, and the refusal has en-US copy', async () => {
+    const seasonSlotIds = [await newTestSlot('2026-10-22T12:00:00.000Z'), await newTestSlot('2026-10-29T12:00:00.000Z')];
+    expectFunctionalError(await createEvent({ client, body: { seasonSlotIds, name: `Fixed Rounds Open ${RUN}`, rounds: 3 } }), { status: 422, code: 'EVENT_ROUNDS_FROM_SLOTS' });
+    expect(enUS.error.EVENT_ROUNDS_FROM_SLOTS).toBeTruthy();
   });
 
   it('makes a multi-slot test event with one round per slot, in the order the slots are given, dated by each slot', async () => {
@@ -126,14 +132,6 @@ describe('createEvent on a season slot', () => {
     const rounds = expectDefined((await listEventRounds({ client, path: { eventId: event.id } })).data).rounds;
     expect(rounds.map((round) => [round.roundNumber, round.slot.seasonSlotId])).toEqual([[1, firstSlotId], [2, secondSlotId]]);
     expect(rounds.map((round) => round.scheduledDate)).toEqual(['2026-10-08T12:00:00.000Z', '2026-10-15T12:00:00.000Z']);
-  });
-
-  it('refuses a rounds-count edit of a multi-slot event with 422 EVENT_ROUNDS_FROM_SLOTS, and the refusal has en-US copy', async () => {
-    const slotIds = [await newTestSlot('2026-10-22T12:00:00.000Z'), await newTestSlot('2026-10-29T12:00:00.000Z')];
-    const event = expectDefined((await createEvent({ client, body: { seasonSlotIds: slotIds, name: `Fixed Rounds Open ${RUN}` } })).data).event;
-    created.sportEventIds.add(event.id);
-    expectFunctionalError(await updateEvent({ client, path: { eventId: event.id }, body: { rounds: 3 } }), { status: 422, code: 'EVENT_ROUNDS_FROM_SLOTS' });
-    expect(enUS.error.EVENT_ROUNDS_FROM_SLOTS).toBeTruthy();
   });
 
   it('refuses slots of two Seasons with 422 SEASON_SLOTS_NOT_ONE_SEASON', async () => {

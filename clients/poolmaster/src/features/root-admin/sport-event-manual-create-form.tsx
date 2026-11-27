@@ -33,6 +33,8 @@ const manualFormSchema = z.object({
   name: z.string().trim().min(1, 'Name is required'),
   venue: z.string().trim(),
   location: z.string().trim(),
+  // The server bounds the count (#2008); the form checks only that it is a whole number of rounds.
+  rounds: z.string().trim().refine((value) => /^[1-9]\d*$/.test(value), 'Rounds is a whole number, 1 or more'),
   autoLifecycleEnabled: z.boolean(),
 });
 
@@ -40,8 +42,8 @@ type ManualFormValues = z.infer<typeof manualFormSchema>;
 
 /**
  * The New test event form (#2004): a test event is made on a free test slot of its league's
- * current Season, and takes the slot's dates and its league's round count. Every other event is
- * the sync's. A test slot can be added here first.
+ * current Season, and takes the slot's dates and plays the rounds given in it (#2008). Every other
+ * event is the sync's. A test slot can be added here first.
  */
 export function SportEventManualCreateForm({
   edition,
@@ -65,7 +67,7 @@ export function SportEventManualCreateForm({
 
   const form = useForm<ManualFormValues>({
     resolver: zodResolver(manualFormSchema),
-    defaultValues: { seasonSlotId: '', name: '', venue: '', location: '', autoLifecycleEnabled: true },
+    defaultValues: { seasonSlotId: '', name: '', venue: '', location: '', rounds: '1', autoLifecycleEnabled: true },
   });
 
   const createMutation = useInvalidatingMutation({
@@ -77,6 +79,7 @@ export function SportEventManualCreateForm({
           name: values.name,
           ...(values.venue === '' ? {} : { venue: values.venue }),
           ...(values.location === '' ? {} : { location: values.location }),
+          rounds: Number(values.rounds),
           autoLifecycleEnabled: values.autoLifecycleEnabled,
         },
       });
@@ -140,6 +143,9 @@ export function SportEventManualCreateForm({
             </FormField>
             <FormField label="Location">
               <Input data-testid="root-admin-sport-event-create-location" {...form.register('location')} />
+            </FormField>
+            <FormField error={form.formState.errors.rounds?.message} label="Rounds">
+              <Input data-testid="root-admin-sport-event-create-rounds" inputMode="numeric" {...form.register('rounds')} />
             </FormField>
           </div>
 

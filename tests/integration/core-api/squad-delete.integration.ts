@@ -22,6 +22,7 @@ import {
 import { freshEventEdition } from '../../support/event-edition';
 import { participantLeagueId } from '../../support/participant-league';
 import { sportRowKeys } from '../../support/sport-rows';
+import { contestOnEvents } from '../../support/contest-rows';
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
@@ -88,8 +89,7 @@ async function seedLeagueWithContestHistory() {
   const contest = await prisma.contest.create({
     data: {
       leagueId: league.id,
-      seasonYear: 2026,
-      sportEvents: { create: { sportEventId: sportEvent.id, sequence: 1 } },
+      ...(await contestOnEvents(prisma, [sportEvent.id])),
       name: `Delete Team Contest ${suffix}`,
       status: 'OPEN',
       contestFormat: 'ROSTER',
