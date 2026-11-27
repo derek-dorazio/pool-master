@@ -39,6 +39,8 @@ const SHAPE_HASH_BY_FORMAT: Readonly<Record<number, string>> = {
   12: 'f766fdcc93bc2d4505daefa55d5bed66231488e3dd0a086ed4f08b250849c8bf',
   // #2184: a field row no longer marks a play-in place (isPlayInPlace); the play-in is the event's first round.
   13: 'f071800314db17b475d3408f539cad17a261969e56214a8695831c5cff1f3326',
+  // #2016: a survivor pick's game names the picked team's side number and where it played (homeAway) in place of side and isNeutralSite.
+  14: '041fc703ac77df1be21a5b77c82941a903def1b8873028268b34b3d6bde2bf7c',
 };
 
 const LEADERBOARD_RESPONSES = ['ContestLeaderboardResponse', 'BracketLeaderboardResponse', 'PickEmLeaderboardResponse', 'SurvivorLeaderboardResponse'];

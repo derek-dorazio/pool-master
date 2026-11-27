@@ -24,7 +24,7 @@ function pick(overrides: Partial<Pick> = {}): Pick {
 
 function game(overrides: Partial<NonNullable<Pick['game']>> = {}): NonNullable<Pick['game']> {
   return {
-    opponent: 'Buffalo Bills', opponentShortName: 'BUF', side: 'HOME', isNeutralSite: false,
+    opponent: 'Buffalo Bills', opponentShortName: 'BUF', sideNumber: 2, homeAway: 'HOME',
     scheduledDate: '2026-11-15T18:00:00.000Z', status: 'COMPLETED', teamScore: 27, opponentScore: 20, ...overrides,
   };
 }
@@ -93,8 +93,8 @@ describe('survivorCellView', () => {
 describe('survivorGameLine', () => {
   it('reads "KC v BUF" at home, "KC at BUF" away and "KC vs BUF" at a neutral site', () => {
     expect(survivorGameLine(pick({ game: game() }))).toBe('KC v BUF');
-    expect(survivorGameLine(pick({ game: game({ side: 'AWAY' }) }))).toBe('KC at BUF');
-    expect(survivorGameLine(pick({ game: game({ isNeutralSite: true }) }))).toBe('KC vs BUF');
+    expect(survivorGameLine(pick({ game: game({ sideNumber: 1, homeAway: 'AWAY' }) }))).toBe('KC at BUF');
+    expect(survivorGameLine(pick({ game: game({ homeAway: 'NONE' }) }))).toBe('KC vs BUF');
   });
 
   it('uses full names where a team has no code, and the team alone without a game', () => {

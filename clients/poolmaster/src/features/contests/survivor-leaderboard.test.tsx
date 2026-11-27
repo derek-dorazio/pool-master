@@ -179,8 +179,8 @@ describe('Survivor contest leaderboard', () => {
   it('opens an entry to its weeks newest first, each game with how it went, a lost week saying it put the entry out', async () => {
     const board = survivorLeaderboardFixture();
     const [morgan, chalk] = board.entries;
-    const game = (side: 'HOME' | 'AWAY', teamScore: number, opponentScore: number) => ({
-      opponent: 'Packers', opponentShortName: 'GB', side, isNeutralSite: false, scheduledDate: '2026-09-13T17:00:00.000Z',
+    const game = (homeAway: 'HOME' | 'AWAY', teamScore: number, opponentScore: number) => ({
+      opponent: 'Packers', opponentShortName: 'GB', sideNumber: homeAway === 'HOME' ? 2 : 1, homeAway, scheduledDate: '2026-09-13T17:00:00.000Z',
       status: 'COMPLETED' as const, teamScore, opponentScore,
     });
     const chalkWeeks: SurvivorPick[] = [

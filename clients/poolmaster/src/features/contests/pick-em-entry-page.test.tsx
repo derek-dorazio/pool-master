@@ -18,6 +18,7 @@ import {
   weekPick,
   weekTiePick,
 } from './test/pick-em-fixtures';
+import { awayAtHomeSides } from './test/game-pick-sides';
 
 const {
   getContestMock,
@@ -378,9 +379,9 @@ describe('Pick\'em contest entry page', () => {
 
   it('shows each team\'s spread beside it in a pool scored against the spread, "PK" for a pick\'em game, and marks a game on the spread a push', async () => {
     const games = week1Games({
-      1: { homeSpread: 0 },
-      2: { homeSpread: -3, locked: true, revealed: true, status: 'COMPLETED', pick: weekPick(NFL_TEAMS.chiefs, { outcome: 'PUSH', points: 0 }) },
-      3: { homeSpread: 6.5 },
+      1: { sides: awayAtHomeSides(NFL_TEAMS.bears, NFL_TEAMS.packers, { spread: 0 }) },
+      2: { sides: awayAtHomeSides(NFL_TEAMS.bills, NFL_TEAMS.chiefs, { spread: 3 }), locked: true, revealed: true, status: 'COMPLETED', pick: weekPick(NFL_TEAMS.chiefs, { outcome: 'PUSH', points: 0 }) },
+      3: { sides: awayAtHomeSides(NFL_TEAMS.cowboys, NFL_TEAMS.eagles, { spread: -6.5 }) },
     });
     primeMocks({ week: pickEmWeekFixture({ games, againstTheSpread: true }) });
     renderPickEmEntry();
@@ -394,7 +395,7 @@ describe('Pick\'em contest entry page', () => {
   });
 
   it('shows no spreads in a pool picked straight up, even when the games have them', async () => {
-    primeMocks({ week: pickEmWeekFixture({ games: week1Games({ 2: { homeSpread: -3 } }) }) });
+    primeMocks({ week: pickEmWeekFixture({ games: week1Games({ 2: { sides: awayAtHomeSides(NFL_TEAMS.bills, NFL_TEAMS.chiefs, { spread: 3 }) } }) }) });
     renderPickEmEntry();
 
     await screen.findByTestId('pick-em-games');

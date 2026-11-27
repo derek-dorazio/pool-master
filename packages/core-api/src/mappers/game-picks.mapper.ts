@@ -4,7 +4,7 @@
  */
 
 import type { ContestEntryMatchPredictionWrite } from '@poolmaster/shared/db';
-import { finalRoundsOfMatches, matchIsNeutralSite, matchSpread, PredictedResult, type PredictedChoice, type SportEventRoundMatch } from '@poolmaster/shared/domain';
+import { finalRoundsOfMatches, matchIsNeutralSite, PredictedResult, type PredictedChoice } from '@poolmaster/shared/domain';
 import {
   GAME_PICKS_TIEBREAKER_MAX,
   type GamePickGameDto,
@@ -15,18 +15,14 @@ import {
   type GamePicksResponse,
   type SaveGamePicksRequest,
 } from '@poolmaster/shared/dto';
-import type { GamePickGame, GamePicksView, GamePreview, GamesPreview } from '../modules/selections/prediction-service';
+import type { GamePickGame, GamePickSide, GamePicksView, GamePreview, GamesPreview } from '../modules/selections/prediction-service';
 import { selectionErrors } from '../modules/selections/selection-errors';
 import { mapRoundSlotToDto } from './sport-event-matches.mapper';
 
-/**
- * The spread from the home side, as the game picks DTO still gives it (its home and away sides
- * move with the prediction side, #2016): side 1's spread is the away side's, so the home side's is
- * its opposite.
- */
-function homeSpreadOf(match: Pick<SportEventRoundMatch, 'id' | 'sides'>): number | null {
-  const spread = matchSpread(match);
-  return spread === null ? null : 0 - spread;
+/** The side a pick's team is on among a game's predicted teams; null for a tie pick. */
+function pickedSideNumber(sides: readonly GamePickSide[], sportEventParticipantId: string | null): number | null {
+  if (sportEventParticipantId === null) return null;
+  return sides.find((side) => side.predictedTeam?.sportEventParticipantId === sportEventParticipantId)?.sideNumber ?? null;
 }
 
 function toGamePickGameDto(game: GamePickGame, finalRounds: ReadonlySet<number>): GamePickGameDto {
@@ -41,11 +37,7 @@ function toGamePickGameDto(game: GamePickGame, finalRounds: ReadonlySet<number>)
     status: match.status,
     isNeutralSite: matchIsNeutralSite(match),
     regionLabel: match.regionLabel,
-    homeSpread: homeSpreadOf(match),
-    home: game.home,
-    away: game.away,
-    predictedHome: game.predictedHome,
-    predictedAway: game.predictedAway,
+    sides: game.sides,
     locked: game.locked,
     revealed: game.revealed,
     pick: pick === null
@@ -53,6 +45,7 @@ function toGamePickGameDto(game: GamePickGame, finalRounds: ReadonlySet<number>)
       : {
         predictedResult: pick.predictedResult,
         sportEventParticipantId: pick.sportEventParticipantId,
+        sideNumber: pickedSideNumber(game.sides, pick.sportEventParticipantId),
         confidence: pick.confidence,
         pickedAt: pick.pickedAt.toISOString(),
         outcome: pickScore?.outcome ?? null,
@@ -125,15 +118,16 @@ function toGamePickPreviewGameDto(game: GamePreview, finalRounds: ReadonlySet<nu
     status: match.status,
     isNeutralSite: matchIsNeutralSite(match),
     regionLabel: match.regionLabel,
-    homeSpread: homeSpreadOf(match),
-    home: game.home,
-    away: game.away,
-    predictedHome: game.predictedHome,
-    predictedAway: game.predictedAway,
+    sides: game.sides,
     locked: game.locked,
     pick: pick === null
       ? null
-      : { predictedResult: pick.predictedResult, sportEventParticipantId: pick.sportEventParticipantId, confidence: pick.confidence },
+      : {
+        predictedResult: pick.predictedResult,
+        sportEventParticipantId: pick.sportEventParticipantId,
+        sideNumber: pickedSideNumber(game.sides, pick.sportEventParticipantId),
+        confidence: pick.confidence,
+      },
   };
 }
 

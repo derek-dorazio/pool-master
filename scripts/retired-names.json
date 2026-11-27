@@ -88,7 +88,14 @@
     "toPeriodScoreInput": "#2184 (10e-web): result routes take sides, no translation",
     "homeTeamName": "#2184 (10e-web): squares rowTeamName and columnTeamName, by side",
     "awayTeamName": "#2184 (10e-web): squares rowTeamName and columnTeamName, by side",
-    "profileName": "#2205: platformTierProfileId / platformPricingProfileId, the profile by key"
+    "profileName": "#2205: platformTierProfileId / platformPricingProfileId, the profile by key",
+    "homeSpread": "#2016: side 1's spread on the game's sides",
+    "predictedHome": "#2016: each side's predictedTeam",
+    "predictedAway": "#2016: each side's predictedTeam",
+    "MatchSide": "#2016 (17, main PR): bracket reseed; #2182: provider adapters, slate and synced field job advancesTo; #2019: squares. Sides by number",
+    "sideNumberOfMatchSide": "#2016 (17, main PR): bracket reseed; #2182: provider adapters, slate and synced field job advancesTo; #2019: squares. Sides by number",
+    "matchSideOfSideNumber": "#2016 (17, main PR): bracket reseed; #2182: provider adapters, slate and synced field job advancesTo; #2019: squares. Sides by number",
+    "teamOnMatchSide": "#2016: sideParticipantId by side number"
   },
   "ROUND_NAMES_FROM_FINAL": 0,
   "roundLabel": 0,
@@ -177,5 +184,12 @@
   "toPeriodScoreInput": 0,
   "homeTeamName": 0,
   "awayTeamName": 0,
-  "profileName": 0
+  "profileName": 0,
+  "homeSpread": 0,
+  "predictedHome": 0,
+  "predictedAway": 0,
+  "MatchSide": 64,
+  "sideNumberOfMatchSide": 17,
+  "matchSideOfSideNumber": 3,
+  "teamOnMatchSide": 0
 }

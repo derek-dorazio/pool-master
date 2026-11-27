@@ -11,7 +11,7 @@ import type { StatusBadgeProps } from '@/features/shared/ui';
 import type { PickEmGame } from './pick-em-week';
 
 export type BracketGame = PickEmGame;
-export type BracketTeam = NonNullable<BracketGame['predictedHome']>;
+export type BracketTeam = NonNullable<BracketGame['sides'][number]['predictedTeam']>;
 
 export interface BracketRegionGroup {
   /** The region's name ("East"), or null for the games where the regions meet. */

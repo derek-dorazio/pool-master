@@ -1,5 +1,6 @@
 import { ContestEntryStatus, PickEmMode, PredictedResult, SelectionType, formatSpread } from '@poolmaster/shared/domain';
 import type { GamePicksResponse, SaveGamePicksRequest } from '@/lib/api';
+import { billedPickSides } from '@/lib/match-sides';
 
 /**
  * A pick'em week as its screen reads it (#718): which games the entry can still pick, what is
@@ -15,7 +16,8 @@ type EntryGame = GamePicksResponse['games'][number];
  * trial pick has no pick time and is not scored yet.
  */
 export type PickEmGame = Omit<EntryGame, 'pick'> & { pick: Omit<NonNullable<EntryGame['pick']>, 'pickedAt'> | null };
-export type PickEmTeam = NonNullable<PickEmGame['home']>;
+export type PickEmSide = PickEmGame['sides'][number];
+export type PickEmTeam = NonNullable<PickEmSide['team']>;
 
 /**
  * A week as its pick screen draws it: an entry's (`GamePicksResponse`), or a setup's before it is
@@ -27,32 +29,39 @@ export type PickEmWeek = Pick<
 > & { games: PickEmGame[] };
 type GamePickWrite = SaveGamePicksRequest['picks'][number];
 
-/** The game's two teams, away first, as a schedule lists them: "Bills at Chiefs". */
-export function gameTeams(game: PickEmGame): [PickEmTeam | null, PickEmTeam | null] {
-  return [game.predictedAway, game.predictedHome];
+/**
+ * The game's two teams the entry picks between, as a schedule lists them: the side playing away
+ * first ("Bills at Chiefs"), or side 1 first at a neutral site.
+ */
+export function gameTeams(game: Pick<PickEmGame, 'sides'>): [PickEmTeam | null, PickEmTeam | null] {
+  const { first, second } = billedPickSides(game);
+  return [first?.predictedTeam ?? null, second?.predictedTeam ?? null];
 }
 
-/** "Bills at Chiefs", or "Bills vs Chiefs" at a neutral site. */
-export function describeMatchup(game: PickEmGame): string {
-  const [away, home] = gameTeams(game);
-  return `${away?.name ?? 'To be decided'} ${game.isNeutralSite ? 'vs' : 'at'} ${home?.name ?? 'To be decided'}`;
+/** "Bills at Chiefs", or "Bills vs Chiefs" where neither side is home or away (a neutral site). */
+export function describeMatchup(game: Pick<PickEmGame, 'sides'>): string {
+  const { isNeutralSite } = billedPickSides(game);
+  const [first, second] = gameTeams(game);
+  return `${first?.name ?? 'To be decided'} ${isNeutralSite ? 'vs' : 'at'} ${second?.name ?? 'To be decided'}`;
 }
 
 /**
  * The spread a team plays the game at (#720), as shown beside it when the pool is scored against
- * the spread: the home spread for the home team and its opposite for the away team. Null when the
- * pool is not against the spread or the game has no spread yet.
+ * the spread: the spread of the side that carries it (side 1) for the team really on that side, its opposite
+ * for the other. Null when
+ * the pool is not against the spread or the game has no spread yet.
  */
 export function teamSpread(
   gamePicks: Pick<GamePicksResponse, 'againstTheSpread'>,
-  game: Pick<PickEmGame, 'home' | 'homeSpread'>,
+  game: Pick<PickEmGame, 'sides'>,
   team: PickEmTeam,
 ): string | null {
-  if (!gamePicks.againstTheSpread || game.homeSpread === null) {
+  const spreadSide = game.sides.find((side) => side.spread !== null);
+  if (!gamePicks.againstTheSpread || spreadSide?.spread == null) {
     return null;
   }
-  const isHome = team.sportEventParticipantId === game.home?.sportEventParticipantId;
-  return formatSpread(isHome ? game.homeSpread : -game.homeSpread);
+  const onSpreadSide = team.sportEventParticipantId === spreadSide.team?.sportEventParticipantId;
+  return formatSpread(onSpreadSide ? spreadSide.spread : -spreadSide.spread);
 }
 
 /** The week's first kickoff: a draft week still unsubmitted then scores nothing. Null for a week with no games. */
