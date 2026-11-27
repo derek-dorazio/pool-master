@@ -49,8 +49,8 @@ async function syncedEvent(golfers: number, status: SportEventStatus = SportEven
     data: [1, 2].map((tierNumber) => ({ sportEventSlotId: tierSet.id, tierKey: `tier-${tierNumber}`, tierNumber })),
   });
   // The provider's id for the event (#2004), which a field sync names it by.
-  const ref = { providerId: 'balldontlie', externalId: `valuation-${event.id}` };
-  await mapEventToProvider(getPrisma(), event.id, ref);
+  const ref = { sportEventId: event.id, providerId: 'balldontlie', externalId: `valuation-${event.id}` };
+  await mapEventToProvider(getPrisma(), event.id, { providerId: ref.providerId, externalId: ref.externalId });
   return { event, field, ref };
 }
 
@@ -133,13 +133,13 @@ describe('Synced field valuation (#1822)', () => {
     });
     const findings = () => getPrisma().providerSyncFinding.findMany({ where: { sportEventId: event.id, kind: ProviderSyncFindingKind.FIELD_HAS_NO_ORDER } });
 
-    await followUps.run({ sportEventId: event.id, ...ref });
+    await followUps.run(ref);
     expect(await findings()).toEqual([expect.objectContaining({ status: ProviderSyncFindingStatus.OPEN, sportLeagueId: event.sportLeagueId, providerId: provider.id })]);
 
     for (const [index, row] of field.entries()) {
       await getPrisma().sportEventParticipant.update({ where: { id: row.id }, data: { oddsToWin: 5 + index } });
     }
-    await followUps.run({ sportEventId: event.id, ...ref });
+    await followUps.run(ref);
     expect((await findings()).map((row) => row.status)).toEqual([ProviderSyncFindingStatus.RESOLVED]);
   });
 });

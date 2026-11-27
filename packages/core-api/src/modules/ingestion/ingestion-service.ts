@@ -192,11 +192,15 @@ export class IngestionService {
    * null when no event has it. Only the sync gives an event a provider id, so every such event is
    * one the provider syncs: its live scores and its field (EVENTPARTICIPANTS). The field feed
    * writes only the field and its size; a synced event's details are kept current by
-   * `SportEventService.keepProviderEventsCurrent`, never here (ADR 0011).
+   * `SportEventService.keepProviderEventsCurrent`, never here (ADR 0011). A provider event linked
+   * to several events, one per competition its games reach (#2154), names their league and no one
+   * event.
    */
-  private async linkedEventOf(providerId: string, eventId: string): Promise<{ sportEventId: string; sportLeagueId: string } | null> {
-    const event = await this.sportEvents.findByProviderRef(providerId, eventId);
-    return event ? { sportEventId: event.id, sportLeagueId: event.sportLeagueId } : null;
+  private async linkedEventOf(providerId: string, eventId: string): Promise<{ sportEventId?: string; sportLeagueId: string } | null> {
+    const events = await this.sportEvents.findByProviderRefs(providerId, [eventId]);
+    const [event] = events;
+    if (events.length === 0) return null;
+    return { ...(events.length === 1 && { sportEventId: event.id }), sportLeagueId: event.sportLeagueId };
   }
 
   // -------------------------------------------------------------------------
@@ -379,7 +383,7 @@ export class IngestionService {
         sport: normalizedScope.sport,
         providerId: normalizedScope.providerId,
         eventId: normalizedScope.eventId,
-        ...(linkedEvent && { sportEventId: linkedEvent.sportEventId }),
+        ...(linkedEvent?.sportEventId !== undefined && { sportEventId: linkedEvent.sportEventId }),
       }, { start }),
     });
     this.jobs.queued();

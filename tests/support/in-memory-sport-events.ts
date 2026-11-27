@@ -233,8 +233,14 @@ export class InMemorySportEvents {
   /** Each synced slot's Season competition, where a test sets one; every other slot is in its Season's one competition. */
   slotCompetitions = new Map<string, string>();
 
+  /** Each Season competition's proper name, where a test sets one (#2154). */
+  competitionNames = new Map<string, string>();
+
   /** The synced slots matched REST_OF_PHASE (#2154): their window takes the games no other slot places. */
   restOfPhaseSlotIds = new Set<string>();
+
+  /** The provider game ids the sync placed in each Season slot (#2154), by slot id. */
+  placedGameIds = new Map<string, string[]>();
 
   /** A synced slot placed by date window, with `window` or none, listed by a template (#2012). Answers its id. */
   addWindowSlot(sportLeague: Pick<SportLeague, 'id' | 'currentSeasonId'>, key: string, window: SlotWindow | null): string {
@@ -260,6 +266,7 @@ export class InMemorySportEvents {
           coveredByTemplate: this.templateCoveredSlotIds.has(slot.id) || this.templateCoveredDefinitionIds.has(slot.slotDefinitionId),
           sportEventId: ownerOf(slot.id),
           seasonCompetitionId: this.slotCompetitions.get(slot.id) ?? `competition-of-${slot.sportLeagueSeasonId}`,
+          competitionName: this.competitionNames.get(this.slotCompetitions.get(slot.id) ?? '') ?? null,
           restOfPhase: this.restOfPhaseSlotIds.has(slot.id),
           startsAt: slot.startsAt,
           endsAt: slot.endsAt,
@@ -288,7 +295,11 @@ export class InMemorySportEvents {
         }
         return { competitionMissing };
       },
-      recordSyncedSlots: async ({ eventSlots, slotDates, confirmedWindows }) => {
+      recordSyncedSlots: async ({ eventSlots, slotDates, confirmedWindows, placedGames }) => {
+        for (const { seasonSlotId, externalIds } of placedGames?.bySlot ?? []) {
+          for (const [slotId, ids] of this.placedGameIds) this.placedGameIds.set(slotId, ids.filter((id) => !externalIds.includes(id)));
+          this.placedGameIds.set(seasonSlotId, [...externalIds]);
+        }
         for (const slotId of confirmedWindows) {
           const window = this.slotWindows.get(slotId);
           if (window) this.slotWindows.set(slotId, { ...window, status: SlotWindowStatus.CONFIRMED });
@@ -636,7 +647,6 @@ export class InMemorySportEvents {
           const held = syncProviderId !== undefined && this.externalIdAt(id, syncProviderId) !== undefined;
           return { id, name, sportLeagueId, providerId: held ? syncProviderId : null };
         }),
-      findByProviderRef: async (providerId, externalId) => this.events.find((row) => this.externalIdAt(row.id, providerId) === externalId) ?? null,
       findByProviderRefs: async (providerId, externalIds) => this.events.filter((row) => externalIds.includes(this.externalIdAt(row.id, providerId) ?? '')),
       findFieldFeedIds: async (providerId, sportLeagueId, ids) => {
         const provider = TEST_PROVIDER_ROWS[requireProviderCodeOfSourceId(providerId)].id;

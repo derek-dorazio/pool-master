@@ -197,12 +197,22 @@ async function windowedLeague(slots: ReadonlyArray<{ key: string; window: TestSl
 }
 
 /** A game with no code, as the college football adapter sends it: its kickoff and its two teams' feed ids. */
-const kickoff = (iso: string, teams: readonly string[] = ['bowl-a', 'bowl-b']) => ({ code: null, startsAt: new Date(iso), endsAt: new Date(iso), teams });
+/** One game with no code, as the college football adapter sends it, with its feed id where a test names one. */
+const kickoff = (iso: string, teams: readonly string[] = ['bowl-a', 'bowl-b'], gameIds?: readonly string[]) => ({
+  code: null, startsAt: new Date(iso), endsAt: new Date(iso), teams, ...(gameIds !== undefined && { gameIds }),
+});
 
-/** Places the seeds on the event's field, as the admin does: teams of the league with these BALLDONTLIE feed ids. */
-async function placeSeeds(sportLeagueId: string, feedIds: readonly string[]) {
+/**
+ * Places the seeds on the event's field, as the admin does: teams of the league with these
+ * BALLDONTLIE feed ids, on the league's event, or on the one playing `seasonSlotId` where the slate
+ * made several.
+ */
+async function placeSeeds(sportLeagueId: string, feedIds: readonly string[], seasonSlotId?: string) {
   const prisma = getPrisma();
-  const event = await prisma.sportEvent.findFirstOrThrow({ where: { sportLeagueId }, select: { id: true } });
+  const event = await prisma.sportEvent.findFirstOrThrow({
+    where: { sportLeagueId, ...(seasonSlotId !== undefined && { slots: { some: { sportLeagueSeasonCompetitionSlotId: seasonSlotId } } }) },
+    select: { id: true },
+  });
   for (const [index, externalId] of feedIds.entries()) {
     const team = await prisma.participant.create({ data: { sportLeagueId, name: `Seed ${externalId}`, participantType: 'TEAM' } });
     await prisma.participantProviderMapping.create({ data: { participantId: team.id, sportLeagueId, providerId: BALLDONTLIE_TEST_PROVIDER_ID, participantType: 'TEAM', externalId } });
@@ -339,6 +349,45 @@ describe('The events sync gives a REST_OF_PHASE slot the games of its window no 
     expect(await slotOf(slotIds.get('bowls'))).toMatchObject({ startsAt: new Date('2027-12-20T17:00:00Z'), endsAt: new Date('2027-12-31T17:00:00Z'), windowStatus: 'CONFIRMED' });
   });
 
+  it('makes the covered bowls an event of their own beside the CFP event, both linked to the one provider event of the season\'s slate, and the bowls never take the quarterfinal', async () => {
+    const { league, slotIds } = await windowedLeague([
+      { key: 'quarterfinal', window: windowOf('2027-12-30T10:00:00Z', '2028-01-02T12:00:00Z', 'CONFIRMED'), competitionCode: 'CFP' },
+      { key: 'bowls', window: windowOf('2027-12-13T10:00:00Z', '2028-01-26T12:00:00Z', 'TENTATIVE'), restOfPhase: true, competitionCode: 'BOWLS' },
+    ]);
+    const slate = seasonSlate([kickoff('2027-12-20T17:00:00Z'), kickoff('2027-12-31T21:00:00Z', ['seed-1', 'seed-4'])]);
+    const sync = buildSync({ events: [slate] });
+
+    await runSync(sync, league.id);
+    await placeSeeds(league.id, ['seed-1', 'seed-4'], slotIds.get('quarterfinal'));
+    await runSync(sync, league.id);
+
+    const slotLists = (await eventsWithSlots(league.id)).map((event) => event.slotIds.join(',')).sort();
+    expect(slotLists).toEqual([slotIds.get('bowls'), slotIds.get('quarterfinal')].map(String).sort());
+    const links = await getPrisma().sportEventProviderMapping.findMany({ where: { sportEvent: { sportLeagueId: league.id } }, select: { externalId: true } });
+    expect(links.map((link) => link.externalId)).toEqual([slate.externalId, slate.externalId]);
+  });
+
+  it('records the games the bowls hold, in one row each, and takes a quarterfinal off the bowls once its seeds are on the CFP field', async () => {
+    const { league, slotIds } = await bowlsAndPlayoff();
+    const placedIn = async () => (await getPrisma().sportLeagueSeasonCompetitionSlotGameProviderMapping.findMany({
+      where: { sportLeagueId: league.id },
+      select: { sportLeagueSeasonCompetitionSlotId: true, externalId: true },
+      orderBy: { externalId: 'asc' },
+    })).map((row) => [row.sportLeagueSeasonCompetitionSlotId, row.externalId]);
+    const sync = buildSync({ events: [seasonSlate([
+      kickoff('2027-12-20T17:00:00Z', undefined, ['early-bowl']),
+      kickoff('2027-12-31T21:00:00Z', ['seed-1', 'seed-4'], ['quarterfinal']),
+    ])] });
+
+    await runSync(sync, league.id);
+    expect(await placedIn()).toEqual([[slotIds.get('bowls'), 'early-bowl'], [slotIds.get('bowls'), 'quarterfinal']]);
+
+    await placeSeeds(league.id, ['seed-1', 'seed-4']);
+    await runSync(sync, league.id);
+    await runSync(sync, league.id);
+    expect(await placedIn()).toEqual([[slotIds.get('bowls'), 'early-bowl']]);
+  });
+
   it('gives a quarterfinal played before the seeds are placed to the bowls, and takes it back once both teams are on the CFP field', async () => {
     const { league, slotIds } = await bowlsAndPlayoff();
     const sync = buildSync({ events: [seasonSlate([kickoff('2027-12-20T17:00:00Z'), kickoff('2027-12-31T21:00:00Z', ['seed-1', 'seed-4'])])] });
@@ -364,8 +413,9 @@ describe('The events sync gives a REST_OF_PHASE slot the games of its window no 
     expect(findings.map((finding) => finding.kind)).toEqual([ProviderSyncFindingKind.GAMES_UNPLACED]);
   });
 
-  it('places any number of games with a rest-of-phase slot in the same number of statements', async () => {
-    const importInto = async (plays: ReturnType<typeof kickoff>[]) => {
+  it('places any number of games with a rest-of-phase slot, and records each one where it went, in the same number of statements', async () => {
+    const importInto = async (kickoffs: ReturnType<typeof kickoff>[]) => {
+      const plays = kickoffs.map((play) => ({ ...play, gameIds: [randomUUID()] }));
       const { league, seasonId, sportLeagueProviderMappingId } = await bowlsAndPlayoff();
       const { sportEvents } = integrationSportEventServices(getAppPrisma());
       return recordStatements(() => sportEvents.importProviderSeason({

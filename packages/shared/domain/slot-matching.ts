@@ -25,6 +25,11 @@ export interface ProviderSlotPlay {
    * from it, and is confirmed by it, only when every one is on the event's field (#2012).
    */
   teams?: readonly string[];
+  /**
+   * The provider's ids for the play's games, where its feed names them: the sync records which
+   * slot each game is placed in, so an event playing a slot gets that slot's games (#2154).
+   */
+  gameIds?: readonly string[];
 }
 
 /** A Season slot as the events sync reads it: what it is matched by, who covers it, and who plays it. */
@@ -52,6 +57,8 @@ export interface SyncSeasonSlot {
   endsAt: Date | null;
   /** The Season competition the slot is in: an event's slots are all of one (#2153). */
   seasonCompetitionId: string;
+  /** Its competition's own proper name, which names the event the sync makes for it; null for none (#2154). */
+  competitionName: string | null;
   /**
    * Whether the league's selected provider mapping matches the slot's definition by its Season
    * window: DATE_WINDOW or REST_OF_PHASE.

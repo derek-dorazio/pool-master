@@ -26,7 +26,7 @@ afterAll(async () => {
   await teardownIntegrationTests();
 });
 
-const MIGRATION = join(__dirname, '../../../packages/core-api/prisma/migrations/20271218027200_tiers_on_event_slots/migration.sql');
+const MIGRATION = join(__dirname, '../../../packages/core-api/prisma/migrations/20271218027500_tiers_on_event_slots/migration.sql');
 
 /** SQL split into its statements, comments dropped. */
 function statementsOf(sql: string): string[] {

@@ -17,7 +17,7 @@
 
 import { Sport, SportEventParticipantStatus } from '@poolmaster/shared/domain';
 import type { GameScoreUpdate } from '@poolmaster/shared/dto';
-import type { ProviderParticipant, SportEvent } from '../../core/provider-interface';
+import type { ProviderParticipant, ProviderScheduledGame, SportEvent } from '../../core/provider-interface';
 import { BalldontlieContractError } from './balldontlie-client';
 import { CompetitionStatusState, eventStatusOf, GAME_STATE_BY_STATUS, hasStarted, PROGRESS_BY_STATE } from './competition-status';
 import type { NcaafGame, NcaafTeam } from './ncaaf-contract';
@@ -27,8 +27,13 @@ import { participantFeedId } from './participant-feed-id';
 export const NCAAF_GAMES_PATH = '/ncaaf/v1/games';
 export const NCAAF_TEAMS_PATH = '/ncaaf/v1/teams';
 
-/** The name the College Football Playoff's event is listed by: the vendor names none. */
-export const CFP_EVENT_NAME = 'College Football Playoff';
+/**
+ * The name a season's slate is listed by: the vendor names none. The events the sync makes from it
+ * are each named by their competition (#2154): the College Football Playoff, the bowl games.
+ */
+export function ncaafSlateName(scope: CfpScope): string {
+  return `College football ${String(scope.season)} season`;
+}
 
 /** One season's College Football Playoff, by the year its season starts. */
 export interface CfpScope {
@@ -71,22 +76,52 @@ export function toCfpEvent(scope: CfpScope, games: readonly NcaafGame[]): SportE
     externalId: cfpScopeId(scope),
     providerId: BALLDONTLIE_PROVIDER_ID,
     sport: Sport.FOOTBALL,
-    name: CFP_EVENT_NAME,
+    name: ncaafSlateName(scope),
     startDate: new Date(Math.min(...times)),
     endDate: new Date(Math.max(...times)),
     status,
     fieldLocked: status !== 'SCHEDULED' && status !== 'POSTPONED',
-    providerSlots: games.map((game, index) => ({ code: null, startsAt: new Date(times[index]), endsAt: new Date(times[index]), teams: teamFeedIdsOf(game) })),
+    providerSlots: games.map((game, index) => ({
+      code: null,
+      startsAt: new Date(times[index]),
+      endsAt: new Date(times[index]),
+      teams: teamFeedIdsOf(game),
+      gameIds: [providerGameIdOf(game)],
+    })),
   };
 }
 
-/** A game's two teams by their feed ids: a window takes its dates only from games between seeds (#2012). */
-function teamFeedIdsOf(game: NcaafGame): string[] {
+const providerGameIdOf = (game: NcaafGame) => String(required(game.id, NCAAF_GAMES_PATH, gameName(game), 'id'));
+
+/**
+ * Each game as a one-game match of a one-round event (#2154): the sync gives an event the games
+ * placed in its rest-of-phase slots (a season's bowls, its conference title games), and their
+ * Matches come from them. The feed names no venue, so the home team it names is the home side.
+ */
+export function toNcaafScheduledGames(games: readonly NcaafGame[]): ProviderScheduledGame[] {
+  return games.map((game) => {
+    const [homeTeamExternalId, awayTeamExternalId] = teamFeedIdsOf(game);
+    return {
+      games: [{ providerGameId: providerGameIdOf(game), gameNumber: 1 }],
+      roundNumber: 1,
+      homeTeamExternalId,
+      awayTeamExternalId,
+      scheduledAt: new Date(required(game.date, NCAAF_GAMES_PATH, gameName(game), 'date')),
+      isNeutralSite: false,
+    };
+  });
+}
+
+/**
+ * A game's home and visiting teams by their feed ids: a window takes its dates only from games
+ * between seeds (#2012).
+ */
+function teamFeedIdsOf(game: NcaafGame): [home: string, visitor: string] {
   const name = gameName(game);
   return [
-    required(required(game.home_team, NCAAF_GAMES_PATH, name, 'home_team').id, NCAAF_GAMES_PATH, name, 'home_team.id'),
-    required(required(game.visitor_team, NCAAF_GAMES_PATH, name, 'visitor_team').id, NCAAF_GAMES_PATH, name, 'visitor_team.id'),
-  ].map(participantFeedId);
+    participantFeedId(required(required(game.home_team, NCAAF_GAMES_PATH, name, 'home_team').id, NCAAF_GAMES_PATH, name, 'home_team.id')),
+    participantFeedId(required(required(game.visitor_team, NCAAF_GAMES_PATH, name, 'visitor_team').id, NCAAF_GAMES_PATH, name, 'visitor_team.id')),
+  ];
 }
 
 export function toNcaafTeamParticipant(team: NcaafTeam, path: string): ProviderParticipant {

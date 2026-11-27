@@ -140,6 +140,7 @@ export class PrismaSportLeagueSeasonRepository implements SportLeagueSeasonRepos
         id: true,
         sportLeagueCompetitionSlotId: true,
         sportLeagueSeasonCompetitionId: true,
+        seasonCompetition: { select: { competition: { select: { name: true } } } },
         startsAt: true,
         endsAt: true,
         windowStartsAt: true,
@@ -174,6 +175,7 @@ export class PrismaSportLeagueSeasonRepository implements SportLeagueSeasonRepos
         coveredByTemplate: row.definition._count.templateSlots > 0,
         sportEventId: row.eventSlot?.sportEventId ?? null,
         seasonCompetitionId: row.sportLeagueSeasonCompetitionId,
+        competitionName: row.seasonCompetition.competition.name,
         startsAt: row.startsAt,
         endsAt: row.endsAt,
         placedByWindow: byWindow,
@@ -245,8 +247,28 @@ export class PrismaSportLeagueSeasonRepository implements SportLeagueSeasonRepos
   }
 
   async recordSyncedSlots(input: SyncedSlotsRecord): Promise<void> {
-    if (input.eventSlots.length === 0 && input.slotDates.length === 0 && input.confirmedWindows.length === 0) return;
+    const placed = input.placedGames ?? null;
+    if (input.eventSlots.length === 0 && input.slotDates.length === 0 && input.confirmedWindows.length === 0 && placed === null) return;
+    const placedRows = placed === null ? [] : placed.bySlot.flatMap(({ seasonSlotId, externalIds }) => externalIds.map((externalId) => ({
+      sportLeagueId: placed.sportLeagueId,
+      sportLeagueSeasonCompetitionSlotId: seasonSlotId,
+      sportLeagueProviderMappingId: placed.sportLeagueProviderMappingId,
+      externalId,
+    })));
     await this.prisma.$transaction([
+      // Each listed game moves to its slot, and a listed slot keeps only its listed games (#2154).
+      ...(placed === null || placed.bySlot.length === 0 ? [] : [
+        this.prisma.sportLeagueSeasonCompetitionSlotGameProviderMapping.deleteMany({
+          where: {
+            sportLeagueProviderMappingId: placed.sportLeagueProviderMappingId,
+            OR: [
+              { sportLeagueSeasonCompetitionSlotId: { in: placed.bySlot.map((slot) => slot.seasonSlotId) } },
+              { externalId: { in: placedRows.map((row) => row.externalId) } },
+            ],
+          },
+        }),
+        ...(placedRows.length === 0 ? [] : [this.prisma.sportLeagueSeasonCompetitionSlotGameProviderMapping.createMany({ data: placedRows })]),
+      ]),
       // A slot that already has an event keeps it: the unique key on the Season slot skips it.
       ...(input.eventSlots.length === 0 ? [] : [this.prisma.sportEventSlot.createMany({
         data: input.eventSlots.map((row) => ({

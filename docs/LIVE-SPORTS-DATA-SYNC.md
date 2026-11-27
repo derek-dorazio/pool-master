@@ -250,7 +250,21 @@ other slots' windows. A rest-of-phase slot's own games give it its dates and con
 window, as a date-window slot's do. One provider event's games can reach several competitions (a
 season's slate reaches its bowls, its title games and its CFP); the sync makes one event per
 competition it reaches, and an event never crosses competitions, so a linked event takes only its
-own competition's slots.
+own competition's slots. Those events all carry the provider event's one id, so that id is not
+unique per provider; a field sync writes each of their fields and queues each one's follow-up job
+by its event id. An event made for a competition with a name (`SportLeagueCompetition.name`, such
+as "Bowl Games") takes that name, and the sync that keeps events current keeps it, rather than the
+provider's slate name.
+
+**A rest-of-phase event's games and field (#2154).** Where the feed names its games (`gameIds` on
+each play), the sync records the games each rest-of-phase slot holds
+(`SportLeagueSeasonCompetitionSlotGameProviderMapping`, one row per game and provider mapping), and
+a later sync that places a game elsewhere moves it: a CFP game the bowls held before its seeds were
+placed leaves the bowls. A field sync then gives each event of the provider event what its slots
+take: an event playing a rest-of-phase slot gets those games, which its Matches are made from, and a
+field of their teams; an event playing only date-window slots gets no game and no new team (its
+Matches are its seeds' bracket); any other event gets the whole feed. A date-window slot records no
+games.
 
 For each provider event:
 

@@ -2177,7 +2177,10 @@ model SportEventProviderMapping {
   provider                   Provider                   @relation(fields: [providerId], references: [id], onDelete: Restrict)
   sportLeagueProviderMapping SportLeagueProviderMapping @relation(fields: [sportLeagueProviderMappingId], references: [id], onDelete: Restrict)
 
-  @@unique([providerId, externalId])
+  /// Not unique (#2154): a provider event whose games reach several competitions of a Season (a
+  /// season's slate of college football games: its bowls, its title games, its CFP) is one event
+  /// per competition, each holding the provider's id. No event crosses competitions.
+  @@index([providerId, externalId])
   /// An event has one id per provider.
   @@unique([sportEventId, providerId])
   @@index([sportLeagueProviderMappingId])
@@ -2742,6 +2745,7 @@ model SportLeagueProviderMapping {
   seasonMappings  SportLeagueSeasonProviderMapping[]
   eventMappings   SportEventProviderMapping[]
   seasonSlotLinks SportLeagueSeasonCompetitionSlotProviderMapping[]
+  placedGames     SportLeagueSeasonCompetitionSlotGameProviderMapping[]
 
   @@unique([sportLeagueId, providerLeagueId])
   /// The target of SportLeague's composite key to its selected mapping.
@@ -2928,6 +2932,9 @@ model SportLeagueCompetition {
   code               String   @db.VarChar(64)
   /// Its place among its phase's competitions, from 1.
   orderIndex         Int      @map("order_index")
+  /// The league's own proper name for it (College Football Playoff, Bowl Games), which names the
+  /// event the sync makes for it (#2154). Null: the event takes the provider event's name.
+  name               String?  @db.VarChar(100)
   createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt          DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
@@ -3191,6 +3198,7 @@ model SportLeagueSeasonCompetitionSlot {
   definition    SportLeagueCompetitionSlot                        @relation(fields: [sportLeagueId, sportLeagueCompetitionSlotId], references: [sportLeagueId, id], onDelete: Restrict, map: "sport_league_season_competition_slots_definition_fkey")
   eventSlot     SportEventSlot?
   providerLinks SportLeagueSeasonCompetitionSlotProviderMapping[]
+  placedGames   SportLeagueSeasonCompetitionSlotGameProviderMapping[]
 
   /// The target of an event slot's composite key.
   @@unique([sportLeagueSeasonId, id], map: "sport_league_season_competition_slots_season_id_key")
@@ -3222,6 +3230,28 @@ model SportLeagueSeasonCompetitionSlotProviderMapping {
   @@unique([sportLeagueProviderMappingId, providerValue], map: "season_competition_slot_provider_mappings_value_key")
   @@index([sportLeagueId, sportLeagueSeasonCompetitionSlotId], map: "season_competition_slot_provider_mappings_slot_idx")
   @@map("sport_league_season_competition_slot_provider_mappings")
+}
+
+/// A provider's game the events sync placed in a Season slot (#2154): placement is worked out once,
+/// by the sync, and the field sync gives an event only its slots' games and their teams. A game sits
+/// in one slot per provider mapping; a later sync that places it elsewhere (a CFP game the bowls held
+/// until its seeds were placed) moves it.
+model SportLeagueSeasonCompetitionSlotGameProviderMapping {
+  id                                 String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sportLeagueId                      String   @map("sport_league_id") @db.Uuid
+  sportLeagueSeasonCompetitionSlotId String   @map("sport_league_season_competition_slot_id") @db.Uuid
+  sportLeagueProviderMappingId       String   @map("sport_league_provider_mapping_id") @db.Uuid
+  /// The provider's id for the game.
+  externalId                         String   @map("external_id") @db.VarChar(200)
+  createdAt                          DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt                          DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  seasonSlot                 SportLeagueSeasonCompetitionSlot @relation(fields: [sportLeagueId, sportLeagueSeasonCompetitionSlotId], references: [sportLeagueId, id], onDelete: Cascade, map: "season_slot_game_provider_mappings_slot_fkey")
+  sportLeagueProviderMapping SportLeagueProviderMapping @relation(fields: [sportLeagueId, sportLeagueProviderMappingId], references: [sportLeagueId, id], onDelete: Cascade, map: "season_slot_game_provider_mappings_mapping_fkey")
+
+  @@unique([sportLeagueProviderMappingId, externalId], map: "season_slot_game_provider_mappings_game_key")
+  @@index([sportLeagueId, sportLeagueSeasonCompetitionSlotId], map: "season_slot_game_provider_mappings_slot_idx")
+  @@map("sport_league_season_competition_slot_game_provider_mappings")
 }
 
 model ProviderSyncRun {
