@@ -592,6 +592,7 @@ enum PrismaProviderSyncFindingKind {
   GAME_ID_REISSUED
   GAME_MOVED
   TIEBREAKER_GAME_REPLACED
+  FIELD_TEAM_WITHOUT_GAME
 }
 
 /// How a sport event's latest automatic release check ended (#1847).

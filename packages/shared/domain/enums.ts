@@ -1102,6 +1102,16 @@ export const ProviderSyncFindingKind = {
    * value, since the choice is the app's own. A root admin resolves it once they have checked the new game.
    */
   TIEBREAKER_GAME_REPLACED: 'TIEBREAKER_GAME_REPLACED',
+  /**
+   * A released event playing a rest-of-phase slot (a season's bowls) holds an active team none of
+   * whose games is placed in its slots any more (#2223): the game moved to another slot, such as a
+   * CFP game placed once its seeds were. A draft withdraws such a team by itself (#2221); a
+   * released event keeps it, since a contest may already hold it, so a contest offers a team that
+   * plays none of its games. WARNING. Subject: league, event, Provider and the team's feed id, with
+   * its name; the field sync that finds the team's game back in the slots, or the team withdrawn,
+   * resolves it.
+   */
+  FIELD_TEAM_WITHOUT_GAME: 'FIELD_TEAM_WITHOUT_GAME',
 } as const;
 export type ProviderSyncFindingKind = (typeof ProviderSyncFindingKind)[keyof typeof ProviderSyncFindingKind];
 export const ProviderSyncFindingKindOrder = alphabeticalOrder('ProviderSyncFindingKind');

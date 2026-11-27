@@ -31,6 +31,8 @@ export const TEST_DEFINITION_KEY = 'TEST_EVENT';
  * with draws, beside a knockout on TEST_EVENT, whose level games a shoot-out decides.
  */
 export const LEVEL_TEST_DEFINITION_KEY = 'TEST_WEEK';
+/** The level definition's week number: past every league's real weeks, so it never takes one's number. */
+const LEVEL_TEST_WEEK_NUMBER = 99;
 
 /** The league's first slot definition (by key), or its TEST_EVENT definition made now when it has none. */
 async function slotDefinitionOf(prisma: Db, sportLeagueId: string): Promise<TestDefinition> {
@@ -71,7 +73,10 @@ async function createTestDefinition(prisma: Db, sportLeagueId: string, key: type
       sportLeagueId,
       sportLeagueCompetitionId: competition.competitionId,
       key,
-      slotKind: 'TOURNAMENT',
+      // The level definition is a regular-season week (its games can end level), so it is a WEEK
+      // slot, numbered past any real week: knockout round points refuse a week's games (#715) and
+      // score a TOURNAMENT slot's one-off games (#2225).
+      ...(key === LEVEL_TEST_DEFINITION_KEY ? { slotKind: 'WEEK' as const, weekNumber: LEVEL_TEST_WEEK_NUMBER } : { slotKind: 'TOURNAMENT' as const }),
       awardsTrophy: false,
       squaresEligible: true,
       seriesFormat: 'SINGLE_GAME',

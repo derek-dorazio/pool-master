@@ -1043,7 +1043,7 @@ describe('The seeded NCAA Men\'s Football league and its knockout templates', ()
 
   it('gives the College Football Playoff one pick-3 tiered and one pick-3 budget template and Straight up, Escalating and Full random draws, Full the default, on round values 1, 2, 4, 8 but Straight up\'s 1 a round (#2164)', async () => {
     const templates = await getPrisma().contestConfigTemplate.findMany({
-      where: { sportLeague: { sport: { sport: Sport.FOOTBALL }, name: 'NCAA Men\'s Football' }, contestFormat: ContestFormat.ROSTER },
+      where: { sportLeague: { urlSegment: 'ncaamf' }, contestFormat: ContestFormat.ROSTER, slots: { some: { definition: { competition: { code: 'CFP' } } } } },
       orderBy: [{ templateKey: 'asc' }],
     });
 
@@ -1068,9 +1068,9 @@ describe('The seeded NCAA Men\'s Football league and its knockout templates', ()
     }
   });
 
-  it('gives the bowls pick\'em straight up (the league\'s pick\'em default) and against the spread and squares, and the conference title games the same, each covering only its own competition\'s slot, with no roster template', async () => {
+  it('gives the bowls pick\'em straight up (the league\'s pick\'em default) and against the spread, squares and a Straight up sweepstakes, and the conference title games the same but the sweepstakes, each covering only its own competition\'s slot, with no tiered or budget template', async () => {
     const templates = await getPrisma().contestConfigTemplate.findMany({
-      where: { sportLeague: { sport: { sport: Sport.FOOTBALL }, name: 'NCAA Men\'s Football' }, slots: { some: { definition: { competition: { code: { in: ['BOWLS', 'CONFERENCE_CHAMPIONSHIPS'] } } } } } },
+      where: { sportLeague: { urlSegment: 'ncaamf' }, slots: { some: { definition: { competition: { code: { in: ['BOWLS', 'CONFERENCE_CHAMPIONSHIPS'] } } } } } },
       include: { slots: { select: { definition: { select: { key: true, competition: { select: { code: true } } } } } } },
       orderBy: [{ sortOrder: 'asc' }],
     });
@@ -1087,10 +1087,17 @@ describe('The seeded NCAA Men\'s Football league and its knockout templates', ()
       ['conference-championships-pick-em-straight-up', SelectionType.PICK_EM, false, ['CONFERENCE_CHAMPIONSHIPS CONFERENCE_CHAMPIONSHIPS']],
       ['conference-championships-pick-em-against-the-spread', SelectionType.PICK_EM, false, ['CONFERENCE_CHAMPIONSHIPS CONFERENCE_CHAMPIONSHIPS']],
       ['conference-championships-squares', SelectionType.SQUARES, false, ['CONFERENCE_CHAMPIONSHIPS CONFERENCE_CHAMPIONSHIPS']],
+      ['bowls-random-draw-straight-up', SelectionType.RANDOM_DRAW, false, ['BOWLS BOWLS']],
     ]);
     expect(templates.every((template) => template.coverageMode === TemplateCoverageMode.ONE_SLOT)).toBe(true);
     const pickEm = templates.filter((template) => template.selectionType === SelectionType.PICK_EM).map((template) => ContestRulesWithEntryLimitSchema.parse(template.configJson));
     expect(pickEm.map((rules) => rules.selectionType === SelectionType.PICK_EM && rules.againstTheSpread)).toEqual([false, true, false, true]);
+    // The sweepstakes deals one bowl team each, and a bowl win scores its one round value.
+    const sweepstakes = ContestRulesWithEntryLimitSchema.parse(templates.find((template) => template.selectionType === SelectionType.RANDOM_DRAW)?.configJson);
+    expect(sweepstakes).toMatchObject({
+      selectionType: SelectionType.RANDOM_DRAW, picksPerEntry: 1, countedScores: 1,
+      scoring: { participantScoringDefinitionId: 'KNOCKOUT_ROUND_POINTS', config: { roundValues: [1], upsetBonus: { rule: 'NONE' } } },
+    });
   });
 });
 
@@ -1296,26 +1303,33 @@ describe('Seeded knockout templates follow the template review (#2164)', () => {
     });
   }
 
-  it('gives every knockout random draw and bracket Straight up, Escalating and Full where the field has seeds, Full the default, and Straight up and Escalating where it has none, Escalating the default', async () => {
+  it('gives every knockout random draw and bracket Straight up, Escalating and Full where the field has seeds, Full the default, and Straight up and Escalating where it has none, Escalating the default; and a slate of one-off games Straight up alone, never the default (#2225)', async () => {
     const templates = await knockoutTemplates();
+    // Each competition's knockout templates (#2153), or each set a template picks one slot from (a tennis tour's Slams).
     const groups = new Map<string, typeof templates>();
     for (const entry of templates) {
-      const key = `${entry.template.sportLeague.urlSegment} ${entry.template.selectionType}`;
+      const competitions = [...new Set(entry.template.slots.map((slot) => slot.definition.sportLeagueCompetitionId))].sort((a, b) => a.localeCompare(b)).join('+');
+      const key = `${entry.template.sportLeague.urlSegment} ${competitions} ${entry.template.selectionType}`;
       groups.set(key, [...(groups.get(key) ?? []), entry]);
     }
 
     const problems = [...groups].flatMap(([key, group]) => {
-      const [{ template, seeded }] = group;
+      const [{ template, rules, seeded }] = group;
       const oneEach = LEAGUES_WITH_ONE_KNOCKOUT_TEMPLATE_EACH.includes(template.sportLeague.urlSegment);
-      const expected: KnockoutVariant[] = oneEach
+      // A one-round table on a TOURNAMENT slot scores a slate of one-off games (a season's bowls),
+      // each game its own final: a win is 1, so only Straight up applies, and the league's playoff
+      // keeps its default. A one-round knockout template (a final alone) is no slate.
+      const slate = rules.scoring?.participantScoringDefinitionId === 'KNOCKOUT_ROUND_POINTS' && rules.scoring.config.roundValues.length === 1
+        && template.slots.every((slot) => slot.definition.slotKind === SlotKind.TOURNAMENT);
+      const expected: KnockoutVariant[] = slate ? ['STRAIGHT_UP'] : oneEach
         ? [template.selectionType === SelectionType.RANDOM_DRAW ? 'FULL' : 'ESCALATING']
         : seeded ? ['STRAIGHT_UP', 'ESCALATING', 'FULL'] : ['STRAIGHT_UP', 'ESCALATING'];
-      const expectedDefault = oneEach ? expected[0] : seeded ? 'FULL' : 'ESCALATING';
+      const expectedDefaults: KnockoutVariant[] = slate ? [] : [oneEach ? expected[0] : seeded ? 'FULL' : 'ESCALATING'];
       const variants = group.map((entry) => entry.variant);
       const defaults = group.filter((entry) => entry.template.isDefault).map((entry) => entry.variant);
       return [
         ...(JSON.stringify(variants) === JSON.stringify(expected) ? [] : [`${key}: ${variants.join(', ')}, not ${expected.join(', ')}`]),
-        ...(JSON.stringify(defaults) === JSON.stringify([expectedDefault]) ? [] : [`${key}: default ${defaults.join(', ') || 'none'}, not ${expectedDefault}`]),
+        ...(JSON.stringify(defaults) === JSON.stringify(expectedDefaults) ? [] : [`${key}: default ${defaults.join(', ') || 'none'}, not ${expectedDefaults.join(', ') || 'none'}`]),
       ];
     });
 

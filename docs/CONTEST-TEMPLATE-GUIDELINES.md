@@ -63,6 +63,9 @@ They come from the owner's league-by-league template review of November 2026.
   - Where the field has seeds, Full is the default.
   - Where it has none (World Cup, Euro, Copa América), offer only Straight up and Escalating,
     with Escalating as the default.
+- **A slate of one-off postseason games** (bowl games) *(checked)*: Straight up alone, one point
+  per win, each game its own final. Never the league's default: its playoff keeps that. A
+  regular-season week gets none: weeks are for pick'em and survivor.
 - **A bye counts as a win.** A series win counts as one win.
 - Golf and finish-position random draws keep their own scoring.
 - Call it "Sweepstakes" on screen in every sport. It is the classic office pool.

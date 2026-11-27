@@ -18,6 +18,8 @@ export interface ProviderSyncFindingResolveFilter {
   providerValues?: readonly string[];
   /** Every league but these (#2070): the leagues a Provider no longer syncs. */
   exceptSportLeagueIds?: readonly string[];
+  /** Every value but these (#2223): the feed ids a check still finds. */
+  exceptProviderValues?: readonly string[];
 }
 
 /** A sport league's OPEN findings of one severity, for the Sports page. */

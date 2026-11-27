@@ -168,6 +168,31 @@ export class ProviderSyncFindingService {
   }
 
   /**
+   * One event's check, from a sync, of the feed's participants it finds something of (#2223): a
+   * WARNING per participant found, named by its feed id and name, and every other open finding of
+   * the kind on the event resolves, since the sync no longer finds it. A feed with no Provider row
+   * (the QA mock feed, until #2039) checks nothing.
+   */
+  async checkEventParticipantsOfSource(input: {
+    kind: ProviderSyncFindingKind;
+    sportLeagueId: string;
+    sportEventId: string;
+    providerSourceId: string;
+    found: ReadonlyArray<{ externalId: string; name: string | null }>;
+  }): Promise<void> {
+    const provider = this.providerOfSourceId(input.providerSourceId);
+    if (provider === undefined) return;
+    const subject = { kind: input.kind, sportLeagueId: input.sportLeagueId, sportEventId: input.sportEventId, providerId: provider.id };
+    await this.deps.repository.resolveOpen({ ...subject, exceptProviderValues: input.found.map((participant) => participant.externalId) }, this.now());
+    await this.raise(input.found.map((participant) => ({
+      ...subject,
+      severity: ProviderSyncFindingSeverity.WARNING,
+      providerValue: participant.externalId,
+      providerValueName: participant.name,
+    })));
+  }
+
+  /**
    * A Provider whose webhooks are switched on while its signing secret is not set: an ERROR on
    * each league it syncs. Once its secret is set, or its webhooks are off, its findings resolve;
    * while it is still missing, a league the Provider no longer syncs has its finding resolved
