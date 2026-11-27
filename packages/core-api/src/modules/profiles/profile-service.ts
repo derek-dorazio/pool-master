@@ -102,14 +102,14 @@ export class ProfileService<TProfile extends { id: string; code: string; name: s
     return this.get(id);
   }
 
-  /** 404 when no such profile exists; 409 while any sport league names it. */
+  /** 404 when no such profile exists; 409 while any sport league, or any event's tier set (#2044), names it. */
   async delete(id: string): Promise<void> {
     const used = await this.deps.profiles.deleteUnlessUsed(id);
     if (used === null) throw this.notFound(id);
     if (used > 0) {
-      this.deps.logger?.warn({ profileId: id, sportLeagueCount: used, kind: this.deps.kind.label }, 'Refused to delete a profile a sport league names');
+      this.deps.logger?.warn({ profileId: id, useCount: used, kind: this.deps.kind.label }, 'Refused to delete a profile a sport league or tier set names');
       throw new ProfileError(
-        `${this.deps.kind.label} ${id} is named by ${used} sport league${used === 1 ? '' : 's'}, so it cannot be deleted.`,
+        `${this.deps.kind.label} ${id} is named by ${used} sport league${used === 1 ? '' : 's'} or event tier set${used === 1 ? '' : 's'}, so it cannot be deleted.`,
         this.deps.kind.codes.inUse,
         409,
       );

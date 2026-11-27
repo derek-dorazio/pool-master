@@ -208,7 +208,7 @@ describe('ProfileService — tier profiles', () => {
       code: 'PLATFORM_TIER_PROFILE_IN_USE', statusCode: 409, message: expect.stringContaining('named by 2 sport leagues'),
     });
     uses.set(profile.id, 1);
-    await expect(service.delete(profile.id)).rejects.toMatchObject({ message: expect.stringContaining('named by 1 sport league,') });
+    await expect(service.delete(profile.id)).rejects.toMatchObject({ message: expect.stringContaining('named by 1 sport league or event tier set,') });
     expect(rows).toHaveLength(1);
   });
 

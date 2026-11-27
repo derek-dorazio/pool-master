@@ -9,7 +9,7 @@ import {
   RaceResultChange,
   RaceResultOrderError,
   RaceResultRowError,
-  RaceResultStatus,
+  GameSideStatus,
 } from '@poolmaster/shared/domain';
 import { registerSchema } from './schema-registry';
 import { UploadRowResolutionDtoSchema } from './sport-catalog.dto';
@@ -20,10 +20,9 @@ export const RACE_RESULT_ROWS_MAX = 200;
 export const RaceResultRowSchema = z.object({
   participantId: z.string().optional(),
   externalId: z.string().optional(),
-  resultStatus: z.enum(RaceResultStatus).describe('How the race ended for this runner.'),
+  resultStatus: z.enum(GameSideStatus).describe('How the race ended for this runner.'),
   finishPosition: z.number().int().min(1).nullable().describe('Finishing place, 1 for the winner. Runners in a dead heat share a place, and the next place skips (1, 2, 2, 4). Only a FINISHED runner has one; it is required for every FINISHED runner once the result is official.'),
   startPosition: z.number().int().min(1).nullable().describe('Post position (or grid slot); null when not known.'),
-  riderName: z.string().trim().min(1).max(255).nullable().describe('The jockey (or rider) for this start; null when not known.'),
 }).describe('One runner\'s result. The first identifier present is used: participantId, then externalId (a feed id one of the participant\'s provider mappings holds), matched within the event\'s field. Every value is stored exactly as sent.');
 export type RaceResultRow = z.infer<typeof RaceResultRowSchema>;
 
@@ -43,10 +42,9 @@ export const RaceResultChangeDtoSchema = z.enum(RaceResultChange)
   .describe('What applying the row would do to the runner\'s stored result.');
 
 export const RaceResultValuesDtoSchema = z.object({
-  resultStatus: z.enum(RaceResultStatus),
+  resultStatus: z.enum(GameSideStatus),
   finishPosition: z.number().int().nullable(),
   startPosition: z.number().int().nullable(),
-  riderName: z.string().nullable(),
   isOfficial: z.boolean(),
 }).describe('A runner\'s result values.');
 

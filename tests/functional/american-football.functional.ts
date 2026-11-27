@@ -59,10 +59,10 @@ async function cleanup(): Promise<void> {
     await db.contestEntryPick.deleteMany({ where: { sportEventParticipant: { sportEventId: { in: eventIds } } } });
     await db.sportEventRoundMatch.deleteMany({ where: { sportEventId: { in: eventIds } } });
     await db.sportEventParticipantStanding.deleteMany({ where: { sportEventParticipant: { sportEventId: { in: eventIds } } } });
-    await db.sportEventParticipantValuation.deleteMany({ where: { sportEventParticipant: { sportEventId: { in: eventIds } } } });
+    await db.sportEventSlotParticipantValuation.deleteMany({ where: { sportEventParticipant: { sportEventId: { in: eventIds } } } });
     await db.sportEventParticipant.deleteMany({ where: { sportEventId: { in: eventIds } } });
     await db.sportEventRound.deleteMany({ where: { sportEventId: { in: eventIds } } });
-    await db.sportEventTier.deleteMany({ where: { sportEventId: { in: eventIds } } });
+    await db.sportEventSlotTier.deleteMany({ where: { slot: { sportEventId: { in: eventIds } } } });
     await db.sportEvent.deleteMany({ where: { id: { in: eventIds } } });
   }
   // Only those no other event's field still holds.
@@ -190,7 +190,7 @@ describe('SDK Functional: American football', () => {
       setEventRoundMatchups({ client: a, path: { eventId: event.id, roundNumber: 2 }, body: { matches: [matchup({ matchNumber: 1, homeSportEventParticipantId: seahawks, awaySportEventParticipantId: rowOf('Los Angeles Rams') })] } }),
       applyEventGolfRoundScores({ client: a, path: { eventId: event.id, roundNumber: 1 }, body: { rows: [{ participantId: ANY_UUID, strokes: 70, scoreToPar: -2, status: 'COMPLETED' }] } }),
       updateEventParticipantGolfRoundScore({ client: a, path: { eventId: event.id, roundNumber: 1, sportEventParticipantId: seahawks }, body: { strokes: 70 } }),
-      applyEventRaceResults({ client: a, path: { eventId: event.id }, body: { isOfficial: true, rows: [{ participantId: ANY_UUID, resultStatus: 'FINISHED', finishPosition: 1, startPosition: null, riderName: null }] } }),
+      applyEventRaceResults({ client: a, path: { eventId: event.id }, body: { isOfficial: true, rows: [{ participantId: ANY_UUID, resultStatus: 'FINISHED', finishPosition: 1, startPosition: null }] } }),
     ]);
     expect(refused.map((reply) => [reply.response?.status, reply.error?.error.code])).toEqual(refused.map(() => [409, 'SPORT_EVENT_NOT_TEST_DATA']));
     expect(await superBowlOf()).toMatchObject({ isNeutralSite: superBowl.isNeutralSite, status: superBowl.status, periodScores: asLoaded });

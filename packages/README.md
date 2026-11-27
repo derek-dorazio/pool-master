@@ -99,8 +99,7 @@ admin routes refuse an event whose family does not keep golf rounds (422
 `EVENT_SCORING_FAMILY_MISMATCH`). The leaderboard response carries the event's `sport`, so the
 web resolves the same family for its own presentation (`SCORING_FAMILY_UI`). Two families are
 built: `STROKE_PLAY` (golf) and `FINISH_POSITION` (horse racing, #622). Finish position keeps a
-race result per field row
-(`SportEventParticipantRaceResult`); an entry's settled points, like golf's to-par total, are `ContestEntryStanding.totalScore`;
+race result per field row as its side result in the race's FIELD Game (#2008); an entry's settled points, like golf's to-par total, are `ContestEntryStanding.totalScore`;
 the admin enters the finishing order through `previewEventRaceResults` and
 `applyEventRaceResults` (`scoring-families/finish-position/race-result-service.ts`), and a
 runner scores its contest's points table value at its place once the result is official. It takes

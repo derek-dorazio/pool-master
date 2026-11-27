@@ -30,8 +30,8 @@ import {
   getFunctionalPrisma,
 } from './setup';
 import { expectDefined } from '../support/expect-defined';
-import { standardEventPricing } from '../support/budget-pricing';
-import { standardPricingRequest } from './standard-pricing';
+import { standardPricingFor } from './standard-pricing';
+import { standardSlotPricing } from '../support/budget-pricing';
 import { sportRowKeys } from '../support/sport-rows';
 import { Sport, SportEventParticipantStatus } from '@poolmaster/shared/domain';
 import { insertTestSportLeague } from '../support/test-sport-league';
@@ -101,12 +101,12 @@ async function cleanup(): Promise<void> {
     await db.sportEventParticipantRound.deleteMany({ where: { sportEventParticipantId: { in: sepIds } } });
     await db.sportEventParticipantGolfStanding.deleteMany({ where: { standing: { sportEventParticipantId: { in: sepIds } } } });
     await db.sportEventParticipantStanding.deleteMany({ where: { sportEventParticipantId: { in: sepIds } } });
-    await db.sportEventParticipantValuation.deleteMany({ where: { sportEventParticipantId: { in: sepIds } } });
+    await db.sportEventSlotParticipantValuation.deleteMany({ where: { sportEventParticipantId: { in: sepIds } } });
     await db.sportEventParticipant.deleteMany({ where: { id: { in: sepIds } } });
   }
   if (eventIds.length) {
     await db.sportEventRound.deleteMany({ where: { sportEventId: { in: eventIds } } });
-    await db.sportEventTier.deleteMany({ where: { sportEventId: { in: eventIds } } });
+    await db.sportEventSlotTier.deleteMany({ where: { slot: { sportEventId: { in: eventIds } } } });
     await db.sportEvent.deleteMany({ where: { id: { in: eventIds } } });
   }
   const leagueIds = [...created.sportLeagueIds];
@@ -295,8 +295,7 @@ describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8;
 
     // --- Auto-assign prices; tier placement must be untouched ------------------
     const tierKeyBySep = new Map(expectDefined(autoTiers.data).participants.map((e) => [e.id, tierKeyById.get(e.valuation?.sportEventTierId ?? '')]));
-    const standardPricing = await standardPricingRequest(c);
-    const prices = await autoAssignEventPrices({ client: c, path: { eventId }, body: standardPricing });
+    const prices = await autoAssignEventPrices({ client: c, path: { eventId }, body: await standardPricingFor(c) });
     expect(prices.response?.status).toBe(200);
     let pricedCount = 0;
     expectDefined(prices.data).participants.forEach((e) => {
@@ -311,7 +310,7 @@ describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8;
     });
     expect(pricedCount).toBe(expectDefined(prices.data).participants.filter((e) => e.status === SportEventParticipantStatus.ACTIVE).length);
     const pricedEvent = await getEvent({ client: c, path: { eventId } });
-    expect(expectDefined(pricedEvent.data).event.pricing).toEqual(standardPricing);
+    expect(expectDefined(pricedEvent.data).event.pricing).toMatchObject(await standardPricingFor(c));
 
     // --- "Drag" one golfer to another tier via the assignments PUT --------------
     const placed = expectDefined(prices.data).participants.filter((e) => e.valuation?.sportEventTierId);
@@ -406,7 +405,7 @@ describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8;
     expectFunctionalError(await rebuildEventLeaderboards({ client: c, path: { eventId: 'x' } }), deny);
     expectFunctionalError(await addEventParticipants({ client: c, path: { eventId: 'x' }, body: { participantIds: [] } }), deny);
     expectFunctionalError(await autoAssignEventTiers({ client: c, path: { eventId: 'x' }, body: {} }), deny);
-    expectFunctionalError(await autoAssignEventPrices({ client: c, path: { eventId: 'x' }, body: { ...standardEventPricing(), platformPricingProfileId: randomUUID() } }), deny);
+    expectFunctionalError(await autoAssignEventPrices({ client: c, path: { eventId: 'x' }, body: standardSlotPricing(randomUUID()) }), deny);
     expectFunctionalError(await replaceEventTierAssignments({ client: c, path: { eventId: 'x' }, body: { assignments: [] } }), deny);
     expectFunctionalError(await applyEventGolfRoundScores({ client: c, path: { eventId: 'x', roundNumber: 1 }, body: { rows: [] } }), deny);
     expectFunctionalError(await updateEventParticipantGolfRoundScore({ client: c, path: { eventId: 'x', roundNumber: 1, sportEventParticipantId: 'x' }, body: { strokes: 70 } }), deny);

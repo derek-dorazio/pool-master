@@ -1,5 +1,5 @@
 import { testDomainEvents } from '../../support/domain-events';
-import { RaceResultStatus, Sport, SportEventParticipantStatus } from '@poolmaster/shared/domain';
+import { GameSideStatus, Sport, SportEventParticipantStatus } from '@poolmaster/shared/domain';
 import {
   RaceResultService,
   type RaceResultRowInput,
@@ -33,7 +33,7 @@ function setup(sport: Sport = Sport.HORSE_RACING) {
     events: store.sportEventRepo(),
     field: store.fieldRepo(),
     participants: store.participantRepo(), mappings: store.mappingRepo(),
-    raceResults: store.raceResultRepo(),
+    raceOrder: store.raceOrderRepo(),
     storesRaceResults: eventStoresRaceResults,
     domainEvents,
     now: () => NOW,
@@ -44,10 +44,9 @@ function setup(sport: Sport = Sport.HORSE_RACING) {
 function row(name: string, finishPosition: number | null, overrides: Partial<RaceResultRowInput> = {}): RaceResultRowInput {
   return {
     participantId: idOf(name),
-    resultStatus: RaceResultStatus.FINISHED,
+    resultStatus: GameSideStatus.FINISHED,
     finishPosition,
     startPosition: null,
-    riderName: null,
     ...overrides,
   };
 }
@@ -61,7 +60,7 @@ describe('RaceResultService — events of another scoring family', () => {
 
     await expect(service.previewResults(event.id, { isOfficial: false, rows: FULL_ORDER })).rejects.toMatchObject(mismatch);
     await expect(service.applyResults(event.id, { isOfficial: false, rows: FULL_ORDER })).rejects.toMatchObject(mismatch);
-    expect(store.raceResultRows).toEqual([]);
+    expect(store.raceOrderRows).toEqual([]);
   });
 });
 
@@ -87,7 +86,7 @@ describe('RaceResultService — preview', () => {
   it('writes nothing, however valid the rows', async () => {
     const { store, service, event } = setup();
     await service.previewResults(event.id, { isOfficial: true, rows: FULL_ORDER });
-    expect(store.raceResultRows).toEqual([]);
+    expect(store.raceOrderRows).toEqual([]);
     expect(store.standingRows).toEqual([]);
   });
 
@@ -104,7 +103,7 @@ describe('RaceResultService — preview', () => {
     const { service, event } = setup();
     const preview = await service.previewResults(event.id, {
       isOfficial: false,
-      rows: [row('Arrow', 1, { resultStatus: RaceResultStatus.DISQUALIFIED })],
+      rows: [row('Arrow', 1, { resultStatus: GameSideStatus.DISQUALIFIED })],
     });
     expect(preview.rows[0].rowError).toBe('POSITION_WITHOUT_FINISH');
   });
@@ -142,18 +141,18 @@ describe('RaceResultService — apply', () => {
     await service.applyResults(event.id, {
       isOfficial: true,
       rows: [
-        row('Arrow', 1, { startPosition: 4, riderName: 'J. Velez' }),
-        row('Bolt', null, { resultStatus: RaceResultStatus.DISQUALIFIED }),
+        row('Arrow', 1, { startPosition: 4 }),
+        row('Bolt', null, { resultStatus: GameSideStatus.DISQUALIFIED }),
         row('Comet', 2),
       ],
     });
 
-    const results = await store.raceResultRepo().findBySportEvent(event.id);
-    expect(results.map((result) => [result.sportEventParticipantId, result.resultStatus, result.finishPosition, result.startPosition, result.riderName, result.isOfficial]))
+    const results = await store.raceOrderRepo().findBySportEvent(event.id);
+    expect(results.map((result) => [result.sportEventParticipantId, result.status, result.position, result.startPosition, result.isOfficial]))
       .toEqual(expect.arrayContaining([
-        [arrow.id, 'FINISHED', 1, 4, 'J. Velez', true],
-        [bolt.id, 'DISQUALIFIED', null, null, null, true],
-        [comet.id, 'FINISHED', 2, null, null, true],
+        [arrow.id, 'FINISHED', 1, 4, true],
+        [bolt.id, 'DISQUALIFIED', null, null, true],
+        [comet.id, 'FINISHED', 2, null, true],
       ]));
     expect(store.standingRows.map((standing) => [standing.sportEventParticipantId, standing.position, standing.displayPosition, standing.status, standing.asOf]))
       .toEqual(expect.arrayContaining([
@@ -174,7 +173,7 @@ describe('RaceResultService — apply', () => {
     const { store, service, event, comet } = setup();
     await service.applyResults(event.id, {
       isOfficial: true,
-      rows: [row('Arrow', 1), row('Bolt', 2), row('Comet', null, { resultStatus: RaceResultStatus.DID_NOT_START })],
+      rows: [row('Arrow', 1), row('Bolt', 2), row('Comet', null, { resultStatus: GameSideStatus.DID_NOT_START })],
     });
     expect(store.standingRows.find((standing) => standing.sportEventParticipantId === comet.id)?.status).toBe('WITHDRAWN');
   });
@@ -185,8 +184,8 @@ describe('RaceResultService — apply', () => {
     // Stewards place Comet level with Bolt: 1, 2, 2.
     await service.applyResults(event.id, { isOfficial: true, rows: [row('Comet', 2)] });
 
-    const results = await store.raceResultRepo().findBySportEvent(event.id);
-    expect(Object.fromEntries(results.map((result) => [result.sportEventParticipantId, result.finishPosition])))
+    const results = await store.raceOrderRepo().findBySportEvent(event.id);
+    expect(Object.fromEntries(results.map((result) => [result.sportEventParticipantId, result.position])))
       .toEqual({ [arrow.id]: 1, [bolt.id]: 2, [comet.id]: 2 });
     const display = Object.fromEntries(store.standingRows.map((standing) => [standing.sportEventParticipantId, standing.displayPosition]));
     expect(display).toEqual({ [arrow.id]: '1', [bolt.id]: 'T2', [comet.id]: 'T2' });
@@ -196,37 +195,37 @@ describe('RaceResultService — apply', () => {
     const { store, service, event } = setup();
     await service.applyResults(event.id, { isOfficial: true, rows: FULL_ORDER });
     await service.applyResults(event.id, { isOfficial: false, rows: [row('Arrow', 1)] });
-    expect(store.raceResultRows.map((result) => result.isOfficial)).toEqual([false, false, false]);
+    expect(store.raceOrderRows.map((result) => result.isOfficial)).toEqual([false, false, false]);
   });
 
   it('refuses a row that does not resolve with 422 RACE_RESULT_ROWS_INVALID, storing nothing', async () => {
     const { store, service, event } = setup();
     await expect(service.applyResults(event.id, { isOfficial: false, rows: [row('Arrow', 1), row('Nobody', 2)] }))
       .rejects.toMatchObject({ code: 'RACE_RESULT_ROWS_INVALID', statusCode: 422 });
-    expect(store.raceResultRows).toEqual([]);
+    expect(store.raceOrderRows).toEqual([]);
   });
 
   it('refuses a row error with 422 RACE_RESULT_ROWS_INVALID, storing nothing', async () => {
     const { store, service, event } = setup();
     await expect(service.applyResults(event.id, {
       isOfficial: false,
-      rows: [row('Arrow', 1), row('Bolt', 2, { resultStatus: RaceResultStatus.DID_NOT_FINISH })],
+      rows: [row('Arrow', 1), row('Bolt', 2, { resultStatus: GameSideStatus.DID_NOT_FINISH })],
     })).rejects.toMatchObject({ code: 'RACE_RESULT_ROWS_INVALID', statusCode: 422 });
-    expect(store.raceResultRows).toEqual([]);
+    expect(store.raceOrderRows).toEqual([]);
   });
 
   it('refuses places that are not a finishing order with 422 RACE_RESULT_POSITIONS_INVALID, storing nothing', async () => {
     const { store, service, event } = setup();
     await expect(service.applyResults(event.id, { isOfficial: false, rows: [row('Arrow', 1), row('Bolt', 2), row('Comet', 2), row('Drift', 3)] }))
       .rejects.toMatchObject({ code: 'RACE_RESULT_POSITIONS_INVALID', statusCode: 422 });
-    expect(store.raceResultRows).toEqual([]);
+    expect(store.raceOrderRows).toEqual([]);
   });
 
   it('refuses an official result missing an active runner with 422 RACE_RESULT_FIELD_INCOMPLETE, storing nothing', async () => {
     const { store, service, event } = setup();
     await expect(service.applyResults(event.id, { isOfficial: true, rows: [row('Arrow', 1), row('Bolt', 2)] }))
       .rejects.toMatchObject({ code: 'RACE_RESULT_FIELD_INCOMPLETE', statusCode: 422 });
-    expect(store.raceResultRows).toEqual([]);
+    expect(store.raceOrderRows).toEqual([]);
   });
 
   it('refuses making a provisional result official while a stored finisher has no place, with 422 RACE_RESULT_FIELD_INCOMPLETE', async () => {
@@ -234,16 +233,16 @@ describe('RaceResultService — apply', () => {
     await service.applyResults(event.id, { isOfficial: false, rows: [row('Arrow', 1), row('Bolt', null), row('Comet', 2)] });
     await expect(service.applyResults(event.id, { isOfficial: true, rows: [row('Arrow', 1)] }))
       .rejects.toMatchObject({ code: 'RACE_RESULT_FIELD_INCOMPLETE', statusCode: 422 });
-    expect(store.raceResultRows.every((result) => !result.isOfficial)).toBe(true);
+    expect(store.raceOrderRows.every((result) => !result.isOfficial)).toBe(true);
   });
 
   it('takes a result for a scratched runner, so an admin can record it as not starting', async () => {
     const { store, service, event, scratched } = setup();
     await service.applyResults(event.id, {
       isOfficial: true,
-      rows: [...FULL_ORDER, row('Drift', null, { resultStatus: RaceResultStatus.DID_NOT_START })],
+      rows: [...FULL_ORDER, row('Drift', null, { resultStatus: GameSideStatus.DID_NOT_START })],
     });
-    expect(store.raceResultRows.find((result) => result.sportEventParticipantId === scratched.id)?.resultStatus).toBe('DID_NOT_START');
+    expect(store.raceOrderRows.find((result) => result.sportEventParticipantId === scratched.id)?.status).toBe('DID_NOT_START');
   });
 });
 
@@ -254,7 +253,7 @@ describe('RaceResultService — clock', () => {
       events: store.sportEventRepo(),
       field: store.fieldRepo(),
       participants: store.participantRepo(), mappings: store.mappingRepo(),
-      raceResults: store.raceResultRepo(),
+      raceOrder: store.raceOrderRepo(),
       storesRaceResults: eventStoresRaceResults,
     });
     const before = Date.now();

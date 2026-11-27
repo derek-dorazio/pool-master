@@ -1,4 +1,4 @@
-import { displayString, enumLabel, profileWords, tierLabel } from '@poolmaster/shared/display-strings';
+import { enumLabel, profileWords, tierLabel } from '@poolmaster/shared/display-strings';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -116,9 +116,8 @@ export function EventSettingsDialog({
   const tierOrder = overview === undefined ? '…' : overview.tierOrderBasis === null ? 'No active field' : enumLabel('FieldOrderBasis', overview.tierOrderBasis);
   const testId = 'root-admin-event-settings-dialog';
 
-  /** The profile the event was priced from, by its words (#2205); one since deleted is said so. */
-  const pricedFromName = (profileId: string | null): string => {
-    if (profileId === null) return displayString('word.deletedProfile');
+  /** The profile the event was priced from, by its words (#2205). */
+  const pricedFromName = (profileId: string): string => {
     // poolmaster-allow-list-lookup: profiles are platform reference data, a handful of rows
     const profile = platformPricingProfilesQuery.data?.find((candidate) => candidate.id === profileId);
     return profile ? profileWords('pricingProfile', profile).name : '…';

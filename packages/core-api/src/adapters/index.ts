@@ -31,10 +31,10 @@ export {
 } from './prisma-contest-management-repositories';
 export {
   PrismaSportEventParticipantRepository,
-  PrismaSportEventParticipantValuationRepository,
+  PrismaSportEventSlotParticipantValuationRepository,
   PrismaSportEventRepository,
   PrismaSportEventRoundRepository,
-  PrismaSportEventTierRepository,
+  PrismaSportEventSlotTierRepository,
   PrismaSportLeagueRepository,
   PrismaSportRepository,
 } from './prisma-sport-catalog-repositories';
@@ -43,7 +43,7 @@ export {
   PrismaSportEventParticipantGolfStandingRepository,
 } from './prisma-golf-repositories';
 export { PrismaSportEventRoundMatchGameRepository, PrismaSportEventRoundMatchRepository } from './prisma-match-repositories';
-export { PrismaSportEventParticipantRaceResultRepository } from './prisma-race-repositories';
+export { PrismaRaceOrderRepository } from './prisma-race-repositories';
 export { lockContestEntryRow, lockContestRow, lockContestRows } from './contest-row-lock';
 export { lockMemberRow } from './member-row-lock';
 export { PrismaSquaresRepository } from './prisma-squares-repository';

@@ -14,7 +14,8 @@ import {
   PrismaParticipantContestScoringRuleRepository,
   PrismaSportEventRoundMatchRepository,
   PrismaSportEventParticipantRepository,
-  PrismaSportEventParticipantValuationRepository,
+  PrismaSportEventSlotParticipantValuationRepository,
+  PrismaSportEventSlotTierRepository,
   PrismaSportEventRepository,
 } from '../../adapters';
 import { PrismaSportLeagueSeasonRepository } from '../../adapters/prisma-sport-league-season-repository';
@@ -48,7 +49,8 @@ export function createContestManagementService(
     sportEventReader: createContestSportEventReader({
       sportEvents: new PrismaSportEventRepository(prisma),
       field: new PrismaSportEventParticipantRepository(prisma),
-      valuations: new PrismaSportEventParticipantValuationRepository(prisma),
+      tiers: new PrismaSportEventSlotTierRepository(prisma),
+      valuations: new PrismaSportEventSlotParticipantValuationRepository(prisma),
       matches: new PrismaSportEventRoundMatchRepository(prisma),
     }),
     cups: createCupService(prisma, logger, planEntitlements),
@@ -68,7 +70,8 @@ export function createContestOpeningReader(prisma: PrismaClient): ContestOpening
   return createBatchedContestOpeningReader({
     sportEvents: new PrismaSportEventRepository(prisma),
     field: new PrismaSportEventParticipantRepository(prisma),
-    valuations: new PrismaSportEventParticipantValuationRepository(prisma),
+    tiers: new PrismaSportEventSlotTierRepository(prisma),
+    valuations: new PrismaSportEventSlotParticipantValuationRepository(prisma),
     matches: new PrismaSportEventRoundMatchRepository(prisma),
   });
 }

@@ -34,7 +34,7 @@ const createdSportLeagueIds: string[] = [];
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
   const series = { sportLeagueId: { in: createdSportLeagueIds } };
-  await getPrisma().sportEventTier.deleteMany({ where: { sportEvent: series } });
+  await getPrisma().sportEventSlotTier.deleteMany({ where: { slot: { sportEvent: series } } });
   await getPrisma().sportEventRound.deleteMany({ where: { sportEvent: series } });
   await getPrisma().sportEventSlot.deleteMany({ where: { sportEvent: series } });
   await getPrisma().sportEvent.deleteMany({ where: series });

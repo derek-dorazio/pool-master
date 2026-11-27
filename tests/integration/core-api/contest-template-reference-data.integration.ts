@@ -715,7 +715,7 @@ describe('The seeded NFL league and its knockout templates', () => {
   });
 
   // Squares (#711, #786, #2164): only on football and March Madness, each its league's default squares preset.
-  it('seeds one squares template on the NFL, NCAA men\'s football and men\'s and women\'s March Madness, and none on any hockey or soccer league, ten boxes per entry and one entry per squad, each its league\'s default squares preset', async () => {
+  it('seeds one squares template on the NFL and men\'s and women\'s March Madness and one on each of NCAA men\'s football\'s CFP, bowls and conference title games, the CFP\'s its default, and none on any hockey or soccer league, ten boxes per entry and one entry per squad', async () => {
     const templates = await getPrisma().contestConfigTemplate.findMany({
       where: { contestFormat: ContestFormat.SQUARES },
       include: { sportLeague: { include: { sport: true } } },
@@ -723,7 +723,9 @@ describe('The seeded NFL league and its knockout templates', () => {
     });
 
     expect(templates.map((template) => [template.templateKey, template.sportLeague.sport.sport, template.selectionType, template.isDefault, template.sportLeague.name])).toEqual([
+      ['bowls-squares', Sport.FOOTBALL, SelectionType.SQUARES, false, 'NCAA Men\'s Football'],
       ['cfp-squares', Sport.FOOTBALL, SelectionType.SQUARES, true, 'NCAA Men\'s Football'],
+      ['conference-championships-squares', Sport.FOOTBALL, SelectionType.SQUARES, false, 'NCAA Men\'s Football'],
       ['ncaa-men-squares', Sport.BASKETBALL, SelectionType.SQUARES, true, 'NCAA Men\'s Basketball'],
       ['ncaa-women-squares', Sport.BASKETBALL, SelectionType.SQUARES, true, 'NCAA Women\'s Basketball'],
       ['nfl-squares', Sport.FOOTBALL, SelectionType.SQUARES, true, 'NFL'],
@@ -1064,6 +1066,31 @@ describe('The seeded NCAA Men\'s Football league and its knockout templates', ()
       if (rules.selectionType === SelectionType.TIERED) expect([rules.picksPerTier, rules.countedScores]).toEqual([1, 3]);
       if (rules.selectionType === SelectionType.BUDGET_PICK) expect([rules.rosterSize, rules.countedScores]).toEqual([3, 3]);
     }
+  });
+
+  it('gives the bowls pick\'em straight up (the league\'s pick\'em default) and against the spread and squares, and the conference title games the same, each covering only its own competition\'s slot, with no roster template', async () => {
+    const templates = await getPrisma().contestConfigTemplate.findMany({
+      where: { sportLeague: { sport: { sport: Sport.FOOTBALL }, name: 'NCAA Men\'s Football' }, slots: { some: { definition: { competition: { code: { in: ['BOWLS', 'CONFERENCE_CHAMPIONSHIPS'] } } } } } },
+      include: { slots: { select: { definition: { select: { key: true, competition: { select: { code: true } } } } } } },
+      orderBy: [{ sortOrder: 'asc' }],
+    });
+
+    expect(templates.map((template) => [
+      template.templateKey,
+      template.selectionType,
+      template.isDefault,
+      template.slots.map((slot) => `${slot.definition.competition.code} ${slot.definition.key}`),
+    ])).toEqual([
+      ['bowls-pick-em-straight-up', SelectionType.PICK_EM, true, ['BOWLS BOWLS']],
+      ['bowls-pick-em-against-the-spread', SelectionType.PICK_EM, false, ['BOWLS BOWLS']],
+      ['bowls-squares', SelectionType.SQUARES, false, ['BOWLS BOWLS']],
+      ['conference-championships-pick-em-straight-up', SelectionType.PICK_EM, false, ['CONFERENCE_CHAMPIONSHIPS CONFERENCE_CHAMPIONSHIPS']],
+      ['conference-championships-pick-em-against-the-spread', SelectionType.PICK_EM, false, ['CONFERENCE_CHAMPIONSHIPS CONFERENCE_CHAMPIONSHIPS']],
+      ['conference-championships-squares', SelectionType.SQUARES, false, ['CONFERENCE_CHAMPIONSHIPS CONFERENCE_CHAMPIONSHIPS']],
+    ]);
+    expect(templates.every((template) => template.coverageMode === TemplateCoverageMode.ONE_SLOT)).toBe(true);
+    const pickEm = templates.filter((template) => template.selectionType === SelectionType.PICK_EM).map((template) => ContestRulesWithEntryLimitSchema.parse(template.configJson));
+    expect(pickEm.map((rules) => rules.selectionType === SelectionType.PICK_EM && rules.againstTheSpread)).toEqual([false, true, false, true]);
   });
 });
 
@@ -1435,7 +1462,7 @@ function championRun(slotKinds: readonly SlotKind[]): SportEventParticipantView[
     valuation: null,
     standing: null,
     rounds: [],
-    raceResult: null,
+    fieldResults: [],
     matches: matches.filter((match) => match.sides.some((side) => side.sportEventParticipantId === entry.id)),
     affiliatedWithSportLeague: true,
   }));

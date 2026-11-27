@@ -27,7 +27,7 @@ User                                         Sport                (golf)
  │     (role: COMMISSIONER | MEMBER)                └─→ SportLeagueSeason (2026)
  └─→ SquadMembership ─→ Squad                            └─→ SportEvent (the 2026 Masters)
        (an owner; one per user per league)                     ├─→ SportEventRound   (Round 1..4)
-                          │                                    ├─→ SportEventTier    (Tier A..)
+                          │                                    ├─→ SportEventSlotTier (Tier A..)
 League ─→ Contest ─→ ContestSportEvent[] ─→ SportEvent        └─→ SportEventParticipant ─→ Participant ─→ SportLeague
              │        (sequence: 1, 2, ...)                          (the field)          (a golfer, or a team; one league's)
              └─→ ContestEntry ←── Squad
@@ -163,7 +163,7 @@ a Team On Screen*.
 
 ### The sport side
 
-> **Being replaced.** Stale against the target model: `PlatformTierProfile` and `PlatformPricingProfile` (become `PlatformTierProfile` and `PlatformPricingProfile`); `SportEventRound` and the golfer's `SportEventParticipantRound`; `SportEventTier` and `…Valuation` (keyed by event slot); `SportEventRoundMatch`, `SportEventMatchPeriodScore` and `SportEventParticipantRaceResult` (Match sides, Games and Game side results). The target model, which new code is designed toward, is §5
+> **Being replaced.** Stale against the target model: `PlatformTierProfile` and `PlatformPricingProfile` (become `PlatformTierProfile` and `PlatformPricingProfile`); `SportEventRound` and the golfer's `SportEventParticipantRound`; `SportEventRoundMatch` and `SportEventMatchPeriodScore` (Match sides, Games and Game side results; a race's result moved onto a FIELD Game's side result in #2008). The target model, which new code is designed toward, is §5
 > *The Target Model* and ADR 0012. Rows marked here stay true of today's code until the
 > slices of #1917 replace them, and this file is rewritten for the new model when they land.
 
@@ -172,17 +172,17 @@ a Team On Screen*.
 | `Sport` | sport | Golf, horse racing, auto racing, cycling, running, basketball, American football, hockey, baseball, soccer and tennis, and future sports. Who competes and how it is scored are its sport leagues', not the sport's (#2001). Each sport's on-screen words (golfer or horse, tournament or race, "Cut", "Scratched") are its display strings (`sport.<SPORT>.<role>`, `rules/ux-rules.md` §16) | `SportLeague` |
 | `SportLeague` | tour | A real-world league or tour: PGA Tour, LPGA Tour, NBA. It says who competes in its events and how they are scored (`participantType`, `scoringFamily`, both required, #2001). A round is named by the slot it is played in (the NBA's Conference Finals, #2006). It names one tier profile and one pricing profile (`platformTierProfileId`, `platformPricingProfileId`, #1844). Screens call it by its sport's word (a tennis tour) unless it has its own `noun` (#834: the NCAA's tennis championships are leagues; read through `sportLeagueNounOf`) | `League`, the office pool |
 | `SportLeaguePosition` | position | One of a sport league's playing positions (#2001): the NFL's QB. Set by migration with each provider's codes for it (`SportLeaguePositionProviderMapping`); only a field-eligible position's players are kept on a Season's roster. `displayOrder` is display only | A field member's finishing place, which the standing tables call `position` |
-| `PlatformTierProfile` | tier profile | A named tier layout, defined once for the platform (#1844): how many tiers a new event starts with, how many participants auto-tiering puts in each tier but the last, and whether the last takes everyone left or at most a cap (anyone beyond is in no tier and can't be picked). A field too small to reach the last tier is spread evenly, a rule fixed in code. Each sport league names one; an event records the layout it was last auto-tiered with (`SportEvent.tierConfig`), and the profile it came from by key (`SportEvent.platformTierProfileId`, set null if the profile is deleted; #2205), never by name. It describes itself (#2194): a stable `code`, a required agent `description`, and the root admin's `name`; screens call it by `tierProfile.<CODE>.name` and its line, falling back to `name` for a row with no strings seeded (`profileWords`) | The event's own `SportEventTier` rows, which an admin may still add or delete |
-| `PlatformPricingProfile` | pricing profile | A named set of the five budget pricing values (#1844: Standard, Small). Each sport league names one; a synced field never priced is priced with it, and the event records the values it was priced with (`SportEvent.pricingConfig`), and the profile they started from by key (`SportEvent.platformPricingProfileId`, set null if the profile is deleted; #2205), never by name. It describes itself like a tier profile (#2194): `code`, agent `description`, root-admin `name`, and `pricingProfile.<CODE>.name` and its line on screen | The event's recorded values, which a later profile edit never moves |
+| `PlatformTierProfile` | tier profile | A named tier layout, defined once for the platform (#1844): how many tiers a new event starts with, how many participants auto-tiering puts in each tier but the last, and whether the last takes everyone left or at most a cap (anyone beyond is in no tier and can't be picked). A field too small to reach the last tier is spread evenly, a rule fixed in code. Each sport league names one; an event slot records the profile it was last auto-tiered with by key, never by name, and any tier size sent (`SportEventSlot.platformTierProfileId`, `tierSize`, #2205, #2044); a profile a slot names can't be deleted. It describes itself (#2194): a stable `code`, a required agent `description`, and the root admin's `name`; screens call it by `tierProfile.<CODE>.name` and its line, falling back to `name` for a row with no strings seeded (`profileWords`) | The event slot's own `SportEventSlotTier` rows, which an admin may still add or delete |
+| `PlatformPricingProfile` | pricing profile | A named set of the five budget pricing values (#1844: Standard, Small). Each sport league names one; a synced field never priced is priced with it, and the event slot records the five values it was priced with and the profile they started from by key, never by name (`SportEventSlot.platformPricingProfileId` and the pricing columns, #2205, #2044); a profile a slot names can't be deleted. It describes itself like a tier profile (#2194): `code`, agent `description`, root-admin `name`, and `pricingProfile.<CODE>.name` and its line on screen | The slot's recorded values, which a later profile edit never moves |
 | `SportEvent` | tournament, event | One event in one Season of its league (`sportLeagueSeasonId`, #2003), with a start date, round count and status | `Contest`, which is the pool's game played on it |
 | `SportEventRound` | round | One scheduled round of an event (golf Round 1–4), with its own date | A participant's result in that round, `SportEventParticipantRound`; and a pick's `lineupSlot`, its position in the entry's lineup |
 | `Participant` | golfer, horse, team (the sport's word) | A real competitor in one sport league (#1853): a golfer on the PGA Tour, or a team such as an NBA team (`participantType` `INDIVIDUAL` or `TEAM`). Its sport is its league's, and its `ranking` is its rank there. A playoff field's teams are its season league's. A provider's feed id names one participant per sport league | A league member (a person in the pool), and a `SportEventParticipant` |
 | `SportEventParticipant` | the field, a field member | A participant entered in one event, with that event's rank, odds, seed and active/withdrawn/cut state | The global `Participant` |
-| `SportEventTier`, `SportEventParticipantValuation` | tier, price | Tiers belong to the **event** and are shared by every contest on it; the valuation puts one field member in one tier, with a price | A contest-level setting: there is no per-contest tier override |
+| `SportEventSlotTier`, `SportEventSlotParticipantValuation` | tier, price | Tiers belong to an **event slot's set** and are shared by every contest starting there (#2044; today every tiered and budget template starts at its event's tier-set slot, the first slot in play order such a template lists, else the first slot); the valuation puts one field member in one tier of the set, with a price | A contest-level setting: there is no per-contest tier override |
 | `SportEventParticipantStanding` | position, leaderboard row | A field member's running position in the event (1 is best, every sport) | An entry's standing in a contest |
 | `SportEventRoundMatch` | match, game, bracket | One game of an event played as matches (#698): a knockout bracket's, or an NFL week's: its round, its home and away field members (either empty until an earlier match's winner fills it), a neutral-site flag, a time, a status, the winning side and both scores, the match and side its winner advances to, and its region or conference. A playoff series is one match whose score is games won. Only a sport whose tournament format is `MATCHES` has them; whether they form a bracket is read from their links (#715) | A `Contest`, and a `SportEventRound`, the round it is played in |
 | `SportEventMatchPeriodScore` | quarter score | Both sides' score at the end of one period of a game but the last (#772): the end of a quarter in American football or a period in hockey, as the scoreboard shows it, earlier periods included. Only a game whose slot definition has a period unit and count keeps them (`periodUnit`, `periodCount`, #2047: men's college basketball plays two halves; read as the round slot's `periods`). The final score, overtime included, is the match's own `homeScore`/`awayScore`, never a period row. Squares pools read them | The points scored in that period alone, which nothing stores |
-| `SportEventParticipantRaceResult` | finish, result | How one runner's race ended (finish position): its place, or did not finish, disqualified, did not start; whether the race's result is official; its rider and post position. The admin enters it | `SportEventParticipantStanding`, its place in the event, which the finishing order writes beside it |
+| Race result (a FIELD Game's side result) | finish, result | How one runner's race ended (finish position, #2008): the race is one FIELD Match in its event's first round, every runner a side, with one Game; the runner's side result holds its `position`, `startPosition`, and `status` (`GameSideStatus`: finished, did not finish, disqualified, did not start). No jockey is stored (#2008). The race is official once that Game is `COMPLETED` | `SportEventParticipantStanding`, its place in the event, which the finishing order writes beside it |
 
 **Platform definitions, league picks; nothing at sport level** (Derek, 2026-11-18, #1844). A
 setting that varies between real-world leagues is a named definition the root admin keeps once
@@ -235,20 +235,20 @@ Rules that are not choices (the small-field even split) stay in code, not in a d
   squad owner (`SquadMembership`).
 - **Player / golfer**: a `Participant`, never a league member.
 - **Horse, runner**: a horse racing `Participant`, and on a race's field a `SportEventParticipant`.
-  The jockey is the result's `riderName`, not a participant.
+  The jockey is not stored: neither a participant nor part of the result (#2008).
 - **Driver**: an auto racing `Participant`, one per person in each series they race in. An
-  auto racing result names only the driver, so its `riderName` stays empty.
+  auto racing result names only the driver.
 - **Series**: what auto racing calls a `SportLeague` (NASCAR Cup Series, IndyCar, Formula 1),
   and running too (World Marathon Majors (men), World Marathon Majors (women)).
-- **Rider (cycling)**: a cycling `Participant`. Not the result's `riderName`, which is horse
-  racing's jockey: a cycling result names only the rider, so its `riderName` stays empty. A rider
+- **Rider (cycling)**: a cycling `Participant`, not horse racing's jockey: a cycling result
+  names only the rider. A rider
   who abandons mid-race is a `DID_NOT_FINISH` result, not a withdrawal.
 - **Tour (cycling)**: what cycling calls a `SportLeague` (UCI WorldTour, UCI Women's WorldTour).
   A Grand Tour (the Tour de France) is one `SportEvent` with one round; its result is the final
   overall classification, and its stages are not rounds.
 - **Runner (running)**: a running `Participant`, one of a marathon's elite field. Horse racing
   also says "runner" for a horse in a race; the word is the sport's vocabulary, not a model. A
-  running result names only the runner, so its `riderName` stays empty, and a runner who drops
+  running result names only the runner, and a runner who drops
   out is a `DID_NOT_FINISH` result, not a withdrawal. A marathon is one `SportEvent` with one
   round.
 - **Scratched, withdrawn**: a runner taken out of a race before the start is a field row whose

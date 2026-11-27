@@ -6,7 +6,7 @@ import {
   MatchStatus,
   ParticipantRoundStatus,
   ParticipantStandingStatus,
-  RaceResultStatus,
+  GameSideStatus,
   Sport,
   SportEventStatus,
   ValuationSource, SportEventParticipantStatus } from '@poolmaster/shared/domain';
@@ -15,9 +15,9 @@ import {
   PrismaSportEventRoundMatchRepository,
   PrismaSportEventParticipantGolfRoundRepository,
   PrismaSportEventParticipantGolfStandingRepository,
-  PrismaSportEventParticipantRaceResultRepository,
+  PrismaRaceOrderRepository,
   PrismaSportEventParticipantRepository,
-  PrismaSportEventParticipantValuationRepository,
+  PrismaSportEventSlotParticipantValuationRepository,
 } from '../../../packages/core-api/src/adapters';
 import { cleanupTestData, getAppPrisma, getPrisma, setupIntegrationTests, teardownIntegrationTests } from '../helpers';
 import { recordStatements, statementCounts, type RecordedStatement } from '../statement-log';
@@ -28,6 +28,8 @@ import { sportRowKeys } from '../../support/sport-rows';
 import { oneEventSlotId } from '../../support/test-slots';
 import { AWAY_SIDE, HOME_SIDE } from '../../support/match-sides';
 import { createMatchRow } from '../../support/match-rows';
+import { inTierSet, tierSetSlot, type TierSetSlot } from '../../support/event-tier-sets';
+import { standardPricingIn } from '../../support/budget-pricing';
 
 // The root-admin event tools' batch writes against real Postgres (#1252): each writes a whole
 // field in a fixed number of queries, however big the field, and leaves the rows as the
@@ -84,7 +86,14 @@ async function eventWithField(size: number) {
   for (const golfer of golfers) {
     field.push(await prisma.sportEventParticipant.create({ data: { sportEventId: setup.event.id, participantId: golfer.id } }));
   }
-  return { ...setup, field };
+  return { ...setup, field, slot: await tierSetSlot(prisma, setup.event.id) };
+}
+
+/** A field row's valuation in the slot's set, or null when it has none. */
+function valuationOf(slot: TierSetSlot, sportEventParticipantId: string) {
+  return getPrisma().sportEventSlotParticipantValuation.findUnique({
+    where: { sportEventSlotId_sportEventParticipantId: { sportEventSlotId: slot.id, sportEventParticipantId } },
+  });
 }
 
 /**
@@ -126,31 +135,31 @@ describe('Adding players to an event\'s field (#1252)', () => {
 
 describe('Saving the field grid (#1252)', () => {
   it('refuses the whole save when one row it gives the same change does not exist, leaving the real row as it was', async () => {
-    const { field } = await eventWithField(1);
+    const { field, slot } = await eventWithField(1);
     const row = expectDefined(field[0]);
     const repository = new PrismaSportEventParticipantRepository(getAppPrisma());
 
     await expect(repository.updateMany([
-      { id: row.id, updates: { ranking: 3 }, price: 12 },
+      { id: row.id, updates: { ranking: 3 }, valuation: { slot, price: 12 } },
       { id: randomUUID(), updates: { ranking: 3 } },
     ])).rejects.toThrow('A field row to update does not exist.');
 
-    const after = await getPrisma().sportEventParticipant.findUniqueOrThrow({ where: { id: row.id }, include: { valuation: true } });
-    expect([after.ranking, after.valuation]).toEqual([row.ranking, null]);
+    const after = await getPrisma().sportEventParticipant.findUniqueOrThrow({ where: { id: row.id } });
+    expect([after.ranking, await valuationOf(slot, row.id)]).toEqual([row.ranking, null]);
   });
 
   it('gives rows the same change in one update, and writes every manual price in a fixed number of queries', async () => {
     const counts = await queriesFor(async (size, measure) => {
-      const { field } = await eventWithField(size);
+      const { field, slot } = await eventWithField(size);
       await measure(() => new PrismaSportEventParticipantRepository(getAppPrisma()).updateMany(field.map((row) => ({
         id: row.id,
         updates: { status: SportEventParticipantStatus.WITHDRAWN },
-        price: 1_000,
+        valuation: { slot, price: 1_000 },
       }))));
-      const rows = await getPrisma().sportEventParticipant.findMany({ where: { id: { in: field.map((row) => row.id) } }, include: { valuation: true } });
+      const rows = await getPrisma().sportEventParticipant.findMany({ where: { id: { in: field.map((row) => row.id) } }, include: { valuations: true } });
       expect(rows.every((row) => row.status === SportEventParticipantStatus.WITHDRAWN)).toBe(true);
-      expect(rows.map((row) => [Number(row.valuation?.price), row.valuation?.priceAssignedSource])).toEqual(
-        field.map(() => [1_000, ValuationSource.MANUAL]),
+      expect(rows.map((row) => row.valuations.map((valuation) => [valuation.sportEventSlotId, Number(valuation.price), valuation.priceAssignedSource]))).toEqual(
+        field.map(() => [[slot.id, 1_000, ValuationSource.MANUAL]]),
       );
     });
 
@@ -158,69 +167,70 @@ describe('Saving the field grid (#1252)', () => {
   });
 
   it('writes each row its own seed, and a price of null clears the price but keeps the row\'s tier', async () => {
-    const { event, field } = await eventWithField(SMALL_FIELD);
+    const { event, field, slot } = await eventWithField(SMALL_FIELD);
     const prisma = getPrisma();
     const [first, second] = field;
-    const tier = await prisma.sportEventTier.create({ data: { sportEventId: event.id, tierKey: 'A', tierNumber: 1 } });
-    const before = await prisma.sportEventParticipantValuation.create({
-      data: { sportEventParticipantId: expectDefined(first).id, sportEventTierId: tier.id, tierOrderIndex: 0, tierAssignedSource: ValuationSource.MANUAL, price: 500, priceAssignedSource: ValuationSource.MANUAL },
+    const tier = await prisma.sportEventSlotTier.create({ data: { sportEventSlotId: slot.id, tierKey: 'A', tierNumber: 1 } });
+    const before = await prisma.sportEventSlotParticipantValuation.create({
+      data: { ...inTierSet(slot), sportEventParticipantId: expectDefined(first).id, sportEventSlotTierId: tier.id, tierOrderIndex: 0, tierAssignedSource: ValuationSource.MANUAL, price: 500, priceAssignedSource: ValuationSource.MANUAL },
     });
 
     await new PrismaSportEventParticipantRepository(prisma).updateMany([
-      { id: expectDefined(first).id, updates: { seedNumber: 2 }, price: null },
+      { id: expectDefined(first).id, updates: { seedNumber: 2 }, valuation: { slot, price: null } },
       { id: expectDefined(second).id, updates: { seedNumber: 1 } },
     ]);
 
-    const rows = await prisma.sportEventParticipant.findMany({ where: { sportEventId: event.id }, include: { valuation: true }, orderBy: { seedNumber: 'asc' } });
+    const rows = await prisma.sportEventParticipant.findMany({ where: { sportEventId: event.id }, orderBy: { seedNumber: 'asc' } });
     expect(rows.map((row) => row.id)).toEqual([expectDefined(second).id, expectDefined(first).id]);
-    expect(rows[1]?.valuation).toMatchObject({ id: before.id, createdAt: before.createdAt, sportEventTierId: tier.id, tierOrderIndex: 0, price: null });
-    expect(rows[0]?.valuation).toBeNull();
+    expect(await valuationOf(slot, expectDefined(first).id)).toMatchObject({ id: before.id, createdAt: before.createdAt, sportEventSlotTierId: tier.id, tierOrderIndex: 0, price: null });
+    expect(await valuationOf(slot, expectDefined(second).id)).toBeNull();
   });
   it('writes a row\'s price and its move into another tier in the one save, both manual, and writes neither when another row is missing', async () => {
-    const { event, field } = await eventWithField(SMALL_FIELD);
+    const { field, slot } = await eventWithField(SMALL_FIELD);
     const prisma = getPrisma();
     const row = expectDefined(field[0]);
     const [tierA, tierB] = await Promise.all([
-      prisma.sportEventTier.create({ data: { sportEventId: event.id, tierKey: 'A', tierNumber: 1 } }),
-      prisma.sportEventTier.create({ data: { sportEventId: event.id, tierKey: 'B', tierNumber: 2 } }),
+      prisma.sportEventSlotTier.create({ data: { sportEventSlotId: slot.id, tierKey: 'A', tierNumber: 1 } }),
+      prisma.sportEventSlotTier.create({ data: { sportEventSlotId: slot.id, tierKey: 'B', tierNumber: 2 } }),
     ]);
-    await prisma.sportEventParticipantValuation.create({
-      data: { sportEventParticipantId: row.id, sportEventTierId: tierA.id, tierOrderIndex: 0, tierAssignedSource: ValuationSource.AUTO_ODDS, price: 500, priceAssignedSource: ValuationSource.AUTO_ODDS },
+    await prisma.sportEventSlotParticipantValuation.create({
+      data: { ...inTierSet(slot), sportEventParticipantId: row.id, sportEventSlotTierId: tierA.id, tierOrderIndex: 0, tierAssignedSource: ValuationSource.AUTO_ODDS, price: 500, priceAssignedSource: ValuationSource.AUTO_ODDS },
     });
     const repository = new PrismaSportEventParticipantRepository(getAppPrisma());
+    const valuation = { slot, price: 900, tier: { sportEventSlotTierId: tierB.id, tierOrderIndex: 4 } };
 
     await expect(repository.updateMany([
-      { id: row.id, updates: { ranking: 3 }, price: 900, tier: { sportEventTierId: tierB.id, tierOrderIndex: 4 } },
+      { id: row.id, updates: { ranking: 3 }, valuation },
       { id: randomUUID(), updates: { ranking: 3 } },
     ])).rejects.toThrow('A field row to update does not exist.');
-    const untouched = await prisma.sportEventParticipantValuation.findUniqueOrThrow({ where: { sportEventParticipantId: row.id } });
-    expect([untouched.sportEventTierId, Number(untouched.price)]).toEqual([tierA.id, 500]);
+    const untouched = expectDefined(await valuationOf(slot, row.id));
+    expect([untouched.sportEventSlotTierId, Number(untouched.price)]).toEqual([tierA.id, 500]);
 
-    await repository.updateMany([{ id: row.id, updates: {}, price: 900, tier: { sportEventTierId: tierB.id, tierOrderIndex: 4 } }]);
+    await repository.updateMany([{ id: row.id, updates: {}, valuation }]);
 
-    const after = await prisma.sportEventParticipantValuation.findUniqueOrThrow({ where: { sportEventParticipantId: row.id } });
-    expect(after).toMatchObject({ sportEventTierId: tierB.id, tierOrderIndex: 4, tierAssignedSource: ValuationSource.MANUAL, priceAssignedSource: ValuationSource.MANUAL });
+    const after = expectDefined(await valuationOf(slot, row.id));
+    expect(after).toMatchObject({ sportEventSlotTierId: tierB.id, tierOrderIndex: 4, tierAssignedSource: ValuationSource.MANUAL, priceAssignedSource: ValuationSource.MANUAL });
     expect(Number(after.price)).toBe(900);
   });
 });
 
-describe('Assigning an event\'s tiers and prices (#1252)', () => {
+describe('Assigning an event slot\'s tiers and prices (#1252, #2044)', () => {
   it('assigns every row a tier in a fixed number of queries, keeping a row\'s price, id and creation time', async () => {
     const counts = await queriesFor(async (size, measure) => {
-      const { event, field } = await eventWithField(size);
-      const tier = await getPrisma().sportEventTier.create({ data: { sportEventId: event.id, tierKey: 'A', tierNumber: 1 } });
-      const priced = await getPrisma().sportEventParticipantValuation.create({
-        data: { sportEventParticipantId: expectDefined(field[0]).id, price: 700, priceAssignedSource: ValuationSource.AUTO_ODDS },
+      const { field, slot } = await eventWithField(size);
+      const tier = await getPrisma().sportEventSlotTier.create({ data: { sportEventSlotId: slot.id, tierKey: 'A', tierNumber: 1 } });
+      const priced = await getPrisma().sportEventSlotParticipantValuation.create({
+        data: { ...inTierSet(slot), sportEventParticipantId: expectDefined(field[0]).id, price: 700, priceAssignedSource: ValuationSource.AUTO_ODDS },
       });
 
-      await measure(() => new PrismaSportEventParticipantValuationRepository(getAppPrisma()).assignTiers(field.map((row, index) => ({
+      await measure(() => new PrismaSportEventSlotParticipantValuationRepository(getAppPrisma()).assignTiers(slot, field.map((row, index) => ({
         sportEventParticipantId: row.id,
-        sportEventTierId: tier.id,
+        sportEventSlotTierId: tier.id,
         tierOrderIndex: index,
         source: ValuationSource.AUTO_RANKING,
       }))));
 
-      const valuations = await getPrisma().sportEventParticipantValuation.findMany({ where: { sportEventTierId: tier.id }, orderBy: { tierOrderIndex: 'asc' } });
+      const valuations = await getPrisma().sportEventSlotParticipantValuation.findMany({ where: { sportEventSlotTierId: tier.id }, orderBy: { tierOrderIndex: 'asc' } });
       expect(valuations.map((row) => [row.sportEventParticipantId, row.tierOrderIndex])).toEqual(field.map((row, index) => [row.id, index]));
       expect(valuations[0]).toMatchObject({ id: priced.id, createdAt: priced.createdAt, priceAssignedSource: ValuationSource.AUTO_ODDS });
       expect(Number(valuations[0]?.price)).toBe(700);
@@ -229,27 +239,30 @@ describe('Assigning an event\'s tiers and prices (#1252)', () => {
     expect(counts[1]).toEqual(counts[0]);
   });
 
-  it('prices every row and saves the event\'s pricing values in a fixed number of queries, keeping a row\'s tier', async () => {
+  it('prices every row and saves the slot\'s pricing values in a fixed number of queries, keeping a row\'s tier', async () => {
     const counts = await queriesFor(async (size, measure) => {
-      const { event, field } = await eventWithField(size);
-      const tier = await getPrisma().sportEventTier.create({ data: { sportEventId: event.id, tierKey: 'A', tierNumber: 1 } });
-      await getPrisma().sportEventParticipantValuation.create({
-        data: { sportEventParticipantId: expectDefined(field[0]).id, sportEventTierId: tier.id, tierOrderIndex: 3, tierAssignedSource: ValuationSource.MANUAL },
+      const { field, slot } = await eventWithField(size);
+      const tier = await getPrisma().sportEventSlotTier.create({ data: { sportEventSlotId: slot.id, tierKey: 'A', tierNumber: 1 } });
+      await getPrisma().sportEventSlotParticipantValuation.create({
+        data: { ...inTierSet(slot), sportEventParticipantId: expectDefined(field[0]).id, sportEventSlotTierId: tier.id, tierOrderIndex: 3, tierAssignedSource: ValuationSource.MANUAL },
       });
-      const pricingConfig = { salaryCap: 50_000, unit: 100, topSharePercent: 24, floorSharePercent: 12, steepness: 4 };
+      const pricing = await standardPricingIn(getPrisma());
 
-      await measure(() => new PrismaSportEventParticipantValuationRepository(getAppPrisma()).assignEventPrices({
-        sportEventId: event.id,
-        pricingConfig: { ...pricingConfig, platformPricingProfileId: null },
+      await measure(() => new PrismaSportEventSlotParticipantValuationRepository(getAppPrisma()).assignSlotPrices({
+        slot,
+        pricing,
         assignments: field.map((row, index) => ({ sportEventParticipantId: row.id, price: 10_000 - index * 100, source: ValuationSource.AUTO_ODDS })),
       }));
 
-      const rows = await getPrisma().sportEventParticipant.findMany({ where: { sportEventId: event.id }, include: { valuation: true } });
-      const byId = new Map(rows.map((row) => [row.id, row.valuation]));
+      const valuations = await getPrisma().sportEventSlotParticipantValuation.findMany({ where: { sportEventSlotId: slot.id } });
+      const byId = new Map(valuations.map((row) => [row.sportEventParticipantId, row]));
       expect(field.map((row) => Number(byId.get(row.id)?.price))).toEqual(field.map((_, index) => 10_000 - index * 100));
-      expect(byId.get(expectDefined(field[0]).id)).toMatchObject({ sportEventTierId: tier.id, tierOrderIndex: 3, tierAssignedSource: ValuationSource.MANUAL });
-      const saved = await getPrisma().sportEvent.findUniqueOrThrow({ where: { id: event.id } });
-      expect(saved.pricingConfig).toEqual(pricingConfig);
+      expect(byId.get(expectDefined(field[0]).id)).toMatchObject({ sportEventSlotTierId: tier.id, tierOrderIndex: 3, tierAssignedSource: ValuationSource.MANUAL });
+      const saved = await getPrisma().sportEventSlot.findUniqueOrThrow({ where: { id: slot.id } });
+      expect(saved).toMatchObject({
+        platformPricingProfileId: pricing.platformPricingProfileId, salaryCap: pricing.salaryCap, pricingUnit: pricing.unit,
+        topSharePercent: pricing.topSharePercent, floorSharePercent: pricing.floorSharePercent, steepness: pricing.steepness,
+      });
     });
 
     expect(counts[1]).toEqual(counts[0]);
@@ -296,24 +309,27 @@ describe('Uploading a sport league\'s rankings (#1252)', () => {
 });
 
 describe('Entering a race\'s finishing order (#1252)', () => {
-  it('writes every runner\'s result and standing in a fixed number of queries, keeping a result\'s id', async () => {
+  it('writes every runner\'s result and standing in a fixed number of queries, keeping a runner\'s side already in the race', async () => {
     const counts = await queriesFor(async (size, measure) => {
       const { event, field } = await eventWithField(size);
-      const earlier = await getPrisma().sportEventParticipantRaceResult.create({
-        data: { sportEventParticipantId: expectDefined(field[0]).id, finishPosition: 9, resultStatus: RaceResultStatus.FINISHED },
-      });
+      const repo = new PrismaRaceOrderRepository(getAppPrisma());
+      const result = (row: { id: string }, index: number) => ({ sportEventParticipantId: row.id, position: index + 1, startPosition: null, status: GameSideStatus.FINISHED });
+      await repo.applyOrder(event.id, { isOfficial: false, at: AS_OF, sides: [{ ...result(expectDefined(field[0]), 8) }], standings: [] });
+      const earlier = await getPrisma().sportEventRoundMatchSide.findFirstOrThrow({ where: { sportEventParticipantId: expectDefined(field[0]).id } });
 
-      await measure(() => new PrismaSportEventParticipantRaceResultRepository(getAppPrisma()).applyResults(event.id, {
+      await measure(() => repo.applyOrder(event.id, {
         isOfficial: true,
-        results: field.map((row, index) => ({ sportEventParticipantId: row.id, finishPosition: index + 1, startPosition: null, resultStatus: RaceResultStatus.FINISHED, riderName: null })),
+        at: AS_OF,
+        sides: field.map(result),
         standings: field.map((row, index) => ({ sportEventParticipantId: row.id, position: index + 1, displayPosition: `${index + 1}`, status: ParticipantStandingStatus.COMPLETE, asOf: AS_OF })),
       }));
 
-      const rows = await getPrisma().sportEventParticipant.findMany({ where: { sportEventId: event.id }, include: { raceResult: true, standing: true } });
-      const byId = new Map(rows.map((row) => [row.id, row]));
-      expect(field.map((row) => [byId.get(row.id)?.raceResult?.finishPosition, byId.get(row.id)?.raceResult?.isOfficial, byId.get(row.id)?.standing?.position]))
+      const results = new Map((await repo.findBySportEvent(event.id)).map((row) => [row.sportEventParticipantId, row]));
+      const standings = new Map((await getPrisma().sportEventParticipantStanding.findMany({ where: { sportEventParticipant: { sportEventId: event.id } } })).map((row) => [row.sportEventParticipantId, row]));
+      expect(field.map((row) => [results.get(row.id)?.position, results.get(row.id)?.isOfficial, standings.get(row.id)?.position]))
         .toEqual(field.map((_, index) => [index + 1, true, index + 1]));
-      expect(byId.get(expectDefined(field[0]).id)?.raceResult).toMatchObject({ id: earlier.id, createdAt: earlier.createdAt });
+      await expect(getPrisma().sportEventRoundMatchSide.findFirstOrThrow({ where: { sportEventParticipantId: expectDefined(field[0]).id } }))
+        .resolves.toMatchObject({ id: earlier.id, sideNumber: 1 });
     });
 
     expect(counts[1]).toEqual(counts[0]);

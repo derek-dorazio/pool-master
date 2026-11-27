@@ -8,6 +8,7 @@
 import { latestParticipantRound } from '@poolmaster/shared/domain';
 import type { SportEventParticipantDto } from '@poolmaster/shared/dto/events.dto';
 import type { SportEventParticipantView } from '../modules/events/sport-event-participant-service';
+import { isRaceOfficial, raceResultOf } from '../modules/scoring-families/finish-position/score-runner';
 import { mapParticipantToDto } from './participants.mapper';
 
 export function mapSportEventParticipantToDto(view: SportEventParticipantView): SportEventParticipantDto {
@@ -24,7 +25,7 @@ export function mapSportEventParticipantToDto(view: SportEventParticipantView): 
     valuation: valuation
       ? {
           id: valuation.id,
-          sportEventTierId: valuation.sportEventTierId,
+          sportEventTierId: valuation.sportEventSlotTierId,
           tierOrderIndex: valuation.tierOrderIndex,
           tierAssignedSource: valuation.tierAssignedSource,
           price: valuation.price,
@@ -57,17 +58,21 @@ export function mapSportEventParticipantToDto(view: SportEventParticipantView): 
       completedAt: round.completedAt?.toISOString() ?? null,
       golf: golf ? { strokes: golf.strokes, scoreToPar: golf.scoreToPar, thru: golf.thru } : null,
     })),
-    race: view.raceResult
-      ? {
-          finishPosition: view.raceResult.finishPosition,
-          startPosition: view.raceResult.startPosition,
-          resultStatus: view.raceResult.resultStatus,
-          isOfficial: view.raceResult.isOfficial,
-          riderName: view.raceResult.riderName,
-        }
-      : null,
+    race: raceBlockOf(view),
     affiliatedWithSportLeague: view.affiliatedWithSportLeague,
     createdAt: entry.createdAt.toISOString(),
     updatedAt: entry.updatedAt.toISOString(),
+  };
+}
+
+/** The runner's race result (#2008): its side result in the race's one FIELD Game, and its rider. */
+function raceBlockOf(view: SportEventParticipantView): SportEventParticipantDto['race'] {
+  const raced = raceResultOf(view);
+  if (!raced || raced.result.status === null) return null;
+  return {
+    finishPosition: raced.result.position,
+    startPosition: raced.result.startPosition,
+    resultStatus: raced.result.status,
+    isOfficial: isRaceOfficial(raced),
   };
 }

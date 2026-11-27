@@ -21,6 +21,7 @@ import {
   MatchFormat,
   SlotKind,
   type ContestTemplateSlot,
+  SeasonSlotStatus,
 } from '@poolmaster/shared/domain';
 import {
   CONTEST_BUDGET_FIELD_OUT_OF_RANGE,
@@ -2849,6 +2850,7 @@ describe('ContestManagementService — a bracket on a knockout already under way
       sportEventReader: createContestSportEventReader({
         sportEvents: store.sportEventRepo(),
         field: store.fieldRepo(),
+        tiers: store.tierRepo(),
         valuations: store.valuationRepo(),
         matches: store.matchRepo(),
       }),
@@ -3173,6 +3175,7 @@ describe('createContestSportEventReader.findByIds (#1355, #2008)', () => {
     const reader = createContestSportEventReader({
       sportEvents: store.sportEventRepo(),
       field: store.fieldRepo(),
+      tiers: store.tierRepo(),
       valuations: store.valuationRepo(),
       matches: store.matchRepo(),
     });
@@ -3193,7 +3196,8 @@ describe('createContestSportEventReader field, game and price reads', () => {
     return createContestSportEventReader({
       sportEvents: store.sportEventRepo(),
       field: { findBySportEvent: async () => ports.entries ?? [] } as unknown as Parameters<typeof createContestSportEventReader>[0]['field'],
-      valuations: { findBySportEvent: async () => ports.valuations ?? [] } as unknown as Parameters<typeof createContestSportEventReader>[0]['valuations'],
+      tiers: { findTierSlots: async () => new Map([[EVENT, [{ id: 'event-slot-1', sportEventId: EVENT, seasonSlotId: 'season-slot-1', seasonSlotStatus: SeasonSlotStatus.SCHEDULED, isTierSetSlot: true, tierLayout: null, pricing: null }]]]) },
+      valuations: { findBySlot: async () => ports.valuations ?? [] } as unknown as Parameters<typeof createContestSportEventReader>[0]['valuations'],
       matches: { findBySportEvent: async () => ports.games ?? [] } as unknown as Parameters<typeof createContestSportEventReader>[0]['matches'],
     });
   }
@@ -3236,6 +3240,7 @@ describe('createContestSportEventReader event and game counts', () => {
     return createContestSportEventReader({
       sportEvents: countParticipants ? { ...sportEvents, countParticipants } : sportEvents,
       field: store.fieldRepo(),
+      tiers: store.tierRepo(),
       valuations: store.valuationRepo(),
       matches: store.matchRepo(),
     });
@@ -3287,6 +3292,7 @@ describe('createBatchedContestOpeningReader', () => {
       reader: createBatchedContestOpeningReader({
         sportEvents: { ...sportEvents, ...overrides },
         field: store.fieldRepo(),
+        tiers: store.tierRepo(),
         valuations: store.valuationRepo(),
         matches: store.matchRepo(),
       }),

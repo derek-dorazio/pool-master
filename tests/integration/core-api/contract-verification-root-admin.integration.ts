@@ -3,6 +3,7 @@ import { SlotTiebreakerService } from '../../../packages/core-api/src/modules/ev
 import { BALLDONTLIE_TEST_PROVIDER_ID } from '../../support/balldontlie-provider-rows';
 import { deleteTestSportLeagues, linkTestSlot, testSlotDefinitionId, testSlotId } from '../../support/test-slots';
 import { syncSlotsFor } from '../../support/sync-slots';
+import { createRoundRows } from '../../support/sport-event-rows';
 import { testDomainEvents } from '../../support/domain-events';
 import { expect } from '@jest/globals';
 import { randomUUID } from 'node:crypto';
@@ -69,6 +70,7 @@ import type {
   UserResponse,
 } from '@poolmaster/shared/dto';
 import { ErrorEnvelopeSchema } from '@poolmaster/shared/dto/errors.dto';
+import { standardPricingIn } from '../../support/budget-pricing';
 import { ingestionModule } from '../../../packages/core-api/src/modules/ingestion/routes';
 import { participantsModule } from '../../../packages/core-api/src/modules/participants/routes';
 import { eventsModule } from '../../../packages/core-api/src/modules/events/routes';
@@ -79,6 +81,7 @@ import {
   PrismaBackgroundJobRepository,
   PrismaProviderSyncRunRepository,
   PrismaSportEventRepository,
+  PrismaSportEventRoundRepository,
   PrismaSportLeagueRepository,
 } from '../../../packages/core-api/src/adapters';
 import { LeagueEventsSync } from '../../../packages/core-api/src/modules/events/league-events-sync';
@@ -97,7 +100,7 @@ import {
   integrationBackgroundJobs,
   setupIntegrationTests,
   teardownIntegrationTests,
-  withoutJsonBodyHeaders, integrationSportEventServices, integrationEventLifecycle, integrationProviderSettings, integrationSyncFindings, standardEventPricingInDb,
+  withoutJsonBodyHeaders, integrationSportEventServices, integrationEventLifecycle, integrationProviderSettings, integrationSyncFindings,
 } from '../helpers';
 import type {
   ProviderParticipant,
@@ -1480,6 +1483,12 @@ describe('Contract verification (root admin)', () => {
       expect(roundsRes.json<SportEventRoundListResponse>().rounds).toHaveLength(4);
 
       // --- releaseEvent (422 while golfers lack a tier, then 200 once tiered and priced) -
+      // A tiered setup over the event's slot: its tiers and prices are what such a contest picks from.
+      const { seasonSlot } = await getPrisma().sportEventSlot.findFirstOrThrow({ where: { sportEventId: eventId }, select: { seasonSlot: { select: { sportLeagueCompetitionSlotId: true } } } });
+      const tieredSetup = await getPrisma().contestConfigTemplate.create({
+        data: { sportLeagueId: leagueId, templateKey: `z3l-tiered-${stamp}`, coverageMode: 'ONE_SLOT', contestFormat: 'ROSTER', selectionType: 'TIERED', name: 'Tiered', description: 'Tiered', sortOrder: 1, configJson: {} },
+      });
+      await getPrisma().contestConfigTemplateSlot.create({ data: { sportLeagueId: leagueId, templateId: tieredSetup.id, sportLeagueCompetitionSlotId: seasonSlot.sportLeagueCompetitionSlotId } });
       const releaseRefusedRes = await getApp().inject({
         method: 'POST',
         url: `/api/v1/events/${eventId}/release`,
@@ -1516,7 +1525,7 @@ describe('Contract verification (root admin)', () => {
         method: 'POST',
         url: `/api/v1/events/${eventId}/prices/auto-assign`,
         headers: rootAdmin.headers,
-        payload: await standardEventPricingInDb(),
+        payload: await standardPricingIn(getPrisma()),
       });
       expect(autoPriceRes.statusCode).toBe(200);
       expect(SportEventParticipantListResponseSchema.safeParse(autoPriceRes.json()).success).toBe(true);
@@ -1569,10 +1578,10 @@ describe('Contract verification (root admin)', () => {
           await prisma.sportEventParticipantRound.deleteMany({ where: { sportEventParticipantId: { in: sepIds } } });
           await prisma.sportEventParticipantGolfStanding.deleteMany({ where: { standing: { sportEventParticipantId: { in: sepIds } } } });
           await prisma.sportEventParticipantStanding.deleteMany({ where: { sportEventParticipantId: { in: sepIds } } });
-          await prisma.sportEventParticipantValuation.deleteMany({ where: { sportEventParticipantId: { in: sepIds } } });
+          await prisma.sportEventSlotParticipantValuation.deleteMany({ where: { sportEventParticipantId: { in: sepIds } } });
           await prisma.sportEventParticipant.deleteMany({ where: { id: { in: sepIds } } });
         }
-        await prisma.sportEventTier.deleteMany({ where: { sportEventId: { in: created.eventIds } } });
+        await prisma.sportEventSlotTier.deleteMany({ where: { slot: { sportEventId: { in: created.eventIds } } } });
         await prisma.sportEventRound.deleteMany({ where: { sportEventId: { in: created.eventIds } } });
         await prisma.sportEvent.deleteMany({ where: { id: { in: created.eventIds } } });
       }
@@ -1585,6 +1594,7 @@ describe('Contract verification (root admin)', () => {
         await prisma.participant.deleteMany({ where: { id: { in: created.participantIds } } });
       }
       if (created.sportLeagueId) {
+        await prisma.contestConfigTemplate.deleteMany({ where: { sportLeagueId: created.sportLeagueId } });
         await deleteTestSportLeagues(prisma, [created.sportLeagueId]);
       }
     }
@@ -1664,7 +1674,7 @@ describe('Contract verification (root admin)', () => {
       const eventIds = (await prisma.sportEvent.findMany({ where: { sportLeagueId: { in: [synced.id, unsynced.id] } }, select: { id: true } }))
         .map((event) => event.id);
       await prisma.sportEventRound.deleteMany({ where: { sportEventId: { in: eventIds } } });
-      await prisma.sportEventTier.deleteMany({ where: { sportEventId: { in: eventIds } } });
+      await prisma.sportEventSlotTier.deleteMany({ where: { slot: { sportEventId: { in: eventIds } } } });
       await prisma.sportEvent.deleteMany({ where: { id: { in: eventIds } } });
       await prisma.contestConfigTemplate.deleteMany({ where: { sportLeagueId: synced.id } });
       await deleteTestSportLeagues(prisma, [synced.id, unsynced.id]);
@@ -1701,7 +1711,11 @@ describe('Contract verification (root admin)', () => {
         },
       });
       // The admin result routes write only on a test event (#2074).
-      if (testEvent) await linkTestSlot(prisma, event);
+      if (testEvent) {
+        await linkTestSlot(prisma, event);
+        // A race is a FIELD match in the event's first round (#2008).
+        await createRoundRows(prisma, new PrismaSportEventRoundRepository(getAppPrisma()), event, [{ roundNumber: 1, scheduledDate: event.startDate }]);
+      }
       for (const name of names) {
         const participant = await prisma.participant.create({ data: { sportLeagueId: await participantLeagueId(prisma, sportId), name: `${name} ${stamp}`, participantType: 'INDIVIDUAL' } });
         participantIdByName.set(name, participant.id);
@@ -1712,7 +1726,7 @@ describe('Contract verification (root admin)', () => {
     const race = await createEvent('HORSE_RACING', horseRacing.id, ['Arrow', 'Bolt']);
     const golfEvent = await createEvent('GOLF', golf.id, ['Golfer']);
     const finisher = (name: string, finishPosition: number | null) => ({
-      participantId: participantIdByName.get(name) ?? randomUUID(), resultStatus: 'FINISHED', finishPosition, startPosition: null, riderName: null,
+      participantId: participantIdByName.get(name) ?? randomUUID(), resultStatus: 'FINISHED', finishPosition, startPosition: null,
     });
     const send = (method: 'POST' | 'PUT', eventId: string, payload: object, headers = rootAdmin.headers) => getApp().inject({
       method,

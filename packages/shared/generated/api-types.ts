@@ -13407,7 +13407,7 @@ export interface components {
             roundsParMax: number;
             /** @description The event's field size: the teams or players on its field, counted on each read. 0 until the field loads. */
             participantCount: number;
-            /** @description The values the field was last priced with for budget contests, or null until prices are assigned. Locked at release; its salaryCap is the cap of every budget contest on the event. */
+            /** @description The values the event's first slot's set was last priced with for budget contests (#2044), or null until it is priced. Locked at release; its salaryCap is the cap of every budget contest on the event. */
             pricing: {
                 /** @description Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event. */
                 salaryCap: number;
@@ -13421,11 +13421,11 @@ export interface components {
                 steepness: number;
                 /**
                  * Format: uuid
-                 * @description The pricing profile the values started from (#2205), or null once that profile is deleted. The admin may have changed any value before assigning.
+                 * @description The pricing profile the values started from. The admin may have changed any value before assigning.
                  */
-                platformPricingProfileId: string | null;
+                platformPricingProfileId: string;
             } | null;
-            /** @description The tier layout the field was last auto-tiered with: its sport league's tier profile at the time, with any tier size an admin sent instead. Null until the field is first auto-tiered. Hand placements do not change it. */
+            /** @description The tier layout the event's first slot's set was last auto-tiered with (#2044): its tier profile's, with any tier size an admin sent instead. Null until the set is first auto-tiered. Hand placements do not change it. */
             tierLayout: ({
                 /** @enum {string} */
                 type: "EQUAL_GROUPS";
@@ -13442,9 +13442,9 @@ export interface components {
                 lastTierMax: number | null;
                 /**
                  * Format: uuid
-                 * @description The tier profile the layout came from (#2205), or null once that profile is deleted.
+                 * @description The tier profile the layout came from: the sport league's when the set was tiered.
                  */
-                platformTierProfileId: string | null;
+                platformTierProfileId: string;
             } | null) | ({
                 /** @enum {string} */
                 type: "RANGES";
@@ -13459,9 +13459,9 @@ export interface components {
                 }[];
                 /**
                  * Format: uuid
-                 * @description The tier profile the layout came from (#2205), or null once that profile is deleted.
+                 * @description The tier profile the layout came from: the sport league's when the set was tiered.
                  */
-                platformTierProfileId: string | null;
+                platformTierProfileId: string;
             } | null);
             /**
              * @description Contest-setup readiness right now.
@@ -13485,7 +13485,7 @@ export interface components {
                  */
                 opening: "OPEN" | "NOT_YET" | "CLOSED";
             }[];
-            /** @description Whether the event's tiers and prices are locked: true once it is released (#431). A tier or price write on a locked event is refused with 409 SPORT_EVENT_TIERS_LOCKED. */
+            /** @description Whether the tiers and prices of the event's first slot are locked: true once the event is released (#431, #2044). A tier or price write on a locked set is refused with 409 SPORT_EVENT_TIERS_LOCKED. */
             tiersLocked: boolean;
             /** @description The slot definitions of the Season slots the event covers, in play order (#2010): the templates covering one of them are offered on it. Empty until the sync gives it its slots. */
             slotDefinitionIds: string[];
@@ -13761,7 +13761,7 @@ export interface components {
                 roundsParMax: number;
                 /** @description The event's field size: the teams or players on its field, counted on each read. 0 until the field loads. */
                 participantCount: number;
-                /** @description The values the field was last priced with for budget contests, or null until prices are assigned. Locked at release; its salaryCap is the cap of every budget contest on the event. */
+                /** @description The values the event's first slot's set was last priced with for budget contests (#2044), or null until it is priced. Locked at release; its salaryCap is the cap of every budget contest on the event. */
                 pricing: {
                     /** @description Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event. */
                     salaryCap: number;
@@ -13775,11 +13775,11 @@ export interface components {
                     steepness: number;
                     /**
                      * Format: uuid
-                     * @description The pricing profile the values started from (#2205), or null once that profile is deleted. The admin may have changed any value before assigning.
+                     * @description The pricing profile the values started from. The admin may have changed any value before assigning.
                      */
-                    platformPricingProfileId: string | null;
+                    platformPricingProfileId: string;
                 } | null;
-                /** @description The tier layout the field was last auto-tiered with: its sport league's tier profile at the time, with any tier size an admin sent instead. Null until the field is first auto-tiered. Hand placements do not change it. */
+                /** @description The tier layout the event's first slot's set was last auto-tiered with (#2044): its tier profile's, with any tier size an admin sent instead. Null until the set is first auto-tiered. Hand placements do not change it. */
                 tierLayout: ({
                     /** @enum {string} */
                     type: "EQUAL_GROUPS";
@@ -13796,9 +13796,9 @@ export interface components {
                     lastTierMax: number | null;
                     /**
                      * Format: uuid
-                     * @description The tier profile the layout came from (#2205), or null once that profile is deleted.
+                     * @description The tier profile the layout came from: the sport league's when the set was tiered.
                      */
-                    platformTierProfileId: string | null;
+                    platformTierProfileId: string;
                 } | null) | ({
                     /** @enum {string} */
                     type: "RANGES";
@@ -13813,9 +13813,9 @@ export interface components {
                     }[];
                     /**
                      * Format: uuid
-                     * @description The tier profile the layout came from (#2205), or null once that profile is deleted.
+                     * @description The tier profile the layout came from: the sport league's when the set was tiered.
                      */
-                    platformTierProfileId: string | null;
+                    platformTierProfileId: string;
                 } | null);
                 /**
                  * @description Contest-setup readiness right now.
@@ -13839,7 +13839,7 @@ export interface components {
                      */
                     opening: "OPEN" | "NOT_YET" | "CLOSED";
                 }[];
-                /** @description Whether the event's tiers and prices are locked: true once it is released (#431). A tier or price write on a locked event is refused with 409 SPORT_EVENT_TIERS_LOCKED. */
+                /** @description Whether the tiers and prices of the event's first slot are locked: true once the event is released (#431, #2044). A tier or price write on a locked set is refused with 409 SPORT_EVENT_TIERS_LOCKED. */
                 tiersLocked: boolean;
                 /** @description The slot definitions of the Season slots the event covers, in play order (#2010): the templates covering one of them are offered on it. Empty until the sync gives it its slots. */
                 slotDefinitionIds: string[];
@@ -14094,7 +14094,7 @@ export interface components {
                 roundsParMax: number;
                 /** @description The event's field size: the teams or players on its field, counted on each read. 0 until the field loads. */
                 participantCount: number;
-                /** @description The values the field was last priced with for budget contests, or null until prices are assigned. Locked at release; its salaryCap is the cap of every budget contest on the event. */
+                /** @description The values the event's first slot's set was last priced with for budget contests (#2044), or null until it is priced. Locked at release; its salaryCap is the cap of every budget contest on the event. */
                 pricing: {
                     /** @description Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event. */
                     salaryCap: number;
@@ -14108,11 +14108,11 @@ export interface components {
                     steepness: number;
                     /**
                      * Format: uuid
-                     * @description The pricing profile the values started from (#2205), or null once that profile is deleted. The admin may have changed any value before assigning.
+                     * @description The pricing profile the values started from. The admin may have changed any value before assigning.
                      */
-                    platformPricingProfileId: string | null;
+                    platformPricingProfileId: string;
                 } | null;
-                /** @description The tier layout the field was last auto-tiered with: its sport league's tier profile at the time, with any tier size an admin sent instead. Null until the field is first auto-tiered. Hand placements do not change it. */
+                /** @description The tier layout the event's first slot's set was last auto-tiered with (#2044): its tier profile's, with any tier size an admin sent instead. Null until the set is first auto-tiered. Hand placements do not change it. */
                 tierLayout: ({
                     /** @enum {string} */
                     type: "EQUAL_GROUPS";
@@ -14129,9 +14129,9 @@ export interface components {
                     lastTierMax: number | null;
                     /**
                      * Format: uuid
-                     * @description The tier profile the layout came from (#2205), or null once that profile is deleted.
+                     * @description The tier profile the layout came from: the sport league's when the set was tiered.
                      */
-                    platformTierProfileId: string | null;
+                    platformTierProfileId: string;
                 } | null) | ({
                     /** @enum {string} */
                     type: "RANGES";
@@ -14146,9 +14146,9 @@ export interface components {
                     }[];
                     /**
                      * Format: uuid
-                     * @description The tier profile the layout came from (#2205), or null once that profile is deleted.
+                     * @description The tier profile the layout came from: the sport league's when the set was tiered.
                      */
-                    platformTierProfileId: string | null;
+                    platformTierProfileId: string;
                 } | null);
                 /**
                  * @description Contest-setup readiness right now.
@@ -14172,7 +14172,7 @@ export interface components {
                      */
                     opening: "OPEN" | "NOT_YET" | "CLOSED";
                 }[];
-                /** @description Whether the event's tiers and prices are locked: true once it is released (#431). A tier or price write on a locked event is refused with 409 SPORT_EVENT_TIERS_LOCKED. */
+                /** @description Whether the tiers and prices of the event's first slot are locked: true once the event is released (#431, #2044). A tier or price write on a locked set is refused with 409 SPORT_EVENT_TIERS_LOCKED. */
                 tiersLocked: boolean;
                 /** @description The slot definitions of the Season slots the event covers, in play order (#2010): the templates covering one of them are offered on it. Empty until the sync gives it its slots. */
                 slotDefinitionIds: string[];
@@ -14617,12 +14617,15 @@ export interface components {
                 createdAt: string;
             }[];
         };
-        /** @description A pick tier an event's field is divided into. Who is in it is on each field row's valuation. */
+        /** @description A pick tier of an event slot's team tier set (#2044). Who is in it is on each field row's valuation. */
         SportEventTierDto: {
             /** Format: uuid */
             id: string;
-            /** Format: uuid */
-            sportEventId: string;
+            /**
+             * Format: uuid
+             * @description The Season slot of the event whose tier set the tier is in (#2044).
+             */
+            seasonSlotId: string;
             /** @description Stable key; assignments name a tier by it. */
             tierKey: string;
             /** @description Order among the event's tiers; 1 first. A tier stores no name: screens call it "Tier N" by this number. */
@@ -14634,8 +14637,11 @@ export interface components {
             tiers: {
                 /** Format: uuid */
                 id: string;
-                /** Format: uuid */
-                sportEventId: string;
+                /**
+                 * Format: uuid
+                 * @description The Season slot of the event whose tier set the tier is in (#2044).
+                 */
+                seasonSlotId: string;
                 /** @description Stable key; assignments name a tier by it. */
                 tierKey: string;
                 /** @description Order among the event's tiers; 1 first. A tier stores no name: screens call it "Tier N" by this number. */
@@ -14666,8 +14672,8 @@ export interface components {
                 tierOrderIndex: number;
             }[];
         };
-        /** @description The values an event's field was priced with for budget contests. */
-        EventPricingConfig: {
+        /** @description The values an event slot's set was priced with for budget contests, and the profile they started from. */
+        SlotPricing: {
             /** @description Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event. */
             salaryCap: number;
             /** @description Whole dollars. Every price is rounded to a multiple of it. At most the worst golfer's price. */
@@ -14680,12 +14686,12 @@ export interface components {
             steepness: number;
             /**
              * Format: uuid
-             * @description The pricing profile the values started from (#2205), or null once that profile is deleted. The admin may have changed any value before assigning.
+             * @description The pricing profile the values started from. The admin may have changed any value before assigning.
              */
-            platformPricingProfileId: string | null;
+            platformPricingProfileId: string;
         };
-        /** @description The tier layout an event's field was last auto-tiered with. */
-        EventTierConfig: {
+        /** @description The tier layout an event slot's set was last auto-tiered with: its tier profile's, with any tier size an admin sent instead. */
+        SlotTierLayout: {
             /** @enum {string} */
             type: "EQUAL_GROUPS";
             /** @description How many tiers a new event starts with. */
@@ -14701,9 +14707,9 @@ export interface components {
             lastTierMax: number | null;
             /**
              * Format: uuid
-             * @description The tier profile the layout came from (#2205), or null once that profile is deleted.
+             * @description The tier profile the layout came from: the sport league's when the set was tiered.
              */
-            platformTierProfileId: string | null;
+            platformTierProfileId: string;
         } | {
             /** @enum {string} */
             type: "RANGES";
@@ -14718,11 +14724,11 @@ export interface components {
             }[];
             /**
              * Format: uuid
-             * @description The tier profile the layout came from (#2205), or null once that profile is deleted.
+             * @description The tier profile the layout came from: the sport league's when the set was tiered.
              */
-            platformTierProfileId: string | null;
+            platformTierProfileId: string;
         };
-        /** @description Prices the active field on the budget curve with these values, in the field's order, and records them on the event as its pricing, with the profile they started from. The values usually are the profile's, possibly changed. */
+        /** @description Prices the active field on the budget curve with these values, best seed first and golfers with no seed last, and records them on the event's first slot as its pricing (#2044). The values usually come from a Budget pricing profile, possibly changed; platformPricingProfileId names that profile (404 PLATFORM_PRICING_PROFILE_NOT_FOUND for none). */
         AutoAssignSportEventPricesRequest: {
             /** @description Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event. */
             salaryCap: number;
@@ -14736,7 +14742,7 @@ export interface components {
             steepness: number;
             /**
              * Format: uuid
-             * @description The pricing profile the values started from. 404 PLATFORM_PRICING_PROFILE_NOT_FOUND when there is none with this id.
+             * @description The pricing profile the values started from. The admin may have changed any value before assigning.
              */
             platformPricingProfileId: string;
         };
@@ -14994,8 +15000,6 @@ export interface components {
                 resultStatus: "FINISHED" | "DID_NOT_FINISH" | "DISQUALIFIED" | "DID_NOT_START";
                 /** @description Whether the race's result is official. Contest scoring counts a result only once it is. */
                 isOfficial: boolean;
-                /** @description The jockey (or rider) for this start; null when not entered. The trainer is the participant's teamAffiliation. */
-                riderName: string | null;
             } | null;
             /** @description Whether the participant is affiliated with the event's sport league; false flags an invite from elsewhere. (Admin-only: operational detail no member surface reads.) */
             affiliatedWithSportLeague: boolean;
@@ -15196,8 +15200,6 @@ export interface components {
                     resultStatus: "FINISHED" | "DID_NOT_FINISH" | "DISQUALIFIED" | "DID_NOT_START";
                     /** @description Whether the race's result is official. Contest scoring counts a result only once it is. */
                     isOfficial: boolean;
-                    /** @description The jockey (or rider) for this start; null when not entered. The trainer is the participant's teamAffiliation. */
-                    riderName: string | null;
                 } | null;
                 /** @description Whether the participant is affiliated with the event's sport league; false flags an invite from elsewhere. (Admin-only: operational detail no member surface reads.) */
                 affiliatedWithSportLeague: boolean;
@@ -15432,8 +15434,6 @@ export interface components {
                     resultStatus: "FINISHED" | "DID_NOT_FINISH" | "DISQUALIFIED" | "DID_NOT_START";
                     /** @description Whether the race's result is official. Contest scoring counts a result only once it is. */
                     isOfficial: boolean;
-                    /** @description The jockey (or rider) for this start; null when not entered. The trainer is the participant's teamAffiliation. */
-                    riderName: string | null;
                 } | null;
                 /** @description Whether the participant is affiliated with the event's sport league; false flags an invite from elsewhere. (Admin-only: operational detail no member surface reads.) */
                 affiliatedWithSportLeague: boolean;
@@ -16403,8 +16403,6 @@ export interface components {
                     resultStatus: "FINISHED" | "DID_NOT_FINISH" | "DISQUALIFIED" | "DID_NOT_START";
                     /** @description Whether the race's result is official. Contest scoring counts a result only once it is. */
                     isOfficial: boolean;
-                    /** @description The jockey (or rider) for this start; null when not entered. The trainer is the participant's teamAffiliation. */
-                    riderName: string | null;
                 } | null;
                 /** @description Whether the participant is affiliated with the event's sport league; false flags an invite from elsewhere. (Admin-only: operational detail no member surface reads.) */
                 affiliatedWithSportLeague: boolean;
@@ -21268,8 +21266,6 @@ export interface components {
                 finishPosition: number | null;
                 /** @description Post position (or grid slot); null when not known. */
                 startPosition: number | null;
-                /** @description The jockey (or rider) for this start; null when not known. */
-                riderName: string | null;
             }[];
         };
         /** @description A dry run of a race result. Nothing is written. */
@@ -21289,8 +21285,6 @@ export interface components {
                     finishPosition: number | null;
                     /** @description Post position (or grid slot); null when not known. */
                     startPosition: number | null;
-                    /** @description The jockey (or rider) for this start; null when not known. */
-                    riderName: string | null;
                 };
                 /**
                  * @description How an uploaded row resolved to a participant: one match, none, or several.
@@ -21319,7 +21313,6 @@ export interface components {
                     resultStatus: "FINISHED" | "DID_NOT_FINISH" | "DISQUALIFIED" | "DID_NOT_START";
                     finishPosition: number | null;
                     startPosition: number | null;
-                    riderName: string | null;
                     isOfficial: boolean;
                 } | null;
                 /** @description A runner's result values. */
@@ -21328,7 +21321,6 @@ export interface components {
                     resultStatus: "FINISHED" | "DID_NOT_FINISH" | "DISQUALIFIED" | "DID_NOT_START";
                     finishPosition: number | null;
                     startPosition: number | null;
-                    riderName: string | null;
                     isOfficial: boolean;
                 };
             }[];

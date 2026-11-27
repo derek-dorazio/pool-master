@@ -17,6 +17,7 @@ import { sportPlay } from '../support/sport-play';
 import { applySlotTiebreakerRule } from './slot-tiebreakers';
 import { oneEventSlotId } from '../support/test-slots';
 import { createMatchRow } from '../support/match-rows';
+import { inTierSet, tierSetSlot } from '../support/event-tier-sets';
 
 export const DAY = 24 * 60 * 60 * 1000;
 export const HOUR = 60 * 60 * 1000;
@@ -98,15 +99,16 @@ export async function seedEventWithField(golfers: number, { startsInDays = 30, s
   return { event, field };
 }
 
-/** `tiers` tiers on the event, its field dealt into them in turn: golfer N in tier N mod `tiers`. */
+/** `tiers` tiers in the event's one slot's set (#2044), its field dealt into them in turn: golfer N in tier N mod `tiers`. */
 export async function seedTiers(sportEventId: string, field: readonly { id: string }[], tiers: number) {
   const prisma = getPrisma();
+  const slot = await tierSetSlot(prisma, sportEventId);
   const rows: { id: string }[] = [];
   for (let tierNumber = 1; tierNumber <= tiers; tierNumber += 1) {
-    rows.push(await prisma.sportEventTier.create({ data: { sportEventId, tierKey: `T${String(tierNumber)}`, tierNumber } }));
+    rows.push(await prisma.sportEventSlotTier.create({ data: { sportEventSlotId: slot.id, tierKey: `T${String(tierNumber)}`, tierNumber } }));
   }
-  await prisma.sportEventParticipantValuation.createMany({
-    data: field.map((row, index) => ({ sportEventParticipantId: row.id, sportEventTierId: rows[index % tiers]?.id, tierOrderIndex: Math.floor(index / tiers) + 1 })),
+  await prisma.sportEventSlotParticipantValuation.createMany({
+    data: field.map((row, index) => ({ ...inTierSet(slot), sportEventParticipantId: row.id, sportEventSlotTierId: rows[index % tiers]?.id, tierOrderIndex: Math.floor(index / tiers) + 1 })),
   });
 }
 

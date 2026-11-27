@@ -179,13 +179,15 @@ describe('Creating one event (#1253)', () => {
     // event read back carries the slot definitions it covers (#2010), a second slot read #2089
     // folds into the summary's; the definitions' competitions and phases once each (#2153). No
     // series is found or created (#2010). The rounds go in the event's slot, whose event slot row is
-    // read once for every round, and the slots are read once together, with their events (#2006).
+    // read once for every round, and the slots are read once together, with their events (#2006). The
+    // default tiers go in the event's tier-set slot's set, and the summary reads its tier slots, with
+    // whether a tiered or budget template lists each (#2044).
     expect(statementCounts(statements)).toEqual([
-      ['INSERT sport_event_rounds', 1], ['INSERT sport_event_slots', 1], ['INSERT sport_event_tiers', 1], ['INSERT sport_events', 1],
-      ['SELECT platform_tier_profile_ranges', 1], ['SELECT platform_tier_profile_sources', 1],
+      ['INSERT sport_event_rounds', 1], ['INSERT sport_event_slot_tiers', 1], ['INSERT sport_event_slots', 1], ['INSERT sport_events', 1],
+      ['SELECT contest_config_template_slots', 1], ['SELECT platform_tier_profile_ranges', 1], ['SELECT platform_tier_profile_sources', 1],
       ['SELECT platform_tier_profiles', 1], ['SELECT provider_leagues', 2], ['SELECT providers', 2],
-      ['SELECT sport_event_provider_mappings', 1], ['SELECT sport_event_slots', 3], ['SELECT sport_events', 1], ['SELECT sport_league_competition_slots', 3],
-      ['SELECT sport_league_competitions', 1], ['SELECT sport_league_phases', 1], ['SELECT sport_league_provider_mappings', 2], ['SELECT sport_league_season_competition_slots', 3],
+      ['SELECT sport_event_provider_mappings', 1], ['SELECT sport_event_slots', 4], ['SELECT sport_events', 1], ['SELECT sport_league_competition_slots', 4],
+      ['SELECT sport_league_competitions', 1], ['SELECT sport_league_phases', 1], ['SELECT sport_league_provider_mappings', 2], ['SELECT sport_league_season_competition_slots', 4],
       ['SELECT sport_league_seasons', 1], ['SELECT sport_leagues', 2], ['SELECT sports', 2],
     ]);
     expect(created).toEqual(await sportEvents.requireAdminSummary(created.event.id));
@@ -230,7 +232,7 @@ describe('Editing an event\'s tiers (#1253)', () => {
     const tour = await golfTour();
     const { sportEvents, tiers } = integrationSportEventServices();
     const created = await sportEvents.createEvent({ seasonSlotIds: [await testSlotId(getPrisma(), tour.id, new Date('2087-05-06T12:00:00.000Z'))], name: 'Shuffle Open' });
-    const before = await getPrisma().sportEventTier.findMany({ where: { sportEventId: created.event.id } });
+    const before = await getPrisma().sportEventSlotTier.findMany({ where: { slot: { sportEventId: created.event.id } } });
     const idByKey = new Map(before.map((row) => [row.tierKey, row.id]));
 
     await tiers.replaceTiers({
@@ -241,7 +243,7 @@ describe('Editing an event\'s tiers (#1253)', () => {
       ],
     });
 
-    const after = await getPrisma().sportEventTier.findMany({ where: { sportEventId: created.event.id }, orderBy: { tierNumber: 'asc' } });
+    const after = await getPrisma().sportEventSlotTier.findMany({ where: { slot: { sportEventId: created.event.id } }, orderBy: { tierNumber: 'asc' } });
     expect(after.map((row) => [row.tierKey, row.tierNumber])).toEqual([
       ['tier-5', 1], ['tier-4', 2], ['tier-3', 3], ['tier-2', 4], ['tier-1', 5], ['tier-new', 6],
     ]);

@@ -1,8 +1,8 @@
 /**
  * Prisma adapters for the cross-sport catalog and event-core ports (#235, #236):
  * Sport, SportLeague, SportEvent,
- * SportEventRound, SportEventParticipant, SportEventTier,
- * and SportEventParticipantValuation.
+ * SportEventRound, SportEventParticipant, and an event slot's team tier set
+ * (SportEventSlotTier, SportEventSlotParticipantValuation, #2044).
  *
  * Sport extension rows (golf rounds and standings, race results, matches) have
  * their own adapters. The one exception is the field read (#1163): a field row comes with
@@ -19,8 +19,9 @@ import type {
   SportEventParticipantFieldUpdate,
   SportEventParticipantPatch,
   SportEventParticipantRepository,
-  SportEventParticipantValuationRepository,
+  SportEventSlotParticipantValuationRepository,
   SportEventParticipantView,
+  FieldGameResultView,
   SportEventLink,
   SportEventProviderSummary,
   SportEventAutoReleaseCandidate,
@@ -34,9 +35,9 @@ import type {
   SportEventRoundRepository,
   SportEventRoundCreate,
   SportEventRoundSchedule,
-  SportEventTierCreate,
-  SportEventTierDefinition,
-  SportEventTierRepository,
+  SportEventSlotTierCreate,
+  SportEventSlotTierDefinition,
+  SportEventSlotTierRepository,
   SportEventStatusTransition,
   SportEventUpdate,
   SportLeagueFilters,
@@ -45,12 +46,11 @@ import type {
   SportLeagueUses,
   SportRepository,
   TierAssignment,
+  ValuedSlot,
 } from '@poolmaster/shared/db';
 import type {
   AutoReleaseCheck,
   BackgroundJobRequest,
-  EventPricingConfig,
-  EventTierConfig,
   MatchStatus,
   ParticipantRoundStatus,
   RoundResultFacts,
@@ -59,22 +59,26 @@ import type {
   SportConfig,
   SportEvent,
   SportEventParticipant,
-  SportEventParticipantValuation,
   SportEventRound,
-  SportEventTier,
+  SportEventSlotParticipantValuation,
+  SportEventSlotTier,
+  SportEventTierSlot,
   SportLeague,
   SportLeagueProviderMapping,
   SportLeagueSeasonSlot,
+  SlotPricing,
+  SlotTierSettings,
 } from '@poolmaster/shared/domain';
-import { compareCoveredSlots, compareMatchPlaces, compareSeasonSlots, StoredEventPricingSchema, StoredEventTierLayoutSchema, providerCodeOfSourceId, providerSourceIdOf, requireProviderCodeOfSourceId, slotPeriodsOf, SportEventParticipantStatus, SportEventStatus, ValuationSource } from '@poolmaster/shared/domain';
+import { chooseTierSetSlot, compareCoveredSlots, TIER_SET_SELECTION_TYPES, compareMatchPlaces, compareSeasonSlots, providerCodeOfSourceId, providerSourceIdOf, requireProviderCodeOfSourceId, slotPeriodsOf, slotTierLayoutOf, SportEventParticipantStatus, SportEventStatus, ValuationSource } from '@poolmaster/shared/domain';
 import { forgettingReads, memoizedRead, memoizedReadMany, ReadMemoKey } from '../core/request-read-memo';
 import { backgroundJobsInsert, insertBackgroundJobs } from './prisma-background-job-repository';
+import { TIER_PROFILE_INCLUDE, toPlatformTierProfile } from './prisma-profile-repositories';
 import { toGolfRound, toGolfStanding } from './prisma-golf-repositories';
-import { MATCH_INCLUDE, toSportEventRoundMatch } from './prisma-match-repositories';
+import { GAME_SIDE_RESULTS_INCLUDE, MATCH_INCLUDE, toGameSideResult, toSportEventRoundMatch } from './prisma-match-repositories';
 import { mapToParticipant } from './prisma-participant-repository';
-import { toRaceResult } from './prisma-race-repositories';
 import { SYNC_PROVIDER_SELECT, syncProviderIdOf, syncProviderNameOf } from './prisma-sync-provider';
 import { SPORT_EVENT_SPORT_SELECT, SPORT_LEAGUE_SPORT_SELECT, sportEventSportWhere, sportOfEvent, sportUrlSegmentOfEvent } from './sport-of';
+import { readFieldMatchIds } from './field-match-read';
 import { COVERS_TEST_SLOT, ROUND_EVENT_SLOT_SELECT, SEASON_SLOT_SELECT, toRoundSlot, toSeasonSlot } from './season-slot-select';
 import { SLOT_PLACE_SELECT, slotPlaceOf } from './slot-place-select';
 
@@ -491,10 +495,10 @@ export class PrismaSportEventRepository implements SportEventRepository {
       this.prisma.sportEventParticipantRound.deleteMany({ where: field }),
       this.prisma.sportEventParticipantGolfStanding.deleteMany({ where: { standing: field } }),
       this.prisma.sportEventParticipantStanding.deleteMany({ where: field }),
-      this.prisma.sportEventParticipantValuation.deleteMany({ where: field }),
+      // The slots' tier sets go with the slots, which the event's delete cascades to (#2044).
+      this.prisma.sportEventSlotParticipantValuation.deleteMany({ where: { sportEventId: id } }),
       this.prisma.sportEventParticipant.deleteMany({ where: { sportEventId: id } }),
       this.prisma.sportEventRound.deleteMany({ where: { sportEventId: id } }),
-      this.prisma.sportEventTier.deleteMany({ where: { sportEventId: id } }),
       this.prisma.sportEvent.delete({ where: { id } }),
     ];
   }
@@ -508,41 +512,54 @@ export class PrismaSportEventRepository implements SportEventRepository {
     return countMap(sportEventIds, groups.map((group) => [group.sportEventId, group._count._all]));
   }
 
-  async countUntieredActiveParticipants(sportEventIds: readonly string[]): Promise<Map<string, number>> {
+  async countUntieredActiveParticipants(slots: readonly ValuedSlot[]): Promise<Map<string, number>> {
+    // A tierless row auto-tiering left beyond a capped last tier has a source (#1844): it is out of
+    // the tiers by the league's layout, not waiting for one.
+    return this.countActiveFieldRowsWithout(slots, (slotId) => ({
+      sportEventSlotId: slotId,
+      OR: [{ sportEventSlotTierId: { not: null } }, { tierAssignedSource: { not: null } }],
+    }));
+  }
+
+  async countUnpricedActiveParticipants(slots: readonly ValuedSlot[]): Promise<Map<string, number>> {
+    return this.countActiveFieldRowsWithout(slots, (slotId) => ({ sportEventSlotId: slotId, price: { not: null } }));
+  }
+
+  /**
+   * Active field rows of each slot's event with no valuation in the slot's set matching `valued`,
+   * per slot id: one grouped read by event, so at most one slot of an event.
+   */
+  private async countActiveFieldRowsWithout(
+    slots: readonly ValuedSlot[],
+    valued: (slotId: string) => Prisma.SportEventSlotParticipantValuationWhereInput,
+  ): Promise<Map<string, number>> {
+    const slotIdByEvent = new Map(slots.map((slot) => [slot.sportEventId, slot.id]));
+    if (slotIdByEvent.size !== slots.length) {
+      throw new Error('Field rows are counted for at most one slot of an event.');
+    }
+    if (slots.length === 0) return new Map();
     const groups = await this.prisma.sportEventParticipant.groupBy({
       by: ['sportEventId'],
       where: {
-        sportEventId: { in: [...sportEventIds] },
         status: SportEventParticipantStatus.ACTIVE,
-        // A tierless row auto-tiering left beyond a capped last tier has a source (#1844): it is
-        // out of the tiers by the league's layout, not waiting for one.
-        OR: [{ valuation: null }, { valuation: { sportEventTierId: null, tierAssignedSource: null } }],
+        OR: slots.map((slot) => ({ sportEventId: slot.sportEventId, valuations: { none: valued(slot.id) } })),
       },
       _count: { _all: true },
     });
-    return countMap(sportEventIds, groups.map((group) => [group.sportEventId, group._count._all]));
+    return countMap(slots.map((slot) => slot.id), groups.flatMap((group): Array<[string, number]> => {
+      const slotId = slotIdByEvent.get(group.sportEventId);
+      return slotId === undefined ? [] : [[slotId, group._count._all]];
+    }));
   }
 
-  async countUnpricedActiveParticipants(sportEventIds: readonly string[]): Promise<Map<string, number>> {
-    const groups = await this.prisma.sportEventParticipant.groupBy({
-      by: ['sportEventId'],
-      where: {
-        sportEventId: { in: [...sportEventIds] },
-        status: SportEventParticipantStatus.ACTIVE,
-        OR: [{ valuation: null }, { valuation: { price: null } }],
-      },
+  async countTiers(sportEventSlotIds: readonly string[]): Promise<Map<string, number>> {
+    if (sportEventSlotIds.length === 0) return new Map();
+    const groups = await this.prisma.sportEventSlotTier.groupBy({
+      by: ['sportEventSlotId'],
+      where: { sportEventSlotId: { in: [...sportEventSlotIds] } },
       _count: { _all: true },
     });
-    return countMap(sportEventIds, groups.map((group) => [group.sportEventId, group._count._all]));
-  }
-
-  async countTiers(sportEventIds: readonly string[]): Promise<Map<string, number>> {
-    const groups = await this.prisma.sportEventTier.groupBy({
-      by: ['sportEventId'],
-      where: { sportEventId: { in: [...sportEventIds] } },
-      _count: { _all: true },
-    });
-    return countMap(sportEventIds, groups.map((group) => [group.sportEventId, group._count._all]));
+    return countMap(sportEventSlotIds, groups.map((group) => [group.sportEventSlotId, group._count._all]));
   }
 
   async isTestEvent(sportEventId: string): Promise<boolean | null> {
@@ -577,29 +594,39 @@ export class PrismaSportEventRepository implements SportEventRepository {
     return slotsByEvent;
   }
 
-  async findEmptyTierNumbers(sportEventIds: readonly string[]): Promise<Map<string, number[]>> {
-    const rows = await this.prisma.sportEventTier.findMany({
+  async findEmptyTierNumbers(sportEventSlotIds: readonly string[]): Promise<Map<string, number[]>> {
+    const numbers = new Map<string, number[]>(sportEventSlotIds.map((id) => [id, []]));
+    if (sportEventSlotIds.length === 0) return numbers;
+    const rows = await this.prisma.sportEventSlotTier.findMany({
       where: {
-        sportEventId: { in: [...sportEventIds] },
+        sportEventSlotId: { in: [...sportEventSlotIds] },
         valuations: { none: { sportEventParticipant: { status: SportEventParticipantStatus.ACTIVE } } },
       },
-      select: { sportEventId: true, tierNumber: true },
+      select: { sportEventSlotId: true, tierNumber: true },
       orderBy: { tierNumber: 'asc' },
     });
-    const numbers = new Map<string, number[]>(sportEventIds.map((id) => [id, []]));
     for (const row of rows) {
-      numbers.get(row.sportEventId)?.push(row.tierNumber);
+      numbers.get(row.sportEventSlotId)?.push(row.tierNumber);
     }
     return numbers;
   }
 
   async findReleaseFacts(event: { id: string; sportLeagueId: string }): Promise<SportEventReleaseFacts> {
-    const [scheduledRoundCount, contestSetupCount] = await Promise.all([
+    const [scheduledRoundCount, contestSetupCount, rosterSetupCount] = await Promise.all([
       this.prisma.sportEventRound.count({ where: { sportEventId: event.id } }),
       // The setups a commissioner could make a contest on the event from: every setup belongs to one sport league (#1825).
       this.prisma.contestConfigTemplate.count({ where: { active: true, sportLeagueId: event.sportLeagueId } }),
+      // Those that pick from its tiers or under its price cap: tiered and budget, over one of its slots.
+      this.prisma.contestConfigTemplate.count({
+        where: {
+          active: true,
+          sportLeagueId: event.sportLeagueId,
+          selectionType: { in: [...TIER_SET_SELECTION_TYPES] },
+          slots: { some: { definition: { seasonSlots: { some: { eventSlot: { sportEventId: event.id } } } } } },
+        },
+      }),
     ]);
-    return { scheduledRoundCount, contestSetupCount };
+    return { scheduledRoundCount, contestSetupCount, rosterSetupCount };
   }
 
   async findAutoReleaseCandidates(now: Date, horizon: Date): Promise<SportEventAutoReleaseCandidate[]> {
@@ -899,33 +926,89 @@ const FIELD_ORDER = [
 ] satisfies Prisma.SportEventParticipantOrderByWithRelationInput[];
 
 /**
+ * A Season slot as the tier-set rule reads it (#2044): its place in play, and whether an active
+ * tiered or budget template of its league lists its definition (`TIER_SET_SELECTION_TYPES`).
+ */
+const TIER_SET_SEASON_SLOT_SELECT = {
+  ...SEASON_SLOT_SELECT,
+  definition: {
+    select: {
+      ...SEASON_SLOT_SELECT.definition.select,
+      templateSlots: { where: { template: { active: true, selectionType: { in: [...TIER_SET_SELECTION_TYPES] } } }, select: { id: true }, take: 1 },
+    },
+  },
+} as const satisfies Prisma.SportLeagueSeasonCompetitionSlotSelect;
+
+type TierSetSeasonSlotRow = Prisma.SportLeagueSeasonCompetitionSlotGetPayload<{ select: typeof TIER_SET_SEASON_SLOT_SELECT }>;
+
+/**
  * Everything a field row is read with (#1163). Prisma 6 reads each relation with its own
  * statement on one connection, so the whole field is a handful of sequential queries; empty
  * relations, such as a golf event's race results, return nothing.
  */
-function fieldRowInclude() {
+function fieldRowInclude(fieldMatchIds: readonly string[]) {
   return {
     participant: true,
-    valuation: true,
+    // Its valuation in each slot's set, and its event's slots as the tier-set rule reads them, in the
+    // same query: a field row is read with its tier-set slot's (#2044).
+    valuations: true,
+    sportEvent: { select: { slots: { select: { id: true, seasonSlot: { select: TIER_SET_SEASON_SLOT_SELECT } } } } },
     standing: { include: { golf: true } },
     rounds: {
       include: { sportEventRound: { select: { roundNumber: true } }, golf: true },
       orderBy: { sportEventRound: { roundNumber: 'asc' } },
     },
-    raceResult: true,
-    matchSides: { select: { match: { include: MATCH_INCLUDE } } },
+    // FIELD matches (a golf round, a race) name every runner: their side results are read by
+    // `readFieldResults`, the row's own only, rather than each match whole for every row.
+    matchSides: { where: { sportEventRoundMatchId: { notIn: [...fieldMatchIds] } }, select: { match: { include: MATCH_INCLUDE } } },
   } satisfies Prisma.SportEventParticipantInclude;
 }
 
 type FieldRow = Prisma.SportEventParticipantGetPayload<{ include: ReturnType<typeof fieldRowInclude> }>;
 
-/** A field row, flagged when its participant belongs to `sportLeagueId`, its event's. */
-function toFieldRow(row: FieldRow, sportLeagueId: string): SportEventParticipantView {
-  const { participant, valuation, standing, rounds, raceResult, matchSides, ...entry } = row;
+/**
+ * The rows' side results in their events' FIELD Games (#2008), in one read, by field row and in
+ * round order: the row's own side result only, never the whole field's.
+ */
+async function readFieldResults(db: Db, fieldMatchIds: readonly string[], sportEventParticipantIds: readonly string[]): Promise<Map<string, FieldGameResultView[]>> {
+  const byEntry = new Map<string, FieldGameResultView[]>();
+  if (fieldMatchIds.length === 0 || sportEventParticipantIds.length === 0) return byEntry;
+  const wanted = new Set(sportEventParticipantIds);
+  // Every result of the matches, kept for the rows asked for: the read leads on the match ids.
+  const rows = await db.sportEventRoundMatchGameSideResult.findMany({
+    where: { sportEventRoundMatchId: { in: [...fieldMatchIds] } },
+    include: {
+      ...GAME_SIDE_RESULTS_INCLUDE.sideResults.include,
+      side: { select: { sideNumber: true, sportEventParticipantId: true } },
+      game: { select: { status: true, gameNumber: true, match: { select: { sportEventRound: { select: { roundNumber: true } } } } } },
+    },
+  });
+  const roundNumberOf = (row: (typeof rows)[number]): number => row.game.match.sportEventRound.roundNumber;
+  const ordered = [...rows].sort((left, right) => roundNumberOf(left) - roundNumberOf(right) || left.game.gameNumber - right.game.gameNumber);
+  for (const row of ordered) {
+    const entryId = row.side.sportEventParticipantId;
+    if (!entryId || !wanted.has(entryId)) continue;
+    byEntry.set(entryId, [...(byEntry.get(entryId) ?? []), {
+      roundNumber: roundNumberOf(row),
+      gameStatus: row.game.status,
+      result: toGameSideResult(row),
+      updatedAt: row.updatedAt,
+    }]);
+  }
+  return byEntry;
+}
+
+/**
+ * A field row, flagged when its participant belongs to `sportLeagueId`, its event's, with its
+ * valuation in its event's tier-set slot's set (`chooseTierSetSlot`).
+ */
+function toFieldRow(row: FieldRow, sportLeagueId: string, fieldResults: ReadonlyMap<string, FieldGameResultView[]>): SportEventParticipantView {
+  const { participant, valuations, sportEvent, standing, rounds, matchSides, ...entry } = row;
+  const tierSetSlotId = chooseTierSetSlot(inPlayOrder(sportEvent.slots))?.row.id;
   return {
     entry: toSportEventParticipant(entry),
     participant: mapToParticipant(participant),
-    valuation: valuation ? toValuation(valuation) : null,
+    valuation: toValuationOrNull(valuations.find((valuation) => valuation.sportEventSlotId === tierSetSlotId)),
     standing: standing
       ? {
         standing: {
@@ -954,7 +1037,7 @@ function toFieldRow(row: FieldRow, sportLeagueId: string): SportEventParticipant
       },
       golf: round.golf ? toGolfRound(round.golf) : null,
     })),
-    raceResult: raceResult ? toRaceResult(raceResult) : null,
+    fieldResults: fieldResults.get(row.id) ?? [],
     matches: matchSides
       .map((side) => toSportEventRoundMatch(side.match))
       .sort(compareMatchPlaces),
@@ -991,32 +1074,37 @@ export class PrismaSportEventParticipantRepository implements SportEventParticip
   }
 
   async findFieldForEvent(sportEventId: string, sportLeagueId: string): Promise<SportEventParticipantView[]> {
+    const fieldMatchIds = await readFieldMatchIds(this.prisma, [sportEventId]);
     const rows = await this.prisma.sportEventParticipant.findMany({
       where: { sportEventId },
-      include: fieldRowInclude(),
+      include: fieldRowInclude(fieldMatchIds),
       orderBy: FIELD_ORDER,
     });
-    return rows.map((row) => toFieldRow(row, sportLeagueId));
+    const fieldResults = await readFieldResults(this.prisma, fieldMatchIds, rows.map((row) => row.id));
+    return rows.map((row) => toFieldRow(row, sportLeagueId, fieldResults));
   }
 
   async findFieldsForEvents(events: readonly { sportEventId: string; sportLeagueId: string }[]): Promise<SportEventParticipantView[]> {
     if (events.length === 0) return [];
+    const fieldMatchIds = await readFieldMatchIds(this.prisma, events.map((event) => event.sportEventId));
     const rows = await this.prisma.sportEventParticipant.findMany({
       where: { sportEventId: { in: events.map((event) => event.sportEventId) } },
-      include: fieldRowInclude(),
+      include: fieldRowInclude(fieldMatchIds),
       orderBy: FIELD_ORDER,
     });
+    const fieldResults = await readFieldResults(this.prisma, fieldMatchIds, rows.map((row) => row.id));
     return events.flatMap(({ sportEventId, sportLeagueId }) => rows
       .filter((row) => row.sportEventId === sportEventId)
-      .map((row) => toFieldRow(row, sportLeagueId)));
+      .map((row) => toFieldRow(row, sportLeagueId, fieldResults)));
   }
 
   async findFieldRow(sportEventId: string, sportEventParticipantId: string, sportLeagueId: string): Promise<SportEventParticipantView | null> {
+    const fieldMatchIds = await readFieldMatchIds(this.prisma, [sportEventId]);
     const row = await this.prisma.sportEventParticipant.findFirst({
       where: { id: sportEventParticipantId, sportEventId },
-      include: fieldRowInclude(),
+      include: fieldRowInclude(fieldMatchIds),
     });
-    return row ? toFieldRow(row, sportLeagueId) : null;
+    return row ? toFieldRow(row, sportLeagueId, await readFieldResults(this.prisma, fieldMatchIds, [row.id])) : null;
   }
 
   async countDistinctParticipants(sportEventIds: readonly string[]): Promise<number> {
@@ -1051,12 +1139,13 @@ export class PrismaSportEventParticipantRepository implements SportEventParticip
       idsByPatch.set(key, group);
     }
     // A row's price and tier move land in the one valuation write, so the save stands or falls whole.
-    const valuations: ValuationChange[] = entries.flatMap((entry) => (entry.price === undefined && entry.tier === undefined
+    const valuations: ValuationChange[] = entries.flatMap(({ id, valuation }) => (valuation === undefined
+      || (valuation.price === undefined && valuation.tier === undefined)
       ? []
       : [{
-        sportEventParticipantId: entry.id,
-        ...(entry.price === undefined ? {} : { price: entry.price, priceAssignedSource: ValuationSource.MANUAL }),
-        ...(entry.tier === undefined ? {} : { ...entry.tier, tierAssignedSource: ValuationSource.MANUAL }),
+        ...valuedRow(valuation.slot, id),
+        ...(valuation.price === undefined ? {} : { price: valuation.price, priceAssignedSource: ValuationSource.MANUAL }),
+        ...(valuation.tier === undefined ? {} : { ...valuation.tier, tierAssignedSource: ValuationSource.MANUAL }),
       }]));
     await this.prisma.$transaction(async (tx) => {
       const groups = [...idsByPatch.values()];
@@ -1073,12 +1162,17 @@ export class PrismaSportEventParticipantRepository implements SportEventParticip
 
   async delete(id: string, jobs: readonly BackgroundJobRequest[] = []): Promise<void> {
     const own = { sportEventParticipantId: id };
+    const entry = await this.prisma.sportEventParticipant.findUnique({ where: { id }, select: { sportEventId: true } });
+    const fieldMatchIds = entry ? await readFieldMatchIds(this.prisma, [entry.sportEventId]) : [];
     await this.prisma.$transaction([
+      // Its sides in the event's FIELD matches (a race), with their results; a head-to-head side still holds it.
+      this.prisma.sportEventRoundMatchSide.deleteMany({ where: { ...own, sportEventRoundMatchId: { in: fieldMatchIds } } }),
       this.prisma.sportEventParticipantGolfRound.deleteMany({ where: { participantRound: own } }),
       this.prisma.sportEventParticipantRound.deleteMany({ where: own }),
       this.prisma.sportEventParticipantGolfStanding.deleteMany({ where: { standing: own } }),
       this.prisma.sportEventParticipantStanding.deleteMany({ where: own }),
-      this.prisma.sportEventParticipantValuation.deleteMany({ where: own }),
+      // The row's valuations in every slot's set go with it by their foreign key's cascade, which
+      // finds them through the (event, field row) index (#2044).
       this.prisma.sportEventParticipant.delete({ where: { id } }),
       ...(jobs.length > 0 ? [backgroundJobsInsert(this.prisma, jobs)] : []),
     ]);
@@ -1089,34 +1183,117 @@ export class PrismaSportEventParticipantRepository implements SportEventParticip
   }
 }
 
-export class PrismaSportEventTierRepository implements SportEventTierRepository {
+/**
+ * What an event slot's team tier set reads of the slot (#2044): its Season slot, for play order and
+ * status, and what the set was last tiered and priced with.
+ */
+const TIER_SLOT_SELECT = {
+  id: true,
+  sportEventId: true,
+  tierSize: true,
+  platformPricingProfileId: true,
+  salaryCap: true,
+  pricingUnit: true,
+  topSharePercent: true,
+  floorSharePercent: true,
+  steepness: true,
+  platformTierProfile: { include: TIER_PROFILE_INCLUDE },
+  seasonSlot: { select: TIER_SET_SEASON_SLOT_SELECT },
+} as const satisfies Prisma.SportEventSlotSelect;
+
+type TierSlotRow = Prisma.SportEventSlotGetPayload<{ select: typeof TIER_SLOT_SELECT }>;
+
+/**
+ * One event's slots in play order (`compareSeasonSlots`), each with its Season slot and whether a
+ * tiered or budget template of its league lists it: what `chooseTierSetSlot` picks the event's
+ * tier-set slot from (#2044).
+ */
+function inPlayOrder<Row extends { seasonSlot: TierSetSeasonSlotRow }>(rows: readonly Row[]): Array<{ row: Row; seasonSlot: SportLeagueSeasonSlot; listedByTierSetTemplate: boolean }> {
+  return rows
+    .map((row) => {
+      const { definition: { templateSlots, ...definition }, ...seasonSlot } = row.seasonSlot;
+      return { row, seasonSlot: toSeasonSlot({ ...seasonSlot, definition }), listedByTierSetTemplate: templateSlots.length > 0 };
+    })
+    .sort((a, b) => compareSeasonSlots(a.seasonSlot, b.seasonSlot));
+}
+
+function toTierSlot(row: TierSlotRow, seasonSlot: SportLeagueSeasonSlot, isTierSetSlot: boolean): SportEventTierSlot {
+  return {
+    id: row.id,
+    sportEventId: row.sportEventId,
+    seasonSlotId: seasonSlot.id,
+    seasonSlotStatus: seasonSlot.status,
+    isTierSetSlot,
+    tierLayout: row.platformTierProfile === null ? null : slotTierLayoutOf(toPlatformTierProfile(row.platformTierProfile), row.tierSize),
+    pricing: toSlotPricing(row),
+  };
+}
+
+/** The values a slot's set was priced with; the database check sets all six columns together. */
+function toSlotPricing(row: TierSlotRow): SlotPricing | null {
+  const { platformPricingProfileId, salaryCap, pricingUnit, topSharePercent, floorSharePercent, steepness } = row;
+  if (platformPricingProfileId === null) return null;
+  if (salaryCap === null || pricingUnit === null || topSharePercent === null || floorSharePercent === null || steepness === null) {
+    throw new Error(`Event slot ${row.id} names a pricing profile without the values it was priced with.`);
+  }
+  return {
+    platformPricingProfileId,
+    salaryCap,
+    unit: pricingUnit,
+    topSharePercent,
+    floorSharePercent,
+    steepness,
+  };
+}
+
+export class PrismaSportEventSlotTierRepository implements SportEventSlotTierRepository {
   constructor(private readonly prisma: Db) {}
 
-  async findBySportEvent(sportEventId: string): Promise<SportEventTier[]> {
-    const rows = await this.prisma.sportEventTier.findMany({ where: { sportEventId }, orderBy: { tierNumber: 'asc' } });
+  async findTierSlots(sportEventIds: readonly string[]): Promise<Map<string, SportEventTierSlot[]>> {
+    if (sportEventIds.length === 0) return new Map();
+    // Read once per request (#2044): contest setup, opening and the reply each ask for the same
+    // events' tier slots. A write to an event or its slots forgets them with the event.
+    const events = await memoizedReadMany(this.prisma, ReadMemoKey.sportEventTierSlots, sportEventIds, async (missing) => {
+      const rows = await this.prisma.sportEventSlot.findMany({
+        where: { sportEventId: { in: [...missing] } },
+        select: TIER_SLOT_SELECT,
+      });
+      return missing.map((id) => {
+        const ordered = inPlayOrder(rows.filter((row) => row.sportEventId === id));
+        const tierSetSlot = chooseTierSetSlot(ordered);
+        return { id, slots: ordered.map((slot) => toTierSlot(slot.row, slot.seasonSlot, slot === tierSetSlot)) };
+      });
+    });
+    const slotsByEvent = new Map(sportEventIds.map((id): [string, SportEventTierSlot[]] => [id, []]));
+    for (const { id, slots } of events) slotsByEvent.set(id, slots);
+    return slotsByEvent;
+  }
+
+  async findBySlot(sportEventSlotId: string): Promise<SportEventSlotTier[]> {
+    const rows = await this.prisma.sportEventSlotTier.findMany({ where: { sportEventSlotId }, orderBy: { tierNumber: 'asc' } });
     return rows.map(toTier);
   }
 
-  async findBySportEvents(sportEventIds: readonly string[]): Promise<SportEventTier[]> {
-    if (sportEventIds.length === 0) return [];
-    const rows = await this.prisma.sportEventTier.findMany({
-      where: { sportEventId: { in: [...sportEventIds] } },
-      orderBy: [{ sportEventId: 'asc' }, { tierNumber: 'asc' }],
+  async findBySlots(sportEventSlotIds: readonly string[]): Promise<SportEventSlotTier[]> {
+    if (sportEventSlotIds.length === 0) return [];
+    const rows = await this.prisma.sportEventSlotTier.findMany({
+      where: { sportEventSlotId: { in: [...sportEventSlotIds] } },
+      orderBy: [{ sportEventSlotId: 'asc' }, { tierNumber: 'asc' }],
     });
     return rows.map(toTier);
   }
 
-  async createMany(tiers: readonly SportEventTierCreate[]): Promise<void> {
+  async createMany(tiers: readonly SportEventSlotTierCreate[]): Promise<void> {
     if (tiers.length === 0) return;
-    await this.prisma.sportEventTier.createMany({
-      data: tiers.map((tier) => ({ sportEventId: tier.sportEventId, ...tierColumns(tier) })),
+    await this.prisma.sportEventSlotTier.createMany({
+      data: tiers.map((tier) => ({ sportEventSlotId: tier.sportEventSlotId, ...tierColumns(tier) })),
     });
   }
 
-  async replace(sportEventId: string, tiers: readonly SportEventTierDefinition[], reassignTo?: string): Promise<void> {
+  async replace(sportEventSlotId: string, tiers: readonly SportEventSlotTierDefinition[], reassignTo?: string): Promise<void> {
     const keep = new Set(tiers.map((tier) => tier.tierKey));
     await this.prisma.$transaction(async (tx) => {
-      const existing = await tx.sportEventTier.findMany({ where: { sportEventId } });
+      const existing = await tx.sportEventSlotTier.findMany({ where: { sportEventSlotId } });
       const existingByKey = new Map(existing.map((tier) => [tier.tierKey, tier]));
       const removed = existing.filter((tier) => !keep.has(tier.tierKey));
       const changed = tiers.flatMap((tier) => {
@@ -1126,127 +1303,127 @@ export class PrismaSportEventTierRepository implements SportEventTierRepository 
       const added = tiers.filter((tier) => !existingByKey.has(tier.tierKey));
       // Park every number that moves or goes away below zero in one statement first (tier numbers
       // start at 1), so two tiers swapping numbers, or a new tier taking a removed one's, never
-      // collide on the (sportEventId, tierNumber) unique index.
+      // collide on the (sportEventSlotId, tierNumber) unique index.
       const parkedIds = [...changed.map(({ id }) => id), ...removed.map((tier) => tier.id)];
       if (parkedIds.length > 0) {
-        await tx.sportEventTier.updateMany({ where: { id: { in: parkedIds } }, data: { tierNumber: { multiply: -1 } } });
+        await tx.sportEventSlotTier.updateMany({ where: { id: { in: parkedIds } }, data: { tierNumber: { multiply: -1 } } });
       }
       // Each changed tier takes its own number, so these stay one statement apiece;
       // valuations point at a tier, so a tier cannot be deleted and inserted again instead.
       for (const { id, tier } of changed) {
-        // poolmaster-allow-query-in-loop: only the tiers whose number changed, of an event's handful
-        await tx.sportEventTier.update({ where: { id }, data: { tierNumber: tier.tierNumber } });
+        // poolmaster-allow-query-in-loop: only the tiers whose number changed, of a set's handful
+        await tx.sportEventSlotTier.update({ where: { id }, data: { tierNumber: tier.tierNumber } });
       }
       if (added.length > 0) {
-        await tx.sportEventTier.createMany({ data: added.map((tier) => ({ sportEventId, ...tierColumns(tier) })) });
+        await tx.sportEventSlotTier.createMany({ data: added.map((tier) => ({ sportEventSlotId, ...tierColumns(tier) })) });
       }
       if (removed.length === 0) {
         return;
       }
       const target = reassignTo
         ? existingByKey.get(reassignTo)
-          ?? await tx.sportEventTier.findUniqueOrThrow({ where: { sportEventId_tierKey: { sportEventId, tierKey: reassignTo } } })
+          ?? await tx.sportEventSlotTier.findUniqueOrThrow({ where: { sportEventSlotId_tierKey: { sportEventSlotId, tierKey: reassignTo } } })
         : null;
       const removedIds = removed.map((tier) => tier.id);
       // A valuation left with no tier loses its source too: a tierless row with a source is one
       // auto-tiering placed beyond a capped last tier (#1844), which release doesn't wait on.
-      await tx.sportEventParticipantValuation.updateMany({
-        where: { sportEventTierId: { in: removedIds } },
-        data: target ? { sportEventTierId: target.id, tierOrderIndex: null } : { sportEventTierId: null, tierOrderIndex: null, tierAssignedSource: null },
+      await tx.sportEventSlotParticipantValuation.updateMany({
+        where: { sportEventSlotTierId: { in: removedIds } },
+        data: target ? { sportEventSlotTierId: target.id, tierOrderIndex: null } : { sportEventSlotTierId: null, tierOrderIndex: null, tierAssignedSource: null },
       });
-      await tx.sportEventTier.deleteMany({ where: { id: { in: removedIds } } });
+      await tx.sportEventSlotTier.deleteMany({ where: { id: { in: removedIds } } });
     });
   }
 
-  async countValuations(sportEventId: string): Promise<Map<string, number>> {
-    // Grouped from the valuations, filtered to the event's tiers: a relation `_count` on the tiers
-    // groups every valuation of every event before joining.
-    const groups = await this.prisma.sportEventParticipantValuation.groupBy({
-      by: ['sportEventTierId'],
-      where: { sportEventTier: { sportEventId } },
+  async countValuations(sportEventSlotId: string): Promise<Map<string, number>> {
+    const groups = await this.prisma.sportEventSlotParticipantValuation.groupBy({
+      by: ['sportEventSlotTierId'],
+      where: { sportEventSlotId, sportEventSlotTierId: { not: null } },
       _count: { _all: true },
     });
-    return new Map(groups.flatMap((group) => (group.sportEventTierId === null ? [] : [[group.sportEventTierId, group._count._all]])));
+    return new Map(groups.flatMap((group) => (group.sportEventSlotTierId === null ? [] : [[group.sportEventSlotTierId, group._count._all]])));
   }
 }
 
-export class PrismaSportEventParticipantValuationRepository implements SportEventParticipantValuationRepository {
+export class PrismaSportEventSlotParticipantValuationRepository implements SportEventSlotParticipantValuationRepository {
   constructor(private readonly prisma: Db) {}
 
-  async findBySportEvent(sportEventId: string): Promise<SportEventParticipantValuation[]> {
-    return this.findBySportEvents([sportEventId]);
+  async findBySlot(sportEventSlotId: string): Promise<SportEventSlotParticipantValuation[]> {
+    return this.findBySlots([sportEventSlotId]);
   }
 
-  async findBySportEvents(sportEventIds: readonly string[]): Promise<SportEventParticipantValuation[]> {
-    if (sportEventIds.length === 0) return [];
-    const rows = await this.prisma.sportEventParticipantValuation.findMany({
-      where: { sportEventParticipant: { sportEventId: { in: [...sportEventIds] } } },
-      orderBy: [{ sportEventTier: { tierNumber: 'asc' } }, { tierOrderIndex: 'asc' }],
+  async findBySlots(sportEventSlotIds: readonly string[]): Promise<SportEventSlotParticipantValuation[]> {
+    if (sportEventSlotIds.length === 0) return [];
+    const rows = await this.prisma.sportEventSlotParticipantValuation.findMany({
+      where: { sportEventSlotId: { in: [...sportEventSlotIds] } },
+      orderBy: [{ tier: { tierNumber: 'asc' } }, { tierOrderIndex: 'asc' }],
     });
     return rows.map(toValuation);
   }
 
-  async assignTiers(assignments: readonly TierAssignment[]): Promise<void> {
-    await this.prisma.$transaction((tx) => rewriteValuations(tx, assignments.map((assignment) => ({
-      sportEventParticipantId: assignment.sportEventParticipantId,
-      sportEventTierId: assignment.sportEventTierId,
-      tierOrderIndex: assignment.tierOrderIndex,
-      tierAssignedSource: assignment.source,
-    }))));
+  async assignTiers(slot: ValuedSlot, assignments: readonly TierAssignment[]): Promise<void> {
+    await this.prisma.$transaction((tx) => rewriteValuations(tx, tierChanges(slot, assignments)));
   }
 
-  async assignEventTiers(input: {
-    sportEventId: string;
-    tierConfig: EventTierConfig;
+  async assignSlotTiers(input: {
+    slot: ValuedSlot;
+    tierSettings: SlotTierSettings;
     assignments: readonly TierAssignment[];
   }): Promise<void> {
     await forgettingReads(ReadMemoKey.sportEvent, () => this.prisma.$transaction(async (tx) => {
-      await rewriteValuations(tx, input.assignments.map((assignment) => ({
-        sportEventParticipantId: assignment.sportEventParticipantId,
-        sportEventTierId: assignment.sportEventTierId,
-        tierOrderIndex: assignment.tierOrderIndex,
-        tierAssignedSource: assignment.source,
-      })));
-      await tx.sportEvent.update({
-        where: { id: input.sportEventId },
-        data: storedTierConfig(input.tierConfig),
+      await rewriteValuations(tx, tierChanges(input.slot, input.assignments));
+      await tx.sportEventSlot.update({
+        where: { id: input.slot.id },
+        data: { platformTierProfileId: input.tierSettings.platformTierProfileId, tierSize: input.tierSettings.tierSize },
       });
     }));
   }
 
-  async assignEventPrices(input: {
-    sportEventId: string;
-    pricingConfig: EventPricingConfig;
+  async assignSlotPrices(input: {
+    slot: ValuedSlot;
+    pricing: SlotPricing;
     assignments: readonly PriceAssignment[];
   }): Promise<void> {
+    const { pricing } = input;
     await forgettingReads(ReadMemoKey.sportEvent, () => this.prisma.$transaction(async (tx) => {
       await rewriteValuations(tx, input.assignments.map((assignment) => ({
-        sportEventParticipantId: assignment.sportEventParticipantId,
+        ...valuedRow(input.slot, assignment.sportEventParticipantId),
         price: assignment.price,
         priceAssignedSource: assignment.source,
       })));
-      await tx.sportEvent.update({
-        where: { id: input.sportEventId },
-        data: storedPricingConfig(input.pricingConfig),
+      await tx.sportEventSlot.update({
+        where: { id: input.slot.id },
+        data: {
+          platformPricingProfileId: pricing.platformPricingProfileId,
+          salaryCap: pricing.salaryCap,
+          pricingUnit: pricing.unit,
+          topSharePercent: pricing.topSharePercent,
+          floorSharePercent: pricing.floorSharePercent,
+          steepness: pricing.steepness,
+        },
       });
     }));
   }
 }
 
-/** An event's tier layout as its columns hold it: the layout as JSON, and the profile it came from as a key (#2205). */
-function storedTierConfig({ platformTierProfileId, ...layout }: EventTierConfig) {
-  return { tierConfig: layout, platformTierProfileId };
+/** A field row's valuation in one slot's set, by its keys. */
+function valuedRow(slot: ValuedSlot, sportEventParticipantId: string) {
+  return { sportEventId: slot.sportEventId, sportEventSlotId: slot.id, sportEventParticipantId };
 }
 
-/** An event's pricing as its columns hold it: the values as JSON, and the profile they started from as a key (#2205). */
-function storedPricingConfig({ platformPricingProfileId, ...values }: EventPricingConfig) {
-  return { pricingConfig: values, platformPricingProfileId };
+function tierChanges(slot: ValuedSlot, assignments: readonly TierAssignment[]): ValuationChange[] {
+  return assignments.map((assignment) => ({
+    ...valuedRow(slot, assignment.sportEventParticipantId),
+    sportEventSlotTierId: assignment.sportEventSlotTierId,
+    tierOrderIndex: assignment.tierOrderIndex,
+    tierAssignedSource: assignment.source,
+  }));
 }
 
-/** A change to one field row's valuation: its tier columns, its price columns, or both. */
-type ValuationChange = { sportEventParticipantId: string } & Partial<Pick<
-  Prisma.SportEventParticipantValuationUncheckedCreateInput,
-  'sportEventTierId' | 'tierOrderIndex' | 'tierAssignedSource' | 'price' | 'priceAssignedSource'
+/** A change to one field row's valuation in one slot's set: its tier columns, its price columns, or both. */
+type ValuationChange = ReturnType<typeof valuedRow> & Partial<Pick<
+  Prisma.SportEventSlotParticipantValuationUncheckedCreateInput,
+  'sportEventSlotTierId' | 'tierOrderIndex' | 'tierAssignedSource' | 'price' | 'priceAssignedSource'
 >>;
 
 /**
@@ -1254,24 +1431,41 @@ type ValuationChange = { sportEventParticipantId: string } & Partial<Pick<
  * (#1252). Prisma has no update of many rows to different values, and nothing points at a
  * valuation row, so the changed rows are read, deleted and inserted again with the change
  * applied, each keeping its id, its creation time and the columns the change leaves alone. A
- * row with no valuation yet gets one. Runs inside the caller's transaction.
+ * row with no valuation in the slot's set yet gets one. Runs inside the caller's transaction.
  */
 async function rewriteValuations(tx: Prisma.TransactionClient, changes: readonly ValuationChange[]): Promise<void> {
-  // A row changed twice keeps the later change, as two upserts in a row would leave it.
-  const changeById = new Map<string, ValuationChange>();
+  // A row changed twice in one slot keeps the later change, as two upserts in a row would leave it.
+  const changesBySlot = new Map<string, Map<string, ValuationChange>>();
   for (const change of changes) {
-    changeById.set(change.sportEventParticipantId, { ...changeById.get(change.sportEventParticipantId), ...change });
+    const slotChanges = changesBySlot.get(change.sportEventSlotId) ?? new Map<string, ValuationChange>();
+    slotChanges.set(change.sportEventParticipantId, { ...slotChanges.get(change.sportEventParticipantId), ...change });
+    changesBySlot.set(change.sportEventSlotId, slotChanges);
   }
-  if (changeById.size === 0) return;
-  const existing = await tx.sportEventParticipantValuation.findMany({
-    where: { sportEventParticipantId: { in: [...changeById.keys()] } },
+  if (changesBySlot.size === 0) return;
+  const existing = await tx.sportEventSlotParticipantValuation.findMany({
+    where: {
+      OR: [...changesBySlot].map(([sportEventSlotId, slotChanges]) => ({
+        sportEventSlotId,
+        sportEventParticipantId: { in: [...slotChanges.keys()] },
+      })),
+    },
+    // Every column a rewritten row keeps; its update time is the rewrite's own.
+    omit: { updatedAt: true },
   });
-  const existingById = new Map(existing.map(({ updatedAt: _updatedAt, ...row }) => [row.sportEventParticipantId, row]));
   if (existing.length > 0) {
-    await tx.sportEventParticipantValuation.deleteMany({ where: { id: { in: existing.map((row) => row.id) } } });
+    await tx.sportEventSlotParticipantValuation.deleteMany({ where: { id: { in: existing.map((row) => row.id) } } });
   }
-  await tx.sportEventParticipantValuation.createMany({
-    data: [...changeById.values()].map((change) => ({ ...existingById.get(change.sportEventParticipantId), ...change })),
+  const existingBySlot = new Map<string, Map<string, (typeof existing)[number]>>();
+  for (const row of existing) {
+    const slotRows = existingBySlot.get(row.sportEventSlotId) ?? new Map<string, (typeof existing)[number]>();
+    slotRows.set(row.sportEventParticipantId, row);
+    existingBySlot.set(row.sportEventSlotId, slotRows);
+  }
+  await tx.sportEventSlotParticipantValuation.createMany({
+    data: [...changesBySlot.values()].flatMap((slotChanges) => [...slotChanges.values()]).map((change) => {
+      const before = existingBySlot.get(change.sportEventSlotId)?.get(change.sportEventParticipantId);
+      return before === undefined ? change : { ...before, ...change };
+    }),
   });
 }
 
@@ -1367,12 +1561,6 @@ function toSportEvent(row: Prisma.SportEventGetPayload<{ include: typeof SPORT_E
     ...(syncProviderId !== null && { syncProviderId }),
     ...(syncProviderName !== null && { syncProviderName }),
     autoLifecycleEnabled: row.autoLifecycleEnabled,
-    ...(row.pricingConfig !== null && {
-      pricingConfig: { ...StoredEventPricingSchema.parse(row.pricingConfig), platformPricingProfileId: row.platformPricingProfileId },
-    }),
-    ...(row.tierConfig !== null && {
-      tierConfig: { ...StoredEventTierLayoutSchema.parse(row.tierConfig), platformTierProfileId: row.platformTierProfileId },
-    }),
     ...(row.autoReleaseCheckedAt !== null && row.autoReleaseOutcome !== null && {
       autoReleaseCheck: { checkedAt: row.autoReleaseCheckedAt, outcome: row.autoReleaseOutcome, failedChecks: row.autoReleaseFailedChecks },
     }),
@@ -1428,25 +1616,30 @@ export function toSportEventParticipant(row: Prisma.SportEventParticipantGetPayl
   };
 }
 
-function tierColumns(tier: SportEventTierDefinition) {
+function tierColumns(tier: SportEventSlotTierDefinition) {
   return { tierKey: tier.tierKey, tierNumber: tier.tierNumber };
 }
 
-function toTier(row: Prisma.SportEventTierGetPayload<object>): SportEventTier {
+function toTier(row: Prisma.SportEventSlotTierGetPayload<object>): SportEventSlotTier {
   return {
     id: row.id,
-    sportEventId: row.sportEventId,
+    sportEventSlotId: row.sportEventSlotId,
     ...tierColumns(row),
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   };
 }
 
-function toValuation(row: Prisma.SportEventParticipantValuationGetPayload<object>): SportEventParticipantValuation {
+function toValuationOrNull(row: Prisma.SportEventSlotParticipantValuationGetPayload<object> | undefined): SportEventSlotParticipantValuation | null {
+  return row === undefined ? null : toValuation(row);
+}
+
+function toValuation(row: Prisma.SportEventSlotParticipantValuationGetPayload<object>): SportEventSlotParticipantValuation {
   return {
     id: row.id,
+    sportEventSlotId: row.sportEventSlotId,
     sportEventParticipantId: row.sportEventParticipantId,
-    sportEventTierId: row.sportEventTierId,
+    sportEventSlotTierId: row.sportEventSlotTierId,
     tierOrderIndex: row.tierOrderIndex,
     tierAssignedSource: row.tierAssignedSource,
     price: row.price === null ? null : Number(row.price),

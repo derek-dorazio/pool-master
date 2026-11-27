@@ -39,6 +39,7 @@ import { expectDefined } from '../support/expect-defined';
 import { unlinkContestsFromSportEvents } from '../support/contest-event-links';
 import { participantLeagueId } from '../support/participant-league';
 import { sportRowKeys } from '../support/sport-rows';
+import { inTierSet, tierSetSlot } from '../support/event-tier-sets';
 
 const createdParticipantIds: string[] = [];
 const createdSportEventIds: string[] = [];
@@ -71,7 +72,7 @@ async function cleanupContestArtifacts(): Promise<void> {
         },
       },
     });
-    await prisma.sportEventParticipantValuation.deleteMany({
+    await prisma.sportEventSlotParticipantValuation.deleteMany({
       where: {
         sportEventParticipantId: {
           in: createdSportEventParticipantIds,
@@ -89,13 +90,13 @@ async function cleanupContestArtifacts(): Promise<void> {
   }
 
   if (createdSportEventIds.length > 0) {
-    // SportEventTier and SportEventRound both have RESTRICT FKs to
-    // SportEvent, so they must clear before the SportEvent delete below.
-    await prisma.sportEventTier.deleteMany({
+    // A slot's tiers (SportEventSlotTier) and the rounds must clear
+    // before the SportEvent delete below.
+    await prisma.sportEventSlotTier.deleteMany({
       where: {
-        sportEventId: {
+        slot: { sportEventId: {
           in: createdSportEventIds,
-        },
+        } },
       },
     });
     await prisma.sportEventRound.deleteMany({
@@ -162,9 +163,9 @@ async function seedImportedGolfEvent(options: {
   const tiers = [];
   for (let tierIndex = 0; tierIndex < tierCount; tierIndex += 1) {
     const tierKey = String.fromCharCode(65 + tierIndex);
-    tiers.push(await prisma.sportEventTier.create({
+    tiers.push(await prisma.sportEventSlotTier.create({
       data: {
-        sportEventId: sportEvent.id,
+        sportEventSlotId: (await tierSetSlot(prisma, sportEvent.id)).id,
         tierKey,
         tierNumber: tierIndex + 1,
       },
@@ -196,10 +197,11 @@ async function seedImportedGolfEvent(options: {
       },
     });
     createdSportEventParticipantIds.push(sportEventParticipant.id);
-    await prisma.sportEventParticipantValuation.create({
+    await prisma.sportEventSlotParticipantValuation.create({
       data: {
+        ...inTierSet(await tierSetSlot(prisma, sportEvent.id)),
         sportEventParticipantId: sportEventParticipant.id,
-        sportEventTierId: tiers[index % tierCount].id,
+        sportEventSlotTierId: tiers[index % tierCount].id,
         tierOrderIndex: Math.floor(index / tierCount) + 1,
         tierAssignedSource: 'MANUAL',
       },
@@ -1112,18 +1114,19 @@ describe('SDK Functional: Contests and Entries', () => {
     createdSportEventParticipantIds.push(sportEventParticipant.id);
 
     // Tiers are event-owned (plans/124 §4.5/§4.6): the pick-submission flow requires a real
-    // tier assignment (TIER_MISSING otherwise), so this fixture needs a SportEventTier.
-    const tier = await prisma.sportEventTier.create({
+    // tier assignment (TIER_MISSING otherwise), so this fixture needs a SportEventSlotTier.
+    const tier = await prisma.sportEventSlotTier.create({
       data: {
-        sportEventId: sportEvent.id,
+        sportEventSlotId: (await tierSetSlot(prisma, sportEvent.id)).id,
         tierKey: 'tier-1',
         tierNumber: 1,
       },
     });
-    await prisma.sportEventParticipantValuation.create({
+    await prisma.sportEventSlotParticipantValuation.create({
       data: {
+        ...inTierSet(await tierSetSlot(prisma, sportEvent.id)),
         sportEventParticipantId: sportEventParticipant.id,
-        sportEventTierId: tier.id,
+        sportEventSlotTierId: tier.id,
         tierOrderIndex: 1,
         tierAssignedSource: 'MANUAL',
         price: 1000,

@@ -2,7 +2,7 @@ import { deleteTestSportLeagues, TEST_DEFINITION_KEY } from '../support/test-slo
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { listEventParticipants, listEvents, listSportLeagues } from '@poolmaster/shared/generated/hey-api';
-import { RaceResultStatus, Sport } from '@poolmaster/shared/domain';
+import { GameSideStatus, Sport } from '@poolmaster/shared/domain';
 import { LoadAction, LoadMode } from '../../packages/core-api/scripts/seed-golf/load-report';
 import { loadSportData } from '../../packages/core-api/scripts/seed-golf/seed-golf';
 import { parseSportDataFile, type SportDataFile } from '../../packages/core-api/scripts/seed-golf/sport-data-file';
@@ -26,10 +26,12 @@ async function cleanup(): Promise<void> {
     const series = { sportLeagueId: { in: leagueIds } };
     const where = { sportEvent: series };
     await db.sportEventParticipantStanding.deleteMany({ where: { sportEventParticipant: where } });
-    await db.sportEventParticipantValuation.deleteMany({ where: { sportEventParticipant: where } });
+    await db.sportEventSlotParticipantValuation.deleteMany({ where: { sportEventParticipant: where } });
+    // A race is a FIELD match in its event (#2008); its sides hold the field rows.
+    await db.sportEventRoundMatch.deleteMany({ where });
     await db.sportEventParticipant.deleteMany({ where });
     await db.sportEventRound.deleteMany({ where });
-    await db.sportEventTier.deleteMany({ where });
+    await db.sportEventSlotTier.deleteMany({ where: { slot: where } });
     await db.sportEvent.deleteMany({ where: series });
   }
   // The run's players: every participant of the run's own leagues (the loader finds a player by name, #2040).
@@ -80,9 +82,9 @@ describe('SDK Functional: racing test seed', () => {
     const field = expectDefined((await listEventParticipants({ client: a, path: { eventId: derby.id } })).data).participants;
     expect(field).toHaveLength(24);
     expect(field.every((row) => row.race?.isOfficial === true)).toBe(true);
-    expect(field.filter((row) => row.race?.resultStatus === RaceResultStatus.DID_NOT_START)).toHaveLength(6);
+    expect(field.filter((row) => row.race?.resultStatus === GameSideStatus.DID_NOT_START)).toHaveLength(6);
     const winner = expectDefined(field.find((row) => row.race?.finishPosition === 1));
-    expect([winner.participant.name, winner.race?.startPosition, winner.race?.riderName]).toEqual(['Golden Tempo', 19, 'José Ortiz']);
+    expect([winner.participant.name, winner.race?.startPosition]).toEqual(['Golden Tempo', 19]);
 
     const again = await loadSportData(file, { getClient: () => Promise.resolve(a), now: new Date(), mode: LoadMode.DRY_RUN });
     expect(again.filter((row) => row.action !== LoadAction.SKIP)).toEqual([]);

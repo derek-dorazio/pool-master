@@ -47,11 +47,11 @@ function sportEvent(overrides: Partial<SportEvent> = {}): SportEvent {
     ...overrides,
   };
 }
-const summary = { event: sportEvent(), participantCount: 88, tierCount: 0, adminCounts: null, slots: [] };
+const summary = { event: sportEvent(), participantCount: 88, tierCount: 0, tierSetSlot: null, adminCounts: null, slots: [] };
 const fieldRow = {
   entry: { id: 'sep-1', sportEventId: EVENT_ID, participantId: 'p1', status: SportEventParticipantStatus.ACTIVE, createdAt: AT, updatedAt: AT },
   participant: { id: 'p1', name: 'Scottie', injuryStatus: { status: 'HEALTHY' }, externalIds: {}, createdAt: AT, updatedAt: AT },
-  valuation: null, standing: null, rounds: [], raceResult: null, affiliatedWithSportLeague: true,
+  valuation: null, standing: null, rounds: [], fieldResults: [], affiliatedWithSportLeague: true,
 };
 const round = {
   id: 'r1', sportEventId: EVENT_ID, roundNumber: 1, scheduledDate: AT, scheduledEndAt: null, createdAt: AT, updatedAt: AT, slot: weekRoundSlot(),
@@ -395,7 +395,7 @@ describe('rounds, field and tiers', () => {
       expect((await callHandler(handler, stubRequest({ params, body }))).body).toMatchObject({ participants: [{ id: 'sep-1' }] });
     }
     expect(services.tiers.replaceTiers).toHaveBeenCalledWith({ sportEventId: EVENT_ID, tiers: [] });
-    expect(services.tiers.autoAssignPrices).toHaveBeenCalledWith({ sportEventId: EVENT_ID, pricingConfig: { salaryCap: 50000 } });
+    expect(services.tiers.autoAssignPrices).toHaveBeenCalledWith({ sportEventId: EVENT_ID, pricing: { salaryCap: 50000 } });
   });
 });
 

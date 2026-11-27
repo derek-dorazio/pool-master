@@ -15,6 +15,7 @@ const READY = {
   unpricedParticipantCount: 0,
   bracketBlockers: null,
   contestSetupCount: 2,
+  rosterSetupCount: 1,
 };
 
 describe('evaluateReleaseChecks (#1823)', () => {
@@ -23,6 +24,13 @@ describe('evaluateReleaseChecks (#1823)', () => {
 
     expect(checks.every((check) => check.passed)).toBe(true);
     expect(checks.map((check) => check.key)).toEqual(['NOT_STARTED', 'ROUNDS_SCHEDULED', 'FIELD_LOADED', 'TIERS_ASSIGNED', 'TIERS_FILLED', 'PRICES_ASSIGNED', 'CONTEST_SETUPS_ON']);
+  });
+
+  it('leaves out the tier and price checks of an event no tiered or budget setup covers, such as a bowl slate, so its unseeded, unpriced field does not hold its release', () => {
+    const checks = evaluateReleaseChecks({ ...READY, rosterSetupCount: 0, untieredParticipantCount: 80, emptyTierNumbers: [2, 3], isPriced: false });
+
+    expect(checks.every((check) => check.passed)).toBe(true);
+    expect(checks.map((check) => check.key)).toEqual(['NOT_STARTED', 'ROUNDS_SCHEDULED', 'FIELD_LOADED', 'CONTEST_SETUPS_ON']);
   });
 
   it('fails each check on its own value: a passed start, an unpriced field and an incomplete bracket', () => {

@@ -21,8 +21,6 @@ import { randomUUID } from 'crypto';
 import bcrypt from 'bcryptjs';
 import { startSmtpSinkServer, type CapturedMail, type SmtpSinkServer } from '../support/smtp-sink';
 import { RecordingCdnInvalidator } from '../support/recording-cdn-invalidator';
-import { standardEventPricing } from '../support/budget-pricing';
-import type { EventPricingConfig } from '@poolmaster/shared/domain';
 import { statementLog } from './statement-log';
 import { describeUnindexedScans, indexCheck } from './index-check';
 
@@ -746,14 +744,6 @@ export function authHeaders(userId: string, email: string): Record<string, strin
   };
 }
 
-/**
- * The Standard pricing profile's values as an event records them, with the id the migrations gave
- * the profile in this database, found by its code (#2205).
- */
-export async function standardEventPricingInDb(): Promise<EventPricingConfig & { platformPricingProfileId: string }> {
-  const { id } = await getPrisma().platformPricingProfile.findUniqueOrThrow({ where: { code: 'STANDARD' }, select: { id: true } });
-  return { ...standardEventPricing(id), platformPricingProfileId: id };
-}
 
 /**
  * Removes JSON body headers for bodyless POST/DELETE requests.
@@ -914,7 +904,7 @@ async function cleanupSportEventParticipantArtifacts(
       },
     },
   });
-  await database.sportEventParticipantValuation.deleteMany({
+  await database.sportEventSlotParticipantValuation.deleteMany({
     where: {
       sportEventParticipantId: {
         in: sportEventParticipantIds,
@@ -1039,13 +1029,13 @@ export async function cleanupTestData(): Promise<void> {
   // tables intentionally use explicit child rows rather than FK cascade.
   await prisma.sportEventParticipantGolfStanding.deleteMany();
   await prisma.sportEventParticipantStanding.deleteMany();
-  await prisma.sportEventParticipantValuation.deleteMany();
+  await prisma.sportEventSlotParticipantValuation.deleteMany();
   await prisma.sportEventParticipant.deleteMany();
   await prisma.participantProviderMapping.deleteMany();
   await prisma.participant.deleteMany();
-  // SportEventTier and SportEventRound both have RESTRICT FKs to
-  // SportEvent, so they must clear before the SportEvent delete below.
-  await prisma.sportEventTier.deleteMany();
+  // A slot's tiers (SportEventSlotTier) and the rounds must clear
+  // before the SportEvent delete below.
+  await prisma.sportEventSlotTier.deleteMany();
   await prisma.sportEventRound.deleteMany();
   // Every event goes, so every contest's link to one goes first (#713): those rows hold RESTRICT
   // foreign keys to the event, where a contest's single event column used to be set null.

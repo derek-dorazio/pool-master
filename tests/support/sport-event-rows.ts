@@ -3,8 +3,8 @@ import type {
   SportEventRepository,
   SportEventRoundRepository,
   SportEventRoundSchedule,
-  SportEventTierDefinition,
-  SportEventTierRepository,
+  SportEventSlotTierDefinition,
+  SportEventSlotTierRepository,
 } from '@poolmaster/shared/db';
 import type { SportEvent } from '@poolmaster/shared/domain';
 import { expectDefined } from './expect-defined';
@@ -36,7 +36,7 @@ export async function createRoundRows(
   await rounds.createMany(schedule.map((round) => ({ sportEventId: event.id, seasonSlotId, ...round })));
 }
 
-/** One event's tiers. */
-export function createTierRows(tiers: SportEventTierRepository, sportEventId: string, definitions: readonly SportEventTierDefinition[]): Promise<void> {
-  return tiers.createMany(definitions.map((tier) => ({ sportEventId, ...tier })));
+/** One event slot's tiers (#2044). */
+export function createTierRows(tiers: SportEventSlotTierRepository, sportEventSlotId: string, definitions: readonly SportEventSlotTierDefinition[]): Promise<void> {
+  return tiers.createMany(definitions.map((tier) => ({ sportEventSlotId, ...tier })));
 }

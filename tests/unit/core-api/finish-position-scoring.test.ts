@@ -1,13 +1,15 @@
 import { sportPlay } from '../../support/sport-play';
 import {
-  RaceResultStatus,
+  GameSideStatus,
   ScoringFamily,
   Sport,
   SportEventStatus,
   SportEventParticipantStatus,
+  HomeAway,
+  MatchStatus,
   type ContestScoringSettings,
-  type SportEventParticipantRaceResult,
 } from '@poolmaster/shared/domain';
+import type { FieldGameResultView } from '@poolmaster/shared/db';
 import { getScoringFamilyModule } from '../../../packages/core-api/src/modules/scoring-families';
 import {
   displayPlace,
@@ -31,7 +33,8 @@ const WIN_PLACE_SHOW: ContestScoringSettings = {
 interface RunnerInput {
   name: string;
   isActive?: boolean;
-  result?: Partial<Pick<SportEventParticipantRaceResult, 'resultStatus' | 'finishPosition' | 'isOfficial'>> | null;
+  /** The runner's side result in the race's Game; the race is official unless `isOfficial` is false. */
+  result?: { resultStatus?: GameSideStatus | null; finishPosition?: number | null; isOfficial?: boolean } | null;
 }
 
 function field(runners: RunnerInput[]): SportEventParticipantView[] {
@@ -41,19 +44,16 @@ function field(runners: RunnerInput[]): SportEventParticipantView[] {
   return runners.map(({ name, isActive = true, result }) => {
     const participant = store.addParticipant(sport.id, name);
     const entry = store.addToField(event.id, participant.id, { status: isActive ? SportEventParticipantStatus.ACTIVE : SportEventParticipantStatus.WITHDRAWN });
-    const raceResult: SportEventParticipantRaceResult | null = result === null || result === undefined ? null : {
-      id: store.id('race-result'),
-      sportEventParticipantId: entry.id,
-      resultStatus: RaceResultStatus.FINISHED,
-      finishPosition: null,
-      startPosition: null,
-      riderName: null,
-      isOfficial: true,
-      createdAt: new Date('2026-05-02T22:00:00.000Z'),
+    const fieldResults: FieldGameResultView[] = result === null || result === undefined ? [] : [{
+      roundNumber: 1,
+      gameStatus: result.isOfficial === false ? MatchStatus.IN_PROGRESS : MatchStatus.COMPLETED,
+      result: {
+        sportEventRoundMatchSideId: `side-${entry.id}`, sideNumber: 1, score: null, homeAway: HomeAway.NONE, periodScores: [],
+        position: result.finishPosition ?? null, startPosition: null, status: result.resultStatus === undefined ? GameSideStatus.FINISHED : result.resultStatus,
+      },
       updatedAt: new Date('2026-05-02T22:00:00.000Z'),
-      ...result,
-    };
-    return { entry, participant, valuation: null, standing: null, rounds: [], raceResult, matches: [], affiliatedWithSportLeague: true };
+    }];
+    return { entry, participant, valuation: null, standing: null, rounds: [], fieldResults, matches: [], affiliatedWithSportLeague: true };
   });
 }
 
@@ -90,13 +90,20 @@ describe('finish position — official finishers', () => {
   it('leaves an official finisher stored without a place unscored rather than inventing one', () => {
     expect(scores([{ name: 'Arrow', result: { finishPosition: null } }])).toEqual({ Arrow: null });
   });
+
+  it('leaves a runner whose side result in the official race has no status unscored rather than treating it as a finisher', () => {
+    expect(scores([
+      { name: 'Arrow', result: { finishPosition: 1 } },
+      { name: 'Bolt', result: { resultStatus: null, finishPosition: null } },
+    ])).toEqual({ Arrow: 5, Bolt: null });
+  });
 });
 
 describe('finish position — non-finishers', () => {
   it.each([
-    RaceResultStatus.DID_NOT_FINISH,
-    RaceResultStatus.DISQUALIFIED,
-    RaceResultStatus.DID_NOT_START,
+    GameSideStatus.DID_NOT_FINISH,
+    GameSideStatus.DISQUALIFIED,
+    GameSideStatus.DID_NOT_START,
   ])('scores an official %s result the contest\'s did-not-finish points', (resultStatus) => {
     expect(scores([
       { name: 'Arrow', result: { finishPosition: 1 } },
@@ -130,7 +137,7 @@ describe('finish position — unofficial and unscorable results', () => {
   it('leaves every runner unscored while the result is not official, places and non-finishes alike', () => {
     expect(scores([
       { name: 'Arrow', result: { finishPosition: 1, isOfficial: false } },
-      { name: 'Bolt', result: { resultStatus: RaceResultStatus.DISQUALIFIED, isOfficial: false } },
+      { name: 'Bolt', result: { resultStatus: GameSideStatus.DISQUALIFIED, isOfficial: false } },
     ])).toEqual({ Arrow: null, Bolt: null });
   });
 
@@ -170,16 +177,16 @@ describe('finishing order shape', () => {
   });
 
   it('marks a runner that started done with the event, and one that did not start withdrawn from it', () => {
-    expect(standingStatusForResult(RaceResultStatus.FINISHED)).toBe('COMPLETE');
-    expect(standingStatusForResult(RaceResultStatus.DID_NOT_FINISH)).toBe('COMPLETE');
-    expect(standingStatusForResult(RaceResultStatus.DISQUALIFIED)).toBe('COMPLETE');
-    expect(standingStatusForResult(RaceResultStatus.DID_NOT_START)).toBe('WITHDRAWN');
+    expect(standingStatusForResult(GameSideStatus.FINISHED)).toBe('COMPLETE');
+    expect(standingStatusForResult(GameSideStatus.DID_NOT_FINISH)).toBe('COMPLETE');
+    expect(standingStatusForResult(GameSideStatus.DISQUALIFIED)).toBe('COMPLETE');
+    expect(standingStatusForResult(GameSideStatus.DID_NOT_START)).toBe('WITHDRAWN');
   });
 });
 
 describe('finish position — guards', () => {
   it('throws on a race result status it does not know, both when scoring and when placing the runner', () => {
-    expect(() => scores([{ name: 'Arrow', result: { resultStatus: 'PHOTO_FINISH' as RaceResultStatus } }])).toThrow();
-    expect(() => standingStatusForResult('PHOTO_FINISH' as RaceResultStatus)).toThrow();
+    expect(() => scores([{ name: 'Arrow', result: { resultStatus: 'PHOTO_FINISH' as GameSideStatus } }])).toThrow();
+    expect(() => standingStatusForResult('PHOTO_FINISH' as GameSideStatus)).toThrow();
   });
 });
