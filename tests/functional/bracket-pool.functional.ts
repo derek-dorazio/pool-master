@@ -62,6 +62,7 @@ import { sportRowKeys } from '../support/sport-rows';
 import { insertTestSportLeague } from '../support/test-sport-league';
 import type { TestRoundSlot } from '../support/event-edition';
 import { bracketMatch, readHomeAway, resultBody } from '../support/match-requests';
+import { HOME_SIDE, pickSideOf, predictedHomeAndAway, type PickSides } from '../support/match-sides';
 import { setFieldRows } from './field-rows';
 
 // Bracket pools end to end over HTTP (#721). An admin releases a knockout; a commissioner runs a
@@ -278,9 +279,9 @@ describe('SDK Functional: a bracket pool (#721)', () => {
     const BRACKET_ORDER = [1, 2, 3, 4, 5, 6, 7, 8].map((matchNumber) => at(1, matchNumber))
       .concat([1, 2, 3, 4].map((matchNumber) => at(2, matchNumber)), [at(3, 1), at(3, 2), at(4, 1)]);
     const picksOf = (winners: readonly number[]) => winners.map((seed, index) => pick(expectDefined(BRACKET_ORDER[index]), seed));
-    const predictedSeeds = (view: { games: Array<MatchPlace & { predictedHome: { sportEventParticipantId: string } | null; predictedAway: { sportEventParticipantId: string } | null }> }, place: MatchPlace) => {
+    const predictedSeeds = (view: { games: Array<MatchPlace & PickSides> }, place: MatchPlace) => {
       const game = expectDefined(view.games.find((each) => isAtPlace(each, place)));
-      return [game.predictedHome?.sportEventParticipantId ?? null, game.predictedAway?.sportEventParticipantId ?? null];
+      return predictedHomeAndAway(game);
     };
 
     // The winners of the 15 games, in bracket order. Chalk: the better seed wins every game.
@@ -292,7 +293,7 @@ describe('SDK Functional: a bracket pool (#721)', () => {
     expect(fresh).toMatchObject({ selectionType: SelectionType.BRACKET, mode: null, gameCount: 15, pickedCount: 0, tiebreakerValue: null, canSubmit: false });
     expect(predictedSeeds(fresh, at(1, 1))).toEqual([row(1), row(16)]);
     // Each team carries its seed, which the bracket shows beside its name.
-    expect(fresh.games.find((game) => isAtPlace(game, at(1, 1)))?.predictedHome?.seedNumber).toBe(1);
+    expect(pickSideOf(expectDefined(fresh.games.find((game) => isAtPlace(game, at(1, 1)))), HOME_SIDE).predictedTeam?.seedNumber).toBe(1);
     expect(predictedSeeds(fresh, at(2, 1))).toEqual([null, null]);
 
     // --- Alice fills in the whole bracket in one request, with her tiebreaker ------------------
@@ -494,10 +495,10 @@ describe('SDK Functional: a bracket pool (#721)', () => {
     const bobEntry = expectDefined((await enterContest({ client: bob.client, path: { contestId } })).data).entry.id;
     const path = (entryId: string) => ({ contestId, entryId, sportEventId: eventId });
     const pick = (place: MatchPlace, seed: number) => ({ sportEventRoundMatchId: gameId(place), predictedResult: PredictedResult.TEAM, sportEventParticipantId: row(seed), confidence: null });
-    const divisional = (view: { games: Array<MatchPlace & { predictedHome: { sportEventParticipantId: string } | null; predictedAway: { sportEventParticipantId: string } | null }> }) =>
+    const divisional = (view: { games: Array<MatchPlace & PickSides> }) =>
       [at(2, 1), at(2, 2)].map((place) => {
         const game = expectDefined(view.games.find((each) => isAtPlace(each, place)));
-        return [seedOf(game.predictedHome?.sportEventParticipantId), seedOf(game.predictedAway?.sportEventParticipantId)];
+        return predictedHomeAndAway(game).map((id) => seedOf(id));
       });
 
     // Alice has the 7 upsetting the 2, so her Divisional round is 1-7 and 3-5; she takes the 5 to the final.

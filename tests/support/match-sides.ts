@@ -317,3 +317,25 @@ export function editInput({ homeSportEventParticipantId, awaySportEventParticipa
     ...(homeSpread !== undefined && { spread: homeSpread === null ? null : 0 - homeSpread }),
   };
 }
+
+/** A pick screen game's side (#2016) by its number, failing the test when the game has none. */
+export function pickSideOf<Side extends { sideNumber: number }>(game: { sides: readonly Side[] }, sideNumber: number): Side {
+  const side = game.sides.find((each) => each.sideNumber === sideNumber);
+  if (side === undefined) throw new Error(`The game has no side ${String(sideNumber)}`);
+  return side;
+}
+
+/** A pick screen game's sides, as the API or the service gives them, read by their teams. */
+export interface PickSides {
+  sides: ReadonlyArray<{ sideNumber: number; predictedTeam: { sportEventParticipantId: string } | null }>;
+}
+
+/** The teams the entry's picks put on a game's home side, then its away side, as the tests name a game's teams. */
+export function predictedHomeAndAway(game: PickSides): Array<string | null> {
+  return [HOME_SIDE, AWAY_SIDE].map((sideNumber) => pickSideOf(game, sideNumber).predictedTeam?.sportEventParticipantId ?? null);
+}
+
+/** The teams a bracket's picks put on a game's sides, read back home and away as the tests name them. */
+export function homeAndAwayOf(sides: ReadonlyMap<number, string | null> | undefined): { home: string | null; away: string | null } {
+  return { home: sides?.get(HOME_SIDE) ?? null, away: sides?.get(AWAY_SIDE) ?? null };
+}

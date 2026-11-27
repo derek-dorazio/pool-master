@@ -18,6 +18,7 @@ import {
   gamePicksFixture,
   secondChanceBracketGames,
 } from './test/bracket-fixtures';
+import { neutralSides } from './test/game-pick-sides';
 
 const {
   getContestMock,
@@ -195,7 +196,7 @@ describe('Bracket contest entry page', () => {
         return { ...game, pick: gamePick(TEAMS.houston) };
       }
       if (isAtPlace(game, { roundNumber: 2, matchNumber: 1 })) {
-        return bracketGame({ matchNumber: 1, roundNumber: 2, regionLabel: 'East', predictedHome: TEAMS.vermont, predictedAway: TEAMS.houston });
+        return bracketGame({ matchNumber: 1, roundNumber: 2, regionLabel: 'East', sides: neutralSides(null, null, { predictedOne: TEAMS.vermont, predictedTwo: TEAMS.houston }) });
       }
       return game;
     });
@@ -315,7 +316,7 @@ describe('Bracket contest entry page', () => {
         return { ...game, status: 'COMPLETED' as const, pick: gamePick(TEAMS.houston, { outcome: 'BUSTED', points: 0 }) };
       }
       if (isAtPlace(game, { roundNumber: 2, matchNumber: 1 })) {
-        return { ...game, home: TEAMS.duke, away: TEAMS.texas };
+        return { ...game, sides: neutralSides(TEAMS.duke, TEAMS.texas, { predictedOne: TEAMS.duke, predictedTwo: TEAMS.houston }) };
       }
       return game;
     });

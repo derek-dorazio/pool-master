@@ -1,4 +1,5 @@
 import type { GamePicksResponse } from '@/lib/api';
+import { neutralSides } from './game-pick-sides';
 import { TOURNAMENT_ROUND_SLOTS } from './round-slots';
 
 /**
@@ -10,7 +11,7 @@ import { TOURNAMENT_ROUND_SLOTS } from './round-slots';
  */
 
 type Game = GamePicksResponse['games'][number];
-type Team = NonNullable<Game['home']>;
+type Team = NonNullable<Game['sides'][number]['team']>;
 
 const REGIONS = ['South', 'East', 'West', 'Midwest'] as const;
 /** A region's first-round lines, top to bottom, by seed. */
@@ -90,16 +91,15 @@ export function tournamentGames({
         status: played ? 'COMPLETED' : 'SCHEDULED',
         isNeutralSite: true,
         regionLabel: regionSize >= 2 ? REGIONS[Math.floor(index / regionSize)] : null,
-        homeSpread: null,
-        home: roundNumber === 1 || roundNumber <= playedRounds + 1 ? home : null,
-        away: roundNumber === 1 || roundNumber <= playedRounds + 1 ? away : null,
-        predictedHome,
-        predictedAway,
+        sides: roundNumber === 1 || roundNumber <= playedRounds + 1
+          ? neutralSides(home, away, { predictedOne: predictedHome, predictedTwo: predictedAway })
+          : neutralSides(null, null, { predictedOne: predictedHome, predictedTwo: predictedAway }),
         locked: true,
         revealed: true,
         pick: picked ? {
           predictedResult: 'TEAM',
           sportEventParticipantId: picked.sportEventParticipantId,
+          sideNumber: picked === predictedHome ? 1 : 2,
           confidence: null,
           pickedAt: '2026-03-19T12:00:00.000Z',
           outcome,

@@ -12,6 +12,7 @@ import { survivorPredictionEngine } from '../../../packages/core-api/src/modules
 import { PredictionIssueKind } from '../../../packages/core-api/src/modules/selections/prediction-engines/prediction-engine';
 import { getPredictionEngine } from '../../../packages/core-api/src/modules/selections/prediction-engines/registry';
 import { expectDefined } from '../../support/expect-defined';
+import { homeAndAwayOf } from '../../support/match-sides';
 import { EIGHT_SEEDS, NONE_WITHDRAWN, bracketPick, eightTeamBracket, withResults } from '../../support/bracket-fixtures';
 
 const STRAIGHT_UP = { selectionType: SelectionType.PICK_EM, mode: PickEmMode.STRAIGHT_UP, againstTheSpread: false };
@@ -132,7 +133,7 @@ describe('pick\'em engine — resolvePicks, scorePicks and the tiebreaker', () =
       withdrawn: NONE_WITHDRAWN,
     });
 
-    expect(resolved.sides.get('m1')).toEqual({ home: 'T1', away: 'T8' });
+    expect(homeAndAwayOf(resolved.sides.get('m1'))).toEqual({ home: 'T1', away: 'T8' });
     expect(resolved.kept.map((each) => each.sportEventRoundMatchId)).toEqual(['m1']);
     expect(resolved.stranded.map((each) => each.sportEventRoundMatchId)).toEqual(['m2']);
   });
@@ -200,7 +201,7 @@ describe('bracket engine', () => {
       withdrawn: NONE_WITHDRAWN,
     });
 
-    expect(resolved.sides.get('m5')).toEqual({ home: 'T8', away: 'T4' });
+    expect(homeAndAwayOf(resolved.sides.get('m5'))).toEqual({ home: 'T8', away: 'T4' });
     expect(resolved.stranded.map((each) => each.sportEventRoundMatchId)).toEqual(['m5', 'm7']);
   });
 

@@ -61,7 +61,6 @@ import {
   SportEventStatus,
   SquadMembershipStatus,
   SurvivorWeekOutcome,
-  MatchSide,
   PickOutcome,
   survivorLivesOf,
   PARTICIPANT_SCORING_DEFINITIONS,
@@ -69,9 +68,8 @@ import {
   eventSportDefinition,
   sideOfParticipant,
   opposingSideOf,
-  matchSideOfSideNumber,
+  matchHomeAwayOf,
   matchScoreOf,
-  matchIsNeutralSite,
 } from '@poolmaster/shared/domain';
 import {
   CONTEST_EVENT_NOT_IN_CONTEST,
@@ -1433,18 +1431,18 @@ export class ContestService {
         // A data gap, not a side still to be decided: the team shows, its game does not.
         this.logger.warn({ contestId, sportEventRoundMatchId: game.id, participantId: opponentId ?? null, fieldRowId: opponentRow }, 'survivor leaderboard pick game opponent missing');
       }
-      if (!game || !opponent) return null;
-      const pickedSide = sideOfParticipant(game, pick.sportEventParticipantId);
-      const side = pickedSide === null ? MatchSide.AWAY : matchSideOfSideNumber(pickedSide.sideNumber);
+      // An opponent is found only from the picked team's side, so the side is there whenever it is.
+      const pickedSide = game ? sideOfParticipant(game, pick.sportEventParticipantId) : null;
+      if (!game || !opponent || pickedSide === null) return null;
       return {
         opponent: opponent.name,
         opponentShortName: opponent.shortName ?? null,
-        side,
-        isNeutralSite: matchIsNeutralSite(game),
+        sideNumber: pickedSide.sideNumber,
+        homeAway: matchHomeAwayOf(game, pickedSide.sideNumber),
         scheduledDate: game.scheduledDate,
         status: game.status,
-        teamScore: pickedSide === null ? null : matchScoreOf(game, pickedSide.sideNumber),
-        opponentScore: pickedSide === null ? null : matchScoreOf(game, opposingSideOf(game, pickedSide.sideNumber).sideNumber),
+        teamScore: matchScoreOf(game, pickedSide.sideNumber),
+        opponentScore: matchScoreOf(game, opposingSideOf(game, pickedSide.sideNumber).sideNumber),
       };
     };
     const settled = contest.status === ContestStatus.COMPLETED

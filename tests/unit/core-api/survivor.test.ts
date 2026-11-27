@@ -12,13 +12,14 @@
  * - Cara picks the Jets: out in week 1.
  * - Dan picks the Bills, then leaves week 2 in draft: out in week 2.
  */
-import { legacyMatch, withHomeAway, homeAwayOf, type HomeAwayFields } from '../../support/match-sides';
+import { AWAY_SIDE, HOME_SIDE, legacyMatch, withHomeAway, homeAwayOf, type HomeAwayFields } from '../../support/match-sides';
 import { fakeLogger } from '../../support/fake-logger';
 import { expect, jest } from '@jest/globals';
 import {
   ContestEntryStatus,
   ContestFormat,
   ContestStatus,
+  HomeAway,
   MatchSide,
   MatchStatus,
   PredictedResult,
@@ -634,7 +635,7 @@ describe('ContestService.getSurvivorLeaderboard', () => {
       team: 'Chiefs',
       teamShortName: 'KC',
       game: {
-        opponent: 'Raiders', opponentShortName: 'LV', side: MatchSide.HOME, isNeutralSite: false,
+        opponent: 'Raiders', opponentShortName: 'LV', sideNumber: HOME_SIDE, homeAway: HomeAway.HOME,
         scheduledDate: later(WEEK_1, 24).toISOString(), status: MatchStatus.COMPLETED, teamScore: 20, opponentScore: 10,
       },
     });
@@ -642,7 +643,7 @@ describe('ContestService.getSurvivorLeaderboard', () => {
     expect(weekOf('Cara', 0)).toMatchObject({
       team: 'Jets',
       teamShortName: null,
-      game: { opponent: 'Bills', opponentShortName: 'BUF', side: MatchSide.AWAY, teamScore: 10, opponentScore: 20 },
+      game: { opponent: 'Bills', opponentShortName: 'BUF', sideNumber: AWAY_SIDE, homeAway: HomeAway.AWAY, teamScore: 10, opponentScore: 20 },
     });
     // A pick not yet kicked off shows neither its team nor its game.
     expect(weekOf('Alice', 1)).toMatchObject({ team: null, teamShortName: null, game: null });

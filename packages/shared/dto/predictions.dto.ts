@@ -5,7 +5,7 @@
 import { z } from 'zod';
 import { registerSchema } from './schema-registry';
 import { SportEventRoundSlotDtoSchema } from './bracket.dto';
-import { ContestEntryStatus, MatchSide, MatchStatus, PickEmMode, PickOutcome, PredictedResult, SelectionType, SportEventStatus, SurvivorWeekOutcome } from '../domain/enums';
+import { ContestEntryStatus, HomeAway, MatchStatus, PickEmMode, PickOutcome, PredictedResult, SelectionType, SportEventStatus, SurvivorWeekOutcome } from '../domain/enums';
 import { SURVIVOR_LIVES_MAX } from '../domain/contest-rules';
 
 // --- Requests ---
@@ -44,9 +44,18 @@ export const GamePickTeamDtoSchema = z.object({
 }).describe('One team of a game.');
 export type GamePickTeamDto = z.infer<typeof GamePickTeamDtoSchema>;
 
+const GamePickSideDtoSchema = z.object({
+  sideNumber: z.number().int().min(1).max(2).describe('The side\'s fixed place in the game: 1 or 2.'),
+  homeAway: z.enum(HomeAway).describe('Where the side plays the game\'s game 1: HOME, AWAY, or NONE at a neutral site (and until the feed says).'),
+  team: GamePickTeamDtoSchema.nullable().describe('The team really playing on this side; null until it is decided.'),
+  predictedTeam: GamePickTeamDtoSchema.nullable().describe('The team the entry\'s own picks put on this side, which its pick chooses between: in a bracket, the team it picked to win the game feeding this side (in a reseeded round, its picked winners paired by seed); otherwise the real team. Null until the picks that decide it are made. On another team\'s entry, the real team until the game is revealed.'),
+  spread: z.number().nullable().describe('The points spread, on side 1 only (#720): -3.5 has side 1 favoured by 3.5, +3.5 has it getting 3.5. Null until set, and always on side 2.'),
+}).describe('One side of a game on a pick screen (#2016).');
+
 export const GamePickDtoSchema = z.object({
   predictedResult: z.enum(PredictedResult).describe('What the pick says happens: TEAM, its team wins; TIE, the game ends level (#792).'),
   sportEventParticipantId: z.uuid().nullable().describe('The team picked to win; null for a TIE pick.'),
+  sideNumber: z.number().int().min(1).max(2).nullable().describe('The side the picked team is on (#2016): its side in the game\'s `sides`, by the entry\'s own predicted teams in a bracket. Null for a TIE pick.'),
   confidence: z.number().int().nullable().describe('The pick\'s confidence value; null in a straight-up pool, in a bracket, or until given.'),
   pickedAt: z.iso.datetime(),
   outcome: z.enum(PickOutcome).nullable().describe('How the pick stands against the results: CORRECT once its team won the game (in a bracket, its round; against the spread, covered), or for a TIE pick once the game ended level, BUSTED once it can no longer come true (a loss, a tie, a failure to cover, or in a bracket its team out), PUSH against the spread when the game landed exactly on it, else PENDING.'),
@@ -65,11 +74,7 @@ export const GamePickGameDtoSchema = z.object({
   status: z.enum(MatchStatus),
   isNeutralSite: z.boolean(),
   regionLabel: z.string().nullable().describe('The bracket region or conference the game is in ("East", "AFC"), for grouping on screen; null where the bracket has none.'),
-  homeSpread: z.number().nullable().describe('The points spread from the home team\'s side (#720): -3.5 has the home team favoured by 3.5. Null until set.'),
-  home: GamePickTeamDtoSchema.nullable().describe('The team really playing on this side; null until it is decided.'),
-  away: GamePickTeamDtoSchema.nullable().describe('The team really playing on this side; null until it is decided.'),
-  predictedHome: GamePickTeamDtoSchema.nullable().describe('The team the entry\'s own picks put on this side, which its pick chooses between: in a bracket, the team it picked to win the game feeding this side (in a reseeded round, its picked winners paired by seed); otherwise the real team. Null until the picks that decide it are made. On another team\'s entry, the real team until the game is revealed.'),
-  predictedAway: GamePickTeamDtoSchema.nullable().describe('As predictedHome, for the away side.'),
+  sides: z.array(GamePickSideDtoSchema).describe('The game\'s two sides, side 1 then side 2 (#2016). A screen bills them from `homeAway`: "away at home", or "vs" where neither side is home.'),
   locked: z.boolean().describe('Whether the game\'s pick can no longer change: it has kicked off, or the contest no longer takes picks.'),
   revealed: z.boolean().describe('Whether picks on this game are shown to the whole league: from its kickoff once the contest is live.'),
   pick: GamePickDtoSchema.nullable().describe('The entry\'s pick on the game. Null when it has none, and on another team\'s entry until the game is revealed.'),
@@ -229,8 +234,8 @@ export type SurvivorLeaderboardWeekDto = z.infer<typeof SurvivorLeaderboardWeekD
 export const SurvivorLeaderboardPickGameDtoSchema = z.object({
   opponent: z.string().describe('The team the picked team played.'),
   opponentShortName: z.string().nullable().describe('The opponent\'s short name ("BUF") when it has one.'),
-  side: z.enum(MatchSide).describe('Whether the picked team was HOME or AWAY: "KC v BUF" at home, "KC at BUF" away.'),
-  isNeutralSite: z.boolean().describe('The game is at neither team\'s home ground: "KC v BUF" either way.'),
+  sideNumber: z.number().int().min(1).max(2).describe('The picked team\'s side in the game (#2016).'),
+  homeAway: z.enum(HomeAway).describe('Where the picked team played: AWAY reads "KC at BUF", HOME "KC v BUF", and NONE, a neutral site, "KC vs BUF".'),
   scheduledDate: z.iso.datetime().nullable().describe('Kickoff, when known.'),
   status: z.enum(MatchStatus).describe('The game\'s status: COMPLETED once its result is in.'),
   teamScore: z.number().int().nullable().describe('The picked team\'s score, once there is one.'),

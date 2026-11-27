@@ -46,6 +46,7 @@ import {
   getFunctionalPrisma,
 } from './setup';
 import { expectDefined } from '../support/expect-defined';
+import { AWAY_SIDE, HOME_SIDE, pickSideOf } from '../support/match-sides';
 import { unlinkContestsFromSportEvents } from '../support/contest-event-links';
 import { standardPricingRequest } from './standard-pricing';
 import { expectMatchesSchema } from '../support/expect-matches-schema';
@@ -222,7 +223,8 @@ describe('SDK Functional: a pick\'em week against the spread (#720)', () => {
     // --- Picks: the week screen carries each spread ---------------------------------------------
     const aliceWeek = expectMatchesSchema(GamePicksResponseSchema, (await getGamePicks({ client: alice.client, path: path(entries.alice) })).data);
     expect(aliceWeek.againstTheSpread).toBe(true);
-    expect(aliceWeek.games.map((each) => [each.matchNumber, each.homeSpread])).toEqual([[1, -3.5], [2, 6.5], [3, -3], [4, 0]]);
+    // Side 1, the away side, carries the spread: the opposite of the home team's.
+    expect(aliceWeek.games.map((each) => [each.matchNumber, pickSideOf(each, AWAY_SIDE).spread, pickSideOf(each, HOME_SIDE).spread])).toEqual([[1, 3.5, null], [2, -6.5, null], [3, 3, null], [4, 0, null]]);
     for (const [client, entryId, side, tiebreakerValue] of [
       [alice.client, entries.alice, 'home', 140],
       [bob.client, entries.bob, 'away', 120],

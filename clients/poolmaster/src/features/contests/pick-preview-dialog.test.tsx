@@ -6,6 +6,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { GamePickPreviewResponse, RosterPickPreviewResponse } from '@/lib/api';
 import { bindApiMocks } from '@/test/msw-api';
 import { PickPreviewAction } from './pick-preview-dialog';
+import { awayAtHomeSides } from './test/game-pick-sides';
 import { weekSlot } from './test/round-slots';
 
 const {
@@ -91,13 +92,11 @@ function gamesPreview(overrides: Partial<GamePickPreviewResponse> = {}, pickedTe
       status: 'SCHEDULED',
       isNeutralSite: false,
       regionLabel: null,
-      homeSpread: -3.5,
-      home: chiefs,
-      away: bills,
-      predictedHome: chiefs,
-      predictedAway: bills,
+      sides: awayAtHomeSides(bills, chiefs, { spread: 3.5 }),
       locked: false,
-      pick: pickedTeam ? { predictedResult: 'TEAM', sportEventParticipantId: pickedTeam.sportEventParticipantId, confidence: null } : null,
+      pick: pickedTeam
+        ? { predictedResult: 'TEAM', sportEventParticipantId: pickedTeam.sportEventParticipantId, sideNumber: pickedTeam === bills ? 1 : 2, confidence: null }
+        : null,
     }],
     ...overrides,
   };

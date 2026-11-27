@@ -7,6 +7,7 @@ import type {
   SportEventParticipantDto,
   SurvivorLeaderboardResponse,
 } from '@/lib/api';
+import { awayAtHomeSides } from './game-pick-sides';
 import { homeAwayMatchFixture, type HomeAwayMatchFixture } from './match-fixtures';
 import { weekSlot } from './round-slots';
 
@@ -17,7 +18,7 @@ import { weekSlot } from './round-slots';
  */
 
 type Game = GamePicksResponse['games'][number];
-type Team = NonNullable<Game['home']>;
+type Team = NonNullable<Game['sides'][number]['team']>;
 
 function team(key: string, name: string): Team {
   return { sportEventParticipantId: `sep-${key}`, participantId: `participant-${key}`, name, seedNumber: null };
@@ -47,11 +48,7 @@ function game(matchNumber: number, kickoff: string, away: Team, home: Team, over
     status: 'SCHEDULED',
     isNeutralSite: false,
     regionLabel: null,
-    homeSpread: null,
-    home,
-    away,
-    predictedHome: home,
-    predictedAway: away,
+    sides: awayAtHomeSides(away, home),
     locked: false,
     revealed: false,
     pick: null,
@@ -64,6 +61,7 @@ export function weekPick(picked: Team, overrides: Partial<NonNullable<Game['pick
   return {
     predictedResult: 'TEAM',
     sportEventParticipantId: picked.sportEventParticipantId,
+    sideNumber: null,
     confidence: null,
     pickedAt: '2099-09-01T12:00:00.000Z',
     outcome: 'PENDING',
@@ -78,6 +76,7 @@ export function weekTiePick(overrides: Partial<NonNullable<Game['pick']>> = {}):
   return {
     predictedResult: 'TIE',
     sportEventParticipantId: null,
+    sideNumber: null,
     confidence: null,
     pickedAt: '2099-09-01T12:00:00.000Z',
     outcome: 'PENDING',

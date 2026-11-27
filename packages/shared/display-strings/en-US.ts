@@ -1406,6 +1406,16 @@ export const enUS = {
     stageUpcoming: 'to come',
     // A profile an event recorded but a root admin has since deleted (#2205).
     deletedProfile: 'A deleted profile',
+    /** Between a survivor pick's team and its opponent: "KC v BUF" at home, "KC at BUF" away, "KC vs BUF" at a neutral site. */
+    pickedAtHome: 'v',
+    pickedAway: 'at',
+    pickedAtNeutralSite: 'vs',
+    /** A game as a schedule names it: "Bills at Chiefs", "Bills vs Chiefs" at a neutral site, "Bills @ Chiefs" where space is short. */
+    matchupAt: 'at',
+    matchupAtShort: '@',
+    matchupVs: 'vs',
+    /** A side of a game whose team is not known yet. */
+    sideToBeDecided: 'To be decided',
     // The price dialog, when no pricing profile is chosen for the values to start from (#2205).
     choosePricingProfile: 'Choose the pricing profile the values start from.',
   },

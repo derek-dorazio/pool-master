@@ -72,7 +72,7 @@ export const DEFAULT_SHOWN_EVENT = '';
  * BUMP THIS whenever any leaderboard response shape changes (the roster, bracket, pick'em or
  * survivor board, or a row or week on one), in the same change.
  */
-export const LEADERBOARD_BOARD_FORMAT = 13;
+export const LEADERBOARD_BOARD_FORMAT = 14;
 
 /**
  * How old a stored board may be before a read computes it again: the bound on the changes no
