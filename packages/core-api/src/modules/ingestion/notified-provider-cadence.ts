@@ -6,7 +6,7 @@
  * the Providers page.
  */
 
-import { ProviderCode } from '@poolmaster/shared/domain';
+import { ProviderCode, ProviderWebhookEventSet } from '@poolmaster/shared/domain';
 import type { NotifiedProviderCadence } from './sync-tick';
 import type { ProviderSettingsStore } from './provider-settings-store';
 import type { ProviderWebhookSwitch } from './provider-webhook-switch';
@@ -37,4 +37,15 @@ export function notifiedProviderCadenceOf(
  */
 export function providerLeagueQuietAfterMs(store: Pick<ProviderSettingsStore, 'findLeague'>): (providerLeagueId: string) => number {
   return (providerLeagueId) => (store.findLeague(providerLeagueId)?.league.quietAfterMinutes ?? 0) * 60_000;
+}
+
+/**
+ * Whether each provider league, by its row's id, subscribes to webhook events: false for a league
+ * whose set is NONE (a feed with no notifications, #2045), and for a league no Provider row has.
+ */
+export function providerLeagueSendsNotifications(store: Pick<ProviderSettingsStore, 'findLeague'>): (providerLeagueId: string) => boolean {
+  return (providerLeagueId) => {
+    const set = store.findLeague(providerLeagueId)?.league.webhookEventSet;
+    return set !== undefined && set !== ProviderWebhookEventSet.NONE;
+  };
 }

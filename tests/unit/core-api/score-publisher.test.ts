@@ -286,6 +286,45 @@ describe('pool-master-rop.78.3 / plans/117 §10.3 — publishLiveScoreUpdate', (
     });
   });
 
+  describe('race sessions (#2045)', () => {
+    const race: LiveScoreResult = {
+      category: 'RACE',
+      externalEventId: 'f1-1108',
+      sessions: [{
+        providerSessionId: '5503', sessionType: 'Race', startsAt: '2025-05-25T13:00:00.000Z', isOfficial: true,
+        runners: [{ participantExternalId: '31', status: 'FINISHED', position: 1 }, { participantExternalId: '33', status: 'DID_NOT_FINISH', position: null }],
+      }],
+    };
+    const persisted = { updatesReturned: 2, updatesPersisted: 2, updatesSkipped: 0, writeDiagnostics: { summary: { total: 0, unchanged: 0, created: 0, updated: 0, deleted: 0 }, rows: [] } };
+    const inProgressRace = () => ({ findFirst: jest.fn().mockResolvedValue(atProvider({ id: 'evt-f1', status: 'IN_PROGRESS', sportLeagueSeason: { sportLeague: { id: 'league-f1', scoringFamily: 'FINISH_POSITION', sport: { sport: 'AUTO_RACING' } } } })) });
+
+    it('hands a RACE batch to the event\'s family writer when it takes race sessions, counting each runner as an update', async () => {
+      const persist = jest.fn().mockResolvedValue(persisted);
+
+      const result = await publishLiveScoreUpdate(race, { contestActivation: NO_CONTEST_ACTIVATION, findings: NO_FINDINGS,
+        prisma: asPrismaClient({ sportEventProviderMapping: inProgressRace() }),
+        domainEvents: testDomainEvents(), providerId: 'balldontlie',
+        scoringFamilyForEvent: () => ({ ...strokePlayScoringFamily, liveScores: { category: 'RACE', persist } }),
+      });
+
+      expect(result).toBe(persisted);
+      expect(persist).toHaveBeenCalledWith(expect.objectContaining({ providerId: 'balldontlie' }), expect.objectContaining({ id: 'evt-f1' }), race);
+    });
+
+    it('writes nothing, and counts every runner skipped, when the event\'s family takes another category', async () => {
+      const persist = jest.fn();
+
+      const result = await publishLiveScoreUpdate(race, { contestActivation: NO_CONTEST_ACTIVATION, findings: NO_FINDINGS,
+        prisma: asPrismaClient({ sportEventProviderMapping: inProgressRace() }),
+        domainEvents: testDomainEvents(), providerId: 'balldontlie',
+        scoringFamilyForEvent: () => ({ ...strokePlayScoringFamily, liveScores: { category: 'GOLF', persist } }),
+      });
+
+      expect(persist).not.toHaveBeenCalled();
+      expect(result).toMatchObject({ updatesReturned: 2, updatesPersisted: 0, updatesSkipped: 2 });
+    });
+  });
+
   describe('the event\'s field this container read lately (#1163)', () => {
     const NOW = new Date('2026-10-28T20:00:00.000Z');
     const result: LiveScoreResult = {

@@ -243,10 +243,14 @@ export class InMemorySportEvents {
     return id;
   }
 
+  /** The session types each league provider mapping plays as Rounds (#2045), by the mapping's id. */
+  readonly sessionTypesByMapping = new Map<string, string[]>();
+
   /** The Season slot reads an event create makes, and the events sync's slot reads and writes. */
-  seasonRepo(): Pick<SportLeagueSeasonRepository, 'findSlot' | 'findSlotsByIds' | 'findSyncSlots' | 'findSlotNamePatterns' | 'linkNameMatchedSlots' | 'recordSyncedSlots'> {
+  seasonRepo(): Pick<SportLeagueSeasonRepository, 'findSlot' | 'findSlotsByIds' | 'findSyncSlots' | 'findSlotNamePatterns' | 'findSessionTypes' | 'linkNameMatchedSlots' | 'recordSyncedSlots'> {
     const ownerOf = (slotId: string) => [...this.slotsByEvent.entries()].find(([, slots]) => slots.some((each) => each.id === slotId))?.[0] ?? null;
     return {
+      findSessionTypes: async (sportLeagueProviderMappingId) => [...(this.sessionTypesByMapping.get(sportLeagueProviderMappingId) ?? [])].sort(),
       findSyncSlots: async (sportLeagueSeasonId) => this.seasonSlots
         .filter((slot) => slot.sportLeagueSeasonId === sportLeagueSeasonId && !slot.isTestData)
         .map((slot) => ({

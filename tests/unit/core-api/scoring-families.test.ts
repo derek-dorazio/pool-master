@@ -87,8 +87,24 @@ describe('head to head', () => {
 });
 
 describe('finish position', () => {
-  it('accepts no live scores, so the score publisher skips any batch for a race', () => {
-    expect(getScoringFamilyModule(ScoringFamily.FINISH_POSITION).liveScores).toBeNull();
+  it('accepts RACE live scores, so the score publisher hands a race feed\'s sessions to it and skips any other category', () => {
+    expect(getScoringFamilyModule(ScoringFamily.FINISH_POSITION).liveScores?.category).toBe('RACE');
+  });
+
+  it('writes a RACE batch through the race result service, reading the session types the event\'s league plays once, and writes nothing when it plays none of them', async () => {
+    const writer = getScoringFamilyModule(ScoringFamily.FINISH_POSITION).liveScores;
+    if (writer?.category !== 'RACE') throw new Error('finish position takes RACE live scores');
+    const findSessionTypes = jest.fn().mockResolvedValue([]);
+    const session = { providerSessionId: '5503', sessionType: 'Race', startsAt: '2025-05-25T13:00:00.000Z', isOfficial: true, runners: [{ participantExternalId: '31', status: 'FINISHED' as const, position: 1 }] };
+
+    const result = await writer.persist(
+      { contestActivation: NO_CONTEST_ACTIVATION, prisma: { sportLeagueProviderSessionTypeMapping: { findMany: findSessionTypes } } as unknown as PrismaClient, providerId: 'balldontlie', domainEvents: testDomainEvents() },
+      { id: 'event-1' },
+      { category: 'RACE', externalEventId: 'f1-1108', sessions: [session] },
+    );
+
+    expect(findSessionTypes).toHaveBeenCalledTimes(1);
+    expect(result).toMatchObject({ updatesReturned: 1, updatesPersisted: 0, updatesSkipped: 1 });
   });
 });
 

@@ -22,6 +22,8 @@ const minutes = (count: number) => count * 60_000;
 const at = (offsetMs: number) => new Date(NOW.getTime() + offsetMs);
 
 const PGA_PROVIDER_LEAGUE = 'pga-provider-league';
+/** A provider league subscribed to no webhook events (its set is NONE): synced on the schedule only. */
+const SCHEDULE_ONLY_PROVIDER_LEAGUE = 'f1-provider-league';
 const seasonal = (inSeason: Record<string, number>, offseason: Record<string, number>) => ({ IN_SEASON: inSeason, OFFSEASON: offseason });
 
 const SCHEDULE = {
@@ -87,6 +89,7 @@ function tickOf(options: {
     notifiedProviderCadence: () => options.cadence,
     // Each provider league's own quiet window: a golf round's is hours, a game's minutes.
     quietAfterMs: (providerLeagueId) => (providerLeagueId === PGA_PROVIDER_LEAGUE ? minutes(240) : minutes(20)),
+    leagueSendsNotifications: (providerLeagueId) => providerLeagueId !== SCHEDULE_ONLY_PROVIDER_LEAGUE,
     findings,
     jobLock: options.lock === 'elsewhere' ? heldElsewhere() : heldHere(),
     now: () => now,
@@ -339,6 +342,22 @@ describe('SyncTick', () => {
       await tick.tick();
 
       expect(queued()).toHaveLength(2);
+    });
+
+    it("keeps the SCORES interval for a league subscribed to no webhook events, and never warns it quiet, though its provider's other leagues are notified", async () => {
+      const f1 = league({ selectedProviderMapping: buildProviderMapping({ id: randomUUID(), providerLeagueId: SCHEDULE_ONLY_PROVIDER_LEAGUE, providerLeagueCode: 'f1' }) });
+      const race = liveEvent(f1.id, { games: [{ status: MatchStatus.IN_PROGRESS, scheduledDate: at(-minutes(30)), playedAsField: true }] });
+      const { tick, queued, advance, finishAll, logger } = tickOf({ leagues: [f1], live: [race], schedule: scoresOnly, cadence: cadence() });
+      await tick.tick();
+      finishAll();
+      advance(minutes(2));
+      await tick.tick();
+      finishAll();
+      advance(minutes(3));
+      await tick.tick();
+
+      expect(queued()).toHaveLength(2);
+      expect(logger.warn.mock.calls.filter(([fields]) => (fields as { action?: string }).action === 'ingestion.providerNotifications.quiet')).toHaveLength(0);
     });
 
     it('warns once per quiet window about a notified event in play with no notification for its league\'s window', async () => {

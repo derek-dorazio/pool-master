@@ -59,7 +59,7 @@ import { ingestionModule } from './modules/ingestion/routes';
 import { providerWebhooksModule, readBalldontlieWebhookSecret } from './modules/ingestion/provider-webhook-routes';
 import { ProviderNotificationService } from './modules/ingestion/provider-notifications';
 import { ProviderCode, ProviderSyncKind } from '@poolmaster/shared/domain';
-import { notifiedProviderCadenceOf, providerLeagueQuietAfterMs } from './modules/ingestion/notified-provider-cadence';
+import { notifiedProviderCadenceOf, providerLeagueQuietAfterMs, providerLeagueSendsNotifications } from './modules/ingestion/notified-provider-cadence';
 import { ProviderSettingsStore } from './modules/ingestion/provider-settings-store';
 import { ProviderWebhookSwitch } from './modules/ingestion/provider-webhook-switch';
 import { providerLookupOf } from './modules/ingestion/provider-lookup';
@@ -436,6 +436,7 @@ export function buildApp(options: BuildAppOptions = {}) {
     schedule: ingestionConfigService,
     notifiedProviderCadence: () => notifiedProviderCadenceOf(providerSettings, providerWebhooks),
     quietAfterMs: providerLeagueQuietAfterMs(providerSettings),
+    leagueSendsNotifications: providerLeagueSendsNotifications(providerSettings),
     findings: syncFindings,
     jobLock,
     logger: app.log,
