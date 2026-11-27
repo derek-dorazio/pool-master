@@ -282,6 +282,12 @@ export interface ParticipantProviderMapping extends DomainEntity {
 // --- Contest ---
 
 /** Core contest record representing a pool or competition within a league. */
+/** The Game a squares contest is played on (#2050), with its match. */
+export interface ContestSquaresGame {
+  sportEventRoundMatchGameId: string;
+  sportEventRoundMatchId: string;
+}
+
 export interface Contest extends DomainEntity {
   leagueId: string;
   /**
@@ -311,10 +317,11 @@ export interface Contest extends DomainEntity {
    */
   drawnAt?: Date;
   /**
-   * A squares contest's one game (#711), a match of its event: its kickoff closes the contest.
-   * Absent for every other contest. The squares digits' draw sets `drawnAt` too.
+   * A squares contest's one Game (#711, #2050), in a covered slot, and the match it is a Game
+   * of: its kickoff closes the contest. Absent for every other contest. The squares digits' draw
+   * sets `drawnAt` too.
    */
-  squaresGameMatchId?: string;
+  squaresGame?: ContestSquaresGame;
   /**
    * The definitions of the slots the contest covers (#2014), one per covered Season slot, in play
    * order: what knockout round values, bracket games and coverage checks read.

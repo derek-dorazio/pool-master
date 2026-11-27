@@ -19923,6 +19923,895 @@
         "additionalProperties": false,
         "description": "One match of an event's bracket."
       },
+      "SquaresGameChoiceDto": {
+        "type": "object",
+        "properties": {
+          "sportEventRoundMatchGameId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The Game: what CreateContestRequest.sportEventRoundMatchGameId takes."
+          },
+          "gameNumber": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991,
+            "description": "Its number in its match: 1 for a single game, a series' games in the order they are played."
+          },
+          "scheduledDate": {
+            "description": "The Game's kickoff, which closes a squares contest on it; null while it is to be announced.",
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "match": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "sportEventId": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "roundNumber": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
+                "description": "The round the match is played in."
+              },
+              "slot": {
+                "type": "object",
+                "properties": {
+                  "seasonSlotId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "The Season slot (SportLeagueSeasonSlotDto) the round is played in. Rounds that share it, such as a golf tournament's four, are named by number rather than by the slot."
+                  },
+                  "name": {
+                    "description": "The slot's proper name (\"Super Bowl\", \"Sweet 16\"); null when it is called by its kind's word.",
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "slotKind": {
+                    "type": "string",
+                    "enum": [
+                      "WEEK",
+                      "PLAY_IN",
+                      "ROUND_OF_64",
+                      "ROUND_OF_32",
+                      "ROUND_OF_16",
+                      "QUARTERFINAL",
+                      "SEMIFINAL",
+                      "THIRD_PLACE",
+                      "FINAL",
+                      "TOURNAMENT"
+                    ],
+                    "description": "The slot's kind. FINAL is the event's final: never found by round position."
+                  },
+                  "weekNumber": {
+                    "description": "A WEEK slot's week (\"Week 14\"); null for every other kind.",
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "minimum": -9007199254740991,
+                    "maximum": 9007199254740991
+                  },
+                  "periods": {
+                    "description": "What a game of the slot is played in (#2047); null for a game that keeps no score by period, such as a race or a tennis match.",
+                    "type": [
+                      "object",
+                      "null"
+                    ],
+                    "properties": {
+                      "unit": {
+                        "type": "string",
+                        "enum": [
+                          "QUARTER",
+                          "HALF",
+                          "PERIOD",
+                          "INNING",
+                          "HOLE"
+                        ],
+                        "description": "What a game of the slot is played in: QUARTER, HALF, PERIOD, INNING or HOLE. Its words come from the display strings."
+                      },
+                      "count": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 9007199254740991,
+                        "description": "How many periods a game has, overtime aside: 4 quarters, 2 halves, 9 innings, 18 holes. The last period's score is the final score."
+                      }
+                    },
+                    "required": [
+                      "unit",
+                      "count"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "seasonSlotId",
+                  "name",
+                  "slotKind",
+                  "weekNumber",
+                  "periods"
+                ],
+                "additionalProperties": false,
+                "description": "The slot the match's round is played in: the round's label and whether the match is the final."
+              },
+              "matchNumber": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
+                "description": "Unique within its round (#2161): the match's place in the round and its display order. Two rounds each have a match 1, so a match is named by roundNumber and matchNumber together."
+              },
+              "isNeutralSite": {
+                "type": "boolean",
+                "description": "True when neither side is at home: screens then say \"vs\" rather than \"at\"."
+              },
+              "scheduledDate": {
+                "description": "Tip-off or kickoff; null until it is announced.",
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date-time"
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "SCHEDULED",
+                  "IN_PROGRESS",
+                  "COMPLETED",
+                  "CANCELLED",
+                  "POSTPONED"
+                ],
+                "description": "Where a match stands. COMPLETED once its result is in; CANCELLED when it was never played; POSTPONED when it was put off before it began and is still to be played, at its scheduledDate once a new time is set."
+              },
+              "isFinal": {
+                "type": "boolean",
+                "description": "True once the match is decided (COMPLETED): its score and its winner, or its tie, stand. The server's own fact, so a client never re-derives it from the status."
+              },
+              "isUnplayed": {
+                "type": "boolean",
+                "description": "True while the match is still to be played: scheduled, or postponed to be played later. The server's own `isMatchUnplayed`, so a client never re-derives it from the status."
+              },
+              "ending": {
+                "type": "string",
+                "enum": [
+                  "PLAYED",
+                  "RETIREMENT",
+                  "WALKOVER",
+                  "DEFAULT"
+                ],
+                "description": "How the match ended; PLAYED for a match without a result. A WALKOVER has no scores."
+              },
+              "completedAt": {
+                "description": "When the result was last recorded: each COMPLETED result sets it, a correction included. Null in every other status.",
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "date-time"
+              },
+              "advancesTo": {
+                "description": "Where the winner moves on to; null for the final, and for a match whose winner is placed by seed in a league that reseeds.",
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "matchId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "The match the winner moves on to."
+                  },
+                  "sideNumber": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 2,
+                    "description": "The side of that match the winner fills."
+                  }
+                },
+                "required": [
+                  "matchId",
+                  "sideNumber"
+                ],
+                "additionalProperties": false
+              },
+              "regionLabel": {
+                "description": "The region or conference the match is played in (\"AFC\", \"East\"); null when the bracket has none. In a reseeded round each team stays in its region.",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "sides": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "sideNumber": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 2,
+                      "description": "The side's fixed place in the match: 1 or 2. A synced game has its away team on side 1 and its home team on side 2; where each side played a game is its game side result's homeAway."
+                    },
+                    "sportEventParticipantId": {
+                      "description": "The field row playing the side; null until it is decided, such as a later round waiting on its feeder match.",
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "uuid"
+                    },
+                    "outcome": {
+                      "type": "string",
+                      "enum": [
+                        "PENDING",
+                        "WON",
+                        "LOST",
+                        "TIED"
+                      ],
+                      "description": "How a side came out of its match: PENDING until the match is decided, then WON or LOST, or TIED for both sides of a game of a week that ended level (#792)."
+                    },
+                    "score": {
+                      "description": "The side's score in the match, summed by the server from its games: its game 1 score in a single game, and in a best-of series the games it has won. Null until it has one.",
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
+                    "spread": {
+                      "description": "The points spread, on side 1 only (#720): -3.5 has side 1 favoured by 3.5, +3.5 has it getting 3.5. Null until set, and always on side 2. A pick'em contest scored against the spread reads it.",
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "sideNumber",
+                    "sportEventParticipantId",
+                    "outcome",
+                    "score",
+                    "spread"
+                  ],
+                  "additionalProperties": false,
+                  "description": "One side of a match (#2046)."
+                },
+                "description": "Side 1 then side 2. The winner is the side whose outcome is WON."
+              },
+              "games": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "gameNumber": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 9007199254740991,
+                      "description": "1 for a single game; a best-of series numbers its games in the order they are played."
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "SCHEDULED",
+                        "IN_PROGRESS",
+                        "COMPLETED",
+                        "CANCELLED",
+                        "POSTPONED"
+                      ],
+                      "description": "Where a match stands. COMPLETED once its result is in; CANCELLED when it was never played; POSTPONED when it was put off before it began and is still to be played, at its scheduledDate once a new time is set."
+                    },
+                    "isFinal": {
+                      "type": "boolean",
+                      "description": "True once the game is decided (COMPLETED). The server's own fact, so a client never re-derives it from the status."
+                    },
+                    "scheduledDate": {
+                      "description": "The game's start; null until it is announced.",
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "date-time"
+                    },
+                    "sideResults": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "sideNumber": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 2,
+                            "description": "The match side the result is for."
+                          },
+                          "score": {
+                            "description": "The side's score in the game, overtime included and a shoot-out never; null until the game starts.",
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991
+                          },
+                          "homeAway": {
+                            "type": "string",
+                            "enum": [
+                              "HOME",
+                              "AWAY",
+                              "NONE"
+                            ],
+                            "description": "Where a side played a game: HOME, AWAY, or NONE at a neutral site. Screens say \"at\" or \"vs\" from it."
+                          },
+                          "shootoutScore": {
+                            "description": "The side's kicks scored in the shoot-out that settled a game level after extra time; null when there was none. Not part of the score.",
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991
+                          },
+                          "periodScores": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "kind": {
+                                  "type": "string",
+                                  "enum": [
+                                    "REGULAR",
+                                    "OVERTIME",
+                                    "SHOOTOUT"
+                                  ],
+                                  "description": "REGULAR for a period of regulation, OVERTIME for one of overtime. A shoot-out is not a period here: it is the side result's shootoutScore."
+                                },
+                                "periodNumber": {
+                                  "type": "integer",
+                                  "minimum": 1,
+                                  "maximum": 9007199254740991,
+                                  "description": "1 for the first period of its kind."
+                                },
+                                "score": {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 9007199254740991,
+                                  "description": "The side's score at the end of the period, earlier periods included, as the scoreboard shows it: summed by the server from each period's own points."
+                                }
+                              },
+                              "required": [
+                                "kind",
+                                "periodNumber",
+                                "score"
+                              ],
+                              "additionalProperties": false,
+                              "description": "One side's running score at the end of one period of play of a game (#772, #2046)."
+                            },
+                            "description": "The side's running score at the end of each period of play entered so far, regulation then overtime, in play order; empty for a sport whose games keep no score by period."
+                          }
+                        },
+                        "required": [
+                          "sideNumber",
+                          "score",
+                          "homeAway",
+                          "shootoutScore",
+                          "periodScores"
+                        ],
+                        "additionalProperties": false,
+                        "description": "One side's result in one game of a match (#2046)."
+                      },
+                      "description": "Each side's result in the game, side 1 first, from the moment the game is loaded: where the side plays it, then its scores once they are in."
+                    }
+                  },
+                  "required": [
+                    "gameNumber",
+                    "status",
+                    "isFinal",
+                    "scheduledDate",
+                    "sideResults"
+                  ],
+                  "additionalProperties": false,
+                  "description": "One game of a match (#2007): a single game is its match's game 1, a best-of series one game per game played."
+                },
+                "description": "The match's games in game-number order: a single game has its game 1 from the moment the match is loaded."
+              }
+            },
+            "required": [
+              "id",
+              "sportEventId",
+              "roundNumber",
+              "slot",
+              "matchNumber",
+              "isNeutralSite",
+              "scheduledDate",
+              "status",
+              "isFinal",
+              "isUnplayed",
+              "ending",
+              "completedAt",
+              "advancesTo",
+              "regionLabel",
+              "sides",
+              "games"
+            ],
+            "additionalProperties": false,
+            "description": "The match it is a Game of: its round, its slot and its two sides."
+          }
+        },
+        "required": [
+          "sportEventRoundMatchGameId",
+          "gameNumber",
+          "scheduledDate",
+          "match"
+        ],
+        "additionalProperties": false,
+        "description": "A Game a squares contest can be played on."
+      },
+      "SquaresGameChoicesResponse": {
+        "type": "object",
+        "properties": {
+          "games": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "sportEventRoundMatchGameId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "description": "The Game: what CreateContestRequest.sportEventRoundMatchGameId takes."
+                },
+                "gameNumber": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 9007199254740991,
+                  "description": "Its number in its match: 1 for a single game, a series' games in the order they are played."
+                },
+                "scheduledDate": {
+                  "description": "The Game's kickoff, which closes a squares contest on it; null while it is to be announced.",
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "date-time"
+                },
+                "match": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "sportEventId": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "roundNumber": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991,
+                      "description": "The round the match is played in."
+                    },
+                    "slot": {
+                      "type": "object",
+                      "properties": {
+                        "seasonSlotId": {
+                          "type": "string",
+                          "format": "uuid",
+                          "description": "The Season slot (SportLeagueSeasonSlotDto) the round is played in. Rounds that share it, such as a golf tournament's four, are named by number rather than by the slot."
+                        },
+                        "name": {
+                          "description": "The slot's proper name (\"Super Bowl\", \"Sweet 16\"); null when it is called by its kind's word.",
+                          "type": [
+                            "string",
+                            "null"
+                          ]
+                        },
+                        "slotKind": {
+                          "type": "string",
+                          "enum": [
+                            "WEEK",
+                            "PLAY_IN",
+                            "ROUND_OF_64",
+                            "ROUND_OF_32",
+                            "ROUND_OF_16",
+                            "QUARTERFINAL",
+                            "SEMIFINAL",
+                            "THIRD_PLACE",
+                            "FINAL",
+                            "TOURNAMENT"
+                          ],
+                          "description": "The slot's kind. FINAL is the event's final: never found by round position."
+                        },
+                        "weekNumber": {
+                          "description": "A WEEK slot's week (\"Week 14\"); null for every other kind.",
+                          "type": [
+                            "integer",
+                            "null"
+                          ],
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991
+                        },
+                        "periods": {
+                          "description": "What a game of the slot is played in (#2047); null for a game that keeps no score by period, such as a race or a tennis match.",
+                          "type": [
+                            "object",
+                            "null"
+                          ],
+                          "properties": {
+                            "unit": {
+                              "type": "string",
+                              "enum": [
+                                "QUARTER",
+                                "HALF",
+                                "PERIOD",
+                                "INNING",
+                                "HOLE"
+                              ],
+                              "description": "What a game of the slot is played in: QUARTER, HALF, PERIOD, INNING or HOLE. Its words come from the display strings."
+                            },
+                            "count": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "maximum": 9007199254740991,
+                              "description": "How many periods a game has, overtime aside: 4 quarters, 2 halves, 9 innings, 18 holes. The last period's score is the final score."
+                            }
+                          },
+                          "required": [
+                            "unit",
+                            "count"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "required": [
+                        "seasonSlotId",
+                        "name",
+                        "slotKind",
+                        "weekNumber",
+                        "periods"
+                      ],
+                      "additionalProperties": false,
+                      "description": "The slot the match's round is played in: the round's label and whether the match is the final."
+                    },
+                    "matchNumber": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991,
+                      "description": "Unique within its round (#2161): the match's place in the round and its display order. Two rounds each have a match 1, so a match is named by roundNumber and matchNumber together."
+                    },
+                    "isNeutralSite": {
+                      "type": "boolean",
+                      "description": "True when neither side is at home: screens then say \"vs\" rather than \"at\"."
+                    },
+                    "scheduledDate": {
+                      "description": "Tip-off or kickoff; null until it is announced.",
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "date-time"
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "SCHEDULED",
+                        "IN_PROGRESS",
+                        "COMPLETED",
+                        "CANCELLED",
+                        "POSTPONED"
+                      ],
+                      "description": "Where a match stands. COMPLETED once its result is in; CANCELLED when it was never played; POSTPONED when it was put off before it began and is still to be played, at its scheduledDate once a new time is set."
+                    },
+                    "isFinal": {
+                      "type": "boolean",
+                      "description": "True once the match is decided (COMPLETED): its score and its winner, or its tie, stand. The server's own fact, so a client never re-derives it from the status."
+                    },
+                    "isUnplayed": {
+                      "type": "boolean",
+                      "description": "True while the match is still to be played: scheduled, or postponed to be played later. The server's own `isMatchUnplayed`, so a client never re-derives it from the status."
+                    },
+                    "ending": {
+                      "type": "string",
+                      "enum": [
+                        "PLAYED",
+                        "RETIREMENT",
+                        "WALKOVER",
+                        "DEFAULT"
+                      ],
+                      "description": "How the match ended; PLAYED for a match without a result. A WALKOVER has no scores."
+                    },
+                    "completedAt": {
+                      "description": "When the result was last recorded: each COMPLETED result sets it, a correction included. Null in every other status.",
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "date-time"
+                    },
+                    "advancesTo": {
+                      "description": "Where the winner moves on to; null for the final, and for a match whose winner is placed by seed in a league that reseeds.",
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "properties": {
+                        "matchId": {
+                          "type": "string",
+                          "format": "uuid",
+                          "description": "The match the winner moves on to."
+                        },
+                        "sideNumber": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 2,
+                          "description": "The side of that match the winner fills."
+                        }
+                      },
+                      "required": [
+                        "matchId",
+                        "sideNumber"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "regionLabel": {
+                      "description": "The region or conference the match is played in (\"AFC\", \"East\"); null when the bracket has none. In a reseeded round each team stays in its region.",
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "sides": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "sideNumber": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 2,
+                            "description": "The side's fixed place in the match: 1 or 2. A synced game has its away team on side 1 and its home team on side 2; where each side played a game is its game side result's homeAway."
+                          },
+                          "sportEventParticipantId": {
+                            "description": "The field row playing the side; null until it is decided, such as a later round waiting on its feeder match.",
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "format": "uuid"
+                          },
+                          "outcome": {
+                            "type": "string",
+                            "enum": [
+                              "PENDING",
+                              "WON",
+                              "LOST",
+                              "TIED"
+                            ],
+                            "description": "How a side came out of its match: PENDING until the match is decided, then WON or LOST, or TIED for both sides of a game of a week that ended level (#792)."
+                          },
+                          "score": {
+                            "description": "The side's score in the match, summed by the server from its games: its game 1 score in a single game, and in a best-of series the games it has won. Null until it has one.",
+                            "type": [
+                              "integer",
+                              "null"
+                            ],
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991
+                          },
+                          "spread": {
+                            "description": "The points spread, on side 1 only (#720): -3.5 has side 1 favoured by 3.5, +3.5 has it getting 3.5. Null until set, and always on side 2. A pick'em contest scored against the spread reads it.",
+                            "type": [
+                              "number",
+                              "null"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "sideNumber",
+                          "sportEventParticipantId",
+                          "outcome",
+                          "score",
+                          "spread"
+                        ],
+                        "additionalProperties": false,
+                        "description": "One side of a match (#2046)."
+                      },
+                      "description": "Side 1 then side 2. The winner is the side whose outcome is WON."
+                    },
+                    "games": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "gameNumber": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 9007199254740991,
+                            "description": "1 for a single game; a best-of series numbers its games in the order they are played."
+                          },
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "SCHEDULED",
+                              "IN_PROGRESS",
+                              "COMPLETED",
+                              "CANCELLED",
+                              "POSTPONED"
+                            ],
+                            "description": "Where a match stands. COMPLETED once its result is in; CANCELLED when it was never played; POSTPONED when it was put off before it began and is still to be played, at its scheduledDate once a new time is set."
+                          },
+                          "isFinal": {
+                            "type": "boolean",
+                            "description": "True once the game is decided (COMPLETED). The server's own fact, so a client never re-derives it from the status."
+                          },
+                          "scheduledDate": {
+                            "description": "The game's start; null until it is announced.",
+                            "type": [
+                              "string",
+                              "null"
+                            ],
+                            "format": "date-time"
+                          },
+                          "sideResults": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "sideNumber": {
+                                  "type": "integer",
+                                  "minimum": 1,
+                                  "maximum": 2,
+                                  "description": "The match side the result is for."
+                                },
+                                "score": {
+                                  "description": "The side's score in the game, overtime included and a shoot-out never; null until the game starts.",
+                                  "type": [
+                                    "integer",
+                                    "null"
+                                  ],
+                                  "minimum": -9007199254740991,
+                                  "maximum": 9007199254740991
+                                },
+                                "homeAway": {
+                                  "type": "string",
+                                  "enum": [
+                                    "HOME",
+                                    "AWAY",
+                                    "NONE"
+                                  ],
+                                  "description": "Where a side played a game: HOME, AWAY, or NONE at a neutral site. Screens say \"at\" or \"vs\" from it."
+                                },
+                                "shootoutScore": {
+                                  "description": "The side's kicks scored in the shoot-out that settled a game level after extra time; null when there was none. Not part of the score.",
+                                  "type": [
+                                    "integer",
+                                    "null"
+                                  ],
+                                  "minimum": -9007199254740991,
+                                  "maximum": 9007199254740991
+                                },
+                                "periodScores": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "object",
+                                    "properties": {
+                                      "kind": {
+                                        "type": "string",
+                                        "enum": [
+                                          "REGULAR",
+                                          "OVERTIME",
+                                          "SHOOTOUT"
+                                        ],
+                                        "description": "REGULAR for a period of regulation, OVERTIME for one of overtime. A shoot-out is not a period here: it is the side result's shootoutScore."
+                                      },
+                                      "periodNumber": {
+                                        "type": "integer",
+                                        "minimum": 1,
+                                        "maximum": 9007199254740991,
+                                        "description": "1 for the first period of its kind."
+                                      },
+                                      "score": {
+                                        "type": "integer",
+                                        "minimum": 0,
+                                        "maximum": 9007199254740991,
+                                        "description": "The side's score at the end of the period, earlier periods included, as the scoreboard shows it: summed by the server from each period's own points."
+                                      }
+                                    },
+                                    "required": [
+                                      "kind",
+                                      "periodNumber",
+                                      "score"
+                                    ],
+                                    "additionalProperties": false,
+                                    "description": "One side's running score at the end of one period of play of a game (#772, #2046)."
+                                  },
+                                  "description": "The side's running score at the end of each period of play entered so far, regulation then overtime, in play order; empty for a sport whose games keep no score by period."
+                                }
+                              },
+                              "required": [
+                                "sideNumber",
+                                "score",
+                                "homeAway",
+                                "shootoutScore",
+                                "periodScores"
+                              ],
+                              "additionalProperties": false,
+                              "description": "One side's result in one game of a match (#2046)."
+                            },
+                            "description": "Each side's result in the game, side 1 first, from the moment the game is loaded: where the side plays it, then its scores once they are in."
+                          }
+                        },
+                        "required": [
+                          "gameNumber",
+                          "status",
+                          "isFinal",
+                          "scheduledDate",
+                          "sideResults"
+                        ],
+                        "additionalProperties": false,
+                        "description": "One game of a match (#2007): a single game is its match's game 1, a best-of series one game per game played."
+                      },
+                      "description": "The match's games in game-number order: a single game has its game 1 from the moment the match is loaded."
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "sportEventId",
+                    "roundNumber",
+                    "slot",
+                    "matchNumber",
+                    "isNeutralSite",
+                    "scheduledDate",
+                    "status",
+                    "isFinal",
+                    "isUnplayed",
+                    "ending",
+                    "completedAt",
+                    "advancesTo",
+                    "regionLabel",
+                    "sides",
+                    "games"
+                  ],
+                  "additionalProperties": false,
+                  "description": "The match it is a Game of: its round, its slot and its two sides."
+                }
+              },
+              "required": [
+                "sportEventRoundMatchGameId",
+                "gameNumber",
+                "scheduledDate",
+                "match"
+              ],
+              "additionalProperties": false,
+              "description": "A Game a squares contest can be played on."
+            },
+            "description": "The Games a squares contest can be played on now: each a Game of a slot that takes squares, still to kick off, with no period score in. The final's first, then by kickoff, round, match and game number. Empty when every game has kicked off."
+          },
+          "defaultSportEventRoundMatchGameId": {
+            "description": "The Game Create contest starts on: Game 1 of the soonest match, the first of `games`. Null when there is none.",
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "games",
+          "defaultSportEventRoundMatchGameId"
+        ],
+        "additionalProperties": false,
+        "description": "The Games of an event a squares contest can be played on."
+      },
       "LoadSportEventBracketRequest": {
         "type": "object",
         "properties": {
@@ -21665,15 +22554,6 @@
             "format": "uuid",
             "description": "The pricing profile the sport league names (PlatformPricingProfileDto): a synced field of the league never priced before is priced with its values."
           },
-          "squaresFromRound": {
-            "description": "The first round whose matches are single games a squares contest can be played on, when not every round's are: 5 for the Champions League, whose earlier rounds are two-legged ties, 3 for MLS, whose round one is a best-of-three series. Null when every round's matches can take one. Set with the league's reference data, never by a request.",
-            "type": [
-              "integer",
-              "null"
-            ],
-            "minimum": 1,
-            "maximum": 9007199254740991
-          },
           "noun": {
             "description": "What screens call the sport league, when not what its sport calls one: LEAGUE for the NCAA Division I tennis championships, where the ATP and the WTA are tours. Null takes the sport's noun. Set with the league's reference data, never by a request.",
             "type": [
@@ -21751,7 +22631,6 @@
           "autoReleaseDaysBeforeStart",
           "platformTierProfileId",
           "platformPricingProfileId",
-          "squaresFromRound",
           "noun",
           "participantType",
           "scoringFamily",
@@ -21965,15 +22844,6 @@
                   "format": "uuid",
                   "description": "The pricing profile the sport league names (PlatformPricingProfileDto): a synced field of the league never priced before is priced with its values."
                 },
-                "squaresFromRound": {
-                  "description": "The first round whose matches are single games a squares contest can be played on, when not every round's are: 5 for the Champions League, whose earlier rounds are two-legged ties, 3 for MLS, whose round one is a best-of-three series. Null when every round's matches can take one. Set with the league's reference data, never by a request.",
-                  "type": [
-                    "integer",
-                    "null"
-                  ],
-                  "minimum": 1,
-                  "maximum": 9007199254740991
-                },
                 "noun": {
                   "description": "What screens call the sport league, when not what its sport calls one: LEAGUE for the NCAA Division I tennis championships, where the ATP and the WTA are tours. Null takes the sport's noun. Set with the league's reference data, never by a request.",
                   "type": [
@@ -22051,7 +22921,6 @@
                 "autoReleaseDaysBeforeStart",
                 "platformTierProfileId",
                 "platformPricingProfileId",
-                "squaresFromRound",
                 "noun",
                 "participantType",
                 "scoringFamily",
@@ -22233,15 +23102,6 @@
                 "format": "uuid",
                 "description": "The pricing profile the sport league names (PlatformPricingProfileDto): a synced field of the league never priced before is priced with its values."
               },
-              "squaresFromRound": {
-                "description": "The first round whose matches are single games a squares contest can be played on, when not every round's are: 5 for the Champions League, whose earlier rounds are two-legged ties, 3 for MLS, whose round one is a best-of-three series. Null when every round's matches can take one. Set with the league's reference data, never by a request.",
-                "type": [
-                  "integer",
-                  "null"
-                ],
-                "minimum": 1,
-                "maximum": 9007199254740991
-              },
               "noun": {
                 "description": "What screens call the sport league, when not what its sport calls one: LEAGUE for the NCAA Division I tennis championships, where the ATP and the WTA are tours. Null takes the sport's noun. Set with the league's reference data, never by a request.",
                 "type": [
@@ -22319,7 +23179,6 @@
               "autoReleaseDaysBeforeStart",
               "platformTierProfileId",
               "platformPricingProfileId",
-              "squaresFromRound",
               "noun",
               "participantType",
               "scoringFamily",
@@ -37733,8 +38592,8 @@
             "type": "string",
             "format": "uuid"
           },
-          "sportEventRoundMatchId": {
-            "description": "A squares contest's game (#711): one of its event's games not yet kicked off. Required for SQUARES (422 CONTEST_SQUARES_GAME_REQUIRED) and refused for every other selection type; 422 CONTEST_SQUARES_GAME_INVALID for a game not of the event, cancelled, or already started.",
+          "sportEventRoundMatchGameId": {
+            "description": "A squares contest's Game (#711, #2050): one of the event's squares Game choices (GET /sport-events/{eventId}/squares-games), a Game of a slot that takes squares not yet kicked off. Required for SQUARES (422 CONTEST_SQUARES_GAME_REQUIRED) and refused for every other selection type; 422 CONTEST_SQUARES_GAME_INVALID for any other Game.",
             "type": "string",
             "format": "uuid"
           }
@@ -91863,6 +92722,69 @@
             }
           },
           "409": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/events/{eventId}/squares-games": {
+      "get": {
+        "operationId": "listEventSquaresGames",
+        "summary": "List the games a squares contest can be played on",
+        "tags": [
+          "Events"
+        ],
+        "description": "The event's Games a squares contest can be played on now: each a Game of a slot that takes squares, still to kick off, with no period score in, the final's first, then by kickoff. Create contest lists them, and creating a squares contest accepts only one of them. Any signed-in user may read a released event's; a DRAFT event's are a root admin's only. 422 SPORT_EVENT_NOT_BRACKET when the event's sport is not played as a bracket.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "path",
+            "name": "eventId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The Games of an event a squares contest can be played on.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SquaresGameChoicesResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
             "description": "Standard API error envelope.",
             "content": {
               "application/json": {

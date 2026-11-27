@@ -24,6 +24,7 @@ import { eventRoundSlots, mapEventToProvider, fixtureSeasonId, type TestRoundSlo
 import { sportPlay } from '../../support/sport-play';
 import { AWAY_SIDE, HOME_SIDE, homeAwayOf } from '../../support/match-sides';
 import { contestOnEvents, contestTemplateId } from '../../support/contest-rows';
+import { squaresGameCreate } from '../../support/squares-game-row';
 
 // A provider's game scores written into a linked bracket against real Postgres (#1496): the
 // head-to-head family's GAME writer, through the admin's result path, with the teams' provider
@@ -186,7 +187,7 @@ async function squaresContestOn(sportEventId: string, sportEventRoundMatchId: st
     data: {
       leagueId: league.id,
       ...(await contestOnEvents(prisma, [sportEventId])),
-      squaresGame: { create: { sportEventRoundMatchId } },
+      squaresGame: await squaresGameCreate(prisma, sportEventRoundMatchId),
       name: `Squares ${suffix}`,
       status: ContestStatus.OPEN,
       contestFormat: 'SQUARES',

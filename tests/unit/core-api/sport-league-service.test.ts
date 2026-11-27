@@ -26,7 +26,6 @@ function sportLeague(overrides: Partial<SportLeague> = {}): SportLeague {
     urlSegment: 'pga-tour',
     platformTierProfileId: 'tier-profile-1',
     platformPricingProfileId: 'pricing-profile-1',
-    squaresFromRound: null,
     ...sportPlay(Sport.GOLF),
     noun: null,
     displayOrder: null,

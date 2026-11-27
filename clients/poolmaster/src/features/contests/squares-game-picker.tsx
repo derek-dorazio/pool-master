@@ -13,7 +13,7 @@ export function SquaresGamePicker({
 }: {
   choices: ReturnType<typeof useSquaresGameChoices>;
   event: SportEventDto;
-  onChange: (sportEventRoundMatchId: string) => void;
+  onChange: (sportEventRoundMatchGameId: string) => void;
   value: string;
 }) {
   const displayPreferences = useDisplayPreferences();
@@ -36,12 +36,12 @@ export function SquaresGamePicker({
   return (
     <FormField helperText="Boxes can be claimed until this game kicks off." label="Game">
       <Select data-testid="contest-squares-game" onChange={(changeEvent) => onChange(changeEvent.target.value)} value={value}>
-        {choices.games.map((game) => (
-          <option key={game.id} value={game.id}>
+        {choices.games.map((choice) => (
+          <option key={choice.sportEventRoundMatchGameId} value={choice.sportEventRoundMatchGameId}>
             {[
-              nameOfRound(game.roundNumber),
-              formatSquaresGameTeams(game, choices.namesById),
-              formatDateTimeDisplay(game.scheduledDate, displayPreferences, 'Kickoff to be announced'),
+              nameOfRound(choice.match.roundNumber),
+              formatSquaresGameTeams(choice.match, choices.namesById),
+              formatDateTimeDisplay(choice.scheduledDate, displayPreferences, 'Kickoff to be announced'),
             ].join(' · ')}
           </option>
         ))}

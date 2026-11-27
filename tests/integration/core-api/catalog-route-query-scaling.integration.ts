@@ -23,6 +23,7 @@ import {
   SportLeagueListResponseSchema,
   SportListResponseSchema,
   SportLeagueResponseSchema,
+  SquaresGameChoicesResponseSchema,
 } from '@poolmaster/shared/dto';
 import {
   cleanupTestData,
@@ -327,6 +328,18 @@ describe('sport catalog reads cost the same statements for 2 rows as for 20', ()
       }),
       call: ({ event, rootAdmin }) => get(`/api/v1/events/${event.id}/bracket`, rootAdmin),
       rowsShown: (response) => okBody(response, SportEventBracketResponseSchema).matches.length,
+    });
+  });
+
+  it("GET an event's squares Games: the same statements for 2 games as for 20, each Game still to kick off offered with its match", async () => {
+    await expectConstantQueries({
+      route: 'GET /api/v1/events/{eventId}/squares-games',
+      seed: async (games) => ({
+        ...(await seedFootballWeek({ games, startDate: new Date(Date.now() + 7 * DAY), status: SportEventStatus.SCHEDULED })),
+        rootAdmin: await createTestUser({ isRootAdmin: true }),
+      }),
+      call: ({ event, rootAdmin }) => get(`/api/v1/events/${event.id}/squares-games`, rootAdmin),
+      rowsShown: (response) => okBody(response, SquaresGameChoicesResponseSchema).games.length,
     });
   });
 

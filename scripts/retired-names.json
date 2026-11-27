@@ -158,7 +158,10 @@
     "lastContestEvent": "#2014 (15): the event of the contest's last covered slot",
     "currentContestEvent": "#2014 (15): currentSlotId from the API (currentCoveredSlot)",
     "lookaheadDays": "#2009 (10c part B): the field sync covers the league's next slot; each sync kind has an interval per Season state",
-    "ParticipantRoundStatus": "#2008 (10b part 4e): a round's progress is its Game side's GameSideStatus (null while playing); the cut is the standing's ELIMINATED, sent as missedCut"
+    "ParticipantRoundStatus": "#2008 (10b part 4e): a round's progress is its Game side's GameSideStatus (null while playing); the cut is the standing's ELIMINATED, sent as missedCut",
+    "isSquaresRound": "#2050 (15b): the API's Game choices",
+    "squaresGameMatchId": "#2050 (15b): squaresGameId, the contest's Game",
+    "MATCH_START": "#2050 (15b): GAME_START, the squares Game's kickoff"
   },
   "ROUND_NAMES_FROM_FINAL": 0,
   "roundLabel": 0,
@@ -175,7 +178,7 @@
   "overdueLateness": 3,
   "RELEASE_CHECK_LABELS": 0,
   "PROGRESS_UNITS": 2,
-  "squaresFromRound": 30,
+  "squaresFromRound": 0,
   "CupWeight": 84,
   "cupPointsScale": 37,
   "isCupSeasonOver": 5,
@@ -317,5 +320,8 @@
   "firstContestEvent": 0,
   "lastContestEvent": 0,
   "currentContestEvent": 0,
-  "lookaheadDays": 0
+  "lookaheadDays": 0,
+  "isSquaresRound": 0,
+  "squaresGameMatchId": 0,
+  "MATCH_START": 0
 }

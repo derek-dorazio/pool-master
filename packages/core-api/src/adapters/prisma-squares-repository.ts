@@ -124,12 +124,12 @@ export class PrismaSquaresRepository implements ContestSquaresRepository {
         ...undrawn,
         squaresGame: {
           is: {
-            sportEventRoundMatch: {
+            game: {
               OR: [
                 { status: MatchStatus.IN_PROGRESS },
                 // A postponed game (#1791) draws before its time as a scheduled one does.
                 { status: { in: [...UNPLAYED_MATCH_STATUSES] }, scheduledDate: { lte: kickoffBy } },
-                { status: { in: [...UNPLAYED_MATCH_STATUSES] }, scheduledDate: null, sportEvent: { startDate: { lte: kickoffBy } } },
+                { status: { in: [...UNPLAYED_MATCH_STATUSES] }, scheduledDate: null, eventSlot: { sportEvent: { startDate: { lte: kickoffBy } } } },
               ],
             },
           },

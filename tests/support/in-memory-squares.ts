@@ -75,7 +75,7 @@ export class InMemorySquares {
         && (contest.status === ContestStatus.OPEN || contest.status === ContestStatus.ACTIVE)
         && !this.draws.has(contest.id))
       .filter((contest) => {
-        const game = contest.squaresGameMatchId === undefined ? undefined : this.games.matches.get(contest.squaresGameMatchId);
+        const game = contest.squaresGame === undefined ? undefined : this.games.matches.get(contest.squaresGame.sportEventRoundMatchId);
         if (!game) return false;
         if (game.status === MatchStatus.IN_PROGRESS || this.boxesOf(contest.id).length === 100) return true;
         const kickoff = game.scheduledDate ?? this.world.sportEvents.get(game.sportEventId)?.startDate;

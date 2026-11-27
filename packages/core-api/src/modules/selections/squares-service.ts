@@ -333,7 +333,7 @@ export class SquaresService {
       this.deps.configurations.findByContest(contestId),
       sportEventId === undefined ? Promise.resolve(null) : this.deps.sportEvents.findById(sportEventId),
       // The grid's one game, not its event's every match (#1201).
-      contest.squaresGameMatchId === undefined ? Promise.resolve(null) : this.deps.matches.findById(contest.squaresGameMatchId),
+      contest.squaresGame === undefined ? Promise.resolve(null) : this.deps.matches.findById(contest.squaresGame.sportEventRoundMatchId),
       this.deps.entries.findByContestWithSquad(contestId),
       this.deps.squares.findSquares(contestId),
       this.deps.squares.findDraw(contestId),

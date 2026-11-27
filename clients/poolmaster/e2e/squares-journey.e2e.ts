@@ -9,6 +9,7 @@ import { generatePassword, registerFreshUser } from './helpers/user-session';
 import { newRunId, e2eName, e2eEmail, e2eUsername, e2eLeagueCode } from './helpers/test-marker';
 import { bracketLoadMatch } from './helpers/match-sides';
 import { tierSetSlotUrl } from './helpers/tier-set-slot';
+import { squaresGameIdsThroughApi } from './helpers/squares-games';
 
 /**
  * #711 — the squares pool journey: the root admin releases an American football event of one game
@@ -186,9 +187,11 @@ test('act 1: the root admin releases an American football event of one game betw
         bracketLoadMatch({ matchNumber: 1, roundNumber: 1, home: rowOf(TEAMS.home), away: rowOf(TEAMS.away), isNeutralSite: true, scheduledDate: KICKOFF, advancesTo: null }),
       ],
     }, 'put');
-    journey.gameId = matches[0]?.id;
     const released = await postJson<{ event: { status: string } }>(api, headers, `/api/v1/events/${event.id}/release`, undefined);
     expect(released.event.status).toBe('SCHEDULED');
+    // The picker offers the game's Game 1 (#2050).
+    const [match] = matches;
+    journey.gameId = (await squaresGameIdsThroughApi(api, headers, event.id)).get(match.id);
   } finally {
     await api.dispose();
   }

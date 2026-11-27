@@ -67,7 +67,6 @@ export function mapSportLeagueToDto(sportLeague: SportLeagueSummary): SportLeagu
     autoReleaseDaysBeforeStart: sportLeague.autoReleaseDaysBeforeStart,
     platformTierProfileId: sportLeague.platformTierProfileId,
     platformPricingProfileId: sportLeague.platformPricingProfileId,
-    squaresFromRound: sportLeague.squaresFromRound,
     noun: sportLeague.noun,
     participantType: sportLeague.participantType,
     scoringFamily: sportLeague.scoringFamily,

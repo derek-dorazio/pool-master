@@ -40,6 +40,7 @@ import type {
   SportEventBracketResponse,
   SportEventRoundMatchResponse,
   SportEventRoundMatchupsResponse,
+  SquaresGameChoicesResponse,
   UpdateSportEventRoundMatchRequest,
 } from '@poolmaster/shared/dto/bracket.dto';
 import { ProviderSyncKind, matchPlaceOf, OFFERABLE_SPORT_EVENT_STATUSES, type MatchPlace } from '@poolmaster/shared/domain';
@@ -388,6 +389,21 @@ export function createEventHandlers({ services, eventLifecycle, ingestion, leade
       // As in getEvent: a draft's bracket is a 404 to anyone but a root admin.
       await sportEvents.requireEvent(request.params.eventId, { releasedOnly: !isRootAdmin(request) });
       return { matches: (await bracket.listBracket(request.params.eventId)).map(mapSportEventRoundMatchToDto) };
+    },
+
+    listEventSquaresGames: async (request: FastifyRequest<EventParams>): Promise<SquaresGameChoicesResponse> => {
+      // As in getEventBracket: a draft's games are a 404 to anyone but a root admin.
+      await sportEvents.requireEvent(request.params.eventId, { releasedOnly: !isRootAdmin(request) });
+      const choices = await bracket.listSquaresGameChoices(request.params.eventId);
+      return {
+        games: choices.map(({ game, match }) => ({
+          sportEventRoundMatchGameId: game.id,
+          gameNumber: game.gameNumber,
+          scheduledDate: game.scheduledDate?.toISOString() ?? null,
+          match: mapSportEventRoundMatchToDto(match),
+        })),
+        defaultSportEventRoundMatchGameId: choices.at(0)?.game.id ?? null,
+      };
     },
 
     loadEventBracket: async (

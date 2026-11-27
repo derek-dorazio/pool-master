@@ -310,7 +310,7 @@ export class ContestSettlementService {
       return 0;
     }
     const contests = (await this.deps.contests.findBySportEvent(sportEventId, { excludeStatuses: NOT_SETTLED }))
-      .filter((contest) => contest.selectionType === SelectionType.SQUARES && contest.squaresGameMatchId === sportEventRoundMatchId);
+      .filter((contest) => contest.selectionType === SelectionType.SQUARES && contest.squaresGame?.sportEventRoundMatchId === sportEventRoundMatchId);
     let completed = 0;
     for (const contest of contests) {
       const settled = await this.settleSquaresContest(reads, contest, sportEvent, input?.completedAt ?? new Date(), { waitForEveryPeriod: true });
@@ -338,7 +338,7 @@ export class ContestSettlementService {
       reads.matches.findBySportEvent(sportEvent.id),
       this.deps.squares.findDraw(contest.id),
     ]);
-    const game = games.find((candidate) => candidate.id === contest.squaresGameMatchId);
+    const game = games.find((candidate) => candidate.id === contest.squaresGame?.sportEventRoundMatchId);
     // The game's periods are its slot's (#2047).
     const periodCount = game?.slot.periods?.count;
     let standingsUpserted = 0;
@@ -348,7 +348,7 @@ export class ContestSettlementService {
         this.logger.info({
           contestId: contest.id,
           sportEventId: sportEvent.id,
-          sportEventRoundMatchId: contest.squaresGameMatchId,
+          sportEventRoundMatchId: contest.squaresGame?.sportEventRoundMatchId,
           scoredPeriods: moments.map((moment) => moment.periodNumber),
         }, 'Squares contest waits for every quarter score before settling');
         return { standingsUpserted: 0, completed: false };
@@ -386,7 +386,7 @@ export class ContestSettlementService {
     this.logger.info({
       contestId: contest.id,
       sportEventId: sportEvent.id,
-      sportEventRoundMatchId: contest.squaresGameMatchId,
+      sportEventRoundMatchId: contest.squaresGame?.sportEventRoundMatchId,
       gameStatus: game?.status,
       drawn: draw !== null,
       standingsUpserted,
