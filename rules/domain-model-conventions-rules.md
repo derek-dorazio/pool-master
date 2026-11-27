@@ -1027,7 +1027,8 @@ screen renders what it is sent.
   returns it (`rules/react-ui-rules.md` §3 *API Integration Rules*). When no API field carries
   it yet, adding that field is part of the slice; a web constant "for now" is not.
 - *Status:* existing values of this kind move to model or config data with the league model
-  redesign (#1917): the web's golf winning-score tiebreaker options and unplayed-round `'80'`,
+  redesign (#1917): the web's golf winning-score tiebreaker options (the unplayed-round `'80'`
+  became the contest setting `unplayedRoundToPar`, read off the leaderboard, in #2008),
   the limit and default constants in `packages/shared/domain` and `packages/shared/dto`
   (events per selection type, survivor lives, roster, squares and tier-profile maximums, the
   game-picks tiebreaker, rounds par, auto-release days and stat value bounds) and the numeric

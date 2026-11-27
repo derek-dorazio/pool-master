@@ -367,5 +367,5 @@ down: a lesson that was true mid-series may not be by the end.
   with the code that uses it. Unused values are dead code and get deleted.
 - **Hiding missing results with defaults.** An unscored participant is unranked, never a
   made-up score (`rules/testing-rules.md` §1B *Forbidden Application-Code Patterns*). A
-  sport's real rule for a missing result (golf's fixed 80 strokes) is a documented scoring
+  sport's real rule for a missing result (golf's unplayed-round score, a contest setting) is a documented scoring
   rule in its family, not a fallback.
