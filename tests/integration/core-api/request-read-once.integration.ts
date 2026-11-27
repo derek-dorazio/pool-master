@@ -113,6 +113,8 @@ const PINNED_GAME_RESULT_COUNTS: Array<[string, number]> = [
  */
 const PINNED_TRANSITION_COUNTS: Array<[string, number]> = [
   ['INSERT background_jobs', 1],
+  // Whether a tiered or budget template lists each tier slot, which picks the tier-set slot (#2044).
+  ['SELECT contest_config_template_slots', 1],
   ['SELECT contest_sport_events', 1],
   ['SELECT sport_event_participants', 3],
   ['SELECT sport_event_provider_mappings', 2],
@@ -363,6 +365,7 @@ describe('Opening a contest (#1355)', () => {
     expect([eachEvent('sport_events'), eachEvent('sport_event_slots')]).toEqual([0, 0]);
     expect(requestCounts(statements)).toEqual([
       ['INSERT background_jobs', 1], // the opened contest's board rebuild, written with the move (#1973)
+      ['SELECT contest_config_template_slots', 1], // the templates listing the tier slots, which pick the tier-set slot (#2044)
       ['SELECT contest_configurations', 1],
       ['SELECT contest_draws', 2],
       ['SELECT contest_sport_events', 2],

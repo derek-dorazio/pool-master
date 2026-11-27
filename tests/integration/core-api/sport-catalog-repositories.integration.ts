@@ -668,20 +668,26 @@ describe('SportEvent core repositories', () => {
     // The tiered template starts at the round of 64; the play-in is listed only by a bracket and by a
     // retired tiered template, neither of which picks from a tier set.
     const template = { sportLeagueId: event.sportLeagueId, coverageMode: 'FROM_SLOT', contestFormat: 'ROSTER', name: 'Setup', description: 'Setup', sortOrder: 1, configJson: {} } as const;
+    const templateIds: string[] = [];
     for (const [selectionType, active, definitionId] of [['TIERED', true, roundOf64Definition], ['BRACKET', true, playInDefinition], ['TIERED', false, playInDefinition]] as const) {
       // poolmaster-allow-query-in-loop: three templates, each with the slot it lists
-      await getPrisma().contestConfigTemplate.create({
+      templateIds.push((await getPrisma().contestConfigTemplate.create({
         data: { ...template, selectionType, active, templateKey: `play-in-${randomUUID()}`, slots: { create: { sportLeagueCompetitionSlotId: definitionId } } },
-      });
+        select: { id: true },
+      })).id);
     }
+    // The setups have no rules of their own, so they go once read: other tests list every template.
+    const dropTemplates = () => getPrisma().contestConfigTemplate.deleteMany({ where: { id: { in: templateIds } } });
     const row = await getPrisma().sportEventParticipant.create({ data: { sportEventId: event.id, participantId: (await createParticipant(sport.id, 'Play-in Golfer')).id } });
     await getPrisma().sportEventSlotParticipantValuation.createMany({ data: [
       { sportEventId: event.id, sportEventSlotId: playInSlotId, sportEventParticipantId: row.id, price: 7000 },
       { sportEventId: event.id, sportEventSlotId: roundOf64SlotId, sportEventParticipantId: row.id, price: 9000 },
     ] });
 
-    const tierSlots = (await new PrismaSportEventSlotTierRepository(getAppPrisma()).findTierSlots([event.id])).get(event.id) ?? [];
-    const field = await new PrismaSportEventParticipantRepository(getAppPrisma()).findFieldForEvent(event.id, event.sportLeagueId);
+    const [tierSlots, field] = await Promise.all([
+      new PrismaSportEventSlotTierRepository(getAppPrisma()).findTierSlots([event.id]).then((slots) => slots.get(event.id) ?? []),
+      new PrismaSportEventParticipantRepository(getAppPrisma()).findFieldForEvent(event.id, event.sportLeagueId),
+    ]).finally(dropTemplates);
 
     expect(tierSlots.map((slot) => [slot.id, slot.isTierSetSlot])).toEqual([[playInSlotId, false], [roundOf64SlotId, true]]);
     expect(field.map((fieldRow) => fieldRow.valuation?.price)).toEqual([9000]);
