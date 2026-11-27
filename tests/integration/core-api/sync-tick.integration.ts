@@ -135,6 +135,28 @@ describe('the linked events whose Games are due or in play', () => {
 
     expect(events.at(0)?.lastHeardAt).toEqual(at(-5 * 60_000));
   });
+
+  it("hears an event last at its own notification when that is later than its Games', and at a Game's when the event itself was never notified", async () => {
+    const league = await syncedLeague();
+    const eventLater = await linkedEventStarting(league, at(-HOUR));
+    await getPrisma().sportEvent.update({ where: { id: eventLater.id }, data: { lastProviderNotificationAt: at(-2 * 60_000) } });
+    await gameOf(eventLater, { status: MatchStatus.IN_PROGRESS, scheduledDate: at(-HOUR), lastProviderNotificationAt: at(-30 * 60_000) });
+    const gameOnly = await linkedEventStarting(league, at(-HOUR));
+    await gameOf(gameOnly, { status: MatchStatus.IN_PROGRESS, scheduledDate: at(-HOUR), lastProviderNotificationAt: at(-7 * 60_000) });
+
+    const events = await new PrismaSyncDueWorkReader(getAppPrisma()).findLiveEvents({ leagues: [league], now: NOW });
+
+    const heard = new Map(events.map((event) => [event.sportEventId, event.lastHeardAt]));
+    expect(heard.get(eventLater.id)).toEqual(at(-2 * 60_000));
+    expect(heard.get(gameOnly.id)).toEqual(at(-7 * 60_000));
+  });
+
+  it('reads nothing, sending no statement, when the tick names no league', async () => {
+    const reader = new PrismaSyncDueWorkReader(getAppPrisma());
+
+    await expect(reader.findLiveEvents({ leagues: [], now: NOW })).resolves.toEqual([]);
+    await expect(reader.findNextSlots({ leagues: [], now: NOW })).resolves.toEqual([]);
+  });
 });
 
 describe("each subject's latest job", () => {
