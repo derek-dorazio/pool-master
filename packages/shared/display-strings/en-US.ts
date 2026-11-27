@@ -395,9 +395,9 @@ export const enUS = {
       ACTIVE: 'Active',
       IN_PROGRESS: 'In progress',
       COMPLETE: { name: 'Complete', short: 'F' },
-      WITHDRAWN: { name: 'Withdrawn', short: 'WD' },
-      // A FIELD event eliminates by its cut, so the short form is the cut's.
-      ELIMINATED: { name: 'Eliminated', short: 'CUT' },
+      // Out of the event: a screen names these with the sport's words (`eliminated`, `withdrawn`).
+      WITHDRAWN: 'Withdrawn',
+      ELIMINATED: 'Eliminated',
     },
     ContestStatus: {
       DRAFT: 'Set up',
@@ -1314,8 +1314,8 @@ export const enUS = {
     match_other: 'matches',
     game_one: 'game',
     game_other: 'games',
-    eliminated: 'Eliminated',
-    withdrawn: 'Withdrawn',
+    eliminated: { name: 'Eliminated', short: 'Out' },
+    withdrawn: { name: 'Withdrawn', short: 'WD' },
     eventStart: 'start',
     overtime: 'overtime',
     tie: 'Tie',
@@ -1443,8 +1443,8 @@ export const enUS = {
       sportLeague_other: 'tours',
       round_one: 'round',
       round_other: 'rounds',
-      eliminated: 'Cut',
-      withdrawn: 'Withdrawn',
+      eliminated: { name: 'Cut', short: 'CUT' },
+      withdrawn: { name: 'Withdrawn', short: 'WD' },
       eventStart: 'first tee time',
     },
     HORSE_RACING: {

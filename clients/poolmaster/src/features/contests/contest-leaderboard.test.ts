@@ -444,35 +444,40 @@ describe('formatThru', () => {
   }
 
   it('shows the holes the feed says the golfer has completed while their round is still being played', () => {
-    expect(formatThru(golferOnRound2('IN_PROGRESS', 12, null))).toBe('12');
+    expect(formatThru(golferOnRound2('IN_PROGRESS', 12, null), 'GOLF')).toBe('12');
   });
 
   it('shows F once the current round\'s side status says the golfer finished it', () => {
-    expect(formatThru(golferOnRound2('IN_PROGRESS', 18, 'FINISHED'))).toBe('F');
+    expect(formatThru(golferOnRound2('IN_PROGRESS', 18, 'FINISHED'), 'GOLF')).toBe('F');
   });
 
   it('shows the short form of how a round ended short, such as DNF, while the standing still has the golfer in', () => {
-    expect(formatThru(golferOnRound2('IN_PROGRESS', 9, 'DID_NOT_FINISH'))).toBe('DNF');
+    expect(formatThru(golferOnRound2('IN_PROGRESS', 9, 'DID_NOT_FINISH'), 'GOLF')).toBe('DNF');
   });
 
   it('shows F for a golfer whose event is complete', () => {
-    expect(formatThru(golferOnRound2('COMPLETE', 18, 'FINISHED'))).toBe('F');
+    expect(formatThru(golferOnRound2('COMPLETE', 18, 'FINISHED'), 'GOLF')).toBe('F');
   });
 
   it('shows CUT for a golfer the standing has eliminated, even with their last round finished', () => {
-    expect(formatThru(golferOnRound2('ELIMINATED', 18, 'FINISHED'))).toBe('CUT');
+    expect(formatThru(golferOnRound2('ELIMINATED', 18, 'FINISHED'), 'GOLF')).toBe('CUT');
+  });
+
+  it('names a FIELD participant who is out of the event with their own sport\'s short word, not golf\'s', () => {
+    expect(formatThru(golferOnRound2('ELIMINATED', 18, 'FINISHED'), null)).toBe('Out');
+    expect(formatThru(golferOnRound2('WITHDRAWN', 7, null), null)).toBe('WD');
   });
 
   it('shows WD for a withdrawn golfer, even mid-round', () => {
-    expect(formatThru(golferOnRound2('WITHDRAWN', 7, null))).toBe('WD');
+    expect(formatThru(golferOnRound2('WITHDRAWN', 7, null), 'GOLF')).toBe('WD');
   });
 
   it('shows a dash before the golfer tees off, whether the feed reports no holes or zero', () => {
-    expect(formatThru(golferOnRound2('ACTIVE', null, null))).toBeNull();
-    expect(formatThru(golferOnRound2('ACTIVE', 0, null))).toBeNull();
+    expect(formatThru(golferOnRound2('ACTIVE', null, null), 'GOLF')).toBeNull();
+    expect(formatThru(golferOnRound2('ACTIVE', 0, null), 'GOLF')).toBeNull();
   });
 
   it('shows a dash for a golfer with no standing yet', () => {
-    expect(formatThru(participantFixture({ id: 'sep-1' }))).toBeNull();
+    expect(formatThru(participantFixture({ id: 'sep-1' }), 'GOLF')).toBeNull();
   });
 });

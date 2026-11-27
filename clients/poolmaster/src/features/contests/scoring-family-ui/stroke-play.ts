@@ -11,25 +11,33 @@ import {
   PARTICIPANT_SCORING_DEFINITIONS,
   ParticipantStandingStatus,
 } from '@poolmaster/shared/domain';
-import { displayString, enumLabel } from '@poolmaster/shared/display-strings';
+import { displayString, enumLabel, sportWord, type SportWordSource } from '@poolmaster/shared/display-strings';
 import type { SportEventParticipantDto } from '@/lib/api';
 import { resolveRoundNumbers } from '../contest-leaderboard-rounds';
 import type { LeaderboardDetailCell, ScoringFamilyUi } from './types';
 
 /**
- * The THR cell (#389): how far the golfer is through their current round. A golfer whose event
- * is over for them reads their standing's short form (`CUT`, `WD`, or `F` once they have played
- * every round) — a golfer out of the event has no round in progress. Otherwise the current round
- * reads its side status's short form once it has ended (`F`), then the periods (holes) the feed
- * says they have completed. Null (a dash) before they tee off.
+ * The THR cell (#389): how far the golfer is through their current round. A golfer out of the
+ * event reads the sport's short word for it (golf: `CUT`, `WD`) — they have no round in progress
+ * — and one who has played every round reads the standing's short form (`F`). Otherwise the
+ * current round reads its side status's short form once it has ended (`F`), then the periods
+ * (holes) the feed says they have completed. Null (a dash) before they tee off.
  */
-export function formatThru(participant: SportEventParticipantDto): string | null {
+export function formatThru(participant: SportEventParticipantDto, sport: SportWordSource): string | null {
   const standing = participant.standing;
   if (!standing) {
     return null;
   }
-  if (OUT_OF_EVENT.has(standing.status)) {
-    return enumLabel('ParticipantStandingStatus', standing.status, { form: 'short' });
+  switch (standing.status) {
+    case ParticipantStandingStatus.ELIMINATED:
+      return sportWord(sport, 'eliminated', { form: 'short' });
+    case ParticipantStandingStatus.WITHDRAWN:
+      return sportWord(sport, 'withdrawn', { form: 'short' });
+    case ParticipantStandingStatus.COMPLETE:
+      return enumLabel('ParticipantStandingStatus', standing.status, { form: 'short' });
+    case ParticipantStandingStatus.ACTIVE:
+    case ParticipantStandingStatus.IN_PROGRESS:
+      break;
   }
   const currentRound = participant.rounds.find(
     (round) => round.roundNumber === standing.currentRound,
@@ -44,13 +52,6 @@ export function formatThru(participant: SportEventParticipantDto): string | null
   return thru === null || thru <= 0 ? null : String(thru);
 }
 
-/** The standings that end a golfer's event: THR shows the standing, not a round. */
-const OUT_OF_EVENT: ReadonlySet<ParticipantStandingStatus> = new Set([
-  ParticipantStandingStatus.ELIMINATED,
-  ParticipantStandingStatus.WITHDRAWN,
-  ParticipantStandingStatus.COMPLETE,
-]);
-
 /** The winning scores an entry may predict, relative to par: +10 down to -30. */
 const WINNING_SCORE_OPTIONS = Array.from({ length: 41 }, (_, index) => 10 - index);
 
@@ -63,7 +64,7 @@ export const strokePlayUi: ScoringFamilyUi = {
     format: PARTICIPANT_SCORING_DEFINITIONS.GOLF_RELATIVE_TO_PAR_TOTAL.format,
     describe: (value) => `Winning score relative to par: ${PARTICIPANT_SCORING_DEFINITIONS.GOLF_RELATIVE_TO_PAR_TOTAL.format(value)}`,
   },
-  leaderboard(response) {
+  leaderboard(response, sport) {
     // Stroke play has one scoring definition: golf's total relative to par.
     const definition = PARTICIPANT_SCORING_DEFINITIONS.GOLF_RELATIVE_TO_PAR_TOTAL;
     // A withdrawn golfer's unplayed rounds can fall on rounds nobody has played yet, so those get
@@ -136,7 +137,7 @@ export const strokePlayUi: ScoringFamilyUi = {
             {
               key: 'thru',
               testId: `contest-leaderboard-pick-thru-${entryId}-${pick.pickId}`,
-              text: formatThru(participant),
+              text: formatThru(participant, sport),
             },
             ...roundCells,
           ],
