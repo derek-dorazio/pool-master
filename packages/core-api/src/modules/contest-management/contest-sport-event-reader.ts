@@ -97,12 +97,12 @@ export function createContestSportEventReader({ sportEvents, field, tiers, valua
       return findBracketProblem(knockoutGames(games.filter((match) => match.status !== MatchStatus.CANCELLED)), knockoutSeeds(entries));
     },
     findKnockoutProblem: async (sportEventId) => {
-      const [games, entries, eventRounds] = await Promise.all([
-        matches.findBySportEvent(sportEventId),
-        field.findBySportEvent(sportEventId),
-        rounds.findBySportEvent(sportEventId),
-      ]);
-      return findKnockoutProblem(games.filter((match) => match.status !== MatchStatus.CANCELLED), knockoutSeeds(entries), eventRounds);
+      const [games, entries] = await Promise.all([matches.findBySportEvent(sportEventId), field.findBySportEvent(sportEventId)]);
+      const played = games.filter((match) => match.status !== MatchStatus.CANCELLED);
+      // An event with a knockout game plays a knockout round, so only one without reads its rounds
+      // (#2241): whether it plays none, or its knockout games are not placed yet.
+      const eventRounds = knockoutGames(played).length > 0 ? played : await rounds.findBySportEvent(sportEventId);
+      return findKnockoutProblem(played, knockoutSeeds(entries), eventRounds);
     },
     // Counted from the event's rounds and their slots, not its games (#2241): slots govern rounds,
     // so a tournament's knockout rounds are known before any knockout game is placed.
