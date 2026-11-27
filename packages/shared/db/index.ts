@@ -136,7 +136,6 @@ export type {
   SportEventAutoReleaseCandidate,
   SportEventReleaseFacts,
   ProviderNotifiedEvent,
-  ProviderNotificationReceipt,
   ProviderNotifiedEventQuery,
   SportEventRepository,
   SportEventRoundRepository,

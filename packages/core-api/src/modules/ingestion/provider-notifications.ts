@@ -12,12 +12,16 @@
  * whose sync waits until the lifecycle sweep has moved them in progress (a live score is written
  * only then). Play ending queues a second, reconciling sync a while later, for the corrections a
  * provider makes after the final whistle. And every notification records when it arrived on the
- * events it is about, so the sync tick can tell when an event in play has gone quiet.
+ * Games it is about, so the sync tick can tell when an event in play has gone quiet.
  *
  * A game's notification routes by its game id alone (#2007): the id's Game provider mapping names
  * the one Game, and so the one event, it is about. Its arrival is recorded on that Game. An id no
  * Game is mapped to queues nothing and is a GAME_UNKNOWN finding on the league the provider sent
  * it for; nothing is synced on a guess.
+ *
+ * An event's own notification, such as a golf round starting, routes through the event's provider
+ * mapping (#2008), and its arrival is recorded on the event's Games in play: a golf tournament's
+ * current round. An event keeps no notification time of its own.
  */
 
 import type { FastifyBaseLogger } from 'fastify';
@@ -68,8 +72,8 @@ export interface ProviderNotificationOutcome {
 }
 
 export interface ProviderNotificationServiceDependencies {
-  sportEvents: Pick<SportEventRepository, 'findLiveNotifiedEvents' | 'recordProviderNotification'>;
-  games: Pick<SportEventRoundMatchGameRepository, 'findByProviderExternalIds' | 'recordProviderNotification'>;
+  sportEvents: Pick<SportEventRepository, 'findLiveNotifiedEvents'>;
+  games: Pick<SportEventRoundMatchGameRepository, 'findByProviderExternalIds' | 'recordProviderNotification' | 'recordEventNotification'>;
   /** The synced leagues, to raise an unknown game's finding on the league the provider sent it for. */
   sportLeagues: Pick<SportLeagueRepository, 'findEventSynced'>;
   findings: Pick<ProviderSyncFindingService, 'raiseOfSource'>;
@@ -135,7 +139,9 @@ export class ProviderNotificationService {
     const startedBy = notification.phase === 'START' ? { startedBy: now } : {};
     if (notification.subject === 'EVENT') {
       const events = await this.deps.sportEvents.findLiveNotifiedEvents({ providerId, sport, externalId: notification.eventId, ...startedBy });
-      await this.deps.sportEvents.recordProviderNotification({ providerId, externalIds: events.map((event) => event.externalId), receivedAt: now });
+      // Found through the event's provider mapping, its arrival is its Games' in play: a golf
+      // tournament's current round (#2008), the Game the quiet check reads.
+      await this.deps.games.recordEventNotification([...new Set(events.map((event) => event.sportEventId))], now);
       return events;
     }
     const games = await this.deps.games.findByProviderExternalIds(requireProviderCodeOfSourceId(providerId), [notification.gameId]);
