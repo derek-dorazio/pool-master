@@ -15,7 +15,6 @@ import {
   LeagueRole,
   MatchStatus,
   GameSideStatus,
-  ParticipantRoundStatus,
   PickOutcome,
   ParticipantStandingStatus,
   SelectionType,
@@ -54,7 +53,8 @@ function after(at: Date, minutes: number): Date {
 
 interface RoundSpec {
   roundNumber: number;
-  status: ParticipantRoundStatus;
+  /** The round's FIELD Game side status: null while the golfer is still playing it. */
+  status: GameSideStatus | null;
   completedAt?: Date | null;
   updatedAt?: Date;
   thru?: number | null;
@@ -72,7 +72,7 @@ function golfer(id: string, rounds: RoundSpec[], options: { standing?: Participa
       strokes: 70,
       scoreToPar: -2,
       thru: round.thru === undefined ? 18 : round.thru,
-      status: sideStatusOf(round.status),
+      status: round.status,
       completedAt: round.completedAt === undefined ? null : round.completedAt,
       updatedAt: round.updatedAt ?? new Date(0),
     })),
@@ -80,23 +80,8 @@ function golfer(id: string, rounds: RoundSpec[], options: { standing?: Participa
   } as unknown as SportEventParticipantView;
 }
 
-/** The side status the stroke-play writer stores for a feed round status. */
-function sideStatusOf(status: ParticipantRoundStatus): GameSideStatus | null {
-  switch (status) {
-    case ParticipantRoundStatus.IN_PROGRESS:
-      return null;
-    case ParticipantRoundStatus.COMPLETED:
-    case ParticipantRoundStatus.MISSED_CUT:
-      return GameSideStatus.FINISHED;
-    case ParticipantRoundStatus.DNF:
-      return GameSideStatus.DID_NOT_FINISH;
-    case ParticipantRoundStatus.DSQ:
-      return GameSideStatus.DISQUALIFIED;
-  }
-}
-
 function done(roundNumber: number, completedAt: Date): RoundSpec {
-  return { roundNumber, status: ParticipantRoundStatus.COMPLETED, completedAt };
+  return { roundNumber, status: GameSideStatus.FINISHED, completedAt };
 }
 
 const HOLES_PER_ROUND = 18;
@@ -105,7 +90,7 @@ describe('lastFinishedRound', () => {
   it('is nothing while any golfer still in the event is playing the only round started', () => {
     expect(lastFinishedRound([
       golfer('a', [done(1, ROUND_1_DONE)]),
-      golfer('b', [{ roundNumber: 1, status: ParticipantRoundStatus.IN_PROGRESS, thru: 14 }]),
+      golfer('b', [{ roundNumber: 1, status: null, thru: 14 }]),
     ], HOLES_PER_ROUND)).toBeNull();
   });
 
@@ -118,35 +103,35 @@ describe('lastFinishedRound', () => {
 
   it('reads a round with no completion time as finished when its score was last written, as an admin entering scores leaves it', () => {
     expect(lastFinishedRound([
-      golfer('a', [{ roundNumber: 1, status: ParticipantRoundStatus.COMPLETED, completedAt: null, updatedAt: ROUND_1_DONE }]),
+      golfer('a', [{ roundNumber: 1, status: GameSideStatus.FINISHED, completedAt: null, updatedAt: ROUND_1_DONE }]),
       golfer('b', [done(1, after(ROUND_1_DONE, -30))]),
     ], HOLES_PER_ROUND)).toEqual({ roundNumber: 1, finishedAt: ROUND_1_DONE });
   });
 
   it('counts a round with every one of its holes scored as finished before its status catches up, and not one a hole short', () => {
     expect(lastFinishedRound([
-      golfer('a', [{ roundNumber: 1, status: ParticipantRoundStatus.IN_PROGRESS, thru: 18, completedAt: null, updatedAt: ROUND_1_DONE }]),
+      golfer('a', [{ roundNumber: 1, status: null, thru: 18, completedAt: null, updatedAt: ROUND_1_DONE }]),
     ], HOLES_PER_ROUND)?.roundNumber).toBe(1);
     expect(lastFinishedRound([
-      golfer('a', [{ roundNumber: 1, status: ParticipantRoundStatus.IN_PROGRESS, thru: 17, completedAt: null, updatedAt: ROUND_1_DONE }]),
+      golfer('a', [{ roundNumber: 1, status: null, thru: 17, completedAt: null, updatedAt: ROUND_1_DONE }]),
     ], HOLES_PER_ROUND)).toBeNull();
     expect(lastFinishedRound([
-      golfer('a', [{ roundNumber: 1, status: ParticipantRoundStatus.IN_PROGRESS, thru: 9, completedAt: null, updatedAt: ROUND_1_DONE }]),
+      golfer('a', [{ roundNumber: 1, status: null, thru: 9, completedAt: null, updatedAt: ROUND_1_DONE }]),
     ], 9)?.roundNumber).toBe(1);
   });
 
   it('is the last round the whole field finished while the next one is under way', () => {
     expect(lastFinishedRound([
       golfer('a', [done(1, ROUND_1_DONE), done(2, ROUND_2_DONE)]),
-      golfer('b', [done(1, ROUND_1_DONE), { roundNumber: 2, status: ParticipantRoundStatus.IN_PROGRESS, thru: 9 }]),
+      golfer('b', [done(1, ROUND_1_DONE), { roundNumber: 2, status: null, thru: 9 }]),
     ], HOLES_PER_ROUND)).toEqual({ roundNumber: 1, finishedAt: ROUND_1_DONE });
   });
 
   it('leaves out golfers who are out of the event: cut, withdrawn or removed from the field', () => {
     expect(lastFinishedRound([
       golfer('a', [done(1, ROUND_1_DONE), done(2, ROUND_2_DONE), done(3, after(ROUND_2_DONE, 1440))]),
-      golfer('cut', [done(1, ROUND_1_DONE), { roundNumber: 2, status: ParticipantRoundStatus.MISSED_CUT, completedAt: ROUND_2_DONE }], { standing: ParticipantStandingStatus.ELIMINATED }),
-      golfer('withdrew', [{ roundNumber: 1, status: ParticipantRoundStatus.DNF, thru: 7 }], { standing: ParticipantStandingStatus.WITHDRAWN }),
+      golfer('cut', [done(1, ROUND_1_DONE), { roundNumber: 2, status: GameSideStatus.FINISHED, completedAt: ROUND_2_DONE }], { standing: ParticipantStandingStatus.ELIMINATED }),
+      golfer('withdrew', [{ roundNumber: 1, status: GameSideStatus.DID_NOT_FINISH, thru: 7 }], { standing: ParticipantStandingStatus.WITHDRAWN }),
       golfer('removed', [], { withdrawn: true }),
     ], HOLES_PER_ROUND)?.roundNumber).toBe(3);
   });
@@ -488,7 +473,7 @@ describe('LiveStandings.queueDue', () => {
     const ana = member(league.id, 'Ana');
     fields.set(masters.id, [
       golfer('g1', [done(1, ROUND_1_DONE), done(2, ROUND_2_DONE)]),
-      golfer('g2', [done(1, ROUND_1_DONE), { roundNumber: 2, status: ParticipantRoundStatus.MISSED_CUT, completedAt: ROUND_2_DONE }], { standing: ParticipantStandingStatus.ELIMINATED }),
+      golfer('g2', [done(1, ROUND_1_DONE), { roundNumber: 2, status: GameSideStatus.FINISHED, completedAt: ROUND_2_DONE }], { standing: ParticipantStandingStatus.ELIMINATED }),
     ]);
     const pick = (sportEventParticipantId: string) => ({ sportEventParticipantId }) as ContestLeaderboardEntryRow['picks'][number];
     boards.set(contest.id, [row('e1', ana.squad, 1, -6, { picks: [pick('g1'), pick('g2')] })]);

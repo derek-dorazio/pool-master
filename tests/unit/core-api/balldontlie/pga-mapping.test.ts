@@ -1,4 +1,4 @@
-import { ParticipantRoundStatus, Sport } from '../../../../packages/shared/domain';
+import { GameSideStatus, Sport } from '../../../../packages/shared/domain';
 import { BalldontlieContractError } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/balldontlie-client';
 import {
   pgaTournamentCompetitorListSchema,
@@ -149,47 +149,47 @@ describe('BALLDONTLIE PGA field to participants', () => {
 });
 
 describe('BALLDONTLIE PGA results to golf round updates', () => {
-  it('marks rounds before the current one COMPLETED and the current one IN_PROGRESS with the holes played', () => {
+  it('marks rounds before the current one FINISHED and the current one still being played (no side status) with the holes played', () => {
     const updates = toGolfRoundUpdates(bmw, [resultFor(liveResults, 185)]);
     expect(updates).toEqual([
-      { participantExternalId: '185', round: 1, strokes: 65, scoreToPar: -5, status: ParticipantRoundStatus.COMPLETED },
-      { participantExternalId: '185', round: 2, strokes: 66, scoreToPar: -4, status: ParticipantRoundStatus.COMPLETED },
-      { participantExternalId: '185', round: 3, strokes: 67, scoreToPar: -3, status: ParticipantRoundStatus.IN_PROGRESS, thru: 12 },
+      { participantExternalId: '185', round: 1, strokes: 65, scoreToPar: -5, status: GameSideStatus.FINISHED },
+      { participantExternalId: '185', round: 2, strokes: 66, scoreToPar: -4, status: GameSideStatus.FINISHED },
+      { participantExternalId: '185', round: 3, strokes: 67, scoreToPar: -3, status: null, thru: 12 },
     ]);
   });
 
   it('reads thru "F" as the current round finished', () => {
     const updates = toGolfRoundUpdates(bmw, [resultFor(liveResults, 75)]);
-    expect(updates.at(-1)).toEqual({ participantExternalId: '75', round: 3, strokes: 67, scoreToPar: -3, status: ParticipantRoundStatus.COMPLETED });
+    expect(updates.at(-1)).toEqual({ participantExternalId: '75', round: 3, strokes: 67, scoreToPar: -3, status: GameSideStatus.FINISHED });
   });
 
   it('reads a back-nine start ("4*") as four holes played, keeping a par-relative score that has no strokes yet', () => {
     const updates = toGolfRoundUpdates(bmw, [resultFor(liveResults, 3)]);
-    expect(updates.at(-1)).toEqual({ participantExternalId: '3', round: 3, strokes: null, scoreToPar: 0, status: ParticipantRoundStatus.IN_PROGRESS, thru: 4 });
+    expect(updates.at(-1)).toEqual({ participantExternalId: '3', round: 3, strokes: null, scoreToPar: 0, status: null, thru: 4 });
   });
 
   it('reads a hole count as the round under way through those holes, leaving how many a round has to its slot, and a missing thru as under way', () => {
     const scheffler = resultFor(liveResults, 185);
-    expect(toGolfRoundUpdates(bmw, [{ ...scheffler, thru: '18' }]).at(-1)).toMatchObject({ status: ParticipantRoundStatus.IN_PROGRESS, thru: 18 });
-    expect(toGolfRoundUpdates(bmw, [{ ...scheffler, thru: '19' }]).at(-1)).toMatchObject({ status: ParticipantRoundStatus.IN_PROGRESS, thru: 19 });
+    expect(toGolfRoundUpdates(bmw, [{ ...scheffler, thru: '18' }]).at(-1)).toMatchObject({ status: null, thru: 18 });
+    expect(toGolfRoundUpdates(bmw, [{ ...scheffler, thru: '19' }]).at(-1)).toMatchObject({ status: null, thru: 19 });
     const noThru = toGolfRoundUpdates(bmw, [{ ...scheffler, thru: null }]).at(-1);
-    expect(noThru).toEqual({ participantExternalId: '185', round: 3, strokes: 67, scoreToPar: -3, status: ParticipantRoundStatus.IN_PROGRESS });
+    expect(noThru).toEqual({ participantExternalId: '185', round: 3, strokes: 67, scoreToPar: -3, status: null });
   });
 
   it('marks a golfer who missed the cut on their last played round and sends no unplayed rounds', () => {
     expect(toGolfRoundUpdates(bmw, [resultFor(liveResults, 10)])).toEqual([
-      { participantExternalId: '10', round: 1, strokes: 74, scoreToPar: 4, status: ParticipantRoundStatus.COMPLETED },
-      { participantExternalId: '10', round: 2, strokes: 73, scoreToPar: 3, status: ParticipantRoundStatus.MISSED_CUT },
+      { participantExternalId: '10', round: 1, strokes: 74, scoreToPar: 4, status: GameSideStatus.FINISHED },
+      { participantExternalId: '10', round: 2, strokes: 73, scoreToPar: 3, status: GameSideStatus.FINISHED, missedCut: true },
     ]);
   });
 
-  it('marks a withdrawal DNF and a disqualification DSQ on the last played round', () => {
+  it('marks a withdrawal DID_NOT_FINISH and a disqualification DISQUALIFIED on the last played round', () => {
     const henley = resultFor(finalResults, 75);
     expect(toGolfRoundUpdates(wyndham, [henley]).map((update) => update.status)).toEqual([
-      ParticipantRoundStatus.COMPLETED,
-      ParticipantRoundStatus.DNF,
+      GameSideStatus.FINISHED,
+      GameSideStatus.DID_NOT_FINISH,
     ]);
-    expect(toGolfRoundUpdates(wyndham, [{ ...henley, position: 'DQ' }]).at(-1)?.status).toBe(ParticipantRoundStatus.DSQ);
+    expect(toGolfRoundUpdates(wyndham, [{ ...henley, position: 'DQ' }]).at(-1)?.status).toBe(GameSideStatus.DISQUALIFIED);
   });
 
   it('reads a golfer with no position yet, or a tied place, as still in it', () => {
@@ -197,7 +197,7 @@ describe('BALLDONTLIE PGA results to golf round updates', () => {
     const statuses = (position: string | null) => toGolfRoundUpdates(bmw, [{ ...scheffler, position }]).map((update) => update.status);
     expect(statuses(null)).toEqual(statuses('1'));
     expect(statuses('T12')).toEqual(statuses('1'));
-    expect(statuses(null)).not.toContain(ParticipantRoundStatus.MISSED_CUT);
+    expect(toGolfRoundUpdates(bmw, [{ ...scheffler, position: null }]).some((update) => update.missedCut)).toBe(false);
   });
 
   it('refuses a position that is neither a place nor CUT, WD or DQ, rather than reading the golfer as still playing', () => {
@@ -207,13 +207,13 @@ describe('BALLDONTLIE PGA results to golf round updates', () => {
     }
   });
 
-  it('marks every round COMPLETED once the tournament is final', () => {
+  it('marks every round FINISHED once the tournament is final', () => {
     const updates = toGolfRoundUpdates(wyndham, [resultFor(finalResults, 10)]);
     expect(updates.map((update) => [update.round, update.status, update.strokes, update.scoreToPar])).toEqual([
-      [1, ParticipantRoundStatus.COMPLETED, 64, -6],
-      [2, ParticipantRoundStatus.COMPLETED, 66, -4],
-      [3, ParticipantRoundStatus.COMPLETED, 67, -3],
-      [4, ParticipantRoundStatus.COMPLETED, 67, -3],
+      [1, GameSideStatus.FINISHED, 64, -6],
+      [2, GameSideStatus.FINISHED, 66, -4],
+      [3, GameSideStatus.FINISHED, 67, -3],
+      [4, GameSideStatus.FINISHED, 67, -3],
     ]);
   });
 

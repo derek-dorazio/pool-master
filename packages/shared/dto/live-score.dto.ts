@@ -13,7 +13,7 @@
  */
 
 import { z } from 'zod';
-import { ParticipantRoundStatus, ProviderGameState } from '@poolmaster/shared/domain';
+import { GameSideStatus, ProviderGameState } from '@poolmaster/shared/domain';
 
 // ============================================================================
 // Per-category update schemas
@@ -42,7 +42,12 @@ export const GolfRoundUpdateSchema = z.object({
   thru: z.number().int().min(0).optional().describe(
     'Number of completed holes in this round when the provider reports an in-progress round. Playoff holes are not part of any round (#118).',
   ),
-  status: z.enum(ParticipantRoundStatus),
+  status: z.enum(GameSideStatus).nullable().describe(
+    'How the golfer\'s round ended, as its FIELD Game side records it; null while they are still playing it. A withdrawal is DID_NOT_FINISH, a disqualification DISQUALIFIED.',
+  ),
+  missedCut: z.boolean().optional().describe(
+    'True on the last round of a golfer the cut eliminated: that round is FINISHED, and the cut is their standing\'s (ELIMINATED). Left out otherwise.',
+  ),
   completedAt: z.iso.datetime().optional(),
 }).describe('Golf round update emitted by golf adapters per plans/117 §6.1.');
 export type GolfRoundUpdate = z.infer<typeof GolfRoundUpdateSchema>;

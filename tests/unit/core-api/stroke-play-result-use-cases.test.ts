@@ -47,14 +47,14 @@ async function setup() {
   return { store, service, event, sport, anaEntry, benEntry, caraEntry, logger };
 }
 
-type RoundStatus = 'IN_PROGRESS' | 'COMPLETED' | 'DNF' | 'DSQ' | 'MISSED_CUT';
-const update = (participantExternalId: string, round: number, scoreToPar: number, overrides: { status?: RoundStatus; thru?: number; strokes?: number | null } = {}) => ({
+type RoundStatus = 'FINISHED' | 'DID_NOT_FINISH' | 'DISQUALIFIED' | 'DID_NOT_START' | null;
+const update = (participantExternalId: string, round: number, scoreToPar: number, overrides: { status?: RoundStatus; missedCut?: boolean; thru?: number; strokes?: number | null } = {}) => ({
   participantExternalId,
   round,
   strokes: 72 + scoreToPar,
   scoreToPar,
   thru: 18,
-  status: 'COMPLETED' as RoundStatus,
+  status: 'FINISHED' as RoundStatus,
   ...overrides,
 });
 
@@ -134,8 +134,8 @@ describe('golf provider sync — what is skipped', () => {
     const { store, service, event, anaEntry } = await setup();
 
     await service.persistRoundUpdatesForSportEvent(event.id, [
-      update('ext-ana', 1, -1, { status: 'IN_PROGRESS', thru: 9 }),
-      update('ext-ana', 1, -3, { status: 'IN_PROGRESS', thru: 12 }),
+      update('ext-ana', 1, -1, { status: null, thru: 9 }),
+      update('ext-ana', 1, -3, { status: null, thru: 12 }),
     ], 'balldontlie');
 
     expect(roundsOf(store, anaEntry.id)).toEqual([expect.objectContaining({ scoreToPar: -3, periodsCompleted: 12 })]);
@@ -157,9 +157,9 @@ describe('golf provider sync — change reporting', () => {
 
   it('reports a changed score as an update to both the round and the golfer\'s standing', async () => {
     const { service, event } = await setup();
-    await service.persistRoundUpdatesForSportEvent(event.id, [update('ext-ana', 1, -2, { status: 'IN_PROGRESS', thru: 10 })], 'balldontlie');
+    await service.persistRoundUpdatesForSportEvent(event.id, [update('ext-ana', 1, -2, { status: null, thru: 10 })], 'balldontlie');
 
-    const result = await service.persistRoundUpdatesForSportEvent(event.id, [update('ext-ana', 1, -3, { status: 'IN_PROGRESS', thru: 11 })], 'balldontlie');
+    const result = await service.persistRoundUpdatesForSportEvent(event.id, [update('ext-ana', 1, -3, { status: null, thru: 11 })], 'balldontlie');
 
     expect(result.writeDiagnostics.summary).toMatchObject({ total: 2, created: 0, updated: 2, unchanged: 0 });
     expect(result.writeDiagnostics.rows.map((row) => [row.entityType, row.disposition])).toEqual([
@@ -174,7 +174,7 @@ describe('golf standings — cut, withdrawal and the current round', () => {
     const { store, service, event, anaEntry, benEntry } = await setup();
 
     await service.persistRoundUpdatesForSportEvent(event.id, [
-      update('ext-ana', 1, 2), update('ext-ana', 2, 3, { status: 'MISSED_CUT' }),
+      update('ext-ana', 1, 2), update('ext-ana', 2, 3, { status: 'FINISHED', missedCut: true }),
       update('ext-ben', 1, 4), update('ext-ben', 2, 4), update('ext-ben', 3, 4),
     ], 'balldontlie');
 
@@ -182,7 +182,7 @@ describe('golf standings — cut, withdrawal and the current round', () => {
     expect(standingOf(store, benEntry.id)).toMatchObject({ position: 1, displayPosition: '1' });
   });
 
-  it.each(['DNF', 'DSQ'] as const)('reads a golfer whose latest round is %s as WITHDRAWN and leaves them unranked', async (status) => {
+  it.each(['DID_NOT_FINISH', 'DISQUALIFIED', 'DID_NOT_START'] as const)('reads a golfer whose latest round ended %s as WITHDRAWN and leaves them unranked', async (status) => {
     const { store, service, event, anaEntry, benEntry } = await setup();
 
     await service.persistRoundUpdatesForSportEvent(event.id, [
@@ -201,7 +201,7 @@ describe('golf standings — cut, withdrawal and the current round', () => {
     expect(standingOf(store, anaEntry.id)).toMatchObject({ status: 'COMPLETE' });
     expect(roundsOf(store, anaEntry.id).map((round) => round.periodsCompleted)).toEqual([18]);
 
-    await service.persistRoundUpdatesForSportEvent(event.id, [update('ext-ana', 2, 0, { status: 'IN_PROGRESS', thru: 0, strokes: 0 })], 'balldontlie');
+    await service.persistRoundUpdatesForSportEvent(event.id, [update('ext-ana', 2, 0, { status: null, thru: 0, strokes: 0 })], 'balldontlie');
     expect(standingOf(store, anaEntry.id)).toMatchObject({ status: 'IN_PROGRESS', scoreToPar: -1 });
     expect(roundsOf(store, anaEntry.id).map((round) => round.periodsCompleted)).toEqual([18, 0]);
   });
@@ -209,7 +209,7 @@ describe('golf standings — cut, withdrawal and the current round', () => {
   it('leaves holes thru unknown for an in-progress round the feed sent without thru', async () => {
     const { store, service, event, anaEntry } = await setup();
 
-    await service.persistRoundUpdatesForSportEvent(event.id, [update('ext-ana', 1, -1, { status: 'IN_PROGRESS', thru: undefined })], 'balldontlie');
+    await service.persistRoundUpdatesForSportEvent(event.id, [update('ext-ana', 1, -1, { status: null, thru: undefined })], 'balldontlie');
 
     expect(roundsOf(store, anaEntry.id).map((round) => round.periodsCompleted)).toEqual([null]);
   });
@@ -219,12 +219,12 @@ describe('golf corrections — moving a golfer in or out of the ranking', () => 
   it('a correction that turns a missed cut back into a completed round ranks the golfer again', async () => {
     const { store, service, event, anaEntry, benEntry } = await setup();
     await service.persistRoundUpdatesForSportEvent(event.id, [
-      update('ext-ana', 1, -1), update('ext-ana', 2, -1, { status: 'MISSED_CUT' }),
+      update('ext-ana', 1, -1), update('ext-ana', 2, -1, { status: 'FINISHED', missedCut: true }),
       update('ext-ben', 1, 1), update('ext-ben', 2, 1),
     ], 'balldontlie');
     expect(standingOf(store, anaEntry.id)?.position).toBeNull();
 
-    await service.updateRoundScore(event.id, 2, anaEntry.id, { status: 'COMPLETED' });
+    await service.updateRoundScore(event.id, 2, anaEntry.id, { status: 'FINISHED' });
 
     expect(standingOf(store, anaEntry.id)).toMatchObject({ status: 'COMPLETE', position: 1, displayPosition: '1' });
     expect(standingOf(store, benEntry.id)).toMatchObject({ position: 2, displayPosition: '2' });
@@ -232,9 +232,9 @@ describe('golf corrections — moving a golfer in or out of the ranking', () => 
 
   it('a status-only correction keeps the round\'s stored strokes, to par and thru', async () => {
     const { store, service, event, anaEntry } = await setup();
-    await service.persistRoundUpdatesForSportEvent(event.id, [update('ext-ana', 1, -2, { status: 'IN_PROGRESS', thru: 14 })], 'balldontlie');
+    await service.persistRoundUpdatesForSportEvent(event.id, [update('ext-ana', 1, -2, { status: null, thru: 14 })], 'balldontlie');
 
-    await service.updateRoundScore(event.id, 1, anaEntry.id, { status: 'DNF' });
+    await service.updateRoundScore(event.id, 1, anaEntry.id, { status: 'DID_NOT_FINISH' });
 
     expect(roundsOf(store, anaEntry.id)).toEqual([expect.objectContaining({ status: 'DID_NOT_FINISH', score: 70, scoreToPar: -2, periodsCompleted: 14 })]);
     expect(standingOf(store, anaEntry.id)?.status).toBe('WITHDRAWN');
@@ -242,7 +242,7 @@ describe('golf corrections — moving a golfer in or out of the ranking', () => 
 
   it('a correction that sends thru as null clears it, while omitting thru keeps it', async () => {
     const { store, service, event, anaEntry } = await setup();
-    await service.persistRoundUpdatesForSportEvent(event.id, [update('ext-ana', 1, -2, { status: 'IN_PROGRESS', thru: 14 })], 'balldontlie');
+    await service.persistRoundUpdatesForSportEvent(event.id, [update('ext-ana', 1, -2, { status: null, thru: 14 })], 'balldontlie');
 
     await service.updateRoundScore(event.id, 1, anaEntry.id, { strokes: 69, scoreToPar: -3 });
     expect(roundsOf(store, anaEntry.id).map((round) => round.periodsCompleted)).toEqual([14]);
@@ -254,7 +254,7 @@ describe('golf corrections — moving a golfer in or out of the ranking', () => 
   it('correcting an earlier round changes the event total but keeps the golfer on their latest round', async () => {
     const { store, service, event, anaEntry } = await setup();
     await service.persistRoundUpdatesForSportEvent(event.id, [
-      update('ext-ana', 1, -2), update('ext-ana', 2, 0), update('ext-ana', 3, -1, { status: 'IN_PROGRESS', thru: 6 }),
+      update('ext-ana', 1, -2), update('ext-ana', 2, 0), update('ext-ana', 3, -1, { status: null, thru: 6 }),
     ], 'balldontlie');
 
     await service.updateRoundScore(event.id, 1, anaEntry.id, { strokes: 72, scoreToPar: 0 });
@@ -267,8 +267,8 @@ describe('golf corrections — moving a golfer in or out of the ranking', () => 
     const { store, service, event } = await setup();
 
     await service.applyRoundScores(event.id, 1, [
-      { participantId: idOf('Ana Park'), strokes: null, scoreToPar: -2, status: 'COMPLETED' },
-      { participantId: idOf('Ben Cole'), strokes: null, scoreToPar: 1, status: 'COMPLETED' },
+      { participantId: idOf('Ana Park'), strokes: null, scoreToPar: -2, status: 'FINISHED' },
+      { participantId: idOf('Ben Cole'), strokes: null, scoreToPar: 1, status: 'FINISHED' },
     ]);
 
     expect(store.fieldSideRows).toEqual([]);
@@ -279,10 +279,10 @@ describe('golf corrections — moving a golfer in or out of the ranking', () => 
     const { store, service, event, sport } = await setup();
     store.addParticipant(sport.id, 'Dan Outsider', { id: idOf('Dan Outsider') });
 
-    const [preview] = await service.previewRoundScores(event.id, 1, [{ participantId: idOf('Dan Outsider'), strokes: 70, scoreToPar: -2, status: 'COMPLETED' }]);
+    const [preview] = await service.previewRoundScores(event.id, 1, [{ participantId: idOf('Dan Outsider'), strokes: 70, scoreToPar: -2, status: 'FINISHED' }]);
 
     expect(preview).toMatchObject({ resolution: 'UNRESOLVED', sportEventParticipantId: null, participantName: null });
-    await expect(service.applyRoundScores(event.id, 1, [{ participantId: idOf('Dan Outsider'), strokes: 70, scoreToPar: -2, status: 'COMPLETED' }]))
+    await expect(service.applyRoundScores(event.id, 1, [{ participantId: idOf('Dan Outsider'), strokes: 70, scoreToPar: -2, status: 'FINISHED' }]))
       .rejects.toMatchObject({ code: 'ROUND_SCORE_ROWS_UNRESOLVED' });
   });
 });
