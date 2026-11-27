@@ -1,3 +1,4 @@
+import { ProviderHealthStatus } from '@poolmaster/shared/domain';
 import type { ChipProps } from '@/features/shared/ui';
 import type { ProviderSummaryDto } from '@/lib/api';
 import { plural } from '@/lib/plural';
@@ -5,9 +6,9 @@ import { plural } from '@/lib/plural';
 export type ProviderStatus = NonNullable<ProviderSummaryDto['status']>;
 
 export const PROVIDER_STATUS_TONES: Record<ProviderStatus, ChipProps['tone']> = {
-  HEALTHY: 'success',
-  DEGRADED: 'warning',
-  DOWN: 'danger',
+  [ProviderHealthStatus.HEALTHY]: 'success',
+  [ProviderHealthStatus.DEGRADED]: 'warning',
+  [ProviderHealthStatus.DOWN]: 'danger',
 };
 
 /** The share of its sync runs that failed in the last hour, as a percent to one place; null when none finished. */
@@ -35,6 +36,6 @@ export function webhooksText(provider: Pick<ProviderSummaryDto, 'webhooksEnabled
 
 /** The header's count line: how many providers, and how many of them are up. */
 export function providersCountLine(providers: readonly ProviderSummaryDto[]): string {
-  const up = providers.filter((provider) => provider.status === 'HEALTHY').length;
+  const up = providers.filter((provider) => provider.status === ProviderHealthStatus.HEALTHY).length;
   return `${plural(providers.length, 'provider')} · ${String(up)} up`;
 }
