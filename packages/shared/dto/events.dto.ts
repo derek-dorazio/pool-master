@@ -109,7 +109,7 @@ export type SportEventProviderMappingDto = z.infer<typeof SportEventProviderMapp
 
 
 /** One slot's tier set as the event read lists it (#2044). */
-export const SportEventTierSetDtoSchema = z.object({
+const SportEventTierSetDtoSchema = z.object({
   seasonSlotId: z.uuid().describe('The Season slot the event plays in this slot: the slot tier routes take it.'),
   isTierSetSlot: z.boolean().describe('Whether this is the event\'s tier-set slot, the first holding a set: the one the event-level tier routes act on, released with the event.'),
   tiersLocked: z.boolean().describe('Whether its tiers and prices are locked: the tier-set slot\'s at release, another slot\'s once it starts. A write on a locked set is refused with 409 SPORT_EVENT_TIERS_LOCKED.'),
