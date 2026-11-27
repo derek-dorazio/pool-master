@@ -80,7 +80,7 @@ export interface SportLeagueUses {
   /** Contest setups offered for its events. */
   contestTemplateCount: number;
   /** Event page offers on its slots. */
-  eventPageOfferCount: number;
+  eventPageCount: number;
   /** Leagues' season cups for it. */
   cupCount: number;
   /** Its participants (#1853): each belongs to it alone, so they go first. */

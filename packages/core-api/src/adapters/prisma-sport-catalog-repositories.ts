@@ -226,7 +226,7 @@ export class PrismaSportLeagueRepository implements SportLeagueRepository {
       const uses: SportLeagueUses = {
         sportEventCount: await tx.sportEvent.count({ where: { sportLeagueId: id } }),
         contestTemplateCount: await tx.contestConfigTemplate.count({ where: { sportLeagueId: id } }),
-        eventPageOfferCount: await tx.eventPageOffer.count({ where: { sportLeagueId: id } }),
+        eventPageCount: await tx.eventPage.count({ where: { sportLeagueId: id } }),
         cupCount: await tx.cup.count({ where: { sportLeagueId: id } }),
         participantCount: await tx.participant.count({ where: { sportLeagueId: id } }),
       };

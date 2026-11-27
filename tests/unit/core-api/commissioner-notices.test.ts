@@ -338,8 +338,8 @@ describe('CommissionerNotices', () => {
       const masters = event({ name: 'The Masters', startDate: inDays(6) });
       event({ name: 'The Players', startDate: inDays(9.5) });
       const open = event({ name: 'The Open', status: SportEventStatus.DRAFT, startDate: inDays(9.5) });
-      eventPages.set(masters.id, { id: 'page-masters', sport: Sport.GOLF, sportUrlSegment: 'golf', urlSegment: 'the-masters', displayOrder: 1, isActive: true, redirectTo: null });
-      eventPages.set(open.id, { id: 'page-open', sport: Sport.GOLF, sportUrlSegment: 'golf', urlSegment: 'the-open', displayOrder: 2, isActive: true, redirectTo: null });
+      eventPages.set(masters.id, { id: 'page-masters', sport: Sport.GOLF, sportUrlSegment: 'golf', urlSegment: 'the-masters', displayOrder: 1, isActive: true, redirectTo: null, sportLeagueId: 'pga', sportLeagueName: 'PGA Tour', sportLeagueCompetitionSlotId: 'majors' });
+      eventPages.set(open.id, { id: 'page-open', sport: Sport.GOLF, sportUrlSegment: 'golf', urlSegment: 'the-open', displayOrder: 2, isActive: true, redirectTo: null, sportLeagueId: 'pga', sportLeagueName: 'PGA Tour', sportLeagueCompetitionSlotId: 'majors' });
 
       templates = [template({ id: 'pick-6', name: 'Tiered: Pick 6' })];
 
@@ -453,7 +453,7 @@ describe('CommissionerNotices', () => {
       const masters = event({ name: 'The Masters', startDate: mondayPlus(2) });
       const heritage = event({ name: 'RBC Heritage', startDate: mondayPlus(4) });
       world.addContest(office.id, { status: ContestStatus.DRAFT, sportEventIds: [heritage.id] });
-      eventPages.set(heritage.id, { id: 'page-heritage', sport: Sport.GOLF, sportUrlSegment: 'golf', urlSegment: 'rbc-heritage', displayOrder: 1, isActive: true, redirectTo: null });
+      eventPages.set(heritage.id, { id: 'page-heritage', sport: Sport.GOLF, sportUrlSegment: 'golf', urlSegment: 'rbc-heritage', displayOrder: 1, isActive: true, redirectTo: null, sportLeagueId: 'pga', sportLeagueName: 'PGA Tour', sportLeagueCompetitionSlotId: 'majors' });
       event({ name: 'Valero Texas Open', status: SportEventStatus.DRAFT, startDate: mondayPlus(9) });
       event({ name: 'Too Far Open', startDate: mondayPlus(15) });
       event({ name: 'Already Started', startDate: new Date(MONDAY.getTime() - HOUR) });

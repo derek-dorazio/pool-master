@@ -14,13 +14,10 @@ import { ReadCache } from '../../../packages/core-api/src/core/read-cache';
 import { etagPlugin } from '../../../packages/core-api/src/plugins/etag-support';
 
 const STAMP = new Date('2026-10-01T00:00:00.000Z');
-const PAGE: EventPage = { id: 'page-cw', sport: Sport.FOOTBALL, sportUrlSegment: 'football', urlSegment: 'championship-weekend', displayOrder: 20, isActive: true, redirectTo: null };
+const PAGE: EventPage = { id: 'page-cw', sport: Sport.FOOTBALL, sportUrlSegment: 'football', urlSegment: 'championship-weekend', displayOrder: 20, isActive: true, redirectTo: null, sportLeagueId: 'cw', sportLeagueName: 'Championship Weekend', sportLeagueCompetitionSlotId: 'conference-championships' };
 const OFFER: EventPageOffer = {
   id: 'tiered',
   eventPageId: PAGE.id,
-  sportLeagueId: 'cw',
-  sportLeagueName: 'Championship Weekend',
-  sportLeagueCompetitionSlotId: 'conference-championships',
   template: {
     id: 'cw-tiered',
     coverageMode: TemplateCoverageMode.ONE_SLOT,

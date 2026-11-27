@@ -27546,22 +27546,10 @@ export type EventPageNextSlotDto = {
 };
 
 /**
- * One way to play on an event page: a contest setup on one sport league's slot definition, with its next Season slot. An offer with no Season slot left that can still take the contest is left out.
+ * One way to play on an event page: a contest setup on the page's slot definition, with its next Season slot. An offer with no Season slot left that can still take the contest is left out.
  */
 export type EventPageOfferDto = {
     id: string;
-    /**
-     * The sport league whose slot the offer runs on.
-     */
-    sportLeagueId: string;
-    /**
-     * The sport league as screens away from its sport's own pages name it, such as "NFL".
-     */
-    sportLeagueName: string;
-    /**
-     * The slot definition the offer runs on (#2010), such as the NFL's conference championships: each Season has a slot of it.
-     */
-    sportLeagueCompetitionSlotId: string;
     /**
      * The contest setup the offer starts as: Create contest's ?template=.
      */
@@ -28223,22 +28211,22 @@ export type EventPageDto = {
         path: string;
     } | null;
     /**
+     * The sport league whose slot the page shows (#2050).
+     */
+    sportLeagueId: string;
+    /**
+     * The sport league as screens away from its sport's own pages name it, such as "NFL".
+     */
+    sportLeagueName: string;
+    /**
+     * The slot definition the page shows (#2010, #2050), such as the NFL's conference championships: each Season has a slot of it, and every offer is shown with the next one not yet over.
+     */
+    sportLeagueCompetitionSlotId: string;
+    /**
      * The page's ways to play in order, each with its next slot. Offers with no slot left to take the contest are left out, so an active page can have none: it is between seasons.
      */
     offers: Array<{
         id: string;
-        /**
-         * The sport league whose slot the offer runs on.
-         */
-        sportLeagueId: string;
-        /**
-         * The sport league as screens away from its sport's own pages name it, such as "NFL".
-         */
-        sportLeagueName: string;
-        /**
-         * The slot definition the offer runs on (#2010), such as the NFL's conference championships: each Season has a slot of it.
-         */
-        sportLeagueCompetitionSlotId: string;
         /**
          * The contest setup the offer starts as: Create contest's ?template=.
          */
@@ -28905,22 +28893,22 @@ export type EventPageResponse = {
             path: string;
         } | null;
         /**
+         * The sport league whose slot the page shows (#2050).
+         */
+        sportLeagueId: string;
+        /**
+         * The sport league as screens away from its sport's own pages name it, such as "NFL".
+         */
+        sportLeagueName: string;
+        /**
+         * The slot definition the page shows (#2010, #2050), such as the NFL's conference championships: each Season has a slot of it, and every offer is shown with the next one not yet over.
+         */
+        sportLeagueCompetitionSlotId: string;
+        /**
          * The page's ways to play in order, each with its next slot. Offers with no slot left to take the contest are left out, so an active page can have none: it is between seasons.
          */
         offers: Array<{
             id: string;
-            /**
-             * The sport league whose slot the offer runs on.
-             */
-            sportLeagueId: string;
-            /**
-             * The sport league as screens away from its sport's own pages name it, such as "NFL".
-             */
-            sportLeagueName: string;
-            /**
-             * The slot definition the offer runs on (#2010), such as the NFL's conference championships: each Season has a slot of it.
-             */
-            sportLeagueCompetitionSlotId: string;
             /**
              * The contest setup the offer starts as: Create contest's ?template=.
              */
@@ -29602,22 +29590,22 @@ export type EventPageListResponse = {
             path: string;
         } | null;
         /**
+         * The sport league whose slot the page shows (#2050).
+         */
+        sportLeagueId: string;
+        /**
+         * The sport league as screens away from its sport's own pages name it, such as "NFL".
+         */
+        sportLeagueName: string;
+        /**
+         * The slot definition the page shows (#2010, #2050), such as the NFL's conference championships: each Season has a slot of it, and every offer is shown with the next one not yet over.
+         */
+        sportLeagueCompetitionSlotId: string;
+        /**
          * The page's ways to play in order, each with its next slot. Offers with no slot left to take the contest are left out, so an active page can have none: it is between seasons.
          */
         offers: Array<{
             id: string;
-            /**
-             * The sport league whose slot the offer runs on.
-             */
-            sportLeagueId: string;
-            /**
-             * The sport league as screens away from its sport's own pages name it, such as "NFL".
-             */
-            sportLeagueName: string;
-            /**
-             * The slot definition the offer runs on (#2010), such as the NFL's conference championships: each Season has a slot of it.
-             */
-            sportLeagueCompetitionSlotId: string;
             /**
              * The contest setup the offer starts as: Create contest's ?template=.
              */
