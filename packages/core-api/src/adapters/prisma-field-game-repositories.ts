@@ -98,6 +98,7 @@ export class PrismaFieldGameRepository implements FieldGameRepository {
         await writeSideResults(tx, sportEventId, rounds);
       }
       await rewriteStandings(tx, apply.standings.map(({ sportEventParticipantId, ...standing }) => ({ sportEventParticipantId, standing })));
+      if (apply.feedFinalAt) await tx.sportEventSlot.updateMany({ where: { sportEventId, feedFinalAt: null }, data: { feedFinalAt: apply.feedFinalAt } });
       await insertBackgroundJobs(tx, apply.jobs ?? []);
     });
   }

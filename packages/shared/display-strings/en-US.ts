@@ -759,6 +759,8 @@ export const enUS = {
       FOLLOW_POSTPONED_EVENT_CONTESTS: 'Postponed event contests',
       RESOLVE_MAPPED_PARTICIPANT_FINDINGS: 'Mapped participant findings',
       REFRESH_SLOT_TIEBREAKERS: 'Tiebreaker games',
+      REFRESH_SLOT_STATUS: 'Slot status',
+      REFRESH_EVENT_STATUS: 'Event status',
     },
     BackgroundJobKind: {
       SYNC: 'Sync',

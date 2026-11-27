@@ -442,7 +442,10 @@ export class MatchResultService {
     });
     const asOf = (this.deps.now ?? (() => new Date()))();
     const standings = formsNoBracket(after, linksOn) ? gameStandings(after, asOf) : bracketStandings(after, asOf);
-    await this.deps.matches.applyResult({ result, sideFill, standings, jobs });
+    // Every result write may move the match's status, which its slot's status follows (#2013). Its
+    // job rides with the caller's, whose `queued()` wakes the runner once for both.
+    const statusChanged = await this.deps.domainEvents.collect({ type: DomainEventType.MATCH_STATUS_CHANGED, sportEventId });
+    await this.deps.matches.applyResult({ result, sideFill, standings, jobs: [...jobs, ...statusChanged.jobs] });
     this.deps.logger?.debug({ sportEventId, matchId: result.id }, 'Rewrote the event standings');
     return after;
   }

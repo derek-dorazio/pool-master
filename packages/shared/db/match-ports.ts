@@ -141,7 +141,7 @@ export interface SportEventRoundMatchRepository {
    * Writes each match's status while it is played, all or none. A match that has since been given
    * a result or cancelled keeps it: only a scheduled, postponed or in-progress match takes one.
    */
-  applyStatuses(statuses: readonly MatchStatusWrite[]): Promise<void>;
+  applyStatuses(statuses: readonly MatchStatusWrite[], jobs?: readonly BackgroundJobRequest[]): Promise<void>;
   /** Both sides of each match given, all or none: a reseeded round's teams placed (#722). */
   placeSides(matches: readonly { id: string; sides: readonly MatchSideTeam[] }[], jobs?: readonly BackgroundJobRequest[]): Promise<void>;
   /** A result entered or cleared, the side it fills and the standings it leaves, all or none. */

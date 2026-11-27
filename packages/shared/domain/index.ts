@@ -28,6 +28,7 @@ export * from './match-games';
 export * from './latest-participant-round';
 export * from './bracket-final';
 export * from './slot-tiebreaker';
+export * from './slot-status';
 export * from './sport-rows';
 export * from './event-match-format';
 export * from './template-coverage';

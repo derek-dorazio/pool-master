@@ -64,6 +64,11 @@ export interface FieldResultsApply {
   standings: readonly FieldStandingWrite[];
   /** Background jobs the results cause (the event's leaderboard rebuild, #1466), written with them. */
   jobs?: readonly BackgroundJobRequest[];
+  /**
+   * When the provider's feed called the event's play final (a golf tournament's FINAL, #2013):
+   * written to each of its slots that has no such time yet. Absent while the feed has not.
+   */
+  feedFinalAt?: Date;
 }
 
 export interface FieldGameRepository {

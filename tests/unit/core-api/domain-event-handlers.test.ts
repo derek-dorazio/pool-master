@@ -123,6 +123,8 @@ describe('DOMAIN_EVENT_HANDLERS, the one map of what follows each change', () =>
       ],
       SPORT_EVENT_FIELD_SYNCED: ['sync-games-then-tier-field'],
       PARTICIPANT_PROVIDER_MAPPED: ['resolve-mapped-participant-findings'],
+      MATCH_STATUS_CHANGED: ['refresh-slot-status'],
+      SEASON_SLOT_STATUS_CHANGED: ['refresh-event-status'],
     });
   });
 
@@ -309,6 +311,33 @@ describe('PARTICIPANT_PROVIDER_MAPPED handlers', () => {
 
   it('queues nothing for a write that mapped no feed id', () => {
     expect(resolve.when?.({ type: DomainEventType.PARTICIPANT_PROVIDER_MAPPED, sportLeagueId: 'league-1', providerId: 'provider-row-1', externalIds: [] })).toBe(false);
+  });
+});
+
+describe('Status bubbling handlers (#2013)', () => {
+  const [refreshSlots] = DOMAIN_EVENT_HANDLERS.MATCH_STATUS_CHANGED;
+  const [refreshEvent] = DOMAIN_EVENT_HANDLERS.SEASON_SLOT_STATUS_CHANGED;
+
+  it('a Match that moved queues one refresh of its event\'s slot statuses, held to one waiting per event', async () => {
+    const jobs = await refreshSlots.jobs({ type: DomainEventType.MATCH_STATUS_CHANGED, sportEventId: 'event-1' }, { queue: watchedQueue(), sportEventChanged: NOBODY_TOLD });
+
+    expect(jobs).toEqual([expect.objectContaining({
+      type: BackgroundJobType.REFRESH_SLOT_STATUS,
+      payload: { sportEventId: 'event-1' },
+      dedupeKey: 'REFRESH_SLOT_STATUS:event-1',
+      sportEventId: 'event-1',
+    })]);
+  });
+
+  it('a Season slot that moved queues one refresh of its event\'s status, held to one waiting per event', async () => {
+    const moved = { type: DomainEventType.SEASON_SLOT_STATUS_CHANGED, sportEventId: 'event-1', seasonSlotId: 'slot-1', from: 'SCHEDULED', to: 'IN_PROGRESS' } as const;
+
+    expect(await refreshEvent.jobs(moved, { queue: watchedQueue(), sportEventChanged: NOBODY_TOLD })).toEqual([expect.objectContaining({
+      type: BackgroundJobType.REFRESH_EVENT_STATUS,
+      payload: { sportEventId: 'event-1' },
+      dedupeKey: 'REFRESH_EVENT_STATUS:event-1',
+      sportEventId: 'event-1',
+    })]);
   });
 });
 
@@ -603,12 +632,14 @@ describe('The generated domain event table in docs/BACKGROUND-JOBS.md', () => {
       '| `CONTEST_STATUS_CHANGED` | `rebuild-moved-contest-leaderboards` | `REBUILD_LEADERBOARDS` |',
       '| `SPORT_EVENT_FIELD_SYNCED` | `sync-games-then-tier-field` | `SYNC_EVENT_GAMES_AND_TIERS` |',
       '| `PARTICIPANT_PROVIDER_MAPPED` | `resolve-mapped-participant-findings` | `RESOLVE_MAPPED_PARTICIPANT_FINDINGS` |',
+      '| `MATCH_STATUS_CHANGED` | `refresh-slot-status` | `REFRESH_SLOT_STATUS` |',
+      '| `SEASON_SLOT_STATUS_CHANGED` | `refresh-event-status` | `REFRESH_EVENT_STATUS` |',
       DOMAIN_EVENT_TABLE_END,
     ].join('\n'));
   });
 
   it('says so on purpose for an event type nothing follows', () => {
-    const nothingFollows: DomainEventHandlerMap = { SPORT_EVENT_STATUS_CHANGED: [], SPORT_EVENT_RESCHEDULED: [], SPORT_EVENT_RESULTS_CHANGED: [], SPORT_EVENT_GAMES_CHANGED: [], GAME_DECIDED: [], CONTEST_ENTRY_EVENT_STATUS_CHANGED: [], CONTEST_STATUS_CHANGED: [], SPORT_EVENT_FIELD_SYNCED: [], PARTICIPANT_PROVIDER_MAPPED: [] };
+    const nothingFollows: DomainEventHandlerMap = { SPORT_EVENT_STATUS_CHANGED: [], SPORT_EVENT_RESCHEDULED: [], SPORT_EVENT_RESULTS_CHANGED: [], SPORT_EVENT_GAMES_CHANGED: [], GAME_DECIDED: [], CONTEST_ENTRY_EVENT_STATUS_CHANGED: [], CONTEST_STATUS_CHANGED: [], SPORT_EVENT_FIELD_SYNCED: [], PARTICIPANT_PROVIDER_MAPPED: [], MATCH_STATUS_CHANGED: [], SEASON_SLOT_STATUS_CHANGED: [] };
 
     expect(renderDomainEventTable(nothingFollows)).toContain('| `SPORT_EVENT_RESCHEDULED` | none | none |');
   });

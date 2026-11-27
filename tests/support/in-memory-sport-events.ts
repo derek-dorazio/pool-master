@@ -324,6 +324,8 @@ export class InMemorySportEvents {
   slotTierSettings = new Map<string, SlotTierSettings>();
   slotPricings = new Map<string, SlotPricing>();
   standingRows: SportEventParticipantStanding[] = [];
+  /** When the feed called each event's play final (`FieldResultsApply.feedFinalAt`), by event id; first call kept, as the adapter keeps it. */
+  feedFinalAtByEvent = new Map<string, Date>();
   /**
    * Each competitor's side result in its event's FIELD Games (#2008): a race's one Game, a golf
    * round's, with the round and the Game's status it is read with.
@@ -1252,7 +1254,7 @@ export class InMemorySportEvents {
           .sort((left, right) => left.sportEventParticipantId.localeCompare(right.sportEventParticipantId))
           .map(({ createdAt: _created, updatedAt: _updated, ...row }) => ({ ...row }));
       },
-      applyResults: async (sportEventId, { games, standings, jobs }) => {
+      applyResults: async (sportEventId, { games, standings, jobs, feedFinalAt }) => {
         const entryIds = entryIdsOf(sportEventId);
         if ([...games.flatMap((game) => game.sides), ...standings].some((write) => !entryIds.has(write.sportEventParticipantId))) {
           throw new Error('unknown field row');
@@ -1279,6 +1281,7 @@ export class InMemorySportEvents {
           }
           Object.assign(standing, values);
         }
+        if (feedFinalAt && !this.feedFinalAtByEvent.has(sportEventId)) this.feedFinalAtByEvent.set(sportEventId, feedFinalAt);
         this.backgroundJobs.push(...(jobs ?? []));
       },
     };

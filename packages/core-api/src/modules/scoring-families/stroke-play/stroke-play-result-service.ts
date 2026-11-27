@@ -157,6 +157,8 @@ export class StrokePlayResultService {
     sportEventId: string,
     rounds: readonly GolfRoundUpdate[],
     providerId: string,
+    /** The feed calls the tournament final (#2013): its slot completes on it. */
+    { final = false }: { final?: boolean } = {},
   ): Promise<GolfRoundPersistenceResult> {
     if (rounds.length === 0) {
       return { updatesReturned: 0, updatesPersisted: 0, updatesSkipped: 0, writeDiagnostics: emptySyncWriteDiagnostics() };
@@ -253,7 +255,7 @@ export class StrokePlayResultService {
     // A payload can carry the same golfer's round more than once; the last one is what the
     // provider says now, so it is the one compared and written.
     const latest = [...new Map(writes.map((write) => [roundKey(write.sportEventParticipantId, write.round.roundNumber), write])).values()];
-    const diagnostics = await this.writeRounds(sportEventId, latest);
+    const diagnostics = await this.writeRounds(sportEventId, latest, final);
     return {
       updatesReturned: rounds.length,
       // A golfer-round sent twice in one payload counts once: it is compared and written once.
@@ -272,8 +274,9 @@ export class StrokePlayResultService {
   private async writeRounds(
     sportEventId: string,
     writes: ReadonlyArray<RoundWrite & { participantExternalId?: string }>,
+    feedFinal = false,
   ): Promise<SyncWriteDiagnostics> {
-    if (writes.length === 0) return emptySyncWriteDiagnostics();
+    if (writes.length === 0 && !feedFinal) return emptySyncWriteDiagnostics();
     const [stored, standings] = await Promise.all([
       this.deps.fieldGames.findResults(sportEventId),
       this.deps.fieldGames.findStandings(sportEventId),
@@ -302,11 +305,19 @@ export class StrokePlayResultService {
       return before === undefined || !sameStanding(before, write);
     });
 
-    if (games.length > 0 || changedStandings.length > 0) {
+    if (games.length > 0 || changedStandings.length > 0 || feedFinal) {
       // The event's boards are rebuilt from the write, so the rebuild job commits with it or not at all (#1466).
       const rebuild = await this.deps.domainEvents.collect({ type: DomainEventType.SPORT_EVENT_RESULTS_CHANGED, sportEventId });
-      await this.deps.fieldGames.applyResults(sportEventId, { games, standings: changedStandings, jobs: rebuild.jobs });
+      // A round's Game that moved, or the feed's final, moves the slot's status (#2013).
+      const statusChanged = games.length > 0 || feedFinal ? await this.deps.domainEvents.collect({ type: DomainEventType.MATCH_STATUS_CHANGED, sportEventId }) : null;
+      await this.deps.fieldGames.applyResults(sportEventId, {
+        games,
+        standings: changedStandings,
+        jobs: [...rebuild.jobs, ...(statusChanged?.jobs ?? [])],
+        ...(feedFinal && { feedFinalAt: asOf }),
+      });
       rebuild.queued();
+      statusChanged?.queued();
     }
 
     const changedStandingIds = new Set(changedStandings.map((write) => write.sportEventParticipantId));

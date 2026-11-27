@@ -77117,7 +77117,9 @@
               "ACTIVATE_EVENT_CONTESTS",
               "FOLLOW_POSTPONED_EVENT_CONTESTS",
               "RESOLVE_MAPPED_PARTICIPANT_FINDINGS",
-              "REFRESH_SLOT_TIEBREAKERS"
+              "REFRESH_SLOT_TIEBREAKERS",
+              "REFRESH_SLOT_STATUS",
+              "REFRESH_EVENT_STATUS"
             ],
             "description": "The job's handler. Its kind follows from it."
           },
@@ -77426,7 +77428,9 @@
                     "ACTIVATE_EVENT_CONTESTS",
                     "FOLLOW_POSTPONED_EVENT_CONTESTS",
                     "RESOLVE_MAPPED_PARTICIPANT_FINDINGS",
-                    "REFRESH_SLOT_TIEBREAKERS"
+                    "REFRESH_SLOT_TIEBREAKERS",
+                    "REFRESH_SLOT_STATUS",
+                    "REFRESH_EVENT_STATUS"
                   ],
                   "description": "The job's handler. Its kind follows from it."
                 },
@@ -77694,7 +77698,9 @@
                   "ACTIVATE_EVENT_CONTESTS",
                   "FOLLOW_POSTPONED_EVENT_CONTESTS",
                   "RESOLVE_MAPPED_PARTICIPANT_FINDINGS",
-                  "REFRESH_SLOT_TIEBREAKERS"
+                  "REFRESH_SLOT_TIEBREAKERS",
+                  "REFRESH_SLOT_STATUS",
+                  "REFRESH_EVENT_STATUS"
                 ],
                 "description": "The job's handler. Its kind follows from it."
               },

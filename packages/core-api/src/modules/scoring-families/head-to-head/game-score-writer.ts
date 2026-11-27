@@ -266,7 +266,10 @@ export async function writeGameScores(
       before: { status: match.status }, after: { status: status ?? match.status }, disposition: statusChanges || gameScored ? 'UPDATED' : 'UNCHANGED',
     });
   }
-  await deps.matches.applyStatuses(live);
+  // A match that starts, or goes back to scheduled, moves its slot's status (#2013).
+  const statusChanged = live.length > 0 ? await deps.domainEvents.collect({ type: DomainEventType.MATCH_STATUS_CHANGED, sportEventId }) : null;
+  await deps.matches.applyStatuses(live, statusChanged?.jobs ?? []);
+  statusChanged?.queued();
 
   const persisted = rows.filter((row) => row.disposition === 'UPDATED').length;
   return {

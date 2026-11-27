@@ -2177,6 +2177,10 @@ export const BackgroundJobType = {
   RESOLVE_MAPPED_PARTICIPANT_FINDINGS: 'RESOLVE_MAPPED_PARTICIPANT_FINDINGS',
   /** Runs the tiebreaker game rule for each slot of one event after a write to its games (#2048). */
   REFRESH_SLOT_TIEBREAKERS: 'REFRESH_SLOT_TIEBREAKERS',
+  /** Recomputes the Season slot status of each slot of one event from its Matches after one of them moved (#2013). */
+  REFRESH_SLOT_STATUS: 'REFRESH_SLOT_STATUS',
+  /** Recomputes one event's status from its slots after one of them moved (#2013). */
+  REFRESH_EVENT_STATUS: 'REFRESH_EVENT_STATUS',
 } as const;
 export type BackgroundJobType = (typeof BackgroundJobType)[keyof typeof BackgroundJobType];
 /** No natural order: A to Z by its display strings. */

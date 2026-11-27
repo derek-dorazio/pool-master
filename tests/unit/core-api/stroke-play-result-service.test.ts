@@ -8,6 +8,7 @@ import { fakeLogger } from '../../support/fake-logger';
 import { eventRebuildJob } from '../../support/recording-leaderboard-rebuilds';
 import { RecordingDomainEvents } from '../../support/recording-domain-events';
 import { BALLDONTLIE_TEST_PROVIDER_ID } from '../../support/balldontlie-provider-rows';
+import { slotStatusRefreshJob } from '../../support/slot-tiebreaker-jobs';
 
 /** A test participant's id, fixed by its name, so a row names it by id as the feed does (#2114). */
 const idOf = (name: string): string => `participant-${name.toLowerCase().replace(/\s+/g, '-')}`;
@@ -399,6 +400,21 @@ describe('StrokePlayResultService — provider sync', () => {
     );
   });
 
+  it('records the feed\'s final call on the event\'s slots with the refresh of their status, even when no score moved, and records none before it', async () => {
+    const { store, service, event } = await syncSetup();
+    await store.addRounds(event.id, fourRounds);
+    const rounds = [1, 2, 3, 4].map((round) => update('ext-ana', round, -1));
+
+    await service.persistRoundUpdatesForSportEvent(event.id, rounds, 'balldontlie');
+    expect(store.feedFinalAtByEvent.has(event.id)).toBe(false);
+    store.backgroundJobs.length = 0;
+
+    await service.persistRoundUpdatesForSportEvent(event.id, rounds, 'balldontlie', { final: true });
+
+    expect(store.feedFinalAtByEvent.get(event.id)).toBeInstanceOf(Date);
+    expect(store.backgroundJobs).toEqual(expect.arrayContaining([slotStatusRefreshJob(event.id)]));
+  });
+
   it('skips a score for a round on an event with no round schedule rather than creating the round', async () => {
     const { store, service, event, logger } = await syncSetup();
 
@@ -569,7 +585,8 @@ describe('StrokePlayResultService — leaderboard rebuild (#1466)', () => {
 
     await service.applyRoundScores(event.id, 1, [{ participantId: anaEntry.participantId, ...row() }]);
 
-    expect(store.backgroundJobs).toEqual([eventRebuildJob(event.id)]);
+    // The round's Game moved, so its slot's status is refreshed with it (#2013).
+    expect(store.backgroundJobs).toEqual([eventRebuildJob(event.id), slotStatusRefreshJob(event.id)]);
     expect(domainEvents.changedSportEventIds).toEqual([event.id]);
   });
 

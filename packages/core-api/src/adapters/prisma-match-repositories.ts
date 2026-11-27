@@ -141,16 +141,17 @@ export class PrismaSportEventRoundMatchRepository implements SportEventRoundMatc
     });
   }
 
-  async applyStatuses(statuses: readonly MatchStatusWrite[]): Promise<void> {
+  async applyStatuses(statuses: readonly MatchStatusWrite[], jobs: readonly BackgroundJobRequest[] = []): Promise<void> {
     if (statuses.length === 0) return;
-    await this.prisma.$transaction(
+    await this.prisma.$transaction([
       // poolmaster-allow-query-in-loop: the games one sync found live (per-row values, one transaction)
-      statuses.map(({ id, status }) => this.prisma.sportEventRoundMatch.updateMany({
+      ...statuses.map(({ id, status }) => this.prisma.sportEventRoundMatch.updateMany({
         // A result entered since the sync read the match stands.
         where: { id, status: { in: [...UNPLAYED_MATCH_STATUSES, MatchStatus.IN_PROGRESS] } },
         data: { status },
       })),
-    );
+      ...(jobs.length > 0 ? [backgroundJobsInsert(this.prisma, jobs)] : []),
+    ]);
   }
 
   async placeSides(matches: readonly { id: string; sides: readonly MatchSideTeam[] }[], jobs: readonly BackgroundJobRequest[] = []): Promise<void> {
