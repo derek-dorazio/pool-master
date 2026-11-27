@@ -4,11 +4,17 @@
  * and email readers, which write nothing, are built with it alone.
  */
 
-import type { SportEventParticipantRepository, SportEventParticipantView, SportEventRepository } from '@poolmaster/shared/db';
+import type { FieldReadEvent, SportEventParticipantRepository, SportEventParticipantView, SportEventRepository } from '@poolmaster/shared/db';
+import { eventPlaysField, type SportEvent } from '@poolmaster/shared/domain';
 import { BatchedRead } from '../../core/batched-read';
 import { ReadCache } from '../../core/read-cache';
 import { SportEventError } from './errors';
 import type { EventFieldCache } from './event-field-cache';
+
+/** The event as a field read takes it (#2227): whether it plays FIELD is read from its slot definitions. */
+export function fieldReadEventOf(event: Pick<SportEvent, 'id' | 'sportLeagueId' | 'slotDefinitions'>): FieldReadEvent {
+  return { sportEventId: event.id, sportLeagueId: event.sportLeagueId, playsField: eventPlaysField(event) };
+}
 
 /** An event's field as readers read it: now, from this container's cache, or batched for a fan-out. */
 export interface EventFieldReads {
@@ -43,7 +49,7 @@ export class EventFieldReader implements EventFieldReads {
     if (!event) {
       throw new SportEventError(`Sport event ${sportEventId} was not found.`, 'EVENT_NOT_FOUND', 404);
     }
-    return this.deps.field.findFieldForEvent(sportEventId, event.sportLeagueId, seasonSlotId);
+    return this.deps.field.findFieldForEvent(fieldReadEventOf(event), seasonSlotId);
   }
 
   /**
@@ -67,7 +73,7 @@ export class EventFieldReader implements EventFieldReads {
       if (missing !== undefined) {
         throw new SportEventError(`Sport event ${missing} was not found.`, 'EVENT_NOT_FOUND', 404);
       }
-      const rows = await this.deps.field.findFieldsForEvents([...events.values()].map((event) => ({ sportEventId: event.id, sportLeagueId: event.sportLeagueId })));
+      const rows = await this.deps.field.findFieldsForEvents([...events.values()].map(fieldReadEventOf));
       return sportEventIds.map((sportEventId) => rows.filter((row) => row.entry.sportEventId === sportEventId));
     });
     const reads: EventFieldReads = {

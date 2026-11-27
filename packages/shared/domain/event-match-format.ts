@@ -12,3 +12,12 @@ import type { SportEventSlotDefinition } from './contest-management-types';
 export function eventPlaysMatches(event: { slotDefinitions: readonly Pick<SportEventSlotDefinition, 'matchFormat'>[] }): boolean {
   return event.slotDefinitions.some((definition) => definition.matchFormat === MatchFormat.HEAD_TO_HEAD);
 }
+
+/**
+ * Whether some slot an event covers is played as a FIELD (#2227): a golf round or a race, every
+ * competitor a side. Only such an event has FIELD matches, so a field read skips looking for them
+ * on any other.
+ */
+export function eventPlaysField(event: { slotDefinitions: readonly Pick<SportEventSlotDefinition, 'matchFormat'>[] }): boolean {
+  return event.slotDefinitions.some((definition) => definition.matchFormat === MatchFormat.FIELD);
+}
