@@ -1205,7 +1205,7 @@ describe('Seeded template coverage (#2010)', () => {
     expect(problems).toEqual([]);
   });
 
-  it('gives every seeded template, in an active or a switched-off league, at least one slot to cover, with no exceptions, so a contest can be created from each (#2167)', async () => {
+  it('gives every seeded template, in an active or a switched-off league, at least one slot to cover, with no exceptions, so each has a slot a contest can be created on once its Season slots exist (#2167)', async () => {
     const prisma = getPrisma();
     const leagues = new Map((await prisma.sportLeague.findMany({ select: { id: true, isActive: true } })).map((league) => [league.id, league.isActive]));
     const all = await everyTemplate();

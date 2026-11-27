@@ -120,7 +120,7 @@ describe('how the seeded slot definitions are played (#2043)', () => {
     expect(slots.filter((slot) => slot.league === 'NFL' && slot.phase === LeaguePhase.REGULAR && !slot.canEndTied)).toEqual([]);
     expect(slots.filter((slot) => slot.sport === Sport.SOCCER && slot.canEndTied !== (slot.slotKind === SlotKind.WEEK || slot.seriesFormat === SeriesFormat.AGGREGATE))).toEqual([]);
     expect([
-      tied('Premier League', 'WEEK_1'), tied('FIFA World Cup', 'MATCHDAY_1'), tied('FIFA World Cup', 'ROUND_OF_32'),
+      tied('Premier League', 'WEEK_1'), tied('FIFA World Cup', 'WEEK_1'), tied('FIFA World Cup', 'ROUND_OF_32'),
       tied('UEFA Champions League', 'ROUND_OF_16'), tied('UEFA Champions League', 'FINAL'), tied('NFL', 'WEEK_1'), tied('NFL', 'FINAL'),
     ]).toEqual([true, true, false, true, false, true, false]);
   });
