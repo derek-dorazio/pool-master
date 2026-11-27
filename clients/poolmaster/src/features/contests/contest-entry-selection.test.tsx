@@ -20,8 +20,6 @@ function buildParticipant(
     sportEventParticipantId: id,
     participantId: `participant-${id}`,
     participantName: name,
-    role: "GOLFER",
-    team: undefined,
     status: "ACTIVE",
     price: undefined,
     ranking: orderIndex,
@@ -295,19 +293,18 @@ describe("contest entry selection: withdrawn golfers and card details", () => {
     expect(screen.getByTestId("contest-entry-participant-sep-3")).toBeDisabled();
   });
 
-  it("shows a golfer's team, price and ranking when they have them", () => {
+  it("shows a golfer's price and ranking when they have them", () => {
     const group = buildGroup([]);
     renderEditable({
       ...group,
       participants: group.participants.map((participant) =>
         participant.sportEventParticipantId === "sep-1"
-          ? { ...participant, team: "USA", price: 3200 }
+          ? { ...participant, price: 3200 }
           : participant,
       ),
     });
 
     const card = screen.getByTestId("contest-entry-participant-sep-1");
-    expect(card).toHaveTextContent("USA");
     expect(card).toHaveTextContent("3200 salary");
     expect(card).toHaveTextContent("Ranking #1");
   });

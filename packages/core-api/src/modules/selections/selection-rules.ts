@@ -139,8 +139,6 @@ export function buildSelectionParticipants(input: {
         sportEventParticipantId: entry.id,
         participantId: entry.participantId,
         participantName: participant?.name ?? '',
-        role: participant?.role ?? null,
-        teamAffiliation: participant?.teamAffiliation ?? null,
         status: entry.status,
         price: valuation?.price ?? undefined,
         ranking: entry.ranking ?? undefined,

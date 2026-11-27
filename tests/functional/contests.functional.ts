@@ -175,8 +175,6 @@ async function seedImportedGolfEvent(options: {
         sportLeagueId: await participantLeagueId(prisma, sport.id),
         name: `Managed Contest Golfer ${index + 1}-${randomUUID().slice(0, 8)}`,
         participantType: ParticipantType.INDIVIDUAL,
-        role: 'GOLFER',
-        teamAffiliation: index % 2 === 0 ? 'USA' : 'EUR',
       },
     });
     createdParticipantIds.push(participant.id);
@@ -921,8 +919,6 @@ describe('SDK Functional: Contests and Entries', () => {
         sportLeagueId: await participantLeagueId(prisma, sport.id),
         name: `Entry Detail Golfer ${randomUUID().slice(0, 8)}`,
         participantType: ParticipantType.INDIVIDUAL,
-        role: 'GOLFER',
-        teamAffiliation: 'USA',
       },
     });
     createdParticipantIds.push(participant.id);
@@ -1080,8 +1076,6 @@ describe('SDK Functional: Contests and Entries', () => {
         sportLeagueId: await participantLeagueId(prisma, sport.id),
         name: `Functional Contest Player ${randomUUID().slice(0, 8)}`,
         participantType: ParticipantType.INDIVIDUAL,
-        role: 'GOLFER',
-        teamAffiliation: null,
       },
     });
     createdParticipantIds.push(participant.id);
@@ -1225,8 +1219,6 @@ describe('SDK Functional: Contests and Entries', () => {
         sportLeagueId: await participantLeagueId(prisma, sport.id),
         name: `Visibility Golfer ${randomUUID().slice(0, 8)}`,
         participantType: ParticipantType.INDIVIDUAL,
-        role: 'GOLFER',
-        teamAffiliation: 'USA',
       },
     });
     createdParticipantIds.push(participant.id);
@@ -1367,8 +1359,6 @@ describe('SDK Functional: Contests and Entries', () => {
         sportLeagueId: await participantLeagueId(prisma, sport.id),
         name: `List Visibility Golfer ${randomUUID().slice(0, 8)}`,
         participantType: ParticipantType.INDIVIDUAL,
-        role: 'GOLFER',
-        teamAffiliation: 'USA',
       },
     });
     createdParticipantIds.push(participant.id);

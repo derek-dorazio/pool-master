@@ -131,10 +131,8 @@ export function toNcaafTeamParticipant(team: NcaafTeam, path: string): ProviderP
     sport: Sport.FOOTBALL,
     name: required(team.full_name, path, `team ${String(id)}`, 'full_name'),
     status: SportEventParticipantStatus.ACTIVE,
-    metadata: {
-      ...(team.abbreviation ? { abbreviation: team.abbreviation } : {}),
-      ...(team.conference ? { conference: team.conference } : {}),
-    },
+    ...(team.abbreviation ? { abbreviation: team.abbreviation } : {}),
+    metadata: team.conference ? { conference: team.conference } : {},
   };
 }
 

@@ -22,8 +22,7 @@ function participant(overrides: Partial<SportLeagueParticipantOverviewDto> = {})
     participantType: 'INDIVIDUAL',
     shortName: null,
     nationality: null,
-    teamAffiliation: null,
-    role: null,
+    abbreviation: null,
     ranking: null,
     feedId: null,
     lastInFeedAt: null,
@@ -75,9 +74,10 @@ describe('leagueParticipantColumnIds', () => {
     expect(leagueParticipantColumnIds(teams)).toEqual(['shortName']);
   });
 
-  it('gives players with a team and position the Team and Position columns', () => {
-    const players = [participant({ teamAffiliation: 'Dodgers', role: 'SS', nationality: 'USA' })];
-    expect(leagueParticipantColumnIds(players)).toEqual(['nationality', 'teamAffiliation', 'role']);
+  it('gives teams with an abbreviation the Abbreviation column, and never a player', () => {
+    const teams = [participant({ participantType: 'TEAM', name: 'Boston Celtics', abbreviation: 'BOS' })];
+    expect(leagueParticipantColumnIds(teams)).toEqual(['abbreviation']);
+    expect(leagueParticipantColumnIds([participant({ abbreviation: 'SS' })])).toEqual([]);
   });
 
   it('leaves out a column no participant has a value for, so none is blank for the whole league', () => {
@@ -87,9 +87,9 @@ describe('leagueParticipantColumnIds', () => {
 });
 
 describe('participant dialog form', () => {
-  it('lets a feed participant\'s short name, country and rank change, and a hand-added one\'s name, team and position too', () => {
+  it('lets a feed participant\'s short name, country and rank change, and a hand-added one\'s name too, never a team or position', () => {
     expect(editableParticipantFields({ addedBy: 'FEED' })).toEqual(['shortName', 'nationality', 'ranking']);
-    expect(editableParticipantFields({ addedBy: 'ADMIN' })).toEqual(['name', 'shortName', 'nationality', 'ranking', 'teamAffiliation', 'role']);
+    expect(editableParticipantFields({ addedBy: 'ADMIN' })).toEqual(['name', 'shortName', 'nationality', 'ranking']);
   });
 
   it('sends only the changed fields, an emptied rank as unranked', () => {

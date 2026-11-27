@@ -21,8 +21,6 @@ function buildParticipant(overrides: Record<string, unknown> = {}) {
     lastName: 'Scheffler',
     shortName: 'Scheffler',
     nationality: 'USA',
-    role: 'GOLFER',
-    teamAffiliation: undefined,
     status: ParticipantStatus.ACTIVE,
     injuryStatus: { status: InjuryStatusCode.HEALTHY },
     photoUrl: undefined,

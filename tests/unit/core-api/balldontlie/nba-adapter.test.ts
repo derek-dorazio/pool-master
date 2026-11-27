@@ -124,9 +124,9 @@ describe('BalldontlieAdapter (NBA playoffs)', () => {
         startDate: new Date('2025-06-06T00:30:00Z'),
         endDate: new Date('2025-06-23T00:30:00Z'),
       });
-      expect(detail?.participants.map((team) => [team.externalId, team.name, team.metadata])).toEqual([
-        ['21', 'Oklahoma City Thunder', { abbreviation: 'OKC', conference: 'West', division: 'Northwest' }],
-        ['12', 'Indiana Pacers', { abbreviation: 'IND', conference: 'East', division: 'Central' }],
+      expect(detail?.participants.map((team) => [team.externalId, team.name, team.abbreviation, team.metadata])).toEqual([
+        ['21', 'Oklahoma City Thunder', 'OKC', { conference: 'West', division: 'Northwest' }],
+        ['12', 'Indiana Pacers', 'IND', { conference: 'East', division: 'Central' }],
       ]);
       expect(requestLine(harness.api)).toEqual(['/nba/v1/games?seasons[]=2024&season_type=playoffs&per_page=100']);
     });

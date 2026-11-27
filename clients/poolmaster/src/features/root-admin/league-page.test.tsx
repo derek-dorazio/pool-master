@@ -169,8 +169,7 @@ function participant(overrides: Partial<SportLeagueParticipantOverviewDto>): Spo
     participantType: 'TEAM',
     shortName: 'BOS',
     nationality: null,
-    teamAffiliation: null,
-    role: null,
+    abbreviation: null,
     ranking: null,
     feedId: '2',
     lastInFeedAt: '2027-01-01T00:00:00.000Z',
@@ -410,14 +409,60 @@ describe('League page', () => {
     })));
   });
 
-  it('gives a league\'s Participants grid Team and Position when a participant has them', async () => {
+  it('gives a league\'s Participants grid an Abbreviation column when a team has one', async () => {
     listSportLeagueParticipantOverviewsMock.mockResolvedValue({
-      data: { participants: [participant({ id: 'p-jt', name: 'Jayson Tatum', participantType: 'INDIVIDUAL', shortName: null, teamAffiliation: 'Celtics', role: 'F' })] },
+      data: { participants: [participant({ abbreviation: 'BOS' })] },
     });
     renderLeaguePage('/manage/sports/basketball/leagues/nba/participants');
 
-    await screen.findByTestId('root-admin-league-participant-p-jt');
-    expect(columnHeaders('root-admin-league-participants-table')).toEqual(expect.arrayContaining(['Team', 'Position']));
+    await screen.findByTestId('root-admin-league-participant-p-bos');
+    expect(columnHeaders('root-admin-league-participants-table')).toEqual(expect.arrayContaining(['Abbreviation']));
+  });
+
+  it('shows a team\'s abbreviation and rank in its details, and a player no feed has listed as never in the feed with no short name', async () => {
+    listSportLeagueParticipantOverviewsMock.mockResolvedValue({
+      data: {
+        participants: [
+          participant({ abbreviation: 'BOS', ranking: 3 }),
+          participant({ id: 'p-tatum', name: 'Jayson Tatum', participantType: 'INDIVIDUAL', shortName: null, lastInFeedAt: null, feedId: null }),
+        ],
+      },
+    });
+    renderLeaguePage('/manage/sports/basketball/leagues/nba/participants');
+
+    const team = await screen.findByTestId('root-admin-league-participant-p-bos');
+    await userEvent.click(within(team).getByRole('button', { name: 'Open details' }));
+    const teamDialog = await screen.findByTestId('root-admin-league-participant');
+    expect(within(teamDialog).getByText('Abbreviation')).toBeInTheDocument();
+    expect(within(teamDialog).getByTestId('root-admin-league-participant-rank')).toHaveTextContent('3');
+    await userEvent.click(within(teamDialog).getByRole('button', { name: 'Close' }));
+    await waitFor(() => expect(screen.queryByTestId('root-admin-league-participant')).not.toBeInTheDocument());
+
+    const player = screen.getByTestId('root-admin-league-participant-p-tatum');
+    await userEvent.click(within(player).getByRole('button', { name: 'Open details' }));
+    const playerDialog = await screen.findByTestId('root-admin-league-participant');
+    expect(within(playerDialog).queryByText('Abbreviation')).not.toBeInTheDocument();
+    expect(within(playerDialog).getByTestId('root-admin-league-participant-short-name')).toHaveTextContent('—');
+    expect(within(playerDialog).getByTestId('root-admin-league-participant-rank')).toHaveTextContent('Unranked');
+    expect(within(playerDialog).getByText('Never')).toBeInTheDocument();
+  });
+
+  it('keeps the participant dialog in Edit, saying the save failed, when a rank change is refused', async () => {
+    listSportLeagueParticipantOverviewsMock.mockResolvedValue({ data: { participants: [participant({})] } });
+    updateParticipantMock.mockResolvedValue({ error: { error: { code: 'VALIDATION_ERROR', message: 'Rank refused.' } } });
+    renderLeaguePage('/manage/sports/basketball/leagues/nba/participants');
+
+    const row = await screen.findByTestId('root-admin-league-participant-p-bos');
+    await userEvent.click(within(row).getByRole('button', { name: 'Open details' }));
+    const dialog = await screen.findByTestId('root-admin-league-participant');
+    await userEvent.click(within(dialog).getByTestId('root-admin-league-participant-edit'));
+    const rank = within(dialog).getByTestId('root-admin-league-participant-ranking-input');
+    expect(rank).toHaveAttribute('inputmode', 'numeric');
+    await userEvent.type(rank, '4');
+    await userEvent.click(within(dialog).getByTestId('root-admin-league-participant-save'));
+
+    expect(await within(dialog).findByText('Save failed')).toBeInTheDocument();
+    expect(updateParticipantMock).toHaveBeenCalledWith(expect.objectContaining({ body: { ranking: 4 } }));
   });
 
   it('opens a contest template in view mode, and Edit then Cancel returns to view without saving', async () => {

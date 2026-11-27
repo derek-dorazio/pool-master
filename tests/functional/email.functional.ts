@@ -89,8 +89,6 @@ async function seedScheduledGolfEvent(eventName: string): Promise<{
       sportLeagueId: await participantLeagueId(prisma, golf.id),
       name: `Email Golfer ${randomUUID().slice(0, 8)}`,
       participantType: ParticipantType.INDIVIDUAL,
-      role: 'GOLFER',
-      teamAffiliation: 'USA',
     },
   });
   createdParticipantIds.push(participant.id);

@@ -316,8 +316,6 @@ function buildReceiptPick(
       participantId,
       participantName,
       status: 'ACTIVE' as const,
-      role: null,
-      teamAffiliation: null,
     },
   };
 }
@@ -1863,8 +1861,6 @@ describe('ContestService', () => {
                 participantId: 'participant-1',
                 participantName: 'Withdrawn Golfer',
                 status: 'WITHDRAWN' as const,
-                role: null,
-                teamAffiliation: null,
               },
             },
           ]),
@@ -1907,8 +1903,6 @@ describe('ContestService', () => {
                 participantId: 'participant-1',
                 participantName: 'Cut Golfer',
                 status: 'ELIMINATED' as const,
-                role: null,
-                teamAffiliation: null,
               },
             },
           ]),

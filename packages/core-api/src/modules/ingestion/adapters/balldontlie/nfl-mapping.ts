@@ -145,7 +145,8 @@ export function toNflTeamParticipant(team: NflTeam, path: string): ProviderParti
     sport: Sport.FOOTBALL,
     name: team.full_name,
     status: SportEventParticipantStatus.ACTIVE,
-    metadata: { abbreviation: team.abbreviation, conference: team.conference, division: team.division },
+    ...(team.abbreviation ? { abbreviation: team.abbreviation } : {}),
+    metadata: { conference: team.conference, division: team.division },
   };
 }
 

@@ -322,7 +322,7 @@ describe('pool-master-za4 the Event page\'s Field tab', () => {
     const guest = fieldEntryFixture({
       id: 'sep-guest',
       participantId: 'p-guest',
-      participant: participantFixture({ id: 'p-guest', name: 'Sponsor Exemption', teamAffiliation: 'Ferrari', nationality: 'ITA' }),
+      participant: participantFixture({ id: 'p-guest', name: 'Sponsor Exemption', abbreviation: 'SPX', nationality: 'ITA' }),
       ranking: null,
       seedNumber: null,
       oddsToWin: null,
@@ -336,7 +336,7 @@ describe('pool-master-za4 the Event page\'s Field tab', () => {
     await userEvent.click(within(row).getByRole('button', { name: /Open details/ }));
     const dialog = await screen.findByTestId('root-admin-event-participant-dialog');
     expect(within(dialog).getByTestId('root-admin-event-participant-dialog-participant')).toHaveTextContent('Sponsor Exemption (guest)');
-    expect(within(dialog).getByText('Ferrari')).toBeInTheDocument();
+    expect(within(dialog).getByText('SPX')).toBeInTheDocument();
     expect(within(dialog).getByText('ITA')).toBeInTheDocument();
     expect(within(dialog).getByTestId('root-admin-event-participant-dialog-seed')).toHaveTextContent('Not set');
     expect(within(dialog).getByTestId('root-admin-event-participant-dialog-rank')).toHaveTextContent('Not set');

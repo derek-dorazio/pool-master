@@ -93,7 +93,7 @@ describe('database indexes', () => {
   it.each([
     ['the root admin user search', 'users', ['email', 'username', 'first_name', 'last_name']],
     ['the root admin league search', 'leagues', ['name']],
-    ['the participant search', 'participants', ['name', 'first_name', 'last_name', 'short_name', 'team_affiliation']],
+    ['the participant search', 'participants', ['name', 'first_name', 'last_name', 'short_name', 'abbreviation']],
   ])('serves %s, a substring match, from a trigram index on every column it matches', async (_read, table, columns) => {
     const trigramColumns = await getPrisma().$queryRaw<Array<{ column: string }>>`
       SELECT a.attname AS column

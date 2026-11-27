@@ -31,15 +31,15 @@ describe('Field grid rows', () => {
     ]);
   });
 
-  it('shows Team, Country and Seed only when someone has one, and Last in feed only on a synced event', () => {
+  it('shows Abbreviation, Country and Seed only when someone has one, and Last in feed only on a synced event', () => {
     const plain = eventFieldRows([entry('a')], TIERS, []);
     const full = eventFieldRows([entry('a', {
       seedNumber: 1,
-      participant: participantFixture({ id: 'p-a', name: 'a', teamAffiliation: 'Ferrari', nationality: 'MON' }),
+      participant: participantFixture({ id: 'p-a', name: 'a', abbreviation: 'FER', nationality: 'MON' }),
     })], TIERS, []);
 
-    expect(eventFieldColumnsShown(plain, false)).toEqual({ team: false, country: false, seed: false, lastInFeed: false });
-    expect(eventFieldColumnsShown(full, true)).toEqual({ team: true, country: true, seed: true, lastInFeed: true });
+    expect(eventFieldColumnsShown(plain, false)).toEqual({ abbreviation: false, country: false, seed: false, lastInFeed: false });
+    expect(eventFieldColumnsShown(full, true)).toEqual({ abbreviation: true, country: true, seed: true, lastInFeed: true });
   });
 });
 

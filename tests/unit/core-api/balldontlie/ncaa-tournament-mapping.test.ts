@@ -99,7 +99,8 @@ describe('NCAA men\'s basketball teams', () => {
       sport: Sport.BASKETBALL,
       name: 'Duke Blue Devils',
       status: 'ACTIVE',
-      metadata: { abbreviation: 'DUKE' },
+      abbreviation: 'DUKE',
+      metadata: {},
     });
   });
 
@@ -199,7 +200,7 @@ describe('the NCAA women\'s tournament, whose bracket numbers the First Four rou
 
   it('lists a women\'s team under the feed\'s raw id with the women\'s tour, apart from the men\'s team of the same school', () => {
     const [, duke] = ncaaTeamListSchema.parse(readBalldontlieFixture('ncaaw', 'teams.json')).data;
-    expect(toNcaaTeamParticipant(NCAA_WOMEN, duke)).toMatchObject({ externalId: '150', name: 'Duke Blue Devils', metadata: { abbreviation: 'DUKE' } });
+    expect(toNcaaTeamParticipant(NCAA_WOMEN, duke)).toMatchObject({ externalId: '150', name: 'Duke Blue Devils', abbreviation: 'DUKE', metadata: {} });
   });
 
   it('lists the round 0 First Four\'s teams in the field with every round 1 team, each with its seed', () => {

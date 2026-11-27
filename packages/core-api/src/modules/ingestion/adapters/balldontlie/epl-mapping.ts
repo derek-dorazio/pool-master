@@ -105,7 +105,8 @@ export function toEplTeamParticipant(team: SoccerTeam): ProviderParticipant {
     sport: Sport.SOCCER,
     name: required(team.name, EPL_TEAMS_PATH, `team ${String(id)}`, 'name'),
     status: SportEventParticipantStatus.ACTIVE,
-    metadata: team.abbreviation ? { abbreviation: team.abbreviation } : {},
+    ...(team.abbreviation ? { abbreviation: team.abbreviation } : {}),
+    metadata: {},
   };
 }
 

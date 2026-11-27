@@ -30,8 +30,6 @@ const FIELD_LABELS: Record<keyof ParticipantValues, string> = {
   name: 'Name',
   shortName: 'Short name',
   nationality: 'Country',
-  teamAffiliation: 'Team',
-  role: 'Position',
   ranking: 'Rank',
 };
 
@@ -76,6 +74,7 @@ export function LeagueParticipantDialog({
     { id: 'name', label: 'Name', value: participant.name, testId: 'root-admin-league-participant-name' },
     { id: 'shortName', label: 'Short name', value: blank(participant.shortName), testId: 'root-admin-league-participant-short-name' },
     { id: 'type', label: 'Type', value: enumLabel('ParticipantType', participant.participantType) },
+    ...(participant.abbreviation === null ? [] : [{ id: 'abbreviation', label: 'Abbreviation', value: participant.abbreviation }]),
     { id: 'league', label: 'League', value: sportLeagueName },
     { id: 'rank', label: 'Rank', value: participant.ranking === null ? 'Unranked' : String(participant.ranking), testId: 'root-admin-league-participant-rank' },
     { id: 'feedId', label: 'Feed id', value: blank(participant.feedId) },

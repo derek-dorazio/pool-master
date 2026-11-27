@@ -33,7 +33,7 @@ export class PrismaParticipantRepository implements ParticipantRepository {
         { firstName: { contains: query, mode: 'insensitive' } },
         { lastName: { contains: query, mode: 'insensitive' } },
         { shortName: { contains: query, mode: 'insensitive' } },
-        { teamAffiliation: { contains: query, mode: 'insensitive' } },
+        { abbreviation: { contains: query, mode: 'insensitive' } },
       ];
     }
 
@@ -136,8 +136,6 @@ export class PrismaParticipantRepository implements ParticipantRepository {
         ...(updates.lastName !== undefined && { lastName: updates.lastName }),
         ...(updates.shortName !== undefined && { shortName: updates.shortName }),
         ...(updates.nationality !== undefined && { nationality: updates.nationality }),
-        ...(updates.role !== undefined && { role: updates.role }),
-        ...(updates.teamAffiliation !== undefined && { teamAffiliation: updates.teamAffiliation }),
         ...(updates.status !== undefined && { status: updates.status }),
         ...(updates.ranking !== undefined && { ranking: updates.ranking }),
         // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion -- needed: Prisma's JSON input type has an index signature this interface lacks; the rule misreads it inside the conditional spread.
@@ -175,8 +173,7 @@ export function mapToParticipant(row: {
   lastName: string | null;
   shortName: string | null;
   nationality: string | null;
-  role: string | null;
-  teamAffiliation: string | null;
+  abbreviation: string | null;
   status: ParticipantStatus;
   injuryStatus: unknown;
   photoUrl: string | null;
@@ -195,8 +192,7 @@ export function mapToParticipant(row: {
     lastName: row.lastName ?? undefined,
     shortName: row.shortName ?? undefined,
     nationality: row.nationality ?? undefined,
-    role: row.role ?? undefined,
-    teamAffiliation: row.teamAffiliation ?? undefined,
+    abbreviation: row.abbreviation ?? undefined,
     status: row.status,
     injuryStatus: toInjuryStatus(row.injuryStatus),
     photoUrl: row.photoUrl ?? undefined,
@@ -232,8 +228,7 @@ function toParticipantCreateData(participant: Omit<Participant, 'id' | 'createdA
     lastName: participant.lastName,
     shortName: participant.shortName,
     nationality: participant.nationality,
-    role: participant.role,
-    teamAffiliation: participant.teamAffiliation,
+    abbreviation: participant.abbreviation,
     status: participant.status,
     injuryStatus: participant.injuryStatus as object,
     photoUrl: participant.photoUrl,

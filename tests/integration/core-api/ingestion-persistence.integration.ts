@@ -746,7 +746,7 @@ describe('IngestionPersistence', () => {
 
     // A participant-only change: the participant row is rewritten, the field row is not.
     const reaffiliated = await persistence.persistEventDetailWithDiagnostics(field(9, {
-      'ingestion-batch-1': { teamAffiliation: 'Team Europe' },
+      'ingestion-batch-1': { abbreviation: 'EUR' },
       'ingestion-batch-3': { status: SportEventParticipantStatus.WITHDRAWN },
     }));
 
@@ -756,7 +756,7 @@ describe('IngestionPersistence', () => {
     expect(fieldRowAt).toBe(afterWithdrawal.get('ingestion-batch-1')?.[0]);
     expect(participantAt).not.toBe(afterWithdrawal.get('ingestion-batch-1')?.[1]);
     expect(afterReaffiliation.get('ingestion-batch-2')).toEqual(afterWithdrawal.get('ingestion-batch-2'));
-    await expect(prisma.participant.findFirstOrThrow({ where: { providerMappings: { some: { externalId: 'ingestion-batch-1' } } } })).resolves.toMatchObject({ teamAffiliation: 'Team Europe' });
+    await expect(prisma.participant.findFirstOrThrow({ where: { providerMappings: { some: { externalId: 'ingestion-batch-1' } } } })).resolves.toMatchObject({ abbreviation: 'EUR' });
   });
 
   // #1853 — a participant belongs to one sport league: the one of the event the sync fields them

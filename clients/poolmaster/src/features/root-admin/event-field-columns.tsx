@@ -28,9 +28,9 @@ export function eventFieldColumns(shown: EventFieldColumnsShown) {
         </span>
       ),
     }),
-    ...(shown.team ? [columnHelper.accessor('teamAffiliation', {
-      header: 'Team',
-      meta: { info: 'The team the participant plays or races for.', type: { kind: 'text' } },
+    ...(shown.abbreviation ? [columnHelper.accessor('abbreviation', {
+      header: 'Abbreviation',
+      meta: { info: 'The team\'s abbreviation as its feed sends it.', type: { kind: 'text' } },
     })] : []),
     ...(shown.country ? [columnHelper.accessor('nationality', {
       header: 'Country',
