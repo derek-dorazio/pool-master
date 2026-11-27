@@ -29,7 +29,7 @@ afterAll(async () => {
   await teardownIntegrationTests();
 });
 
-const MIGRATION = join(__dirname, '../../../packages/core-api/prisma/migrations/20271218027900_contests_cover_season_slots/migration.sql');
+const MIGRATION = join(__dirname, '../../../packages/core-api/prisma/migrations/20271218028500_contests_cover_season_slots/migration.sql');
 
 /** The migration's statements in order. A `DO $$ … $$` block holds no `;` followed by a line break. */
 function migrationStatements(): string[] {

@@ -54,7 +54,8 @@ describe('notification batch reads (#1255)', () => {
     const all = await contests.findBySportEvents([first.event.id, second.event.id]);
 
     expect(all.map((contest) => contest.id)).toEqual([onFirst.id, season.id, draft.id]);
-    expect(expectDefined(all.find((contest) => contest.id === season.id)).sportEventIds).toEqual([first.event.id, second.event.id]);
+    // The two events start together, so their play order is their slots' (#2014): compare as sets.
+    expect([...expectDefined(all.find((contest) => contest.id === season.id)).sportEventIds].sort()).toEqual([first.event.id, second.event.id].sort());
     await expect(contests.findBySportEvents([])).resolves.toEqual([]);
   });
 
