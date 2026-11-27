@@ -1619,9 +1619,8 @@ describe('Contract verification (root admin)', () => {
         const sepIds = seps.map((s) => s.id);
         if (sepIds.length) {
           await prisma.contestEntryPick.deleteMany({ where: { sportEventParticipantId: { in: sepIds } } });
-          await prisma.sportEventParticipantGolfRound.deleteMany({ where: { participantRound: { sportEventParticipantId: { in: sepIds } } } });
-          await prisma.sportEventParticipantRound.deleteMany({ where: { sportEventParticipantId: { in: sepIds } } });
-          await prisma.sportEventParticipantGolfStanding.deleteMany({ where: { standing: { sportEventParticipantId: { in: sepIds } } } });
+          // The rounds' FIELD matches name the golfers as sides (#2008).
+          await prisma.sportEventRoundMatch.deleteMany({ where: { sportEventId: { in: created.eventIds } } });
           await prisma.sportEventParticipantStanding.deleteMany({ where: { sportEventParticipantId: { in: sepIds } } });
           await prisma.sportEventSlotParticipantValuation.deleteMany({ where: { sportEventParticipantId: { in: sepIds } } });
           await prisma.sportEventParticipant.deleteMany({ where: { id: { in: sepIds } } });

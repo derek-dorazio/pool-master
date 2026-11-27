@@ -1293,9 +1293,9 @@ export const IngestionJobStatusOrder = explicitOrder<IngestionJobStatus>({
 });
 
 /**
- * A participant's progress through one round (SportEventParticipantRound.status), as the
- * score source reported it. Every round row is written with one of these; there is no
- * "not started" value, because a round with no scores has no row.
+ * A golfer's progress through one round, as the score source reports it and the API shows it
+ * (#2008). It is stored as the golfer's side status in the round's FIELD Game, and a missed cut
+ * on their standing; there is no "not started" value, because a round with no scores has no side.
  */
 export const ParticipantRoundStatus = {
   IN_PROGRESS: 'IN_PROGRESS',

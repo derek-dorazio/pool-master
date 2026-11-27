@@ -28,6 +28,8 @@ function sideResult(sideNumber: number, score: number | null, shootout?: number)
     homeAway: HomeAway.NONE,
     position: null,
     startPosition: null,
+    scoreToPar: null,
+    periodsCompleted: null,
     status: null,
     periodScores: shootout === undefined ? [] : [{ kind: PeriodKind.SHOOTOUT, periodNumber: 1, score: shootout }],
   };

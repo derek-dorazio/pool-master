@@ -21,7 +21,7 @@ export const finishPositionScoringFamily: ScoringFamilyModule = {
       name: row.participant.name,
       score: settings ? scoreRunner(row, settings, raceOfficial) : null,
       detail: { scoringFamily: ScoringFamily.FINISH_POSITION },
-      asOf: row.standing?.standing.asOf ?? raceResultOf(row)?.updatedAt ?? null,
+      asOf: row.standing?.asOf ?? raceResultOf(row)?.updatedAt ?? null,
     }));
   },
 

@@ -1,6 +1,6 @@
 import { testDomainEvents } from '../../support/domain-events';
 import { PeriodUnit, Sport } from '@poolmaster/shared/domain';
-import { GolfScoreService } from '../../../packages/core-api/src/modules/golf/golf-score-service';
+import { StrokePlayResultService } from '../../../packages/core-api/src/modules/scoring-families/stroke-play/stroke-play-result-service';
 import { eventStoresGolfRoundScores } from '../../../packages/core-api/src/modules/scoring-families/golf-round-scores';
 import { InMemorySportEvents } from '../../support/in-memory-sport-events';
 import { fakeLogger } from '../../support/fake-logger';
@@ -9,7 +9,7 @@ import { BALLDONTLIE_TEST_PROVIDER_ID } from '../../support/balldontlie-provider
 /** A test participant's id, fixed by its name, so a row names it by id as the feed does (#2114). */
 const idOf = (name: string): string => `participant-${name.toLowerCase().replace(/\s+/g, '-')}`;
 
-// Golf scoring use cases beyond golf-score-service.test.ts: the provider sync's skip paths and
+// Golf scoring use cases beyond stroke-play-result-service.test.ts: the provider sync's skip paths and
 // change reporting, how a cut or withdrawn golfer's standing reads, and corrections that move a
 // golfer in or out of the ranking.
 
@@ -34,14 +34,13 @@ async function setup() {
     await store.mappingRepo().bind({ providerId: BALLDONTLIE_TEST_PROVIDER_ID, externalId, participantId, sportLeagueId: store.leagueOf(participantId), participantType: 'INDIVIDUAL', mappedAt });
   }
   const logger = fakeLogger();
-  const service = new GolfScoreService({ domainEvents: testDomainEvents(),
+  const service = new StrokePlayResultService({ domainEvents: testDomainEvents(),
     events: store.sportEventRepo(),
     rounds: store.roundRepo(),
     field: store.fieldRepo(),
     participants: store.participantRepo(),
     mappings: store.mappingRepo(),
-    golfRounds: store.golfRoundRepo(),
-    golfStandings: store.golfStandingRepo(),
+    fieldGames: store.fieldGameRepo(),
     storesGolfRoundScores: eventStoresGolfRoundScores,
     logger,
   });
@@ -59,10 +58,13 @@ const update = (participantExternalId: string, round: number, scoreToPar: number
   ...overrides,
 });
 
-const standingOf = async (store: InMemorySportEvents, sportEventParticipantId: string) => {
-  const [standing] = await store.golfStandingRepo().findBySportEventParticipants([sportEventParticipantId]);
-  return standing;
-};
+const standingOf = (store: InMemorySportEvents, sportEventParticipantId: string) =>
+  store.standingRows.find((row) => row.sportEventParticipantId === sportEventParticipantId);
+
+/** A golfer's rounds as stored: their side results in the event's FIELD Games, in round order. */
+const roundsOf = (store: InMemorySportEvents, sportEventParticipantId: string) => store.fieldSideRows
+  .filter((row) => row.sportEventParticipantId === sportEventParticipantId)
+  .sort((left, right) => left.roundNumber - right.roundNumber);
 
 describe('golf provider sync — what is skipped', () => {
   it('writes nothing and reports zero for an empty payload', async () => {
@@ -74,7 +76,7 @@ describe('golf provider sync — what is skipped', () => {
       updatesSkipped: 0,
       writeDiagnostics: { summary: { total: 0, unchanged: 0, created: 0, updated: 0, deleted: 0 }, rows: [] },
     });
-    expect(store.golfRoundRows).toEqual([]);
+    expect(store.fieldSideRows).toEqual([]);
   });
 
   it('skips and logs an update for a provider golfer with no mapping, and still stores the others', async () => {
@@ -83,7 +85,7 @@ describe('golf provider sync — what is skipped', () => {
     const result = await service.persistRoundUpdatesForSportEvent(event.id, [update('ext-ana', 1, -1), update('ext-stranger', 1, -5)], 'balldontlie', 4);
 
     expect(result).toMatchObject({ updatesReturned: 2, updatesPersisted: 1, updatesSkipped: 1 });
-    expect(store.golfRoundRows).toHaveLength(1);
+    expect(store.fieldSideRows).toHaveLength(1);
     expect(logger.warn).toHaveBeenCalledWith(
       { action: 'liveScore.golf.unmappedExternalId', data: { providerId: 'balldontlie', sportEventId: event.id, externalIds: ['ext-stranger'] } },
       expect.any(String),
@@ -112,7 +114,7 @@ describe('golf provider sync — what is skipped', () => {
     const result = await service.persistRoundUpdatesForSportEvent(event.id, [update('ext-dan', 1, -3)], 'balldontlie', 4);
 
     expect(result).toMatchObject({ updatesPersisted: 0, updatesSkipped: 1 });
-    expect(store.golfRoundRows).toEqual([]);
+    expect(store.fieldSideRows).toEqual([]);
     expect(logger.warn).toHaveBeenCalledWith(
       { action: 'liveScore.golf.noSportEventParticipant', data: { participantId: outsider.id, externalId: 'ext-dan', sportEventId: event.id } },
       expect.any(String),
@@ -125,7 +127,7 @@ describe('golf provider sync — what is skipped', () => {
     const result = await service.persistRoundUpdatesForSportEvent(event.id, [update('ext-ana', 1, -2, { strokes: null })], 'balldontlie', 4);
 
     expect(result).toMatchObject({ updatesPersisted: 0, updatesSkipped: 1 });
-    expect(store.golfRoundRows).toEqual([]);
+    expect(store.fieldSideRows).toEqual([]);
   });
 
   it('applies two updates for the same golfer and round in payload order, so the later one is stored', async () => {
@@ -136,9 +138,8 @@ describe('golf provider sync — what is skipped', () => {
       update('ext-ana', 1, -3, { status: 'IN_PROGRESS', thru: 12 }),
     ], 'balldontlie', 4);
 
-    const [round] = await store.golfRoundRepo().findBySportEventParticipants([anaEntry.id]);
-    expect(round.golf).toMatchObject({ scoreToPar: -3, thru: 12 });
-    expect((await standingOf(store, anaEntry.id)).golf).toMatchObject({ eventScoreToPar: -3, currentRoundThru: 12 });
+    expect(roundsOf(store, anaEntry.id)).toEqual([expect.objectContaining({ scoreToPar: -3, periodsCompleted: 12 })]);
+    expect(standingOf(store, anaEntry.id)).toMatchObject({ scoreToPar: -3 });
   });
 });
 
@@ -162,8 +163,8 @@ describe('golf provider sync — change reporting', () => {
 
     expect(result.writeDiagnostics.summary).toMatchObject({ total: 2, created: 0, updated: 2, unchanged: 0 });
     expect(result.writeDiagnostics.rows.map((row) => [row.entityType, row.disposition])).toEqual([
-      ['SportEventParticipantGolfRound', 'UPDATED'],
-      ['SportEventParticipantGolfStanding', 'UPDATED'],
+      ['SportEventRoundMatchGameSideResult', 'UPDATED'],
+      ['SportEventParticipantStanding', 'UPDATED'],
     ]);
   });
 });
@@ -177,10 +178,8 @@ describe('golf standings — cut, withdrawal and the current round', () => {
       update('ext-ben', 1, 4), update('ext-ben', 2, 4), update('ext-ben', 3, 4),
     ], 'balldontlie', 4);
 
-    const ana = await standingOf(store, anaEntry.id);
-    expect(ana.standing).toMatchObject({ status: 'ELIMINATED', position: null, displayPosition: null });
-    expect(ana.golf).toMatchObject({ eventScoreToPar: 5, eventStrokes: 149 });
-    expect((await standingOf(store, benEntry.id)).standing).toMatchObject({ position: 1, displayPosition: '1' });
+    expect(standingOf(store, anaEntry.id)).toMatchObject({ status: 'ELIMINATED', position: null, displayPosition: null, scoreToPar: 5, total: 149 });
+    expect(standingOf(store, benEntry.id)).toMatchObject({ position: 1, displayPosition: '1' });
   });
 
   it.each(['DNF', 'DSQ'] as const)('reads a golfer whose latest round is %s as WITHDRAWN and leaves them unranked', async (status) => {
@@ -191,32 +190,28 @@ describe('golf standings — cut, withdrawal and the current round', () => {
       update('ext-ben', 1, 2), update('ext-ben', 2, 2),
     ], 'balldontlie', 4);
 
-    expect((await standingOf(store, anaEntry.id)).standing).toMatchObject({ status: 'WITHDRAWN', position: null });
-    expect((await standingOf(store, benEntry.id)).standing).toMatchObject({ status: 'COMPLETE', position: 1, displayPosition: '1' });
+    expect(standingOf(store, anaEntry.id)).toMatchObject({ status: 'WITHDRAWN', position: null });
+    expect(standingOf(store, benEntry.id)).toMatchObject({ status: 'COMPLETE', position: 1, displayPosition: '1' });
   });
 
   it('reads a golfer between rounds as COMPLETE through every hole of the round\'s slot (18), and on the first tee of the next round as thru 0', async () => {
     const { store, service, event, anaEntry } = await setup();
 
     await service.persistRoundUpdatesForSportEvent(event.id, [update('ext-ana', 1, -1, { thru: undefined })], 'balldontlie', 4);
-    expect(await standingOf(store, anaEntry.id)).toMatchObject({
-      standing: { status: 'COMPLETE' },
-      golf: { currentRoundThru: 18 },
-    });
+    expect(standingOf(store, anaEntry.id)).toMatchObject({ status: 'COMPLETE' });
+    expect(roundsOf(store, anaEntry.id).map((round) => round.periodsCompleted)).toEqual([18]);
 
     await service.persistRoundUpdatesForSportEvent(event.id, [update('ext-ana', 2, 0, { status: 'IN_PROGRESS', thru: 0, strokes: 0 })], 'balldontlie', 4);
-    expect(await standingOf(store, anaEntry.id)).toMatchObject({
-      standing: { status: 'IN_PROGRESS' },
-      golf: { currentRoundThru: 0, eventScoreToPar: -1 },
-    });
+    expect(standingOf(store, anaEntry.id)).toMatchObject({ status: 'IN_PROGRESS', scoreToPar: -1 });
+    expect(roundsOf(store, anaEntry.id).map((round) => round.periodsCompleted)).toEqual([18, 0]);
   });
 
-  it('leaves the current round unknown-through for an in-progress round the feed sent without thru', async () => {
+  it('leaves holes thru unknown for an in-progress round the feed sent without thru', async () => {
     const { store, service, event, anaEntry } = await setup();
 
     await service.persistRoundUpdatesForSportEvent(event.id, [update('ext-ana', 1, -1, { status: 'IN_PROGRESS', thru: undefined })], 'balldontlie', 4);
 
-    expect((await standingOf(store, anaEntry.id)).golf.currentRoundThru).toBeNull();
+    expect(roundsOf(store, anaEntry.id).map((round) => round.periodsCompleted)).toEqual([null]);
   });
 });
 
@@ -227,12 +222,12 @@ describe('golf corrections — moving a golfer in or out of the ranking', () => 
       update('ext-ana', 1, -1), update('ext-ana', 2, -1, { status: 'MISSED_CUT' }),
       update('ext-ben', 1, 1), update('ext-ben', 2, 1),
     ], 'balldontlie', 4);
-    expect((await standingOf(store, anaEntry.id)).standing.position).toBeNull();
+    expect(standingOf(store, anaEntry.id)?.position).toBeNull();
 
     await service.updateRoundScore(event.id, 2, anaEntry.id, { status: 'COMPLETED' });
 
-    expect((await standingOf(store, anaEntry.id)).standing).toMatchObject({ status: 'COMPLETE', position: 1, displayPosition: '1' });
-    expect((await standingOf(store, benEntry.id)).standing).toMatchObject({ position: 2, displayPosition: '2' });
+    expect(standingOf(store, anaEntry.id)).toMatchObject({ status: 'COMPLETE', position: 1, displayPosition: '1' });
+    expect(standingOf(store, benEntry.id)).toMatchObject({ position: 2, displayPosition: '2' });
   });
 
   it('a status-only correction keeps the round\'s stored strokes, to par and thru', async () => {
@@ -241,9 +236,8 @@ describe('golf corrections — moving a golfer in or out of the ranking', () => 
 
     await service.updateRoundScore(event.id, 1, anaEntry.id, { status: 'DNF' });
 
-    const [round] = await store.golfRoundRepo().findBySportEventParticipants([anaEntry.id]);
-    expect(round).toMatchObject({ participantRound: { status: 'DNF' }, golf: { strokes: 70, scoreToPar: -2, thru: 14 } });
-    expect((await standingOf(store, anaEntry.id)).standing.status).toBe('WITHDRAWN');
+    expect(roundsOf(store, anaEntry.id)).toEqual([expect.objectContaining({ status: 'DID_NOT_FINISH', score: 70, scoreToPar: -2, periodsCompleted: 14 })]);
+    expect(standingOf(store, anaEntry.id)?.status).toBe('WITHDRAWN');
   });
 
   it('a correction that sends thru as null clears it, while omitting thru keeps it', async () => {
@@ -251,12 +245,10 @@ describe('golf corrections — moving a golfer in or out of the ranking', () => 
     await service.persistRoundUpdatesForSportEvent(event.id, [update('ext-ana', 1, -2, { status: 'IN_PROGRESS', thru: 14 })], 'balldontlie', 4);
 
     await service.updateRoundScore(event.id, 1, anaEntry.id, { strokes: 69, scoreToPar: -3 });
-    let [round] = await store.golfRoundRepo().findBySportEventParticipants([anaEntry.id]);
-    expect(round.golf.thru).toBe(14);
+    expect(roundsOf(store, anaEntry.id).map((round) => round.periodsCompleted)).toEqual([14]);
 
     await service.updateRoundScore(event.id, 1, anaEntry.id, { thru: null });
-    [round] = await store.golfRoundRepo().findBySportEventParticipants([anaEntry.id]);
-    expect(round.golf.thru).toBeNull();
+    expect(roundsOf(store, anaEntry.id).map((round) => round.periodsCompleted)).toEqual([null]);
   });
 
   it('correcting an earlier round changes the event total but keeps the golfer on their latest round', async () => {
@@ -267,10 +259,8 @@ describe('golf corrections — moving a golfer in or out of the ranking', () => 
 
     await service.updateRoundScore(event.id, 1, anaEntry.id, { strokes: 72, scoreToPar: 0 });
 
-    expect(await standingOf(store, anaEntry.id)).toMatchObject({
-      standing: { status: 'IN_PROGRESS' },
-      golf: { eventScoreToPar: -1, currentRoundThru: 6 },
-    });
+    expect(standingOf(store, anaEntry.id)).toMatchObject({ status: 'IN_PROGRESS', scoreToPar: -1 });
+    expect(roundsOf(store, anaEntry.id).map((round) => round.periodsCompleted)).toEqual([18, 18, 6]);
   });
 
   it('a bulk apply in which every row lacks strokes writes no round and no standing', async () => {
@@ -281,8 +271,8 @@ describe('golf corrections — moving a golfer in or out of the ranking', () => 
       { participantId: idOf('Ben Cole'), strokes: null, scoreToPar: 1, status: 'COMPLETED' },
     ]);
 
-    expect(store.golfRoundRows).toEqual([]);
-    await expect(store.golfStandingRepo().findBySportEvent(event.id)).resolves.toEqual([]);
+    expect(store.fieldSideRows).toEqual([]);
+    expect(store.standingRows).toEqual([]);
   });
 
   it('previews a named golfer who is not on this event\'s field as unresolved, so apply refuses it', async () => {
