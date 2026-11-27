@@ -475,6 +475,21 @@ describe('IngestionPersistence', () => {
       expect((await teamFindings()).map((finding) => finding.status)).toEqual([ProviderSyncFindingStatus.RESOLVED, ProviderSyncFindingStatus.RESOLVED]);
     });
 
+    it('reports 20 teams of a released event in the same statements as 2', async () => {
+      await expectSameStatementCount({
+        seed: async (teams) => {
+          const seeded = await bowlsHoldingBoth(`integration-stale-report-scaling-${String(teams)}`, teams / 2);
+          await getPrisma().sportEvent.update({ where: { id: seeded.event.id }, data: { status: 'SCHEDULED' } });
+          return seeded;
+        },
+        call: async ({ detail, persistence, teamFindings }) => {
+          await persistence.persistEventDetailWithDiagnostics(detail);
+          return (await teamFindings()).filter((finding) => finding.status === ProviderSyncFindingStatus.OPEN).length;
+        },
+        rowsShown: (reported) => reported,
+      });
+    });
+
     it('raises no team finding on a draft, which withdraws the teams instead', async () => {
       const { detail, persistence, teamFindings } = await bowlsHoldingBoth('integration-stale-draft-no-finding');
 

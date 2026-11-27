@@ -435,9 +435,9 @@ export class IngestionPersistence {
       const participantId = participantIdByKey.get(providerKey(participant));
       if (participantId) mapped.set(participantId, participant);
     }
-    // A field that withdraws or reports the teams the feed no longer lists reads the whole field,
-    // with each team's name and feed id, in the same one read.
-    const rows: FieldRow[] = unlistedTeams !== UnlistedTeams.KEEP
+    // A field that withdraws or reports the teams the feed no longer lists reads the whole field in
+    // the same one read; one that reports them reads each team's name and feed id with it.
+    const rows: FieldRow[] = unlistedTeams === UnlistedTeams.REPORT
       ? await this.prisma.sportEventParticipant.findMany({
         where: { sportEventId },
         include: { participant: { select: {
@@ -445,13 +445,17 @@ export class IngestionPersistence {
           providerMappings: { where: { provider: { code: requireProviderCodeOfSourceId(detail.providerId) } }, select: { externalId: true }, take: 1 },
         } } },
       })
-      : mapped.size === 0 ? [] : await this.prisma.sportEventParticipant.findMany({ where: { sportEventId, participantId: { in: [...mapped.keys()] } } });
+      : unlistedTeams === UnlistedTeams.WITHDRAW
+        ? await this.prisma.sportEventParticipant.findMany({ where: { sportEventId } })
+        : mapped.size === 0 ? [] : await this.prisma.sportEventParticipant.findMany({ where: { sportEventId, participantId: { in: [...mapped.keys()] } } });
     const existingByParticipantId = new Map(rows.filter((row) => mapped.has(row.participantId)).map((row) => [row.participantId, row]));
     const unlistedRows = rows.filter((row) => !mapped.has(row.participantId) && row.status !== SportEventParticipantStatus.WITHDRAWN);
     const unlisted = unlistedTeams === UnlistedTeams.WITHDRAW ? unlistedRows.map((row) => row.id) : [];
     const reported = unlistedTeams === UnlistedTeams.REPORT
       ? unlistedRows.flatMap(({ participant }) => {
         const mapping = participant?.providerMappings.at(0);
+        // A team with no feed id at this provider (test data, or a team mapped since removed) has
+        // no feed id to name the finding by, so it is left out rather than raised nameless.
         return participant === undefined || mapping === undefined ? [] : [{ externalId: mapping.externalId, name: participant.name }];
       })
       : [];
