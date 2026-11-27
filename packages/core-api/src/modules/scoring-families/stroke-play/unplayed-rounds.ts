@@ -17,6 +17,7 @@
 import {
   type ContestScoringSettings,
   GameSideStatus,
+  ParticipantScoringDefinitionIdSchema,
   ParticipantStandingStatus,
   SportEventStatus,
   type SportEvent,
@@ -31,13 +32,17 @@ import { scoredRoundsOf, type ScoredRound } from './scored-rounds';
  * unscored rather than scored under rules it lacks.
  */
 export function unplayedRoundToParOf(scoring: ContestScoringSettings): number | null {
-  return scoring.participantScoringDefinitionId === 'GOLF_RELATIVE_TO_PAR_TOTAL'
+  return scoring.participantScoringDefinitionId ===
+    ParticipantScoringDefinitionIdSchema.enum.GOLF_RELATIVE_TO_PAR_TOTAL
     ? scoring.config.unplayedRoundToPar
     : null;
 }
 
 /** What unplayed-round scoring reads off the event. */
-export type UnplayedRoundScoringEvent = Pick<SportEvent, 'roundCount' | 'status' | 'slotDefinitions'>;
+export type UnplayedRoundScoringEvent = Pick<
+  SportEvent,
+  'roundCount' | 'status' | 'slotDefinitions'
+>;
 
 /**
  * How many holes each of a stroke-play event's rounds has (#2047): the period count of the slot
@@ -45,7 +50,9 @@ export type UnplayedRoundScoringEvent = Pick<SportEvent, 'roundCount' | 'status'
  * no slot with one, or slots that disagree.
  */
 export function holesPerRound(event: Pick<SportEvent, 'slotDefinitions'>): number | null {
-  const counts = [...new Set(event.slotDefinitions.map((definition) => definition.periods?.count ?? null))];
+  const counts = [
+    ...new Set(event.slotDefinitions.map((definition) => definition.periods?.count ?? null)),
+  ];
   return counts.length === 1 ? counts[0] : null;
 }
 
@@ -61,15 +68,19 @@ export interface GolfContestScore {
  * last group's round is marked finished).
  */
 export function isRoundFinished(round: ScoredRound, holes: number | null): boolean {
-  return round.result.status === GameSideStatus.FINISHED
-    || (round.result.status === null && holes !== null && round.result.periodsCompleted === holes);
+  return (
+    round.result.status === GameSideStatus.FINISHED ||
+    (round.result.status === null && holes !== null && round.result.periodsCompleted === holes)
+  );
 }
 
 export function isOutOfEvent(row: SportEventParticipantView): boolean {
   const status = row.standing?.status;
-  return row.entry.status !== SportEventParticipantStatus.ACTIVE
-    || status === ParticipantStandingStatus.WITHDRAWN
-    || status === ParticipantStandingStatus.ELIMINATED;
+  return (
+    row.entry.status !== SportEventParticipantStatus.ACTIVE ||
+    status === ParticipantStandingStatus.WITHDRAWN ||
+    status === ParticipantStandingStatus.ELIMINATED
+  );
 }
 
 /** The field-wide facts every golfer's score is read against, computed once per field. */
@@ -116,8 +127,14 @@ export function scoreGolferForContest(
   });
 
   const rounds = scoredRoundsOf(row);
-  const finished = new Map(rounds.filter((round) => isRoundFinished(round, context.holes)).map((round) => [round.roundNumber, round]));
-  const missesScheduledRound = context.scheduledRoundNumbers.some((roundNumber) => !finished.has(roundNumber));
+  const finished = new Map(
+    rounds
+      .filter((round) => isRoundFinished(round, context.holes))
+      .map((round) => [round.roundNumber, round]),
+  );
+  const missesScheduledRound = context.scheduledRoundNumbers.some(
+    (roundNumber) => !finished.has(roundNumber),
+  );
 
   // Out of the event, or the event is over and they did not finish every round: the rounds
   // they finished, then the unplayed score for every other scheduled round. A round they
@@ -126,10 +143,13 @@ export function scoreGolferForContest(
     const { unplayedRoundNumbers, penalty } = scoreUnplayed(
       context.scheduledRoundNumbers.filter((roundNumber) => !finished.has(roundNumber)),
     );
-    const played = context.scheduledRoundNumbers
-      .reduce((sum, roundNumber) => sum + (finished.get(roundNumber)?.result.scoreToPar ?? 0), 0);
-    const hasScore = unplayedRoundNumbers.length > 0
-      || context.scheduledRoundNumbers.some((roundNumber) => finished.has(roundNumber));
+    const played = context.scheduledRoundNumbers.reduce(
+      (sum, roundNumber) => sum + (finished.get(roundNumber)?.result.scoreToPar ?? 0),
+      0,
+    );
+    const hasScore =
+      unplayedRoundNumbers.length > 0 ||
+      context.scheduledRoundNumbers.some((roundNumber) => finished.has(roundNumber));
     return { score: hasScore ? played + penalty : null, unplayedRoundNumbers };
   }
 
@@ -142,7 +162,9 @@ export function scoreGolferForContest(
   // Mid-event, still in it with no score at all: the unplayed score for each round the field has
   // moved past.
   const { unplayedRoundNumbers, penalty } = scoreUnplayed(
-    context.scheduledRoundNumbers.filter((roundNumber) => roundNumber < context.highestStartedRound),
+    context.scheduledRoundNumbers.filter(
+      (roundNumber) => roundNumber < context.highestStartedRound,
+    ),
   );
   return { score: unplayedRoundNumbers.length > 0 ? penalty : null, unplayedRoundNumbers };
 }

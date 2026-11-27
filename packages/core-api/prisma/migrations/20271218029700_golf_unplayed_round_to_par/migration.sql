@@ -1,7 +1,8 @@
 -- #2008 (10b part 4c): an unplayed golf round scores a contest setting, `unplayedRoundToPar`,
--- in strokes over par, no longer 80 strokes against a par read off the course. The setting is
--- required and the server picks no default, so every stroke-play league's templates now preset it
--- (+8, the usual rule: an 80 on a par 72), and every stored golf scoring rule is given it. The
+-- in strokes over par, no longer 80 strokes against a par read off the course. Every stroke-play
+-- league's templates now preset it (+8, the usual rule: an 80 on a par 72), the same value the
+-- server gives a golf contest whose template has none, and every stored golf scoring rule is
+-- given it. The
 -- rule's config held no other live key (the retired cutRule/playoffHandling keys never changed a
 -- score), so it is written whole. Data only.
 --
