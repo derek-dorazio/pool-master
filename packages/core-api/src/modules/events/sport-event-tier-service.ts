@@ -650,11 +650,7 @@ export class SportEventTierService {
     return knockedOutBefore(await this.deps.matches.findBySportEvent(sportEventId), earlier);
   }
 
-  /**
-   * The event's field still in for a slot in its one order: its active rows less `knockedOut`, the
-   * teams a later slot's set leaves out (`knockedOutEntering`).
-   */
-  /** The field a slot's set covers: its active rows, less those `knockedOut` before the slot. */
+  /** The field a slot's set covers: its active rows, less those `knockedOut` before the slot (`knockedOutEntering`). */
   private async activeField(sportEventId: string, knockedOut: ReadonlySet<string>) {
     return (await this.deps.field.findBySportEvent(sportEventId))
       .filter((entry) => entry.status === SportEventParticipantStatus.ACTIVE && !knockedOut.has(entry.id))
@@ -662,6 +658,7 @@ export class SportEventTierService {
       .sort((left, right) => left.participantId.localeCompare(right.participantId));
   }
 
+  /** The slot's field still in (`activeField`), in its one order. */
   private async orderedActiveField(sportEventId: string, sources: readonly FieldOrderBasis[], knockedOut: ReadonlySet<string>): Promise<FieldOrder | 'NO_FIELD' | 'NO_ORDER'> {
     const active = await this.activeField(sportEventId, knockedOut);
     const nameOf = new Map((active.length === 0 ? [] : await this.deps.participants.findByIds(active.map((entry) => entry.participantId)))

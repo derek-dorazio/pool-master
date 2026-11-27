@@ -19,6 +19,7 @@ import { sportRowKeys } from '../../support/sport-rows';
 import { sportPlay } from '../../support/sport-play';
 import { linkTestSlot, oneEventSlotId } from '../../support/test-slots';
 import { createMatchRow } from '../../support/match-rows';
+import { expectSameStatementCount } from '../query-scaling';
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
@@ -635,7 +636,7 @@ describe('each slot a tiered or budget template lists holds its own tier set (#2
     const prisma = getPrisma();
     const admin = await createTestUser({ displayName: 'Still In Admin', isRootAdmin: true });
     const event = await prisma.sportEvent.create({
-      data: { ...(await freshEventEdition(prisma)), id: randomUUID(), name: 'Still In Open', startDate: new Date('2099-04-20T15:00:00.000Z'), endDate: null, status: 'DRAFT' },
+      data: { ...(await freshEventEdition(prisma, { sport: Sport.BASKETBALL })), id: randomUUID(), name: 'Still In Open', startDate: new Date('2099-04-20T15:00:00.000Z'), endDate: null, status: 'DRAFT' },
     });
     const [roundOf64SlotId, roundOf32SlotId] = await eventRoundSlots(prisma, event.id, [{ slotKind: 'ROUND_OF_64' }, { slotKind: 'ROUND_OF_32' }]);
     const slots = await prisma.sportEventSlot.findMany({
@@ -644,7 +645,7 @@ describe('each slot a tiered or budget template lists holds its own tier set (#2
     });
     const later = slots.find((slot) => slot.id === roundOf32SlotId);
     if (!later) throw new Error('The round of 32 slot was not made');
-    // A tiered contest may start at either round, so each holds a set.
+    // A knockout's games are head to head. A tiered contest may start at either round, so each holds a set.
     const template = await prisma.contestConfigTemplate.create({
       data: {
         sportLeagueId: event.sportLeagueId, coverageMode: 'ONE_SLOT', contestFormat: 'ROSTER', name: 'Setup', description: 'Setup', sortOrder: 1, configJson: {},
@@ -653,7 +654,7 @@ describe('each slot a tiered or budget template lists holds its own tier set (#2
       },
       select: { id: true },
     });
-    const participantLeagueId = await participantLeagueIdForSport(prisma, Sport.GOLF);
+    const participantLeagueId = await participantLeagueIdForSport(prisma, Sport.BASKETBALL);
     const names = ['Loser', 'Winner', 'Unplayed One', 'Unplayed Two', 'Bye'];
     const rows = new Map<string, string>();
     const row = (name: string) => {
@@ -663,7 +664,7 @@ describe('each slot a tiered or budget template lists holds its own tier set (#2
     };
     for (const [index, name] of names.entries()) {
       // poolmaster-allow-query-in-loop: five teams, each with its field row
-      const participant = await prisma.participant.create({ data: { sportLeagueId: participantLeagueId, participantType: 'INDIVIDUAL', name: `Still In ${name}` } });
+      const participant = await prisma.participant.create({ data: { sportLeagueId: participantLeagueId, participantType: 'TEAM', name: `Still In ${name}` } });
       rows.set(name, (await prisma.sportEventParticipant.create({ data: { sportEventId: event.id, participantId: participant.id, ranking: index + 1 } })).id);
     }
     const round = await prisma.sportEventRound.create({ data: { sportEventId: event.id, sportEventSlotId: roundOf64SlotId, roundNumber: 1, scheduledDate: new Date('2099-04-20T15:00:00.000Z') } });
@@ -686,6 +687,57 @@ describe('each slot a tiered or budget template lists holds its own tier set (#2
       expect(tiered.map((row) => nameOf.get(row.sportEventParticipantId) ?? '').sort((left, right) => left.localeCompare(right))).toEqual(['Bye', 'Unplayed One', 'Unplayed Two', 'Winner']);
     } finally {
       await prisma.contestConfigTemplate.deleteMany({ where: { id: template.id } });
+    }
+  });
+
+  it("auto-assigns a later slot's tiers in the same statements for 2 teams knocked out before it as for 20", async () => {
+    const prisma = getPrisma();
+    const admin = await createTestUser({ displayName: 'Still In Scaling Admin', isRootAdmin: true });
+    const templateIds: string[] = [];
+    try {
+      await expectSameStatementCount({
+        seed: async (losers) => {
+          const event = await prisma.sportEvent.create({
+            data: { ...(await freshEventEdition(prisma, { sport: Sport.BASKETBALL })), id: randomUUID(), name: `Still In Scaling ${String(losers)}`, startDate: new Date('2099-04-20T15:00:00.000Z'), endDate: null, status: 'DRAFT' },
+          });
+          const [roundOf64SlotId, roundOf32SlotId] = await eventRoundSlots(prisma, event.id, [{ slotKind: 'ROUND_OF_64' }, { slotKind: 'ROUND_OF_32' }]);
+          const slots = await prisma.sportEventSlot.findMany({
+            where: { sportEventId: event.id },
+            select: { id: true, sportLeagueSeasonCompetitionSlotId: true, seasonSlot: { select: { sportLeagueCompetitionSlotId: true } } },
+          });
+          const later = slots.find((slot) => slot.id === roundOf32SlotId);
+          if (!later) throw new Error('The round of 32 slot was not made');
+          templateIds.push((await prisma.contestConfigTemplate.create({
+            data: {
+              sportLeagueId: event.sportLeagueId, coverageMode: 'ONE_SLOT', contestFormat: 'ROSTER', name: 'Setup', description: 'Setup', sortOrder: 1, configJson: {},
+              selectionType: 'TIERED', active: true, templateKey: `still-in-scaling-${randomUUID()}`,
+              slots: { create: slots.map((slot) => ({ sportLeagueCompetitionSlotId: slot.seasonSlot.sportLeagueCompetitionSlotId })) },
+            },
+            select: { id: true },
+          })).id);
+          const participantLeagueId = await participantLeagueIdForSport(prisma, Sport.BASKETBALL);
+          const round = await prisma.sportEventRound.create({ data: { sportEventId: event.id, sportEventSlotId: roundOf64SlotId, roundNumber: 1, scheduledDate: new Date('2099-04-20T15:00:00.000Z') } });
+          for (let game = 0; game < losers; game += 1) {
+            const [loser, winner] = await Promise.all([2 * game + 1, 2 * game + 2].map(async (ranking) => {
+              const participant = await prisma.participant.create({ data: { sportLeagueId: participantLeagueId, participantType: 'TEAM', name: `Still In Scaling ${String(ranking)}` } });
+              return (await prisma.sportEventParticipant.create({ data: { sportEventId: event.id, participantId: participant.id, ranking } })).id;
+            })) as [string, string];
+            await createMatchRow(prisma, {
+              sportEventId: event.id, sportEventRoundId: round.id, sportEventSlotId: round.sportEventSlotId, matchNumber: game + 1, teams: [loser, winner], isNeutralSite: true,
+              result: { winnerSideNumber: 2, scores: [1, 3] },
+            });
+          }
+          const slotRoute = (path: string) => `/api/v1/events/${event.id}/slots/${later.sportLeagueSeasonCompetitionSlotId}/${path}`;
+          expect((await getApp().inject({ method: 'PUT', url: slotRoute('tiers'), headers: admin.headers, payload: { tiers: [{ tierKey: 'A', tierNumber: 1 }] } })).statusCode).toBe(200);
+          return slotRoute('tiers/auto-assign');
+        },
+        call: (url) => getApp().inject({ method: 'POST', url, headers: admin.headers, payload: {} }),
+        // Only the winners are tiered, so the write read every decided game.
+        rowsShown: (response) => SportEventParticipantListResponseSchema.parse(response.json()).participants
+          .filter((participant) => participant.valuation?.sportEventTierId != null).length,
+      });
+    } finally {
+      await prisma.contestConfigTemplate.deleteMany({ where: { id: { in: templateIds } } });
     }
   });
 
