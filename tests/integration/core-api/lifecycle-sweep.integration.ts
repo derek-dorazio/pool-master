@@ -231,6 +231,27 @@ describe('event lifecycle sweep through the app client (#1303)', () => {
     await expect(getPrisma().contest.findUniqueOrThrow({ where: { id: contest.id } })).resolves.toMatchObject({ status: ContestStatus.ACTIVE, startsAt: newStart });
   });
 
+  it('completes an in-progress event covering no slot once its end date has passed, and leaves one covering a slot, one not yet ended and one with no end date in progress', async () => {
+    const yesterday = new Date(Date.now() - DAY);
+    const covering = await seedFootballWeek({ games: 1, startDate: new Date(Date.now() - 3 * DAY), status: SportEventStatus.IN_PROGRESS });
+    await getPrisma().sportEvent.update({ where: { id: covering.event.id }, data: { endDate: yesterday } });
+    const { sportLeagueId, sportLeagueSeasonId } = await getPrisma().sportEvent.findUniqueOrThrow({ where: { id: covering.event.id }, select: { sportLeagueId: true, sportLeagueSeasonId: true } });
+    const slotless = (name: string, endDate: Date | null) => getPrisma().sportEvent.create({
+      data: { sportLeagueId, sportLeagueSeasonId, name, startDate: new Date(Date.now() - 3 * DAY), endDate, status: SportEventStatus.IN_PROGRESS, autoLifecycleEnabled: true },
+    });
+    const ended = await slotless('Ended, no slot', yesterday);
+    const notYet = await slotless('Not yet ended, no slot', new Date(Date.now() + DAY));
+    const noEnd = await slotless('No end date, no slot', null);
+
+    const { sweep, logger } = lifecycleSweep(new Date());
+    await sweep();
+
+    expect(logger.error).not.toHaveBeenCalled();
+    const statusOf = async (id: string) => (await getPrisma().sportEvent.findUniqueOrThrow({ where: { id }, select: { status: true } })).status;
+    expect(await statusOf(ended.id)).toBe(SportEventStatus.COMPLETED);
+    for (const id of [covering.event.id, notYet.id, noEnd.id]) expect(await statusOf(id)).toBe(SportEventStatus.IN_PROGRESS);
+  });
+
   it('runs a sweep with nothing due as a no-op, sending no email and logging no failure', async () => {
     const { league } = await seedLeagueWithTeams(1);
     const { sweep, logger } = lifecycleSweep(new Date());

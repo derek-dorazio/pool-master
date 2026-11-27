@@ -9,7 +9,7 @@
  * published unchanged if the delivery ever moves out of process.
  */
 
-import type { ContestEntryStatus, ContestStatus, SportEvent, SportEventStatus } from '@poolmaster/shared/domain';
+import type { ContestEntryStatus, ContestStatus, SeasonSlotStatus, SportEvent, SportEventStatus } from '@poolmaster/shared/domain';
 import type { ProviderBracketMatch, ProviderScheduledGame } from '../ingestion/core/provider-interface';
 
 export const DomainEventType = {
@@ -47,6 +47,15 @@ export const DomainEventType = {
    * a finding's Map participant fix, or a roster or field sync creating the participant (#2069).
    */
   PARTICIPANT_PROVIDER_MAPPED: 'PARTICIPANT_PROVIDER_MAPPED',
+  /**
+   * What a sport event's slot statuses are computed from may have moved (#2013): a Match's status,
+   * written with its Games when one starts, finishes or is cancelled, or the feed's call that a
+   * stroke-play event is final. Said by every writer of a Match's status, from the feed or a test
+   * slot's result routes alike; the refresh writes only a slot that moved.
+   */
+  MATCH_STATUS_CHANGED: 'MATCH_STATUS_CHANGED',
+  /** A Season slot's status moved (#2013), by the slot status refresh's guarded write. */
+  SEASON_SLOT_STATUS_CHANGED: 'SEASON_SLOT_STATUS_CHANGED',
 } as const;
 export type DomainEventType = (typeof DomainEventType)[keyof typeof DomainEventType];
 
@@ -142,8 +151,22 @@ export interface ParticipantProviderMapped {
   externalIds: readonly string[];
 }
 
+export interface MatchStatusChanged {
+  type: typeof DomainEventType.MATCH_STATUS_CHANGED;
+  sportEventId: string;
+}
+
+export interface SeasonSlotStatusChanged {
+  type: typeof DomainEventType.SEASON_SLOT_STATUS_CHANGED;
+  sportEventId: string;
+  /** The Season slot (`SportLeagueSeasonCompetitionSlot`). */
+  seasonSlotId: string;
+  from: SeasonSlotStatus;
+  to: SeasonSlotStatus;
+}
+
 /** Every domain event: one member per entity change, discriminated by `type`. */
-export type DomainEvent = SportEventStatusChanged | SportEventRescheduled | SportEventResultsChanged | SportEventGamesChanged | GameDecided | ContestEntryEventStatusChanged | ContestStatusChanged | SportEventFieldSynced | ParticipantProviderMapped;
+export type DomainEvent = SportEventStatusChanged | SportEventRescheduled | SportEventResultsChanged | SportEventGamesChanged | GameDecided | ContestEntryEventStatusChanged | ContestStatusChanged | SportEventFieldSynced | ParticipantProviderMapped | MatchStatusChanged | SeasonSlotStatusChanged;
 
 /** The member of `DomainEvent` whose type is `T`. */
 export type DomainEventOf<T extends DomainEventType> = Extract<DomainEvent, { type: T }>;

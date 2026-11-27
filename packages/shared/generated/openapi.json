@@ -78201,7 +78201,9 @@
               "FOLLOW_POSTPONED_EVENT_CONTESTS",
               "RESOLVE_MAPPED_PARTICIPANT_FINDINGS",
               "REFRESH_SLOT_TIEBREAKERS",
-              "SYNC_LEAGUE_ROSTER"
+              "SYNC_LEAGUE_ROSTER",
+              "REFRESH_SLOT_STATUS",
+              "REFRESH_EVENT_STATUS"
             ],
             "description": "The job's handler. Its kind follows from it."
           },
@@ -78511,7 +78513,9 @@
                     "FOLLOW_POSTPONED_EVENT_CONTESTS",
                     "RESOLVE_MAPPED_PARTICIPANT_FINDINGS",
                     "REFRESH_SLOT_TIEBREAKERS",
-                    "SYNC_LEAGUE_ROSTER"
+                    "SYNC_LEAGUE_ROSTER",
+                    "REFRESH_SLOT_STATUS",
+                    "REFRESH_EVENT_STATUS"
                   ],
                   "description": "The job's handler. Its kind follows from it."
                 },
@@ -78780,7 +78784,9 @@
                   "FOLLOW_POSTPONED_EVENT_CONTESTS",
                   "RESOLVE_MAPPED_PARTICIPANT_FINDINGS",
                   "REFRESH_SLOT_TIEBREAKERS",
-                  "SYNC_LEAGUE_ROSTER"
+                  "SYNC_LEAGUE_ROSTER",
+                  "REFRESH_SLOT_STATUS",
+                  "REFRESH_EVENT_STATUS"
                 ],
                 "description": "The job's handler. Its kind follows from it."
               },

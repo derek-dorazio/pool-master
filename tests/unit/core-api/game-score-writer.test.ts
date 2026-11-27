@@ -9,6 +9,7 @@ import { expectDefined } from '../../support/expect-defined';
 import { fakeLogger } from '../../support/fake-logger';
 import { testDomainEvents } from '../../support/domain-events';
 import { homeAwayResult, withHomeAway, type HomeAwayFields } from '../../support/match-sides';
+import { slotStatusRefreshJob } from '../../support/slot-tiebreaker-jobs';
 
 // A provider's final for a match's Game is written through the admin's result path (#1496); a
 // provider game id is the Game it is mapped to (#2007).
@@ -89,6 +90,8 @@ function writer(matches: SportEventRoundMatch[], unmappedTeams: readonly string[
   const logger = fakeLogger();
   const applySync = jest.fn<Promise<void>, [SportEventRoundMatchGameSync, (readonly BackgroundJobRequest[])?]>().mockResolvedValue();
   const applyStatuses = jest.fn<Promise<void>, [readonly MatchStatusWrite[]]>().mockResolvedValue();
+  /** The jobs each status write carried, beside the statuses `applyStatuses` records. */
+  const statusJobs: BackgroundJobRequest[][] = [];
   const games = {
     findBySportEvent: jest.fn(async (): Promise<ProviderMappedGame[]> => matches.flatMap((match) => match.games.map((each) => ({ game: each, externalId: each.gameNumber === 1 ? LINKS.get(match.id) ?? null : null })))),
     findByProviderExternalIds: jest.fn(async (_code: string, ids: readonly string[]) => elsewhere.filter((each) => each.externalId !== null && ids.includes(each.externalId))),
@@ -96,7 +99,7 @@ function writer(matches: SportEventRoundMatch[], unmappedTeams: readonly string[
   };
   const deps = {
     providerId: 'balldontlie',
-    matches: { findBySportEvent: jest.fn(async () => matches), applyStatuses },
+    matches: { findBySportEvent: jest.fn(async () => matches), applyStatuses: async (statuses: readonly MatchStatusWrite[], jobs: readonly BackgroundJobRequest[] = []) => { statusJobs.push([...jobs]); await applyStatuses(statuses); } },
     games,
     eventParticipants: { findByIds },
     mappings: { findByProviderExternalIds },
@@ -105,7 +108,7 @@ function writer(matches: SportEventRoundMatch[], unmappedTeams: readonly string[
     now: () => NOW,
     logger,
   } as unknown as GameScoreWriterDeps;
-  return { deps, recordResult, findByIds, findByProviderExternalIds, applySync, applyStatuses, logger };
+  return { deps, recordResult, findByIds, findByProviderExternalIds, applySync, applyStatuses, statusJobs, logger };
 }
 
 const NOW = new Date('2027-01-10T20:00:00.000Z');
@@ -224,7 +227,7 @@ describe('writeGameScores', () => {
 
   it('marks a scheduled game postponed when the provider postpones it, and scheduled again once the provider reschedules it', async () => {
     const matches = bracket();
-    const { deps, applyStatuses } = writer(matches);
+    const { deps, applyStatuses, statusJobs } = writer(matches);
 
     await writeGameScores(deps, EVENT, [game('g1', 'KC', 'BUF', null, null, ProviderGameState.POSTPONED)]);
     matches[0] = withHomeAway(matches[0], { status: MatchStatus.POSTPONED });
@@ -234,6 +237,16 @@ describe('writeGameScores', () => {
       [[{ id: 'm1', status: MatchStatus.POSTPONED }]],
       [[{ id: 'm1', status: MatchStatus.SCHEDULED }]],
     ]);
+    // Each status write carries the refresh of the event's slot statuses (#2013).
+    expect(statusJobs).toEqual([[slotStatusRefreshJob(EVENT_ID)], [slotStatusRefreshJob(EVENT_ID)]]);
+  });
+
+  it('carries no slot status refresh on a sync that moves no match status', async () => {
+    const { deps, statusJobs } = writer(bracket());
+
+    await writeGameScores(deps, EVENT, []);
+
+    expect(statusJobs).toEqual([[]]);
   });
 
   it('puts a postponed game\'s live score on it once the provider says it is being played', async () => {

@@ -221,6 +221,8 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
         name: run.tournamentName,
         // A tournament of four rounds, all in its one slot (#2008).
         rounds: 4,
+        // The journey moves the event's status by hand, so its results do not move it first (#2013).
+        autoLifecycleEnabled: false,
       });
       return { eventId: created.id, championshipYear: created.championshipYear };
     });

@@ -96,6 +96,7 @@ export const LiveScoreResultSchema = z.discriminatedUnion('category', [
     category: z.literal('GOLF'),
     ...sportEventScope,
     rounds: z.array(GolfRoundUpdateSchema),
+    final: z.boolean().optional().describe('The feed calls the tournament final (#2013): its slot completes on it. Absent or false while it is played.'),
   }),
   z.object({
     category: z.literal('GAME'),

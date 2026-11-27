@@ -29,6 +29,7 @@ import { activateEventContestsHandler, followPostponedEventContestsHandler } fro
 import { syncGamesThenTierFieldHandler } from '../events/synced-field-follow-up-job';
 import { resolveMappedParticipantFindingsHandler } from '../ingestion/findings/mapped-participant-findings-job';
 import { refreshDecidedGameSlotTiebreakersHandler, refreshSlotTiebreakersHandler } from '../events/slot-tiebreaker-job';
+import { refreshEventStatusHandler, refreshSlotStatusHandler } from '../events/status-refresh-job-requests';
 import { DomainEventType } from './domain-event';
 import type { DomainEventHandlerMap } from './domain-event-handler';
 
@@ -57,4 +58,7 @@ export const DOMAIN_EVENT_HANDLERS = {
   ],
   [DomainEventType.SPORT_EVENT_FIELD_SYNCED]: [syncGamesThenTierFieldHandler],
   [DomainEventType.PARTICIPANT_PROVIDER_MAPPED]: [resolveMappedParticipantFindingsHandler],
+  // Status bubbles up (#2013): a Match that moved refreshes its event's slots, and a slot that moved its event.
+  [DomainEventType.MATCH_STATUS_CHANGED]: [refreshSlotStatusHandler],
+  [DomainEventType.SEASON_SLOT_STATUS_CHANGED]: [refreshEventStatusHandler],
 } as const satisfies DomainEventHandlerMap;

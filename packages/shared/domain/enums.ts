@@ -2182,6 +2182,10 @@ export const BackgroundJobType = {
   REFRESH_SLOT_TIEBREAKERS: 'REFRESH_SLOT_TIEBREAKERS',
   /** Syncs one sport league's roster for its current Season from its provider: queued by the sync tick (#2025). */
   SYNC_LEAGUE_ROSTER: 'SYNC_LEAGUE_ROSTER',
+  /** Recomputes the Season slot status of each slot of one event from its Matches after one of them moved (#2013). */
+  REFRESH_SLOT_STATUS: 'REFRESH_SLOT_STATUS',
+  /** Recomputes one event's status from its slots after one of them moved (#2013). */
+  REFRESH_EVENT_STATUS: 'REFRESH_EVENT_STATUS',
 } as const;
 export type BackgroundJobType = (typeof BackgroundJobType)[keyof typeof BackgroundJobType];
 /** No natural order: A to Z by its display strings. */
