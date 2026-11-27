@@ -17,6 +17,7 @@ import { BalldontlieContractError } from './balldontlie-client';
 import { CompetitionStatusState, eventStatusOf, GAME_STATE_BY_STATUS, hasStarted, PROGRESS_BY_STATE } from './competition-status';
 import { NflSeasonType, type NflGame, type NflPlayer, type NflStanding, type NflTeam } from './nfl-contract';
 import { BALLDONTLIE_PROVIDER_ID } from './pga-mapping';
+import { teamConference } from './team-conference';
 import { participantFeedId } from './participant-feed-id';
 import { ProviderSeasonType, providerSlotCode, slotPlaysOf } from './provider-slot-codes';
 
@@ -146,7 +147,8 @@ export function toNflTeamParticipant(team: NflTeam, path: string): ProviderParti
     name: team.full_name,
     status: SportEventParticipantStatus.ACTIVE,
     ...(team.abbreviation ? { abbreviation: team.abbreviation } : {}),
-    metadata: { conference: team.conference, division: team.division },
+    ...teamConference(team.conference, team.division),
+    metadata: {},
   };
 }
 
@@ -217,7 +219,7 @@ export function toNflPlayoffField(standings: readonly NflStanding[]): ProviderPa
 }
 
 function conferenceOrder(participant: ProviderParticipant): number {
-  return NFL_CONFERENCES.findIndex((conference) => conference === participant.metadata['conference']);
+  return NFL_CONFERENCES.findIndex((conference) => conference === participant.conference?.providerCode);
 }
 
 function seedOf(participant: ProviderParticipant): number {
@@ -237,7 +239,7 @@ function seedOf(participant: ProviderParticipant): number {
 export function toNflPlayoffBracket(field: readonly ProviderParticipant[], games: readonly ProviderScheduledGame[]): ProviderBracketMatch[] | null {
   const conferences: Array<{ label: string; teamOfSeed: (seed: number) => string }> = [];
   for (const conference of NFL_CONFERENCES) {
-    const teams = field.filter((participant) => participant.metadata['conference'] === conference);
+    const teams = field.filter((participant) => participant.conference?.providerCode === conference);
     const bySeed = new Map(teams.map((participant) => [participant.seed, participant.externalId]));
     if (teams.length !== NFL_PLAYOFF_SEEDS || bySeed.size !== NFL_PLAYOFF_SEEDS) return null;
     conferences.push({

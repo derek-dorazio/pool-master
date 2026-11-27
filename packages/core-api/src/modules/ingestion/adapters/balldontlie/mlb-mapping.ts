@@ -15,6 +15,7 @@ import { MLB_LEAGUES, mlbGameListSchema, mlbStandingListSchema, mlbTeamListSchem
 import type { PlayoffSeedRanks } from './series-playoff-bracket';
 import { BracketShapeKind, type PlayoffGame, type PlayoffsLeague, type PlayoffTeam } from './series-playoffs';
 import type { PlayoffsSource } from './series-playoffs-reader';
+import { teamConference } from './team-conference';
 
 export const MLB_POSTSEASON: PlayoffsLeague = {
   key: 'mlb',
@@ -57,7 +58,7 @@ export function toMlbPlayoffTeam(team: MlbTeam, path: string): PlayoffTeam {
     id,
     name: required(team.display_name, path, `team ${String(id)}`, 'display_name'),
     ...(team.abbreviation ? { abbreviation: team.abbreviation } : {}),
-    metadata: { league: team.league, division: team.division },
+    ...teamConference(team.league, team.division),
   };
 }
 

@@ -47,12 +47,12 @@ describe('WNBA playoffs league', () => {
 });
 
 describe('toWnbaPlayoffTeam', () => {
-  it('keeps the team\'s id and full name, with its abbreviation and conference as facts', () => {
+  it('keeps the team\'s id and full name, with its abbreviation, and its conference as the feed codes it', () => {
     expect(toWnbaPlayoffTeam(aces, '/wnba/v1/teams')).toEqual({
       id: 7,
       name: 'Las Vegas Aces',
       abbreviation: 'LVA',
-      metadata: { conference: 'Western' },
+      conference: { providerCode: 'Western' },
     });
   });
 

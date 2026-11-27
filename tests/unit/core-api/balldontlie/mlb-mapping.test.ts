@@ -48,12 +48,12 @@ describe('MLB postseason league', () => {
 });
 
 describe('toMlbPlayoffTeam', () => {
-  it('keeps the team\'s id and full display name, with its abbreviation, league and division as facts', () => {
+  it('keeps the team\'s id and full display name, with its abbreviation, and its league and division as the feed codes them', () => {
     expect(toMlbPlayoffTeam(dodgers, '/mlb/v1/teams')).toEqual({
       id: 18,
       name: 'Los Angeles Dodgers',
       abbreviation: 'LAD',
-      metadata: { league: 'National', division: 'West' },
+      conference: { providerCode: 'National', divisionProviderCode: 'West' },
     });
   });
 

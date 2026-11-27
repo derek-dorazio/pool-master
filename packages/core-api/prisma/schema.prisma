@@ -592,6 +592,8 @@ enum PrismaProviderSyncFindingKind {
   TIEBREAKER_GAME_REPLACED
   FIELD_TEAM_WITHOUT_GAME
   SYNC_FAILED
+  CONFERENCE_UNMAPPED
+  DIVISION_UNMAPPED
 }
 
 /// How a sport event's latest automatic release check ended (#1847).
@@ -1190,6 +1192,7 @@ model SportLeague {
   syncFindings                ProviderSyncFinding[]
   syncRuns                    ProviderSyncRun[]
   positions                   SportLeaguePosition[]
+  conferences                 SportLeagueConference[]
   /// The composite key keeps the selected mapping one of the league's own.
   selectedProviderMapping     SportLeagueProviderMapping?  @relation("SelectedSportLeagueProviderMapping", fields: [id, selectedProviderMappingId], references: [sportLeagueId, id], onDelete: NoAction, onUpdate: NoAction)
 
@@ -1384,6 +1387,8 @@ model Participant {
   rosterRows             SportLeagueSeasonParticipantTeam[] @relation("RosterPlayer")
   /// A team's players' roster rows.
   rosterPlayers          SportLeagueSeasonParticipantTeam[] @relation("RosterTeam")
+  /// A team's conference and division in each Season (#2052).
+  seasonConferences      SportLeagueSeasonTeamConference[]
 
   /// The target of the composite keys that keep a participant's rows in its own league.
   @@unique([sportLeagueId, id])
@@ -1434,6 +1439,35 @@ model SportLeagueSeasonParticipantTeam {
   @@index([sportLeagueId, sportLeagueSeasonId], map: "sport_league_season_participant_teams_season_idx")
   @@index([sportLeagueId, sportLeaguePositionId], map: "sport_league_season_participant_teams_position_idx")
   @@map("sport_league_season_participant_teams")
+}
+
+/// A team's conference, and division where its conference has them, in one Season (#2052, plan
+/// §4). Written by the events sync from the feed's team payload as each event's field is synced;
+/// a team the feed moves is updated, and nothing is deleted. Every key runs through the sport
+/// league, and the division's runs through the conference, so a division is always one of the
+/// row's conference.
+model SportLeagueSeasonTeamConference {
+  id                  String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sportLeagueId       String   @map("sport_league_id") @db.Uuid
+  sportLeagueSeasonId String   @map("sport_league_season_id") @db.Uuid
+  /// The team, a TEAM participant of the league.
+  participantId       String   @map("participant_id") @db.Uuid
+  conferenceId        String   @map("conference_id") @db.Uuid
+  /// Null where the conference has no divisions, or the feed names none.
+  divisionId          String?  @map("division_id") @db.Uuid
+  createdAt           DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt           DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  season     SportLeagueSeason              @relation(fields: [sportLeagueId, sportLeagueSeasonId], references: [sportLeagueId, id], onDelete: Cascade, map: "sport_league_season_team_conferences_season_fkey")
+  team       Participant                    @relation(fields: [sportLeagueId, participantId], references: [sportLeagueId, id], onDelete: Cascade, map: "sport_league_season_team_conferences_team_fkey")
+  conference SportLeagueConference          @relation(fields: [sportLeagueId, conferenceId], references: [sportLeagueId, id], map: "sport_league_season_team_conferences_conference_fkey")
+  division   SportLeagueConferenceDivision? @relation(fields: [sportLeagueId, conferenceId, divisionId], references: [sportLeagueId, conferenceId, id], map: "sport_league_season_team_conferences_division_fkey")
+
+  /// One row per Season and team.
+  @@unique([sportLeagueSeasonId, participantId], map: "sport_league_season_team_conferences_season_team_key")
+  @@index([sportLeagueId, participantId], map: "sport_league_season_team_conferences_team_idx")
+  @@index([sportLeagueId, conferenceId, divisionId], map: "sport_league_season_team_conferences_division_idx")
+  @@map("sport_league_season_team_conferences")
 }
 
 /// A provider's id for a participant (#2040): the only place a participant's feed id is kept. The
@@ -2735,6 +2769,8 @@ model SportLeagueProviderMapping {
   providerLeague  ProviderLeague                                    @relation(fields: [providerLeagueId], references: [id], onDelete: Restrict)
   selectedBy      SportLeague?                                      @relation("SelectedSportLeagueProviderMapping")
   positionCodes   SportLeaguePositionProviderMapping[]
+  conferenceCodes SportLeagueConferenceProviderMapping[]
+  divisionCodes   SportLeagueConferenceDivisionProviderMapping[]
   sessionTypes    SportLeagueProviderSessionTypeMapping[]
   slotMappings    SportLeagueCompetitionSlotProviderMapping[]
   seasonMappings  SportLeagueSeasonProviderMapping[]
@@ -2798,6 +2834,116 @@ model SportLeaguePositionProviderMapping {
   @@index([sportLeagueId, sportLeaguePositionId])
   @@index([sportLeagueId, sportLeagueProviderMappingId], map: "sport_league_position_provider_mappings_provider_mapping_idx")
   @@map("sport_league_position_provider_mappings")
+}
+
+/// One of a sport league's conferences (#2052, plans/league-model-redesign.md §4): the NFL's AFC,
+/// MLB's American League, NCAA's Big Ten. Timeless, one set per league, set by migration. A league
+/// with none (soccer, golf) has no rows. Each Season's team rows say which teams are in it.
+model SportLeagueConference {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sportLeagueId String   @map("sport_league_id") @db.Uuid
+  /// The conference's key within its league, capital letters, digits and underscores: AFC.
+  /// Typed into migrations; nothing builds or parses it.
+  code          String   @db.VarChar(40)
+  /// The conference's proper name: American Football Conference. A proper name is data, so it is
+  /// a column, never translated (rules/domain-model-conventions-rules.md §17).
+  name          String   @db.VarChar(100)
+  /// Plain English for agents and root admins: what the conference is. Not translated and not
+  /// shown to commissioners or members.
+  description   String   @db.VarChar(500)
+  /// Where the conference sits when the league's conferences are listed. Display only.
+  displayOrder  Int      @map("display_order")
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt     DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  sportLeague   SportLeague                            @relation(fields: [sportLeagueId], references: [id], onDelete: Cascade)
+  divisions     SportLeagueConferenceDivision[]
+  providerCodes SportLeagueConferenceProviderMapping[]
+  seasonTeams   SportLeagueSeasonTeamConference[]
+  competitions  SportLeagueCompetition[]
+
+  @@unique([sportLeagueId, code])
+  /// The target of the composite keys that keep a division, a provider code, a Season team row
+  /// and a competition on the conference's own league.
+  @@unique([sportLeagueId, id])
+  @@map("sport_league_conferences")
+}
+
+/// One division of a conference (#2052): the AFC's East, MLB's American League Central. Set by
+/// migration. A league whose conferences have none (WNBA, NCAA) has no rows.
+model SportLeagueConferenceDivision {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sportLeagueId String   @map("sport_league_id") @db.Uuid
+  conferenceId  String   @map("conference_id") @db.Uuid
+  /// The division's key within its conference: EAST. Typed into migrations.
+  code          String   @db.VarChar(40)
+  /// The division's proper name: AFC East. Never translated.
+  name          String   @db.VarChar(100)
+  /// Plain English for agents and root admins: what the division is.
+  description   String   @db.VarChar(500)
+  /// Where the division sits when its conference's divisions are listed. Display only.
+  displayOrder  Int      @map("display_order")
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt     DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  conference    SportLeagueConference                          @relation(fields: [sportLeagueId, conferenceId], references: [sportLeagueId, id], onDelete: Cascade, map: "sport_league_conference_divisions_conference_fkey")
+  providerCodes SportLeagueConferenceDivisionProviderMapping[]
+  seasonTeams   SportLeagueSeasonTeamConference[]
+
+  @@unique([conferenceId, code])
+  /// The target of the composite keys that keep a provider code and a Season team row's division
+  /// inside its own conference and league.
+  @@unique([sportLeagueId, conferenceId, id])
+  @@map("sport_league_conference_divisions")
+}
+
+/// A provider's code for one of a league's conferences (#2052): BALLDONTLIE's NFL `conference`
+/// AFC, its NCAA basketball `conference_id` 7. Where the vendor numbers its conferences the code is
+/// that id, never the name. Inclusion only: a code with no row is not one of the league's
+/// conferences, and a team the feed puts in it raises CONFERENCE_UNMAPPED.
+model SportLeagueConferenceProviderMapping {
+  id                           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sportLeagueId                String   @map("sport_league_id") @db.Uuid
+  conferenceId                 String   @map("conference_id") @db.Uuid
+  sportLeagueProviderMappingId String   @map("sport_league_provider_mapping_id") @db.Uuid
+  /// The provider's own code for the conference, exactly as its feed sends it.
+  providerCode                 String   @map("provider_code") @db.VarChar(100)
+  createdAt                    DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt                    DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  /// Both composite keys run through the sport league.
+  conference                 SportLeagueConference      @relation(fields: [sportLeagueId, conferenceId], references: [sportLeagueId, id], onDelete: Cascade, map: "sport_league_conference_provider_mappings_conference_fkey")
+  sportLeagueProviderMapping SportLeagueProviderMapping @relation(fields: [sportLeagueId, sportLeagueProviderMappingId], references: [sportLeagueId, id], onDelete: Cascade, map: "sport_league_conference_provider_mappings_provider_mapping_fkey")
+
+  @@unique([sportLeagueProviderMappingId, providerCode])
+  @@index([sportLeagueId, conferenceId])
+  @@index([sportLeagueId, sportLeagueProviderMappingId], map: "sport_league_conference_provider_mappings_provider_mapping_idx")
+  @@map("sport_league_conference_provider_mappings")
+}
+
+/// A provider's code for a division within one conference (#2052): BALLDONTLIE's NFL `division`
+/// EAST, which names the AFC East only with the team's AFC. Inclusion only: a code with no row
+/// raises DIVISION_UNMAPPED, and the team is written with its conference alone.
+model SportLeagueConferenceDivisionProviderMapping {
+  id                           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sportLeagueId                String   @map("sport_league_id") @db.Uuid
+  conferenceId                 String   @map("conference_id") @db.Uuid
+  divisionId                   String   @map("division_id") @db.Uuid
+  sportLeagueProviderMappingId String   @map("sport_league_provider_mapping_id") @db.Uuid
+  /// The provider's own code for the division, exactly as its feed sends it.
+  providerCode                 String   @map("provider_code") @db.VarChar(100)
+  createdAt                    DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt                    DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  /// The division's key runs through its conference and league, so a code names a division of
+  /// the conference it is read with.
+  division                   SportLeagueConferenceDivision @relation(fields: [sportLeagueId, conferenceId, divisionId], references: [sportLeagueId, conferenceId, id], onDelete: Cascade, map: "sport_league_division_provider_mappings_division_fkey")
+  sportLeagueProviderMapping SportLeagueProviderMapping    @relation(fields: [sportLeagueId, sportLeagueProviderMappingId], references: [sportLeagueId, id], onDelete: Cascade, map: "sport_league_division_provider_mappings_provider_mapping_fkey")
+
+  @@unique([sportLeagueProviderMappingId, conferenceId, providerCode], map: "sport_league_division_provider_mappings_code_key")
+  @@index([sportLeagueId, conferenceId, divisionId], map: "sport_league_division_provider_mappings_division_idx")
+  @@index([sportLeagueId, sportLeagueProviderMappingId], map: "sport_league_division_provider_mappings_provider_mapping_idx")
+  @@map("sport_league_division_provider_mappings")
 }
 
 /// A provider's session type a sport league's events play as Rounds (#2045, plan §3): BALLDONTLIE's
@@ -2930,19 +3076,31 @@ model SportLeaguePhase {
   seasonPhases SportLeagueSeasonPhase[]
 
   @@unique([sportLeagueId, phase])
-  /// The target of a competition's composite key, which keeps it in a phase of its own league.
+  /// The target of a Season phase's composite key, which keeps it in a phase of its own league.
   @@unique([sportLeagueId, id])
+  /// The target of a competition's composite key, which keeps it in a phase of its own league and
+  /// carries the phase onto the competition for its conference check (#2052).
+  @@unique([sportLeagueId, id, phase])
   @@map("sport_league_phases")
 }
 
 /// One competition of a phase, timeless (#2153): what a phase's slots are played as, set by
 /// migration. Most phases hold one (code = the phase); NCAA Men's Football's POSTSEASON holds the
 /// CFP, and a POSTSEASON_CONFERENCE phase one tournament per conference. No contest crosses
-/// competitions. Database checks: the code is a code, and the order is from 1.
+/// competitions. Database checks: the code is a code, the order is from 1, and a conference is
+/// named only in a POSTSEASON_CONFERENCE phase (#2052).
 model SportLeagueCompetition {
-  id                 String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  sportLeagueId      String   @map("sport_league_id") @db.Uuid
-  sportLeaguePhaseId String   @map("sport_league_phase_id") @db.Uuid
+  id                 String            @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sportLeagueId      String            @map("sport_league_id") @db.Uuid
+  sportLeaguePhaseId String            @map("sport_league_phase_id") @db.Uuid
+  /// The phase's value, carried here by the composite key to the phase so the database can check
+  /// that only a POSTSEASON_CONFERENCE competition names a conference. Load-bearing: never set
+  /// apart from the phase, which the key forbids anyway.
+  leaguePhase        PrismaLeaguePhase @map("league_phase")
+  /// The conference whose tournament or title game this is (#2052): only that conference's teams
+  /// are placed in it. Optional, and only in a POSTSEASON_CONFERENCE phase: NCAA football's
+  /// CONFERENCE_CHAMPIONSHIPS spans every conference and names none.
+  conferenceId       String?           @map("conference_id") @db.Uuid
   /// A readable key unique in the league (REGULAR, CFP), typed into migrations; nothing builds or
   /// parses it.
   code               String   @db.VarChar(64)
@@ -2955,8 +3113,10 @@ model SportLeagueCompetition {
   updatedAt          DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
   sportLeague        SportLeague                    @relation(fields: [sportLeagueId], references: [id], onDelete: Cascade)
-  /// The composite key keeps the competition in a phase of its own league.
-  phase              SportLeaguePhase               @relation(fields: [sportLeagueId, sportLeaguePhaseId], references: [sportLeagueId, id], onDelete: Cascade)
+  /// The composite key keeps the competition in a phase of its own league, with the phase's value.
+  phase              SportLeaguePhase               @relation(fields: [sportLeagueId, sportLeaguePhaseId, leaguePhase], references: [sportLeagueId, id, phase], onDelete: Cascade, map: "sport_league_competitions_phase_fkey")
+  /// Through the league, so the conference is the league's own.
+  conference         SportLeagueConference?         @relation(fields: [sportLeagueId, conferenceId], references: [sportLeagueId, id], onDelete: Restrict, map: "sport_league_competitions_conference_fkey")
   slots              SportLeagueCompetitionSlot[]
   seasonCompetitions SportLeagueSeasonCompetition[]
 
@@ -2967,6 +3127,7 @@ model SportLeagueCompetition {
   /// The target of a Season competition's composite key, which keeps it in its competition's phase.
   @@unique([sportLeaguePhaseId, id])
   @@index([sportLeagueId, sportLeaguePhaseId])
+  @@index([sportLeagueId, conferenceId])
   @@map("sport_league_competitions")
 }
 
@@ -3091,6 +3252,7 @@ model SportLeagueSeason {
   contests         Contest[]
   cups             Cup[]
   rosterRows       SportLeagueSeasonParticipantTeam[]
+  teamConferences  SportLeagueSeasonTeamConference[]
 
   @@unique([sportLeagueId, championshipYear])
   /// The target of the composite keys that keep a Season's rows in its own league.
