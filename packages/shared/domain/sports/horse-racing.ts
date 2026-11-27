@@ -10,7 +10,6 @@ import type { SportDefinition } from './sport-definition';
 export const horseRacingSportDefinition: SportDefinition = {
   sport: Sport.HORSE_RACING,
   name: 'Horse racing',
-  defaultRounds: 1,
   selectionTypes: [SelectionType.TIERED, SelectionType.BUDGET_PICK, SelectionType.RANDOM_DRAW],
   scoringDefinitions: ['FINISH_POSITION_POINTS'],
   // A horse race is one race; a meeting run as several numbered races would read "Race 2".

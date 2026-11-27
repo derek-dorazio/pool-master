@@ -68,7 +68,6 @@ async function createBracketEvent() {
     name: 'NCAA Tournament',
     startDate: new Date('2027-03-18T16:00:00.000Z'),
     status: 'DRAFT',
-    rounds: 2,
     autoLifecycleEnabled: true,
   });
   await createRoundRows(getPrisma(), rounds, event, [

@@ -12501,21 +12501,9 @@ export type SportEventDto = {
      */
     endDate: string | null;
     /**
-     * Number of rounds when the format has them; null otherwise.
+     * How many rounds the event has (#2008): the count of its rounds (SportEventRoundDto), read on each request and never stored. A bracket has a round in each slot, so its count is its FINAL slot's round. 0 until the sync, or a test event, gives it any.
      */
-    rounds: number | null;
-    /**
-     * Par for every round, when an admin set it. Null: contest scoring derives each round's par from the field's finished rounds. Contest scoring uses it to turn an unplayed round's 80 strokes into to-par.
-     */
-    roundsPar: number | null;
-    /**
-     * The lowest par per round an update takes; a lower one is refused with 400.
-     */
-    roundsParMin: number;
-    /**
-     * The highest par per round an update takes; a higher one is refused with 400.
-     */
-    roundsParMax: number;
+    roundCount: number;
     /**
      * The event's field size: the teams or players on its field, counted on each read. 0 until the field loads.
      */
@@ -13058,21 +13046,9 @@ export type SportEventListResponse = {
          */
         endDate: string | null;
         /**
-         * Number of rounds when the format has them; null otherwise.
+         * How many rounds the event has (#2008): the count of its rounds (SportEventRoundDto), read on each request and never stored. A bracket has a round in each slot, so its count is its FINAL slot's round. 0 until the sync, or a test event, gives it any.
          */
-        rounds: number | null;
-        /**
-         * Par for every round, when an admin set it. Null: contest scoring derives each round's par from the field's finished rounds. Contest scoring uses it to turn an unplayed round's 80 strokes into to-par.
-         */
-        roundsPar: number | null;
-        /**
-         * The lowest par per round an update takes; a lower one is refused with 400.
-         */
-        roundsParMin: number;
-        /**
-         * The highest par per round an update takes; a higher one is refused with 400.
-         */
-        roundsParMax: number;
+        roundCount: number;
         /**
          * The event's field size: the teams or players on its field, counted on each read. 0 until the field loads.
          */
@@ -13590,21 +13566,9 @@ export type SportEventResponse = {
          */
         endDate: string | null;
         /**
-         * Number of rounds when the format has them; null otherwise.
+         * How many rounds the event has (#2008): the count of its rounds (SportEventRoundDto), read on each request and never stored. A bracket has a round in each slot, so its count is its FINAL slot's round. 0 until the sync, or a test event, gives it any.
          */
-        rounds: number | null;
-        /**
-         * Par for every round, when an admin set it. Null: contest scoring derives each round's par from the field's finished rounds. Contest scoring uses it to turn an unplayed round's 80 strokes into to-par.
-         */
-        roundsPar: number | null;
-        /**
-         * The lowest par per round an update takes; a lower one is refused with 400.
-         */
-        roundsParMin: number;
-        /**
-         * The highest par per round an update takes; a higher one is refused with 400.
-         */
-        roundsParMax: number;
+        roundCount: number;
         /**
          * The event's field size: the teams or players on its field, counted on each read. 0 until the field loads.
          */
@@ -14057,16 +14021,20 @@ export type SportEventResponse = {
 };
 
 /**
- * A test event, made by hand on test slots (QA only). Created DRAFT with a round in each slot (its league's default round count for one slot), its league's tiers, and its slots' dates; commissioners see it once it is released.
+ * A test event, made by hand on test slots (QA only). Created DRAFT with its rounds in its slots, its league's tiers, and its slots' dates; commissioners see it once it is released.
  */
 export type CreateSportEventRequest = {
     /**
-     * The test slots the event is played on (SportLeagueSeasonSlotDto), all of one sport league's current Season: they decide the event's league, Season and dates. One slot plays the league's default round count in it; several play one round in each, in play order (a test bracket's rounds, its FINAL slot last, #2006). 404 SEASON_SLOT_NOT_FOUND; 422 SEASON_SLOT_NOT_TEST for a slot the sync keeps, SEASON_SLOT_NOT_CURRENT for one outside its league's current Season, SEASON_SLOTS_NOT_ONE_SEASON for slots of two Seasons; 409 SEASON_SLOT_TAKEN when one already has an event.
+     * The test slots the event is played on (SportLeagueSeasonSlotDto), all of one sport league's current Season: they decide the event's league, Season and dates. One slot plays `rounds` rounds in it; several play one round in each, in play order (a test bracket's rounds, its FINAL slot last, #2006). 404 SEASON_SLOT_NOT_FOUND; 422 SEASON_SLOT_NOT_TEST for a slot the sync keeps, SEASON_SLOT_NOT_CURRENT for one outside its league's current Season, SEASON_SLOTS_NOT_ONE_SEASON for slots of two Seasons; 409 SEASON_SLOT_TAKEN when one already has an event.
      */
     seasonSlotIds: Array<string>;
     name: string;
     venue?: string;
     location?: string;
+    /**
+     * How many rounds a test event on one slot plays in it (a golf tournament's four), at most 8. Defaults to 1. 422 EVENT_ROUNDS_FROM_SLOTS with several slots, whose rounds are one in each.
+     */
+    rounds?: number;
     autoLifecycleEnabled?: boolean;
 };
 
@@ -14091,14 +14059,6 @@ export type UpdateSportEventRequest = {
      * null clears it. 422 EVENT_DATES_FROM_SLOTS for an event with Season slots.
      */
     endDate?: string | null;
-    /**
-     * Raises an event played in one slot to this many rounds. 422 EVENT_ROUNDS_FROM_SLOTS for an event with several slots, which plays a round in each.
-     */
-    rounds?: number;
-    /**
-     * Par for every round, 60 to 80. null clears it, so contest scoring derives each round's par from the field.
-     */
-    roundsPar?: number | null;
     autoLifecycleEnabled?: boolean;
     /**
      * false for a data correction, such as filling in the real start time of an event loaded with only its date: a released event's start moves without the "event moved" email to its leagues. Refused (400) when the start being moved is not the noon-UTC date-only placeholder. Defaults to true.

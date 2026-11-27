@@ -49,8 +49,7 @@ const race = sportEventFixture({
   name: 'Kentucky Derby',
   venue: 'Churchill Downs',
   status: 'IN_PROGRESS',
-  rounds: 1,
-  roundsPar: null,
+  roundCount: 1,
   allowedTransitions: [],
 });
 

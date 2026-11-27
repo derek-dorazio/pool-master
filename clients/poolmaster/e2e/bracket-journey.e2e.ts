@@ -145,7 +145,7 @@ test('act 1: the root admin releases a four-team basketball tournament of two ro
       slotLabel: run.tournamentName,
       name: run.tournamentName,
       startsAt: TOURNAMENT_START,
-      rounds: 2,
+      laterSlotKinds: ['FINAL'],
       autoLifecycleEnabled: false,
     });
     const eventId = event.id;

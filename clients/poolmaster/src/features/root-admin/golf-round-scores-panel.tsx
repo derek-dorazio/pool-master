@@ -29,7 +29,7 @@ export function GolfRoundScoresPanel({ event: tournament }: { event: SportEventD
   const fieldQuery = useSportEventFieldQuery(eventId);
 
   const roundOptions = useMemo(() => {
-    const total = tournament.rounds ?? 0;
+    const total = tournament.roundCount;
     const byNumber = new Map(
       (roundsQuery.data ?? []).map((r) => [r.roundNumber, r]),
     );
@@ -43,7 +43,7 @@ export function GolfRoundScoresPanel({ event: tournament }: { event: SportEventD
         label: scheduled ? `${label} — ${formatDateDisplay(scheduled, displayPreferences)}` : label,
       };
     });
-  }, [displayPreferences, roundsQuery.data, tournament.rounds]);
+  }, [displayPreferences, roundsQuery.data, tournament.roundCount]);
 
   const roundScoreRows = useMemo(
     () => golfRoundScoreRows(fieldQuery.data ?? [], round),

@@ -192,7 +192,7 @@ export class ProviderGameSlateService {
     if (draft) {
       // Games with no bracket load only into a one-round event (a game week): on a longer event they
       // are one round's games, and loading them would wipe the bracket an admin built.
-      const load = input.bracket !== undefined ? bracketOf(input.bracket, fieldRowOf) : event.rounds === 1 ? slate : null;
+      const load = input.bracket !== undefined ? bracketOf(input.bracket, fieldRowOf) : event.roundCount === 1 ? slate : null;
       const same = load === null || (input.bracket === undefined ? samePairings(stored, load) : sameBracket(stored, load));
       if (!same) {
         await this.deps.bracket.loadBracket(event.id, load);

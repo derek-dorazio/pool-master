@@ -112,7 +112,7 @@ describe('SDK Functional: College Football Playoff', () => {
     const { sportLeague: cfp, event } = await loadPlayoffs(admin, file);
     // Each round is played in its CFP slot, the National Championship the FINAL.
     expect(expectDefined((await listEventRounds({ client: a, path: { eventId: event.id } })).data).rounds.map((round) => round.slot.slotKind)).toEqual(['ROUND_OF_16', 'QUARTERFINAL', 'SEMIFINAL', 'FINAL']);
-    expect([event.status, event.rounds]).toEqual(['SCHEDULED', 4]);
+    expect([event.status, event.roundCount]).toEqual(['SCHEDULED', 4]);
 
     // The league's seed-range tiers (#2164): four seeds in each, by seed and not by odds.
     const tiers = await getFunctionalPrisma().sportEventSlotTier.findMany({

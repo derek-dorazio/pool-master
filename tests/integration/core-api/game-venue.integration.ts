@@ -52,7 +52,6 @@ async function oneMatchEvent() {
     name: `Game Venue ${randomUUID().slice(0, 8)}`,
     startDate: new Date('2027-04-18T16:00:00.000Z'),
     status: 'SCHEDULED',
-    rounds: 1,
     autoLifecycleEnabled: false,
   });
   await createRoundRows(prisma, new PrismaSportEventRoundRepository(getAppPrisma()), event, [{ roundNumber: 1, scheduledDate: new Date('2027-04-18T16:00:00.000Z') }]);

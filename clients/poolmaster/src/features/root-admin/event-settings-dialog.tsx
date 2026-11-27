@@ -27,7 +27,6 @@ import { getLogger } from '@/lib/logger';
 import { useInvalidatingMutation } from '@/lib/mutation-hooks';
 import { QueryKeys } from '@/lib/query-keys';
 import { describeBudgetPricing } from './budget-pricing-format';
-import { getScoringFamilyAdminUi } from './scoring-family-admin';
 import { EventTiersDialog } from './event-tiers-dialog';
 import { formatSportEventStatus, type SportEventDtoStatus } from './sport-admin-utils';
 import { useDetailEditDialog } from './use-detail-edit-dialog';
@@ -54,7 +53,6 @@ export function EventSettingsDialog({
   sportLeague: SportLeagueDto | undefined;
 }) {
   const preferences = useDisplayPreferences();
-  const { scoresUnplayedRoundsAgainstPar } = getScoringFamilyAdminUi(event);
   const platformTierProfilesQuery = usePlatformTierProfilesQuery();
   const platformPricingProfilesQuery = usePlatformPricingProfilesQuery();
   const [transitionTarget, setTransitionTarget] = useState<SportEventDtoStatus | null>(null);
@@ -66,7 +64,7 @@ export function EventSettingsDialog({
   const fieldQuery = useSportEventSlotFieldQuery(event.id, tierSetSlot?.seasonSlotId ?? '');
   const current = valuesOf(event);
 
-  const form = useForm<SettingsValues>({ resolver: zodResolver(settingsSchema(event)), defaultValues: current, mode: 'onChange' });
+  const form = useForm<SettingsValues>({ resolver: zodResolver(settingsSchema), defaultValues: current, mode: 'onChange' });
   const dialog = useDetailEditDialog(form, current, onClose);
   const eventKeys = [QueryKeys.rootAdmin.manageSport.event(event.id), QueryKeys.rootAdmin.manageSport.events];
 
@@ -74,7 +72,7 @@ export function EventSettingsDialog({
     mutationFn: async (values: SettingsValues) => {
       const response = await updateEvent({
         path: { eventId: event.id },
-        body: settingsRequestBody(values, current, { isTestData: event.isTestData, sendsRoundsPar: scoresUnplayedRoundsAgainstPar }),
+        body: settingsRequestBody(values, current, { isTestData: event.isTestData }),
       });
       if (!response.data?.event) throwApiError(response.error, 'The event update response is missing data.');
       return response.data.event;
@@ -132,10 +130,7 @@ export function EventSettingsDialog({
     { id: 'ends', label: 'Ends', value: formatDateTimeDisplay(event.endDate, preferences, 'Not set'), testId: `${testId}-ends` },
     { id: 'venue', label: 'Venue', value: event.venue ?? 'Not set', testId: `${testId}-venue` },
     { id: 'location', label: 'Location', value: event.location ?? 'Not set', testId: `${testId}-location` },
-    { id: 'rounds', label: 'Rounds', value: event.rounds ?? 'Not set', testId: `${testId}-rounds` },
-    ...(scoresUnplayedRoundsAgainstPar
-      ? [{ id: 'par', label: 'Par per round', value: event.roundsPar ?? 'From scores', testId: `${testId}-par` }]
-      : []),
+    { id: 'rounds', label: 'Rounds', value: event.roundCount === 0 ? 'Not set' : event.roundCount, testId: `${testId}-rounds` },
     {
       id: 'feedId',
       label: 'Feed ids',
@@ -246,19 +241,6 @@ export function EventSettingsDialog({
           <FormField label="Location">
             <Input data-testid="root-admin-sport-event-edit-location" {...form.register('location')} />
           </FormField>
-          <FormField error={form.formState.errors.rounds?.message} label="Rounds">
-            <Input data-testid="root-admin-sport-event-edit-rounds" inputMode="numeric" {...form.register('rounds')} />
-          </FormField>
-          {scoresUnplayedRoundsAgainstPar ? (
-            <FormField error={form.formState.errors.roundsPar?.message} label="Par per round">
-              <Input
-                data-testid="root-admin-sport-event-edit-rounds-par"
-                inputMode="numeric"
-                placeholder="From scores"
-                {...form.register('roundsPar')}
-              />
-            </FormField>
-          ) : null}
         </div>
       </DetailEditModal>
       {tiersOpen && tierSetSlot !== undefined && tiersQuery.data !== undefined && fieldQuery.data !== undefined ? (

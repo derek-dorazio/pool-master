@@ -123,12 +123,12 @@ describe('RootAdminSportEventCreatePage', () => {
     expect(screen.queryByTestId('root-admin-sport-event-create-tours-link')).not.toBeInTheDocument();
   });
 
-  it('defaults the only active tour when the URL names none, and asks for no dates or rounds: they are the slot\'s and the tour\'s', async () => {
+  it('defaults the only active tour when the URL names none, asks for no dates: they are the slot\'s, and offers one round by default', async () => {
     renderPage('/manage/sports/golf/events/new', [sportLeagueFixture({ id: 'league-1' })]);
 
     await waitFor(() => expect(screen.getByTestId('root-admin-sport-event-create-tour')).toHaveValue('league-1'));
     expect(screen.queryByTestId('root-admin-sport-event-create-start')).not.toBeInTheDocument();
-    expect(screen.queryByTestId('root-admin-sport-event-create-rounds')).not.toBeInTheDocument();
+    expect(screen.getByTestId('root-admin-sport-event-create-rounds')).toHaveValue('1');
     expect(screen.getByTestId('root-admin-sport-event-create-header')).toHaveTextContent('New test tournament');
   });
 
@@ -173,7 +173,7 @@ describe('RootAdminSportEventCreatePage', () => {
     expect(createEventMock).not.toHaveBeenCalled();
   });
 
-  it('creates the test event on the chosen slot with its name, venue and location, and navigates to it', async () => {
+  it('creates the test event on the chosen slot with its name, venue, location and rounds, and navigates to it', async () => {
     createEventMock.mockResolvedValue({ data: { event: sportEventFixture({ id: 'new-tour' }) } });
     renderPage();
     await slotOptions();
@@ -181,13 +181,27 @@ describe('RootAdminSportEventCreatePage', () => {
     fireEvent.change(screen.getByTestId('root-admin-sport-event-create-slot'), { target: { value: 'free' } });
     fireEvent.change(screen.getByTestId('root-admin-sport-event-create-name'), { target: { value: 'Spring Classic' } });
     fireEvent.change(screen.getByTestId('root-admin-sport-event-create-venue'), { target: { value: 'Augusta National' } });
+    fireEvent.change(screen.getByTestId('root-admin-sport-event-create-rounds'), { target: { value: '4' } });
     fireEvent.click(screen.getByTestId('root-admin-sport-event-create-auto-lifecycle'));
     fireEvent.click(screen.getByTestId('root-admin-sport-event-create-submit'));
 
     await waitFor(() => expect(createEventMock).toHaveBeenCalledTimes(1));
     const body = (createEventMock.mock.calls[0][0] as { body: CreateSportEventRequest }).body;
-    expect(body).toEqual({ seasonSlotIds: ['free'], name: 'Spring Classic', venue: 'Augusta National', autoLifecycleEnabled: false });
+    expect(body).toEqual({ seasonSlotIds: ['free'], name: 'Spring Classic', venue: 'Augusta National', rounds: 4, autoLifecycleEnabled: false });
     expect(await screen.findByTestId('tournament-home')).toBeInTheDocument();
+  });
+
+  it('refuses to submit a round count that is not a whole number of rounds, 1 or more', async () => {
+    renderPage();
+    await slotOptions();
+
+    fireEvent.change(screen.getByTestId('root-admin-sport-event-create-slot'), { target: { value: 'free' } });
+    fireEvent.change(screen.getByTestId('root-admin-sport-event-create-name'), { target: { value: 'Spring Classic' } });
+    fireEvent.change(screen.getByTestId('root-admin-sport-event-create-rounds'), { target: { value: '0' } });
+    fireEvent.click(screen.getByTestId('root-admin-sport-event-create-submit'));
+
+    expect(await screen.findByText('Rounds is a whole number, 1 or more')).toBeInTheDocument();
+    expect(createEventMock).not.toHaveBeenCalled();
   });
 
   it('shows a slot another create took first as its own refusal, not a generic failure', async () => {

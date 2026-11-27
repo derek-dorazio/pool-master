@@ -13,7 +13,6 @@ import type { SportDefinition } from './sport-definition';
 export const cyclingSportDefinition: SportDefinition = {
   sport: Sport.CYCLING,
   name: 'Cycling',
-  defaultRounds: 1,
   selectionTypes: [SelectionType.TIERED, SelectionType.BUDGET_PICK, SelectionType.RANDOM_DRAW],
   scoringDefinitions: ['FINISH_POSITION_POINTS'],
   // An event run as several numbered races would read "Race 2".

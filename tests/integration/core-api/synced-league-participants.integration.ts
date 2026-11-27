@@ -117,7 +117,7 @@ describe('Creating a participant in a provider-synced sport league (#2096)', () 
     const { eventId } = await testEvent(headers, sportLeagueId);
     const { currentSeasonId } = await getPrisma().sportLeague.findUniqueOrThrow({ where: { id: sportLeagueId }, select: { currentSeasonId: true } });
     const synced = await createSportEventRow(new PrismaSportEventRepository(getAppPrisma()), {
-      sportLeagueId, sportLeagueSeasonId: currentSeasonId ?? '', name: `Synced Open ${randomUUID()}`, startDate: new Date('2084-07-01T12:00:00.000Z'), status: 'DRAFT', rounds: 4, autoLifecycleEnabled: false,
+      sportLeagueId, sportLeagueSeasonId: currentSeasonId ?? '', name: `Synced Open ${randomUUID()}`, startDate: new Date('2084-07-01T12:00:00.000Z'), status: 'DRAFT', autoLifecycleEnabled: false,
     });
 
     const onTest = await getApp().inject({ method: 'POST', url: `/api/v1/events/${eventId}/participants`, headers, payload: { participantIds: [participantId] } });

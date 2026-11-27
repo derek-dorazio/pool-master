@@ -98,7 +98,7 @@ describe('SDK Functional: Auto racing NASCAR Cup Series points', () => {
     const eventId = expectDefined(race.data).event.id;
     created.sportEventIds.add(eventId);
     // A race is one round, with the sport's five tiers.
-    expect(expectDefined(race.data).event.rounds).toBe(1);
+    expect(expectDefined(race.data).event.roundCount).toBe(1);
 
     const driverIds: string[] = [];
     for (const driver of DRIVERS) {

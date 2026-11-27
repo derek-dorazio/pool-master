@@ -290,7 +290,7 @@ describe('EntryReceipts', () => {
 
   it('lists a bracket\'s last three rounds, the final first, in the sport league\'s words, with the teams the entry\'s own picks put there', async () => {
     const { contest, event, entry, owners } = await entryIn(SelectionType.BRACKET, {
-      name: 'NCAA Tournament', sport: Sport.BASKETBALL, rounds: 4, startDate: KICKOFF,
+      name: 'NCAA Tournament', sport: Sport.BASKETBALL, roundCount: 4, startDate: KICKOFF,
     });
     slotNames = ['First Round', 'Elite Eight', 'Final Four', 'Championship'];
 
