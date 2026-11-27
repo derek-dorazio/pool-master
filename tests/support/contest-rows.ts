@@ -87,3 +87,34 @@ export async function fixtureTemplateId(prisma: Db, template: {
   });
   return created.id;
 }
+
+/**
+ * A Season for a fixture contest with no events (#2014: every contest is in one): the first of
+ * the year, by id, of any sport league.
+ */
+export async function anySeasonId(prisma: Db, championshipYear: number): Promise<string> {
+  const season = await prisma.sportLeagueSeason.findFirstOrThrow({ where: { championshipYear }, orderBy: { id: 'asc' }, select: { id: true } });
+  return season.id;
+}
+
+/** The fixture template (`fixtureTemplateId`) for a contest's configuration: its Season league's, of its type. */
+export async function contestTemplateId(prisma: Db, contestId: string): Promise<string> {
+  const contest = await prisma.contest.findUniqueOrThrow({
+    where: { id: contestId },
+    select: { selectionType: true, contestFormat: true, sportLeagueSeason: { select: { sportLeagueId: true } } },
+  });
+  return fixtureTemplateId(prisma, {
+    sportLeagueId: contest.sportLeagueSeason.sportLeagueId,
+    selectionType: contest.selectionType,
+    contestFormat: contest.contestFormat,
+    configJson: { selectionType: contest.selectionType },
+  });
+}
+
+/** Adds events to a fixture contest's coverage (`coverageOfEvents`): their slots, in the contest's Season. */
+export async function coverEvents(prisma: Db, contestId: string, sportEventIds: readonly string[]): Promise<void> {
+  const { sportLeagueSeasonId, seasonSlotIds } = await coverageOfEvents(prisma, sportEventIds);
+  await prisma.contestSeasonSlot.createMany({
+    data: seasonSlotIds.map((sportLeagueSeasonCompetitionSlotId) => ({ contestId, sportLeagueSeasonId, sportLeagueSeasonCompetitionSlotId })),
+  });
+}

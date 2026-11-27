@@ -58,6 +58,7 @@ import { sportRowKeys } from '../../support/sport-rows';
 import { makeSlotTiebreaker } from '../../support/slot-tiebreaker-rows';
 import { oneEventSlotId } from '../../support/test-slots';
 import { createMatchRow } from '../../support/match-rows';
+import { contestTemplateId, coverEvents } from '../../support/contest-rows';
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
@@ -827,10 +828,11 @@ describe('Contract verification (web)', () => {
 
     // #245 retired the event-less legacy create this contract once went through; the selection-state
     // contract does not depend on how the contest was made, so the row is a fixture.
+    const edition = await freshEventEdition(getPrisma());
     const contest = await getPrisma().contest.create({
       data: {
         leagueId,
-        seasonYear: 2026,
+        sportLeagueSeasonId: edition.sportLeagueSeasonId,
         name: 'Contract Draft Contest',
         status: 'DRAFT',
         contestFormat: ContestFormat.ROSTER,
@@ -840,6 +842,7 @@ describe('Contract verification (web)', () => {
     await getPrisma().contestConfiguration.create({
       data: {
         contestId: contest.id,
+        templateId: await contestTemplateId(getPrisma(), contest.id),
         selectionType: SelectionType.TIERED,
         maxEntriesPerSquad: 1,
       },
@@ -855,13 +858,13 @@ describe('Contract verification (web)', () => {
     // A selection room is always one event's (#713), so the contest covers one.
     const event = await getPrisma().sportEvent.create({
       data: {
-        ...(await freshEventEdition(getPrisma())),
+        ...edition,
         name: 'Contract Room Event',
         startDate: new Date('2099-04-20T12:00:00.000Z'),
         status: 'SCHEDULED',
       },
     });
-    await getPrisma().contestSportEvent.create({ data: { contestId, sportEventId: event.id, sequence: 1 } });
+    await coverEvents(getPrisma(), contestId, [event.id]);
     const roomEntries = await getPrisma().contestEntry.findMany({ where: { contestId }, select: { id: true } });
     await getPrisma().contestEntryEvent.createMany({
       data: roomEntries.map((entry) => ({ contestEntryId: entry.id, sportEventId: event.id })),
@@ -888,10 +891,11 @@ describe('Contract verification (web)', () => {
     const leagueId = leagueRes.json<LeagueContextResponse>().league.id;
 
     const prisma = getPrisma();
+    const edition = await freshEventEdition(prisma);
     const contest = await prisma.contest.create({
       data: {
         leagueId,
-        seasonYear: 2026,
+        sportLeagueSeasonId: edition.sportLeagueSeasonId,
         name: 'Contract Draw Contest',
         status: 'OPEN',
         contestFormat: ContestFormat.ROSTER,
@@ -901,6 +905,7 @@ describe('Contract verification (web)', () => {
     await prisma.contestConfiguration.create({
       data: {
         contestId: contest.id,
+        templateId: await contestTemplateId(prisma, contest.id),
         selectionType: SelectionType.RANDOM_DRAW,
         maxEntriesPerSquad: 1,
         configJson: { selectionType: SelectionType.RANDOM_DRAW, picksPerEntry: 1, countedScores: 1 },
@@ -920,7 +925,7 @@ describe('Contract verification (web)', () => {
     });
     const event = await prisma.sportEvent.create({
       data: {
-        ...(await freshEventEdition(prisma)),
+        ...edition,
         name: 'Contract Draw Event',
         startDate: new Date('2099-04-20T12:00:00.000Z'),
         status: 'SCHEDULED',
@@ -932,7 +937,7 @@ describe('Contract verification (web)', () => {
     await prisma.sportEventParticipant.create({ data: { sportEventId: event.id, participantId: golfer.id } });
     // The event added after the entry, as "Events in this contest" adds one: the entry gets a
     // DRAFT status in it (#713).
-    await prisma.contestSportEvent.create({ data: { contestId: contest.id, sportEventId: event.id, sequence: 1 } });
+    await coverEvents(prisma, contest.id, [event.id]);
     const drawEntries = await prisma.contestEntry.findMany({ where: { contestId: contest.id }, select: { id: true } });
     await prisma.contestEntryEvent.createMany({
       data: drawEntries.map((entry) => ({ contestEntryId: entry.id, sportEventId: event.id })),
@@ -961,10 +966,11 @@ describe('Contract verification (web)', () => {
     const leagueId = leagueRes.json<LeagueContextResponse>().league.id;
 
     const prisma = getPrisma();
+    const edition = await freshEventEdition(prisma, { sport: Sport.BASKETBALL });
     const contest = await prisma.contest.create({
       data: {
         leagueId,
-        seasonYear: 2026,
+        sportLeagueSeasonId: edition.sportLeagueSeasonId,
         name: 'Contract Pickem Contest',
         status: 'OPEN',
         contestFormat: ContestFormat.PREDICTION,
@@ -974,6 +980,7 @@ describe('Contract verification (web)', () => {
     await prisma.contestConfiguration.create({
       data: {
         contestId: contest.id,
+        templateId: await contestTemplateId(prisma, contest.id),
         selectionType: SelectionType.PICK_EM,
         maxEntriesPerSquad: 1,
         configJson: { selectionType: SelectionType.PICK_EM, mode: PickEmMode.CONFIDENCE, againstTheSpread: false },
@@ -993,7 +1000,7 @@ describe('Contract verification (web)', () => {
     });
     const event = await prisma.sportEvent.create({
       data: {
-        ...(await freshEventEdition(prisma, { sport: Sport.BASKETBALL })),
+        ...edition,
         name: 'Contract Pickem Event',
         startDate: new Date('2099-03-19T16:00:00.000Z'),
         status: 'SCHEDULED',
@@ -1011,7 +1018,7 @@ describe('Contract verification (web)', () => {
     });
     // The week's one game is its tiebreaker game, as the rule names it (#2048).
     await makeSlotTiebreaker(prisma, game.id);
-    await prisma.contestSportEvent.create({ data: { contestId: contest.id, sportEventId: event.id, sequence: 1 } });
+    await coverEvents(prisma, contest.id, [event.id]);
     const entry = await prisma.contestEntry.findFirstOrThrow({ where: { contestId: contest.id }, select: { id: true } });
     await prisma.contestEntryEvent.create({ data: { contestEntryId: entry.id, sportEventId: event.id } });
     const url = `/api/v1/selections/${contest.id}/entries/${entry.id}/events/${event.id}/game-picks`;

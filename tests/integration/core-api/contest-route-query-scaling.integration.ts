@@ -53,6 +53,7 @@ import { recordStatements, statementsOn, StatementVerb } from '../statement-log'
 import { oneEventSlotId } from '../../support/test-slots';
 import { AWAY_SIDE, HOME_SIDE } from '../../support/match-sides';
 import { createMatchRow, rowSideTeam } from '../../support/match-rows';
+import { anySeasonId, contestOnEvents, contestTemplateId } from '../../support/contest-rows';
 
 // No mocks.
 
@@ -87,7 +88,7 @@ async function seedRosterContest({ entries, events, golfers = 2, tiers = 2 }: { 
   const contest = await prisma.contest.create({
     data: {
       leagueId: seeded.league.id,
-      seasonYear: expectDefined(majors[0]).event.startDate.getUTCFullYear(),
+      sportLeagueSeasonId: await anySeasonId(prisma, expectDefined(majors[0]).event.startDate.getUTCFullYear()),
       sportEvents: { create: majors.map(({ event }, index) => ({ sportEventId: event.id, sequence: index + 1 })) },
       name: `Majors ${seeded.suffix}`,
       status: ContestStatus.ACTIVE,
@@ -98,6 +99,7 @@ async function seedRosterContest({ entries, events, golfers = 2, tiers = 2 }: { 
   await prisma.contestConfiguration.create({
     data: {
       contestId: contest.id,
+      templateId: await contestTemplateId(prisma, contest.id),
       selectionType: SelectionType.TIERED,
       configJson: { selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 2 },
       participantScoringRules: { create: { participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', sortOrder: 1 } },
@@ -144,7 +146,7 @@ async function seedMyEntries({ contests, events }: { contests: number; events: n
     await prisma.contest.create({
       data: {
         leagueId: seeded.league.id,
-        seasonYear: expectDefined(majors[0]).event.startDate.getUTCFullYear(),
+        sportLeagueSeasonId: await anySeasonId(prisma, expectDefined(majors[0]).event.startDate.getUTCFullYear()),
         sportEvents: { create: majors.map(({ event }, sequence) => ({ sportEventId: event.id, sequence: sequence + 1 })) },
         name: `Contest ${seeded.suffix} ${index}`,
         status: ContestStatus.OPEN,
@@ -181,7 +183,7 @@ async function seedMyLiveEntries({ contests, boards }: { contests: number; board
     const contest = await prisma.contest.create({
       data: {
         leagueId: seeded.league.id,
-        seasonYear: played.event.startDate.getUTCFullYear(),
+        sportLeagueSeasonId: await anySeasonId(prisma, played.event.startDate.getUTCFullYear()),
         sportEvents: { create: majors.map(({ event }, sequence) => ({ sportEventId: event.id, sequence: sequence + 1 })) },
         name: `Live ${seeded.suffix} ${index}`,
         status: ContestStatus.ACTIVE,
@@ -192,6 +194,7 @@ async function seedMyLiveEntries({ contests, boards }: { contests: number; board
     await prisma.contestConfiguration.create({
       data: {
         contestId: contest.id,
+        templateId: await contestTemplateId(prisma, contest.id),
         selectionType: SelectionType.TIERED,
         configJson: { selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 2 },
         participantScoringRules: { create: { participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', sortOrder: 1 } },
@@ -250,8 +253,7 @@ async function seedContestsInSportLeagues(
     const contest = await prisma.contest.create({
       data: {
         leagueId: seeded.league.id,
-        seasonYear: event.startDate.getUTCFullYear(),
-        sportEvents: { create: { sportEventId: event.id, sequence: 1 } },
+        ...(await contestOnEvents(prisma, [event.id])),
         name: `Contest ${seeded.suffix} ${index}`,
         status,
         contestFormat: bracket ? 'PREDICTION' : 'ROSTER',
@@ -261,7 +263,7 @@ async function seedContestsInSportLeagues(
     });
     if (bracket) {
       await prisma.contestConfiguration.create({
-        data: { contestId: contest.id, selectionType: SelectionType.BRACKET, configJson: { selectionType: SelectionType.BRACKET } },
+        data: { contestId: contest.id, templateId: await contestTemplateId(prisma, contest.id), selectionType: SelectionType.BRACKET, configJson: { selectionType: SelectionType.BRACKET } },
       });
     }
     events.push(event);
@@ -278,7 +280,7 @@ async function seedFinishedYears(years: number) {
     await prisma.contest.create({
       data: {
         leagueId: seeded.league.id,
-        seasonYear: year,
+        sportLeagueSeasonId: await anySeasonId(prisma, year),
         name: `Final ${seeded.suffix} ${String(year)}`,
         status: ContestStatus.COMPLETED,
         contestFormat: 'ROSTER',
@@ -343,7 +345,7 @@ async function seedPredictionContest(selectionType: PredictionType, { entries, w
   const contest = await prisma.contest.create({
     data: {
       leagueId: seeded.league.id,
-      seasonYear: expectDefined(season[0]).event.startDate.getUTCFullYear(),
+      sportLeagueSeasonId: await anySeasonId(prisma, expectDefined(season[0]).event.startDate.getUTCFullYear()),
       sportEvents: { create: season.map(({ event }, index) => ({ sportEventId: event.id, sequence: index + 1 })) },
       name: `Season ${seeded.suffix}`,
       status: ContestStatus.ACTIVE,
@@ -351,7 +353,7 @@ async function seedPredictionContest(selectionType: PredictionType, { entries, w
       selectionType,
     },
   });
-  await prisma.contestConfiguration.create({ data: { contestId: contest.id, selectionType, configJson: RULES_OF[selectionType] } });
+  await prisma.contestConfiguration.create({ data: { contestId: contest.id, templateId: await contestTemplateId(prisma, contest.id), selectionType, configJson: RULES_OF[selectionType] } });
   const predictions = new PrismaContestEntryMatchPredictionRepository(getAppPrisma());
   const settledAt = new Date();
   const contestEntries = [];
@@ -416,8 +418,7 @@ async function seedBracketContest(entries: number) {
   const contest = await prisma.contest.create({
     data: {
       leagueId: seeded.league.id,
-      seasonYear: event.startDate.getUTCFullYear(),
-      sportEvents: { create: { sportEventId: event.id, sequence: 1 } },
+      ...(await contestOnEvents(prisma, [event.id])),
       name: `Bracket ${seeded.suffix}`,
       status: ContestStatus.ACTIVE,
       contestFormat: 'PREDICTION',
@@ -427,6 +428,7 @@ async function seedBracketContest(entries: number) {
   await prisma.contestConfiguration.create({
     data: {
       contestId: contest.id,
+      templateId: await contestTemplateId(prisma, contest.id),
       selectionType: SelectionType.BRACKET,
       configJson: { selectionType: SelectionType.BRACKET },
       participantScoringRules: {
@@ -465,8 +467,7 @@ async function seedSquaresContest(entries: number) {
   const contest = await prisma.contest.create({
     data: {
       leagueId: seeded.league.id,
-      seasonYear: event.startDate.getUTCFullYear(),
-      sportEvents: { create: { sportEventId: event.id, sequence: 1 } },
+      ...(await contestOnEvents(prisma, [event.id])),
       squaresGame: { create: { sportEventRoundMatchId: expectDefined(game).id } },
       name: `Squares ${seeded.suffix}`,
       status: ContestStatus.OPEN,
@@ -475,7 +476,7 @@ async function seedSquaresContest(entries: number) {
     },
   });
   await prisma.contestConfiguration.create({
-    data: { contestId: contest.id, selectionType: SelectionType.SQUARES, configJson: { selectionType: SelectionType.SQUARES, maxSquaresPerEntry: 10 } },
+    data: { contestId: contest.id, templateId: await contestTemplateId(prisma, contest.id), selectionType: SelectionType.SQUARES, configJson: { selectionType: SelectionType.SQUARES, maxSquaresPerEntry: 10 } },
   });
   for (const [index, squad] of seeded.squads.entries()) {
     const entry = await prisma.contestEntry.create({

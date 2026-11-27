@@ -18,6 +18,7 @@ import {
   sportLeagueDefinitionOf,
   placeInRanges,
   templateCoverageProblem,
+  type ContestRoundCoverage,
   type SportEventRoundMatch,
 } from '@poolmaster/shared/domain';
 import {
@@ -1386,6 +1387,11 @@ describe('Seeded knockout templates follow the template review (#2164)', () => {
  * round, the champion winning each against a fresh opponent. Each round is one match, so each is
  * decided by its one result.
  */
+/** A contest covering every round of `championRun`'s event: each round's slot definition. */
+function everyRound(slotKinds: readonly SlotKind[]): ContestRoundCoverage {
+  return { slotDefinitionIds: slotKinds.map((slotKind) => roundSlot(slotKind).slotDefinitionId) };
+}
+
 function championRun(slotKinds: readonly SlotKind[]): SportEventParticipantView[] {
   const store = new InMemorySportEvents();
   const sport = store.addSport(Sport.SOCCER);
@@ -1468,7 +1474,7 @@ describe('Seeded knockout round points cover every round a template lists', () =
 
   it('scores a champion who wins every round a knockout template lists the sum of its round values, the final its last value, in every league', async () => {
     const problems = (await bracketTemplates()).flatMap(({ template, roundValues, upsetBonus, rounds }) => {
-      const [champion] = scoreKnockoutField(championRun(rounds), { roundValues, upsetBonus }, { slotDefinitionIds: null });
+      const [champion] = scoreKnockoutField(championRun(rounds), { roundValues, upsetBonus }, everyRound(rounds));
       const expected = roundValues.reduce((total, value) => total + value, 0);
       return champion.score === expected ? [] : [`${template.templateKey}: the champion scores ${String(champion.score)}, not ${String(expected)}`];
     });
@@ -1479,7 +1485,7 @@ describe('Seeded knockout round points cover every round a template lists', () =
   it('scores a FIFA World Cup champion 1 point in the Round of 32, doubling each round to 16 in the final, under Escalating', async () => {
     const template = (await bracketTemplates()).find((each) => each.template.templateKey === 'world-cup-random-draw-doubling');
     const { roundValues, upsetBonus, rounds } = expectDefined(template, 'the World Cup\'s Escalating random draw');
-    const [champion] = scoreKnockoutField(championRun(rounds), { roundValues, upsetBonus }, { slotDefinitionIds: null });
+    const [champion] = scoreKnockoutField(championRun(rounds), { roundValues, upsetBonus }, everyRound(rounds));
 
     expect(rounds).toEqual([SlotKind.ROUND_OF_32, SlotKind.ROUND_OF_16, SlotKind.QUARTERFINAL, SlotKind.SEMIFINAL, SlotKind.FINAL]);
     expect(roundValues).toEqual([1, 2, 4, 8, 16]);

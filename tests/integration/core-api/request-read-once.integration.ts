@@ -42,6 +42,7 @@ import { sportRowKeys } from '../../support/sport-rows';
 import { linkTestSlot } from '../../support/test-slots';
 import { oneEventSlotId, setEventSlotPeriods } from '../../support/test-slots';
 import { createMatchRow } from '../../support/match-rows';
+import { contestOnEvents } from '../../support/contest-rows';
 
 // The routes #1355 brought under the request query budget, against Postgres: each reads the
 // joiner, the team, the league and the contest's events once however many steps of the request
@@ -436,8 +437,7 @@ async function squaresContestUnderWay(options: { gameFinished: boolean; contests
     const contest = await prisma.contest.create({
       data: {
         leagueId,
-        seasonYear: 2026,
-        sportEvents: { create: { sportEventId: event.id, sequence: 1 } },
+        ...(await contestOnEvents(prisma, [event.id])),
         squaresGame: { create: { sportEventRoundMatchId: game.id } },
         name: `Read Once Squares ${suffix} ${number}`,
         status: 'ACTIVE',
@@ -685,8 +685,7 @@ async function openContestsOnScheduledEvent(options: { contests: 1 | 3 }) {
     const contest = await prisma.contest.create({
       data: {
         leagueId,
-        seasonYear: 2026,
-        sportEvents: { create: { sportEventId: event.id, sequence: 1 } },
+        ...(await contestOnEvents(prisma, [event.id])),
         name: `Read Once Changed ${suffix} ${number}`,
         status: 'OPEN',
         contestFormat: 'PREDICTION',

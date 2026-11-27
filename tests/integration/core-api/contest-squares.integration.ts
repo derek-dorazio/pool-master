@@ -24,6 +24,7 @@ import { participantLeagueId } from '../../support/participant-league';
 import { sportRowKeys } from '../../support/sport-rows';
 import { oneEventSlotId } from '../../support/test-slots';
 import { createMatchRow } from '../../support/match-rows';
+import { contestOnEvents } from '../../support/contest-rows';
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
@@ -84,8 +85,7 @@ async function seedSquaresContest(): Promise<SquaresFixture> {
   const contest = await prisma.contest.create({
     data: {
       leagueId: league.id,
-      seasonYear: 2026,
-      sportEvents: { create: { sportEventId: sportEvent.id, sequence: 1 } },
+      ...(await contestOnEvents(prisma, [sportEvent.id])),
       squaresGame: { create: { sportEventRoundMatchId: game.id } },
       name: `Squares Contest ${suffix}`,
       status: 'OPEN',

@@ -38,6 +38,7 @@ import { syncLeagueTo } from '../../support/league-sync';
 import { participantLeagueId } from '../../support/participant-league';
 import { sportRowKeys } from '../../support/sport-rows';
 import { sportPlay } from '../../support/sport-play';
+import { contestOnEvents } from '../../support/contest-rows';
 
 // The event-core write ports and the golf extension ports (#236) against real Postgres:
 // what each write leaves in the tables, that "all or none" is all or none, and that
@@ -865,7 +866,7 @@ async function createContestFixture(sportEventId: string) {
   const squad = await prisma.squad.create({ data: { leagueId: league.id, name: `Repository Squad ${suffix}`, createdBy: user.id } });
   const contest = await prisma.contest.create({
     data: {
-      leagueId: league.id, seasonYear: 2026, sportEvents: { create: { sportEventId, sequence: 1 } }, name: `Repository Contest ${suffix}`, status: 'OPEN',
+      leagueId: league.id, ...(await contestOnEvents(prisma, [sportEventId])), name: `Repository Contest ${suffix}`, status: 'OPEN',
       contestFormat: 'ROSTER', selectionType: 'TIERED',
     },
   });

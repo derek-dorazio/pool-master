@@ -26,6 +26,7 @@ import { participantLeagueId } from '../../support/participant-league';
 import { testDomainEvents } from '../../support/domain-events';
 import { sportRowKeys } from '../../support/sport-rows';
 import { oneEventSlotId } from '../../support/test-slots';
+import { anySeasonId, contestTemplateId } from '../../support/contest-rows';
 
 // The roster contest leaderboard's reads against real Postgres (#1162): however many events the
 // contest has, its entries come from one query and its picks from one more, and only the picks
@@ -124,7 +125,7 @@ async function fourMajors(status: ContestStatus, lastSettled: boolean) {
   const contest = await prisma.contest.create({
     data: {
       leagueId: league.id,
-      seasonYear: 2026,
+      sportLeagueSeasonId: await anySeasonId(prisma, 2026),
       sportEvents: { create: majors.map(({ event }, index) => ({ sportEventId: event.id, sequence: index + 1 })) },
       name: `Majors ${suffix}`,
       status,
@@ -135,6 +136,7 @@ async function fourMajors(status: ContestStatus, lastSettled: boolean) {
   await prisma.contestConfiguration.create({
     data: {
       contestId: contest.id,
+      templateId: await contestTemplateId(prisma, contest.id),
       selectionType: 'TIERED',
       configJson: { selectionType: 'TIERED', picksPerTier: 1, countedScores: 2 },
       participantScoringRules: { create: { participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', sortOrder: 1 } },
@@ -212,7 +214,7 @@ async function golfContest(events: ReadonlyArray<{ event: { id: string } }>) {
   const contest = await prisma.contest.create({
     data: {
       leagueId: league.id,
-      seasonYear: 2026,
+      sportLeagueSeasonId: await anySeasonId(prisma, 2026),
       sportEvents: { create: events.map(({ event }, index) => ({ sportEventId: event.id, sequence: index + 1 })) },
       name: `Season ${suffix}`,
       status: ContestStatus.ACTIVE,
@@ -223,6 +225,7 @@ async function golfContest(events: ReadonlyArray<{ event: { id: string } }>) {
   await prisma.contestConfiguration.create({
     data: {
       contestId: contest.id,
+      templateId: await contestTemplateId(prisma, contest.id),
       selectionType: 'TIERED',
       configJson: { selectionType: 'TIERED', picksPerTier: 1, countedScores: 2 },
       participantScoringRules: { create: { participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', sortOrder: 1 } },

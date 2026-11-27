@@ -41,7 +41,7 @@ import {
 import { recordStatements, statementsOn, StatementVerb } from '../statement-log';
 import { createRoundRows, createSportEventRow } from '../../support/sport-event-rows';
 import { integrationPlanEntitlements } from '../plan-entitlements';
-import { createContestRow } from '../../support/contest-rows';
+import { contestTemplateId, createContestRow } from '../../support/contest-rows';
 import { sportLeagueRowDefaults } from '../../support/league-profiles';
 import { sportRowKeys } from '../../support/sport-rows';
 import { fixtureSeasonId } from '../../support/event-edition';
@@ -139,9 +139,8 @@ async function createPickEmContest(sportEventIds: string[]) {
     data: { leagueId: league.id, userId: owner.user.id, role: 'COMMISSIONER', status: 'ACTIVE', joinedAt: new Date() },
   });
   const squad = await prisma.squad.create({ data: { leagueId: league.id, createdBy: owner.user.id, name: `Pickers ${suffix}` } });
-  const contest = await createContestRow(new PrismaContestRepository(getAppPrisma()), {
+  const contest = await createContestRow(getPrisma(), new PrismaContestRepository(getAppPrisma()), {
     leagueId: league.id,
-    seasonYear: 2026,
     sportEventIds,
     name: `Season ${suffix}`,
     status: ContestStatus.ACTIVE,
@@ -150,6 +149,7 @@ async function createPickEmContest(sportEventIds: string[]) {
   });
   await new PrismaContestConfigurationRepository(getAppPrisma()).create({
     contestId: contest.id,
+    templateId: await contestTemplateId(getPrisma(), contest.id),
     selectionType: SelectionType.PICK_EM,
     configJson: { selectionType: SelectionType.PICK_EM, mode: PickEmMode.STRAIGHT_UP, againstTheSpread: false },
   });
