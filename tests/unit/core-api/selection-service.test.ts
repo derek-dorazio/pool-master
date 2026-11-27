@@ -23,6 +23,7 @@ import type { SelectionServiceDeps } from '../../../packages/core-api/src/module
 import type { EntrySubmittedReceiptInput } from '../../../packages/core-api/src/modules/contests/service';
 import type { SportEventTierService } from '../../../packages/core-api/src/modules/events/sport-event-tier-service';
 import type { ContestEntryPickService } from '../../../packages/core-api/src/modules/contest-entry-picks';
+import { buildCoveredSlot } from '../../factories';
 import {
   fakeContestConfigurationRepo,
   fakeContestEntryPickRepo,
@@ -96,6 +97,7 @@ function contest(overrides: Partial<Contest> = {}): Contest {
     sportEventIds: [EVENT_ID],
     coveredSlotDefinitionIds: ['def-tournament'],
     coveredSeasonSlotIds: ['season-slot-tournament'],
+    coveredSlots: [buildCoveredSlot({ seasonSlotId: 'season-slot-tournament', slotDefinitionId: 'def-tournament', sportEventId: EVENT_ID })],
     name: 'Masters Pool',
     sportLeagueSeasonId: 'season-2026',
     seasonYear: 2026,

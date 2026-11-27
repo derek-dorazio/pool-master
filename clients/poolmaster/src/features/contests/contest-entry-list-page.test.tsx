@@ -1,3 +1,4 @@
+import { withCoverage } from './test/covered-slots';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter, Route, Routes, useLocation, useNavigationType } from 'react-router';
@@ -210,7 +211,7 @@ function primeMocks(opts?: {
 
   getContestMock.mockResolvedValue({
     data: {
-      contest: {
+      contest: withCoverage({
         id: 'contest-1',
         name: 'Masters Pick 6',
         status: contestStatus,
@@ -227,15 +228,16 @@ function primeMocks(opts?: {
           sportEventId: 'event-1',
           // The slot whose tier set the contest picks from on the event (#2044).
           tierSetSeasonSlotId: 'slot-1',
-          sequence: 1,
           name: 'The Masters',
           startDate: opts?.eventStartDate ?? '2099-04-09T12:40:00.000Z',
           endDate: opts?.eventEndDate ?? null,
           status: 'SCHEDULED',
+          participantType: 'INDIVIDUAL',
+          scoringFamily: 'STROKE_PLAY',
         }],
         myEntryIds: myEntries.map((entry) => entry.id),
         ...(opts?.endsAt ? { endsAt: opts.endsAt } : {}),
-      },
+      }),
     },
   });
 

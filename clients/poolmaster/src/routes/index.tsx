@@ -23,7 +23,6 @@ import { CreateContestPage } from '@/features/contests/create-contest/create-con
 import { ContestEntryPage } from '@/features/contests/contest-entry-page';
 import { ContestEntryLeagueRedirect } from '@/features/contests/contest-entry-league-redirect';
 import { ContestLeaderboardRedirect, ContestPage } from '@/features/contests/contest-page';
-import { ContestEventsPage } from '@/features/contests/contest-events-page';
 import { EditContestPage } from '@/features/contests/edit-contest-page';
 import { ManageContestPage } from '@/features/contests/manage-contest-page';
 import { ManageContestsPage } from '@/features/contests/manage-contests-page';
@@ -242,10 +241,6 @@ export const router = createBrowserRouter([
                   {
                     path: 'contests/:contestId/edit',
                     element: <EditContestPage />,
-                  },
-                  {
-                    path: 'contests/:contestId/events',
-                    element: <ContestEventsPage />,
                   },
                   {
                     path: 'contests/:contestId/cup-weight',

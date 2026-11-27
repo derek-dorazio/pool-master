@@ -677,7 +677,6 @@ describe('Contract verification (web)', () => {
     expect(listParsed.success).toBe(true);
     expect(listParsed.data?.contests.find((contest) => contest.id === contestId)?.sportEvents).toEqual([{
       sportEventId: sportEvent.id,
-      sequence: 1,
       name: sportEvent.name,
       startDate: sportEvent.startDate.toISOString(),
       // The contest carries each event's end, so its schedule reads no event (#1198).

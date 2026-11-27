@@ -75,7 +75,7 @@ const players = buildSportEvent({ id: 'event-3', name: 'The Players', startDate:
 /** A listed contest on `event`: the contest list carries the event's name and start. */
 function onEvent(event: SportEventDto): Pick<ContestDto, 'sportEvents'> {
   return {
-    sportEvents: [{ sportEventId: event.id, sequence: 1, name: event.name, startDate: event.startDate, endDate: null, status: event.status, participantType: event.participantType, scoringFamily: event.scoringFamily }],
+    sportEvents: [{ sportEventId: event.id, name: event.name, startDate: event.startDate, endDate: null, status: event.status, participantType: event.participantType, scoringFamily: event.scoringFamily }],
   };
 }
 

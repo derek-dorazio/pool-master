@@ -1,5 +1,5 @@
 import { FormField, formatDateDisplay, Select, useDisplayPreferences } from '@/features/shared/ui';
-import type { ContestSportEvent } from './contest-events';
+import type { ContestEvent } from './contest-events';
 
 /**
  * Which of a contest's events a page shows (#713): an NFL pick'em has a week per event, and its
@@ -15,8 +15,8 @@ export function ContestEventSwitcher({
   value,
 }: {
   /** A short note after an event's name, such as whether this entry submitted it. */
-  describe?: (sportEvent: ContestSportEvent) => string | null;
-  events: readonly ContestSportEvent[];
+  describe?: (sportEvent: ContestEvent) => string | null;
+  events: readonly ContestEvent[];
   /** What the contest calls its events: a pick'em's are weeks. */
   label?: string;
   onChange: (sportEventId: string) => void;

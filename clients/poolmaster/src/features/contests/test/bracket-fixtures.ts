@@ -1,3 +1,4 @@
+import { withCoverage } from './covered-slots';
 import type {
   BracketLeaderboardResponse,
   ContestDto,
@@ -169,7 +170,7 @@ export function gamePicksFixture(overrides: Partial<GamePicksResponse> = {}): Ga
 
 /** A one-event basketball bracket contest, open and not started unless told otherwise. */
 export function bracketContestFixture(overrides: Partial<ContestDto> = {}): ContestDto {
-  return {
+  return withCoverage({
     id: 'contest-1',
     leagueId: 'league-1',
     entriesPerContest: null,
@@ -179,9 +180,9 @@ export function bracketContestFixture(overrides: Partial<ContestDto> = {}): Cont
     contestFormat: 'PREDICTION',
     selectionType: 'BRACKET',
     myEntryIds: ['entry-1'],
-    sportEvents: [{ sportEventId: 'event-1', sequence: 1, name: 'March Madness', startDate: BRACKET_START, endDate: null, status: 'SCHEDULED', participantType: 'TEAM', scoringFamily: 'HEAD_TO_HEAD' }],
+    sportEvents: [{ sportEventId: 'event-1', name: 'March Madness', startDate: BRACKET_START, endDate: null, status: 'SCHEDULED', participantType: 'TEAM', scoringFamily: 'HEAD_TO_HEAD' }],
     ...overrides,
-  };
+  });
 }
 
 export function bracketLeaderboardFixture(overrides: Partial<BracketLeaderboardResponse> = {}): BracketLeaderboardResponse {

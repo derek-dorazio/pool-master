@@ -35,7 +35,9 @@ import type {
   JobTrigger,
   ParticipantStatus,
   ParticipantType,
+  SeasonSlotStatus,
   SelectionType,
+  SlotKind,
   Sport,
   SquadMembershipStatus,
   SquadOwnerInvitationStatus,
@@ -319,12 +321,37 @@ export interface Contest extends DomainEntity {
   coveredSlotDefinitionIds: string[];
   /** The Season slots themselves, in the same order: a contest's coverage, written once at creation. */
   coveredSeasonSlotIds: string[];
+  /** The same Season slots with what a screen shows of each (#2014): its event, kind, status and competition. */
+  coveredSlots: ContestCoveredSlot[];
   /** The Season the contest plays in (#2014), fixed at creation: every covered slot is one of its. */
   sportLeagueSeasonId: string;
   /** That Season's championship year, read with it: the cup the contest counts toward (#841). */
   seasonYear: number;
   /** How much the contest counts toward its cup and the league championship (#841). */
   cupWeight: CupWeight;
+}
+
+/**
+ * One Season slot a contest covers (#2014), with what a screen names and orders it by. Its status
+ * is the Season slot's own; its event is the event that plays it, absent until one does.
+ */
+export interface ContestCoveredSlot {
+  seasonSlotId: string;
+  slotDefinitionId: string;
+  /** The definition's code in its league, such as WEEK_14 or FINAL; nothing parses it. */
+  key: string;
+  /** The league's proper name for the slot, or a test slot's label; null when the kind names it. */
+  name: string | null;
+  slotKind: SlotKind;
+  /** For a WEEK slot, its week. */
+  weekNumber: number | null;
+  status: SeasonSlotStatus;
+  startsAt: Date | null;
+  endsAt: Date | null;
+  sportEventId: string | null;
+  /** The competition the slot is in, such as REGULAR or CFP, and its name when it has one. */
+  competitionCode: string;
+  competitionName: string | null;
 }
 
 /**

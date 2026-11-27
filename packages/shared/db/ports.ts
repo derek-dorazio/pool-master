@@ -588,11 +588,14 @@ export interface ContestRepository {
   update(id: string, updates: ContestUpdate): Promise<Contest>;
   /**
    * Sets the Season slots the contest covers to `seasonSlotIds` (#2014), resolved again as at
-   * creation. In one transaction under the contest row lock: each entry gets a DRAFT status row for
-   * every added event, and loses its status row and its picks (roster and game picks) on every
-   * event it no longer covers.
+   * creation, but only while the contest is in one of the `whileIn` statuses. In one transaction
+   * under the contest row lock, which every entry write takes and opening's status write waits on: the
+   * status is read under the lock, and each entry gets a DRAFT status row for every added event
+   * and loses its status row and its picks (roster and game picks) on every event it no longer
+   * covers. Returns whether it changed the coverage: false, changing nothing, for a contest that
+   * had moved out of `whileIn`.
    */
-  replaceCoveredSlots(id: string, seasonSlotIds: readonly string[]): Promise<void>;
+  replaceCoveredSlots(id: string, seasonSlotIds: readonly string[], whileIn: readonly Contest['status'][]): Promise<boolean>;
   /**
    * Moves a contest to `to` (with its start or end time), but only while it is in one of the
    * `from` statuses. Returns whether this call made the change: a guarded single write, so two
@@ -658,8 +661,9 @@ export type ContestCreate = Pick<
 > & { seasonSlotIds: readonly string[] };
 
 /**
- * What can change on a contest row itself; its covered slots change through `replaceCoveredSlots`, its
- * season never (fixed at creation, #2014), and its status only through `ContestLifecycle` (#1949).
+ * What can change on a contest row itself; its covered slots change through `replaceCoveredSlots`
+ * (in Set up only, #2014), its season never (fixed at creation), and its status only through
+ * `ContestLifecycle` (#1949).
  */
 export type ContestUpdate = Partial<Pick<Contest, 'name' | 'startsAt' | 'endsAt'>>;
 

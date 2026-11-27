@@ -1,3 +1,4 @@
+import { coverageOfEvents } from '@/features/contests/test/covered-slots';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { MemoryRouter, Route, Routes, useLocation, useNavigate } from 'react-router';
@@ -17,7 +18,7 @@ import {
   getLeagueByCodeData,
   getLeagueSquadFrom,
 } from './test/fixtures';
-import type { ContestResultSummaryDto, CupDto } from '@/lib/api';
+import type { ContestDto, ContestResultSummaryDto, CupDto } from '@/lib/api';
 import { buildContestResult, buildRunningCup } from '@/features/championships/test/fixtures';
 import { buildPlanEntitlements } from '@/features/plans/test/fixtures';
 
@@ -91,14 +92,16 @@ function renderLeagueHome(initialEntry: string | { pathname: string; state: unkn
 type ContestStatus = 'DRAFT' | 'OPEN' | 'ACTIVE' | 'COMPLETED';
 
 function contest(id: string, name: string, status: ContestStatus, sportEventId = `event-${id}`, entryCount = 4) {
+  const sportEvents = [{ sportEventId, name: `Event ${sportEventId}`, startDate: '2026-05-01T12:00:00.000Z', status: 'SCHEDULED', endDate: null, ...sportPlay(Sport.GOLF) }] as ContestDto['sportEvents'];
   return {
+    ...coverageOfEvents({ sportEvents }),
     id,
     name,
     status,
     contestFormat: 'ROSTER',
     selectionType: 'TIERED',
     leagueId: 'league-1',
-    sportEvents: [{ sportEventId, sequence: 1, name: `Event ${sportEventId}`, startDate: '2026-05-01T12:00:00.000Z', status: 'SCHEDULED', ...sportPlay(Sport.GOLF) }],
+    sportEvents,
     sport: 'GOLF',
     entryCount,
     entriesPerContest: null as number | null,

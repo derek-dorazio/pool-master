@@ -44,6 +44,7 @@ import {
   type SportEventTierSlot,
   type SportEventParticipant,
   type TieredContestRules,
+  currentCoveredSlot,
 } from '@poolmaster/shared/domain';
 import type {
   ContestConfigurationRepository,
@@ -67,7 +68,7 @@ import {
   type LockedEntryPick,
 } from '../contest-entry-picks';
 import type { ContestService, EntrySubmittedReceiptInput } from '../contests/service';
-import { areEventPicksOpen, areEventPicksRevealed, currentContestEvent } from '../contests/entry-window';
+import { areEventPicksOpen, areEventPicksRevealed } from '../contests/entry-window';
 import type { SportEventTierGroup, SportEventTierService, TierSetChoice } from '../events/sport-event-tier-service';
 import { selectionErrors, type SelectionError } from './selection-errors';
 import {
@@ -714,12 +715,13 @@ export class SelectionService {
     const eventsById = new Map(
       (await this.deps.sportEvents.findByIds(contest.sportEventIds)).map((event) => [event.id, event]),
     );
-    const contestEvents = contest.sportEventIds.flatMap((id) => eventsById.get(id) ?? []);
     const requested = requestedSportEventId === undefined ? undefined : eventsById.get(requestedSportEventId);
     if (requestedSportEventId !== undefined && !requested && !options?.fallBackToCurrent) {
       throw selectionErrors.eventNotInContest(requestedSportEventId, contestId);
     }
-    const sportEvent = requested ?? currentContestEvent(contestEvents, now);
+    // With none named, the event of the slot the contest's pages open on (#2014).
+    const currentSlotEventId = currentCoveredSlot(contest.coveredSlots, eventsById, now)?.sportEventId;
+    const sportEvent = requested ?? (currentSlotEventId ? eventsById.get(currentSlotEventId) : undefined);
     if (!sportEvent) {
       throw selectionErrors.contestHasNoEvent(contestId);
     }

@@ -16316,10 +16316,6 @@ export type ContestSportEventDto = {
      */
     sportEventId: string;
     /**
-     * The event's place in the contest, 1 first: the contest's events in start-date order.
-     */
-    sequence: number;
-    /**
      * The event's name.
      */
     name: string;
@@ -16350,13 +16346,71 @@ export type ContestSportEventDto = {
 };
 
 /**
- * Request payload for setting the events a contest covers.
+ * Request payload for changing the event and starting slot of a contest still in Set up.
  */
-export type SetContestSportEventsRequest = {
+export type SetContestCoverageRequest = {
     /**
-     * Every event the contest should cover: the ones it keeps and the ones added. An event left out is removed. Kept in start-date order.
+     * The events the contest covers instead, as at create: from the contest's sport league and Season, each released, with its field loaded and not yet started.
      */
     sportEventIds: Array<string>;
+    /**
+     * The Season slot the contest starts at, as at create. Left out, the events' first slot the template lists.
+     */
+    startingSlotId?: string;
+};
+
+/**
+ * One Season slot a contest covers (#2014): what a screen names it by, its status and the event that plays it.
+ */
+export type ContestCoveredSlotDto = {
+    /**
+     * The Season slot (SportLeagueSeasonSlotDto.id).
+     */
+    seasonSlotId: string;
+    /**
+     * Its slot definition (SportLeagueCompetitionSlot).
+     */
+    slotDefinitionId: string;
+    /**
+     * The definition's code in its league, such as WEEK_14, FINAL or MASTERS. An identifier; nothing parses it.
+     */
+    key: string;
+    /**
+     * The league's proper name for the slot, such as "Super Bowl", or a test slot's label; null: screens use the word for its kind.
+     */
+    name: string | null;
+    /**
+     * What kind of slot it is: a WEEK of games, a postseason ROUND, a TOURNAMENT of its own, a PLAY_IN.
+     */
+    slotKind: 'WEEK' | 'PLAY_IN' | 'ROUND_OF_64' | 'ROUND_OF_32' | 'ROUND_OF_16' | 'QUARTERFINAL' | 'SEMIFINAL' | 'THIRD_PLACE' | 'FINAL' | 'TOURNAMENT';
+    /**
+     * For a WEEK slot, its week; null otherwise.
+     */
+    weekNumber: number | null;
+    /**
+     * The Season slot's own status.
+     */
+    status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
+    /**
+     * The earliest start of the slot's games; null until the sync has placed one.
+     */
+    startsAt: string | null;
+    /**
+     * The latest end of the slot's games; null until the sync has placed one.
+     */
+    endsAt: string | null;
+    /**
+     * The event that plays the slot, one of the contest's `sportEvents`; null until an event does.
+     */
+    sportEventId: string | null;
+    /**
+     * The competition the slot is in, such as REGULAR or CFP; nothing parses it.
+     */
+    competitionCode: string;
+    /**
+     * That competition's name, such as "Bowls", when it has one.
+     */
+    competitionName: string | null;
 };
 
 /**
@@ -16430,17 +16484,13 @@ export type ContestDto = {
     selectionType: 'TIERED' | 'BUDGET_PICK' | 'RANDOM_DRAW' | 'PICK_EM' | 'BRACKET' | 'SURVIVOR' | 'SQUARES';
     leagueId: string;
     /**
-     * The events the contest covers, in sequence order (#713). One for a golf or race contest.
+     * The events that play the contest's covered slots, each once, in the order their slots are played (#713). One for a golf or race contest.
      */
     sportEvents: Array<{
         /**
          * The event.
          */
         sportEventId: string;
-        /**
-         * The event's place in the contest, 1 first: the contest's events in start-date order.
-         */
-        sequence: number;
         /**
          * The event's name.
          */
@@ -16470,6 +16520,63 @@ export type ContestDto = {
          */
         tierSetSeasonSlotId?: string | null;
     }>;
+    /**
+     * The Season slots the contest covers, in play order (#2014), fixed at creation.
+     */
+    coveredSlots: Array<{
+        /**
+         * The Season slot (SportLeagueSeasonSlotDto.id).
+         */
+        seasonSlotId: string;
+        /**
+         * Its slot definition (SportLeagueCompetitionSlot).
+         */
+        slotDefinitionId: string;
+        /**
+         * The definition's code in its league, such as WEEK_14, FINAL or MASTERS. An identifier; nothing parses it.
+         */
+        key: string;
+        /**
+         * The league's proper name for the slot, such as "Super Bowl", or a test slot's label; null: screens use the word for its kind.
+         */
+        name: string | null;
+        /**
+         * What kind of slot it is: a WEEK of games, a postseason ROUND, a TOURNAMENT of its own, a PLAY_IN.
+         */
+        slotKind: 'WEEK' | 'PLAY_IN' | 'ROUND_OF_64' | 'ROUND_OF_32' | 'ROUND_OF_16' | 'QUARTERFINAL' | 'SEMIFINAL' | 'THIRD_PLACE' | 'FINAL' | 'TOURNAMENT';
+        /**
+         * For a WEEK slot, its week; null otherwise.
+         */
+        weekNumber: number | null;
+        /**
+         * The Season slot's own status.
+         */
+        status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
+        /**
+         * The earliest start of the slot's games; null until the sync has placed one.
+         */
+        startsAt: string | null;
+        /**
+         * The latest end of the slot's games; null until the sync has placed one.
+         */
+        endsAt: string | null;
+        /**
+         * The event that plays the slot, one of the contest's `sportEvents`; null until an event does.
+         */
+        sportEventId: string | null;
+        /**
+         * The competition the slot is in, such as REGULAR or CFP; nothing parses it.
+         */
+        competitionCode: string;
+        /**
+         * That competition's name, such as "Bowls", when it has one.
+         */
+        competitionName: string | null;
+    }>;
+    /**
+     * The covered slot the contest's pages open on when none is named (#2014): its first covered slot that has not started, the one being picked, else its last. A slot has started once its event has and, when its games give it a start, that start has passed. Null only for a contest that covers no slot.
+     */
+    currentSlotId: string | null;
     sport?: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS' | null;
     /**
      * The URL segment of the contest's sport, read through its events' sport league: what a link to its sport's How to Play names it by. Null or absent as `sport` is.
@@ -17324,17 +17431,13 @@ export type ContestResponse = {
         selectionType: 'TIERED' | 'BUDGET_PICK' | 'RANDOM_DRAW' | 'PICK_EM' | 'BRACKET' | 'SURVIVOR' | 'SQUARES';
         leagueId: string;
         /**
-         * The events the contest covers, in sequence order (#713). One for a golf or race contest.
+         * The events that play the contest's covered slots, each once, in the order their slots are played (#713). One for a golf or race contest.
          */
         sportEvents: Array<{
             /**
              * The event.
              */
             sportEventId: string;
-            /**
-             * The event's place in the contest, 1 first: the contest's events in start-date order.
-             */
-            sequence: number;
             /**
              * The event's name.
              */
@@ -17364,6 +17467,63 @@ export type ContestResponse = {
              */
             tierSetSeasonSlotId?: string | null;
         }>;
+        /**
+         * The Season slots the contest covers, in play order (#2014), fixed at creation.
+         */
+        coveredSlots: Array<{
+            /**
+             * The Season slot (SportLeagueSeasonSlotDto.id).
+             */
+            seasonSlotId: string;
+            /**
+             * Its slot definition (SportLeagueCompetitionSlot).
+             */
+            slotDefinitionId: string;
+            /**
+             * The definition's code in its league, such as WEEK_14, FINAL or MASTERS. An identifier; nothing parses it.
+             */
+            key: string;
+            /**
+             * The league's proper name for the slot, such as "Super Bowl", or a test slot's label; null: screens use the word for its kind.
+             */
+            name: string | null;
+            /**
+             * What kind of slot it is: a WEEK of games, a postseason ROUND, a TOURNAMENT of its own, a PLAY_IN.
+             */
+            slotKind: 'WEEK' | 'PLAY_IN' | 'ROUND_OF_64' | 'ROUND_OF_32' | 'ROUND_OF_16' | 'QUARTERFINAL' | 'SEMIFINAL' | 'THIRD_PLACE' | 'FINAL' | 'TOURNAMENT';
+            /**
+             * For a WEEK slot, its week; null otherwise.
+             */
+            weekNumber: number | null;
+            /**
+             * The Season slot's own status.
+             */
+            status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
+            /**
+             * The earliest start of the slot's games; null until the sync has placed one.
+             */
+            startsAt: string | null;
+            /**
+             * The latest end of the slot's games; null until the sync has placed one.
+             */
+            endsAt: string | null;
+            /**
+             * The event that plays the slot, one of the contest's `sportEvents`; null until an event does.
+             */
+            sportEventId: string | null;
+            /**
+             * The competition the slot is in, such as REGULAR or CFP; nothing parses it.
+             */
+            competitionCode: string;
+            /**
+             * That competition's name, such as "Bowls", when it has one.
+             */
+            competitionName: string | null;
+        }>;
+        /**
+         * The covered slot the contest's pages open on when none is named (#2014): its first covered slot that has not started, the one being picked, else its last. A slot has started once its event has and, when its games give it a start, that start has passed. Null only for a contest that covers no slot.
+         */
+        currentSlotId: string | null;
         sport?: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS' | null;
         /**
          * The URL segment of the contest's sport, read through its events' sport league: what a link to its sport's How to Play names it by. Null or absent as `sport` is.
@@ -17429,17 +17589,13 @@ export type ContestListResponse = {
         selectionType: 'TIERED' | 'BUDGET_PICK' | 'RANDOM_DRAW' | 'PICK_EM' | 'BRACKET' | 'SURVIVOR' | 'SQUARES';
         leagueId: string;
         /**
-         * The events the contest covers, in sequence order (#713). One for a golf or race contest.
+         * The events that play the contest's covered slots, each once, in the order their slots are played (#713). One for a golf or race contest.
          */
         sportEvents: Array<{
             /**
              * The event.
              */
             sportEventId: string;
-            /**
-             * The event's place in the contest, 1 first: the contest's events in start-date order.
-             */
-            sequence: number;
             /**
              * The event's name.
              */
@@ -17469,6 +17625,63 @@ export type ContestListResponse = {
              */
             tierSetSeasonSlotId?: string | null;
         }>;
+        /**
+         * The Season slots the contest covers, in play order (#2014), fixed at creation.
+         */
+        coveredSlots: Array<{
+            /**
+             * The Season slot (SportLeagueSeasonSlotDto.id).
+             */
+            seasonSlotId: string;
+            /**
+             * Its slot definition (SportLeagueCompetitionSlot).
+             */
+            slotDefinitionId: string;
+            /**
+             * The definition's code in its league, such as WEEK_14, FINAL or MASTERS. An identifier; nothing parses it.
+             */
+            key: string;
+            /**
+             * The league's proper name for the slot, such as "Super Bowl", or a test slot's label; null: screens use the word for its kind.
+             */
+            name: string | null;
+            /**
+             * What kind of slot it is: a WEEK of games, a postseason ROUND, a TOURNAMENT of its own, a PLAY_IN.
+             */
+            slotKind: 'WEEK' | 'PLAY_IN' | 'ROUND_OF_64' | 'ROUND_OF_32' | 'ROUND_OF_16' | 'QUARTERFINAL' | 'SEMIFINAL' | 'THIRD_PLACE' | 'FINAL' | 'TOURNAMENT';
+            /**
+             * For a WEEK slot, its week; null otherwise.
+             */
+            weekNumber: number | null;
+            /**
+             * The Season slot's own status.
+             */
+            status: 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
+            /**
+             * The earliest start of the slot's games; null until the sync has placed one.
+             */
+            startsAt: string | null;
+            /**
+             * The latest end of the slot's games; null until the sync has placed one.
+             */
+            endsAt: string | null;
+            /**
+             * The event that plays the slot, one of the contest's `sportEvents`; null until an event does.
+             */
+            sportEventId: string | null;
+            /**
+             * The competition the slot is in, such as REGULAR or CFP; nothing parses it.
+             */
+            competitionCode: string;
+            /**
+             * That competition's name, such as "Bowls", when it has one.
+             */
+            competitionName: string | null;
+        }>;
+        /**
+         * The covered slot the contest's pages open on when none is named (#2014): its first covered slot that has not started, the one being picked, else its last. A slot has started once its event has and, when its games give it a start, that start has passed. Null only for a contest that covers no slot.
+         */
+        currentSlotId: string | null;
         sport?: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS' | null;
         /**
          * The URL segment of the contest's sport, read through its events' sport league: what a link to its sport's How to Play names it by. Null or absent as `sport` is.
@@ -36586,6 +36799,54 @@ export type OpenContestResponses = {
 
 export type OpenContestResponse = OpenContestResponses[keyof OpenContestResponses];
 
+export type SetContestCoverageData = {
+    body: SetContestCoverageRequest;
+    path: {
+        id: string;
+        contestId: string;
+    };
+    query?: never;
+    url: '/api/v1/leagues/{id}/contest-management/contests/{contestId}/coverage';
+};
+
+export type SetContestCoverageErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    400: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    401: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    403: ErrorEnvelope;
+    /**
+     * CONTEST_NOT_FOUND, or SPORT_EVENT_NOT_FOUND for an event that does not exist.
+     */
+    404: ErrorEnvelope;
+    /**
+     * CONTEST_EVENTS_LOCKED — the contest is no longer in Set up (checked again under the contest row lock), or it is a squares contest, whose event came with its game. CONTEST_BUDGET_SALARY_CAP_MISMATCH, CONTEST_EVENT_NOT_PRICED or CONTEST_BUDGET_UNFILLABLE — budget rules the new events cannot fill.
+     */
+    409: ErrorEnvelope;
+    /**
+     * SPORT_EVENT_NOT_RELEASED, SPORT_EVENT_FIELD_NOT_LOADED or SPORT_EVENT_ALREADY_STARTED — an event contests cannot be built on. CONTEST_EVENTS_LEAGUE_MISMATCH — an event from another sport league. CONTEST_EVENTS_SEASON_MISMATCH — an event of another Season than the contest's, fixed at creation. CONTEST_COVERAGE_NO_LISTED_SLOT, CONTEST_COVERAGE_SLOT_NOT_CHOSEN or CONTEST_COVERAGE_SLOT_NOT_COVERABLE — the events and starting slot do not give the template a slot to cover, as at create. CONTEST_DRAW_SINGLE_EVENT, CONTEST_BRACKET_SINGLE_EVENT or CONTEST_SQUARES_SINGLE_EVENT — a one-event contest given more. CONTEST_TIER_FIELD_OUT_OF_RANGE or CONTEST_SCORING_ROUNDS_MISMATCH — the rules do not fit the new event. CONTEST_EVENT_HAS_NO_GAMES, CONTEST_EVENT_GAME_UNDECIDED or CONTEST_EVENT_SPREAD_MISSING — a week that cannot be picked under the pick'em rules.
+     */
+    422: ErrorEnvelope;
+};
+
+export type SetContestCoverageError = SetContestCoverageErrors[keyof SetContestCoverageErrors];
+
+export type SetContestCoverageResponses = {
+    /**
+     * Managed-contest detail response.
+     */
+    200: ContestManagementResponse;
+};
+
+export type SetContestCoverageResponse = SetContestCoverageResponses[keyof SetContestCoverageResponses];
+
 export type SetContestCupWeightData = {
     body: SetContestCupWeightRequest;
     path: {
@@ -36629,54 +36890,6 @@ export type SetContestCupWeightResponses = {
 };
 
 export type SetContestCupWeightResponse = SetContestCupWeightResponses[keyof SetContestCupWeightResponses];
-
-export type SetContestSportEventsData = {
-    body: SetContestSportEventsRequest;
-    path: {
-        id: string;
-        contestId: string;
-    };
-    query?: never;
-    url: '/api/v1/leagues/{id}/contest-management/contests/{contestId}/sport-events';
-};
-
-export type SetContestSportEventsErrors = {
-    /**
-     * Standard API error envelope.
-     */
-    400: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    401: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    403: ErrorEnvelope;
-    /**
-     * CONTEST_NOT_FOUND, or SPORT_EVENT_NOT_FOUND for an event that does not exist.
-     */
-    404: ErrorEnvelope;
-    /**
-     * CONTEST_EVENTS_LOCKED — an event would be removed after one of the contest's events started, or the contest is COMPLETED or drawn. CONTEST_BUDGET_SALARY_CAP_MISMATCH — a budget contest's events were priced against different salary caps, or an open one's new event against another cap than its entries were built under. CONTEST_EVENT_NOT_PRICED or CONTEST_BUDGET_UNFILLABLE — budget rules an added event cannot fill.
-     */
-    409: ErrorEnvelope;
-    /**
-     * SPORT_EVENT_NOT_RELEASED, SPORT_EVENT_FIELD_NOT_LOADED or SPORT_EVENT_ALREADY_STARTED — an added event is not one contests can be built on. CONTEST_EVENTS_LEAGUE_MISMATCH — an event from another sport league. CONTEST_EVENTS_SEASON_MISMATCH — an event of another Season than the contest's, fixed at creation. CONTEST_COVERAGE_NO_LISTED_SLOT — the events hold none of the slots the contest's template lists. CONTEST_DRAW_SINGLE_EVENT — a random-draw contest given more than one event. CONTEST_BRACKET_SINGLE_EVENT — a bracket contest given more than one event. CONTEST_SQUARES_SINGLE_EVENT — a squares contest given more than one event. CONTEST_TIER_FIELD_OUT_OF_RANGE or CONTEST_SCORING_ROUNDS_MISMATCH — the rules do not fit an added event. CONTEST_EVENT_HAS_NO_GAMES, CONTEST_EVENT_GAME_UNDECIDED or CONTEST_EVENT_SPREAD_MISSING — an added week cannot be picked under the pick'em rules. CONTEST_SPREAD_NOT_OFFERED — a pick'em pool against the spread in a sport whose pools have no spread (#792).
-     */
-    422: ErrorEnvelope;
-};
-
-export type SetContestSportEventsError = SetContestSportEventsErrors[keyof SetContestSportEventsErrors];
-
-export type SetContestSportEventsResponses = {
-    /**
-     * Managed-contest detail response.
-     */
-    200: ContestManagementResponse;
-};
-
-export type SetContestSportEventsResponse = SetContestSportEventsResponses[keyof SetContestSportEventsResponses];
 
 export type DeleteContestData = {
     body?: never;
