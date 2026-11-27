@@ -34,8 +34,8 @@ describe('check-retired-names', () => {
     assert.deepEqual(compareWithBaseline({ a: 1 }, { a: 1 }, {}).unowned, ['a']);
   });
 
-  it('only lowers entries when updating, and drops a name that reaches no uses', () => {
-    assert.deepEqual(ratchetBaseline({ a: 5, b: 0, c: 1 }, { a: 2, b: 3, c: 4 }), { a: 2, c: 1 });
+  it('only lowers entries when updating, and keeps a name that reaches no uses at 0 so it cannot come back', () => {
+    assert.deepEqual(ratchetBaseline({ a: 5, b: 0, c: 1, d: 0 }, { a: 2, b: 3, c: 4, d: 0 }), { a: 2, b: 0, c: 1, d: 0 });
   });
 
   it('keeps the comment and the owners apart from the counts', () => {
