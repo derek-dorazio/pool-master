@@ -1063,9 +1063,14 @@ export async function cleanupTestData(): Promise<void> {
   // foreign keys to the league's slot, competition and phase definitions, so they clear first (#2010: tests put events in
   // Season slots). A test's Season slot in a seeded league goes too.
   // A test's synced-slot template (`syncSlotsFor`) is no reference data: it goes, so its league does.
+  // A contest's configuration restricts its template's delete (#2014): the contests made from it go first.
+  await prisma.contest.deleteMany({ where: { configuration: { template: { templateKey: COVERING_TEMPLATE_KEY } } } });
   await prisma.contestConfigTemplate.deleteMany({ where: { templateKey: COVERING_TEMPLATE_KEY } });
   const testLeagues = { contestConfigTemplates: { none: {} }, displayOrder: null };
   const testLeagueIds = (await prisma.sportLeague.findMany({ where: testLeagues, select: { id: true } })).map(({ id }) => id);
+  // A contest and a cup are in a Season of their league (#2014), whose delete they restrict.
+  await prisma.contest.deleteMany({ where: { sportLeagueSeason: { sportLeagueId: { in: testLeagueIds } } } });
+  await prisma.cup.deleteMany({ where: { sportLeagueId: { in: testLeagueIds } } });
   // A synced event's copy of a seeded league's test definition (`testSlotIdIn`, isTestData false)
   // goes too, with its synced Season slot, so the seeded league keeps only its own definitions.
   const copiedDefinitionIds = (await prisma.sportLeagueCompetitionSlot.findMany({ where: { key: { startsWith: SYNCED_SLOT_KEY_PREFIX } }, select: { id: true } })).map(({ id }) => id);

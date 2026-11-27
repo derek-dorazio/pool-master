@@ -34,7 +34,7 @@ async function seedContest(leagueId: string, status: ContestStatus, sportEventId
   const prisma = getPrisma();
   const coverage = await contestOnEvents(prisma, sportEventIds);
   const { sportLeagueId } = await prisma.sportLeagueSeason.findUniqueOrThrow({ where: { id: coverage.sportLeagueSeasonId }, select: { sportLeagueId: true } });
-  const templateId = await fixtureTemplateId(prisma, { sportLeagueId, selectionType: 'TIERED', contestFormat: 'ROSTER', configJson: { selectionType: 'TIERED' } });
+  const templateId = await fixtureTemplateId(prisma, { sportLeagueId, selectionType: 'TIERED' });
   return prisma.contest.create({
     data: {
       leagueId,

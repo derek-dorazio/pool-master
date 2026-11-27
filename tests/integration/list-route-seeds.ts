@@ -59,10 +59,12 @@ interface EventOptions {
   status?: SportEventStatus;
   /** Its series in a golf sports league of its own instead of the shared fixture tour, so a read per sports league scales too. */
   ownSportLeague?: boolean;
+  /** The Season it is in: its start's year by default. A contest's events share one Season (#2014). */
+  championshipYear?: number;
 }
 
 /** A golf event with a field of `golfers`. */
-export async function seedEventWithField(golfers: number, { startsInDays = 30, status = SportEventStatus.SCHEDULED, ownSportLeague = false }: EventOptions = {}) {
+export async function seedEventWithField(golfers: number, { startsInDays = 30, status = SportEventStatus.SCHEDULED, ownSportLeague = false, championshipYear }: EventOptions = {}) {
   const prisma = getPrisma();
   const suffix = randomUUID().slice(0, 8);
   const sport = await prisma.sport.upsert({
@@ -74,7 +76,7 @@ export async function seedEventWithField(golfers: number, { startsInDays = 30, s
   const tour = ownSportLeague
     ? await prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `Scaling Tour ${suffix}` } })
     : undefined;
-  const edition = await freshEventEdition(prisma, { championshipYear: startDate.getUTCFullYear(), sportLeagueId: tour?.id });
+  const edition = await freshEventEdition(prisma, { championshipYear: championshipYear ?? startDate.getUTCFullYear(), sportLeagueId: tour?.id });
   // The field's golfers belong to the event's sport league (#1853).
   const { sportLeagueId } = edition;
   const event = await prisma.sportEvent.create({

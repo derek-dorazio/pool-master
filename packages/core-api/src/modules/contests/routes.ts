@@ -113,14 +113,14 @@ export function contestsModule(fastify: FastifyInstance, opts: MailModuleOptions
       tags: ['Contests'],
       summary: 'Create a new contest in a league',
       description:
-        'The one way a contest is created. Name a template, supply a configuration, or both: the template seeds the configuration and `configuration` replaces it. A request with neither is refused with 400 CONTEST_CONFIGURATION_REQUIRED — there is no platform default. A template that names a sport league (that league\'s own preset) makes contests only for that league\'s events: 422 CONTEST_CONFIG_TEMPLATE_LEAGUE_MISMATCH otherwise. Commissioners of the league only.',
+        'The one way a contest is created, always from a template (#2014): the template seeds the configuration, and `configuration` replaces its rules. A request naming no template is refused with 400 CONTEST_CONFIGURATION_REQUIRED — there is no platform default. The contest covers the template\'s listed slots among its events\' Season slots, as the template\'s coverage mode allows, fixed at creation: `startingSlotId` chooses the slot a one-slot or from-slot template starts at. A template that names a sport league (that league\'s own preset) makes contests only for that league\'s events: 422 CONTEST_CONFIG_TEMPLATE_LEAGUE_MISMATCH otherwise. Commissioners of the league only.',
       operationId: 'createContest',
       body: schemaRef('CreateContestRequest'),
       response: {
         201: schemaRef('ContestResponse'),
         400: {
           ...schemaRef('ErrorEnvelope'),
-          description: 'CONTEST_CONFIGURATION_REQUIRED when neither `templateId` nor `configuration` is supplied; otherwise a request that does not match the schema.',
+          description: 'CONTEST_CONFIGURATION_REQUIRED when no `templateId` is supplied; otherwise a request that does not match the schema.',
         },
         401: schemaRef('ErrorEnvelope'),
         403: schemaRef('ErrorEnvelope'),
@@ -130,7 +130,7 @@ export function contestsModule(fastify: FastifyInstance, opts: MailModuleOptions
         },
         422: {
           ...schemaRef('ErrorEnvelope'),
-          description: 'The event, format or template cannot make this contest. The event: SPORT_EVENT_NOT_FOUND, SPORT_EVENT_NOT_RELEASED, SPORT_EVENT_FIELD_NOT_LOADED, SPORT_EVENT_ALREADY_STARTED. The format: CONTEST_FORMAT_NOT_ALLOWED. The games of a pick\'em or survivor contest: CONTEST_EVENT_HAS_NO_GAMES, CONTEST_EVENT_GAME_UNDECIDED, or CONTEST_EVENT_SPREAD_MISSING (a pick\'em pool against the spread on a week with a game lacking its spread). CONTEST_SPREAD_NOT_OFFERED: a pick\'em pool against the spread in a sport whose pools have no spread (#792). The selection type: CONTEST_SELECTION_TYPE_NOT_ALLOWED (the event\'s sport does not offer it). The configuration: CONTEST_RULES_SELECTION_TYPE_MISMATCH (rules of another selection type than the contest\'s), CONTEST_TIER_FIELD_OUT_OF_RANGE, CONTEST_BUDGET_FIELD_OUT_OF_RANGE (counted scores above the roster size), CONTEST_CONFIGURATION_INVALID (template missing, inactive, or for another format or selection type), or CONTEST_CONFIG_TEMPLATE_LEAGUE_MISMATCH (the template is one sport league\'s own preset and the event belongs to another league; a template with no sport league is offered for every league of its sport).',
+          description: 'The event, format or template cannot make this contest. The event: SPORT_EVENT_NOT_FOUND, SPORT_EVENT_NOT_RELEASED, SPORT_EVENT_FIELD_NOT_LOADED, SPORT_EVENT_ALREADY_STARTED. The format: CONTEST_FORMAT_NOT_ALLOWED. The games of a pick\'em or survivor contest: CONTEST_EVENT_HAS_NO_GAMES, CONTEST_EVENT_GAME_UNDECIDED, or CONTEST_EVENT_SPREAD_MISSING (a pick\'em pool against the spread on a week with a game lacking its spread). CONTEST_SPREAD_NOT_OFFERED: a pick\'em pool against the spread in a sport whose pools have no spread (#792). The selection type: CONTEST_SELECTION_TYPE_NOT_ALLOWED (the event\'s sport does not offer it). The coverage: CONTEST_COVERAGE_NO_LISTED_SLOT (the events hold none of the slots the template lists), CONTEST_COVERAGE_SLOT_NOT_CHOSEN (a one-slot template lists several of them and no `startingSlotId` chooses one), CONTEST_COVERAGE_SLOT_NOT_COVERABLE (`startingSlotId` is not a listed slot of the events). The configuration: CONTEST_RULES_SELECTION_TYPE_MISMATCH (rules of another selection type than the contest\'s), CONTEST_TIER_FIELD_OUT_OF_RANGE, CONTEST_BUDGET_FIELD_OUT_OF_RANGE (counted scores above the roster size), CONTEST_CONFIGURATION_INVALID (template missing, inactive, or for another format or selection type), or CONTEST_CONFIG_TEMPLATE_LEAGUE_MISMATCH (the template is one sport league\'s own preset and the event belongs to another league; a template with no sport league is offered for every league of its sport).',
         },
       },
     },

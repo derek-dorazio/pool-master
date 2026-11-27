@@ -31,6 +31,7 @@ import { participantLeagueId } from '../../support/participant-league';
 import { sportRowKeys } from '../../support/sport-rows';
 import { fixtureSeasonId } from '../../support/event-edition';
 import { sportPlay } from '../../support/sport-play';
+import { templateForEvent } from '../../support/contest-rows';
 
 // No api-routes manifest entry for the new template list (the manifest is not extended without
 // approval); the literal is the published path.
@@ -53,6 +54,7 @@ describe('Contest management integration', () => {
   let sportId: string;
   let pgaTourId: string;
   let sportEventId: string;
+  let templateIds: Record<'TIERED' | 'BUDGET_PICK', string>;
   let contestId: string;
   let topParticipantId: string;
   let secondParticipantId: string;
@@ -142,6 +144,11 @@ describe('Contest management integration', () => {
       },
     });
     sportEventId = sportEvent.id;
+    // Every contest is made from a template and covers a slot it lists (#2014): the event plays one.
+    templateIds = {
+      TIERED: await templateForEvent(prisma, sportEventId, SelectionType.TIERED),
+      BUDGET_PICK: await templateForEvent(prisma, sportEventId, SelectionType.BUDGET_PICK),
+    };
 
     const topEventParticipant = await prisma.sportEventParticipant.create({
       data: {
@@ -205,6 +212,7 @@ describe('Contest management integration', () => {
         sportEventIds: [sportEventId],
         contestFormat: 'ROSTER',
         selectionType: 'TIERED',
+        templateId: templateIds.TIERED,
         configuration: {
           maxEntriesPerSquad: 3,
           selectionType: SelectionType.TIERED,
@@ -389,6 +397,7 @@ describe('Contest management integration', () => {
         sportEventIds: [sportEventId],
         contestFormat: 'ROSTER',
         selectionType: 'TIERED',
+        templateId: templateIds.TIERED,
         configuration: {
           selectionType: 'BUDGET_PICK',
         },
@@ -430,6 +439,7 @@ describe('Contest management integration', () => {
         sportEventIds: [sportEventId],
         contestFormat: 'ROSTER',
         selectionType: 'LAST_MAN_STANDING',
+        templateId: templateIds.TIERED,
         configuration: { selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 4 },
       },
     });
@@ -448,6 +458,7 @@ describe('Contest management integration', () => {
         sportEventIds: [sportEventId],
         contestFormat: 'ROSTER',
         selectionType: 'PICK_EM',
+        templateId: templateIds.TIERED,
         configuration: { selectionType: 'PICK_EM', mode: 'STRAIGHT_UP', againstTheSpread: false },
       },
     });
@@ -467,6 +478,7 @@ describe('Contest management integration', () => {
         sportEventIds: [sportEventId],
         contestFormat: 'ROSTER',
         selectionType: 'BUDGET_PICK',
+        templateId: templateIds.BUDGET_PICK,
         configuration: { selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 4 },
       },
     });
@@ -535,6 +547,7 @@ describe('Contest management integration', () => {
         sportEventIds: [sportEventId],
         contestFormat: 'ROSTER',
         selectionType: 'BUDGET_PICK',
+        templateId: templateIds.BUDGET_PICK,
         configuration: { selectionType: SelectionType.BUDGET_PICK, rosterSize: 6, countedScores: 4 },
       },
     });
@@ -599,6 +612,7 @@ describe('Contest management integration', () => {
           sportEventIds: [sportEventId],
           contestFormat: 'ROSTER',
           selectionType: 'TIERED',
+          templateId: templateIds.TIERED,
           configuration: { selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 4 },
         },
       });

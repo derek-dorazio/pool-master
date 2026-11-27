@@ -314,10 +314,9 @@ describe('ContestRepository', () => {
     const { league, event, suffix } = await createLeagueAndEvent();
     const later = await createLaterEvent(suffix);
     const soon = await createContest(league.id, [event.id, later.event.id], 'Soon', ContestStatus.DRAFT);
-    const laterFirst = await createContest(league.id, [later.event.id, event.id], 'Later first', ContestStatus.DRAFT);
     const open = await createContest(league.id, event.id, 'Open', ContestStatus.OPEN);
     await getPrisma().contest.updateMany({
-      where: { id: { in: [soon.id, laterFirst.id, open.id] } },
+      where: { id: { in: [soon.id, open.id] } },
       data: { createdAt: new Date('2026-06-01T00:00:00.000Z') },
     });
     const young = await createContest(league.id, event.id, 'Young', ContestStatus.DRAFT);

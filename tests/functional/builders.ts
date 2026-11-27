@@ -253,12 +253,7 @@ export async function seedContestFixture(leagueId: string, options: {
   await prisma.contestConfiguration.create({
     data: {
       contestId: contest.id,
-      templateId: await fixtureTemplateId(prisma, {
-        sportLeagueId: season.sportLeagueId,
-        selectionType: options.selectionType,
-        contestFormat: 'ROSTER',
-        configJson: options.configuration?.configJson ?? {},
-      }),
+      templateId: await fixtureTemplateId(prisma, { sportLeagueId: season.sportLeagueId, selectionType: options.selectionType }),
       selectionType: options.selectionType,
       maxEntriesPerSquad: 1,
       ...options.configuration,

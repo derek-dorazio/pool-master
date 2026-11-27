@@ -141,7 +141,9 @@ async function seedMyEntries({ contests, events }: { contests: number; events: n
   await prisma.squadMembership.create({ data: { squadId: squad.id, leagueId: seeded.league.id, userId: viewer.user.id } });
   for (let index = 0; index < contests; index += 1) {
     const majors = [];
-    for (let event = 0; event < events; event += 1) majors.push(await seedEventWithField(2, { startsInDays: 30 + 7 * event }));
+    // One Season holds a contest's events (#2014), whichever calendar years their weeks fall in.
+    const championshipYear = new Date(Date.now() + 30 * DAY).getUTCFullYear();
+    for (let event = 0; event < events; event += 1) majors.push(await seedEventWithField(2, { startsInDays: 30 + 7 * event, championshipYear }));
     await prisma.contest.create({
       data: {
         leagueId: seeded.league.id,
@@ -768,9 +770,10 @@ describe('A poll of a stored prediction leaderboard (#1435)', () => {
       expect(statementsOn(statements, StatementVerb.SELECT, table)).toEqual([]);
     }
     expect(statementsOn(statements, StatementVerb.SELECT, 'contest_leaderboard_snapshots')).toHaveLength(1);
-    // The contest (9: its sport is read through its events' Season and league since #2042), the reader's squad membership (1; the task keeps the league membership,
-    // #1438) and the snapshot (1): the same 11 for every prediction board, as for a lineup board.
-    expect(statements).toHaveLength(11);
+    // The contest (10: its Season, league and sport, and its covered slots with each one's Season
+    // slot and event slot since #2014), the reader's squad membership (1; the task keeps the league
+    // membership, #1438) and the snapshot (1): the same 12 for every prediction board, as for a lineup board.
+    expect(statements).toHaveLength(12);
   });
 
   it.each([

@@ -58,7 +58,7 @@ import { sportRowKeys } from '../../support/sport-rows';
 import { makeSlotTiebreaker } from '../../support/slot-tiebreaker-rows';
 import { oneEventSlotId } from '../../support/test-slots';
 import { createMatchRow } from '../../support/match-rows';
-import { contestTemplateId, coverEvents } from '../../support/contest-rows';
+import { contestTemplateId, coverEvents, placeEventForTemplate } from '../../support/contest-rows';
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
@@ -633,6 +633,7 @@ describe('Contract verification (web)', () => {
       (template) => template.isDefault,
     );
     if (!defaultTemplate) throw new Error('No default contest template is seeded');
+    await placeEventForTemplate(getPrisma(), sportEvent.id, defaultTemplate.id);
 
     const res = await getApp().inject({
       method: 'POST',

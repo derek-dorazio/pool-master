@@ -43,6 +43,8 @@ beforeEach(() => cleanupTestData());
 /** The templates a case made; templates are reference data the cleanup keeps, so each case removes its own. */
 const madeTemplateIds = new Set<string>();
 afterEach(async () => {
+  // A contest's configuration restricts its template's delete (#2014): the contests made from them go first.
+  await getPrisma().contest.deleteMany({ where: { configuration: { templateId: { in: [...madeTemplateIds] } } } });
   await getPrisma().contestConfigTemplate.deleteMany({ where: { id: { in: [...madeTemplateIds] } } });
   madeTemplateIds.clear();
 });

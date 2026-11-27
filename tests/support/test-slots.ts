@@ -192,11 +192,14 @@ export async function linkTestSlot(
  * the league's cascade cannot take them: they go first, slots before competitions before phases (as the API's delete does).
  */
 export async function deleteTestSportLeagues(
-  prisma: Pick<PrismaClient, 'sportLeague' | 'sportLeagueSeasonPhase' | 'sportLeagueSeasonCompetition' | 'sportLeagueSeasonCompetitionSlot' | 'contestConfigTemplate'>,
+  prisma: Pick<PrismaClient, 'sportLeague' | 'sportLeagueSeasonPhase' | 'sportLeagueSeasonCompetition' | 'sportLeagueSeasonCompetitionSlot' | 'contestConfigTemplate' | 'contest' | 'cup'>,
   sportLeagueIds: readonly string[],
 ): Promise<void> {
   const ids = [...sportLeagueIds];
-  // A fixture contest's template (`fixtureTemplateId`) is its league's, once its contests are gone.
+  // A contest and a cup are in a Season of the league (#2014), whose delete they restrict, and a
+  // contest's configuration restricts its template's: they go first.
+  await prisma.contest.deleteMany({ where: { OR: [{ sportLeagueSeason: { sportLeagueId: { in: ids } } }, { configuration: { template: { sportLeagueId: { in: ids } } } }] } });
+  await prisma.cup.deleteMany({ where: { sportLeagueId: { in: ids } } });
   await prisma.contestConfigTemplate.deleteMany({ where: { sportLeagueId: { in: ids } } });
   await prisma.sportLeagueSeasonCompetitionSlot.deleteMany({ where: { sportLeagueId: { in: ids } } });
   await prisma.sportLeagueSeasonCompetition.deleteMany({ where: { sportLeagueId: { in: ids } } });
