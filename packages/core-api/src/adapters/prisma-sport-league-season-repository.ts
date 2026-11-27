@@ -213,6 +213,24 @@ export class PrismaSportLeagueSeasonRepository implements SportLeagueSeasonRepos
     return rows.flatMap((row) => (row.providerValue === null ? [] : [{ slotDefinitionId: row.sportLeagueCompetitionSlotId, pattern: row.providerValue }]));
   }
 
+  async findSessionTypes(sportLeagueProviderMappingId: string): Promise<string[]> {
+    const rows = await this.prisma.sportLeagueProviderSessionTypeMapping.findMany({
+      where: { sportLeagueProviderMappingId },
+      select: { providerSessionType: true },
+      orderBy: { providerSessionType: 'asc' },
+    });
+    return rows.map((row) => row.providerSessionType);
+  }
+
+  async findEventSessionTypes(sportEventId: string): Promise<string[]> {
+    const rows = await this.prisma.sportLeagueProviderSessionTypeMapping.findMany({
+      where: { sportLeagueProviderMapping: { selectedBy: { is: { sportEvents: { some: { id: sportEventId } } } } } },
+      select: { providerSessionType: true },
+      orderBy: { providerSessionType: 'asc' },
+    });
+    return rows.map((row) => row.providerSessionType);
+  }
+
   async linkNameMatchedSlots(input: NameMatchedSlotsRecord): Promise<{ competitionMissing: string[] }> {
     if (input.links.length === 0 && input.creates.length === 0) return { competitionMissing: [] };
     const { sportLeagueId, sportLeagueSeasonId, sportLeagueProviderMappingId } = input;

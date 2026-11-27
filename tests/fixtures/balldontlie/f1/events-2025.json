@@ -1,0 +1,77 @@
+{
+  "data": [
+    {
+      "id": 1108,
+      "name": "Monaco Grand Prix",
+      "short_name": null,
+      "season": 2025,
+      "start_date": "2025-05-23T11:30:00.000Z",
+      "end_date": "2025-05-25T13:00:00.000Z",
+      "status": "Completed",
+      "status_state": "final",
+      "circuit": {
+        "id": 7,
+        "name": "Circuit de Monaco",
+        "short_name": "Monaco",
+        "location": "Monte Carlo",
+        "country_code": "MC",
+        "country_name": "Monaco"
+      },
+      "location": "Monte Carlo",
+      "country_code": "MC",
+      "country_name": "Monaco"
+    },
+    {
+      "id": 1124,
+      "name": "Abu Dhabi Grand Prix",
+      "short_name": null,
+      "season": 2025,
+      "start_date": "2025-12-05T09:30:00.000Z",
+      "end_date": "2025-12-07T13:00:00.000Z",
+      "status": "Scheduled",
+      "status_state": "scheduled",
+      "circuit": {
+        "id": 21,
+        "name": "Yas Marina Circuit",
+        "short_name": "Yas Marina",
+        "location": "Abu Dhabi",
+        "country_code": "AE",
+        "country_name": "United Arab Emirates"
+      },
+      "location": "Abu Dhabi",
+      "country_code": "AE",
+      "country_name": "United Arab Emirates"
+    },
+    {
+      "id": 1125,
+      "name": "Pre-Season Testing",
+      "short_name": null,
+      "season": 2025,
+      "start_date": "2025-02-26T07:00:00.000Z",
+      "end_date": "2025-02-28T16:00:00.000Z",
+      "status": null,
+      "status_state": "unknown",
+      "circuit": null,
+      "location": null,
+      "country_code": null,
+      "country_name": null
+    },
+    {
+      "id": 1126,
+      "name": "Chinese Grand Prix",
+      "short_name": null,
+      "season": 2025,
+      "start_date": null,
+      "end_date": null,
+      "status": "TBC",
+      "status_state": "scheduled",
+      "circuit": null,
+      "location": "Shanghai",
+      "country_code": "CN",
+      "country_name": "China"
+    }
+  ],
+  "meta": {
+    "per_page": 100
+  }
+}

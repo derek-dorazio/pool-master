@@ -1,0 +1,181 @@
+{
+  "data": [
+    {
+      "id": 5501,
+      "event": {
+        "id": 1108,
+        "name": "Monaco Grand Prix",
+        "short_name": null,
+        "season": 2025,
+        "start_date": "2025-05-23T11:30:00.000Z",
+        "end_date": "2025-05-25T13:00:00.000Z",
+        "status": "Completed",
+        "status_state": "final",
+        "circuit": {
+          "id": 7,
+          "name": "Circuit de Monaco",
+          "short_name": "Monaco",
+          "location": "Monte Carlo",
+          "country_code": "MC",
+          "country_name": "Monaco"
+        },
+        "location": "Monte Carlo",
+        "country_code": "MC",
+        "country_name": "Monaco"
+      },
+      "type": "Practice",
+      "name": "Practice 1",
+      "date": "2025-05-23T11:30:00.000Z",
+      "status": "Completed",
+      "status_state": "final"
+    },
+    {
+      "id": 5502,
+      "event": {
+        "id": 1108,
+        "name": "Monaco Grand Prix",
+        "short_name": null,
+        "season": 2025,
+        "start_date": "2025-05-23T11:30:00.000Z",
+        "end_date": "2025-05-25T13:00:00.000Z",
+        "status": "Completed",
+        "status_state": "final",
+        "circuit": {
+          "id": 7,
+          "name": "Circuit de Monaco",
+          "short_name": "Monaco",
+          "location": "Monte Carlo",
+          "country_code": "MC",
+          "country_name": "Monaco"
+        },
+        "location": "Monte Carlo",
+        "country_code": "MC",
+        "country_name": "Monaco"
+      },
+      "type": "Qualifying",
+      "name": "Qualifying",
+      "date": "2025-05-24T14:00:00.000Z",
+      "status": "Completed",
+      "status_state": "final"
+    },
+    {
+      "id": 5503,
+      "event": {
+        "id": 1108,
+        "name": "Monaco Grand Prix",
+        "short_name": null,
+        "season": 2025,
+        "start_date": "2025-05-23T11:30:00.000Z",
+        "end_date": "2025-05-25T13:00:00.000Z",
+        "status": "Completed",
+        "status_state": "final",
+        "circuit": {
+          "id": 7,
+          "name": "Circuit de Monaco",
+          "short_name": "Monaco",
+          "location": "Monte Carlo",
+          "country_code": "MC",
+          "country_name": "Monaco"
+        },
+        "location": "Monte Carlo",
+        "country_code": "MC",
+        "country_name": "Monaco"
+      },
+      "type": "Race",
+      "name": "Race",
+      "date": "2025-05-25T13:00:00.000Z",
+      "status": "Completed",
+      "status_state": "final"
+    },
+    {
+      "id": 5601,
+      "event": {
+        "id": 1124,
+        "name": "Abu Dhabi Grand Prix",
+        "short_name": null,
+        "season": 2025,
+        "start_date": "2025-12-05T09:30:00.000Z",
+        "end_date": "2025-12-07T13:00:00.000Z",
+        "status": "Scheduled",
+        "status_state": "scheduled",
+        "circuit": {
+          "id": 21,
+          "name": "Yas Marina Circuit",
+          "short_name": "Yas Marina",
+          "location": "Abu Dhabi",
+          "country_code": "AE",
+          "country_name": "United Arab Emirates"
+        },
+        "location": "Abu Dhabi",
+        "country_code": "AE",
+        "country_name": "United Arab Emirates"
+      },
+      "type": "Practice",
+      "name": "Practice 1",
+      "date": "2025-12-05T09:30:00.000Z",
+      "status": "Scheduled",
+      "status_state": "scheduled"
+    },
+    {
+      "id": 5603,
+      "event": {
+        "id": 1124,
+        "name": "Abu Dhabi Grand Prix",
+        "short_name": null,
+        "season": 2025,
+        "start_date": "2025-12-05T09:30:00.000Z",
+        "end_date": "2025-12-07T13:00:00.000Z",
+        "status": "Scheduled",
+        "status_state": "scheduled",
+        "circuit": {
+          "id": 21,
+          "name": "Yas Marina Circuit",
+          "short_name": "Yas Marina",
+          "location": "Abu Dhabi",
+          "country_code": "AE",
+          "country_name": "United Arab Emirates"
+        },
+        "location": "Abu Dhabi",
+        "country_code": "AE",
+        "country_name": "United Arab Emirates"
+      },
+      "type": "Race",
+      "name": "Race",
+      "date": "2025-12-07T13:00:00.000Z",
+      "status": "Scheduled",
+      "status_state": "scheduled"
+    },
+    {
+      "id": 5604,
+      "event": {
+        "id": 1124,
+        "name": "Abu Dhabi Grand Prix",
+        "short_name": null,
+        "season": 2025,
+        "start_date": "2025-12-05T09:30:00.000Z",
+        "end_date": "2025-12-07T13:00:00.000Z",
+        "status": "Scheduled",
+        "status_state": "scheduled",
+        "circuit": {
+          "id": 21,
+          "name": "Yas Marina Circuit",
+          "short_name": "Yas Marina",
+          "location": "Abu Dhabi",
+          "country_code": "AE",
+          "country_name": "United Arab Emirates"
+        },
+        "location": "Abu Dhabi",
+        "country_code": "AE",
+        "country_name": "United Arab Emirates"
+      },
+      "type": "Sprint",
+      "name": "Sprint",
+      "date": null,
+      "status": "TBC",
+      "status_state": "scheduled"
+    }
+  ],
+  "meta": {
+    "per_page": 100
+  }
+}

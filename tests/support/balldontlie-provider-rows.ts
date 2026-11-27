@@ -37,6 +37,7 @@ export const BALLDONTLIE_TEST_LEAGUES: readonly ProviderLeagueSettings[] = [
   league('mlb', 'MLB', Sport.BASEBALL, ProviderWebhookEventSet.GAME_PERIODS, 210, 180),
   league('epl', 'Premier League', Sport.SOCCER, ProviderWebhookEventSet.GAME_HALVES, 90, 120),
   league('worldcup', 'FIFA World Cup', Sport.SOCCER, ProviderWebhookEventSet.GAME_HALVES, 150, 120),
+  league('f1', 'Formula 1', Sport.AUTO_RACING, ProviderWebhookEventSet.NONE, 180, 120),
 ];
 
 /** BALLDONTLIE's row: on, webhooks switched on, every league enabled. */

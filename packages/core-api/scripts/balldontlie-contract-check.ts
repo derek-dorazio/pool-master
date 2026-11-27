@@ -31,7 +31,7 @@ import { countLiveScoreUpdates } from '../src/modules/ingestion/core/live-score-
 import { errorMessageWithCause } from '../src/core/error-message';
 
 /** Each league the adapter reads, by the name of its vendored document, with the name the vendor gives it. */
-const LEAGUES = { pga: 'PGA TOUR', nfl: 'NFL', ncaaf: 'NCAAF', ncaab: 'NCAAB', ncaaw: 'NCAAW', nba: 'NBA', nhl: 'NHL', mlb: 'MLB', wnba: 'WNBA', epl: 'EPL', fifa: 'FIFA' } as const;
+const LEAGUES = { pga: 'PGA TOUR', nfl: 'NFL', ncaaf: 'NCAAF', ncaab: 'NCAAB', ncaaw: 'NCAAW', nba: 'NBA', nhl: 'NHL', mlb: 'MLB', wnba: 'WNBA', epl: 'EPL', fifa: 'FIFA', f1: 'Formula 1' } as const;
 type League = keyof typeof LEAGUES;
 const HEADER_LINES = 3;
 

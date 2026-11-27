@@ -2,10 +2,11 @@
  * Finish position (racing, #622): a runner's contest score is the points its finishing place
  * earns from the contest's points table (`FINISH_POSITION_POINTS`); a non-finisher scores the
  * table's "did not finish" value (score-runner.ts holds every rule). Results are the admin's
- * finishing order, stored as each runner's side result in the race's one FIELD Game (#2008). It takes no live
- * scores: no racing feed exists yet (plans/racing-sports.md Q9.4).
+ * finishing order on a test slot, or the feed's race sessions (#2045), stored as each runner's side
+ * result in the session's FIELD Game (#2008). It accepts RACE live scores.
  */
 import { ScoringFamily } from '@poolmaster/shared/domain';
+import { createRaceResultService } from '../../events/wiring';
 import type { ScoringFamilyModule } from '../scoring-family-module';
 import { isRaceResultOfficial, raceResultOf, scoreRunner } from './score-runner';
 
@@ -25,5 +26,14 @@ export const finishPositionScoringFamily: ScoringFamilyModule = {
     }));
   },
 
-  liveScores: null,
+  liveScores: {
+    category: 'RACE',
+    persist(deps, event, result) {
+      return createRaceResultService(deps.prisma, deps.domainEvents, deps.logger).persistSessionUpdatesForSportEvent(
+        event.id,
+        result.sessions,
+        deps.providerId,
+      );
+    },
+  },
 };

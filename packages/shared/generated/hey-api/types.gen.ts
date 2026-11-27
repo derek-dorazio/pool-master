@@ -32173,7 +32173,7 @@ export type ProviderLeagueDto = {
     /**
      * Which of the provider's webhook events the league sends for its games.
      */
-    webhookEventSet: 'GAME_PERIODS' | 'GAME_HALVES' | 'GOLF_ROUNDS';
+    webhookEventSet: 'GAME_PERIODS' | 'GAME_HALVES' | 'GOLF_ROUNDS' | 'NONE';
     /**
      * How long a game may go between two of its notifications in normal play, in minutes; past it the live-score sweep warns that the webhook may have stopped.
      */
@@ -32259,7 +32259,7 @@ export type ProviderSettingsDto = {
         /**
          * Which of the provider's webhook events the league sends for its games.
          */
-        webhookEventSet: 'GAME_PERIODS' | 'GAME_HALVES' | 'GOLF_ROUNDS';
+        webhookEventSet: 'GAME_PERIODS' | 'GAME_HALVES' | 'GOLF_ROUNDS' | 'NONE';
         /**
          * How long a game may go between two of its notifications in normal play, in minutes; past it the live-score sweep warns that the webhook may have stopped.
          */
@@ -32390,7 +32390,7 @@ export type ProviderSummaryDto = {
             /**
              * Which of the provider's webhook events the league sends for its games.
              */
-            webhookEventSet: 'GAME_PERIODS' | 'GAME_HALVES' | 'GOLF_ROUNDS';
+            webhookEventSet: 'GAME_PERIODS' | 'GAME_HALVES' | 'GOLF_ROUNDS' | 'NONE';
             /**
              * How long a game may go between two of its notifications in normal play, in minutes; past it the live-score sweep warns that the webhook may have stopped.
              */
@@ -32501,7 +32501,7 @@ export type ProviderSettingsResponse = {
             /**
              * Which of the provider's webhook events the league sends for its games.
              */
-            webhookEventSet: 'GAME_PERIODS' | 'GAME_HALVES' | 'GOLF_ROUNDS';
+            webhookEventSet: 'GAME_PERIODS' | 'GAME_HALVES' | 'GOLF_ROUNDS' | 'NONE';
             /**
              * How long a game may go between two of its notifications in normal play, in minutes; past it the live-score sweep warns that the webhook may have stopped.
              */
@@ -32554,7 +32554,7 @@ export type ProviderLeagueResponse = {
         /**
          * Which of the provider's webhook events the league sends for its games.
          */
-        webhookEventSet: 'GAME_PERIODS' | 'GAME_HALVES' | 'GOLF_ROUNDS';
+        webhookEventSet: 'GAME_PERIODS' | 'GAME_HALVES' | 'GOLF_ROUNDS' | 'NONE';
         /**
          * How long a game may go between two of its notifications in normal play, in minutes; past it the live-score sweep warns that the webhook may have stopped.
          */
@@ -32731,7 +32731,7 @@ export type ProviderListResponse = {
                 /**
                  * Which of the provider's webhook events the league sends for its games.
                  */
-                webhookEventSet: 'GAME_PERIODS' | 'GAME_HALVES' | 'GOLF_ROUNDS';
+                webhookEventSet: 'GAME_PERIODS' | 'GAME_HALVES' | 'GOLF_ROUNDS' | 'NONE';
                 /**
                  * How long a game may go between two of its notifications in normal play, in minutes; past it the live-score sweep warns that the webhook may have stopped.
                  */

@@ -1,0 +1,99 @@
+{
+  "data": [
+    {
+      "id": 701,
+      "season": 2025,
+      "driver": {
+        "id": 31,
+        "first_name": "Lando",
+        "last_name": "Norris",
+        "display_name": "Lando Norris",
+        "short_name": "NOR",
+        "country_code": "GB",
+        "country_name": "United Kingdom",
+        "racing_number": "4",
+        "team": {
+          "id": 3,
+          "name": "McLaren",
+          "short_name": "MCL",
+          "country_code": "GB",
+          "country_name": "United Kingdom"
+        }
+      },
+      "position": 1,
+      "points": 423
+    },
+    {
+      "id": 702,
+      "season": 2025,
+      "driver": {
+        "id": 33,
+        "first_name": "Oscar",
+        "last_name": "Piastri",
+        "display_name": "Oscar Piastri",
+        "short_name": "PIA",
+        "country_code": "AU",
+        "country_name": "Australia",
+        "racing_number": "81",
+        "team": {
+          "id": 3,
+          "name": "McLaren",
+          "short_name": "MCL",
+          "country_code": "GB",
+          "country_name": "United Kingdom"
+        }
+      },
+      "position": 2,
+      "points": 410
+    },
+    {
+      "id": 703,
+      "season": 2025,
+      "driver": {
+        "id": 32,
+        "first_name": "Charles",
+        "last_name": "Leclerc",
+        "display_name": "Charles Leclerc",
+        "short_name": "LEC",
+        "country_code": "MC",
+        "country_name": "Monaco",
+        "racing_number": "16",
+        "team": {
+          "id": 4,
+          "name": "Ferrari",
+          "short_name": "FER",
+          "country_code": "IT",
+          "country_name": "Italy"
+        }
+      },
+      "position": 5,
+      "points": 242
+    },
+    {
+      "id": 704,
+      "season": 2025,
+      "driver": {
+        "id": 34,
+        "first_name": "Lewis",
+        "last_name": "Hamilton",
+        "display_name": "Lewis Hamilton",
+        "short_name": "HAM",
+        "country_code": "GB",
+        "country_name": "United Kingdom",
+        "racing_number": "44",
+        "team": {
+          "id": 4,
+          "name": "Ferrari",
+          "short_name": "FER",
+          "country_code": "IT",
+          "country_name": "Italy"
+        }
+      },
+      "position": 6,
+      "points": 156
+    }
+  ],
+  "meta": {
+    "per_page": 100
+  }
+}
