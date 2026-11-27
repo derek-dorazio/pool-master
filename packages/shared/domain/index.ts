@@ -82,6 +82,7 @@ export type {
 export type {
   ContestConfigTemplate,
   ContestConfiguration,
+  ContestConfigurationWrite,
   ParticipantContestScoringRule,
   ParticipantContestScoringRuleCreate,
   SportEvent,

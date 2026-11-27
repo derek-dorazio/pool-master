@@ -517,6 +517,30 @@ describe('SportEventService.importProviderSeason', () => {
     expect(seeded.slotsNeedingDates).toEqual(['FINAL']);
   });
 
+  it('makes no event that crosses competitions: a slate reaching the bowls and the CFP makes the CFP event on the CFP slot alone, and the linked event never takes the bowls slot (#2154)', async () => {
+    const { store, service, sportLeague } = setup();
+    const kickoff = slate[0].startDate;
+    const around = { startsAt: new Date(kickoff.getTime() - 60_000), endsAt: new Date(kickoff.getTime() + 60_000), status: SlotWindowStatus.CONFIRMED };
+    const firstRound = store.addWindowSlot(sportLeague, 'ROUND_OF_16', around);
+    const bowls = store.addWindowSlot(sportLeague, 'BOWLS', { ...around, endsAt: new Date(kickoff.getTime() + 86_400_000) });
+    store.restOfPhaseSlotIds.add(bowls);
+    store.slotCompetitions.set(bowls, 'bowls-competition');
+    store.templateCoveredSlotIds.delete(bowls);
+    const seasonOf = (...teams: string[][]) => ({
+      ...providerEvent('ncaaf-2026', 'College Football Playoff', null, kickoff, kickoff),
+      providerSlots: teams.map((pair, index) => ({ code: null, startsAt: new Date(kickoff.getTime() + index * 3_600_000), endsAt: new Date(kickoff.getTime() + index * 3_600_000), teams: pair })),
+    });
+
+    const made = await service.importProviderSeason(importOf(sportLeague, [seasonOf(['1', '2'], ['8', '9'])]));
+
+    expect(made.created.map(({ slots }) => slots.map((slot) => slot.id))).toEqual([[firstRound]]);
+    store.templateCoveredSlotIds.add(bowls);
+    await service.importProviderSeason(importOf(sportLeague, [seasonOf(['1', '2'], ['8', '9'])]));
+    // Before the seeds are placed both games are the bowls' (the CFP's window places the event, not the game).
+    expect(store.seasonSlots.find((slot) => slot.id === bowls)).toEqual(expect.objectContaining({ startsAt: kickoff, endsAt: new Date(kickoff.getTime() + 3_600_000) }));
+    expect([...store.slotsByEvent.values()].flat().map((slot) => slot.id)).toEqual([firstRound]);
+  });
+
   it('names no slot needing dates for a Season with no slot placed by date window', async () => {
     const { store, service, sportLeague } = setup();
     slotsFor(store, sportLeague, slate);

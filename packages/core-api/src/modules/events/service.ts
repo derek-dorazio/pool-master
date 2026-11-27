@@ -368,7 +368,7 @@ export class SportEventService {
     for (const providerEvent of input.providerEvents) {
       const { externalId, name } = providerEvent;
       const linkedId = linkedIdByExternalId.get(externalId);
-      const { matched, unmatched: missed, unplaced: unplacedGames } = matchProviderSlots(providerEvent.providerSlots, slots, linkedId === undefined ? undefined : fields.get(linkedId));
+      const { matched, unmatched: missed, unplaced: unplacedGames } = matchProviderSlots(providerEvent.providerSlots, slots, () => (linkedId === undefined ? undefined : fields.get(linkedId)) ?? new Set());
       for (const play of missed) {
         // A tournament name matching handled is reported by its name, not again by its code.
         if (!unmatched.has(play.code) && !named.handledCodes.has(play.code)) unmatched.set(play.code, { code: play.code, eventName: name });
@@ -385,26 +385,39 @@ export class SportEventService {
       }
       const free = matched.filter(({ slot }) => !taken.has(slot.seasonSlotId));
       if (linkedId !== undefined) {
-        for (const { slot } of free) {
+        // No event crosses competitions (#2153): a linked event takes only its own competition's slots.
+        const own = new Set(slots.flatMap((slot) => (slot.sportEventId === linkedId ? [slot.seasonCompetitionId] : [])));
+        for (const { slot } of free.filter(({ slot: each }) => own.has(each.seasonCompetitionId))) {
           taken.add(slot.seasonSlotId);
           eventSlots.push({ sportEventId: linkedId, sportLeagueSeasonId: input.sportLeagueSeasonId, seasonSlotId: slot.seasonSlotId });
         }
         skipped.push({ externalId, name, reason: 'ALREADY_LINKED' });
         continue;
       }
-      const reason = unplayableReason(providerEvent, matched, free.map(({ slot }) => slot), now);
-      if (reason !== null) {
-        skipped.push({ externalId, name, reason });
+      // One event per competition its games reach (#2154): a season's slate of college football games
+      // reaches its bowls, its conference title games and its CFP, and no event crosses competitions.
+      const judged = (matched.length === 0 ? [null] : competitionsOf(matched)).map((competitionId) => {
+        const inCompetition = matched.filter(({ slot }) => slot.seasonCompetitionId === competitionId);
+        const freeInCompetition = free.filter(({ slot }) => slot.seasonCompetitionId === competitionId);
+        return { plays: freeInCompetition, reason: unplayableReason(providerEvent, inCompetition, freeInCompetition.map(({ slot }) => slot), now) };
+      });
+      const playable = judged.flatMap(({ plays, reason }) => (reason === null ? [plays] : []));
+      // Nothing to make: the first competition's own reason (a slate that matched nothing has NO_SLOT or ALREADY_STARTED).
+      const [first] = judged;
+      if (playable.length === 0) {
+        skipped.push({ externalId, name, reason: first.reason ?? 'SLOT_TAKEN' });
         continue;
       }
-      for (const { slot } of free) taken.add(slot.seasonSlotId);
-      editions.push(providerEdition({
-        ...providerEvent,
-        sportLeagueId: sportLeague.id,
-        sportLeagueSeasonId: input.sportLeagueSeasonId,
-        providerId: input.providerId,
-        plays: free.map(({ slot, play }) => ({ seasonSlotId: slot.seasonSlotId, startsAt: play.startsAt, endsAt: play.endsAt })),
-      }));
+      for (const plays of playable) {
+        for (const { slot } of plays) taken.add(slot.seasonSlotId);
+        editions.push(providerEdition({
+          ...providerEvent,
+          sportLeagueId: sportLeague.id,
+          sportLeagueSeasonId: input.sportLeagueSeasonId,
+          providerId: input.providerId,
+          plays: plays.map(({ slot, play }) => ({ seasonSlotId: slot.seasonSlotId, startsAt: play.startsAt, endsAt: play.endsAt })),
+        }));
+      }
     }
     const written = await this.createEditions(sportLeague, editions);
     await this.deps.seasons.recordSyncedSlots({ eventSlots, slotDates, confirmedWindows: [...confirmedWindows] });
@@ -1021,6 +1034,11 @@ function providerEdition(
     },
     rounds: schedule,
   };
+}
+
+/** The Season competitions matched slots are in, each once, in the order first matched. */
+function competitionsOf(matched: ReadonlyArray<{ slot: SyncSeasonSlot }>): string[] {
+  return [...new Set(matched.map(({ slot }) => slot.seasonCompetitionId))];
 }
 
 /**

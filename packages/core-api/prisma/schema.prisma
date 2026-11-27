@@ -2859,13 +2859,14 @@ enum PrismaSeasonSlotStatus {
 }
 
 /// How a provider's games are matched to a slot definition (#2002, plan §1 and §6): the code its
-/// adapter reduces a game to, a normalized tournament name, a date window, or the calendar week.
-/// Mirrors the domain `SlotProviderMatchType`.
+/// adapter reduces a game to, a normalized tournament name, a date window, the calendar week, or
+/// the games of a window no other slot places (#2154). Mirrors the domain `SlotProviderMatchType`.
 enum PrismaSlotProviderMatchType {
   PROVIDER_CODE
   NAME_PATTERN
   DATE_WINDOW
   CALENDAR_WEEK
+  REST_OF_PHASE
 }
 
 /// Whether a Season slot's date window is the schedule's published dates or a best guess while
@@ -3005,7 +3006,7 @@ model SportLeagueCompetitionSlot {
 /// a provider value no row names is never synced. Keyed by the league's own provider mapping, so
 /// the slot and the provider league are always the same sport league's. Set by migration; slice 12
 /// adds NAME_PATTERN rows from findings. Database check: `providerValue` is null exactly for
-/// CALENDAR_WEEK and DATE_WINDOW.
+/// CALENDAR_WEEK, DATE_WINDOW and REST_OF_PHASE.
 model SportLeagueCompetitionSlotProviderMapping {
   id                           String                      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   sportLeagueId                String                      @map("sport_league_id") @db.Uuid
@@ -3014,7 +3015,7 @@ model SportLeagueCompetitionSlotProviderMapping {
   matchType                    PrismaSlotProviderMatchType @map("match_type")
   /// What the provider's game is matched on: the adapter's code (`REG:5`, `POST:3`) or a
   /// normalized tournament name. Null for CALENDAR_WEEK, which matches by the global date rule,
-  /// and for DATE_WINDOW, which matches by the Season slot's window.
+  /// and for DATE_WINDOW and REST_OF_PHASE, which match by the Season slot's window.
   providerValue                String?                     @map("provider_value") @db.VarChar(200)
   createdAt                    DateTime                    @default(now()) @map("created_at") @db.Timestamptz
   updatedAt                    DateTime                    @updatedAt @map("updated_at") @db.Timestamptz

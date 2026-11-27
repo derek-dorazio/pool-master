@@ -40,7 +40,7 @@ describe('contest scoring definition', () => {
   // definition's settings schema.
   const configuration = (rules: Array<{ participantScoringDefinitionId: string; config?: unknown; sortOrder: number; active: boolean }>) => ({
     configJson: null,
-    rounds: 4,
+    coverage: { slotDefinitionIds: null },
     participantScoringRules: rules.map((rule) => ({
       sortOrder: rule.sortOrder,
       active: rule.active,
@@ -56,6 +56,7 @@ describe('contest scoring definition', () => {
       ok: true,
       id: 'GOLF_RELATIVE_TO_PAR_TOTAL',
       definition: PARTICIPANT_SCORING_DEFINITIONS.GOLF_RELATIVE_TO_PAR_TOTAL,
+      coverage: { slotDefinitionIds: null },
       scoring: { participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', config: {} },
     });
   });
@@ -207,7 +208,7 @@ describe('settled contest standings — order among equals', () => {
 describe('contest counting rule', () => {
   const config = (configJson: ContestSelectionConfig | null) => ({
     configJson,
-    rounds: null,
+    coverage: { slotDefinitionIds: null },
     participantScoringRules: [],
   });
 

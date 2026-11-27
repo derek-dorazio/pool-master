@@ -10,6 +10,7 @@ import type {
 import type {
   ContestConfigTemplate,
   ContestConfiguration,
+  ContestConfigurationWrite,
   ContestFormat,
   ContestTemplateSlot,
   MatchFormat,
@@ -35,6 +36,7 @@ export class PrismaContestConfigurationRepository
     return memoizedRead(this.prisma, `${ReadMemoKey.contestConfiguration}${contestId}`, async () => {
       const row = await this.prisma.contestConfiguration.findUnique({
         where: { contestId },
+        include: CONFIGURATION_INCLUDE,
       });
       return row ? mapContestConfiguration(row) : null;
     });
@@ -44,13 +46,12 @@ export class PrismaContestConfigurationRepository
     if (contestIds.length === 0) return [];
     const rows = await this.prisma.contestConfiguration.findMany({
       where: { contestId: { in: [...contestIds] } },
+      include: CONFIGURATION_INCLUDE,
     });
     return rows.map(mapContestConfiguration);
   }
 
-  async create(
-    configuration: Omit<ContestConfiguration, 'id' | 'createdAt' | 'updatedAt'>,
-  ): Promise<ContestConfiguration> {
+  async create(configuration: ContestConfigurationWrite): Promise<ContestConfiguration> {
     const row = await forgettingReads(ReadMemoKey.contestConfiguration, () => this.prisma.contestConfiguration.create({
       data: {
         contestId: configuration.contestId,
@@ -62,13 +63,14 @@ export class PrismaContestConfigurationRepository
         maxEntriesPerSquad: configuration.maxEntriesPerSquad,
         totalPrizePoolAmount: configuration.totalPrizePoolAmount,
       },
+      include: CONFIGURATION_INCLUDE,
     }));
     return mapContestConfiguration(row);
   }
 
   async update(
     id: string,
-    updates: Partial<ContestConfiguration>,
+    updates: Partial<ContestConfigurationWrite>,
   ): Promise<ContestConfiguration> {
     const row = await forgettingReads(ReadMemoKey.contestConfiguration, () => this.prisma.contestConfiguration.update({
       where: { id },
@@ -95,6 +97,7 @@ export class PrismaContestConfigurationRepository
           totalPrizePoolAmount: updates.totalPrizePoolAmount,
         }),
       },
+      include: CONFIGURATION_INCLUDE,
     }));
     return mapContestConfiguration(row);
   }
@@ -225,6 +228,11 @@ export class PrismaParticipantContestScoringRuleRepository
   }
 }
 
+/** A configuration read with the slot definitions its template lists: the contest's coverage (#2014). */
+const CONFIGURATION_INCLUDE = {
+  template: { select: { slots: { select: { sportLeagueCompetitionSlotId: true } } } },
+} as const;
+
 function mapContestConfiguration(row: {
   id: string;
   contestId: string;
@@ -237,6 +245,7 @@ function mapContestConfiguration(row: {
   totalPrizePoolAmount: number | null;
   createdAt: Date;
   updatedAt: Date;
+  template: { slots: { sportLeagueCompetitionSlotId: string }[] } | null;
 }): ContestConfiguration {
   return {
     id: row.id,
@@ -250,6 +259,7 @@ function mapContestConfiguration(row: {
     minimumEntries: row.minimumEntries ?? undefined,
     maxEntriesPerSquad: row.maxEntriesPerSquad ?? undefined,
     totalPrizePoolAmount: row.totalPrizePoolAmount ?? undefined,
+    coveredSlotDefinitionIds: row.template === null ? null : row.template.slots.map((slot) => slot.sportLeagueCompetitionSlotId),
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   };

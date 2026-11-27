@@ -587,11 +587,6 @@ export interface ContestRepository {
   create(contest: ContestCreate, limits: ContestSeasonLimits): Promise<ContestCreateResult>;
   update(id: string, updates: ContestUpdate): Promise<Contest>;
   /**
-   * Moves the contest to `seasonYear` (#841: a new first event of another year), under the same
-   * league row lock and count as `create`, unless that season has no room for its sports league.
-   */
-  moveToSeason(id: string, seasonYear: number, limits: ContestSeasonLimits): Promise<ContestSeasonMoveResult>;
-  /**
    * Sets the events the contest covers to `sportEventIds`, in that order (#713). In one
    * transaction under the contest row lock: each entry gets a DRAFT status row for every added
    * event, and loses its status row and its picks (roster and game picks) on every removed one.
@@ -660,7 +655,7 @@ export type ContestCreate = Pick<
 
 /**
  * What can change on a contest row itself; its events change through `replaceSportEvents`, its
- * season through `moveToSeason`, and its status only through `ContestLifecycle` (#1949).
+ * season never (fixed at creation, #2014), and its status only through `ContestLifecycle` (#1949).
  */
 export type ContestUpdate = Partial<Pick<Contest, 'name' | 'startsAt' | 'endsAt'>>;
 
@@ -688,10 +683,6 @@ export interface DeletedDraftContest {
   id: string;
   leagueId: string;
 }
-
-export type ContestSeasonMoveResult =
-  | { status: 'moved' }
-  | ContestSeasonFull;
 
 /** A new entry; it is born a DRAFT in every event of its contest. */
 export type ContestEntryCreate = Pick<ContestEntry, 'contestId' | 'squadId' | 'entryNumber' | 'name' | 'tiebreakerValue'>;

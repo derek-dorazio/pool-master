@@ -43,7 +43,7 @@ export const ROUND_EVENT_SLOT_SELECT = {
 
 /** The slot a round is played in, as `SportEventRound.slot` and `SportEventRoundMatch.slot` carry it. */
 export function toRoundSlot(eventSlot: Prisma.SportEventSlotGetPayload<typeof ROUND_EVENT_SLOT_SELECT>): SportEventRoundSlot {
-  const { id, name, slotKind, weekNumber, seriesGames, pairing } = toSeasonSlot(eventSlot.seasonSlot);
+  const { id, slotDefinitionId, name, slotKind, weekNumber, seriesGames, pairing } = toSeasonSlot(eventSlot.seasonSlot);
   const { definition } = eventSlot.seasonSlot;
-  return { seasonSlotId: id, name, slotKind, weekNumber, seriesGames, pairing, canEndTied: definition.canEndTied, periods: slotPeriodsOf(definition), tiebreakerMatchId: eventSlot.tiebreakerGame?.sportEventRoundMatchId ?? null };
+  return { seasonSlotId: id, slotDefinitionId, name, slotKind, weekNumber, seriesGames, pairing, canEndTied: definition.canEndTied, periods: slotPeriodsOf(definition), tiebreakerMatchId: eventSlot.tiebreakerGame?.sportEventRoundMatchId ?? null };
 }

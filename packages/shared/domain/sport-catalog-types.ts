@@ -96,6 +96,8 @@ export interface SportLeague extends DomainEntity {
  */
 export interface SportEventRoundSlot {
   seasonSlotId: string;
+  /** The slot definition the Season slot plays: what a contest template lists, and so what a contest covers (#2014). */
+  slotDefinitionId: string;
   /** The definition's proper name; null when screens show the word for its kind. */
   name: string | null;
   slotKind: SlotKind;

@@ -44,6 +44,8 @@ import {
   type BracketContestRules,
   type Contest,
   type ContestConfiguration,
+  type ContestRoundCoverage,
+  contestRoundCoverage,
   type ContestEntry,
   type ContestEntryMatchPrediction,
   type PickEmContestRules,
@@ -729,7 +731,7 @@ export class PredictionService {
     if (!sportEvent) throw selectionErrors.eventNotInContest(sportEventId, contestId);
     const rules = configuration?.configJson;
     if (rules?.selectionType !== selectionType) throw selectionErrors.selectionConfigInvalid(contestId);
-    const setup = this.weekSetup(rules, sportEvent, matches, field);
+    const setup = this.weekSetup(rules, contestRoundCoverage(configuration), sportEvent, matches, field);
     const now = this.now();
 
     return {
@@ -751,18 +753,19 @@ export class PredictionService {
 
   /**
    * What a game setup's rules make of an event: the games an entry picks (never a cancelled
-   * game), the mode and spread, whether ties may be picked, the
+   * game, and in a bracket only its covered rounds', #2014), the mode and spread, whether ties may be picked, the
    * window the picks close on, the seeds and withdrawals a bracket resolves with, and the
    * tiebreaker game. A saved week and a setup's preview both start here.
    */
   private weekSetup(
     rules: GameRules,
+    coverage: ContestRoundCoverage,
     sportEvent: SportEvent,
     matches: SportEventRoundMatch[],
     field: SportEventParticipant[],
   ): WeekSetup {
     const games = rules.selectionType === SelectionType.BRACKET
-      ? contestBracketGames(matches)
+      ? contestBracketGames(matches, coverage)
       : matches.filter((match) => match.status !== MatchStatus.CANCELLED);
     const engine = getPredictionEngine(rules.selectionType);
     const sportDefinition = (this.deps.sportDefinitionOf ?? getSportDefinition)(sportEvent.sport);
@@ -908,7 +911,9 @@ export class PredictionService {
       this.deps.field.findBySportEvent(sportEvent.id),
     ]);
     const team = await this.teamLookup(field);
-    const setup = this.weekSetup(rules, sportEvent, matches, field);
+    // A setup's preview names no template yet, so it previews every round of the event; the
+    // preview takes its template's coverage with #2014 part B.
+    const setup = this.weekSetup(rules, { slotDefinitionIds: null }, sportEvent, matches, field);
     const { engine, games } = setup;
     const gameIds = new Set(games.map((game) => game.id));
     const unknown = input.picks.find((pick) => !gameIds.has(pick.sportEventRoundMatchId));
@@ -977,6 +982,7 @@ export class PredictionService {
       : [];
     const scoring = resolveContestScoringDefinition({
       configJson: context.configuration?.configJson ?? null,
+      coverage: contestRoundCoverage(context.configuration),
       participantScoringRules: rules,
     });
     return context.engine.scorePicks({

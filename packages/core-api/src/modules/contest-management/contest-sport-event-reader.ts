@@ -10,8 +10,8 @@ import type {
   SportEventSlotTierRepository,
   SportEventRepository,
 } from '@poolmaster/shared/db';
-import { firstTierSlotOf, type SportEventTierSlot, MatchStatus, SportEventParticipantStatus, eventPlaysMatches, isSquaresRound, hasSportEventStarted, matchSpread } from '@poolmaster/shared/domain';
-import { contestBracketGames, findBracketProblem } from '../scoring-families/head-to-head/bracket-picks';
+import { firstTierSlotOf, type SportEventTierSlot, MatchStatus, SportEventParticipantStatus, coveredRoundNumbers, eventPlaysMatches, isSquaresRound, hasSportEventStarted, matchSpread } from '@poolmaster/shared/domain';
+import { findBracketProblem } from '../scoring-families/head-to-head/bracket-picks';
 import { ContestCutoffKind, cutoffTiming } from '../contests/entry-window';
 import { knockoutSeeds } from '../scoring-families/head-to-head/score-team';
 import { BatchedRead, batchedByIds, batchedByKey, withReads } from '../../core/batched-read';
@@ -55,6 +55,7 @@ export function createContestSportEventReader({ sportEvents, field, tiers, valua
       playsMatches: eventPlaysMatches(event),
       participantCount: loaded.get(event.id) ?? 0,
       rounds: event.rounds ?? null,
+      slotDefinitionIds: event.slotDefinitions.map((definition) => definition.id),
       salaryCap: firstTierSlotOf(tierSlots.get(event.id) ?? [])?.pricing?.salaryCap ?? null,
       squaresFromRound: event.squaresFromRound ?? null,
       participantType: event.participantType,
@@ -87,8 +88,12 @@ export function createContestSportEventReader({ sportEvents, field, tiers, valua
       (await matches.findBySportEvent(sportEventId)).filter((match) => match.status !== MatchStatus.CANCELLED && matchSpread(match) === null).length,
     findBracketProblem: async (sportEventId) => {
       const [games, entries] = await Promise.all([matches.findBySportEvent(sportEventId), field.findBySportEvent(sportEventId)]);
-      return findBracketProblem(contestBracketGames(games), knockoutSeeds(entries));
+      // The event's own bracket, every round of it: whether its games form one is the event's fact,
+      // whichever rounds a contest on it covers.
+      return findBracketProblem(games.filter((match) => match.status !== MatchStatus.CANCELLED), knockoutSeeds(entries));
     },
+    countCoveredRounds: async (sportEventId, coverage) =>
+      coveredRoundNumbers(coverage, await matches.findBySportEvent(sportEventId)).length,
     findGame: async (sportEventId, sportEventRoundMatchId) => {
       const game = (await matches.findBySportEvent(sportEventId)).find((match) => match.id === sportEventRoundMatchId);
       return game === undefined ? null : { status: game.status, roundNumber: game.roundNumber };

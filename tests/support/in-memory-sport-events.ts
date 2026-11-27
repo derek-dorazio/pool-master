@@ -85,8 +85,8 @@ import { sportRowKeys } from './sport-rows';
 const T0 = new Date('2026-01-01T00:00:00.000Z');
 
 /** A round's slot as the round read gives it (#2006). */
-function roundSlotOf({ id, name, slotKind, weekNumber, seriesGames, pairing }: SportLeagueSeasonSlot, periods: SlotPeriods | null): SportEventRoundSlot {
-  return { seasonSlotId: id, name, slotKind, weekNumber, seriesGames, pairing, canEndTied: false, periods, tiebreakerMatchId: null };
+function roundSlotOf({ id, slotDefinitionId, name, slotKind, weekNumber, seriesGames, pairing }: SportLeagueSeasonSlot, periods: SlotPeriods | null): SportEventRoundSlot {
+  return { seasonSlotId: id, slotDefinitionId, name, slotKind, weekNumber, seriesGames, pairing, canEndTied: false, periods, tiebreakerMatchId: null };
 }
 
 /** A Game read back, as a database hands it: a copy, its side results in side order. */
@@ -230,6 +230,12 @@ export class InMemorySportEvents {
   /** The synced slots placed by date window, each with its window or none (#2012). */
   slotWindows = new Map<string, SlotWindow | null>();
 
+  /** Each synced slot's Season competition, where a test sets one; every other slot is in its Season's one competition. */
+  slotCompetitions = new Map<string, string>();
+
+  /** The synced slots matched REST_OF_PHASE (#2154): their window takes the games no other slot places. */
+  restOfPhaseSlotIds = new Set<string>();
+
   /** A synced slot placed by date window, with `window` or none, listed by a template (#2012). Answers its id. */
   addWindowSlot(sportLeague: Pick<SportLeague, 'id' | 'currentSeasonId'>, key: string, window: SlotWindow | null): string {
     const id = this.addSyncSlot(sportLeague, null);
@@ -253,6 +259,8 @@ export class InMemorySportEvents {
           linkedCode: this.slotLinks.get(slot.id) ?? null,
           coveredByTemplate: this.templateCoveredSlotIds.has(slot.id) || this.templateCoveredDefinitionIds.has(slot.slotDefinitionId),
           sportEventId: ownerOf(slot.id),
+          seasonCompetitionId: this.slotCompetitions.get(slot.id) ?? `competition-of-${slot.sportLeagueSeasonId}`,
+          restOfPhase: this.restOfPhaseSlotIds.has(slot.id),
           startsAt: slot.startsAt,
           endsAt: slot.endsAt,
           placedByWindow: this.slotWindows.has(slot.id),
