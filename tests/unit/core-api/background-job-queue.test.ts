@@ -1,4 +1,4 @@
-import { BackgroundJobStatus, BackgroundJobType, ProviderCode, Sport, type BackgroundJobRequest } from '@poolmaster/shared/domain';
+import { BackgroundJobStatus, BackgroundJobType, ProviderCode, type BackgroundJobRequest } from '@poolmaster/shared/domain';
 import {
   BackgroundJobQueue,
   InvalidBackgroundJobPayloadError,
@@ -8,13 +8,11 @@ import {
 } from '../../../packages/core-api/src/modules/background-jobs';
 import { inMemoryBackgroundJobs, TEST_JOB_START, testCurrentJobStart } from '../../support/in-memory-background-jobs';
 
-type SyncPayload = BackgroundJobPayload<typeof BackgroundJobType.MANUAL_EVENT_SYNC>;
+type SyncPayload = BackgroundJobPayload<typeof BackgroundJobType.SYNC_EVENT_FIELD>;
 
 const PAYLOAD: SyncPayload = {
-  syncRunIds: ['00000000-0000-4000-8000-000000000001'],
-  sport: Sport.GOLF,
-  providerId: 'mock-provider',
-  eventId: 'golf-open-championship-2026',
+  sportEventId: '00000000-0000-4000-8000-0000000000e1',
+  syncRunId: '00000000-0000-4000-8000-000000000001',
 };
 
 function setup() {
@@ -29,10 +27,10 @@ describe('background job queue (#1440)', () => {
   it('queues a job with a valid payload, due at once, and wakes the runner', async () => {
     const { jobs, queue, runner } = setup();
 
-    await expect(queue.enqueue(BackgroundJobType.MANUAL_EVENT_SYNC, PAYLOAD)).resolves.toBe(true);
+    await expect(queue.enqueue(BackgroundJobType.SYNC_EVENT_FIELD, PAYLOAD)).resolves.toBe(true);
 
     expect(jobs.rows).toEqual([expect.objectContaining({
-      type: BackgroundJobType.MANUAL_EVENT_SYNC,
+      type: BackgroundJobType.SYNC_EVENT_FIELD,
       payload: PAYLOAD,
       status: BackgroundJobStatus.QUEUED,
       attempts: 0,
@@ -42,11 +40,11 @@ describe('background job queue (#1440)', () => {
 
   it('refuses a payload that fails its type\'s schema where it is made, writing nothing and waking nothing', async () => {
     const { jobs, queue, runner } = setup();
-    const bad = { ...PAYLOAD, syncRunIds: ['not-a-uuid'] };
+    const bad = { ...PAYLOAD, syncRunId: 'not-a-uuid' };
 
-    await expect(queue.enqueue(BackgroundJobType.MANUAL_EVENT_SYNC, bad)).rejects.toBeInstanceOf(InvalidBackgroundJobPayloadError);
-    expect(() => queue.request(BackgroundJobType.MANUAL_EVENT_SYNC, { ...PAYLOAD, syncRunIds: [] }))
-      .toThrow(/Invalid MANUAL_EVENT_SYNC job payload/);
+    await expect(queue.enqueue(BackgroundJobType.SYNC_EVENT_FIELD, bad)).rejects.toBeInstanceOf(InvalidBackgroundJobPayloadError);
+    expect(() => queue.request(BackgroundJobType.SYNC_EVENT_FIELD, { ...PAYLOAD, sportEventId: '' }))
+      .toThrow(/Invalid SYNC_EVENT_FIELD job payload/);
 
     expect(jobs.rows).toEqual([]);
     expect(runner.wake).not.toHaveBeenCalled();
@@ -55,9 +53,9 @@ describe('background job queue (#1440)', () => {
   it('coalesces a second enqueue with the dedupe key a job waiting for its first try holds into that one job', async () => {
     const { jobs, queue } = setup();
 
-    await expect(queue.enqueue(BackgroundJobType.MANUAL_EVENT_SYNC, PAYLOAD, { dedupeKey: 'sync:event-1' })).resolves.toBe(true);
-    await expect(queue.enqueue(BackgroundJobType.MANUAL_EVENT_SYNC, PAYLOAD, { dedupeKey: 'sync:event-1' })).resolves.toBe(false);
-    await expect(queue.enqueue(BackgroundJobType.MANUAL_EVENT_SYNC, PAYLOAD, { dedupeKey: 'sync:event-2' })).resolves.toBe(true);
+    await expect(queue.enqueue(BackgroundJobType.SYNC_EVENT_FIELD, PAYLOAD, { dedupeKey: 'sync:event-1' })).resolves.toBe(true);
+    await expect(queue.enqueue(BackgroundJobType.SYNC_EVENT_FIELD, PAYLOAD, { dedupeKey: 'sync:event-1' })).resolves.toBe(false);
+    await expect(queue.enqueue(BackgroundJobType.SYNC_EVENT_FIELD, PAYLOAD, { dedupeKey: 'sync:event-2' })).resolves.toBe(true);
 
     expect(jobs.rows.map((row) => row.dedupeKey)).toEqual(['sync:event-1', 'sync:event-2']);
   });
@@ -66,9 +64,9 @@ describe('background job queue (#1440)', () => {
     const { jobs, queue, runner } = setup();
     const runAt = new Date('2026-11-07T12:05:00.000Z');
 
-    const request = queue.request(BackgroundJobType.MANUAL_EVENT_SYNC, PAYLOAD, { runAt, dedupeKey: 'sync:event-1' });
+    const request = queue.request(BackgroundJobType.SYNC_EVENT_FIELD, PAYLOAD, { runAt, dedupeKey: 'sync:event-1' });
 
-    expect(request).toEqual({ type: BackgroundJobType.MANUAL_EVENT_SYNC, payload: PAYLOAD, runAt, dedupeKey: 'sync:event-1', start: TEST_JOB_START });
+    expect(request).toEqual({ type: BackgroundJobType.SYNC_EVENT_FIELD, payload: PAYLOAD, sportEventId: PAYLOAD.sportEventId, runAt, dedupeKey: 'sync:event-1', start: TEST_JOB_START });
     expect(jobs.rows).toEqual([]);
     expect(runner.wake).not.toHaveBeenCalled();
     queue.queued();
@@ -78,8 +76,8 @@ describe('background job queue (#1440)', () => {
 
 describe('jobs a write carries (#1466)', () => {
   it('combines several writes\' jobs in order, and wakes each one\'s runner once the write commits', () => {
-    const first = { jobs: [{ type: BackgroundJobType.MANUAL_EVENT_SYNC, payload: 'a', start: TEST_JOB_START }], queued: jest.fn() };
-    const second = { jobs: [{ type: BackgroundJobType.MANUAL_EVENT_SYNC, payload: 'b', start: TEST_JOB_START }], queued: jest.fn() };
+    const first = { jobs: [{ type: BackgroundJobType.SYNC_EVENT_FIELD, payload: 'a', start: TEST_JOB_START }], queued: jest.fn() };
+    const second = { jobs: [{ type: BackgroundJobType.SYNC_EVENT_FIELD, payload: 'b', start: TEST_JOB_START }], queued: jest.fn() };
 
     const combined = combineJobsForWrite(first, NO_JOBS_FOR_WRITE, second);
 
@@ -110,19 +108,19 @@ describe('jobs a write carries (#1466)', () => {
     // A contest's rebuild or results email may span several events, so it names none.
     expect(scopeOf(queue.request(BackgroundJobType.REBUILD_LEADERBOARDS, { subject: 'CONTEST', id: 'contest-1' }))).toEqual(onNothing);
     expect(scopeOf(queue.request(BackgroundJobType.CONTEST_SETTLED_EMAILS, { contestId: 'contest-1' }))).toEqual(onNothing);
-    // An event sync names PoolMaster's event when the caller knew it, and none otherwise.
-    expect(scopeOf(queue.request(BackgroundJobType.MANUAL_EVENT_SYNC, { ...PAYLOAD, sportEventId }))).toEqual(onEvent);
-    expect(scopeOf(queue.request(BackgroundJobType.MANUAL_EVENT_SYNC, PAYLOAD))).toEqual(onNothing);
+    // An event sync names PoolMaster's event, which its payload always holds (#2009).
+    expect(scopeOf(queue.request(BackgroundJobType.SYNC_EVENT_FIELD, { sportEventId }))).toEqual(onEvent);
+    expect(scopeOf(queue.request(BackgroundJobType.SYNC_EVENT_SCORES, { sportEventId }))).toEqual(onEvent);
   });
 
   it('answers the job it queued, or the waiting job holding the same dedupe key, and wakes the runner either way (#1819)', async () => {
     const { jobs, queue, runner } = setup();
 
-    const first = await queue.enqueueReturning(BackgroundJobType.MANUAL_EVENT_SYNC, PAYLOAD, { dedupeKey: 'one-sync' });
-    const second = await queue.enqueueReturning(BackgroundJobType.MANUAL_EVENT_SYNC, PAYLOAD, { dedupeKey: 'one-sync' });
+    const first = await queue.enqueueReturning(BackgroundJobType.SYNC_EVENT_FIELD, PAYLOAD, { dedupeKey: 'one-sync' });
+    const second = await queue.enqueueReturning(BackgroundJobType.SYNC_EVENT_FIELD, PAYLOAD, { dedupeKey: 'one-sync' });
 
     expect(second.id).toBe(first.id);
-    expect(first).toMatchObject({ type: BackgroundJobType.MANUAL_EVENT_SYNC, status: BackgroundJobStatus.QUEUED, payload: PAYLOAD });
+    expect(first).toMatchObject({ type: BackgroundJobType.SYNC_EVENT_FIELD, status: BackgroundJobStatus.QUEUED, payload: PAYLOAD });
     expect(jobs.rows).toHaveLength(1);
     expect(runner.wake).toHaveBeenCalledTimes(2);
   });
@@ -142,8 +140,8 @@ describe('jobs a write carries (#1466)', () => {
   it('answers a new job for each enqueue with no options, since without a dedupe key nothing coalesces', async () => {
     const { jobs, queue } = setup();
 
-    const first = await queue.enqueueReturning(BackgroundJobType.MANUAL_EVENT_SYNC, PAYLOAD);
-    const second = await queue.enqueueReturning(BackgroundJobType.MANUAL_EVENT_SYNC, PAYLOAD);
+    const first = await queue.enqueueReturning(BackgroundJobType.SYNC_EVENT_FIELD, PAYLOAD);
+    const second = await queue.enqueueReturning(BackgroundJobType.SYNC_EVENT_FIELD, PAYLOAD);
 
     expect(first).toMatchObject({ status: BackgroundJobStatus.QUEUED, payload: PAYLOAD });
     expect(second.id).not.toBe(first.id);

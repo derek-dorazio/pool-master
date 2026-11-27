@@ -1,4 +1,4 @@
-import type { IngestionJobProviderPayload } from '../../packages/core-api/src/modules/ingestion/core/ingestion-scheduler';
+import type { IngestionJobProviderPayload } from '../../packages/core-api/src/modules/ingestion/core/event-feed-sync';
 import type { ProviderSyncRunOutcome } from '@poolmaster/shared/domain';
 
 /** The outcome of a run that has not reported one yet, for tests that write runs by hand. */

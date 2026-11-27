@@ -56,7 +56,7 @@ import { PlatformSettingsService } from './modules/platform/platform-settings-se
 import { ingestionModule } from './modules/ingestion/routes';
 import { providerWebhooksModule, readBalldontlieWebhookSecret } from './modules/ingestion/provider-webhook-routes';
 import { ProviderNotificationService } from './modules/ingestion/provider-notifications';
-import { ProviderCode } from '@poolmaster/shared/domain';
+import { ProviderCode, ProviderSyncKind } from '@poolmaster/shared/domain';
 import { notifiedProviderCadenceOf } from './modules/ingestion/notified-provider-cadence';
 import { ProviderSettingsStore } from './modules/ingestion/provider-settings-store';
 import { ProviderWebhookSwitch } from './modules/ingestion/provider-webhook-switch';
@@ -93,7 +93,7 @@ import { pickPreviewModule } from './modules/selections/preview-routes';
 import { createDrawReceipts, createSquaresService } from './modules/selections/wiring';
 
 // Ingestion module
-import { ProviderRegistry, IngestionScheduler, publishLiveScoreUpdate } from './modules/ingestion/core';
+import { ProviderRegistry, EventFeedSync, publishLiveScoreUpdate } from './modules/ingestion/core';
 import type { IngestionCallbacks, SportEventDetail } from './modules/ingestion/core';
 import type { LiveScoreResult } from '@poolmaster/shared/dto';
 import { IngestionPersistence } from './modules/ingestion/persistence/ingestion-persistence';
@@ -103,9 +103,10 @@ import { EventLifecycleScheduler } from './modules/events/event-lifecycle-schedu
 import { SquaresAutoDrawScheduler } from './modules/selections/squares-auto-draw-scheduler';
 import { SportEventAutoReleaseScheduler } from './modules/events/sport-event-auto-release-scheduler';
 import { releaseSportEventJobHandler } from './modules/events/release-sport-event-job';
-import { syncChangedRows } from './modules/ingestion/core/sync-write-diagnostics';
 import { ProviderSeasonScheduleReader } from './modules/events/provider-season-schedule-reader';
-import { SyncedEventCreationScheduler } from './modules/events/synced-event-creation-scheduler';
+import { SyncTick } from './modules/ingestion/sync-tick';
+import { EventSyncJobs } from './modules/ingestion/event-sync-jobs';
+import { PrismaSyncDueWorkReader } from './adapters/prisma-sync-due-work-reader';
 import { LeagueEventsSync } from './modules/events/league-events-sync';
 import { activityModule } from './modules/activity/routes';
 import { ActivityService } from './modules/activity/activity-service';
@@ -136,7 +137,6 @@ import { PrismaSlotNamePatternRepository } from './adapters/prisma-slot-name-pat
 import { PrismaProviderSyncFindingRepository } from './adapters/prisma-provider-sync-finding-repository';
 import { ParticipantService } from './modules/participants/service';
 import { registerConfiguredProviders, type SportDataProviderFactory } from './modules/ingestion/core/provider-bindings';
-import { createScheduledEventReader } from './modules/ingestion/core/scheduled-event-reader';
 import { createContestService, createContestSettlementService } from './modules/contests/wiring';
 import { JobLeaderboardRebuilds, leaderboardChangesOf } from './modules/contests/leaderboard-rebuild-job-requests';
 import { scoringFamilyForEvent } from './modules/scoring-families';
@@ -371,7 +371,7 @@ export function buildApp(options: BuildAppOptions = {}) {
     },
   };
 
-  const providerSyncRunLedger = new ProviderSyncRunLedger(providerSyncRuns, app.log, new PrismaSportEventRepository(prisma), syncFindings);
+  const providerSyncRunLedger = new ProviderSyncRunLedger(providerSyncRuns, app.log, syncFindings);
   // A synced draft event is released on its own once its ready checks pass, in its league's window (#1823).
   const sportEventAutoReleaseScheduler = new SportEventAutoReleaseScheduler({
     sportEvents: new PrismaSportEventRepository(prisma),
@@ -403,18 +403,27 @@ export function buildApp(options: BuildAppOptions = {}) {
     jobs: backgroundJobs,
     logger: app.log,
   });
-  const syncedEventCreationScheduler = new SyncedEventCreationScheduler({
-    leagueEventsSync,
+  // The one scheduler of provider syncs (#2009): each minute it queues the due syncs as jobs.
+  const syncTick = new SyncTick({
+    sportLeagues: new PrismaSportLeagueRepository(prisma),
+    dueWork: new PrismaSyncDueWorkReader(prisma),
+    jobHistory: backgroundJobRepository,
+    jobs: backgroundJobs,
+    registry,
     schedule: ingestionConfigService,
+    notifiedProviderCadence: () => notifiedProviderCadenceOf(providerSettings, providerWebhooks),
     jobLock,
     logger: app.log,
   });
-  const ingestionScheduler = new IngestionScheduler(registry, ingestionCallbacks, app.log, {
-    configReader: ingestionConfigService,
-    eventReader: createScheduledEventReader({ prisma, registry, logger: app.log }),
+  // An event's field and scores syncs, whoever queued them: the tick, a webhook or Sync now.
+  const eventSyncJobs = new EventSyncJobs({
+    sportEvents: new PrismaSportEventRepository(prisma),
+    feeds: new EventFeedSync(registry, ingestionCallbacks, app.log),
+    syncRuns: providerSyncRuns,
     syncRunLedger: providerSyncRunLedger,
-    jobLock,
-    notifiedProviderCadence: () => notifiedProviderCadenceOf(providerSettings, providerWebhooks),
+    registry,
+    schedule: ingestionConfigService,
+    logger: app.log,
   });
   const ingestionService = new IngestionService({
     registry,
@@ -424,7 +433,6 @@ export function buildApp(options: BuildAppOptions = {}) {
     providerSettings,
     webhooks: providerWebhooks,
     jobHistory: backgroundJobRepository,
-    scheduler: ingestionScheduler,
     syncRunLedger: providerSyncRunLedger,
     jobs: backgroundJobs,
     logger: app.log,
@@ -434,10 +442,8 @@ export function buildApp(options: BuildAppOptions = {}) {
   const backgroundJobRunner = new BackgroundJobRunner({
     jobs: backgroundJobRepository,
     handlers: {
-      MANUAL_EVENT_SYNC: (payload, context) => ingestionService.runManualEventSync(payload, context),
-      PROVIDER_EVENT_SYNC: async (payload, context) => ({
-        changedCount: syncChangedRows((await ingestionScheduler.runNotifiedEventSync(payload, { jobId: context.jobId, trigger: context.trigger }))?.writeDiagnostics),
-      }),
+      SYNC_EVENT_FIELD: (payload, context) => eventSyncJobs.run(ProviderSyncKind.FIELD, payload, context),
+      SYNC_EVENT_SCORES: (payload, context) => eventSyncJobs.run(ProviderSyncKind.SCORES, payload, context),
       CONTEST_STARTED_EMAILS: (payload) => contestEmailJobs.contestStarted(payload),
       CONTEST_SETTLED_EMAILS: (payload) => contestEmailJobs.contestSettled(payload),
       CONTEST_EVENT_CHANGED_EMAILS: (payload) => contestEmailJobs.contestEventChanged(payload),
@@ -602,9 +608,7 @@ export function buildApp(options: BuildAppOptions = {}) {
 
     // Ingestion
     if (process.env.AUTO_START_SCHEDULER !== 'false') {
-      ingestionScheduler.start();
-      app.log.info('Ingestion scheduler started');
-      syncedEventCreationScheduler.start();
+      syncTick.start();
     }
 
     // Admin-managed event lifecycle (plans/124 §3.6) — always runs; it is
@@ -635,8 +639,7 @@ export function buildApp(options: BuildAppOptions = {}) {
   app.addHook('onClose', async () => {
     appSettings.stop();
     providerSettings.stop();
-    ingestionScheduler.stop();
-    syncedEventCreationScheduler.stop();
+    syncTick.stop();
     eventLifecycleScheduler.stop();
     squaresAutoDrawScheduler.stop();
     sportEventAutoReleaseScheduler.stop();

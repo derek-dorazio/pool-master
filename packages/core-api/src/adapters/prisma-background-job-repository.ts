@@ -11,6 +11,7 @@ import {
   type BackgroundJobOutcome,
   type BackgroundJobRequest,
   type BackgroundJobResult,
+  type BackgroundJobType,
   type JobErrorType,
 } from '@poolmaster/shared/domain';
 
@@ -99,6 +100,22 @@ export class PrismaBackgroundJobRepository implements BackgroundJobRepository {
       sportEventId: group.sportEventId,
       count: group._count._all,
     }));
+  }
+
+  async findLatestRunAt(filter: { type: BackgroundJobType; by: 'sportLeagueId' | 'sportEventId'; ids: readonly string[] }): Promise<Map<string, Date>> {
+    if (filter.ids.length === 0) return new Map();
+    const groups = await this.prisma.backgroundJob.groupBy({
+      by: [filter.by],
+      where: { type: filter.type, [filter.by]: { in: [...filter.ids] } },
+      _max: { runAt: true },
+    });
+    const latest = new Map<string, Date>();
+    for (const group of groups) {
+      const id = group[filter.by];
+      const runAt = group._max.runAt;
+      if (id !== null && runAt !== null) latest.set(id, runAt);
+    }
+    return latest;
   }
 
   async claimDue(claim: { now: Date; limit: number; leaseUntil: Date }): Promise<BackgroundJob[]> {

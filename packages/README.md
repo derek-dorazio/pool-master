@@ -140,7 +140,7 @@ no provider is primary for a sport (#2073). Tests register their own fake throug
 `POST /api/v1/provider-webhooks/balldontlie` when something happens in a game or tournament. The
 route checks the HMAC signature with `BALLDONTLIE_WEBHOOK_SECRET` (from Secrets Manager; unset, it
 refuses every delivery) while the BALLDONTLIE Provider row's webhook switch is on and, for a game or tournament linked to an in-progress event, queues one
-`PROVIDER_EVENT_SYNC` job, due a minute out under the event's dedupe key, so a burst shares one
+`SYNC_EVENT_SCORES` job, due a minute out under the event's dedupe key, so a burst shares one
 sync. The job runs the same live-score sync the scheduler runs, reading current state over REST,
 and the sync history shows it as a `WEBHOOK` run. A game no match is linked to yet syncs every
 in-progress event of its league. Notifications for anything else are acknowledged and dropped.

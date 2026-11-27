@@ -42,7 +42,9 @@ flowchart LR
     T3[BALLDONTLIE webhook]
   end
   subgraph Core["ingestion/core"]
-    S[IngestionScheduler<br/>pollLiveScores / runEventFieldSync]
+    K[SyncTick<br/>one minute, one write]
+    J[EventSyncJobs<br/>SYNC_EVENT_FIELD / SYNC_EVENT_SCORES]
+    S[EventFeedSync<br/>pollLiveScores / runEventFieldSync]
     E[LeagueEventsSync]
     R[ProviderRegistry]
     L[provider_sync_runs]
@@ -53,8 +55,9 @@ flowchart LR
     C[BalldontlieClient<br/>one attempt, Zod]
     CP[ProviderCallPolicy<br/>pacing, cockatiel retry, breaker]
   end
-  T1 & T2 --> E
-  T1 & T2 & T3 --> S
+  T1 --> K
+  K & T2 --> E
+  K & T2 & T3 --> J --> S
   E & S --> R --> A --> RD --> CP --> C --> V[(api.balldontlie.io)]
   E & S --> L
   S -- scores --> P[publishLiveScoreUpdate] --> W[GOLF / GAME writer]
@@ -170,7 +173,7 @@ creates a Season. `current_season_id` is set by the nightly `currentSeasons` ste
 
 ### The run
 
-`SyncedEventCreationScheduler` queues one `SYNC_LEAGUE_EVENTS` job per active synced league on
+The sync tick (`SyncTick`, §4) queues one `SYNC_LEAGUE_EVENTS` job per active synced league on
 the Event list policy; a root admin's **Sync now**
 (`POST /api/v1/ingestion/sport-leagues/:id/events-sync`) queues the same job.
 `LeagueEventsSync.run` reads the league's current Season and every later one (`seasonsToSync`),
@@ -310,10 +313,11 @@ release earlier by hand. `sport_events.released_at` records every release.
 
 ## 3. Field sync
 
-The Field loop runs every participant interval over each provider's next two `DRAFT` or
-`SCHEDULED` events of synced leagues starting inside the lookahead window. An admin's **Load
-Participant Field** (`POST /api/v1/events/:eventId/participants/refresh`) queues a
-`MANUAL_EVENT_SYNC` job down the same path: `runEventFieldSync` →
+The sync tick (§4) queues a `SYNC_EVENT_FIELD` job, on the participants interval, for each event
+in its league's next slot: the synced Season slots starting soonest after now, judged by the
+slot's start and never by the event's status (`fieldWindowEventIds`). A test slot never is. An
+admin's **Load Participant Field** (`POST /api/v1/events/:eventId/participants/refresh`) queues
+the same job for one event, running the run it submitted: `runEventFieldSync` →
 `provider.getEventDetails(externalId)` → `IngestionPersistence.persistEventDetailWithDiagnostics`.
 The games and then the tiers and prices follow in one `SYNC_EVENT_GAMES_AND_TIERS` job per event,
 written with the field (the `sync-games-then-tier-field` handler of `SPORT_EVENT_FIELD_SYNCED`,
@@ -393,16 +397,16 @@ never replace a multi-round event's bracket; a draft only takes their kickoffs.
 |---|---|---|
 | Schedule, Event list policy | Events sync per synced league | `SYNC_LEAGUE_EVENTS` |
 | Root admin **Sync now** | Events sync for one league | `SYNC_LEAGUE_EVENTS` |
-| Schedule, participants policy | Field sync | `runConfiguredSportFieldSync` timer, one loop per sport |
-| Schedule, live scores policy | Scores sync of every `IN_PROGRESS` event its provider has an id for, with a field | `runConfiguredLiveScoreSweep` timer, lock `ingestion:<sport>:live-scores` |
-| Root admin event sync or field refresh | Field or scores for one event | `MANUAL_EVENT_SYNC` |
-| BALLDONTLIE webhook | Scores for the notified events | `PROVIDER_EVENT_SYNC` |
+| Schedule, participants policy | Field sync of each event in its league's next slot | `SYNC_EVENT_FIELD` |
+| Schedule, live scores policy | Scores sync of each linked event with a Game in play, or scheduled and started, not overdue | `SYNC_EVENT_SCORES` |
+| Root admin event sync or field refresh | Field or scores for one event, one job per kind | `SYNC_EVENT_FIELD`, `SYNC_EVENT_SCORES` |
+| BALLDONTLIE webhook | Scores for the notified events | `SYNC_EVENT_SCORES` |
 | Hourly release sweep | Auto-release check | `RELEASE_SPORT_EVENT` |
 
 Every sync writes a `provider_sync_runs` row with its **kind** (`EVENTS`, `FIELD`, `SCORES`),
 its **trigger** (`SCHEDULE`, `WEBHOOK`, `ADMIN`, `COMMISSIONER`, `SYSTEM`; a job's own when a job
-ran it), its sport league and event (looked up from the linked event when the caller named
-none), and the job that ran it. Its outcome is in columns (#1999): a one-line `summary`, its
+ran it), its sport league and event (every event sync job names its event by our own id), and the
+job that ran it. Its outcome is in columns (#1999): a one-line `summary`, its
 numeric `stats`, `changed_count` (rows created, updated or deleted, once it completes) and
 `error_count` (at least one on a FAILED run). Who asked is the trigger; nothing else of the
 request is kept. The detailed diagnostics (`details_json`) are kept 30 days. Each background job records the same trigger and who started it
@@ -410,8 +414,14 @@ request is kept. The detailed diagnostics (`details_json`) are kept 30 days. Eac
 jobs with their runs, and the Sports, League and Event pages read each league's and event's
 latest run per kind for its sync health.
 
-The Field and Scores timers still run outside the job table; moving them onto jobs is the next
-step (#1835).
+**The sync tick (#2009).** Every server task starts `SyncTick`; each minute the task holding the
+`sync-tick` lock reads what is due and queues it as jobs in one write, and the job runner makes
+every provider call. Nothing is remembered between ticks: each sync is paced by its subject's
+latest job (`findLatestRunAt`), so a job a webhook or a root admin queued also counts. A league is
+synced while it is active and its selected mapping names a provider running here. Its reads are a
+fixed few statements however many leagues and events are due (`PrismaSyncDueWorkReader`). A job
+carries only our own ids; the event's id at its provider is read when the job runs. A scores job
+runs only while live scores are on; a field job always runs (#2086).
 
 **Overdue.** A released event is `OVERDUE` when it is neither completed nor cancelled more than
 4 hours after it should have ended (its last round's end, else its last start plus its league's
@@ -423,8 +433,9 @@ provider league's `typicalGameMinutes`). A draft never released is never overdue
 `POST /api/v1/provider-webhooks/balldontlie` checks the HMAC-SHA256 signature of
 `"{ts}.{raw body}"` (5 minute tolerance; bad or missing → 403), drops unsubscribed leagues and
 event types with a 200, and hands the rest to `ProviderNotificationService.receive`. It queues
-one `PROVIDER_EVENT_SYNC` per in-progress event the notification is about, 60 seconds out, deduped
-on `provider-event-sync:<provider>:<externalId>` so a burst coalesces. A game notification is
+one `SYNC_EVENT_SCORES` per in-progress event the notification is about, 60 seconds out, deduped
+on `SYNC_EVENT_SCORES:SYNC:<sportEventId>` so a burst coalesces (the tick's job for the event waits
+under the same key). A game notification is
 routed by its game id alone (#2007): the one Game whose provider mapping
 (`sport_event_round_match_game_provider_mappings`) holds that id, and the in-progress event that
 Game is in. There is no prefix match and no fan-out to a league's other events. An id no Game is
@@ -495,7 +506,7 @@ The actions a finding offers come from the API (`actions` on each finding); the 
 
 ```mermaid
 sequenceDiagram
-  participant S as IngestionScheduler.pollLiveScores
+  participant S as EventFeedSync.pollLiveScores
   participant A as BalldontlieAdapter.getLiveScores
   participant P as publishLiveScoreUpdate
   participant F as Scoring family writer

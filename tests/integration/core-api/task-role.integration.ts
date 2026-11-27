@@ -11,7 +11,7 @@ import { BackgroundJobQueue, BackgroundJobRunner } from '../../../packages/core-
 import { EmailSender } from '../../../packages/core-api/src/modules/email';
 import { EventLifecycleScheduler } from '../../../packages/core-api/src/modules/events/event-lifecycle-scheduler';
 import { NightlyCleanupScheduler } from '../../../packages/core-api/src/core/nightly-cleanup';
-import { IngestionScheduler } from '../../../packages/core-api/src/modules/ingestion/core';
+import { SyncTick } from '../../../packages/core-api/src/modules/ingestion/sync-tick';
 
 let savedEnv: NodeJS.ProcessEnv;
 let app: FastifyInstance | undefined;
@@ -39,7 +39,7 @@ function stubLoops() {
     emailSender,
     lifecycleSweep: jest.spyOn(EventLifecycleScheduler.prototype, 'start').mockImplementation(() => undefined),
     nightlyCleanup: jest.spyOn(NightlyCleanupScheduler.prototype, 'start').mockImplementation(() => undefined),
-    ingestion: jest.spyOn(IngestionScheduler.prototype, 'start').mockImplementation(() => undefined),
+    ingestion: jest.spyOn(SyncTick.prototype, 'start').mockImplementation(() => undefined),
     senderWake: jest.spyOn(EmailSender.prototype, 'wake').mockImplementation(() => undefined),
     runnerWiredToQueue: jest.spyOn(BackgroundJobQueue.prototype, 'wakes'),
   };

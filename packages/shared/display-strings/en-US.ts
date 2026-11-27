@@ -744,8 +744,8 @@ export const enUS = {
       ALWAYS_ON: 'Always on',
     },
     BackgroundJobType: {
-      MANUAL_EVENT_SYNC: 'Event feeds',
-      PROVIDER_EVENT_SYNC: 'Live scores',
+      SYNC_EVENT_FIELD: 'Field',
+      SYNC_EVENT_SCORES: 'Live scores',
       CONTEST_STARTED_EMAILS: 'Contest is live',
       CONTEST_SETTLED_EMAILS: 'Results',
       CONTEST_EVENT_CHANGED_EMAILS: 'Event changed',

@@ -75170,8 +75170,8 @@
           "type": {
             "type": "string",
             "enum": [
-              "MANUAL_EVENT_SYNC",
-              "PROVIDER_EVENT_SYNC",
+              "SYNC_EVENT_FIELD",
+              "SYNC_EVENT_SCORES",
               "CONTEST_STARTED_EMAILS",
               "CONTEST_SETTLED_EMAILS",
               "CONTEST_EVENT_CHANGED_EMAILS",
@@ -75479,8 +75479,8 @@
                 "type": {
                   "type": "string",
                   "enum": [
-                    "MANUAL_EVENT_SYNC",
-                    "PROVIDER_EVENT_SYNC",
+                    "SYNC_EVENT_FIELD",
+                    "SYNC_EVENT_SCORES",
                     "CONTEST_STARTED_EMAILS",
                     "CONTEST_SETTLED_EMAILS",
                     "CONTEST_EVENT_CHANGED_EMAILS",
@@ -75747,8 +75747,8 @@
               "type": {
                 "type": "string",
                 "enum": [
-                  "MANUAL_EVENT_SYNC",
-                  "PROVIDER_EVENT_SYNC",
+                  "SYNC_EVENT_FIELD",
+                  "SYNC_EVENT_SCORES",
                   "CONTEST_STARTED_EMAILS",
                   "CONTEST_SETTLED_EMAILS",
                   "CONTEST_EVENT_CHANGED_EMAILS",

@@ -13,6 +13,7 @@ import { createEventHandlers } from '../../../packages/core-api/src/modules/even
 import { SportEventError } from '../../../packages/core-api/src/modules/events/errors';
 import type { SportEventServices } from '../../../packages/core-api/src/modules/events/wiring';
 import {
+  SportEventNotSyncedError,
   SportProviderNotFoundError,
   type IngestionService,
 } from '../../../packages/core-api/src/modules/ingestion/ingestion-service';
@@ -119,7 +120,7 @@ function fakes() {
   };
   const lifecycle = { applySportEventStatusTransition: fn(undefined) };
   const eventOverviews = { getEventOverview: fn<SportEventOverview | null>(EVENT_OVERVIEW) };
-  const ingestion = { syncEventData: fn({ sport: 'GOLF', eventId: 'masters-2026', requestedKinds: ['FIELD'], submittedAt: AT, syncRuns: [] }) };
+  const ingestion = { syncSportEvent: fn({ sport: 'GOLF', eventId: 'masters-2026', requestedKinds: ['FIELD'], submittedAt: AT, syncRuns: [] }) };
   const leaderboards = { eventsChanged: fn(undefined) };
   const handlers = createEventHandlers({
     services: services as unknown as SportEventServices,
@@ -240,60 +241,33 @@ describe('event writes', () => {
 });
 
 describe('field refresh from the provider', () => {
-  it('queues a field sync as the signed-in root admin with 202', async () => {
+  it('queues the event\'s field sync as the signed-in root admin with 202', async () => {
     const { ingestion, handlers } = fakes();
 
     const reply = await callHandler(handlers.refreshEventParticipants, stubRequest({ params, authUser: admin }));
 
-    expect(ingestion.syncEventData).toHaveBeenCalledWith({ sport: 'GOLF', providerId: 'balldontlie', eventId: 'masters-2026', kinds: ['FIELD'] }, 'admin', 'admin@example.test');
+    expect(ingestion.syncSportEvent).toHaveBeenCalledWith(EVENT_ID, ['FIELD'], 'admin', 'admin@example.test');
     expect(reply).toMatchObject({ statusCode: 202, body: { eventId: 'masters-2026' } });
   });
 
-  it('refuses a field sync for a test event, which its provider has no id for, with 409 EVENT_NOT_LINKED and syncs nothing', async () => {
-    const { services, ingestion, handlers } = fakes();
-    services.sportEvents.requireEvent.mockResolvedValueOnce(sportEvent({ providerMappings: [] }));
-
-    const reply = await callHandler(handlers.refreshEventParticipants, stubRequest({ params }));
-
-    expect(reply).toMatchObject({ statusCode: 409, body: { error: { code: 'EVENT_NOT_LINKED' } } });
-    expect(ingestion.syncEventData).not.toHaveBeenCalled();
-  });
-
-  it('queues a field sync for a linked draft event, whose field is loaded before release', async () => {
-    const { services, ingestion, handlers } = fakes();
-    services.sportEvents.requireEvent.mockResolvedValueOnce(sportEvent({ status: SportEventStatus.DRAFT }));
-
-    const reply = await callHandler(handlers.refreshEventParticipants, stubRequest({ params, authUser: admin }));
-
-    expect(reply).toMatchObject({ statusCode: 202 });
-    expect(ingestion.syncEventData).toHaveBeenCalledWith(expect.objectContaining({ kinds: ['FIELD'] }), 'admin', 'admin@example.test');
-  });
-
-  it('refuses a field sync for a cancelled event, which no field sync runs on, with 422 EVENT_SYNC_KIND_UNAVAILABLE and syncs nothing', async () => {
-    const { services, ingestion, handlers } = fakes();
-    services.sportEvents.requireEvent.mockResolvedValueOnce(sportEvent({ status: SportEventStatus.CANCELLED }));
-
-    const reply = await callHandler(handlers.refreshEventParticipants, stubRequest({ params }));
-
-    expect(reply).toMatchObject({ statusCode: 422, body: { error: { code: 'EVENT_SYNC_KIND_UNAVAILABLE' } } });
-    expect(ingestion.syncEventData).not.toHaveBeenCalled();
-  });
-
   it.each<[string, Error, number, string]>([
+    ['an unknown event with 404 EVENT_NOT_FOUND', new SportEventNotSyncedError('gone', 'EVENT_NOT_FOUND', 404), 404, 'EVENT_NOT_FOUND'],
+    ['a test event, which its provider has no id for, with 409 EVENT_NOT_LINKED', new SportEventNotSyncedError('test event', 'EVENT_NOT_LINKED', 409), 409, 'EVENT_NOT_LINKED'],
+    ['a cancelled event, which no field sync runs on, with 422 EVENT_SYNC_KIND_UNAVAILABLE', new SportEventNotSyncedError('cancelled', 'EVENT_SYNC_KIND_UNAVAILABLE', 422), 422, 'EVENT_SYNC_KIND_UNAVAILABLE'],
     ['no provider with 404 SPORT_PROVIDER_NOT_FOUND', new SportProviderNotFoundError('GOLF', 'mock-provider'), 404, 'SPORT_PROVIDER_NOT_FOUND'],
   ])('answers a field sync refused for %s, with no session read as no actor', async (_label, error, status, code) => {
     const { ingestion, handlers } = fakes();
-    ingestion.syncEventData.mockRejectedValueOnce(error);
+    ingestion.syncSportEvent.mockRejectedValueOnce(error);
 
     const reply = await callHandler(handlers.refreshEventParticipants, stubRequest({ params }));
 
-    expect(ingestion.syncEventData).toHaveBeenCalledWith(expect.anything(), '', '');
+    expect(ingestion.syncSportEvent).toHaveBeenCalledWith(EVENT_ID, ['FIELD'], '', '');
     expect(reply).toMatchObject({ statusCode: status, body: { error: { code } } });
   });
 
   it('passes an unexpected field sync failure on to the global error handler', async () => {
     const { ingestion, handlers } = fakes();
-    ingestion.syncEventData.mockRejectedValueOnce(boom);
+    ingestion.syncSportEvent.mockRejectedValueOnce(boom);
 
     await expect(callHandler(handlers.refreshEventParticipants, stubRequest({ params, authUser: admin }))).rejects.toBe(boom);
   });

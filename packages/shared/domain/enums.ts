@@ -2142,10 +2142,13 @@ export const EmailTemplateStatusOrder = explicitOrder<EmailTemplateStatus>({
  * one handler and one payload schema, in the background-jobs module's registries.
  */
 export const BackgroundJobType = {
-  /** Runs a root admin's submitted sync of one event's feeds (#1441). */
-  MANUAL_EVENT_SYNC: 'MANUAL_EVENT_SYNC',
-  /** Syncs one linked event's live scores because its provider said something happened in it (#1498). */
-  PROVIDER_EVENT_SYNC: 'PROVIDER_EVENT_SYNC',
+  /** Syncs one event's field from its league's provider: queued by the sync tick and by a root admin's Sync now (#2009). */
+  SYNC_EVENT_FIELD: 'SYNC_EVENT_FIELD',
+  /**
+   * Syncs one event's scores from its league's provider: queued by the sync tick while its Games
+   * are due or in play, by a provider's webhook (#1498) and by a root admin's Sync now (#2009).
+   */
+  SYNC_EVENT_SCORES: 'SYNC_EVENT_SCORES',
   /** Queues "Contest is live" (E1) to the league of one contest that just went live for an event (#1387). */
   CONTEST_STARTED_EMAILS: 'CONTEST_STARTED_EMAILS',
   /** Queues "Final results" (F1 to F3) to the league of one contest that just completed (#1387). */

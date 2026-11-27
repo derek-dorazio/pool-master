@@ -8,6 +8,7 @@ import type {
   BackgroundJobOutcome,
   BackgroundJobRequest,
   BackgroundJobStatus,
+  BackgroundJobType,
   JobErrorType,
 } from '../domain';
 
@@ -93,4 +94,10 @@ export interface BackgroundJobRepository {
    * after it (by when that try started). A job that later succeeded no longer counts.
    */
   countByScope(filter: { errorType: JobErrorType; since: Date }): Promise<BackgroundJobScopeCount[]>;
+  /**
+   * When each subject's latest job of `type` was due (#2009): its `runAt`, whatever its status, by
+   * the sport league's or the event's id (`by`), in one grouped read. A subject with no such job
+   * kept is left out. The sync tick paces each sync by it, so no server task remembers it.
+   */
+  findLatestRunAt(filter: { type: BackgroundJobType; by: 'sportLeagueId' | 'sportEventId'; ids: readonly string[] }): Promise<Map<string, Date>>;
 }

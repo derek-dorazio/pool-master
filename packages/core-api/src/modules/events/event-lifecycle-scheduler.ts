@@ -5,7 +5,7 @@
  *
  * Runs on its own fixed 5-minute interval, platform-wide and not
  * admin-configurable (confirmed §9) — deliberately not folded into
- * `IngestionScheduler`, since no provider is involved. Covers every event,
+ * the sync tick (`SyncTick`), since no provider is involved. Covers every event,
  * linked to a provider or not: a provider moves a synced event's dates, and this scheduler
  * moves its status on them (ADR 0011).
  * Skips any event with `autoLifecycleEnabled = false` — the admin's manual

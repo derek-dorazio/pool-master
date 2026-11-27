@@ -10,7 +10,7 @@ import { JobTrigger, Sport, type ProviderSyncRun } from '@poolmaster/shared/doma
 import type { ProviderSyncRunRepository } from '@poolmaster/shared/db';
 import { ProviderSyncRunLedger } from '../../../packages/core-api/src/modules/ingestion/persistence/provider-sync-run-ledger';
 import { SyncOrchestrator } from '../../../packages/core-api/src/modules/ingestion/core/sync-orchestrator';
-import type { IngestionJobRecord } from '../../../packages/core-api/src/modules/ingestion/core/ingestion-scheduler';
+import type { IngestionJobRecord } from '../../../packages/core-api/src/modules/ingestion/core/event-feed-sync';
 import type { EventSyncKind, NormalizedSyncRequest } from '../../../packages/core-api/src/modules/ingestion/core/sync-orchestrator';
 import type { StoredSyncRunDetails } from '../../support/sync-run-payload';
 import { TEST_PROVIDER_ROWS } from '../../support/balldontlie-provider-rows';
@@ -152,6 +152,8 @@ async function runAndReadPayload(input: {
     providerId: 'balldontlie',
     submittedAt: new Date('2026-05-30T12:00:00.000Z'),
     trigger: JobTrigger.SCHEDULE,
+    sportEventId: 'sport-event-1',
+    sportLeagueId: 'sport-league-1',
   });
   const syncRun = syncRuns.at(0);
   if (!syncRun) {
@@ -230,7 +232,7 @@ describe('sync orchestration equivalence', () => {
 
     expect(clonePayload(scheduledPayload)).toEqual(clonePayload(manualPayload));
     expect(clonePayload(scheduledPayload)).toMatchObject({
-      summary: 'Failed Live scores and results sync for event-1: Provider returned no live scores',
+      summary: 'Failed Live scores and results sync for sport-event-1: Provider returned no live scores',
       changedCount: null,
       errorCount: 1,
       providerPayload: {

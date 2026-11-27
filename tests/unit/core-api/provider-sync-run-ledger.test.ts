@@ -1,10 +1,10 @@
 import type { FastifyBaseLogger } from 'fastify';
 import { expect } from '@jest/globals';
 import { SCHEDULED_SCORES_RUN } from '../../support/sync-run-fixtures';
-import { BackgroundJobType, JobTrigger, ProviderCode, Sport, type ProviderSyncRun, type SportEvent } from '@poolmaster/shared/domain';
+import { BackgroundJobType, JobTrigger, ProviderCode, Sport, type ProviderSyncRun } from '@poolmaster/shared/domain';
 import { ProviderSyncRunLedger } from '../../../packages/core-api/src/modules/ingestion/persistence/provider-sync-run-ledger';
 import { SyncOrchestrator } from '../../../packages/core-api/src/modules/ingestion/core/sync-orchestrator';
-import type { IngestionJobRecord } from '../../../packages/core-api/src/modules/ingestion/core/ingestion-scheduler';
+import type { IngestionJobRecord } from '../../../packages/core-api/src/modules/ingestion/core/event-feed-sync';
 import type { ProviderSyncRunRepository } from '@poolmaster/shared/db';
 import { mockFn } from '../../support/mock-fn';
 import { inMemorySyncRuns } from '../../support/in-memory-sync-runs';
@@ -106,61 +106,25 @@ function createJob(overrides: Partial<IngestionJobRecord> = {}): IngestionJobRec
 
 describe('ProviderSyncRunLedger records each run\'s event and sport league (#1847)', () => {
   const now = new Date('2026-05-30T12:00:00.000Z');
-  const scheduled = (eventId: string) => new SyncOrchestrator({ now: () => now }).normalizeRequest({
+  const scheduled = new SyncOrchestrator({ now: () => now }).normalizeRequest({
     source: 'SCHEDULED',
     actor: { type: 'SYSTEM', name: 'scheduler' },
-    scope: { type: 'EVENT', sport: Sport.GOLF, providerId: 'balldontlie', eventId, kinds: ['SCORES'] },
-  });
-  const linkedEvents = {
-    findByProviderRefs: jest.fn(async (_providerId: string, externalIds: readonly string[]): Promise<SportEvent[]> => {
-      if (externalIds.includes('linked')) return [{ id: 'sport-event-1', sportLeagueId: 'pga-tour' } as SportEvent];
-      if (externalIds.includes('season-slate')) return [{ id: 'cfp-event', sportLeagueId: 'ncaaf' } as SportEvent, { id: 'bowls-event', sportLeagueId: 'ncaaf' } as SportEvent];
-      return [];
-    }),
-  };
-
-  beforeEach(() => linkedEvents.findByProviderRefs.mockClear());
-
-  it('fills in the linked event and its sport league for a scheduled run whose caller named neither', async () => {
-    const ledger = new ProviderSyncRunLedger(inMemorySyncRuns(), undefined, linkedEvents);
-
-    const [run] = await ledger.createSubmissions({ normalizedRequest: scheduled('linked'), providerId: 'balldontlie', submittedAt: now, trigger: JobTrigger.SCHEDULE });
-
-    expect(run).toMatchObject({ sportEventId: 'sport-event-1', sportLeagueId: 'pga-tour' });
-    expect(linkedEvents.findByProviderRefs).toHaveBeenCalledWith('balldontlie', ['linked']);
+    scope: { type: 'EVENT', sport: Sport.GOLF, providerId: 'balldontlie', eventId: 'provider-event', kinds: ['SCORES'] },
   });
 
-  it('names the league and no one event for a provider event linked to an event in each of two competitions', async () => {
-    const ledger = new ProviderSyncRunLedger(inMemorySyncRuns(), undefined, linkedEvents);
+  it('keeps on each run the event and sport league its caller names, through either write', async () => {
+    const ledger = new ProviderSyncRunLedger(inMemorySyncRuns());
+    const named = { normalizedRequest: scheduled, providerId: 'balldontlie', submittedAt: now, sportEventId: 'named-event', sportLeagueId: 'named-league' };
 
-    const [run] = await ledger.createSubmissions({ normalizedRequest: scheduled('season-slate'), providerId: 'balldontlie', submittedAt: now, trigger: JobTrigger.SCHEDULE });
-
-    expect(run).toMatchObject({ sportEventId: null, sportLeagueId: 'ncaaf' });
-  });
-
-  it('leaves both null for a provider event linked to no event of ours', async () => {
-    const ledger = new ProviderSyncRunLedger(inMemorySyncRuns(), undefined, linkedEvents);
-
-    const [run] = await ledger.createSubmissions({ normalizedRequest: scheduled('unlinked'), providerId: 'balldontlie', submittedAt: now, trigger: JobTrigger.SCHEDULE });
-
-    expect(run).toMatchObject({ sportEventId: null, sportLeagueId: null });
-  });
-
-  it('keeps the event and sport league a caller names without looking them up, through the write that also queues the job', async () => {
-    const ledger = new ProviderSyncRunLedger(inMemorySyncRuns(), undefined, linkedEvents);
-
-    const [run] = await ledger.createSubmissionsWithJob({
-      normalizedRequest: scheduled('linked'),
-      providerId: 'balldontlie',
-      submittedAt: now,
+    const [run] = await ledger.createSubmissions({ ...named, trigger: JobTrigger.SCHEDULE });
+    const [withJob] = await ledger.createSubmissionsWithJob({
+      ...named,
       trigger: JobTrigger.ADMIN,
-      sportEventId: 'named-event',
-      sportLeagueId: 'named-league',
-      job: () => ({ type: BackgroundJobType.MANUAL_EVENT_SYNC, payload: {}, start: TEST_JOB_START }),
+      job: () => ({ type: BackgroundJobType.SYNC_EVENT_SCORES, payload: {}, start: TEST_JOB_START }),
     });
 
     expect(run).toMatchObject({ sportEventId: 'named-event', sportLeagueId: 'named-league' });
-    expect(linkedEvents.findByProviderRefs).not.toHaveBeenCalled();
+    expect(withJob).toMatchObject({ sportEventId: 'named-event', sportLeagueId: 'named-league' });
   });
 });
 
@@ -180,7 +144,9 @@ describe('ProviderSyncRunLedger', () => {
       providerId: 'balldontlie',
       submittedAt: now,
       trigger: JobTrigger.ADMIN,
-      job: (written) => ({ type: BackgroundJobType.MANUAL_EVENT_SYNC, payload: { ids: written.map((run) => run.id) }, start: TEST_JOB_START }),
+      sportEventId: 'sport-event-1',
+      sportLeagueId: 'pga-tour',
+      job: (written) => ({ type: BackgroundJobType.SYNC_EVENT_FIELD, payload: { ids: written.map((run) => run.id) }, start: TEST_JOB_START }),
     });
 
     expect(syncRuns.create).not.toHaveBeenCalled();
@@ -215,13 +181,15 @@ describe('ProviderSyncRunLedger', () => {
       providerId: 'balldontlie',
       submittedAt: now,
       trigger: JobTrigger.SCHEDULE,
+      sportEventId: 'sport-event-1',
+      sportLeagueId: 'pga-tour',
     });
 
     expect(runs).toHaveLength(1);
     expect(providerSyncRunCreate).toHaveBeenCalledWith(expect.objectContaining({
       providerCode: ProviderCode.BALLDONTLIE,
       sport: Sport.GOLF,
-      sportEventId: null,
+      sportEventId: 'sport-event-1',
       status: 'SUBMITTED',
       createdAt: now,
       kind: 'FIELD',
@@ -404,7 +372,7 @@ describe('ProviderSyncRunLedger checks each completed run\'s event for its sync\
     ['SCORES', 'NO_PROVIDER_LIVE_SCORES'],
   ] as const)('raises the %s run\'s %s finding on its event when the run warned of it', async (kind, findingKind) => {
     const findings = { checkEvent: jest.fn(async (_check: unknown) => undefined) };
-    const ledger = new ProviderSyncRunLedger(syncRunsIgnoringWrites(), undefined, undefined, findings);
+    const ledger = new ProviderSyncRunLedger(syncRunsIgnoringWrites(), undefined, findings);
 
     await ledger.executeFeedRun(createSyncRun({ kind, ...linked }), async () => createJob({ warnings: [{ code: findingKind, message: 'Nothing came back.' }] }));
 
@@ -413,7 +381,7 @@ describe('ProviderSyncRunLedger checks each completed run\'s event for its sync\
 
   it('resolves the event\'s finding when a completed run did not warn of it', async () => {
     const findings = { checkEvent: jest.fn(async (_check: unknown) => undefined) };
-    const ledger = new ProviderSyncRunLedger(syncRunsIgnoringWrites(), undefined, undefined, findings);
+    const ledger = new ProviderSyncRunLedger(syncRunsIgnoringWrites(), undefined, findings);
 
     await ledger.executeFeedRun(createSyncRun(linked), async () => createJob());
 
@@ -422,7 +390,7 @@ describe('ProviderSyncRunLedger checks each completed run\'s event for its sync\
 
   it('checks nothing for a run whose job failed, or a run linked to no event of ours', async () => {
     const findings = { checkEvent: jest.fn(async (_check: unknown) => undefined) };
-    const ledger = new ProviderSyncRunLedger(syncRunsIgnoringWrites(), undefined, undefined, findings);
+    const ledger = new ProviderSyncRunLedger(syncRunsIgnoringWrites(), undefined, findings);
 
     await ledger.executeFeedRun(createSyncRun(linked), async () => createJob({ status: 'FAILED', errors: 1, errorLog: [{ error: 'down', at: new Date() }] }));
     await ledger.executeFeedRun(createSyncRun(), async () => createJob());
@@ -433,7 +401,7 @@ describe('ProviderSyncRunLedger checks each completed run\'s event for its sync\
   it('returns the completed job and logs the failure when the findings check throws after the run is recorded', async () => {
     const findings = { checkEvent: jest.fn(async (_check: unknown) => { throw new Error('connection reset'); }) };
     const logger = { debug: jest.fn(), info: jest.fn(), warn: jest.fn(), error: jest.fn() };
-    const ledger = new ProviderSyncRunLedger(syncRunsIgnoringWrites(), logger as unknown as FastifyBaseLogger, undefined, findings);
+    const ledger = new ProviderSyncRunLedger(syncRunsIgnoringWrites(), logger as unknown as FastifyBaseLogger, findings);
     const job = createJob();
 
     await expect(ledger.executeFeedRun(createSyncRun(linked), async () => job)).resolves.toBe(job);
