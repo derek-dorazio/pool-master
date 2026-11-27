@@ -283,8 +283,8 @@ export interface ParticipantProviderMapping extends DomainEntity {
 export interface Contest extends DomainEntity {
   leagueId: string;
   /**
-   * The events the contest covers, in sequence order: by start date (#713). One for a golf or
-   * race contest, several for a majors pool or a pick'em season. Every contest has at least one.
+   * The events of the slots the contest covers (#2014), each once, by start date. One for a golf
+   * or race contest, several for a pick'em season.
    */
   sportEventIds: string[];
   name: string;
@@ -313,7 +313,14 @@ export interface Contest extends DomainEntity {
    * Absent for every other contest. The squares digits' draw sets `drawnAt` too.
    */
   squaresGameMatchId?: string;
-  /** The season whose cup the contest counts toward (#841): its first event's year when created. */
+  /**
+   * The definitions of the slots the contest covers (#2014), one per covered Season slot, in play
+   * order: what knockout round values, bracket games and coverage checks read.
+   */
+  coveredSlotDefinitionIds: string[];
+  /** The Season the contest plays in (#2014), fixed at creation: every covered slot is one of its. */
+  sportLeagueSeasonId: string;
+  /** That Season's championship year, read with it: the cup the contest counts toward (#841). */
   seasonYear: number;
   /** How much the contest counts toward its cup and the league championship (#841). */
   cupWeight: CupWeight;

@@ -649,13 +649,19 @@ export class PrismaSportEventRepository implements SportEventRepository {
   }
 
   async countContests(sportEventIds: readonly string[]): Promise<Map<string, number>> {
-    // A contest covers its events through contest_sport_events (#713): one row per contest and event.
-    const groups = await this.prisma.contestSportEvent.groupBy({
-      by: ['sportEventId'],
+    // A contest covers an event's slots (#2014), so each contest counts once per event however
+    // many of its slots it covers.
+    const slots = await this.prisma.sportEventSlot.findMany({
       where: { sportEventId: { in: [...sportEventIds] } },
-      _count: { _all: true },
+      select: { sportEventId: true, seasonSlot: { select: { contestSlots: { select: { contestId: true } } } } },
     });
-    return countMap(sportEventIds, groups.map((group) => [group.sportEventId, group._count._all]));
+    const contestsByEvent = new Map<string, Set<string>>();
+    for (const slot of slots) {
+      const contests = contestsByEvent.get(slot.sportEventId) ?? new Set<string>();
+      for (const { contestId } of slot.seasonSlot.contestSlots) contests.add(contestId);
+      contestsByEvent.set(slot.sportEventId, contests);
+    }
+    return countMap(sportEventIds, [...contestsByEvent].map(([sportEventId, contests]) => [sportEventId, contests.size]));
   }
 
   async countBySportLeagues(sportLeagueIds: readonly string[]): Promise<Map<string, number>> {
