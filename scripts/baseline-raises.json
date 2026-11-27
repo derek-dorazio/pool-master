@@ -609,6 +609,12 @@
     },
     {
       "file": "scripts/retired-names.json",
+      "key": "ProviderNotificationReceipt",
+      "now": 0,
+      "reason": "retired by #2008"
+    },
+    {
+      "file": "scripts/retired-names.json",
       "key": "GolfScoreError",
       "now": 0,
       "reason": "retired by #2008"
