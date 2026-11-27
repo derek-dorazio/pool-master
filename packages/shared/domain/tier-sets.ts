@@ -47,49 +47,61 @@ export interface TierSetSlotChoice {
 }
 
 /**
- * Which slots, in play order, the templates give a tier set (#2044): every slot a contest of an
+ * Which slots, in play order, active templates give a tier set (#2044): every slot a contest of an
  * active tiered or budget template of its league may start at, as that template's coverage allows
  * (`STARTS_AT_EACH_LISTED_SLOT_BY_COVERAGE`): each listed slot for a template covering one slot or
- * a slot onwards, the first of the event's listed slots for a template covering them all. The
- * first slot alone when no such template lists any.
+ * a slot onwards, the first of the event's listed slots for a template covering them all. Empty
+ * when no such template lists any.
  */
-function templateTierSetSlots<Slot extends TierSetSlotChoice>(slotsInPlayOrder: readonly Slot[]): Slot[] {
+function listedTierSetSlots<Slot extends TierSetSlotChoice>(slotsInPlayOrder: readonly Slot[]): Slot[] {
   const firstListing = new Map<string, Slot>();
   for (const slot of slotsInPlayOrder) {
     for (const template of slot.tierSetTemplates) {
       if (!firstListing.has(template.templateId)) firstListing.set(template.templateId, slot);
     }
   }
-  const starting = slotsInPlayOrder.filter((slot) => slot.tierSetTemplates.some((template) =>
+  return slotsInPlayOrder.filter((slot) => slot.tierSetTemplates.some((template) =>
     STARTS_AT_EACH_LISTED_SLOT_BY_COVERAGE[template.coverageMode] || firstListing.get(template.templateId) === slot));
-  return starting.length > 0 ? starting : slotsInPlayOrder.slice(0, 1);
 }
 
 /**
- * Which of an event's slots, in play order, hold a tier set (#2044): those the templates give one
- * (`templateTierSetSlots`), and the event's tier-set slot (`chooseTierSetSlot`), which keeps the
- * set built for it when no template chooses it any longer (#2226). None for an event covering no
- * slot. The one rule for which slots hold a set.
+ * The event's tier-set slot, and whether it is a kept one (#2226). The templates choose the first
+ * slot they give a set (`listedTierSetSlots`), or the first slot when they list none. A slot
+ * whose set was built while a template chose it, and that no template lists now, is kept instead
+ * while the chosen slot has no set of its own: an admin switching the template off, or taking the
+ * slot off its list, leaves the event its tiers and prices.
+ */
+function tierSetChoice<Slot extends TierSetSlotChoice>(slotsInPlayOrder: readonly Slot[]): { slot: Slot | undefined; kept: boolean; listed: Slot[] } {
+  const listed = listedTierSetSlots(slotsInPlayOrder);
+  const chosen = listed.at(0) ?? slotsInPlayOrder.at(0);
+  const kept = chosen?.storesSet === false ? slotsInPlayOrder.find((slot) => slot.storesSet && !listed.includes(slot)) : undefined;
+  return kept === undefined ? { slot: chosen, kept: false, listed } : { slot: kept, kept: true, listed };
+}
+
+/**
+ * Which of an event's slots, in play order, hold a tier set (#2044): the slots the templates give
+ * one (`listedTierSetSlots`), or the first slot alone when they list none. When the event's
+ * tier-set slot is a kept one (#2226), it holds the set and no slot before it does: an earlier
+ * slot given one would be valued by the next sync and then taken for the tier-set slot, moving
+ * the event's set, released or not (#431). Slots after it the templates list keep theirs. None
+ * for an event covering no slot. The one rule for which slots hold a set.
  */
 export function chooseTierSetSlots<Slot extends TierSetSlotChoice>(slotsInPlayOrder: readonly Slot[]): Slot[] {
-  const chosen = new Set(templateTierSetSlots(slotsInPlayOrder));
-  const tierSetSlot = chooseTierSetSlot(slotsInPlayOrder);
-  return slotsInPlayOrder.filter((slot) => slot === tierSetSlot || chosen.has(slot));
+  const { slot: tierSetSlot, kept, listed } = tierSetChoice(slotsInPlayOrder);
+  if (tierSetSlot === undefined) return [];
+  if (!kept) return listed.length > 0 ? listed : [tierSetSlot];
+  const from = slotsInPlayOrder.indexOf(tierSetSlot);
+  return slotsInPlayOrder.filter((slot, index) => slot === tierSetSlot || (index > from && listed.includes(slot)));
 }
 
 /**
  * Which of an event's slots holds its tier set, the one released with the event (#2044): the first
- * the templates give one (`templateTierSetSlots`), so a league's play-in, which no tiered or budget
- * template covers, is passed over. A slot whose set was built while a template chose it, and that
- * no template chooses now, stays the tier-set slot while the slot they choose has none (#2226): an
- * admin switching the template off, or taking the slot off its list, leaves the event its tiers
- * and prices. Undefined for an event covering no slot.
+ * the templates give one, so a league's play-in, which no tiered or budget template covers, is
+ * passed over; or a kept built slot no template lists now (`tierSetChoice`, #2226). Undefined for
+ * an event covering no slot.
  */
 export function chooseTierSetSlot<Slot extends TierSetSlotChoice>(slotsInPlayOrder: readonly Slot[]): Slot | undefined {
-  const chosenSlots = templateTierSetSlots(slotsInPlayOrder);
-  const chosen = chosenSlots.at(0);
-  if (chosen === undefined || chosen.storesSet) return chosen;
-  return slotsInPlayOrder.find((slot) => slot.storesSet && !chosenSlots.includes(slot)) ?? chosen;
+  return tierSetChoice(slotsInPlayOrder).slot;
 }
 
 /**

@@ -68,10 +68,12 @@ describe('chooseTierSetSlots', () => {
     expect([chooseTierSetSlots([semifinal, final]), chooseTierSetSlots<typeof final>([])]).toEqual([[semifinal], []]);
   });
 
-  it('keeps a set in the built slot no template chooses any longer, beside the slots the templates choose now, in play order', () => {
-    const [playIn, roundOf64, roundOf32] = [slot('PLAY_IN', [oneSlot]), slot('ROUND_OF_64'), slot('ROUND_OF_32', [], true)];
+  it('gives a kept tier-set slot the set alone before it, so a sync never builds an earlier slot that would take over, and keeps the listed slots after it', () => {
+    const switchedOff = [slot('PLAY_IN'), slot('ROUND_OF_64', [], true), slot('ROUND_OF_32')];
+    const listedAround = [slot('PLAY_IN', [oneSlot]), slot('ROUND_OF_64', [], true), slot('ROUND_OF_32', [oneSlot])];
 
-    expect(chooseTierSetSlots([playIn, roundOf64, roundOf32])).toEqual([playIn, roundOf32]);
+    expect([chooseTierSetSlots(switchedOff), chooseTierSetSlots(listedAround)]).toEqual([[switchedOff[1]], [listedAround[1], listedAround[2]]]);
+    expect(chooseTierSetSlot(listedAround)).toBe(listedAround[1]);
   });
 });
 
