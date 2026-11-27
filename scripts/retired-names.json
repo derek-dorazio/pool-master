@@ -265,7 +265,7 @@
   "RaceOrderRepository": 0,
   "PrismaRaceOrderRepository": 0,
   "ParticipantRoundView": 0,
-  "currentRoundThru": 3,
+  "currentRoundThru": 0,
   "roundsPar": 0,
   "ROUNDS_PAR_MIN": 0,
   "ROUNDS_PAR_MAX": 0,

@@ -214,9 +214,10 @@ describe('Golf round scores — admin correction surface', () => {
     expect(participant.rounds).toEqual([
       expect.objectContaining({
         roundNumber: 1,
-        status: 'COMPLETED',
+        status: 'FINISHED',
+        periodsCompleted: 18,
         completedAt: '2026-05-07T22:15:00.000Z',
-        golf: { strokes: 73, scoreToPar: 1, thru: 18 },
+        golf: { strokes: 73, scoreToPar: 1 },
       }),
     ]);
     expect(participant.standing).toMatchObject({ position: 2, golf: { eventStrokes: 73, eventScoreToPar: 1 } });
@@ -242,7 +243,7 @@ describe('Golf round scores — admin correction surface', () => {
 
     expect(res.statusCode).toBe(200);
     expect(res.json<SportEventParticipantResponse>().participant.rounds).toEqual([
-      expect.objectContaining({ completedAt: '2026-05-07T22:15:00.000Z', status: 'COMPLETED' }),
+      expect.objectContaining({ completedAt: '2026-05-07T22:15:00.000Z', status: 'FINISHED' }),
     ]);
   });
 

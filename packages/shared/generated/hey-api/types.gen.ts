@@ -15021,10 +15021,6 @@ export type SportEventParticipantStandingDto = {
     golf: {
         eventScoreToPar: number;
         eventStrokes: number;
-        /**
-         * Holes completed in the current round.
-         */
-        currentRoundThru: number | null;
     } | null;
 };
 
@@ -15036,9 +15032,13 @@ export type SportEventParticipantRoundDto = {
     sportEventRoundId: string;
     roundNumber: number;
     /**
-     * Progress through the round.
+     * How the participant's part in the round ended, as the round's Game records it; null while they are still playing it. A missed cut is not a round status: it is the standing's ELIMINATED.
      */
-    status: 'IN_PROGRESS' | 'COMPLETED' | 'DNF' | 'DSQ' | 'MISSED_CUT';
+    status: 'FINISHED' | 'DID_NOT_FINISH' | 'DISQUALIFIED' | 'DID_NOT_START' | null;
+    /**
+     * How many of the round's periods the participant has completed (holes, in golf), as the feed reports it; null when it reports none.
+     */
+    periodsCompleted: number | null;
     /**
      * ISO 8601 datetime string.
      */
@@ -15049,7 +15049,6 @@ export type SportEventParticipantRoundDto = {
     golf: {
         strokes: number;
         scoreToPar: number;
-        thru: number | null;
     } | null;
 };
 
@@ -15228,10 +15227,6 @@ export type SportEventParticipantDto = {
         golf: {
             eventScoreToPar: number;
             eventStrokes: number;
-            /**
-             * Holes completed in the current round.
-             */
-            currentRoundThru: number | null;
         } | null;
     } | null;
     /**
@@ -15242,9 +15237,13 @@ export type SportEventParticipantDto = {
         sportEventRoundId: string;
         roundNumber: number;
         /**
-         * Progress through the round.
+         * How the participant's part in the round ended, as the round's Game records it; null while they are still playing it. A missed cut is not a round status: it is the standing's ELIMINATED.
          */
-        status: 'IN_PROGRESS' | 'COMPLETED' | 'DNF' | 'DSQ' | 'MISSED_CUT';
+        status: 'FINISHED' | 'DID_NOT_FINISH' | 'DISQUALIFIED' | 'DID_NOT_START' | null;
+        /**
+         * How many of the round's periods the participant has completed (holes, in golf), as the feed reports it; null when it reports none.
+         */
+        periodsCompleted: number | null;
         /**
          * ISO 8601 datetime string.
          */
@@ -15255,7 +15254,6 @@ export type SportEventParticipantDto = {
         golf: {
             strokes: number;
             scoreToPar: number;
-            thru: number | null;
         } | null;
     }>;
     /**
@@ -15472,10 +15470,6 @@ export type SportEventParticipantListResponse = {
             golf: {
                 eventScoreToPar: number;
                 eventStrokes: number;
-                /**
-                 * Holes completed in the current round.
-                 */
-                currentRoundThru: number | null;
             } | null;
         } | null;
         /**
@@ -15486,9 +15480,13 @@ export type SportEventParticipantListResponse = {
             sportEventRoundId: string;
             roundNumber: number;
             /**
-             * Progress through the round.
+             * How the participant's part in the round ended, as the round's Game records it; null while they are still playing it. A missed cut is not a round status: it is the standing's ELIMINATED.
              */
-            status: 'IN_PROGRESS' | 'COMPLETED' | 'DNF' | 'DSQ' | 'MISSED_CUT';
+            status: 'FINISHED' | 'DID_NOT_FINISH' | 'DISQUALIFIED' | 'DID_NOT_START' | null;
+            /**
+             * How many of the round's periods the participant has completed (holes, in golf), as the feed reports it; null when it reports none.
+             */
+            periodsCompleted: number | null;
             /**
              * ISO 8601 datetime string.
              */
@@ -15499,7 +15497,6 @@ export type SportEventParticipantListResponse = {
             golf: {
                 strokes: number;
                 scoreToPar: number;
-                thru: number | null;
             } | null;
         }>;
         /**
@@ -15769,10 +15766,6 @@ export type SportEventParticipantResponse = {
             golf: {
                 eventScoreToPar: number;
                 eventStrokes: number;
-                /**
-                 * Holes completed in the current round.
-                 */
-                currentRoundThru: number | null;
             } | null;
         } | null;
         /**
@@ -15783,9 +15776,13 @@ export type SportEventParticipantResponse = {
             sportEventRoundId: string;
             roundNumber: number;
             /**
-             * Progress through the round.
+             * How the participant's part in the round ended, as the round's Game records it; null while they are still playing it. A missed cut is not a round status: it is the standing's ELIMINATED.
              */
-            status: 'IN_PROGRESS' | 'COMPLETED' | 'DNF' | 'DSQ' | 'MISSED_CUT';
+            status: 'FINISHED' | 'DID_NOT_FINISH' | 'DISQUALIFIED' | 'DID_NOT_START' | null;
+            /**
+             * How many of the round's periods the participant has completed (holes, in golf), as the feed reports it; null when it reports none.
+             */
+            periodsCompleted: number | null;
             /**
              * ISO 8601 datetime string.
              */
@@ -15796,7 +15793,6 @@ export type SportEventParticipantResponse = {
             golf: {
                 strokes: number;
                 scoreToPar: number;
-                thru: number | null;
             } | null;
         }>;
         /**
@@ -17162,10 +17158,6 @@ export type ContestLeaderboardResponse = {
             golf: {
                 eventScoreToPar: number;
                 eventStrokes: number;
-                /**
-                 * Holes completed in the current round.
-                 */
-                currentRoundThru: number | null;
             } | null;
         } | null;
         /**
@@ -17176,9 +17168,13 @@ export type ContestLeaderboardResponse = {
             sportEventRoundId: string;
             roundNumber: number;
             /**
-             * Progress through the round.
+             * How the participant's part in the round ended, as the round's Game records it; null while they are still playing it. A missed cut is not a round status: it is the standing's ELIMINATED.
              */
-            status: 'IN_PROGRESS' | 'COMPLETED' | 'DNF' | 'DSQ' | 'MISSED_CUT';
+            status: 'FINISHED' | 'DID_NOT_FINISH' | 'DISQUALIFIED' | 'DID_NOT_START' | null;
+            /**
+             * How many of the round's periods the participant has completed (holes, in golf), as the feed reports it; null when it reports none.
+             */
+            periodsCompleted: number | null;
             /**
              * ISO 8601 datetime string.
              */
@@ -17189,7 +17185,6 @@ export type ContestLeaderboardResponse = {
             golf: {
                 strokes: number;
                 scoreToPar: number;
-                thru: number | null;
             } | null;
         }>;
         /**

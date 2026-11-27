@@ -8,7 +8,6 @@ import {
   SlotPricingSchema,
   SlotTierLayoutSchema,
   SportEventParticipantStatus,
-  ParticipantRoundStatus,
   ParticipantType,
   ParticipantStandingStatus,
   GameSideStatus,
@@ -334,8 +333,7 @@ export type SportEventParticipantValuationDto = z.infer<typeof SportEventPartici
 export const SportEventParticipantGolfStandingDtoSchema = z.object({
   eventScoreToPar: z.number().int(),
   eventStrokes: z.number().int(),
-  currentRoundThru: z.number().int().nullable().describe('Holes completed in the current round.'),
-}).describe('Golf extension of a standing: the totals it was ranked from.');
+}).describe('Golf extension of a standing: the totals it was ranked from. How far into the current round the golfer is lives on that round (`rounds[].periodsCompleted`).');
 
 export const SportEventParticipantStandingDtoSchema = z.object({
   id: z.uuid(),
@@ -351,14 +349,14 @@ export type SportEventParticipantStandingDto = z.infer<typeof SportEventParticip
 export const SportEventParticipantGolfRoundDtoSchema = z.object({
   strokes: z.number().int(),
   scoreToPar: z.number().int(),
-  thru: z.number().int().nullable(),
 }).describe('Golf extension of a round: what was scored.');
 
 export const SportEventParticipantRoundDtoSchema = z.object({
   id: z.uuid(),
   sportEventRoundId: z.uuid(),
   roundNumber: z.number().int(),
-  status: z.enum(ParticipantRoundStatus).describe('Progress through the round.'),
+  status: z.enum(GameSideStatus).nullable().describe('How the participant\'s part in the round ended, as the round\'s Game records it; null while they are still playing it. A missed cut is not a round status: it is the standing\'s ELIMINATED.'),
+  periodsCompleted: z.number().int().nullable().describe('How many of the round\'s periods the participant has completed (holes, in golf), as the feed reports it; null when it reports none.'),
   completedAt: DateTimeSchema.nullable(),
   golf: SportEventParticipantGolfRoundDtoSchema.nullable().describe('Present once a golf round is scored.'),
 }).describe('A field row\'s part in one round.');

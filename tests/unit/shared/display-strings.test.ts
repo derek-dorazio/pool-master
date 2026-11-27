@@ -211,7 +211,8 @@ describe('sport words (#1960)', () => {
   it('give a role\'s short form when asked, and its name where it has none', () => {
     expect(strings.sportWord(Sport.GOLF, 'eventStart', { form: 'short' })).toBe('tee time');
     expect(strings.sportWord(Sport.GOLF, 'eventStart')).toBe('first tee time');
-    expect(strings.sportWord(Sport.GOLF, 'withdrawn', { form: 'short' })).toBe('Withdrawn');
+    expect(strings.sportWord(Sport.GOLF, 'tie', { form: 'short' })).toBe('Tie');
+    expect(strings.sportWord(Sport.GOLF, 'withdrawn', { form: 'short' })).toBe('WD');
   });
 
   it('refuse at compile time a role that is not a sport word role', () => {
