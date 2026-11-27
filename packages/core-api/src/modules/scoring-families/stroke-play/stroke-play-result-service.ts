@@ -323,18 +323,19 @@ export class StrokePlayResultService {
       ...(plan.before ? { before: comparableSide(plan.before) } : {}),
       after: comparableSide(plan.side),
     }));
-    const standingRows: SyncWriteDetailRow[] = [...new Set(writes.map((write) => write.sportEventParticipantId))].flatMap((entryId) => {
-      const after = standingWrites.find((write) => write.sportEventParticipantId === entryId);
-      if (!after) return [];
+    // The named golfers' standings: every one of them has one after the write.
+    const named = new Set(writes.map((write) => write.sportEventParticipantId));
+    const standingRows: SyncWriteDetailRow[] = standingWrites.filter((after) => named.has(after.sportEventParticipantId)).map((after) => {
+      const entryId = after.sportEventParticipantId;
       const before = standingByEntry.get(entryId);
-      return [{
+      return {
         id: `golf-standing:${entryId}`,
         entityType: 'SportEventParticipantStanding',
         disposition: before === undefined ? 'CREATED' : changedStandingIds.has(entryId) ? 'UPDATED' : 'UNCHANGED',
         internalId: before?.id,
         ...(before ? { before: comparableStanding(before) } : {}),
         after: comparableStanding(after),
-      }];
+      };
     });
     return mergeSyncWriteDiagnostics([summarizeSyncWriteRows(roundRows), summarizeSyncWriteRows(standingRows)]);
   }

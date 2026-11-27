@@ -19,7 +19,7 @@ const idOf = (name: string): string => `participant-${name.toLowerCase().replace
 
 const SCHEDULED = new Date('2026-06-04T12:00:00.000Z');
 
-function setup(eventOverrides: { rounds?: number; sport?: Sport } = {}) {
+function setup(eventOverrides: { rounds?: number; sport?: Sport } = {}, now?: () => Date) {
   const store = new InMemorySportEvents();
   const sport = store.addSport(Sport.GOLF);
   const event = store.addEvent({ providerRef: { providerId: 'balldontlie', externalId: 'golf-event-1' }, ...eventOverrides });
@@ -38,6 +38,7 @@ function setup(eventOverrides: { rounds?: number; sport?: Sport } = {}) {
     fieldGames,
     storesGolfRoundScores: eventStoresGolfRoundScores,
     domainEvents,
+    now,
   });
   return { store, service, event, anaEntry, benEntry, sport, domainEvents, fieldGames };
 }
@@ -150,6 +151,21 @@ describe('StrokePlayResultService — apply', () => {
   });
 });
 
+describe('StrokePlayResultService — apply, round completion', () => {
+  it('completes a round\'s Game at the time of the write when every golfer has finished and none sent a finish time, and stores a round sent with no holes as played through its slot\'s 18', async () => {
+    const asOf = new Date('2026-06-04T20:00:00.000Z');
+    const { service, store, event, anaEntry } = setup({}, () => asOf);
+    store.slotPeriods.set(store.eventSlotOf(event.id).id, { unit: PeriodUnit.HOLE, count: 18 });
+
+    await service.applyRoundScores(event.id, 1, [
+      { participantId: idOf('Ana Park'), strokes: 70, scoreToPar: -2, status: 'COMPLETED' },
+      { participantId: idOf('Ben Cole'), ...row() },
+    ]);
+
+    expect(roundsOf(store, anaEntry.id)).toEqual([expect.objectContaining({ periodsCompleted: 18, gameStatus: 'COMPLETED', gameCompletedAt: asOf })]);
+  });
+});
+
 describe('StrokePlayResultService — single-cell correction', () => {
   it('a correction that sends strokes and to par updates the round, the event to-par and the rank', async () => {
     const { service, store, event, anaEntry, benEntry } = setup();
@@ -166,6 +182,18 @@ describe('StrokePlayResultService — single-cell correction', () => {
         expect.objectContaining({ position: 1, total: 71, scoreToPar: -1 }),
         expect.objectContaining({ position: 2, total: 73, scoreToPar: 1 }),
       ]);
+  });
+
+  it('a correction that finishes the round\'s last golfer completes the round\'s Game at the finish time it sends', async () => {
+    const { service, store, event, anaEntry, benEntry } = setup();
+    await service.applyRoundScores(event.id, 1, [
+      { participantId: idOf('Ana Park'), ...row({ completedAt: '2026-06-04T17:00:00.000Z' }) },
+      { participantId: idOf('Ben Cole'), ...row({ status: 'IN_PROGRESS', thru: 12 }) },
+    ]);
+
+    await service.updateRoundScore(event.id, 1, benEntry.id, { thru: 18, status: 'COMPLETED', completedAt: '2026-06-04T18:45:00.000Z' });
+
+    expect(roundsOf(store, anaEntry.id)).toEqual([expect.objectContaining({ gameStatus: 'COMPLETED', gameCompletedAt: new Date('2026-06-04T18:45:00.000Z') })]);
   });
 
   it('refuses a field row that is not on this event with 404 EVENT_PARTICIPANT_NOT_FOUND', async () => {
@@ -383,6 +411,18 @@ describe('StrokePlayResultService — provider sync', () => {
       { action: 'liveScore.golf.unscheduledRoundSkipped', data: { sportEventId: event.id, roundNumbers: [1] } },
       expect.any(String),
     );
+  });
+
+  it('completes a round\'s Game at the finish time the feed sends once both golfers have finished it', async () => {
+    const { store, service, event, anaEntry } = await syncSetup();
+    await store.addRounds(event.id, fourRounds);
+
+    await service.persistRoundUpdatesForSportEvent(event.id, [
+      { ...update('ext-ana', 1, -2), completedAt: '2026-06-04T17:10:00.000Z' },
+      { ...update('ext-ben', 1, 1), completedAt: '2026-06-04T18:20:00.000Z' },
+    ], 'balldontlie', null);
+
+    expect(roundsOf(store, anaEntry.id)).toEqual([expect.objectContaining({ gameStatus: 'COMPLETED', gameCompletedAt: new Date('2026-06-04T18:20:00.000Z') })]);
   });
 
   it('gives two golfers tied after 72 holes the same event score and both "T1"', async () => {

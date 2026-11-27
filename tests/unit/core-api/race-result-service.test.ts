@@ -1,5 +1,5 @@
 import { testDomainEvents } from '../../support/domain-events';
-import { GameSideStatus, Sport, SportEventParticipantStatus } from '@poolmaster/shared/domain';
+import { GameSideStatus, MatchStatus, Sport, SportEventParticipantStatus } from '@poolmaster/shared/domain';
 import {
   RaceResultService,
   type RaceResultRowInput,
@@ -83,6 +83,23 @@ describe('RaceResultService — preview', () => {
       ['UNRESOLVED', null, null],
     ]);
     expect(preview.orderErrors).toEqual([]);
+  });
+
+  it('takes only the race round\'s side results with a status as stored results, so a runner with a side and no result yet previews as CREATE', async () => {
+    const { store, service, event, arrow, bolt } = await setup();
+    const side = (sportEventParticipantId: string, status: GameSideStatus | null) => ({ sportEventParticipantId, status, position: null, startPosition: null, score: null, scoreToPar: null, periodsCompleted: null });
+    await store.addRounds(event.id, [{ roundNumber: 2, scheduledDate: NOW }]);
+    await store.fieldGameRepo().applyResults(event.id, {
+      games: [
+        { roundNumber: 1, status: MatchStatus.IN_PROGRESS, completedAt: null, sides: [side(arrow.id, null)] },
+        { roundNumber: 2, status: MatchStatus.COMPLETED, completedAt: NOW, sides: [side(bolt.id, GameSideStatus.FINISHED)] },
+      ],
+      standings: [],
+    });
+
+    const preview = await service.previewResults(event.id, { isOfficial: false, rows: [row('Arrow', 1), row('Bolt', 2)] });
+
+    expect(preview.rows.map((entry) => [entry.participantName, entry.change, entry.before])).toEqual([['Arrow', 'CREATE', null], ['Bolt', 'CREATE', null]]);
   });
 
   it('writes nothing, however valid the rows', async () => {
