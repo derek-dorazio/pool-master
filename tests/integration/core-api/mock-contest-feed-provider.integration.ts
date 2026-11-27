@@ -597,13 +597,15 @@ describe('mock contest feed provider event-first verification', () => {
     const liveScores = await adapter.getLiveScores(eventExternalId);
     expect(liveScores.category).toBe('GOLF');
     expect(golfRoundsOf(liveScores).length).toBeGreaterThan(0);
-    expect(golfRoundsOf(liveScores)[0]).toEqual(
+    // Each round says how it ended as its Game side records it, null while it is being played.
+    const firstRound = golfRoundsOf(liveScores)[0];
+    expect(firstRound).toEqual(
       expect.objectContaining({
         participantExternalId: expect.any(String),
         round: expect.any(Number),
-        status: expect.stringMatching(/IN_PROGRESS|COMPLETED|DNF|DSQ|MISSED_CUT/),
       }),
     );
+    expect([null, 'FINISHED', 'DID_NOT_FINISH', 'DISQUALIFIED', 'DID_NOT_START']).toContain(firstRound.status);
 
     // plans/147 — sync updates the event linked to this provider event; it never creates one.
     const persistedEvent = await linkedProviderEvent(prisma, {
