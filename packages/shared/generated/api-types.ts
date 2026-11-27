@@ -2235,46 +2235,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/events/{eventId}/participants/upload/preview": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Preview a field upload
-         * @description Resolves each row against the event's field — participantId, then externalId, then an exact case-insensitive playerName, with no fallback — and reports what applying it would change to ranking, seedNumber and status (odds come only from the feed). A participant not on the field is UNRESOLVED: the upload never adds one, so the field is loaded from the provider first. A participant named by two rows is a DUPLICATE_PARTICIPANT row error. Writes nothing. Root admin only.
-         */
-        post: operations["previewEventParticipantUpload"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/events/{eventId}/participants/upload": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Apply a field upload
-         * @description Re-runs the preview, then patches every changed row in one transaction, all or none. 422 EVENT_PARTICIPANT_UPLOAD_ROWS_UNRESOLVED, with nothing written, when any row is not MATCHED or is a duplicate. Omitted values are left alone; null clears. A later field refresh from the provider replaces these values as it does grid edits, except a released bracket event's seeds. 409 SPORT_EVENT_SEEDS_LOCKED when a released bracket event's seed would change. Returns the field. Root admin only.
-         */
-        post: operations["applyEventParticipantUpload"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/v1/events/{eventId}/participants/{sportEventParticipantId}": {
         parameters: {
             query?: never;
@@ -2946,46 +2906,6 @@ export interface paths {
          * @description Root admin only. All or none; every participant named must be the sport league's.
          */
         patch: operations["updateSportLeagueParticipantRankings"];
-        trace?: never;
-    };
-    "/api/v1/sport-leagues/{sportLeagueId}/participants/rankings/upload/preview": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Preview a ranking upload
-         * @description Resolves each row to a participant of the sport league and writes nothing. Root admin only.
-         */
-        post: operations["previewSportLeagueRankingUpload"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/sport-leagues/{sportLeagueId}/participants/rankings/upload": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Apply a ranking upload
-         * @description Ranks every row's participant, all or none; 422 SPORT_LEAGUE_RANKING_UPLOAD_UNRESOLVED_ROWS when any row does not resolve. Root admin only.
-         */
-        post: operations["applySportLeagueRankingUpload"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
         trace?: never;
     };
     "/api/v1/tier-profiles/": {
@@ -3909,7 +3829,7 @@ export interface paths {
         };
         /**
          * Get a prediction contest entry's game picks for one event
-         * @description Returns one event's games, in game-number order and without cancelled games, with the entry's pick on each (#716). Active members of the contest's league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise. The entry's own squad sees every pick; anyone else sees a pick only once its game is revealed, at that game's kickoff once the contest is live (in a bracket, every pick at the event's start). Each game carries the teams really playing it and the teams the entry's own picks put in it (`predictedHome`, `predictedAway`): in a bracket (#721) a later game offers the teams the entry picked to win the games before it, paired by seed in a reseeded round. A bracket's picks also carry their outcome (CORRECT, BUSTED or PENDING) and points, and the entry its points, the most it can still reach, and its tiebreaker. 404 CONTEST_NOT_FOUND, CONTEST_EVENT_NOT_IN_CONTEST or CONTEST_ENTRY_NOT_FOUND; 409 CONTEST_FORMAT_MISMATCH for a roster contest, whose entries pick a lineup through the selection room.
+         * @description Returns one event's games, in game-number order and without cancelled games, with the entry's pick on each (#716). Active members of the contest's league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise. The entry's own squad sees every pick; anyone else sees a pick only once its game is revealed, at that game's kickoff once the contest is live (in a bracket, every pick at the event's start). Each game carries its sides (#2016), each with where it plays, the team really playing on it and the team the entry's own picks put there (`predictedTeam`): in a bracket (#721) a later game offers the teams the entry picked to win the games before it, paired by seed in a reseeded round. A bracket's picks also carry their outcome (CORRECT, BUSTED or PENDING) and points, and the entry its points, the most it can still reach, and its tiebreaker. 404 CONTEST_NOT_FOUND, CONTEST_EVENT_NOT_IN_CONTEST or CONTEST_ENTRY_NOT_FOUND; 409 CONTEST_FORMAT_MISMATCH for a roster contest, whose entries pick a lineup through the selection room.
          */
         get: operations["getGamePicks"];
         /**
@@ -13305,47 +13225,11 @@ export interface components {
                 ranking: number | null;
             }[];
         };
-        /** @description A ranking upload for a sport league's participants. */
-        SportLeagueRankingUploadRequest: {
-            rows: {
-                /** Format: uuid */
-                participantId?: string;
-                externalId?: string;
-                playerName?: string;
-                ranking?: number;
-            }[];
-        };
         /**
          * @description How an uploaded row resolved to a participant: one match, none, or several.
          * @enum {string}
          */
         UploadRowResolutionDto: "MATCHED" | "UNRESOLVED" | "AMBIGUOUS";
-        /** @description A dry run of a ranking upload. Nothing is written. */
-        SportLeagueRankingUploadPreviewResponse: {
-            /** @description One per uploaded row, in upload order. */
-            rows: {
-                /** @description One uploaded rank. The first identifier present is used: participantId, then externalId, then an exact case-insensitive playerName, among the sport league's participants. */
-                row: {
-                    /** Format: uuid */
-                    participantId?: string;
-                    externalId?: string;
-                    playerName?: string;
-                    ranking?: number;
-                };
-                /**
-                 * @description How an uploaded row resolved to a participant: one match, none, or several.
-                 * @enum {string}
-                 */
-                resolution: "MATCHED" | "UNRESOLVED" | "AMBIGUOUS";
-                /**
-                 * Format: uuid
-                 * @description Set only when MATCHED.
-                 */
-                participantId: string | null;
-                /** @description Set only when MATCHED. */
-                participantName: string | null;
-            }[];
-        };
         /** @enum {string} */
         EventStatusDto: "DRAFT" | "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
         /** @enum {string} */
@@ -15571,104 +15455,6 @@ export interface components {
                 updatedAt: string;
             };
         };
-        /** @description A field upload: changes to participants already on the event's field. It never adds one. */
-        SportEventParticipantUploadRequest: {
-            rows: {
-                participantId?: string;
-                /** @description The participant's canonical external id. */
-                externalId?: string;
-                playerName?: string;
-                /**
-                 * @description The field row's place in its event (#2184): ACTIVE while it competes; WITHDRAWN, ELIMINATED (a missed cut or a knock-out) or DISQUALIFIED once it is out.
-                 * @enum {string}
-                 */
-                status?: "ACTIVE" | "WITHDRAWN" | "ELIMINATED" | "DISQUALIFIED";
-                ranking?: number | null;
-                seedNumber?: number | null;
-            }[];
-        };
-        /** @description A dry run of a field upload. Nothing is written. */
-        SportEventParticipantUploadPreviewResponse: {
-            /** @description One per uploaded row, in upload order. */
-            rows: {
-                /** @description One uploaded field row. The first identifier present is used — participantId, then externalId, then an exact case-insensitive playerName — matched only within the event's field, with no fallback to the next. Each value omitted is left alone; null clears it. */
-                row: {
-                    participantId?: string;
-                    /** @description The participant's canonical external id. */
-                    externalId?: string;
-                    playerName?: string;
-                    /**
-                     * @description The field row's place in its event (#2184): ACTIVE while it competes; WITHDRAWN, ELIMINATED (a missed cut or a knock-out) or DISQUALIFIED once it is out.
-                     * @enum {string}
-                     */
-                    status?: "ACTIVE" | "WITHDRAWN" | "ELIMINATED" | "DISQUALIFIED";
-                    ranking?: number | null;
-                    seedNumber?: number | null;
-                };
-                /**
-                 * @description MATCHED: one participant on the field. UNRESOLVED: none on the field — the upload never adds one, so load the field from the provider first. AMBIGUOUS: several.
-                 * @enum {string}
-                 */
-                resolution: "MATCHED" | "UNRESOLVED" | "AMBIGUOUS";
-                /**
-                 * Format: uuid
-                 * @description Set only when MATCHED.
-                 */
-                participantId: string | null;
-                /** @description Set only when MATCHED. */
-                participantName: string | null;
-                /**
-                 * Format: uuid
-                 * @description The field row it resolved to; set only when MATCHED.
-                 */
-                sportEventParticipantId: string | null;
-                /**
-                 * @description Set when a MATCHED row still cannot be applied.
-                 * @enum {string|null}
-                 */
-                rowError: "DUPLICATE_PARTICIPANT" | null;
-                /**
-                 * @description Null when the row cannot be applied.
-                 * @enum {string|null}
-                 */
-                change: "UPDATE" | "UNCHANGED" | null;
-                /** @description What is stored now; set whenever the row resolved. */
-                before: {
-                    /**
-                     * @description The field row's place in its event (#2184): ACTIVE while it competes; WITHDRAWN, ELIMINATED (a missed cut or a knock-out) or DISQUALIFIED once it is out.
-                     * @enum {string}
-                     */
-                    status: "ACTIVE" | "WITHDRAWN" | "ELIMINATED" | "DISQUALIFIED";
-                    ranking: number | null;
-                    seedNumber: number | null;
-                } | null;
-                /** @description What applying would store; null when the row cannot be applied. */
-                after: {
-                    /**
-                     * @description The field row's place in its event (#2184): ACTIVE while it competes; WITHDRAWN, ELIMINATED (a missed cut or a knock-out) or DISQUALIFIED once it is out.
-                     * @enum {string}
-                     */
-                    status: "ACTIVE" | "WITHDRAWN" | "ELIMINATED" | "DISQUALIFIED";
-                    ranking: number | null;
-                    seedNumber: number | null;
-                } | null;
-                /** @description Why the row cannot be applied, for display; null when it can. */
-                message: string | null;
-            }[];
-            /** @description Counts by resolution and by change. Apply succeeds only when matched equals total and duplicate is 0. */
-            rollup: {
-                total: number;
-                matched: number;
-                unresolved: number;
-                ambiguous: number;
-                /** @description MATCHED rows refused as DUPLICATE_PARTICIPANT. */
-                duplicate: number;
-                /** @description Rows that would change a value. */
-                update: number;
-                /** @description Rows that would change nothing. */
-                unchanged: number;
-            };
-        };
         /** @description Request payload for creating a contest. */
         CreateContestRequest: {
             /** @description Contest name shown to commissioners and members. */
@@ -17455,13 +17241,13 @@ export interface components {
                         opponent: string;
                         /** @description The opponent's short name ("BUF") when it has one. */
                         opponentShortName: string | null;
+                        /** @description The picked team's side in the game (#2016). */
+                        sideNumber: number;
                         /**
-                         * @description Whether the picked team was HOME or AWAY: "KC v BUF" at home, "KC at BUF" away.
+                         * @description Where the picked team played: AWAY reads "KC at BUF", HOME "KC v BUF", and NONE, a neutral site, "KC vs BUF".
                          * @enum {string}
                          */
-                        side: "HOME" | "AWAY";
-                        /** @description The game is at neither team's home ground: "KC v BUF" either way. */
-                        isNeutralSite: boolean;
+                        homeAway: "HOME" | "AWAY" | "NONE";
                         /**
                          * Format: date-time
                          * @description Kickoff, when known.
@@ -17736,60 +17522,44 @@ export interface components {
                 isNeutralSite: boolean;
                 /** @description The bracket region or conference the game is in ("East", "AFC"), for grouping on screen; null where the bracket has none. */
                 regionLabel: string | null;
-                /** @description The points spread from the home team's side (#720): -3.5 has the home team favoured by 3.5. Null until set. */
-                homeSpread: number | null;
-                /** @description The team really playing on this side; null until it is decided. */
-                home: {
+                /** @description The game's two sides, side 1 then side 2 (#2016). A screen bills them from `homeAway`: "away at home", or "vs" where neither side is home. */
+                sides: {
+                    /** @description The side's fixed place in the game: 1 or 2. */
+                    sideNumber: number;
                     /**
-                     * Format: uuid
-                     * @description The team's field row in the event: what a pick names.
+                     * @description Where the side plays the game's game 1: HOME, AWAY, or NONE at a neutral site (and until the feed says).
+                     * @enum {string}
                      */
-                    sportEventParticipantId: string;
-                    /** Format: uuid */
-                    participantId: string;
-                    name: string;
-                    /** @description The team's seed in the event ("1" in a navy square beside its name on a bracket); null where the event seeds no field, or this team. */
-                    seedNumber: number | null;
-                } | null;
-                /** @description The team really playing on this side; null until it is decided. */
-                away: {
-                    /**
-                     * Format: uuid
-                     * @description The team's field row in the event: what a pick names.
-                     */
-                    sportEventParticipantId: string;
-                    /** Format: uuid */
-                    participantId: string;
-                    name: string;
-                    /** @description The team's seed in the event ("1" in a navy square beside its name on a bracket); null where the event seeds no field, or this team. */
-                    seedNumber: number | null;
-                } | null;
-                /** @description The team the entry's own picks put on this side, which its pick chooses between: in a bracket, the team it picked to win the game feeding this side (in a reseeded round, its picked winners paired by seed); otherwise the real team. Null until the picks that decide it are made. On another team's entry, the real team until the game is revealed. */
-                predictedHome: {
-                    /**
-                     * Format: uuid
-                     * @description The team's field row in the event: what a pick names.
-                     */
-                    sportEventParticipantId: string;
-                    /** Format: uuid */
-                    participantId: string;
-                    name: string;
-                    /** @description The team's seed in the event ("1" in a navy square beside its name on a bracket); null where the event seeds no field, or this team. */
-                    seedNumber: number | null;
-                } | null;
-                /** @description As predictedHome, for the away side. */
-                predictedAway: {
-                    /**
-                     * Format: uuid
-                     * @description The team's field row in the event: what a pick names.
-                     */
-                    sportEventParticipantId: string;
-                    /** Format: uuid */
-                    participantId: string;
-                    name: string;
-                    /** @description The team's seed in the event ("1" in a navy square beside its name on a bracket); null where the event seeds no field, or this team. */
-                    seedNumber: number | null;
-                } | null;
+                    homeAway: "HOME" | "AWAY" | "NONE";
+                    /** @description The team really playing on this side; null until it is decided. */
+                    team: {
+                        /**
+                         * Format: uuid
+                         * @description The team's field row in the event: what a pick names.
+                         */
+                        sportEventParticipantId: string;
+                        /** Format: uuid */
+                        participantId: string;
+                        name: string;
+                        /** @description The team's seed in the event ("1" in a navy square beside its name on a bracket); null where the event seeds no field, or this team. */
+                        seedNumber: number | null;
+                    } | null;
+                    /** @description The team the entry's own picks put on this side, which its pick chooses between: in a bracket, the team it picked to win the game feeding this side (in a reseeded round, its picked winners paired by seed); otherwise the real team. Null until the picks that decide it are made. On another team's entry, the real team until the game is revealed. */
+                    predictedTeam: {
+                        /**
+                         * Format: uuid
+                         * @description The team's field row in the event: what a pick names.
+                         */
+                        sportEventParticipantId: string;
+                        /** Format: uuid */
+                        participantId: string;
+                        name: string;
+                        /** @description The team's seed in the event ("1" in a navy square beside its name on a bracket); null where the event seeds no field, or this team. */
+                        seedNumber: number | null;
+                    } | null;
+                    /** @description The points spread, on side 1 only (#720): -3.5 has side 1 favoured by 3.5, +3.5 has it getting 3.5. Null until set, and always on side 2. */
+                    spread: number | null;
+                }[];
                 /** @description Whether the game's pick can no longer change: it has kicked off, or the contest no longer takes picks. */
                 locked: boolean;
                 /** @description Whether picks on this game are shown to the whole league: from its kickoff once the contest is live. */
@@ -17806,6 +17576,8 @@ export interface components {
                      * @description The team picked to win; null for a TIE pick.
                      */
                     sportEventParticipantId: string | null;
+                    /** @description The side the picked team is on (#2016): its side in the game's `sides`, by the entry's own predicted teams in a bracket. Null for a TIE pick. */
+                    sideNumber: number | null;
                     /** @description The pick's confidence value; null in a straight-up pool, in a bracket, or until given. */
                     confidence: number | null;
                     /** Format: date-time */
@@ -18030,60 +17802,44 @@ export interface components {
                 isNeutralSite: boolean;
                 /** @description The bracket region or conference the game is in ("East", "AFC"), for grouping on screen; null where the bracket has none. */
                 regionLabel: string | null;
-                /** @description The points spread from the home team's side (#720): -3.5 has the home team favoured by 3.5. Null until set. */
-                homeSpread: number | null;
-                /** @description The team really playing on this side; null until it is decided. */
-                home: {
+                /** @description The game's two sides, side 1 then side 2 (#2016). A screen bills them from `homeAway`: "away at home", or "vs" where neither side is home. */
+                sides: {
+                    /** @description The side's fixed place in the game: 1 or 2. */
+                    sideNumber: number;
                     /**
-                     * Format: uuid
-                     * @description The team's field row in the event: what a pick names.
+                     * @description Where the side plays the game's game 1: HOME, AWAY, or NONE at a neutral site (and until the feed says).
+                     * @enum {string}
                      */
-                    sportEventParticipantId: string;
-                    /** Format: uuid */
-                    participantId: string;
-                    name: string;
-                    /** @description The team's seed in the event ("1" in a navy square beside its name on a bracket); null where the event seeds no field, or this team. */
-                    seedNumber: number | null;
-                } | null;
-                /** @description The team really playing on this side; null until it is decided. */
-                away: {
-                    /**
-                     * Format: uuid
-                     * @description The team's field row in the event: what a pick names.
-                     */
-                    sportEventParticipantId: string;
-                    /** Format: uuid */
-                    participantId: string;
-                    name: string;
-                    /** @description The team's seed in the event ("1" in a navy square beside its name on a bracket); null where the event seeds no field, or this team. */
-                    seedNumber: number | null;
-                } | null;
-                /** @description The team the entry's own picks put on this side, which its pick chooses between: in a bracket, the team it picked to win the game feeding this side (in a reseeded round, its picked winners paired by seed); otherwise the real team. Null until the picks that decide it are made. On another team's entry, the real team until the game is revealed. */
-                predictedHome: {
-                    /**
-                     * Format: uuid
-                     * @description The team's field row in the event: what a pick names.
-                     */
-                    sportEventParticipantId: string;
-                    /** Format: uuid */
-                    participantId: string;
-                    name: string;
-                    /** @description The team's seed in the event ("1" in a navy square beside its name on a bracket); null where the event seeds no field, or this team. */
-                    seedNumber: number | null;
-                } | null;
-                /** @description As predictedHome, for the away side. */
-                predictedAway: {
-                    /**
-                     * Format: uuid
-                     * @description The team's field row in the event: what a pick names.
-                     */
-                    sportEventParticipantId: string;
-                    /** Format: uuid */
-                    participantId: string;
-                    name: string;
-                    /** @description The team's seed in the event ("1" in a navy square beside its name on a bracket); null where the event seeds no field, or this team. */
-                    seedNumber: number | null;
-                } | null;
+                    homeAway: "HOME" | "AWAY" | "NONE";
+                    /** @description The team really playing on this side; null until it is decided. */
+                    team: {
+                        /**
+                         * Format: uuid
+                         * @description The team's field row in the event: what a pick names.
+                         */
+                        sportEventParticipantId: string;
+                        /** Format: uuid */
+                        participantId: string;
+                        name: string;
+                        /** @description The team's seed in the event ("1" in a navy square beside its name on a bracket); null where the event seeds no field, or this team. */
+                        seedNumber: number | null;
+                    } | null;
+                    /** @description The team the entry's own picks put on this side, which its pick chooses between: in a bracket, the team it picked to win the game feeding this side (in a reseeded round, its picked winners paired by seed); otherwise the real team. Null until the picks that decide it are made. On another team's entry, the real team until the game is revealed. */
+                    predictedTeam: {
+                        /**
+                         * Format: uuid
+                         * @description The team's field row in the event: what a pick names.
+                         */
+                        sportEventParticipantId: string;
+                        /** Format: uuid */
+                        participantId: string;
+                        name: string;
+                        /** @description The team's seed in the event ("1" in a navy square beside its name on a bracket); null where the event seeds no field, or this team. */
+                        seedNumber: number | null;
+                    } | null;
+                    /** @description The points spread, on side 1 only (#720): -3.5 has side 1 favoured by 3.5, +3.5 has it getting 3.5. Null until set, and always on side 2. */
+                    spread: number | null;
+                }[];
                 /** @description Whether the game's pick would already be closed once the contest opens: it has kicked off, or in a bracket the event has started. */
                 locked: boolean;
                 /** @description The trial pick on the game; null when there is none, or it no longer stands (in a bracket, a later pick whose team an earlier trial pick knocked out). */
@@ -18098,6 +17854,8 @@ export interface components {
                      * @description The team picked to win; null for a TIE pick.
                      */
                     sportEventParticipantId: string | null;
+                    /** @description The side the picked team is on (#2016): its side in the game's `sides`, by the entry's own predicted teams in a bracket. Null for a TIE pick. */
+                    sideNumber: number | null;
                     /** @description The pick's confidence value; null in a straight-up pool, in a bracket, or until given. */
                     confidence: number | null;
                 } | null;
@@ -21416,7 +21174,6 @@ export interface components {
             rows: {
                 participantId?: string;
                 externalId?: string;
-                playerName?: string;
                 /** @description Null when only the score to par is known; such a row is not stored. */
                 strokes: number | null;
                 scoreToPar: number;
@@ -21432,11 +21189,10 @@ export interface components {
         GolfRoundScorePreviewResponse: {
             /** @description One per uploaded row, in upload order. */
             rows: {
-                /** @description One golfer's result for one round. The first identifier present is used: participantId, then externalId, then an exact case-insensitive playerName, matched within the event's field. */
+                /** @description One golfer's result for one round. The first identifier present is used: participantId, then externalId (a feed id one of the participant's provider mappings holds), matched within the event's field. */
                 row: {
                     participantId?: string;
                     externalId?: string;
-                    playerName?: string;
                     /** @description Null when only the score to par is known; such a row is not stored. */
                     strokes: number | null;
                     scoreToPar: number;
@@ -21509,7 +21265,6 @@ export interface components {
             rows: {
                 participantId?: string;
                 externalId?: string;
-                playerName?: string;
                 /**
                  * @description How the race ended for this runner.
                  * @enum {string}
@@ -21527,11 +21282,10 @@ export interface components {
         RaceResultPreviewResponse: {
             /** @description One per row sent, in the order sent. */
             rows: {
-                /** @description One runner's result. The first identifier present is used: participantId, then externalId, then an exact case-insensitive playerName, matched within the event's field. Every value is stored exactly as sent. */
+                /** @description One runner's result. The first identifier present is used: participantId, then externalId (a feed id one of the participant's provider mappings holds), matched within the event's field. Every value is stored exactly as sent. */
                 row: {
                     participantId?: string;
                     externalId?: string;
-                    playerName?: string;
                     /**
                      * @description How the race ended for this runner.
                      * @enum {string}
@@ -34999,148 +34753,6 @@ export interface operations {
             };
         };
     };
-    previewEventParticipantUpload: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                eventId: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["SportEventParticipantUploadRequest"];
-            };
-        };
-        responses: {
-            /** @description A dry run of a field upload. Nothing is written. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["SportEventParticipantUploadPreviewResponse"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-        };
-    };
-    applyEventParticipantUpload: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                eventId: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["SportEventParticipantUploadRequest"];
-            };
-        };
-        responses: {
-            /** @description An event's field. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["SportEventParticipantListResponse"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-        };
-    };
     removeEventParticipant: {
         parameters: {
             query?: never;
@@ -37355,103 +36967,6 @@ export interface operations {
             };
             /** @description Standard API error envelope. */
             404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-        };
-    };
-    previewSportLeagueRankingUpload: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                sportLeagueId: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["SportLeagueRankingUploadRequest"];
-            };
-        };
-        responses: {
-            /** @description A dry run of a ranking upload. Nothing is written. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["SportLeagueRankingUploadPreviewResponse"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-        };
-    };
-    applySportLeagueRankingUpload: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                sportLeagueId: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["SportLeagueRankingUploadRequest"];
-            };
-        };
-        responses: {
-            /** @description Participant-list response. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ParticipantListResponse"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            422: {
                 headers: {
                     [name: string]: unknown;
                 };

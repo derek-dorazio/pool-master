@@ -12172,53 +12172,9 @@ export type SportLeagueParticipantRankingsRequest = {
 };
 
 /**
- * A ranking upload for a sport league's participants.
- */
-export type SportLeagueRankingUploadRequest = {
-    rows: Array<{
-        participantId?: string;
-        externalId?: string;
-        playerName?: string;
-        ranking?: number;
-    }>;
-};
-
-/**
  * How an uploaded row resolved to a participant: one match, none, or several.
  */
 export type UploadRowResolutionDto = 'MATCHED' | 'UNRESOLVED' | 'AMBIGUOUS';
-
-/**
- * A dry run of a ranking upload. Nothing is written.
- */
-export type SportLeagueRankingUploadPreviewResponse = {
-    /**
-     * One per uploaded row, in upload order.
-     */
-    rows: Array<{
-        /**
-         * One uploaded rank. The first identifier present is used: participantId, then externalId, then an exact case-insensitive playerName, among the sport league's participants.
-         */
-        row: {
-            participantId?: string;
-            externalId?: string;
-            playerName?: string;
-            ranking?: number;
-        };
-        /**
-         * How an uploaded row resolved to a participant: one match, none, or several.
-         */
-        resolution: 'MATCHED' | 'UNRESOLVED' | 'AMBIGUOUS';
-        /**
-         * Set only when MATCHED.
-         */
-        participantId: string | null;
-        /**
-         * Set only when MATCHED.
-         */
-        participantName: string | null;
-    }>;
-};
 
 export type EventStatusDto = 'DRAFT' | 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
 
@@ -15069,125 +15025,6 @@ export type SportEventParticipantResponse = {
 };
 
 /**
- * A field upload: changes to participants already on the event's field. It never adds one.
- */
-export type SportEventParticipantUploadRequest = {
-    rows: Array<{
-        participantId?: string;
-        /**
-         * The participant's canonical external id.
-         */
-        externalId?: string;
-        playerName?: string;
-        /**
-         * The field row's place in its event (#2184): ACTIVE while it competes; WITHDRAWN, ELIMINATED (a missed cut or a knock-out) or DISQUALIFIED once it is out.
-         */
-        status?: 'ACTIVE' | 'WITHDRAWN' | 'ELIMINATED' | 'DISQUALIFIED';
-        ranking?: number | null;
-        seedNumber?: number | null;
-    }>;
-};
-
-/**
- * A dry run of a field upload. Nothing is written.
- */
-export type SportEventParticipantUploadPreviewResponse = {
-    /**
-     * One per uploaded row, in upload order.
-     */
-    rows: Array<{
-        /**
-         * One uploaded field row. The first identifier present is used — participantId, then externalId, then an exact case-insensitive playerName — matched only within the event's field, with no fallback to the next. Each value omitted is left alone; null clears it.
-         */
-        row: {
-            participantId?: string;
-            /**
-             * The participant's canonical external id.
-             */
-            externalId?: string;
-            playerName?: string;
-            /**
-             * The field row's place in its event (#2184): ACTIVE while it competes; WITHDRAWN, ELIMINATED (a missed cut or a knock-out) or DISQUALIFIED once it is out.
-             */
-            status?: 'ACTIVE' | 'WITHDRAWN' | 'ELIMINATED' | 'DISQUALIFIED';
-            ranking?: number | null;
-            seedNumber?: number | null;
-        };
-        /**
-         * MATCHED: one participant on the field. UNRESOLVED: none on the field — the upload never adds one, so load the field from the provider first. AMBIGUOUS: several.
-         */
-        resolution: 'MATCHED' | 'UNRESOLVED' | 'AMBIGUOUS';
-        /**
-         * Set only when MATCHED.
-         */
-        participantId: string | null;
-        /**
-         * Set only when MATCHED.
-         */
-        participantName: string | null;
-        /**
-         * The field row it resolved to; set only when MATCHED.
-         */
-        sportEventParticipantId: string | null;
-        /**
-         * Set when a MATCHED row still cannot be applied.
-         */
-        rowError: 'DUPLICATE_PARTICIPANT' | null;
-        /**
-         * Null when the row cannot be applied.
-         */
-        change: 'UPDATE' | 'UNCHANGED' | null;
-        /**
-         * What is stored now; set whenever the row resolved.
-         */
-        before: {
-            /**
-             * The field row's place in its event (#2184): ACTIVE while it competes; WITHDRAWN, ELIMINATED (a missed cut or a knock-out) or DISQUALIFIED once it is out.
-             */
-            status: 'ACTIVE' | 'WITHDRAWN' | 'ELIMINATED' | 'DISQUALIFIED';
-            ranking: number | null;
-            seedNumber: number | null;
-        } | null;
-        /**
-         * What applying would store; null when the row cannot be applied.
-         */
-        after: {
-            /**
-             * The field row's place in its event (#2184): ACTIVE while it competes; WITHDRAWN, ELIMINATED (a missed cut or a knock-out) or DISQUALIFIED once it is out.
-             */
-            status: 'ACTIVE' | 'WITHDRAWN' | 'ELIMINATED' | 'DISQUALIFIED';
-            ranking: number | null;
-            seedNumber: number | null;
-        } | null;
-        /**
-         * Why the row cannot be applied, for display; null when it can.
-         */
-        message: string | null;
-    }>;
-    /**
-     * Counts by resolution and by change. Apply succeeds only when matched equals total and duplicate is 0.
-     */
-    rollup: {
-        total: number;
-        matched: number;
-        unresolved: number;
-        ambiguous: number;
-        /**
-         * MATCHED rows refused as DUPLICATE_PARTICIPANT.
-         */
-        duplicate: number;
-        /**
-         * Rows that would change a value.
-         */
-        update: number;
-        /**
-         * Rows that would change nothing.
-         */
-        unchanged: number;
-    };
-};
-
-/**
  * Request payload for creating a contest.
  */
 export type CreateContestRequest = {
@@ -17623,13 +17460,13 @@ export type SurvivorLeaderboardResponse = {
                  */
                 opponentShortName: string | null;
                 /**
-                 * Whether the picked team was HOME or AWAY: "KC v BUF" at home, "KC at BUF" away.
+                 * The picked team's side in the game (#2016).
                  */
-                side: 'HOME' | 'AWAY';
+                sideNumber: number;
                 /**
-                 * The game is at neither team's home ground: "KC v BUF" either way.
+                 * Where the picked team played: AWAY reads "KC at BUF", HOME "KC v BUF", and NONE, a neutral site, "KC vs BUF".
                  */
-                isNeutralSite: boolean;
+                homeAway: 'HOME' | 'AWAY' | 'NONE';
                 /**
                  * Kickoff, when known.
                  */
@@ -17997,69 +17834,52 @@ export type GamePicksResponse = {
          */
         regionLabel: string | null;
         /**
-         * The points spread from the home team's side (#720): -3.5 has the home team favoured by 3.5. Null until set.
+         * The game's two sides, side 1 then side 2 (#2016). A screen bills them from `homeAway`: "away at home", or "vs" where neither side is home.
          */
-        homeSpread: number | null;
-        /**
-         * The team really playing on this side; null until it is decided.
-         */
-        home: {
+        sides: Array<{
             /**
-             * The team's field row in the event: what a pick names.
+             * The side's fixed place in the game: 1 or 2.
              */
-            sportEventParticipantId: string;
-            participantId: string;
-            name: string;
+            sideNumber: number;
             /**
-             * The team's seed in the event ("1" in a navy square beside its name on a bracket); null where the event seeds no field, or this team.
+             * Where the side plays the game's game 1: HOME, AWAY, or NONE at a neutral site (and until the feed says).
              */
-            seedNumber: number | null;
-        } | null;
-        /**
-         * The team really playing on this side; null until it is decided.
-         */
-        away: {
+            homeAway: 'HOME' | 'AWAY' | 'NONE';
             /**
-             * The team's field row in the event: what a pick names.
+             * The team really playing on this side; null until it is decided.
              */
-            sportEventParticipantId: string;
-            participantId: string;
-            name: string;
+            team: {
+                /**
+                 * The team's field row in the event: what a pick names.
+                 */
+                sportEventParticipantId: string;
+                participantId: string;
+                name: string;
+                /**
+                 * The team's seed in the event ("1" in a navy square beside its name on a bracket); null where the event seeds no field, or this team.
+                 */
+                seedNumber: number | null;
+            } | null;
             /**
-             * The team's seed in the event ("1" in a navy square beside its name on a bracket); null where the event seeds no field, or this team.
+             * The team the entry's own picks put on this side, which its pick chooses between: in a bracket, the team it picked to win the game feeding this side (in a reseeded round, its picked winners paired by seed); otherwise the real team. Null until the picks that decide it are made. On another team's entry, the real team until the game is revealed.
              */
-            seedNumber: number | null;
-        } | null;
-        /**
-         * The team the entry's own picks put on this side, which its pick chooses between: in a bracket, the team it picked to win the game feeding this side (in a reseeded round, its picked winners paired by seed); otherwise the real team. Null until the picks that decide it are made. On another team's entry, the real team until the game is revealed.
-         */
-        predictedHome: {
+            predictedTeam: {
+                /**
+                 * The team's field row in the event: what a pick names.
+                 */
+                sportEventParticipantId: string;
+                participantId: string;
+                name: string;
+                /**
+                 * The team's seed in the event ("1" in a navy square beside its name on a bracket); null where the event seeds no field, or this team.
+                 */
+                seedNumber: number | null;
+            } | null;
             /**
-             * The team's field row in the event: what a pick names.
+             * The points spread, on side 1 only (#720): -3.5 has side 1 favoured by 3.5, +3.5 has it getting 3.5. Null until set, and always on side 2.
              */
-            sportEventParticipantId: string;
-            participantId: string;
-            name: string;
-            /**
-             * The team's seed in the event ("1" in a navy square beside its name on a bracket); null where the event seeds no field, or this team.
-             */
-            seedNumber: number | null;
-        } | null;
-        /**
-         * As predictedHome, for the away side.
-         */
-        predictedAway: {
-            /**
-             * The team's field row in the event: what a pick names.
-             */
-            sportEventParticipantId: string;
-            participantId: string;
-            name: string;
-            /**
-             * The team's seed in the event ("1" in a navy square beside its name on a bracket); null where the event seeds no field, or this team.
-             */
-            seedNumber: number | null;
-        } | null;
+            spread: number | null;
+        }>;
         /**
          * Whether the game's pick can no longer change: it has kicked off, or the contest no longer takes picks.
          */
@@ -18080,6 +17900,10 @@ export type GamePicksResponse = {
              * The team picked to win; null for a TIE pick.
              */
             sportEventParticipantId: string | null;
+            /**
+             * The side the picked team is on (#2016): its side in the game's `sides`, by the entry's own predicted teams in a bracket. Null for a TIE pick.
+             */
+            sideNumber: number | null;
             /**
              * The pick's confidence value; null in a straight-up pool, in a bracket, or until given.
              */
@@ -18376,69 +18200,52 @@ export type GamePickPreviewResponse = {
          */
         regionLabel: string | null;
         /**
-         * The points spread from the home team's side (#720): -3.5 has the home team favoured by 3.5. Null until set.
+         * The game's two sides, side 1 then side 2 (#2016). A screen bills them from `homeAway`: "away at home", or "vs" where neither side is home.
          */
-        homeSpread: number | null;
-        /**
-         * The team really playing on this side; null until it is decided.
-         */
-        home: {
+        sides: Array<{
             /**
-             * The team's field row in the event: what a pick names.
+             * The side's fixed place in the game: 1 or 2.
              */
-            sportEventParticipantId: string;
-            participantId: string;
-            name: string;
+            sideNumber: number;
             /**
-             * The team's seed in the event ("1" in a navy square beside its name on a bracket); null where the event seeds no field, or this team.
+             * Where the side plays the game's game 1: HOME, AWAY, or NONE at a neutral site (and until the feed says).
              */
-            seedNumber: number | null;
-        } | null;
-        /**
-         * The team really playing on this side; null until it is decided.
-         */
-        away: {
+            homeAway: 'HOME' | 'AWAY' | 'NONE';
             /**
-             * The team's field row in the event: what a pick names.
+             * The team really playing on this side; null until it is decided.
              */
-            sportEventParticipantId: string;
-            participantId: string;
-            name: string;
+            team: {
+                /**
+                 * The team's field row in the event: what a pick names.
+                 */
+                sportEventParticipantId: string;
+                participantId: string;
+                name: string;
+                /**
+                 * The team's seed in the event ("1" in a navy square beside its name on a bracket); null where the event seeds no field, or this team.
+                 */
+                seedNumber: number | null;
+            } | null;
             /**
-             * The team's seed in the event ("1" in a navy square beside its name on a bracket); null where the event seeds no field, or this team.
+             * The team the entry's own picks put on this side, which its pick chooses between: in a bracket, the team it picked to win the game feeding this side (in a reseeded round, its picked winners paired by seed); otherwise the real team. Null until the picks that decide it are made. On another team's entry, the real team until the game is revealed.
              */
-            seedNumber: number | null;
-        } | null;
-        /**
-         * The team the entry's own picks put on this side, which its pick chooses between: in a bracket, the team it picked to win the game feeding this side (in a reseeded round, its picked winners paired by seed); otherwise the real team. Null until the picks that decide it are made. On another team's entry, the real team until the game is revealed.
-         */
-        predictedHome: {
+            predictedTeam: {
+                /**
+                 * The team's field row in the event: what a pick names.
+                 */
+                sportEventParticipantId: string;
+                participantId: string;
+                name: string;
+                /**
+                 * The team's seed in the event ("1" in a navy square beside its name on a bracket); null where the event seeds no field, or this team.
+                 */
+                seedNumber: number | null;
+            } | null;
             /**
-             * The team's field row in the event: what a pick names.
+             * The points spread, on side 1 only (#720): -3.5 has side 1 favoured by 3.5, +3.5 has it getting 3.5. Null until set, and always on side 2.
              */
-            sportEventParticipantId: string;
-            participantId: string;
-            name: string;
-            /**
-             * The team's seed in the event ("1" in a navy square beside its name on a bracket); null where the event seeds no field, or this team.
-             */
-            seedNumber: number | null;
-        } | null;
-        /**
-         * As predictedHome, for the away side.
-         */
-        predictedAway: {
-            /**
-             * The team's field row in the event: what a pick names.
-             */
-            sportEventParticipantId: string;
-            participantId: string;
-            name: string;
-            /**
-             * The team's seed in the event ("1" in a navy square beside its name on a bracket); null where the event seeds no field, or this team.
-             */
-            seedNumber: number | null;
-        } | null;
+            spread: number | null;
+        }>;
         /**
          * Whether the game's pick would already be closed once the contest opens: it has kicked off, or in a bracket the event has started.
          */
@@ -18455,6 +18262,10 @@ export type GamePickPreviewResponse = {
              * The team picked to win; null for a TIE pick.
              */
             sportEventParticipantId: string | null;
+            /**
+             * The side the picked team is on (#2016): its side in the game's `sides`, by the entry's own predicted teams in a bracket. Null for a TIE pick.
+             */
+            sideNumber: number | null;
             /**
              * The pick's confidence value; null in a straight-up pool, in a bracket, or until given.
              */
@@ -23237,7 +23048,6 @@ export type GolfRoundScoreUploadRequest = {
     rows: Array<{
         participantId?: string;
         externalId?: string;
-        playerName?: string;
         /**
          * Null when only the score to par is known; such a row is not stored.
          */
@@ -23261,12 +23071,11 @@ export type GolfRoundScorePreviewResponse = {
      */
     rows: Array<{
         /**
-         * One golfer's result for one round. The first identifier present is used: participantId, then externalId, then an exact case-insensitive playerName, matched within the event's field.
+         * One golfer's result for one round. The first identifier present is used: participantId, then externalId (a feed id one of the participant's provider mappings holds), matched within the event's field.
          */
         row: {
             participantId?: string;
             externalId?: string;
-            playerName?: string;
             /**
              * Null when only the score to par is known; such a row is not stored.
              */
@@ -23350,7 +23159,6 @@ export type RaceResultUploadRequest = {
     rows: Array<{
         participantId?: string;
         externalId?: string;
-        playerName?: string;
         /**
          * How the race ended for this runner.
          */
@@ -23379,12 +23187,11 @@ export type RaceResultPreviewResponse = {
      */
     rows: Array<{
         /**
-         * One runner's result. The first identifier present is used: participantId, then externalId, then an exact case-insensitive playerName, matched within the event's field. Every value is stored exactly as sent.
+         * One runner's result. The first identifier present is used: participantId, then externalId (a feed id one of the participant's provider mappings holds), matched within the event's field. Every value is stored exactly as sent.
          */
         row: {
             participantId?: string;
             externalId?: string;
-            playerName?: string;
             /**
              * How the race ended for this runner.
              */
@@ -37156,92 +36963,6 @@ export type RefreshEventParticipantsResponses = {
 
 export type RefreshEventParticipantsResponse = RefreshEventParticipantsResponses[keyof RefreshEventParticipantsResponses];
 
-export type PreviewEventParticipantUploadData = {
-    body: SportEventParticipantUploadRequest;
-    path: {
-        eventId: string;
-    };
-    query?: never;
-    url: '/api/v1/events/{eventId}/participants/upload/preview';
-};
-
-export type PreviewEventParticipantUploadErrors = {
-    /**
-     * Standard API error envelope.
-     */
-    400: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    401: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    403: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    404: ErrorEnvelope;
-};
-
-export type PreviewEventParticipantUploadError = PreviewEventParticipantUploadErrors[keyof PreviewEventParticipantUploadErrors];
-
-export type PreviewEventParticipantUploadResponses = {
-    /**
-     * A dry run of a field upload. Nothing is written.
-     */
-    200: SportEventParticipantUploadPreviewResponse;
-};
-
-export type PreviewEventParticipantUploadResponse = PreviewEventParticipantUploadResponses[keyof PreviewEventParticipantUploadResponses];
-
-export type ApplyEventParticipantUploadData = {
-    body: SportEventParticipantUploadRequest;
-    path: {
-        eventId: string;
-    };
-    query?: never;
-    url: '/api/v1/events/{eventId}/participants/upload';
-};
-
-export type ApplyEventParticipantUploadErrors = {
-    /**
-     * Standard API error envelope.
-     */
-    400: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    401: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    403: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    404: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    409: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    422: ErrorEnvelope;
-};
-
-export type ApplyEventParticipantUploadError = ApplyEventParticipantUploadErrors[keyof ApplyEventParticipantUploadErrors];
-
-export type ApplyEventParticipantUploadResponses = {
-    /**
-     * An event's field.
-     */
-    200: SportEventParticipantListResponse;
-};
-
-export type ApplyEventParticipantUploadResponse = ApplyEventParticipantUploadResponses[keyof ApplyEventParticipantUploadResponses];
-
 export type RemoveEventParticipantData = {
     body?: never;
     path: {
@@ -38701,72 +38422,6 @@ export type UpdateSportLeagueParticipantRankingsResponses = {
 };
 
 export type UpdateSportLeagueParticipantRankingsResponse = UpdateSportLeagueParticipantRankingsResponses[keyof UpdateSportLeagueParticipantRankingsResponses];
-
-export type PreviewSportLeagueRankingUploadData = {
-    body: SportLeagueRankingUploadRequest;
-    path: {
-        sportLeagueId: string;
-    };
-    query?: never;
-    url: '/api/v1/sport-leagues/{sportLeagueId}/participants/rankings/upload/preview';
-};
-
-export type PreviewSportLeagueRankingUploadErrors = {
-    /**
-     * Standard API error envelope.
-     */
-    403: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    404: ErrorEnvelope;
-};
-
-export type PreviewSportLeagueRankingUploadError = PreviewSportLeagueRankingUploadErrors[keyof PreviewSportLeagueRankingUploadErrors];
-
-export type PreviewSportLeagueRankingUploadResponses = {
-    /**
-     * A dry run of a ranking upload. Nothing is written.
-     */
-    200: SportLeagueRankingUploadPreviewResponse;
-};
-
-export type PreviewSportLeagueRankingUploadResponse = PreviewSportLeagueRankingUploadResponses[keyof PreviewSportLeagueRankingUploadResponses];
-
-export type ApplySportLeagueRankingUploadData = {
-    body: SportLeagueRankingUploadRequest;
-    path: {
-        sportLeagueId: string;
-    };
-    query?: never;
-    url: '/api/v1/sport-leagues/{sportLeagueId}/participants/rankings/upload';
-};
-
-export type ApplySportLeagueRankingUploadErrors = {
-    /**
-     * Standard API error envelope.
-     */
-    403: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    404: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    422: ErrorEnvelope;
-};
-
-export type ApplySportLeagueRankingUploadError = ApplySportLeagueRankingUploadErrors[keyof ApplySportLeagueRankingUploadErrors];
-
-export type ApplySportLeagueRankingUploadResponses = {
-    /**
-     * Participant-list response.
-     */
-    200: ParticipantListResponse;
-};
-
-export type ApplySportLeagueRankingUploadResponse = ApplySportLeagueRankingUploadResponses[keyof ApplySportLeagueRankingUploadResponses];
 
 export type ListPlatformTierProfilesData = {
     body?: never;

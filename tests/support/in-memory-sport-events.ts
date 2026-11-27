@@ -566,11 +566,6 @@ export class InMemorySportEvents {
       findById: async (id) => this.participants.find((row) => row.id === id) ?? null,
       findByIds: async (ids) => this.participants.filter((row) => ids.includes(row.id)),
       search: async () => [...this.participants],
-      findMatchingAny: async (sportLeagueId, queries) => this.participants.filter((row) => row.sportLeagueId === sportLeagueId && queries.some((query) => (
-        (query.id === undefined || row.id === query.id)
-        && (query.externalId === undefined || this.mappings.some((mapping) => mapping.participantId === row.id && mapping.externalId === query.externalId))
-        && (query.name === undefined || row.name.toLowerCase() === query.name.toLowerCase())
-      ))),
       findBySportLeague: async (sportLeagueId, testData = false) => this.participants
         .filter((row) => row.sportLeagueId === sportLeagueId && row.isTestData === testData)
         .sort((left, right) => (left.ranking ?? Infinity) - (right.ranking ?? Infinity) || left.name.localeCompare(right.name)),

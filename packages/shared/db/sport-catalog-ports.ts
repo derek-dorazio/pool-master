@@ -551,12 +551,10 @@ export interface SportEventSlotParticipantValuationRepository {
   }): Promise<void>;
 }
 
-/** Candidate participants for an upload row, within one sport. Exact match on each identifier given. */
+/** Which participant a result row names: its id, or a feed id one of its provider mappings holds. Never a name (#2114). */
 export interface ParticipantMatchQuery {
   id?: string;
   externalId?: string;
-  /** Case-insensitive exact name. */
-  name?: string;
 }
 
 

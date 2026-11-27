@@ -6,6 +6,9 @@ import { InMemorySportEvents } from '../../support/in-memory-sport-events';
 import { fakeLogger } from '../../support/fake-logger';
 import { BALLDONTLIE_TEST_PROVIDER_ID } from '../../support/balldontlie-provider-rows';
 
+/** A test participant's id, fixed by its name, so a row names it by id as the feed does (#2114). */
+const idOf = (name: string): string => `participant-${name.toLowerCase().replace(/\s+/g, '-')}`;
+
 // Golf scoring use cases beyond golf-score-service.test.ts: the provider sync's skip paths and
 // change reporting, how a cut or withdrawn golfer's standing reads, and corrections that move a
 // golfer in or out of the ranking.
@@ -20,9 +23,9 @@ async function setup() {
     roundNumber,
     scheduledDate: new Date('2026-06-04T12:00:00.000Z'),
   })));
-  const ana = store.addParticipant(sport.id, 'Ana Park');
-  const ben = store.addParticipant(sport.id, 'Ben Cole');
-  const cara = store.addParticipant(sport.id, 'Cara Diaz');
+  const ana = store.addParticipant(sport.id, 'Ana Park', { id: idOf('Ana Park') });
+  const ben = store.addParticipant(sport.id, 'Ben Cole', { id: idOf('Ben Cole') });
+  const cara = store.addParticipant(sport.id, 'Cara Diaz', { id: idOf('Cara Diaz') });
   const anaEntry = store.addToField(event.id, ana.id);
   const benEntry = store.addToField(event.id, ben.id);
   const caraEntry = store.addToField(event.id, cara.id);
@@ -103,7 +106,7 @@ describe('golf provider sync — what is skipped', () => {
 
   it('skips and logs an update for a mapped golfer who is not on this event\'s field', async () => {
     const { store, service, event, sport, logger } = await setup();
-    const outsider = store.addParticipant(sport.id, 'Dan Outsider');
+    const outsider = store.addParticipant(sport.id, 'Dan Outsider', { id: idOf('Dan Outsider') });
     await store.mappingRepo().bind({ providerId: BALLDONTLIE_TEST_PROVIDER_ID, externalId: 'ext-dan', participantId: outsider.id, sportLeagueId: outsider.sportLeagueId, participantType: 'INDIVIDUAL', mappedAt: new Date() });
 
     const result = await service.persistRoundUpdatesForSportEvent(event.id, [update('ext-dan', 1, -3)], 'balldontlie', 4);
@@ -274,8 +277,8 @@ describe('golf corrections — moving a golfer in or out of the ranking', () => 
     const { store, service, event } = await setup();
 
     await service.applyRoundScores(event.id, 1, [
-      { playerName: 'Ana Park', strokes: null, scoreToPar: -2, status: 'COMPLETED' },
-      { playerName: 'Ben Cole', strokes: null, scoreToPar: 1, status: 'COMPLETED' },
+      { participantId: idOf('Ana Park'), strokes: null, scoreToPar: -2, status: 'COMPLETED' },
+      { participantId: idOf('Ben Cole'), strokes: null, scoreToPar: 1, status: 'COMPLETED' },
     ]);
 
     expect(store.golfRoundRows).toEqual([]);
@@ -284,12 +287,12 @@ describe('golf corrections — moving a golfer in or out of the ranking', () => 
 
   it('previews a named golfer who is not on this event\'s field as unresolved, so apply refuses it', async () => {
     const { store, service, event, sport } = await setup();
-    store.addParticipant(sport.id, 'Dan Outsider');
+    store.addParticipant(sport.id, 'Dan Outsider', { id: idOf('Dan Outsider') });
 
-    const [preview] = await service.previewRoundScores(event.id, 1, [{ playerName: 'Dan Outsider', strokes: 70, scoreToPar: -2, status: 'COMPLETED' }]);
+    const [preview] = await service.previewRoundScores(event.id, 1, [{ participantId: idOf('Dan Outsider'), strokes: 70, scoreToPar: -2, status: 'COMPLETED' }]);
 
     expect(preview).toMatchObject({ resolution: 'UNRESOLVED', sportEventParticipantId: null, participantName: null });
-    await expect(service.applyRoundScores(event.id, 1, [{ playerName: 'Dan Outsider', strokes: 70, scoreToPar: -2, status: 'COMPLETED' }]))
+    await expect(service.applyRoundScores(event.id, 1, [{ participantId: idOf('Dan Outsider'), strokes: 70, scoreToPar: -2, status: 'COMPLETED' }]))
       .rejects.toMatchObject({ code: 'ROUND_SCORE_ROWS_UNRESOLVED' });
   });
 });

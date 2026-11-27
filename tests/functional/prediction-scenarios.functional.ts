@@ -32,6 +32,7 @@ import { loadSportData } from '../../packages/core-api/scripts/seed-golf/seed-go
 import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, type RegisteredUserContext } from './builders';
 import { cleanupFunctionalData, disconnectFunctionalPrisma, getFunctionalPrisma } from './setup';
 import { expectDefined } from '../support/expect-defined';
+import { HOME_SIDE, pickSideOf } from '../support/match-sides';
 import { withCurrentSeason } from '../support/event-edition';
 import { LEVEL_TEST_DEFINITION_KEY, removeTestDefinition, TEST_DEFINITION_KEY, withTestDefinition } from '../support/test-slots';
 import { expectMatchesSchema } from '../support/expect-matches-schema';
@@ -200,7 +201,7 @@ async function playedResults(row: PlayoffLeague, tag: string) {
   return { winners, losers, rounds, gameCount: matches.length, finalTotal };
 }
 
-type Team = NonNullable<GamePicksResponse['games'][number]['predictedHome']>;
+type Team = NonNullable<GamePicksResponse['games'][number]['sides'][number]['predictedTeam']>;
 
 describe('SDK Functional: a bracket pool and a playoff survivor pool on every playoff league\'s test seed', () => {
   it.each(ROWS.map((row) => [row.event, row.selectionType, row] as const))(
@@ -253,7 +254,7 @@ describe('SDK Functional: a bracket pool and a playoff survivor pool on every pl
           for (let roundNumber = 1; roundNumber <= played.rounds; roundNumber += 1) {
             const games = (await view(entrant)).games.filter((game) => game.roundNumber === roundNumber);
             const picks = games.map((game) => {
-              const sides = [game.predictedHome, game.predictedAway].filter((team): team is Team => team !== null);
+              const sides = game.sides.flatMap((side) => (side.predictedTeam === null ? [] : [side.predictedTeam]));
               expect(sides).toHaveLength(2);
               return { sportEventRoundMatchId: game.sportEventRoundMatchId, predictedResult: PredictedResult.TEAM, sportEventParticipantId: choose(roundNumber, sides).sportEventParticipantId, confidence: null };
             });
@@ -378,11 +379,11 @@ describe('SDK Functional: a pick\'em pool on the NFL weeks test seed', () => {
       return entryId;
     };
     const winnerRow = (game: GamePicksResponse['games'][number]) => expectDefined(
-      [game.home, game.away].find((team) => team !== null && nameOfRow(team.sportEventParticipantId) === winnerName(game.matchNumber)),
+      game.sides.map((side) => side.team).find((team) => team !== null && nameOfRow(team.sportEventParticipantId) === winnerName(game.matchNumber)),
       `game ${game.matchNumber}'s winner`,
     ).sportEventParticipantId;
     const perfect = await pickWeek(commissioner.client, winnerRow, lastTotal);
-    const rival = await pickWeek(other.client, (game) => expectDefined(game.home).sportEventParticipantId, 0);
+    const rival = await pickWeek(other.client, (game) => expectDefined(pickSideOf(game, HOME_SIDE).team).sportEventParticipantId, 0);
 
     await playOut(eventId, seed, 1);
 
@@ -461,11 +462,11 @@ describe('SDK Functional: soccer week pools with draw picks, on the Premier Leag
       const realResult = (game: Game) => {
         const winner = winnerName(game.matchNumber);
         if (winner === null) return { predictedResult: PredictedResult.TIE, sportEventParticipantId: null };
-        const team = expectDefined([game.home, game.away].find((side) => side !== null && nameOfRow(side.sportEventParticipantId) === winner), `game ${game.matchNumber}'s winner`);
+        const team = expectDefined(game.sides.map((side) => side.team).find((side) => side !== null && nameOfRow(side.sportEventParticipantId) === winner), `game ${game.matchNumber}'s winner`);
         return { predictedResult: PredictedResult.TEAM, sportEventParticipantId: team.sportEventParticipantId };
       };
       const perfect = await pickWeek(commissioner.client, realResult);
-      const rival = await pickWeek(other.client, (game) => ({ predictedResult: PredictedResult.TEAM, sportEventParticipantId: expectDefined(game.home).sportEventParticipantId }));
+      const rival = await pickWeek(other.client, (game) => ({ predictedResult: PredictedResult.TEAM, sportEventParticipantId: expectDefined(pickSideOf(game, HOME_SIDE).team).sportEventParticipantId }));
 
       await playOut(eventId, seed, 1);
 

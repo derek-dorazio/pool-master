@@ -78,6 +78,15 @@ export function homeAwayOf(game: Pick<SportEventRoundMatchGame, 'sideResults'>, 
 }
 
 /**
+ * Where a side is billed for its match: where it played Game 1, which a single game and a
+ * series' opener share. NONE while the match has no Game 1 or no result says, as at a neutral site.
+ */
+export function matchHomeAwayOf(match: Pick<SportEventRoundMatch, 'games'>, sideNumber: number): HomeAway {
+  const gameOne = match.games.find((game) => game.gameNumber === 1);
+  return gameOne === undefined ? HomeAway.NONE : homeAwayOf(gameOne, sideNumber);
+}
+
+/**
  * The side number that won a COMPLETED Game: the higher score, or on a level score the higher
  * shoot-out. Null for a Game not completed, and for one that ended level.
  */
@@ -148,20 +157,15 @@ export function runningPeriodScores(game: Pick<SportEventRoundMatchGame, 'sideRe
 }
 
 /**
- * The side number a prediction's HOME and AWAY name (#2046): the sync puts the home team on
- * side 2 and the away team on side 1. Match DTOs name sides by number (#2184); predictions move
- * to side numbers with #2016.
+ * The side number a HOME or AWAY names (#2046): the sync puts the home team on side 2 and the
+ * away team on side 1. Match DTOs (#2184) and predictions (#2016) name sides by number; a
+ * bracket's reseed, a provider's slate and squares still bridge until they do too.
  */
 export function sideNumberOfMatchSide(side: MatchSide): number {
   return side === MatchSide.HOME ? 2 : 1;
 }
 
-/** A prediction's HOME or AWAY for a side number: the reverse of `sideNumberOfMatchSide`. */
+/** HOME or AWAY for a side number: the reverse of `sideNumberOfMatchSide`. */
 export function matchSideOfSideNumber(sideNumber: number): MatchSide {
   return sideNumber === 2 ? MatchSide.HOME : MatchSide.AWAY;
-}
-
-/** The team on the side a prediction calls HOME or AWAY (`sideNumberOfMatchSide`), until #2016 names it by number. */
-export function teamOnMatchSide(match: MatchWithSides, side: MatchSide): string | null {
-  return sideParticipantId(match, sideNumberOfMatchSide(side));
 }

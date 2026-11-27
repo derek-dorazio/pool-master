@@ -94,8 +94,6 @@ function fakes() {
       listCachedEventParticipants: fn([fieldRow]),
       addParticipants: fn({ addedCount: 1 }),
       updateParticipants: fn([fieldRow]),
-      previewUpload: fn([]),
-      applyUpload: fn([fieldRow]),
       removeParticipant: fn(undefined),
     },
     tiers: {
@@ -375,16 +373,12 @@ describe('rounds, field and tiers', () => {
     const listed = await callHandler(handlers.listEventParticipants, stubRequest({ params }));
     const added = await callHandler(handlers.addEventParticipants, stubRequest({ params, body: { participantIds: ['p1'] } }));
     const updated = await callHandler(handlers.updateEventParticipants, stubRequest({ params, body: { participants: [] } }));
-    const preview = await callHandler(handlers.previewEventParticipantUpload, stubRequest({ params, body: { rows: [] } }));
-    const applied = await callHandler(handlers.applyEventParticipantUpload, stubRequest({ params, body: { rows: [] } }));
     const removed = await callHandler(handlers.removeEventParticipant, stubRequest({ params: { eventId: EVENT_ID, sportEventParticipantId: 'sep-1' } }));
 
     expect(listed.body).toMatchObject({ participants: [{ id: 'sep-1' }] });
     expect(services.field.addParticipants).toHaveBeenCalledWith(EVENT_ID, ['p1']);
     expect(added.body).toEqual({ addedCount: 1 });
     expect(updated.body).toMatchObject({ participants: [{ id: 'sep-1' }] });
-    expect(preview.body).toMatchObject({ rows: [] });
-    expect(applied.body).toMatchObject({ participants: [{ id: 'sep-1' }] });
     expect(removed.statusCode).toBe(204);
   });
 

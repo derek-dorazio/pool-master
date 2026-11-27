@@ -5,7 +5,7 @@
  * once the event is under way its picks are scored and revealed. Against an in-memory world, so
  * each test asserts the stored picks, the entry's status and the view rather than the calls.
  */
-import { withHomeAway } from '../../support/match-sides';
+import { AWAY_SIDE, HOME_SIDE, pickSideOf, predictedHomeAndAway, withHomeAway } from '../../support/match-sides';
 import { expect } from '@jest/globals';
 import {
   ContestEntryStatus,
@@ -21,7 +21,7 @@ import {
   type ContestEntry,
   type SportEventRoundMatch,
 } from '@poolmaster/shared/domain';
-import { PredictionService, type GamePicksView } from '../../../packages/core-api/src/modules/selections/prediction-service';
+import { PredictionService, type GamePickGame, type GamePicksView } from '../../../packages/core-api/src/modules/selections/prediction-service';
 import { SelectionError } from '../../../packages/core-api/src/modules/selections/selection-errors';
 import {
   EIGHT_SEEDS,
@@ -138,7 +138,7 @@ async function expectRefused(promise: Promise<unknown>, code: string, statusCode
 const game = (view: GamePicksView, matchNumber: number) => expectDefined(view.games.find((each) => each.match.matchNumber === matchNumber));
 const predicted = (view: GamePicksView, matchNumber: number) => {
   const each = game(view, matchNumber);
-  return [each.predictedHome?.sportEventParticipantId ?? null, each.predictedAway?.sportEventParticipantId ?? null];
+  return predictedHomeAndAway(each);
 };
 
 describe('PredictionService on a bracket — filling it in', () => {
@@ -149,16 +149,16 @@ describe('PredictionService on a bracket — filling it in', () => {
     expect(view).toMatchObject({ selectionType: SelectionType.BRACKET, mode: null, gameCount: 7, pickedCount: 0, tiebreakerValue: null, canSubmit: false });
     expect(predicted(view, 1)).toEqual(['T1', 'T8']);
     expect(predicted(view, 5)).toEqual([null, null]);
-    expect(game(view, 5).home).toBeNull();
+    expect(game(view, 5).sides.map((side) => side.team)).toEqual([null, null]);
   });
 
   it('names each team with its seed in the event, so the bracket can show it beside the name, and no seed for a team the field leaves unseeded', async () => {
     const context = setup({ seeds: new Map([...EIGHT_SEEDS, ['T8', null]]) });
     const view = await context.service.getGamePicks(context.input);
 
-    expect(game(view, 1).predictedHome).toMatchObject({ sportEventParticipantId: 'T1', name: 'Team T1', seedNumber: 1 });
-    expect(game(view, 1).home).toMatchObject({ sportEventParticipantId: 'T1', seedNumber: 1 });
-    expect(game(view, 1).predictedAway).toMatchObject({ sportEventParticipantId: 'T8', seedNumber: null });
+    expect(pickSideOf(game(view, 1), HOME_SIDE).predictedTeam).toMatchObject({ sportEventParticipantId: 'T1', name: 'Team T1', seedNumber: 1 });
+    expect(pickSideOf(game(view, 1), HOME_SIDE).team).toMatchObject({ sportEventParticipantId: 'T1', seedNumber: 1 });
+    expect(pickSideOf(game(view, 1), AWAY_SIDE).predictedTeam).toMatchObject({ sportEventParticipantId: 'T8', seedNumber: null });
   });
 
   it('saves picks through to the final in one request, each later game offering the teams picked to win the games before it', async () => {
@@ -453,9 +453,9 @@ describe('PredictionService on a bracket — a team withdrawn after the draw (#7
 describe('PredictionService.previewGames on a bracket setup, before it is saved', () => {
   const BRACKET_RULES = { selectionType: SelectionType.BRACKET } as const;
   const eventId = (context: ReturnType<typeof setup>) => context.input.sportEventId;
-  const previewed = (games: readonly { match: SportEventRoundMatch; predictedHome: { sportEventParticipantId: string } | null; predictedAway: { sportEventParticipantId: string } | null }[], matchNumber: number) => {
+  const previewed = (games: readonly Pick<GamePickGame, 'match' | 'sides'>[], matchNumber: number) => {
     const each = expectDefined(games.find((row) => row.match.matchNumber === matchNumber));
-    return [each.predictedHome?.sportEventParticipantId ?? null, each.predictedAway?.sportEventParticipantId ?? null];
+    return predictedHomeAndAway(each);
   };
 
   it('fills each later game with the teams the trial picks send there, as an entry\'s picks would', async () => {

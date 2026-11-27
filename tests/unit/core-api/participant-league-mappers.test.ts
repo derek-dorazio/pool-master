@@ -13,8 +13,8 @@ import {
   mapParticipantToDto,
   toUpdateParticipantInput,
 } from '../../../packages/core-api/src/mappers/participants.mapper';
-import { mapFieldUploadPreviewToDto, mapSportEventParticipantToDto } from '../../../packages/core-api/src/mappers/sport-event-participants.mapper';
-import type { FieldUploadPreviewRow, SportEventParticipantView } from '../../../packages/core-api/src/modules/events/sport-event-participant-service';
+import { mapSportEventParticipantToDto } from '../../../packages/core-api/src/mappers/sport-event-participants.mapper';
+import type { SportEventParticipantView } from '../../../packages/core-api/src/modules/events/sport-event-participant-service';
 
 const created = new Date('2026-01-01T00:00:00.000Z');
 const updated = new Date('2026-02-01T00:00:00.000Z');
@@ -164,32 +164,6 @@ describe('field row mappers', () => {
     expect(dto.standing).toMatchObject({ asOf: null, golf: null });
   });
 
-  it('rolls a field upload\'s dry run up by how each row resolved, its duplicates, and what it would change', () => {
-    const row = (overrides: Partial<FieldUploadPreviewRow>): FieldUploadPreviewRow => ({
-      row: { rowNumber: 1 } as never,
-      resolution: 'MATCHED',
-      participantId: 'p-1',
-      participantName: 'Player One',
-      sportEventParticipantId: 'sep-1',
-      rowError: null,
-      change: 'UPDATE',
-      before: null,
-      after: null,
-      message: null,
-      ...overrides,
-    });
-
-    const dto = mapFieldUploadPreviewToDto([
-      row({}),
-      row({ change: 'UNCHANGED' }),
-      row({ rowError: 'DUPLICATE_PARTICIPANT', change: null }),
-      row({ resolution: 'UNRESOLVED', participantId: null, change: null }),
-      row({ resolution: 'AMBIGUOUS', participantId: null, change: null }),
-    ]);
-
-    expect(dto.rollup).toEqual({ total: 5, matched: 3, unresolved: 1, ambiguous: 1, duplicate: 1, update: 1, unchanged: 1 });
-    expect(dto.rows[0]).toEqual({ row: { rowNumber: 1 }, resolution: 'MATCHED', participantId: 'p-1', participantName: 'Player One', sportEventParticipantId: 'sep-1', rowError: null, change: 'UPDATE', before: null, after: null, message: null });
-  });
 });
 
 describe('league membership and invitation mappers', () => {

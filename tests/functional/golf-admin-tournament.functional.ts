@@ -3,8 +3,6 @@ import { deleteTestSportLeagues } from '../support/test-slots';
 import {
   addEventParticipants,
   applyEventGolfRoundScores,
-  applyEventParticipantUpload,
-  applySportLeagueRankingUpload,
   autoAssignEventPrices,
   autoAssignEventTiers,
   createEvent,
@@ -15,7 +13,6 @@ import {
   listEventRounds,
   listEventTiers,
   previewEventGolfRoundScores,
-  previewEventParticipantUpload,
   rebuildEventLeaderboards,
   releaseEvent,
   replaceEventTierAssignments,
@@ -24,6 +21,7 @@ import {
   updateEventParticipantGolfRoundScore,
   updateEventParticipants,
   updateSportLeague,
+  updateSportLeagueParticipantRankings,
 } from '@poolmaster/shared/generated/hey-api';
 import { buildRegisteredUser, promoteToRootAdmin, createTestEvent } from './builders';
 import {
@@ -148,7 +146,7 @@ describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8;
     const { id: sportLeagueId } = await insertTestSportLeague(getFunctionalPrisma(), { sport: Sport.GOLF, name: `PGA Tour ${RUN}` });
     created.sportLeagueIds.add(sportLeagueId);
 
-    // --- 20 participants of the tour + a ranking upload (incl. a tied ranking pair) ------
+    // --- 20 participants of the tour, ranked (incl. a tied ranking pair) ------------
     const players: Array<{ id: string; rank: number }> = [];
     for (let i = 0; i < 20; i += 1) {
       const p = await createParticipant({
@@ -161,10 +159,10 @@ describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8;
       players.push({ id: expectDefined(p.data).participant.id, rank: i >= 18 ? 19 : i + 1 });
     }
 
-    const rosterApply = await applySportLeagueRankingUpload({
+    const rosterApply = await updateSportLeagueParticipantRankings({
       client: c,
       path: { sportLeagueId },
-      body: { rows: players.map((p) => ({ participantId: p.id, ranking: p.rank })) },
+      body: { rankings: players.map((p) => ({ participantId: p.id, ranking: p.rank })) },
     });
     expect(rosterApply.response?.status).toBe(200);
     expect(expectDefined(rosterApply.data).participants.length).toBe(20);
@@ -194,15 +192,17 @@ describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8;
     const defaultTiers = await listEventTiers({ client: c, path: { eventId } });
     expect(expectDefined(defaultTiers.data).tiers.length).toBe(6);
 
-    // --- The field: the tour's 20 golfers, ranked and seeded by upload -------------
+    // --- The field: the tour's 20 golfers, ranked and seeded in the grid ------------
     const fieldAdd = await addEventParticipants({ client: c, path: { eventId }, body: { participantIds: players.map((p) => p.id) } });
     expect(fieldAdd.response?.status).toBe(200);
     expect(expectDefined(fieldAdd.data).added).toBe(20);
-    // Each row's distinct values cost a write of their own, so the 20 rows go up in two uploads of
+    // Each row's distinct values cost a write of their own, so the 20 rows go up in two saves of
     // ten to stay inside the per-request query budget.
-    const seedRows = players.map((p, index) => ({ participantId: p.id, ranking: p.rank, seedNumber: index + 1 }));
-    for (const rows of [seedRows.slice(0, 10), seedRows.slice(10)]) {
-      const seeding = await applyEventParticipantUpload({ client: c, path: { eventId }, body: { rows } });
+    const added = expectDefined((await listEventParticipants({ client: c, path: { eventId } })).data).participants;
+    const fieldRowOf = (participantId: string) => expectDefined(added.find((e) => e.participantId === participantId)).id;
+    const seedRows = players.map((p, index) => ({ sportEventParticipantId: fieldRowOf(p.id), ranking: p.rank, seedNumber: index + 1 }));
+    for (const participants of [seedRows.slice(0, 10), seedRows.slice(10)]) {
+      const seeding = await updateEventParticipants({ client: c, path: { eventId }, body: { participants } });
       expect(seeding.response?.status).toBe(200);
     }
 
@@ -263,51 +263,17 @@ describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8;
       }),
       { status: 400, code: 'FST_ERR_VALIDATION' },
     );
-    expectFunctionalError(
-      await previewEventParticipantUpload({
-        client: c,
-        path: { eventId },
-        body: { rows: [{ participantId: oversizedTarget.participantId, seedNumber: oversized }] },
-      }),
-      { status: 400, code: 'FST_ERR_VALIDATION' },
-    );
-
-    // --- Bulk-adjust the field: preview, a refused apply, then apply -------------
-    // The upload only adjusts golfers already on the field; one it cannot find blocks the apply.
-    const [upA, upB] = expectDefined(field.data).participants.slice(6, 8);
-    const uploadRows = [
-      { participantId: upA.participantId, ranking: 1, oddsToWin: 3.5 },
-      { playerName: upB.participant.name.toUpperCase(), ranking: null },
-    ];
-    const uploadPreview = await previewEventParticipantUpload({
-      client: c,
-      path: { eventId },
-      body: { rows: [...uploadRows, { externalId: `${RUN}-not-on-field`, ranking: 2 }] },
-    });
-    expect(uploadPreview.response?.status).toBe(200);
-    expect(expectDefined(uploadPreview.data).rollup).toMatchObject({ total: 3, matched: 2, unresolved: 1, update: 2 });
-    expect(expectDefined(uploadPreview.data).rows[0].after).not.toHaveProperty('oddsToWin');
-    expect(expectDefined(uploadPreview.data).rows[1]).toMatchObject({ sportEventParticipantId: upB.id, after: { ranking: null } });
-    expect(expectDefined(uploadPreview.data).rows[2].message).toMatch(/refresh the field from the provider first/);
-
-    expectFunctionalError(
-      await applyEventParticipantUpload({ client: c, path: { eventId }, body: { rows: [...uploadRows, { externalId: `${RUN}-not-on-field`, ranking: 2 }] } }),
-      { status: 422, code: 'EVENT_PARTICIPANT_UPLOAD_ROWS_UNRESOLVED' },
-    );
+    // --- Rankings, seeds and the field come from the feed (#2008) ----------------
+    // The sport league's ranking upload and the event's field upload are gone, so even a root admin gets 404.
+    const removedRoutes = await Promise.all([
+      c.post({ url: '/api/v1/sport-leagues/{sportLeagueId}/participants/rankings/upload/preview', path: { sportLeagueId }, body: { rows: [{ participantId: oversizedTarget.participantId, ranking: 1 }] }, headers: { 'Content-Type': 'application/json' } }),
+      c.post({ url: '/api/v1/sport-leagues/{sportLeagueId}/participants/rankings/upload', path: { sportLeagueId }, body: { rows: [{ participantId: oversizedTarget.participantId, ranking: 1 }] }, headers: { 'Content-Type': 'application/json' } }),
+      c.post({ url: '/api/v1/events/{eventId}/participants/upload/preview', path: { eventId }, body: { rows: [{ participantId: oversizedTarget.participantId, ranking: 1 }] }, headers: { 'Content-Type': 'application/json' } }),
+      c.post({ url: '/api/v1/events/{eventId}/participants/upload', path: { eventId }, body: { rows: [{ participantId: oversizedTarget.participantId, ranking: 1 }] }, headers: { 'Content-Type': 'application/json' } }),
+    ]);
+    expect(removedRoutes.map((removed) => removed.response?.status)).toEqual([404, 404, 404, 404]);
     const unchangedField = await listEventParticipants({ client: c, path: { eventId } });
-    expect(expectDefined(expectDefined(unchangedField.data).participants.find((e) => e.id === upA.id)).ranking).toBe(upA.ranking);
-
-    const uploaded = await applyEventParticipantUpload({ client: c, path: { eventId }, body: { rows: uploadRows } });
-    expect(uploaded.response?.status).toBe(200);
-    expect(expectDefined(uploaded.data).participants).toHaveLength(expectDefined(field.data).participants.length);
-    // Odds come only from the feed (#2081): an odds value sent in an upload row is dropped, and the field keeps its odds.
-    expect(expectDefined(uploaded.data).participants.find((e) => e.id === upA.id)).toMatchObject({ ranking: 1, oddsToWin: upA.oddsToWin ?? null });
-    expect(expectDefined(expectDefined(uploaded.data).participants.find((e) => e.id === upB.id)).ranking).toBeNull();
-
-    expectFunctionalError(
-      await previewEventParticipantUpload({ client: c, path: { eventId: ANY_UUID }, body: { rows: uploadRows } }),
-      { status: 404, code: 'EVENT_NOT_FOUND' },
-    );
+    expect(expectDefined(expectDefined(unchangedField.data).participants.find((e) => e.id === oversizedTarget.id)).ranking).toBe(oversizedTarget.ranking);
 
     // --- Reshape to 4 tiers, then auto-assign in the field's order ---------------
     const fourTiers = await replaceEventTiers({
@@ -384,7 +350,7 @@ describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8;
 
     // --- Round-1 scores: bulk preview + apply, then a single-row correction -----
     const scoreRows = expectDefined(field.data).participants.slice(0, 5).map((e, i) => ({
-      playerName: e.participant.name,
+      participantId: e.participantId,
       strokes: 70 + i,
       scoreToPar: i - 1,
       thru: 18,
@@ -442,8 +408,6 @@ describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8;
     expectFunctionalError(await autoAssignEventPrices({ client: c, path: { eventId: 'x' }, body: standardSlotPricing(randomUUID()) }), deny);
     expectFunctionalError(await replaceEventTierAssignments({ client: c, path: { eventId: 'x' }, body: { assignments: [] } }), deny);
     expectFunctionalError(await applyEventGolfRoundScores({ client: c, path: { eventId: 'x', roundNumber: 1 }, body: { rows: [] } }), deny);
-    expectFunctionalError(await previewEventParticipantUpload({ client: c, path: { eventId: 'x' }, body: { rows: [] } }), deny);
-    expectFunctionalError(await applyEventParticipantUpload({ client: c, path: { eventId: 'x' }, body: { rows: [] } }), deny);
     expectFunctionalError(await updateEventParticipantGolfRoundScore({ client: c, path: { eventId: 'x', roundNumber: 1, sportEventParticipantId: 'x' }, body: { strokes: 70 } }), deny);
     expectFunctionalError(await createEvent({
       client: c,

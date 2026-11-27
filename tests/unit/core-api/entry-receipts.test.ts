@@ -3,10 +3,11 @@
  * survivor week. The contest world is in memory; the email service is the real one over an
  * in-memory outbox, so the tests assert on the emails recorded.
  */
-import { legacyMatch } from '../../support/match-sides';
+import { AWAY_SIDE, HOME_SIDE, legacyMatch } from '../../support/match-sides';
 import { jest } from '@jest/globals';
 import {
   ContestEntryStatus,
+  HomeAway,
   PickEmMode,
   SelectionType,
   Sport,
@@ -45,6 +46,8 @@ function game(options: {
   kickoff?: Date;
   predictedAway?: string;
   predictedHome?: string;
+  /** Played at a neutral site: neither side home or away. */
+  neutral?: boolean;
 }): GamePickGame {
   const away = team(options.away);
   const home = team(options.home);
@@ -53,16 +56,28 @@ function game(options: {
       id: options.id,
       homeSportEventParticipantId: home.sportEventParticipantId,
       awaySportEventParticipantId: away.sportEventParticipantId,
-      isNeutralSite: false,
+      isNeutralSite: options.neutral ?? false,
       homeSpread: options.homeSpread ?? null,
       roundNumber: options.roundNumber ?? 1, slot: namedSlotOfRound(options.roundNumber ?? 1, slotNames),
       matchNumber: options.matchNumber ?? 1,
     }),
     kickoff: options.kickoff ?? KICKOFF,
-    home,
-    away,
-    predictedHome: options.predictedHome === undefined ? home : team(options.predictedHome),
-    predictedAway: options.predictedAway === undefined ? away : team(options.predictedAway),
+    sides: [
+      {
+        sideNumber: AWAY_SIDE,
+        homeAway: options.neutral ? HomeAway.NONE : HomeAway.AWAY,
+        team: away,
+        predictedTeam: options.predictedAway === undefined ? away : team(options.predictedAway),
+        spread: options.homeSpread === undefined ? null : 0 - options.homeSpread,
+      },
+      {
+        sideNumber: HOME_SIDE,
+        homeAway: options.neutral ? HomeAway.NONE : HomeAway.HOME,
+        team: home,
+        predictedTeam: options.predictedHome === undefined ? home : team(options.predictedHome),
+        spread: null,
+      },
+    ],
     locked: false,
     revealed: true,
     pick: options.picked === undefined
@@ -226,20 +241,31 @@ describe('EntryReceipts', () => {
 
   it('reads a neutral-site game as "vs", a team not yet known as To be decided, a pick on a game with no line by the team alone, and a tiebreaker on no listed game by its total', async () => {
     const { contest, event, entry, owners } = await entryIn(SelectionType.PICK_EM, { name: 'Week 1', sport: Sport.FOOTBALL, startDate: KICKOFF });
-    const neutral = game({ id: 'game-1', away: 'Bills', home: 'Chiefs', picked: 'Chiefs' });
-    const undecided = { ...game({ id: 'game-2', away: 'Bears', home: 'Lions', picked: 'Lions' }), away: null, predictedAway: null };
+    const neutral = game({ id: 'game-1', away: 'Bills', home: 'Chiefs', picked: 'Chiefs', neutral: true });
+    const lions = game({ id: 'game-2', away: 'Bears', home: 'Lions', picked: 'Lions' });
+    const undecided = { ...lions, sides: lions.sides.map((side) => (side.sideNumber === AWAY_SIDE ? { ...side, team: null, predictedTeam: null } : side)) };
 
     await submitted(view({ contestId: contest.id, entryId: entry.id, sportEventId: event.id }, {
       againstTheSpread: true,
       tiebreakerMatchId: 'game-9',
       tiebreakerValue: 38,
-      games: [{ ...neutral, match: { ...neutral.match, games: neutral.match.games.map((game) => ({ ...game, isNeutralSite: true })) } }, undecided],
+      games: [neutral, undecided],
     }));
 
     const text = textTo(owners[0].id);
     expect(text).toContain('- Bills vs Chiefs: Chiefs');
     expect(text).toContain('- To be decided at Lions: Lions');
     expect(text).toContain('Tiebreaker: 38 total points\n');
+  });
+
+  it('names the side playing away first whichever side number it has, "at" the home side', async () => {
+    const { contest, event, entry, owners } = await entryIn(SelectionType.PICK_EM, { name: 'Week 1', sport: Sport.FOOTBALL, startDate: KICKOFF });
+    const billsAtChiefs = game({ id: 'game-1', away: 'Bills', home: 'Chiefs', picked: 'Bills' });
+    const awayOnSideTwo = { ...billsAtChiefs, sides: billsAtChiefs.sides.map((side) => ({ ...side, sideNumber: side.sideNumber === AWAY_SIDE ? HOME_SIDE : AWAY_SIDE })) };
+
+    await submitted(view({ contestId: contest.id, entryId: entry.id, sportEventId: event.id }, { games: [awayOnSideTwo] }));
+
+    expect(textTo(owners[0].id)).toContain('- Bills at Chiefs: Bills');
   });
 
   it('sends nothing, logging the skip, for a week that is not submitted', async () => {

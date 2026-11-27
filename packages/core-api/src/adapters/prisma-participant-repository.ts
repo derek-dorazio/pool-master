@@ -5,7 +5,6 @@
 import { Prisma, type PrismaClient } from '@prisma/client';
 import type {
   ParticipantFeedId,
-  ParticipantMatchQuery,
   ParticipantRanking,
   ParticipantRepository,
   ParticipantSearchFilters,
@@ -39,25 +38,6 @@ export class PrismaParticipantRepository implements ParticipantRepository {
     }
 
     const rows = await this.prisma.participant.findMany({ where, orderBy: { name: 'asc' } });
-    return rows.map(mapToParticipant);
-  }
-
-  async findMatchingAny(sportLeagueId: string, queries: readonly ParticipantMatchQuery[]): Promise<Participant[]> {
-    if (queries.length === 0) return [];
-    const rows = await this.prisma.participant.findMany({
-      where: {
-        sportLeagueId,
-        // A ranking upload ranks the roster; a test participant is on none (#2096).
-        isTestData: false,
-        OR: queries.map((query) => ({
-          ...(query.id !== undefined && { id: query.id }),
-          // A feed id is the provider's, kept only on the participant's provider mappings (#2040).
-          ...(query.externalId !== undefined && { providerMappings: { some: { sportLeagueId, externalId: query.externalId } } }),
-          ...(query.name !== undefined && { name: { equals: query.name, mode: 'insensitive' as const } }),
-        })),
-      },
-      orderBy: { name: 'asc' },
-    });
     return rows.map(mapToParticipant);
   }
 

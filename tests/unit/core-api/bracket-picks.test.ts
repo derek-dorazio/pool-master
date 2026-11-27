@@ -3,7 +3,7 @@
  * from its own picks, which picks stand once an earlier one changes, how the picks score against
  * the results, and how entries level on points are ranked by their tiebreaker.
  */
-import { withHomeAway } from '../../support/match-sides';
+import { homeAndAwayOf, withHomeAway } from '../../support/match-sides';
 import { expect } from '@jest/globals';
 import {
   MatchSide,
@@ -17,6 +17,8 @@ import {
   contestBracketGames,
   finalTotalPoints,
   findBracketProblem,
+  predictedOn,
+  predictedSideOf,
   rankPredictionStandings,
   resolveBracketPicks,
   scoreBracketPicks,
@@ -34,8 +36,23 @@ import {
 } from '../../support/bracket-fixtures';
 
 const { HOME, AWAY } = MatchSide;
-const sidesOf = (resolved: ReturnType<typeof resolveBracketPicks>, matchNumber: number) => resolved.sides.get(`m${matchNumber}`);
+/** The teams the picks put on a game, home and away as the fixtures name them. */
+const sidesOf = (resolved: ReturnType<typeof resolveBracketPicks>, matchNumber: number) => homeAndAwayOf(resolved.sides.get(`m${matchNumber}`));
 const ids = (picks: ReadonlyArray<{ sportEventRoundMatchId: string }>) => picks.map((each) => each.sportEventRoundMatchId);
+
+describe('reading a game\'s predicted sides', () => {
+  const sides = new Map([[1, 'T8'], [2, null]]);
+
+  it('names the team on a side and the side a team is on, and nothing for a side or team not there', () => {
+    expect([predictedOn(sides, 1), predictedOn(sides, 2), predictedOn(sides, 3)]).toEqual(['T8', null, null]);
+    expect([predictedSideOf(sides, 'T8'), predictedSideOf(sides, 'T1')]).toEqual([1, null]);
+  });
+
+  it('names nothing for a game the picks have no sides for', () => {
+    expect(predictedOn(undefined, 1)).toBeNull();
+    expect(predictedSideOf(undefined, 'T8')).toBeNull();
+  });
+});
 
 describe('resolveBracketPicks — a fixed-link bracket', () => {
   it('offers each first-round game its real teams and a later game the teams the entry picked to win the games feeding it', () => {

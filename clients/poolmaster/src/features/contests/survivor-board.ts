@@ -1,5 +1,5 @@
 import { displayString } from '@poolmaster/shared/display-strings';
-import { MatchSide, MatchStatus, SportEventStatus, SurvivorWeekOutcome, pluralize } from '@poolmaster/shared/domain';
+import { HomeAway, MatchStatus, SportEventStatus, SurvivorWeekOutcome, pluralize } from '@poolmaster/shared/domain';
 import type { SurvivorLeaderboardResponse } from '@/lib/api';
 
 /**
@@ -94,6 +94,12 @@ export function survivorCellView(pick: SurvivorPick | undefined, ownTeam: string
   return { kind: 'pick', label, tone: isLost(pick.outcome) ? 'lost' : 'pending' };
 }
 
+/** The word between the picked team and its opponent, by where the picked team played. */
+function survivorGameJoiner(homeAway: HomeAway): string {
+  if (homeAway === HomeAway.HOME) return displayString('word.pickedAtHome');
+  return homeAway === HomeAway.AWAY ? displayString('word.pickedAway') : displayString('word.pickedAtNeutralSite');
+}
+
 /** A pick's game as an opened entry lists it: "KC v BUF" at home, "KC at BUF" away, "KC vs BUF" at a neutral site. */
 export function survivorGameLine(pick: SurvivorPick): string {
   const team = teamLabel(pick);
@@ -104,7 +110,7 @@ export function survivorGameLine(pick: SurvivorPick): string {
     return team;
   }
   const opponent = pick.game.opponentShortName ?? pick.game.opponent;
-  const joiner = pick.game.isNeutralSite ? 'vs' : pick.game.side === MatchSide.HOME ? 'v' : 'at';
+  const joiner = survivorGameJoiner(pick.game.homeAway);
   return `${team} ${joiner} ${opponent}`;
 }
 

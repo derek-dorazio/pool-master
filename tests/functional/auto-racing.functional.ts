@@ -1,7 +1,6 @@
 import {
   acceptInvitation,
   addEventParticipants,
-  applyEventParticipantUpload,
   applyEventRaceResults,
   autoAssignEventPrices,
   autoAssignEventTiers,
@@ -30,6 +29,7 @@ import {
 } from './setup';
 import { expectDefined } from '../support/expect-defined';
 import { standardPricingFor } from './standard-pricing';
+import { byParticipantId, setFieldRows } from './field-rows';
 
 // Auto racing end to end over HTTP (#624): an admin builds a race in the seeded NASCAR Cup Series
 // and loads its field's rankings by upload, a commissioner runs a contest from the series' default
@@ -107,7 +107,7 @@ describe('SDK Functional: Auto racing NASCAR Cup Series points', () => {
     expect((await addEventParticipants({ client: a, path: { eventId }, body: { participantIds: driverIds } })).data?.added).toBe(6);
 
     // The admin uploads each driver's ranking (odds come only from the feed), then tiers and prices follow from it.
-    const upload = await applyEventParticipantUpload({
+    const upload = await setFieldRows({
       client: a,
       path: { eventId },
       body: { rows: DRIVERS.map((driver, index) => ({ playerName: `${driver} ${RUN}`, ranking: index + 1 })) },
@@ -179,13 +179,13 @@ describe('SDK Functional: Auto racing NASCAR Cup Series points', () => {
 
     // --- The race runs, and the official finishing order goes in ---------------------------
     expect((await transitionEvent({ client: a, path: { eventId }, body: { toStatus: 'IN_PROGRESS' } })).data?.event.status).toBe('IN_PROGRESS');
-    const rows = DRIVERS.map((driver) => ({
+    const rows = await byParticipantId(a, eventId, DRIVERS.map((driver) => ({
       playerName: `${driver} ${RUN}`,
       resultStatus: FINISH[driver] === null ? 'DID_NOT_FINISH' as const : 'FINISHED' as const,
       finishPosition: FINISH[driver],
       startPosition: null,
       riderName: null,
-    }));
+    })));
     const official = await applyEventRaceResults({ client: a, path: { eventId }, body: { isOfficial: true, rows } });
     expect(official.response?.status).toBe(200);
     expect(Object.fromEntries(expectDefined(official.data).participants.map((row) => [driverOf(row.id), row.race?.finishPosition ?? null])))
@@ -245,7 +245,7 @@ describe('SDK Functional: Auto racing Formula 1 points', () => {
       driverIds.push(id);
     }
     expect((await addEventParticipants({ client: a, path: { eventId }, body: { participantIds: driverIds } })).data?.added).toBe(8);
-    expect((await applyEventParticipantUpload({
+    expect((await setFieldRows({
       client: a,
       path: { eventId },
       body: { rows: F1_DRIVERS.map((driver, index) => ({ playerName: `${driver} ${RUN}`, ranking: index + 1 })) },
@@ -324,13 +324,13 @@ describe('SDK Functional: Auto racing Formula 1 points', () => {
       path: { eventId },
       body: {
         isOfficial: true,
-        rows: F1_DRIVERS.map((driver) => ({
+        rows: await byParticipantId(a, eventId, F1_DRIVERS.map((driver) => ({
           playerName: `${driver} ${RUN}`,
           resultStatus: F1_FINISH[driver] === null ? 'DID_NOT_FINISH' as const : 'FINISHED' as const,
           finishPosition: F1_FINISH[driver],
           startPosition: null,
           riderName: null,
-        })),
+        }))),
       },
     });
     expect(official.response?.status).toBe(200);

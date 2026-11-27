@@ -60,9 +60,8 @@ and *Save corrections*.
 
 - Tiers (next step) and budget prices share one order: odds, then seed, then rank, decided by the
   first value every horse has; the dialogs say which.
-- To set them all at once, use *Bulk upload* on the *Tools* tab: CSV or JSON with
-  `playerName` (or `externalId`) and `seedNumber` per row, *Preview*, then
-  *Apply to field*. It only changes horses already in the field.
+- There is no bulk upload (#2008): seeds, rankings and odds come from the feed, and a
+  hand correction is one horse's dialog.
 
 ### Tiers
 
@@ -140,24 +139,13 @@ From the race's ⚙, *Move to In Progress* and confirm. Open contests on the rac
 ### The finishing order
 
 *Results* (`/manage/sports/horse-racing/events/:id/results`). The *Result* card shows what is
-stored ("No results yet" at first). The *Finishing order* card loads it:
-
-1. *Download CSV template*: one row per horse in the field. Fill in, per row:
-   - `finishPosition`: the place, for a horse that finished;
-   - `resultStatus`: blank for a finisher, otherwise `DNF` (did not finish), `DQ`
-     (disqualified) or `DNS` (did not start);
-   - `startPosition` (post position) and `riderName` (the jockey), both optional, shown on the
-     Result card's *Start* and *Rider* columns.
-   A row with neither a place nor a status is skipped.
-2. Paste it (or upload the file) and press *Preview*. Every row should read *Matched*; fix
-   any row marked *Several matches*, *Not in the field* or with a row error, and preview again.
-   *Apply* stays disabled until nothing is marked.
-3. Press *Apply result*.
+stored ("No results yet" at first). The finishing order comes from the feed
+(#2008): there is no paste or CSV upload, and results never match a horse by name (#2114).
 
 **Provisional first.** With *This result is official* unticked, the result is stored as
 **Provisional**: the contest leaderboard shows each pick's place with a note that places are
 provisional, and no pick has points yet. When the stewards make the result official, tick
-*This result is official*, paste the order again, *Preview*, and *Apply official result*. The
+the feed sends the official order. The
 badge then reads **Official**, and contests score it. You can also go straight to official.
 
 An official result needs a result for every horse still in the field: places 1 to N for
@@ -169,11 +157,8 @@ need none.
 - **DNF, DQ and DNS** score *Points for not finishing*. A horse the stewards disqualify and
   place behind another (the usual US ruling) is entered at its official place as a finisher,
   not as `DQ`.
-- **Corrections** before completing: paste only the changed rows, *Preview* and apply. Horses
-  you leave out keep their place. *This result is official* starts ticked once the stored
-  result is official; leave it ticked, because the box applies to the whole race and applying
-  a correction with it unticked turns the race back to Provisional, and every pick loses its
-  points.
+- **Corrections** come from the feed too: a changed row replaces that horse's place, and horses
+  it leaves out keep theirs.
 
 ### Complete
 
@@ -255,8 +240,8 @@ Road racing (UCI WorldTour, UCI Women's WorldTour) runs through the same steps u
   is withdrawn from the field and reads *Withdrawn*. **Starts** is the start of the race (the
   first stage of a Grand Tour), the cutoff for release, contests and picks; copy reads
   "Entries close at the start".
-- **Odds to win overall.** Give every rider their odds to win the race overall (*Bulk upload*
-  with `oddsToWin` suits a field of about 175). Odds alone price an unseeded field.
+- **Odds to win overall.** Give every rider their odds to win the race overall (the feed sends
+  them). Odds alone price an unseeded field.
 - **Five tiers of ten.** *Auto-assign tiers* fills them ten riders at a time from the
   favourite, the last tier taking the rest: a 176-rider field comes out 10/10/10/10/136. The four
   tiers of contenders hold 40 riders; move riders by hand if a tier looks wrong.
@@ -290,8 +275,8 @@ Marathons (World Marathon Majors) run through the same steps under
   field on the race: 20 to 40 runners, never the mass start. A runner who does not start is
   withdrawn from the field and reads *Withdrawn*. **Starts** is the elite start, the cutoff for
   release, contests and picks; copy reads "Entries close at the start".
-- **Ranking and seed, not odds.** Odds are thin for marathons, so *Bulk upload* each runner's
-  World Athletics ranking as `ranking` and the same order as `seedNumber`. Odds are optional:
+- **Ranking and seed, not odds.** Odds are thin for marathons, so the feed's ranking
+  sets each runner's `ranking`, and the same order its `seedNumber`. Odds are optional:
   ranking and seed alone tier and price the field.
 - **Four tiers of six, by seed.** On *Field*, press *Auto-assign tiers*. With no odds in the
   field it orders the runners by seed (the ranking order), and fills the tiers six at a time,

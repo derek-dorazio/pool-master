@@ -450,6 +450,96 @@
       "key": "profileName",
       "now": 0,
       "reason": "retired by #2205"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "previewEventParticipantUpload",
+      "now": 0,
+      "reason": "retired by #2008"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "applyEventParticipantUpload",
+      "now": 0,
+      "reason": "retired by #2008"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "previewRankingUpload",
+      "now": 0,
+      "reason": "retired by #2008"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "applyRankingUpload",
+      "now": 0,
+      "reason": "retired by #2008"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "findMatchingAny",
+      "now": 0,
+      "reason": "retired by #2008"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "BulkUploadPanel",
+      "now": 0,
+      "reason": "retired by #2008"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "UploadPreviewTable",
+      "now": 0,
+      "reason": "retired by #2008"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "parseGolfRoundScoreUpload",
+      "now": 0,
+      "reason": "retired by #2008"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "homeSpread",
+      "now": 0,
+      "reason": "retired by #2016"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "predictedHome",
+      "now": 0,
+      "reason": "retired by #2016"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "predictedAway",
+      "now": 0,
+      "reason": "retired by #2016"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "MatchSide",
+      "now": 64,
+      "reason": "retired by #2016"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "sideNumberOfMatchSide",
+      "now": 17,
+      "reason": "retired by #2016"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "matchSideOfSideNumber",
+      "now": 3,
+      "reason": "retired by #2016"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "teamOnMatchSide",
+      "now": 0,
+      "reason": "retired by #2016"
     }
   ]
 }

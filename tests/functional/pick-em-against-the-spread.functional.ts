@@ -2,7 +2,6 @@ import { deleteTestSportLeagues } from '../support/test-slots';
 import {
   acceptInvitation,
   addEventParticipants,
-  applyEventParticipantUpload,
   autoAssignEventPrices,
   autoAssignEventTiers,
   createContest,
@@ -47,12 +46,14 @@ import {
   getFunctionalPrisma,
 } from './setup';
 import { expectDefined } from '../support/expect-defined';
+import { AWAY_SIDE, HOME_SIDE, pickSideOf } from '../support/match-sides';
 import { unlinkContestsFromSportEvents } from '../support/contest-event-links';
 import { standardPricingFor } from './standard-pricing';
 import { expectMatchesSchema } from '../support/expect-matches-schema';
 import { sportRowKeys } from '../support/sport-rows';
 import { insertTestSportLeague } from '../support/test-sport-league';
 import { bracketMatch, dtoSideTeam, matchEdit, readHomeAway, resultBody } from '../support/match-requests';
+import { setFieldRows } from './field-rows';
 
 // A pick'em week scored against the spread end to end over HTTP (#720). An admin releases a week of
 // four unlinked basketball games and sets three spreads; a straight-up pool against the spread is
@@ -144,7 +145,7 @@ describe('SDK Functional: a pick\'em week against the spread (#720)', () => {
     created.sportEventIds.add(eventId);
     expect((await addEventParticipants({ client: a, path: { eventId }, body: { participantIds: teamIds } })).data?.added).toBe(TEAMS.length);
     // Release asks every event for its roster setup too: seeds, tiers and prices.
-    expect((await applyEventParticipantUpload({
+    expect((await setFieldRows({
       client: a,
       path: { eventId },
       body: { rows: TEAMS.map((team, index) => ({ playerName: `${team} ${RUN}`, seedNumber: index + 1 })) },
@@ -222,7 +223,8 @@ describe('SDK Functional: a pick\'em week against the spread (#720)', () => {
     // --- Picks: the week screen carries each spread ---------------------------------------------
     const aliceWeek = expectMatchesSchema(GamePicksResponseSchema, (await getGamePicks({ client: alice.client, path: path(entries.alice) })).data);
     expect(aliceWeek.againstTheSpread).toBe(true);
-    expect(aliceWeek.games.map((each) => [each.matchNumber, each.homeSpread])).toEqual([[1, -3.5], [2, 6.5], [3, -3], [4, 0]]);
+    // Side 1, the away side, carries the spread: the opposite of the home team's.
+    expect(aliceWeek.games.map((each) => [each.matchNumber, pickSideOf(each, AWAY_SIDE).spread, pickSideOf(each, HOME_SIDE).spread])).toEqual([[1, 3.5, null], [2, -6.5, null], [3, 3, null], [4, 0, null]]);
     for (const [client, entryId, side, tiebreakerValue] of [
       [alice.client, entries.alice, 'home', 140],
       [bob.client, entries.bob, 'away', 120],

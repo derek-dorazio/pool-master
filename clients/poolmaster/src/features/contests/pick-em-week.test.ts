@@ -12,9 +12,11 @@ import {
   roundWeek,
   survivorPickTeam,
   tiebreakerGame,
+  teamSpread,
   weekSubmitHint,
 } from './pick-em-week';
 import { NFL_TEAMS, WEEK_1_START, pickEmWeekFixture, playoffSurvivorFixture, survivorWeekFixture, week1Games, weekPick } from './test/pick-em-fixtures';
+import { awayAtHomeSides, neutralSides } from './test/game-pick-sides';
 
 const id = (team: { sportEventParticipantId: string }) => team.sportEventParticipantId;
 
@@ -22,7 +24,28 @@ describe('pick\'em week helpers', () => {
   it('names a game away team first, "at" the home team, or "vs" at a neutral site', () => {
     const [monday] = week1Games({ 1: {} });
     expect(describeMatchup(monday)).toBe('Bears at Packers');
-    expect(describeMatchup({ ...monday, isNeutralSite: true })).toBe('Bears vs Packers');
+    expect(describeMatchup({ ...monday, sides: neutralSides(NFL_TEAMS.bears, NFL_TEAMS.packers) })).toBe('Bears vs Packers');
+  });
+
+  it('names the away team first whichever side it is on, and side 1 first at a neutral site', () => {
+    const homeOnSideOne = [...awayAtHomeSides(NFL_TEAMS.bears, NFL_TEAMS.packers)].map((side) => ({
+      ...side, sideNumber: side.sideNumber === 1 ? 2 : 1,
+    }));
+    expect(describeMatchup({ sides: homeOnSideOne })).toBe('Bears at Packers');
+    expect(describeMatchup({ sides: neutralSides(NFL_TEAMS.packers, NFL_TEAMS.bears) })).toBe('Packers vs Bears');
+  });
+
+  it('bills the teams the entry\'s own picks put on each side, and "To be decided" for a side with none', () => {
+    const sides = neutralSides(null, null, { predictedOne: NFL_TEAMS.bills, predictedTwo: null });
+    expect(describeMatchup({ sides })).toBe('Bills vs To be decided');
+  });
+
+  it('gives the side carrying the spread its own number and the other team the opposite, only against the spread', () => {
+    const game = { sides: awayAtHomeSides(NFL_TEAMS.bills, NFL_TEAMS.chiefs, { spread: 3.5 }) };
+    expect(teamSpread({ againstTheSpread: true }, game, NFL_TEAMS.bills)).toBe('+3.5');
+    expect(teamSpread({ againstTheSpread: true }, game, NFL_TEAMS.chiefs)).toBe('-3.5');
+    expect(teamSpread({ againstTheSpread: false }, game, NFL_TEAMS.bills)).toBeNull();
+    expect(teamSpread({ againstTheSpread: true }, { sides: awayAtHomeSides(NFL_TEAMS.bills, NFL_TEAMS.chiefs) }, NFL_TEAMS.bills)).toBeNull();
   });
 
   it('finds the week\'s first kickoff whatever order the games come in, and none for a week with no games', () => {

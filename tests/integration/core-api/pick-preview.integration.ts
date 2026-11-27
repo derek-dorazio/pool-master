@@ -130,7 +130,7 @@ describe('POST /leagues/:id/pick-preview/games', () => {
     const body = expectDefined(parsed.data);
 
     expect(body).toMatchObject({ selectionType: SelectionType.PICK_EM, mode: PickEmMode.CONFIDENCE, gameCount: 2, pickedCount: 1 });
-    expect(body.games[0]?.pick).toEqual({ predictedResult: PredictedResult.TEAM, sportEventParticipantId: rowSideTeam(first, AWAY_SIDE), confidence: 2 });
+    expect(body.games[0]?.pick).toEqual({ predictedResult: PredictedResult.TEAM, sportEventParticipantId: rowSideTeam(first, AWAY_SIDE), sideNumber: AWAY_SIDE, confidence: 2 });
     expect(body.games.every((game) => !game.locked)).toBe(true);
     expect(await storedRows()).toEqual(before);
   });
