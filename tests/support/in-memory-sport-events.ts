@@ -76,8 +76,8 @@ import { sportRowKeys } from './sport-rows';
 const T0 = new Date('2026-01-01T00:00:00.000Z');
 
 /** A round's slot as the round read gives it (#2006). */
-function roundSlotOf({ id, slotDefinitionId, name, slotKind, weekNumber, seriesGames, pairing }: SportLeagueSeasonSlot, periods: SlotPeriods | null): SportEventRoundSlot {
-  return { seasonSlotId: id, slotDefinitionId, name, slotKind, weekNumber, seriesGames, pairing, canEndTied: false, periods, tiebreakerMatchId: null };
+function roundSlotOf({ id, slotDefinitionId, name, slotKind, weekNumber, seriesGames, pairing }: SportLeagueSeasonSlot, periods: SlotPeriods | null, isNeutralSite: boolean): SportEventRoundSlot {
+  return { seasonSlotId: id, slotDefinitionId, name, slotKind, weekNumber, seriesGames, pairing, canEndTied: false, isNeutralSite, periods, tiebreakerMatchId: null };
 }
 
 /** A Game read back, as a database hands it: a copy, its side results in side order. */
@@ -178,6 +178,8 @@ export class InMemorySportEvents {
   seasonSlots: Array<SportLeagueSeasonSlot & { sportLeagueId: string; sportLeagueSeasonId: string }> = [];
   /** Each Season slot's periods, from its definition (#2047), by its id; a slot a test leaves out keeps no score by period. */
   slotPeriods = new Map<string, SlotPeriods>();
+  /** The Season slots whose definition says neutral site (#2154), by id; a slot a test leaves out is played at home. */
+  neutralSiteSlots = new Set<string>();
 
   /**
    * A Season slot of the league's current Season (#2004): a test slot unless `isTestData` is
@@ -468,7 +470,7 @@ export class InMemorySportEvents {
 
   private roundSlotOfEvent(sportEventId: string): SportEventRoundSlot {
     const slot = this.eventSlotOf(sportEventId);
-    return roundSlotOf(slot, this.slotPeriods.get(slot.id) ?? null);
+    return roundSlotOf(slot, this.slotPeriods.get(slot.id) ?? null, this.neutralSiteSlots.has(slot.id));
   }
 
   /**
@@ -818,7 +820,7 @@ export class InMemorySportEvents {
               ? this.seasonSlots.find((candidate) => candidate.id === round.seasonSlotId)
               : undefined);
           if (!slot) throw new Error(`Season slot ${round.seasonSlotId} is not one of sport event ${round.sportEventId}'s slots.`);
-          this.roundRows.push(stamp({ id: this.id('round'), sportEventId: round.sportEventId, roundNumber: round.roundNumber, scheduledDate: round.scheduledDate, scheduledEndAt: round.scheduledEndAt ?? null, slot: roundSlotOf(slot, this.slotPeriods.get(slot.id) ?? null) }));
+          this.roundRows.push(stamp({ id: this.id('round'), sportEventId: round.sportEventId, roundNumber: round.roundNumber, scheduledDate: round.scheduledDate, scheduledEndAt: round.scheduledEndAt ?? null, slot: roundSlotOf(slot, this.slotPeriods.get(slot.id) ?? null, this.neutralSiteSlots.has(slot.id)) }));
         }
       },
       reschedule: async (sportEventId, rounds) => {

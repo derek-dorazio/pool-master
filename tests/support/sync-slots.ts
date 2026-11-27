@@ -85,6 +85,7 @@ async function slotDefinitionFor(
       slotKind: 'TOURNAMENT',
       awardsTrophy: false,
       squaresEligible: false,
+      isNeutralSite: false,
       seriesFormat: 'SINGLE_GAME',
       seriesGames: 1,
       pairing: 'FIXED',

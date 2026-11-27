@@ -68,7 +68,6 @@ async function syncedWeek() {
     homeTeamExternalId: `${externalId}-${home}`,
     awayTeamExternalId: `${externalId}-${away}`,
     scheduledAt: new Date(KICKOFF.getTime() + hoursAfterKickoff * HOUR),
-    isNeutralSite: false,
   });
   return { event, externalId, field, game };
 }
@@ -132,7 +131,7 @@ describe('Provider game slate (#1728)', () => {
     expect(await matchesOf(event.id)).toEqual([]);
   });
 
-  it('loads a synced draft playoff\'s whole bracket, then places its reseeded round from the provider\'s games once the round before is played', async () => {
+  it('loads a synced draft playoff\'s whole bracket, its final alone at a neutral site as its slot says, then places its reseeded round from the provider\'s games once the round before is played', async () => {
     const prisma = getPrisma();
     const sport = await prisma.sport.upsert({
       where: { sport: Sport.FOOTBALL },
@@ -156,7 +155,7 @@ describe('Provider game slate (#1728)', () => {
     });
     const WEEK = 7 * 24 * HOUR;
     // The Divisional round reseeds; each round is its own synced slot, so the event stays synced.
-    const eventSlotIds = await eventRoundSlots(prisma, event.id, [{ slotKind: 'QUARTERFINAL' }, { slotKind: 'SEMIFINAL', pairing: 'RESEEDED' }, { slotKind: 'FINAL' }], { isTestData: false });
+    const eventSlotIds = await eventRoundSlots(prisma, event.id, [{ slotKind: 'QUARTERFINAL' }, { slotKind: 'SEMIFINAL', pairing: 'RESEEDED' }, { slotKind: 'FINAL', isNeutralSite: true }], { isTestData: false });
     const eventSlots = await prisma.sportEventSlot.findMany({ where: { id: { in: eventSlotIds } }, select: { id: true, sportLeagueSeasonCompetitionSlotId: true } });
     const seasonSlotOf = new Map(eventSlots.map((eventSlot) => [eventSlot.id, eventSlot.sportLeagueSeasonCompetitionSlotId]));
     await new PrismaSportEventRoundRepository(getAppPrisma()).createMany(eventSlotIds.map((eventSlotId, index) => ({
@@ -178,7 +177,6 @@ describe('Provider game slate (#1728)', () => {
       roundNumber,
       homeTeamExternalId: home === null ? null : team(home),
       awayTeamExternalId: away === null ? null : team(away),
-      isNeutralSite: roundNumber === 3,
       scheduledAt: roundNumber === 1 ? KICKOFF : null,
       advancesTo,
       regionLabel: roundNumber === 3 ? null : 'AFC',
@@ -190,7 +188,7 @@ describe('Provider game slate (#1728)', () => {
       slot(1, 3, null, null),
     ];
     const game = (id: string, roundNumber: number, home: number, away: number, at: Date): ProviderScheduledGame => ({
-      games: [{ providerGameId: id, gameNumber: 1 }], roundNumber, homeTeamExternalId: team(home), awayTeamExternalId: team(away), scheduledAt: at, isNeutralSite: false,
+      games: [{ providerGameId: id, gameNumber: 1 }], roundNumber, homeTeamExternalId: team(home), awayTeamExternalId: team(away), scheduledAt: at,
     });
     const wildCard = [game('w1', 1, 2, 7, KICKOFF), game('w2', 1, 3, 6, KICKOFF), game('w3', 1, 4, 5, KICKOFF)];
     const { providerGames } = integrationSportEventServices();
@@ -203,6 +201,10 @@ describe('Provider game slate (#1728)', () => {
       [1, seedRow(2), seedRow(7)], [2, seedRow(3), seedRow(6)], [3, seedRow(4), seedRow(5)],
       [1, seedRow(1), null], [2, null, null], [1, null, null],
     ]);
+    // Only the final's slot says neutral site (#2154), so only its Game is played by neither side at home.
+    const sites = await prisma.sportEventRoundMatchGame.findMany({ where: { sportEventId: event.id }, select: { isNeutralSite: true, match: { select: { sportEventRound: { select: { roundNumber: true } } } } } });
+    expect([...new Set(sites.filter((each) => each.isNeutralSite).map((each) => each.match.sportEventRound.roundNumber))]).toEqual([3]);
+    expect(sites.filter((each) => !each.isNeutralSite)).toHaveLength(5);
 
     // Released, and the Wild Card played: the 2 and 4 seeds win at home, the 6 seed away.
     await prisma.sportEvent.update({ where: { id: event.id }, data: { status: SportEventStatus.SCHEDULED } });

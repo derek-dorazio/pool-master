@@ -149,7 +149,7 @@ describe('BalldontlieAdapter (WNBA playoffs)', () => {
       // Las Vegas hosted Game 1 of the Finals, but Phoenix came up the 1 seed's half, the bracket's
       // home side, so the series' game takes the bracket's sides and the slate reads no swap.
       expect(detail?.games?.filter((game) => game.roundNumber === 3)).toEqual([
-        { games: ['4252021', '4252022', '4252023', '4252024'].map((providerGameId, index) => ({ providerGameId, gameNumber: index + 1 })), roundNumber: 3, homeTeamExternalId: team(10), awayTeamExternalId: team(7), scheduledAt: new Date('2025-10-03T23:30:00.000Z'), isNeutralSite: false },
+        { games: ['4252021', '4252022', '4252023', '4252024'].map((providerGameId, index) => ({ providerGameId, gameNumber: index + 1 })), roundNumber: 3, homeTeamExternalId: team(10), awayTeamExternalId: team(7), scheduledAt: new Date('2025-10-03T23:30:00.000Z') },
       ]);
     });
 

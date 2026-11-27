@@ -236,7 +236,7 @@ const STRUCTURE_MAPPING = {
   providerId: '00000000-0000-4000-8000-00000000b001', providerName: 'BALLDONTLIE', providerLeagueCode: 'nba', providerLeagueName: 'NBA',
 } as const;
 const STRUCTURE_SLOT: Omit<SportLeaguePhaseDefinitionDto['competitions'][number]['slots'][number], 'id' | 'key' | 'slotKind'> = {
-  weekNumber: null, name: null, awardsTrophy: false, squaresEligible: false, seriesFormat: 'SINGLE_GAME', seriesGames: 1, pairing: 'FIXED',
+  weekNumber: null, name: null, awardsTrophy: false, squaresEligible: false, isNeutralSite: false, seriesFormat: 'SINGLE_GAME', seriesGames: 1, pairing: 'FIXED',
   matchFormat: 'HEAD_TO_HEAD', canEndTied: false, periodUnit: 'QUARTER', periodCount: 4, providerMappings: [],
 };
 const STRUCTURE: SportLeaguePhaseDefinitionDto[] = [
@@ -441,7 +441,7 @@ describe('League page', () => {
     expect(updateContestConfigTemplateMock).not.toHaveBeenCalled();
   });
 
-  it('lists the league\'s phases with their competitions and its slots in the API\'s order, each named by its proper name or the word for its kind and showing its competition, opens a slot to read with no Edit, and closes it on Escape', async () => {
+  it('lists the league\'s phases with their competitions and its slots in the API\'s order, each named by its proper name or the word for its kind and showing its competition, opens a slot to read with whether it is a neutral site and no Edit, and closes it on Escape', async () => {
     getSportLeagueStructureMock.mockResolvedValue({ data: { phases: STRUCTURE } });
     listSportLeaguePositionsMock.mockResolvedValue({ data: { positions: [] } });
     renderLeaguePage('/manage/sports/basketball/leagues/nba/structure');
@@ -460,6 +460,7 @@ describe('League page', () => {
     await userEvent.click(within(screen.getByTestId('root-admin-league-structure-slot-FINAL')).getByRole('button', { name: 'Open details' }));
     const dialog = await screen.findByTestId('root-admin-league-structure-slot');
     expect(within(dialog).getByTestId('root-admin-league-structure-slot-mappings')).toHaveTextContent('BALLDONTLIE nba · Provider code POST:5');
+    expect(dialog).toHaveTextContent(/Neutral site\s*No/);
     expect(within(dialog).queryByRole('button', { name: 'Edit' })).not.toBeInTheDocument();
 
     await userEvent.keyboard('{Escape}');

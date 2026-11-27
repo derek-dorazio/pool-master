@@ -152,7 +152,7 @@ async function fixtureTourStructure(prisma: Db, sportLeagueId: string): Promise<
   await prisma.sportLeagueCompetitionSlot.createMany({
     data: [{
       sportLeagueId, sportLeagueCompetitionId: competitionId, key: FIXTURE_TOUR_SLOT_KEY, slotKind: 'TOURNAMENT',
-      awardsTrophy: false, squaresEligible: false, seriesFormat: 'SINGLE_GAME', seriesGames: 1, pairing: 'FIXED',
+      awardsTrophy: false, squaresEligible: false, isNeutralSite: false, seriesFormat: 'SINGLE_GAME', seriesGames: 1, pairing: 'FIXED',
       ...(await fixtureSlotPlay(prisma, sportLeagueId)),
     }],
     skipDuplicates: true,
@@ -174,13 +174,13 @@ export async function keyedSlotDefinitionId(
   prisma: Db,
   sportLeagueId: string,
   key: string,
-  options: { phase?: 'REGULAR' | 'POSTSEASON'; slotKind?: PrismaSlotKind; name?: string; pairing?: PrismaSlotPairing; seriesGames?: number; periods?: { unit: PeriodUnit; count: number } } = {},
+  options: { phase?: 'REGULAR' | 'POSTSEASON'; slotKind?: PrismaSlotKind; name?: string; pairing?: PrismaSlotPairing; seriesGames?: number; periods?: { unit: PeriodUnit; count: number }; isNeutralSite?: boolean } = {},
 ): Promise<string> {
   const { competitionId } = await competitionFor(prisma, { sportLeagueId, phase: options.phase ?? 'REGULAR' });
   await prisma.sportLeagueCompetitionSlot.createMany({
     data: [{
       sportLeagueId, sportLeagueCompetitionId: competitionId, key, slotKind: options.slotKind ?? 'TOURNAMENT', name: options.name ?? null,
-      awardsTrophy: false, squaresEligible: false,
+      awardsTrophy: false, squaresEligible: false, isNeutralSite: options.isNeutralSite ?? false,
       seriesFormat: (options.seriesGames ?? 1) > 1 ? 'BEST_OF' : 'SINGLE_GAME', seriesGames: options.seriesGames ?? 1, pairing: options.pairing ?? 'FIXED',
       ...(await fixtureSlotPlay(prisma, sportLeagueId)),
       ...(options.periods ? { periodUnit: options.periods.unit, periodCount: options.periods.count } : {}),
@@ -353,6 +353,8 @@ export interface TestRoundSlot {
   seriesGames?: number;
   /** What its games are played in (#2047): four quarters a football game; none unless given. */
   periods?: { unit: PeriodUnit; count: number };
+  /** Whether its games are played at a neutral site (#2154); at home unless given. */
+  isNeutralSite?: boolean;
 }
 
 /**

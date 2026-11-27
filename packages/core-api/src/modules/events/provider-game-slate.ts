@@ -55,7 +55,8 @@ export interface ProviderGameSlateDeps {
 
 /**
  * A provider game's home and away teams as a match's sides: the sync puts the away team on side 1
- * and the home team on side 2, each playing Game 1 where the provider says (NONE at a neutral site).
+ * and the home team on side 2, each playing Game 1 where the provider says, or NONE when its slot is
+ * played at a neutral site (#2154).
  */
 function sidesOfProviderGame(home: string | null, away: string | null, isNeutralSite: boolean): BracketSideInput[] {
   return [
@@ -140,11 +141,11 @@ export class ProviderGameSlateService {
     // Only a draft loads the bracket, so a released event reads none: a side it names may have left
     // the field since, and must not hold up the games.
     const sync = event.status === SportEventStatus.DRAFT ? input : { ...input, bracket: undefined };
-    const fieldRowOf = await this.fieldRows(event, sync);
+    const [fieldRowOf, neutralRounds] = await Promise.all([this.fieldRows(event, sync), this.neutralSiteRounds(event.id)]);
     if (fieldRowOf === null) {
       return { outcome: 'SKIPPED', reason: 'TEAMS_NOT_IN_FIELD' };
     }
-    const outcome = await this.syncMatches(event, sync, fieldRowOf);
+    const outcome = await this.syncMatches(event, sync, fieldRowOf, neutralRounds);
     if (outcome.outcome !== 'UNCHANGED') await this.dateRoundsByKickoff(event.id);
     await this.mapProviderGames(event, input, fieldRowOf);
     return outcome;
@@ -185,14 +186,28 @@ export class ProviderGameSlateService {
     this.deps.logger?.info({ sportEventId: event.id, providerId: input.providerId, mapped: mapped.length, created: created.length }, 'Mapped a synced event\'s provider games to its Games');
   }
 
-  private async syncMatches(event: SportEvent, input: ProviderGameSlateInput, fieldRowOf: (teamExternalId: string) => string): Promise<ProviderGameSlateOutcome> {
-    const slate = slateOf(input.games, fieldRowOf);
+  /**
+   * The event's rounds played in a slot whose definition says neutral site (#2154): a provider game
+   * of one is played by neither side at home, whatever the feed says, so it shows "vs".
+   */
+  private async neutralSiteRounds(sportEventId: string): Promise<ReadonlySet<number>> {
+    const rounds = await this.deps.rounds.listRounds(sportEventId);
+    return new Set(rounds.filter((round) => round.slot.isNeutralSite).map((round) => round.roundNumber));
+  }
+
+  private async syncMatches(
+    event: SportEvent,
+    input: ProviderGameSlateInput,
+    fieldRowOf: (teamExternalId: string) => string,
+    neutralRounds: ReadonlySet<number>,
+  ): Promise<ProviderGameSlateOutcome> {
+    const slate = slateOf(input.games, fieldRowOf, neutralRounds);
     const stored = await this.deps.matches.findBySportEvent(event.id);
     const draft = event.status === SportEventStatus.DRAFT;
     if (draft) {
       // Games with no bracket load only into a one-round event (a game week): on a longer event they
       // are one round's games, and loading them would wipe the bracket an admin built.
-      const load = input.bracket !== undefined ? bracketOf(input.bracket, fieldRowOf) : event.rounds === 1 ? slate : null;
+      const load = input.bracket !== undefined ? bracketOf(input.bracket, fieldRowOf, neutralRounds) : event.rounds === 1 ? slate : null;
       const same = load === null || (input.bracket === undefined ? samePairings(stored, load) : sameBracket(stored, load));
       if (!same) {
         await this.deps.bracket.loadBracket(event.id, load);
@@ -353,7 +368,7 @@ function skipReason(event: SportEvent | null): Extract<ProviderGameSlateOutcome,
 }
 
 /** The provider's games as the event's matches, in round and kickoff order, numbered within each round (#2161). */
-function slateOf(games: readonly ProviderScheduledGame[], fieldRowOf: (teamExternalId: string) => string): BracketMatchInput[] {
+function slateOf(games: readonly ProviderScheduledGame[], fieldRowOf: (teamExternalId: string) => string, neutralRounds: ReadonlySet<number>): BracketMatchInput[] {
   const numbered = new Map<number, number>();
   return [...games]
     .sort(byRoundThenKickoff)
@@ -365,8 +380,8 @@ function slateOf(games: readonly ProviderScheduledGame[], fieldRowOf: (teamExter
     .map(({ game, matchNumber }) => ({
       matchNumber,
       roundNumber: game.roundNumber,
-      sides: sidesOfProviderGame(fieldRowOf(game.homeTeamExternalId), fieldRowOf(game.awayTeamExternalId), game.isNeutralSite),
-      isNeutralSite: game.isNeutralSite,
+      sides: sidesOfProviderGame(fieldRowOf(game.homeTeamExternalId), fieldRowOf(game.awayTeamExternalId), neutralRounds.has(game.roundNumber)),
+      isNeutralSite: neutralRounds.has(game.roundNumber),
       scheduledDate: game.scheduledAt,
       advancesTo: null,
     }));
@@ -394,16 +409,16 @@ function crossRegionPairings(bracket: readonly BracketMatchInput[]): Array<Match
 }
 
 /** The provider's bracket as the event's, each named side its team's field row. */
-function bracketOf(bracket: readonly ProviderBracketMatch[], fieldRowOf: (teamExternalId: string) => string): BracketMatchInput[] {
+function bracketOf(bracket: readonly ProviderBracketMatch[], fieldRowOf: (teamExternalId: string) => string, neutralRounds: ReadonlySet<number>): BracketMatchInput[] {
   return bracket.map((match) => ({
     matchNumber: match.matchNumber,
     roundNumber: match.roundNumber,
     sides: sidesOfProviderGame(
       match.homeTeamExternalId === null ? null : fieldRowOf(match.homeTeamExternalId),
       match.awayTeamExternalId === null ? null : fieldRowOf(match.awayTeamExternalId),
-      match.isNeutralSite,
+      neutralRounds.has(match.roundNumber),
     ),
-    isNeutralSite: match.isNeutralSite,
+    isNeutralSite: neutralRounds.has(match.roundNumber),
     scheduledDate: match.scheduledAt,
     advancesTo: match.advancesTo === null ? null : {
       roundNumber: match.advancesTo.roundNumber,

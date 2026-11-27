@@ -502,7 +502,7 @@ async function seedLeagueStructure(slots: number) {
     await prisma.sportLeagueCompetitionSlot.create({
       data: {
         sportLeagueId: sportLeague.id, sportLeagueCompetitionId: competition.id, key: `WEEK_${String(week)}`, slotKind: 'WEEK', weekNumber: week,
-        awardsTrophy: false, squaresEligible: true, seriesFormat: 'SINGLE_GAME', seriesGames: 1, pairing: 'FIXED',
+        awardsTrophy: false, squaresEligible: true, isNeutralSite: false, seriesFormat: 'SINGLE_GAME', seriesGames: 1, pairing: 'FIXED',
         matchFormat: 'HEAD_TO_HEAD', canEndTied: false, periodUnit: 'QUARTER', periodCount: 4,
         providerMappings: { create: { sportLeagueProviderMappingId: mappingId, matchType: 'CALENDAR_WEEK' } },
       },

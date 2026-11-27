@@ -12266,6 +12266,8 @@ export interface components {
             awardsTrophy: boolean;
             /** @description Whether a squares pool can be played on its games. */
             squaresEligible: boolean;
+            /** @description Whether its games are played at a neutral site, neither side at home (a Super Bowl, a bowl game). Each game of the slot takes it, and screens then say "vs" rather than "at". */
+            isNeutralSite: boolean;
             /** @enum {string} */
             seriesFormat: "SINGLE_GAME" | "BEST_OF" | "AGGREGATE";
             /** @description Games in one meeting: 1 for SINGLE_GAME, the series length for BEST_OF, the legs for AGGREGATE. */
@@ -12328,6 +12330,8 @@ export interface components {
                 awardsTrophy: boolean;
                 /** @description Whether a squares pool can be played on its games. */
                 squaresEligible: boolean;
+                /** @description Whether its games are played at a neutral site, neither side at home (a Super Bowl, a bowl game). Each game of the slot takes it, and screens then say "vs" rather than "at". */
+                isNeutralSite: boolean;
                 /** @enum {string} */
                 seriesFormat: "SINGLE_GAME" | "BEST_OF" | "AGGREGATE";
                 /** @description Games in one meeting: 1 for SINGLE_GAME, the series length for BEST_OF, the legs for AGGREGATE. */
@@ -12399,6 +12403,8 @@ export interface components {
                     awardsTrophy: boolean;
                     /** @description Whether a squares pool can be played on its games. */
                     squaresEligible: boolean;
+                    /** @description Whether its games are played at a neutral site, neither side at home (a Super Bowl, a bowl game). Each game of the slot takes it, and screens then say "vs" rather than "at". */
+                    isNeutralSite: boolean;
                     /** @enum {string} */
                     seriesFormat: "SINGLE_GAME" | "BEST_OF" | "AGGREGATE";
                     /** @description Games in one meeting: 1 for SINGLE_GAME, the series length for BEST_OF, the legs for AGGREGATE. */
@@ -12473,6 +12479,8 @@ export interface components {
                         awardsTrophy: boolean;
                         /** @description Whether a squares pool can be played on its games. */
                         squaresEligible: boolean;
+                        /** @description Whether its games are played at a neutral site, neither side at home (a Super Bowl, a bowl game). Each game of the slot takes it, and screens then say "vs" rather than "at". */
+                        isNeutralSite: boolean;
                         /** @enum {string} */
                         seriesFormat: "SINGLE_GAME" | "BEST_OF" | "AGGREGATE";
                         /** @description Games in one meeting: 1 for SINGLE_GAME, the series length for BEST_OF, the legs for AGGREGATE. */

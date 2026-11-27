@@ -123,7 +123,7 @@ describe('IngestionPersistence', () => {
     const withFollowUps = () => new IngestionPersistence(getAppPrisma(), testDomainEvents({ queue: integrationBackgroundJobs().queue }));
     const followUpJobs = (sportEventId: string) => getPrisma().backgroundJob.findMany({ where: { type: 'SYNC_EVENT_GAMES_AND_TIERS', sportEventId } });
     const KICKOFF = new Date('2026-04-15T17:00:00.000Z');
-    const games = [{ games: [{ providerGameId: 'g1', gameNumber: 1 }], roundNumber: 1, homeTeamExternalId: 'home', awayTeamExternalId: 'away', scheduledAt: KICKOFF, isNeutralSite: false }];
+    const games = [{ games: [{ providerGameId: 'g1', gameNumber: 1 }], roundNumber: 1, homeTeamExternalId: 'home', awayTeamExternalId: 'away', scheduledAt: KICKOFF }];
 
     it('writes one job with the field a sync writes, carrying the provider\'s games, and one on its own when the field is unchanged', async () => {
       const detail = { ...await linkedField('integration-follow-up-sync', 'ingestion-follow-up-1'), games };
@@ -344,7 +344,7 @@ describe('IngestionPersistence', () => {
     await prisma.sportLeagueSeasonCompetitionSlotGameProviderMapping.create({
       data: { sportLeagueId: event.sportLeagueId, sportLeagueSeasonCompetitionSlotId: seasonSlotId, sportLeagueProviderMappingId, externalId: 'bowl-game' },
     });
-    const game = (id: string, home: string, away: string) => ({ games: [{ providerGameId: id, gameNumber: 1 }], roundNumber: 1, homeTeamExternalId: home, awayTeamExternalId: away, scheduledAt: new Date('2026-12-20T17:00:00.000Z'), isNeutralSite: false });
+    const game = (id: string, home: string, away: string) => ({ games: [{ providerGameId: id, gameNumber: 1 }], roundNumber: 1, homeTeamExternalId: home, awayTeamExternalId: away, scheduledAt: new Date('2026-12-20T17:00:00.000Z') });
 
     await persistence.persistEventDetailWithDiagnostics({
       ...rankedFieldDetail(externalId, ['ingestion-bowl-home', 'ingestion-bowl-away', 'ingestion-cfp-seed-1', 'ingestion-cfp-seed-4'].map((team) => rankedGolfer(team))),
@@ -359,7 +359,7 @@ describe('IngestionPersistence', () => {
   });
 
   describe('a rest-of-phase draft\'s field follows its placed games (#2221)', () => {
-    const game = (id: string, home: string, away: string) => ({ games: [{ providerGameId: id, gameNumber: 1 }], roundNumber: 1, homeTeamExternalId: home, awayTeamExternalId: away, scheduledAt: new Date('2026-12-20T17:00:00.000Z'), isNeutralSite: false });
+    const game = (id: string, home: string, away: string) => ({ games: [{ providerGameId: id, gameNumber: 1 }], roundNumber: 1, homeTeamExternalId: home, awayTeamExternalId: away, scheduledAt: new Date('2026-12-20T17:00:00.000Z') });
     const TEAMS = ['ingestion-stale-bowl-home', 'ingestion-stale-bowl-away', 'ingestion-stale-cfp-1', 'ingestion-stale-cfp-4'];
 
     /**
@@ -505,7 +505,7 @@ describe('IngestionPersistence', () => {
 
     await persistence.persistEventDetailWithDiagnostics({
       ...rankedFieldDetail(externalId, [rankedGolfer('ingestion-window-only-team')]),
-      games: [{ games: [{ providerGameId: 'some-game', gameNumber: 1 }], roundNumber: 1, homeTeamExternalId: 'a', awayTeamExternalId: 'b', scheduledAt: new Date('2026-12-30T17:00:00.000Z'), isNeutralSite: false }],
+      games: [{ games: [{ providerGameId: 'some-game', gameNumber: 1 }], roundNumber: 1, homeTeamExternalId: 'a', awayTeamExternalId: 'b', scheduledAt: new Date('2026-12-30T17:00:00.000Z') }],
     });
 
     const [job] = await prisma.backgroundJob.findMany({ where: { type: 'SYNC_EVENT_GAMES_AND_TIERS', sportEventId: event.id } });

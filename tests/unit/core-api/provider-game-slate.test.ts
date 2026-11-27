@@ -27,7 +27,7 @@ const KICKOFF = new Date('2026-11-15T18:00:00.000Z');
 const HOUR = 60 * 60 * 1000;
 const TEAMS = ['Bears', 'Lions', 'Packers', 'Vikings'] as const;
 
-function setup({ status = SportEventStatus.DRAFT, synced = true, rounds = 1 }: { status?: Status; synced?: boolean; rounds?: number } = {}) {
+function setup({ status = SportEventStatus.DRAFT, synced = true, rounds = 1, neutralSite = false }: { status?: Status; synced?: boolean; rounds?: number; neutralSite?: boolean } = {}) {
   const store = new InMemorySportEvents();
   const sport = store.addSport(Sport.FOOTBALL);
   const league = store.addSportLeague(sport.id, 'NFL');
@@ -39,6 +39,8 @@ function setup({ status = SportEventStatus.DRAFT, synced = true, rounds = 1 }: {
     providerRef: { providerId: PROVIDER, externalId: WEEK_EVENT },
     ...(synced && { syncProviderId: PROVIDER }),
   });
+  // The week's slot is played at a neutral site when its definition says so (#2154).
+  if (neutralSite) store.neutralSiteSlots.add(store.eventSlotOf(event.id).id);
   void store.addRounds(event.id, [{ roundNumber: 1, scheduledDate: KICKOFF }]);
   const field = Object.fromEntries(TEAMS.map((name) => {
     const team = store.addParticipant(sport.id, name, { participantType: 'TEAM' });
@@ -75,7 +77,7 @@ function setup({ status = SportEventStatus.DRAFT, synced = true, rounds = 1 }: {
 }
 
 function game(id: string, home: string, away: string, hoursAfterKickoff: number): ProviderScheduledGame {
-  return { games: [{ providerGameId: id, gameNumber: 1 }], roundNumber: 1, homeTeamExternalId: `team-${home}`, awayTeamExternalId: `team-${away}`, scheduledAt: new Date(KICKOFF.getTime() + hoursAfterKickoff * HOUR), isNeutralSite: false };
+  return { games: [{ providerGameId: id, gameNumber: 1 }], roundNumber: 1, homeTeamExternalId: `team-${home}`, awayTeamExternalId: `team-${away}`, scheduledAt: new Date(KICKOFF.getTime() + hoursAfterKickoff * HOUR) };
 }
 
 const WEEK = [game('g2', 'Packers', 'Vikings', 3), game('g1', 'Bears', 'Lions', 0)];
@@ -98,6 +100,18 @@ describe('ProviderGameSlateService', () => {
       [1, field.Bears, field.Lions, KICKOFF.toISOString()],
       [2, field.Packers, field.Vikings, new Date(KICKOFF.getTime() + 3 * HOUR).toISOString()],
     ]);
+  });
+
+  it('plays a week\'s games at a neutral site, neither side home, when its slot\'s definition says neutral site, and home and away when it does not', async () => {
+    const neutral = setup({ neutralSite: true });
+    await neutral.service.syncGames({ sportEventId: neutral.event.id, providerId: PROVIDER, externalId: WEEK_EVENT, games: WEEK });
+    const home = setup();
+    await home.service.syncGames({ sportEventId: home.event.id, providerId: PROVIDER, externalId: WEEK_EVENT, games: WEEK });
+
+    expect((await neutral.store.matchRepo().findBySportEvent(neutral.event.id)).map(matchIsNeutralSite)).toEqual([true, true]);
+    expect(gameOneHomeAway(neutral.store, 1)).toEqual([[1, HomeAway.NONE], [2, HomeAway.NONE]]);
+    expect((await home.store.matchRepo().findBySportEvent(home.event.id)).map(matchIsNeutralSite)).toEqual([false, false]);
+    expect(gameOneHomeAway(home.store, 1)).toEqual([[1, HomeAway.AWAY], [2, HomeAway.HOME]]);
   });
 
   it('keeps each game\'s number within its round when the provider adds a game kicking off later: the new game takes the next number', async () => {
@@ -124,9 +138,8 @@ describe('ProviderGameSlateService', () => {
   });
 
   it('writes nothing again for a neutral-site draft whose match already has its Game 2, which took Game 1\'s neutral site', async () => {
-    const { service, event, store } = setup();
-    const neutralWeek = WEEK.map((each) => ({ ...each, isNeutralSite: true }));
-    await service.syncGames({ sportEventId: event.id, providerId: PROVIDER, externalId: WEEK_EVENT, games: neutralWeek });
+    const { service, event, store } = setup({ neutralSite: true });
+    await service.syncGames({ sportEventId: event.id, providerId: PROVIDER, externalId: WEEK_EVENT, games: WEEK });
     const [first] = await store.matchRepo().findBySportEvent(event.id);
     const gameOne = expectDefined(first.games.find((each) => each.gameNumber === 1));
     await store.gameRepo().applySync({
@@ -135,7 +148,7 @@ describe('ProviderGameSlateService', () => {
       mapped: [], moved: [], scores: [],
     });
 
-    await expect(service.syncGames({ sportEventId: event.id, providerId: PROVIDER, externalId: WEEK_EVENT, games: neutralWeek }))
+    await expect(service.syncGames({ sportEventId: event.id, providerId: PROVIDER, externalId: WEEK_EVENT, games: WEEK }))
       .resolves.toEqual({ outcome: 'UNCHANGED', sportEventId: event.id });
   });
 
@@ -317,6 +330,8 @@ describe('ProviderGameSlateService', () => {
       // A day apart from two hours before the first kickoff, as a provider event's rounds are made.
       // Its postseason slots reseed, the last its FINAL (#2006).
       const slots = store.addRoundSlots(event.id, [SlotKind.QUARTERFINAL, SlotKind.SEMIFINAL, SlotKind.FINAL].map((slotKind) => ({ slotKind, pairing: SlotPairing.RESEEDED })));
+      // Its FINAL's definition says neutral site (#2154), as the Super Bowl's does.
+      store.neutralSiteSlots.add(slots[2]);
       void store.addRounds(event.id, [1, 2, 3].map((roundNumber) => ({ roundNumber, scheduledDate: roundDefault(roundNumber) })), (roundNumber) => slots[roundNumber - 1]);
       const field = new Map(SEEDS.map((seed) => {
         const participant = store.addParticipant(sport.id, `Seed ${seed}`, { participantType: 'TEAM' });
@@ -372,7 +387,6 @@ describe('ProviderGameSlateService', () => {
       roundNumber,
       homeTeamExternalId: home === null ? null : team(home),
       awayTeamExternalId: away === null ? null : team(away),
-      isNeutralSite: false,
       scheduledAt: null,
       advancesTo: null,
       regionLabel: 'AFC',
@@ -385,7 +399,7 @@ describe('ProviderGameSlateService', () => {
       // Each round numbers its games from 1 (#2161).
       slot(1, 2, 1, null, { advancesTo: { roundNumber: 3, matchNumber: 1, side: MatchSide.HOME } }),
       slot(2, 2, null, null, { advancesTo: { roundNumber: 3, matchNumber: 1, side: MatchSide.AWAY } }),
-      slot(1, 3, null, null, { regionLabel: null, isNeutralSite: true }),
+      slot(1, 3, null, null, { regionLabel: null }),
     ];
     const playoffGame = (id: string, roundNumber: number, home: number, away: number, hoursAfterKickoff = 0): ProviderScheduledGame => ({
       games: [{ providerGameId: id, gameNumber: 1 }],
@@ -393,11 +407,10 @@ describe('ProviderGameSlateService', () => {
       homeTeamExternalId: team(home),
       awayTeamExternalId: team(away),
       scheduledAt: new Date(KICKOFF.getTime() + hoursAfterKickoff * HOUR),
-      isNeutralSite: false,
     });
     const WILD_CARD = [playoffGame('w1', 1, 2, 7), playoffGame('w2', 1, 3, 6), playoffGame('w3', 1, 4, 5)];
 
-    it('loads a synced draft playoff\'s whole bracket, first round to final, with its regions and links', async () => {
+    it('loads a synced draft playoff\'s whole bracket, first round to final, with its regions and links, only the final at a neutral site as its slot says', async () => {
       const { sync, sides, rowOf, store, event } = playoffSetup();
 
       await expect(sync(WILD_CARD)).resolves.toEqual({ outcome: 'LOADED', sportEventId: event.id, matchCount: 6 });
@@ -411,6 +424,7 @@ describe('ProviderGameSlateService', () => {
       expect(homeAwayOf(expectDefined(at(2, 2))).advancesToSide).toBe(MatchSide.AWAY);
       expect(at(3, 1)).toMatchObject({ regionLabel: null });
       expect(matchIsNeutralSite(expectDefined(at(3, 1)))).toBe(true);
+      expect(matchIsNeutralSite(expectDefined(at(1, 1)))).toBe(false);
       expect(at(1, 1)).toMatchObject({ regionLabel: 'AFC', advancesToMatchId: null });
     });
 

@@ -141,7 +141,7 @@ describe('BalldontlieAdapter (NFL)', () => {
         ['25', '27', '9', '4', '17', '3', '31', '30'],
       );
       expect(detail?.games).toHaveLength(4);
-      expect(detail?.games?.[0]).toMatchObject({ roundNumber: 1, homeTeamExternalId: '25', awayTeamExternalId: '27', isNeutralSite: false });
+      expect(detail?.games?.[0]).toMatchObject({ roundNumber: 1, homeTeamExternalId: '25', awayTeamExternalId: '27' });
       expect(detail?.games?.[0].games[0]?.providerGameId).toMatch(/^\d+$/);
       expect(detail?.games?.[0].scheduledAt).toBeInstanceOf(Date);
       const teamsInGames = detail?.games?.flatMap((game) => [game.homeTeamExternalId, game.awayTeamExternalId]);

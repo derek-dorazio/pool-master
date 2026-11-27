@@ -164,7 +164,7 @@ function byeBracket(leagues: ReadonlyArray<{ name: string; label: string }>,
 ): ProviderBracketMatch[] | null {
   const team = (each: PlayoffTeam) => participantFeedId(each.id);
   const match = (matchNumber: number, roundNumber: number, regionLabel: string | null, fill: Partial<ProviderBracketMatch> = {}): ProviderBracketMatch => ({
-    matchNumber, roundNumber, homeTeamExternalId: null, awayTeamExternalId: null, isNeutralSite: false, scheduledAt: null, advancesTo: null, regionLabel, ...fill,
+    matchNumber, roundNumber, homeTeamExternalId: null, awayTeamExternalId: null, scheduledAt: null, advancesTo: null, regionLabel, ...fill,
   });
   const rounds: ProviderBracketMatch[][] = [[], [], []];
   for (const [index, { name, label }] of leagues.entries()) {
@@ -207,7 +207,6 @@ function linkBracket(slots: readonly FirstRoundSlot[]): ProviderBracketMatch[] {
       roundNumber: 1,
       homeTeamExternalId: team(slot.top),
       awayTeamExternalId: team(slot.bottom),
-      isNeutralSite: false,
       scheduledAt: new Date(seriesGameOne(slot.series).start),
       advancesTo: null,
       regionLabel: slot.regionLabel,
@@ -230,7 +229,6 @@ function linkBracket(slots: readonly FirstRoundSlot[]): ProviderBracketMatch[] {
         ...next,
         homeTeamExternalId: null,
         awayTeamExternalId: null,
-        isNeutralSite: false,
         scheduledAt: null,
         advancesTo: null,
         regionLabel: left.match.regionLabel === right.match.regionLabel ? left.match.regionLabel : null,
@@ -262,7 +260,6 @@ export function toPlayoffSeriesGames(games: readonly PlayoffGame[], bracket: rea
       homeTeamExternalId: flip ? away : home,
       awayTeamExternalId: flip ? home : away,
       scheduledAt: new Date(first.start),
-      isNeutralSite: false,
     };
   });
 }

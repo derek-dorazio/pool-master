@@ -255,7 +255,7 @@ describe('an NCAA men\'s bracket from the vendor\'s (#1728)', () => {
     expect(firstRound?.[16]).toEqual([17, 'South', team(3, 1), null]);
   });
 
-  it('links each pair of games into the next round through the Elite Eight, the first two regions\' champions meeting in the first semifinal and the last two in the second, all at neutral sites', () => {
+  it('links each pair of games into the next round through the Elite Eight, the first two regions\' champions meeting in the first semifinal and the last two in the second', () => {
     const bracket = toNcaaBracket(SEASON_2025, whole) ?? [];
     const game = (roundNumber: number, matchNumber: number) =>
       bracket.find((match) => match.roundNumber === roundNumber && match.matchNumber === matchNumber);
@@ -281,7 +281,6 @@ describe('an NCAA men\'s bracket from the vendor\'s (#1728)', () => {
     expect(game(7, 1)?.advancesTo).toBeNull();
     expect([1, 2, 3, 4].map((number) => game(5, number)?.regionLabel)).toEqual(['East', 'West', 'South', 'Midwest']);
     expect([game(6, 1), game(6, 2), game(7, 1)].map((match) => match?.regionLabel)).toEqual([null, null, null]);
-    expect(bracket.every((match) => match.isNeutralSite)).toBe(true);
     expect([game(1, 1), game(2, 1)].map((match) => match?.scheduledAt instanceof Date)).toEqual([true, true]);
     expect(game(3, 1)?.scheduledAt).toBeNull();
   });
@@ -300,7 +299,6 @@ describe('an NCAA men\'s bracket from the vendor\'s (#1728)', () => {
   it('gives every game with both teams, the First Four\'s as round 1 and the round of 64\'s as round 2, a First Four side\'s game once its winner shows in it', () => {
     const games = toNcaaScheduledGames(NCAA_MEN, whole);
     expect(games.map((game) => game.roundNumber)).toEqual([1, 1, ...Array.from({ length: 30 }, () => 2)]);
-    expect(games.every((game) => game.isNeutralSite)).toBe(true);
     expect(toNcaaScheduledGames(NCAA_MEN, firstFourPlayed)).toHaveLength(34);
     expect(toNcaaScheduledGames(NCAA_WOMEN, womens2025).map((game) => game.roundNumber)).toEqual([1, 2, 2, 7]);
   });
