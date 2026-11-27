@@ -180,7 +180,7 @@ describe('IngestionService manual sync submission', () => {
       return { service, syncRuns };
     }
     const event = (overrides: Record<string, unknown> = {}) => ({
-      id: 'event-1', sport: Sport.GOLF, syncProviderId: 'balldontlie',
+      id: 'event-1', sport: Sport.GOLF, status: 'SCHEDULED', syncProviderId: 'balldontlie',
       providerMappings: [{ providerCode: 'BALLDONTLIE', providerName: 'BALLDONTLIE', externalId: 'golf-open-2026' }],
       ...overrides,
     });
@@ -205,6 +205,22 @@ describe('IngestionService manual sync submission', () => {
       await expect(missing.service.syncSportEvent('event-1', ['SCORES'], 'admin-1', 'admin@example.com'))
         .rejects.toMatchObject({ code: 'EVENT_NOT_FOUND', statusCode: 404 });
       expect([...testEvent.syncRuns.rows, ...missing.syncRuns.rows]).toEqual([]);
+    });
+
+    it('refuses a sync kind the event cannot run now with 422 EVENT_SYNC_KIND_UNAVAILABLE: live scores before play starts, queuing nothing', async () => {
+      const { service, syncRuns } = buildEventSyncService(jest.fn().mockResolvedValue(event({ status: 'SCHEDULED' })));
+
+      await expect(service.syncSportEvent('event-1', ['FIELD', 'SCORES'], 'admin-1', 'admin@example.com'))
+        .rejects.toMatchObject({ code: 'EVENT_SYNC_KIND_UNAVAILABLE', statusCode: 422 });
+      expect(syncRuns.rows).toEqual([]);
+    });
+
+    it('queues live scores for an event in play, where its sync kinds include them', async () => {
+      const { service, syncRuns } = buildEventSyncService(jest.fn().mockResolvedValue(event({ status: 'IN_PROGRESS' })));
+
+      await service.syncSportEvent('event-1', ['SCORES'], 'admin-1', 'admin@example.com');
+
+      expect(syncRuns.rows).toEqual([expect.objectContaining({ kind: 'SCORES', status: 'SUBMITTED' })]);
     });
   });
 

@@ -18,6 +18,8 @@ import type {
 import {
   BackgroundJobType,
   eventFeedRef,
+  eventSyncKindsOf,
+  type ProviderEventRef,
   JobErrorType,
   JobTrigger,
   type ProviderHealthStatus,
@@ -120,13 +122,43 @@ export class ProviderSyncRunNotFoundError extends Error {
 
 /**
  * A manual sync of one of our events (#2004) that its league's provider has no id for (409
- * EVENT_NOT_LINKED: a test event), or that does not exist (404 EVENT_NOT_FOUND).
+ * EVENT_NOT_LINKED: a test event), that does not exist (404 EVENT_NOT_FOUND), or that asks for a
+ * kind the event cannot run now (422 EVENT_SYNC_KIND_UNAVAILABLE, #2238: `eventSyncKindsOf`).
  */
 export class SportEventNotSyncedError extends Error {
-  constructor(message: string, readonly code: 'EVENT_NOT_FOUND' | 'EVENT_NOT_LINKED', readonly statusCode: 404 | 409) {
+  constructor(
+    message: string,
+    readonly code: 'EVENT_NOT_FOUND' | 'EVENT_NOT_LINKED' | 'EVENT_SYNC_KIND_UNAVAILABLE',
+    readonly statusCode: 404 | 409 | 422,
+  ) {
     super(message);
     this.name = 'SportEventNotSyncedError';
   }
+}
+
+/**
+ * The provider id a root admin's sync of these kinds reads for one of our events (#2004): refused
+ * when its league's provider has no id for it (409 EVENT_NOT_LINKED), and for a kind it cannot run
+ * now (422 EVENT_SYNC_KIND_UNAVAILABLE, #2238), the same rule its DTO's `syncKinds` answers.
+ */
+export function requireSyncableEvent(
+  event: Parameters<typeof eventSyncKindsOf>[0] & { id: string },
+  kinds: readonly EventSyncKind[],
+): ProviderEventRef {
+  const feedRef = eventFeedRef(event);
+  if (feedRef === undefined) {
+    throw new SportEventNotSyncedError(`Sport event ${event.id} has no id at its league's provider, so nothing syncs it.`, 'EVENT_NOT_LINKED', 409);
+  }
+  const available = eventSyncKindsOf(event);
+  const unavailable = kinds.filter((kind) => !available.includes(kind));
+  if (unavailable.length > 0) {
+    throw new SportEventNotSyncedError(
+      `Sport event ${event.id} cannot run a ${unavailable.join(', ')} sync while it is ${event.status}.`,
+      'EVENT_SYNC_KIND_UNAVAILABLE',
+      422,
+    );
+  }
+  return feedRef;
 }
 
 // ---------------------------------------------------------------------------
@@ -315,10 +347,7 @@ export class IngestionService {
   ): Promise<ProviderManualSyncSubmissionResult> {
     const event = await this.sportEvents.findById(sportEventId);
     if (!event) throw new SportEventNotSyncedError(`Sport event ${sportEventId} was not found.`, 'EVENT_NOT_FOUND', 404);
-    const feedRef = eventFeedRef(event);
-    if (feedRef === undefined) {
-      throw new SportEventNotSyncedError(`Sport event ${sportEventId} has no id at its league's provider, so nothing syncs it.`, 'EVENT_NOT_LINKED', 409);
-    }
+    const feedRef = requireSyncableEvent(event, kinds);
     return this.syncEventData({ sport: event.sport, providerId: feedRef.providerId, eventId: feedRef.externalId, kinds }, rootAdminUserId, rootAdminEmail);
   }
 

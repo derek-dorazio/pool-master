@@ -72,16 +72,25 @@ export function eventFeedRef(event: {
 export const EVENT_SYNC_KINDS = [ProviderSyncKind.FIELD, ProviderSyncKind.SCORES] as const;
 export type EventSyncKind = (typeof EVENT_SYNC_KINDS)[number];
 
-/** The statuses each event sync kind runs in: a field while there is one to load, scores while play is on. */
+/**
+ * The statuses the scheduled field sync loads an event's field in (#431): a draft, before release
+ * (a loaded field is a release check), or a released event not yet started.
+ */
+export const SCHEDULED_FIELD_SYNC_STATUSES = [SportEventStatus.DRAFT, SportEventStatus.SCHEDULED] as const;
+
+/**
+ * The statuses each event sync kind runs in on a root admin's ask: its field whenever the schedule
+ * loads it, and again once play starts or ends; its scores while play is on.
+ */
 const EVENT_SYNC_KIND_STATUSES: Readonly<Record<EventSyncKind, readonly SportEventStatus[]>> = {
-  [ProviderSyncKind.FIELD]: [SportEventStatus.SCHEDULED, SportEventStatus.IN_PROGRESS, SportEventStatus.COMPLETED],
+  [ProviderSyncKind.FIELD]: [...SCHEDULED_FIELD_SYNC_STATUSES, SportEventStatus.IN_PROGRESS, SportEventStatus.COMPLETED],
   [ProviderSyncKind.SCORES]: [SportEventStatus.IN_PROGRESS],
 };
 
 /**
  * The sync kinds a root admin can run on an event now (#2234): none for an event its league's
- * provider has no id for (a test event, or a league no provider syncs); its FIELD while it is
- * scheduled, in play or completed; and its SCORES while it is in play.
+ * provider has no id for (a test event, or a league no provider syncs); its FIELD while it is a
+ * draft, scheduled, in play or completed; and its SCORES while it is in play.
  */
 export function eventSyncKindsOf(event: {
   status: SportEventStatus;

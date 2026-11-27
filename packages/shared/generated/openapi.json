@@ -29920,7 +29920,7 @@
               ],
               "description": "What an event sync syncs: the event's FIELD or its SCORES. A sport league's EVENTS are synced by league, not by event."
             },
-            "description": "The sync kinds a root admin can run on the event now (#2234): its FIELD while it is scheduled, in play or completed, and its SCORES while it is in play. Empty for an event its league's provider has no id for, such as a test event. (Admin-only: operational detail no member surface reads.)"
+            "description": "The sync kinds a root admin can run on the event now (#2234): its FIELD while it is a draft, scheduled, in play or completed, and its SCORES while it is in play. Empty for an event its league's provider has no id for, such as a test event. (Admin-only: operational detail no member surface reads.)"
           },
           "createdAt": {
             "type": "string",
@@ -31187,7 +31187,7 @@
                     ],
                     "description": "What an event sync syncs: the event's FIELD or its SCORES. A sport league's EVENTS are synced by league, not by event."
                   },
-                  "description": "The sync kinds a root admin can run on the event now (#2234): its FIELD while it is scheduled, in play or completed, and its SCORES while it is in play. Empty for an event its league's provider has no id for, such as a test event. (Admin-only: operational detail no member surface reads.)"
+                  "description": "The sync kinds a root admin can run on the event now (#2234): its FIELD while it is a draft, scheduled, in play or completed, and its SCORES while it is in play. Empty for an event its league's provider has no id for, such as a test event. (Admin-only: operational detail no member surface reads.)"
                 },
                 "createdAt": {
                   "type": "string",
@@ -32408,7 +32408,7 @@
                   ],
                   "description": "What an event sync syncs: the event's FIELD or its SCORES. A sport league's EVENTS are synced by league, not by event."
                 },
-                "description": "The sync kinds a root admin can run on the event now (#2234): its FIELD while it is scheduled, in play or completed, and its SCORES while it is in play. Empty for an event its league's provider has no id for, such as a test event. (Admin-only: operational detail no member surface reads.)"
+                "description": "The sync kinds a root admin can run on the event now (#2234): its FIELD while it is a draft, scheduled, in play or completed, and its SCORES while it is in play. Empty for an event its league's provider has no id for, such as a test event. (Admin-only: operational detail no member surface reads.)"
               },
               "createdAt": {
                 "type": "string",
@@ -87716,7 +87716,7 @@
         "tags": [
           "Events"
         ],
-        "description": "Queues a provider sync of the field and returns at once; reload the field once the sync runs complete. 409 EVENT_NOT_LINKED for an event with no provider. Root admin only.",
+        "description": "Queues a provider sync of the field and returns at once; reload the field once the sync runs complete. 409 EVENT_NOT_LINKED for an event with no provider; 422 EVENT_SYNC_KIND_UNAVAILABLE for a postponed or cancelled event, which no field sync runs on (#2238). Root admin only.",
         "parameters": [
           {
             "schema": {
@@ -93942,7 +93942,7 @@
         "tags": [
           "Ingestion"
         ],
-        "description": "Queues one sync run per requested event-level feed for the event, read from its sport league's provider by the id the events sync gave it, and answers at once (202); the runs execute in a background job. 404 EVENT_NOT_FOUND, or SPORT_PROVIDER_NOT_FOUND when that provider is not running here; 409 EVENT_NOT_LINKED for a test event, which no provider syncs.",
+        "description": "Queues one sync run per requested event-level feed for the event, read from its sport league's provider by the id the events sync gave it, and answers at once (202); the runs execute in a background job. 404 EVENT_NOT_FOUND, or SPORT_PROVIDER_NOT_FOUND when that provider is not running here; 409 EVENT_NOT_LINKED for a test event, which no provider syncs; 422 EVENT_SYNC_KIND_UNAVAILABLE for a kind outside the event's syncKinds (#2238).",
         "requestBody": {
           "required": true,
           "content": {
