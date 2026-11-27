@@ -214,6 +214,8 @@ export interface ProviderNotificationReceipt {
 export interface SportEventReleaseFacts {
   scheduledRoundCount: number;
   contestSetupCount: number;
+  /** The active tiered and budget setups covering one of the event's slots: those the field's tiers and prices serve. */
+  rosterSetupCount: number;
 }
 
 /** A DRAFT event the automatic release sweep may try (#1823). */

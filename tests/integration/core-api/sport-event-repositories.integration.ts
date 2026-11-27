@@ -950,7 +950,7 @@ describe('SportEventRepository — automatic release reads (#1823)', () => {
     await expect(findUnindexedScans(getPrisma(), statements.map(({ sql }) => ({ sql, test: 'findAutoReleaseCandidates' })))).resolves.toEqual([]);
   });
 
-  it('counts an event\'s rounds and the active setups its league offers, in two statements', async () => {
+  it('counts an event\'s rounds, the active setups its league offers and the active tiered or budget ones over its own slot, in three statements', async () => {
     const league = await syncedLeague(true);
     const event = await draftIn(league.id, 3);
     const { rounds } = repos();
@@ -968,7 +968,18 @@ describe('SportEventRepository — automatic release reads (#1823)', () => {
     expect(result.scheduledRoundCount).toBe(2);
     // Its own active setup; the retired one is not counted.
     expect(result.contestSetupCount).toBe(1);
-    expect(statements).toHaveLength(2);
+    // Neither covers the event's slot, so neither is one its tiers and prices serve.
+    expect(result.rosterSetupCount).toBe(0);
+    expect(statements).toHaveLength(3);
+
+    // Tiered over the event's slot counts; a pick'em over it does not.
+    const { seasonSlot } = await getPrisma().sportEventSlot.findFirstOrThrow({ where: { sportEventId: event.id }, select: { seasonSlot: { select: { sportLeagueCompetitionSlotId: true } } } });
+    const covering = await getPrisma().contestConfigTemplate.findFirstOrThrow({ where: { sportLeagueId: league.id, active: true }, select: { id: true } });
+    const pickEm = await getPrisma().contestConfigTemplate.create({ data: { ...template, contestFormat: 'PREDICTION', selectionType: 'PICK_EM', sportLeagueId: league.id, templateKey: `pick-${randomUUID()}` } });
+    await getPrisma().contestConfigTemplateSlot.createMany({
+      data: [covering.id, pickEm.id].map((templateId) => ({ sportLeagueId: league.id, templateId, sportLeagueCompetitionSlotId: seasonSlot.sportLeagueCompetitionSlotId })),
+    });
+    expect((await repos().events.findReleaseFacts({ id: event.id, sportLeagueId: league.id })).rosterSetupCount).toBe(1);
   });
 
   it('sweeps 20 events in its window in the same statements as 2: one candidates read and one insert of every job', async () => {

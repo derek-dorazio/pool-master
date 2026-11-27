@@ -42,7 +42,8 @@ They come from the owner's league-by-league template review of November 2026.
 - **Playoffs of 12 or more teams only** *(checked)*. With fewer teams the tiers are too thin to
   give a real choice. Leagues with an 8-team playoff (WNBA, NWSL) or a 4-team one (PWHL) get
   none. The test reads this as a knockout with a round of 16 or earlier, which agrees with 12 or
-  more teams for every league today; a 9 to 11 team field is where the two could differ.
+  more teams for every league today; a 9 to 11 team field is where the two could differ. Bowl
+  games and conference title games get none: they are no playoff, and their teams have no seeds.
 - **Team playoffs: three or four tiers, one pick each, all count**, the tiers following the
   field's seed structure. For example, the NFL's tier 1 is the #1 seeds, tier 2 seeds 2 to 4,
   tier 3 the rest, and March Madness uses seed lines 1-4, 5-8, 9-12 and 13 on. Fit the ranges to
@@ -79,6 +80,9 @@ They come from the owner's league-by-league template review of November 2026.
 
 - **Regular seasons get pick'em and survivor across the weeks**: straight up, against the
   spread, and confidence.
+- **A slate of one-off postseason games** (bowl games, conference title games): pick'em straight
+  up and against the spread, each slate its own competition, so a bowl pick'em leaves out the
+  CFP games.
 - **College football:** limit the weekly pick'em to ranked games, any game with a team ranked
   25 or better, which the commissioner can change.
 - **Survivor on a playoff:** one pick per round. Tennis gets no survivor. A bracket is the
