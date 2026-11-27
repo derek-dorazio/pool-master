@@ -85,7 +85,7 @@ export class PrismaSyncDueWorkReader implements SyncDueWorkReader {
         lastScoresChangedAt: null,
       };
       event.games.push({ status: game.status, scheduledDate: game.scheduledDate, playedAsField: seasonSlot.definition.matchFormat === MatchFormat.FIELD });
-      event.lastHeardAt = latest(event.lastHeardAt, game.lastProviderNotificationAt);
+      event.lastHeardAt = latest([event.lastHeardAt, game.lastProviderNotificationAt]);
       events.set(game.sportEventId, event);
     }
     if (events.size === 0) return [];
@@ -95,16 +95,14 @@ export class PrismaSyncDueWorkReader implements SyncDueWorkReader {
       where: { sportEventId: { in: [...events.keys()] }, kind: ProviderSyncKind.SCORES, status: ProviderSyncRunStatus.COMPLETED, changedCount: { gt: 0 } },
       _max: { createdAt: true },
     });
-    for (const group of changed) {
-      const event = group.sportEventId === null ? undefined : events.get(group.sportEventId);
-      if (event !== undefined) event.lastScoresChangedAt = group._max.createdAt;
-    }
+    const changedAt = new Map(changed.map((group) => [group.sportEventId, group._max.createdAt]));
+    for (const event of events.values()) event.lastScoresChangedAt = changedAt.get(event.sportEventId) ?? null;
     return [...events.values()];
   }
 }
 
-function latest(left: Date | null, right: Date | null): Date | null {
-  if (left === null) return right;
-  if (right === null) return left;
-  return left > right ? left : right;
+/** The latest of the times given, or null when none is set. */
+function latest(times: ReadonlyArray<Date | null>): Date | null {
+  const set = times.filter((time): time is Date => time !== null).map((time) => time.getTime());
+  return set.length === 0 ? null : new Date(Math.max(...set));
 }
