@@ -23,7 +23,7 @@ const START = Date.parse('2026-04-18T17:00:00.000Z');
 
 /** A team id: the conference's hundred plus its seed, West 100s and East 200s. */
 const id = (conference: 'West' | 'East', seed: number) => (conference === 'West' ? 100 : 200) + seed;
-const teamOf = (conference: 'West' | 'East', seed: number): PlayoffTeam => ({ id: id(conference, seed), name: `${conference} ${String(seed)}`, metadata: { conference } });
+const teamOf = (conference: 'West' | 'East', seed: number): PlayoffTeam => ({ id: id(conference, seed), name: `${conference} ${String(seed)}`, conference: { providerCode: conference } });
 const external = (conference: 'West' | 'East', seed: number) => String(id(conference, seed));
 
 let nextGameId = 1;
@@ -154,7 +154,7 @@ describe('series playoffs bracket', () => {
 
 describe('series playoffs bracket by division', () => {
   /** A team of a division, by its rank across the league (1 the best). */
-  const hockey = (rank: number, conference: 'Eastern' | 'Western', division: string): PlayoffTeam => ({ id: rank, name: `Team ${String(rank)}`, metadata: { conference, division } });
+  const hockey = (rank: number, conference: 'Eastern' | 'Western', division: string): PlayoffTeam => ({ id: rank, name: `Team ${String(rank)}`, conference: { providerCode: conference, divisionProviderCode: division } });
   const ranks = new Map(Array.from({ length: 16 }, (_, index) => [index + 1, index + 1]));
   // East: Atlantic 1, 4, 5 and Metropolitan 2, 3, 6, wild cards 7 (Atlantic) and 8 (Metropolitan).
   const atl = (rank: number) => hockey(rank, 'Eastern', 'Atlantic');
@@ -223,7 +223,7 @@ describe('series playoffs bracket by division', () => {
 
 describe('series playoffs bracket with byes', () => {
   /** A club by its seed in its league: American 1xx, National 2xx. */
-  const club = (league: 'American' | 'National', seed: number): PlayoffTeam => ({ id: (league === 'American' ? 100 : 200) + seed, name: `${league} ${String(seed)}`, metadata: { league } });
+  const club = (league: 'American' | 'National', seed: number): PlayoffTeam => ({ id: (league === 'American' ? 100 : 200) + seed, name: `${league} ${String(seed)}`, conference: { providerCode: league } });
   const seeds = new Map((['American', 'National'] as const).flatMap((league) => [1, 2, 3, 4, 5, 6].map((seed) => [club(league, seed).id, seed] as const)));
   const teams = (['American', 'National'] as const).flatMap((league) => [1, 2, 3, 4, 5, 6].map((seed) => club(league, seed)));
   const wildCard = (pairs: Array<[number, number]> = [[4, 5], [3, 6]]) => (['American', 'National'] as const)

@@ -91,7 +91,7 @@ describe('an NCAA men\'s tournament as an event', () => {
 });
 
 describe('NCAA men\'s basketball teams', () => {
-  it('lists a team under its raw feed id and full name', () => {
+  it('lists a team under its raw feed id and full name, with the vendor\'s conference id as its conference code', () => {
     const [duke] = ncaaTeamListSchema.parse(readBalldontlieFixture('ncaab', 'teams.json')).data;
     expect(toNcaaTeamParticipant(NCAA_MEN, duke)).toEqual({
       externalId: '150',
@@ -100,6 +100,7 @@ describe('NCAA men\'s basketball teams', () => {
       name: 'Duke Blue Devils',
       status: 'ACTIVE',
       abbreviation: 'DUKE',
+      conference: { providerCode: '7' },
       metadata: {},
     });
   });

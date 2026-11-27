@@ -521,7 +521,7 @@ async function seedLeagueStructure(slots: number) {
   const sportLeague = await prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(Sport.BASKETBALL), sportId: sport.id, name: `League Page Structure ${randomUUID().slice(0, 8)}` } });
   const mappingId = await syncLeagueTo(prisma, sportLeague.id, 'nba');
   const phase = await prisma.sportLeaguePhase.create({ data: { sportLeagueId: sportLeague.id, phase: 'REGULAR', isSynced: true } });
-  const competition = await prisma.sportLeagueCompetition.create({ data: { sportLeagueId: sportLeague.id, sportLeaguePhaseId: phase.id, code: 'REGULAR', orderIndex: 1 } });
+  const competition = await prisma.sportLeagueCompetition.create({ data: { sportLeagueId: sportLeague.id, sportLeaguePhaseId: phase.id, leaguePhase: phase.phase, code: 'REGULAR', orderIndex: 1 } });
   for (let week = 1; week <= slots; week += 1) {
     await prisma.sportLeagueCompetitionSlot.create({
       data: {

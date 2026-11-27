@@ -26,7 +26,7 @@ const LEAGUE: PlayoffsLeague = {
   playoffYearOffset: 1,
 };
 
-const team = (id: number): PlayoffTeam => ({ id, name: `Team ${String(id)}`, abbreviation: `T${String(id)}`, metadata: {} });
+const team = (id: number): PlayoffTeam => ({ id, name: `Team ${String(id)}`, abbreviation: `T${String(id)}` });
 
 let nextId = 1;
 function game(day: number, home: number, away: number, homeScore: number | null, awayScore: number | null, state: CompetitionStatusState = CompetitionStatusState.FINAL, season = 2025): PlayoffGame {

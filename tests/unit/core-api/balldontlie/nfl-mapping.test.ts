@@ -139,7 +139,8 @@ describe('NFL teams', () => {
       name: 'Detroit Lions',
       status: 'ACTIVE',
       abbreviation: 'DET',
-      metadata: { conference: 'NFC', division: 'NORTH' },
+      conference: { providerCode: 'NFC', divisionProviderCode: 'NORTH' },
+      metadata: {},
     });
   });
 
@@ -243,7 +244,7 @@ describe('NFL postseason bracket', () => {
   });
 
   it('lays out no bracket until both conferences have their seven seeds', () => {
-    expect(toNflPlayoffBracket(field.filter((participant) => participant.seed !== 7 || participant.metadata['conference'] !== 'NFC'), games)).toBeNull();
+    expect(toNflPlayoffBracket(field.filter((participant) => participant.seed !== 7 || participant.conference?.providerCode !== 'NFC'), games)).toBeNull();
     expect(toNflPlayoffBracket([], games)).toBeNull();
   });
 });

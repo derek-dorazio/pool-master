@@ -14,7 +14,7 @@
 
 import { seriesWinsNeeded, type Sport, SportEventParticipantStatus } from '@poolmaster/shared/domain';
 import type { GameScoreUpdate } from '@poolmaster/shared/dto';
-import type { ProviderParticipant, SportEvent } from '../../core/provider-interface';
+import type { ProviderParticipant, ProviderTeamConference, SportEvent } from '../../core/provider-interface';
 import { CompetitionStatusState, eventStatusOf, GAME_STATE_BY_STATUS, hasStarted, isDone, PROGRESS_BY_STATE } from './competition-status';
 import { BALLDONTLIE_PROVIDER_ID } from './pga-mapping';
 import { participantFeedId } from './participant-feed-id';
@@ -64,8 +64,8 @@ export interface DivisionBracketConference {
 
 /**
  * A bracket fixed by seed. `groups` seed their own half each, in bracket order, by a team's
- * `metadata.conference` (null for a league seeded as one); `conferences` order a division bracket;
- * `leagues` order a bye bracket by a team's `metadata.league`.
+ * conference code (null for a league seeded as one); `conferences` order a division bracket;
+ * `leagues` order a bye bracket by a team's conference code (MLB's league).
  */
 export type PlayoffsBracketShape =
   | { kind: typeof BracketShapeKind.SEEDED; groups: readonly string[] | null }
@@ -78,8 +78,8 @@ export interface PlayoffTeam {
   name: string;
   /** The team's abbreviation as the feed sends it, stored on the participant (#2025). */
   abbreviation?: string;
-  /** The league's own facts about the team (conference, division), read while mapping and not stored. */
-  metadata: Record<string, unknown>;
+  /** The team's conference and division as the feed codes them (#2052). */
+  conference?: ProviderTeamConference;
 }
 
 /** A postseason game as a league's normalizer reads it. */
@@ -223,7 +223,8 @@ export function toPlayoffsTeamParticipant(league: PlayoffsLeague, team: PlayoffT
     name: team.name,
     status: SportEventParticipantStatus.ACTIVE,
     ...(team.abbreviation === undefined ? {} : { abbreviation: team.abbreviation }),
-    metadata: team.metadata,
+    ...(team.conference === undefined ? {} : { conference: team.conference }),
+    metadata: {},
   };
 }
 

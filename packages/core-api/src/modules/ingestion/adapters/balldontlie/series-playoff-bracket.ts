@@ -52,9 +52,14 @@ interface FirstRoundSlot {
   series: PlayoffSeries;
 }
 
-function metadataText(team: PlayoffTeam, key: string): string | null {
-  const value = team.metadata[key];
-  return typeof value === 'string' ? value : null;
+/** The team's conference code as the feed sends it, or null where it names none. */
+function conferenceCode(team: PlayoffTeam): string | null {
+  return team.conference?.providerCode ?? null;
+}
+
+/** The team's division code within its conference as the feed sends it, or null. */
+function divisionCode(team: PlayoffTeam): string | null {
+  return team.conference?.divisionProviderCode ?? null;
 }
 
 /** A first-round series with its better-ranked team on top; null when the ranks name neither. */
@@ -76,7 +81,7 @@ function seededSlots(league: PlayoffsLeague, groups: readonly string[] | null, f
   const groupList = groups ?? [null];
   const teamsPerGroup = (league.rounds[0].seriesCount * 2) / groupList.length;
   const groupOf = (team: PlayoffTeam) => {
-    const conference = metadataText(team, 'conference');
+    const conference = conferenceCode(team);
     return groups === null ? null : conference !== null && groups.includes(conference) ? conference : undefined;
   };
   const seeded: Array<{ group: string | null; topSeed: number; slot: FirstRoundSlot }> = [];
@@ -112,10 +117,10 @@ function divisionSlots(league: PlayoffsLeague, conferences: DivisionBracketConfe
   if (firstRound.some((series) => teamsOf(series).some((team) => !ranks.has(team.id)))) return null;
   const slots: FirstRoundSlot[] = [];
   for (const conference of conferences) {
-    const inConference = firstRound.filter((series) => teamsOf(series).every((team) => metadataText(team, 'conference') === conference.name));
+    const inConference = firstRound.filter((series) => teamsOf(series).every((team) => conferenceCode(team) === conference.name));
     if (inConference.length * conferences.length !== league.rounds[0].seriesCount) return null;
     for (const division of conference.divisions) {
-      const inDivision = (team: PlayoffTeam) => metadataText(team, 'division') === division;
+      const inDivision = (team: PlayoffTeam) => divisionCode(team) === division;
       const winner = inConference.flatMap(teamsOf).filter(inDivision).sort((left, right) => rankOf(left) - rankOf(right)).at(0);
       if (winner === undefined) return null;
       const winnerSeries = inConference.find((series) => teamsOf(series).includes(winner));
@@ -170,10 +175,10 @@ function byeBracket(leagues: ReadonlyArray<{ name: string; label: string }>,
   for (const [index, { name, label }] of leagues.entries()) {
     const inLeague = firstRound.flatMap((series) => {
       const sides = ranked(series, ranks);
-      return sides !== null && metadataText(sides.top, 'league') === name ? [{ ...sides, series }] : [];
+      return sides !== null && conferenceCode(sides.top) === name ? [{ ...sides, series }] : [];
     });
     const headedBy = (seed: number) => inLeague.find((sides) => sides.topRank === seed && ranks.get(sides.bottom.id) === 9 - seed);
-    const bye = (seed: number) => teams.find((each) => metadataText(each, 'league') === name && ranks.get(each.id) === seed);
+    const bye = (seed: number) => teams.find((each) => conferenceCode(each) === name && ranks.get(each.id) === seed);
     const [fourFive, threeSix, first, second] = [headedBy(4), headedBy(3), bye(1), bye(2)];
     if (inLeague.length !== 2 || fourFive === undefined || threeSix === undefined || first === undefined || second === undefined) return null;
     // Each match numbered within its round (#2161), the leagues in order.
