@@ -21,6 +21,7 @@ import type {
   SportEventParticipantRepository,
   SportEventSlotParticipantValuationRepository,
   SportEventParticipantView,
+  FieldReadEvent,
   FieldGameResultView,
   SportEventLink,
   SportEventProviderSummary,
@@ -921,6 +922,14 @@ const TIER_SET_SEASON_SLOT_SELECT = {
 type TierSetSeasonSlotRow = Prisma.SportLeagueSeasonCompetitionSlotGetPayload<{ select: typeof TIER_SET_SEASON_SLOT_SELECT }>;
 
 /**
+ * The events whose FIELD matches a field read looks up (#2227): those with a slot played as a
+ * FIELD. A head-to-head event has none, so its read skips the lookup.
+ */
+function fieldPlayingEventIds(events: readonly FieldReadEvent[]): string[] {
+  return events.filter((event) => event.playsField).map((event) => event.sportEventId);
+}
+
+/**
  * Everything a field row is read with (#1163). Prisma 6 reads each relation with its own
  * statement on one connection, so the whole field is a handful of sequential queries; empty
  * relations return nothing.
@@ -1039,20 +1048,20 @@ export class PrismaSportEventParticipantRepository implements SportEventParticip
     return rows.map(toSportEventParticipant);
   }
 
-  async findFieldForEvent(sportEventId: string, sportLeagueId: string, seasonSlotId?: string): Promise<SportEventParticipantView[]> {
-    const fieldMatchIds = await readFieldMatchIds(this.prisma, [sportEventId]);
+  async findFieldForEvent(event: FieldReadEvent, seasonSlotId?: string): Promise<SportEventParticipantView[]> {
+    const fieldMatchIds = await readFieldMatchIds(this.prisma, fieldPlayingEventIds([event]));
     const rows = await this.prisma.sportEventParticipant.findMany({
-      where: { sportEventId },
+      where: { sportEventId: event.sportEventId },
       include: fieldRowInclude(fieldMatchIds),
       orderBy: FIELD_ORDER,
     });
     const fieldResults = await readFieldResults(this.prisma, fieldMatchIds, rows.map((row) => row.id));
-    return rows.map((row) => toFieldRow(row, sportLeagueId, fieldResults, seasonSlotId));
+    return rows.map((row) => toFieldRow(row, event.sportLeagueId, fieldResults, seasonSlotId));
   }
 
-  async findFieldsForEvents(events: readonly { sportEventId: string; sportLeagueId: string }[]): Promise<SportEventParticipantView[]> {
+  async findFieldsForEvents(events: readonly FieldReadEvent[]): Promise<SportEventParticipantView[]> {
     if (events.length === 0) return [];
-    const fieldMatchIds = await readFieldMatchIds(this.prisma, events.map((event) => event.sportEventId));
+    const fieldMatchIds = await readFieldMatchIds(this.prisma, fieldPlayingEventIds(events));
     const rows = await this.prisma.sportEventParticipant.findMany({
       where: { sportEventId: { in: events.map((event) => event.sportEventId) } },
       include: fieldRowInclude(fieldMatchIds),
@@ -1064,13 +1073,13 @@ export class PrismaSportEventParticipantRepository implements SportEventParticip
       .map((row) => toFieldRow(row, sportLeagueId, fieldResults)));
   }
 
-  async findFieldRow(sportEventId: string, sportEventParticipantId: string, sportLeagueId: string): Promise<SportEventParticipantView | null> {
-    const fieldMatchIds = await readFieldMatchIds(this.prisma, [sportEventId]);
+  async findFieldRow(event: FieldReadEvent, sportEventParticipantId: string): Promise<SportEventParticipantView | null> {
+    const fieldMatchIds = await readFieldMatchIds(this.prisma, fieldPlayingEventIds([event]));
     const row = await this.prisma.sportEventParticipant.findFirst({
-      where: { id: sportEventParticipantId, sportEventId },
+      where: { id: sportEventParticipantId, sportEventId: event.sportEventId },
       include: fieldRowInclude(fieldMatchIds),
     });
-    return row ? toFieldRow(row, sportLeagueId, await readFieldResults(this.prisma, fieldMatchIds, [row.id])) : null;
+    return row ? toFieldRow(row, event.sportLeagueId, await readFieldResults(this.prisma, fieldMatchIds, [row.id])) : null;
   }
 
   async countDistinctParticipants(sportEventIds: readonly string[]): Promise<number> {
