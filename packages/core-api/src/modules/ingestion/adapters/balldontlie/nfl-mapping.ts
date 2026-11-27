@@ -12,10 +12,10 @@
 
 import { MatchSide, Sport, SportEventParticipantStatus } from '@poolmaster/shared/domain';
 import type { GameScoreUpdate } from '@poolmaster/shared/dto';
-import type { ProviderBracketMatch, ProviderParticipant, ProviderScheduledGame, SportEvent } from '../../core/provider-interface';
+import type { ProviderBracketMatch, ProviderParticipant, ProviderRosterPlayer, ProviderScheduledGame, SportEvent } from '../../core/provider-interface';
 import { BalldontlieContractError } from './balldontlie-client';
 import { CompetitionStatusState, eventStatusOf, GAME_STATE_BY_STATUS, hasStarted, PROGRESS_BY_STATE } from './competition-status';
-import { NflSeasonType, type NflGame, type NflStanding, type NflTeam } from './nfl-contract';
+import { NflSeasonType, type NflGame, type NflPlayer, type NflStanding, type NflTeam } from './nfl-contract';
 import { BALLDONTLIE_PROVIDER_ID } from './pga-mapping';
 import { participantFeedId } from './participant-feed-id';
 import { ProviderSeasonType, providerSlotCode, slotPlaysOf } from './provider-slot-codes';
@@ -147,6 +147,25 @@ export function toNflTeamParticipant(team: NflTeam, path: string): ProviderParti
     status: SportEventParticipantStatus.ACTIVE,
     ...(team.abbreviation ? { abbreviation: team.abbreviation } : {}),
     metadata: { conference: team.conference, division: team.division },
+  };
+}
+
+/**
+ * An active player as a roster entry (#2025): their name from both name fields, their team by its
+ * feed id, and the vendor's `position_abbreviation` as their position code. A player with no id or
+ * no name cannot be one, and is refused with the path read.
+ */
+export function toNflRosterPlayer(player: NflPlayer, path: string): ProviderRosterPlayer {
+  const name = [player.first_name, player.last_name].filter((part) => part !== undefined && part !== '').join(' ');
+  if (player.id === undefined || name === '') {
+    throw new BalldontlieContractError(path, [`a player has no ${player.id === undefined ? 'id' : 'name'}`]);
+  }
+  return {
+    externalId: participantFeedId(player.id),
+    name,
+    teamExternalId: player.team?.id === undefined ? null : participantFeedId(player.team.id),
+    teamName: player.team?.full_name ?? null,
+    positionCode: player.position_abbreviation === undefined || player.position_abbreviation === '' ? null : player.position_abbreviation,
   };
 }
 

@@ -358,7 +358,7 @@ describe('platform config services on the settings registry', () => {
 
   const seasonal = (inSeason: Record<string, number>, offseason: Record<string, number>) => ({ IN_SEASON: inSeason, OFFSEASON: offseason });
 
-  it('ingestion config gives the field sync no switch, keeps live scores on, syncs event lists and fields every six hours in season and daily off it, and has no per-sport overrides', async () => {
+  it('ingestion config gives the field and roster syncs no switch, keeps live scores on, syncs event lists and fields every six hours in season and daily off it, rosters daily, and has no per-sport overrides', async () => {
     const { settings } = await loaded();
     const service = new IngestionConfigService(settings, fakeLogger());
 
@@ -367,7 +367,8 @@ describe('platform config services on the settings registry', () => {
     expect(config.FIELD).toEqual({ intervals: seasonal({ intervalMinutes: 360 }, { intervalMinutes: 1440 }) });
     expect(config.SCORES).toEqual({ enabled: true, intervals: seasonal({ intervalSeconds: 300 }, { intervalSeconds: 300 }) });
     expect(config.EVENTS).toEqual({ enabled: true, intervals: seasonal({ intervalMinutes: 360 }, { intervalMinutes: 1440 }) });
-    expect(Object.keys(config).sort()).toEqual(['EVENTS', 'FIELD', 'SCORES']);
+    expect(config.ROSTER).toEqual({ intervals: seasonal({ intervalMinutes: 1440 }, { intervalMinutes: 1440 }) });
+    expect(Object.keys(config).sort()).toEqual(['EVENTS', 'FIELD', 'ROSTER', 'SCORES']);
     await expect(service.resetDefaults('admin-1')).resolves.toEqual(expect.objectContaining({
       FIELD: { intervals: seasonal({ intervalMinutes: 360 }, { intervalMinutes: 1440 }) },
     }));
@@ -386,6 +387,7 @@ describe('platform config services on the settings registry', () => {
       SCORES: { enabled: true, intervals: seasonal({ intervalSeconds: 45 }, { intervalSeconds: 300 }) },
       EVENTS: { enabled: false, intervals: seasonal({ intervalMinutes: 360 }, { intervalMinutes: 720 }) },
       FIELD: { intervals: seasonal({ intervalMinutes: 360 }, { intervalMinutes: 1440 }) },
+      ROSTER: { intervals: seasonal({ intervalMinutes: 1440 }, { intervalMinutes: 1440 }) },
     });
     await expect(service.resetDefaults('admin-1')).resolves.toEqual(
       expect.objectContaining({
@@ -438,6 +440,7 @@ describe('platform config services on the settings registry', () => {
       EVENTS: { enabled: true, intervals: seasonal({ intervalMinutes: 360 }, { intervalMinutes: 1440 }) },
       FIELD: { intervals: seasonal({ intervalMinutes: 720 }, { intervalMinutes: 2880 }) },
       SCORES: { enabled: true, intervals: seasonal({ intervalSeconds: 45 }, { intervalSeconds: 600 }) },
+      ROSTER: { intervals: seasonal({ intervalMinutes: 1440 }, { intervalMinutes: 1440 }) },
     });
     expect(repository.history).toHaveLength(0);
   });

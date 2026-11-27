@@ -55,7 +55,7 @@ export class SportLeaguePageService {
   async listSyncs(sportLeagueId: string): Promise<SportLeagueSync[] | null> {
     const facts = await this.deps.reader.readSyncFacts(sportLeagueId);
     if (facts === null) return null;
-    return buildSportLeagueSyncs(facts.league, facts.latestRuns, { webhookProviderIds: this.deps.webhookProviderIds() });
+    return buildSportLeagueSyncs(facts.league, facts.latestRuns, { webhookProviderIds: this.deps.webhookProviderIds(), syncsRoster: facts.syncsRoster });
   }
 
   /** Null when the league does not exist. */
@@ -69,8 +69,9 @@ export class SportLeaguePageService {
   async listParticipants(sportLeagueId: string): Promise<SportLeagueParticipantOverview[] | null> {
     const rows = await this.deps.reader.readParticipants(sportLeagueId);
     if (rows === null) return null;
-    return rows.map(({ participant, mapping }) => ({
+    return rows.map(({ participant, mapping, roster }) => ({
       ...participant,
+      roster,
       feedId: mapping?.externalId ?? null,
       lastInFeedAt: mapping?.lastSeenAt ?? null,
       addedBy: mapping === null ? ParticipantAddedBy.ADMIN : ParticipantAddedBy.FEED,
@@ -114,7 +115,8 @@ export class SportLeaguePageService {
 
 
 /**
- * One row per sync kind, in kind order: its health by the overview's rule from its latest run,
+ * One row per sync kind the league runs, in kind order (the roster sync only where its provider
+ * mapping names position codes, #2025): its health by the overview's rule from its latest run,
  * that run, and whether a webhook or the schedule drives it. The live scores of a provider whose
  * webhooks are on follow the webhook; every other sync runs on the one schedule (#1997: the page
  * no longer works out the schedule's next run itself).
@@ -122,10 +124,11 @@ export class SportLeaguePageService {
 export function buildSportLeagueSyncs(
   league: SportLeaguePageLeague,
   latestRuns: readonly SportLeaguePageRun[],
-  context: { webhookProviderIds: readonly string[] },
+  context: { webhookProviderIds: readonly string[]; syncsRoster: boolean },
 ): SportLeagueSync[] {
   const providerId = league.syncProviderId;
   return Object.values(ProviderSyncKind)
+    .filter((kind) => kind !== ProviderSyncKind.ROSTER || context.syncsRoster)
     .sort(compareByEnumOrder(ProviderSyncKindOrder))
     .map((kind): SportLeagueSync => {
       const run = latestRuns.find((candidate) => candidate.kind === kind) ?? null;
@@ -218,7 +221,7 @@ export function buildSportEventOverview(
   // An event no provider syncs reads as a league no provider syncs: every row OFF, nothing scheduled.
   const syncLeague = synced ? league : { ...league, syncProviderId: null };
   const eventRuns = latestRuns.filter((run) => EVENT_SYNC_KINDS.includes(run.kind));
-  const syncs = buildSportLeagueSyncs(syncLeague, eventRuns, context).filter((sync) => EVENT_SYNC_KINDS.includes(sync.kind));
+  const syncs = buildSportLeagueSyncs(syncLeague, eventRuns, { ...context, syncsRoster: false }).filter((sync) => EVENT_SYNC_KINDS.includes(sync.kind));
   const failedRuns = eventRuns.filter((run) => run.status === ProviderSyncRunStatus.FAILED);
   const check = event.lastReleaseCheck;
   const held = event.status === SportEventStatus.DRAFT && check?.outcome === AutoReleaseCheckOutcome.HELD

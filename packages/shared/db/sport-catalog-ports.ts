@@ -656,6 +656,8 @@ export interface SportLeagueSyncFacts {
   league: SportLeaguePageLeague;
   /** The league's latest run of each kind. */
   latestRuns: SportLeaguePageRun[];
+  /** Whether its selected provider mapping names any position codes, so the roster sync runs for it (#2025). */
+  syncsRoster: boolean;
 }
 
 /** One event of the league as its Events grid reads it. */
@@ -697,6 +699,16 @@ export interface SportLeaguePageParticipant {
     createdAt: Date;
   };
   mapping: { externalId: string; lastSeenAt: Date | null } | null;
+  /** A player's roster row in the league's current Season (#2025); null for a team and a player on none. */
+  roster: SportLeaguePageRosterRow | null;
+}
+
+/** A player's team and position in a Season, from their roster row. */
+export interface SportLeaguePageRosterRow {
+  teamParticipantId: string;
+  teamName: string;
+  positionCode: string;
+  lastSeenAt: Date;
 }
 
 /** One field row of an event as its Event page reads it (#1889). */

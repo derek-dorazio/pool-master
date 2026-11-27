@@ -2,7 +2,7 @@
   "$comment": "poolmaster/no-clock-year-or-league-tables (rules/domain-model-conventions-rules.md §17): the clock-year and league-keyed-table hits each file may still have. A file over its count reports every hit, so a listed file cannot add one. Counts only go down (rules:check:baseline-ratchet): read the Season or the fact from the model, then lower or delete the entry. scripts/clock-year-baseline.test.mjs fails an entry above what the file has now. Nothing is ever added.",
   "packages/core-api/src/modules/contests/handler.ts": 1,
   "packages/core-api/src/modules/ingestion/adapters/balldontlie/balldontlie-adapter.ts": 2,
-  "packages/core-api/src/modules/ingestion/adapters/balldontlie/epl-reader.ts": 4,
+  "packages/core-api/src/modules/ingestion/adapters/balldontlie/epl-reader.ts": 2,
   "packages/core-api/src/modules/ingestion/adapters/balldontlie/ncaa-tournament-reader.ts": 2,
   "packages/core-api/src/modules/ingestion/adapters/balldontlie/ncaaf-reader.ts": 2,
   "packages/core-api/src/modules/ingestion/adapters/balldontlie/nfl-reader.ts": 2,

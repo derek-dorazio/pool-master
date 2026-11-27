@@ -20,7 +20,8 @@ published OpenAPI document, not from recorded traffic.
 - `nfl/*.json` are written to the NFL document's schemas, which give no response examples for
   games or teams: a 2026 regular season week with a final, a live, a scheduled and an `unknown`
   game; the complete 2025 postseason; the 2026 postseason part way through; and the teams in
-  them. Every one must fit the document (`nfl-contract.test.ts`).
+  them; and `players-active.json`, a page of active players with a quarterback, a kicker, a
+  linebacker and a free agent with no team. Every one must fit the document (`nfl-contract.test.ts`).
 - `ncaab/*.json` are written to the NCAAB document's schemas, which give no response examples:
   the 2025 season's tournament as a few final games (a First Four game, two round of 64 games
   and the championship); the 2026 season's part way through, with a final, a live, a scheduled

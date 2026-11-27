@@ -108,6 +108,8 @@ import { SyncTick } from './modules/ingestion/sync-tick';
 import { EventSyncJobs } from './modules/ingestion/event-sync-jobs';
 import { PrismaSyncDueWorkReader } from './adapters/prisma-sync-due-work-reader';
 import { LeagueEventsSync } from './modules/events/league-events-sync';
+import { LeagueRosterSync } from './modules/ingestion/roster/league-roster-sync';
+import { PrismaSportLeagueRosterRepository } from './adapters/prisma-sport-league-roster-repository';
 import { activityModule } from './modules/activity/routes';
 import { ActivityService } from './modules/activity/activity-service';
 import { customersModule } from './modules/customers/routes';
@@ -403,6 +405,17 @@ export function buildApp(options: BuildAppOptions = {}) {
     jobs: backgroundJobs,
     logger: app.log,
   });
+  // Each synced league's roster for its current Season (#2025), queued by the sync tick.
+  const leagueRosterSync = new LeagueRosterSync({
+    sportLeagues: new PrismaSportLeagueRepository(prisma),
+    seasons: new PrismaSportLeagueSeasonRepository(prisma),
+    rosterSource: new ProviderSeasonScheduleReader(prisma, registry),
+    rosters: new PrismaSportLeagueRosterRepository(prisma),
+    findings: syncFindings,
+    syncRuns: providerSyncRuns,
+    domainEvents,
+    logger: app.log,
+  });
   // The one scheduler of provider syncs (#2009): each minute it queues the due syncs as jobs.
   const syncTick = new SyncTick({
     sportLeagues: new PrismaSportLeagueRepository(prisma),
@@ -460,6 +473,7 @@ export function buildApp(options: BuildAppOptions = {}) {
       FOLLOW_POSTPONED_EVENT_CONTESTS: (payload) => eventLifecycleService.followPostponedEventContests(payload),
       RESOLVE_MAPPED_PARTICIPANT_FINDINGS: resolveMappedParticipantFindingsJobHandler(syncFindings),
       REFRESH_SLOT_TIEBREAKERS: (payload) => slotTiebreakers.refresh(payload.sportEventId),
+      SYNC_LEAGUE_ROSTER: (payload, context) => leagueRosterSync.run(payload, context),
     },
     pollMs: readBackgroundJobPollMs(process.env),
     logger: app.log,

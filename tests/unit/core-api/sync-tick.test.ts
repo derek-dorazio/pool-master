@@ -28,6 +28,7 @@ const SCHEDULE = {
   EVENTS: { enabled: true, intervals: seasonal({ intervalMinutes: 360 }, { intervalMinutes: 1440 }) },
   FIELD: { intervals: seasonal({ intervalMinutes: 360 }, { intervalMinutes: 1440 }) },
   SCORES: { enabled: true, intervals: seasonal({ intervalSeconds: 300 }, { intervalSeconds: 300 }) },
+  ROSTER: { intervals: seasonal({ intervalMinutes: 1440 }, { intervalMinutes: 1440 }) },
 };
 
 function league(overrides: Partial<SportLeague> = {}): SportLeague {
@@ -60,6 +61,8 @@ function tickOf(options: {
   lock?: 'here' | 'elsewhere';
   /** The leagues' Seasons not yet ended; by default each league has one under way, so it is in season. */
   seasons?: SeasonSpanView[];
+  /** The leagues with a roster: by default none. */
+  rostered?: string[];
 }) {
   const findings = { raiseOfSource: jest.fn(async (_providerSourceId: string, _raises: unknown) => undefined) };
   let now = NOW;
@@ -70,6 +73,7 @@ function tickOf(options: {
       ?? leagues.map((tickLeague) => ({ sportLeagueId: tickLeague.sportLeagueId, startsAt: at(-minutes(60 * 24 * 30)), endsAt: at(minutes(60 * 24 * 30)) }))),
     findNextSlots: jest.fn(async () => options.slots ?? []),
     findLiveEvents: jest.fn(async () => options.live ?? []),
+    findRosteredLeagueIds: jest.fn(async () => new Set(options.rostered ?? [])),
   };
   const sportLeagues = { findEventSynced: jest.fn(async () => options.leagues) };
   const logger = fakeLogger();
@@ -121,6 +125,33 @@ describe('SyncTick', () => {
       { type: BackgroundJobType.SYNC_EVENT_FIELD, sportLeagueId: undefined, sportEventId: fieldEvent },
       { type: BackgroundJobType.SYNC_EVENT_SCORES, sportLeagueId: undefined, sportEventId: live.sportEventId },
     ]));
+  });
+
+  it('queues the roster sync of each league with a roster, and none for a league without one', async () => {
+    const nfl = league();
+    const nba = league();
+    const { tick, queued, dueWork } = tickOf({ leagues: [nfl, nba], rostered: [nfl.id] });
+
+    await tick.tick();
+
+    expect(queued().filter((job) => job.type === BackgroundJobType.SYNC_LEAGUE_ROSTER)).toEqual([
+      { type: BackgroundJobType.SYNC_LEAGUE_ROSTER, sportLeagueId: nfl.id, sportEventId: undefined },
+    ]);
+    expect(dueWork.findRosteredLeagueIds).toHaveBeenCalledTimes(1);
+  });
+
+  it('queues a league\'s roster sync again only once its roster interval has passed since the last', async () => {
+    const nfl = league();
+    const schedule = { ...SCHEDULE, EVENTS: { ...SCHEDULE.EVENTS, enabled: false }, SCORES: { ...SCHEDULE.SCORES, enabled: false } };
+    const { tick, advance, finishAll, queued } = tickOf({ leagues: [nfl], rostered: [nfl.id], schedule });
+    await tick.tick();
+    finishAll();
+
+    advance(minutes(1439));
+    expect(await tick.tick()).toBe(0);
+    advance(minutes(1));
+    expect(await tick.tick()).toBe(1);
+    expect(queued().filter((job) => job.type === BackgroundJobType.SYNC_LEAGUE_ROSTER)).toHaveLength(2);
   });
 
   it('queues none of them again on a second tick in the same window, even once the first ones have run', async () => {

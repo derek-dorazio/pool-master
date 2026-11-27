@@ -31,8 +31,8 @@ function matchesRoute(rows: readonly MatchRow[]): FakeRoute {
   };
 }
 
-/** The teams of 2026 only: another season's list is empty here. */
-const teamsRoute: FakeRoute = ({ query }) => (query.get('season') === '2026'
+/** The teams of 2026 only, the vendor's current season when none is named: another season's list is empty here. */
+const teamsRoute: FakeRoute = ({ query }) => ((query.get('season') ?? '2026') === '2026'
   ? { body: readBalldontlieFixture('epl', 'teams-2026.json') }
   : { body: { data: [] } });
 
@@ -161,7 +161,7 @@ describe('BalldontlieAdapter (soccer: the Premier League)', () => {
     });
   });
 
-  it('lists the Premier League teams of the season under way, then the World Cup\'s current nations, as participants', async () => {
+  it('lists the Premier League teams of the vendor\'s current season, by its own default and never a season worked out from the clock, then the World Cup\'s current nations, as participants', async () => {
     const harness = setup();
     restore = harness.restore;
 
@@ -170,7 +170,7 @@ describe('BalldontlieAdapter (soccer: the Premier League)', () => {
     expect(teams).toHaveLength(14);
     expect(teams[0]).toMatchObject({ externalId: '1', name: 'Arsenal', metadata: {} });
     expect(teams[10]).toMatchObject({ externalId: '9', name: 'Argentina', metadata: {} });
-    expect([...requestLine(harness.api)].sort()).toEqual(['/epl/v2/teams?season=2026', '/fifa/worldcup/v1/teams?']);
+    expect([...requestLine(harness.api)].sort()).toEqual(['/epl/v2/teams?', '/fifa/worldcup/v1/teams?']);
   });
 
   it('gives a matchweek\'s match scores in the GAME category, under the matchweek\'s id', async () => {

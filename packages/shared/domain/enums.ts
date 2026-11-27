@@ -822,6 +822,8 @@ export const ProviderSyncKind = {
   FIELD: 'FIELD',
   /** One event's scores. */
   SCORES: 'SCORES',
+  /** A sport league's roster for its current Season: each player's team and position (#2025). */
+  ROSTER: 'ROSTER',
 } as const;
 export type ProviderSyncKind = (typeof ProviderSyncKind)[keyof typeof ProviderSyncKind];
 /** The order the values are declared in. */
@@ -829,6 +831,7 @@ export const ProviderSyncKindOrder = explicitOrder<ProviderSyncKind>({
   [ProviderSyncKind.EVENTS]: 0,
   [ProviderSyncKind.FIELD]: 1,
   [ProviderSyncKind.SCORES]: 2,
+  [ProviderSyncKind.ROSTER]: 3,
 });
 
 /**
@@ -2177,6 +2180,8 @@ export const BackgroundJobType = {
   RESOLVE_MAPPED_PARTICIPANT_FINDINGS: 'RESOLVE_MAPPED_PARTICIPANT_FINDINGS',
   /** Runs the tiebreaker game rule for each slot of one event after a write to its games (#2048). */
   REFRESH_SLOT_TIEBREAKERS: 'REFRESH_SLOT_TIEBREAKERS',
+  /** Syncs one sport league's roster for its current Season from its provider: queued by the sync tick (#2025). */
+  SYNC_LEAGUE_ROSTER: 'SYNC_LEAGUE_ROSTER',
 } as const;
 export type BackgroundJobType = (typeof BackgroundJobType)[keyof typeof BackgroundJobType];
 /** No natural order: A to Z by its display strings. */

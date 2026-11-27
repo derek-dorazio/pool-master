@@ -45,4 +45,9 @@ export interface SyncDueWorkReader {
    * with those Games and when its scores last changed, in two reads.
    */
   findLiveEvents(input: { leagues: readonly SyncedLeagueRef[]; now: Date }): Promise<LiveEventView[]>;
+  /**
+   * Which of the leagues have a roster to sync (#2025): those whose provider mapping names the
+   * provider's code for at least one of the league's positions. In one read.
+   */
+  findRosteredLeagueIds(input: { leagues: readonly SyncedLeagueRef[] }): Promise<Set<string>>;
 }
