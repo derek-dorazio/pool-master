@@ -1,7 +1,6 @@
 import {
   acceptInvitation,
   addEventParticipants,
-  applyEventParticipantUpload,
   applyEventRaceResults,
   autoAssignEventPrices,
   autoAssignEventTiers,
@@ -29,6 +28,7 @@ import {
 } from './setup';
 import { expectDefined } from '../support/expect-defined';
 import { standardPricingRequest } from './standard-pricing';
+import { byParticipantId, setFieldRows } from './field-rows';
 
 // Running end to end over HTTP (#627): an admin builds a marathon in the seeded World Marathon
 // Majors (men) series and loads its elite field by upload with each runner's World Athletics
@@ -109,7 +109,7 @@ describe('SDK Functional: Running World Marathon Majors Top 10 points', () => {
 
     // The admin uploads each runner's ranking and the same order as seed, and no odds; tiers then
     // follow from ranking and prices from seed.
-    const upload = await applyEventParticipantUpload({
+    const upload = await setFieldRows({
       client: a,
       path: { eventId },
       body: { rows: RUNNERS.map((runner, index) => ({ playerName: `${runner} ${RUN}`, ranking: index + 1, seedNumber: index + 1 })) },
@@ -191,13 +191,13 @@ describe('SDK Functional: Running World Marathon Majors Top 10 points', () => {
 
     // --- The race runs, and the official finishing order goes in, Lemma's dropout as a DNF -----
     expect((await transitionEvent({ client: a, path: { eventId }, body: { toStatus: 'IN_PROGRESS' } })).data?.event.status).toBe('IN_PROGRESS');
-    const rows = RUNNERS.map((runner) => ({
+    const rows = await byParticipantId(a, eventId, RUNNERS.map((runner) => ({
       playerName: `${runner} ${RUN}`,
       resultStatus: FINISH[runner] === null ? 'DID_NOT_FINISH' as const : 'FINISHED' as const,
       finishPosition: FINISH[runner],
       startPosition: null,
       riderName: null,
-    }));
+    })));
     const official = await applyEventRaceResults({ client: a, path: { eventId }, body: { isOfficial: true, rows } });
     expect(official.response?.status).toBe(200);
     expect(Object.fromEntries(expectDefined(official.data).participants.map((row) => [runnerOf(row.id), row.race?.finishPosition ?? null])))

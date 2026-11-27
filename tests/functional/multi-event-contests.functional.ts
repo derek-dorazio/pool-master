@@ -3,7 +3,6 @@ import {
   acceptInvitation,
   addEventParticipants,
   applyEventGolfRoundScores,
-  applyEventParticipantUpload,
   autoAssignEventPrices,
   autoAssignEventTiers,
   createContest,
@@ -39,6 +38,7 @@ import { standardPricingRequest } from './standard-pricing';
 import { unlinkContestsFromSportEvents } from '../support/contest-event-links';
 import { expectMatchesSchema } from '../support/expect-matches-schema';
 import { insertTestSportLeague } from '../support/test-sport-league';
+import { byParticipantId, setFieldRows } from './field-rows';
 
 // A golf contest over two tournaments end to end over HTTP (#713). An admin builds two one-round
 // tournaments on a tour of their own, each with the same seven golfers, ranked so the default
@@ -138,7 +138,7 @@ async function buildTwoTournamentContest(
     const eventId = expectDefined(event.data).event.id;
     created.sportEventIds.add(eventId);
     expect((await addEventParticipants({ client: a, path: { eventId }, body: { participantIds: golferIds } })).data?.added).toBe(7);
-    const upload = await applyEventParticipantUpload({
+    const upload = await setFieldRows({
       client: a,
       path: { eventId },
       body: { rows: GOLFERS.map((golfer, index) => ({ playerName: `${golfer} ${RUN}${tag}`, ranking: index + 1, seedNumber: index + 1 })) },
@@ -230,13 +230,13 @@ async function buildTwoTournamentContest(
     beforeEnd?: () => Promise<void>,
   ) => {
     expect((await transitionEvent({ client: a, path: { eventId }, body: { toStatus: 'IN_PROGRESS' } })).data?.event.status).toBe('IN_PROGRESS');
-    const rows = GOLFERS.map((golfer) => ({
+    const rows = await byParticipantId(a, eventId, GOLFERS.map((golfer) => ({
       playerName: `${golfer} ${RUN}${tag}`,
       strokes: PAR + scores[golfer],
       scoreToPar: scores[golfer],
       thru: 18,
       status: 'COMPLETED' as const,
-    }));
+    })));
     expect((await applyEventGolfRoundScores({ client: a, path: { eventId, roundNumber: 1 }, body: { rows } })).response?.status).toBe(200);
     if (beforeEnd) await beforeEnd();
     expect((await transitionEvent({ client: a, path: { eventId }, body: { toStatus: endStatus } })).data?.event.status).toBe(endStatus);

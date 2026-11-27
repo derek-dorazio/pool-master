@@ -74,7 +74,6 @@ export type GolfRoundStatus = GolfRoundUpdate['status'];
 export interface GolfScoreRowInput {
   participantId?: string;
   externalId?: string;
-  playerName?: string;
   strokes: number | null;
   scoreToPar: number;
   thru?: number;

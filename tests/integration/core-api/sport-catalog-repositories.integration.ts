@@ -382,35 +382,15 @@ describe('ParticipantRepository — a sport league\'s roster (#1853)', () => {
 });
 
 describe('ParticipantRepository — search and matching', () => {
-  it('returns every match unpaged, and matches upload identifiers exactly within one sport league', async () => {
+  it('returns every match of a search unpaged', async () => {
     const sport = await golfSport();
     const league = await participantLeagueId(getPrisma(), sport.id);
     const participants = new PrismaParticipantRepository(getAppPrisma());
     for (let index = 0; index < 60; index += 1) {
       await createParticipant(sport.id, `Search Golfer ${String(index).padStart(2, '0')}`);
     }
-    const rory = await createParticipant(sport.id, 'Rory McIlroy', 'owgr-rory');
 
     expect(await participants.search('Search Golfer', { sportLeagueId: league })).toHaveLength(60);
-    await expect(participants.findMatchingAny(league, [{ name: 'rory mcilroy' }])).resolves.toEqual([expect.objectContaining({ id: rory.id })]);
-    await expect(participants.findMatchingAny(league, [{ externalId: 'owgr-rory' }])).resolves.toHaveLength(1);
-    await expect(participants.findMatchingAny(league, [{ name: 'Rory' }])).resolves.toEqual([]);
-    await expect(participants.findMatchingAny(randomUUID(), [{ id: rory.id }])).resolves.toEqual([]);
-    await expect(participants.findMatchingAny(league, [])).resolves.toEqual([]);
-  });
-
-  it('reads the candidates for a whole upload at once: every participant of the sport league any row\'s identifier matches, and no other', async () => {
-    const sport = await golfSport();
-    const league = await participantLeagueId(getPrisma(), sport.id);
-    const participants = new PrismaParticipantRepository(getAppPrisma());
-    const rory = await createParticipant(sport.id, 'Rory McIlroy', 'owgr-rory');
-    const jon = await createParticipant(sport.id, 'Jon Rahm', 'owgr-jon');
-    const scottie = await createParticipant(sport.id, 'Scottie Scheffler', 'owgr-scottie');
-    await createParticipant(sport.id, 'Ludvig Aberg', 'owgr-ludvig');
-
-    const found = await participants.findMatchingAny(league, [{ id: rory.id }, { externalId: 'owgr-jon' }, { name: 'SCOTTIE scheffler' }, { name: 'Nobody' }]);
-
-    expect(found.map((candidate) => candidate.id).sort()).toEqual([rory.id, jon.id, scottie.id].sort());
   });
 
   it('creates a participant, reads it by id, and updates only the fields given', async () => {

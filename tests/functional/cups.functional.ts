@@ -2,7 +2,6 @@ import { randomUUID } from 'node:crypto';
 import {
   acceptInvitation,
   addEventParticipants,
-  applyEventParticipantUpload,
   applyEventRaceResults,
   autoAssignEventPrices,
   autoAssignEventTiers,
@@ -61,6 +60,7 @@ import { keyedSlotDefinitionId } from '../support/event-edition';
 import { uniqueTestSlotLabel } from '../support/test-slots';
 import { expectDefined } from '../support/expect-defined';
 import { standardPricingRequest } from './standard-pricing';
+import { byParticipantId, setFieldRows } from './field-rows';
 
 // A league's 2099 World Marathon Majors (men) Cup end to end (#841): the cup is made with the
 // league's first contest of the season, and two races settled through the real routes rank the
@@ -157,7 +157,7 @@ describe('SDK Functional: sports league cups and the league championship (#841, 
       })).data).event.id;
       created.sportEventIds.add(eventId);
       await addEventParticipants({ client: a, path: { eventId }, body: { participantIds: runnerIds } });
-      await applyEventParticipantUpload({
+      await setFieldRows({
         client: a,
         path: { eventId },
         body: { rows: RUNNERS.map((runner, index) => ({ playerName: `${runner} ${RUN}`, ranking: index + 1, seedNumber: index + 1 })) },
@@ -183,13 +183,13 @@ describe('SDK Functional: sports league cups and the league championship (#841, 
 
     /** The race's official result: `finish` is runner to place. */
     const applyResults = async (eventId: string, finish: Record<string, number>) => {
-      const rows = RUNNERS.map((runner) => ({
+      const rows = await byParticipantId(a, eventId, RUNNERS.map((runner) => ({
         playerName: `${runner} ${RUN}`,
         resultStatus: 'FINISHED' as const,
         finishPosition: expectDefined(finish[runner]),
         startPosition: null,
         riderName: null,
-      }));
+      })));
       expect((await applyEventRaceResults({ client: a, path: { eventId }, body: { isOfficial: true, rows } })).response?.status).toBe(200);
     };
 

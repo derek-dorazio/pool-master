@@ -3,7 +3,6 @@ import { createRef } from "react";
 import { describe, expect, it } from "vitest";
 import { Button } from "./button";
 import { DateTimeField } from "./date-time";
-import { FileInput } from "./file-input";
 import { Checkbox, Input, Select, Textarea } from "./form-field";
 import { Tile } from "./tile";
 import { TimeZoneSelect } from "./time-zone-select";
@@ -25,20 +24,17 @@ describe("shared UI controls take a ref as an ordinary prop", () => {
     expect(ref.current).toBeInstanceOf(HTMLAnchorElement);
   });
 
-  it("hands Input, DateTimeField and FileInput refs to their input elements", () => {
+  it("hands Input and DateTimeField refs to their input elements", () => {
     const input = createRef<HTMLInputElement>();
     const dateTime = createRef<HTMLInputElement>();
-    const file = createRef<HTMLInputElement>();
     render(
       <>
         <Input ref={input} />
         <DateTimeField ref={dateTime} />
-        <FileInput ref={file} />
       </>,
     );
     expect(input.current).toBeInstanceOf(HTMLInputElement);
     expect(dateTime.current?.type).toBe("datetime-local");
-    expect(file.current?.type).toBe("file");
   });
 
   it("hands Checkbox's ref to its input and still sets the indeterminate state", () => {

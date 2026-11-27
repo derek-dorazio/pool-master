@@ -429,11 +429,6 @@ A date and time entry box in the member's zone, and the time zone drop-down (US 
 A grid of icons to choose one from, such as a league's icon on its `FormPage`.
 - **Story:** [icon-palette.stories.tsx](./icon-palette.stories.tsx)
 
-### `FileInput`
-The file picker; a bare `<input type="file">` is barred in feature code.
-- **Props that matter:** `onFileText` hands back the file's text.
-- **Story:** [file-input.stories.tsx](./file-input.stories.tsx)
-
 ## Tables
 
 ### `DataGrid`
@@ -488,13 +483,6 @@ on its edges, a number beside each row and column, and cells holding a short cod
   with the cell's class. `BoardBand` goes across the top or, in a `relative` cell spanning the
   rows, down the side.
 - **Story:** [board-cell.stories.tsx](./board-cell.stories.tsx)
-
-### `BulkUploadPanel` and `UploadPreviewTable`
-Paste or upload rows, preview what they would change, then apply.
-- **Props that matter:** the caller owns the row schema, the parser and the preview and apply
-  mutations, so cache invalidation stays with the feature. `UploadPreviewTable` is its preview.
-- **Story:** [bulk-upload-panel.stories.tsx](./bulk-upload-panel.stories.tsx),
-  [upload-preview-table.stories.tsx](./upload-preview-table.stories.tsx)
 
 ## Dialogs
 

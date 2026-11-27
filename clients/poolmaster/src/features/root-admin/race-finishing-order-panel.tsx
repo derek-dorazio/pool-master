@@ -1,13 +1,9 @@
 import { enumLabel } from '@poolmaster/shared/display-strings';
-import { assertNever, RaceResultOrderError, RaceResultStatus, type SportVocabulary, sportVocabulary, SportEventParticipantStatus } from '@poolmaster/shared/domain';
-import { useState } from 'react';
-import { applyEventRaceResults, previewEventRaceResults } from '@/lib/api';
+import { RaceResultStatus, sportVocabulary, SportEventParticipantStatus } from '@poolmaster/shared/domain';
 import type { SportEventDto, SportEventParticipantDto } from '@/lib/api';
 import {
   Notice,
   formatOrdinal,
-  BulkUploadPanel,
-  Checkbox,
   SectionCard,
   SimpleTable,
   StatusBadge,
@@ -16,70 +12,10 @@ import {
   TableHead,
   TableHeaderCell,
   TableRow,
-  UploadPreviewTable,
 } from '@/features/shared/ui';
-import { errorCodeMessage, extractErrorMessage, throwApiError, type ExtractErrorMessageOptions } from '@/lib/errors';
-import { getLogger } from '@/lib/logger';
-import { useInvalidatingMutation } from '@/lib/mutation-hooks';
-import { QueryKeys } from '@/lib/query-keys';
-import {
-  RACE_RESULT_UPLOAD_HEADERS,
-  describeRaceResult,
-  parseRaceResultUpload,
-  raceResultTemplateRows,
-  type RaceResultPreviewRow,
-  type RaceResultUploadRow,
-} from './race-result-upload';
+import { extractErrorMessage } from '@/lib/errors';
 import { useSportEventFieldQuery } from './use-sport-event';
 import { upperFirst } from '@/lib/upper-first';
-
-const RESOLUTION_TONE: Record<RaceResultPreviewRow['resolution'], 'active' | 'warning' | 'danger'> = {
-  MATCHED: 'active',
-  AMBIGUOUS: 'warning',
-  UNRESOLVED: 'danger',
-};
-
-const RESOLUTION_LABEL: Record<RaceResultPreviewRow['resolution'], string> = {
-  MATCHED: 'Matched',
-  AMBIGUOUS: 'Several matches',
-  UNRESOLVED: 'Not in the field',
-};
-
-const CHANGE_TONE: Record<NonNullable<RaceResultPreviewRow['change']>, 'success' | 'info' | 'neutral'> = {
-  CREATE: 'success',
-  UPDATE: 'info',
-  UNCHANGED: 'neutral',
-};
-
-/** A race result's refusals in the sport's words: the field's `{{participant}}` and `{{round}}`. */
-function raceResultErrors(vocabulary: SportVocabulary): ExtractErrorMessageOptions {
-  return { context: 'raceResult', values: { participant: vocabulary.participant.one, round: vocabulary.round.one } };
-}
-
-/**
- * Why the finishing order as a whole cannot be applied, in the sport's words: the same sentence
- * as the server's refusal of that order (`raceResult` error wording), so the preview and a
- * refused apply agree. The error's label is `enumLabel('RaceResultOrderError', …)`.
- */
-function orderErrorMessage(error: RaceResultOrderError, vocabulary: SportVocabulary): string {
-  switch (error) {
-    case RaceResultOrderError.POSITIONS_INVALID:
-      return errorCodeMessage('RACE_RESULT_POSITIONS_INVALID', raceResultErrors(vocabulary));
-    case RaceResultOrderError.FIELD_INCOMPLETE:
-      return errorCodeMessage('RACE_RESULT_FIELD_INCOMPLETE', raceResultErrors(vocabulary));
-    default:
-      return assertNever(error, 'race result order error');
-  }
-}
-
-function describeRow(row: RaceResultPreviewRow['row']): string {
-  return row.playerName ?? row.externalId ?? row.participantId ?? 'Unnamed row';
-}
-
-/** A preview row that cannot be applied as it stands. */
-function needsAttention(row: RaceResultPreviewRow): boolean {
-  return row.resolution !== 'MATCHED' || row.rowError !== null;
-}
 
 /** The field in finishing order: placed runners first, then the rest by name. */
 function byFinish(left: SportEventParticipantDto, right: SportEventParticipantDto): number {
@@ -115,7 +51,7 @@ function StoredFinishingOrder({ event, field }: { event: SportEventDto; field: r
     >
       {!hasResults ? (
         <p className="text-sm text-muted-foreground" data-testid="root-admin-race-result-empty">
-          {`No results yet. Load the finishing order below once the ${vocabulary.round.one} is run.`}
+          {`No results yet. The ${vocabulary.round.one}'s result comes from the feed once it is run.`}
         </p>
       ) : (
         <>
@@ -163,129 +99,8 @@ function StoredFinishingOrder({ event, field }: { event: SportEventDto; field: r
 }
 
 /**
- * Loads a race's finishing order (#623): paste or upload it, preview how each row resolves and
- * what it changes, then apply. Marking it official makes contests count it; the panel is
- * remounted when that changes, so a preview is never applied under the other setting.
- *
- * The official box follows the stored result until the admin changes it, because apply sets the
- * flag on every row of the race: a correction applied unticked would make an official race
- * provisional again.
- */
-function FinishingOrderUploadCard({ event, field }: { event: SportEventDto; field: readonly SportEventParticipantDto[] }) {
-  const logger = getLogger().child({ feature: 'root-admin-race-finishing-order' });
-  const vocabulary = sportVocabulary(event.sport);
-  const [chosenOfficial, setChosenOfficial] = useState<boolean | null>(null);
-  const isOfficial = chosenOfficial ?? isStoredResultOfficial(field);
-
-  const previewMutation = useInvalidatingMutation({
-    mutationFn: async (rows: RaceResultUploadRow[]) => {
-      const response = await previewEventRaceResults({ path: { eventId: event.id }, body: { isOfficial, rows } });
-      if (!response.data?.rows) {
-        throwApiError(response.error, 'Race result preview response is missing data.');
-      }
-      return response.data;
-    },
-    invalidates: [],
-    onError: (error) => {
-      logger.warn({ action: 'race.result.preview.failed', err: error }, 'Race result preview was rejected');
-    },
-  });
-
-  const applyMutation = useInvalidatingMutation({
-    mutationFn: async (rows: RaceResultUploadRow[]) => {
-      const response = await applyEventRaceResults({ path: { eventId: event.id }, body: { isOfficial, rows } });
-      if (!response.data?.participants) {
-        throwApiError(response.error, 'Race result apply response is missing data.');
-      }
-      return response.data.participants;
-    },
-    // The result is read back from the field; the event's counts follow it.
-    invalidates: [QueryKeys.rootAdmin.manageSport.field(event.id), QueryKeys.rootAdmin.manageSport.event(event.id)],
-    onError: (error) => {
-      logger.warn({ action: 'race.result.apply.failed', err: error }, 'Race result apply was rejected');
-    },
-  });
-
-  const orderErrors = previewMutation.data?.orderErrors ?? [];
-
-  return (
-    <SectionCard headingLevel={3} padded title="Finishing order">
-      <p className="text-sm text-muted-foreground">
-        {`Paste or upload the ${vocabulary.round.one}'s result: a place for each ${vocabulary.participant.one} that finished, or DNF, DQ or DNS. Preview it, then apply. ${upperFirst(vocabulary.participant.many)} you leave out keep the result they have.`}
-      </p>
-      <label className="mt-4 flex items-center gap-2 text-sm text-foreground">
-        <Checkbox
-          checked={isOfficial}
-          data-testid="root-admin-race-result-mark-official"
-          onChange={(changeEvent) => {
-            previewMutation.reset();
-            applyMutation.reset();
-            setChosenOfficial(changeEvent.target.checked);
-          }}
-        />
-        This result is official. Contests score it, and every {vocabulary.participant.one} still in the field needs a result.
-      </label>
-      <div className="mt-4">
-        <BulkUploadPanel<RaceResultUploadRow, RaceResultPreviewRow>
-          apply={(rows) => applyMutation.mutateAsync(rows).then(() => undefined)}
-          applyError={applyMutation.isError
-            ? extractErrorMessage(applyMutation.error, {
-              ...raceResultErrors(vocabulary),
-              fallback: 'We could not apply this result.',
-            })
-            : null}
-          applyLabel={isOfficial ? 'Apply official result' : 'Apply result'}
-          formatNote="Columns: externalId or playerName (one required), finishPosition, resultStatus (FINISHED, DNF, DQ or DNS; a place with no status is a finisher), startPosition and riderName (both optional). Rows with no place and no status are skipped."
-          isApplyPending={applyMutation.isPending}
-          isPreviewPending={previewMutation.isPending}
-          key={`${event.id}:${String(isOfficial)}`}
-          parse={parseRaceResultUpload}
-          preview={(rows) => previewMutation.mutateAsync(rows).then((preview) => preview.rows)}
-          previewError={previewMutation.isError
-            ? extractErrorMessage(previewMutation.error, { fallback: 'We could not preview this result.' })
-            : null}
-          renderPreview={(rows) => (
-            <div className="space-y-3">
-              {orderErrors.map((orderError) => (
-                <Notice data-testid={`root-admin-race-result-order-error-${orderError}`} key={orderError} tone="danger">
-                  {orderErrorMessage(orderError, vocabulary)}
-                </Notice>
-              ))}
-              <UploadPreviewTable
-                change={{
-                  before: (entry) => describeRaceResult(entry.before),
-                  after: (entry) => describeRaceResult(entry.after),
-                  badge: (entry) => entry.rowError ? (
-                    <StatusBadge tone="danger">{enumLabel('RaceResultRowError', entry.rowError)}</StatusBadge>
-                  ) : entry.change ? (
-                    <StatusBadge tone={CHANGE_TONE[entry.change]}>{enumLabel('RaceResultChange', entry.change)}</StatusBadge>
-                  ) : '—',
-                }}
-                describeRow={(entry) => describeRow(entry.row)}
-                match={(entry) => entry.participantName ?? '—'}
-                matchHeader={upperFirst(vocabulary.participant.one)}
-                resolution={(entry) => <StatusBadge tone={RESOLUTION_TONE[entry.resolution]}>{RESOLUTION_LABEL[entry.resolution]}</StatusBadge>}
-                resolutionHeader="Match"
-                rows={rows}
-                testId="root-admin-race-result-upload-preview-table"
-              />
-            </div>
-          )}
-          templateFilename={`${event.name.replace(/[^a-z0-9]+/gi, '-').toLowerCase()}-finishing-order.csv`}
-          templateHeaders={RACE_RESULT_UPLOAD_HEADERS}
-          templateRows={field.length > 0 ? raceResultTemplateRows(field) : undefined}
-          testId="root-admin-race-result-upload"
-          unresolvedCount={(rows) => rows.filter(needsAttention).length + orderErrors.length}
-          unresolvedNotice={() => 'Fix the rows and problems marked below, then preview again before applying.'}
-        />
-      </div>
-    </SectionCard>
-  );
-}
-
-/**
- * Finish position's results (#623): the race's stored result, and the card that loads or corrects
- * its finishing order. The event's Results page shows it for a finish-position event.
+ * Finish position's results (#623): the race's stored result, which comes from the feed (#2008).
+ * The event's Results page shows it for a finish-position event.
  */
 export function RaceFinishingOrderPanel({ event }: { event: SportEventDto }) {
   const fieldQuery = useSportEventFieldQuery(event.id);
@@ -296,16 +111,12 @@ export function RaceFinishingOrderPanel({ event }: { event: SportEventDto }) {
       {fieldQuery.isError ? (
         <Notice data-testid="root-admin-race-result-field-error" tone="danger">
           {extractErrorMessage(fieldQuery.error, {
-            fallback: 'We could not load the field, so the current result is not shown and a finishing order cannot be loaded.',
+            fallback: 'We could not load the field, so the current result is not shown.',
           })}
         </Notice>
       ) : null}
       {fieldQuery.isSuccess ? (
-        <>
-          <StoredFinishingOrder event={event} field={field} />
-          {/* Only once the field is read, so the official box starts from the stored result. */}
-          <FinishingOrderUploadCard event={event} field={field} />
-        </>
+        <StoredFinishingOrder event={event} field={field} />
       ) : null}
     </div>
   );
