@@ -68,8 +68,9 @@ export function eventFeedRef(event: {
   return mapping === undefined ? undefined : { providerId: event.syncProviderId, externalId: mapping.externalId };
 }
 
-/** A sync kind one event runs: its FIELD or its SCORES; a league's EVENTS is synced by league. */
-type EventSyncKind = typeof ProviderSyncKind.FIELD | typeof ProviderSyncKind.SCORES;
+/** The sync kinds one event runs: its FIELD and its SCORES; a league's EVENTS is synced by league. */
+export const EVENT_SYNC_KINDS = [ProviderSyncKind.FIELD, ProviderSyncKind.SCORES] as const;
+export type EventSyncKind = (typeof EVENT_SYNC_KINDS)[number];
 
 /** The statuses each event sync kind runs in: a field while there is one to load, scores while play is on. */
 const EVENT_SYNC_KIND_STATUSES: Readonly<Record<EventSyncKind, readonly SportEventStatus[]>> = {
@@ -88,7 +89,7 @@ export function eventSyncKindsOf(event: {
   syncProviderId?: string;
 }): EventSyncKind[] {
   if (eventFeedRef(event) === undefined) return [];
-  return [ProviderSyncKind.FIELD, ProviderSyncKind.SCORES].filter((kind) => EVENT_SYNC_KIND_STATUSES[kind].includes(event.status));
+  return EVENT_SYNC_KINDS.filter((kind) => EVENT_SYNC_KIND_STATUSES[kind].includes(event.status));
 }
 
 /**

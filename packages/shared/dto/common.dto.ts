@@ -2,7 +2,7 @@
  * Common DTO schemas shared across all API endpoints.
  */
 import { z } from 'zod';
-import { ProviderSyncKind } from '@poolmaster/shared/domain';
+import { EVENT_SYNC_KINDS } from '@poolmaster/shared/domain';
 import { registerSchema } from './schema-registry';
 
 // --- Primitives ---
@@ -49,6 +49,5 @@ export type SuccessResponse = z.infer<typeof SuccessResponseSchema>;
 // The shared acknowledgement for deletes and other actions that return nothing else (#192).
 registerSchema('SuccessResponse', SuccessResponseSchema);
 
-export const EventSyncKindSchema = z.enum([ProviderSyncKind.FIELD, ProviderSyncKind.SCORES])
+export const EventSyncKindSchema = z.enum(EVENT_SYNC_KINDS)
   .describe('What an event sync syncs: the event\'s FIELD or its SCORES. A sport league\'s EVENTS are synced by league, not by event.');
-export type EventSyncKind = z.infer<typeof EventSyncKindSchema>;

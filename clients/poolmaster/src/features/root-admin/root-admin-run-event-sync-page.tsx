@@ -15,7 +15,7 @@ import {
   type DisplayPreferences,
   useDisplayPreferences,
 } from '@/features/shared/ui';
-import { EventSyncKindSchema, type EventSyncKind } from '@poolmaster/shared/dto';
+import { EventSyncKindSchema } from '@poolmaster/shared/dto';
 import {
   formatJsonPayload,
   syncedSports,
@@ -28,7 +28,7 @@ import { SeasonSelect } from './season-select';
 import { useSportLeaguesQuery } from './use-sport-catalog';
 import { seasonIdOrCurrent, useSportLeagueSeasonsQuery } from '@/features/contests/use-sport-league-seasons';
 import { useSportLeagueOverviewsQuery } from './use-sport-league-overviews';
-import { ProviderSyncKind, type Sport } from '@poolmaster/shared/domain';
+import { ProviderSyncKind, type EventSyncKind, type Sport } from '@poolmaster/shared/domain';
 
 function formatEventOptionLabel(event: SportEventDto, displayPreferences: DisplayPreferences) {
   const participantText = `${event.participantCount} participants`;
