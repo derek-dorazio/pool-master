@@ -1,6 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { render, screen } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
@@ -135,65 +134,25 @@ function renderPage() {
   );
 }
 
-describe('pool-master-r11 Rounds and matches tab for a golf event', () => {
+describe('Rounds and matches tab for a golf event', () => {
   afterEach(() => {
     vi.clearAllMocks();
     mockLogger.child.mockReturnValue(mockLogger);
   });
 
-  it('pool-master-r11 shows a round selector labelled by scheduled date, no sync alert for a manual tournament', async () => {
+  it('lists the event\'s four rounds and offers no score entry or correction, since scores come from the feed, or the test-data loader on a test event', async () => {
     seed();
     renderPage();
 
-    expect(await screen.findByRole('radio', { name: /Round 1/ })).toBeInTheDocument();
-    expect(screen.getByRole('radio', { name: /Round 4/ })).toBeInTheDocument();
-    expect(
-      screen.queryByTestId('root-admin-golf-scores-sync-alert'),
-    ).not.toBeInTheDocument();
-    // The round's corrections render; there is no score upload, since scores come from the feed (#2008).
-    expect(await screen.findByText('Rory McIlroy')).toBeInTheDocument();
-    expect(screen.queryByTestId('root-admin-golf-scores-upload-textarea')).not.toBeInTheDocument();
+    for (const roundNumber of [1, 2, 3, 4]) {
+      expect(await screen.findByTestId(`root-admin-event-round-${String(roundNumber)}`)).toBeInTheDocument();
+    }
+    expect(screen.queryByTestId('root-admin-golf-tournament-scores-page')).not.toBeInTheDocument();
+    expect(screen.queryByRole('radiogroup', { name: 'Round' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
   });
 
-  it('pool-master-r11 shows the sync-tick alert for a provider-synced tournament but keeps the tools usable', async () => {
-    seed({ tournament: { isTestData: false } });
-    renderPage();
-
-    expect(await screen.findByTestId('root-admin-golf-scores-sync-alert')).toBeInTheDocument();
-    expect(await screen.findByTestId('root-admin-golf-scores-strokes-sep-1')).toBeInTheDocument();
-  });
-
-  it('pool-master-r11 shows the selected round\'s scores, read from the field', async () => {
-    seed();
-    renderPage();
-
-    expect(await screen.findByTestId('root-admin-golf-scores-strokes-sep-1')).toHaveValue('70');
-    await userEvent.click(screen.getByRole('radio', { name: /Round 3/ }));
-
-    await waitFor(() =>
-      expect(screen.getByTestId('root-admin-golf-scores-strokes-sep-1')).toHaveValue('72'),
-    );
-    // No per-round read: one field read serves every round.
-    expect(listEventParticipantsMock).toHaveBeenCalledTimes(1);
-  });
-
-  it('pool-master-r11 clears a typed correction when the round changes (key remount)', async () => {
-    seed();
-    renderPage();
-
-    const strokes = await screen.findByTestId('root-admin-golf-scores-strokes-sep-1');
-    await userEvent.clear(strokes);
-    await userEvent.type(strokes, '65');
-    expect(screen.getByTestId('root-admin-golf-scores-save-sep-1')).toBeEnabled();
-
-    // Switch rounds -> the corrections card remounts and the typed correction is reset.
-    await userEvent.click(screen.getByRole('radio', { name: /Round 2/ }));
-
-    await waitFor(() => expect(screen.getByTestId('root-admin-golf-scores-strokes-sep-1')).toHaveValue('70'));
-    expect(screen.getByTestId('root-admin-golf-scores-save-sep-1')).toBeDisabled();
-  });
-
-  it('pool-master-r11 surfaces a round-schedule load error in the Rounds grid and the scores panel without blocking the tools', async () => {
+  it('says the round schedule could not load in the Rounds grid', async () => {
     seed();
     listEventRoundsMock.mockResolvedValue({
       error: { error: { code: 'INTERNAL_ERROR', message: 'Round schedule offline' } },
@@ -201,31 +160,7 @@ describe('pool-master-r11 Rounds and matches tab for a golf event', () => {
     });
     renderPage();
 
-    // Both the Rounds grid and the scores panel read the schedule, and each says it failed.
-    // findAllByText settles on the first panel to fail, so wait until both have.
-    await waitFor(() => expect(screen.getAllByText('Something went wrong. Please try again.')).toHaveLength(2));
-    // Rounds fall back to numbered options from tournament.rounds.
-    expect(screen.getByRole('radio', { name: 'Round 1' })).toBeInTheDocument();
-  });
-
-  it('says the field could not load, so the round\'s scores show as failed', async () => {
-    seed();
-    listEventParticipantsMock.mockResolvedValue({
-      error: { error: { code: 'INTERNAL_ERROR', message: 'Field offline' } },
-      response: { status: 500 },
-    });
-    renderPage();
-
-    expect(await screen.findByTestId('root-admin-golf-scores-corrections-error')).toBeInTheDocument();
-  });
-
-  it('says a tournament with no rounds has none scheduled, and offers no round tools', async () => {
-    seed({ tournament: { roundCount: 0 } });
-    listEventRoundsMock.mockResolvedValue({ data: { rounds: [] } });
-    renderPage();
-
-    expect(await screen.findByTestId('root-admin-golf-scores-no-rounds')).toHaveTextContent('This tournament has no rounds scheduled yet.');
-    expect(screen.queryByTestId('root-admin-golf-scores-corrections-error')).not.toBeInTheDocument();
-    expect(screen.queryByRole('radio')).not.toBeInTheDocument();
+    expect(await screen.findByText('Something went wrong. Please try again.')).toBeInTheDocument();
+    expect(screen.queryByTestId('root-admin-event-round-1')).not.toBeInTheDocument();
   });
 });

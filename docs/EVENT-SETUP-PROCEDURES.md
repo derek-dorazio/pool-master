@@ -10,8 +10,9 @@ played, and contests on past events are tried from the test seeds instead (*Load
 typing*, below). Release, contests, the lifecycle moves and cancelling work the same way for
 every sport.
 
-- **Races** (horse racing, auto racing, cycling, running) have no score feed, so a race's
-  finishing order is entered by hand: see [`RACE-SETUP-PROCEDURES.md`](RACE-SETUP-PROCEDURES.md).
+- **Races** (horse racing, auto racing, cycling, running) have no score feed here, so a test
+  race's finishing order comes from the test-data loader; Manage has no results entry (#2008):
+  see [`RACE-SETUP-PROCEDURES.md`](RACE-SETUP-PROCEDURES.md).
 - **Knockouts** (basketball, American football) are resulted game by game on the event's Bracket
   tab: *Knockout brackets* below.
 - **Loading instead of typing.** Events, fields and brackets can come from a data file, and

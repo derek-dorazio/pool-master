@@ -128,7 +128,11 @@
     "replaceEventTiers": "#2044 (7b): the slot route, on the set of the slot named",
     "autoAssignEventTiers": "#2044 (7b): the slot route, on the set of the slot named",
     "replaceEventTierAssignments": "#2044 (7b): the slot route, on the set of the slot named",
-    "autoAssignEventPrices": "#2044 (7b): the slot route, on the set of the slot named"
+    "autoAssignEventPrices": "#2044 (7b): the slot route, on the set of the slot named",
+    "SCORING_FAMILY_ADMIN_UI": "#2008 (10b part 4b): no per-family results page in Manage; results come from the feed or the test-data loader",
+    "getScoringFamilyAdminUi": "#2008 (10b part 4b): no per-family results page in Manage; results come from the feed or the test-data loader",
+    "ScoreSyncNotice": "#2008 (10b part 4b): no per-family results page in Manage; results come from the feed or the test-data loader",
+    "useRowCorrections": "#2008 (10b part 4b): no per-family results page in Manage; results come from the feed or the test-data loader"
   },
   "ROUND_NAMES_FROM_FINAL": 0,
   "roundLabel": 0,
@@ -257,5 +261,9 @@
   "replaceEventTiers": 0,
   "autoAssignEventTiers": 0,
   "replaceEventTierAssignments": 0,
-  "autoAssignEventPrices": 0
+  "autoAssignEventPrices": 0,
+  "SCORING_FAMILY_ADMIN_UI": 0,
+  "getScoringFamilyAdminUi": 0,
+  "ScoreSyncNotice": 0,
+  "useRowCorrections": 0
 }

@@ -7,9 +7,6 @@
  */
 export const QUERY_STATES_BASELINE = [
   'clients/poolmaster/src/features/root-admin/event-field-add-participants-modal.tsx',
-  'clients/poolmaster/src/features/root-admin/golf-round-score-corrections-card.tsx',
-  'clients/poolmaster/src/features/root-admin/golf-round-scores-panel.tsx',
   'clients/poolmaster/src/features/root-admin/manage-sport-route.tsx',
-  'clients/poolmaster/src/features/root-admin/race-finishing-order-panel.tsx',
   'clients/poolmaster/src/features/root-admin/root-admin-run-event-sync-page.tsx',
 ];

@@ -395,15 +395,12 @@ test('act 4: the root admin starts the race, its official finishing order comes 
     await moveRaceTo(page, state.raceId, 'IN_PROGRESS');
   });
 
-  await test.step('the race\'s Rounds and matches tab shows its result, with no upload and no golf round scores', async () => {
+  await test.step('the race\'s old results link opens its Rounds and matches tab, which offers no result entry', async () => {
     await page.goto(`/manage/sports/auto-racing/events/${state.raceId}/results`);
-    await expect(page.getByTestId('root-admin-race-results-panel')).toBeVisible();
-    // The old results link opens the Rounds and matches tab, which holds the results.
     await expect(page.getByTestId('root-admin-event-tab-rounds')).toHaveAttribute('aria-current', 'page');
-    await expect(page.getByTestId('root-admin-race-result-empty')).toBeVisible();
-    // A race's result comes from the feed (#2008): the page offers no paste or upload.
-    await expect(page.getByTestId('root-admin-race-result-upload-textarea')).toHaveCount(0);
-    await expect(page.getByTestId('root-admin-golf-tournament-scores-page')).toHaveCount(0);
+    await expect(page.getByTestId('root-admin-event-rounds-tab')).toBeVisible();
+    // A race's result comes from the feed, or the test-data loader on a test race (#2008): no admin panel enters one.
+    await expect(page.getByTestId('root-admin-race-results-panel')).toHaveCount(0);
   });
 
   await test.step('the official finishing order goes in on the test race, by driver id, as the feed would send it', async () => {
@@ -422,12 +419,17 @@ test('act 4: the root admin starts the race, its official finishing order comes 
     });
     expect(response.ok(), `PUT the race result answered ${response.status()}`).toBe(true);
 
-    await page.reload();
-    await expect(page.getByTestId('root-admin-race-result-official')).toHaveText('Official');
+    // The event's field, read back: the result is official, the winner first and driver 7 out.
+    const field = await page.request.get(`/api/v1/events/${state.raceId}/participants`);
+    expect(field.ok(), `GET the field answered ${field.status()}`).toBe(true);
+    const { participants } = (await field.json()) as {
+      participants: Array<{ id: string; race: { finishPosition: number | null; resultStatus: string; isOfficial: boolean } | null }>;
+    };
+    const raceOf = (fieldEntryId: string) => participants.find((row) => row.id === fieldEntryId)?.race ?? null;
     const winner = state.fieldEntryIds[FINISHING_ORDER[0].driver - 1];
     const nonFinisher = state.fieldEntryIds[7 - 1];
-    await expect(page.getByTestId(`root-admin-race-result-finish-${winner}`)).toHaveText('1st');
-    await expect(page.getByTestId(`root-admin-race-result-finish-${nonFinisher}`)).toHaveText('Did not finish');
+    expect(raceOf(winner)).toMatchObject({ finishPosition: 1, resultStatus: 'FINISHED', isOfficial: true });
+    expect(raceOf(nonFinisher)).toMatchObject({ finishPosition: null, resultStatus: 'DID_NOT_FINISH', isOfficial: true });
   });
 
   await test.step('complete the race, which settles the contest', async () => {

@@ -25,9 +25,9 @@ under *Sports*, and its three lists are **Races**, **Horses** and **Circuits**.
 ## What drives what
 
 - **There is no racing feed.** No provider covers horse racing, so nothing is linked for
-  ingestion and nothing arrives on its own: you enter the finishing order yourself. The
-  race's *Score source* card reads "Not linked — results must be entered manually". Leave
-  it that way. If horse racing is listed for scheduled ingestion, the API logs a warning that
+  ingestion and nothing arrives on its own. Manage has no page for entering a finishing
+  order (#2008): a test race's result comes from the test-data loader. Leave the race
+  unlinked. If horse racing is listed for scheduled ingestion, the API logs a warning that
   it has no provider once each time it starts; that is expected, and there is nothing to
   configure.
 - **You move the race through its statuses.** Draft, then Scheduled (released), In Progress
@@ -138,15 +138,17 @@ From the race's ⚙, *Move to In Progress* and confirm. Open contests on the rac
 
 ### The finishing order
 
-*Results* (`/manage/sports/horse-racing/events/:id/results`). The *Result* card shows what is
-stored ("No results yet" at first). The finishing order comes from the feed
-(#2008): there is no paste or CSV upload, and results never match a horse by name (#2114).
+The finishing order comes from the feed, or on a test race from the test-data loader, which
+writes it through the test-slot race results route (`docs/DOMAIN-OPERATIONS.md`, #2074).
+Manage has no results entry (#2008): the race's old *Results* link
+(`/manage/sports/horse-racing/events/:id/results`) opens its Rounds and matches tab, and the
+stored result is the event's field (`GET /api/v1/events/:id/participants`, each runner's `race`).
+Results never match a horse by name (#2114).
 
-**Provisional first.** With *This result is official* unticked, the result is stored as
-**Provisional**: the contest leaderboard shows each pick's place with a note that places are
-provisional, and no pick has points yet. When the stewards make the result official, tick
-the feed sends the official order. The
-badge then reads **Official**, and contests score it. You can also go straight to official.
+**Provisional first.** A result sent with `isOfficial` false is stored as **Provisional**: the
+contest leaderboard shows each pick's place with a note that places are provisional, and no
+pick has points yet. When the stewards make the result official, the official order follows,
+and contests score it. A result can also go straight to official.
 
 An official result needs a result for every horse still in the field: places 1 to N for
 every finisher, not just the top three, and a status for every other runner. Scratched horses
@@ -155,10 +157,10 @@ need none.
 - **Places** run 1, 2, 3 and on. A **dead heat** repeats a place and skips the next
   (1, 2, 2, 4); each horse in it scores that place's full points.
 - **DNF, DQ and DNS** score *Points for not finishing*. A horse the stewards disqualify and
-  place behind another (the usual US ruling) is entered at its official place as a finisher,
+  place behind another (the usual US ruling) is sent at its official place as a finisher,
   not as `DQ`.
-- **Corrections** come from the feed too: a changed row replaces that horse's place, and horses
-  it leaves out keep theirs.
+- **Corrections** come the same way: a changed row replaces that horse's place, and horses it
+  leaves out keep theirs.
 
 ### Complete
 
