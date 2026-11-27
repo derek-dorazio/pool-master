@@ -422,6 +422,17 @@ describe('RootAdminProvidersPage', () => {
     expect(mocks.updateIngestionSchedule).not.toHaveBeenCalled();
   });
 
+  it('names an admin who is no longer known as an unknown admin, and Escape closes the sync', async () => {
+    seed({ group: { ...scheduleGroup(), updatedBy: null } });
+    renderPage();
+
+    await userEvent.click(await screen.findByTestId('root-admin-sync-schedule-EVENTS'));
+    expect(await screen.findByTestId('root-admin-sync-schedule-dialog-last-changed')).toHaveTextContent('by an unknown admin');
+
+    await userEvent.keyboard('{Escape}');
+    await waitFor(() => expect(screen.queryByTestId('root-admin-sync-schedule-dialog-last-changed')).not.toBeInTheDocument());
+  });
+
   it('shows a refused save in the form, which stays open', async () => {
     seed();
     mocks.updateIngestionSchedule.mockResolvedValue({ error: { error: { code: 'VALIDATION_ERROR', message: 'Interval too long' } } });
