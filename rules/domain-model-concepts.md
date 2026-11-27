@@ -66,7 +66,9 @@ Two readings of this chain have both been held at once, so it is worth stating p
   clears the later picks that followed from it. A correct pick scores its round's value under the
   knockout round points, as a knockout roster pool does.
 - **A knockout roster pick scores per match it wins** (`KNOCKOUT_ROUND_POINTS`, #699): that
-  round's value from the contest's table, plus an upset bonus when the contest has one on. A
+  round's value from the contest's table, counted only in the rounds the contest covers (those
+  whose slot its template lists, #2014) and indexed by the round's place among them, so a
+  play-in the template leaves out scores nothing, plus an upset bonus when the contest has one on. A
   team placed straight into a later round (a bye) counts the bye as a win: it scores the value
   of each round it skipped once that round is decided, with no upset bonus (#2170).
 - **A match's winner is its own fact** (`winnerSide`), and every scorer reads it, never the
@@ -99,7 +101,7 @@ Two readings of this chain have both been held at once, so it is worth stating p
   always a team, and a survivor pick on a game that ends level is out. Only a game of a week can
   end level; a bracket match always has a winner.
 - **A pool against the spread scores the team that covers** (`againstTheSpread`, #720), in
-  either mode. Each game carries its spread from the home side (`homeSpread`, "Chiefs -3.5"); a
+  either mode. Each game carries its spread on side 1, the other side's its opposite ("Bills +3.5", "Chiefs -3.5"); a
   team covers when its score plus its spread beats the other team's. A game landing exactly on
   the spread is a **push**, worth nothing to either side. A game ended early (a retirement,
   walkover or default, #825) has no real final score, so its winner covers.

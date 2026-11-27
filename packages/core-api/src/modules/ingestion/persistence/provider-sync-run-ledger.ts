@@ -43,7 +43,7 @@ export class ProviderSyncRunLedger {
   constructor(
     private readonly syncRuns: ProviderSyncRunRepository,
     private readonly logger?: FastifyBaseLogger,
-    private readonly linkedEvents?: Pick<SportEventRepository, 'findByProviderRef'>,
+    private readonly linkedEvents?: Pick<SportEventRepository, 'findByProviderRefs'>,
     private readonly findings?: Pick<ProviderSyncFindingService, 'checkEvent'>,
   ) {}
 
@@ -65,12 +65,17 @@ export class ProviderSyncRunLedger {
     return this.syncRuns.createWithJob(submissionRuns(await this.withLinkedEvent(input)), input.job);
   }
 
-  /** The input with the linked event and its sport league filled in, when the caller left the league out and one is linked. */
+  /**
+   * The input with the linked event and its sport league filled in, when the caller left the league
+   * out and one is linked. A provider event linked to several events, one per competition its games
+   * reach (#2154), names their league and no one event.
+   */
   private async withLinkedEvent(input: SubmissionInput): Promise<SubmissionInput> {
     if (input.sportLeagueId !== undefined || this.linkedEvents === undefined) return input;
-    const event = await this.linkedEvents.findByProviderRef(input.providerId, input.normalizedRequest.scope.eventId);
-    if (event === null) return input;
-    return { ...input, sportEventId: event.id, sportLeagueId: event.sportLeagueId };
+    const events = await this.linkedEvents.findByProviderRefs(input.providerId, [input.normalizedRequest.scope.eventId]);
+    const [event] = events;
+    if (events.length === 0) return input;
+    return { ...input, ...(events.length === 1 && { sportEventId: event.id }), sportLeagueId: event.sportLeagueId };
   }
 
   /**

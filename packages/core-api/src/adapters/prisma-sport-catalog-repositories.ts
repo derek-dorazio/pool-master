@@ -283,17 +283,6 @@ export class PrismaSportEventRepository implements SportEventRepository {
     });
   }
 
-  async findByProviderRef(providerId: string, externalId: string): Promise<SportEvent | null> {
-    // An adapter id no Provider carries has no events.
-    const code = providerCodeOfSourceId(providerId);
-    if (code === undefined) return null;
-    const row = await this.prisma.sportEvent.findFirst({
-      where: { providerMappings: { some: { provider: { code }, externalId } } },
-      include: SPORT_EVENT_INCLUDE,
-    });
-    return row ? toSportEvent(row) : null;
-  }
-
   async findByProviderRefs(providerId: string, externalIds: readonly string[]): Promise<SportEvent[]> {
     const code = providerCodeOfSourceId(providerId);
     if (externalIds.length === 0 || code === undefined) return [];

@@ -2194,7 +2194,10 @@ model SportEventProviderMapping {
   provider                   Provider                   @relation(fields: [providerId], references: [id], onDelete: Restrict)
   sportLeagueProviderMapping SportLeagueProviderMapping @relation(fields: [sportLeagueProviderMappingId], references: [id], onDelete: Restrict)
 
-  @@unique([providerId, externalId])
+  /// Not unique (#2154): a provider event whose games reach several competitions of a Season (a
+  /// season's slate of college football games: its bowls, its title games, its CFP) is one event
+  /// per competition, each holding the provider's id. No event crosses competitions.
+  @@index([providerId, externalId])
   /// An event has one id per provider.
   @@unique([sportEventId, providerId])
   @@index([sportLeagueProviderMappingId])
@@ -2717,6 +2720,7 @@ model SportLeagueProviderMapping {
   seasonMappings  SportLeagueSeasonProviderMapping[]
   eventMappings   SportEventProviderMapping[]
   seasonSlotLinks SportLeagueSeasonCompetitionSlotProviderMapping[]
+  placedGames     SportLeagueSeasonCompetitionSlotGameProviderMapping[]
 
   @@unique([sportLeagueId, providerLeagueId])
   /// The target of SportLeague's composite key to its selected mapping.
@@ -2834,13 +2838,14 @@ enum PrismaSeasonSlotStatus {
 }
 
 /// How a provider's games are matched to a slot definition (#2002, plan §1 and §6): the code its
-/// adapter reduces a game to, a normalized tournament name, a date window, or the calendar week.
-/// Mirrors the domain `SlotProviderMatchType`.
+/// adapter reduces a game to, a normalized tournament name, a date window, the calendar week, or
+/// the games of a window no other slot places (#2154). Mirrors the domain `SlotProviderMatchType`.
 enum PrismaSlotProviderMatchType {
   PROVIDER_CODE
   NAME_PATTERN
   DATE_WINDOW
   CALENDAR_WEEK
+  REST_OF_PHASE
 }
 
 /// Whether a Season slot's date window is the schedule's published dates or a best guess while
@@ -2902,6 +2907,9 @@ model SportLeagueCompetition {
   code               String   @db.VarChar(64)
   /// Its place among its phase's competitions, from 1.
   orderIndex         Int      @map("order_index")
+  /// The league's own proper name for it (College Football Playoff, Bowl Games), which names the
+  /// event the sync makes for it (#2154). Null: the event takes the provider event's name.
+  name               String?  @db.VarChar(100)
   createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt          DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
@@ -2980,7 +2988,7 @@ model SportLeagueCompetitionSlot {
 /// a provider value no row names is never synced. Keyed by the league's own provider mapping, so
 /// the slot and the provider league are always the same sport league's. Set by migration; slice 12
 /// adds NAME_PATTERN rows from findings. Database check: `providerValue` is null exactly for
-/// CALENDAR_WEEK and DATE_WINDOW.
+/// CALENDAR_WEEK, DATE_WINDOW and REST_OF_PHASE.
 model SportLeagueCompetitionSlotProviderMapping {
   id                           String                      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   sportLeagueId                String                      @map("sport_league_id") @db.Uuid
@@ -2989,7 +2997,7 @@ model SportLeagueCompetitionSlotProviderMapping {
   matchType                    PrismaSlotProviderMatchType @map("match_type")
   /// What the provider's game is matched on: the adapter's code (`REG:5`, `POST:3`) or a
   /// normalized tournament name. Null for CALENDAR_WEEK, which matches by the global date rule,
-  /// and for DATE_WINDOW, which matches by the Season slot's window.
+  /// and for DATE_WINDOW and REST_OF_PHASE, which match by the Season slot's window.
   providerValue                String?                     @map("provider_value") @db.VarChar(200)
   createdAt                    DateTime                    @default(now()) @map("created_at") @db.Timestamptz
   updatedAt                    DateTime                    @updatedAt @map("updated_at") @db.Timestamptz
@@ -3162,9 +3170,10 @@ model SportLeagueSeasonCompetitionSlot {
   /// The composite key keeps the slot in a competition of its own Season.
   seasonCompetition SportLeagueSeasonCompetition                      @relation(fields: [sportLeagueSeasonId, sportLeagueSeasonCompetitionId], references: [sportLeagueSeasonId, id], onDelete: Cascade, map: "sport_league_season_competition_slots_season_competition_fkey")
   /// The composite key keeps the definition one of its own league's.
-  definition        SportLeagueCompetitionSlot                        @relation(fields: [sportLeagueId, sportLeagueCompetitionSlotId], references: [sportLeagueId, id], onDelete: Restrict, map: "sport_league_season_competition_slots_definition_fkey")
-  eventSlot         SportEventSlot?
-  providerLinks     SportLeagueSeasonCompetitionSlotProviderMapping[]
+  definition    SportLeagueCompetitionSlot                        @relation(fields: [sportLeagueId, sportLeagueCompetitionSlotId], references: [sportLeagueId, id], onDelete: Restrict, map: "sport_league_season_competition_slots_definition_fkey")
+  eventSlot     SportEventSlot?
+  providerLinks SportLeagueSeasonCompetitionSlotProviderMapping[]
+  placedGames   SportLeagueSeasonCompetitionSlotGameProviderMapping[]
 
   /// The target of an event slot's composite key.
   @@unique([sportLeagueSeasonId, id], map: "sport_league_season_competition_slots_season_id_key")
@@ -3196,6 +3205,28 @@ model SportLeagueSeasonCompetitionSlotProviderMapping {
   @@unique([sportLeagueProviderMappingId, providerValue], map: "season_competition_slot_provider_mappings_value_key")
   @@index([sportLeagueId, sportLeagueSeasonCompetitionSlotId], map: "season_competition_slot_provider_mappings_slot_idx")
   @@map("sport_league_season_competition_slot_provider_mappings")
+}
+
+/// A provider's game the events sync placed in a Season slot (#2154): placement is worked out once,
+/// by the sync, and the field sync gives an event only its slots' games and their teams. A game sits
+/// in one slot per provider mapping; a later sync that places it elsewhere (a CFP game the bowls held
+/// until its seeds were placed) moves it.
+model SportLeagueSeasonCompetitionSlotGameProviderMapping {
+  id                                 String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sportLeagueId                      String   @map("sport_league_id") @db.Uuid
+  sportLeagueSeasonCompetitionSlotId String   @map("sport_league_season_competition_slot_id") @db.Uuid
+  sportLeagueProviderMappingId       String   @map("sport_league_provider_mapping_id") @db.Uuid
+  /// The provider's id for the game.
+  externalId                         String   @map("external_id") @db.VarChar(200)
+  createdAt                          DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt                          DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  seasonSlot                 SportLeagueSeasonCompetitionSlot @relation(fields: [sportLeagueId, sportLeagueSeasonCompetitionSlotId], references: [sportLeagueId, id], onDelete: Cascade, map: "season_slot_game_provider_mappings_slot_fkey")
+  sportLeagueProviderMapping SportLeagueProviderMapping @relation(fields: [sportLeagueId, sportLeagueProviderMappingId], references: [sportLeagueId, id], onDelete: Cascade, map: "season_slot_game_provider_mappings_mapping_fkey")
+
+  @@unique([sportLeagueProviderMappingId, externalId], map: "season_slot_game_provider_mappings_game_key")
+  @@index([sportLeagueId, sportLeagueSeasonCompetitionSlotId], map: "season_slot_game_provider_mappings_slot_idx")
+  @@map("sport_league_season_competition_slot_game_provider_mappings")
 }
 
 model ProviderSyncRun {

@@ -63,6 +63,7 @@ export type GamePickPreviewRequest = z.infer<typeof GamePickPreviewRequestSchema
 export const GamePickPreviewPickDtoSchema = GamePickDtoSchema.pick({
   predictedResult: true,
   sportEventParticipantId: true,
+  sideNumber: true,
   confidence: true,
 }).describe('A trial pick on one game, as it stands under the setup\'s rules.');
 export type GamePickPreviewPickDto = z.infer<typeof GamePickPreviewPickDtoSchema>;

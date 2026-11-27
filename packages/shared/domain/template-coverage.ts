@@ -5,7 +5,7 @@
  * Every rule here reads slot facts (competition, phase kind, slot kind, match format), never a name.
  */
 import { MatchFormat, SelectionType, SlotKind, TemplateCoverageMode } from './enums';
-import type { ContestTemplateSlot } from './contest-management-types';
+import type { ContestConfiguration, ContestTemplateSlot } from './contest-management-types';
 import type { ContestScoringSettings } from './contest-scoring';
 import { compareSlotDefinitions, compareSlotPlaces } from './sport-league-structure';
 
@@ -107,4 +107,48 @@ type CoveredSlot = Pick<ContestTemplateSlot, 'phase' | 'competitionOrderIndex' |
  */
 export function compareCoveredSlots(left: CoveredSlot, right: CoveredSlot): number {
   return compareSlotPlaces(left, right) || compareSlotDefinitions(left, right);
+}
+
+/**
+ * What a contest covers of its event (#2014): the slot definitions its template lists. Null for a
+ * contest made with no template, which covers every round until #2014 makes the template required.
+ */
+export interface ContestRoundCoverage {
+  slotDefinitionIds: readonly string[] | null;
+}
+
+type CoverableMatch = { roundNumber: number; slot: { slotDefinitionId: string } };
+
+/** Whether a contest covers a match's round: its slot's definition is one the contest's template lists. */
+export function coversMatchRound(coverage: ContestRoundCoverage, match: Pick<CoverableMatch, 'slot'>): boolean {
+  return coverage.slotDefinitionIds === null || coverage.slotDefinitionIds.includes(match.slot.slotDefinitionId);
+}
+
+/**
+ * The rounds of an event a contest covers, in play order (lowest first), by number. Since #2184 an
+ * event's play-in is its first round, and a bracket or knockout template leaves it out, so the
+ * NCAA tournament's covered rounds start at round 2, the round of 64.
+ */
+export function coveredRoundNumbers(coverage: ContestRoundCoverage, matches: readonly CoverableMatch[]): number[] {
+  return [...new Set(matches.filter((match) => coversMatchRound(coverage, match)).map((match) => match.roundNumber))]
+    .sort((left, right) => left - right);
+}
+
+/**
+ * What a win in round `roundNumber` scores under knockout round points (#2014): the value of that
+ * round's place among the contest's covered rounds (`roundValues[0]` the first covered round,
+ * whatever its number in the event). Undefined for a round the contest does not cover, which
+ * scores nothing, and for a covered round past the table's end.
+ */
+export function coveredRoundValue(roundValues: readonly number[], coveredRounds: readonly number[], roundNumber: number): number | undefined {
+  const place = coveredRounds.indexOf(roundNumber);
+  return place === -1 ? undefined : roundValues.at(place);
+}
+
+/**
+ * A contest's coverage from its configuration: the slots its template lists. A contest with no
+ * configuration or no template covers every round, until #2014 makes the template required.
+ */
+export function contestRoundCoverage(configuration: Pick<ContestConfiguration, 'coveredSlotDefinitionIds'> | null | undefined): ContestRoundCoverage {
+  return { slotDefinitionIds: configuration?.coveredSlotDefinitionIds ?? null };
 }

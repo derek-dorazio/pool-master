@@ -254,6 +254,11 @@ export const SlotProviderMatchType = {
   DATE_WINDOW: 'DATE_WINDOW',
   /** The calendar week a game is played in, by the one global week rule. */
   CALENDAR_WEEK: 'CALENDAR_WEEK',
+  /**
+   * Every game in the slot's window that no other slot places, whoever plays it (#2154): a
+   * phase's bowls beside its playoff, or a weekend of title games. Matched last.
+   */
+  REST_OF_PHASE: 'REST_OF_PHASE',
 } as const;
 export type SlotProviderMatchType = (typeof SlotProviderMatchType)[keyof typeof SlotProviderMatchType];
 /** The order the sync tries them in (plan §6). */
@@ -262,6 +267,7 @@ export const SlotProviderMatchTypeOrder = explicitOrder<SlotProviderMatchType>({
   [SlotProviderMatchType.NAME_PATTERN]: 1,
   [SlotProviderMatchType.DATE_WINDOW]: 2,
   [SlotProviderMatchType.CALENDAR_WEEK]: 3,
+  [SlotProviderMatchType.REST_OF_PHASE]: 4,
 });
 
 /**

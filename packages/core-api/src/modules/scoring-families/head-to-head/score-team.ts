@@ -3,15 +3,19 @@
  * the sum, over the matches it won, of that round's value plus the upset bonus. The family's rules,
  * all here:
  *
- * - A win in round N scores `roundValues[N - 1]`. Contest setup holds the table to one value per
- *   round of the event (design Q3.3), so a round with no value leaves the team unscored rather than
- *   scoring it 0.
+ * - Only the rounds the contest covers count (#2014): the rounds whose slot its template lists. A
+ *   win in a covered round scores the value of that round's place among the covered rounds
+ *   (`coveredRoundValue`), so a contest covering the round of 64 on scores a round of 64 win at
+ *   `roundValues[0]` though the play-in is the event's round 1, and a play-in win scores nothing.
+ *   Contest setup holds the table to one value per covered round (#2177), so a covered round with
+ *   no value leaves the team unscored rather than scoring it 0. A loss in any round still puts the
+ *   team out.
  * - With the SEED_DIFFERENCE bonus on, a win by the worse seed (the higher number) adds the seed
  *   difference times the multiplier. No bonus for equal seeds or when the better seed wins.
  * - An unseeded team counts as the field's worst seed: the highest seed number on the field, which
  *   is locked from release (design Q3.1).
- * - A bye counts as a win (#2170): a team placed straight into a later round scores the value of
- *   each round it skipped, as if it had won a match there, and the bye counts among its wins. The
+ * - A bye counts as a win (#2170): a team placed straight into a later covered round scores the
+ *   value of each covered round it skipped, as if it had won a match there, and the bye counts among its wins. The
  *   credit lands when the skipped round is decided (every one of its games has its result or was
  *   cancelled), the same moment that round's winners are scored. A bye earns no upset bonus,
  *   since nobody was beaten. `byeEntries` is the one reading of who had a bye, shared with
@@ -28,6 +32,10 @@ import {
   SportEventParticipantStatus,
   UpsetBonusRule,
   assertNever,
+  coveredRoundNumbers,
+  coveredRoundValue,
+  coversMatchRound,
+  type ContestRoundCoverage,
   type KnockoutRoundPointsSettings,
   type SportEventRoundMatch,
   type UpsetBonus,
@@ -86,7 +94,7 @@ export function byeEntries(
 
 /** How a team's knockout score came about: what a leaderboard pick shows beside its points. */
 export interface KnockoutTeamRecord {
-  /** Matches won, with each bye whose skipped round is decided counted as a win. */
+  /** Matches won in covered rounds, with each bye whose skipped round is decided counted as a win. */
   wins: number;
   /** The part of the score that is upset bonus; 0 with the bonus off. */
   upsetBonusPoints: number;
@@ -131,10 +139,14 @@ export function knockoutSeeds(field: ReadonlyArray<{ id: string; seedNumber?: nu
   return new Map(field.map((row) => [row.id, row.seedNumber ?? worstSeed]));
 }
 
-/** Every field row's knockout score and record under one contest's settings, in field order. */
+/**
+ * Every field row's knockout score and record under one contest's settings and coverage, in field
+ * order.
+ */
 export function scoreKnockoutField(
   field: readonly SportEventParticipantView[],
   settings: KnockoutRoundPointsSettings,
+  coverage: ContestRoundCoverage,
 ): KnockoutTeamScore[] {
   const decided = new Map<string, DecidedMatch>();
   for (const row of field) {
@@ -149,7 +161,12 @@ export function scoreKnockoutField(
   // Each row carries the matches it is in; the bracket is every one of them, once.
   const bracket = [...new Map(field.flatMap((row) => row.matches).map((match) => [match.id, match])).values()];
   const withdrawn = withdrawnRowIds(field.map((row) => row.entry), bracket);
-  const byes = byeEntries(bracket);
+  // The contest's own bracket is its covered rounds: a bye is a skipped covered round, and only a
+  // covered round's result is scored.
+  const covered = bracket.filter((match) => coversMatchRound(coverage, match));
+  const coveredRounds = coveredRoundNumbers(coverage, bracket);
+  const byes = byeEntries(covered);
+  const anyCoveredResult = [...decided.values()].some((result) => coversMatchRound(coverage, result.match));
 
   return field.map((row) => {
     const results = row.matches.flatMap((match) => {
@@ -157,21 +174,22 @@ export function scoreKnockoutField(
       return result ? [result] : [];
     });
     const won = results.filter((result) => result.winner === row.entry.id);
-    const upsetBonusPoints = won.reduce((total, result) => total + upsetBonusFor(
+    const wonCovered = won.filter((result) => coversMatchRound(coverage, result.match));
+    const upsetBonusPoints = wonCovered.reduce((total, result) => total + upsetBonusFor(
       settings.upsetBonus,
       seedById.get(row.entry.id) ?? null,
       seedById.get(result.loser ?? '') ?? null,
     ), 0);
-    const byeRounds = (byes.get(row.entry.id)?.skippedRounds ?? []).filter((roundNumber) => isMatchRoundDecided(bracket, roundNumber));
-    const roundPoints = [...byeRounds, ...won.map((result) => result.match.roundNumber)]
-      .map((roundNumber) => settings.roundValues.at(roundNumber - 1));
+    const byeRounds = (byes.get(row.entry.id)?.skippedRounds ?? []).filter((roundNumber) => isMatchRoundDecided(covered, roundNumber));
+    const roundPoints = [...byeRounds, ...wonCovered.map((result) => result.match.roundNumber)]
+      .map((roundNumber) => coveredRoundValue(settings.roundValues, coveredRounds, roundNumber));
     const record: KnockoutTeamRecord = {
-      wins: won.length + byeRounds.length,
+      wins: wonCovered.length + byeRounds.length,
       upsetBonusPoints,
       isAlive: !withdrawn.has(row.entry.id) && results.length === won.length,
     };
     const scoredRounds = roundPoints.filter((points): points is number => points !== undefined);
-    if (decided.size === 0 || scoredRounds.length < roundPoints.length) {
+    if (!anyCoveredResult || scoredRounds.length < roundPoints.length) {
       return { score: null, record };
     }
     return { score: scoredRounds.reduce((total, points) => total + points, 0) + upsetBonusPoints, record };

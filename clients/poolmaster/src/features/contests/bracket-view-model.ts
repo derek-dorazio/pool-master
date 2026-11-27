@@ -25,8 +25,8 @@ export interface BracketLine {
 
 export interface BracketDrawnGame {
   game: BracketGame;
-  /** Home first: the upper line on a neutral site. */
-  lines: [BracketLine, BracketLine];
+  /** One line per side of the game, side 1 first. */
+  lines: BracketLine[];
 }
 
 export interface BracketDrawnRound {
@@ -97,12 +97,12 @@ function drawLine(
 /** A region's winner as the entry picked it: its last game's pick, marked by how that pick stands. */
 function winnerLine(game: BracketGame): BracketLine | null {
   const id = pickedTeamId(game);
-  const team = [game.predictedHome, game.predictedAway].find((side) => side?.sportEventParticipantId === id) ?? null;
+  const team = game.sides.find((side) => side.predictedTeam?.sportEventParticipantId === id)?.predictedTeam ?? null;
   if (!team) {
     return null;
   }
   const realWinner = game.status === MatchStatus.COMPLETED && game.pick?.outcome === PickOutcome.BUSTED
-    ? [game.home, game.away].find((side) => side && side.sportEventParticipantId !== id) ?? null
+    ? game.sides.find((side) => side.team !== null && side.team.sportEventParticipantId !== id)?.team ?? null
     : null;
   return { team, mark: markOf(game.pick), actual: realWinner, isPicked: false, openLabel: '' };
 }
@@ -126,10 +126,14 @@ export function drawBracket(games: readonly BracketGame[]): BracketDrawing {
       regionLabel: region.regionLabel,
       games: region.games.map((game): BracketDrawnGame => ({
         game,
-        lines: [
-          drawLine(game, game.predictedHome, game.home, game.predictedHome ? feederPicks.get(`${round.roundNumber}:${game.predictedHome.sportEventParticipantId}`) : undefined, openLabel),
-          drawLine(game, game.predictedAway, game.away, game.predictedAway ? feederPicks.get(`${round.roundNumber}:${game.predictedAway.sportEventParticipantId}`) : undefined, openLabel),
-        ],
+        // One line per side, side 1 first.
+        lines: [...game.sides].sort((left, right) => left.sideNumber - right.sideNumber).map((side) => drawLine(
+          game,
+          side.predictedTeam,
+          side.team,
+          side.predictedTeam ? feederPicks.get(`${round.roundNumber}:${side.predictedTeam.sportEventParticipantId}`) : undefined,
+          openLabel,
+        )),
       })),
     }));
     // This round's picks mark the lines their teams stand on in the next.

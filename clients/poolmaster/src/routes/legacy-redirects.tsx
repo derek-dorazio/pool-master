@@ -19,7 +19,7 @@ import {
   buildLeagueTeamPastContestsPath,
 } from '@/features/leagues/league-routing';
 import { useLeagueContext } from '@/features/leagues/use-league-context';
-import { ACTIVITY_PATH, buildManageUserPath, buildSportPath, LEGACY_SYNC_PATH, PROVIDERS_PATH } from '@/features/root-admin/manage-navigation';
+import { ACTIVITY_PATH, buildManageUserPath, LEGACY_SYNC_PATH, PROVIDERS_PATH } from '@/features/root-admin/manage-navigation';
 
 export function LegacyJoinInviteRedirect() {
   const { inviteCode = '' } = useParams<{ inviteCode: string }>();
@@ -92,34 +92,6 @@ export function LegacyContestTypesRedirect() {
   }
   const canManage = viewer.isCommissioner || viewer.isRootAdmin;
   return <Navigate replace to={canManage ? buildLeagueContestTypesPath(leagueCode) : HOW_TO_PLAY_PATH} />;
-}
-
-/**
- * Golf's Manage pages moved under `/manage/sports/golf` when horse racing joined them
- * (plans/racing-sports.md Q9.6): one copy of every event, field and tier page serves each sport.
- * An old golf link lands on the same page there. Its lists took the sport-neutral names
- * (tournaments are events, players are participants), and Scores became Results.
- */
-const LEGACY_GOLF_LISTS: Readonly<Record<string, string>> = {
-  tournaments: 'events',
-  players: 'participants',
-  leagues: 'leagues',
-};
-
-export function LegacyGolfManageRedirect() {
-  const { pathname, search } = useLocation();
-  // The old address names its sport by the segment the sport's Manage pages still use.
-  const [, , sportUrlSegment = '', ...segments] = pathname.split('/');
-  const listed = segments.filter(Boolean);
-  const list = listed.at(0);
-  const rest = listed.slice(1);
-  const golfPath = buildSportPath(sportUrlSegment);
-  const movedList = list === undefined ? undefined : LEGACY_GOLF_LISTS[list];
-  if (!movedList) {
-    return <Navigate replace to={`${golfPath}/events`} />;
-  }
-  const movedRest = rest.map((segment, index) => (index === rest.length - 1 && segment === 'scores' ? 'results' : segment));
-  return <Navigate replace to={`${[golfPath, movedList, ...movedRest].join('/')}${search}`} />;
 }
 
 /** The old Edit league page: General's Edit is now a dialog on League settings. */

@@ -108,6 +108,7 @@ function contest(overrides: Partial<Contest> = {}): Contest {
 function configuration(overrides: Partial<ContestConfiguration> = {}): ContestConfiguration {
   return {
     id: 'config-1',
+    coveredSlotDefinitionIds: null,
     contestId: CONTEST_ID,
     selectionType: SelectionType.TIERED,
     // Every tier takes the contest's picksPerTier (#479): two tiers × 2 is a roster of 4.

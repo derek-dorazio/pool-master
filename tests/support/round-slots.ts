@@ -13,8 +13,11 @@ function slotIdOf(name: string): string {
 }
 
 export function roundSlot(slotKind: SlotKind, overrides: Partial<SportEventRoundSlot> = {}): SportEventRoundSlot {
+  const seasonSlotId = overrides.seasonSlotId ?? slotIdOf(`${slotKind}-${String(overrides.weekNumber ?? 0)}`);
   return {
-    seasonSlotId: slotIdOf(`${slotKind}-${String(overrides.weekNumber ?? 0)}`),
+    seasonSlotId,
+    // Each Season slot plays a definition of its own, unless the test names one.
+    slotDefinitionId: slotIdOf(`definition-${seasonSlotId}`),
     name: null,
     slotKind,
     weekNumber: null,

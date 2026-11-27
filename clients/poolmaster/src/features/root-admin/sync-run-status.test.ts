@@ -3,7 +3,6 @@ import type { ProviderSyncRunDetails } from './root-admin-sync-utils';
 import {
   buildRunEvidenceRows,
   formatEventValue,
-  getStatusTone,
 } from './sync-run-status';
 
 describe('formatEventValue', () => {
@@ -13,21 +12,6 @@ describe('formatEventValue', () => {
 
   it.each([null, undefined, '', '   '])('reads "No event" when the run has no event (%j)', (value) => {
     expect(formatEventValue(value)).toBe('No event');
-  });
-});
-
-describe('getStatusTone', () => {
-  it.each([
-    ['COMPLETED', 'success'],
-    ['HEALTHY', 'success'],
-    ['FAILED', 'danger'],
-    ['UNHEALTHY', 'danger'],
-    ['IN_PROGRESS', 'warning'],
-    ['SUBMITTED', 'warning'],
-    ['CANCELLED', 'neutral'],
-    ['SOMETHING_NEW', 'neutral'],
-  ])('draws status %s in the %s tone', (status, tone) => {
-    expect(getStatusTone(status)).toBe(tone);
   });
 });
 

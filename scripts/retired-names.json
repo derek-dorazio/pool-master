@@ -99,7 +99,14 @@
     "RaceResultStatus": "#2008 (10b): GameSideStatus, a FIELD Game side's status",
     "sportEventParticipantRaceResult": "#2008 (10b): a race's result is its runner's side result in the race's FIELD Game",
     "SportEventParticipantRaceResultRepository": "#2008 (10b): RaceOrderRepository, the race's FIELD Game side results",
-    "raceResultRows": "#2008 (10b): RaceOrderRepository reads the race's side results"
+    "raceResultRows": "#2008 (10b): RaceOrderRepository reads the race's side results",
+    "homeSpread": "#2016: side 1's spread on the game's sides",
+    "predictedHome": "#2016: each side's predictedTeam",
+    "predictedAway": "#2016: each side's predictedTeam",
+    "MatchSide": "#2016 (17, main PR): bracket reseed; #2182: provider adapters, slate and synced field job advancesTo; #2019: squares. Sides by number",
+    "sideNumberOfMatchSide": "#2016 (17, main PR): bracket reseed; #2182: provider adapters, slate and synced field job advancesTo; #2019: squares. Sides by number",
+    "matchSideOfSideNumber": "#2016 (17, main PR): bracket reseed; #2182: provider adapters, slate and synced field job advancesTo; #2019: squares. Sides by number",
+    "teamOnMatchSide": "#2016: sideParticipantId by side number"
   },
   "ROUND_NAMES_FROM_FINAL": 0,
   "roundLabel": 0,
@@ -122,9 +129,9 @@
   "isCupSeasonOver": 5,
   "playoffYearOffset": 8,
   "ROSTER_ROLLOVER_MONTH": 2,
-  "useProviderName": 1,
-  "getStatusTone": 1,
-  "SYNC_STATUS_OPTIONS": 2,
+  "useProviderName": 0,
+  "getStatusTone": 0,
+  "SYNC_STATUS_OPTIONS": 0,
   "NFL_POSTSEASON_ROUNDS": 4,
   "NFL_POSTSEASON_GAMES": 2,
   "firstFourRound": 7,
@@ -199,5 +206,12 @@
   "RaceResultStatus": 0,
   "sportEventParticipantRaceResult": 0,
   "SportEventParticipantRaceResultRepository": 0,
-  "raceResultRows": 0
+  "raceResultRows": 0,
+  "homeSpread": 0,
+  "predictedHome": 0,
+  "predictedAway": 0,
+  "MatchSide": 64,
+  "sideNumberOfMatchSide": 17,
+  "matchSideOfSideNumber": 3,
+  "teamOnMatchSide": 0
 }

@@ -3,7 +3,7 @@
  * with a `SurvivorLeaderboardModel`; the published `SurvivorLeaderboardResponse` is shaped here.
  */
 
-import type { MatchSide, MatchStatus, SportEventStatus, SurvivorWeekOutcome } from '@poolmaster/shared/domain';
+import type { HomeAway, MatchStatus, SportEventStatus, SurvivorWeekOutcome } from '@poolmaster/shared/domain';
 import type { SurvivorLeaderboardResponse } from '@poolmaster/shared/dto';
 
 export interface SurvivorLeaderboardWeekRow {
@@ -23,8 +23,10 @@ export interface SurvivorLeaderboardWeekRow {
 export interface SurvivorLeaderboardPickGameRow {
   opponent: string;
   opponentShortName: string | null;
-  side: MatchSide;
-  isNeutralSite: boolean;
+  /** The picked team's side in the game. */
+  sideNumber: number;
+  /** Where the picked team played: its side's place in the game's first Game. */
+  homeAway: HomeAway;
   scheduledDate: Date | null;
   status: MatchStatus;
   teamScore: number | null;

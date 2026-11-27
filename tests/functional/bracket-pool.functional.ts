@@ -62,6 +62,7 @@ import { sportRowKeys } from '../support/sport-rows';
 import { insertTestSportLeague } from '../support/test-sport-league';
 import type { TestRoundSlot } from '../support/event-edition';
 import { bracketMatch, readHomeAway, resultBody } from '../support/match-requests';
+import { HOME_SIDE, pickSideOf, predictedHomeAndAway, type PickSides } from '../support/match-sides';
 import { setFieldRows } from './field-rows';
 
 // Bracket pools end to end over HTTP (#721). An admin releases a knockout; a commissioner runs a
@@ -102,6 +103,8 @@ async function cleanup(): Promise<void> {
     await db.participant.deleteMany({ where: { id: { in: [...created.participantIds] } } });
   }
   if (created.sportLeagueIds.size) {
+    // A league with setups cannot be deleted: the play-in test's own setup goes first.
+    await db.contestConfigTemplate.deleteMany({ where: { sportLeagueId: { in: [...created.sportLeagueIds] } } });
     await deleteTestSportLeagues(db, [...created.sportLeagueIds]);
   }
 }
@@ -199,7 +202,7 @@ async function releasedKnockout(options: {
 
   const bracket = expectMatchesSchema(SportEventBracketResponseSchema, (await getEventBracket({ client: a, path: { eventId } })).data).matches;
   const gameId = (place: MatchPlace) => expectDefined(bracket.find((match) => isAtPlace(match, place)), describeMatchPlace(place)).id;
-  return { admin: a, eventId, row, seedOf, gameId };
+  return { admin: a, eventId, sportLeagueId, row, seedOf, gameId };
 }
 
 /** A league of three teams: the commissioner's and two members'. */
@@ -278,9 +281,9 @@ describe('SDK Functional: a bracket pool (#721)', () => {
     const BRACKET_ORDER = [1, 2, 3, 4, 5, 6, 7, 8].map((matchNumber) => at(1, matchNumber))
       .concat([1, 2, 3, 4].map((matchNumber) => at(2, matchNumber)), [at(3, 1), at(3, 2), at(4, 1)]);
     const picksOf = (winners: readonly number[]) => winners.map((seed, index) => pick(expectDefined(BRACKET_ORDER[index]), seed));
-    const predictedSeeds = (view: { games: Array<MatchPlace & { predictedHome: { sportEventParticipantId: string } | null; predictedAway: { sportEventParticipantId: string } | null }> }, place: MatchPlace) => {
+    const predictedSeeds = (view: { games: Array<MatchPlace & PickSides> }, place: MatchPlace) => {
       const game = expectDefined(view.games.find((each) => isAtPlace(each, place)));
-      return [game.predictedHome?.sportEventParticipantId ?? null, game.predictedAway?.sportEventParticipantId ?? null];
+      return predictedHomeAndAway(game);
     };
 
     // The winners of the 15 games, in bracket order. Chalk: the better seed wins every game.
@@ -292,7 +295,7 @@ describe('SDK Functional: a bracket pool (#721)', () => {
     expect(fresh).toMatchObject({ selectionType: SelectionType.BRACKET, mode: null, gameCount: 15, pickedCount: 0, tiebreakerValue: null, canSubmit: false });
     expect(predictedSeeds(fresh, at(1, 1))).toEqual([row(1), row(16)]);
     // Each team carries its seed, which the bracket shows beside its name.
-    expect(fresh.games.find((game) => isAtPlace(game, at(1, 1)))?.predictedHome?.seedNumber).toBe(1);
+    expect(pickSideOf(expectDefined(fresh.games.find((game) => isAtPlace(game, at(1, 1)))), HOME_SIDE).predictedTeam?.seedNumber).toBe(1);
     expect(predictedSeeds(fresh, at(2, 1))).toEqual([null, null]);
 
     // --- Alice fills in the whole bracket in one request, with her tiebreaker ------------------
@@ -494,10 +497,10 @@ describe('SDK Functional: a bracket pool (#721)', () => {
     const bobEntry = expectDefined((await enterContest({ client: bob.client, path: { contestId } })).data).entry.id;
     const path = (entryId: string) => ({ contestId, entryId, sportEventId: eventId });
     const pick = (place: MatchPlace, seed: number) => ({ sportEventRoundMatchId: gameId(place), predictedResult: PredictedResult.TEAM, sportEventParticipantId: row(seed), confidence: null });
-    const divisional = (view: { games: Array<MatchPlace & { predictedHome: { sportEventParticipantId: string } | null; predictedAway: { sportEventParticipantId: string } | null }> }) =>
+    const divisional = (view: { games: Array<MatchPlace & PickSides> }) =>
       [at(2, 1), at(2, 2)].map((place) => {
         const game = expectDefined(view.games.find((each) => isAtPlace(each, place)));
-        return [seedOf(game.predictedHome?.sportEventParticipantId), seedOf(game.predictedAway?.sportEventParticipantId)];
+        return predictedHomeAndAway(game).map((id) => seedOf(id));
       });
 
     // Alice has the 7 upsetting the 2, so her Divisional round is 1-7 and 3-5; she takes the 5 to the final.
@@ -543,5 +546,90 @@ describe('SDK Functional: a bracket pool (#721)', () => {
     expect(expectDefined((await getContest({ client: bob.client, path: { contestId } })).data).contest.status).toBe(ContestStatus.COMPLETED);
     const frozen = await getFunctionalPrisma().contestEntryStanding.findMany({ where: { contestId }, orderBy: { position: 'asc' } });
     expect(frozen.map((standing) => [standing.contestEntryId, standing.totalScore, standing.displayPosition])).toEqual([[aliceEntry, 11, '1'], [bobEntry, 3, '2']]);
+  });
+
+  it('leaves an event\'s play-in out of a bracket whose template covers the rounds after it, scoring its first covered round at the first round value', async () => {
+    // A play-in is the event's round 1 (#2184): seeds 4 and 5 play for the place against the 1
+    // seed in round 2. The contest's setup lists the semi-final and final slots only.
+    const { admin: a, eventId, sportLeagueId, row, gameId } = await releasedKnockout({
+      label: 'PlayIn',
+      seeds: [1, 2, 3, 4, 5],
+      rounds: 3,
+      tierSize: 1,
+      roundSlots: [{ slotKind: 'PLAY_IN' }, { slotKind: 'SEMIFINAL' }, { slotKind: 'FINAL' }],
+      matches: [
+        { matchNumber: 1, roundNumber: 1, home: 4, away: 5, advancesTo: { ...at(2, 1), side: MatchSide.AWAY } },
+        { matchNumber: 1, roundNumber: 2, home: 1, away: null, advancesTo: { ...at(3, 1), side: MatchSide.HOME } },
+        { matchNumber: 2, roundNumber: 2, home: 2, away: 3, advancesTo: { ...at(3, 1), side: MatchSide.AWAY } },
+        { matchNumber: 1, roundNumber: 3, home: null, away: null, advancesTo: null },
+      ],
+    });
+    const db = getFunctionalPrisma();
+    const eventSlots = await db.sportEventSlot.findMany({
+      where: { sportEventId: eventId },
+      select: { seasonSlot: { select: { sportLeagueCompetitionSlotId: true, definition: { select: { slotKind: true } } } } },
+    });
+    const definitionOf = (slotKind: string) => expectDefined(eventSlots.find((slot) => slot.seasonSlot.definition.slotKind === slotKind), slotKind).seasonSlot.sportLeagueCompetitionSlotId;
+    const template = await db.contestConfigTemplate.create({
+      data: {
+        sportLeagueId,
+        contestFormat: ContestFormat.PREDICTION,
+        selectionType: SelectionType.BRACKET,
+        templateKey: `play-in-bracket-${RUN}`,
+        name: 'Bracket',
+        description: 'Pick every game from the semi-finals on.',
+        sortOrder: 1,
+        coverageMode: 'ALL_LISTED',
+        configJson: {
+          selectionType: SelectionType.BRACKET,
+          maxEntriesPerSquad: 1,
+          scoring: { participantScoringDefinitionId: 'KNOCKOUT_ROUND_POINTS', config: { roundValues: [1, 4], upsetBonus: { rule: 'NONE' } } },
+        },
+      },
+    });
+    await db.contestConfigTemplateSlot.createMany({
+      data: ['SEMIFINAL', 'FINAL'].map((slotKind) => ({ sportLeagueId, templateId: template.id, sportLeagueCompetitionSlotId: definitionOf(slotKind) })),
+    });
+    const win = async (place: MatchPlace, winnerSide: MatchSide) => {
+      const result = await recordEventMatchResult({ client: a, path: { eventId, ...place }, body: resultBody({ winnerSide, homeScore: 70, awayScore: 60 }) });
+      expect([result.error, result.response?.status]).toEqual([undefined, 200]);
+    };
+
+    const { commissioner, league } = await leagueOfThree('PlayIn');
+    const created = await createContest({
+      client: commissioner.client,
+      path: { id: league.id },
+      body: { name: `Play-in Bracket ${RUN}`, sportEventIds: [eventId], contestFormat: ContestFormat.PREDICTION, selectionType: SelectionType.BRACKET, templateId: template.id },
+    });
+    const contestId = expectDefined(created.data, JSON.stringify(created.error)).contest.id;
+    expect((await openContest({ client: commissioner.client, path: { id: league.id, contestId } })).data?.contest.status).toBe(ContestStatus.OPEN);
+    const entryId = expectDefined((await enterContest({ client: commissioner.client, path: { contestId } })).data).entry.id;
+    const path = { contestId, entryId, sportEventId: eventId };
+    const pick = (place: MatchPlace, seed: number) => ({ sportEventRoundMatchId: gameId(place), predictedResult: PredictedResult.TEAM, sportEventParticipantId: row(seed), confidence: null });
+
+    // The bracket asks the three games from the semi-finals on, and no pick of the play-in.
+    const fresh = expectMatchesSchema(GamePicksResponseSchema, (await getGamePicks({ client: commissioner.client, path })).data);
+    expect([fresh.gameCount, fresh.games.map(matchPlaceOf)]).toEqual([3, [at(2, 1), at(2, 2), at(3, 1)]]);
+    expectFunctionalError(
+      await saveGamePicks({ client: commissioner.client, path, body: { picks: [pick(at(1, 1), 4)] } }),
+      { status: 404, code: 'PREDICTION_GAME_NOT_FOUND' },
+    );
+
+    // The play-in's winner takes its semi-final place as a real team, and the entry picks every game.
+    await win(at(1, 1), MatchSide.HOME);
+    const saved = expectMatchesSchema(GamePicksResponseSchema, (await saveGamePicks({
+      client: commissioner.client, path, body: { picks: [pick(at(2, 1), 1), pick(at(2, 2), 2), pick(at(3, 1), 1)], tiebreakerValue: 130 },
+    })).data);
+    expect(saved).toMatchObject({ pickedCount: 3, gameCount: 3, canSubmit: true });
+    expect((await submitGamePicks({ client: commissioner.client, path })).data?.status).toBe(ContestEntryStatus.SUBMITTED);
+
+    expect((await transitionEvent({ client: a, path: { eventId }, body: { toStatus: 'IN_PROGRESS' } })).data?.event.status).toBe('IN_PROGRESS');
+    await win(at(2, 1), MatchSide.HOME);
+    await win(at(2, 2), MatchSide.HOME);
+    await win(at(3, 1), MatchSide.HOME);
+
+    // Two semi-final wins at the first value, 1 each, and the final at the second, 4.
+    const board = expectMatchesSchema(BracketLeaderboardResponseSchema, (await getBracketLeaderboard({ client: commissioner.client, path: { contestId } })).data);
+    expect(board.entries.map((entry) => [entry.entryId, entry.points, entry.maxPossiblePoints])).toEqual([[entryId, 6, 6]]);
   });
 });

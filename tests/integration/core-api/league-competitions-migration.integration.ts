@@ -19,18 +19,29 @@ const NCAA_FOOTBALL_ID = '37b259d2-b681-4ca5-94d4-894d5e9bcc10';
 const NFL_ID = 'f91f2566-1978-4171-a706-ae417c4d601a';
 
 describe('the league competitions migration', () => {
-  it('gives every seeded phase one competition at order 1, coded as the phase but for NCAA Men\'s Football\'s postseason, the CFP', async () => {
+  it('gives every other league\'s seeded phase one competition at order 1, coded as the phase', async () => {
     const phases = await getPrisma().sportLeaguePhase.findMany({
+      where: { sportLeagueId: { not: NCAA_FOOTBALL_ID } },
       select: { sportLeagueId: true, phase: true, competitions: { select: { code: true, orderIndex: true } } },
     });
 
     expect(phases.length).toBeGreaterThan(0);
     expect(phases.filter((phase) => phase.competitions.length !== 1)).toEqual([]);
-    const unexpected = phases.filter(({ sportLeagueId, phase, competitions: [competition] }) => {
-      const code = sportLeagueId === NCAA_FOOTBALL_ID && phase === LeaguePhase.POSTSEASON ? 'CFP' : phase;
-      return competition.code !== code || competition.orderIndex !== 1;
+    expect(phases.filter(({ phase, competitions: [competition] }) => competition.code !== phase || competition.orderIndex !== 1)).toEqual([]);
+  });
+
+  it('gives NCAA Men\'s Football\'s postseason the bowls and then the CFP, and its conference postseason the conference championships (#2154)', async () => {
+    const phases = await getPrisma().sportLeaguePhase.findMany({
+      where: { sportLeagueId: NCAA_FOOTBALL_ID },
+      select: { phase: true, isSynced: true, competitions: { select: { code: true, orderIndex: true }, orderBy: { orderIndex: 'asc' } } },
+      orderBy: { phase: 'asc' },
     });
-    expect(unexpected).toEqual([]);
+
+    expect(phases).toEqual([
+      { phase: LeaguePhase.REGULAR, isSynced: false, competitions: [{ code: 'REGULAR', orderIndex: 1 }] },
+      { phase: LeaguePhase.POSTSEASON_CONFERENCE, isSynced: true, competitions: [{ code: 'CONFERENCE_CHAMPIONSHIPS', orderIndex: 1 }] },
+      { phase: LeaguePhase.POSTSEASON, isSynced: true, competitions: [{ code: 'BOWLS', orderIndex: 1 }, { code: 'CFP', orderIndex: 2 }] },
+    ]);
   });
 
   it('gives every Season phase a scheduled Season competition for each competition of its phase, with no champion', async () => {
@@ -95,5 +106,30 @@ describe('the league competitions migration', () => {
       ['FINAL', 'CONFIRMED'], ['QUARTERFINAL', 'CONFIRMED'], ['ROUND_OF_16', 'TENTATIVE'], ['SEMIFINAL', 'CONFIRMED'],
     ]);
     expect(of2026.every((slot) => slot.windowStartsAt !== null && slot.windowEndsAt !== null)).toBe(true);
+  });
+
+  it('gives the bowls and the conference championships one squares-eligible single-game slot each, matched REST_OF_PHASE, in every Season, with tentative 2026 windows (#2154)', async () => {
+    const prisma = getPrisma();
+    const definitions = await prisma.sportLeagueCompetitionSlot.findMany({
+      where: { sportLeagueId: NCAA_FOOTBALL_ID, key: { in: ['BOWLS', 'CONFERENCE_CHAMPIONSHIPS'] } },
+      select: {
+        key: true, slotKind: true, squaresEligible: true, seriesFormat: true, matchFormat: true,
+        competition: { select: { code: true } },
+        providerMappings: { select: { matchType: true, providerValue: true } },
+        seasonSlots: { where: { isTestData: false }, select: { windowStatus: true, windowStartsAt: true, season: { select: { championshipYear: true } } } },
+      },
+      orderBy: { key: 'asc' },
+    });
+
+    expect(definitions.map(({ seasonSlots: _seasonSlots, ...definition }) => definition)).toEqual(['BOWLS', 'CONFERENCE_CHAMPIONSHIPS'].map((key) => ({
+      key, slotKind: 'TOURNAMENT', squaresEligible: true, seriesFormat: 'SINGLE_GAME', matchFormat: 'HEAD_TO_HEAD',
+      competition: { code: key }, providerMappings: [{ matchType: 'REST_OF_PHASE', providerValue: null }],
+    })));
+    for (const definition of definitions) {
+      const byYear = new Map(definition.seasonSlots.map((slot) => [slot.season.championshipYear, slot]));
+      expect([...byYear.keys()].sort((left, right) => left - right)).toEqual([2025, 2026, 2027]);
+      expect(byYear.get(2026)?.windowStatus).toBe('TENTATIVE');
+      expect(byYear.get(2027)?.windowStartsAt).toBeNull();
+    }
   });
 });

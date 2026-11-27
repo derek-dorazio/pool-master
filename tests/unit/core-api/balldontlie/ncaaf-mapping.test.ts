@@ -6,6 +6,7 @@ import {
   cfpScopeId,
   parseCfpScope,
   teamsOfGames,
+  toNcaafScheduledGames,
   toCfpEvent,
   toCfpGameScoreUpdates,
   toNcaafTeamParticipant,
@@ -32,22 +33,35 @@ describe('College Football Playoff scopes', () => {
   });
 });
 
-describe('a College Football Playoff as an event', () => {
-  it('carries every game of its season as a play with no code and its two teams\' feed ids, for the sync to place by date window, spanning its first game to its last', () => {
+describe('a college football season as one provider event', () => {
+  it('carries every game of its season as a play with no code, its two teams\' feed ids and its own feed id, for the sync to place by date window and record where it went, spanning its first game to its last', () => {
     const event = toCfpEvent(CFP_2025, season2025);
     expect(event).toEqual({
       externalId: 'ncaaf-2025-cfp',
       providerId: 'balldontlie',
       sport: Sport.FOOTBALL,
-      name: 'College Football Playoff',
+      name: 'College football 2025 season',
       startDate: new Date('2025-11-29T17:00:00.000Z'),
       endDate: new Date('2026-01-20T00:30:00.000Z'),
       status: 'COMPLETED',
       fieldLocked: true,
       providerSlots: season2025.map((game) => ({
-        code: null, startsAt: new Date(game.date as string), endsAt: new Date(game.date as string), teams: [String(game.home_team?.id), String(game.visitor_team?.id)],
+        code: null, startsAt: new Date(game.date as string), endsAt: new Date(game.date as string), teams: [String(game.home_team?.id), String(game.visitor_team?.id)], gameIds: [String(game.id)],
       })),
     });
+  });
+
+  it('lists every game as a one-game match of round 1, home side as the feed names it, by the game\'s own feed id, for a bowl or title-game event to make its Matches from (#2154)', () => {
+    const [first] = season2025;
+    expect(toNcaafScheduledGames(season2025)).toHaveLength(season2025.length);
+    expect(toNcaafScheduledGames([first])).toEqual([{
+      games: [{ providerGameId: String(first.id), gameNumber: 1 }],
+      roundNumber: 1,
+      homeTeamExternalId: String(first.home_team?.id),
+      awayTeamExternalId: String(first.visitor_team?.id),
+      scheduledAt: new Date(first.date as string),
+      isNeutralSite: false,
+    }]);
   });
 
   it('is under way with its field locked once a game is live', () => {

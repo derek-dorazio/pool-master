@@ -275,6 +275,10 @@ function createSportEventReader(overrides?: Partial<{
   undecidedGameCount: number;
   gamesWithoutSpreadCount: number;
   bracketProblem: string | null;
+  /** How many rounds a template's coverage covers; by default every round of the event. */
+  coveredRoundCount: number;
+  /** The slot definitions the event's rounds play; a template listing all of them covers every round. */
+  slotDefinitionIds: string[];
   squaresFromRound: number | null;
   participantType: ParticipantType;
   scoringFamily: ScoringFamily;
@@ -286,6 +290,7 @@ function createSportEventReader(overrides?: Partial<{
   countUndecidedGames: jest.Mock;
   countGamesWithoutSpread: jest.Mock;
   findBracketProblem: jest.Mock;
+  countCoveredRounds: jest.Mock;
   findCutoffTiming: jest.Mock;
   findGame: jest.Mock;
 } {
@@ -295,6 +300,7 @@ function createSportEventReader(overrides?: Partial<{
     countUndecidedGames: jest.fn().mockResolvedValue(overrides?.undecidedGameCount ?? 0),
     countGamesWithoutSpread: jest.fn().mockResolvedValue(overrides?.gamesWithoutSpreadCount ?? 0),
     findBracketProblem: jest.fn().mockResolvedValue(overrides?.bracketProblem ?? null),
+    countCoveredRounds: jest.fn().mockResolvedValue(overrides?.coveredRoundCount ?? (overrides?.rounds === undefined ? 4 : overrides.rounds)),
     // The event's own timing for an ordinary contest; a later round's start would read its games, of which this event has none.
     findCutoffTiming: mockFn<ContestCreateSportEventReader['findCutoffTiming']>(async (sportEvent, cutoff) => cutoffTiming(cutoff, sportEvent, [])),
     findGame: jest.fn().mockResolvedValue(null),
@@ -308,6 +314,7 @@ function createSportEventReader(overrides?: Partial<{
       playsMatches: overrides?.playsMatches ?? false,
       participantCount: overrides?.participantCount ?? 72,
       rounds: overrides?.rounds === undefined ? 4 : overrides.rounds,
+      slotDefinitionIds: overrides?.slotDefinitionIds ?? [],
       salaryCap: overrides?.salaryCap ?? null,
       squaresFromRound: overrides?.squaresFromRound ?? null,
       ...(overrides?.participantType !== undefined && { participantType: overrides.participantType }),
@@ -1935,6 +1942,52 @@ describe('ContestManagementService finish-position scoring (#622)', () => {
     expect(scoringRuleRepo.create).not.toHaveBeenCalled();
   });
 
+  /**
+   * A knockout setup from a template that lists the event's rounds after its play-in (#2014): the
+   * reader counts the event's rounds whose slot the template lists.
+   */
+  async function playInTemplateCreate(roundValues: number[]) {
+    const templateRepo = createContestConfigTemplateRepo();
+    const template = await templateRepo.findById('11111111-1111-4111-8111-111111111111');
+    jest.mocked(templateRepo.findById).mockResolvedValue({
+      ...expectDefined(template, 'the stub template'),
+      coverageMode: TemplateCoverageMode.ALL_LISTED,
+      slots: [],
+      selectionType: SelectionType.RANDOM_DRAW,
+      configJson: { ...drawRules, scoring: knockoutScoring(roundValues) },
+    });
+    const sportEventReader = createSportEventReader({ sport: Sport.BASKETBALL, playsMatches: true, rounds: 4, coveredRoundCount: 3, slotDefinitionIds: ['play-in-definition'] });
+    const contestCoreRepo = createContestRepo();
+    const service = new ContestManagementService({
+      domainEvents: testDomainEvents(),
+      contests: contestCoreRepo,
+      configTemplates: templateRepo,
+      configurations: createContestConfigurationRepo(),
+      scoringRules: createParticipantScoringRuleRepo(),
+      tiers: createSportEventTierServiceStub(),
+      sportEventReader,
+      cups: createCupKeeper(),
+      planEntitlements: platinumEntitlements(),
+    });
+    const request = raceRequest({ name: 'Knockout Draw', templateId: '11111111-1111-4111-8111-111111111111', configuration: undefined });
+    return { contestCoreRepo, sportEventReader, create: () => service.createContest({ leagueId: 'league-1' }, request) };
+  }
+
+  it('takes a template\'s knockout round values when they give one value per round the template covers, the play-in left out', async () => {
+    const { contestCoreRepo, sportEventReader, create } = await playInTemplateCreate([1, 2, 4]);
+
+    await create();
+    expect(contestCoreRepo.create).toHaveBeenCalled();
+    expect(sportEventReader.countCoveredRounds).toHaveBeenCalledWith('11111111-1111-1111-1111-111111111111', { slotDefinitionIds: [] });
+  });
+
+  it('refuses a template\'s knockout round values that give one value per round of the event, play-in included, with 422 CONTEST_SCORING_ROUNDS_MISMATCH', async () => {
+    const { contestCoreRepo, create } = await playInTemplateCreate([1, 2, 4, 8]);
+
+    await expect(create()).rejects.toMatchObject({ code: CONTEST_SCORING_ROUNDS_MISMATCH, statusCode: 422 });
+    expect(contestCoreRepo.create).not.toHaveBeenCalled();
+  });
+
   it('refuses knockout round values on an event with no rounds with 422 CONTEST_SCORING_ROUNDS_MISMATCH, saying the event has no rounds', async () => {
     const { contestCoreRepo, service } = basketballService(null);
 
@@ -1995,6 +2048,7 @@ describe('ContestManagementService — a contest of several events', () => {
       countUndecidedGames: jest.fn().mockResolvedValue(0),
       countGamesWithoutSpread: jest.fn().mockResolvedValue(0),
       findBracketProblem: jest.fn().mockResolvedValue(null),
+      countCoveredRounds: jest.fn().mockResolvedValue(4),
       findCutoffTiming: mockFn<ContestCreateSportEventReader['findCutoffTiming']>(async (sportEvent, cutoff) => cutoffTiming(cutoff, sportEvent, [])),
       findGame: jest.fn().mockResolvedValue(null),
     };
@@ -2144,32 +2198,17 @@ describe('ContestManagementService — a contest of several events', () => {
     expect(contestRepo.replaceSportEvents).not.toHaveBeenCalled();
   });
 
-  it('moves a draft swapped onto next year\'s edition into that season: its season year becomes 2027 and the 2027 cup is made', async () => {
+  it('keeps a contest in the Season it was created in: an event of another Season is refused with 422 CONTEST_EVENTS_SEASON_MISMATCH, its events, season and cups unchanged', async () => {
     const NEXT_MASTERS = '66666666-6666-4666-8666-666666666666';
     const { service, contestRepo, cupsAsked } = build({
       reader: multiEventReader([...READER_EVENTS, { id: NEXT_MASTERS, startDate: '2027-04-08T12:00:00.000Z', championshipYear: 2027 }]),
       contest: { status: ContestStatus.DRAFT },
     });
-
-    await service.setContestSportEvents('league-1', 'contest-1', [NEXT_MASTERS]);
-
-    expect(contestRepo.moveToSeason).toHaveBeenCalledWith('contest-1', 2027, PLATINUM_SEASON_LIMIT);
-    expect(cupsAsked).toEqual([{ leagueId: 'league-1', seasonYear: 2027, sportLeagueId: PGA_TOUR_LEAGUE_ID }]);
-  });
-
-  it('refuses moving a contest into a season with no room for its sports league on the league\'s plan with 409 PLAN_SPORTS_LEAGUE_LIMIT_REACHED, changing its events and cups not at all', async () => {
-    const NEXT_MASTERS = '66666666-6666-4666-8666-666666666666';
-    const { service, contestRepo, cupsAsked } = build({
-      reader: multiEventReader([...READER_EVENTS, { id: NEXT_MASTERS, startDate: '2027-04-08T12:00:00.000Z', championshipYear: 2027 }]),
-      contest: { status: ContestStatus.DRAFT },
-      planEntitlements: planEntitlementsOver({ findById: async (id) => buildLeague({ id, plan: LeaguePlan.FREE }) }),
-    });
-    jest.mocked(contestRepo.moveToSeason).mockResolvedValue({ status: 'sportsLeagueLimitReached', sportLeaguesPerYear: 5, sportLeagueCount: 5 });
 
     await expect(service.setContestSportEvents('league-1', 'contest-1', [NEXT_MASTERS]))
-      .rejects.toMatchObject({ code: 'PLAN_SPORTS_LEAGUE_LIMIT_REACHED', statusCode: 409 });
-    expect(contestRepo.moveToSeason).toHaveBeenCalledWith('contest-1', 2027, { sportLeaguesPerYear: 5, sportLeagueId: PGA_TOUR_LEAGUE_ID });
+      .rejects.toMatchObject({ code: 'CONTEST_EVENTS_SEASON_MISMATCH', statusCode: 422 });
     expect(contestRepo.replaceSportEvents).not.toHaveBeenCalled();
+    expect(contestRepo.update).not.toHaveBeenCalled();
     expect(cupsAsked).toEqual([]);
   });
 
@@ -2178,7 +2217,7 @@ describe('ContestManagementService — a contest of several events', () => {
 
     await service.setContestSportEvents('league-1', 'contest-1', [MASTERS, PGA]);
 
-    expect(contestRepo.moveToSeason).not.toHaveBeenCalled();
+    expect(contestRepo.replaceSportEvents).toHaveBeenCalledWith('contest-1', [MASTERS, PGA]);
     expect(cupsAsked).toEqual([]);
   });
 

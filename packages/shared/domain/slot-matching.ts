@@ -6,7 +6,8 @@
  * event's codes here. PROVIDER_CODE mappings and the Season slots a tournament was linked to by its
  * name (NAME_PATTERN, slice 12, #2011) match by code; a game whose feed names no place for it
  * (BALLDONTLIE's college football) matches a DATE_WINDOW slot whose Season window holds its start
- * (#2012). Calendar weeks come with #2142.
+ * (#2012), and a game no such slot places goes to the REST_OF_PHASE slot whose window holds it
+ * (#2154): a phase's bowls, or a conference title weekend. Calendar weeks come with #2142.
  */
 
 import type { SlotWindow } from './sport-league-seasons';
@@ -24,6 +25,11 @@ export interface ProviderSlotPlay {
    * from it, and is confirmed by it, only when every one is on the event's field (#2012).
    */
   teams?: readonly string[];
+  /**
+   * The provider's ids for the play's games, where its feed names them: the sync records which
+   * slot each game is placed in, so an event playing a slot gets that slot's games (#2154).
+   */
+  gameIds?: readonly string[];
 }
 
 /** A Season slot as the events sync reads it: what it is matched by, who covers it, and who plays it. */
@@ -49,8 +55,20 @@ export interface SyncSeasonSlot {
   sportEventId: string | null;
   startsAt: Date | null;
   endsAt: Date | null;
-  /** Whether the league's selected provider mapping matches the slot's definition by DATE_WINDOW. */
+  /** The Season competition the slot is in: an event's slots are all of one (#2153). */
+  seasonCompetitionId: string;
+  /** Its competition's own proper name, which names the event the sync makes for it; null for none (#2154). */
+  competitionName: string | null;
+  /**
+   * Whether the league's selected provider mapping matches the slot's definition by its Season
+   * window: DATE_WINDOW or REST_OF_PHASE.
+   */
   placedByWindow: boolean;
+  /**
+   * Whether that mapping is REST_OF_PHASE (#2154): the slot takes every game in its window that no
+   * other slot places, whoever plays it, and is matched after every other slot.
+   */
+  restOfPhase: boolean;
   /** The Season slot's date window, when it is placed by one and the Season has dates for it; null otherwise. */
   window: SlotWindow | null;
 }
@@ -58,14 +76,15 @@ export interface SyncSeasonSlot {
 /** A provider event's plays, each matched to its Season slot or left unmatched. */
 export interface ProviderSlotMatches<Slot extends SyncSeasonSlot> {
   /**
-   * Each slot its plays reach. `fromGames` says whether the play is the slot's own games: always
-   * for a code; for a window, only when a game between teams on the event's field is in it, and the
-   * play is then those games, from the first to the last. A window holding only other games (a bowl
-   * between two unseeded schools, or any game before the seeds are placed) still places the event
-   * on the slot, so its seeds can be placed, but its play is the window itself: it takes no dates
-   * and confirms no window.
+   * Each slot its plays reach, with the plays that are its own (`games`). `fromGames` says whether
+   * it has any: always for a code; for a DATE_WINDOW slot, only when a game between teams on its
+   * field is in its window; for a REST_OF_PHASE slot, whenever a game is left to it. The play is
+   * then its games, from the first to the last. A DATE_WINDOW slot holding only other games (a
+   * bowl between two unseeded schools, or any game before the seeds are placed) still places the
+   * event on the slot, so its seeds can be placed, but its play is the window itself: it takes no
+   * dates and confirms no window.
    */
-  matched: Array<{ slot: Slot; play: ProviderSlotPlay; fromGames: boolean }>;
+  matched: Array<{ slot: Slot; play: ProviderSlotPlay; fromGames: boolean; games: ProviderSlotPlay[] }>;
   /** The plays whose code no mapping includes: not synced, and raised as a finding. */
   unmatched: CodedSlotPlay[];
   /** The games with no code that no slot's window holds: not synced, and raised as a finding. */
@@ -75,55 +94,69 @@ export interface ProviderSlotMatches<Slot extends SyncSeasonSlot> {
 /**
  * Matches each play to the Season slot whose PROVIDER_CODE mapping names its code, or that a
  * tournament of that code was linked to by name. A code names at most one slot (the mappings'
- * unique keys), so a match is never ambiguous. A game with no code goes to the slot whose window
- * holds its start, its window `from` inclusive and `to` exclusive; a Season's windows do not
- * overlap, so that too is one slot at most. Of a window's games, only those whose teams are all on
- * `field` (the feed ids of the event's field, empty before its seeds are placed) are the slot's
- * own, and they are one play, from the earliest start to the latest.
+ * unique keys), so a match is never ambiguous.
+ *
+ * A game with no code goes to the DATE_WINDOW slot whose window holds its start, its window `from`
+ * inclusive and `to` exclusive; those windows do not overlap, so that is one slot at most. Of such
+ * a window's games, only those whose teams are all on the slot's field (`fieldOf`: the feed ids of
+ * the field its event has, empty before its seeds are placed) are the slot's own. Every other game
+ * goes to the REST_OF_PHASE slot whose window holds it (#2154): its window spans its phase, it
+ * takes whoever plays, and it is matched last, so a game a DATE_WINDOW slot places never lands
+ * there too. A game neither places is `unplaced` when no window holds it. A slot's own games are
+ * one play, from the earliest start to the latest.
  */
 export function matchProviderSlots<Slot extends SyncSeasonSlot>(
   plays: readonly ProviderSlotPlay[],
   slots: readonly Slot[],
-  field: ReadonlySet<string> = new Set(),
+  fieldOf: (slot: Slot) => ReadonlySet<string> = () => new Set(),
 ): ProviderSlotMatches<Slot> {
   const slotByCode = new Map(slots.flatMap((slot) => [slot.providerCode, slot.linkedCode].flatMap((code) => (code === null ? [] : [[code, slot] as const]))));
   const windowed = slots.flatMap((slot) => (slot.window === null ? [] : [{ slot, window: slot.window }]));
+  const byDate = windowed.filter(({ slot }) => !slot.restOfPhase);
+  const rest = windowed.filter(({ slot }) => slot.restOfPhase);
+  const holding = (play: ProviderSlotPlay) => ({ window }: { window: SlotWindow }) => play.startsAt >= window.startsAt && play.startsAt < window.endsAt;
   const matches: ProviderSlotMatches<Slot> = { matched: [], unmatched: [], unplaced: [] };
-  /** Each window a game is in, with the span of its games between field teams; null while it has none. */
-  const byWindow = new Map<Slot, { window: SlotWindow; games: ProviderSlotPlay | null }>();
+  /** Each window a game is in, with the games that are its slot's own. */
+  const byWindow = new Map<Slot, { window: SlotWindow; games: ProviderSlotPlay[] }>();
+  const placeIn = (found: { slot: Slot; window: SlotWindow }, own: ProviderSlotPlay | null) => {
+    const placed = byWindow.get(found.slot) ?? { window: found.window, games: [] };
+    if (own !== null) placed.games.push(own);
+    byWindow.set(found.slot, placed);
+  };
   for (const play of plays) {
-    if (play.code === null) {
-      const found = windowed.find(({ window }) => play.startsAt >= window.startsAt && play.startsAt < window.endsAt);
-      if (found === undefined) {
-        matches.unplaced.push(play);
-        continue;
-      }
-      const placed = byWindow.get(found.slot) ?? { window: found.window, games: null };
-      const onField = play.teams !== undefined && play.teams.length > 0 && play.teams.every((team) => field.has(team));
-      if (onField) placed.games = spanOf(placed.games, play);
-      byWindow.set(found.slot, placed);
+    if (play.code !== null) {
+      const slot = slotByCode.get(play.code);
+      if (slot === undefined) matches.unmatched.push({ ...play, code: play.code });
+      else matches.matched.push({ slot, play, fromGames: true, games: [play] });
       continue;
     }
-    const slot = slotByCode.get(play.code);
-    if (slot === undefined) matches.unmatched.push({ ...play, code: play.code });
-    else matches.matched.push({ slot, play, fromGames: true });
+    const dated = byDate.find(holding(play));
+    const onField = dated !== undefined && play.teams !== undefined && play.teams.length > 0 && play.teams.every((team) => fieldOf(dated.slot).has(team));
+    if (dated !== undefined && onField) {
+      placeIn(dated, play);
+      continue;
+    }
+    const leftOver = rest.find(holding(play));
+    if (leftOver !== undefined) placeIn(leftOver, play);
+    // A window holding only other teams' games still places its event on the slot, so its seeds can be placed.
+    if (dated !== undefined) placeIn(dated, null);
+    if (dated === undefined && leftOver === undefined) matches.unplaced.push(play);
   }
   for (const [slot, { window, games }] of byWindow) {
-    matches.matched.push(games === null
-      ? { slot, play: { code: null, startsAt: window.startsAt, endsAt: window.endsAt }, fromGames: false }
-      : { slot, play: games, fromGames: true });
+    const span = spanOf(games);
+    matches.matched.push(span === null
+      ? { slot, play: { code: null, startsAt: window.startsAt, endsAt: window.endsAt }, fromGames: false, games }
+      : { slot, play: span, fromGames: true, games });
   }
   return matches;
 }
 
-/** The games of one window as one play, from the earliest start to the latest. */
-function spanOf(span: ProviderSlotPlay | null, play: ProviderSlotPlay): ProviderSlotPlay {
-  if (span === null) return { code: null, startsAt: play.startsAt, endsAt: play.endsAt };
-  return {
-    code: null,
-    startsAt: play.startsAt < span.startsAt ? play.startsAt : span.startsAt,
-    endsAt: play.endsAt > span.endsAt ? play.endsAt : span.endsAt,
-  };
+/** Games as one play, from the earliest start to the latest; null for none. */
+function spanOf(games: readonly ProviderSlotPlay[]): ProviderSlotPlay | null {
+  if (games.length === 0) return null;
+  const starts = games.map((game) => game.startsAt.getTime());
+  const ends = games.map((game) => game.endsAt.getTime());
+  return { code: null, startsAt: new Date(Math.min(...starts)), endsAt: new Date(Math.max(...ends)) };
 }
 
 /**

@@ -58,7 +58,7 @@ function field(runners: RunnerInput[]): SportEventParticipantView[] {
 }
 
 function scores(runners: RunnerInput[], scoring: ContestScoringSettings = WIN_PLACE_SHOW): Record<string, number | null> {
-  return Object.fromEntries(family.scoreField(field(runners), RACE, scoring).map((row) => [row.name, row.score]));
+  return Object.fromEntries(family.scoreField(field(runners), RACE, scoring, { slotDefinitionIds: null }).map((row) => [row.name, row.score]));
 }
 
 describe('finish position — official finishers', () => {
@@ -149,7 +149,7 @@ describe('finish position — unofficial and unscorable results', () => {
   });
 
   it('tags every scored row with the finish-position detail and the result\'s time as its as-of', () => {
-    const [row] = family.scoreField(field([{ name: 'Arrow', result: { finishPosition: 1 } }]), RACE, WIN_PLACE_SHOW);
+    const [row] = family.scoreField(field([{ name: 'Arrow', result: { finishPosition: 1 } }]), RACE, WIN_PLACE_SHOW, { slotDefinitionIds: null });
     expect(row.detail).toEqual({ scoringFamily: ScoringFamily.FINISH_POSITION });
     expect(row.asOf).toEqual(new Date('2026-05-02T22:00:00.000Z'));
   });

@@ -146,6 +146,12 @@ export const CONTEST_EVENT_ALREADY_STARTED = 'CONTEST_EVENT_ALREADY_STARTED';
 export const CONTEST_EVENTS_LEAGUE_MISMATCH = 'CONTEST_EVENTS_LEAGUE_MISMATCH';
 
 /**
+ * Error code for giving a contest an event of another Season (#2014): a contest's Season is fixed
+ * at creation, so its events change only inside it.
+ */
+export const CONTEST_EVENTS_SEASON_MISMATCH = 'CONTEST_EVENTS_SEASON_MISMATCH';
+
+/**
  * Error code for removing an event from a contest once one of its events has started (#713):
  * entries have been played against the list, so it can only grow.
  */

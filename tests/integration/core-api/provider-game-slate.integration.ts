@@ -93,7 +93,7 @@ describe('Provider game slate (#1728)', () => {
     const { event, externalId, field, game } = await syncedWeek();
     const { providerGames } = integrationSportEventServices();
 
-    await expect(providerGames.afterFieldLoad({ providerId: PROVIDER, externalId: externalId, games: [game('g2', 'Packers', 'Vikings', 3), game('g1', 'Bears', 'Lions', 0)] }))
+    await expect(providerGames.afterFieldLoad({ sportEventId: event.id, providerId: PROVIDER, externalId: externalId, games: [game('g2', 'Packers', 'Vikings', 3), game('g1', 'Bears', 'Lions', 0)] }))
       .resolves.toEqual({ outcome: 'LOADED', sportEventId: event.id, matchCount: 2 });
     expect(await matchesOf(event.id)).toEqual([
       [1, field.Bears, field.Lions, KICKOFF.toISOString()],
@@ -101,7 +101,7 @@ describe('Provider game slate (#1728)', () => {
     ]);
 
     await getPrisma().sportEvent.update({ where: { id: event.id }, data: { status: SportEventStatus.SCHEDULED } });
-    await expect(providerGames.afterFieldLoad({ providerId: PROVIDER, externalId: externalId, games: [game('g1', 'Bears', 'Lions', 0), game('g2', 'Packers', 'Vikings', 7)] }))
+    await expect(providerGames.afterFieldLoad({ sportEventId: event.id, providerId: PROVIDER, externalId: externalId, games: [game('g1', 'Bears', 'Lions', 0), game('g2', 'Packers', 'Vikings', 7)] }))
       .resolves.toEqual({ outcome: 'MATCHES_UPDATED', sportEventId: event.id, matches: [{ roundNumber: 1, matchNumber: 2 }] });
     expect(await matchesOf(event.id)).toEqual([
       [1, field.Bears, field.Lions, KICKOFF.toISOString()],
@@ -112,11 +112,11 @@ describe('Provider game slate (#1728)', () => {
   it('writes each synced game with its away team on side 1 and its home team on side 2, and a released game the provider lists the other way round keeps its sides and changes only where each plays Game 1 (#2046)', async () => {
     const { event, externalId, field, game } = await syncedWeek();
     const { providerGames } = integrationSportEventServices();
-    await providerGames.afterFieldLoad({ providerId: PROVIDER, externalId, games: [game('g1', 'Bears', 'Lions', 0)] });
+    await providerGames.afterFieldLoad({ sportEventId: event.id, providerId: PROVIDER, externalId, games: [game('g1', 'Bears', 'Lions', 0)] });
     const loaded = await sidesOf(event.id);
 
     await getPrisma().sportEvent.update({ where: { id: event.id }, data: { status: SportEventStatus.SCHEDULED } });
-    await providerGames.afterFieldLoad({ providerId: PROVIDER, externalId, games: [game('g1', 'Lions', 'Bears', 0)] });
+    await providerGames.afterFieldLoad({ sportEventId: event.id, providerId: PROVIDER, externalId, games: [game('g1', 'Lions', 'Bears', 0)] });
 
     expect(loaded).toEqual([[1, field.Lions, 'AWAY'], [2, field.Bears, 'HOME']]);
     expect(await sidesOf(event.id)).toEqual([[1, field.Lions, 'HOME'], [2, field.Bears, 'AWAY']]);
@@ -127,7 +127,7 @@ describe('Provider game slate (#1728)', () => {
     await getPrisma().sportLeague.updateMany({ where: { id: event.sportLeagueId }, data: { selectedProviderMappingId: null } });
     const { providerGames } = integrationSportEventServices();
 
-    await expect(providerGames.afterFieldLoad({ providerId: PROVIDER, externalId: externalId, games: [game('g1', 'Bears', 'Lions', 0)] }))
+    await expect(providerGames.afterFieldLoad({ sportEventId: event.id, providerId: PROVIDER, externalId: externalId, games: [game('g1', 'Bears', 'Lions', 0)] }))
       .resolves.toEqual({ outcome: 'SKIPPED', reason: 'NOT_SYNCED' });
     expect(await matchesOf(event.id)).toEqual([]);
   });
@@ -196,7 +196,7 @@ describe('Provider game slate (#1728)', () => {
     const { providerGames } = integrationSportEventServices();
     const sides = async () => (await matchesOf(event.id)).map(([matchNumber, home, away]) => [matchNumber, home, away]);
 
-    await expect(providerGames.afterFieldLoad({ providerId: PROVIDER, externalId: externalId, games: wildCard, bracket }))
+    await expect(providerGames.afterFieldLoad({ sportEventId: event.id, providerId: PROVIDER, externalId: externalId, games: wildCard, bracket }))
       .resolves.toEqual({ outcome: 'LOADED', sportEventId: event.id, matchCount: 6 });
     const seedRow = (seed: number) => row.get(seed) ?? null;
     expect(await sides()).toEqual([
@@ -218,6 +218,7 @@ describe('Provider game slate (#1728)', () => {
     }
     const divisionalKickoff = new Date(KICKOFF.getTime() + WEEK);
     await expect(providerGames.afterFieldLoad({
+      sportEventId: event.id,
       providerId: PROVIDER,
       externalId: externalId,
       games: [...wildCard, game('d1', 2, 1, 6, divisionalKickoff), game('d2', 2, 2, 4, divisionalKickoff)],

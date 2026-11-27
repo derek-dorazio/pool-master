@@ -44,11 +44,12 @@ describe('SyncedFieldFollowUps, a field sync\'s follow-up job', () => {
 
     expect(steps).toEqual(['games', 'tiers']);
     expect(providerGames.afterFieldLoad).toHaveBeenCalledWith({
+      sportEventId: 'sport-event-1',
       providerId: 'balldontlie',
       externalId: 'week-2',
       games: [{ games: [{ providerGameId: 'g1', gameNumber: 1 }], roundNumber: 1, homeTeamExternalId: 'bears', awayTeamExternalId: 'lions', scheduledAt: new Date(KICKOFF), isNeutralSite: false }],
     });
-    expect(valuation.afterFieldLoad).toHaveBeenCalledWith({ providerId: 'balldontlie', externalId: 'week-2' });
+    expect(valuation.afterFieldLoad).toHaveBeenCalledWith({ sportEventId: 'sport-event-1', providerId: 'balldontlie', externalId: 'week-2' });
   });
 
   it('passes a bracket with no kickoff yet as null, and lists no games when the provider listed none', async () => {
@@ -57,7 +58,7 @@ describe('SyncedFieldFollowUps, a field sync\'s follow-up job', () => {
 
     await service.run({ sportEventId: 'sport-event-1', providerId: 'balldontlie', externalId: 'postseason', bracket });
 
-    expect(providerGames.afterFieldLoad).toHaveBeenCalledWith({ providerId: 'balldontlie', externalId: 'postseason', bracket });
+    expect(providerGames.afterFieldLoad).toHaveBeenCalledWith({ sportEventId: 'sport-event-1', providerId: 'balldontlie', externalId: 'postseason', bracket });
   });
 
   it('reports the games it loaded and the tiers and prices it made, with the run\'s stats, as the job\'s result', async () => {

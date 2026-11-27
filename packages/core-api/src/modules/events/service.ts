@@ -154,6 +154,12 @@ export interface ProviderSeasonImport {
    * to a slot whose competition the Season lacks.
    */
   unplacedNames: Array<{ normalizedName: string; name: string; reason: 'UNMATCHED' | 'AMBIGUOUS' | 'SEASON_COMPETITION_MISSING' }>;
+  /**
+   * The name each of the Season's events takes from its competition (#2154), by event id: a
+   * provider event whose games reach several competitions names none of them, so these events keep
+   * their competition's name rather than the provider's.
+   */
+  competitionNames: ReadonlyMap<string, string>;
 }
 
 /** One synced event whose details its provider changed, and which details (#1727). */
@@ -341,7 +347,15 @@ export class SportEventService {
     ]);
     const named = await this.placeByName(input, seasonSlots, namePatterns);
     const slots = named.slots;
-    const linkedIdByExternalId = new Map(linkedEvents.flatMap((event) => externalIdsAt(event, input.providerId).map((externalId) => [externalId, event.id] as const)));
+    // A provider event's games can reach several competitions, each with its own event (#2154).
+    const linkedIdsByExternalId = new Map<string, string[]>();
+    for (const event of linkedEvents) {
+      for (const externalId of externalIdsAt(event, input.providerId)) linkedIdsByExternalId.set(externalId, [...(linkedIdsByExternalId.get(externalId) ?? []), event.id]);
+    }
+    const competitionsByEvent = new Map<string, Set<string>>();
+    for (const slot of slots) {
+      if (slot.sportEventId !== null) competitionsByEvent.set(slot.sportEventId, (competitionsByEvent.get(slot.sportEventId) ?? new Set()).add(slot.seasonCompetitionId));
+    }
     // A window takes dates only from games between teams on its event's field (#2012): one read of
     // the linked events' fields, and none for a Season with no window.
     const fields = linkedEvents.length === 0 || !slots.some((slot) => slot.window !== null)
@@ -349,26 +363,49 @@ export class SportEventService {
       : await this.deps.sportEvents.findFieldFeedIds(input.providerId, input.sportLeagueId, linkedEvents.map((event) => event.id));
 
     const editions: NewEdition[] = [];
+    /** Each edition's competition name, in step with `editions`; null where the provider's name stands. */
+    const editionNames: Array<string | null> = [];
     const skipped: ProviderSeasonImport['skipped'] = [];
     const unmatched = new Map<string, ProviderSeasonImport['unmatched'][number]>();
     const eventSlots: SyncedSlotsRecord['eventSlots'][number][] = [];
     const slotDates: SyncedSlotsRecord['slotDates'][number][] = [];
     const confirmedWindows = new Set<string>();
     const placed: ProviderSeasonImport['placed'] = [];
+    /**
+     * The provider games each matched rest-of-phase slot now holds, for a feed that names its games
+     * (#2154): its event's Matches and field come from them. A date-window slot's event is a bracket
+     * on the seeds placed on it, whose games link by their teams, so it records none.
+     */
+    const placedGames = new Map<string, string[]>();
+    let namesGames = false;
     const unplaced: ProviderSeasonImport['unplaced'] = [];
     /** Slots an event of this slate takes, so a second provider event cannot take one too. */
     const taken = new Set(slots.flatMap((slot) => (slot.sportEventId === null ? [] : [slot.seasonSlotId])));
     for (const providerEvent of input.providerEvents) {
       const { externalId, name } = providerEvent;
-      const linkedId = linkedIdByExternalId.get(externalId);
-      const { matched, unmatched: missed, unplaced: unplacedGames } = matchProviderSlots(providerEvent.providerSlots, slots, linkedId === undefined ? undefined : fields.get(linkedId));
+      const linkedIds = linkedIdsByExternalId.get(externalId) ?? [];
+      /**
+       * The linked event of a competition: its games' event there, and the field its window slots
+       * read. A linked event holding no slot yet is the first competition's to reach it (see
+       * `competitionsOf`), and no other's.
+       */
+      const linkedIn = (seasonCompetitionId: string) => linkedIds.find((id) => competitionsByEvent.get(id)?.has(seasonCompetitionId) === true)
+        ?? linkedIds.find((id) => !competitionsByEvent.has(id));
+      const fieldOf = (slot: SyncSeasonSlot) => {
+        const linkedId = linkedIn(slot.seasonCompetitionId);
+        return (linkedId === undefined ? undefined : fields.get(linkedId)) ?? new Set<string>();
+      };
+      const { matched, unmatched: missed, unplaced: unplacedGames } = matchProviderSlots(providerEvent.providerSlots, slots, fieldOf);
+      if (providerEvent.providerSlots.some((play) => play.gameIds !== undefined)) namesGames = true;
       for (const play of missed) {
         // A tournament name matching handled is reported by its name, not again by its code.
         if (!unmatched.has(play.code) && !named.handledCodes.has(play.code)) unmatched.set(play.code, { code: play.code, eventName: name });
       }
       unplaced.push(...unplacedGames.map((game) => ({ ...game, eventName: name })));
-      for (const { slot, play, fromGames } of matched) {
+      for (const { slot, play, fromGames, games } of matched) {
         placed.push({ ...play, eventName: name });
+        const gameIds = games.flatMap((game) => game.gameIds ?? []);
+        if (slot.restOfPhase) placedGames.set(slot.seasonSlotId, [...(placedGames.get(slot.seasonSlotId) ?? []), ...gameIds]);
         // A window holding no game of the event's own teams is no evidence of its dates (#2012).
         if (!fromGames) continue;
         const change = slotDatesChange(slot, play);
@@ -377,30 +414,54 @@ export class SportEventService {
         if (slot.window?.status === SlotWindowStatus.TENTATIVE) confirmedWindows.add(slot.seasonSlotId);
       }
       const free = matched.filter(({ slot }) => !taken.has(slot.seasonSlotId));
-      if (linkedId !== undefined) {
-        for (const { slot } of free) {
-          taken.add(slot.seasonSlotId);
-          eventSlots.push({ sportEventId: linkedId, sportLeagueSeasonId: input.sportLeagueSeasonId, seasonSlotId: slot.seasonSlotId });
+      // One event per competition its games reach (#2154): a season's slate of college football games
+      // reaches its bowls, its conference title games and its CFP, and no event crosses competitions.
+      // A competition with a linked event gives it its free slots; any other makes one when playable.
+      const judged = (matched.length === 0 ? [null] : competitionsOf(matched)).flatMap((competitionId) => {
+        const linkedId = competitionId === null ? undefined : linkedIn(competitionId);
+        const freeInCompetition = free.filter(({ slot }) => slot.seasonCompetitionId === competitionId);
+        if (linkedId !== undefined && competitionId !== null) {
+          competitionsByEvent.set(linkedId, (competitionsByEvent.get(linkedId) ?? new Set()).add(competitionId));
+          for (const { slot } of freeInCompetition) {
+            taken.add(slot.seasonSlotId);
+            eventSlots.push({ sportEventId: linkedId, sportLeagueSeasonId: input.sportLeagueSeasonId, seasonSlotId: slot.seasonSlotId });
+          }
+          return [];
         }
-        skipped.push({ externalId, name, reason: 'ALREADY_LINKED' });
+        const inCompetition = matched.filter(({ slot }) => slot.seasonCompetitionId === competitionId);
+        return [{ plays: freeInCompetition, reason: unplayableReason(providerEvent, inCompetition, freeInCompetition.map(({ slot }) => slot), now) }];
+      });
+      const playable = judged.flatMap(({ plays, reason }) => (reason === null ? [plays] : []));
+      if (playable.length === 0) {
+        // Nothing new: already linked, or the first competition's own reason (NO_SLOT or ALREADY_STARTED when nothing matched).
+        const [first] = judged;
+        skipped.push({ externalId, name, reason: linkedIds.length > 0 || judged.length === 0 ? 'ALREADY_LINKED' : first.reason ?? 'SLOT_TAKEN' });
         continue;
       }
-      const reason = unplayableReason(providerEvent, matched, free.map(({ slot }) => slot), now);
-      if (reason !== null) {
-        skipped.push({ externalId, name, reason });
-        continue;
+      for (const plays of playable) {
+        for (const { slot } of plays) taken.add(slot.seasonSlotId);
+        // A named competition names its event; the provider's name is the slate's (#2154).
+        const competitionName = plays.find(({ slot }) => slot.competitionName !== null)?.slot.competitionName ?? null;
+        editionNames.push(competitionName);
+        editions.push(providerEdition({
+          ...providerEvent,
+          name: competitionName ?? name,
+          sportLeagueId: sportLeague.id,
+          sportLeagueSeasonId: input.sportLeagueSeasonId,
+          providerId: input.providerId,
+          plays: plays.map(({ slot, play }) => ({ seasonSlotId: slot.seasonSlotId, startsAt: play.startsAt, endsAt: play.endsAt })),
+        }));
       }
-      for (const { slot } of free) taken.add(slot.seasonSlotId);
-      editions.push(providerEdition({
-        ...providerEvent,
-        sportLeagueId: sportLeague.id,
-        sportLeagueSeasonId: input.sportLeagueSeasonId,
-        providerId: input.providerId,
-        plays: free.map(({ slot, play }) => ({ seasonSlotId: slot.seasonSlotId, startsAt: play.startsAt, endsAt: play.endsAt })),
-      }));
     }
     const written = await this.createEditions(sportLeague, editions);
-    await this.deps.seasons.recordSyncedSlots({ eventSlots, slotDates, confirmedWindows: [...confirmedWindows] });
+    await this.deps.seasons.recordSyncedSlots({
+      eventSlots,
+      slotDates,
+      confirmedWindows: [...confirmedWindows],
+      placedGames: namesGames
+        ? { sportLeagueId: sportLeague.id, sportLeagueProviderMappingId: input.sportLeagueProviderMappingId, bySlot: [...placedGames].map(([seasonSlotId, externalIds]) => ({ seasonSlotId, externalIds })) }
+        : null,
+    });
     // The new events' slots as they now stand, with the dates just written: one read for them all.
     const slotsByEvent = written.length === 0 ? new Map<string, SportLeagueSeasonSlot[]>() : await this.deps.sportEvents.findSlots(written.map(({ event }) => event.id));
     const created = written.map((summary) => ({ ...summary, slots: slotsByEvent.get(summary.event.id) ?? [] }));
@@ -428,7 +489,11 @@ export class SportEventService {
       },
       'Imported provider Season',
     );
-    return { created, skipped, unmatched: [...unmatched.values()], placed, unplaced, slotsNeedingDates, unplacedNames: named.unplaced };
+    const competitionNames = new Map([
+      ...slots.flatMap((slot) => (slot.sportEventId === null || slot.competitionName === null ? [] : [[slot.sportEventId, slot.competitionName] as const])),
+      ...written.flatMap(({ event }, index) => (editionNames[index] === null ? [] : [[event.id, editionNames[index]] as const])),
+    ]);
+    return { created, skipped, unmatched: [...unmatched.values()], placed, unplaced, slotsNeedingDates, unplacedNames: named.unplaced, competitionNames };
   }
 
   /**
@@ -500,6 +565,8 @@ export class SportEventService {
     sportLeagueId: string;
     providerId: string;
     providerEvents: ReadonlyArray<ProviderEventDetail & { externalId: string }>;
+    /** The events that take their competition's name, not the provider's (#2154): the import's. */
+    competitionNames?: ReadonlyMap<string, string>;
   }): Promise<ProviderEventDetailsChange[]> {
     const linked = await this.deps.sportEvents.findByProviderRefs(
       input.providerId,
@@ -514,7 +581,8 @@ export class SportEventService {
       const providerEvent = externalId === undefined ? undefined : providerEventById.get(externalId);
       if (externalId === undefined || !providerEvent || event.sportLeagueId !== input.sportLeagueId) continue;
       const slotDates = eventDatesFromSlots(slotsByEvent.get(event.id) ?? []);
-      const updates = providerDetailUpdates(event, slotDates === null ? providerEvent : { ...providerEvent, ...slotDates });
+      const named = { ...providerEvent, name: input.competitionNames?.get(event.id) ?? providerEvent.name };
+      const updates = providerDetailUpdates(event, slotDates === null ? named : { ...named, ...slotDates });
       const changed = PROVIDER_DETAILS_BY_STATUS[event.status].filter((field) => updates[field] !== undefined);
       if (changed.length === 0) continue;
       try {
@@ -996,6 +1064,17 @@ function providerEdition(
     },
     rounds: schedule,
   };
+}
+
+/**
+ * The Season competitions matched slots are in, each once: those with no rest-of-phase slot first,
+ * then in the order first matched. A linked event holding no slot yet goes to the first (#2154), so
+ * a playoff's own event is never taken for the rest of its phase.
+ */
+function competitionsOf(matched: ReadonlyArray<{ slot: SyncSeasonSlot }>): string[] {
+  const rest = new Set(matched.flatMap(({ slot }) => (slot.restOfPhase ? [slot.seasonCompetitionId] : [])));
+  const all = [...new Set(matched.map(({ slot }) => slot.seasonCompetitionId))];
+  return [...all.filter((id) => !rest.has(id)), ...all.filter((id) => rest.has(id))];
 }
 
 /**

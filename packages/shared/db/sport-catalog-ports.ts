@@ -237,9 +237,10 @@ export interface SportEventRepository {
   findByIds(ids: readonly string[]): Promise<SportEvent[]>;
   /** The events with these ids, id, name, sport league and provider only, in one read; an unknown id is left out. */
   findLinks(ids: readonly string[]): Promise<SportEventLink[]>;
-  /** The event a provider knows by this identity, if one is linked to it. */
-  findByProviderRef(providerId: string, externalId: string): Promise<SportEvent | null>;
-  /** The events a provider knows by any of these identities, in one read (#1253). */
+  /**
+   * The events a provider knows by any of these identities, in one read (#1253). One identity can
+   * name several events, one per competition its games reach (#2154).
+   */
   findByProviderRefs(providerId: string, externalIds: readonly string[]): Promise<SportEvent[]>;
   /**
    * Each event's active field as the provider's feed ids for its teams in the sport league, by
@@ -898,6 +899,16 @@ export interface SyncedSlotsRecord {
   slotDates: ReadonlyArray<{ seasonSlotId: string; startsAt: Date; endsAt: Date }>;
   /** Season slots whose TENTATIVE window the feed has now placed a game in: they become CONFIRMED (#2012). */
   confirmedWindows: readonly string[];
+  /**
+   * The provider's games each slot now holds (#2154), for a sync whose feed names its games: each
+   * listed game moves to its slot, and a listed slot keeps only its listed games. Null when the feed
+   * names no game ids.
+   */
+  placedGames?: {
+    sportLeagueId: string;
+    sportLeagueProviderMappingId: string;
+    bySlot: ReadonlyArray<{ seasonSlotId: string; externalIds: readonly string[] }>;
+  } | null;
 }
 
 /** What adding a test slot did: the slot, or why there is none. */

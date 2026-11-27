@@ -13,13 +13,13 @@ import { writeGameScores } from './game-score-writer';
 import { scoreKnockoutField } from './score-team';
 
 export const headToHeadScoringFamily: ScoringFamilyModule = {
-  scoreField(field, _event, scoring) {
+  scoreField(field, _event, scoring, coverage) {
     // Head to head scores only its own definition. A contest ranked by another family's definition
     // cannot be set up (contest management refuses a definition the sport does not offer); if one
     // were read, its record is read with no upset bonus and the team is left unscored rather than
     // scored under rules it lacks.
     const ownSettings = scoring.participantScoringDefinitionId === 'KNOCKOUT_ROUND_POINTS' ? scoring.config : null;
-    const scores = scoreKnockoutField(field, ownSettings ?? { roundValues: [], upsetBonus: { rule: UpsetBonusRule.NONE } });
+    const scores = scoreKnockoutField(field, ownSettings ?? { roundValues: [], upsetBonus: { rule: UpsetBonusRule.NONE } }, coverage);
     return field.map((row, index) => {
       const { score, record } = scores[index];
       return {

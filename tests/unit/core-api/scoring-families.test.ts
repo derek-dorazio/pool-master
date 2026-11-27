@@ -45,7 +45,7 @@ describe.each(Object.values(ScoringFamily))('scoring family %s', (family) => {
   const event = expectDefined(EVENT_BY_SCORING_FAMILY.get(family), `an event scored by ${family}`);
 
   it('scores an empty field as no participants', () => {
-    expect(module.scoreField([], { ...event, rounds: 4, roundsPar: 72, status: SportEventStatus.IN_PROGRESS, slotDefinitions: [] }, defaultScoring(event))).toEqual([]);
+    expect(module.scoreField([], { ...event, rounds: 4, roundsPar: 72, status: SportEventStatus.IN_PROGRESS, slotDefinitions: [] }, defaultScoring(event), { slotDefinitionIds: null })).toEqual([]);
   });
 
   it('is the module an event of its sport league resolves to', () => {

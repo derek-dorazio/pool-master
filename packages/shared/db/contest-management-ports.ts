@@ -2,6 +2,7 @@ import type {
   BackgroundJobRequest,
   ContestConfigTemplate,
   ContestConfiguration,
+  ContestConfigurationWrite,
   ContestEntryPick,
   ContestTemplateSlot,
   ParticipantContestScoringRule,
@@ -13,12 +14,10 @@ export interface ContestConfigurationRepository {
   findByContest(contestId: string): Promise<ContestConfiguration | null>;
   /** Several contests' configurations in one read; a contest with none is left out. */
   findByContests(contestIds: readonly string[]): Promise<ContestConfiguration[]>;
-  create(
-    configuration: Omit<ContestConfiguration, 'id' | 'createdAt' | 'updatedAt'>,
-  ): Promise<ContestConfiguration>;
+  create(configuration: ContestConfigurationWrite): Promise<ContestConfiguration>;
   update(
     id: string,
-    updates: Partial<ContestConfiguration>,
+    updates: Partial<ContestConfigurationWrite>,
   ): Promise<ContestConfiguration>;
 }
 

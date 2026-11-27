@@ -11,6 +11,7 @@ import {
   PeriodKind,
   SlotKind,
   gameWinnerSideNumber,
+  matchHomeAwayOf,
   matchScoreOf,
   opposingSideOf,
   sideOf,
@@ -68,6 +69,24 @@ describe('a match\'s sides', () => {
 
   it('refuses the opposing side of a match that has only the one side', () => {
     expect(() => opposingSideOf(lonelyMatch, 1)).toThrow('Match match-1 has no side opposing side 1');
+  });
+});
+
+describe('where a side is billed for its match', () => {
+  const placed = (sideNumber: number, homeAway: HomeAway) => ({ ...sideResult(sideNumber, null), homeAway });
+
+  it('is where the side played Game 1, whatever a later Game of a series says', () => {
+    const games = [
+      game(2, MatchStatus.SCHEDULED, [placed(1, HomeAway.HOME), placed(2, HomeAway.AWAY)]),
+      game(1, MatchStatus.SCHEDULED, [placed(1, HomeAway.AWAY), placed(2, HomeAway.HOME)]),
+    ];
+    expect([matchHomeAwayOf({ games }, 1), matchHomeAwayOf({ games }, 2)]).toEqual([HomeAway.AWAY, HomeAway.HOME]);
+  });
+
+  it('is NONE at a neutral site, for a match with no Game 1 yet, and for a side Game 1 has no result for', () => {
+    expect(matchHomeAwayOf({ games: [game(1, MatchStatus.SCHEDULED, [placed(1, HomeAway.NONE)])] }, 1)).toBe(HomeAway.NONE);
+    expect(matchHomeAwayOf({ games: [] }, 1)).toBe(HomeAway.NONE);
+    expect(matchHomeAwayOf({ games: [game(1, MatchStatus.SCHEDULED, [placed(1, HomeAway.AWAY)])] }, 2)).toBe(HomeAway.NONE);
   });
 });
 

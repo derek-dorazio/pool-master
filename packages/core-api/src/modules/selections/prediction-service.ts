@@ -44,6 +44,8 @@ import {
   type BracketContestRules,
   type Contest,
   type ContestConfiguration,
+  type ContestRoundCoverage,
+  contestRoundCoverage,
   type ContestEntry,
   type ContestEntryMatchPrediction,
   type PickEmContestRules,
@@ -57,9 +59,8 @@ import {
   type SurvivorContestRules,
   type SurvivorWeekOutcome,
   hasSportEventStarted,
-  teamOnMatchSide,
-  MatchSide,
-  sideNumberOfMatchSide,
+  matchHomeAwayOf,
+  type HomeAway,
 } from '@poolmaster/shared/domain';
 import type {
   ContestConfigurationRepository,
@@ -80,7 +81,7 @@ import type {
 import { resolveContestScoringDefinition } from '../contests/contest-leaderboard-calculator';
 import { areMatchPicksOpen, areMatchPicksRevealed, contestCutoff, cutoffTiming, openingRoundNumber, type EventTiming } from '../contests/entry-window';
 import { knockoutSeeds, withdrawnRowIds } from '../scoring-families/head-to-head/score-team';
-import { contestBracketGames, type PredictedSides, type ScoredBracketPick } from '../scoring-families/head-to-head/bracket-picks';
+import { contestBracketGames, predictedOn, predictedSideOf, realSides, type PredictedSides, type ScoredBracketPick } from '../scoring-families/head-to-head/bracket-picks';
 import { getPredictionEngine } from './prediction-engines/registry';
 import {
   PredictionIssueKind,
@@ -146,15 +147,25 @@ export interface GamePickTeam {
   seedNumber: number | null;
 }
 
+/** One side of a game as a pick screen draws it (#2016). */
+export interface GamePickSide {
+  sideNumber: number;
+  /** Where the side plays the game's Game 1; NONE at a neutral site, or until the feed says. */
+  homeAway: HomeAway;
+  /** The team really on the side; null until it is decided. */
+  team: GamePickTeam | null;
+  /** The team the entry's own picks put on the side: in a bracket, its picks of the games before; else the real team. */
+  predictedTeam: GamePickTeam | null;
+  /** The points spread, on side 1 only; null until set. */
+  spread: number | null;
+}
+
 export interface GamePickGame {
   match: SportEventRoundMatch;
   /** The game's scheduled time, else its event's start. */
   kickoff: Date;
-  home: GamePickTeam | null;
-  away: GamePickTeam | null;
-  /** The teams the entry's own picks put in the game: in a bracket, its picks of the games before; else the game's teams. */
-  predictedHome: GamePickTeam | null;
-  predictedAway: GamePickTeam | null;
+  /** The game's sides, side 1 first. */
+  sides: GamePickSide[];
   locked: boolean;
   revealed: boolean;
   /** Null when the entry has none, or the viewer may not see it yet. */
@@ -295,13 +306,10 @@ interface WeekContext extends WeekSetup {
  */
 function withPickedSide(pick: ContestEntryMatchPredictionWrite, sides: ReadonlyMap<string, PredictedSides>): ContestEntryMatchPredictionSidedWrite {
   if (!isTeamChoice(pick)) return { ...pick, sideNumber: null };
-  const predicted = sides.get(pick.sportEventRoundMatchId);
-  const side = predicted?.home === pick.sportEventParticipantId ? MatchSide.HOME
-    : predicted?.away === pick.sportEventParticipantId ? MatchSide.AWAY
-      : null;
+  const sideNumber = predictedSideOf(sides.get(pick.sportEventRoundMatchId), pick.sportEventParticipantId);
   // A saved pick whose team its game does not offer is refused before it is written.
-  if (side === null) throw new Error(`Game ${pick.sportEventRoundMatchId} does not offer team ${pick.sportEventParticipantId}.`);
-  return { ...pick, sideNumber: sideNumberOfMatchSide(side) };
+  if (sideNumber === null) throw new Error(`Game ${pick.sportEventRoundMatchId} does not offer team ${pick.sportEventParticipantId}.`);
+  return { ...pick, sideNumber };
 }
 
 /**
@@ -317,16 +325,17 @@ function gameRow(
   sides: PredictedSides | undefined,
   now: Date,
 ): Omit<GamePreview, 'pick'> {
-  const home = teamOnMatchSide(match, MatchSide.HOME);
-  const away = teamOnMatchSide(match, MatchSide.AWAY);
-  const shownSides = sides ?? { home, away };
+  const shownSides = sides ?? realSides(match);
   return {
     match,
     kickoff: match.scheduledDate ?? setup.sportEvent.startDate,
-    home: team(home),
-    away: team(away),
-    predictedHome: team(shownSides.home),
-    predictedAway: team(shownSides.away),
+    sides: [...match.sides].sort((left, right) => left.sideNumber - right.sideNumber).map((side) => ({
+      sideNumber: side.sideNumber,
+      homeAway: matchHomeAwayOf(match, side.sideNumber),
+      team: team(side.sportEventParticipantId),
+      predictedTeam: team(predictedOn(shownSides, side.sideNumber)),
+      spread: side.spread,
+    })),
     locked: !areMatchPicksOpen(setup.engine.pickWindow, contest, setup.window, match, setup.openingRound, now),
   };
 }
@@ -722,7 +731,7 @@ export class PredictionService {
     if (!sportEvent) throw selectionErrors.eventNotInContest(sportEventId, contestId);
     const rules = configuration?.configJson;
     if (rules?.selectionType !== selectionType) throw selectionErrors.selectionConfigInvalid(contestId);
-    const setup = this.weekSetup(rules, sportEvent, matches, field);
+    const setup = this.weekSetup(rules, contestRoundCoverage(configuration), sportEvent, matches, field);
     const now = this.now();
 
     return {
@@ -744,18 +753,19 @@ export class PredictionService {
 
   /**
    * What a game setup's rules make of an event: the games an entry picks (never a cancelled
-   * game), the mode and spread, whether ties may be picked, the
+   * game, and in a bracket only its covered rounds', #2014), the mode and spread, whether ties may be picked, the
    * window the picks close on, the seeds and withdrawals a bracket resolves with, and the
    * tiebreaker game. A saved week and a setup's preview both start here.
    */
   private weekSetup(
     rules: GameRules,
+    coverage: ContestRoundCoverage,
     sportEvent: SportEvent,
     matches: SportEventRoundMatch[],
     field: SportEventParticipant[],
   ): WeekSetup {
     const games = rules.selectionType === SelectionType.BRACKET
-      ? contestBracketGames(matches)
+      ? contestBracketGames(matches, coverage)
       : matches.filter((match) => match.status !== MatchStatus.CANCELLED);
     const engine = getPredictionEngine(rules.selectionType);
     const sportDefinition = (this.deps.sportDefinitionOf ?? getSportDefinition)(sportEvent.sport);
@@ -901,7 +911,9 @@ export class PredictionService {
       this.deps.field.findBySportEvent(sportEvent.id),
     ]);
     const team = await this.teamLookup(field);
-    const setup = this.weekSetup(rules, sportEvent, matches, field);
+    // A setup's preview names no template yet, so it previews every round of the event; the
+    // preview takes its template's coverage with #2014 part B.
+    const setup = this.weekSetup(rules, { slotDefinitionIds: null }, sportEvent, matches, field);
     const { engine, games } = setup;
     const gameIds = new Set(games.map((game) => game.id));
     const unknown = input.picks.find((pick) => !gameIds.has(pick.sportEventRoundMatchId));
@@ -970,6 +982,7 @@ export class PredictionService {
       : [];
     const scoring = resolveContestScoringDefinition({
       configJson: context.configuration?.configJson ?? null,
+      coverage: contestRoundCoverage(context.configuration),
       participantScoringRules: rules,
     });
     return context.engine.scorePicks({

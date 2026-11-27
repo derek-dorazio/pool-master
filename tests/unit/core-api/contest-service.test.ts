@@ -83,12 +83,14 @@ function createMockContestConfigurationRepo(
   return fakeContestConfigurationRepo({
     create: mockFn<ContestConfigurationRepository['create']>(async (input) => ({
       ...input,
+      coveredSlotDefinitionIds: null,
       id: 'new-config-id',
       createdAt: new Date(),
       updatedAt: new Date(),
     })),
     update: mockFn<ContestConfigurationRepository['update']>(async (id, updates) => ({
       id,
+      coveredSlotDefinitionIds: null,
       contestId: 'c-1',
       selectionType: SharedDomainEnums.SelectionType.TIERED,
       createdAt: new Date(),

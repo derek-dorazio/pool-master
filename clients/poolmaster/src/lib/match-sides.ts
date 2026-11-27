@@ -1,5 +1,5 @@
 import { HomeAway, MatchSideOutcome, PeriodKind } from '@poolmaster/shared/domain';
-import type { GameSideResultDto, SportEventRoundMatchDto, SportEventRoundMatchGameDto, SportEventRoundMatchSideDto } from './api';
+import type { GamePicksResponse, GameSideResultDto, SportEventRoundMatchDto, SportEventRoundMatchGameDto, SportEventRoundMatchSideDto } from './api';
 
 /**
  * Reading a match on its sides (#2184): each side by its number, the team on it, its result, and
@@ -8,6 +8,7 @@ import type { GameSideResultDto, SportEventRoundMatchDto, SportEventRoundMatchGa
  */
 
 type MatchSides = Pick<SportEventRoundMatchDto, 'sides'>;
+type GamePickSideDto = GamePicksResponse['games'][number]['sides'][number];
 
 /** A match's side by its number. */
 export function sideOn(match: MatchSides, sideNumber: number): SportEventRoundMatchSideDto | undefined {
@@ -49,31 +50,37 @@ export function sideResultIn(game: SportEventRoundMatchGameDto | undefined, side
   return game?.sideResults.find((result) => result.sideNumber === sideNumber);
 }
 
-/** The match's sides in side-number order. */
-function sidesInOrder(match: MatchSides): SportEventRoundMatchSideDto[] {
-  return [...match.sides].sort((left, right) => left.sideNumber - right.sideNumber);
+/** Two sides in the order a schedule names them, and whether a "vs" joins them in place of "at". */
+export interface BilledSides<Side> {
+  first: Side | undefined;
+  second: Side | undefined;
+  isNeutralSite: boolean;
 }
 
 /**
- * The two sides in the order a schedule names them, "away at home", from where each side plays
- * game 1: the side playing away first. Where neither side is home or away (HomeAway NONE, a
- * neutral site), side 1 first, and the two are joined by "vs".
+ * Sides in the order a schedule names them, "away at home", from where each plays: the side
+ * playing away first. Where neither side is home or away (HomeAway NONE, a neutral site), side 1
+ * first, and the two are joined by "vs".
  */
-export function billedSides(match: Pick<SportEventRoundMatchDto, 'sides' | 'games'>): {
-  first: SportEventRoundMatchSideDto | undefined;
-  second: SportEventRoundMatchSideDto | undefined;
-  isNeutralSite: boolean;
-} {
-  const ordered = sidesInOrder(match);
-  const game = gameOne(match);
-  const homeAway = (side: SportEventRoundMatchSideDto) => sideResultIn(game, side.sideNumber)?.homeAway ?? HomeAway.NONE;
-  const away = ordered.find((side) => homeAway(side) === HomeAway.AWAY);
-  const first = away ?? ordered[0];
+function billInOrder<Side extends { sideNumber: number }>(sides: readonly Side[], homeAway: (side: Side) => HomeAway): BilledSides<Side> {
+  const ordered = [...sides].sort((left, right) => left.sideNumber - right.sideNumber);
+  const first = ordered.find((side) => homeAway(side) === HomeAway.AWAY) ?? ordered[0];
   return {
     first,
     second: ordered.find((side) => side !== first),
     isNeutralSite: ordered.every((side) => homeAway(side) === HomeAway.NONE),
   };
+}
+
+/** A match's two sides as a schedule bills them, from where each side plays game 1. */
+export function billedSides(match: Pick<SportEventRoundMatchDto, 'sides' | 'games'>): BilledSides<SportEventRoundMatchSideDto> {
+  const game = gameOne(match);
+  return billInOrder(match.sides, (side) => sideResultIn(game, side.sideNumber)?.homeAway ?? HomeAway.NONE);
+}
+
+/** A pick screen game's two sides (#2016) as a schedule bills them, from where the API says each plays. */
+export function billedPickSides<Side extends Pick<GamePickSideDto, 'sideNumber' | 'homeAway'>>(game: { sides: readonly Side[] }): BilledSides<Side> {
+  return billInOrder(game.sides, (side) => side.homeAway);
 }
 
 /** A side's running score at the end of each period of regulation of a game, by period number. */

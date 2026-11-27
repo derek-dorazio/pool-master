@@ -11,6 +11,7 @@ import {
   rankSortedScores,
   SelectionType,
   UpsetBonusRule,
+  type ContestRoundCoverage,
   type ContestScoringSettings,
   type ContestScoringSettingsParse,
   type ContestSelectionConfig,
@@ -39,6 +40,8 @@ export interface ContestLeaderboardCountingRule extends ContestCountingRule {
 export interface ContestScoringConfigurationRow {
   /** The contest's typed rules; every selection type's carry `countedScores` (#93). */
   configJson: ContestSelectionConfig | null;
+  /** The rounds the contest covers (#2014), from its template's listed slots. */
+  coverage: ContestRoundCoverage;
   participantScoringRules: Array<{
     sortOrder: number;
     /** The rule's definition and settings, as read through the definition's settings schema. */
@@ -182,6 +185,8 @@ export type ContestScoringResolution =
     id: ParticipantScoringDefinitionId;
     definition: ParticipantScoringDefinition;
     scoring: ContestScoringSettings;
+    /** The rounds the contest covers (#2014): only their results score. */
+    coverage: ContestRoundCoverage;
   }
   | { ok: false; reason: ContestScoringResolutionFailure };
 
@@ -190,7 +195,10 @@ export type ContestScoringResolutionFailure = 'RULE_MISSING' | 'DEFINITION_UNKNO
 export function resolveContestScoringDefinition(
   configuration: ContestScoringConfigurationRow | null,
 ): ContestScoringResolution {
-  const rule = [...(configuration?.participantScoringRules ?? [])]
+  if (!configuration) {
+    return { ok: false, reason: 'RULE_MISSING' };
+  }
+  const rule = [...configuration.participantScoringRules]
     .filter((candidate) => candidate.active)
     .sort((left, right) => left.sortOrder - right.sortOrder)
     .at(0);
@@ -202,7 +210,7 @@ export function resolveContestScoringDefinition(
   }
   const scoring = rule.scoring.data;
   const id = scoring.participantScoringDefinitionId;
-  return { ok: true, id, definition: PARTICIPANT_SCORING_DEFINITIONS[id], scoring };
+  return { ok: true, id, definition: PARTICIPANT_SCORING_DEFINITIONS[id], scoring, coverage: configuration.coverage };
 }
 
 export function buildContestEntryStanding(
