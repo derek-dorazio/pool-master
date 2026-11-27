@@ -11,6 +11,8 @@ import { DAY, okBody, seedEventWithField, seedFootballWeek, seedLeagueWithTeams,
 import { expectSameStatementCount } from '../query-scaling';
 import { AWAY_SIDE, HOME_SIDE } from '../../support/match-sides';
 import { rowSideTeam } from '../../support/match-rows';
+import { tierSetSlot } from '../../support/event-tier-sets';
+import { priceTierSetIn, standardPricingIn } from '../../support/budget-pricing';
 
 // No mocks.
 
@@ -36,12 +38,10 @@ async function pricedGolfEvent(golfers: number) {
   const { event, field } = await seedEventWithField(golfers);
   await seedTiers(event.id, field, 2);
   const prisma = getPrisma();
-  await prisma.sportEvent.update({
-    where: { id: event.id },
-    data: { pricingConfig: { salaryCap: 50_000, unit: 100, topSharePercent: 24, floorSharePercent: 12, steepness: 4 } },
-  });
-  await Promise.all(field.map((row, index) => prisma.sportEventParticipantValuation.update({
-    where: { sportEventParticipantId: row.id },
+  const tierSet = await tierSetSlot(prisma, event.id);
+  await priceTierSetIn(prisma, tierSet.id, await standardPricingIn(prisma));
+  await Promise.all(field.map((row, index) => prisma.sportEventSlotParticipantValuation.update({
+    where: { sportEventSlotId_sportEventParticipantId: { sportEventSlotId: tierSet.id, sportEventParticipantId: row.id } },
     data: { price: 12_000 - index * 100 },
   })));
   return { event, field };

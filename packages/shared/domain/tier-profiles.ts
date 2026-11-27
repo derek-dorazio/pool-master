@@ -70,21 +70,42 @@ export function tierCountOf(layout: TierLayout): number {
   return layout.type === TierProfileType.EQUAL_GROUPS ? layout.tierCount : layout.ranges.length;
 }
 
-const ProfileOfLayoutSchema = z.uuid().nullable()
-  .describe('The tier profile the layout came from (#2205), or null once that profile is deleted.');
+/** The profile a slot's layout came from (#2205, #2044), by id; screens name it by its code's words. */
+const ProfileOfLayoutSchema = {
+  platformTierProfileId: z.uuid().describe('The tier profile the layout came from: the sport league\'s when the set was tiered.'),
+};
 
 /**
  * The tier layout an event's field was last auto-tiered with: its sport league's profile at the
  * time, with the tier size an admin sent instead, if any. Stored on the event with the tiers.
  */
-export const EventTierConfigSchema = z.discriminatedUnion('type', [
-  EqualGroupsLayoutSchema.extend({ platformTierProfileId: ProfileOfLayoutSchema }),
-  RangesLayoutSchema.extend({ platformTierProfileId: ProfileOfLayoutSchema }),
-]).describe('The tier layout an event\'s field was last auto-tiered with.');
-export type EventTierConfig = z.infer<typeof EventTierConfigSchema>;
+export const SlotTierLayoutSchema = z.discriminatedUnion('type', [
+  EqualGroupsLayoutSchema.extend(ProfileOfLayoutSchema),
+  RangesLayoutSchema.extend(ProfileOfLayoutSchema),
+]).describe('The tier layout an event slot\'s set was last auto-tiered with: its tier profile\'s, with any tier size an admin sent instead.');
+export type SlotTierLayout = z.infer<typeof SlotTierLayoutSchema>;
 
-/** The layout as the event's JSON column stores it; the profile it came from is a column of its own. */
-export const StoredEventTierLayoutSchema = z.discriminatedUnion('type', [EqualGroupsLayoutSchema, RangesLayoutSchema]);
+/** What an event slot keeps of the layout it was tiered with (#2044): the profile, and any tier size an admin sent instead (EQUAL_GROUPS only). */
+export interface SlotTierSettings {
+  platformTierProfileId: string;
+  tierSize: number | null;
+}
+
+/** The layout a slot was tiered with: its profile's own, with the slot's tier size where one was sent. */
+export function slotTierLayoutOf(profile: PlatformTierProfile, tierSize: number | null): SlotTierLayout {
+  const of = { platformTierProfileId: profile.id };
+  return profile.type === TierProfileType.RANGES
+    ? { type: TierProfileType.RANGES, ...of, ranges: profile.ranges.map(({ tierNumber, fromValue, toValue }) => ({ tierNumber, fromValue, toValue })) }
+    : {
+      type: TierProfileType.EQUAL_GROUPS,
+      ...of,
+      tierCount: profile.tierCount,
+      tierSize: tierSize ?? profile.tierSize,
+      lastTier: profile.lastTier,
+      lastTierMax: profile.lastTierMax,
+    };
+}
+
 
 /** A named tier layout, defined once for the platform; each sport league names one (`SportLeague.platformTierProfileId`). */
 export type PlatformTierProfile = DomainEntity & TierLayout & {

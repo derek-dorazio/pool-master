@@ -6,10 +6,11 @@
 import type {
   SportEventRoundMatchRepository,
   SportEventParticipantRepository,
-  SportEventParticipantValuationRepository,
+  SportEventSlotParticipantValuationRepository,
+  SportEventSlotTierRepository,
   SportEventRepository,
 } from '@poolmaster/shared/db';
-import { MatchStatus, SportEventParticipantStatus, coveredRoundNumbers, eventPlaysMatches, isSquaresRound, hasSportEventStarted, matchSpread } from '@poolmaster/shared/domain';
+import { tierSetSlotOf, type SportEventTierSlot, MatchStatus, SportEventParticipantStatus, coveredRoundNumbers, eventPlaysMatches, isSquaresRound, hasSportEventStarted, matchSpread } from '@poolmaster/shared/domain';
 import { findBracketProblem } from '../scoring-families/head-to-head/bracket-picks';
 import { ContestCutoffKind, cutoffTiming } from '../contests/entry-window';
 import { knockoutSeeds } from '../scoring-families/head-to-head/score-team';
@@ -20,13 +21,15 @@ import type { ContestCreateSportEventReader, ContestCreateSportEventState } from
 /**
  * What contest creation and opening need to know about the event: its status and start time,
  * its release and field-lock timing, its sport league (for a league's own template), whether it plays matches, how much of its field has
- * loaded, and for budget rules its salary cap and its active golfers' prices (#93). Composed
+ * loaded, and for budget rules its salary cap and its active golfers' prices (#93), both its first
+ * slot's set's (#2044). Composed
  * from the slice-2 ports (#247) — it was a raw Prisma read inlined here.
  */
-export function createContestSportEventReader({ sportEvents, field, valuations, matches }: {
+export function createContestSportEventReader({ sportEvents, field, tiers, valuations, matches }: {
   sportEvents: SportEventRepository;
   field: SportEventParticipantRepository;
-  valuations: SportEventParticipantValuationRepository;
+  tiers: Pick<SportEventSlotTierRepository, 'findTierSlots'>;
+  valuations: Pick<SportEventSlotParticipantValuationRepository, 'findBySlot'>;
   matches: SportEventRoundMatchRepository;
 }): ContestCreateSportEventReader {
   /**
@@ -38,7 +41,10 @@ export function createContestSportEventReader({ sportEvents, field, valuations, 
     if (events.length === 0) {
       return [];
     }
-    const loaded = await sportEvents.countParticipants(events.map((event) => event.id));
+    const [loaded, tierSlots] = await Promise.all([
+      sportEvents.countParticipants(events.map((event) => event.id)),
+      tiers.findTierSlots(events.map((event) => event.id)),
+    ]);
     return events.map((event) => ({
       id: event.id,
       status: event.status,
@@ -50,7 +56,7 @@ export function createContestSportEventReader({ sportEvents, field, valuations, 
       participantCount: loaded.get(event.id) ?? 0,
       rounds: event.rounds ?? null,
       slotDefinitionIds: event.slotDefinitions.map((definition) => definition.id),
-      salaryCap: event.pricingConfig?.salaryCap ?? null,
+      salaryCap: tierSetSlotOf(tierSlots.get(event.id) ?? [])?.pricing?.salaryCap ?? null,
       squaresFromRound: event.squaresFromRound ?? null,
       participantType: event.participantType,
       scoringFamily: event.scoringFamily,
@@ -60,9 +66,11 @@ export function createContestSportEventReader({ sportEvents, field, valuations, 
     findById: async (sportEventId) => (await findByIds([sportEventId])).at(0) ?? null,
     findByIds,
     findActiveFieldPrices: async (sportEventId) => {
+      const firstSlot = tierSetSlotOf((await tiers.findTierSlots([sportEventId])).get(sportEventId) ?? []);
+      if (firstSlot === undefined) return [];
       const [entries, eventValuations] = await Promise.all([
         field.findBySportEvent(sportEventId),
-        valuations.findBySportEvent(sportEventId),
+        valuations.findBySlot(firstSlot.id),
       ]);
       const activeEntryIds = new Set(entries.filter((entry) => entry.status === SportEventParticipantStatus.ACTIVE).map((entry) => entry.id));
       return eventValuations.flatMap((valuation) =>
@@ -97,10 +105,11 @@ export function createContestSportEventReader({ sportEvents, field, valuations, 
 }
 
 /** The opening reader over its repositories, with the batching described on `createContestOpeningReader`. */
-export function createBatchedContestOpeningReader({ sportEvents, field, valuations, matches: eventMatches }: {
+export function createBatchedContestOpeningReader({ sportEvents, field, tiers, valuations, matches: eventMatches }: {
   sportEvents: SportEventRepository;
   field: SportEventParticipantRepository;
-  valuations: SportEventParticipantValuationRepository;
+  tiers: Pick<SportEventSlotTierRepository, 'findTierSlots'>;
+  valuations: Pick<SportEventSlotParticipantValuationRepository, 'findBySlot'>;
   matches: SportEventRoundMatchRepository;
 }): ContestOpeningReader {
   const eventsById = batchedByIds((ids) => sportEvents.findByIds(ids), (event) => event.id);
@@ -111,12 +120,20 @@ export function createBatchedContestOpeningReader({ sportEvents, field, valuatio
   const gamesOf = batchedByKey((sportEventIds) => eventMatches.findBySportEvents(sportEventIds), (game) => game.sportEventId);
   const fieldOf = batchedByKey((sportEventIds) => field.findBySportEvents(sportEventIds), (row) => row.sportEventId);
   const matches = withReads(eventMatches, { findBySportEvent: (sportEventId) => gamesOf.load(sportEventId) });
+  // Every event's tier slots in one read, for the salary caps (#2044).
+  const tierSlotsOf = new BatchedRead<string, SportEventTierSlot[]>(async (sportEventIds) => {
+    const slots = await tiers.findTierSlots([...new Set(sportEventIds)]);
+    return sportEventIds.map((sportEventId) => slots.get(sportEventId) ?? []);
+  });
   const reader = createContestSportEventReader({
     sportEvents: withReads(sportEvents, {
       findByIds: (ids) => eventsById.load(ids),
       countParticipants: async (sportEventIds) => new Map(await Promise.all(sportEventIds.map(async (sportEventId) => [sportEventId, await participantCounts.load(sportEventId)] as const))),
     }),
     field: withReads(field, { findBySportEvent: (sportEventId) => fieldOf.load(sportEventId) }),
+    tiers: {
+      findTierSlots: async (sportEventIds) => new Map(await Promise.all(sportEventIds.map(async (sportEventId) => [sportEventId, await tierSlotsOf.load(sportEventId)] as const))),
+    },
     valuations,
     matches,
   });

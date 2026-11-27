@@ -6,7 +6,7 @@ import {
   formatDollars,
   priceOnBudgetCurve,
   type BudgetPricingProfile,
-  type EventPricingConfig, SportEventParticipantStatus } from '@poolmaster/shared/domain';
+  type SlotPricing, SportEventParticipantStatus } from '@poolmaster/shared/domain';
 import { AutoAssignSportEventPricesRequestSchema, type AutoAssignSportEventPricesRequest } from '@poolmaster/shared/dto';
 import { autoAssignEventPrices, type SportEventOverviewDto } from '@/lib/api';
 import {
@@ -37,7 +37,7 @@ const VALUE_FIELDS: ReadonlyArray<{ key: keyof PricingDraft; label: string; help
   { key: 'steepness', label: 'Steepness', helper: '1 is a straight line; higher keeps only the top few expensive.' },
 ];
 
-function toDraft(values: BudgetPricingProfile | EventPricingConfig): PricingDraft {
+function toDraft(values: BudgetPricingProfile | SlotPricing): PricingDraft {
   return {
     salaryCap: String(values.salaryCap),
     unit: String(values.unit),
@@ -81,8 +81,8 @@ export function PriceAssignAction({
   overview,
   sportLeagueId,
 }: {
-  /** The values the tournament was last priced with, if any: the dialog starts from them. */
-  current: EventPricingConfig | null;
+  /** The values the tournament was last priced with, and their profile, if any: the dialog starts from them. */
+  current: SlotPricing | null;
   disabled: boolean;
   eventId: string;
   /** The event's field: its active participants are priced, in the order the dialog names (#1807). */
@@ -127,8 +127,8 @@ export function PriceAssignAction({
     // poolmaster-allow-list-lookup: the dialog's profile picker shows this whole list
     const leagueProfile = profiles.find((profile) => profile.id === sportLeagueQuery.data?.platformPricingProfileId);
     if (current) {
-      // The profile the event was priced from, or the league's once that profile is gone (#2205).
-      setProfileId(current.platformPricingProfileId ?? leagueProfile?.id ?? '');
+      // The profile the event was priced from (#2205), which a priced slot keeps (#2044).
+      setProfileId(current.platformPricingProfileId);
       setDraft(toDraft(current));
     } else {
       setProfileId(leagueProfile?.id ?? '');

@@ -25,7 +25,6 @@ import {
   providerMappingFixture,
   sportLeagueFixture,
   tierFixture,
-  STANDARD_PLATFORM_PRICING_PROFILE_ID,
 } from './sport-test-fixtures';
 
 // The root admin's Event page (#1890): the header and its chips, the tab set, the ⚙ and Release
@@ -626,23 +625,12 @@ describe('Event page ⚙ dialog', () => {
 
   it('says what the event was priced with, or that it is not priced yet', async () => {
     renderEventPage('/manage/sports/golf/events/tour-1/field', {
-      event: tournament({ pricing: { platformPricingProfileId: STANDARD_PLATFORM_PRICING_PROFILE_ID, salaryCap: 50000, unit: 100, topSharePercent: 30, floorSharePercent: 12, steepness: 4 } }),
+      event: tournament({ pricing: { platformPricingProfileId: '00000000-0000-4000-8000-0000000000b2', salaryCap: 50000, unit: 100, topSharePercent: 30, floorSharePercent: 12, steepness: 4 } }),
     });
 
     const dialog = await openSettings();
     expect(within(dialog).getByTestId('root-admin-event-settings-dialog-priced-with')).toHaveTextContent(
       'Standard: $50,000 cap · $100 unit · best 30% · worst 12% · steepness 4',
-    );
-  });
-
-  it('says an event was priced from a deleted profile when the profile it recorded is gone, still naming the values', async () => {
-    renderEventPage('/manage/sports/golf/events/tour-1/field', {
-      event: tournament({ pricing: { platformPricingProfileId: null, salaryCap: 50000, unit: 100, topSharePercent: 30, floorSharePercent: 12, steepness: 4 } }),
-    });
-
-    const dialog = await openSettings();
-    expect(within(dialog).getByTestId('root-admin-event-settings-dialog-priced-with')).toHaveTextContent(
-      'A deleted profile: $50,000 cap · $100 unit · best 30% · worst 12% · steepness 4',
     );
   });
 

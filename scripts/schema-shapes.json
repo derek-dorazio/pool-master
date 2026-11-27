@@ -12,7 +12,5 @@
   "json:PlatformRuntimeConfigHistory.previousJson": "allowed: the history of the runtime settings",
   "json:ProviderSyncRun.detailsJson": "allowed: the raw provider response kept for audit (integration boundary)",
   "json:ProviderSyncRun.stats": "allowed: the raw provider response kept for audit (integration boundary)",
-  "json:SportEvent.pricingConfig": "#2044 (slice 7b)",
-  "json:SportEvent.tierConfig": "#2044 (slice 7b)",
   "key:EmailMessage.providerMessageId": "allowed: the email vendor's message id, owned by the email adapter, not a sports feed key"
 }

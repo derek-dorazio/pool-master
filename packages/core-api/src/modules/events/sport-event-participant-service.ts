@@ -24,14 +24,16 @@ import type {
   SportEventRoundMatchRepository,
   SportEventParticipantRepository,
   SportEventParticipantView,
-  SportEventParticipantValuationRepository,
+  SportEventSlotParticipantValuationRepository,
   SportEventRepository,
-  SportEventTierRepository,
+  SportEventSlotTierRepository,
 } from '@poolmaster/shared/db';
 import {
   eventPlaysMatches,
   SportEventStatus,
+  tierSetSlotOf,
   type SportEvent,
+  type SportEventTierSlot,
   type SportEventParticipant,
   sideOfParticipant,
 } from '@poolmaster/shared/domain';
@@ -40,7 +42,7 @@ import { DomainEventType, type DomainEvents } from '../domain-events';
 import { SportEventError } from './errors';
 import type { EventFieldCache } from './event-field-cache';
 import { EventFieldReader, type EventFieldReads } from './event-field-reader';
-import { assertTiersAndPricesEditable } from './sport-event-tier-service';
+import { assertTierSetEditable, requireTierSetSlot } from './sport-event-tier-service';
 
 // The field row a reader sees lives with the port that reads it (#1163).
 export type { ParticipantRoundView, ParticipantStandingView, SportEventParticipantView } from '@poolmaster/shared/db';
@@ -73,9 +75,12 @@ export interface SportEventParticipantServiceDeps {
   field: SportEventParticipantRepository;
   participants: ParticipantRepository;
   matches: Pick<SportEventRoundMatchRepository, 'findBySportEvent'>;
-  /** The event's tiers and valuations, read when a save moves a participant into another tier. */
-  tiers: Pick<SportEventTierRepository, 'findBySportEvent'>;
-  valuations: Pick<SportEventParticipantValuationRepository, 'findBySportEvent'>;
+  /**
+   * The event's tier-set slot, whose set a price or tier in a save goes into (#2044), and that set's
+   * tiers and valuations, read when a save moves a participant into another tier.
+   */
+  tiers: Pick<SportEventSlotTierRepository, 'findTierSlots' | 'findBySlot'>;
+  valuations: Pick<SportEventSlotParticipantValuationRepository, 'findBySlot'>;
   /** The fields read lately, shared by every instance of this service in the container; a new one when omitted. */
   fieldCache?: EventFieldCache;
   /** What follows each results, field or game change it writes (#1946): the app's one map. */
@@ -85,6 +90,9 @@ export interface SportEventParticipantServiceDeps {
 }
 
 export type { EventFieldReads } from './event-field-reader';
+
+/** Where a tier move in a field save lands in the slot's set. */
+type TierMove = { sportEventSlotTierId: string; tierOrderIndex: number };
 
 export class SportEventParticipantService implements EventFieldReads {
   /** The field's reads (#1163, #1315), which the contest and email readers are built with alone. */
@@ -145,22 +153,16 @@ export class SportEventParticipantService implements EventFieldReads {
   }
 
   /**
-   * One save of the field grid: every patched row and its manual price, all or none. Rank,
-   * odds, seed and withdrawals stay editable after release; a price does not (409
+   * One save of the field grid: every patched row and its manual price, all or none; a price or a
+   * tier move goes into the event's tier-set slot's set (#2044). Rank, odds, seed and withdrawals
+   * stay editable after release; a price does not (409
    * SPORT_EVENT_TIERS_LOCKED, #431), and neither does a seed on an event played as a bracket,
    * whose upset bonus reads the seeds as they stood at release (409 SPORT_EVENT_SEEDS_LOCKED,
    * #698). A seed sent unchanged is not a change.
    */
   async updateParticipants(sportEventId: string, updates: readonly FieldEntryUpdate[]): Promise<SportEventParticipantView[]> {
     const event = await this.requireEvent(sportEventId);
-    if (updates.some((update) => update.price !== undefined || update.tierKey !== undefined)) {
-      try {
-        assertTiersAndPricesEditable(event);
-      } catch (error) {
-        this.deps.logger?.warn({ sportEventId, status: event.status }, 'Refused a tier or price change on a released sport event');
-        throw error;
-      }
-    }
+    const valued = await this.valuedSlot(event, updates);
     const field = await this.deps.field.findBySportEvent(sportEventId);
     const seedsLocked = eventPlaysMatches(event) && event.status !== SportEventStatus.DRAFT;
     if (seedsLocked) {
@@ -189,31 +191,54 @@ export class SportEventParticipantService implements EventFieldReads {
     // Only the values that change are written, so a grid saved with most rows untouched writes
     // little: the adapter writes one statement per distinct new value (#1252).
     const entryById = new Map(field.map((entry) => [entry.id, entry]));
-    const tierMoves = await this.tierMoves(sportEventId, updates);
+    const tierMoves = valued === null ? new Map<string, TierMove>() : await this.tierMoves(sportEventId, valued, updates);
     const rebuild = await this.rebuild(sportEventId);
     await this.deps.field.updateMany(updates.map(({ sportEventParticipantId, price, tierKey: _tierKey, ...patch }) => {
       const entry = entryById.get(sportEventParticipantId);
       const tier = tierMoves.get(sportEventParticipantId);
-      return { id: sportEventParticipantId, updates: entry ? changedValues(entry, patch) : patch, price, ...(tier && { tier }) };
+      return {
+        id: sportEventParticipantId,
+        updates: entry ? changedValues(entry, patch) : patch,
+        ...(valued !== null && (price !== undefined || tier !== undefined) && { valuation: { slot: valued, price, tier } }),
+      };
     }), rebuild.jobs);
     rebuild.queued();
     return this.listEventParticipants(sportEventId);
   }
 
   /**
-   * Where each tier move in a save lands: last in its new tier, after the highest place already
-   * held there, so a tier with gaps in its order never gets a place twice. Nothing is read when
-   * the save moves no one. 422 UNKNOWN_TIER_KEY for a key the event has no tier for.
+   * The event's tier-set slot (#2044), when the save sets a price or moves a tier: the set they go
+   * into, checked editable (409 SPORT_EVENT_TIERS_LOCKED, 409 SPORT_EVENT_HAS_NO_SLOT). Null for a
+   * save that touches neither, which reads nothing.
+   */
+  private async valuedSlot(event: SportEvent, updates: readonly FieldEntryUpdate[]): Promise<SportEventTierSlot | null> {
+    if (!updates.some((update) => update.price !== undefined || update.tierKey !== undefined)) return null;
+    const slot = requireTierSetSlot(event.id, tierSetSlotOf((await this.deps.tiers.findTierSlots([event.id])).get(event.id) ?? []));
+    try {
+      assertTierSetEditable(event, slot);
+    } catch (error) {
+      this.deps.logger?.warn({ sportEventId: event.id, sportEventSlotId: slot.id, status: event.status }, 'Refused a tier or price change on a locked tier set');
+      throw error;
+    }
+    return slot;
+  }
+
+  /**
+   * Where each tier move in a save lands: last in its new tier of the slot's set, after the
+   * highest place already held there, so a tier with gaps in its order never gets a place twice.
+   * Nothing is read when the save moves no one. 422 UNKNOWN_TIER_KEY for a key the set has no
+   * tier for.
    */
   private async tierMoves(
     sportEventId: string,
+    slot: SportEventTierSlot,
     updates: readonly FieldEntryUpdate[],
-  ): Promise<Map<string, { sportEventTierId: string; tierOrderIndex: number }>> {
+  ): Promise<Map<string, TierMove>> {
     const moves = updates.filter((update): update is FieldEntryUpdate & { tierKey: string } => update.tierKey !== undefined);
     if (moves.length === 0) return new Map();
     const [tiers, valuations] = await Promise.all([
-      this.deps.tiers.findBySportEvent(sportEventId),
-      this.deps.valuations.findBySportEvent(sportEventId),
+      this.deps.tiers.findBySlot(slot.id),
+      this.deps.valuations.findBySlot(slot.id),
     ]);
     const tierIdByKey = new Map(tiers.map((tier) => [tier.tierKey, tier.id]));
     const unknownKeys = [...new Set(moves.map((move) => move.tierKey))].filter((key) => !tierIdByKey.has(key));
@@ -224,16 +249,16 @@ export class SportEventParticipantService implements EventFieldReads {
     const moving = new Set(moves.map((move) => move.sportEventParticipantId));
     const nextPlace = new Map<string, number>();
     for (const valuation of valuations) {
-      if (valuation.sportEventTierId === null || moving.has(valuation.sportEventParticipantId)) continue;
+      if (valuation.sportEventSlotTierId === null || moving.has(valuation.sportEventParticipantId)) continue;
       const place = (valuation.tierOrderIndex ?? -1) + 1;
-      nextPlace.set(valuation.sportEventTierId, Math.max(nextPlace.get(valuation.sportEventTierId) ?? 0, place));
+      nextPlace.set(valuation.sportEventSlotTierId, Math.max(nextPlace.get(valuation.sportEventSlotTierId) ?? 0, place));
     }
-    const placed = new Map<string, { sportEventTierId: string; tierOrderIndex: number }>();
+    const placed = new Map<string, TierMove>();
     for (const move of moves) {
-      const sportEventTierId = tierIdByKey.get(move.tierKey) as string;
-      const tierOrderIndex = nextPlace.get(sportEventTierId) ?? 0;
-      nextPlace.set(sportEventTierId, tierOrderIndex + 1);
-      placed.set(move.sportEventParticipantId, { sportEventTierId, tierOrderIndex });
+      const sportEventSlotTierId = tierIdByKey.get(move.tierKey) as string;
+      const tierOrderIndex = nextPlace.get(sportEventSlotTierId) ?? 0;
+      nextPlace.set(sportEventSlotTierId, tierOrderIndex + 1);
+      placed.set(move.sportEventParticipantId, { sportEventSlotTierId, tierOrderIndex });
     }
     return placed;
   }

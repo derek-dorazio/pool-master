@@ -1,8 +1,9 @@
 import { expect } from '@jest/globals';
 import {
   EqualGroupsLayoutSchema,
-  EventTierConfigSchema,
-  StoredEventTierLayoutSchema,
+  SlotTierLayoutSchema,
+  slotTierLayoutOf,
+  type PlatformTierProfile,
   FieldOrderBasis,
   PlatformTierProfileLastTier,
   TierProfileType,
@@ -23,8 +24,8 @@ import {
 const SIX_OF_TEN: EqualGroupsLayout = { type: TierProfileType.EQUAL_GROUPS, tierCount: 6, tierSize: 10, lastTier: PlatformTierProfileLastTier.ALL_REMAINING, lastTierMax: null };
 const SIX_OF_TEN_CAPPED: EqualGroupsLayout = { ...SIX_OF_TEN, lastTier: PlatformTierProfileLastTier.CAPPED, lastTierMax: 15 };
 
-/** A tier profile's id, as an event records the profile its layout came from (#2205). */
 const PROFILE_ID = '00000000-0000-4000-8000-0000000000a1';
+
 const ODDS_FIRST = [FieldOrderBasis.ODDS, FieldOrderBasis.SEED, FieldOrderBasis.RANKING];
 
 function range(tierNumber: number, fromValue: number, toValue: number | null): TierRange {
@@ -153,7 +154,7 @@ describe('placeInRanges — each participant in the tier whose range holds its v
   });
 });
 
-describe('EqualGroupsLayoutSchema and EventTierConfigSchema', () => {
+describe('EqualGroupsLayoutSchema and SlotTierLayoutSchema', () => {
   it('refuses a layout of no tiers, more than twenty, or tiers of no one', () => {
     expect(EqualGroupsLayoutSchema.safeParse({ ...SIX_OF_TEN, tierCount: 0 }).success).toBe(false);
     expect(EqualGroupsLayoutSchema.safeParse({ ...SIX_OF_TEN, tierCount: 21 }).success).toBe(false);
@@ -161,27 +162,36 @@ describe('EqualGroupsLayoutSchema and EventTierConfigSchema', () => {
     expect(EqualGroupsLayoutSchema.safeParse(SIX_OF_TEN).success).toBe(true);
   });
 
-  it('reads back an event\'s recorded layout with the id of the profile it came from', () => {
+  it('reads back a slot\'s recorded layout with the profile it came from, by id', () => {
     const recorded = { platformTierProfileId: PROFILE_ID, ...SIX_OF_TEN_CAPPED };
 
-    expect(EventTierConfigSchema.parse(recorded)).toEqual(recorded);
+    expect(SlotTierLayoutSchema.parse(recorded)).toEqual(recorded);
   });
 
-  it('reads back an event\'s recorded ranges layout with its ranges', () => {
+  it('refuses a slot\'s recorded layout that names its profile by name rather than id', () => {
+    expect(SlotTierLayoutSchema.safeParse({ profileName: '6 tiers of 10', ...SIX_OF_TEN }).success).toBe(false);
+  });
+
+  it('reads back a slot\'s recorded ranges layout with its ranges', () => {
     const recorded = { platformTierProfileId: PROFILE_ID, type: TierProfileType.RANGES, ranges: SEED_RANGES.ranges };
 
-    expect(EventTierConfigSchema.parse(recorded)).toEqual(recorded);
+    expect(SlotTierLayoutSchema.parse(recorded)).toEqual(recorded);
+  });
+});
+
+describe('slotTierLayoutOf', () => {
+  const stamps = { code: 'TIERS_6_OF_10', name: '6 tiers of 10', description: 'Six tiers of ten.', sources: ODDS_FIRST, createdAt: new Date(0), updatedAt: new Date(0) };
+
+  it('lays a slot out by its profile, with the tier size an admin sent in place of the profile\'s', () => {
+    const profile: PlatformTierProfile = { id: PROFILE_ID, ...stamps, ...SIX_OF_TEN };
+
+    expect(slotTierLayoutOf(profile, 8)).toEqual({ platformTierProfileId: PROFILE_ID, ...SIX_OF_TEN, tierSize: 8 });
+    expect(slotTierLayoutOf(profile, null)).toEqual({ platformTierProfileId: PROFILE_ID, ...SIX_OF_TEN });
   });
 
-  it('reads back a recorded layout whose profile was deleted, with no profile', () => {
-    expect(EventTierConfigSchema.parse({ platformTierProfileId: null, ...SIX_OF_TEN_CAPPED })).toEqual({ platformTierProfileId: null, ...SIX_OF_TEN_CAPPED });
-  });
+  it('lays a slot out by a ranges profile\'s own ranges, which take no tier size', () => {
+    const profile: PlatformTierProfile = { id: PROFILE_ID, ...stamps, name: 'Seeds', type: TierProfileType.RANGES, ranges: SEED_RANGES.ranges };
 
-  it('refuses a recorded layout that names its profile by name rather than id', () => {
-    expect(EventTierConfigSchema.safeParse({ profileName: '6 tiers of 10', ...SIX_OF_TEN_CAPPED }).success).toBe(false);
-  });
-
-  it('stores a layout without its profile, which the event keeps as a column of its own', () => {
-    expect(StoredEventTierLayoutSchema.parse({ platformTierProfileId: PROFILE_ID, ...SIX_OF_TEN_CAPPED })).toEqual(SIX_OF_TEN_CAPPED);
+    expect(slotTierLayoutOf(profile, null)).toEqual({ platformTierProfileId: PROFILE_ID, type: TierProfileType.RANGES, ranges: SEED_RANGES.ranges });
   });
 });

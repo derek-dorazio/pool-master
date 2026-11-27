@@ -126,7 +126,7 @@ export function resolveLineupSize(
     case SelectionType.RANDOM_DRAW:
       return configJson.picksPerEntry;
     case SelectionType.TIERED: {
-      const tierCount = new Set(field.flatMap((row) => (row.valuation?.sportEventTierId ? [row.valuation.sportEventTierId] : []))).size;
+      const tierCount = new Set(field.flatMap((row) => (row.valuation?.sportEventSlotTierId ? [row.valuation.sportEventSlotTierId] : []))).size;
       return tierCount === 0 ? null : getTieredRosterSize(tierCount, configJson.picksPerTier);
     }
     // Game-pick contests hold no lineup, so there is no "of M" to state.
