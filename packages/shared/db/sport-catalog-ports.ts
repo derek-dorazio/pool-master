@@ -140,7 +140,7 @@ export interface SportEventFilters {
  * for an event the sync creates (#2004): it is kept under its Season's league's selected provider
  * mapping, which must be that provider's. A test event has none.
  */
-export type SportEventCreate = Omit<SportEvent, 'id' | 'sport' | 'sportUrlSegment' | 'createdAt' | 'updatedAt' | 'slotDefinitions' | 'championshipYear' | 'participantType' | 'scoringFamily' | 'providerMappings'> & {
+export type SportEventCreate = Omit<SportEvent, 'id' | 'sport' | 'sportUrlSegment' | 'createdAt' | 'updatedAt' | 'slotDefinitions' | 'championshipYear' | 'participantType' | 'scoringFamily' | 'providerMappings' | 'roundCount'> & {
   providerRef?: ProviderEventRef;
   /** The Season slots it covers (#2004), in its own Season: a test event's test slot. */
   seasonSlotIds?: readonly string[];
@@ -153,8 +153,6 @@ export interface SportEventUpdate {
   location?: string | null;
   startDate?: Date;
   endDate?: Date | null;
-  rounds?: number | null;
-  roundsPar?: number | null;
   autoLifecycleEnabled?: boolean;
   status?: SportEventStatus;
 }
@@ -373,11 +371,6 @@ export interface SportEventRoundRepository {
   createMany(rounds: readonly SportEventRoundCreate[]): Promise<void>;
   /** Reschedules existing rounds, all or none. `scheduledEndAt` left undefined is kept. */
   reschedule(sportEventId: string, rounds: readonly SportEventRoundSchedule[]): Promise<void>;
-  /**
-   * The event's round of this number, created (scheduled now, in the event's one slot) when a score
-   * arrives for a round it lacks. An event with several slots has a round per slot from its create.
-   */
-  findOrCreate(sportEventId: string, roundNumber: number): Promise<SportEventRound>;
   /**
    * The results recorded in each of the event's rounds, by round id, grouped by status (#1889): two
    * grouped reads however many rounds and results. A round with nothing recorded is absent.
@@ -824,6 +817,15 @@ export interface SportLeagueCurrentSeasonFacts {
   seasons: CurrentSeasonCandidate[];
 }
 
+/** A Season slot as coverage resolution reads it (#2014); its place comes from the template's slot. */
+export interface CoverableSeasonSlotRow {
+  id: string;
+  slotDefinitionId: string;
+  seasonCompetitionId: string;
+  sportEventId: string | null;
+  isTestData: boolean;
+}
+
 export interface SportLeagueSeasonRepository {
   findById(id: string): Promise<SportLeagueSeason | null>;
   /**
@@ -837,6 +839,12 @@ export interface SportLeagueSeasonRepository {
   setCurrentSeasons(changes: ReadonlyArray<{ sportLeagueId: string; currentSeasonId: string | null }>): Promise<void>;
   /** One Season slot with its Season and the event on it, or null for an unknown id (#2004). */
   findSlot(seasonSlotId: string): Promise<SeasonSlotWithEvent | null>;
+  /**
+   * The Season's slots that play any of the definitions, each with its competition, the event on
+   * it (null while free) and whether it is a test slot (#2014): what a new contest's coverage is
+   * resolved from. One read.
+   */
+  findCoverableSlots(sportLeagueSeasonId: string, slotDefinitionIds: readonly string[]): Promise<CoverableSeasonSlotRow[]>;
   /** Season slots by id, each with its Season and the event on it, in one read; an unknown id is left out (#2006). */
   findSlotsByIds(seasonSlotIds: readonly string[]): Promise<SeasonSlotWithEvent[]>;
   /**

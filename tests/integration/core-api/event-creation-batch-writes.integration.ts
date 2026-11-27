@@ -131,7 +131,7 @@ describe('Importing a provider\'s Season of events (#1253, #2003)', () => {
 
     const { created } = await sportEvents.importProviderSeason({ sportLeagueId: tour.id, sportLeagueSeasonId, providerId: PROVIDER_ID, sportLeagueProviderMappingId: tour.sportLeagueProviderMappingId, providerEvents: slate });
 
-    expect(created.map(({ event }) => [event.name, event.providerMappings, event.status, event.rounds])).toEqual(
+    expect(created.map(({ event }) => [event.name, event.providerMappings, event.status, event.roundCount])).toEqual(
       slate.map((providerEvent) => [providerEvent.name, [{ providerCode: ProviderCode.BALLDONTLIE, providerName: 'BALLDONTLIE', externalId: providerEvent.externalId }], 'DRAFT', 4]),
     );
     for (const summary of created) {
@@ -160,17 +160,17 @@ describe('Importing a provider\'s Season of events (#1253, #2003)', () => {
 });
 
 describe('Creating one event (#1253)', () => {
-  it('creates a test event on its test slot with its default rounds and tiers in one insert per table, answering the summary a read of it gives', async () => {
+  it('creates a test event on its test slot with the rounds asked for and its default tiers in one insert per table, answering the summary a read of it gives', async () => {
     const tour = await golfTour();
     const { sportEvents } = integrationSportEventServices();
 
     const seasonSlotId = await testSlotId(getPrisma(), tour.id, new Date('2087-05-06T12:00:00.000Z'));
 
     const { result: created, statements } = await recordStatements(
-      () => sportEvents.createEvent({ seasonSlotIds: [seasonSlotId], name: 'The Batch Classic' }),
+      () => sportEvents.createEvent({ seasonSlotIds: [seasonSlotId], name: 'The Batch Classic', rounds: 4 }),
     );
 
-    // One insert per table: the default rounds and tiers go in together, not one at a time; and
+    // One insert per table: the four rounds and the default tiers go in together, not one at a time; and
     // every read is pinned too, so an added read shows. The league's tier profile is one read (#1844),
     // with its sources and its ranges one read each (#2160).
     // The tour is synced: its selected mapping, provider league and provider are read with the

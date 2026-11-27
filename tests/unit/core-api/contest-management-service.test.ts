@@ -18,6 +18,9 @@ import {
   SportEventStatus,
   TemplateCoverageMode,
   LeaguePlan,
+  LeaguePhase,
+  MatchFormat,
+  type ContestTemplateSlot,
   SeasonSlotStatus,
 } from '@poolmaster/shared/domain';
 import {
@@ -52,6 +55,7 @@ import type {
   ContestRepository,
   CupKey,
   ParticipantContestScoringRuleRepository,
+  SportLeagueSeasonRepository,
 } from '@poolmaster/shared/db';
 import {
   ContestManagementError,
@@ -90,20 +94,26 @@ function createContestRepo(): ContestRepository {
       id: 'contest-1',
       leagueId: 'league-1',
       sportEventIds: ['11111111-1111-1111-1111-111111111111'],
+      coveredSlotDefinitionIds: [EVENT_SLOT_DEFINITION_ID],
+      coveredSeasonSlotIds: [`season-slot-${EVENT_SLOT_DEFINITION_ID}`],
       name: 'Contest 1',
       status: ContestStatus.DRAFT,
       contestFormat: ContestFormat.ROSTER,
       selectionType: 'TIERED',
+      sportLeagueSeasonId: 'season-2026',
       seasonYear: 2026,
       cupWeight: CupWeight.NORMAL,
       createdAt: new Date('2026-04-07T12:00:00.000Z'),
       updatedAt: new Date('2026-04-07T12:00:00.000Z'),
     }),
-    create: mockFn<ContestRepository['create']>(async (contest) => ({
+    create: mockFn<ContestRepository['create']>(async ({ seasonSlotIds, ...contest }) => ({
       status: 'created',
       contest: {
         id: 'contest-1',
         ...contest,
+        sportEventIds: ['11111111-1111-1111-1111-111111111111'],
+        coveredSeasonSlotIds: [...seasonSlotIds],
+        coveredSlotDefinitionIds: seasonSlotIds.map((seasonSlotId) => seasonSlotId.replace('season-slot-', '')),
         cupWeight: CupWeight.NORMAL,
         createdAt: new Date('2026-04-07T12:00:00.000Z'),
         updatedAt: new Date('2026-04-07T12:00:00.000Z'),
@@ -165,12 +175,48 @@ function createContestConfigurationRepo(): ContestConfigurationRepository {
   };
 }
 
+/** The slot definition the test event's one Season slot plays, which every fixture template lists. */
+const EVENT_SLOT_DEFINITION_ID = 'definition-event-slot';
+const EVENT_SLOT: ContestTemplateSlot = {
+  id: EVENT_SLOT_DEFINITION_ID,
+  key: 'TEST_EVENT',
+  name: null,
+  slotKind: SlotKind.TOURNAMENT,
+  weekNumber: null,
+  sportLeagueCompetitionId: 'competition-regular',
+  competitionCode: 'REGULAR',
+  competitionOrderIndex: 0,
+  phase: LeaguePhase.REGULAR,
+  matchFormat: MatchFormat.FIELD,
+};
+
+/** The fixture template of each selection type (#2014: every contest is made from one). */
+function templateIdFor(selectionType: SelectionType): string {
+  return `template-${selectionType.toLowerCase()}`;
+}
+
+/**
+ * The Season slots a test contest's coverage resolves from: one per definition asked for, on the
+ * test event (every event the reader answers is that one).
+ */
+function coverableSeasons(): Pick<SportLeagueSeasonRepository, 'findCoverableSlots'> {
+  return {
+    findCoverableSlots: jest.fn(async (_seasonId: string, slotDefinitionIds: readonly string[]) => slotDefinitionIds.map((slotDefinitionId) => ({
+      id: `season-slot-${slotDefinitionId}`,
+      slotDefinitionId,
+      seasonCompetitionId: 'season-competition-regular',
+      sportEventId: '11111111-1111-1111-1111-111111111111',
+      isTestData: false,
+    }))),
+  };
+}
+
 function createContestConfigTemplateRepo(): ContestConfigTemplateRepository {
   const template = {
     id: '11111111-1111-4111-8111-111111111111',
     sportLeagueId: PGA_TOUR_LEAGUE_ID,
     coverageMode: TemplateCoverageMode.ONE_SLOT,
-    slots: [],
+    slots: [EVENT_SLOT],
     contestFormat: ContestFormat.ROSTER,
     selectionType: SelectionType.TIERED,
     templateKey: 'golf-tiered-pick-6',
@@ -190,8 +236,13 @@ function createContestConfigTemplateRepo(): ContestConfigTemplateRepository {
     updatedAt: new Date('2026-04-07T12:00:00.000Z'),
   };
 
+  // A fixture template id names its selection type; any other id is the golf tiered template.
+  const templateOf = (id: string) => {
+    const selectionType = Object.values(SelectionType).find((type) => templateIdFor(type) === id);
+    return selectionType === undefined ? template : { ...template, id, selectionType, templateKey: id };
+  };
   return {
-    findById: jest.fn().mockResolvedValue(template),
+    findById: jest.fn(async (id: string) => templateOf(id)),
     list: jest.fn().mockResolvedValue([template]),
     update: mockFn<ContestConfigTemplateRepository['update']>(async (_id, updates) => ({
       ...template,
@@ -268,6 +319,7 @@ function createSportEventReader(overrides?: Partial<{
   startDate: Date;
   sport: Sport;
   sportLeagueId: string;
+  sportLeagueSeasonId: string;
   championshipYear: number;
   playsMatches: boolean;
   participantCount: number;
@@ -318,6 +370,7 @@ function createSportEventReader(overrides?: Partial<{
       startDate: overrides?.startDate ?? new Date('2026-05-14T12:00:00.000Z'),
       sport: overrides?.sport ?? Sport.GOLF,
       sportLeagueId: overrides?.sportLeagueId ?? PGA_TOUR_LEAGUE_ID,
+      sportLeagueSeasonId: overrides?.sportLeagueSeasonId ?? `season-${String(overrides?.championshipYear ?? 2026)}`,
       championshipYear: overrides?.championshipYear ?? 2026,
       playsMatches: overrides?.playsMatches ?? false,
       participantCount: overrides?.participantCount ?? 72,
@@ -359,6 +412,7 @@ describe('ContestManagementService', () => {
       configurations: contestConfigurationRepo,
       scoringRules: participantContestScoringRuleRepo,
       tiers: createSportEventTierServiceStub(),
+      seasons: coverableSeasons(),
       sportEventReader: createSportEventReader(),
       cups: createCupKeeper(cupsAsked),
       planEntitlements: platinumEntitlements(),
@@ -367,6 +421,7 @@ describe('ContestManagementService', () => {
     const result = await service.createContest(
       { leagueId: 'league-1' },
       {
+        templateId: templateIdFor('TIERED'),
         name: 'Masters Pick 6',
         sportEventIds: ['11111111-1111-1111-1111-111111111111'],
         contestFormat: 'ROSTER',
@@ -382,7 +437,8 @@ describe('ContestManagementService', () => {
 
     expect(contestCoreRepo.create).toHaveBeenCalledWith({
       leagueId: 'league-1',
-      sportEventIds: ['11111111-1111-1111-1111-111111111111'],
+      sportLeagueSeasonId: 'season-2026',
+      seasonSlotIds: [`season-slot-${EVENT_SLOT_DEFINITION_ID}`],
       name: 'Masters Pick 6',
       selectionType: 'TIERED',
       contestFormat: ContestFormat.ROSTER,
@@ -394,7 +450,7 @@ describe('ContestManagementService', () => {
     expect(cupsAsked).toEqual([{ leagueId: 'league-1', seasonYear: 2026, sportLeagueId: PGA_TOUR_LEAGUE_ID }]);
     expect(contestConfigurationRepo.create).toHaveBeenCalledWith(
       expect.objectContaining({
-        templateId: undefined,
+        templateId: templateIdFor('TIERED'),
         selectionType: 'TIERED',
         // configJson holds only GolfContestConfig's own fields; the entry cap has its column (#416).
         configJson: { selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 4 },
@@ -419,6 +475,7 @@ describe('ContestManagementService', () => {
       configurations: createContestConfigurationRepo(),
       scoringRules: createParticipantScoringRuleRepo(),
       tiers: createSportEventTierServiceStub(2),
+      seasons: coverableSeasons(),
       sportEventReader: createSportEventReader({
         participantCount: 80,
       }),
@@ -430,6 +487,7 @@ describe('ContestManagementService', () => {
       service.createContest(
         { leagueId: 'league-1' },
         {
+          templateId: templateIdFor('TIERED'),
           name: 'Invalid counted scores',
           sportEventIds: ['11111111-1111-1111-1111-111111111111'],
           contestFormat: 'ROSTER',
@@ -459,6 +517,7 @@ describe('ContestManagementService', () => {
       configurations: contestConfigurationRepo,
       scoringRules: createParticipantScoringRuleRepo(),
       tiers: createSportEventTierServiceStub(2),
+      seasons: coverableSeasons(),
       sportEventReader: createSportEventReader({
         participantCount: 80,
       }),
@@ -470,6 +529,7 @@ describe('ContestManagementService', () => {
       service.createContest(
         { leagueId: 'league-1' },
         {
+          templateId: templateIdFor('TIERED'),
           name: 'Every pick counts',
           sportEventIds: ['11111111-1111-1111-1111-111111111111'],
           contestFormat: 'ROSTER',
@@ -509,6 +569,7 @@ describe('ContestManagementService', () => {
       configurations: contestConfigurationRepo,
       scoringRules: createParticipantScoringRuleRepo(),
       tiers: createSportEventTierServiceStub(),
+      seasons: coverableSeasons(),
       sportEventReader: createSportEventReader(),
       cups: createCupKeeper(),
       planEntitlements: platinumEntitlements(),
@@ -536,6 +597,7 @@ describe('ContestManagementService', () => {
         configurations: createContestConfigurationRepo(),
         scoringRules: createParticipantScoringRuleRepo(),
         tiers: createSportEventTierServiceStub(),
+        seasons: coverableSeasons(),
         sportEventReader: createSportEventReader({ sportLeagueId: eventLeagueId }),
         cups: createCupKeeper(),
         planEntitlements: platinumEntitlements(),
@@ -570,6 +632,7 @@ describe('ContestManagementService', () => {
     function buildService(options?: { status?: ContestStatus; leagueId?: string; written?: boolean }) {
       const contestCoreRepo = createContestRepo();
       const contest = {
+        templateId: templateIdFor('TIERED'),
         id: 'contest-1',
         leagueId: options?.leagueId ?? 'league-1',
         sportEventIds: ['11111111-1111-1111-1111-111111111111'],
@@ -596,6 +659,7 @@ describe('ContestManagementService', () => {
         configurations: createContestConfigurationRepo(),
         scoringRules: createParticipantScoringRuleRepo(),
         tiers: createSportEventTierServiceStub(0),
+        seasons: coverableSeasons(),
         sportEventReader: createSportEventReader(),
         now: () => CONTEST_MANAGEMENT_TEST_NOW,
         cups: createCupKeeper(),
@@ -653,6 +717,7 @@ describe('ContestManagementService', () => {
     }) {
       const contestCoreRepo = createContestRepo();
       const draft = {
+        templateId: templateIdFor('TIERED'),
         id: 'contest-1',
         leagueId: options?.leagueId ?? 'league-1',
         sportEventIds: options?.sportEventIds ?? ['11111111-1111-1111-1111-111111111111'],
@@ -679,6 +744,7 @@ describe('ContestManagementService', () => {
         configurations: createContestConfigurationRepo(),
         scoringRules: createParticipantScoringRuleRepo(),
         tiers,
+        seasons: coverableSeasons(),
         sportEventReader: options?.reader ?? createSportEventReader(),
         contestOpened: options?.contestOpened,
         now: () => CONTEST_MANAGEMENT_TEST_NOW,
@@ -702,7 +768,7 @@ describe('ContestManagementService', () => {
       expect(reader.findByIds).toHaveBeenCalledTimes(1);
       expect(reader.findByIds).toHaveBeenCalledWith([masters, pga]);
       expect(tiers.listTiersOfEvents).toHaveBeenCalledTimes(1);
-      expect(tiers.listTiersOfEvents).toHaveBeenCalledWith([masters, pga], { coveredSlotDefinitionIds: null });
+      expect(jest.mocked(tiers.listTiersOfEvents).mock.calls[0]?.[0]).toEqual([masters, pga]);
     });
 
     it('moves a DRAFT contest to OPEN with a compare-and-set from DRAFT, records when it opened, has the reminder sweep look at it next (#1170), and returns it open', async () => {
@@ -820,6 +886,7 @@ describe('ContestManagementService', () => {
       configurations: contestConfigurationRepo,
       scoringRules: participantContestScoringRuleRepo,
       tiers: createSportEventTierServiceStub(),
+      seasons: coverableSeasons(),
       sportEventReader: createSportEventReader(),
       cups: createCupKeeper(),
       planEntitlements: platinumEntitlements(),
@@ -861,6 +928,7 @@ describe('ContestManagementService', () => {
       configurations: contestConfigurationRepo,
       scoringRules: createParticipantScoringRuleRepo(),
       tiers: createSportEventTierServiceStub(2),
+      seasons: coverableSeasons(),
       sportEventReader: createSportEventReader({
         participantCount: 80,
       }),
@@ -891,6 +959,7 @@ describe('ContestManagementService', () => {
       configurations: contestConfigurationRepo,
       scoringRules: createParticipantScoringRuleRepo(),
       tiers: createSportEventTierServiceStub(2),
+      seasons: coverableSeasons(),
       sportEventReader: createSportEventReader({
         participantCount: 80,
       }),
@@ -920,6 +989,7 @@ describe('ContestManagementService', () => {
       configurations: createContestConfigurationRepo(),
       scoringRules: createParticipantScoringRuleRepo(),
       tiers: createSportEventTierServiceStub(),
+      seasons: coverableSeasons(),
       sportEventReader: createSportEventReader(),
       cups: createCupKeeper(),
       planEntitlements: platinumEntitlements(),
@@ -945,6 +1015,7 @@ describe('ContestManagementService', () => {
       configurations: createContestConfigurationRepo(),
       scoringRules: createParticipantScoringRuleRepo(),
       tiers: golfTierService,
+      seasons: coverableSeasons(),
       sportEventReader: createSportEventReader(),
       cups: createCupKeeper(),
       planEntitlements: platinumEntitlements(),
@@ -955,7 +1026,8 @@ describe('ContestManagementService', () => {
     expect(golfTierService.getEffectiveTiersForSportEvents).toHaveBeenCalledTimes(1);
     expect(golfTierService.getEffectiveTiersForSportEvents).toHaveBeenCalledWith(
       ['11111111-1111-1111-1111-111111111111'],
-      { coveredSlotDefinitionIds: null },
+      // The set the contest picks from is its covered slots' (#2014).
+      { coveredSlotDefinitionIds: ['definition-event-slot'] },
     );
     expect(result.sportEvents[0]?.effectiveTiers).toEqual([
       {
@@ -1002,6 +1074,7 @@ describe('ContestManagementService', () => {
       configurations: createContestConfigurationRepo(),
       scoringRules: createParticipantScoringRuleRepo(),
       tiers,
+      seasons: coverableSeasons(),
       sportEventReader: createSportEventReader(),
       cups: createCupKeeper(),
       planEntitlements: platinumEntitlements(),
@@ -1030,6 +1103,7 @@ describe('ContestManagementService', () => {
       configurations: contestConfigurationRepo,
       scoringRules: participantContestScoringRuleRepo,
       tiers: createSportEventTierServiceStub(),
+      seasons: coverableSeasons(),
       sportEventReader: createSportEventReader(),
       cups: createCupKeeper(),
       planEntitlements: platinumEntitlements(),
@@ -1077,6 +1151,7 @@ describe('ContestManagementService', () => {
       configurations: contestConfigurationRepo,
       scoringRules: createParticipantScoringRuleRepo(),
       tiers: createSportEventTierServiceStub(),
+      seasons: coverableSeasons(),
       sportEventReader: createSportEventReader(),
       cups: createCupKeeper(),
       planEntitlements: platinumEntitlements(),
@@ -1109,7 +1184,7 @@ describe('ContestManagementService', () => {
 
   // #245 — neither a template nor a configuration: the service holds the rule even without the
   // route's refine in front of it.
-  it('rejects a create naming neither a template nor a configuration', async () => {
+  it('refuses a create naming no template, even with a configuration, with 400 CONTEST_CONFIGURATION_REQUIRED: every contest is made from one (#2014)', async () => {
     const contestCoreRepo = createContestRepo();
     const service = new ContestManagementService({
       domainEvents: testDomainEvents(),
@@ -1118,6 +1193,7 @@ describe('ContestManagementService', () => {
       configurations: createContestConfigurationRepo(),
       scoringRules: createParticipantScoringRuleRepo(),
       tiers: createSportEventTierServiceStub(),
+      seasons: coverableSeasons(),
       sportEventReader: createSportEventReader(),
       cups: createCupKeeper(),
       planEntitlements: platinumEntitlements(),
@@ -1131,6 +1207,7 @@ describe('ContestManagementService', () => {
           sportEventIds: ['11111111-1111-1111-1111-111111111111'],
           contestFormat: 'ROSTER',
           selectionType: 'TIERED',
+          configuration: { selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 4 },
         },
       ),
     ).rejects.toMatchObject({ code: CONTEST_CONFIGURATION_REQUIRED, statusCode: 400 });
@@ -1154,6 +1231,7 @@ describe('ContestManagementService', () => {
       configurations: createContestConfigurationRepo(),
       scoringRules: createParticipantScoringRuleRepo(),
       tiers: createSportEventTierServiceStub(),
+      seasons: coverableSeasons(),
       sportEventReader: createSportEventReader(),
       cups: createCupKeeper(),
       planEntitlements: platinumEntitlements(),
@@ -1188,6 +1266,7 @@ describe('ContestManagementService', () => {
       configurations: createContestConfigurationRepo(),
       scoringRules: createParticipantScoringRuleRepo(),
       tiers: createSportEventTierServiceStub(),
+      seasons: coverableSeasons(),
       sportEventReader: createSportEventReader(),
       cups: createCupKeeper(),
       planEntitlements: platinumEntitlements(),
@@ -1224,6 +1303,7 @@ describe('ContestManagementService', () => {
       configurations: contestConfigurationRepo,
       scoringRules: createParticipantScoringRuleRepo(),
       tiers: createSportEventTierServiceStub(),
+      seasons: coverableSeasons(),
       sportEventReader: createSportEventReader(),
       cups: createCupKeeper(),
       planEntitlements: platinumEntitlements(),
@@ -1249,6 +1329,7 @@ describe('ContestManagementService', () => {
       configurations: createContestConfigurationRepo(),
       scoringRules: createParticipantScoringRuleRepo(),
       tiers: createSportEventTierServiceStub(),
+      seasons: coverableSeasons(),
       sportEventReader: createSportEventReader({
         participantCount: 0,
       }),
@@ -1259,6 +1340,7 @@ describe('ContestManagementService', () => {
     await expect(service.createContest(
       { leagueId: 'league-1' },
       {
+        templateId: templateIdFor('TIERED'),
         name: 'Missing Field Contest',
         sportEventIds: ['11111111-1111-1111-1111-111111111111'],
         contestFormat: 'ROSTER',
@@ -1305,6 +1387,7 @@ describe('ContestManagementService', () => {
       configurations: createContestConfigurationRepo(),
       scoringRules: createParticipantScoringRuleRepo(),
       tiers: createSportEventTierServiceStub(),
+      seasons: coverableSeasons(),
       sportEventReader: createSportEventReader({ ...event, participantCount: 72 }),
       cups: createCupKeeper(),
       planEntitlements: platinumEntitlements(),
@@ -1313,6 +1396,7 @@ describe('ContestManagementService', () => {
     await expect(service.createContest(
       { leagueId: 'league-1' },
       {
+        templateId: templateIdFor('TIERED'),
         name: 'Unavailable Event Contest',
         sportEventIds: ['11111111-1111-1111-1111-111111111111'],
         contestFormat: 'ROSTER',
@@ -1331,6 +1415,7 @@ describe('ContestManagementService', () => {
   describe('refusals and legacy rows', () => {
     const EVENT_ID = '11111111-1111-1111-1111-111111111111';
     const CREATE: CreateContestRequest = {
+      templateId: templateIdFor('TIERED'),
       name: 'Masters Pool',
       sportEventIds: [EVENT_ID],
       contestFormat: 'ROSTER',
@@ -1353,6 +1438,7 @@ describe('ContestManagementService', () => {
         configurations: configurationRepo,
         scoringRules: createParticipantScoringRuleRepo(),
         tiers: createSportEventTierServiceStub(),
+        seasons: coverableSeasons(),
         sportEventReader: options.reader ?? createSportEventReader(),
         now: () => CONTEST_MANAGEMENT_TEST_NOW,
         cups: createCupKeeper(),
@@ -1458,7 +1544,7 @@ describe('ContestManagementService', () => {
 
       await expect(service.setContestSportEvents('league-1', 'contest-1', [EVENT_ID]))
         .rejects.toMatchObject({ code: 'CONTEST_NOT_FOUND', statusCode: 404 });
-      expect(contestRepo.replaceSportEvents).not.toHaveBeenCalled();
+      expect(contestRepo.replaceCoveredSlots).not.toHaveBeenCalled();
     });
 
     it('lists the sports leagues the league\'s contests use in a season as the repository counts them', async () => {
@@ -1535,6 +1621,7 @@ describe('ContestManagementService budget rules (#93)', () => {
   });
 
   const budgetRequest = (configuration: { rosterSize: number; countedScores: number }): CreateContestRequest => ({
+    templateId: templateIdFor(SelectionType.BUDGET_PICK),
     name: 'Masters Budget',
     sportEventIds: ['11111111-1111-1111-1111-111111111111'],
     contestFormat: 'ROSTER',
@@ -1552,6 +1639,7 @@ describe('ContestManagementService budget rules (#93)', () => {
       configurations: contestConfigurationRepo,
       scoringRules: createParticipantScoringRuleRepo(),
       tiers: createSportEventTierServiceStub(),
+      seasons: coverableSeasons(),
       sportEventReader: reader,
       cups: createCupKeeper(),
       planEntitlements: platinumEntitlements(),
@@ -1569,6 +1657,7 @@ describe('ContestManagementService budget rules (#93)', () => {
 
     expect(contestConfigurationRepo.create).toHaveBeenCalledWith(expect.objectContaining({
       selectionType: SelectionType.BUDGET_PICK,
+      templateId: templateIdFor(SelectionType.BUDGET_PICK),
       configJson: { selectionType: SelectionType.BUDGET_PICK, rosterSize: 6, salaryCap: 50_000, countedScores: 4 },
       maxEntriesPerSquad: 1,
     }));
@@ -1618,7 +1707,7 @@ describe('ContestManagementService budget rules (#93)', () => {
       activeFieldPrices: [1, 1, 1, 1, 1, 1],
     }));
 
-    await expect(service.createContest({ leagueId: 'league-1' }, { ...budgetRequest({ rosterSize: 6, countedScores: 6 }), selectionType: SelectionType.TIERED }))
+    await expect(service.createContest({ leagueId: 'league-1' }, { ...budgetRequest({ rosterSize: 6, countedScores: 6 }), selectionType: SelectionType.TIERED, templateId: templateIdFor(SelectionType.TIERED) }))
       .rejects.toMatchObject({ code: CONTEST_RULES_SELECTION_TYPE_MISMATCH, statusCode: 422 });
     // The stored contest is tiered: budget rules cannot replace its rules.
     await expect(service.updateContestConfiguration('contest-1', {
@@ -1672,6 +1761,7 @@ describe('ContestManagementService random-draw rules (#601)', () => {
   });
 
   const drawRequest = (configuration: { picksPerEntry: number; countedScores: number }): CreateContestRequest => ({
+    templateId: templateIdFor(SelectionType.RANDOM_DRAW),
     name: 'Masters Sweepstake',
     sportEventIds: ['11111111-1111-1111-1111-111111111111'],
     contestFormat: 'ROSTER',
@@ -1689,6 +1779,7 @@ describe('ContestManagementService random-draw rules (#601)', () => {
       configurations: contestConfigurationRepo,
       scoringRules: createParticipantScoringRuleRepo(),
       tiers: createSportEventTierServiceStub(),
+      seasons: coverableSeasons(),
       sportEventReader: createSportEventReader({ salaryCap: null }),
       cups: createCupKeeper(),
       planEntitlements: platinumEntitlements(),
@@ -1703,6 +1794,7 @@ describe('ContestManagementService random-draw rules (#601)', () => {
 
     expect(contestConfigurationRepo.create).toHaveBeenCalledWith(expect.objectContaining({
       selectionType: SelectionType.RANDOM_DRAW,
+      templateId: templateIdFor(SelectionType.RANDOM_DRAW),
       configJson: { selectionType: SelectionType.RANDOM_DRAW, picksPerEntry: 3, countedScores: 2 },
       maxEntriesPerSquad: 1,
     }));
@@ -1734,6 +1826,7 @@ describe('ContestManagementService finish-position scoring (#622)', () => {
   // The draft the stub configuration repository holds is a tiered one.
   const tieredRules = { selectionType: SelectionType.TIERED, maxEntriesPerSquad: 1, picksPerTier: 1, countedScores: 3 } as const;
   const raceRequest = (overrides: Partial<CreateContestRequest> = {}): CreateContestRequest => ({
+    templateId: templateIdFor(SelectionType.RANDOM_DRAW),
     name: 'Derby Sweepstake',
     sportEventIds: ['11111111-1111-1111-1111-111111111111'],
     contestFormat: 'ROSTER',
@@ -1749,7 +1842,7 @@ describe('ContestManagementService finish-position scoring (#622)', () => {
       id: '99999999-9999-4999-8999-999999999999',
       sportLeagueId: PGA_TOUR_LEAGUE_ID,
       coverageMode: TemplateCoverageMode.ONE_SLOT,
-      slots: [],
+      slots: [EVENT_SLOT],
       contestFormat: ContestFormat.ROSTER,
       selectionType: SelectionType.RANDOM_DRAW,
       templateKey: 'horse-racing-random-draw-win-place-show',
@@ -1780,11 +1873,12 @@ describe('ContestManagementService finish-position scoring (#622)', () => {
       configurations: createContestConfigurationRepo(),
       scoringRules: scoringRuleRepo,
       tiers: createSportEventTierServiceStub(),
+      seasons: coverableSeasons(),
       sportEventReader: createSportEventReader({ sport: Sport.HORSE_RACING, playsMatches: false }),
       cups: createCupKeeper(),
       planEntitlements: platinumEntitlements(),
     });
-    return { contestCoreRepo, scoringRuleRepo, service };
+    return { contestCoreRepo, scoringRuleRepo, service, templateRepo };
   }
 
   it('creates a horse racing contest scored by the points table it was sent', async () => {
@@ -1810,8 +1904,10 @@ describe('ContestManagementService finish-position scoring (#622)', () => {
     expect(scoringRuleRepo.create).toHaveBeenCalledWith(expect.objectContaining({ scoring: WIN_PLACE_SHOW }));
   });
 
-  it('refuses a horse racing contest with neither scoring nor a template with 422 CONTEST_SCORING_SETTINGS_REQUIRED, writing nothing', async () => {
-    const { contestCoreRepo, service } = raceService();
+  it('refuses a horse racing contest sent no scoring from a template that has none with 422 CONTEST_SCORING_SETTINGS_REQUIRED, writing nothing', async () => {
+    const { contestCoreRepo, service, templateRepo } = raceService();
+    const template = expectDefined(await templateRepo.findById('any'));
+    jest.mocked(templateRepo.findById).mockResolvedValueOnce({ ...template, configJson: drawRules });
 
     await expect(service.createContest({ leagueId: 'league-1' }, raceRequest()))
       .rejects.toMatchObject({ code: CONTEST_SCORING_SETTINGS_REQUIRED, statusCode: 422 });
@@ -1837,6 +1933,7 @@ describe('ContestManagementService finish-position scoring (#622)', () => {
       configurations: createContestConfigurationRepo(),
       scoringRules: scoringRuleRepo,
       tiers: createSportEventTierServiceStub(),
+      seasons: coverableSeasons(),
       sportEventReader: createSportEventReader({ sport: Sport.BASKETBALL, playsMatches: true, rounds, bracketProblem, knockoutProblem }),
       cups: createCupKeeper(),
       planEntitlements: platinumEntitlements(),
@@ -1971,7 +2068,7 @@ describe('ContestManagementService finish-position scoring (#622)', () => {
     jest.mocked(templateRepo.findById).mockResolvedValue({
       ...expectDefined(template, 'the stub template'),
       coverageMode: TemplateCoverageMode.ALL_LISTED,
-      slots: [],
+      slots: [EVENT_SLOT],
       selectionType: SelectionType.RANDOM_DRAW,
       configJson: { ...drawRules, scoring: knockoutScoring(roundValues) },
     });
@@ -1984,6 +2081,7 @@ describe('ContestManagementService finish-position scoring (#622)', () => {
       configurations: createContestConfigurationRepo(),
       scoringRules: createParticipantScoringRuleRepo(),
       tiers: createSportEventTierServiceStub(),
+      seasons: coverableSeasons(),
       sportEventReader,
       cups: createCupKeeper(),
       planEntitlements: platinumEntitlements(),
@@ -1997,7 +2095,7 @@ describe('ContestManagementService finish-position scoring (#622)', () => {
 
     await create();
     expect(contestCoreRepo.create).toHaveBeenCalled();
-    expect(sportEventReader.countCoveredRounds).toHaveBeenCalledWith('11111111-1111-1111-1111-111111111111', { slotDefinitionIds: [] });
+    expect(sportEventReader.countCoveredRounds).toHaveBeenCalledWith('11111111-1111-1111-1111-111111111111', { slotDefinitionIds: [EVENT_SLOT_DEFINITION_ID] });
   });
 
   it('refuses a template\'s knockout round values that give one value per round of the event, play-in included, with 422 CONTEST_SCORING_ROUNDS_MISMATCH', async () => {
@@ -2013,12 +2111,12 @@ describe('ContestManagementService finish-position scoring (#622)', () => {
     jest.mocked(templateRepo.findById).mockResolvedValue({
       ...expectDefined(template, 'the stub template'),
       coverageMode: TemplateCoverageMode.ALL_LISTED,
-      slots: [],
+      slots: [EVENT_SLOT],
       selectionType: SelectionType.RANDOM_DRAW,
       configJson: { ...drawRules, scoring: knockoutScoring([1, 2, 4, 8, 16]) },
     });
     // Eight rounds: three group matchdays, then five knockout rounds; the template lists every slot.
-    const sportEventReader = createSportEventReader({ sport: Sport.BASKETBALL, playsMatches: true, rounds: 8, coveredRoundCount: 5, slotDefinitionIds: [], playsOnlyKnockoutRounds: false });
+    const sportEventReader = createSportEventReader({ sport: Sport.BASKETBALL, playsMatches: true, rounds: 8, coveredRoundCount: 5, slotDefinitionIds: [EVENT_SLOT_DEFINITION_ID], playsOnlyKnockoutRounds: false });
     const contestCoreRepo = createContestRepo();
     const service = new ContestManagementService({
       domainEvents: testDomainEvents(),
@@ -2027,13 +2125,14 @@ describe('ContestManagementService finish-position scoring (#622)', () => {
       configurations: createContestConfigurationRepo(),
       scoringRules: createParticipantScoringRuleRepo(),
       tiers: createSportEventTierServiceStub(),
+      seasons: coverableSeasons(),
       sportEventReader,
       cups: createCupKeeper(),
       planEntitlements: platinumEntitlements(),
     });
 
     await service.createContest({ leagueId: 'league-1' }, raceRequest({ name: 'World Cup Sweep', templateId: '11111111-1111-4111-8111-111111111111', configuration: undefined }));
-    expect(sportEventReader.countCoveredRounds).toHaveBeenCalledWith('11111111-1111-1111-1111-111111111111', { slotDefinitionIds: [] });
+    expect(sportEventReader.countCoveredRounds).toHaveBeenCalledWith('11111111-1111-1111-1111-111111111111', { slotDefinitionIds: [EVENT_SLOT_DEFINITION_ID] });
     expect(contestCoreRepo.create).toHaveBeenCalled();
   });
 
@@ -2087,6 +2186,7 @@ describe('ContestManagementService — a contest of several events', () => {
       squaresFromRound: null,
       championshipYear: 2026,
       ...event,
+      sportLeagueSeasonId: `season-${String(event.championshipYear ?? 2026)}`,
       startDate: new Date(event.startDate),
     }]));
     return {
@@ -2104,6 +2204,27 @@ describe('ContestManagementService — a contest of several events', () => {
     };
   }
 
+  const NEXT_MASTERS = '66666666-6666-4666-8666-666666666666';
+  /** Each event's one Season slot. */
+  const slotOf = (sportEventId: string) => `season-slot-${sportEventId}`;
+  /** Every event's Season slot, playing the definition the template lists. */
+  const eachEventsSlot = (): Pick<SportLeagueSeasonRepository, 'findCoverableSlots'> => ({
+    findCoverableSlots: jest.fn(async (_seasonId: string, slotDefinitionIds: readonly string[]) => [MASTERS, PGA, US_OPEN, LPGA_MAJOR, NEXT_MASTERS]
+      .flatMap((sportEventId) => slotDefinitionIds.map((slotDefinitionId) => ({
+        id: slotOf(sportEventId), slotDefinitionId, seasonCompetitionId: 'season-competition-regular', sportEventId, isTestData: false,
+      })))),
+  });
+  /** The fixture templates, covering all their listed slots: every slot of the chosen events. */
+  const allListedTemplates = () => {
+    const templates = createContestConfigTemplateRepo();
+    const one = jest.mocked(templates.findById).getMockImplementation();
+    jest.mocked(templates.findById).mockImplementation(async (id: string) => {
+      const template = await expectDefined(one)(id);
+      return template && { ...template, coverageMode: TemplateCoverageMode.ALL_LISTED };
+    });
+    return templates;
+  };
+
   const READER_EVENTS = [
     { id: MASTERS, startDate: '2026-05-01T12:00:00.000Z' },
     { id: PGA, startDate: '2026-05-14T12:00:00.000Z' },
@@ -2116,11 +2237,13 @@ describe('ContestManagementService — a contest of several events', () => {
     contest?: Record<string, unknown>;
     planEntitlements?: ContestManagementServiceDeps['planEntitlements'];
     storedConfigJson?: { selectionType: typeof SelectionType.BUDGET_PICK; rosterSize: number; salaryCap: number; countedScores: number };
+    configTemplates?: ContestManagementServiceDeps['configTemplates'];
+    seasons?: Pick<SportLeagueSeasonRepository, 'findCoverableSlots'>;
   } = {}) {
     const contestRepo = createContestRepo();
     const cupsAsked: CupKey[] = [];
     if (options.contest) {
-      (contestRepo.findById as jest.Mock).mockResolvedValue({
+      const contest = {
         id: 'contest-1',
         leagueId: 'league-1',
         sportEventIds: [MASTERS],
@@ -2128,11 +2251,18 @@ describe('ContestManagementService — a contest of several events', () => {
         status: ContestStatus.DRAFT,
         contestFormat: ContestFormat.ROSTER,
         selectionType: SelectionType.TIERED,
+        sportLeagueSeasonId: 'season-2026',
         seasonYear: 2026,
         cupWeight: CupWeight.NORMAL,
         createdAt: new Date('2026-04-07T12:00:00.000Z'),
         updatedAt: new Date('2026-04-07T12:00:00.000Z'),
         ...options.contest,
+      };
+      const sportEventIds = contest.sportEventIds;
+      (contestRepo.findById as jest.Mock).mockResolvedValue({
+        ...contest,
+        coveredSeasonSlotIds: sportEventIds.map(slotOf),
+        coveredSlotDefinitionIds: sportEventIds.map(() => EVENT_SLOT_DEFINITION_ID),
       });
     }
     const configurationRepo = createContestConfigurationRepo();
@@ -2141,6 +2271,7 @@ describe('ContestManagementService — a contest of several events', () => {
       (configurationRepo.findByContest as jest.Mock).mockResolvedValue({
         id: 'config-1',
         contestId: 'contest-1',
+        templateId: templateIdFor(options.storedConfigJson.selectionType),
         selectionType: options.storedConfigJson.selectionType,
         configJson: options.storedConfigJson,
         maxEntriesPerSquad: 1,
@@ -2151,10 +2282,11 @@ describe('ContestManagementService — a contest of several events', () => {
     const service = new ContestManagementService({
       domainEvents: testDomainEvents(),
       contests: contestRepo,
-      configTemplates: createContestConfigTemplateRepo(),
+      configTemplates: options.configTemplates ?? allListedTemplates(),
       configurations: configurationRepo,
       scoringRules: createParticipantScoringRuleRepo(),
       tiers: createSportEventTierServiceStub(),
+      seasons: options.seasons ?? eachEventsSlot(),
       sportEventReader: options.reader ?? multiEventReader(READER_EVENTS),
       now: () => CONTEST_MANAGEMENT_TEST_NOW,
       cups: createCupKeeper(cupsAsked),
@@ -2165,6 +2297,7 @@ describe('ContestManagementService — a contest of several events', () => {
   }
 
   const tiered = (sportEventIds: string[]): CreateContestRequest => ({
+    templateId: templateIdFor(SelectionType.TIERED),
     name: 'Majors Pool',
     sportEventIds,
     contestFormat: 'ROSTER',
@@ -2172,12 +2305,40 @@ describe('ContestManagementService — a contest of several events', () => {
     configuration: { maxEntriesPerSquad: 1, selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 4 },
   });
 
-  it('creates a contest on several events of one sport league, storing them in start-date order whatever order they were sent in', async () => {
+  it('creates a contest on several events of one sport league, covering each event\'s slot in play order whatever order they were sent in', async () => {
     const { service, contestRepo } = build();
 
     await service.createContest({ leagueId: 'league-1' }, tiered([US_OPEN, MASTERS, PGA]));
 
-    expect(contestRepo.create).toHaveBeenCalledWith(expect.objectContaining({ sportEventIds: [MASTERS, PGA, US_OPEN] }), PLATINUM_SEASON_LIMIT);
+    expect(contestRepo.create).toHaveBeenCalledWith(expect.objectContaining({ seasonSlotIds: [MASTERS, PGA, US_OPEN].map(slotOf) }), PLATINUM_SEASON_LIMIT);
+  });
+
+  it('refuses a contest on events of two Seasons with 422 CONTEST_EVENTS_SEASON_MISMATCH, creating nothing', async () => {
+    const { service, contestRepo } = build({
+      reader: multiEventReader([...READER_EVENTS, { id: NEXT_MASTERS, startDate: '2027-04-08T12:00:00.000Z', championshipYear: 2027 }]),
+    });
+
+    await expect(service.createContest({ leagueId: 'league-1' }, tiered([MASTERS, NEXT_MASTERS])))
+      .rejects.toMatchObject({ code: 'CONTEST_EVENTS_SEASON_MISMATCH', statusCode: 422 });
+    expect(contestRepo.create).not.toHaveBeenCalled();
+  });
+
+  it('refuses a contest on an event holding no slot its template lists with 422 CONTEST_COVERAGE_NO_LISTED_SLOT, creating nothing', async () => {
+    const { service, contestRepo } = build({ seasons: { findCoverableSlots: jest.fn().mockResolvedValue([]) } });
+
+    await expect(service.createContest({ leagueId: 'league-1' }, tiered([MASTERS])))
+      .rejects.toMatchObject({ code: 'CONTEST_COVERAGE_NO_LISTED_SLOT', statusCode: 422 });
+    expect(contestRepo.create).not.toHaveBeenCalled();
+  });
+
+  it('refuses changing the events of a contest whose template is gone with 404 CONTEST_CONFIG_TEMPLATE_NOT_FOUND, changing nothing', async () => {
+    const configTemplates = createContestConfigTemplateRepo();
+    jest.mocked(configTemplates.findById).mockResolvedValue(null);
+    const { service, contestRepo } = build({ contest: { status: ContestStatus.DRAFT }, configTemplates });
+
+    await expect(service.setContestSportEvents('league-1', 'contest-1', [MASTERS, PGA]))
+      .rejects.toMatchObject({ code: 'CONTEST_CONFIG_TEMPLATE_NOT_FOUND', statusCode: 404 });
+    expect(contestRepo.replaceCoveredSlots).not.toHaveBeenCalled();
   });
 
   it('refuses a contest mixing two sport leagues\' events with CONTEST_EVENTS_LEAGUE_MISMATCH, creating nothing', async () => {
@@ -2192,6 +2353,7 @@ describe('ContestManagementService — a contest of several events', () => {
     const { service, contestRepo } = build();
 
     await expect(service.createContest({ leagueId: 'league-1' }, {
+      templateId: templateIdFor(SelectionType.RANDOM_DRAW),
       name: 'Draw',
       sportEventIds: [MASTERS, PGA],
       contestFormat: 'ROSTER',
@@ -2210,6 +2372,7 @@ describe('ContestManagementService — a contest of several events', () => {
     });
 
     await expect(service.createContest({ leagueId: 'league-1' }, {
+      templateId: templateIdFor(SelectionType.BUDGET_PICK),
       name: 'Budget Majors',
       sportEventIds: [MASTERS, PGA],
       contestFormat: 'ROSTER',
@@ -2219,7 +2382,7 @@ describe('ContestManagementService — a contest of several events', () => {
     expect(contestRepo.create).not.toHaveBeenCalled();
   });
 
-  it('adds a later event to a live contest, keeping the events in start-date order, and has the reminder sweep look at it next (#1170)', async () => {
+  it('adds a later event to a live contest, covering each event\'s slot in play order, and has the reminder sweep look at it next (#1170)', async () => {
     const { service, contestRepo } = build({
       reader: multiEventReader([
         { id: MASTERS, startDate: '2026-04-20T12:00:00.000Z', status: SportEventStatus.IN_PROGRESS },
@@ -2230,7 +2393,7 @@ describe('ContestManagementService — a contest of several events', () => {
 
     await service.setContestSportEvents('league-1', 'contest-1', [PGA, MASTERS]);
 
-    expect(contestRepo.replaceSportEvents).toHaveBeenCalledWith('contest-1', [MASTERS, PGA]);
+    expect(contestRepo.replaceCoveredSlots).toHaveBeenCalledWith('contest-1', [MASTERS, PGA].map(slotOf));
     expect(contestRepo.recheckReminders).toHaveBeenCalledWith({ contestIds: ['contest-1'] }, CONTEST_MANAGEMENT_TEST_NOW);
   });
 
@@ -2245,11 +2408,10 @@ describe('ContestManagementService — a contest of several events', () => {
 
     await expect(service.setContestSportEvents('league-1', 'contest-1', [MASTERS]))
       .rejects.toMatchObject({ code: 'CONTEST_EVENTS_LOCKED', statusCode: 409 });
-    expect(contestRepo.replaceSportEvents).not.toHaveBeenCalled();
+    expect(contestRepo.replaceCoveredSlots).not.toHaveBeenCalled();
   });
 
   it('keeps a contest in the Season it was created in: an event of another Season is refused with 422 CONTEST_EVENTS_SEASON_MISMATCH, its events, season and cups unchanged', async () => {
-    const NEXT_MASTERS = '66666666-6666-4666-8666-666666666666';
     const { service, contestRepo, cupsAsked } = build({
       reader: multiEventReader([...READER_EVENTS, { id: NEXT_MASTERS, startDate: '2027-04-08T12:00:00.000Z', championshipYear: 2027 }]),
       contest: { status: ContestStatus.DRAFT },
@@ -2257,7 +2419,7 @@ describe('ContestManagementService — a contest of several events', () => {
 
     await expect(service.setContestSportEvents('league-1', 'contest-1', [NEXT_MASTERS]))
       .rejects.toMatchObject({ code: 'CONTEST_EVENTS_SEASON_MISMATCH', statusCode: 422 });
-    expect(contestRepo.replaceSportEvents).not.toHaveBeenCalled();
+    expect(contestRepo.replaceCoveredSlots).not.toHaveBeenCalled();
     expect(contestRepo.update).not.toHaveBeenCalled();
     expect(cupsAsked).toEqual([]);
   });
@@ -2267,7 +2429,7 @@ describe('ContestManagementService — a contest of several events', () => {
 
     await service.setContestSportEvents('league-1', 'contest-1', [MASTERS, PGA]);
 
-    expect(contestRepo.replaceSportEvents).toHaveBeenCalledWith('contest-1', [MASTERS, PGA]);
+    expect(contestRepo.replaceCoveredSlots).toHaveBeenCalledWith('contest-1', [MASTERS, PGA].map(slotOf));
     expect(cupsAsked).toEqual([]);
   });
 
@@ -2276,7 +2438,7 @@ describe('ContestManagementService — a contest of several events', () => {
 
     await service.setContestSportEvents('league-1', 'contest-1', [PGA]);
 
-    expect(contestRepo.replaceSportEvents).toHaveBeenCalledWith('contest-1', [PGA]);
+    expect(contestRepo.replaceCoveredSlots).toHaveBeenCalledWith('contest-1', [PGA].map(slotOf));
   });
 
   it('refuses adding another sport league\'s event with CONTEST_EVENTS_LEAGUE_MISMATCH, changing nothing', async () => {
@@ -2284,7 +2446,7 @@ describe('ContestManagementService — a contest of several events', () => {
 
     await expect(service.setContestSportEvents('league-1', 'contest-1', [MASTERS, LPGA_MAJOR]))
       .rejects.toMatchObject({ code: 'CONTEST_EVENTS_LEAGUE_MISMATCH' });
-    expect(contestRepo.replaceSportEvents).not.toHaveBeenCalled();
+    expect(contestRepo.replaceCoveredSlots).not.toHaveBeenCalled();
   });
 
   it('refuses a second event on a bracket contest with 422 CONTEST_BRACKET_SINGLE_EVENT, changing nothing', async () => {
@@ -2292,7 +2454,7 @@ describe('ContestManagementService — a contest of several events', () => {
 
     await expect(service.setContestSportEvents('league-1', 'contest-1', [MASTERS, PGA]))
       .rejects.toMatchObject({ code: CONTEST_BRACKET_SINGLE_EVENT, statusCode: 422 });
-    expect(contestRepo.replaceSportEvents).not.toHaveBeenCalled();
+    expect(contestRepo.replaceCoveredSlots).not.toHaveBeenCalled();
   });
 
   it('refuses a second event on a random-draw contest with CONTEST_DRAW_SINGLE_EVENT', async () => {
@@ -2300,7 +2462,7 @@ describe('ContestManagementService — a contest of several events', () => {
 
     await expect(service.setContestSportEvents('league-1', 'contest-1', [MASTERS, PGA]))
       .rejects.toMatchObject({ code: 'CONTEST_DRAW_SINGLE_EVENT' });
-    expect(contestRepo.replaceSportEvents).not.toHaveBeenCalled();
+    expect(contestRepo.replaceCoveredSlots).not.toHaveBeenCalled();
   });
 
   it('refuses changing the events of a drawn or COMPLETED contest with 409 CONTEST_EVENTS_LOCKED', async () => {
@@ -2309,7 +2471,7 @@ describe('ContestManagementService — a contest of several events', () => {
 
       await expect(service.setContestSportEvents('league-1', 'contest-1', [MASTERS, PGA]))
         .rejects.toMatchObject({ code: 'CONTEST_EVENTS_LOCKED', statusCode: 409 });
-      expect(contestRepo.replaceSportEvents).not.toHaveBeenCalled();
+      expect(contestRepo.replaceCoveredSlots).not.toHaveBeenCalled();
     }
   });
 
@@ -2325,7 +2487,7 @@ describe('ContestManagementService — a contest of several events', () => {
 
     await expect(service.setContestSportEvents('league-1', 'contest-1', [MASTERS, PGA]))
       .rejects.toMatchObject({ code: 'CONTEST_BUDGET_SALARY_CAP_MISMATCH', statusCode: 409 });
-    expect(contestRepo.replaceSportEvents).not.toHaveBeenCalled();
+    expect(contestRepo.replaceCoveredSlots).not.toHaveBeenCalled();
   });
 
   describe('swapping a budget contest onto an event priced against another salary cap', () => {
@@ -2345,7 +2507,7 @@ describe('ContestManagementService — a contest of several events', () => {
       await service.setContestSportEvents('league-1', 'contest-1', [PGA]);
 
       expect(configurationRepo.update).toHaveBeenCalledWith('config-1', { configJson: expect.objectContaining({ salaryCap: 200 }) });
-      expect(contestRepo.replaceSportEvents).toHaveBeenCalledWith('contest-1', [PGA]);
+      expect(contestRepo.replaceCoveredSlots).toHaveBeenCalledWith('contest-1', [PGA].map(slotOf));
     });
 
     it('refuses it on an open contest, whose entries were built under the old cap, with 409 CONTEST_BUDGET_SALARY_CAP_MISMATCH, changing nothing', async () => {
@@ -2358,7 +2520,7 @@ describe('ContestManagementService — a contest of several events', () => {
       await expect(service.setContestSportEvents('league-1', 'contest-1', [PGA]))
         .rejects.toMatchObject({ code: 'CONTEST_BUDGET_SALARY_CAP_MISMATCH', statusCode: 409 });
       expect(configurationRepo.update).not.toHaveBeenCalled();
-      expect(contestRepo.replaceSportEvents).not.toHaveBeenCalled();
+      expect(contestRepo.replaceCoveredSlots).not.toHaveBeenCalled();
     });
   });
 
@@ -2367,7 +2529,7 @@ describe('ContestManagementService — a contest of several events', () => {
 
     await expect(service.setContestSportEvents('league-2', 'contest-1', [MASTERS, PGA]))
       .rejects.toMatchObject({ code: 'CONTEST_NOT_FOUND', statusCode: 404 });
-    expect(contestRepo.replaceSportEvents).not.toHaveBeenCalled();
+    expect(contestRepo.replaceCoveredSlots).not.toHaveBeenCalled();
   });
 });
 
@@ -2387,6 +2549,7 @@ describe('ContestManagementService pick\'em rules (#716)', () => {
     config: { roundValues: [1, 2, 4, 8], upsetBonus: { rule: 'NONE' } },
   };
   const pickEmRequest = (overrides: Partial<CreateContestRequest> = {}): CreateContestRequest => ({
+    templateId: templateIdFor(SelectionType.PICK_EM),
     name: 'Week 1 Confidence',
     sportEventIds: ['11111111-1111-1111-1111-111111111111'],
     contestFormat: 'PREDICTION',
@@ -2421,6 +2584,7 @@ describe('ContestManagementService pick\'em rules (#716)', () => {
       configurations: contestConfigurationRepo,
       scoringRules: scoringRuleRepo,
       tiers: createSportEventTierServiceStub(),
+      seasons: coverableSeasons(),
       sportEventReader: reader,
       cups: createCupKeeper(),
       planEntitlements: platinumEntitlements(),
@@ -2556,6 +2720,7 @@ describe('ContestManagementService pick\'em rules (#716)', () => {
 
     await expect(service.createContest({ leagueId: 'league-1' }, pickEmRequest({
       selectionType: SelectionType.RANDOM_DRAW,
+      templateId: templateIdFor(SelectionType.RANDOM_DRAW),
       configuration: { selectionType: SelectionType.RANDOM_DRAW, maxEntriesPerSquad: 1, picksPerEntry: 1, countedScores: 1, scoring: knockoutScoring },
     }))).rejects.toMatchObject({ code: 'CONTEST_FORMAT_NOT_ALLOWED', statusCode: 422 });
     expect(contestCoreRepo.create).not.toHaveBeenCalled();
@@ -2576,6 +2741,7 @@ describe('ContestManagementService pick\'em rules (#716)', () => {
     await service.createContest({ leagueId: 'league-1' }, pickEmRequest({
       name: 'Office Survivor',
       selectionType: SelectionType.SURVIVOR,
+      templateId: templateIdFor(SelectionType.SURVIVOR),
       configuration: { selectionType: SelectionType.SURVIVOR, maxEntriesPerSquad: 1 },
     }));
 
@@ -2595,6 +2761,7 @@ describe('ContestManagementService pick\'em rules (#716)', () => {
     await service.createContest({ leagueId: 'league-1' }, pickEmRequest({
       name: 'Office Survivor',
       selectionType: SelectionType.SURVIVOR,
+      templateId: templateIdFor(SelectionType.SURVIVOR),
       configuration: { selectionType: SelectionType.SURVIVOR, reuseTeamsOnceAllUsed: false, lives: 2, maxEntriesPerSquad: 1 },
     }));
 
@@ -2608,6 +2775,7 @@ describe('ContestManagementService pick\'em rules (#716)', () => {
 
     await expect(service.createContest({ leagueId: 'league-1' }, pickEmRequest({
       selectionType: SelectionType.SURVIVOR,
+      templateId: templateIdFor(SelectionType.SURVIVOR),
       configuration: { selectionType: SelectionType.SURVIVOR, maxEntriesPerSquad: 1 },
     }))).rejects.toMatchObject({ code: CONTEST_EVENT_HAS_NO_GAMES, statusCode: 422 });
     expect(contestCoreRepo.create).not.toHaveBeenCalled();
@@ -2626,6 +2794,7 @@ describe('ContestManagementService bracket rules (#721)', () => {
 
   const EVENT_ID = '11111111-1111-1111-1111-111111111111';
   const bracketRequest = (overrides: Partial<CreateContestRequest> = {}): CreateContestRequest => ({
+    templateId: templateIdFor(SelectionType.BRACKET),
     name: 'March bracket',
     sportEventIds: [EVENT_ID],
     contestFormat: 'PREDICTION',
@@ -2655,6 +2824,7 @@ describe('ContestManagementService bracket rules (#721)', () => {
       configurations: contestConfigurationRepo,
       scoringRules: createParticipantScoringRuleRepo(),
       tiers: createSportEventTierServiceStub(),
+      seasons: coverableSeasons(),
       sportEventReader: reader,
       cups: createCupKeeper(),
       planEntitlements: platinumEntitlements(),
@@ -2670,7 +2840,7 @@ describe('ContestManagementService bracket rules (#721)', () => {
     expect(contestCoreRepo.create).toHaveBeenCalledWith(expect.objectContaining({
       contestFormat: ContestFormat.PREDICTION,
       selectionType: SelectionType.BRACKET,
-      sportEventIds: [EVENT_ID],
+      seasonSlotIds: [`season-slot-${EVENT_SLOT_DEFINITION_ID}`],
     }), PLATINUM_SEASON_LIMIT);
     expect(contestConfigurationRepo.create).toHaveBeenCalledWith(expect.objectContaining({
       selectionType: SelectionType.BRACKET,
@@ -2723,7 +2893,6 @@ describe('ContestManagementService — a bracket on a knockout already under way
       sport: Sport.BASKETBALL,
       status: options.eventStatus ?? SportEventStatus.IN_PROGRESS,
       startDate: at(options.eventStartHours ?? -48),
-      rounds: 3,
     });
     for (const [team, seed] of EIGHT_SEEDS) {
       const participant = store.addParticipant(sport.id, `Team ${team}`);
@@ -2756,6 +2925,7 @@ describe('ContestManagementService — a bracket on a knockout already under way
       configurations: configurationRepo,
       scoringRules: scoringRuleRepo,
       tiers: createSportEventTierServiceStub(),
+      seasons: coverableSeasons(),
       sportEventReader: createContestSportEventReader({
         sportEvents: store.sportEventRepo(),
         field: store.fieldRepo(),
@@ -2769,6 +2939,7 @@ describe('ContestManagementService — a bracket on a knockout already under way
       planEntitlements: platinumEntitlements(),
     });
     const request = (): CreateContestRequest => ({
+      templateId: templateIdFor(SelectionType.BRACKET),
       name: 'Late bracket',
       sportEventIds: [event.id],
       contestFormat: 'PREDICTION',
@@ -2811,6 +2982,7 @@ describe('ContestManagementService squares rules (#711)', () => {
   const EVENT_ID = '11111111-1111-1111-1111-111111111111';
   const GAME_ID = '22222222-2222-2222-2222-222222222222';
   const squaresRequest = (overrides: Partial<CreateContestRequest> = {}): CreateContestRequest => ({
+    templateId: templateIdFor(SelectionType.SQUARES),
     name: 'Super Bowl Squares',
     sportEventIds: [EVENT_ID],
     sportEventRoundMatchId: GAME_ID,
@@ -2822,20 +2994,28 @@ describe('ContestManagementService squares rules (#711)', () => {
 
   function squaresService(
     gameStatus: MatchStatus | null = MatchStatus.SCHEDULED,
-    { roundNumber = 4, squaresFromRound = null }: { roundNumber?: number; squaresFromRound?: number | null } = {},
+    { roundNumber = 4, squaresFromRound = null, gameSlotDefinitionId = EVENT_SLOT_DEFINITION_ID, configTemplates = createContestConfigTemplateRepo() }: {
+      roundNumber?: number;
+      squaresFromRound?: number | null;
+      gameSlotDefinitionId?: string;
+      configTemplates?: ContestConfigTemplateRepository;
+    } = {},
   ) {
     const contestCoreRepo = createContestRepo();
     const contestConfigurationRepo = createContestConfigurationRepo();
     const reader = createSportEventReader({ sport: Sport.FOOTBALL, playsMatches: true, rounds: 4, gameCount: 1, squaresFromRound });
     reader.findGame.mockImplementation(async (sportEventId: string, sportEventRoundMatchId: string) =>
-      sportEventId === EVENT_ID && sportEventRoundMatchId === GAME_ID && gameStatus !== null ? { status: gameStatus, roundNumber } : null);
+      sportEventId === EVENT_ID && sportEventRoundMatchId === GAME_ID && gameStatus !== null
+        ? { status: gameStatus, roundNumber, seasonSlotId: `season-slot-${gameSlotDefinitionId}` }
+        : null);
     const service = new ContestManagementService({
       domainEvents: testDomainEvents(),
       contests: contestCoreRepo,
-      configTemplates: createContestConfigTemplateRepo(),
+      configTemplates,
       configurations: contestConfigurationRepo,
       scoringRules: createParticipantScoringRuleRepo(),
       tiers: createSportEventTierServiceStub(),
+      seasons: coverableSeasons(),
       sportEventReader: reader,
       cups: createCupKeeper(),
       planEntitlements: platinumEntitlements(),
@@ -2857,6 +3037,30 @@ describe('ContestManagementService squares rules (#711)', () => {
       configJson: { selectionType: SelectionType.SQUARES, maxSquaresPerEntry: 10 },
       maxEntriesPerSquad: 1,
     }));
+  });
+
+  it('covers the slot its game is played in when its event holds several slots its one-slot template lists, so no starting slot need be chosen', async () => {
+    const configTemplates = createContestConfigTemplateRepo();
+    const finalSlot = { ...EVENT_SLOT, id: 'definition-final', key: 'FINAL', slotKind: SlotKind.FINAL };
+    const listed = await configTemplates.findById(templateIdFor(SelectionType.SQUARES));
+    configTemplates.findById = jest.fn().mockResolvedValue({ ...expectDefined(listed), coverageMode: TemplateCoverageMode.ONE_SLOT, slots: [EVENT_SLOT, finalSlot] });
+    const { contestCoreRepo, service } = squaresService(MatchStatus.SCHEDULED, { gameSlotDefinitionId: finalSlot.id, configTemplates });
+
+    await service.createContest({ leagueId: 'league-1' }, squaresRequest());
+
+    expect(contestCoreRepo.create).toHaveBeenCalledWith(expect.objectContaining({ seasonSlotIds: ['season-slot-definition-final'] }), PLATINUM_SEASON_LIMIT);
+  });
+
+  it('covers its game\'s slot, not a different starting slot the commissioner sent, so a squares contest never covers a slot its game is not in', async () => {
+    const configTemplates = createContestConfigTemplateRepo();
+    const finalSlot = { ...EVENT_SLOT, id: 'definition-final', key: 'FINAL', slotKind: SlotKind.FINAL };
+    const listed = await configTemplates.findById(templateIdFor(SelectionType.SQUARES));
+    configTemplates.findById = jest.fn().mockResolvedValue({ ...expectDefined(listed), coverageMode: TemplateCoverageMode.ONE_SLOT, slots: [EVENT_SLOT, finalSlot] });
+    const { contestCoreRepo, service } = squaresService(MatchStatus.SCHEDULED, { gameSlotDefinitionId: finalSlot.id, configTemplates });
+
+    await service.createContest({ leagueId: 'league-1' }, squaresRequest({ startingSlotId: `season-slot-${EVENT_SLOT.id}` }));
+
+    expect(contestCoreRepo.create).toHaveBeenCalledWith(expect.objectContaining({ seasonSlotIds: ['season-slot-definition-final'] }), PLATINUM_SEASON_LIMIT);
   });
 
   it.each([
@@ -2961,6 +3165,7 @@ describe('ContestManagementService squares rules (#711)', () => {
     await expect(service.createContest({ leagueId: 'league-1' }, squaresRequest({
       contestFormat: 'PREDICTION',
       selectionType: SelectionType.PICK_EM,
+      templateId: templateIdFor(SelectionType.PICK_EM),
       configuration: { selectionType: SelectionType.PICK_EM, maxEntriesPerSquad: 1, mode: PickEmMode.STRAIGHT_UP, againstTheSpread: false },
     }))).rejects.toMatchObject({ code: CONTEST_SQUARES_GAME_INVALID });
     expect(contestCoreRepo.create).not.toHaveBeenCalled();
@@ -3010,6 +3215,7 @@ describe('ContestManagementService sports leagues a year (#947)', () => {
       configurations,
       scoringRules: createParticipantScoringRuleRepo(),
       tiers: createSportEventTierServiceStub(),
+      seasons: coverableSeasons(),
       sportEventReader: createSportEventReader(),
       cups: createCupKeeper(cupsAsked),
       planEntitlements: planEntitlementsOver({ findById: async (id) => buildLeague({ id, plan: LeaguePlan.FREE }) }),
@@ -3018,6 +3224,7 @@ describe('ContestManagementService sports leagues a year (#947)', () => {
   }
 
   const MASTERS_CONTEST: Parameters<ContestManagementService['createContest']>[1] = {
+    templateId: templateIdFor(SelectionType.TIERED),
     name: 'Masters Pick 6',
     sportEventIds: ['11111111-1111-1111-1111-111111111111'],
     contestFormat: ContestFormat.ROSTER,
@@ -3056,6 +3263,7 @@ describe('ContestManagementService sports leagues a year (#947)', () => {
       configurations: createContestConfigurationRepo(),
       scoringRules: createParticipantScoringRuleRepo(),
       tiers: createSportEventTierServiceStub(),
+      seasons: coverableSeasons(),
       sportEventReader: createSportEventReader(),
       cups: createCupKeeper(),
       planEntitlements: planEntitlementsOver(
@@ -3134,7 +3342,7 @@ describe('createContestSportEventReader field, game and price reads', () => {
     });
 
     await expect(reader.countGamesWithoutSpread(EVENT)).resolves.toBe(1);
-    await expect(reader.findGame(EVENT, 'g2')).resolves.toEqual({ status: MatchStatus.SCHEDULED, roundNumber: 2 });
+    await expect(reader.findGame(EVENT, 'g2')).resolves.toEqual({ status: MatchStatus.SCHEDULED, roundNumber: 2, seasonSlotId: expect.any(String) });
     await expect(reader.findGame(EVENT, 'missing')).resolves.toBeNull();
   });
 });
@@ -3169,7 +3377,7 @@ describe('createContestSportEventReader knockout reads over a tournament with gr
   }
 
   it('counts the covered knockout rounds from the event\'s rounds before any game is placed: the semifinal and the final', async () => {
-    await expect(readerOver([]).reader.countCoveredRounds(EVENT, { slotDefinitionIds: null })).resolves.toBe(2);
+    await expect(readerOver([]).reader.countCoveredRounds(EVENT, { slotDefinitionIds: ROUNDS.map((round) => round.slot.slotDefinitionId) })).resolves.toBe(2);
   });
 
   it('lets knockout round points take the event with only group games, reading its rounds to see it plays a knockout', async () => {

@@ -17,7 +17,7 @@ import { sportLeagueRowDefaults } from '../../support/league-profiles';
 import { participantLeagueIdForSport } from '../../support/participant-league';
 import { sportRowKeys } from '../../support/sport-rows';
 import { sportPlay } from '../../support/sport-play';
-import { linkTestSlot, oneEventSlotId } from '../../support/test-slots';
+import { linkTestSlot } from '../../support/test-slots';
 import { createMatchRow } from '../../support/match-rows';
 import { expectSameStatementCount } from '../query-scaling';
 
@@ -512,50 +512,6 @@ describe('events routes', () => {
       expect(adminRes.statusCode).toBe(200);
       expect(adminRes.json<SportEventListResponse>().events.map((event) => event.name).sort()).toEqual(['Season List Classic', 'Season List Open']);
     });
-  });
-});
-
-describe('editing an event\'s round count adds rounds in its slot', () => {
-  it('schedules the rounds an admin adds to a one-slot event a day after its last, in the same slot, in Postgres', async () => {
-    const prisma = getPrisma();
-    const admin = await createTestUser({ displayName: 'Round Schedule Admin', isRootAdmin: true });
-    const eventId = randomUUID();
-    await prisma.sportEvent.create({
-      data: {
-        ...(await freshEventEdition(prisma)),
-        id: eventId,
-        name: 'Round Shift Open',
-        startDate: new Date('2099-06-04T12:00:00.000Z'),
-        status: 'DRAFT',
-        rounds: 2,
-      },
-    });
-    const sportEventSlotId = await oneEventSlotId(prisma, eventId);
-    await prisma.sportEventRound.createMany({
-      data: [
-        { sportEventId: eventId, sportEventSlotId, roundNumber: 1, scheduledDate: new Date('2099-06-04T12:00:00.000Z'), scheduledEndAt: new Date('2099-06-04T22:00:00.000Z') },
-        { sportEventId: eventId, sportEventSlotId, roundNumber: 2, scheduledDate: new Date('2099-06-06T12:00:00.000Z') },
-      ],
-    });
-
-    const res = await getApp().inject({
-      method: 'PATCH',
-      url: `/api/v1/events/${eventId}`,
-      headers: admin.headers,
-      payload: { rounds: 3 },
-    });
-
-    expect(res.statusCode).toBe(200);
-    const rounds = await prisma.sportEventRound.findMany({ where: { sportEventId: eventId }, orderBy: { roundNumber: 'asc' } });
-    expect(rounds.map((round) => [round.roundNumber, round.scheduledDate.toISOString(), round.scheduledEndAt?.toISOString() ?? null, round.sportEventSlotId])).toEqual([
-      [1, '2099-06-04T12:00:00.000Z', '2099-06-04T22:00:00.000Z', sportEventSlotId],
-      [2, '2099-06-06T12:00:00.000Z', null, sportEventSlotId],
-      // The added round follows the last one by a day, so it keeps the irregular schedule.
-      [3, '2099-06-07T12:00:00.000Z', null, sportEventSlotId],
-    ]);
-
-    await prisma.sportEventRound.deleteMany({ where: { sportEventId: eventId } });
-    await prisma.sportEvent.delete({ where: { id: eventId } });
   });
 });
 

@@ -59,7 +59,6 @@ async function linkedEvent(input: {
     name: input.externalId,
     startDate: input.startDate ?? new Date('2026-11-12T18:00:00.000Z'),
     status: input.status ?? SportEventStatus.IN_PROGRESS,
-    rounds: 1,
     autoLifecycleEnabled: input.autoLifecycleEnabled ?? false,
   });
   await mapEventToProvider(prisma, event.id, { providerId: PROVIDER, externalId: input.externalId }, input.providerLeagueCode);

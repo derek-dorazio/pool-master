@@ -369,15 +369,18 @@ export function useCreateContestForm(league: Pick<LeagueDto, 'id' | 'planEntitle
     });
   }, [eventsQuery.data, presetValues, presetsFor, presetsKey, requestedEvents, requestedTemplate, requestedTemplateSport, selectedEvent, setFormValues, sport, templatesQuery.data]);
 
-  // A preset the chosen event does not offer gives way to the format's default among the presets
-  // it does (#802), or to Custom.
+  // A preset the chosen event does not offer, or none at all, gives way to the format's default
+  // among the presets it does (#802): every contest starts from one (#2014).
   useEffect(() => {
     const templateId = form.getValues('selectedTemplateId');
     const offered = presetsFor(form.getValues('selectionType'));
-    if (!templateId || templatesQuery.data === undefined || offered.some((template) => template.id === templateId)) {
+    if (templatesQuery.data === undefined || offered.some((template) => template.id === templateId)) {
       return;
     }
     const preset = defaultPresetOf(offered);
+    if (!templateId && !preset) {
+      return;
+    }
     setFormValues({ selectedTemplateId: preset?.id ?? '', ...(preset ? presetValues(preset.configuration) : {}) });
   }, [form, presetValues, presetsFor, selectedTemplateId, setFormValues, templatesQuery.data]);
 

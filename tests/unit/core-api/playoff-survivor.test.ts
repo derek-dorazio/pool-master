@@ -54,7 +54,7 @@ function setup(options: { untimedLaterRounds?: boolean } = {}) {
   const world = new InMemoryContestWorld();
   const games = new InMemoryGamePicks(world);
   const league = world.addLeague();
-  const playoffs = world.addSportEvent({ name: 'Playoffs', startDate: ROUND_1, rounds: 3 });
+  const playoffs = world.addSportEvent({ name: 'Playoffs', startDate: ROUND_1, roundCount: 3 });
 
   const round1 = [1, 2, 3, 4].map((matchNumber) => games.addGame(playoffs.id, matchNumber, later(ROUND_1, matchNumber - 1)));
   const teamRow = {} as Record<Team, string>;

@@ -560,8 +560,8 @@ roster, pick'em, survivor or bracket contest is `ACTIVE`, one goes after each mo
 - **After a round** ("After round 2: Masters Pick 6"): a stroke-play round is finished when every
   golfer still in the event (cut, withdrawn and removed golfers left out) has played it to the
   end, at the latest of their rounds' `completed_at`, or when the score was last written for a
-  round with none. Not after the event's last round, and not for an event with no round count or
-  only one round.
+  round with none. Not after the event's last round, and not for an event with no rounds or
+  only one round (its round count is its Round rows, #2008).
 - **After an event of a contest across several events**: the event's
   standings settled and another event of the contest remains to play. It shows each entry's
   result in that event and the next event, with when its picks close. Not after the last event:

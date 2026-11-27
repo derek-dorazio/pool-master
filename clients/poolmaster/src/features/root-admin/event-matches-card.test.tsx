@@ -66,8 +66,7 @@ const tournament = sportEventFixture({
   playsMatches: true,
   name: 'Harbour Classic',
   status: 'IN_PROGRESS',
-  rounds: 2,
-  roundsPar: null,
+  roundCount: 2,
   allowedTransitions: [],
 });
 

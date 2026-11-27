@@ -21,6 +21,7 @@ import {
 import { seedEventWithField, seedLeagueWithTeams } from '../list-route-seeds';
 import { expectSameStatementCount } from '../query-scaling';
 import { NO_SETTLE_JOBS } from '../../support/event-settlement';
+import { contestOnEvents } from '../../support/contest-rows';
 
 // No mocks.
 
@@ -42,8 +43,7 @@ async function seedOpenContests(contests: number, { status = ContestStatus.OPEN 
     const contest = await prisma.contest.create({
       data: {
         leagueId: league.id,
-        seasonYear: event.startDate.getUTCFullYear(),
-        sportEvents: { create: { sportEventId: event.id, sequence: 1 } },
+        ...(await contestOnEvents(prisma, [event.id])),
         name: `Lifecycle ${suffix}`,
         status,
         contestFormat: 'ROSTER',

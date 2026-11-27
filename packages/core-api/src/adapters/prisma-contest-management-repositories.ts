@@ -36,7 +36,6 @@ export class PrismaContestConfigurationRepository
     return memoizedRead(this.prisma, `${ReadMemoKey.contestConfiguration}${contestId}`, async () => {
       const row = await this.prisma.contestConfiguration.findUnique({
         where: { contestId },
-        include: CONFIGURATION_INCLUDE,
       });
       return row ? mapContestConfiguration(row) : null;
     });
@@ -46,7 +45,6 @@ export class PrismaContestConfigurationRepository
     if (contestIds.length === 0) return [];
     const rows = await this.prisma.contestConfiguration.findMany({
       where: { contestId: { in: [...contestIds] } },
-      include: CONFIGURATION_INCLUDE,
     });
     return rows.map(mapContestConfiguration);
   }
@@ -63,7 +61,6 @@ export class PrismaContestConfigurationRepository
         maxEntriesPerSquad: configuration.maxEntriesPerSquad,
         totalPrizePoolAmount: configuration.totalPrizePoolAmount,
       },
-      include: CONFIGURATION_INCLUDE,
     }));
     return mapContestConfiguration(row);
   }
@@ -97,7 +94,6 @@ export class PrismaContestConfigurationRepository
           totalPrizePoolAmount: updates.totalPrizePoolAmount,
         }),
       },
-      include: CONFIGURATION_INCLUDE,
     }));
     return mapContestConfiguration(row);
   }
@@ -228,15 +224,10 @@ export class PrismaParticipantContestScoringRuleRepository
   }
 }
 
-/** A configuration read with the slot definitions its template lists: the contest's coverage (#2014). */
-const CONFIGURATION_INCLUDE = {
-  template: { select: { slots: { select: { sportLeagueCompetitionSlotId: true } } } },
-} as const;
-
 function mapContestConfiguration(row: {
   id: string;
   contestId: string;
-  templateId: string | null;
+  templateId: string;
   templateVersion: number | null;
   selectionType: SelectionType;
   configJson: unknown;
@@ -245,12 +236,11 @@ function mapContestConfiguration(row: {
   totalPrizePoolAmount: number | null;
   createdAt: Date;
   updatedAt: Date;
-  template: { slots: { sportLeagueCompetitionSlotId: string }[] } | null;
 }): ContestConfiguration {
   return {
     id: row.id,
     contestId: row.contestId,
-    templateId: row.templateId ?? undefined,
+    templateId: row.templateId,
     templateVersion: row.templateVersion ?? undefined,
     selectionType: row.selectionType,
     // Parsed, not cast: the rules decide what an entry may pick, so a row that breaks them
@@ -259,7 +249,6 @@ function mapContestConfiguration(row: {
     minimumEntries: row.minimumEntries ?? undefined,
     maxEntriesPerSquad: row.maxEntriesPerSquad ?? undefined,
     totalPrizePoolAmount: row.totalPrizePoolAmount ?? undefined,
-    coveredSlotDefinitionIds: row.template === null ? null : row.template.slots.map((slot) => slot.sportLeagueCompetitionSlotId),
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   };

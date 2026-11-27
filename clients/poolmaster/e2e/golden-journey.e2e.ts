@@ -22,9 +22,7 @@ import { tierSetSlotUrl } from './helpers/tier-set-slot';
  * event and reads every role's writes back (act 4), further rounds of scores move the contest
  * leaderboard (act 5, #326), and completing the event settles the contest (act 6). Acts 4-6 also
  * keep the leaderboard page open across each change and assert it follows without a reload
- * (#362). Act 7 (#749) runs a contest over two more tournaments on the same tour: the
- * commissioner adds the second on the contest's Events page, and the member's entry and the
- * leaderboard switch between them.
+ * (#362).
  *
  * Shape: one `test()` per act in a serial file. Tags select tests, not steps (plans/130 §"What
  * act 1 found when it ran"), so acts 1-3, which run post-deploy, sit in a describe tagged
@@ -65,9 +63,6 @@ type JourneyState = {
   /** Field-entry ids in tier order: entry `i` sits alone in `tier-${i + 1}`. */
   fieldEntryIds?: string[];
   commissionerId?: string;
-  /** Kept so act 7 can sign the commissioner and the member back in. */
-  commissionerPassword?: string;
-  memberPassword?: string;
   leagueId?: string;
   contestId?: string;
   joinUrl?: string;
@@ -155,7 +150,6 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
       tourUrlSegment: 'pga',
       playerNamePrefix: e2eName('Golfer', runId),
       tournamentName: e2eName('Open', runId),
-      moreTournamentNames: [e2eName('Classic', runId), e2eName('Invitational', runId)],
       // RFC 2606 reserves .invalid, so nothing sent to these can reach a real mailbox.
       commissioner: {
         username: e2eUsername('c', runId),
@@ -225,6 +219,8 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
         slotLabel: run.tournamentName,
         startsAt: start,
         name: run.tournamentName,
+        // A tournament of four rounds, all in its one slot (#2008).
+        rounds: 4,
       });
       return { eventId: created.id, championshipYear: created.championshipYear };
     });
@@ -356,8 +352,7 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
     await test.step('a fresh commissioner registers', async () => {
       await page.goto('/');
       await page.getByTestId('auth-mode-register').click();
-      state.commissionerPassword = generatePassword();
-      state.commissionerId = await registerFreshUser(page, run.commissioner, state.commissionerPassword);
+      state.commissionerId = await registerFreshUser(page, run.commissioner, generatePassword());
       await expect(page.getByTestId('authenticated-landing')).toBeVisible();
     });
 
@@ -569,8 +564,7 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
       // Signed out, the invite page offers only sign-in or registration; registration carries
       // the invite path through and returns to it.
       await page.getByTestId('invite-create-account').click();
-      state.memberPassword = generatePassword();
-      state.memberId = await registerFreshUser(page, run.member, state.memberPassword);
+      state.memberId = await registerFreshUser(page, run.member, generatePassword());
       await expect(page.getByTestId('join-league-page')).toBeVisible();
     });
 
@@ -1160,267 +1154,6 @@ test('act 6: completing the event settles the contest and freezes its standing a
     await logOut(page);
   });
 });
-
-/**
- * #749 — act 7's round-1 scores to par, by golfer index, in its two tournaments: different, so
- * each tournament's leaderboard reads differently. With the best four of six counting, the
- * entry is 1 under par in the first and 6 over in the second, and its contest total is the sum.
- */
-const ACT_7_SCORES_TO_PAR: readonly (readonly number[])[] = [
-  [-2, -1, 1, 1, 3, 4],
-  [0, 1, 2, 3, 4, 5],
-];
-const ACT_7_EVENT_TOTALS: readonly number[] = [-1, 6];
-const ACT_7_CONTEST_TOTAL = 5;
-
-// Act 7 is outside the tagged describe too: it starts tournaments and writes scores.
-test('act 7: a contest over two tournaments — the commissioner adds the second on the Events page, and the member\'s entry and the leaderboard switch between them', async ({ page }) => {
-  test.setTimeout(300_000);
-  const state = requireJourney();
-  const { run } = state;
-  const credentials = readAdminCredentials();
-  const [firstName, secondName] = run.moreTournamentNames ?? [];
-  if (!firstName || !secondName) {
-    throw new Error('act 1 named no further tournaments for act 7');
-  }
-  const contestName = e2eName('Two Events', run.runId);
-
-  // The same day a week out, morning and afternoon, so both are in one year whatever the date.
-  const tournaments = await test.step('the root admin builds and releases two more tournaments on the tour, each with the six players a tier apiece', async () => {
-    await adminSignIn(page, credentials);
-    const day = addDays(new Date(), 7);
-    const built: BuiltTournament[] = [];
-    for (const [index, name] of [firstName, secondName].entries()) {
-      const start = new Date(day);
-      start.setHours(index === 0 ? 8 : 13, 0, 0, 0);
-      built.push(await buildReleasedTournament(page, { runId: run.runId, tourId: state.tourId, name, start, playerIds: state.playerIds }));
-    }
-    await logOut(page);
-    return built;
-  });
-  const [first, second] = tournaments;
-
-  const contestId = await test.step('the commissioner creates a tiered contest on the first tournament', async () => {
-    await adminSignIn(page, { identifier: run.commissioner.username, password: state.commissionerPassword });
-    await page.goto(`/league/${run.leagueCode}/admin/contests/new`);
-    const eventChoice = page.getByTestId(`contest-event-${first.eventId}`);
-    await expect(eventChoice).toContainText(firstName);
-    await eventChoice.click();
-    await expect(eventChoice).toBeChecked();
-    await page.getByTestId('contest-name').fill(contestName);
-    await page.getByTestId('contest-tiered-picks-per-tier').fill('1');
-    await page.getByTestId('contest-tiered-counted-scores').fill('4');
-    const created = await submitAndRead<{ contest: { id: string } }>(
-      page,
-      'create-contest-submit',
-      'POST',
-      `/api/v1/leagues/${state.leagueId}/contests`,
-    );
-    await expect(page.getByTestId('manage-contest-page')).toBeVisible();
-    return created.contest.id;
-  });
-
-  await test.step('on the contest\'s Events page the commissioner adds the second tournament, and the contest lists both', async () => {
-    await page.getByTestId('manage-contest-events-edit').click();
-    await expect(page.getByTestId('contest-events-page')).toBeVisible();
-    await expect(page.getByTestId('contest-events-chosen')).toContainText(firstName);
-    await page.getByTestId(`contest-events-option-${second.eventId}`).check();
-    await expect(page.getByTestId('contest-events-chosen')).toContainText(secondName);
-    const saved = await submitAndRead<{ contest: { sportEvents: { sportEventId: string }[] } }>(
-      page,
-      'contest-events-save',
-      'PUT',
-      `/api/v1/leagues/${state.leagueId}/contest-management/contests/${contestId}/sport-events`,
-    );
-    expect(saved.contest.sportEvents.map((sportEvent) => sportEvent.sportEventId)).toEqual([first.eventId, second.eventId]);
-    await expect(page.getByTestId('manage-contest-page')).toBeVisible();
-  });
-
-  await test.step('the commissioner opens the contest to the league and logs out', async () => {
-    await page.getByTestId('contest-open-to-league').click();
-    const opened = await submitAndRead<{ contest: { status: string } }>(
-      page,
-      'contest-open-confirm',
-      'POST',
-      `/api/v1/leagues/${state.leagueId}/contest-management/contests/${contestId}/open`,
-    );
-    expect(opened.contest.status).toBe('OPEN');
-    await logOut(page);
-  });
-
-  const entryId = await test.step('the member enters, picks a golfer a tier for the first tournament and submits it', async () => {
-    await adminSignIn(page, { identifier: run.member.username, password: state.memberPassword });
-    await page.goto(`/league/${run.leagueCode}/contests/${contestId}`);
-    const created = await submitAndRead<{ entry: { id: string } }>(
-      page,
-      'contest-board-create-entry',
-      'POST',
-      `/api/v1/contests/${contestId}/entries/me`,
-    );
-    // The entry opens on the contest's first tournament.
-    await expect(page.getByTestId('contest-entry-event-switcher')).toHaveValue(first.eventId);
-    await pickAndSubmitEvent(page, contestId, created.entry.id, first);
-    return created.entry.id;
-  });
-
-  await test.step('back on the entry, the member switches to the second tournament, which is not submitted yet, and submits a roster for it', async () => {
-    await page.goto(`/league/${run.leagueCode}/contests/${contestId}/entries/${entryId}`);
-    const switcher = page.getByTestId('contest-entry-event-switcher');
-    await expect(switcher.locator(`option[value="${first.eventId}"]`)).toContainText('Submitted');
-    await expect(switcher.locator(`option[value="${second.eventId}"]`)).toContainText('Not submitted');
-    await switcher.selectOption(second.eventId);
-    await expect(switcher).toHaveValue(second.eventId);
-    // The second tournament's field is its own: none of the first's picks are on it.
-    await expect(page.getByTestId(`contest-entry-selected-${first.fieldEntryIds[0]}`)).toHaveCount(0);
-    await pickAndSubmitEvent(page, contestId, entryId, second);
-    await logOut(page);
-  });
-
-  await test.step('the root admin starts both tournaments and loads each one\'s round-1 scores', async () => {
-    await adminSignIn(page, credentials);
-    for (const [index, tournament] of tournaments.entries()) {
-      await page.goto(`/manage/sports/golf/events/${tournament.eventId}`);
-      await page.getByTestId('root-admin-event-settings').click();
-      await page.getByTestId('root-admin-sport-event-transition-IN_PROGRESS').click();
-      const moved = await submitAndRead<{ event: { status: string } }>(
-        page,
-        'root-admin-sport-event-transition-confirm',
-        'POST',
-        `/api/v1/events/${tournament.eventId}/transition`,
-      );
-      expect(moved.event.status).toBe('IN_PROGRESS');
-      await uploadRoundScores(
-        page,
-        tournament.eventId,
-        1,
-        ACT_7_SCORES_TO_PAR[index].map((scoreToPar, golfer) => ({
-          playerName: `${run.playerNamePrefix} ${golfer + 1}`,
-          strokes: PAR_PER_ROUND + scoreToPar,
-          scoreToPar,
-        })),
-      );
-    }
-    await logOut(page);
-  });
-
-  await test.step('the member\'s leaderboard switches between the tournaments, each with its own picks and total', async () => {
-    await adminSignIn(page, { identifier: run.member.username, password: state.memberPassword });
-    await page.goto(`/league/${run.leagueCode}/contests/${contestId}`);
-    const switcher = page.getByTestId('contest-leaderboard-event-switcher');
-    await expect(switcher).toBeVisible();
-    for (const tournament of tournaments) {
-      const response = await page.request.get(`/api/v1/contests/${contestId}/leaderboard`, {
-        params: { sportEventId: tournament.eventId },
-      });
-      expect(response.ok(), `GET the leaderboard for ${tournament.eventId} answered ${response.status()}`).toBe(true);
-      const board = (await response.json()) as {
-        sportEventId: string;
-        entries: Array<{
-          entryId: string;
-          totalScore: number | null;
-          events: { sportEventId: string; totalScore: number | null }[];
-          picks: { pickId: string }[];
-        }>;
-      };
-      expect(board.sportEventId).toBe(tournament.eventId);
-      const entry = board.entries.find((candidate) => candidate.entryId === entryId);
-      // The contest total sums both tournaments whichever is shown; the picks are the shown one's.
-      expect(entry?.totalScore).toBe(ACT_7_CONTEST_TOTAL);
-      expect(entry?.events.map((result) => [result.sportEventId, result.totalScore])).toEqual(
-        tournaments.map((each, eachIndex) => [each.eventId, ACT_7_EVENT_TOTALS[eachIndex]]),
-      );
-
-      await switcher.selectOption(tournament.eventId);
-      await expect(switcher).toHaveValue(tournament.eventId);
-      expect(entry?.picks).toHaveLength(PLAYER_COUNT);
-      for (const pick of entry?.picks ?? []) {
-        await expect(page.getByTestId(`contest-leaderboard-pick-${entryId}-${pick.pickId}`)).toBeVisible();
-      }
-      // On the page too: the contest total, and each tournament's place and score.
-      await expect(page.getByTestId(`contest-leaderboard-total-${entryId}`)).toHaveText(`+${ACT_7_CONTEST_TOTAL}`);
-      await expect(page.getByTestId(`contest-leaderboard-events-${entryId}`)).toHaveText(
-        `${firstName}: 1, ${ACT_7_EVENT_TOTALS[0]} · ${secondName}: 1, +${ACT_7_EVENT_TOTALS[1]}`,
-      );
-    }
-    await logOut(page);
-  });
-});
-
-type BuiltTournament = { eventId: string; fieldEntryIds: string[] };
-
-/**
- * #749 — act 1's tournament steps, condensed, for act 7's two further tournaments: create a
- * test tournament on the tour, load the six players, put one in each default tier, price
- * the field and release it. Act 1 proves each of these pages; this only uses them.
- */
-async function buildReleasedTournament(
-  page: Page,
-  { runId, tourId, name, start, playerIds }: { runId: string; tourId: string; name: string; start: Date; playerIds: readonly string[] },
-): Promise<BuiltTournament> {
-  const { id: eventId } = await createTestEvent(page, { sportUrlSegment: 'golf', sportLeagueId: tourId, slotKind: 'TOURNAMENT', slotLabel: name, startsAt: start, name });
-
-  await page.goto(`/manage/sports/golf/events/${eventId}/field`);
-  await page.getByTestId('root-admin-event-field-add').click();
-  await page.getByTestId('root-admin-event-field-add-search').fill(runId);
-  for (const id of playerIds) {
-    const candidate = page.getByTestId(`root-admin-event-field-add-candidate-${id}`);
-    await candidate.click();
-    await expect(candidate).toHaveAttribute('aria-pressed', 'true');
-  }
-  await submitAndRead(page, 'root-admin-event-field-add-modal-apply', 'POST', `/api/v1/events/${eventId}/participants`);
-  await expect(page.getByTestId('root-admin-event-field-add-modal')).toBeHidden();
-
-  const fieldResponse = await page.request.get(`/api/v1/events/${eventId}/participants`);
-  expect(fieldResponse.ok(), `GET the field answered ${fieldResponse.status()}`).toBe(true);
-  const field = (await fieldResponse.json()) as { participants: { id: string; participantId: string }[] };
-  const fieldEntryIds = playerIds.map((playerId) => {
-    const entry = field.participants.find((candidate) => candidate.participantId === playerId);
-    if (!entry) {
-      throw new Error(`player ${playerId} is not in the field of "${name}"`);
-    }
-    return entry.id;
-  });
-
-  await page.goto(`/manage/sports/golf/events/${eventId}/field`);
-  for (const [index, entryId] of fieldEntryIds.entries()) {
-    await correctFieldParticipant(page, eventId, entryId, { tierKey: `tier-${index + 1}`, seedNumber: index + 1 });
-  }
-  await page.getByTestId('root-admin-tier-auto-prices').click();
-  await expect(page.getByTestId('root-admin-tier-auto-prices-preview')).toBeVisible();
-  await submitAndRead(page, 'root-admin-tier-auto-prices-confirm', 'POST', `${await tierSetSlotUrl(page.request, eventId)}/prices/auto-assign`);
-
-  await page.goto(`/manage/sports/golf/events/${eventId}`);
-  await page.getByTestId('root-admin-event-release-chip').click();
-  await page.getByTestId('root-admin-sport-event-release').click();
-  const released = await submitAndRead<{ event: { status: string } }>(
-    page,
-    'root-admin-sport-event-release-confirm',
-    'POST',
-    `/api/v1/events/${eventId}/release`,
-  );
-  expect(released.event.status).toBe('SCHEDULED');
-  return { eventId, fieldEntryIds };
-}
-
-/**
- * #749 — picks one golfer from each tier of the tournament the entry page shows, sets the
- * tiebreaker and submits the entry for that tournament.
- */
-async function pickAndSubmitEvent(page: Page, contestId: string, entryId: string, tournament: BuiltTournament) {
-  for (const fieldEntryId of tournament.fieldEntryIds) {
-    await expect(page.getByTestId(`contest-entry-participant-${fieldEntryId}`)).toBeVisible();
-    await submitAndRead(page, `contest-entry-participant-${fieldEntryId}`, 'PUT', `/api/v1/selections/${contestId}/entries/${entryId}/picks/${fieldEntryId}`);
-    await expect(page.getByTestId(`contest-entry-selected-${fieldEntryId}`)).toBeVisible();
-  }
-  await page.getByTestId('contest-entry-tiebreaker-select').selectOption({ index: 1 });
-  await submitAndRead(
-    page,
-    'contest-entry-submit',
-    'POST',
-    `/api/v1/selections/${contestId}/entries/${entryId}/events/${tournament.eventId}/submit`,
-  );
-  await expect(page.getByTestId(`contest-board-entry-${entryId}`)).toBeVisible();
-}
 
 /**
  * #362 — how long a leaderboard page left open gets to catch up on its own: one 30-second poll,

@@ -24,6 +24,8 @@ import { expectConstantQueries } from '../query-scaling';
 import { oneEventSlotId } from '../../support/test-slots';
 import { AWAY_SIDE, HOME_SIDE } from '../../support/match-sides';
 import { createMatchRow, rowSideTeam, type MatchRowWithSides } from '../../support/match-rows';
+import { contestOnEvents, contestTemplateId } from '../../support/contest-rows';
+import { fixtureSeasonId } from '../../support/event-edition';
 
 // No mocks.
 
@@ -53,7 +55,7 @@ async function seedLiveCup(contests: number, seedContest: LiveContestSeed) {
   const live: LiveContest[] = [];
   for (let index = 0; index < contests; index += 1) live.push(await seedContest(seeded, index));
   const { sportLeagueId, seasonYear } = expectDefined(live[0]);
-  const cup = await getPrisma().cup.create({ data: { leagueId: seeded.league.id, sportLeagueId, seasonYear } });
+  const cup = await getPrisma().cup.create({ data: { leagueId: seeded.league.id, sportLeagueId, sportLeagueSeasonId: await fixtureSeasonId(getPrisma(), sportLeagueId, seasonYear) } });
   return { ...seeded, cup };
 }
 
@@ -96,8 +98,7 @@ function liveRosterContest(selectionType: RosterType, { tied = false }: { tied?:
     const contest = await prisma.contest.create({
       data: {
         leagueId: seeded.league.id,
-        seasonYear: event.startDate.getUTCFullYear(),
-        sportEvents: { create: { sportEventId: event.id, sequence: 1 } },
+        ...(await contestOnEvents(prisma, [event.id])),
         name: `Live Major ${seeded.suffix} ${String(index)}`,
         status: ContestStatus.ACTIVE,
         contestFormat: 'ROSTER',
@@ -107,6 +108,7 @@ function liveRosterContest(selectionType: RosterType, { tied = false }: { tied?:
     await prisma.contestConfiguration.create({
       data: {
         contestId: contest.id,
+        templateId: await contestTemplateId(prisma, contest.id),
         selectionType,
         configJson: ROSTER_RULES[selectionType],
         participantScoringRules: { create: { participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', sortOrder: 1 } },
@@ -157,15 +159,14 @@ function livePredictionContest(selectionType: typeof SelectionType.PICK_EM | typ
     const contest = await prisma.contest.create({
       data: {
         leagueId: seeded.league.id,
-        seasonYear: week.event.startDate.getUTCFullYear(),
-        sportEvents: { create: { sportEventId: week.event.id, sequence: 1 } },
+        ...(await contestOnEvents(prisma, [week.event.id])),
         name: `Live Week ${seeded.suffix} ${String(index)}`,
         status: ContestStatus.ACTIVE,
         contestFormat: 'PREDICTION',
         selectionType,
       },
     });
-    await prisma.contestConfiguration.create({ data: { contestId: contest.id, selectionType, configJson: PREDICTION_RULES[selectionType] } });
+    await prisma.contestConfiguration.create({ data: { contestId: contest.id, templateId: await contestTemplateId(prisma, contest.id), selectionType, configJson: PREDICTION_RULES[selectionType] } });
     const games = selectionType === SelectionType.SURVIVOR ? week.games.slice(0, 1) : week.games;
     for (const [team, squad] of seeded.squads.entries()) {
       const entry = await prisma.contestEntry.create({
@@ -197,12 +198,10 @@ const liveBracketContest: LiveContestSeed = async (seeded, index) => {
   });
   await prisma.sportEventRoundMatch.update({ where: { id: first.id }, data: { advancesToMatchId: final.id, advancesToSideNumber: HOME_SIDE } });
   await prisma.sportEventRoundMatch.update({ where: { id: second.id }, data: { advancesToMatchId: final.id, advancesToSideNumber: AWAY_SIDE } });
-  await prisma.sportEvent.update({ where: { id: event.id }, data: { rounds: 2 } });
   const contest = await prisma.contest.create({
     data: {
       leagueId: seeded.league.id,
-      seasonYear: event.startDate.getUTCFullYear(),
-      sportEvents: { create: { sportEventId: event.id, sequence: 1 } },
+      ...(await contestOnEvents(prisma, [event.id])),
       name: `Live Bracket ${seeded.suffix} ${String(index)}`,
       status: ContestStatus.ACTIVE,
       contestFormat: 'PREDICTION',
@@ -212,6 +211,7 @@ const liveBracketContest: LiveContestSeed = async (seeded, index) => {
   await prisma.contestConfiguration.create({
     data: {
       contestId: contest.id,
+      templateId: await contestTemplateId(prisma, contest.id),
       selectionType: SelectionType.BRACKET,
       configJson: { selectionType: SelectionType.BRACKET },
       participantScoringRules: {

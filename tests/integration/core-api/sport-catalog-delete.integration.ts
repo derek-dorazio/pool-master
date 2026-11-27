@@ -19,7 +19,7 @@ import {
 } from '../helpers';
 import { recordStatements } from '../statement-log';
 import { sportLeagueRowDefaults } from '../../support/league-profiles';
-import { keyedSlotDefinitionId } from '../../support/event-edition';
+import { fixtureSeasonId, keyedSlotDefinitionId } from '../../support/event-edition';
 import { participantLeagueId } from '../../support/participant-league';
 import { sportRowKeys } from '../../support/sport-rows';
 import { sportPlay } from '../../support/sport-play';
@@ -180,7 +180,7 @@ describe('deleting a sport league or a participant costs fixed statements (#1400
     const suffix = randomUUID().slice(0, 8).toUpperCase();
     const league = await prisma.league.create({ data: { name: `Cup League ${suffix}`, leagueCode: `CUPDEL${suffix}`, cupName: 'Delete Guard Cup' } });
     made.leagueIds.add(league.id);
-    const cup = await prisma.cup.create({ data: { leagueId: league.id, seasonYear: 2026, sportLeagueId } });
+    const cup = await prisma.cup.create({ data: { leagueId: league.id, sportLeagueSeasonId: await fixtureSeasonId(prisma, sportLeagueId, 2026), sportLeagueId } });
 
     const response = await remove(`/api/v1/sport-leagues/${sportLeagueId}`, admin);
 

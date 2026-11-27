@@ -32,7 +32,7 @@ import {
   SelectionStateResponseSchema,
   SportEventBracketResponseSchema,
 } from '@poolmaster/shared/dto';
-import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, createTestEvent } from './builders';
+import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, createTestEvent, contestTemplateFor } from './builders';
 import {
   cleanupFunctionalData,
   disconnectFunctionalPrisma,
@@ -171,9 +171,11 @@ describe('SDK Functional: Basketball knockout scoring', () => {
     const invite = await generateInviteLink({ client: commissioner.client, path: { id: league.id }, body: { maxUses: 1 } });
     await acceptInvitation({ client: member.client, body: { inviteCode: expectDefined(invite.data).invitation.inviteCode } });
 
+    const templateId = await contestTemplateFor([eventId], SelectionType.TIERED);
     const contestBody = (roundValues: number[]) => ({
       name: `Harbour Bracket Pool ${RUN}`,
       sportEventIds: [eventId],
+      templateId,
       contestFormat: ContestFormat.ROSTER,
       selectionType: SelectionType.TIERED,
       configuration: {

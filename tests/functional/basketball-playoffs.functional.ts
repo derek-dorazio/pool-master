@@ -120,7 +120,7 @@ describe('SDK Functional: NBA and WNBA playoffs', () => {
     const file = taggedSeed('basketball-2025-nba-playoffs-test.json', () => `NBA Playoffs ${RUN}`);
     const { sportLeague: nba, event } = await loadPlayoffs(admin, file);
     expect(expectDefined((await listEventRounds({ client: a, path: { eventId: event.id } })).data).rounds.map((round) => round.slot.slotKind)).toEqual(['ROUND_OF_16', 'QUARTERFINAL', 'SEMIFINAL', 'FINAL']);
-    expect([event.status, event.rounds]).toEqual(['SCHEDULED', 4]);
+    expect([event.status, event.roundCount]).toEqual(['SCHEDULED', 4]);
 
     const field = expectDefined((await listEventParticipants({ client: a, path: { eventId: event.id } })).data).participants;
     expect(field.filter((row) => (row.seedNumber ?? 0) >= 7).map((row) => [row.participant.name, row.seedNumber]).sort((left, right) => String(left[0]).localeCompare(String(right[0])))).toEqual([
@@ -194,7 +194,7 @@ describe('SDK Functional: NBA and WNBA playoffs', () => {
     const { event } = await loadPlayoffs(admin, taggedSeed('basketball-2025-wnba-playoffs-test.json', () => `WNBA Playoffs ${RUN}`));
 
     expect(expectDefined((await listEventRounds({ client: admin.client, path: { eventId: event.id } })).data).rounds.map((round) => round.slot.slotKind)).toEqual(['QUARTERFINAL', 'SEMIFINAL', 'FINAL']);
-    expect([event.status, event.rounds]).toEqual(['SCHEDULED', 3]);
+    expect([event.status, event.roundCount]).toEqual(['SCHEDULED', 3]);
     const field = expectDefined((await listEventParticipants({ client: admin.client, path: { eventId: event.id } })).data).participants;
     const bracket = expectDefined((await getEventBracket({ client: admin.client, path: { eventId: event.id } })).data).matches;
     const final = withHomeAwayRead(expectDefined(bracket.find((match) => match.roundNumber === 3)));
@@ -216,7 +216,7 @@ describe('SDK Functional: NBA and WNBA playoffs', () => {
       [1, 'UCLA Bruins', 'South Carolina Gamecocks', ['Missouri State Lady Bears', 'Nebraska Cornhuskers', 'Southern Jaguars', 'Virginia Cavaliers']],
     ] as const) {
       const { event } = await findPlayoffs(admin, file, leagueIndex);
-      expect([event.status, event.rounds]).toEqual(['SCHEDULED', 6]);
+      expect([event.status, event.roundCount]).toEqual(['SCHEDULED', 6]);
       const field = expectDefined((await listEventParticipants({ client: admin.client, path: { eventId: event.id } })).data).participants;
       expect(field).toHaveLength(64);
       const names = new Set(field.map((row) => row.participant.name));

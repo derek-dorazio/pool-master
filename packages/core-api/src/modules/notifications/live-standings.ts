@@ -214,10 +214,10 @@ export class LiveStandings implements DueNotifications {
     const due: DueStandings[] = [];
     for (const sportEvent of contestEvents) {
       if (sportEvent.status !== SportEventStatus.IN_PROGRESS || !eventStoresGolfRoundScores(sportEvent)) continue;
-      // With no round count there is no telling the last round, and a one-round event has none to report between.
-      if (sportEvent.rounds === undefined || sportEvent.rounds < 2) continue;
+      // With no rounds there is no telling the last round, and a one-round event has none to report between.
+      if (sportEvent.roundCount < 2) continue;
       const finished = lastFinishedRound(await fieldOf(sportEvent.id), holesPerRound(sportEvent));
-      if (!finished || finished.roundNumber >= sportEvent.rounds || !isDue(finished.finishedAt)) continue;
+      if (!finished || finished.roundNumber >= sportEvent.roundCount || !isDue(finished.finishedAt)) continue;
       const roundNumber = finished.roundNumber;
       due.push({
         contest,

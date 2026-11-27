@@ -34,9 +34,10 @@ export class PrismaContestLeaderboardSnapshotRepository<Board> implements Contes
 
   async findKeysByContestsOrEvents(contestIds: readonly string[], sportEventIds: readonly string[]): Promise<ContestLeaderboardSnapshotKey[]> {
     // The contests on the events first, by the event index: an OR across the two would read every snapshot.
-    const onEvents = sportEventIds.length === 0 ? [] : await this.prisma.contestSportEvent.findMany({
-      where: { sportEventId: { in: [...new Set(sportEventIds)] } },
+    const onEvents = sportEventIds.length === 0 ? [] : await this.prisma.contestSeasonSlot.findMany({
+      where: { seasonSlot: { eventSlot: { sportEventId: { in: [...new Set(sportEventIds)] } } } },
       select: { contestId: true },
+      distinct: ['contestId'],
     });
     const named = [...new Set([...contestIds, ...onEvents.map((row) => row.contestId)])];
     if (named.length === 0) return [];

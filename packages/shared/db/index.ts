@@ -163,6 +163,7 @@ export type {
   SportLeagueCurrentSeasonFacts,
   SportLeagueSeasonRepository,
   SeasonSlotWithEvent,
+  CoverableSeasonSlotRow,
   SyncedSlotsRecord,
   NameMatchedSlotsRecord,
   SlotNamePatternRepository,

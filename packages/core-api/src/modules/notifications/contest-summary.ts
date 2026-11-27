@@ -94,7 +94,7 @@ export async function summarizeContest(deps: ContestSummaryDeps, contest: Contes
       rules,
       rules.selectionType === SelectionType.TIERED
         // The set the contest picks from: the first slot it covers holding one (#2044).
-        ? (await deps.tiers.getEffectiveTiersForSportEvent(first.id, { coveredSlotDefinitionIds: contestRoundCoverage(configuration).slotDefinitionIds })).length
+        ? (await deps.tiers.getEffectiveTiersForSportEvent(first.id, { coveredSlotDefinitionIds: contestRoundCoverage(contest).slotDefinitionIds })).length
         : 0,
       sportVocabulary(eventSportDefinition(first)).participant,
       rules.selectionType === SelectionType.BUDGET_PICK ? rules.salaryCap : null,
@@ -140,5 +140,5 @@ export async function describeEventFormat(
 ): Promise<string | null> {
   const games = await deps.matches.findBySportEvent(sportEvent.id);
   if (games.length > 0) return pluralize(games.length, 'game');
-  return sportEvent.rounds === undefined ? null : pluralize(sportEvent.rounds, 'round');
+  return sportEvent.roundCount === 0 ? null : pluralize(sportEvent.roundCount, 'round');
 }

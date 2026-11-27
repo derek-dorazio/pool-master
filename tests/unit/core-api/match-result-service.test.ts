@@ -83,7 +83,7 @@ const FOUR_QUARTERS: SlotPeriods = { unit: PeriodUnit.QUARTER, count: 4 };
 async function setup({ sport = Sport.BASKETBALL, status = SportEventStatus.IN_PROGRESS, periods = FOUR_QUARTERS }: { sport?: Sport; status?: SportEventStatus; periods?: SlotPeriods | null } = {}) {
   const store = new InMemorySportEvents();
   const sportRow = store.addSport(sport);
-  const event = store.addEvent({ sport, status: SportEventStatus.DRAFT, rounds: 2 });
+  const event = store.addEvent({ sport, status: SportEventStatus.DRAFT });
   await store.addRounds(event.id, [
     { roundNumber: 1, scheduledDate: new Date('2027-03-18T16:00:00.000Z') },
     { roundNumber: 2, scheduledDate: new Date('2027-03-20T16:00:00.000Z') },
@@ -127,7 +127,7 @@ async function setup({ sport = Sport.BASKETBALL, status = SportEventStatus.IN_PR
 async function week() {
   const store = new InMemorySportEvents();
   const sportRow = store.addSport(Sport.FOOTBALL);
-  const event = store.addEvent({ sport: Sport.FOOTBALL, status: SportEventStatus.DRAFT, rounds: 1 });
+  const event = store.addEvent({ sport: Sport.FOOTBALL, status: SportEventStatus.DRAFT });
   await store.addRounds(event.id, [{ roundNumber: 1, scheduledDate: new Date('2027-09-12T17:00:00.000Z') }]);
   // A regular-season week's games can end level (#792), and are played in four quarters: its slot says so (#2046, #2047).
   for (const round of store.roundRows) round.slot = { ...round.slot, canEndTied: true, periods: FOUR_QUARTERS };
@@ -860,7 +860,7 @@ describe('MatchResultService on a reseeded bracket', () => {
   async function reseeded({ finalFirst = false }: { finalFirst?: boolean } = {}) {
     const store = new InMemorySportEvents();
     const sportRow = store.addSport(Sport.BASKETBALL);
-    const event = store.addEvent({ sport: Sport.BASKETBALL, status: SportEventStatus.IN_PROGRESS, rounds: 3 });
+    const event = store.addEvent({ sport: Sport.BASKETBALL, status: SportEventStatus.IN_PROGRESS });
     const [one, two, three, four, five, six] = [1, 2, 3, 4, 5, 6].map((seed) => {
       const team = store.addParticipant(sportRow.id, `Seed ${seed}`, { participantType: 'TEAM' });
       return store.addToField(event.id, team.id, { seedNumber: seed });
@@ -956,7 +956,7 @@ describe('MatchResultService on a bracket numbered within each round (#2161)', (
   it('advances a winner to the match its link names, round 2\'s match 2, not round 2\'s match 1, past a round whose first game is between two byes', async () => {
     const store = new InMemorySportEvents();
     const sportRow = store.addSport(Sport.BASKETBALL);
-    const event = store.addEvent({ sport: Sport.BASKETBALL, status: SportEventStatus.IN_PROGRESS, rounds: 3 });
+    const event = store.addEvent({ sport: Sport.BASKETBALL, status: SportEventStatus.IN_PROGRESS });
     const [one, two, three, five, six] = [1, 2, 3, 5, 6].map((seed) => store.addToField(event.id, store.addParticipant(sportRow.id, `Seed ${seed}`, { participantType: 'TEAM' }).id, { seedNumber: seed }));
     const match = (id: string, roundNumber: number, matchNumber: number, home: string | null, away: string | null, advancesTo: [string, MatchSide] | null) => (legacyMatch({
       id, sportEventId: event.id, roundNumber, slot: bracketRoundSlots(3)[roundNumber - 1], matchNumber,

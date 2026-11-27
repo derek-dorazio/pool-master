@@ -26,7 +26,7 @@ import {
 } from '../helpers';
 import { recordStatements, statementCounts, statementsOn, StatementVerb } from '../statement-log';
 import { createRoundRows, createSportEventRow } from '../../support/sport-event-rows';
-import { createContestRow } from '../../support/contest-rows';
+import { coverageOfEvents, createContestRow } from '../../support/contest-rows';
 import { sportLeagueRowDefaults } from '../../support/league-profiles';
 import { sportRowKeys } from '../../support/sport-rows';
 import { fixtureSeasonId } from '../../support/event-edition';
@@ -75,7 +75,6 @@ async function createWeek(label: string, startDate: Date) {
     name: label,
     startDate,
     status: 'SCHEDULED',
-    rounds: 1,
     autoLifecycleEnabled: true,
   });
   await createRoundRows(getPrisma(), new PrismaSportEventRoundRepository(getAppPrisma()), event, [{ roundNumber: 1, scheduledDate: startDate }]);
@@ -120,9 +119,8 @@ async function createPickEmEntry(sportEventIds: string[]) {
     data: { leagueId: league.id, userId: owner.user.id, role: 'COMMISSIONER', status: 'ACTIVE', joinedAt: new Date() },
   });
   const squad = await prisma.squad.create({ data: { leagueId: league.id, createdBy: owner.user.id, name: `Pickers ${suffix}` } });
-  const contest = await createContestRow(repos().contests, {
+  const contest = await createContestRow(getPrisma(), repos().contests, {
     leagueId: league.id,
-    seasonYear: 2026,
     sportEventIds,
     name: `Confidence ${suffix}`,
     status: ContestStatus.OPEN,
@@ -651,7 +649,7 @@ describe('contest_entry_match_predictions constraints', () => {
   });
 });
 
-describe('PrismaContestRepository.replaceSportEvents with game picks', () => {
+describe('PrismaContestRepository.replaceCoveredSlots with game picks', () => {
   it('removes an event from a pick\'em contest with the entry\'s picks on its games, keeping the other week\'s picks', async () => {
     const week1 = await createWeek('Week 1', AT);
     const week2 = await createWeek('Week 2', LATER);
@@ -668,7 +666,7 @@ describe('PrismaContestRepository.replaceSportEvents with game picks', () => {
       });
     }
 
-    await repos().contests.replaceSportEvents(contest.id, [week2.event.id]);
+    await repos().contests.replaceCoveredSlots(contest.id, (await coverageOfEvents(getPrisma(), [week2.event.id])).seasonSlotIds);
 
     await expect(repos().predictions.findByEntryAndEvent(entry.id, week1.event.id)).resolves.toEqual([]);
     expect((await repos().predictions.findByEntryAndEvent(entry.id, week2.event.id)).map((pick) => pick.sportEventRoundMatchId))

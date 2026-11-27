@@ -99,7 +99,7 @@ describe('SDK Functional: Running World Marathon Majors Top 10 points', () => {
     expect(race.response?.status).toBe(201);
     const eventId = expectDefined(race.data).event.id;
     created.sportEventIds.add(eventId);
-    expect(expectDefined(race.data).event.rounds).toBe(1);
+    expect(expectDefined(race.data).event.roundCount).toBe(1);
 
     const runnerIds: string[] = [];
     for (const runner of RUNNERS) {

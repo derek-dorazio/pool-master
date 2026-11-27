@@ -19,7 +19,6 @@ import { oneEventSlotId, setEventSlotPeriods } from '../../support/test-slots';
 
 // #435 — scores land only in rounds an admin scheduled, so each event gets the four-round
 // schedule an admin-created event starts with.
-const fourRoundSchedule = () => ({ rounds: 4 });
 
 /** The event's four rounds, a day apart, in its one slot (#2006), of 18 holes each (#2047). */
 async function addFourRounds(prisma: ReturnType<typeof getPrisma>, sportEventId: string): Promise<void> {
@@ -82,7 +81,6 @@ describe('pool-master-eux.2: Golf participant standing persistence', () => {
         startDate: new Date('2026-05-07T12:00:00.000Z'),
         endDate: new Date('2026-05-10T22:00:00.000Z'),
         status: 'IN_PROGRESS',
-        ...fourRoundSchedule(),
       },
     });
     await addFourRounds(prisma, event.id);
@@ -179,8 +177,7 @@ describe('Golf live-score persistence', () => {
           name: `Live ${suffix} ${tag}`,
           startDate: new Date('2026-05-07T12:00:00.000Z'),
           status: 'IN_PROGRESS',
-          ...fourRoundSchedule(),
-        },
+          },
       });
       await addFourRounds(prisma, row.id);
       return row;

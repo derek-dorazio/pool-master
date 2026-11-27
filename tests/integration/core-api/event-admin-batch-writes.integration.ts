@@ -60,7 +60,6 @@ async function golfEvent() {
       name: `Batch Writes Open ${randomUUID().slice(0, 6)}`,
       startDate: new Date('2026-05-07T12:00:00.000Z'),
       status: SportEventStatus.DRAFT,
-      rounds: 1,
     },
   });
   const round = await prisma.sportEventRound.create({ data: { sportEventId: event.id, sportEventSlotId: await oneEventSlotId(prisma, event.id), roundNumber: 1, scheduledDate: new Date('2026-05-07') } });

@@ -129,7 +129,6 @@ test('act 1: the root admin releases two bowl games on the BOWLS slot, with no s
       slotLabel: run.tournamentName,
       name: run.tournamentName,
       startsAt: BOWLS[0].kickoff,
-      rounds: 1,
       autoLifecycleEnabled: false,
     });
     journey.eventId = event.id;

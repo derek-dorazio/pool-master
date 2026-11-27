@@ -177,6 +177,7 @@ describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8;
         // Far future so the release step below never meets a start that has passed.
         startDate: '2099-07-16T08:00:00.000Z',
         endDate: '2099-07-19T20:00:00.000Z',
+        rounds: 4,
         sportLeagueId,
         championshipYear: 2026,
         autoLifecycleEnabled: false,

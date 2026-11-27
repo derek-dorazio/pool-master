@@ -1442,15 +1442,17 @@ model Contest {
   /// the end of the quiet hours after it opened, or once its events or their times change. Null
   /// when no reminder is left; the sweep reads only contests whose moment has come.
   nextReminderAt DateTime?           @map("next_reminder_at") @db.Timestamptz
-  /// The season whose cup the contest counts toward (#841): its first event's year at creation.
-  seasonYear     Int                 @map("season_year")
+  /// The sport league Season the contest is in (#2014): fixed at creation, and every slot it covers
+  /// is one of this Season's (composite key on `ContestSeasonSlot`). Its cup is this Season's.
+  sportLeagueSeasonId String         @map("sport_league_season_id") @db.Uuid
   /// How much it counts toward its cup and the championship (#841); fixed once COMPLETED.
   cupWeight      PrismaCupWeight     @default(NORMAL) @map("cup_weight")
   createdAt      DateTime            @default(now()) @map("created_at") @db.Timestamptz
   updatedAt      DateTime            @updatedAt @map("updated_at") @db.Timestamptz
 
   league               League                       @relation(fields: [leagueId], references: [id])
-  sportEvents          ContestSportEvent[]
+  sportLeagueSeason    SportLeagueSeason            @relation(fields: [sportLeagueSeasonId], references: [id], onDelete: Restrict)
+  seasonSlots          ContestSeasonSlot[]
   configuration        ContestConfiguration?
   entries              ContestEntry[]
   entryStandings       ContestEntryStanding[]
@@ -1466,7 +1468,10 @@ model Contest {
   payments             LeaguePayment[]
   leaderboardSnapshots ContestLeaderboardSnapshot[]
 
-  @@index([leagueId, seasonYear])
+  /// The target of a covered slot's composite key, which keeps the slot in the contest's Season.
+  @@unique([id, sportLeagueSeasonId])
+  @@index([leagueId, sportLeagueSeasonId])
+  @@index([sportLeagueSeasonId])
   @@index([status])
   @@index([nextReminderAt])
   @@map("contests")
@@ -1479,8 +1484,9 @@ model Contest {
 model Cup {
   id                  String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   leagueId            String                @map("league_id") @db.Uuid
-  seasonYear          Int                   @map("season_year")
   sportLeagueId       String                @map("sport_league_id") @db.Uuid
+  /// The sport league Season it adds up (#2014); the composite key keeps it the sport league's own.
+  sportLeagueSeasonId String                @map("sport_league_season_id") @db.Uuid
   status              PrismaCupStatus       @default(OPEN)
   /// Set with CROWNED (database check), like the points table frozen with it.
   crownedAt           DateTime?             @map("crowned_at") @db.Timestamptz
@@ -1491,9 +1497,10 @@ model Cup {
   // A cup is the league's, so it goes with the league; nothing else deletes one.
   league      League        @relation(fields: [leagueId], references: [id], onDelete: Cascade)
   sportLeague SportLeague   @relation(fields: [sportLeagueId], references: [id], onDelete: Cascade)
+  sportLeagueSeason SportLeagueSeason @relation(fields: [sportLeagueId, sportLeagueSeasonId], references: [sportLeagueId, id], onDelete: Restrict, map: "cups_season_fkey")
   standings   CupStanding[]
 
-  @@unique([leagueId, seasonYear, sportLeagueId])
+  @@unique([leagueId, sportLeagueSeasonId])
   @@index([sportLeagueId])
   @@map("cups")
 }
@@ -1577,26 +1584,30 @@ model LeagueYearReview {
 // One event a contest covers (#713). Every contest has at least one: a golf or race contest has
 // one row, a majors pool or a pick'em season one per event. `sequence` is the events' order by
 // start, which the server keeps when the commissioner adds or removes events.
-model ContestSportEvent {
-  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  contestId    String   @map("contest_id") @db.Uuid
-  sportEventId String   @map("sport_event_id") @db.Uuid
-  sequence     Int
-  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
+/// A Season slot a contest covers (#2014, plan §7): the template's listed slots ∩ the chosen event's
+/// or Season's slots, as its coverage mode allows, copied once at creation (no later slot joins).
+/// The slot's event is the one covering it (`SportEventSlot`); play order is the slots' own.
+model ContestSeasonSlot {
+  id                                 String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  contestId                          String   @map("contest_id") @db.Uuid
+  sportLeagueSeasonId                String   @map("sport_league_season_id") @db.Uuid
+  sportLeagueSeasonCompetitionSlotId String   @map("sport_league_season_competition_slot_id") @db.Uuid
+  createdAt                          DateTime @default(now()) @map("created_at") @db.Timestamptz
 
-  contest    Contest    @relation(fields: [contestId], references: [id], onDelete: Cascade)
-  sportEvent SportEvent @relation(fields: [sportEventId], references: [id])
+  /// The composite key keeps the slot's Season the contest's own.
+  contest             Contest                          @relation(fields: [contestId, sportLeagueSeasonId], references: [id, sportLeagueSeasonId], onDelete: Cascade, map: "contest_season_slots_contest_fkey")
+  seasonSlot          SportLeagueSeasonCompetitionSlot @relation(fields: [sportLeagueSeasonId, sportLeagueSeasonCompetitionSlotId], references: [sportLeagueSeasonId, id], onDelete: Restrict, map: "contest_season_slots_season_slot_fkey")
+  pendingDrawReceipts ContestDraw[]                    @relation("ContestDrawReceiptsPending")
 
-  @@unique([contestId, sportEventId])
-  @@unique([contestId, sequence])
-  @@index([sportEventId])
-  @@map("contest_sport_events")
+  @@unique([contestId, sportLeagueSeasonCompetitionSlotId])
+  @@index([sportLeagueSeasonId, sportLeagueSeasonCompetitionSlotId])
+  @@map("contest_season_slots")
 }
 
 model ContestConfiguration {
   id                   String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   contestId            String              @unique @map("contest_id") @db.Uuid
-  templateId           String?             @map("template_id") @db.Uuid
+  templateId           String              @map("template_id") @db.Uuid
   templateVersion      Int?                @map("template_version")
   selectionType        PrismaSelectionType @map("selection_type")
   configJson           Json?               @map("config_json")
@@ -1607,7 +1618,7 @@ model ContestConfiguration {
   updatedAt            DateTime            @updatedAt @map("updated_at") @db.Timestamptz
 
   contest                 Contest                         @relation(fields: [contestId], references: [id])
-  template                ContestConfigTemplate?          @relation(fields: [templateId], references: [id])
+  template                ContestConfigTemplate           @relation(fields: [templateId], references: [id])
   participantScoringRules ParticipantContestScoringRule[]
 
   @@index([templateId])
@@ -1956,16 +1967,16 @@ model ContestDraw {
   entryOrder                  String[] @map("entry_order") @db.Uuid
   drawnByUserId               String?  @map("drawn_by_user_id") @db.Uuid
   drawnAt                     DateTime @default(now()) @map("drawn_at") @db.Timestamptz
-  /// The event whose dealt picks the entries' sweepstakes receipts are still to list (#1171): the
-  /// draw sets it, and the next lifecycle sweep sends them and clears it. Null once sent.
-  receiptsPendingSportEventId String?  @map("receipts_pending_sport_event_id") @db.Uuid
+  /// The covered slot whose dealt picks the entries' sweepstakes receipts are still to list (#1171,
+  /// #2014): the draw sets it, and the next lifecycle sweep sends them and clears it. Null once sent.
+  receiptsPendingContestSeasonSlotId String? @map("receipts_pending_contest_season_slot_id") @db.Uuid
 
   contest                   Contest     @relation(fields: [contestId], references: [id], onDelete: Cascade)
   drawnBy                   User?       @relation(fields: [drawnByUserId], references: [id], onDelete: SetNull)
-  receiptsPendingSportEvent SportEvent? @relation("ContestDrawReceiptsPending", fields: [receiptsPendingSportEventId], references: [id], onDelete: SetNull)
+  receiptsPendingContestSeasonSlot ContestSeasonSlot? @relation("ContestDrawReceiptsPending", fields: [receiptsPendingContestSeasonSlotId], references: [id], onDelete: SetNull)
 
   @@index([drawnByUserId])
-  @@index([receiptsPendingSportEventId])
+  @@index([receiptsPendingContestSeasonSlotId])
   @@map("contest_draws")
 }
 
@@ -2089,11 +2100,6 @@ model SportEvent {
   startDate                  DateTime                       @map("start_date") @db.Timestamptz
   endDate                    DateTime?                      @map("end_date") @db.Timestamptz
   status                     PrismaSportEventStatus         @default(SCHEDULED)
-  rounds                     Int?
-  // Par for every round of the event (#478), set by an admin. Null derives each
-  // round's par from the field's finished rounds (strokes minus to-par). Read
-  // only by contest scoring, to turn an unplayed round's 80 strokes into to-par.
-  roundsPar                  Int?                           @map("rounds_par")
   // The event's sport league (#2010): its Season is one of this league's, by a composite key.
   sportLeagueId              String                         @map("sport_league_id") @db.Uuid
   // The Season the event is played in (#2003): the synced Season the sync read it from, or the
@@ -2122,9 +2128,7 @@ model SportEvent {
   createdAt                  DateTime                       @default(now()) @map("created_at") @db.Timestamptz
   updatedAt                  DateTime                       @updatedAt @map("updated_at") @db.Timestamptz
 
-  contests                   ContestSportEvent[]
   contestEntryEvents         ContestEntryEvent[]
-  pendingDrawReceipts        ContestDraw[]               @relation("ContestDrawReceiptsPending")
   contestEntryEventStandings ContestEntryEventStanding[]
   sportEventParticipants     SportEventParticipant[]
   roundSchedule              SportEventRound[]
@@ -2990,6 +2994,8 @@ model SportLeagueSeason {
   competitions     SportLeagueSeasonCompetition[]
   slots            SportLeagueSeasonCompetitionSlot[]
   sportEvents      SportEvent[]
+  contests         Contest[]
+  cups             Cup[]
 
   @@unique([sportLeagueId, championshipYear])
   /// The target of the composite keys that keep a Season's rows in its own league.
@@ -3119,6 +3125,7 @@ model SportLeagueSeasonCompetitionSlot {
   /// The composite key keeps the definition one of its own league's.
   definition    SportLeagueCompetitionSlot                        @relation(fields: [sportLeagueId, sportLeagueCompetitionSlotId], references: [sportLeagueId, id], onDelete: Restrict, map: "sport_league_season_competition_slots_definition_fkey")
   eventSlot     SportEventSlot?
+  contestSlots  ContestSeasonSlot[]
   providerLinks SportLeagueSeasonCompetitionSlotProviderMapping[]
   placedGames   SportLeagueSeasonCompetitionSlotGameProviderMapping[]
 

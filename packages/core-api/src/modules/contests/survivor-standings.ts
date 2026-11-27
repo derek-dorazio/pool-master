@@ -117,7 +117,7 @@ export async function loadSurvivorWeeks(
     return (roundNumbers.length > 0 ? roundNumbers : [firstRound]).map((roundNumber) => ({
       event,
       roundNumber,
-      roundCount: Math.max(event.rounds ?? 0, roundNumbers.at(-1) ?? 1),
+      roundCount: Math.max(event.roundCount, roundNumbers.at(-1) ?? 1),
       // A later round starts at its first game's kickoff; its games with no time yet wait on theirs (#785).
       started: roundNumber === firstRound
         ? hasSportEventStarted(event, now)

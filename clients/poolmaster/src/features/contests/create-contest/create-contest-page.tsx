@@ -68,6 +68,9 @@ export function CreateContestPage() {
       if (!event) {
         throw new Error('Choose a contest-ready event for the contest.');
       }
+      if (!submitted.selectedTemplateId) {
+        throw new Error('Choose a setup to start from.');
+      }
       const submittedParticipant = sportVocabulary(eventSportDefinition(event)).participant;
       const parsed = parseContestRules(submitted, submitted.selectionType, event.tierCount, submittedParticipant);
       if (parsed.error !== null) {
@@ -86,7 +89,7 @@ export function CreateContestPage() {
         contestFormat: contestFormatForSelectionType(submitted.selectionType),
         selectionType: submitted.selectionType,
         ...(submitted.selectionType === SelectionType.SQUARES ? { sportEventRoundMatchId: submitted.sportEventRoundMatchId } : {}),
-        ...(submitted.selectedTemplateId ? { templateId: submitted.selectedTemplateId } : {}),
+        templateId: submitted.selectedTemplateId,
         // A definition that takes settings sends them; one that takes none leaves the template's
         // preset or the sport's default to apply.
         configuration: scoring.scoring ? { ...parsed.configuration, scoring: scoring.scoring } : parsed.configuration,
@@ -153,8 +156,9 @@ export function CreateContestPage() {
         fallback: 'We could not create that contest. Please try again.',
       })
       : null);
-  // Any rule or scoring changed by hand leaves the preset for Custom.
-  const changeRules = (next: Partial<CreateContestFormValues>) => draft.setFormValues({ ...next, selectedTemplateId: '' });
+  // A rule or scoring changed by hand edits the chosen setup's rules: every contest is made from a
+  // template (#2014), which decides the slots it covers, so the setup stays chosen.
+  const changeRules = (next: Partial<CreateContestFormValues>) => draft.setFormValues(next);
 
   return (
     <FormPage

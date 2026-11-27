@@ -23,6 +23,7 @@ import { freshEventEdition } from '../../support/event-edition';
 import { eventRebuildJob } from '../../support/recording-leaderboard-rebuilds';
 import { participantLeagueId } from '../../support/participant-league';
 import { sportRowKeys } from '../../support/sport-rows';
+import { contestOnEvents, contestTemplateId } from '../../support/contest-rows';
 
 // The finish-position extension (#622) against real Postgres: what the admin's finishing order
 // leaves in the tables, that it is all or none, the constraints the table holds on its own, and a
@@ -54,7 +55,6 @@ async function seedRace(status: 'SCHEDULED' | 'COMPLETED' = 'COMPLETED') {
       startDate: new Date('2026-05-02T22:00:00.000Z'),
       endDate: new Date('2026-05-02T22:05:00.000Z'),
       status,
-      rounds: 1,
     },
   });
   await createRoundRows(prisma, new PrismaSportEventRoundRepository(getAppPrisma()), event, [{ roundNumber: 1, scheduledDate: event.startDate }]);
@@ -306,13 +306,14 @@ describe('horse racing contest — read and settled from the finishing order', (
     })));
     const contest = await prisma.contest.create({
       data: {
-        leagueId: league.id, seasonYear: 2026, sportEvents: { create: { sportEventId: event.id, sequence: 1 } }, name: `Win Place Show ${suffix}`,
+        leagueId: league.id, ...(await contestOnEvents(prisma, [event.id])), name: `Win Place Show ${suffix}`,
         status: 'ACTIVE', contestFormat: 'ROSTER', selectionType: 'BUDGET_PICK',
       },
     });
     await prisma.contestConfiguration.create({
       data: {
         contestId: contest.id,
+        templateId: await contestTemplateId(prisma, contest.id),
         selectionType: 'BUDGET_PICK',
         configJson: { selectionType: 'BUDGET_PICK', rosterSize: 2, countedScores: 2, salaryCap: 100 },
         participantScoringRules: {

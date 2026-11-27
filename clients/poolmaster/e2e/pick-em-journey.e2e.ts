@@ -13,8 +13,8 @@ import { tierSetSlotUrl } from './helpers/tier-set-slot';
 /**
  * #718 — the pick'em pool journey: the root admin sets up two released American football weeks
  * through the API, each one game between two teams (act 1: it is the setting, not the thing under
- * test); a new commissioner creates a Pick'em contest on the first week, adds the season's other
- * week with Add all on its Events page, and opens it (act 2); and a new member joins by link,
+ * test); a new commissioner creates a Pick'em contest on the first week, which its one-week setup
+ * covers alone (#2014), and opens it (act 2); and a new member joins by link,
  * picks week 1's game, saves the tiebreaker on it, submits the week, and finds the entry on the
  * season leaderboard (act 3).
  *
@@ -152,7 +152,6 @@ test('act 1: the root admin releases two American football weeks, each one game 
         slotLabel: weekName(run, index),
         name: weekName(run, index),
         startsAt: week.start,
-        rounds: 1,
         autoLifecycleEnabled: false,
       });
       eventIds.push(event.id);
@@ -212,11 +211,11 @@ test('act 1: the root admin releases two American football weeks, each one game 
   }
 });
 
-test('act 2: a new commissioner creates a Pick\'em contest on week 1, adds the other week with Add all, opens it, and hands out a join link', async ({ page }) => {
+test('act 2: a new commissioner creates a Pick\'em contest on week 1, opens it, and hands out a join link', async ({ page }) => {
   test.setTimeout(120_000);
   const state = requireJourney();
   const { run } = state;
-  const [week1Id, week2Id] = state.eventIds;
+  const [week1Id] = state.eventIds;
 
   await test.step('a fresh commissioner registers and creates a league', async () => {
     await page.goto('/');
@@ -255,21 +254,6 @@ test('act 2: a new commissioner creates a Pick\'em contest on week 1, adds the o
     state.contestId = created.contest.id;
     await expect(page.getByTestId('manage-contest-page')).toBeVisible();
     await expect(page.getByTestId('manage-contest-format')).toContainText('Pick’em');
-  });
-
-  await test.step('add the season\'s other week with Add all on the Events page', async () => {
-    await page.getByTestId('manage-contest-events-edit').click();
-    await expect(page.getByTestId('contest-events-page')).toBeVisible();
-    await page.getByTestId('contest-events-add-all').click();
-    await expect(page.getByTestId(`contest-events-option-${week2Id}`)).toBeChecked();
-    const saved = await submitAndRead<{ contest: { sportEvents: { sportEventId: string }[] } }>(
-      page,
-      'contest-events-save',
-      'PUT',
-      `/api/v1/leagues/${state.leagueId}/contest-management/contests/${state.contestId}/sport-events`,
-    );
-    expect(saved.contest.sportEvents.map((sportEvent) => sportEvent.sportEventId)).toEqual([week1Id, week2Id]);
-    await expect(page.getByTestId('manage-contest-page')).toBeVisible();
   });
 
   await test.step('open the contest to the league', async () => {
@@ -329,7 +313,6 @@ test('act 3: a new member joins, picks week 1\'s game, saves the tiebreaker on i
     );
     state.entryId = created.entry.id;
     await expect(page.getByTestId('pick-em-entry-page')).toBeVisible();
-    await expect(page.getByTestId('pick-em-week-switcher')).toHaveValue(week1Id);
     await expect(page.getByTestId('pick-em-picked-count')).toHaveText('0 of 1');
     await expect(page.getByTestId('contest-entry-status-line')).toContainText('Not submitted · submit by');
   });

@@ -17,7 +17,6 @@ import type { SportDefinition } from './sport-definition';
 export const soccerSportDefinition: SportDefinition = {
   sport: Sport.SOCCER,
   name: 'Soccer',
-  defaultRounds: 4,
   selectionTypes: [
     SelectionType.TIERED, SelectionType.BUDGET_PICK, SelectionType.RANDOM_DRAW, SelectionType.PICK_EM, SelectionType.BRACKET, SelectionType.SURVIVOR, SelectionType.SQUARES,
   ],

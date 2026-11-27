@@ -4,7 +4,7 @@
  *
  * A new event's rounds are created with it (`createSchedules`), from a derived schedule or the
  * default, `dailyRoundSchedule`: sequential daily dates from the event's start, each editable
- * afterwards. `extendTo` adds rounds after the last one. `reschedule` and `shiftSchedule` only
+ * afterwards. `reschedule` and `shiftSchedule` only
  * move existing rounds; neither creates one.
  */
 
@@ -48,44 +48,6 @@ export class SportEventRoundService {
       { sportEventIds: schedules.map(({ sportEventId }) => sportEventId), roundCount: schedules.reduce((total, { rounds }) => total + rounds.length, 0) },
       'Created round schedules for new events',
     );
-  }
-
-  /**
-   * Adds rounds up to `rounds` when an admin raises an event's round count: each added round a
-   * day after the round before it, so it follows an irregular schedule rather than landing on
-   * one of its days. Rounds that exist are left alone.
-   */
-  async extendTo(input: { sportEventId: string; rounds: number; startDate: Date }): Promise<SportEventRound[]> {
-    const existing = await this.deps.rounds.findBySportEvent(input.sportEventId);
-    // Only an event played in one slot takes more rounds: a round per slot is the others' count (#2006).
-    const seasonSlotIds = new Set(existing.map((round) => round.slot.seasonSlotId));
-    const [seasonSlotId] = [...seasonSlotIds];
-    if (seasonSlotIds.size !== 1) {
-      throw new SportEventError(
-        `Sport event ${input.sportEventId} plays a round in each of its slots, so its round count comes from them.`,
-        'EVENT_ROUNDS_FROM_SLOTS',
-        422,
-      );
-    }
-    const dateByRound = new Map(existing.map((round) => [round.roundNumber, round.scheduledDate]));
-    const added: SportEventRoundSchedule[] = [];
-    for (let roundNumber = 1; roundNumber <= input.rounds; roundNumber += 1) {
-      if (dateByRound.has(roundNumber)) continue;
-      const previous = dateByRound.get(roundNumber - 1);
-      const scheduledDate = previous
-        ? new Date(previous.getTime() + MS_PER_DAY)
-        : new Date(input.startDate.getTime() + (roundNumber - 1) * MS_PER_DAY);
-      dateByRound.set(roundNumber, scheduledDate);
-      added.push({ roundNumber, scheduledDate });
-    }
-    if (added.length > 0) {
-      await this.deps.rounds.createMany(added.map((round) => ({ sportEventId: input.sportEventId, seasonSlotId, ...round })));
-      this.deps.logger?.info(
-        { sportEventId: input.sportEventId, createdRoundNumbers: added.map((round) => round.roundNumber) },
-        'Added rounds to the schedule',
-      );
-    }
-    return this.deps.rounds.findBySportEvent(input.sportEventId);
   }
 
   /** Moves every round, start and end, by `shiftMs`: the event's start date moved and its schedule moves with it. */

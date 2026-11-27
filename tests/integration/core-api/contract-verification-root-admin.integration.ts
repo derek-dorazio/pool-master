@@ -829,7 +829,6 @@ describe('Contract verification (root admin)', () => {
         startDate: new Date('2026-04-10T15:00:00.000Z'),
         endDate: new Date('2026-04-14T21:00:00.000Z'),
         status: 'SCHEDULED',
-        rounds: 4,
       },
     });
     await mapEventToProvider(getPrisma(), contractEvent.id, { providerId: 'balldontlie', externalId: 'event-1' });
@@ -1376,6 +1375,7 @@ describe('Contract verification (root admin)', () => {
         payload: {
           seasonSlotIds: [testSlotRes.json<SportLeagueSeasonSlotResponse>().slot.id],
           name: `Z3L Contract Open ${stamp}`,
+          rounds: 4,
           venue: 'Contract Links',
           location: 'Testshire',
           autoLifecycleEnabled: false,

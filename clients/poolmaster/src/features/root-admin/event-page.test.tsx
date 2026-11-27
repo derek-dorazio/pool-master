@@ -116,7 +116,7 @@ function tournament(overrides: Parameters<typeof sportEventFixture>[0] = {}) {
     endDate: '2026-05-10T22:00:00.000Z',
     status: 'SCHEDULED',
     tiersLocked: true,
-    rounds: 4,
+    roundCount: 4,
     sportLeagueSeasonId: 'season-2026',
     championshipYear: 2026,
     sportLeagueId: 'league-1',
@@ -658,7 +658,7 @@ describe('Event page ⚙ dialog', () => {
   });
 
   it('reads "Not set" for a missing venue, location and round count, and a synced event\'s feed id', async () => {
-    renderEventPage('/manage/sports/golf/events/tour-1/field', { event: tournament({ venue: null, location: null, rounds: null, isTestData: false }) });
+    renderEventPage('/manage/sports/golf/events/tour-1/field', { event: tournament({ venue: null, location: null, roundCount: 0, isTestData: false }) });
 
     const dialog = await openSettings();
     expect(within(dialog).getByTestId('root-admin-event-settings-dialog-venue')).toHaveTextContent('Not set');
@@ -793,34 +793,12 @@ describe('Event page ⚙ dialog Edit', () => {
     expect((updateEventMock.mock.calls[0][0] as { body: Record<string, unknown> }).body).toEqual({ location: 'Hoylake' });
   });
 
-  it('saves the par per round an admin enters, and sends null when it is cleared', async () => {
-    updateEventMock.mockResolvedValue({ data: { event: tournament({ roundsPar: 72 }) } });
+  it('refuses a blank name before saving, and offers no rounds or par: they are the event\'s slots\' and its scores\'', async () => {
     renderEventPage('/manage/sports/golf/events/tour-1/field');
 
     const dialog = await openSettingsEdit();
-    expect(within(dialog).getByTestId('root-admin-sport-event-edit-rounds-par')).toHaveValue('');
-    await userEvent.type(within(dialog).getByTestId('root-admin-sport-event-edit-rounds-par'), '72');
-    // The event read again after the save holds the new par.
-    getEventMock.mockResolvedValue({ data: { event: tournament({ roundsPar: 72 }) } });
-    await userEvent.click(within(dialog).getByTestId('root-admin-event-settings-dialog-save'));
-    await waitFor(() => expect(updateEventMock).toHaveBeenCalledTimes(1));
-    expect(updateEventMock.mock.calls[0][0]).toMatchObject({ body: { roundsPar: 72 } });
-
-    await userEvent.click(await within(dialog).findByTestId('root-admin-event-settings-dialog-edit'));
-    await userEvent.clear(within(dialog).getByTestId('root-admin-sport-event-edit-rounds-par'));
-    await userEvent.click(within(dialog).getByTestId('root-admin-event-settings-dialog-save'));
-
-    await waitFor(() => expect(updateEventMock).toHaveBeenCalledTimes(2));
-    expect(updateEventMock.mock.calls[1][0]).toMatchObject({ body: { roundsPar: null } });
-  });
-
-  it('refuses a par per round outside 60 to 80, and a blank name, before saving', async () => {
-    renderEventPage('/manage/sports/golf/events/tour-1/field');
-
-    const dialog = await openSettingsEdit();
-    await userEvent.type(within(dialog).getByTestId('root-admin-sport-event-edit-rounds-par'), '85');
-    expect(await within(dialog).findByText('Par is a whole number from 60 to 80, or blank')).toBeInTheDocument();
-    await userEvent.clear(within(dialog).getByTestId('root-admin-sport-event-edit-rounds-par'));
+    expect(within(dialog).queryByLabelText('Rounds')).not.toBeInTheDocument();
+    expect(within(dialog).queryByLabelText('Par per round')).not.toBeInTheDocument();
     await userEvent.clear(within(dialog).getByTestId('root-admin-sport-event-edit-name'));
 
     expect(await within(dialog).findByText('Name is required')).toBeInTheDocument();

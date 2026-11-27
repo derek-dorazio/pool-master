@@ -186,8 +186,9 @@ export class SportEventTierService {
   }
 
   /**
-   * Each event's slots holding a tier set (#2044, `chooseTierSetSlots`), in play order, its
-   * tier-set slot first; an event covering no slot has none. One read however many events.
+   * Each event's slots holding a tier set (#2044, `chooseTierSetSlots`), in play order (its
+   * tier-set slot is the one `isTierSetSlot` marks, `tierSetSlotOf`); an event covering no slot has
+   * none. One read however many events.
    */
   async holdingSlots(sportEventIds: readonly string[]): Promise<Map<string, SportEventTierSlot[]>> {
     const slotsByEvent = await this.deps.tiers.findTierSlots(sportEventIds);

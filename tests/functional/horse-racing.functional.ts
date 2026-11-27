@@ -22,7 +22,7 @@ import {
   updateEventParticipants,
 } from '@poolmaster/shared/generated/hey-api';
 import { ContestFormat, ContestStatus, SelectionType, Sport } from '@poolmaster/shared/domain';
-import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, createTestEvent } from './builders';
+import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, createTestEvent, placedTemplate } from './builders';
 import {
   cleanupFunctionalData,
   disconnectFunctionalPrisma,
@@ -113,7 +113,7 @@ describe('SDK Functional: Horse racing Win/Place/Show', () => {
     const eventId = expectDefined(race.data).event.id;
     created.sportEventIds.add(eventId);
     // A race is one round by the sport's default.
-    expect(expectDefined(race.data).event.rounds).toBe(1);
+    expect(expectDefined(race.data).event.roundCount).toBe(1);
 
     const horseIds: string[] = [];
     for (const horse of HORSES) {
@@ -146,7 +146,7 @@ describe('SDK Functional: Horse racing Win/Place/Show', () => {
     const invite = await generateInviteLink({ client: commissioner.client, path: { id: league.id }, body: { maxUses: 1 } });
     await acceptInvitation({ client: member.client, body: { inviteCode: expectDefined(invite.data).invitation.inviteCode } });
 
-    // A horse racing contest's points table has no default: sent neither scoring nor a template, it is refused.
+    // A contest is made from a contest type (#2014): sent no template, it is refused before its rules are read.
     expectFunctionalError(await createContest({
       client: commissioner.client,
       path: { id: league.id },
@@ -157,7 +157,7 @@ describe('SDK Functional: Horse racing Win/Place/Show', () => {
         selectionType: SelectionType.RANDOM_DRAW,
         configuration: { selectionType: SelectionType.RANDOM_DRAW, maxEntriesPerSquad: 1, picksPerEntry: 1, countedScores: 1 },
       },
-    }), { status: 422, code: 'CONTEST_SCORING_SETTINGS_REQUIRED' });
+    }), { status: 400, code: 'CONTEST_CONFIGURATION_REQUIRED' });
 
     const templates = expectDefined((await listContestConfigTemplates({
       client: commissioner.client,
@@ -173,7 +173,7 @@ describe('SDK Functional: Horse racing Win/Place/Show', () => {
         sportEventIds: [eventId],
         contestFormat: ContestFormat.ROSTER,
         selectionType: SelectionType.RANDOM_DRAW,
-        templateId: drawTemplate.id,
+        templateId: await placedTemplate([eventId], drawTemplate.id),
       },
     });
     expect(contest.response?.status).toBe(201);

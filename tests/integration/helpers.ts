@@ -15,7 +15,7 @@ import { COVERING_TEMPLATE_KEY } from '../support/sync-slots';
 import { SYNCED_SLOT_KEY_PREFIX } from '../support/test-slots';
 import Fastify from 'fastify';
 import type { FastifyInstance } from 'fastify';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, type Prisma } from '@prisma/client';
 import jwt from 'jsonwebtoken';
 import { randomUUID } from 'crypto';
 import bcrypt from 'bcryptjs';
@@ -813,6 +813,16 @@ export function buildContestEligibleEventTiming(now: Date = new Date()): {
   };
 }
 
+/** Deletes the contests matching `where`, with their entries, standings, picks and configuration. */
+export async function deleteTestContests(where: Prisma.ContestWhereInput): Promise<void> {
+  const prisma = getPrisma();
+  await cleanupContestArtifacts(prisma, await contestIdsWhere(prisma, where));
+}
+
+async function contestIdsWhere(database: PrismaClient, where: Prisma.ContestWhereInput): Promise<string[]> {
+  return (await database.contest.findMany({ where, select: { id: true } })).map(({ id }) => id);
+}
+
 async function cleanupContestArtifacts(
   database: PrismaClient,
   contestIds: string[],
@@ -971,7 +981,7 @@ export async function cleanupTestData(): Promise<void> {
         where: {
           OR: [
             { leagueId: { in: leagueIds } },
-            { sportEvents: { some: { sportEventId: { in: providerSportEventIds } } } },
+            { seasonSlots: { some: { seasonSlot: { eventSlot: { sportEventId: { in: providerSportEventIds } } } } } },
           ],
         },
         select: { id: true },
@@ -1033,7 +1043,7 @@ export async function cleanupTestData(): Promise<void> {
   // foreign keys to the event, where a contest's single event column used to be set null.
   await prisma.contestEntryEventStanding.deleteMany();
   await prisma.contestEntryEvent.deleteMany();
-  await prisma.contestSportEvent.deleteMany();
+  await prisma.contestSeasonSlot.deleteMany();
   await prisma.sportEvent.deleteMany();
   // A sport league that a contest template names is reference data (auto racing's series, seeded
   // with their points presets), and the template's foreign key restricts its delete: it stays.
@@ -1045,9 +1055,14 @@ export async function cleanupTestData(): Promise<void> {
   // foreign keys to the league's slot, competition and phase definitions, so they clear first (#2010: tests put events in
   // Season slots). A test's Season slot in a seeded league goes too.
   // A test's synced-slot template (`syncSlotsFor`) is no reference data: it goes, so its league does.
+  // A contest's configuration restricts its template's delete (#2014): the contests made from it go first.
+  await cleanupContestArtifacts(prisma, await contestIdsWhere(prisma, { configuration: { template: { templateKey: COVERING_TEMPLATE_KEY } } }));
   await prisma.contestConfigTemplate.deleteMany({ where: { templateKey: COVERING_TEMPLATE_KEY } });
   const testLeagues = { contestConfigTemplates: { none: {} }, displayOrder: null };
   const testLeagueIds = (await prisma.sportLeague.findMany({ where: testLeagues, select: { id: true } })).map(({ id }) => id);
+  // A contest and a cup are in a Season of their league (#2014), whose delete they restrict.
+  await cleanupContestArtifacts(prisma, await contestIdsWhere(prisma, { sportLeagueSeason: { sportLeagueId: { in: testLeagueIds } } }));
+  await prisma.cup.deleteMany({ where: { sportLeagueId: { in: testLeagueIds } } });
   // A synced event's copy of a seeded league's test definition (`testSlotIdIn`, isTestData false)
   // goes too, with its synced Season slot, so the seeded league keeps only its own definitions.
   const copiedDefinitionIds = (await prisma.sportLeagueCompetitionSlot.findMany({ where: { key: { startsWith: SYNCED_SLOT_KEY_PREFIX } }, select: { id: true } })).map(({ id }) => id);
