@@ -922,6 +922,12 @@ const TIER_SET_SEASON_SLOT_SELECT = {
 type TierSetSeasonSlotRow = Prisma.SportLeagueSeasonCompetitionSlotGetPayload<{ select: typeof TIER_SET_SEASON_SLOT_SELECT }>;
 
 /**
+ * Whether a set was built for an event slot (#2226): it was tiered or priced from a profile, which
+ * the slot's own columns record, so the read costs no statement of its own.
+ */
+const BUILT_SET_SELECT = { platformTierProfileId: true, platformPricingProfileId: true } as const satisfies Prisma.SportEventSlotSelect;
+
+/**
  * The events whose FIELD matches a field read looks up (#2227): those with a slot played as a
  * FIELD. A head-to-head event has none, so its read skips the lookup.
  */
@@ -940,7 +946,7 @@ function fieldRowInclude(fieldMatchIds: readonly string[]) {
     // Its valuation in each slot's set, and its event's slots as the tier-set rule reads them, in the
     // same query: a field row is read with its tier-set slot's (#2044).
     valuations: true,
-    sportEvent: { select: { slots: { select: { id: true, seasonSlot: { select: TIER_SET_SEASON_SLOT_SELECT } } } } },
+    sportEvent: { select: { slots: { select: { id: true, seasonSlot: { select: TIER_SET_SEASON_SLOT_SELECT }, ...BUILT_SET_SELECT } } } },
     standing: true,
     // FIELD matches (a golf round, a race) name every runner: their side results are read by
     // `readFieldResults`, the row's own only, rather than each match whole for every row.
@@ -1163,7 +1169,6 @@ const TIER_SLOT_SELECT = {
   id: true,
   sportEventId: true,
   tierSize: true,
-  platformPricingProfileId: true,
   salaryCap: true,
   pricingUnit: true,
   topSharePercent: true,
@@ -1171,20 +1176,27 @@ const TIER_SLOT_SELECT = {
   steepness: true,
   platformTierProfile: { include: TIER_PROFILE_INCLUDE },
   seasonSlot: { select: TIER_SET_SEASON_SLOT_SELECT },
+  ...BUILT_SET_SELECT,
 } as const satisfies Prisma.SportEventSlotSelect;
 
 type TierSlotRow = Prisma.SportEventSlotGetPayload<{ select: typeof TIER_SLOT_SELECT }>;
 
 /**
- * One event's slots in play order (`compareSeasonSlots`), each with its Season slot and whether a
- * tiered or budget templates of its league that list it: what `chooseTierSetSlots` picks the slots
- * holding a tier set from, and `chooseTierSetSlot` the event's tier-set slot (#2044).
+ * One event's slots in play order (`compareSeasonSlots`), each with its Season slot, the active
+ * tiered or budget templates of its league that list it, and whether a set was built for it (#2226): what
+ * `chooseTierSetSlots` picks the slots holding a tier set from, and `chooseTierSetSlot` the event's
+ * tier-set slot (#2044).
  */
-function inPlayOrder<Row extends { seasonSlot: TierSetSeasonSlotRow }>(rows: readonly Row[]): Array<{ row: Row; seasonSlot: SportLeagueSeasonSlot; tierSetTemplates: TierSetTemplateListing[] }> {
+function inPlayOrder<Row extends { seasonSlot: TierSetSeasonSlotRow; platformTierProfileId: string | null; platformPricingProfileId: string | null }>(rows: readonly Row[]): Array<{ row: Row; seasonSlot: SportLeagueSeasonSlot; tierSetTemplates: TierSetTemplateListing[]; storesSet: boolean }> {
   return rows
     .map((row) => {
       const { definition: { templateSlots, ...definition }, ...seasonSlot } = row.seasonSlot;
-      return { row, seasonSlot: toSeasonSlot({ ...seasonSlot, definition }), tierSetTemplates: templateSlots.map(({ template }) => ({ templateId: template.id, coverageMode: template.coverageMode })) };
+      return {
+        row,
+        seasonSlot: toSeasonSlot({ ...seasonSlot, definition }),
+        tierSetTemplates: templateSlots.map(({ template }) => ({ templateId: template.id, coverageMode: template.coverageMode })),
+        storesSet: row.platformTierProfileId !== null || row.platformPricingProfileId !== null,
+      };
     })
     .sort((a, b) => compareSeasonSlots(a.seasonSlot, b.seasonSlot));
 }
@@ -1234,7 +1246,8 @@ export class PrismaSportEventSlotTierRepository implements SportEventSlotTierRep
       return missing.map((id) => {
         const ordered = inPlayOrder(rows.filter((row) => row.sportEventId === id));
         const holding = chooseTierSetSlots(ordered);
-        return { id, slots: ordered.map((slot) => toTierSlot(slot.row, slot.seasonSlot, { holdsTierSet: holding.includes(slot), isTierSetSlot: slot === holding.at(0) })) };
+        const tierSetSlot = chooseTierSetSlot(ordered);
+        return { id, slots: ordered.map((slot) => toTierSlot(slot.row, slot.seasonSlot, { holdsTierSet: holding.includes(slot), isTierSetSlot: slot === tierSetSlot })) };
       });
     });
     const slotsByEvent = new Map(sportEventIds.map((id): [string, SportEventTierSlot[]] => [id, []]));

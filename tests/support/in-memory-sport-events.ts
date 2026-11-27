@@ -42,7 +42,7 @@ import type {
 } from '@poolmaster/shared/db';
 import { TEST_PROVIDER_ROWS } from './balldontlie-provider-rows';
 import type { SportEventBracketServiceDeps } from '../../packages/core-api/src/modules/events/sport-event-bracket-service';
-import { chooseTierSetSlots, compareMatchPlaces, compareSeasonSlots, slotTierLayoutOf, MatchEnding, SeasonSlotStatus, SeriesFormat, SlotKind, SlotPairing, SlotWindowStatus, type SlotWindow, findSportRow, providerSourceIdOf, requireProviderCodeOfSourceId, type ProviderEventRef, type SportEventProviderMapping, HomeAway, isMatchUnplayed, MatchSideOutcome, MatchStatus, PeriodKind, PeriodKindOrder, Sport, FieldOrderBasis, TierProfileType, SportEventParticipantStatus, type TierSetTemplateListing } from '@poolmaster/shared/domain';
+import { chooseTierSetSlot, chooseTierSetSlots, compareMatchPlaces, compareSeasonSlots, slotTierLayoutOf, MatchEnding, SeasonSlotStatus, SeriesFormat, SlotKind, SlotPairing, SlotWindowStatus, type SlotWindow, findSportRow, providerSourceIdOf, requireProviderCodeOfSourceId, type ProviderEventRef, type SportEventProviderMapping, HomeAway, isMatchUnplayed, MatchSideOutcome, MatchStatus, PeriodKind, PeriodKindOrder, Sport, FieldOrderBasis, TierProfileType, SportEventParticipantStatus, type TierSetTemplateListing } from '@poolmaster/shared/domain';
 import { sportEventSlots, sportPlay } from './sport-play';
 import type {
   AutoReleaseCheck,
@@ -515,8 +515,11 @@ export class InMemorySportEvents {
         tierSetTemplates: this.tierSetTemplates
           .filter((template) => template.slotDefinitionIds.includes(slot.slotDefinitionId))
           .map(({ templateId, coverageMode }) => ({ templateId, coverageMode })),
+        // Built when tiered or priced from a profile (#2226), as the slot's columns record it.
+        storesSet: this.slotTierSettings.has(slot.id) || this.slotPricings.has(slot.id),
       }));
     const holding = chooseTierSetSlots(ordered);
+    const tierSetSlot = chooseTierSetSlot(ordered);
     return ordered.map((entry) => {
       const { slot } = entry;
       const tierSettings = this.slotTierSettings.get(slot.id);
@@ -529,7 +532,7 @@ export class InMemorySportEvents {
         slotDefinitionId: slot.slotDefinitionId,
         seasonSlotStatus: slot.status,
         holdsTierSet: holding.includes(entry),
-        isTierSetSlot: entry === holding.at(0),
+        isTierSetSlot: entry === tierSetSlot,
         tierLayout: tierProfile ? slotTierLayoutOf(tierProfile, tierSettings.tierSize) : null,
         pricing: pricing ?? null,
       };
