@@ -345,7 +345,6 @@ export function fakeParticipantRepo(
     findById: one(),
     findByIds: many(),
     search: many(),
-    findMatchingAny: many(),
     findBySportLeague: many(),
     updateRankings: nothing(),
     countBySportLeagues: noCounts(),

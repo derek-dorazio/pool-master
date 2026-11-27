@@ -2,7 +2,6 @@ import { deleteTestSportLeagues } from '../support/test-slots';
 import {
   acceptInvitation,
   addEventParticipants,
-  applyEventParticipantUpload,
   autoAssignEventPrices,
   autoAssignEventTiers,
   createContest,
@@ -53,6 +52,7 @@ import { expectMatchesSchema } from '../support/expect-matches-schema';
 import { sportRowKeys } from '../support/sport-rows';
 import { insertTestSportLeague } from '../support/test-sport-league';
 import { bracketMatch, dtoSideTeam, matchEdit, readHomeAway, resultBody } from '../support/match-requests';
+import { setFieldRows } from './field-rows';
 
 // A pick'em week scored against the spread end to end over HTTP (#720). An admin releases a week of
 // four unlinked basketball games and sets three spreads; a straight-up pool against the spread is
@@ -144,7 +144,7 @@ describe('SDK Functional: a pick\'em week against the spread (#720)', () => {
     created.sportEventIds.add(eventId);
     expect((await addEventParticipants({ client: a, path: { eventId }, body: { participantIds: teamIds } })).data?.added).toBe(TEAMS.length);
     // Release asks every event for its roster setup too: seeds, tiers and prices.
-    expect((await applyEventParticipantUpload({
+    expect((await setFieldRows({
       client: a,
       path: { eventId },
       body: { rows: TEAMS.map((team, index) => ({ playerName: `${team} ${RUN}`, seedNumber: index + 1 })) },

@@ -230,8 +230,6 @@ describe('sport league handlers', () => {
     deleteSportLeague: jest.fn((..._args: unknown[]) => Promise.resolve()),
     listParticipants: jest.fn((..._args: unknown[]) => Promise.resolve([participant])),
     updateRankings: jest.fn((..._args: unknown[]) => Promise.resolve([participant])),
-    previewRankingUpload: jest.fn((..._args: unknown[]) => Promise.resolve([{ row: 1, resolution: 'MATCHED', participantId: 'p1', participantName: 'One' }])),
-    applyRankingUpload: jest.fn((..._args: unknown[]) => Promise.resolve([participant])),
   };
   const overviews = new SportLeagueOverviewService({
     reader: {
@@ -331,14 +329,6 @@ describe('sport league handlers', () => {
     expect(service.listParticipants).toHaveBeenNthCalledWith(2, 'sl1', true);
     expect(service.updateRankings).toHaveBeenCalledWith('sl1', [{ participantId: 'p1', ranking: 1 }]);
     expect(ranked.body).toMatchObject({ participants: [{ ranking: 1 }] });
-  });
-
-  it('previews and applies a ranking upload', async () => {
-    const preview = await callHandler(handlers.previewRankingUpload, stubRequest({ params, body: { rows: [] } }));
-    const applied = await callHandler(handlers.applyRankingUpload, stubRequest({ params, body: { rows: [] } }));
-
-    expect(preview.body).toEqual({ rows: [{ row: 1, resolution: 'MATCHED', participantId: 'p1', participantName: 'One' }] });
-    expect(applied.body).toMatchObject({ participants: [{ id: 'p1' }] });
   });
 
   it('answers a sport league\'s structure and its Seasons with their current flag, and either read of one that does not exist with 404 SPORT_LEAGUE_NOT_FOUND', async () => {

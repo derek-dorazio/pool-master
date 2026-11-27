@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -20,8 +20,6 @@ const {
   getEventMock,
   listEventRoundsMock,
   listEventParticipantsMock,
-  previewEventGolfRoundScoresMock,
-  applyEventGolfRoundScoresMock,
   mockLogger,
 } = vi.hoisted(() => {
   const logger = {
@@ -37,8 +35,6 @@ const {
     getEventMock: vi.fn(),
     listEventRoundsMock: vi.fn(),
     listEventParticipantsMock: vi.fn(),
-    previewEventGolfRoundScoresMock: vi.fn(),
-    applyEventGolfRoundScoresMock: vi.fn(),
     mockLogger: logger,
   };
 });
@@ -47,8 +43,6 @@ bindApiMocks({
   getEvent: getEventMock,
   listEventRounds: listEventRoundsMock,
   listEventParticipants: listEventParticipantsMock,
-  previewEventGolfRoundScores: previewEventGolfRoundScoresMock,
-  applyEventGolfRoundScores: applyEventGolfRoundScoresMock,
 });
 
 vi.mock('@/lib/logger', () => ({
@@ -156,9 +150,9 @@ describe('pool-master-r11 Rounds and matches tab for a golf event', () => {
     expect(
       screen.queryByTestId('root-admin-golf-scores-sync-alert'),
     ).not.toBeInTheDocument();
-    // bulk load + corrections both render for round 1.
-    expect(screen.getByTestId('root-admin-golf-scores-upload-textarea')).toBeInTheDocument();
+    // The round's corrections render; there is no score upload, since scores come from the feed (#2008).
     expect(await screen.findByText('Rory McIlroy')).toBeInTheDocument();
+    expect(screen.queryByTestId('root-admin-golf-scores-upload-textarea')).not.toBeInTheDocument();
   });
 
   it('pool-master-r11 shows the sync-tick alert for a provider-synced tournament but keeps the tools usable', async () => {
@@ -166,7 +160,7 @@ describe('pool-master-r11 Rounds and matches tab for a golf event', () => {
     renderPage();
 
     expect(await screen.findByTestId('root-admin-golf-scores-sync-alert')).toBeInTheDocument();
-    expect(screen.getByTestId('root-admin-golf-scores-upload-textarea')).toBeInTheDocument();
+    expect(await screen.findByTestId('root-admin-golf-scores-strokes-sep-1')).toBeInTheDocument();
   });
 
   it('pool-master-r11 shows the selected round\'s scores, read from the field', async () => {
@@ -183,161 +177,19 @@ describe('pool-master-r11 Rounds and matches tab for a golf event', () => {
     expect(listEventParticipantsMock).toHaveBeenCalledTimes(1);
   });
 
-  it('pool-master-r11 previews then applies a bulk score upload for the selected round', async () => {
+  it('pool-master-r11 clears a typed correction when the round changes (key remount)', async () => {
     seed();
-    previewEventGolfRoundScoresMock.mockResolvedValue({
-      data: {
-        rows: [
-          {
-            row: { playerName: 'Rory McIlroy', strokes: 68, scoreToPar: -3, status: 'COMPLETED' },
-            resolution: 'MATCHED',
-            sportEventParticipantId: 'sep-1',
-            participantName: 'Rory McIlroy',
-            change: 'UPDATE',
-            before: { strokes: 70, scoreToPar: -1, thru: 18, status: 'COMPLETED' },
-            after: { strokes: 68, scoreToPar: -3, thru: 18, status: 'COMPLETED' },
-          },
-        ],
-        rollup: { total: 1, matched: 1, unresolved: 0, ambiguous: 0 },
-      },
-    });
-    applyEventGolfRoundScoresMock.mockResolvedValue({ data: {} });
     renderPage();
 
-    const textarea = await screen.findByTestId('root-admin-golf-scores-upload-textarea');
-    await userEvent.type(
-      textarea,
-      'externalId,playerName,strokes,scoreToPar,thru,status\n,Rory McIlroy,68,-3,18,COMPLETED',
-    );
-    await userEvent.click(screen.getByTestId('root-admin-golf-scores-upload-preview'));
-
-    await screen.findByTestId('root-admin-golf-scores-upload-preview-table');
-    expect(screen.getByText('MATCHED')).toBeInTheDocument();
-    expect(screen.getByText('Changed')).toBeInTheDocument();
-
-    await waitFor(() =>
-      expect(screen.getByTestId('root-admin-golf-scores-upload-apply')).toBeEnabled(),
-    );
-    await userEvent.click(screen.getByTestId('root-admin-golf-scores-upload-apply'));
-
-    await waitFor(() =>
-      expect(applyEventGolfRoundScoresMock).toHaveBeenCalledWith(
-        expect.objectContaining({
-          path: { eventId: 'evt-1', roundNumber: '1' },
-          body: {
-            rows: [
-              { playerName: 'Rory McIlroy', strokes: 68, scoreToPar: -3, thru: 18, status: 'COMPLETED' },
-            ],
-          },
-        }),
-      ),
-    );
-  });
-
-  it('pool-master-r11 blocks Apply while a previewed row is unresolved', async () => {
-    seed();
-    previewEventGolfRoundScoresMock.mockResolvedValue({
-      data: {
-        rows: [
-          {
-            row: { playerName: 'Ghost', strokes: 70, scoreToPar: -1, status: 'COMPLETED' },
-            resolution: 'UNRESOLVED',
-            sportEventParticipantId: '',
-            participantName: '',
-            change: 'CREATE',
-            before: { strokes: 0, scoreToPar: 0, thru: 0, status: '' },
-            after: { strokes: 70, scoreToPar: -1, thru: 0, status: 'COMPLETED' },
-          },
-        ],
-        rollup: { total: 1, matched: 0, unresolved: 1, ambiguous: 0 },
-      },
-    });
-    renderPage();
-
-    const textarea = await screen.findByTestId('root-admin-golf-scores-upload-textarea');
-    await userEvent.type(
-      textarea,
-      'playerName,strokes,scoreToPar,status\nGhost,70,-1,COMPLETED',
-    );
-    await userEvent.click(screen.getByTestId('root-admin-golf-scores-upload-preview'));
-
-    await screen.findByTestId('root-admin-golf-scores-upload-preview-table');
-    expect(screen.getByTestId('root-admin-golf-scores-upload-unresolved')).toBeInTheDocument();
-    expect(screen.getByTestId('root-admin-golf-scores-upload-apply')).toBeDisabled();
-  });
-
-  it('labels a previewed row with no strokes "Not stored (no strokes)"', async () => {
-    seed();
-    previewEventGolfRoundScoresMock.mockResolvedValue({
-      data: {
-        rows: [
-          {
-            row: { playerName: 'Rory McIlroy', strokes: null, scoreToPar: -1, status: 'IN_PROGRESS' },
-            resolution: 'MATCHED',
-            sportEventParticipantId: 'sep-1',
-            participantName: 'Rory McIlroy',
-            change: 'SKIPPED',
-            before: null,
-            after: { strokes: null, scoreToPar: -1, thru: null, status: 'IN_PROGRESS' },
-          },
-        ],
-        rollup: { total: 1, matched: 1, unresolved: 0, ambiguous: 0 },
-      },
-    });
-    renderPage();
-
-    const textarea = await screen.findByTestId('root-admin-golf-scores-upload-textarea');
-    await userEvent.type(textarea, 'playerName,strokes,scoreToPar,status\nRory McIlroy,70,-1,IN_PROGRESS');
-    await userEvent.click(screen.getByTestId('root-admin-golf-scores-upload-preview'));
-
-    const table = await screen.findByTestId('root-admin-golf-scores-upload-preview-table');
-    expect(within(table).getByText('Not stored (no strokes)')).toBeInTheDocument();
-  });
-
-  it('pool-master-r11 clears a pending preview and any typed correction when the round changes (key remount)', async () => {
-    seed();
-    previewEventGolfRoundScoresMock.mockResolvedValue({
-      data: {
-        rows: [
-          {
-            row: { playerName: 'Rory McIlroy', strokes: 68, scoreToPar: -3, status: 'COMPLETED' },
-            resolution: 'MATCHED',
-            sportEventParticipantId: 'sep-1',
-            participantName: 'Rory McIlroy',
-            change: 'UPDATE',
-            before: { strokes: 70, scoreToPar: -1, thru: 18, status: 'COMPLETED' },
-            after: { strokes: 68, scoreToPar: -3, thru: 18, status: 'COMPLETED' },
-          },
-        ],
-        rollup: { total: 1, matched: 1, unresolved: 0, ambiguous: 0 },
-      },
-    });
-    renderPage();
-
-    // Preview for round 1, and start a correction edit.
-    const textarea = await screen.findByTestId('root-admin-golf-scores-upload-textarea');
-    await userEvent.type(
-      textarea,
-      'playerName,strokes,scoreToPar,thru,status\nRory McIlroy,68,-3,18,COMPLETED',
-    );
-    await userEvent.click(screen.getByTestId('root-admin-golf-scores-upload-preview'));
-    await screen.findByTestId('root-admin-golf-scores-upload-preview-table');
-
-    const strokes = screen.getByTestId('root-admin-golf-scores-strokes-sep-1');
+    const strokes = await screen.findByTestId('root-admin-golf-scores-strokes-sep-1');
     await userEvent.clear(strokes);
     await userEvent.type(strokes, '65');
     expect(screen.getByTestId('root-admin-golf-scores-save-sep-1')).toBeEnabled();
 
-    // Switch rounds -> both cards remount: preview gone, textarea empty, correction reset.
+    // Switch rounds -> the corrections card remounts and the typed correction is reset.
     await userEvent.click(screen.getByRole('radio', { name: /Round 2/ }));
 
-    await waitFor(() =>
-      expect(
-        screen.queryByTestId('root-admin-golf-scores-upload-preview-table'),
-      ).not.toBeInTheDocument(),
-    );
-    expect(screen.getByTestId('root-admin-golf-scores-upload-textarea')).toHaveValue('');
-    expect(screen.getByTestId('root-admin-golf-scores-strokes-sep-1')).toHaveValue('70');
+    await waitFor(() => expect(screen.getByTestId('root-admin-golf-scores-strokes-sep-1')).toHaveValue('70'));
     expect(screen.getByTestId('root-admin-golf-scores-save-sep-1')).toBeDisabled();
   });
 
@@ -356,7 +208,7 @@ describe('pool-master-r11 Rounds and matches tab for a golf event', () => {
     expect(screen.getByRole('radio', { name: 'Round 1' })).toBeInTheDocument();
   });
 
-  it('says the field could not load, shows the round\'s scores as failed and leaves the upload usable', async () => {
+  it('says the field could not load, so the round\'s scores show as failed', async () => {
     seed();
     listEventParticipantsMock.mockResolvedValue({
       error: { error: { code: 'INTERNAL_ERROR', message: 'Field offline' } },
@@ -364,8 +216,7 @@ describe('pool-master-r11 Rounds and matches tab for a golf event', () => {
     });
     renderPage();
 
-    expect(await screen.findByTestId('root-admin-golf-scores-field-error')).toBeInTheDocument();
-    expect(screen.getByTestId('root-admin-golf-scores-upload-textarea')).toBeInTheDocument();
+    expect(await screen.findByTestId('root-admin-golf-scores-corrections-error')).toBeInTheDocument();
   });
 
   it('says a tournament with no rounds has none scheduled, and offers no round tools', async () => {
@@ -374,6 +225,7 @@ describe('pool-master-r11 Rounds and matches tab for a golf event', () => {
     renderPage();
 
     expect(await screen.findByTestId('root-admin-golf-scores-no-rounds')).toHaveTextContent('This tournament has no rounds scheduled yet.');
-    expect(screen.queryByTestId('root-admin-golf-scores-upload-textarea')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('root-admin-golf-scores-corrections-error')).not.toBeInTheDocument();
+    expect(screen.queryByRole('radio')).not.toBeInTheDocument();
   });
 });

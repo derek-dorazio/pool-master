@@ -1,9 +1,4 @@
 import { enumLabel } from '@poolmaster/shared/display-strings';
-import { z } from 'zod';
-import {
-  parseDelimitedRecords,
-  type BulkUploadFormat,
-} from '@/features/shared/ui/bulk-upload-parse';
 import type {
   GolfRoundScoreUploadRequest,
   ParticipantDto,
@@ -69,15 +64,9 @@ type _ParticipantStatusExhaustive =
     : ['golf player status missing from PARTICIPANT_STATUSES', ManagedParticipantStatus];
 export type ParticipantStatusesMatchEnum = AssertTrue<_ParticipantStatusExhaustive>;
 
-// --- Round-score bulk upload (plans/124 §6.3 Round scores / §6.4) ---
-//
-// plans/124 §6.3 documents the CSV header as `externalId,playerName,strokes,thru,status`,
-// but the generated `applyEventGolfRoundScores` request row also requires `scoreToPar`
-// (not optional) and `status` is a fixed 5-value enum. The template + parser therefore
-// carry `scoreToPar` too; the discrepancy is flagged in the pool-master-r11 close note.
+// --- Round scores (plans/124 §6.3) ---
 
-export type GolfRoundScoreUploadRow = GolfRoundScoreUploadRequest['rows'][number];
-export type GolfRoundScoreStatus = GolfRoundScoreUploadRow['status'];
+export type GolfRoundScoreStatus = GolfRoundScoreUploadRequest['rows'][number]['status'];
 
 export const GOLF_ROUND_SCORE_STATUSES = [
   'IN_PROGRESS',
@@ -100,88 +89,6 @@ export type GolfRoundScoreStatusesMatchEnum = AssertTrue<_GolfRoundScoreStatusEx
 /** A participant's round status in words. */
 export function formatGolfRoundStatus(status: GolfRoundScoreStatus): string {
   return enumLabel('ParticipantRoundStatus', status);
-}
-
-export const GOLF_ROUND_SCORE_UPLOAD_HEADERS = [
-  'participantId',
-  'playerName',
-  'strokes',
-  'scoreToPar',
-  'thru',
-  'status',
-] as const;
-
-const golfRoundScoreUploadRowSchema = z
-  .object({
-    participantId: z.string().trim().min(1).optional(),
-    externalId: z.string().trim().min(1).optional(),
-    playerName: z.string().trim().min(1).optional(),
-    strokes: z.coerce.number().int().min(1),
-    scoreToPar: z.coerce.number().int(),
-    thru: z.coerce.number().int().min(0).optional(),
-    status: z
-      .string()
-      .trim()
-      .transform((value) => value.toUpperCase())
-      .pipe(z.enum(GOLF_ROUND_SCORE_STATUSES)),
-  })
-  .refine(
-    (row) =>
-      Boolean(row.participantId) ||
-      Boolean(row.externalId) ||
-      Boolean(row.playerName),
-    { message: 'each row needs a participantId, externalId, or playerName' },
-  );
-
-/**
- * Parse pasted / uploaded round-score text into `applyEventGolfRoundScores`
- * request rows. Throws an `Error` with a user-facing message on malformed input.
- */
-function hasNoScoreData(record: Record<string, unknown>): boolean {
-  return ['strokes', 'scoreToPar', 'thru', 'status'].every((key) => {
-    const value = record[key];
-    // eslint-disable-next-line @typescript-eslint/no-base-to-string -- parsed CSV/JSON cell, genuinely unknown-shaped; stringifying an object here just correctly counts as "has data", not blank.
-    return value === undefined || String(value).trim() === '';
-  });
-}
-
-export function parseGolfRoundScoreUpload(
-  text: string,
-  format: BulkUploadFormat,
-): GolfRoundScoreUploadRow[] {
-  const records = parseDelimitedRecords(text, format);
-  if (records.length === 0) {
-    throw new Error('No rows found.');
-  }
-
-  // The downloadable template pre-fills one row per field golfer with blank
-  // score cells; a still-blank row means "no result for this golfer" and is
-  // dropped rather than rejected.
-  const scored = records.filter((record) => !hasNoScoreData(record));
-  if (scored.length === 0) {
-    throw new Error('No scores were entered on any row.');
-  }
-
-  return scored.map((record, index) => {
-    const parsed = golfRoundScoreUploadRowSchema.safeParse(record);
-    if (!parsed.success) {
-      const issue = parsed.error.issues.at(0);
-      const field = issue?.path.at(0);
-      throw new Error(
-        `Row ${index + 1}${field ? ` (${String(field)})` : ''}: ${
-          issue?.message ?? 'is not a valid score row'
-        }.`,
-      );
-    }
-    const { participantId, externalId, playerName, strokes, scoreToPar, thru, status } =
-      parsed.data;
-    const row: GolfRoundScoreUploadRow = { strokes, scoreToPar, status };
-    if (participantId) row.participantId = participantId;
-    if (externalId) row.externalId = externalId;
-    if (playerName) row.playerName = playerName;
-    if (thru !== undefined) row.thru = thru;
-    return row;
-  });
 }
 
 // --- One round's scores, read from the field (#236) ---

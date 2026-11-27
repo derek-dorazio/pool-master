@@ -107,8 +107,8 @@ describe('extractErrorMessage', () => {
 describe('errorCodeMessage', () => {
   it('gives a code\'s words with no error in hand, from the screen\'s context first', () => {
     expect(errorCodeMessage('CONTEST_FULL')).toBe('This contest is full.');
-    expect(errorCodeMessage('RACE_RESULT_ROWS_INVALID', { context: 'raceResult', values: { participant: 'driver' } }))
-      .toBe('A row does not match one driver in the field, or has a problem. Preview again to see which.');
+    expect(errorCodeMessage('PREDICTION_WEEK_INCOMPLETE', { context: 'pickEm', values: { match: 'game' } }))
+      .toBe('Every game needs a pick before this week can be submitted.');
   });
 });
 

@@ -118,11 +118,9 @@ matches on. Then:
 The field load matches players by provider id only. If the roster already holds a hand-made
 player with the same name as a provider golfer, you will see both.
 
-The field upload has no page any more (its card lived on the deleted Tools tab, #2074). Its
-API (`previewEventParticipantUpload`, `applyEventParticipantUpload`) still sets rankings, seeds
-and withdrawals on golfers already on the field; odds come only from the feed, so it takes none
-(#2081). A later *Refresh Participant Field* replaces those values with the provider's again,
-as it does corrections made in a golfer's dialog (#415).
+There is no field upload (#2008): rankings, seeds and odds come from the feed. Correct one
+golfer in their dialog; a later *Refresh Participant Field* replaces those values with the
+provider's again (#415).
 
 ## 5. Build tiers
 

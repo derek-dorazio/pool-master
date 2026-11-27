@@ -735,22 +735,15 @@ test('act 4: the root admin scores round 1, starts the event, and reads every ro
   });
 
   await test.step('enter round-1 scores for the six players', async () => {
-    await page.goto(`/manage/sports/golf/events/${state.eventId}/results`);
-    await expect(page.getByTestId('root-admin-golf-tournament-scores-page')).toBeVisible();
-    const rows = Array.from(
-      { length: PLAYER_COUNT },
-      (_, index) => `,${run.playerNamePrefix} ${index + 1},${70 + index},${index - 2},18,COMPLETED`,
-    );
-    await page
-      .getByTestId('root-admin-golf-scores-upload-textarea')
-      .fill(['externalId,playerName,strokes,scoreToPar,thru,status', ...rows].join('\n'));
-    await page.getByTestId('root-admin-golf-scores-upload-preview').click();
-    await expect(page.getByTestId('root-admin-golf-scores-upload-preview-result')).toBeVisible();
-    await submitAndRead(
+    await uploadRoundScores(
       page,
-      'root-admin-golf-scores-upload-apply',
-      'POST',
-      `/api/v1/events/${state.eventId}/rounds/1/golf-scores`,
+      state.eventId,
+      1,
+      Array.from({ length: PLAYER_COUNT }, (_, index) => ({
+        playerName: `${run.playerNamePrefix} ${index + 1}`,
+        strokes: 70 + index,
+        scoreToPar: index - 2,
+      })),
     );
     for (const fieldEntryId of state.fieldEntryIds) {
       await expect(page.getByTestId(`root-admin-golf-scores-strokes-${fieldEntryId}`)).toBeVisible();
@@ -1676,11 +1669,13 @@ function bestOf(read: LeaderboardRead, fieldEntryIds: readonly string[]): string
 }
 
 /**
- * Loads one round of scores the way an admin does: pick the round, paste the CSV, preview, apply.
+ * Loads one round of scores as the feed would send them: by participant id, through the test
+ * event's golf score route (the CSV paste is gone, #2008). The golfers were created in the webapp,
+ * so each is found on the field by its run-unique name here, in the test, and sent by id. Then the
+ * results page is opened on that round, so the caller reads the write back in the UI.
  *
  * The round control is a radio group with no test id of its own, so the round is chosen by its
- * accessible name. The panel is keyed by round, so it is remounted by that click and the paste
- * has to follow it, never precede it.
+ * accessible name.
  */
 async function uploadRoundScores(
   page: Page,
@@ -1688,30 +1683,38 @@ async function uploadRoundScores(
   round: number,
   rows: ReadonlyArray<{ playerName: string; strokes: number; scoreToPar: number }>,
 ): Promise<void> {
+  const field = await page.request.get(`/api/v1/events/${eventId}/participants`);
+  expect(field.ok(), `GET the field answered ${field.status()}`).toBe(true);
+  const { participants } = (await field.json()) as { participants: Array<{ participantId: string; participant: { name: string } }> };
+  const participantIdOf = (name: string) => {
+    const row = participants.find((candidate) => candidate.participant.name === name);
+    if (!row) throw new Error(`${name} is not on the field of event ${eventId}`);
+    return row.participantId;
+  };
+  const response = await page.request.post(`/api/v1/events/${eventId}/rounds/${round}/golf-scores`, {
+    headers: { 'x-csrf-token': await readCsrfToken(page) },
+    data: {
+      rows: rows.map((row) => ({
+        participantId: participantIdOf(row.playerName),
+        strokes: row.strokes,
+        scoreToPar: row.scoreToPar,
+        thru: 18,
+        status: 'COMPLETED',
+      })),
+    },
+  });
+  expect(response.ok(), `POST round ${round}'s golf scores answered ${response.status()}`).toBe(true);
+
   await page.goto(`/manage/sports/golf/events/${eventId}/results`);
   await expect(page.getByTestId('root-admin-golf-tournament-scores-page')).toBeVisible();
   await page
     .getByRole('radiogroup', { name: 'Round' })
     .getByRole('radio', { name: new RegExp(`^Round ${round}\\b`) })
     .click();
-  await page.getByTestId('root-admin-golf-scores-upload-textarea').fill([
-    'externalId,playerName,strokes,scoreToPar,thru,status',
-    // No externalId: these golfers were created in the webapp and have none, so each row
-    // resolves on its run-unique name, as act 4's round-1 upload does.
-    ...rows.map((row) => `,${row.playerName},${row.strokes},${row.scoreToPar},18,COMPLETED`),
-  ].join('\n'));
-  await page.getByTestId('root-admin-golf-scores-upload-preview').click();
-  await expect(page.getByTestId('root-admin-golf-scores-upload-preview-result')).toBeVisible();
-  await submitAndRead(
-    page,
-    'root-admin-golf-scores-upload-apply',
-    'POST',
-    `/api/v1/events/${eventId}/rounds/${round}/golf-scores`,
-  );
 }
 
 /**
- * Moves one golfer's `roundNumber` by `strokes` — through the same upload panel, as a one-row
+ * Moves one golfer's `roundNumber` by `strokes` — through the same score route, as a one-row
  * correction — and returns what that did to their score to par for the round. Both the row it
  * uploads and the change it reports are derived from the leaderboard read passed in, so the
  * caller compares the entry's total against a delta the API supplied.

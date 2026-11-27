@@ -9,6 +9,9 @@ import { InMemorySportEvents } from '../../support/in-memory-sport-events';
 import { eventRebuildJob } from '../../support/recording-leaderboard-rebuilds';
 import { RecordingDomainEvents } from '../../support/recording-domain-events';
 
+/** A test participant's id, fixed by its name, so a row names it by id as the feed does (#2114). */
+const idOf = (name: string): string => `participant-${name.toLowerCase().replace(/\s+/g, '-')}`;
+
 // The admin's finishing order against an in-memory store (#622): what a preview reports, that an
 // apply is all or none, how a correction merges, and the standings an apply leaves behind. The
 // Prisma adapter's writes against Postgres are in race-results.integration.
@@ -20,10 +23,10 @@ function setup(sport: Sport = Sport.HORSE_RACING) {
   const sportRow = store.addSport(sport);
   const event = store.addEvent({ sport });
   const [arrow, bolt, comet] = ['Arrow', 'Bolt', 'Comet'].map((name) => {
-    const participant = store.addParticipant(sportRow.id, name);
+    const participant = store.addParticipant(sportRow.id, name, { id: idOf(name) });
     return store.addToField(event.id, participant.id);
   });
-  const scratchedHorse = store.addParticipant(sportRow.id, 'Drift');
+  const scratchedHorse = store.addParticipant(sportRow.id, 'Drift', { id: idOf('Drift') });
   const scratched = store.addToField(event.id, scratchedHorse.id, { status: SportEventParticipantStatus.WITHDRAWN });
   const domainEvents = new RecordingDomainEvents();
   const service = new RaceResultService({
@@ -38,9 +41,9 @@ function setup(sport: Sport = Sport.HORSE_RACING) {
   return { store, service, event, arrow, bolt, comet, scratched, domainEvents };
 }
 
-function row(playerName: string, finishPosition: number | null, overrides: Partial<RaceResultRowInput> = {}): RaceResultRowInput {
+function row(name: string, finishPosition: number | null, overrides: Partial<RaceResultRowInput> = {}): RaceResultRowInput {
   return {
-    playerName,
+    participantId: idOf(name),
     resultStatus: RaceResultStatus.FINISHED,
     finishPosition,
     startPosition: null,
@@ -69,7 +72,7 @@ describe('RaceResultService — preview', () => {
 
     const preview = await service.previewResults(event.id, {
       isOfficial: false,
-      rows: [row('arrow', 1), row('Bolt', 3), row('Comet', 2), row('Nobody', 4)],
+      rows: [row('Arrow', 1), row('Bolt', 3), row('Comet', 2), row('Nobody', 4)],
     });
 
     expect(preview.rows.map((entry) => [entry.resolution, entry.participantName, entry.change])).toEqual([

@@ -34,6 +34,7 @@ import { copyContestSetups } from '../support/contest-setups';
 import { standardPricingRequest } from './standard-pricing';
 import { sportRowKeys } from '../support/sport-rows';
 import { insertTestSportLeague } from '../support/test-sport-league';
+import { byParticipantId } from './field-rows';
 
 // Horse racing end to end over HTTP (#622, #623): an admin builds a race and its field, a
 // commissioner runs a Win/Place/Show contest from the sport's template, the draw deals each entry
@@ -186,12 +187,12 @@ describe('SDK Functional: Horse racing Win/Place/Show', () => {
     expect((await transitionEvent({ client: a, path: { eventId }, body: { toStatus: 'IN_PROGRESS' } })).data?.event.status).toBe('IN_PROGRESS');
 
     // --- The finishing order: previewed, provisional, refused incomplete, then official -----
-    const rows = [
+    const rows = await byParticipantId(a, eventId, [
       { playerName: `Arrow ${RUN}`, resultStatus: 'FINISHED' as const, finishPosition: 1, startPosition: 3, riderName: 'J. Velez' },
       { playerName: `Bolt ${RUN}`, resultStatus: 'FINISHED' as const, finishPosition: 2, startPosition: 1, riderName: null },
       { playerName: `Comet ${RUN}`, resultStatus: 'FINISHED' as const, finishPosition: 2, startPosition: null, riderName: null },
       { playerName: `Drift ${RUN}`, resultStatus: 'DID_NOT_FINISH' as const, finishPosition: null, startPosition: null, riderName: null },
-    ];
+    ]);
     const preview = expectDefined((await previewEventRaceResults({ client: a, path: { eventId }, body: { isOfficial: true, rows } })).data);
     expect(preview.rollup).toMatchObject({ total: 4, matched: 4, unresolved: 0, invalid: 0 });
     expect(preview.orderErrors).toEqual([]);
