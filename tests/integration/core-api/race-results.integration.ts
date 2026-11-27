@@ -1,9 +1,10 @@
 import { testDomainEvents } from '../../support/domain-events';
 import { expect } from '@jest/globals';
 import { randomUUID } from 'node:crypto';
-import { RaceResultStatus, Sport } from '@poolmaster/shared/domain';
+import { GameSideStatus, Sport } from '@poolmaster/shared/domain';
 import { ContestLeaderboardResponseSchema } from '@poolmaster/shared/dto';
-import { PrismaSportEventParticipantRaceResultRepository } from '../../../packages/core-api/src/adapters';
+import { PrismaRaceOrderRepository, PrismaSportEventParticipantRepository, PrismaSportEventRoundRepository } from '../../../packages/core-api/src/adapters';
+import { createRoundRows } from '../../support/sport-event-rows';
 import { createContestSettlementService } from '../../../packages/core-api/src/modules/contests/wiring';
 import { createRaceResultService } from '../../../packages/core-api/src/modules/events/wiring';
 import {
@@ -54,6 +55,7 @@ async function seedRace(status: 'SCHEDULED' | 'COMPLETED' = 'COMPLETED') {
       rounds: 1,
     },
   });
+  await createRoundRows(prisma, new PrismaSportEventRoundRepository(getAppPrisma()), event, [{ roundNumber: 1, scheduledDate: event.startDate }]);
   const field = [];
   for (const [index, name] of RUNNERS.entries()) {
     const participant = await prisma.participant.create({
@@ -67,32 +69,34 @@ async function seedRace(status: 'SCHEDULED' | 'COMPLETED' = 'COMPLETED') {
   return { prisma, suffix, event, arrow, bolt, comet, drift };
 }
 
-const write = (sportEventParticipantId: string, finishPosition: number | null, resultStatus: RaceResultStatus = RaceResultStatus.FINISHED) => ({
-  sportEventParticipantId, finishPosition, resultStatus, startPosition: null, riderName: null,
+const write = (sportEventParticipantId: string, position: number | null, status: GameSideStatus = GameSideStatus.FINISHED) => ({
+  sportEventParticipantId, position, status, startPosition: null, riderName: null,
 });
+const AT = new Date('2026-05-02T22:30:00.000Z');
 const standing = (sportEventParticipantId: string, position: number | null) => ({
   sportEventParticipantId,
   position,
   displayPosition: position === null ? null : String(position),
   status: 'COMPLETE' as const,
-  asOf: new Date('2026-05-02T22:30:00.000Z'),
+  asOf: AT,
 });
 
-describe('SportEventParticipantRaceResultRepository', () => {
+describe('RaceOrderRepository — the race as a FIELD match', () => {
   it('stores the results and each runner\'s standing, and reads back only the event\'s own results', async () => {
     const { prisma, event, arrow, bolt } = await seedRace();
     const other = await seedRace();
-    const repo = new PrismaSportEventParticipantRaceResultRepository(getAppPrisma());
+    const repo = new PrismaRaceOrderRepository(getAppPrisma());
 
-    await repo.applyResults(event.id, {
-      results: [write(arrow.id, 1), { ...write(bolt.id, 2), startPosition: 5, riderName: 'J. Velez' }],
+    await repo.applyOrder(event.id, {
+      sides: [write(arrow.id, 1), { ...write(bolt.id, 2), startPosition: 5, riderName: 'J. Velez' }],
       isOfficial: false,
+      at: AT,
       standings: [standing(arrow.id, 1), standing(bolt.id, 2)],
     });
-    await repo.applyResults(other.event.id, { results: [write(other.arrow.id, 1)], isOfficial: false, standings: [] });
+    await repo.applyOrder(other.event.id, { sides: [write(other.arrow.id, 1)], isOfficial: false, at: AT, standings: [] });
 
     const results = await repo.findBySportEvent(event.id);
-    expect(results.map((result) => [result.sportEventParticipantId, result.finishPosition, result.startPosition, result.riderName, result.isOfficial]))
+    expect(results.map((result) => [result.sportEventParticipantId, result.position, result.startPosition, result.riderName, result.isOfficial]))
       .toEqual([
         [arrow.id, 1, null, null, false],
         [bolt.id, 2, 5, 'J. Velez', false],
@@ -103,24 +107,49 @@ describe('SportEventParticipantRaceResultRepository', () => {
     expect(standings).toHaveLength(2);
   });
 
-  it('sets the official flag on every result of the race, including runners the write does not name', async () => {
-    const { event, arrow, bolt } = await seedRace();
-    const repo = new PrismaSportEventParticipantRaceResultRepository(getAppPrisma());
-    await repo.applyResults(event.id, { results: [write(arrow.id, 1), write(bolt.id, 2)], isOfficial: false, standings: [] });
+  it('holds the race as one FIELD match in the event\'s first round, one Game, and a side numbered 1 to n per runner', async () => {
+    const { prisma, event, arrow, bolt, comet } = await seedRace();
+    const repo = new PrismaRaceOrderRepository(getAppPrisma());
 
-    await repo.applyResults(event.id, { results: [write(arrow.id, 1)], isOfficial: true, standings: [] });
+    await repo.applyOrder(event.id, { sides: [write(arrow.id, 1), write(bolt.id, 2)], isOfficial: false, at: AT, standings: [] });
+    await repo.applyOrder(event.id, { sides: [write(comet.id, 3)], isOfficial: false, at: AT, standings: [] });
+
+    const matches = await prisma.sportEventRoundMatch.findMany({
+      where: { sportEventId: event.id },
+      select: { status: true, sportEventRound: { select: { roundNumber: true } }, games: { select: { gameNumber: true, status: true } }, sides: { select: { sideNumber: true, sportEventParticipantId: true }, orderBy: { sideNumber: 'asc' } } },
+    });
+    expect(matches).toEqual([{
+      status: 'IN_PROGRESS',
+      sportEventRound: { roundNumber: 1 },
+      games: [{ gameNumber: 1, status: 'IN_PROGRESS' }],
+      sides: [
+        { sideNumber: 1, sportEventParticipantId: expect.any(String) },
+        { sideNumber: 2, sportEventParticipantId: expect.any(String) },
+        { sideNumber: 3, sportEventParticipantId: comet.id },
+      ],
+    }]);
+  });
+
+  it('makes every result of the race official, including runners the write does not name, and stamps the Game completed', async () => {
+    const { prisma, event, arrow, bolt } = await seedRace();
+    const repo = new PrismaRaceOrderRepository(getAppPrisma());
+    await repo.applyOrder(event.id, { sides: [write(arrow.id, 1), write(bolt.id, 2)], isOfficial: false, at: AT, standings: [] });
+
+    await repo.applyOrder(event.id, { sides: [write(arrow.id, 1)], isOfficial: true, at: AT, standings: [] });
 
     expect((await repo.findBySportEvent(event.id)).map((result) => result.isOfficial)).toEqual([true, true]);
+    await expect(prisma.sportEventRoundMatchGame.findFirstOrThrow({ where: { sportEventId: event.id }, select: { status: true, completedAt: true } }))
+      .resolves.toEqual({ status: 'COMPLETED', completedAt: AT });
   });
 
   it('makes the race official and rewrites the standings when the write names no results, keeping the results already stored', async () => {
     const { prisma, event, arrow, bolt } = await seedRace();
-    const repo = new PrismaSportEventParticipantRaceResultRepository(getAppPrisma());
-    await repo.applyResults(event.id, { results: [write(arrow.id, 1), write(bolt.id, 2)], isOfficial: false, standings: [] });
+    const repo = new PrismaRaceOrderRepository(getAppPrisma());
+    await repo.applyOrder(event.id, { sides: [write(arrow.id, 1), write(bolt.id, 2)], isOfficial: false, at: AT, standings: [] });
 
-    await repo.applyResults(event.id, { results: [], isOfficial: true, standings: [standing(arrow.id, 1)] });
+    await repo.applyOrder(event.id, { sides: [], isOfficial: true, at: AT, standings: [standing(arrow.id, 1)] });
 
-    expect((await repo.findBySportEvent(event.id)).map((result) => [result.finishPosition, result.isOfficial]))
+    expect((await repo.findBySportEvent(event.id)).map((result) => [result.position, result.isOfficial]))
       .toEqual(expect.arrayContaining([[1, true], [2, true]]));
     const standings = await prisma.sportEventParticipantStanding.findMany({ where: { sportEventParticipant: { sportEventId: event.id } } });
     expect(standings.map((row) => [row.sportEventParticipantId, row.position])).toEqual([[arrow.id, 1]]);
@@ -128,57 +157,58 @@ describe('SportEventParticipantRaceResultRepository', () => {
 
   it('writes nothing when one result names a field row that does not exist', async () => {
     const { prisma, event, arrow } = await seedRace();
-    const repo = new PrismaSportEventParticipantRaceResultRepository(getAppPrisma());
+    const repo = new PrismaRaceOrderRepository(getAppPrisma());
 
-    await expect(repo.applyResults(event.id, {
-      results: [write(arrow.id, 1), write(randomUUID(), 2)],
+    await expect(repo.applyOrder(event.id, {
+      sides: [write(arrow.id, 1), write(randomUUID(), 2)],
       isOfficial: false,
+      at: AT,
       standings: [standing(arrow.id, 1)],
     })).rejects.toThrow();
 
     await expect(repo.findBySportEvent(event.id)).resolves.toEqual([]);
+    await expect(prisma.sportEventRoundMatch.count({ where: { sportEventId: event.id } })).resolves.toBe(0);
     await expect(prisma.sportEventParticipantStanding.count({ where: { sportEventParticipantId: arrow.id } })).resolves.toBe(0);
   });
 
   it.each([
-    ['a place below 1', { finishPosition: 0 }],
+    ['a place below 1', { position: 0 }],
     ['a start position below 1', { startPosition: 0 }],
-    ['a place on a runner that did not finish', { resultStatus: RaceResultStatus.DID_NOT_FINISH, finishPosition: 2 }],
-    ['an official finisher with no place', { finishPosition: null, isOfficial: true }],
+    ['a place on a runner that did not finish', { status: GameSideStatus.DID_NOT_FINISH, position: 2 }],
   ])('refuses %s at the database', async (_case, values) => {
-    const { prisma, arrow } = await seedRace();
-    await expect(prisma.sportEventParticipantRaceResult.create({
-      data: { sportEventParticipantId: arrow.id, resultStatus: RaceResultStatus.FINISHED, finishPosition: 1, ...values },
-    })).rejects.toThrow();
+    const { event, arrow } = await seedRace();
+    const repo = new PrismaRaceOrderRepository(getAppPrisma());
+    await expect(repo.applyOrder(event.id, { sides: [{ ...write(arrow.id, 1), ...values }], isOfficial: false, at: AT, standings: [] })).rejects.toThrow();
   });
 
-  it('removes a runner\'s result with its field row', async () => {
+  it('removes a runner\'s side and result with its field row', async () => {
     const { prisma, event, arrow } = await seedRace();
-    const repo = new PrismaSportEventParticipantRaceResultRepository(getAppPrisma());
-    await repo.applyResults(event.id, { results: [write(arrow.id, 1)], isOfficial: false, standings: [] });
+    const repo = new PrismaRaceOrderRepository(getAppPrisma());
+    await repo.applyOrder(event.id, { sides: [write(arrow.id, 1)], isOfficial: false, at: AT, standings: [] });
 
-    await prisma.sportEventParticipant.delete({ where: { id: arrow.id } });
+    await new PrismaSportEventParticipantRepository(getAppPrisma()).delete(arrow.id);
 
-    await expect(prisma.sportEventParticipantRaceResult.count({ where: { sportEventParticipantId: arrow.id } })).resolves.toBe(0);
+    await expect(prisma.sportEventRoundMatchSide.count({ where: { sportEventParticipantId: arrow.id } })).resolves.toBe(0);
+    await expect(repo.findBySportEvent(event.id)).resolves.toEqual([]);
   });
 });
 
-describe('SportEventParticipantRaceResultRepository — the leaderboard rebuild a result carries (#1466)', () => {
+describe('RaceOrderRepository — the leaderboard rebuild a result carries (#1466)', () => {
   it('commits the rebuild job with the result', async () => {
     const { prisma, event, arrow } = await seedRace();
-    const repo = new PrismaSportEventParticipantRaceResultRepository(getAppPrisma());
+    const repo = new PrismaRaceOrderRepository(getAppPrisma());
 
-    await repo.applyResults(event.id, { results: [write(arrow.id, 1)], isOfficial: true, standings: [standing(arrow.id, 1)], jobs: [eventRebuildJob(event.id)] });
+    await repo.applyOrder(event.id, { sides: [write(arrow.id, 1)], isOfficial: true, at: AT, standings: [standing(arrow.id, 1)], jobs: [eventRebuildJob(event.id)] });
 
     await expect(prisma.backgroundJob.count({ where: { dedupeKey: eventRebuildJob(event.id).dedupeKey } })).resolves.toBe(1);
   });
 
   it('stores no result and no standing when the rebuild job cannot be written', async () => {
     const { prisma, event, arrow } = await seedRace();
-    const repo = new PrismaSportEventParticipantRaceResultRepository(getAppPrisma());
+    const repo = new PrismaRaceOrderRepository(getAppPrisma());
 
-    await expect(withBackgroundJobsFailing('REBUILD_LEADERBOARDS', () => repo.applyResults(event.id, {
-      results: [write(arrow.id, 1)], isOfficial: true, standings: [standing(arrow.id, 1)], jobs: [eventRebuildJob(event.id)],
+    await expect(withBackgroundJobsFailing('REBUILD_LEADERBOARDS', () => repo.applyOrder(event.id, {
+      sides: [write(arrow.id, 1)], isOfficial: true, at: AT, standings: [standing(arrow.id, 1)], jobs: [eventRebuildJob(event.id)],
     }))).rejects.toThrow();
 
     await expect(repo.findBySportEvent(event.id)).resolves.toEqual([]);
@@ -236,9 +266,9 @@ describe('horse racing contest — read and settled from the finishing order', (
   const officialOrder = (race: { arrow: { participantId: string }; bolt: { participantId: string }; comet: { participantId: string } }) => ({
     isOfficial: true,
     rows: [
-      { participantId: race.arrow.participantId, resultStatus: RaceResultStatus.FINISHED, finishPosition: 1, startPosition: null, riderName: null },
-      { participantId: race.bolt.participantId, resultStatus: RaceResultStatus.FINISHED, finishPosition: 2, startPosition: null, riderName: null },
-      { participantId: race.comet.participantId, resultStatus: RaceResultStatus.FINISHED, finishPosition: 3, startPosition: null, riderName: null },
+      { participantId: race.arrow.participantId, resultStatus: GameSideStatus.FINISHED, finishPosition: 1, startPosition: null, riderName: null },
+      { participantId: race.bolt.participantId, resultStatus: GameSideStatus.FINISHED, finishPosition: 2, startPosition: null, riderName: null },
+      { participantId: race.comet.participantId, resultStatus: GameSideStatus.FINISHED, finishPosition: 3, startPosition: null, riderName: null },
     ],
   });
 

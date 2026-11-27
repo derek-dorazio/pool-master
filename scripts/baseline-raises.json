@@ -498,6 +498,30 @@
       "key": "parseGolfRoundScoreUpload",
       "now": 0,
       "reason": "retired by #2008"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "RaceResultStatus",
+      "now": 0,
+      "reason": "retired by #2008"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "sportEventParticipantRaceResult",
+      "now": 0,
+      "reason": "retired by #2008"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "SportEventParticipantRaceResultRepository",
+      "now": 0,
+      "reason": "retired by #2008"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "raceResultRows",
+      "now": 0,
+      "reason": "retired by #2008"
     }
   ]
 }

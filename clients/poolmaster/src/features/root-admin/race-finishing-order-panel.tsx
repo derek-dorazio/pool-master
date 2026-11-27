@@ -1,5 +1,5 @@
 import { enumLabel } from '@poolmaster/shared/display-strings';
-import { RaceResultStatus, sportVocabulary, SportEventParticipantStatus } from '@poolmaster/shared/domain';
+import { GameSideStatus, sportVocabulary, SportEventParticipantStatus } from '@poolmaster/shared/domain';
 import type { SportEventDto, SportEventParticipantDto } from '@/lib/api';
 import {
   Notice,
@@ -75,9 +75,9 @@ function StoredFinishingOrder({ event, field }: { event: SportEventDto; field: r
                   const { race } = entry;
                   const finish = !race
                     ? ((entry.status === SportEventParticipantStatus.ACTIVE) ? '—' : vocabulary.withdrawn)
-                    : race.resultStatus === RaceResultStatus.FINISHED
+                    : race.resultStatus === GameSideStatus.FINISHED
                       ? (race.finishPosition === null ? '—' : formatOrdinal(race.finishPosition))
-                      : enumLabel('RaceResultStatus', race.resultStatus);
+                      : enumLabel('GameSideStatus', race.resultStatus);
                   return (
                     <TableRow data-testid={`root-admin-race-result-row-${entry.id}`} key={entry.id}>
                       <TableCell className="font-medium" data-testid={`root-admin-race-result-finish-${entry.id}`}>{finish}</TableCell>

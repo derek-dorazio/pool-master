@@ -142,7 +142,7 @@ function gamesOf(
     lastProviderNotificationAt: null,
     createdAt: T0,
     updatedAt: T0,
-    sideResults: sides.map((side) => ({ sportEventRoundMatchSideId: side.id, sideNumber: side.sideNumber, score: scoreOf(side.sideNumber), homeAway: homeAway(side.sideNumber), periodScores: periods(side.sideNumber) })),
+    sideResults: sides.map((side) => ({ sportEventRoundMatchSideId: side.id, sideNumber: side.sideNumber, score: scoreOf(side.sideNumber), homeAway: homeAway(side.sideNumber), position: null, startPosition: null, status: null, riderName: null, periodScores: periods(side.sideNumber) })),
   });
   const homeScore = scores.homeScore ?? null;
   const awayScore = scores.awayScore ?? null;

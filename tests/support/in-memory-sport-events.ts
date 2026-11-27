@@ -19,7 +19,8 @@ import type {
   SportEventParticipantGolfRoundRepository,
   SportEventParticipantGolfStandingRepository,
   SportEventParticipantPatch,
-  SportEventParticipantRaceResultRepository,
+  RaceOrderRepository,
+  RaceOrderResult,
   ProviderNotificationReceipt,
   SportEventParticipantRepository,
   SportEventParticipantValuationRepository,
@@ -59,7 +60,6 @@ import type {
   SportEventParticipant,
   SportEventParticipantGolfRound,
   SportEventParticipantGolfStanding,
-  SportEventParticipantRaceResult,
   SportEventParticipantRound,
   SportEventParticipantStanding,
   SportEventParticipantValuation,
@@ -115,7 +115,7 @@ function withSideScores(match: SportEventRoundMatch, game: SportEventRoundMatchG
     const side = match.sides.find((each) => each.sideNumber === sideNumber);
     if (!side) throw new Error('unknown side');
     const index = results.findIndex((result) => result.sideNumber === sideNumber);
-    const stored = index === -1 ? { sportEventRoundMatchSideId: side.id, sideNumber, score: null, homeAway: HomeAway.NONE, periodScores: [] } : results[index];
+    const stored = index === -1 ? { sportEventRoundMatchSideId: side.id, sideNumber, score: null, homeAway: HomeAway.NONE, position: null, startPosition: null, status: null, riderName: null, periodScores: [] } : results[index];
     const written = {
       ...stored,
       score,
@@ -306,7 +306,8 @@ export class InMemorySportEvents {
   standingRows: SportEventParticipantStanding[] = [];
   golfRoundRows: SportEventParticipantGolfRound[] = [];
   golfStandingRows: SportEventParticipantGolfStanding[] = [];
-  raceResultRows: SportEventParticipantRaceResult[] = [];
+  /** Each runner's result in its event's race (#2008): its side result in the race's one Game. */
+  raceOrderRows: RaceOrderResult[] = [];
   /** Each match with its sides and its Games (#2007, #2046). */
   matchRows: SportEventRoundMatch[] = [];
   /** Every match's Games (#2007): read from `matchRows`, where they are kept. */
@@ -973,7 +974,7 @@ export class InMemorySportEvents {
     const standing = this.standingRows.find((row) => row.sportEventParticipantId === entry.id);
     const standingGolf = standing && this.golfStandingRows.find((row) => row.standingId === standing.id);
     const valuation = this.valuationRows.find((row) => row.sportEventParticipantId === entry.id);
-    const raceResult = this.raceResultRows.find((row) => row.sportEventParticipantId === entry.id);
+    const raced = this.raceOrderRows.find((row) => row.sportEventParticipantId === entry.id);
     return {
       entry: { ...entry },
       participant: { ...(this.participants.find((participant) => participant.id === entry.participantId) as Participant) },
@@ -990,7 +991,17 @@ export class InMemorySportEvents {
             golf: golf ? { ...golf } : null,
           };
         }),
-      raceResult: raceResult ? { ...raceResult } : null,
+      fieldResults: raced
+        ? [{
+          roundNumber: 1,
+          gameStatus: raced.isOfficial ? MatchStatus.COMPLETED : MatchStatus.IN_PROGRESS,
+          result: {
+            sportEventRoundMatchSideId: `race-side-${entry.id}`, sideNumber: 1, score: null, homeAway: HomeAway.NONE,
+            position: raced.position, startPosition: raced.startPosition, status: raced.status, riderName: raced.riderName, periodScores: [],
+          },
+          updatedAt: raced.updatedAt,
+        }]
+        : [],
       matches: this.matchRows
         .filter((match) => match.sides.some((side) => side.sportEventParticipantId === entry.id))
         .sort(compareMatchPlaces)
@@ -1185,7 +1196,7 @@ export class InMemorySportEvents {
               games: [stamp({
                 id: `${match.id}-g1`, sportEventId, sportEventRoundMatchId: match.id, sportEventSlotId: `event-slot-${String(match.roundNumber)}`, gameNumber: 1,
                 scheduledDate: match.scheduledDate, isNeutralSite, venue: null, location: null, status: MatchStatus.SCHEDULED, completedAt: null, movedToGameId: null, lastProviderNotificationAt: null,
-                sideResults: sides.map((side, index) => ({ sportEventRoundMatchSideId: stored[index].id, sideNumber: side.sideNumber, score: null, homeAway: side.homeAway, periodScores: [] })),
+                sideResults: sides.map((side, index) => ({ sportEventRoundMatchSideId: stored[index].id, sideNumber: side.sideNumber, score: null, homeAway: side.homeAway, position: null, startPosition: null, status: null, riderName: null, periodScores: [] })),
               })],
             });
           }),
@@ -1247,7 +1258,7 @@ export class InMemorySportEvents {
           const side = row.sides.find((each) => each.sideNumber === sideNumber);
           if (!side) throw new Error('unknown side');
           const index = results.findIndex((each) => each.sideNumber === sideNumber);
-          const stored = index === -1 ? { sportEventRoundMatchSideId: side.id, sideNumber, score: null, homeAway: HomeAway.NONE, periodScores: [] } : results[index];
+          const stored = index === -1 ? { sportEventRoundMatchSideId: side.id, sideNumber, score: null, homeAway: HomeAway.NONE, position: null, startPosition: null, status: null, riderName: null, periodScores: [] } : results[index];
           const written = { ...stored, periodScores: [...stored.periodScores.filter((period) => period.kind === PeriodKind.SHOOTOUT), ...periodScores.map((period) => ({ ...period }))] };
           if (index === -1) results.push(written);
           else results[index] = written;
@@ -1257,31 +1268,29 @@ export class InMemorySportEvents {
     };
   }
 
-  raceResultRepo(): SportEventParticipantRaceResultRepository {
+  raceOrderRepo(): RaceOrderRepository {
     const entryIdsOf = (sportEventId: string) => new Set(this.field.filter((row) => row.sportEventId === sportEventId).map((row) => row.id));
     return {
       findBySportEvent: async (sportEventId) => {
         const entryIds = entryIdsOf(sportEventId);
-        return this.raceResultRows
+        return this.raceOrderRows
           .filter((row) => entryIds.has(row.sportEventParticipantId))
           .sort((left, right) => left.sportEventParticipantId.localeCompare(right.sportEventParticipantId))
           .map((row) => ({ ...row }));
       },
-      applyResults: async (sportEventId, { results, isOfficial, standings, jobs }) => {
+      applyOrder: async (sportEventId, { sides, isOfficial, at, standings, jobs }) => {
         this.backgroundJobs.push(...(jobs ?? []));
         const entryIds = entryIdsOf(sportEventId);
-        if ([...results, ...standings].some((write) => !entryIds.has(write.sportEventParticipantId))) {
+        if ([...sides, ...standings].some((write) => !entryIds.has(write.sportEventParticipantId))) {
           throw new Error('unknown field row');
         }
-        for (const { sportEventParticipantId, ...values } of results) {
-          let row = this.raceResultRows.find((candidate) => candidate.sportEventParticipantId === sportEventParticipantId);
-          if (!row) {
-            row = stamp({ id: this.id('race-result'), sportEventParticipantId, ...values, isOfficial });
-            this.raceResultRows.push(row);
-          }
-          Object.assign(row, values);
+        for (const side of sides) {
+          const index = this.raceOrderRows.findIndex((candidate) => candidate.sportEventParticipantId === side.sportEventParticipantId);
+          const row = { ...side, isOfficial, updatedAt: at };
+          if (index === -1) this.raceOrderRows.push(row);
+          else this.raceOrderRows[index] = row;
         }
-        for (const row of this.raceResultRows) {
+        for (const row of this.raceOrderRows) {
           if (entryIds.has(row.sportEventParticipantId)) row.isOfficial = isOfficial;
         }
         for (const { sportEventParticipantId, ...values } of standings) {

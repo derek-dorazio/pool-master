@@ -1429,7 +1429,7 @@ function championRun(slotKinds: readonly SlotKind[]): SportEventParticipantView[
     valuation: null,
     standing: null,
     rounds: [],
-    raceResult: null,
+    fieldResults: [],
     matches: matches.filter((match) => match.sides.some((side) => side.sportEventParticipantId === entry.id)),
     affiliatedWithSportLeague: true,
   }));

@@ -2,7 +2,7 @@
  * The shape of a finishing order (#622), read from the places alone. The server checks it and
  * never repairs it: the admin enters every place.
  */
-import { ParticipantStandingStatus, RaceResultStatus, assertNever } from '@poolmaster/shared/domain';
+import { ParticipantStandingStatus, GameSideStatus, assertNever } from '@poolmaster/shared/domain';
 
 /**
  * Whether finishing places form a finishing order: they run 1, 2, 3 ... and a dead heat repeats a
@@ -25,13 +25,13 @@ export function displayPlace(place: number, places: readonly number[]): string {
  * A runner's standing status in the event from how its race ended: a runner that started is done
  * with the event, finished or not; one that did not start is out of it.
  */
-export function standingStatusForResult(resultStatus: RaceResultStatus): ParticipantStandingStatus {
+export function standingStatusForResult(resultStatus: GameSideStatus): ParticipantStandingStatus {
   switch (resultStatus) {
-    case RaceResultStatus.FINISHED:
-    case RaceResultStatus.DID_NOT_FINISH:
-    case RaceResultStatus.DISQUALIFIED:
+    case GameSideStatus.FINISHED:
+    case GameSideStatus.DID_NOT_FINISH:
+    case GameSideStatus.DISQUALIFIED:
       return ParticipantStandingStatus.COMPLETE;
-    case RaceResultStatus.DID_NOT_START:
+    case GameSideStatus.DID_NOT_START:
       return ParticipantStandingStatus.WITHDRAWN;
     default:
       return assertNever(resultStatus);

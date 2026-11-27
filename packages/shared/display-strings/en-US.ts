@@ -167,7 +167,7 @@ export const enUS = {
     SportLeagueNoun: {
       LEAGUE: 'League',
     },
-    RaceResultStatus: {
+    GameSideStatus: {
       FINISHED: 'Finished',
       DID_NOT_FINISH: 'Did not finish',
       DISQUALIFIED: 'Disqualified',

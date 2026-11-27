@@ -95,7 +95,11 @@
     "findMatchingAny": "#2008 (10b): rows match by participant id or feed id, never by name (#2114)",
     "BulkUploadPanel": "#2008 (10b): results and fields come from the feed, with no paste or CSV upload",
     "UploadPreviewTable": "#2008 (10b): results and fields come from the feed, with no paste or CSV upload",
-    "parseGolfRoundScoreUpload": "#2008 (10b): golf round scores come from the feed by participant id"
+    "parseGolfRoundScoreUpload": "#2008 (10b): golf round scores come from the feed by participant id",
+    "RaceResultStatus": "#2008 (10b): GameSideStatus, a FIELD Game side's status",
+    "sportEventParticipantRaceResult": "#2008 (10b): a race's result is its runner's side result in the race's FIELD Game",
+    "SportEventParticipantRaceResultRepository": "#2008 (10b): RaceOrderRepository, the race's FIELD Game side results",
+    "raceResultRows": "#2008 (10b): RaceOrderRepository reads the race's side results"
   },
   "ROUND_NAMES_FROM_FINAL": 0,
   "roundLabel": 0,
@@ -191,5 +195,9 @@
   "findMatchingAny": 0,
   "BulkUploadPanel": 0,
   "UploadPreviewTable": 0,
-  "parseGolfRoundScoreUpload": 0
+  "parseGolfRoundScoreUpload": 0,
+  "RaceResultStatus": 0,
+  "sportEventParticipantRaceResult": 0,
+  "SportEventParticipantRaceResultRepository": 0,
+  "raceResultRows": 0
 }

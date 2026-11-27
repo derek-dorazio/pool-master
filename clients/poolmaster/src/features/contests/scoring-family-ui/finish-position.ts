@@ -8,7 +8,7 @@
 
 import {
   PARTICIPANT_SCORING_DEFINITIONS,
-  RaceResultStatus,
+  GameSideStatus,
   type SportDefinition,
   sportVocabulary,
   SportEventParticipantStatus,
@@ -17,10 +17,10 @@ import type { SportEventParticipantDto } from '@/lib/api';
 import type { ScoringFamilyUi } from './types';
 
 /** How a race that did not end in a place reads in the Finish column. */
-const NON_FINISH_LABEL: Readonly<Record<Exclude<RaceResultStatus, typeof RaceResultStatus.FINISHED>, string>> = {
-  [RaceResultStatus.DID_NOT_FINISH]: 'DNF',
-  [RaceResultStatus.DISQUALIFIED]: 'DQ',
-  [RaceResultStatus.DID_NOT_START]: 'DNS',
+const NON_FINISH_LABEL: Readonly<Record<Exclude<GameSideStatus, typeof GameSideStatus.FINISHED>, string>> = {
+  [GameSideStatus.DID_NOT_FINISH]: 'DNF',
+  [GameSideStatus.DISQUALIFIED]: 'DQ',
+  [GameSideStatus.DID_NOT_START]: 'DNS',
 };
 
 /**
@@ -33,7 +33,7 @@ export function formatFinish(participant: SportEventParticipantDto, sport: Sport
   if (!race) {
     return participant.status === SportEventParticipantStatus.ACTIVE ? null : sportVocabulary(sport).withdrawn;
   }
-  if (race.resultStatus === RaceResultStatus.FINISHED) {
+  if (race.resultStatus === GameSideStatus.FINISHED) {
     if (race.finishPosition === null) {
       return null;
     }

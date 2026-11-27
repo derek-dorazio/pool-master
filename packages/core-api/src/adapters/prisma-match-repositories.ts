@@ -24,13 +24,13 @@ import type {
   SportEventRoundMatchWrite,
 } from '@poolmaster/shared/db';
 import { MatchStatus, PeriodKind, UNPLAYED_MATCH_STATUSES } from '@poolmaster/shared/domain';
-import type { BackgroundJobRequest, HomeAway, ProviderCode, SportEventRoundMatch, SportEventRoundMatchGame } from '@poolmaster/shared/domain';
+import type { BackgroundJobRequest, HomeAway, ProviderCode, SportEventRoundMatch, SportEventRoundMatchGame, SportEventRoundMatchGameSideResult } from '@poolmaster/shared/domain';
 import { ROUND_EVENT_SLOT_SELECT, toRoundSlot } from './season-slot-select';
 import { rewriteStandings } from './prisma-standing-rewrite';
 import { backgroundJobsInsert, insertBackgroundJobs } from './prisma-background-job-repository';
 
 /** What a Game is read with (#2046): each side's result, with the side's number and its period scores in order. */
-const GAME_SIDE_RESULTS_INCLUDE = {
+export const GAME_SIDE_RESULTS_INCLUDE = {
   sideResults: {
     include: {
       side: { select: { sideNumber: true } },
@@ -263,15 +263,21 @@ async function writeSideScores(db: Prisma.TransactionClient, games: readonly Gam
 type GameRow = Prisma.SportEventRoundMatchGameGetPayload<{ include: typeof GAME_SIDE_RESULTS_INCLUDE }>;
 
 function toGame({ sideResults, ...game }: GameRow): SportEventRoundMatchGame {
+  return { ...game, sideResults: sideResults.map(toGameSideResult) };
+}
+
+/** A side result read with its side's number and its period scores (`GAME_SIDE_RESULTS_INCLUDE`). */
+export function toGameSideResult(result: GameRow['sideResults'][number]): SportEventRoundMatchGameSideResult {
   return {
-    ...game,
-    sideResults: sideResults.map((result) => ({
-      sportEventRoundMatchSideId: result.sportEventRoundMatchSideId,
-      sideNumber: result.side.sideNumber,
-      score: result.score,
-      homeAway: result.homeAway,
-      periodScores: result.periodScores,
-    })),
+    sportEventRoundMatchSideId: result.sportEventRoundMatchSideId,
+    sideNumber: result.side.sideNumber,
+    score: result.score,
+    homeAway: result.homeAway,
+    position: result.position,
+    startPosition: result.startPosition,
+    status: result.status,
+    riderName: result.riderName,
+    periodScores: result.periodScores,
   };
 }
 

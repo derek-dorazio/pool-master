@@ -92,10 +92,11 @@ export type {
   SportEventParticipantGolfStandingRepository,
 } from './golf-ports';
 export type {
-  RaceResultApply,
-  RaceResultWrite,
+  RaceOrderApply,
+  RaceOrderRepository,
+  RaceOrderResult,
+  RaceOrderSideWrite,
   RaceStandingWrite,
-  SportEventParticipantRaceResultRepository,
 } from './race-ports';
 export type {
   BracketStandingWrite,
@@ -121,6 +122,7 @@ export type {
   ParticipantMatchQuery,
   ParticipantRanking,
   ParticipantRoundView,
+  FieldGameResultView,
   ParticipantStandingView,
   PriceAssignment,
   PlatformPricingProfileRepository,

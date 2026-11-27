@@ -482,23 +482,24 @@ export type SportLeagueNoun = (typeof SportLeagueNoun)[keyof typeof SportLeagueN
 export const SportLeagueNounOrder = alphabeticalOrder('SportLeagueNoun');
 
 /**
- * How one field member's race ended (#622): the finish-position family's result status. Only a
- * FINISHED runner has a finishing place; every other status scores the contest's "did not
- * finish" points. A horse scratched before the start is WITHDRAWN on the field, not here.
+ * How one side's part in a FIELD Game ended (#2008): a runner's race (#622), a golfer's round.
+ * Only a FINISHED side has a finishing place; in a race every other status scores the contest's
+ * "did not finish" points. A horse scratched before the start is WITHDRAWN on the field, not
+ * here. A head-to-head Game's side results have none.
  */
-export const RaceResultStatus = {
+export const GameSideStatus = {
   FINISHED: 'FINISHED',
   DID_NOT_FINISH: 'DID_NOT_FINISH',
   DISQUALIFIED: 'DISQUALIFIED',
   DID_NOT_START: 'DID_NOT_START',
 } as const;
-export type RaceResultStatus = (typeof RaceResultStatus)[keyof typeof RaceResultStatus];
+export type GameSideStatus = (typeof GameSideStatus)[keyof typeof GameSideStatus];
 /** The order the values are declared in. */
-export const RaceResultStatusOrder = explicitOrder<RaceResultStatus>({
-  [RaceResultStatus.FINISHED]: 0,
-  [RaceResultStatus.DID_NOT_FINISH]: 1,
-  [RaceResultStatus.DISQUALIFIED]: 2,
-  [RaceResultStatus.DID_NOT_START]: 3,
+export const GameSideStatusOrder = explicitOrder<GameSideStatus>({
+  [GameSideStatus.FINISHED]: 0,
+  [GameSideStatus.DID_NOT_FINISH]: 1,
+  [GameSideStatus.DISQUALIFIED]: 2,
+  [GameSideStatus.DID_NOT_START]: 3,
 });
 
 /** Why one row of a race's finishing order cannot be applied (#622). */

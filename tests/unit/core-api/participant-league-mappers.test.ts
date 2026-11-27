@@ -95,7 +95,7 @@ describe('field row mappers', () => {
   };
 
   it('gives a bare field row null ranking, odds, seed, valuation, standing and race, and no rounds', () => {
-    const dto = mapSportEventParticipantToDto({ entry, participant: scottie, valuation: null, standing: null, rounds: [], raceResult: null, affiliatedWithSportLeague: true } as unknown as SportEventParticipantView);
+    const dto = mapSportEventParticipantToDto({ entry, participant: scottie, valuation: null, standing: null, rounds: [], fieldResults: [], affiliatedWithSportLeague: true } as unknown as SportEventParticipantView);
 
     expect(dto).toMatchObject({
       id: 'sep-1',
@@ -125,7 +125,13 @@ describe('field row mappers', () => {
         { round: { id: 'r-1', sportEventRoundId: 'er-1', roundNumber: 1, status: 'COMPLETE', completedAt: new Date('2026-04-09T23:00:00.000Z') }, golf: { strokes: 68, scoreToPar: -4, thru: 18 } },
         { round: { id: 'r-2', sportEventRoundId: 'er-2', roundNumber: 2, status: 'IN_PROGRESS', completedAt: null }, golf: null },
       ],
-      raceResult: { finishPosition: 2, startPosition: 5, resultStatus: 'FINISHED', isOfficial: true, riderName: null },
+      // The race's one FIELD Game is official: its result is the row's side result there (#2008).
+      fieldResults: [{
+        roundNumber: 1,
+        gameStatus: 'COMPLETED',
+        result: { sportEventRoundMatchSideId: 'side-1', sideNumber: 1, score: null, homeAway: 'NONE', position: 2, startPosition: 5, status: 'FINISHED', riderName: 'J. Velez', periodScores: [] },
+        updatedAt: new Date('2026-04-12T20:00:00.000Z'),
+      }],
       affiliatedWithSportLeague: false,
     } as unknown as SportEventParticipantView;
 
@@ -147,7 +153,7 @@ describe('field row mappers', () => {
       { id: 'r-1', sportEventRoundId: 'er-1', roundNumber: 1, status: 'COMPLETE', completedAt: '2026-04-09T23:00:00.000Z', golf: { strokes: 68, scoreToPar: -4, thru: 18 } },
       { id: 'r-2', sportEventRoundId: 'er-2', roundNumber: 2, status: 'IN_PROGRESS', completedAt: null, golf: null },
     ]);
-    expect(dto.race).toEqual({ finishPosition: 2, startPosition: 5, resultStatus: 'FINISHED', isOfficial: true, riderName: null });
+    expect(dto.race).toEqual({ finishPosition: 2, startPosition: 5, resultStatus: 'FINISHED', isOfficial: true, riderName: 'J. Velez' });
   });
 
   it('gives a standing with no time and no golf detail a null as-of and null golf', () => {
@@ -157,7 +163,7 @@ describe('field row mappers', () => {
       valuation: null,
       standing: { standing: { id: 's-1', position: null, displayPosition: null, status: 'ACTIVE', asOf: null }, golf: null },
       rounds: [],
-      raceResult: null,
+      fieldResults: [],
       affiliatedWithSportLeague: true,
     } as unknown as SportEventParticipantView);
 

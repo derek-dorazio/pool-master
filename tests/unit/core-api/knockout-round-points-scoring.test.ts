@@ -94,7 +94,7 @@ function bracketField(teams: TeamInput[], matchInputs: MatchInput[]): SportEvent
     valuation: null,
     standing: null,
     rounds: [],
-    raceResult: null,
+    fieldResults: [],
     matches: matches.filter((match) => homeAwayOf(match).homeSportEventParticipantId === entry.id || homeAwayOf(match).awaySportEventParticipantId === entry.id),
     affiliatedWithSportLeague: true,
   }));
