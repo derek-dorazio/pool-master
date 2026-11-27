@@ -283,44 +283,7 @@ export function createEventHandlers({ services, eventLifecycle, ingestion, leade
       return reply.status(204).send();
     },
 
-    listEventTiers: async (request: FastifyRequest<EventParams>): Promise<SportEventTierListResponse> => {
-      await requireEvent(request.params.eventId);
-      return { tiers: (await tiers.listTiers(request.params.eventId)).map(mapSportEventTierToDto) };
-    },
-
-    replaceEventTiers: async (
-      request: FastifyRequest<EventParams & { Body: ReplaceSportEventTiersRequest }>,
-    ): Promise<SportEventTierListResponse> => {
-      await requireEvent(request.params.eventId);
-      const groups = await tiers.replaceTiers({ sportEventId: request.params.eventId, ...request.body });
-      return { tiers: groups.map(mapSportEventTierToDto) };
-    },
-
-    autoAssignEventTiers: async (
-      request: FastifyRequest<EventParams & { Body: AutoAssignSportEventTiersRequest }>,
-    ): Promise<SportEventParticipantListResponse> => {
-      await requireEvent(request.params.eventId);
-      await tiers.autoAssignTiers({ sportEventId: request.params.eventId, ...request.body });
-      return fieldResponse(request.params.eventId);
-    },
-
-    replaceEventTierAssignments: async (
-      request: FastifyRequest<EventParams & { Body: ReplaceSportEventTierAssignmentsRequest }>,
-    ): Promise<SportEventParticipantListResponse> => {
-      await requireEvent(request.params.eventId);
-      await tiers.replaceTierAssignments({ sportEventId: request.params.eventId, assignments: request.body.assignments });
-      return fieldResponse(request.params.eventId);
-    },
-
-    autoAssignEventPrices: async (
-      request: FastifyRequest<EventParams & { Body: AutoAssignSportEventPricesRequest }>,
-    ): Promise<SportEventParticipantListResponse> => {
-      await requireEvent(request.params.eventId);
-      await tiers.autoAssignPrices({ sportEventId: request.params.eventId, pricing: request.body });
-      return fieldResponse(request.params.eventId);
-    },
-
-    // The same reads and writes on the set of the slot played in a Season slot (#2044).
+    // The tier and price reads and writes, on the set of the slot played in a Season slot (#2044).
     listEventSlotParticipants: async (request: FastifyRequest<SlotParams>): Promise<SportEventParticipantListResponse> => {
       const { eventId, seasonSlotId } = request.params;
       await requireEvent(eventId);

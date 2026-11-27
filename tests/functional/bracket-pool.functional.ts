@@ -2,8 +2,8 @@ import { deleteTestSportLeagues } from '../support/test-slots';
 import {
   acceptInvitation,
   addEventParticipants,
-  autoAssignEventPrices,
-  autoAssignEventTiers,
+  autoAssignEventSlotPrices,
+  autoAssignEventSlotTiers,
   clearGamePick,
   createContest,
   createParticipant,
@@ -64,6 +64,7 @@ import type { TestRoundSlot } from '../support/event-edition';
 import { bracketMatch, readHomeAway, resultBody } from '../support/match-requests';
 import { HOME_SIDE, pickSideOf, predictedHomeAndAway, type PickSides } from '../support/match-sides';
 import { setFieldRows } from './field-rows';
+import { tierSetSlotPath } from './tier-set-slot';
 
 // Bracket pools end to end over HTTP (#721). An admin releases a knockout; a commissioner runs a
 // BRACKET contest on it scored by knockout round points; each team fills in the winner of every
@@ -173,8 +174,8 @@ async function releasedKnockout(options: {
     path: { eventId },
     body: { rows: options.seeds.map((seed) => ({ playerName: `Seed ${seed} ${options.label} ${RUN}`, seedNumber: seed })) },
   })).response?.status).toBe(200);
-  expect((await autoAssignEventTiers({ client: a, path: { eventId }, body: { tierSize: options.tierSize } })).response?.status).toBe(200);
-  expect((await autoAssignEventPrices({ client: a, path: { eventId }, body: await standardPricingFor(a) })).response?.status).toBe(200);
+  expect((await autoAssignEventSlotTiers({ client: a, path: await tierSetSlotPath(a, eventId), body: { tierSize: options.tierSize } })).response?.status).toBe(200);
+  expect((await autoAssignEventSlotPrices({ client: a, path: await tierSetSlotPath(a, eventId), body: await standardPricingFor(a) })).response?.status).toBe(200);
 
   const field = expectDefined((await listEventParticipants({ client: a, path: { eventId } })).data).participants;
   const row = (seed: number) => expectDefined(field.find((each) => each.participant.name === `Seed ${seed} ${options.label} ${RUN}`), `seed ${seed}`).id;

@@ -106,7 +106,12 @@
     "MatchSide": "#2016 (17, main PR): bracket reseed; #2182: provider adapters, slate and synced field job advancesTo; #2019: squares. Sides by number",
     "sideNumberOfMatchSide": "#2016 (17, main PR): bracket reseed; #2182: provider adapters, slate and synced field job advancesTo; #2019: squares. Sides by number",
     "matchSideOfSideNumber": "#2016 (17, main PR): bracket reseed; #2182: provider adapters, slate and synced field job advancesTo; #2019: squares. Sides by number",
-    "teamOnMatchSide": "#2016: sideParticipantId by side number"
+    "teamOnMatchSide": "#2016: sideParticipantId by side number",
+    "listEventTiers": "#2044 (7b): the slot route, on the set of the slot named",
+    "replaceEventTiers": "#2044 (7b): the slot route, on the set of the slot named",
+    "autoAssignEventTiers": "#2044 (7b): the slot route, on the set of the slot named",
+    "replaceEventTierAssignments": "#2044 (7b): the slot route, on the set of the slot named",
+    "autoAssignEventPrices": "#2044 (7b): the slot route, on the set of the slot named"
   },
   "ROUND_NAMES_FROM_FINAL": 0,
   "roundLabel": 0,
@@ -213,5 +218,10 @@
   "MatchSide": 64,
   "sideNumberOfMatchSide": 17,
   "matchSideOfSideNumber": 3,
-  "teamOnMatchSide": 0
+  "teamOnMatchSide": 0,
+  "listEventTiers": 0,
+  "replaceEventTiers": 0,
+  "autoAssignEventTiers": 0,
+  "replaceEventTierAssignments": 0,
+  "autoAssignEventPrices": 0
 }

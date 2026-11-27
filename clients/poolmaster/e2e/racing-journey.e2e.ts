@@ -12,6 +12,7 @@ import { createTestEvent, findSeededSportLeague } from './helpers/test-event';
 import { addTestParticipants } from './helpers/test-participants';
 import { registerFreshUser } from './helpers/user-session';
 import { newRunId, e2eName, e2eEmail, e2eUsername, e2eLeagueCode } from './helpers/test-marker';
+import { tierSetSlotUrl } from './helpers/tier-set-slot';
 
 /**
  * #623, #2075 — the racing journey, on Formula 1 (a racing league with a feed: a league with none
@@ -228,7 +229,7 @@ test('act 1: the root admin builds a race — the seeded series, ten test driver
 
   await test.step('tier the field in seed order, two seeds a tier over the five tiers', async () => {
     await page.getByTestId('root-admin-tier-auto-tiers').click();
-    await submitAndRead(page, 'root-admin-tier-auto-tiers-confirm', 'POST', `/api/v1/events/${raceId}/tiers/auto-assign`);
+    await submitAndRead(page, 'root-admin-tier-auto-tiers-confirm', 'POST', `${await tierSetSlotUrl(page.request, raceId)}/tiers/auto-assign`);
     for (const [index, entryId] of fieldEntryIds.entries()) {
       await expect(page.getByTestId(`root-admin-event-field-row-${entryId}`)).toContainText(`Tier ${String(TIER_OF_DRIVER[index])}`);
     }
@@ -237,7 +238,7 @@ test('act 1: the root admin builds a race — the seeded series, ten test driver
   await test.step('price the field with the default pricing profile', async () => {
     await page.getByTestId('root-admin-tier-auto-prices').click();
     await expect(page.getByTestId('root-admin-tier-auto-prices-preview')).toBeVisible();
-    await submitAndRead(page, 'root-admin-tier-auto-prices-confirm', 'POST', `/api/v1/events/${raceId}/prices/auto-assign`);
+    await submitAndRead(page, 'root-admin-tier-auto-prices-confirm', 'POST', `${await tierSetSlotUrl(page.request, raceId)}/prices/auto-assign`);
   });
 
   await test.step('release the race for contests', async () => {

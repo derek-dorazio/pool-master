@@ -32,3 +32,10 @@ export async function tierSetSlot(prisma: Db, sportEventId: string): Promise<Tie
 export function inTierSet(slot: TierSetSlot): { sportEventId: string; sportEventSlotId: string } {
   return { sportEventId: slot.sportEventId, sportEventSlotId: slot.id };
 }
+
+/** The slot tier and price routes' URL for the event's one slot (#2044): `/api/v1/events/<event>/slots/<Season slot>/<path>`. */
+export async function tierSetSlotRoute(prisma: Db, sportEventId: string, path: string): Promise<string> {
+  const { id } = await tierSetSlot(prisma, sportEventId);
+  const { sportLeagueSeasonCompetitionSlotId } = await prisma.sportEventSlot.findUniqueOrThrow({ where: { id }, select: { sportLeagueSeasonCompetitionSlotId: true } });
+  return `/api/v1/events/${sportEventId}/slots/${sportLeagueSeasonCompetitionSlotId}/${path}`;
+}

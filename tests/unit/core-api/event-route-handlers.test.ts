@@ -382,22 +382,6 @@ describe('rounds, field and tiers', () => {
     expect(removed.statusCode).toBe(204);
   });
 
-  it('lists and replaces tiers, and answers each tier or price assignment with the field', async () => {
-    const { services, handlers } = fakes();
-
-    expect((await callHandler(handlers.listEventTiers, stubRequest({ params }))).body).toEqual({ tiers: [] });
-    expect((await callHandler(handlers.replaceEventTiers, stubRequest({ params, body: { tiers: [] } }))).body).toEqual({ tiers: [] });
-    for (const [handler, body] of [
-      [handlers.autoAssignEventTiers, { tierCount: 3 }],
-      [handlers.replaceEventTierAssignments, { assignments: [] }],
-      [handlers.autoAssignEventPrices, { salaryCap: 50000 }],
-    ] as const) {
-      expect((await callHandler(handler, stubRequest({ params, body }))).body).toMatchObject({ participants: [{ id: 'sep-1' }] });
-    }
-    expect(services.tiers.replaceTiers).toHaveBeenCalledWith({ sportEventId: EVENT_ID, tiers: [] });
-    expect(services.tiers.autoAssignPrices).toHaveBeenCalledWith({ sportEventId: EVENT_ID, pricing: { salaryCap: 50000 } });
-  });
-
   it('reads and writes the set of the slot a slot route names, answering each write with the field valued in that slot (#2044)', async () => {
     const { services, handlers } = fakes();
     const slotParams = { eventId: EVENT_ID, seasonSlotId: 'season-slot-r32' };

@@ -12,7 +12,7 @@ import {
 } from '../helpers';
 import { eventRoundSlots, fixtureSeasonId, freshEventEdition } from '../../support/event-edition';
 import { standardPricingIn } from '../../support/budget-pricing';
-import { inTierSet, tierSetSlot } from '../../support/event-tier-sets';
+import { inTierSet, tierSetSlot, tierSetSlotRoute } from '../../support/event-tier-sets';
 import { sportLeagueRowDefaults } from '../../support/league-profiles';
 import { participantLeagueIdForSport } from '../../support/participant-league';
 import { sportRowKeys } from '../../support/sport-rows';
@@ -299,7 +299,7 @@ describe('events routes', () => {
 
       const draftTierRes = await getApp().inject({
         method: 'PUT',
-        url: `/api/v1/events/${eventId}/tiers`,
+        url: await tierSetSlotRoute(getPrisma(), eventId, 'tiers'),
         headers: admin.headers,
         payload: tierPayload,
       });
@@ -317,7 +317,7 @@ describe('events routes', () => {
 
       const pricesRes = await getApp().inject({
         method: 'POST',
-        url: `/api/v1/events/${eventId}/prices/auto-assign`,
+        url: await tierSetSlotRoute(getPrisma(), eventId, 'prices/auto-assign'),
         headers: admin.headers,
         payload: await standardPricingIn(getPrisma()),
       });
@@ -337,7 +337,7 @@ describe('events routes', () => {
 
       const lockedTierRes = await getApp().inject({
         method: 'PUT',
-        url: `/api/v1/events/${eventId}/tiers`,
+        url: await tierSetSlotRoute(getPrisma(), eventId, 'tiers'),
         headers: admin.headers,
         payload: tierPayload,
       });
@@ -347,7 +347,7 @@ describe('events routes', () => {
 
       const lockedPricesRes = await getApp().inject({
         method: 'POST',
-        url: `/api/v1/events/${eventId}/prices/auto-assign`,
+        url: await tierSetSlotRoute(getPrisma(), eventId, 'prices/auto-assign'),
         headers: admin.headers,
         payload: { ...(await standardPricingIn(getPrisma())), salaryCap: 5000, unit: 10 },
       });
@@ -370,7 +370,7 @@ describe('events routes', () => {
 
       const res = await getApp().inject({
         method: 'POST',
-        url: `/api/v1/events/${eventId}/prices/auto-assign`,
+        url: await tierSetSlotRoute(getPrisma(), eventId, 'prices/auto-assign'),
         headers: admin.headers,
         payload: { ...standard, profileName: 'Standard' },
       });
@@ -386,7 +386,7 @@ describe('events routes', () => {
 
       const res = await getApp().inject({
         method: 'POST',
-        url: `/api/v1/events/${eventId}/prices/auto-assign`,
+        url: await tierSetSlotRoute(getPrisma(), eventId, 'prices/auto-assign'),
         headers: admin.headers,
         payload: { ...(await standardPricingIn(getPrisma())), platformPricingProfileId: randomUUID() },
       });
@@ -421,7 +421,7 @@ describe('events routes', () => {
       });
       const pricesRes = await getApp().inject({
         method: 'POST',
-        url: `/api/v1/events/${eventId}/prices/auto-assign`,
+        url: await tierSetSlotRoute(getPrisma(), eventId, 'prices/auto-assign'),
         headers: admin.headers,
         payload: await standardPricingIn(getPrisma()),
       });
@@ -599,7 +599,7 @@ describe('each slot a tiered or budget template lists holds its own tier set (#2
 
       const [laterTiers, tierSetTiers, laterField, tierSetField] = await Promise.all([
         inject('GET', slotUrl(later, 'tiers')),
-        inject('GET', `/api/v1/events/${event.id}/tiers`),
+        inject('GET', slotUrl(roundOf64.sportLeagueSeasonCompetitionSlotId, 'tiers')),
         inject('GET', slotUrl(later, 'participants')),
         inject('GET', `/api/v1/events/${event.id}/participants`),
       ]);

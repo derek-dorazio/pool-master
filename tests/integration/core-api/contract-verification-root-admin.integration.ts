@@ -1408,7 +1408,7 @@ describe('Contract verification (root admin)', () => {
       // A root admin's read carries the admin counts a member's never does (#1198).
       expect(tournamentListRes.json<SportEventListResponse>().events[0]?.adminCounts).toMatchObject({ contestCount: 0 });
 
-      // --- listEventParticipants / listEventTiers / listEventRounds (200) ----
+      // --- listEventParticipants / listEventSlotTiers / listEventRounds (200) ----
       const fieldRes = await getApp().inject({
         method: 'GET',
         url: `/api/v1/events/${eventId}/participants`,
@@ -1479,9 +1479,12 @@ describe('Contract verification (root admin)', () => {
       expect(rankSaveRes.statusCode).toBe(200);
       expect(SportEventParticipantListResponseSchema.safeParse(rankSaveRes.json()).success).toBe(true);
 
+      // The tier and price routes take the slot whose set they read and write (#2044): the event's one slot.
+      const { sportLeagueSeasonCompetitionSlotId: seasonSlotId } = await getPrisma().sportEventSlot.findFirstOrThrow({ where: { sportEventId: eventId }, select: { sportLeagueSeasonCompetitionSlotId: true } });
+      const slotRoute = (path: string) => `/api/v1/events/${eventId}/slots/${seasonSlotId}/${path}`;
       const tiersRes = await getApp().inject({
         method: 'GET',
-        url: `/api/v1/events/${eventId}/tiers`,
+        url: slotRoute('tiers'),
         headers: rootAdmin.headers,
       });
       expect(tiersRes.statusCode).toBe(200);
@@ -1516,7 +1519,7 @@ describe('Contract verification (root admin)', () => {
       // Two golfers can't fill six tiers, and release refuses an empty tier: play two.
       const twoTiersRes = await getApp().inject({
         method: 'PUT',
-        url: `/api/v1/events/${eventId}/tiers`,
+        url: slotRoute('tiers'),
         headers: rootAdmin.headers,
         payload: {
           tiers: [
@@ -1529,16 +1532,16 @@ describe('Contract verification (root admin)', () => {
 
       const autoTierRes = await getApp().inject({
         method: 'POST',
-        url: `/api/v1/events/${eventId}/tiers/auto-assign`,
+        url: slotRoute('tiers/auto-assign'),
         headers: rootAdmin.headers,
         payload: {},
       });
       expect(autoTierRes.statusCode).toBe(200);
 
-      // --- autoAssignEventPrices: release also needs every active golfer priced (#93) ---
+      // --- autoAssignEventSlotPrices: release also needs every active golfer priced (#93) ---
       const autoPriceRes = await getApp().inject({
         method: 'POST',
-        url: `/api/v1/events/${eventId}/prices/auto-assign`,
+        url: slotRoute('prices/auto-assign'),
         headers: rootAdmin.headers,
         payload: await standardPricingIn(getPrisma()),
       });
@@ -1555,8 +1558,6 @@ describe('Contract verification (root admin)', () => {
       expect(releaseRes.json<SportEventResponse>().event.status).toBe('SCHEDULED');
 
       // --- the slot tier routes (#2044): reads 200, every write 409 once the tier-set slot is released ---
-      const { sportLeagueSeasonCompetitionSlotId: seasonSlotId } = await getPrisma().sportEventSlot.findFirstOrThrow({ where: { sportEventId: eventId }, select: { sportLeagueSeasonCompetitionSlotId: true } });
-      const slotRoute = (path: string) => `/api/v1/events/${eventId}/slots/${seasonSlotId}/${path}`;
       const slotTiersRes = await getApp().inject({ method: 'GET', url: slotRoute('tiers'), headers: rootAdmin.headers });
       expect(slotTiersRes.statusCode).toBe(200);
       expect(SportEventTierListResponseSchema.safeParse(slotTiersRes.json()).success).toBe(true);

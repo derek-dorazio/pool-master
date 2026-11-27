@@ -3,8 +3,8 @@ import {
   acceptInvitation,
   addEventParticipants,
   applyEventRaceResults,
-  autoAssignEventPrices,
-  autoAssignEventTiers,
+  autoAssignEventSlotPrices,
+  autoAssignEventSlotTiers,
   createContest,
   crownCup,
   createEvent,
@@ -61,6 +61,7 @@ import { uniqueTestSlotLabel } from '../support/test-slots';
 import { expectDefined } from '../support/expect-defined';
 import { standardPricingFor } from './standard-pricing';
 import { byParticipantId, setFieldRows } from './field-rows';
+import { tierSetSlotPath } from './tier-set-slot';
 
 // A league's 2099 World Marathon Majors (men) Cup end to end (#841): the cup is made with the
 // league's first contest of the season, and two races settled through the real routes rank the
@@ -164,8 +165,8 @@ describe('SDK Functional: sports league cups and the league championship (#841, 
         path: { eventId },
         body: { rows: RUNNERS.map((runner, index) => ({ playerName: `${runner} ${RUN}`, ranking: index + 1, seedNumber: index + 1 })) },
       });
-      await autoAssignEventTiers({ client: a, path: { eventId }, body: { tierSize: 1 } });
-      await autoAssignEventPrices({ client: a, path: { eventId }, body: await standardPricingFor(a) });
+      await autoAssignEventSlotTiers({ client: a, path: await tierSetSlotPath(a, eventId), body: { tierSize: 1 } });
+      await autoAssignEventSlotPrices({ client: a, path: await tierSetSlotPath(a, eventId), body: await standardPricingFor(a) });
       expect((await releaseEvent({ client: a, path: { eventId } })).data?.event.status).toBe('SCHEDULED');
       return eventId;
     };

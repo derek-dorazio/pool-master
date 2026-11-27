@@ -14,6 +14,7 @@ import { createTestEvent, findSeededSportLeague } from './helpers/test-event';
 import { registerFreshUser } from './helpers/user-session';
 import { newRunId, e2eName, e2eEmail, e2eUsername, e2eLeagueCode } from './helpers/test-marker';
 import { AWAY_SIDE, HOME_SIDE, bracketLoadMatch, teamOn, type BracketReadMatch } from './helpers/match-sides';
+import { tierSetSlotUrl } from './helpers/tier-set-slot';
 
 /**
  * #749 — the knockout journey, on the 2025 WNBA playoffs as they were played (series results
@@ -266,13 +267,13 @@ test('act 1: the root admin builds the 2025 WNBA playoffs — league, eight team
 
   await test.step('tier the field, which has a seed for every team, two teams a tier, and price it', async () => {
     await page.getByTestId('root-admin-tier-auto-tiers').click();
-    await submitAndRead(page, 'root-admin-tier-auto-tiers-confirm', 'POST', `/api/v1/events/${eventId}/tiers/auto-assign`);
+    await submitAndRead(page, 'root-admin-tier-auto-tiers-confirm', 'POST', `${await tierSetSlotUrl(page.request, eventId)}/tiers/auto-assign`);
     for (const [index, entryId] of fieldEntryIds.entries()) {
       await expect(page.getByTestId(`root-admin-event-field-row-${entryId}`)).toContainText(`Tier ${String(TIER_OF_SEED[index])}`);
     }
     await page.getByTestId('root-admin-tier-auto-prices').click();
     await expect(page.getByTestId('root-admin-tier-auto-prices-preview')).toBeVisible();
-    await submitAndRead(page, 'root-admin-tier-auto-prices-confirm', 'POST', `/api/v1/events/${eventId}/prices/auto-assign`);
+    await submitAndRead(page, 'root-admin-tier-auto-prices-confirm', 'POST', `${await tierSetSlotUrl(page.request, eventId)}/prices/auto-assign`);
   });
 
   await test.step('load the bracket with the 2 seed\'s first-round opponent still open, as a data file would before the play-in is decided', async () => {

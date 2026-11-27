@@ -8,6 +8,7 @@ import { createTestEventThroughApi, findSeededSportLeagueThroughApi } from './he
 import { registerFreshUser } from './helpers/user-session';
 import { newRunId, e2eName, e2eEmail, e2eUsername, e2eLeagueCode } from './helpers/test-marker';
 import { bracketLoadMatch } from './helpers/match-sides';
+import { tierSetSlotUrl } from './helpers/tier-set-slot';
 
 /**
  * #718 — the pick'em pool journey: the root admin sets up two released American football weeks
@@ -178,9 +179,10 @@ test('act 1: the root admin releases two American football weeks, each one game 
           seedNumber: seed + 1,
         })),
       }, 'patch');
-      await postJson(api, headers, `/api/v1/events/${event.id}/tiers`, { tiers: TWO_TIERS }, 'put');
-      await postJson(api, headers, `/api/v1/events/${event.id}/tiers/auto-assign`, {});
-      await postJson(api, headers, `/api/v1/events/${event.id}/prices/auto-assign`, await standardPricingRequest(api, headers));
+      const slotUrl = await tierSetSlotUrl(api, event.id, headers);
+      await postJson(api, headers, `${slotUrl}/tiers`, { tiers: TWO_TIERS }, 'put');
+      await postJson(api, headers, `${slotUrl}/tiers/auto-assign`, {});
+      await postJson(api, headers, `${slotUrl}/prices/auto-assign`, await standardPricingRequest(api, headers));
 
       const { participants } = await (await expectOk(api.get(`/api/v1/events/${event.id}/participants`, { headers }), 'read the field')).json() as {
         participants: Array<{ id: string; participant: { name: string } }>;

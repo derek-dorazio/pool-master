@@ -1,8 +1,8 @@
 import { deleteTestSportLeagues } from '../support/test-slots';
 import {
   addEventParticipants,
-  autoAssignEventPrices,
-  autoAssignEventTiers,
+  autoAssignEventSlotPrices,
+  autoAssignEventSlotTiers,
   createParticipant,
   getEventBracket,
   listEventParticipants,
@@ -30,6 +30,7 @@ import { insertTestSportLeague } from '../support/test-sport-league';
 import type { SportEventRoundMatchDto } from '@poolmaster/shared/dto/bracket.dto';
 import { bracketMatch, dtoSideTeam, matchup, matchupTeams, resultBody } from '../support/match-requests';
 import { setFieldRows } from './field-rows';
+import { tierSetSlotPath } from './tier-set-slot';
 
 // A reseeded bracket end to end over HTTP (#722), shaped like one NFL conference: seven seeds, the
 // 1 seed on a bye, Wild Card games that link nowhere, a Divisional round the admin places by seed,
@@ -112,8 +113,8 @@ describe('SDK Functional: Reseeded bracket', () => {
       path: { eventId },
       body: { rows: SEEDS.map((seed) => ({ playerName: `Seed ${seed} ${RUN}`, seedNumber: seed })) },
     });
-    expect((await autoAssignEventTiers({ client: a, path: { eventId }, body: { tierSize: 2 } })).response?.status).toBe(200);
-    expect((await autoAssignEventPrices({ client: a, path: { eventId }, body: await standardPricingFor(a) })).response?.status).toBe(200);
+    expect((await autoAssignEventSlotTiers({ client: a, path: await tierSetSlotPath(a, eventId), body: { tierSize: 2 } })).response?.status).toBe(200);
+    expect((await autoAssignEventSlotPrices({ client: a, path: await tierSetSlotPath(a, eventId), body: await standardPricingFor(a) })).response?.status).toBe(200);
 
     const field = expectDefined((await listEventParticipants({ client: a, path: { eventId } })).data).participants;
     const seedRow = (seed: number) => expectDefined(field.find((row) => row.participant.name === `Seed ${seed} ${RUN}`)).id;

@@ -2,8 +2,8 @@ import {
   acceptInvitation,
   addEventParticipants,
   applyEventRaceResults,
-  autoAssignEventPrices,
-  autoAssignEventTiers,
+  autoAssignEventSlotPrices,
+  autoAssignEventSlotTiers,
   createContest,
   createParticipant,
   enterContest,
@@ -15,7 +15,7 @@ import {
   listSportLeagues,
   openContest,
   releaseEvent,
-  replaceEventTiers,
+  replaceEventSlotTiers,
   submitContestEntry,
   selectContestPick,
   transitionEvent,
@@ -30,6 +30,7 @@ import {
 import { expectDefined } from '../support/expect-defined';
 import { standardPricingFor } from './standard-pricing';
 import { byParticipantId, setFieldRows } from './field-rows';
+import { tierSetSlotPath } from './tier-set-slot';
 
 // Auto racing end to end over HTTP (#624): an admin builds a race in the seeded NASCAR Cup Series
 // and loads its field's rankings by upload, a commissioner runs a contest from the series' default
@@ -115,8 +116,8 @@ describe('SDK Functional: Auto racing NASCAR Cup Series points', () => {
       body: { rows: DRIVERS.map((driver, index) => ({ playerName: `${driver} ${RUN}`, ranking: index + 1 })) },
     });
     expect(upload.response?.status).toBe(200);
-    expect((await autoAssignEventTiers({ client: a, path: { eventId }, body: { tierSize: 1 } })).response?.status).toBe(200);
-    expect((await autoAssignEventPrices({ client: a, path: { eventId }, body: await standardPricingFor(a) })).response?.status).toBe(200);
+    expect((await autoAssignEventSlotTiers({ client: a, path: await tierSetSlotPath(a, eventId), body: { tierSize: 1 } })).response?.status).toBe(200);
+    expect((await autoAssignEventSlotPrices({ client: a, path: await tierSetSlotPath(a, eventId), body: await standardPricingFor(a) })).response?.status).toBe(200);
     expect((await releaseEvent({ client: a, path: { eventId } })).data?.event.status).toBe('SCHEDULED');
 
     const field = expectDefined((await listEventParticipants({ client: a, path: { eventId } })).data).participants;
@@ -253,15 +254,15 @@ describe('SDK Functional: Auto racing Formula 1 points', () => {
     })).response?.status).toBe(200);
 
     // A Formula 1 race is set to four tiers on the event's Tiers card, over the sport's five.
-    const fourTiers = await replaceEventTiers({
+    const fourTiers = await replaceEventSlotTiers({
       client: a,
-      path: { eventId },
+      path: await tierSetSlotPath(a, eventId),
       body: { tiers: [1, 2, 3, 4].map((n) => ({ tierKey: `tier-${n}`, tierNumber: n })) },
     });
     expect(fourTiers.response?.status).toBe(200);
     expect(expectDefined(fourTiers.data).tiers).toHaveLength(4);
-    expect((await autoAssignEventTiers({ client: a, path: { eventId }, body: { tierSize: 2 } })).response?.status).toBe(200);
-    expect((await autoAssignEventPrices({ client: a, path: { eventId }, body: await standardPricingFor(a) })).response?.status).toBe(200);
+    expect((await autoAssignEventSlotTiers({ client: a, path: await tierSetSlotPath(a, eventId), body: { tierSize: 2 } })).response?.status).toBe(200);
+    expect((await autoAssignEventSlotPrices({ client: a, path: await tierSetSlotPath(a, eventId), body: await standardPricingFor(a) })).response?.status).toBe(200);
     expect((await releaseEvent({ client: a, path: { eventId } })).data?.event.status).toBe('SCHEDULED');
 
     const field = expectDefined((await listEventParticipants({ client: a, path: { eventId } })).data).participants;

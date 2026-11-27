@@ -12348,7 +12348,7 @@ export type SportEventTierSetDto = {
      */
     seasonSlotId: string;
     /**
-     * Whether this is the event's tier-set slot, the first holding a set: the one the event-level tier routes act on, released with the event.
+     * Whether this is the event's tier-set slot, the first holding a set: the one a contest starting at the first slot the event lists picks from, locked when the event is released.
      */
     isTierSetSlot: boolean;
     /**
@@ -12636,7 +12636,7 @@ export type SportEventDto = {
          */
         seasonSlotId: string;
         /**
-         * Whether this is the event's tier-set slot, the first holding a set: the one the event-level tier routes act on, released with the event.
+         * Whether this is the event's tier-set slot, the first holding a set: the one a contest starting at the first slot the event lists picks from, locked when the event is released.
          */
         isTierSetSlot: boolean;
         /**
@@ -13193,7 +13193,7 @@ export type SportEventListResponse = {
              */
             seasonSlotId: string;
             /**
-             * Whether this is the event's tier-set slot, the first holding a set: the one the event-level tier routes act on, released with the event.
+             * Whether this is the event's tier-set slot, the first holding a set: the one a contest starting at the first slot the event lists picks from, locked when the event is released.
              */
             isTierSetSlot: boolean;
             /**
@@ -13725,7 +13725,7 @@ export type SportEventResponse = {
              */
             seasonSlotId: string;
             /**
-             * Whether this is the event's tier-set slot, the first holding a set: the one the event-level tier routes act on, released with the event.
+             * Whether this is the event's tier-set slot, the first holding a set: the one a contest starting at the first slot the event lists picks from, locked when the event is released.
              */
             isTierSetSlot: boolean;
             /**
@@ -37400,209 +37400,6 @@ export type RemoveEventParticipantResponses = {
 };
 
 export type RemoveEventParticipantResponse = RemoveEventParticipantResponses[keyof RemoveEventParticipantResponses];
-
-export type ListEventTiersData = {
-    body?: never;
-    path: {
-        eventId: string;
-    };
-    query?: never;
-    url: '/api/v1/events/{eventId}/tiers';
-};
-
-export type ListEventTiersErrors = {
-    /**
-     * Standard API error envelope.
-     */
-    401: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    404: ErrorEnvelope;
-};
-
-export type ListEventTiersError = ListEventTiersErrors[keyof ListEventTiersErrors];
-
-export type ListEventTiersResponses = {
-    /**
-     * An event's tiers.
-     */
-    200: SportEventTierListResponse;
-};
-
-export type ListEventTiersResponse = ListEventTiersResponses[keyof ListEventTiersResponses];
-
-export type ReplaceEventTiersData = {
-    body: ReplaceSportEventTiersRequest;
-    path: {
-        eventId: string;
-    };
-    query?: never;
-    url: '/api/v1/events/{eventId}/tiers';
-};
-
-export type ReplaceEventTiersErrors = {
-    /**
-     * Standard API error envelope.
-     */
-    401: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    403: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    404: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    409: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    422: ErrorEnvelope;
-};
-
-export type ReplaceEventTiersError = ReplaceEventTiersErrors[keyof ReplaceEventTiersErrors];
-
-export type ReplaceEventTiersResponses = {
-    /**
-     * An event's tiers.
-     */
-    200: SportEventTierListResponse;
-};
-
-export type ReplaceEventTiersResponse = ReplaceEventTiersResponses[keyof ReplaceEventTiersResponses];
-
-export type AutoAssignEventTiersData = {
-    body: AutoAssignSportEventTiersRequest;
-    path: {
-        eventId: string;
-    };
-    query?: never;
-    url: '/api/v1/events/{eventId}/tiers/auto-assign';
-};
-
-export type AutoAssignEventTiersErrors = {
-    /**
-     * Standard API error envelope.
-     */
-    401: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    403: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    404: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    409: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    422: ErrorEnvelope;
-};
-
-export type AutoAssignEventTiersError = AutoAssignEventTiersErrors[keyof AutoAssignEventTiersErrors];
-
-export type AutoAssignEventTiersResponses = {
-    /**
-     * An event's field.
-     */
-    200: SportEventParticipantListResponse;
-};
-
-export type AutoAssignEventTiersResponse = AutoAssignEventTiersResponses[keyof AutoAssignEventTiersResponses];
-
-export type ReplaceEventTierAssignmentsData = {
-    body: ReplaceSportEventTierAssignmentsRequest;
-    path: {
-        eventId: string;
-    };
-    query?: never;
-    url: '/api/v1/events/{eventId}/tiers/assignments';
-};
-
-export type ReplaceEventTierAssignmentsErrors = {
-    /**
-     * Standard API error envelope.
-     */
-    401: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    403: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    404: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    409: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    422: ErrorEnvelope;
-};
-
-export type ReplaceEventTierAssignmentsError = ReplaceEventTierAssignmentsErrors[keyof ReplaceEventTierAssignmentsErrors];
-
-export type ReplaceEventTierAssignmentsResponses = {
-    /**
-     * An event's field.
-     */
-    200: SportEventParticipantListResponse;
-};
-
-export type ReplaceEventTierAssignmentsResponse = ReplaceEventTierAssignmentsResponses[keyof ReplaceEventTierAssignmentsResponses];
-
-export type AutoAssignEventPricesData = {
-    body: AutoAssignSportEventPricesRequest;
-    path: {
-        eventId: string;
-    };
-    query?: never;
-    url: '/api/v1/events/{eventId}/prices/auto-assign';
-};
-
-export type AutoAssignEventPricesErrors = {
-    /**
-     * Standard API error envelope.
-     */
-    401: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    403: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    404: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    409: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    422: ErrorEnvelope;
-};
-
-export type AutoAssignEventPricesError = AutoAssignEventPricesErrors[keyof AutoAssignEventPricesErrors];
-
-export type AutoAssignEventPricesResponses = {
-    /**
-     * An event's field.
-     */
-    200: SportEventParticipantListResponse;
-};
-
-export type AutoAssignEventPricesResponse = AutoAssignEventPricesResponses[keyof AutoAssignEventPricesResponses];
 
 export type ListEventSlotParticipantsData = {
     body?: never;

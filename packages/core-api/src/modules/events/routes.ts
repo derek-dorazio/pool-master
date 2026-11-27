@@ -398,80 +398,9 @@ export async function eventsModule(fastify: FastifyInstance, opts: EventsModuleO
     handler: handler.removeEventParticipant,
   });
 
-  // --- Tiers and valuations ------------------------------------------------------------
-
-  fastify.get('/:eventId/tiers', {
-    schema: {
-      tags: TAGS,
-      summary: 'List a sport event\'s tiers',
-      description: 'Who is in each tier is on each field row\'s valuation (listEventParticipants).',
-      operationId: 'listEventTiers',
-      params: EVENT_PARAMS,
-      response: { 200: schemaRef('SportEventTierListResponse'), ...errors(401, 404) },
-    },
-    handler: handler.listEventTiers,
-  });
-
-  fastify.put('/:eventId/tiers', {
-    ...write,
-    schema: {
-      tags: TAGS,
-      summary: 'Replace a sport event\'s tiers',
-      description: 'The event\'s optional override of the tiers it copied from its sport league\'s tier profile. While no tier was placed by hand, the field is placed in the new tiers at once, as auto-assign does. Once one was (MANUAL), places are kept and '
-        + '409 TIER_REPLACE_WOULD_ORPHAN_ASSIGNMENTS answers a removal that would strand participants with no reassignOrphansTo. 409 SPORT_EVENT_TIERS_LOCKED once released. Root admin only.',
-      operationId: 'replaceEventTiers',
-      params: EVENT_PARAMS,
-      body: schemaRef('ReplaceSportEventTiersRequest'),
-      response: { 200: schemaRef('SportEventTierListResponse'), ...errors(401, 403, 404, 409, 422) },
-    },
-    handler: handler.replaceEventTiers,
-  });
-
-  fastify.post('/:eventId/tiers/auto-assign', {
-    ...write,
-    schema: {
-      tags: TAGS,
-      summary: 'Fill a sport event\'s tiers from its active field',
-      description: 'Returns the field with its new valuations. Root admin only. 409 SPORT_EVENT_TIERS_LOCKED once the event is released: its tiers and prices are locked. 409 FIELD_HAS_NO_ORDER when no active participant has a value for any source the league\'s tier profile lists: a field is never ordered by name. 422 TIER_SIZE_NOT_FOR_RANGES when a tier size is sent for a league whose tier profile is RANGES.',
-      operationId: 'autoAssignEventTiers',
-      params: EVENT_PARAMS,
-      body: schemaRef('AutoAssignSportEventTiersRequest'),
-      response: { 200: schemaRef('SportEventParticipantListResponse'), ...errors(401, 403, 404, 409, 422) },
-    },
-    handler: handler.autoAssignEventTiers,
-  });
-
-  fastify.put('/:eventId/tiers/assignments', {
-    ...write,
-    schema: {
-      tags: TAGS,
-      summary: 'Replace a sport event\'s tier assignments',
-      description: 'The drag-and-drop save, all or none. Returns the field with its new valuations. Root admin only. 409 SPORT_EVENT_TIERS_LOCKED once the event is released: its tiers and prices are locked.',
-      operationId: 'replaceEventTierAssignments',
-      params: EVENT_PARAMS,
-      body: schemaRef('ReplaceSportEventTierAssignmentsRequest'),
-      response: { 200: schemaRef('SportEventParticipantListResponse'), ...errors(401, 403, 404, 409, 422) },
-    },
-    handler: handler.replaceEventTierAssignments,
-  });
-
-  fastify.post('/:eventId/prices/auto-assign', {
-    ...write,
-    schema: {
-      tags: TAGS,
-      summary: 'Price a sport event\'s seeded field',
-      description: 'Prices the active field on the budget curve with the values sent, in the order of the league\'s pricing profile\'s sources, and stores the values as the event\'s pricing, with the profile they started from by id. Repeatable until release. Returns the field with its new valuations. Root admin only. 409 SPORT_EVENT_TIERS_LOCKED once the event is released: its tiers and prices are locked. 422 PRICING_CONFIG_INVALID when the floor share is above the top share or the rounding unit is above the worst golfer\'s price (salaryCap × floorSharePercent / 100), which could round prices to $0. 409 FIELD_HAS_NO_ORDER when no active participant has a value for any source the league\'s pricing profile lists: a field is never ordered by name. 404 PLATFORM_PRICING_PROFILE_NOT_FOUND when no pricing profile has the id sent.',
-      operationId: 'autoAssignEventPrices',
-      params: EVENT_PARAMS,
-      body: schemaRef('AutoAssignSportEventPricesRequest'),
-      response: { 200: schemaRef('SportEventParticipantListResponse'), ...errors(401, 403, 404, 409, 422) },
-    },
-    handler: handler.autoAssignEventPrices,
-  });
-
   // --- A slot's tiers and valuations (#2044): every slot a tiered or budget contest may start at
-  // holds its own set (chooseTierSetSlots), keyed by the Season slot the event is played in. The event routes above act on
-  // the event's tier-set slot, the first of them. Each answers 404 SPORT_EVENT_SLOT_NOT_FOUND for a
+  // holds its own set (chooseTierSetSlots), keyed by the Season slot the event is played in; the
+  // event's tier-set slot is the first of them. Each answers 404 SPORT_EVENT_SLOT_NOT_FOUND for a
   // Season slot the event is not played in.
 
   const SLOT_SET = 'The set of the slot the event plays in this Season slot (#2044): a slot holds one when a contest of a tiered or budget template may start there (each slot a one-slot or from-slot template lists, the first a whole-event template lists), or it is the event\'s first slot and no such template lists any.';
@@ -506,7 +435,7 @@ export async function eventsModule(fastify: FastifyInstance, opts: EventsModuleO
     schema: {
       tags: TAGS,
       summary: 'Replace a sport event slot\'s tiers',
-      description: `replaceEventTiers on the slot's set. ${SLOT_SET} ${SLOT_LOCK} Root admin only.`,
+      description: `The slot's optional override of the tiers it copied from its sport league's tier profile. While no tier was placed by hand, the field is placed in the new tiers at once, as auto-assign does. Once one was (MANUAL), places are kept and 409 TIER_REPLACE_WOULD_ORPHAN_ASSIGNMENTS answers a removal that would strand participants with no reassignOrphansTo. ${SLOT_SET} ${SLOT_LOCK} Root admin only.`,
       operationId: 'replaceEventSlotTiers',
       params: SLOT_PARAMS,
       body: schemaRef('ReplaceSportEventTiersRequest'),
@@ -520,7 +449,7 @@ export async function eventsModule(fastify: FastifyInstance, opts: EventsModuleO
     schema: {
       tags: TAGS,
       summary: 'Fill a sport event slot\'s tiers from its active field',
-      description: `autoAssignEventTiers on the slot's set, from the field still active: a later slot's set covers who is still in when it starts. Returns the field with the slot's valuations. ${SLOT_LOCK} Root admin only.`,
+      description: `Fills the slot's tiers from the field still active when it starts: a later slot's set leaves out the participants who lost a decided match in an earlier slot. Returns the field with the slot's valuations. 409 FIELD_HAS_NO_ORDER when no active participant has a value for any source the league's tier profile lists: a field is never ordered by name. 422 TIER_SIZE_NOT_FOR_RANGES when a tier size is sent for a league whose tier profile is RANGES. ${SLOT_LOCK} Root admin only.`,
       operationId: 'autoAssignEventSlotTiers',
       params: SLOT_PARAMS,
       body: schemaRef('AutoAssignSportEventTiersRequest'),
@@ -534,7 +463,7 @@ export async function eventsModule(fastify: FastifyInstance, opts: EventsModuleO
     schema: {
       tags: TAGS,
       summary: 'Replace a sport event slot\'s tier assignments',
-      description: `replaceEventTierAssignments on the slot's set. Returns the field with the slot's valuations. ${SLOT_LOCK} Root admin only.`,
+      description: `The drag-and-drop save of the slot's set, all or none. Returns the field with the slot's valuations. ${SLOT_LOCK} Root admin only.`,
       operationId: 'replaceEventSlotTierAssignments',
       params: SLOT_PARAMS,
       body: schemaRef('ReplaceSportEventTierAssignmentsRequest'),
@@ -548,7 +477,7 @@ export async function eventsModule(fastify: FastifyInstance, opts: EventsModuleO
     schema: {
       tags: TAGS,
       summary: 'Price a sport event slot\'s seeded field',
-      description: `autoAssignEventPrices on the slot's set, recording the values on the slot. Returns the field with the slot's valuations. ${SLOT_LOCK} Root admin only.`,
+      description: `Prices the slot's active field on the budget curve with the values sent, in the order of the league's pricing profile's sources, and stores the values as the slot's pricing, with the profile they started from by id. Repeatable until the set locks. Returns the field with the slot's valuations. 422 PRICING_CONFIG_INVALID when the floor share is above the top share or the rounding unit is above the worst golfer's price (salaryCap × floorSharePercent / 100), which could round prices to $0. 409 FIELD_HAS_NO_ORDER when no active participant has a value for any source the league's pricing profile lists: a field is never ordered by name. 404 PLATFORM_PRICING_PROFILE_NOT_FOUND when no pricing profile has the id sent. ${SLOT_LOCK} Root admin only.`,
       operationId: 'autoAssignEventSlotPrices',
       params: SLOT_PARAMS,
       body: schemaRef('AutoAssignSportEventPricesRequest'),

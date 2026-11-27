@@ -2255,90 +2255,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/events/{eventId}/tiers": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * List a sport event's tiers
-         * @description Who is in each tier is on each field row's valuation (listEventParticipants).
-         */
-        get: operations["listEventTiers"];
-        /**
-         * Replace a sport event's tiers
-         * @description The event's optional override of the tiers it copied from its sport league's tier profile. While no tier was placed by hand, the field is placed in the new tiers at once, as auto-assign does. Once one was (MANUAL), places are kept and 409 TIER_REPLACE_WOULD_ORPHAN_ASSIGNMENTS answers a removal that would strand participants with no reassignOrphansTo. 409 SPORT_EVENT_TIERS_LOCKED once released. Root admin only.
-         */
-        put: operations["replaceEventTiers"];
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/events/{eventId}/tiers/auto-assign": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Fill a sport event's tiers from its active field
-         * @description Returns the field with its new valuations. Root admin only. 409 SPORT_EVENT_TIERS_LOCKED once the event is released: its tiers and prices are locked. 409 FIELD_HAS_NO_ORDER when no active participant has a value for any source the league's tier profile lists: a field is never ordered by name. 422 TIER_SIZE_NOT_FOR_RANGES when a tier size is sent for a league whose tier profile is RANGES.
-         */
-        post: operations["autoAssignEventTiers"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/events/{eventId}/tiers/assignments": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        /**
-         * Replace a sport event's tier assignments
-         * @description The drag-and-drop save, all or none. Returns the field with its new valuations. Root admin only. 409 SPORT_EVENT_TIERS_LOCKED once the event is released: its tiers and prices are locked.
-         */
-        put: operations["replaceEventTierAssignments"];
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/events/{eventId}/prices/auto-assign": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Price a sport event's seeded field
-         * @description Prices the active field on the budget curve with the values sent, in the order of the league's pricing profile's sources, and stores the values as the event's pricing, with the profile they started from by id. Repeatable until release. Returns the field with its new valuations. Root admin only. 409 SPORT_EVENT_TIERS_LOCKED once the event is released: its tiers and prices are locked. 422 PRICING_CONFIG_INVALID when the floor share is above the top share or the rounding unit is above the worst golfer's price (salaryCap × floorSharePercent / 100), which could round prices to $0. 409 FIELD_HAS_NO_ORDER when no active participant has a value for any source the league's pricing profile lists: a field is never ordered by name. 404 PLATFORM_PRICING_PROFILE_NOT_FOUND when no pricing profile has the id sent.
-         */
-        post: operations["autoAssignEventPrices"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/v1/events/{eventId}/slots/{seasonSlotId}/participants": {
         parameters: {
             query?: never;
@@ -2373,7 +2289,7 @@ export interface paths {
         get: operations["listEventSlotTiers"];
         /**
          * Replace a sport event slot's tiers
-         * @description replaceEventTiers on the slot's set. The set of the slot the event plays in this Season slot (#2044): a slot holds one when a contest of a tiered or budget template may start there (each slot a one-slot or from-slot template lists, the first a whole-event template lists), or it is the event's first slot and no such template lists any. 409 SPORT_EVENT_TIERS_LOCKED once the set is locked: the event's tier-set slot (its first slot holding a set) at release, any other slot once it starts. 409 SLOT_HOLDS_NO_TIER_SET for a slot holding no set. Root admin only.
+         * @description The slot's optional override of the tiers it copied from its sport league's tier profile. While no tier was placed by hand, the field is placed in the new tiers at once, as auto-assign does. Once one was (MANUAL), places are kept and 409 TIER_REPLACE_WOULD_ORPHAN_ASSIGNMENTS answers a removal that would strand participants with no reassignOrphansTo. The set of the slot the event plays in this Season slot (#2044): a slot holds one when a contest of a tiered or budget template may start there (each slot a one-slot or from-slot template lists, the first a whole-event template lists), or it is the event's first slot and no such template lists any. 409 SPORT_EVENT_TIERS_LOCKED once the set is locked: the event's tier-set slot (its first slot holding a set) at release, any other slot once it starts. 409 SLOT_HOLDS_NO_TIER_SET for a slot holding no set. Root admin only.
          */
         put: operations["replaceEventSlotTiers"];
         post?: never;
@@ -2394,7 +2310,7 @@ export interface paths {
         put?: never;
         /**
          * Fill a sport event slot's tiers from its active field
-         * @description autoAssignEventTiers on the slot's set, from the field still active: a later slot's set covers who is still in when it starts. Returns the field with the slot's valuations. 409 SPORT_EVENT_TIERS_LOCKED once the set is locked: the event's tier-set slot (its first slot holding a set) at release, any other slot once it starts. 409 SLOT_HOLDS_NO_TIER_SET for a slot holding no set. Root admin only.
+         * @description Fills the slot's tiers from the field still active when it starts: a later slot's set leaves out the participants who lost a decided match in an earlier slot. Returns the field with the slot's valuations. 409 FIELD_HAS_NO_ORDER when no active participant has a value for any source the league's tier profile lists: a field is never ordered by name. 422 TIER_SIZE_NOT_FOR_RANGES when a tier size is sent for a league whose tier profile is RANGES. 409 SPORT_EVENT_TIERS_LOCKED once the set is locked: the event's tier-set slot (its first slot holding a set) at release, any other slot once it starts. 409 SLOT_HOLDS_NO_TIER_SET for a slot holding no set. Root admin only.
          */
         post: operations["autoAssignEventSlotTiers"];
         delete?: never;
@@ -2413,7 +2329,7 @@ export interface paths {
         get?: never;
         /**
          * Replace a sport event slot's tier assignments
-         * @description replaceEventTierAssignments on the slot's set. Returns the field with the slot's valuations. 409 SPORT_EVENT_TIERS_LOCKED once the set is locked: the event's tier-set slot (its first slot holding a set) at release, any other slot once it starts. 409 SLOT_HOLDS_NO_TIER_SET for a slot holding no set. Root admin only.
+         * @description The drag-and-drop save of the slot's set, all or none. Returns the field with the slot's valuations. 409 SPORT_EVENT_TIERS_LOCKED once the set is locked: the event's tier-set slot (its first slot holding a set) at release, any other slot once it starts. 409 SLOT_HOLDS_NO_TIER_SET for a slot holding no set. Root admin only.
          */
         put: operations["replaceEventSlotTierAssignments"];
         post?: never;
@@ -2434,7 +2350,7 @@ export interface paths {
         put?: never;
         /**
          * Price a sport event slot's seeded field
-         * @description autoAssignEventPrices on the slot's set, recording the values on the slot. Returns the field with the slot's valuations. 409 SPORT_EVENT_TIERS_LOCKED once the set is locked: the event's tier-set slot (its first slot holding a set) at release, any other slot once it starts. 409 SLOT_HOLDS_NO_TIER_SET for a slot holding no set. Root admin only.
+         * @description Prices the slot's active field on the budget curve with the values sent, in the order of the league's pricing profile's sources, and stores the values as the slot's pricing, with the profile they started from by id. Repeatable until the set locks. Returns the field with the slot's valuations. 422 PRICING_CONFIG_INVALID when the floor share is above the top share or the rounding unit is above the worst golfer's price (salaryCap × floorSharePercent / 100), which could round prices to $0. 409 FIELD_HAS_NO_ORDER when no active participant has a value for any source the league's pricing profile lists: a field is never ordered by name. 404 PLATFORM_PRICING_PROFILE_NOT_FOUND when no pricing profile has the id sent. 409 SPORT_EVENT_TIERS_LOCKED once the set is locked: the event's tier-set slot (its first slot holding a set) at release, any other slot once it starts. 409 SLOT_HOLDS_NO_TIER_SET for a slot holding no set. Root admin only.
          */
         post: operations["autoAssignEventSlotPrices"];
         delete?: never;
@@ -13459,7 +13375,7 @@ export interface components {
              * @description The Season slot the event plays in this slot: the slot tier routes take it.
              */
             seasonSlotId: string;
-            /** @description Whether this is the event's tier-set slot, the first holding a set: the one the event-level tier routes act on, released with the event. */
+            /** @description Whether this is the event's tier-set slot, the first holding a set: the one a contest starting at the first slot the event lists picks from, locked when the event is released. */
             isTierSetSlot: boolean;
             /** @description Whether its tiers and prices are locked: the tier-set slot's at release, another slot's once it starts. A write on a locked set is refused with 409 SPORT_EVENT_TIERS_LOCKED. */
             tiersLocked: boolean;
@@ -13668,7 +13584,7 @@ export interface components {
                  * @description The Season slot the event plays in this slot: the slot tier routes take it.
                  */
                 seasonSlotId: string;
-                /** @description Whether this is the event's tier-set slot, the first holding a set: the one the event-level tier routes act on, released with the event. */
+                /** @description Whether this is the event's tier-set slot, the first holding a set: the one a contest starting at the first slot the event lists picks from, locked when the event is released. */
                 isTierSetSlot: boolean;
                 /** @description Whether its tiers and prices are locked: the tier-set slot's at release, another slot's once it starts. A write on a locked set is refused with 409 SPORT_EVENT_TIERS_LOCKED. */
                 tiersLocked: boolean;
@@ -14094,7 +14010,7 @@ export interface components {
                      * @description The Season slot the event plays in this slot: the slot tier routes take it.
                      */
                     seasonSlotId: string;
-                    /** @description Whether this is the event's tier-set slot, the first holding a set: the one the event-level tier routes act on, released with the event. */
+                    /** @description Whether this is the event's tier-set slot, the first holding a set: the one a contest starting at the first slot the event lists picks from, locked when the event is released. */
                     isTierSetSlot: boolean;
                     /** @description Whether its tiers and prices are locked: the tier-set slot's at release, another slot's once it starts. A write on a locked set is refused with 409 SPORT_EVENT_TIERS_LOCKED. */
                     tiersLocked: boolean;
@@ -14499,7 +14415,7 @@ export interface components {
                      * @description The Season slot the event plays in this slot: the slot tier routes take it.
                      */
                     seasonSlotId: string;
-                    /** @description Whether this is the event's tier-set slot, the first holding a set: the one the event-level tier routes act on, released with the event. */
+                    /** @description Whether this is the event's tier-set slot, the first holding a set: the one a contest starting at the first slot the event lists picks from, locked when the event is released. */
                     isTierSetSlot: boolean;
                     /** @description Whether its tiers and prices are locked: the tier-set slot's at release, another slot's once it starts. A write on a locked set is refused with 409 SPORT_EVENT_TIERS_LOCKED. */
                     tiersLocked: boolean;
@@ -35193,330 +35109,6 @@ export interface operations {
             };
             /** @description Standard API error envelope. */
             409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-        };
-    };
-    listEventTiers: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                eventId: string;
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description An event's tiers. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["SportEventTierListResponse"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-        };
-    };
-    replaceEventTiers: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                eventId: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["ReplaceSportEventTiersRequest"];
-            };
-        };
-        responses: {
-            /** @description An event's tiers. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["SportEventTierListResponse"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-        };
-    };
-    autoAssignEventTiers: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                eventId: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["AutoAssignSportEventTiersRequest"];
-            };
-        };
-        responses: {
-            /** @description An event's field. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["SportEventParticipantListResponse"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-        };
-    };
-    replaceEventTierAssignments: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                eventId: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["ReplaceSportEventTierAssignmentsRequest"];
-            };
-        };
-        responses: {
-            /** @description An event's field. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["SportEventParticipantListResponse"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-        };
-    };
-    autoAssignEventPrices: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                eventId: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["AutoAssignSportEventPricesRequest"];
-            };
-        };
-        responses: {
-            /** @description An event's field. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["SportEventParticipantListResponse"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            422: {
                 headers: {
                     [name: string]: unknown;
                 };
