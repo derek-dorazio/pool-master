@@ -29,7 +29,7 @@ export function mapSportEventParticipantToDto(view: SportEventParticipantView): 
     valuation: valuation
       ? {
           id: valuation.id,
-          sportEventTierId: valuation.sportEventTierId,
+          sportEventTierId: valuation.sportEventSlotTierId,
           tierOrderIndex: valuation.tierOrderIndex,
           tierAssignedSource: valuation.tierAssignedSource,
           price: valuation.price,

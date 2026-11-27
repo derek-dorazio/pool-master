@@ -120,6 +120,18 @@ const SEEDED = [
   { name: 'Texas', seed: 3 },
 ];
 
+describe('knockout round points — a slate of one-off games (#2225)', () => {
+  it('scores a one-round slate\'s win 1 and its loss 0 at a round value of 1, each game its own final, and leaves a game still to play at 0', () => {
+    const field = bracketField([{ name: 'Hoosiers' }, { name: 'Ducks' }, { name: 'Bulldogs' }, { name: 'Buckeyes' }, { name: 'Utes' }, { name: 'Tigers' }], [
+      { matchNumber: 1, round: 1, home: 'Ducks', away: 'Hoosiers', winner: MatchSide.AWAY },
+      { matchNumber: 2, round: 1, home: 'Buckeyes', away: 'Bulldogs', winner: MatchSide.HOME },
+      { matchNumber: 3, round: 1, home: 'Tigers', away: 'Utes' },
+    ]);
+
+    expect(scores(field, knockout([1]))).toEqual({ Hoosiers: 1, Ducks: 0, Bulldogs: 0, Buckeyes: 1, Utes: 0, Tigers: 0 });
+  });
+});
+
 describe('knockout round points — round values', () => {
   it('scores each win its round\'s value, summed over the rounds a team won', () => {
     const field = bracketField(SEEDED, [

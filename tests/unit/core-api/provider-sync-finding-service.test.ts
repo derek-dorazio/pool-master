@@ -343,6 +343,41 @@ describe('ProviderSyncFindingService event checks (#1999)', () => {
   });
 });
 
+describe('ProviderSyncFindingService event participant checks (#2223)', () => {
+  const subject = { kind: ProviderSyncFindingKind.FIELD_TEAM_WITHOUT_GAME, sportLeagueId: 'ncaamf', sportEventId: 'bowls', providerId: PROVIDER.id };
+  const bySource = { kind: subject.kind, sportLeagueId: subject.sportLeagueId, sportEventId: subject.sportEventId, providerSourceId: providerSourceIdOf(PROVIDER.code) };
+
+  it('raises a WARNING per participant found, named by its feed id and name, and resolves the event\'s other open findings of the kind', async () => {
+    const { findings, table } = service();
+
+    await findings.checkEventParticipantsOfSource({ ...bySource, found: [{ externalId: 'team-7', name: 'Ducks' }, { externalId: 'team-9', name: 'Hoosiers' }] });
+
+    expect(table.resolved).toEqual([{ ...subject, exceptProviderValues: ['team-7', 'team-9'] }]);
+    expect(table.raised).toEqual([[
+      { ...subject, severity: ProviderSyncFindingSeverity.WARNING, providerValue: 'team-7', providerValueName: 'Ducks' },
+      { ...subject, severity: ProviderSyncFindingSeverity.WARNING, providerValue: 'team-9', providerValueName: 'Hoosiers' },
+    ]]);
+  });
+
+  it('resolves every open finding of the kind on the event when none is found, and raises nothing', async () => {
+    const { findings, table } = service();
+
+    await findings.checkEventParticipantsOfSource({ ...bySource, found: [] });
+
+    expect(table.resolved).toEqual([{ ...subject, exceptProviderValues: [] }]);
+    expect(table.raised).toEqual([]);
+  });
+
+  it('checks nothing for a feed with no Provider row', async () => {
+    const { findings, table } = service();
+
+    await findings.checkEventParticipantsOfSource({ ...bySource, providerSourceId: 'mock-contest-feed', found: [{ externalId: 'team-7', name: 'Ducks' }] });
+
+    expect(table.resolved).toEqual([]);
+    expect(table.raised).toEqual([]);
+  });
+});
+
 describe('ProviderSyncFindingService reads', () => {
   it('lists every finding and answers one by id', async () => {
     const table = inMemoryFindings([finding()]);

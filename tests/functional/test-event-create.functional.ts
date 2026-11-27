@@ -36,7 +36,7 @@ afterAll(async () => {
   // A round is played in one of its event's slots (#2006), so the rounds go first.
   await db.sportEventRound.deleteMany({ where: { sportEventId: { in: eventIds } } });
   await db.sportEventSlot.deleteMany({ where: { sportEventId: { in: eventIds } } });
-  await db.sportEventTier.deleteMany({ where: { sportEventId: { in: eventIds } } });
+  await db.sportEventSlotTier.deleteMany({ where: { slot: { sportEventId: { in: eventIds } } } });
   await db.sportEvent.deleteMany({ where: { id: { in: eventIds } } });
   await deleteTestSportLeagues(db, [...created.sportLeagueIds]);
   await db.refreshToken.deleteMany({ where: { userId: { in: [...created.userIds] } } });

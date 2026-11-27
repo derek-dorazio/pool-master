@@ -51,8 +51,6 @@ function setup({ status = SportEventStatus.DRAFT, synced = true, rounds = 1 }: {
     rounds: store.roundRepo(),
     field: store.fieldRepo(),
     matches: store.matchRepo(),
-    tiers: store.tierRepo(),
-    valuations: store.valuationRepo(),
     contests: { recheckReminders: jest.fn<ContestRepository['recheckReminders']>().mockResolvedValue(undefined) },
     ...NO_PICKS_ON_EVENT,
     newId: () => {
@@ -332,8 +330,6 @@ describe('ProviderGameSlateService', () => {
         rounds: store.roundRepo(),
         field: store.fieldRepo(),
         matches: store.matchRepo(),
-        tiers: store.tierRepo(),
-        valuations: store.valuationRepo(),
         contests: { recheckReminders: jest.fn<ContestRepository['recheckReminders']>().mockResolvedValue(undefined) },
         ...NO_PICKS_ON_EVENT,
         newId: () => {

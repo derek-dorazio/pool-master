@@ -17,6 +17,7 @@ import {
   SportEventStatus,
   TemplateCoverageMode,
   LeaguePlan,
+  SeasonSlotStatus,
 } from '@poolmaster/shared/domain';
 import {
   CONTEST_BUDGET_FIELD_OUT_OF_RANGE,
@@ -275,6 +276,8 @@ function createSportEventReader(overrides?: Partial<{
   undecidedGameCount: number;
   gamesWithoutSpreadCount: number;
   bracketProblem: string | null;
+  /** Why knockout round points can't score the event; the bracket's problem unless the event is a slate of one-off games. */
+  knockoutProblem: string | null;
   /** How many rounds a template's coverage covers; by default every round of the event. */
   coveredRoundCount: number;
   /** The slot definitions the event's rounds play; a template listing all of them covers every round. */
@@ -290,6 +293,7 @@ function createSportEventReader(overrides?: Partial<{
   countUndecidedGames: jest.Mock;
   countGamesWithoutSpread: jest.Mock;
   findBracketProblem: jest.Mock;
+  findKnockoutProblem: jest.Mock;
   countCoveredRounds: jest.Mock;
   findCutoffTiming: jest.Mock;
   findGame: jest.Mock;
@@ -300,6 +304,7 @@ function createSportEventReader(overrides?: Partial<{
     countUndecidedGames: jest.fn().mockResolvedValue(overrides?.undecidedGameCount ?? 0),
     countGamesWithoutSpread: jest.fn().mockResolvedValue(overrides?.gamesWithoutSpreadCount ?? 0),
     findBracketProblem: jest.fn().mockResolvedValue(overrides?.bracketProblem ?? null),
+    findKnockoutProblem: jest.fn().mockResolvedValue(overrides?.knockoutProblem !== undefined ? overrides.knockoutProblem : overrides?.bracketProblem ?? null),
     countCoveredRounds: jest.fn().mockResolvedValue(overrides?.coveredRoundCount ?? (overrides?.rounds === undefined ? 4 : overrides.rounds)),
     // The event's own timing for an ordinary contest; a later round's start would read its games, of which this event has none.
     findCutoffTiming: mockFn<ContestCreateSportEventReader['findCutoffTiming']>(async (sportEvent, cutoff) => cutoffTiming(cutoff, sportEvent, [])),
@@ -1817,7 +1822,7 @@ describe('ContestManagementService finish-position scoring (#622)', () => {
     expect(contestCoreRepo.create).not.toHaveBeenCalled();
   });
 
-  function basketballService(rounds: number | null, bracketProblem: string | null = null) {
+  function basketballService(rounds: number | null, bracketProblem: string | null = null, knockoutProblem: string | null = bracketProblem) {
     const contestCoreRepo = createContestRepo();
     const scoringRuleRepo = createParticipantScoringRuleRepo();
     const service = new ContestManagementService({
@@ -1827,7 +1832,7 @@ describe('ContestManagementService finish-position scoring (#622)', () => {
       configurations: createContestConfigurationRepo(),
       scoringRules: scoringRuleRepo,
       tiers: createSportEventTierServiceStub(),
-      sportEventReader: createSportEventReader({ sport: Sport.BASKETBALL, playsMatches: true, rounds, bracketProblem }),
+      sportEventReader: createSportEventReader({ sport: Sport.BASKETBALL, playsMatches: true, rounds, bracketProblem, knockoutProblem }),
       cups: createCupKeeper(),
       planEntitlements: platinumEntitlements(),
     });
@@ -1866,6 +1871,15 @@ describe('ContestManagementService finish-position scoring (#622)', () => {
       configuration: { ...drawRules, scoring: knockoutScoring([1]) },
     }))).rejects.toMatchObject({ code: CONTEST_EVENT_NOT_A_BRACKET, statusCode: 422 });
     expect(contestCoreRepo.create).not.toHaveBeenCalled();
+  });
+
+  it('creates a random draw scored by knockout round points on a slate of one-off games (a season\'s bowls), though its games form no bracket (#2225)', async () => {
+    const { contestCoreRepo, scoringRuleRepo, service } = basketballService(1, 'its final has 0 games, not one', null);
+
+    await service.createContest({ leagueId: 'league-1' }, raceRequest({ name: 'Bowl Sweepstakes', configuration: { ...drawRules, scoring: knockoutScoring([1]) } }));
+
+    expect(contestCoreRepo.create).toHaveBeenCalled();
+    expect(scoringRuleRepo.create).toHaveBeenCalledWith(expect.objectContaining({ scoring: knockoutScoring([1]) }));
   });
 
   it('creates a basketball contest scored by the knockout round values sent, one per round of the event', async () => {
@@ -2048,6 +2062,7 @@ describe('ContestManagementService — a contest of several events', () => {
       countUndecidedGames: jest.fn().mockResolvedValue(0),
       countGamesWithoutSpread: jest.fn().mockResolvedValue(0),
       findBracketProblem: jest.fn().mockResolvedValue(null),
+      findKnockoutProblem: jest.fn().mockResolvedValue(null),
       countCoveredRounds: jest.fn().mockResolvedValue(4),
       findCutoffTiming: mockFn<ContestCreateSportEventReader['findCutoffTiming']>(async (sportEvent, cutoff) => cutoffTiming(cutoff, sportEvent, [])),
       findGame: jest.fn().mockResolvedValue(null),
@@ -2709,6 +2724,7 @@ describe('ContestManagementService — a bracket on a knockout already under way
       sportEventReader: createContestSportEventReader({
         sportEvents: store.sportEventRepo(),
         field: store.fieldRepo(),
+        tiers: store.tierRepo(),
         valuations: store.valuationRepo(),
         matches: store.matchRepo(),
       }),
@@ -3026,6 +3042,7 @@ describe('createContestSportEventReader.findByIds (#1355, #2008)', () => {
     const reader = createContestSportEventReader({
       sportEvents: store.sportEventRepo(),
       field: store.fieldRepo(),
+      tiers: store.tierRepo(),
       valuations: store.valuationRepo(),
       matches: store.matchRepo(),
     });
@@ -3046,7 +3063,8 @@ describe('createContestSportEventReader field, game and price reads', () => {
     return createContestSportEventReader({
       sportEvents: store.sportEventRepo(),
       field: { findBySportEvent: async () => ports.entries ?? [] } as unknown as Parameters<typeof createContestSportEventReader>[0]['field'],
-      valuations: { findBySportEvent: async () => ports.valuations ?? [] } as unknown as Parameters<typeof createContestSportEventReader>[0]['valuations'],
+      tiers: { findTierSlots: async () => new Map([[EVENT, [{ id: 'event-slot-1', sportEventId: EVENT, seasonSlotId: 'season-slot-1', seasonSlotStatus: SeasonSlotStatus.SCHEDULED, isTierSetSlot: true, tierLayout: null, pricing: null }]]]) },
+      valuations: { findBySlot: async () => ports.valuations ?? [] } as unknown as Parameters<typeof createContestSportEventReader>[0]['valuations'],
       matches: { findBySportEvent: async () => ports.games ?? [] } as unknown as Parameters<typeof createContestSportEventReader>[0]['matches'],
     });
   }
@@ -3089,6 +3107,7 @@ describe('createContestSportEventReader event and game counts', () => {
     return createContestSportEventReader({
       sportEvents: countParticipants ? { ...sportEvents, countParticipants } : sportEvents,
       field: store.fieldRepo(),
+      tiers: store.tierRepo(),
       valuations: store.valuationRepo(),
       matches: store.matchRepo(),
     });
@@ -3140,6 +3159,7 @@ describe('createBatchedContestOpeningReader', () => {
       reader: createBatchedContestOpeningReader({
         sportEvents: { ...sportEvents, ...overrides },
         field: store.fieldRepo(),
+        tiers: store.tierRepo(),
         valuations: store.valuationRepo(),
         matches: store.matchRepo(),
       }),

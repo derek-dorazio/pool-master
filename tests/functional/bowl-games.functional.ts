@@ -14,6 +14,7 @@ import {
   listSportLeagues,
   openContest,
   recordEventMatchResult,
+  runContestDraw,
   saveGamePicks,
   submitGamePicks,
   transitionEvent,
@@ -34,7 +35,8 @@ import { resultBody } from '../support/match-requests';
 // NCAA Men's Football's bowl games end to end over HTTP (#2154): two played bowls load into the
 // league's BOWLS slot as one event, a game each, released though its unseeded field fills no seed tier, because no
 // tiered or budget setup covers the bowls. A commissioner runs the bowls' seeded templates on it:
-// a pick'em straight up that scores a point for each right pick, and squares on one bowl game.
+// a pick'em straight up that scores a point for each right pick, squares on one bowl game, and a
+// sweepstakes whose dealt team's bowl win scores 1 (#2225), the bowls being a slate of one-off games.
 
 const RUN = `bowls-${Date.now()}`;
 const SEED_DIR = join(__dirname, '../../packages/core-api/scripts/seed-golf');
@@ -58,10 +60,10 @@ async function cleanup(): Promise<void> {
     await unlinkContestsFromSportEvents(db, eventIds);
     await db.sportEventRoundMatch.deleteMany({ where: { sportEventId: { in: eventIds } } });
     await db.sportEventParticipantStanding.deleteMany({ where: { sportEventParticipant: { sportEventId: { in: eventIds } } } });
-    await db.sportEventParticipantValuation.deleteMany({ where: { sportEventParticipant: { sportEventId: { in: eventIds } } } });
+    await db.sportEventSlotParticipantValuation.deleteMany({ where: { sportEventParticipant: { sportEventId: { in: eventIds } } } });
     await db.sportEventParticipant.deleteMany({ where: { sportEventId: { in: eventIds } } });
     await db.sportEventRound.deleteMany({ where: { sportEventId: { in: eventIds } } });
-    await db.sportEventTier.deleteMany({ where: { sportEventId: { in: eventIds } } });
+    await db.sportEventSlotTier.deleteMany({ where: { slot: { sportEventId: { in: eventIds } } } });
     await db.sportEvent.deleteMany({ where: { id: { in: eventIds } } });
   }
   await db.participant.deleteMany({ where: { id: { in: runParticipantIds }, sportEventParticipants: { none: {} } } });
@@ -136,7 +138,7 @@ describe('SDK Functional: bowl games (#2154)', () => {
     });
   });
 
-  it('releases the bowls event though its unseeded field fills none of the league\'s seed tiers, then runs the bowls\' seeded pick\'em and squares on one bowl game on it, the pick\'em settling a point for each right pick', async () => {
+  it('releases the bowls event though its unseeded field fills none of the league\'s seed tiers, then runs the bowls\' seeded pick\'em, squares on one bowl game and a sweepstakes on it, the pick\'em settling a point for each right pick and the sweepstakes 1 for each dealt team\'s win', async () => {
     const admin = await buildRegisteredUser({ displayName: 'Bowl Director' });
     await promoteToRootAdmin(admin);
     const a = admin.client;
@@ -206,6 +208,26 @@ describe('SDK Functional: bowl games (#2154)', () => {
     });
     expect(squares.response?.status).toBe(201);
 
+    // --- A sweepstakes: the draw deals each entry one bowl team ------------------------------------
+    const sweepstakesTemplate = template('bowls-random-draw-straight-up');
+    expect(sweepstakesTemplate.isDefault).toBe(false);
+    const sweepstakes = await createContest({
+      client: commissioner.client,
+      path: { id: league.id },
+      body: { name: `Bowl Sweepstakes ${RUN}`, sportEventIds: [event.id], contestFormat: ContestFormat.ROSTER, selectionType: SelectionType.RANDOM_DRAW, templateId: sweepstakesTemplate.id },
+    });
+    expect([sweepstakes.error, sweepstakes.response?.status]).toEqual([undefined, 201]);
+    const sweepstakesId = expectDefined(sweepstakes.data).contest.id;
+    expect((await openContest({ client: commissioner.client, path: { id: league.id, contestId: sweepstakesId } })).data?.contest.status).toBe(ContestStatus.OPEN);
+    const drawEntryIds = [
+      expectDefined((await enterContest({ client: commissioner.client, path: { contestId: sweepstakesId } })).data).entry.id,
+      expectDefined((await enterContest({ client: member.client, path: { contestId: sweepstakesId } })).data).entry.id,
+    ];
+    const drawn = await runContestDraw({ client: commissioner.client, path: { contestId: sweepstakesId } });
+    expect(drawn.data?.entries.map((entry) => entry.status)).toEqual(['SUBMITTED', 'SUBMITTED']);
+    const dealt = await getFunctionalPrisma().contestEntryPick.findMany({ where: { entryId: { in: drawEntryIds } }, select: { entryId: true, sportEventParticipantId: true } });
+    expect(dealt).toHaveLength(2);
+
     // --- Both bowls kick off and are played, the away team winning each, then settled --------------
     const kickedOff = new Date(Date.now() - 60 * 60 * 1000);
     await getFunctionalPrisma().sportEvent.update({ where: { id: event.id }, data: { startDate: kickedOff } });
@@ -219,5 +241,11 @@ describe('SDK Functional: bowl games (#2154)', () => {
     expect(expectDefined((await getContest({ client: member.client, path: { contestId: pickEmId } })).data).contest.status).toBe(ContestStatus.COMPLETED);
     const settled = await getFunctionalPrisma().contestEntryStanding.findUniqueOrThrow({ where: { contestEntryId: pickEmEntryId } });
     expect(settled.totalScore).toBe(1);
+
+    // Each dealt team scores 1 for its bowl win, and 0 for a loss: the away team won both bowls.
+    expect(expectDefined((await getContest({ client: member.client, path: { contestId: sweepstakesId } })).data).contest.status).toBe(ContestStatus.COMPLETED);
+    const winners = new Set([bowl1, bowl2].map((bowl) => expectDefined(rowSideTeam(bowl, AWAY_SIDE))));
+    const standings = await getFunctionalPrisma().contestEntryStanding.findMany({ where: { contestEntryId: { in: drawEntryIds } }, select: { contestEntryId: true, totalScore: true } });
+    expect(Object.fromEntries(standings.map((row) => [row.contestEntryId, Number(row.totalScore)]))).toEqual(Object.fromEntries(dealt.map((pick) => [pick.entryId, winners.has(pick.sportEventParticipantId) ? 1 : 0])));
   });
 });

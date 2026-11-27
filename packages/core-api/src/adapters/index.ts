@@ -31,10 +31,10 @@ export {
 } from './prisma-contest-management-repositories';
 export {
   PrismaSportEventParticipantRepository,
-  PrismaSportEventParticipantValuationRepository,
+  PrismaSportEventSlotParticipantValuationRepository,
   PrismaSportEventRepository,
   PrismaSportEventRoundRepository,
-  PrismaSportEventTierRepository,
+  PrismaSportEventSlotTierRepository,
   PrismaSportLeagueRepository,
   PrismaSportRepository,
 } from './prisma-sport-catalog-repositories';

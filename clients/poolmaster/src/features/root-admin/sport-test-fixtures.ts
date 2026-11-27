@@ -184,7 +184,7 @@ export function tierFixture(overrides: Partial<SportEventTierDto> = {}): SportEv
   const tierNumber = overrides.tierNumber ?? 1;
   return {
     id: `tier-${tierNumber}`,
-    sportEventId: 'event-1',
+    seasonSlotId: '00000000-0000-4000-8000-0000000000c1',
     tierKey: `TIER_${tierNumber}`,
     tierNumber,
     ...overrides,

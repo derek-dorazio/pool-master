@@ -14,10 +14,11 @@ import {
   PrismaSportEventParticipantRepository,
   PrismaSportEventRepository,
   PrismaSportEventRoundRepository,
+  PrismaSportEventSlotTierRepository,
   PrismaSportLeagueRepository,
   PrismaSportRepository,
 } from '../../../packages/core-api/src/adapters';
-import { freshEventEdition, fixtureSeasonId, mapEventToProvider } from '../../support/event-edition';
+import { eventRoundSlots, freshEventEdition, fixtureSeasonId, mapEventToProvider } from '../../support/event-edition';
 import { sportLeagueRowDefaults } from '../../support/league-profiles';
 import { BALLDONTLIE_TEST_PROVIDER_ID } from '../../support/balldontlie-provider-rows';
 import { participantLeagueId } from '../../support/participant-league';
@@ -633,6 +634,65 @@ describe('SportEvent core repositories', () => {
       ['Second', 2, []],
       ['Unranked', null, []],
     ]);
+  });
+
+  it('prices an event\'s field from its first slot in play order when no tiered or budget template lists any, whichever slot was made first (#2044)', async () => {
+    const sport = await golfSport();
+    const event = await createEvent('two-slot-field');
+    const oneSlot = await createEvent('one-slot-field');
+    // Made out of play order: the final's slot first, then the semifinal's, which is played first.
+    const [finalSlotId, semifinalSlotId] = await eventRoundSlots(getPrisma(), event.id, [{ slotKind: 'FINAL' }, { slotKind: 'SEMIFINAL' }]);
+    const [oneSlotId] = await eventRoundSlots(getPrisma(), oneSlot.id, [{ slotKind: 'FINAL' }]);
+    const golfer = await createParticipant(sport.id, 'Two Slot Golfer');
+    const [row, oneSlotRow] = await Promise.all([event, oneSlot].map((sportEvent) => getPrisma().sportEventParticipant.create({ data: { sportEventId: sportEvent.id, participantId: golfer.id } })));
+    await getPrisma().sportEventSlotParticipantValuation.createMany({ data: [
+      { sportEventId: event.id, sportEventSlotId: finalSlotId, sportEventParticipantId: row.id, price: 7000 },
+      { sportEventId: event.id, sportEventSlotId: semifinalSlotId, sportEventParticipantId: row.id, price: 9000 },
+      { sportEventId: oneSlot.id, sportEventSlotId: oneSlotId, sportEventParticipantId: oneSlotRow.id, price: 5000 },
+    ] });
+
+    const fields = await new PrismaSportEventParticipantRepository(getAppPrisma()).findFieldsForEvents([
+      { sportEventId: event.id, sportLeagueId: event.sportLeagueId },
+      { sportEventId: oneSlot.id, sportLeagueId: oneSlot.sportLeagueId },
+    ]);
+
+    expect(fields.map((field) => [field.entry.sportEventId, field.valuation?.price])).toEqual([[event.id, 9000], [oneSlot.id, 5000]]);
+  });
+
+  it('keeps an event\'s tier set on the first slot an active tiered or budget template lists, not a play-in before it, and prices its field from there (#2044)', async () => {
+    const sport = await golfSport();
+    const event = await createEvent('play-in-field');
+    const [playInSlotId, roundOf64SlotId] = await eventRoundSlots(getPrisma(), event.id, [{ slotKind: 'PLAY_IN' }, { slotKind: 'ROUND_OF_64' }]);
+    const definitionOf = async (sportEventSlotId: string) => (await getPrisma().sportEventSlot.findUniqueOrThrow({
+      where: { id: sportEventSlotId }, select: { seasonSlot: { select: { sportLeagueCompetitionSlotId: true } } },
+    })).seasonSlot.sportLeagueCompetitionSlotId;
+    const [playInDefinition, roundOf64Definition] = [await definitionOf(playInSlotId), await definitionOf(roundOf64SlotId)];
+    // The tiered template starts at the round of 64; the play-in is listed only by a bracket and by a
+    // retired tiered template, neither of which picks from a tier set.
+    const template = { sportLeagueId: event.sportLeagueId, coverageMode: 'FROM_SLOT', contestFormat: 'ROSTER', name: 'Setup', description: 'Setup', sortOrder: 1, configJson: {} } as const;
+    const templateIds: string[] = [];
+    for (const [selectionType, active, definitionId] of [['TIERED', true, roundOf64Definition], ['BRACKET', true, playInDefinition], ['TIERED', false, playInDefinition]] as const) {
+      // poolmaster-allow-query-in-loop: three templates, each with the slot it lists
+      templateIds.push((await getPrisma().contestConfigTemplate.create({
+        data: { ...template, selectionType, active, templateKey: `play-in-${randomUUID()}`, slots: { create: { sportLeagueCompetitionSlotId: definitionId } } },
+        select: { id: true },
+      })).id);
+    }
+    // The setups have no rules of their own, so they go once read: other tests list every template.
+    const dropTemplates = () => getPrisma().contestConfigTemplate.deleteMany({ where: { id: { in: templateIds } } });
+    const row = await getPrisma().sportEventParticipant.create({ data: { sportEventId: event.id, participantId: (await createParticipant(sport.id, 'Play-in Golfer')).id } });
+    await getPrisma().sportEventSlotParticipantValuation.createMany({ data: [
+      { sportEventId: event.id, sportEventSlotId: playInSlotId, sportEventParticipantId: row.id, price: 7000 },
+      { sportEventId: event.id, sportEventSlotId: roundOf64SlotId, sportEventParticipantId: row.id, price: 9000 },
+    ] });
+
+    const [tierSlots, field] = await Promise.all([
+      new PrismaSportEventSlotTierRepository(getAppPrisma()).findTierSlots([event.id]).then((slots) => slots.get(event.id) ?? []),
+      new PrismaSportEventParticipantRepository(getAppPrisma()).findFieldForEvent(event.id, event.sportLeagueId),
+    ]).finally(dropTemplates);
+
+    expect(tierSlots.map((slot) => [slot.id, slot.isTierSetSlot])).toEqual([[playInSlotId, false], [roundOf64SlotId, true]]);
+    expect(field.map((fieldRow) => fieldRow.valuation?.price)).toEqual([9000]);
   });
 
   it("reads several events' fields in one read, in the order asked, each row's tour membership checked against its own event's tour (#1315)", async () => {

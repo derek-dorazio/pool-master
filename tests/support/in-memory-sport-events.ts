@@ -19,7 +19,7 @@ import type {
   FieldSideResult,
   ProviderNotificationReceipt,
   SportEventParticipantRepository,
-  SportEventParticipantValuationRepository,
+  SportEventSlotParticipantValuationRepository,
   SportEventParticipantView,
   GameSideScoreWrite,
   MatchSideTeam,
@@ -29,8 +29,10 @@ import type {
   SportLeagueSeasonRepository,
   SportEventRoundRepository,
   SportEventRoundSchedule,
-  SportEventTierDefinition,
-  SportEventTierRepository,
+  SportEventSlotTierDefinition,
+  ValuedSlot,
+  TierAssignment,
+  SportEventSlotTierRepository,
   SportEventUpdate,
   SportLeagueRepository,
   SportRepository,
@@ -40,7 +42,7 @@ import type {
 } from '@poolmaster/shared/db';
 import { TEST_PROVIDER_ROWS } from './balldontlie-provider-rows';
 import type { SportEventBracketServiceDeps } from '../../packages/core-api/src/modules/events/sport-event-bracket-service';
-import { compareMatchPlaces, MatchEnding, SeasonSlotStatus, SeriesFormat, SlotKind, SlotPairing, SlotWindowStatus, type SlotWindow, findSportRow, providerSourceIdOf, requireProviderCodeOfSourceId, type ProviderEventRef, type SportEventProviderMapping, HomeAway, isMatchUnplayed, MatchSideOutcome, MatchStatus, PeriodKind, PeriodKindOrder, Sport, FieldOrderBasis, TierProfileType, SportEventParticipantStatus } from '@poolmaster/shared/domain';
+import { chooseTierSetSlot, compareMatchPlaces, compareSeasonSlots, slotTierLayoutOf, MatchEnding, SeasonSlotStatus, SeriesFormat, SlotKind, SlotPairing, SlotWindowStatus, type SlotWindow, findSportRow, providerSourceIdOf, requireProviderCodeOfSourceId, type ProviderEventRef, type SportEventProviderMapping, HomeAway, isMatchUnplayed, MatchSideOutcome, MatchStatus, PeriodKind, PeriodKindOrder, Sport, FieldOrderBasis, TierProfileType, SportEventParticipantStatus } from '@poolmaster/shared/domain';
 import { sportEventSlots, sportPlay } from './sport-play';
 import type {
   AutoReleaseCheck,
@@ -53,11 +55,14 @@ import type {
   SportEventRoundMatchGame,
   SportEventParticipant,
   SportEventParticipantStanding,
-  SportEventParticipantValuation,
+  SportEventSlotParticipantValuation,
   SportEventRound,
   SportEventRoundSlot,
   SlotPeriods,
-  SportEventTier,
+  SportEventSlotTier,
+  SportEventTierSlot,
+  SlotPricing,
+  SlotTierSettings,
   SportLeague,
   BudgetPricingProfile,
   PlatformPricingProfile,
@@ -310,8 +315,12 @@ export class InMemorySportEvents {
   picksByEntry = new Map<string, number>();
   roundRows: SportEventRound[] = [];
   field: SportEventParticipant[] = [];
-  tierRows: SportEventTier[] = [];
-  valuationRows: SportEventParticipantValuation[] = [];
+  /** Each event slot's team tier set (#2044); in the store an event slot's id is its Season slot's. */
+  tierRows: SportEventSlotTier[] = [];
+  valuationRows: SportEventSlotParticipantValuation[] = [];
+  /** What each event slot's set was last tiered and priced with, by slot id; absent until it is. */
+  slotTierSettings = new Map<string, SlotTierSettings>();
+  slotPricings = new Map<string, SlotPricing>();
   standingRows: SportEventParticipantStanding[] = [];
   /**
    * Each competitor's side result in its event's FIELD Games (#2008): a race's one Game, a golf
@@ -430,6 +439,16 @@ export class InMemorySportEvents {
   }
 
   /**
+   * An event that covers its one slot (#2044), as every synced event does: tiers and prices live on
+   * an event slot, so an event with none has no set to write.
+   */
+  addSlottedEvent(overrides: Partial<SportEvent> & { providerRef?: ProviderEventRef } = {}): SportEvent {
+    const event = this.addEvent(overrides);
+    this.eventSlotOf(event.id);
+    return event;
+  }
+
+  /**
    * The event's one slot (#2006): the slot it was made on, else a slot of its Season the sync keeps,
    * given to it now (an event a test added straight to the store has none), so it stays no test
    * event. Throws for an event of several.
@@ -476,9 +495,49 @@ export class InMemorySportEvents {
     return added.map((slot) => slot.id);
   }
 
-  /** Gives an event these tiers, through the tier repository's one insert. */
-  addTiers(sportEventId: string, tiers: readonly SportEventTierDefinition[]): Promise<void> {
-    return this.tierRepo().createMany(tiers.map((tier) => ({ sportEventId, ...tier })));
+  /** Gives an event's first slot these tiers (#2044), through the tier repository's one insert. */
+  async addTiers(sportEventId: string, tiers: readonly SportEventSlotTierDefinition[]): Promise<void> {
+    const slot = this.tierSetSlotOf(sportEventId);
+    return this.tierRepo().createMany(tiers.map((tier) => ({ sportEventSlotId: slot.id, ...tier })));
+  }
+
+  /** The slot definitions an active tiered or budget template lists, which the tier-set rule reads (#2044). */
+  tierSetTemplateDefinitionIds = new Set<string>();
+
+  /**
+   * The event's slots as their tier sets read them (#2044), in play order, its tier-set slot
+   * (`chooseTierSetSlot`) marked; none for an event covering no slot.
+   */
+  tierSlotsOf(sportEventId: string): SportEventTierSlot[] {
+    const ordered = [...(this.slotsByEvent.get(sportEventId) ?? [])].sort(compareSeasonSlots)
+      .map((slot) => ({ slot, listedByTierSetTemplate: this.tierSetTemplateDefinitionIds.has(slot.slotDefinitionId) }));
+    const tierSetSlot = chooseTierSetSlot(ordered);
+    return ordered.map((entry) => {
+      const { slot } = entry;
+      const tierSettings = this.slotTierSettings.get(slot.id);
+      const tierProfile = tierSettings && this.platformTierProfiles.find((profile) => profile.id === tierSettings.platformTierProfileId);
+      const pricing = this.slotPricings.get(slot.id);
+      return {
+        id: slot.id,
+        sportEventId,
+        seasonSlotId: slot.id,
+        seasonSlotStatus: slot.status,
+        isTierSetSlot: entry === tierSetSlot,
+        tierLayout: tierProfile ? slotTierLayoutOf(tierProfile, tierSettings.tierSize) : null,
+        pricing: pricing ?? null,
+      };
+    });
+  }
+
+  /**
+   * The event's first slot (`tierSlotsOf`). An event a test added straight to the store with no
+   * slot is given its one slot now, as `eventSlotOf` does.
+   */
+  tierSetSlotOf(sportEventId: string): SportEventTierSlot {
+    if ((this.slotsByEvent.get(sportEventId) ?? []).length === 0) this.eventSlotOf(sportEventId);
+    const first = this.tierSlotsOf(sportEventId).find((slot) => slot.isTierSetSlot);
+    if (!first) throw new Error(`Sport event ${sportEventId} has no slot.`);
+    return first;
   }
 
   addToField(sportEventId: string, participantId: string, overrides: Partial<SportEventParticipant> = {}): SportEventParticipant {
@@ -647,26 +706,27 @@ export class InMemorySportEvents {
       delete: async (id) => {
         const entryIds = new Set(this.field.filter((row) => row.sportEventId === id).map((row) => row.id));
         this.field = this.field.filter((row) => row.sportEventId !== id);
+        const slotIds = new Set((this.slotsByEvent.get(id) ?? []).map((slot) => slot.id));
         this.valuationRows = this.valuationRows.filter((row) => !entryIds.has(row.sportEventParticipantId));
         this.roundRows = this.roundRows.filter((row) => row.sportEventId !== id);
-        this.tierRows = this.tierRows.filter((row) => row.sportEventId !== id);
+        this.tierRows = this.tierRows.filter((row) => !slotIds.has(row.sportEventSlotId));
         this.events = this.events.filter((row) => row.id !== id);
       },
       countParticipants: async (ids) => count(ids, (id) => this.field.filter((row) => row.sportEventId === id).length),
-      countUntieredActiveParticipants: async (ids) => count(ids, (id) => this.field.filter((row) => (
-        row.sportEventId === id
+      countUntieredActiveParticipants: async (slots: readonly ValuedSlot[]) => new Map(slots.map((slot) => [slot.id, this.field.filter((row) => (
+        row.sportEventId === slot.sportEventId
         && row.status === SportEventParticipantStatus.ACTIVE
-        && !this.valuationRows.some((valuation) => valuation.sportEventParticipantId === row.id && (valuation.sportEventTierId || valuation.tierAssignedSource))
-      )).length),
-      countUnpricedActiveParticipants: async (ids) => count(ids, (id) => this.field.filter((row) => (
-        row.sportEventId === id
+        && !this.valuationRows.some((valuation) => valuation.sportEventSlotId === slot.id && valuation.sportEventParticipantId === row.id && (valuation.sportEventSlotTierId || valuation.tierAssignedSource))
+      )).length])),
+      countUnpricedActiveParticipants: async (slots: readonly ValuedSlot[]) => new Map(slots.map((slot) => [slot.id, this.field.filter((row) => (
+        row.sportEventId === slot.sportEventId
         && row.status === SportEventParticipantStatus.ACTIVE
-        && !this.valuationRows.some((valuation) => valuation.sportEventParticipantId === row.id && valuation.price !== null)
-      )).length),
-      countTiers: async (ids) => count(ids, (id) => this.tierRows.filter((row) => row.sportEventId === id).length),
+        && !this.valuationRows.some((valuation) => valuation.sportEventSlotId === slot.id && valuation.sportEventParticipantId === row.id && valuation.price !== null)
+      )).length])),
+      countTiers: async (ids) => count(ids, (id) => this.tierRows.filter((row) => row.sportEventSlotId === id).length),
       findEmptyTierNumbers: async (ids) => new Map(ids.map((id) => [id, this.tierRows
-        .filter((tier) => tier.sportEventId === id && !this.valuationRows.some((valuation) => (
-          valuation.sportEventTierId === tier.id
+        .filter((tier) => tier.sportEventSlotId === id && !this.valuationRows.some((valuation) => (
+          valuation.sportEventSlotTierId === tier.id
           && this.field.some((row) => row.id === valuation.sportEventParticipantId && row.status === SportEventParticipantStatus.ACTIVE)
         )))
         .sort((left, right) => left.tierNumber - right.tierNumber)
@@ -780,21 +840,13 @@ export class InMemorySportEvents {
         if (value !== undefined) (row as unknown as Record<string, unknown>)[key] = nullable(value);
       }
     };
-    const valuationOf = (id: string) => {
-      let valuation = this.valuationRows.find((row) => row.sportEventParticipantId === id);
-      if (!valuation) {
-        valuation = stamp({ id: this.id('valuation'), sportEventParticipantId: id, sportEventTierId: null, tierOrderIndex: null, tierAssignedSource: null, price: null, priceAssignedSource: null });
-        this.valuationRows.push(valuation);
-      }
-      return valuation;
-    };
-    const setPrice = (id: string, price: number | null) => {
-      const valuation = valuationOf(id);
+    const setPrice = (slot: ValuedSlot, id: string, price: number | null) => {
+      const valuation = this.valuationIn(slot, id);
       valuation.price = price;
       valuation.priceAssignedSource = 'MANUAL';
     };
-    const setTier = (id: string, tier: { sportEventTierId: string; tierOrderIndex: number }) => {
-      Object.assign(valuationOf(id), tier, { tierAssignedSource: 'MANUAL' });
+    const setTier = (slot: ValuedSlot, id: string, tier: { sportEventSlotTierId: string; tierOrderIndex: number }) => {
+      Object.assign(this.valuationIn(slot, id), tier, { tierAssignedSource: 'MANUAL' });
     };
     const bySeed = (sportEventId: string) => this.field
       .filter((row) => row.sportEventId === sportEventId)
@@ -826,8 +878,9 @@ export class InMemorySportEvents {
         }
         for (const entry of entries) {
           apply(this.field.find((row) => row.id === entry.id) as SportEventParticipant, entry.updates);
-          if (entry.price !== undefined) setPrice(entry.id, entry.price);
-          if (entry.tier !== undefined) setTier(entry.id, entry.tier);
+          const { valuation } = entry;
+          if (valuation?.price !== undefined) setPrice(valuation.slot, entry.id, valuation.price);
+          if (valuation?.tier !== undefined) setTier(valuation.slot, entry.id, valuation.tier);
         }
       },
       delete: async (id, jobs) => {
@@ -839,40 +892,51 @@ export class InMemorySportEvents {
     };
   }
 
-  tierRepo(): SportEventTierRepository {
-    const findBySportEvents = async (sportEventIds: readonly string[]) => this.tierRows
-      .filter((row) => sportEventIds.includes(row.sportEventId))
-      .sort((left, right) => left.sportEventId.localeCompare(right.sportEventId) || left.tierNumber - right.tierNumber);
+  tierRepo(): SportEventSlotTierRepository {
+    const findBySlots = async (slotIds: readonly string[]) => this.tierRows
+      .filter((row) => slotIds.includes(row.sportEventSlotId))
+      .sort((left, right) => left.sportEventSlotId.localeCompare(right.sportEventSlotId) || left.tierNumber - right.tierNumber);
     return {
-      findBySportEvent: async (sportEventId) => findBySportEvents([sportEventId]),
-      findBySportEvents,
+      findTierSlots: async (sportEventIds) => new Map(sportEventIds.map((id) => [id, this.events.some((event) => event.id === id) ? this.tierSlotsOf(id) : []])),
+      findBySlot: async (slotId) => findBySlots([slotId]),
+      findBySlots,
       createMany: async (tiers) => {
         for (const tier of tiers) this.tierRows.push(stamp({ id: this.id('tier'), ...tier }));
       },
-      replace: async (sportEventId, tiers, reassignTo) => {
-        const existing = this.tierRows.filter((row) => row.sportEventId === sportEventId);
+      replace: async (sportEventSlotId, tiers, reassignTo) => {
+        const existing = this.tierRows.filter((row) => row.sportEventSlotId === sportEventSlotId);
         const keep = new Set(tiers.map((tier) => tier.tierKey));
         for (const tier of tiers) {
           const row = existing.find((candidate) => candidate.tierKey === tier.tierKey);
           if (row) Object.assign(row, tier);
-          else this.tierRows.push(stamp({ id: this.id('tier'), sportEventId, ...tier }));
+          else this.tierRows.push(stamp({ id: this.id('tier'), sportEventSlotId, ...tier }));
         }
         const removed = new Set(existing.filter((row) => !keep.has(row.tierKey)).map((row) => row.id));
-        const target = this.tierRows.find((row) => row.sportEventId === sportEventId && row.tierKey === reassignTo);
+        const target = this.tierRows.find((row) => row.sportEventSlotId === sportEventSlotId && row.tierKey === reassignTo);
         for (const valuation of this.valuationRows) {
-          if (valuation.sportEventTierId && removed.has(valuation.sportEventTierId)) {
-            valuation.sportEventTierId = target?.id ?? null;
+          if (valuation.sportEventSlotTierId && removed.has(valuation.sportEventSlotTierId)) {
+            valuation.sportEventSlotTierId = target?.id ?? null;
             valuation.tierOrderIndex = null;
             if (!target) valuation.tierAssignedSource = null;
           }
         }
         this.tierRows = this.tierRows.filter((row) => !removed.has(row.id));
       },
-      countValuations: async (sportEventId) => new Map(this.tierRows
-        .filter((row) => row.sportEventId === sportEventId)
-        .map((tier): [string, number] => [tier.id, this.valuationRows.filter((valuation) => valuation.sportEventTierId === tier.id).length])
+      countValuations: async (sportEventSlotId) => new Map(this.tierRows
+        .filter((row) => row.sportEventSlotId === sportEventSlotId)
+        .map((tier): [string, number] => [tier.id, this.valuationRows.filter((valuation) => valuation.sportEventSlotTierId === tier.id).length])
         .filter(([, count]) => count > 0)),
     };
+  }
+
+  /** A field row's valuation in the slot's set, made empty when it has none. */
+  private valuationIn(slot: ValuedSlot, sportEventParticipantId: string): SportEventSlotParticipantValuation {
+    let row = this.valuationRows.find((candidate) => candidate.sportEventSlotId === slot.id && candidate.sportEventParticipantId === sportEventParticipantId);
+    if (!row) {
+      row = stamp({ id: this.id('valuation'), sportEventSlotId: slot.id, sportEventParticipantId, sportEventSlotTierId: null, tierOrderIndex: null, tierAssignedSource: null, price: null, priceAssignedSource: null });
+      this.valuationRows.push(row);
+    }
+    return row;
   }
 
   /** The tier profile each sport league names, by league id: what the tier service reads. */
@@ -890,10 +954,7 @@ export class InMemorySportEvents {
   platformPricingProfileRepo(): Pick<PlatformPricingProfileRepository, 'findBySportLeague' | 'findById'> {
     return {
       findBySportLeague: async (sportLeagueId) => this.profileOf(this.platformPricingProfiles, sportLeagueId, 'platformPricingProfileId'),
-      findById: async (id) => {
-        const profile = this.platformPricingProfiles.find((row) => row.id === id);
-        return profile ? { ...profile } : null;
-      },
+      findById: async (id) => this.platformPricingProfiles.find((row) => row.id === id) ?? null,
     };
   }
 
@@ -935,48 +996,29 @@ export class InMemorySportEvents {
     return Object.assign(this.addSportLeague('sport-1', `League ${profile.id}`), { platformPricingProfileId: profile.id });
   }
 
-  valuationRepo(): SportEventParticipantValuationRepository {
-    const valuationFor = (sportEventParticipantId: string) => {
-      let row = this.valuationRows.find((candidate) => candidate.sportEventParticipantId === sportEventParticipantId);
-      if (!row) {
-        row = stamp({ id: this.id('valuation'), sportEventParticipantId, sportEventTierId: null, tierOrderIndex: null, tierAssignedSource: null, price: null, priceAssignedSource: null });
-        this.valuationRows.push(row);
+  valuationRepo(): SportEventSlotParticipantValuationRepository {
+    const place = (slot: ValuedSlot, assignments: readonly TierAssignment[]) => {
+      for (const assignment of assignments) {
+        Object.assign(this.valuationIn(slot, assignment.sportEventParticipantId), {
+          sportEventSlotTierId: assignment.sportEventSlotTierId,
+          tierOrderIndex: assignment.tierOrderIndex,
+          tierAssignedSource: assignment.source,
+        });
       }
-      return row;
     };
     return {
-      findBySportEvent: async (sportEventId) => {
-        const entryIds = new Set(this.field.filter((row) => row.sportEventId === sportEventId).map((row) => row.id));
-        return this.valuationRows.filter((row) => entryIds.has(row.sportEventParticipantId));
+      findBySlot: async (slotId) => this.valuationRows.filter((row) => row.sportEventSlotId === slotId),
+      findBySlots: async (slotIds) => this.valuationRows.filter((row) => slotIds.includes(row.sportEventSlotId)),
+      assignTiers: async (slot, assignments) => place(slot, assignments),
+      assignSlotTiers: async ({ slot, tierSettings, assignments }) => {
+        place(slot, assignments);
+        this.slotTierSettings.set(slot.id, { ...tierSettings });
       },
-      findBySportEvents: async (sportEventIds) => {
-        const entryIds = new Set(this.field.filter((row) => sportEventIds.includes(row.sportEventId)).map((row) => row.id));
-        return this.valuationRows.filter((row) => entryIds.has(row.sportEventParticipantId));
-      },
-      assignTiers: async (assignments) => {
+      assignSlotPrices: async ({ slot, pricing, assignments }) => {
         for (const assignment of assignments) {
-          Object.assign(valuationFor(assignment.sportEventParticipantId), {
-            sportEventTierId: assignment.sportEventTierId,
-            tierOrderIndex: assignment.tierOrderIndex,
-            tierAssignedSource: assignment.source,
-          });
+          Object.assign(this.valuationIn(slot, assignment.sportEventParticipantId), { price: assignment.price, priceAssignedSource: assignment.source });
         }
-      },
-      assignEventTiers: async ({ sportEventId, tierConfig, assignments }) => {
-        for (const assignment of assignments) {
-          Object.assign(valuationFor(assignment.sportEventParticipantId), {
-            sportEventTierId: assignment.sportEventTierId,
-            tierOrderIndex: assignment.tierOrderIndex,
-            tierAssignedSource: assignment.source,
-          });
-        }
-        Object.assign(this.events.find((row) => row.id === sportEventId) as SportEvent, { tierConfig });
-      },
-      assignEventPrices: async ({ sportEventId, pricingConfig, assignments }) => {
-        for (const assignment of assignments) {
-          Object.assign(valuationFor(assignment.sportEventParticipantId), { price: assignment.price, priceAssignedSource: assignment.source });
-        }
-        Object.assign(this.events.find((row) => row.id === sportEventId) as SportEvent, { pricingConfig });
+        this.slotPricings.set(slot.id, { ...pricing });
       },
     };
   }
@@ -984,7 +1026,9 @@ export class InMemorySportEvents {
   /** One field row with everything the field read carries, as copies. */
   private fieldRow(entry: SportEventParticipant, sportLeagueId: string): SportEventParticipantView {
     const standing = this.standingRows.find((row) => row.sportEventParticipantId === entry.id);
-    const valuation = this.valuationRows.find((row) => row.sportEventParticipantId === entry.id);
+    // The tier-set slot's set's (#2044), as a field read shows it.
+    const tierSetSlotId = this.tierSlotsOf(entry.sportEventId).find((slot) => slot.isTierSetSlot)?.id;
+    const valuation = this.valuationRows.find((row) => row.sportEventSlotId === tierSetSlotId && row.sportEventParticipantId === entry.id);
     return {
       entry: { ...entry },
       participant: { ...(this.participants.find((participant) => participant.id === entry.participantId) as Participant) },

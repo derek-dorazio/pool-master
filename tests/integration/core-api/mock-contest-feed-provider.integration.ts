@@ -90,7 +90,7 @@ async function cleanupMockProviderImportData(): Promise<void> {
 
   // The rounds' FIELD matches name the golfers as sides (#2008).
   await prisma.sportEventRoundMatch.deleteMany({ where: { sportEvent: MOCK_FEED_EVENTS } });
-  await prisma.sportEventParticipantValuation.deleteMany({
+  await prisma.sportEventSlotParticipantValuation.deleteMany({
     where: {
       sportEventParticipant: {
         sportEvent: MOCK_FEED_EVENTS,

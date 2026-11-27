@@ -145,6 +145,8 @@ export const ReadMemoKey = {
   squad: 'squad:',
   squadMembership: 'squad-membership:',
   sportEvent: 'sport-event:',
+  /** An event's tier slots (#2044): under the event's prefix, so every write that forgets the event forgets them. */
+  sportEventTierSlots: 'sport-event:tier-slots:',
   sportLeague: 'sport-league:',
   user: 'user:',
 } as const;

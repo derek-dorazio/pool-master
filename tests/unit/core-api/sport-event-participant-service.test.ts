@@ -7,7 +7,7 @@ import { InMemorySportEvents } from '../../support/in-memory-sport-events';
 import { expectDefined } from '../../support/expect-defined';
 import { eventRebuildJob } from '../../support/recording-leaderboard-rebuilds';
 import { RecordingDomainEvents } from '../../support/recording-domain-events';
-import { standardEventPricing } from '../../support/budget-pricing';
+import { inMemoryStandardPricing } from '../../support/budget-pricing';
 import { ReadCache } from '../../../packages/core-api/src/core/read-cache';
 import type { SportEventParticipantView } from '@poolmaster/shared/db';
 import { roundSlot } from '../../support/round-slots';
@@ -20,7 +20,7 @@ function setup(sportName: Sport = Sport.GOLF, status: SportEventStatus = SportEv
   const sport = store.addSport(sportName);
   const sportLeague = store.addSportLeague(sport.id);
   // A draft, so its prices are still editable (#431); pass a released status to lock them.
-  const event = store.addEvent({ sportLeagueId: sportLeague.id, sport: sportName, status });
+  const event = store.addSlottedEvent({ sportLeagueId: sportLeague.id, sport: sportName, status });
   const domainEvents = new RecordingDomainEvents();
   const service = new SportEventParticipantService({
     sportEvents: store.sportEventRepo(),
@@ -42,9 +42,9 @@ describe('SportEventParticipantService.listEventParticipants', () => {
       games: [{ roundNumber: round.roundNumber, status: 'COMPLETED', completedAt: null, sides: [{ sportEventParticipantId: entry.id, score: 70, scoreToPar: -2, periodsCompleted: 18, position: null, startPosition: null, status: 'FINISHED' }] }],
       standings: [{ sportEventParticipantId: entry.id, position: 1, displayPosition: '1', status: 'COMPLETE', asOf: new Date(), total: 70, scoreToPar: -2 }],
     });
-    await store.valuationRepo().assignEventPrices({
-      sportEventId: event.id,
-      pricingConfig: standardEventPricing(),
+    await store.valuationRepo().assignSlotPrices({
+      slot: store.tierSetSlotOf(event.id),
+      pricing: inMemoryStandardPricing(),
       assignments: [{ sportEventParticipantId: entry.id, price: 9, source: 'MANUAL' }],
     });
 
@@ -70,7 +70,7 @@ describe('SportEventParticipantService.listEventParticipants', () => {
 
   it('flags nobody as affiliated on an event of another sport league\'s series, and fails with 404 for an unknown event', async () => {
     const { store, service, sport } = setup();
-    const orphan = store.addEvent();
+    const orphan = store.addSlottedEvent();
     store.addToField(orphan.id, store.addParticipant(sport.id, 'Solo').id);
 
     await expect(service.listEventParticipants(orphan.id)).resolves.toEqual([expect.objectContaining({ affiliatedWithSportLeague: false })]);
@@ -146,7 +146,7 @@ describe('SportEventParticipantService.getEventParticipant', () => {
     store.affiliate(sportLeague.id, ana.id);
     store.addToField(event.id, store.addParticipant(sport.id, 'Bea').id, { seedNumber: 1 });
     const row = store.addToField(event.id, ana.id, { seedNumber: 2 });
-    const elsewhere = store.addToField(store.addEvent({ sportLeagueId: sportLeague.id }).id, ana.id);
+    const elsewhere = store.addToField(store.addSlottedEvent({ sportLeagueId: sportLeague.id }).id, ana.id);
 
     const one = await service.getEventParticipant(event.id, row.id);
 
@@ -188,7 +188,7 @@ describe('SportEventParticipantService — changing the field', () => {
   it('saves the grid all or none: a row off this event\'s field is refused with 404 before anything is written', async () => {
     const { store, service, sport, event } = setup();
     const entry = store.addToField(event.id, store.addParticipant(sport.id, 'A').id, { ranking: 4 });
-    const other = store.addToField(store.addEvent().id, store.addParticipant(sport.id, 'B').id);
+    const other = store.addToField(store.addSlottedEvent().id, store.addParticipant(sport.id, 'B').id);
 
     await expect(service.updateParticipants(event.id, [
       { sportEventParticipantId: entry.id, ranking: 1 },
@@ -205,7 +205,7 @@ describe('SportEventParticipantService — changing the field', () => {
   it('writes only the values a grid save changes, leaving out values sent as they already are (#1252)', async () => {
     const store = new InMemorySportEvents();
     const sport = store.addSport(Sport.GOLF);
-    const event = store.addEvent({ sportLeagueId: store.addSportLeague(sport.id).id, sport: Sport.GOLF, status: SportEventStatus.DRAFT });
+    const event = store.addSlottedEvent({ sportLeagueId: store.addSportLeague(sport.id).id, sport: Sport.GOLF, status: SportEventStatus.DRAFT });
     const field = store.fieldRepo();
     const updateMany = jest.spyOn(field, 'updateMany');
     const service = new SportEventParticipantService({ domainEvents: testDomainEvents(),
@@ -221,8 +221,8 @@ describe('SportEventParticipantService — changing the field', () => {
     ]);
 
     expect(updateMany).toHaveBeenCalledWith([
-      { id: same.id, updates: {}, price: undefined },
-      { id: moved.id, updates: { ranking: 2 }, price: undefined },
+      { id: same.id, updates: {} },
+      { id: moved.id, updates: { ranking: 2 } },
     ], [eventRebuildJob(event.id)]);
     expect([same.ranking, moved.ranking]).toEqual([4, 2]);
   });
@@ -242,7 +242,7 @@ describe('SportEventParticipantService — changing the field', () => {
       const context = setup();
       const { store, sport, event } = context;
       await store.addTiers(event.id, [{ tierKey: 'tier-1', tierNumber: 1 }, { tierKey: 'tier-2', tierNumber: 2 }]);
-      const [tier1, tier2] = await store.tierRepo().findBySportEvent(event.id);
+      const [tier1, tier2] = await store.tierRepo().findBySlot(store.tierSetSlotOf(event.id).id);
       const add = (name: string) => store.addToField(event.id, store.addParticipant(sport.id, name).id);
       return { ...context, tier1, tier2, add };
     }
@@ -250,16 +250,16 @@ describe('SportEventParticipantService — changing the field', () => {
     it('places the moved participant after the highest place in its new tier, so a tier with gaps never repeats a place, and marks the tier and price manual', async () => {
       const { store, service, event, tier1, tier2, add } = await tiered();
       const [first, third, moving] = [add('First'), add('Third'), add('Moving')];
-      await store.valuationRepo().assignTiers([
-        { sportEventParticipantId: first.id, sportEventTierId: tier2.id, tierOrderIndex: 0, source: 'AUTO_ODDS' },
-        { sportEventParticipantId: third.id, sportEventTierId: tier2.id, tierOrderIndex: 2, source: 'AUTO_ODDS' },
-        { sportEventParticipantId: moving.id, sportEventTierId: tier1.id, tierOrderIndex: 0, source: 'AUTO_ODDS' },
+      await store.valuationRepo().assignTiers(store.tierSetSlotOf(event.id), [
+        { sportEventParticipantId: first.id, sportEventSlotTierId: tier2.id, tierOrderIndex: 0, source: 'AUTO_ODDS' },
+        { sportEventParticipantId: third.id, sportEventSlotTierId: tier2.id, tierOrderIndex: 2, source: 'AUTO_ODDS' },
+        { sportEventParticipantId: moving.id, sportEventSlotTierId: tier1.id, tierOrderIndex: 0, source: 'AUTO_ODDS' },
       ]);
 
       await service.updateParticipants(event.id, [{ sportEventParticipantId: moving.id, tierKey: 'tier-2', price: 900 }]);
 
       expect(store.valuationRows.find((row) => row.sportEventParticipantId === moving.id)).toMatchObject({
-        sportEventTierId: tier2.id, tierOrderIndex: 3, tierAssignedSource: 'MANUAL', price: 900, priceAssignedSource: 'MANUAL',
+        sportEventSlotTierId: tier2.id, tierOrderIndex: 3, tierAssignedSource: 'MANUAL', price: 900, priceAssignedSource: 'MANUAL',
       });
     });
 
@@ -272,7 +272,7 @@ describe('SportEventParticipantService — changing the field', () => {
         { sportEventParticipantId: b.id, tierKey: 'tier-1' },
       ]);
 
-      expect(store.valuationRows.map((row) => [row.sportEventParticipantId, row.sportEventTierId, row.tierOrderIndex])).toEqual([
+      expect(store.valuationRows.map((row) => [row.sportEventParticipantId, row.sportEventSlotTierId, row.tierOrderIndex])).toEqual([
         [a.id, tier1.id, 0],
         [b.id, tier1.id, 1],
       ]);

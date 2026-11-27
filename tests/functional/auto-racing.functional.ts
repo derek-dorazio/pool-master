@@ -28,7 +28,7 @@ import {
   getFunctionalPrisma,
 } from './setup';
 import { expectDefined } from '../support/expect-defined';
-import { standardPricingRequest } from './standard-pricing';
+import { standardPricingFor } from './standard-pricing';
 import { byParticipantId, setFieldRows } from './field-rows';
 
 // Auto racing end to end over HTTP (#624): an admin builds a race in the seeded NASCAR Cup Series
@@ -59,12 +59,12 @@ async function cleanup(): Promise<void> {
     // The seeded series stays: only this run's event series goes with its race.
     await db.contestEntryPick.deleteMany({ where: { sportEventParticipant: { sportEventId: { in: eventIds } } } });
     await db.sportEventParticipantStanding.deleteMany({ where: { sportEventParticipant: { sportEventId: { in: eventIds } } } });
-    await db.sportEventParticipantValuation.deleteMany({ where: { sportEventParticipant: { sportEventId: { in: eventIds } } } });
+    await db.sportEventSlotParticipantValuation.deleteMany({ where: { sportEventParticipant: { sportEventId: { in: eventIds } } } });
     // A race is a FIELD match in its event (#2008); its sides hold the field rows.
     await db.sportEventRoundMatch.deleteMany({ where: { sportEventId: { in: eventIds } } });
     await db.sportEventParticipant.deleteMany({ where: { sportEventId: { in: eventIds } } });
     await db.sportEventRound.deleteMany({ where: { sportEventId: { in: eventIds } } });
-    await db.sportEventTier.deleteMany({ where: { sportEventId: { in: eventIds } } });
+    await db.sportEventSlotTier.deleteMany({ where: { slot: { sportEventId: { in: eventIds } } } });
     await db.sportEvent.deleteMany({ where: { id: { in: eventIds } } });
   }
   if (created.participantIds.size) {
@@ -116,7 +116,7 @@ describe('SDK Functional: Auto racing NASCAR Cup Series points', () => {
     });
     expect(upload.response?.status).toBe(200);
     expect((await autoAssignEventTiers({ client: a, path: { eventId }, body: { tierSize: 1 } })).response?.status).toBe(200);
-    expect((await autoAssignEventPrices({ client: a, path: { eventId }, body: await standardPricingRequest(a) })).response?.status).toBe(200);
+    expect((await autoAssignEventPrices({ client: a, path: { eventId }, body: await standardPricingFor(a) })).response?.status).toBe(200);
     expect((await releaseEvent({ client: a, path: { eventId } })).data?.event.status).toBe('SCHEDULED');
 
     const field = expectDefined((await listEventParticipants({ client: a, path: { eventId } })).data).participants;
@@ -261,7 +261,7 @@ describe('SDK Functional: Auto racing Formula 1 points', () => {
     expect(fourTiers.response?.status).toBe(200);
     expect(expectDefined(fourTiers.data).tiers).toHaveLength(4);
     expect((await autoAssignEventTiers({ client: a, path: { eventId }, body: { tierSize: 2 } })).response?.status).toBe(200);
-    expect((await autoAssignEventPrices({ client: a, path: { eventId }, body: await standardPricingRequest(a) })).response?.status).toBe(200);
+    expect((await autoAssignEventPrices({ client: a, path: { eventId }, body: await standardPricingFor(a) })).response?.status).toBe(200);
     expect((await releaseEvent({ client: a, path: { eventId } })).data?.event.status).toBe('SCHEDULED');
 
     const field = expectDefined((await listEventParticipants({ client: a, path: { eventId } })).data).participants;

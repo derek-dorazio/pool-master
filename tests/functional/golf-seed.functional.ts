@@ -73,10 +73,10 @@ async function cleanup(): Promise<void> {
   const fieldIds = (await db.sportEventParticipant.findMany({ where: { sportEventId: { in: eventIds } }, select: { id: true } })).map((row) => row.id);
   await db.sportEventRoundMatch.deleteMany({ where: { sportEventId: { in: eventIds } } });
   await db.sportEventParticipantStanding.deleteMany({ where: { sportEventParticipantId: { in: fieldIds } } });
-  await db.sportEventParticipantValuation.deleteMany({ where: { sportEventParticipantId: { in: fieldIds } } });
+  await db.sportEventSlotParticipantValuation.deleteMany({ where: { sportEventParticipantId: { in: fieldIds } } });
   await db.sportEventParticipant.deleteMany({ where: { id: { in: fieldIds } } });
   await db.sportEventRound.deleteMany({ where: { sportEventId: { in: eventIds } } });
-  await db.sportEventTier.deleteMany({ where: { sportEventId: { in: eventIds } } });
+  await db.sportEventSlotTier.deleteMany({ where: { slot: { sportEventId: { in: eventIds } } } });
   await db.sportEvent.deleteMany({ where: { id: { in: eventIds } } });
   // The run's players, and every participant of the run's leagues (#1853: each belongs to one).
   const participantWhere = { OR: [{ name: { startsWith: RUN } }, { sportLeagueId: { in: leagueIds } }] };

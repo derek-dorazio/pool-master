@@ -6,8 +6,10 @@
  */
 
 import type { ScoringFamily } from './sports/scoring-family';
-import type { ProviderCode, HomeAway, MatchEnding, MatchSideOutcome, MatchStatus, PeriodKind, ParticipantType, ParticipantStandingStatus, GameSideStatus, SlotKind, SlotPairing, SportLeagueNoun, ValuationSource } from './enums';
+import type { ProviderCode, HomeAway, MatchEnding, MatchSideOutcome, MatchStatus, PeriodKind, ParticipantType, ParticipantStandingStatus, GameSideStatus, SeasonSlotStatus, SlotKind, SlotPairing, SportLeagueNoun, ValuationSource } from './enums';
 import type { DomainEntity } from './types';
+import type { SlotPricing } from './budget-pricing';
+import type { SlotTierLayout } from './tier-profiles';
 import type { SlotPeriods } from './slot-periods';
 
 /**
@@ -146,25 +148,51 @@ export interface SportEventParticipantStanding extends DomainEntity {
   scoreToPar: number | null;
 }
 
-/** A pick tier an event's field is divided into. Cross-sport: nothing here is golf. */
-export interface SportEventTier extends DomainEntity {
-  sportEventId: string;
+/**
+ * A pick tier of an event slot's team tier set (#2044): a set is built for each event slot a
+ * template lists as a starting point. Cross-sport: nothing here is golf.
+ */
+export interface SportEventSlotTier extends DomainEntity {
+  sportEventSlotId: string;
   tierKey: string;
   /** 1 is the top tier; its words are `tierLabel(tierNumber)` (#2047). */
   tierNumber: number;
 }
 
 /**
- * A participant's tier placement and price at one event. Tier and price are set
+ * A field row's tier placement and price in one event slot's set (#2044). Tier and price are set
  * independently — either may be null — and each records how it was set.
  */
-export interface SportEventParticipantValuation extends DomainEntity {
+export interface SportEventSlotParticipantValuation extends DomainEntity {
+  sportEventSlotId: string;
   sportEventParticipantId: string;
-  sportEventTierId: string | null;
+  sportEventSlotTierId: string | null;
   tierOrderIndex: number | null;
   tierAssignedSource: ValuationSource | null;
   price: number | null;
   priceAssignedSource: ValuationSource | null;
+}
+
+/**
+ * An event slot as its team tier set reads it (#2044): where it is in play, and what the set was
+ * last tiered and priced with.
+ */
+export interface SportEventTierSlot {
+  /** The event slot (SportEventSlot). */
+  id: string;
+  sportEventId: string;
+  /** The Season slot it is. */
+  seasonSlotId: string;
+  seasonSlotStatus: SeasonSlotStatus;
+  /**
+   * Whether it is its event's tier-set slot (`chooseTierSetSlot`): the slot today's tiered and budget
+   * contests read, whose set is built while the event is a draft.
+   */
+  isTierSetSlot: boolean;
+  /** The layout the set was last auto-tiered with; null until it first is. */
+  tierLayout: SlotTierLayout | null;
+  /** The values the set was last priced with, and the profile they started from; null until it is priced. */
+  pricing: SlotPricing | null;
 }
 
 // --- Matches (#698) -----------------------------------------------------------

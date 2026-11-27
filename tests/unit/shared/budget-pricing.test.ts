@@ -1,8 +1,8 @@
-import { EventPricingConfigSchema, eventPricingOf, priceFieldOnBudgetCurve, StoredEventPricingSchema } from '@poolmaster/shared/domain';
-import { standardEventPricing } from '../../support/budget-pricing';
+import { SlotPricingSchema, priceFieldOnBudgetCurve, slotPricingOf } from '@poolmaster/shared/domain';
+import { inMemoryStandardPricing } from '../../support/budget-pricing';
 
 describe('priceFieldOnBudgetCurve — a pricing profile\'s budget curve (#93), over a field already in order', () => {
-  const standard = standardEventPricing();
+  const standard = inMemoryStandardPricing();
   const field = (size: number) => Array.from({ length: size }, (_, i) => `p-${i + 1}`);
 
   it('prices a 144-participant field with the Standard profile from $12,000 at the top to $6,000 at the bottom, steepest at the top', () => {
@@ -49,7 +49,7 @@ describe('priceFieldOnBudgetCurve — a pricing profile\'s budget curve (#93), o
   });
 });
 
-describe('An event\'s recorded pricing names the profile its values started from by id (#2205)', () => {
+describe('A slot\'s recorded pricing names the profile its values started from by id', () => {
   const PROFILE_ID = '00000000-0000-4000-8000-0000000000b1';
   const values = { salaryCap: 50_000, unit: 100, topSharePercent: 24, floorSharePercent: 12, steepness: 4 };
 
@@ -57,18 +57,10 @@ describe('An event\'s recorded pricing names the profile its values started from
     const now = new Date();
     const profile = { id: PROFILE_ID, code: 'STANDARD', name: 'Standard', description: 'The usual curve.', sources: [], createdAt: now, updatedAt: now, ...values };
 
-    expect(eventPricingOf(profile)).toEqual({ platformPricingProfileId: PROFILE_ID, ...values });
-  });
-
-  it('reads back recorded pricing whose profile was deleted, with no profile', () => {
-    expect(EventPricingConfigSchema.parse({ platformPricingProfileId: null, ...values })).toEqual({ platformPricingProfileId: null, ...values });
+    expect(slotPricingOf(profile)).toEqual({ platformPricingProfileId: PROFILE_ID, ...values });
   });
 
   it('refuses recorded pricing that names its profile by name rather than id', () => {
-    expect(EventPricingConfigSchema.safeParse({ profileName: 'Standard', ...values }).success).toBe(false);
-  });
-
-  it('stores the values without the profile, which the event keeps as a column of its own', () => {
-    expect(StoredEventPricingSchema.parse({ platformPricingProfileId: PROFILE_ID, ...values })).toEqual(values);
+    expect(SlotPricingSchema.safeParse({ profileName: 'Standard', ...values }).success).toBe(false);
   });
 });

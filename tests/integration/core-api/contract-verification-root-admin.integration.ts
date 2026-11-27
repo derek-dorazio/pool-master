@@ -70,6 +70,7 @@ import type {
   UserResponse,
 } from '@poolmaster/shared/dto';
 import { ErrorEnvelopeSchema } from '@poolmaster/shared/dto/errors.dto';
+import { standardPricingIn } from '../../support/budget-pricing';
 import { ingestionModule } from '../../../packages/core-api/src/modules/ingestion/routes';
 import { participantsModule } from '../../../packages/core-api/src/modules/participants/routes';
 import { eventsModule } from '../../../packages/core-api/src/modules/events/routes';
@@ -99,7 +100,7 @@ import {
   integrationBackgroundJobs,
   setupIntegrationTests,
   teardownIntegrationTests,
-  withoutJsonBodyHeaders, integrationSportEventServices, integrationEventLifecycle, integrationProviderSettings, integrationSyncFindings, standardEventPricingInDb,
+  withoutJsonBodyHeaders, integrationSportEventServices, integrationEventLifecycle, integrationProviderSettings, integrationSyncFindings,
 } from '../helpers';
 import type {
   ProviderParticipant,
@@ -1524,7 +1525,7 @@ describe('Contract verification (root admin)', () => {
         method: 'POST',
         url: `/api/v1/events/${eventId}/prices/auto-assign`,
         headers: rootAdmin.headers,
-        payload: await standardEventPricingInDb(),
+        payload: await standardPricingIn(getPrisma()),
       });
       expect(autoPriceRes.statusCode).toBe(200);
       expect(SportEventParticipantListResponseSchema.safeParse(autoPriceRes.json()).success).toBe(true);
@@ -1576,10 +1577,10 @@ describe('Contract verification (root admin)', () => {
           // The rounds' FIELD matches name the golfers as sides (#2008).
           await prisma.sportEventRoundMatch.deleteMany({ where: { sportEventId: { in: created.eventIds } } });
           await prisma.sportEventParticipantStanding.deleteMany({ where: { sportEventParticipantId: { in: sepIds } } });
-          await prisma.sportEventParticipantValuation.deleteMany({ where: { sportEventParticipantId: { in: sepIds } } });
+          await prisma.sportEventSlotParticipantValuation.deleteMany({ where: { sportEventParticipantId: { in: sepIds } } });
           await prisma.sportEventParticipant.deleteMany({ where: { id: { in: sepIds } } });
         }
-        await prisma.sportEventTier.deleteMany({ where: { sportEventId: { in: created.eventIds } } });
+        await prisma.sportEventSlotTier.deleteMany({ where: { slot: { sportEventId: { in: created.eventIds } } } });
         await prisma.sportEventRound.deleteMany({ where: { sportEventId: { in: created.eventIds } } });
         await prisma.sportEvent.deleteMany({ where: { id: { in: created.eventIds } } });
       }
@@ -1672,7 +1673,7 @@ describe('Contract verification (root admin)', () => {
       const eventIds = (await prisma.sportEvent.findMany({ where: { sportLeagueId: { in: [synced.id, unsynced.id] } }, select: { id: true } }))
         .map((event) => event.id);
       await prisma.sportEventRound.deleteMany({ where: { sportEventId: { in: eventIds } } });
-      await prisma.sportEventTier.deleteMany({ where: { sportEventId: { in: eventIds } } });
+      await prisma.sportEventSlotTier.deleteMany({ where: { slot: { sportEventId: { in: eventIds } } } });
       await prisma.sportEvent.deleteMany({ where: { id: { in: eventIds } } });
       await prisma.contestConfigTemplate.deleteMany({ where: { sportLeagueId: synced.id } });
       await deleteTestSportLeagues(prisma, [synced.id, unsynced.id]);

@@ -318,7 +318,7 @@ borderline object is tenant-scoped until the repo owner says otherwise.
 
 | | Objects |
 |---|---|
-| **Global** | `Sport`, `SportLeague`, `SportEvent`, `SportEventRound`, `SportEventTier`, `Participant`, `ParticipantProviderMapping`, `SportEventParticipant` and its standing, round and valuation rows, `ContestConfigTemplate`, `EventPage` and its offers |
+| **Global** | `Sport`, `SportLeague`, `SportEvent`, `SportEventRound`, `SportEventSlotTier`, `Participant`, `ParticipantProviderMapping`, `SportEventParticipant` and its standing, round and valuation rows, `ContestConfigTemplate`, `EventPage` and its offers |
 | **Tenant-scoped** | `User`, `League`, `LeagueMembership`, `Squad`, `SquadMembership`, both invitation objects, `Contest` and everything under it — configuration, entries, picks, scoring rules, prizes |
 
 The boundary is where the two halves meet: `SportEventParticipant` is global (a golfer in a
@@ -581,7 +581,7 @@ link with `maxUses` / `currentUses`.
 
 Cluster: `Sport`, `SportLeague`, `SportEvent`, `SportEventRound`,
 `SportEventParticipant`, `SportEventParticipantStanding`,
-`SportEventTier`, `SportEventParticipantValuation`, `SportEventRoundMatch`, `Participant`,
+`SportEventSlotTier`, `SportEventSlotParticipantValuation`, `SportEventRoundMatch`, `Participant`,
 `ParticipantProviderMapping`. A `Participant` belongs to one `SportLeague` (#1853).
 The tree is `SportLeague → SportLeagueSeason → SportEvent`: an event sits in one of its
 league's Seasons (#2003), and plays the Season slots its event slots name (#2010; the series
@@ -675,7 +675,7 @@ are gone (#236).
 | Automatic release | the hourly sweep | A synced `DRAFT` event inside its sport league's `autoReleaseDaysBeforeStart` window (7 days by default; null turns it off) is tried each hour by a `RELEASE_SPORT_EVENT` job (`docs/BACKGROUND-JOBS.md`): every ready check passing releases it through `releaseEvent`'s path, any failing holds it as a draft; the job's result is every check and its value (#1823). A hold for the same failed checks as the stored one leaves no Activity row (#1865) |
 | Transition | `rootAdmin` | `transitionEvent` refuses `DRAFT` → `SCHEDULED` with 409 `SPORT_EVENT_RELEASE_REQUIRED`: that move is `releaseEvent`'s. Linking an event to a provider event by hand, and unlinking it, went in #2004: an event's provider ids are the sync's alone, and each event reads them back as `providerMappings` (provider code and name, and the id) |
 
-### SportEventRound, SportEventTier
+### SportEventRound, SportEventSlotTier
 
 Children of an event; always reached through it.
 
@@ -749,8 +749,10 @@ into a later covered round scores the value of each covered round it skipped onc
 decided, with no upset bonus (#2170). Contest setup
 requires one round value per round the contest covers: 422 `CONTEST_SCORING_ROUNDS_MISMATCH`
 otherwise, and refuses an event whose games form no bracket (a regular-season week, #715) with
-422 `CONTEST_EVENT_NOT_A_BRACKET`, since no team goes a round further. Until the bracket has a
-result, no team is scored.
+422 `CONTEST_EVENT_NOT_A_BRACKET`, since no team goes a round further. A slate of one-off games is
+scored (#2225): every game in one round of a TOURNAMENT slot, none leading to another (a
+season's bowl games; a week's games or a knockout's first round alone are not one), each game its own final, so a win scores the round's one value. A bracket
+pick'em still needs a bracket. Until the bracket has a result, no team is scored.
 
 ### A golf round — a FIELD Game's side results, and SportEventParticipantStanding
 
@@ -797,14 +799,18 @@ them only on a test slot (#2074).
 | Apply a finishing order | `rootAdmin` | `applyEventRaceResults`, all or none. Every value is stored as sent and none is derived (the score-correction pattern); runners not named keep their stored result, so a stewards' change is one row. `isOfficial` is set on every result of the race: the race is official as a whole. Places, merged with the stored ones, must run 1, 2, 3 … with a dead heat repeating a place and skipping the next (1, 2, 2, 4). An official result needs a result for every active runner and a place for every finisher; a scratched runner needs none. Also writes each runner's core standing: `position` its place, displayed "T2" in a dead heat, `COMPLETE` once it started and `WITHDRAWN` when it did not start. 422 `RACE_RESULT_ROWS_INVALID`, `RACE_RESULT_POSITIONS_INVALID`, `RACE_RESULT_FIELD_INCOMPLETE`, and `EVENT_SCORING_FAMILY_MISMATCH` for an event whose sport is not scored by finishing place |
 | Score | *(contest scoring)* | Only an official result scores. A finisher scores its contest's `pointsTable` value at its place (0 beyond the table; both runners of a dead heat take the full points); `DID_NOT_FINISH`, `DISQUALIFIED` and `DID_NOT_START` score `didNotFinishPoints`, and so does a scratched runner with no result once the race is official. A runner with no result, or any result not yet official, is unscored |
 
-### SportEventParticipantValuation
+### SportEventSlotParticipantValuation
 
-The tier assignment and price for a participant at an event. 1:1 with
-`SportEventParticipant`.
+The tier assignment and price for a participant in one event slot's tier set (#2044): at most
+one per field row per slot. Tiers (`SportEventSlotTier`) and the set's tier and pricing settings
+are the slot's too. Every tiered and budget template starts at its event's tier-set slot today: the first slot in play order that such a template of its league lists, else the first slot (`chooseTierSetSlot`; a league's play-in comes first but no such template covers it), so the
+event's reads and writes are that slot's set; an event covering no slot has no set, and the
+writes answer 409 `SPORT_EVENT_HAS_NO_SLOT`. The tier-set slot's set locks when the event is
+released.
 
 **One valuation per field row, shared by every contest on the event — deliberate (#249).**
-The row is keyed by `sportEventParticipantId` alone and tiers are keyed
-`(sportEventId, tierKey)`, so two leagues running contests on the same event read the
+The row is keyed by the slot and `sportEventParticipantId` and tiers by `(sportEventSlotId,
+tierKey)`, so two leagues running contests on the same event read the
 same tiers and the same prices. Nothing is scoped to a contest or a league, and only a
 root admin writes them. That is the intent, not an accident of early modelling: it gives
 one valuation per event to maintain, keeps entries comparable across pools, and spares
@@ -824,7 +830,7 @@ event's, by the ruling above, and so is its salary cap: a budget contest copies 
 | Operation | Role | Notes |
 |---|---|---|
 | Read for an event | `authenticated` | On each `listEventParticipants` row |
-| Auto-assign tiers, replace assignments, auto-assign prices | `rootAdmin` | `autoAssignEventTiers` (the field's one order, shared with prices (#1807, `orderField`): odds, then seed, then rank, decided for the whole field by the first value every active participant has, only later values breaking ties, then name; with none of the three in the field there is no order, and both refuse with 409 `FIELD_HAS_NO_ORDER` rather than order by name (#2040). Each automatic tier and price records the deciding value as its source: `AUTO_ODDS`, `AUTO_SEED` or `AUTO_RANKING`. With no `tierSize`, an event that keeps its sport league's tier profile's tier count gets the profile's tier size per tier and the last tier takes the rest (or, for a CAPPED profile, at most its `lastTierMax`, leaving anyone beyond in no tier: release does not wait on them) while the field reaches the last tier, the layout recorded on the event as `tierLayout` (#1844), and any other tier count, or a field too small for that, gets the active field spread evenly, larger tiers first), `replaceEventTierAssignments`, `autoAssignEventPrices`. All three refuse with 409 `SPORT_EVENT_TIERS_LOCKED` once the event is released (#431). A provider field sync runs the same two assignments on a draft event by itself, in the job it writes with the field (#1822, #1952), unless an admin has placed a tier (`MANUAL`) or typed a price by hand, which it then keeps; the buttons stay for corrections (`docs/LIVE-SPORTS-DATA-SYNC.md` §3 *Tiers and prices*). Prices follow the budget curve (#93): `price = round(salaryCap × (floor + (top − floor) × (1 − x)^steepness) / unit) × unit`, where `x` runs from 0 for the first in the field's order to 1 for the last. The request carries the five values and the profile they came from, usually a pricing profile (#1844); they are stored on the event as `pricing` in the same write, and its `salaryCap` is every budget contest's cap. 422 `PRICING_CONFIG_INVALID` when the floor share is above the top share or the unit above the worst golfer's price (`salaryCap × floorSharePercent / 100`), which could round prices to $0 |
+| Auto-assign tiers, replace assignments, auto-assign prices | `rootAdmin` | `autoAssignEventTiers` (the field's one order, shared with prices (#1807, `orderField`): odds, then seed, then rank, decided for the whole field by the first value every active participant has, only later values breaking ties, then name; with none of the three in the field there is no order, and both refuse with 409 `FIELD_HAS_NO_ORDER` rather than order by name (#2040). Each automatic tier and price records the deciding value as its source: `AUTO_ODDS`, `AUTO_SEED` or `AUTO_RANKING`. With no `tierSize`, an event that keeps its sport league's tier profile's tier count gets the profile's tier size per tier and the last tier takes the rest (or, for a CAPPED profile, at most its `lastTierMax`, leaving anyone beyond in no tier: release does not wait on them) while the field reaches the last tier, the profile and any tier size sent recorded on the event's tier-set slot and read back on the event as `tierLayout` (#1844, #2044), and any other tier count, or a field too small for that, gets the active field spread evenly, larger tiers first), `replaceEventTierAssignments`, `autoAssignEventPrices`. All three refuse with 409 `SPORT_EVENT_TIERS_LOCKED` once the event is released (#431). A provider field sync runs the same two assignments on a draft event by itself, in the job it writes with the field (#1822, #1952), unless an admin has placed a tier (`MANUAL`) or typed a price by hand, which it then keeps; the buttons stay for corrections (`docs/LIVE-SPORTS-DATA-SYNC.md` §3 *Tiers and prices*). Prices follow the budget curve (#93): `price = round(salaryCap × (floor + (top − floor) × (1 − x)^steepness) / unit) × unit`, where `x` runs from 0 for the first in the field's order to 1 for the last. The request carries the five values and the id of the pricing profile they started from (#1844, #2044; 404 `PLATFORM_PRICING_PROFILE_NOT_FOUND` for an unknown one); they are stored on the event's tier-set slot in the same write and read back on the event as `pricing`, and its `salaryCap` is every budget contest's cap. 422 `PRICING_CONFIG_INVALID` when the floor share is above the top share or the unit above the worst golfer's price (`salaryCap × floorSharePercent / 100`), which could round prices to $0 |
 
 ### Participant
 

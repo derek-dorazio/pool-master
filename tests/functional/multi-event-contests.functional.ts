@@ -34,7 +34,7 @@ import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, c
 import { cleanupFunctionalData, disconnectFunctionalPrisma, getFunctionalPrisma } from './setup';
 import { expectDefined } from '../support/expect-defined';
 import { copyContestSetups } from '../support/contest-setups';
-import { standardPricingRequest } from './standard-pricing';
+import { standardPricingFor } from './standard-pricing';
 import { unlinkContestsFromSportEvents } from '../support/contest-event-links';
 import { expectMatchesSchema } from '../support/expect-matches-schema';
 import { insertTestSportLeague } from '../support/test-sport-league';
@@ -78,10 +78,10 @@ async function cleanup(): Promise<void> {
     // The rounds' FIELD matches name the golfers as sides (#2008).
     await db.sportEventRoundMatch.deleteMany({ where: { sportEventId: { in: eventIds } } });
     await db.sportEventParticipantStanding.deleteMany({ where: field });
-    await db.sportEventParticipantValuation.deleteMany({ where: field });
+    await db.sportEventSlotParticipantValuation.deleteMany({ where: field });
     await db.sportEventParticipant.deleteMany({ where: { sportEventId: { in: eventIds } } });
     await db.sportEventRound.deleteMany({ where: { sportEventId: { in: eventIds } } });
-    await db.sportEventTier.deleteMany({ where: { sportEventId: { in: eventIds } } });
+    await db.sportEventSlotTier.deleteMany({ where: { slot: { sportEventId: { in: eventIds } } } });
     await db.sportEvent.deleteMany({ where: { id: { in: eventIds } } });
   }
   const leagueIds = [...created.sportLeagueIds];
@@ -144,7 +144,7 @@ async function buildTwoTournamentContest(
     });
     expect(upload.response?.status).toBe(200);
     expect((await autoAssignEventTiers({ client: a, path: { eventId }, body: { tierSize: 1 } })).response?.status).toBe(200);
-    expect((await autoAssignEventPrices({ client: a, path: { eventId }, body: await standardPricingRequest(a) })).response?.status).toBe(200);
+    expect((await autoAssignEventPrices({ client: a, path: { eventId }, body: await standardPricingFor(a) })).response?.status).toBe(200);
     expect((await releaseEvent({ client: a, path: { eventId } })).data?.event.status).toBe('SCHEDULED');
     const field = expectDefined((await listEventParticipants({ client: a, path: { eventId } })).data).participants;
     const fieldRowOf = (golfer: string) => expectDefined(field.find((row) => row.participant.name === `${golfer} ${RUN}${tag}`)).id;
