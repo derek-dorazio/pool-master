@@ -24,7 +24,7 @@ export const BUDGET_SALARY_CAP_MAX = 10_000_000;
 export const BUDGET_STEEPNESS_MAX = 10;
 
 /** The five values a field is priced with. */
-export const BudgetPricingValuesSchema = z.object({
+const BudgetPricingValuesSchema = z.object({
   salaryCap: z.number().int().min(1).max(BUDGET_SALARY_CAP_MAX)
     .describe('Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event.'),
   unit: z.number().int().min(1).max(BUDGET_SALARY_CAP_MAX)
