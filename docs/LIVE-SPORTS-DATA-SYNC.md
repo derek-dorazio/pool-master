@@ -267,7 +267,9 @@ Matches are its seeds' bracket); any other event gets the whole feed. A date-win
 games. While a rest-of-phase event is a draft, a team on its field with no game left in its slots is
 withdrawn (#2221), so a CFP team the bowls held before the seeds were placed leaves the bowls'
 field with its game; a team whose game comes back is made active again. A released event keeps
-every row, since a contest may already hold it.
+every row, since a contest may already hold it, and each such team is a `FIELD_TEAM_WITHOUT_GAME`
+WARNING finding on the event, named by its feed id and name (#2223); the field sync that finds the
+team's game back in the slots, or the team withdrawn, resolves it.
 
 For each provider event:
 
@@ -477,7 +479,9 @@ column. Each finding names its sport league; its event, Provider row and the fee
   could see them, raised as a WARNING when it does and resolved when a later one does not:
   `NO_PROVIDER_PARTICIPANTS` (a completed FIELD run whose provider sent no field),
   `NO_PROVIDER_LIVE_SCORES` (a completed SCORES run with no updates) and `GAMES_NOT_SYNCED` (the
-  field's follow-up job could not load the games the provider listed). The ledger turns a feed
+  field's follow-up job could not load the games the provider listed). `FIELD_TEAM_WITHOUT_GAME`
+  is checked the same way per team, by the field sync of a released rest-of-phase event (*A
+  rest-of-phase event's games and field* above). The ledger turns a feed
   run's warning into its finding, so a run carries no warnings of its own; the tier and price
   warnings stay in the follow-up job's result.
 - **Alert.** An ERROR that opens logs `ingestion.syncFinding.errorOpened`; a CloudWatch metric

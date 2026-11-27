@@ -6,12 +6,13 @@ import {
   setupIntegrationTests,
   teardownIntegrationTests,
   getPrisma,
+  integrationSyncFindings,
   withBackgroundJobsFailing,
 } from '../helpers';
 import { eventRebuildJob } from '../../support/recording-leaderboard-rebuilds';
 import { IngestionPersistence } from '../../../packages/core-api/src/modules/ingestion/persistence/ingestion-persistence';
 import type { SportEventDetail } from '../../../packages/core-api/src/modules/ingestion/core/provider-interface';
-import { SportEventParticipantStatus, Sport } from '@poolmaster/shared/domain';
+import { ProviderCode, ProviderSyncFindingKind, ProviderSyncFindingSeverity, ProviderSyncFindingStatus, SportEventParticipantStatus, Sport } from '@poolmaster/shared/domain';
 import { keyedSlotDefinitionId, linkedProviderEvent, providerEventWhere, putEventInSlot } from '../../support/event-edition';
 import { recordStatements, statementsOn, StatementVerb } from '../statement-log';
 import { expectSameStatementCount } from '../query-scaling';
@@ -379,7 +380,9 @@ describe('IngestionPersistence', () => {
       const cfpGames = Array.from({ length: leaving }, (_, index) => game(`stale-cfp-${String(index)}`, cfpTeams[2 * index], cfpTeams[2 * index + 1]));
       const games = [game('stale-bowl', TEAMS[0], TEAMS[1]), ...cfpGames];
       const prisma = getPrisma();
-      const persistence = new IngestionPersistence(getAppPrisma(), testDomainEvents());
+      const provider = await prisma.provider.findUniqueOrThrow({ where: { code: ProviderCode.BALLDONTLIE } });
+      const findings = integrationSyncFindings(getAppPrisma(), { all: () => [{ ...provider, leagues: [] }] });
+      const persistence = new IngestionPersistence(getAppPrisma(), testDomainEvents(), undefined, undefined, undefined, findings);
       const event = await linkedProviderEvent(prisma, { providerId: 'balldontlie', externalId, name: 'Bowl Games', startDate: new Date('2026-12-20T12:00:00.000Z') });
       await prisma.sportEvent.update({ where: { id: event.id }, data: { status: 'DRAFT' } });
       const { sportLeagueProviderMappingId } = await prisma.sportEventProviderMapping.findFirstOrThrow({ where: { sportEventId: event.id }, select: { sportLeagueProviderMappingId: true } });
@@ -401,7 +404,9 @@ describe('IngestionPersistence', () => {
       await prisma.sportLeagueSeasonCompetitionSlotGameProviderMapping.deleteMany({ where: { sportLeagueSeasonCompetitionSlotId: seasonSlotId, externalId: { not: `${externalId}-stale-bowl` } } });
       const statuses = async () => Object.fromEntries((await prisma.sportEventParticipant.findMany({ where: { sportEventId: event.id }, include: { participant: { include: { providerMappings: true } } } }))
         .map((row) => [feedIdOf(row.participant) ?? '', row.status]));
-      return { event, detail, persistence, statuses };
+      const teamFindings = async () => (await prisma.providerSyncFinding.findMany({ where: { sportEventId: event.id, kind: ProviderSyncFindingKind.FIELD_TEAM_WITHOUT_GAME }, orderBy: { providerValue: 'asc' } }))
+        .map((finding) => ({ team: finding.providerValue, name: finding.providerValueName, status: finding.status, severity: finding.severity, providerId: finding.providerId }));
+      return { event, detail, persistence, statuses, teamFindings, provider, seasonSlotId };
     }
 
     it('withdraws from a draft the teams whose game left its slots, and keeps the teams of the games it still holds', async () => {
@@ -448,6 +453,34 @@ describe('IngestionPersistence', () => {
       await persistence.persistEventDetailWithDiagnostics(detail);
 
       expect(Object.values(await statuses())).toEqual(['ACTIVE', 'ACTIVE', 'ACTIVE', 'ACTIVE']);
+    });
+
+    it('raises a warning naming each team a released event holds with no game left in its slots, and resolves it once the game returns', async () => {
+      const prisma = getPrisma();
+      const { event, detail, persistence, teamFindings, provider, seasonSlotId } = await bowlsHoldingBoth('integration-stale-finding');
+      await prisma.sportEvent.update({ where: { id: event.id }, data: { status: 'SCHEDULED' } });
+
+      await persistence.persistEventDetailWithDiagnostics(detail);
+
+      const open = (team: string) => ({ team, name: `Golfer ${team}`, status: ProviderSyncFindingStatus.OPEN, severity: ProviderSyncFindingSeverity.WARNING, providerId: provider.id });
+      expect(await teamFindings()).toEqual([open(TEAMS[2]), open(TEAMS[3])]);
+
+      // The CFP game is placed back in the bowls: the teams play a bowl game again.
+      const { sportLeagueProviderMappingId } = await prisma.sportLeagueSeasonCompetitionSlotGameProviderMapping.findFirstOrThrow({ where: { sportLeagueSeasonCompetitionSlotId: seasonSlotId } });
+      await prisma.sportLeagueSeasonCompetitionSlotGameProviderMapping.create({
+        data: { sportLeagueId: event.sportLeagueId, sportLeagueSeasonCompetitionSlotId: seasonSlotId, sportLeagueProviderMappingId, externalId: 'integration-stale-finding-stale-cfp-0' },
+      });
+      await persistence.persistEventDetailWithDiagnostics(detail);
+
+      expect((await teamFindings()).map((finding) => finding.status)).toEqual([ProviderSyncFindingStatus.RESOLVED, ProviderSyncFindingStatus.RESOLVED]);
+    });
+
+    it('raises no team finding on a draft, which withdraws the teams instead', async () => {
+      const { detail, persistence, teamFindings } = await bowlsHoldingBoth('integration-stale-draft-no-finding');
+
+      await persistence.persistEventDetailWithDiagnostics(detail);
+
+      expect(await teamFindings()).toEqual([]);
     });
   });
 

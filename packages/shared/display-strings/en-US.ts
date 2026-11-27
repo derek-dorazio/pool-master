@@ -316,6 +316,7 @@ export const enUS = {
       GAME_ID_REISSUED: 'Game id re-issued',
       GAME_MOVED: 'Game moved to another event',
       TIEBREAKER_GAME_REPLACED: 'Tiebreaker game chosen again',
+      FIELD_TEAM_WITHOUT_GAME: 'Released field holds a team with no game',
     },
     ProviderSyncFindingAction: {
       MAP_PARTICIPANT: 'Map participant',

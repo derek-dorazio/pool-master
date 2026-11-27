@@ -262,7 +262,7 @@ export function buildApp(options: BuildAppOptions = {}) {
   const memberJoined = createMemberJoinedNotices(prisma, { email, readConfig: () => appSettings.get(EMAIL_SETTINGS), appBaseUrl, logger: app.log });
   // Admin saves, and provider syncs that load an event's field, clear the public reads CloudFront keeps (#1181).
   const cdn = createCdnInvalidator(process.env, app.log);
-  const ingestionPersistence = new IngestionPersistence(prisma, domainEvents, app.log, eventFieldCache, cdn);
+  const ingestionPersistence = new IngestionPersistence(prisma, domainEvents, app.log, eventFieldCache, cdn, syncFindings);
   const jobLock = new PostgresJobLock(process.env.DATABASE_URL, app.log);
   const eventLifecycleScheduler = new EventLifecycleScheduler({
     sportEvents: new PrismaSportEventRepository(prisma),
