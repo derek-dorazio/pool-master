@@ -6,7 +6,7 @@ import {
   MatchStatus,
   ParticipantRoundStatus,
   ParticipantStandingStatus,
-  RaceResultStatus,
+  GameSideStatus,
   Sport,
   SportEventStatus,
   ValuationSource, SportEventParticipantStatus } from '@poolmaster/shared/domain';
@@ -15,7 +15,7 @@ import {
   PrismaSportEventRoundMatchRepository,
   PrismaSportEventParticipantGolfRoundRepository,
   PrismaSportEventParticipantGolfStandingRepository,
-  PrismaSportEventParticipantRaceResultRepository,
+  PrismaRaceOrderRepository,
   PrismaSportEventParticipantRepository,
   PrismaSportEventSlotParticipantValuationRepository,
 } from '../../../packages/core-api/src/adapters';
@@ -309,24 +309,27 @@ describe('Uploading a sport league\'s rankings (#1252)', () => {
 });
 
 describe('Entering a race\'s finishing order (#1252)', () => {
-  it('writes every runner\'s result and standing in a fixed number of queries, keeping a result\'s id', async () => {
+  it('writes every runner\'s result and standing in a fixed number of queries, keeping a runner\'s side already in the race', async () => {
     const counts = await queriesFor(async (size, measure) => {
       const { event, field } = await eventWithField(size);
-      const earlier = await getPrisma().sportEventParticipantRaceResult.create({
-        data: { sportEventParticipantId: expectDefined(field[0]).id, finishPosition: 9, resultStatus: RaceResultStatus.FINISHED },
-      });
+      const repo = new PrismaRaceOrderRepository(getAppPrisma());
+      const result = (row: { id: string }, index: number) => ({ sportEventParticipantId: row.id, position: index + 1, startPosition: null, status: GameSideStatus.FINISHED });
+      await repo.applyOrder(event.id, { isOfficial: false, at: AS_OF, sides: [{ ...result(expectDefined(field[0]), 8) }], standings: [] });
+      const earlier = await getPrisma().sportEventRoundMatchSide.findFirstOrThrow({ where: { sportEventParticipantId: expectDefined(field[0]).id } });
 
-      await measure(() => new PrismaSportEventParticipantRaceResultRepository(getAppPrisma()).applyResults(event.id, {
+      await measure(() => repo.applyOrder(event.id, {
         isOfficial: true,
-        results: field.map((row, index) => ({ sportEventParticipantId: row.id, finishPosition: index + 1, startPosition: null, resultStatus: RaceResultStatus.FINISHED, riderName: null })),
+        at: AS_OF,
+        sides: field.map(result),
         standings: field.map((row, index) => ({ sportEventParticipantId: row.id, position: index + 1, displayPosition: `${index + 1}`, status: ParticipantStandingStatus.COMPLETE, asOf: AS_OF })),
       }));
 
-      const rows = await getPrisma().sportEventParticipant.findMany({ where: { sportEventId: event.id }, include: { raceResult: true, standing: true } });
-      const byId = new Map(rows.map((row) => [row.id, row]));
-      expect(field.map((row) => [byId.get(row.id)?.raceResult?.finishPosition, byId.get(row.id)?.raceResult?.isOfficial, byId.get(row.id)?.standing?.position]))
+      const results = new Map((await repo.findBySportEvent(event.id)).map((row) => [row.sportEventParticipantId, row]));
+      const standings = new Map((await getPrisma().sportEventParticipantStanding.findMany({ where: { sportEventParticipant: { sportEventId: event.id } } })).map((row) => [row.sportEventParticipantId, row]));
+      expect(field.map((row) => [results.get(row.id)?.position, results.get(row.id)?.isOfficial, standings.get(row.id)?.position]))
         .toEqual(field.map((_, index) => [index + 1, true, index + 1]));
-      expect(byId.get(expectDefined(field[0]).id)?.raceResult).toMatchObject({ id: earlier.id, createdAt: earlier.createdAt });
+      await expect(getPrisma().sportEventRoundMatchSide.findFirstOrThrow({ where: { sportEventParticipantId: expectDefined(field[0]).id } }))
+        .resolves.toMatchObject({ id: earlier.id, sideNumber: 1 });
     });
 
     expect(counts[1]).toEqual(counts[0]);

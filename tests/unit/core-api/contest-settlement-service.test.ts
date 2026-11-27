@@ -61,7 +61,7 @@ function golfer(sportEventParticipantId: string, eventScoreToPar: number) {
       round: { roundNumber, status: 'COMPLETED' },
       golf: { strokes: 72 + (roundNumber === 1 ? eventScoreToPar : 0), scoreToPar: roundNumber === 1 ? eventScoreToPar : 0, thru: 18 },
     })),
-    raceResult: null,
+    fieldResults: [],
     matches: [],
     affiliatedWithSportLeague: true,
   };

@@ -9,6 +9,7 @@ import type {
   AutoReleaseCheck,
   BackgroundJobRequest,
   FieldOrderBasis,
+  MatchStatus,
   PlatformPricingProfile,
   ProviderEventRef,
   OverdueEventFacts,
@@ -24,10 +25,10 @@ import type {
   SportEvent,
   SportEventContest,
   SportEventRoundMatch,
+  SportEventRoundMatchGameSideResult,
   SportEventParticipant,
   SportEventParticipantGolfRound,
   SportEventParticipantGolfStanding,
-  SportEventParticipantRaceResult,
   SportEventParticipantRound,
   SportEventParticipantStanding,
   SportEventSlotParticipantValuation,
@@ -425,6 +426,15 @@ export interface ParticipantStandingView {
   golf: SportEventParticipantGolfStanding | null;
 }
 
+/** A field row's side result in one FIELD Game of its event (#2008). */
+export interface FieldGameResultView {
+  roundNumber: number;
+  /** The Game's status: a race's result is official once its Game is COMPLETED. */
+  gameStatus: MatchStatus;
+  result: SportEventRoundMatchGameSideResult;
+  updatedAt: Date;
+}
+
 /** One field row, as every reader of an event's participants sees it (#236). */
 export interface SportEventParticipantView {
   entry: SportEventParticipant;
@@ -437,9 +447,12 @@ export interface SportEventParticipantView {
   standing: ParticipantStandingView | null;
   /** In round number order. */
   rounds: ParticipantRoundView[];
-  /** The finish-position extension: how the runner's race ended, once a result is entered. */
-  raceResult: SportEventParticipantRaceResult | null;
-  /** The bracket matches naming this row on either side, in match order: head to head scores from them (#699). */
+  /**
+   * This row's side result in each FIELD Game of its event (#2008), in round order: a race's one
+   * Game, a golf round. A round with no side for the row (after a cut) has none.
+   */
+  fieldResults: FieldGameResultView[];
+  /** The head-to-head matches naming this row on either side, in match order: head to head scores from them (#699). FIELD matches are in `fieldResults`. */
   matches: SportEventRoundMatch[];
   /** Whether the participant is affiliated with the event's sport league — false flags an invite from elsewhere. */
   affiliatedWithSportLeague: boolean;

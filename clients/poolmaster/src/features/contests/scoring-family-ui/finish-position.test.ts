@@ -1,7 +1,7 @@
 import { sportPlay } from '@/test/sport-play';
 import { describe, expect, it } from 'vitest';
 import {
-  RaceResultStatus,
+  GameSideStatus,
   ScoringFamily,
   Sport,
   sportLeagueDefinitionOf,
@@ -48,9 +48,8 @@ function runner(
     race: race === null ? null : {
       finishPosition: 1,
       startPosition: null,
-      resultStatus: RaceResultStatus.FINISHED,
+      resultStatus: GameSideStatus.FINISHED,
       isOfficial: true,
-      riderName: null,
       ...race,
     },
     affiliatedWithSportLeague: true,
@@ -147,9 +146,9 @@ describe('formatFinish', () => {
   });
 
   it.each([
-    [RaceResultStatus.DID_NOT_FINISH, 'DNF'],
-    [RaceResultStatus.DISQUALIFIED, 'DQ'],
-    [RaceResultStatus.DID_NOT_START, 'DNS'],
+    [GameSideStatus.DID_NOT_FINISH, 'DNF'],
+    [GameSideStatus.DISQUALIFIED, 'DQ'],
+    [GameSideStatus.DID_NOT_START, 'DNS'],
   ])('shows a %s result as %s', (resultStatus, label) => {
     expect(formatFinish(runner({ resultStatus, finishPosition: null }), horseRacing)).toBe(label);
   });

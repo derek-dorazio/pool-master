@@ -1,12 +1,14 @@
 import { testDomainEvents } from '../../support/domain-events';
 import { expect } from '@jest/globals';
 import { randomUUID } from 'node:crypto';
-import { PeriodKind, Sport, SportEventStatus, gameNumbered, matchParticipantIds, matchSpread } from '@poolmaster/shared/domain';
+import { GameSideStatus, MatchStatus, PeriodKind, Sport, SportEventStatus, gameNumbered, matchParticipantIds, matchSpread } from '@poolmaster/shared/domain';
 import type { SportEventParticipantListResponse, SportEventParticipantResponse } from '@poolmaster/shared/dto';
 import {
+  PrismaRaceOrderRepository,
   PrismaSportEventRoundMatchRepository,
-  PrismaSportEventParticipantRaceResultRepository,
+  PrismaSportEventRoundRepository,
 } from '../../../packages/core-api/src/adapters';
+import { createRoundRows } from '../../support/sport-event-rows';
 import { createSportEventParticipantService } from '../../../packages/core-api/src/modules/events/wiring';
 import {
   cleanupTestData,
@@ -127,7 +129,8 @@ describe('An event\'s field', () => {
 
     // The event's own row, then the field and each of its relations in one statement: no read per
     // row, and nothing else. A field row's games are read through the match sides naming it (#2046);
-    // a field with no matches reads no further.
+    // a field with no matches reads no further. The event's FIELD matches (a race, #2008) are read
+    // first by the event, and a field with none reads no side results.
     expect(statementCounts(statements)).toEqual([
       // In the field's query, whether a tiered or budget template lists each of its event's slots,
       // which decides the slot whose set prices the field (#2044).
@@ -135,12 +138,12 @@ describe('An event\'s field', () => {
       ['SELECT participants', 1],
       ['SELECT sport_event_participant_golf_rounds', 1],
       ['SELECT sport_event_participant_golf_standings', 1],
-      ['SELECT sport_event_participant_race_results', 1],
       ['SELECT sport_event_participant_rounds', 1],
       ['SELECT sport_event_participant_standings', 1],
       ['SELECT sport_event_participants', 1],
       ['SELECT sport_event_provider_mappings', 1],
       ['SELECT sport_event_round_match_sides', 1],
+      ['SELECT sport_event_round_matches', 1],
       ['SELECT sport_event_rounds', 1],
       // A field row's price is its event's tier-set slot's (#2044).
       ['SELECT sport_event_slot_participant_valuations', 1],
@@ -164,7 +167,7 @@ describe('An event\'s field', () => {
     expect(anaRow.valuation).toMatchObject({ price: 12 });
     expect(anaRow.standing).toMatchObject({ standing: { position: 1 }, golf: { eventScoreToPar: -6, eventStrokes: 138 } });
     expect(anaRow.rounds.map(({ round, golf }) => [round.roundNumber, golf?.strokes])).toEqual([[1, 68], [2, 70]]);
-    expect(anaRow.raceResult).toBeNull();
+    expect(anaRow.fieldResults).toEqual([]);
     expect(anaRow.matches).toEqual([]);
     expect(beaRow).toMatchObject({ valuation: null, standing: null, rounds: [] });
   });
@@ -285,25 +288,34 @@ describe('An event\'s field, for every scoring family', () => {
     }
   });
 
-  it('gives a runner its race result once one is entered, and none to a runner without one, as the event\'s race result read gives them', async () => {
+  it('gives a runner its race result on the race\'s FIELD Game once one is entered, and none to a runner without one, as the event\'s race read gives them', async () => {
     const prisma = getPrisma();
     const { event, field: [winner, scratched, unplaced] } = await eventWithField(Sport.HORSE_RACING, ['Secretariat', 'Sham', 'Twice A Prince']);
-    await prisma.sportEventParticipantRaceResult.create({
-      data: { sportEventParticipantId: winner.id, finishPosition: 1, startPosition: 2, resultStatus: 'FINISHED', isOfficial: true, riderName: 'Ron Turcotte' },
-    });
-    await prisma.sportEventParticipantRaceResult.create({
-      data: { sportEventParticipantId: scratched.id, resultStatus: 'DID_NOT_START' },
+    await createRoundRows(prisma, new PrismaSportEventRoundRepository(getAppPrisma()), event, [{ roundNumber: 1, scheduledDate: event.startDate }]);
+    const raceOrder = new PrismaRaceOrderRepository(getAppPrisma());
+    await raceOrder.applyOrder(event.id, {
+      sides: [
+        { sportEventParticipantId: winner.id, position: 1, startPosition: 2, status: GameSideStatus.FINISHED },
+        { sportEventParticipantId: scratched.id, position: null, startPosition: null, status: GameSideStatus.DID_NOT_START },
+      ],
+      isOfficial: true,
+      at: new Date('2026-05-07T12:05:00.000Z'),
+      standings: [],
     });
 
     const rows = await createSportEventParticipantService(getAppPrisma(), testDomainEvents()).listEventParticipants(event.id);
-    const results = await new PrismaSportEventParticipantRaceResultRepository(getAppPrisma()).findBySportEvent(event.id);
+    const results = await raceOrder.findBySportEvent(event.id);
 
-    const byRow = new Map(rows.map((row) => [row.entry.id, row.raceResult]));
-    expect(byRow.get(winner.id)).toMatchObject({ finishPosition: 1, startPosition: 2, resultStatus: 'FINISHED', isOfficial: true, riderName: 'Ron Turcotte' });
-    expect(byRow.get(scratched.id)).toMatchObject({ finishPosition: null, resultStatus: 'DID_NOT_START', isOfficial: false });
-    expect(byRow.get(unplaced.id)).toBeNull();
+    const byRow = new Map(rows.map((row) => [row.entry.id, row]));
+    expect(byRow.get(winner.id)?.fieldResults.map(({ roundNumber, gameStatus, result }) => [roundNumber, gameStatus, result.position, result.startPosition, result.status]))
+      .toEqual([[1, MatchStatus.COMPLETED, 1, 2, GameSideStatus.FINISHED]]);
+    expect(byRow.get(scratched.id)?.fieldResults.map(({ result }) => [result.position, result.status])).toEqual([[null, GameSideStatus.DID_NOT_START]]);
+    expect(byRow.get(unplaced.id)?.fieldResults).toEqual([]);
+    // The race's FIELD match is not one of a runner's head-to-head matches.
+    expect(rows.flatMap((row) => row.matches)).toEqual([]);
     for (const row of rows) {
-      expect(row.raceResult).toEqual(results.find((result) => result.sportEventParticipantId === row.entry.id) ?? null);
+      const result = results.find((entry) => entry.sportEventParticipantId === row.entry.id);
+      expect(row.fieldResults.map(({ result: side }) => side.position)).toEqual(result ? [result.position] : []);
     }
   });
 });

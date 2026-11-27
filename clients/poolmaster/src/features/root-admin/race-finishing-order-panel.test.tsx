@@ -113,24 +113,25 @@ describe('The Rounds and matches tab for a horse race', () => {
 
   it('lists the stored result in finishing order with a provisional badge until it is official', async () => {
     seed([
-      { ...journalism, race: { finishPosition: 2, startPosition: 8, resultStatus: 'FINISHED', isOfficial: false, riderName: 'U. Rispoli' } },
-      { ...sovereignty, race: { finishPosition: 1, startPosition: 18, resultStatus: 'FINISHED', isOfficial: false, riderName: 'J. Alvarado' } },
+      { ...journalism, race: { finishPosition: 2, startPosition: 8, resultStatus: 'FINISHED', isOfficial: false } },
+      { ...sovereignty, race: { finishPosition: 1, startPosition: 18, resultStatus: 'FINISHED', isOfficial: false } },
     ]);
     renderPage();
 
     const table = await screen.findByTestId('root-admin-race-result-table');
     expect(within(table).getAllByRole('row').slice(1).map((row) => row.textContent)).toEqual([
-      '1stSovereignty18J. Alvarado',
-      '2ndJournalism8U. Rispoli',
+      '1stSovereignty18',
+      '2ndJournalism8',
     ]);
-    expect(within(table).getAllByRole('columnheader').map((cell) => cell.textContent)).toEqual(['Finish', 'Horse', 'Start', 'Rider']);
+    // The feed names no jockey, so the result has no rider column (#2008).
+    expect(within(table).getAllByRole('columnheader').map((cell) => cell.textContent)).toEqual(['Finish', 'Horse', 'Start']);
     expect(screen.getByTestId('root-admin-race-result-official')).toHaveTextContent('Provisional');
   });
 
   it('shows an official badge once the stored result is official, and a non-finisher by how its race ended', async () => {
     seed([
-      { ...sovereignty, race: { finishPosition: 1, startPosition: null, resultStatus: 'FINISHED', isOfficial: true, riderName: null } },
-      { ...journalism, race: { finishPosition: null, startPosition: null, resultStatus: 'DID_NOT_FINISH', isOfficial: true, riderName: null } },
+      { ...sovereignty, race: { finishPosition: 1, startPosition: null, resultStatus: 'FINISHED', isOfficial: true } },
+      { ...journalism, race: { finishPosition: null, startPosition: null, resultStatus: 'DID_NOT_FINISH', isOfficial: true } },
     ]);
     renderPage();
 
@@ -147,10 +148,10 @@ describe('The Rounds and matches tab for an auto race', () => {
     mockLogger.child.mockReturnValue(mockLogger);
   });
 
-  it('heads the stored result Finish, Driver and Start, with no Rider column because the result names only the driver', async () => {
+  it('heads the stored result Finish, Driver and Start', async () => {
     getEventMock.mockResolvedValue({ data: { event: autoRace } });
     listEventParticipantsMock.mockResolvedValue({ data: { participants: [
-      { ...sovereignty, race: { finishPosition: 1, startPosition: 4, resultStatus: 'FINISHED', isOfficial: true, riderName: null } },
+      { ...sovereignty, race: { finishPosition: 1, startPosition: 4, resultStatus: 'FINISHED', isOfficial: true } },
     ] } });
     renderPage();
 
@@ -168,11 +169,11 @@ describe('The Rounds and matches tab for a cycling race', () => {
     mockLogger.child.mockReturnValue(mockLogger);
   });
 
-  it('heads the final overall order Finish, Rider and Start with no second rider column, and shows an abandon as Did not finish', async () => {
+  it('heads the final overall order Finish, Rider and Start, and shows an abandon as Did not finish', async () => {
     getEventMock.mockResolvedValue({ data: { event: cyclingRace } });
     listEventParticipantsMock.mockResolvedValue({ data: { participants: [
-      { ...journalism, race: { finishPosition: null, startPosition: null, resultStatus: 'DID_NOT_FINISH', isOfficial: true, riderName: null } },
-      { ...sovereignty, race: { finishPosition: 1, startPosition: null, resultStatus: 'FINISHED', isOfficial: true, riderName: null } },
+      { ...journalism, race: { finishPosition: null, startPosition: null, resultStatus: 'DID_NOT_FINISH', isOfficial: true } },
+      { ...sovereignty, race: { finishPosition: 1, startPosition: null, resultStatus: 'FINISHED', isOfficial: true } },
     ] } });
     renderPage();
 
@@ -193,11 +194,11 @@ describe('The Rounds and matches tab for a running race', () => {
     mockLogger.child.mockReturnValue(mockLogger);
   });
 
-  it('heads the finishing order Finish, Runner and Start with no rider column, and shows a dropout as Did not finish', async () => {
+  it('heads the finishing order Finish, Runner and Start, and shows a dropout as Did not finish', async () => {
     getEventMock.mockResolvedValue({ data: { event: marathon } });
     listEventParticipantsMock.mockResolvedValue({ data: { participants: [
-      { ...journalism, race: { finishPosition: null, startPosition: null, resultStatus: 'DID_NOT_FINISH', isOfficial: true, riderName: null } },
-      { ...sovereignty, race: { finishPosition: 1, startPosition: null, resultStatus: 'FINISHED', isOfficial: true, riderName: null } },
+      { ...journalism, race: { finishPosition: null, startPosition: null, resultStatus: 'DID_NOT_FINISH', isOfficial: true } },
+      { ...sovereignty, race: { finishPosition: 1, startPosition: null, resultStatus: 'FINISHED', isOfficial: true } },
     ] } });
     renderPage();
 

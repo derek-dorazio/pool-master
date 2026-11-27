@@ -14455,10 +14455,6 @@ export type SportEventParticipantDto = {
          * Whether the race's result is official. Contest scoring counts a result only once it is.
          */
         isOfficial: boolean;
-        /**
-         * The jockey (or rider) for this start; null when not entered. The trainer is the participant's teamAffiliation.
-         */
-        riderName: string | null;
     } | null;
     /**
      * Whether the participant is affiliated with the event's sport league; false flags an invite from elsewhere. (Admin-only: operational detail no member surface reads.)
@@ -14703,10 +14699,6 @@ export type SportEventParticipantListResponse = {
              * Whether the race's result is official. Contest scoring counts a result only once it is.
              */
             isOfficial: boolean;
-            /**
-             * The jockey (or rider) for this start; null when not entered. The trainer is the participant's teamAffiliation.
-             */
-            riderName: string | null;
         } | null;
         /**
          * Whether the participant is affiliated with the event's sport league; false flags an invite from elsewhere. (Admin-only: operational detail no member surface reads.)
@@ -15004,10 +14996,6 @@ export type SportEventParticipantResponse = {
              * Whether the race's result is official. Contest scoring counts a result only once it is.
              */
             isOfficial: boolean;
-            /**
-             * The jockey (or rider) for this start; null when not entered. The trainer is the participant's teamAffiliation.
-             */
-            riderName: string | null;
         } | null;
         /**
          * Whether the participant is affiliated with the event's sport league; false flags an invite from elsewhere. (Admin-only: operational detail no member surface reads.)
@@ -16330,10 +16318,6 @@ export type ContestLeaderboardResponse = {
              * Whether the race's result is official. Contest scoring counts a result only once it is.
              */
             isOfficial: boolean;
-            /**
-             * The jockey (or rider) for this start; null when not entered. The trainer is the participant's teamAffiliation.
-             */
-            riderName: string | null;
         } | null;
         /**
          * Whether the participant is affiliated with the event's sport league; false flags an invite from elsewhere. (Admin-only: operational detail no member surface reads.)
@@ -23171,10 +23155,6 @@ export type RaceResultUploadRequest = {
          * Post position (or grid slot); null when not known.
          */
         startPosition: number | null;
-        /**
-         * The jockey (or rider) for this start; null when not known.
-         */
-        riderName: string | null;
     }>;
 };
 
@@ -23204,10 +23184,6 @@ export type RaceResultPreviewResponse = {
              * Post position (or grid slot); null when not known.
              */
             startPosition: number | null;
-            /**
-             * The jockey (or rider) for this start; null when not known.
-             */
-            riderName: string | null;
         };
         /**
          * How an uploaded row resolved to a participant: one match, none, or several.
@@ -23233,7 +23209,6 @@ export type RaceResultPreviewResponse = {
             resultStatus: 'FINISHED' | 'DID_NOT_FINISH' | 'DISQUALIFIED' | 'DID_NOT_START';
             finishPosition: number | null;
             startPosition: number | null;
-            riderName: string | null;
             isOfficial: boolean;
         } | null;
         /**
@@ -23243,7 +23218,6 @@ export type RaceResultPreviewResponse = {
             resultStatus: 'FINISHED' | 'DID_NOT_FINISH' | 'DISQUALIFIED' | 'DID_NOT_START';
             finishPosition: number | null;
             startPosition: number | null;
-            riderName: string | null;
             isOfficial: boolean;
         };
     }>;

@@ -83,7 +83,6 @@ function raceTestSeed(): RaceTestSeed {
       status: places[index] === null ? 'DID_NOT_FINISH' : 'FINISHED',
       finishPosition: places[index],
       startPosition: index + 1,
-      riderName: `Jockey ${runner.toUpperCase()}`,
     },
   }));
   return file;
@@ -171,10 +170,10 @@ describe('sport data file envelope', () => {
     const file = parseSportDataFile(raceTestSeed());
 
     expect(file.sportLeagues[0].events[0].field.map((entry) => entry.raceResult)).toEqual([
-      { status: 'FINISHED', finishPosition: 2, startPosition: 1, riderName: 'Jockey A' },
-      { status: 'FINISHED', finishPosition: 1, startPosition: 2, riderName: 'Jockey B' },
-      { status: 'FINISHED', finishPosition: 2, startPosition: 3, riderName: 'Jockey C' },
-      { status: 'DID_NOT_FINISH', finishPosition: null, startPosition: 4, riderName: 'Jockey D' },
+      { status: 'FINISHED', finishPosition: 2, startPosition: 1 },
+      { status: 'FINISHED', finishPosition: 1, startPosition: 2 },
+      { status: 'FINISHED', finishPosition: 2, startPosition: 3 },
+      { status: 'DID_NOT_FINISH', finishPosition: null, startPosition: 4 },
     ]);
   });
 

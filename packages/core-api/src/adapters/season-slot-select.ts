@@ -47,3 +47,11 @@ export function toRoundSlot(eventSlot: Prisma.SportEventSlotGetPayload<typeof RO
   const { definition } = eventSlot.seasonSlot;
   return { seasonSlotId: id, slotDefinitionId, name, slotKind, weekNumber, seriesGames, pairing, canEndTied: definition.canEndTied, periods: slotPeriodsOf(definition), tiebreakerMatchId: eventSlot.tiebreakerGame?.sportEventRoundMatchId ?? null };
 }
+
+/**
+ * A match whose round is played in a FIELD slot (#2008): a golf round or a race, every
+ * competitor a side. Field reads keep these apart from the head-to-head matches.
+ */
+export const FIELD_MATCH_WHERE = {
+  sportEventRound: { eventSlot: { seasonSlot: { definition: { matchFormat: 'FIELD' } } } },
+} as const satisfies Prisma.SportEventRoundMatchWhereInput;

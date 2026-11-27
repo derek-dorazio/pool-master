@@ -1,5 +1,5 @@
 import { enumLabel } from '@poolmaster/shared/display-strings';
-import { RaceResultStatus, sportVocabulary, SportEventParticipantStatus } from '@poolmaster/shared/domain';
+import { GameSideStatus, sportVocabulary, SportEventParticipantStatus } from '@poolmaster/shared/domain';
 import type { SportEventDto, SportEventParticipantDto } from '@/lib/api';
 import {
   Notice,
@@ -67,7 +67,6 @@ function StoredFinishingOrder({ event, field }: { event: SportEventDto; field: r
                   <TableHeaderCell>Finish</TableHeaderCell>
                   <TableHeaderCell>{upperFirst(vocabulary.participant.one)}</TableHeaderCell>
                   <TableHeaderCell>Start</TableHeaderCell>
-                  {vocabulary.rider !== undefined ? <TableHeaderCell>{vocabulary.rider}</TableHeaderCell> : null}
                 </tr>
               </TableHead>
               <TableBody>
@@ -75,17 +74,14 @@ function StoredFinishingOrder({ event, field }: { event: SportEventDto; field: r
                   const { race } = entry;
                   const finish = !race
                     ? ((entry.status === SportEventParticipantStatus.ACTIVE) ? '—' : vocabulary.withdrawn)
-                    : race.resultStatus === RaceResultStatus.FINISHED
+                    : race.resultStatus === GameSideStatus.FINISHED
                       ? (race.finishPosition === null ? '—' : formatOrdinal(race.finishPosition))
-                      : enumLabel('RaceResultStatus', race.resultStatus);
+                      : enumLabel('GameSideStatus', race.resultStatus);
                   return (
                     <TableRow data-testid={`root-admin-race-result-row-${entry.id}`} key={entry.id}>
                       <TableCell className="font-medium" data-testid={`root-admin-race-result-finish-${entry.id}`}>{finish}</TableCell>
                       <TableCell>{entry.participant.name}</TableCell>
                       <TableCell className="text-muted-foreground">{race?.startPosition ?? '—'}</TableCell>
-                      {vocabulary.rider !== undefined ? (
-                        <TableCell className="text-muted-foreground">{race?.riderName ?? '—'}</TableCell>
-                      ) : null}
                     </TableRow>
                   );
                 })}

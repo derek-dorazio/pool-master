@@ -3,6 +3,7 @@ import { SlotTiebreakerService } from '../../../packages/core-api/src/modules/ev
 import { BALLDONTLIE_TEST_PROVIDER_ID } from '../../support/balldontlie-provider-rows';
 import { deleteTestSportLeagues, linkTestSlot, testSlotDefinitionId, testSlotId } from '../../support/test-slots';
 import { syncSlotsFor } from '../../support/sync-slots';
+import { createRoundRows } from '../../support/sport-event-rows';
 import { testDomainEvents } from '../../support/domain-events';
 import { expect } from '@jest/globals';
 import { randomUUID } from 'node:crypto';
@@ -80,6 +81,7 @@ import {
   PrismaBackgroundJobRepository,
   PrismaProviderSyncRunRepository,
   PrismaSportEventRepository,
+  PrismaSportEventRoundRepository,
   PrismaSportLeagueRepository,
 } from '../../../packages/core-api/src/adapters';
 import { LeagueEventsSync } from '../../../packages/core-api/src/modules/events/league-events-sync';
@@ -1709,7 +1711,11 @@ describe('Contract verification (root admin)', () => {
         },
       });
       // The admin result routes write only on a test event (#2074).
-      if (testEvent) await linkTestSlot(prisma, event);
+      if (testEvent) {
+        await linkTestSlot(prisma, event);
+        // A race is a FIELD match in the event's first round (#2008).
+        await createRoundRows(prisma, new PrismaSportEventRoundRepository(getAppPrisma()), event, [{ roundNumber: 1, scheduledDate: event.startDate }]);
+      }
       for (const name of names) {
         const participant = await prisma.participant.create({ data: { sportLeagueId: await participantLeagueId(prisma, sportId), name: `${name} ${stamp}`, participantType: 'INDIVIDUAL' } });
         participantIdByName.set(name, participant.id);
@@ -1720,7 +1726,7 @@ describe('Contract verification (root admin)', () => {
     const race = await createEvent('HORSE_RACING', horseRacing.id, ['Arrow', 'Bolt']);
     const golfEvent = await createEvent('GOLF', golf.id, ['Golfer']);
     const finisher = (name: string, finishPosition: number | null) => ({
-      participantId: participantIdByName.get(name) ?? randomUUID(), resultStatus: 'FINISHED', finishPosition, startPosition: null, riderName: null,
+      participantId: participantIdByName.get(name) ?? randomUUID(), resultStatus: 'FINISHED', finishPosition, startPosition: null,
     });
     const send = (method: 'POST' | 'PUT', eventId: string, payload: object, headers = rootAdmin.headers) => getApp().inject({
       method,

@@ -6,7 +6,7 @@
  */
 
 import type { ScoringFamily } from './sports/scoring-family';
-import type { ProviderCode, HomeAway, MatchEnding, MatchSideOutcome, MatchStatus, PeriodKind, ParticipantRoundStatus, ParticipantType, ParticipantStandingStatus, RaceResultStatus, SeasonSlotStatus, SlotKind, SlotPairing, SportLeagueNoun, ValuationSource } from './enums';
+import type { ProviderCode, HomeAway, MatchEnding, MatchSideOutcome, MatchStatus, PeriodKind, ParticipantRoundStatus, ParticipantType, ParticipantStandingStatus, GameSideStatus, SeasonSlotStatus, SlotKind, SlotPairing, SportLeagueNoun, ValuationSource } from './enums';
 import type { DomainEntity } from './types';
 import type { SlotPricing } from './budget-pricing';
 import type { SlotTierLayout } from './tier-profiles';
@@ -232,23 +232,6 @@ export interface GolfStandingResult {
   golf: SportEventParticipantGolfStanding;
 }
 
-// --- Finish-position extension row (#622) -----------------------------------
-// Keyed 1:1 to a field row: a race is one result per runner.
-
-/**
- * How one runner's race ended, as the admin entered it. `finishPosition` is set only for a
- * FINISHED runner (1 is the winner; a dead heat repeats a place), and a result counts in contest
- * scoring only once `isOfficial`. `riderName` is the jockey for this start.
- */
-export interface SportEventParticipantRaceResult extends DomainEntity {
-  sportEventParticipantId: string;
-  finishPosition: number | null;
-  startPosition: number | null;
-  resultStatus: RaceResultStatus;
-  isOfficial: boolean;
-  riderName: string | null;
-}
-
 // --- Matches (#698) -----------------------------------------------------------
 // Core event data, beside the round schedule: one game of one round, two sides and a result.
 
@@ -347,6 +330,12 @@ export interface SportEventRoundMatchGameSideResult {
   /** The side's score in the game, overtime included and a shoot-out never; null until it starts. */
   score: number | null;
   homeAway: HomeAway;
+  /** A FIELD Game's finishing place (#2008): 1 the winner, a dead heat sharing a place; null until placed. */
+  position: number | null;
+  /** Where the side started (a race's grid or post position); null where none was sent. */
+  startPosition: number | null;
+  /** How the side's part in a FIELD Game ended; null on a head-to-head Game. */
+  status: GameSideStatus | null;
   /** The side's own points in each period, in play order; a shoot-out is one SHOOTOUT period. */
   periodScores: readonly GamePeriodScore[];
 }

@@ -203,8 +203,7 @@ are **Races**, **Drivers** and **Series**. What differs:
   driver each). NASCAR's points table is 40, 35, 34 and one fewer per place down to 1 at 36th,
   then 1 to 40th; IndyCar's is 50, 40, 35, 32, 30, 28, 26, 24, 22, 20, then 19 down to 6 for
   11th to 24th, then 5 to 33rd. No stage or bonus points.
-- **The result names only the driver.** Leave `riderName` blank; the Result card has no
-  *Rider* column. `startPosition` is the grid slot. A car out of the race is `DNF`.
+- **The result names only the driver.** `startPosition` is the grid slot. A car out of the race is `DNF`.
 
 ### Formula 1
 
@@ -251,8 +250,7 @@ Road racing (UCI WorldTour, UCI Women's WorldTour) runs through the same steps u
   three score **Top 10 points**: 10 for the winner, 9 for second, down to 1 for tenth, and 0
   below that.
 - **The result names only the rider.** The Result card heads its columns *Finish*, *Rider*
-  (the cyclist) and *Start*, with no jockey column; leave `riderName` and `startPosition`
-  blank. Give every rider who reached the finish their overall place, 1 to N, not just the top
+  (the cyclist) and *Start*; leave `startPosition` blank. Give every rider who reached the finish their overall place, 1 to N, not just the top
   ten. A rider who **abandoned** mid-race, or was eliminated outside the time limit, is `DNF`
   and scores 0; a disqualified rider is `DQ`.
 - **Keep it In Progress for the three weeks.** Move the race to In Progress at the start and to
@@ -288,6 +286,6 @@ Marathons (World Marathon Majors) run through the same steps under
   runner each). All three score **Top 10 points**: 10 for the winner, 9 for second, down to 1
   for tenth, and 0 below that.
 - **The result names only the runner.** The Result card heads its columns *Finish*, *Runner*
-  and *Start*, with no jockey column; leave `riderName` and `startPosition` blank. Give every
+  and *Start*; leave `startPosition` blank. Give every
   runner who finished their place, 1 to N, not just the top ten. A runner who **dropped out** is
   `DNF` and scores 0; a disqualified runner is `DQ`.
