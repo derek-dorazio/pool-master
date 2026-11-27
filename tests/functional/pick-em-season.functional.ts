@@ -4,8 +4,8 @@ import { singleGameResult } from '../support/match-rows';
 import {
   acceptInvitation,
   addEventParticipants,
-  autoAssignEventPrices,
-  autoAssignEventTiers,
+  autoAssignEventSlotPrices,
+  autoAssignEventSlotTiers,
   createContest,
   createParticipant,
   enterContest,
@@ -58,6 +58,7 @@ import { sportRowKeys } from '../support/sport-rows';
 import { insertTestSportLeague } from '../support/test-sport-league';
 import { bracketMatch, dtoSideTeam, resultBody } from '../support/match-requests';
 import { setFieldRows } from './field-rows';
+import { tierSetSlotPath } from './tier-set-slot';
 
 // A two-week confidence pick'em season end to end over HTTP (#717). An admin releases two weeks,
 // each an eight-team basketball event whose four first-round games are the week (its later
@@ -136,8 +137,8 @@ async function releasedWeek(a: Client, sportLeagueId: string, teamIds: readonly 
     path: { eventId },
     body: { rows: TEAMS.map((team, index) => ({ playerName: `${team} ${RUN}`, seedNumber: index + 1 })) },
   })).response?.status).toBe(200);
-  expect((await autoAssignEventTiers({ client: a, path: { eventId }, body: { tierSize: 2 } })).response?.status).toBe(200);
-  expect((await autoAssignEventPrices({ client: a, path: { eventId }, body: await standardPricingFor(a) })).response?.status).toBe(200);
+  expect((await autoAssignEventSlotTiers({ client: a, path: await tierSetSlotPath(a, eventId), body: { tierSize: 2 } })).response?.status).toBe(200);
+  expect((await autoAssignEventSlotPrices({ client: a, path: await tierSetSlotPath(a, eventId), body: await standardPricingFor(a) })).response?.status).toBe(200);
   const field = expectDefined((await listEventParticipants({ client: a, path: { eventId } })).data).participants;
   const rowOf = (team: string) => expectDefined(field.find((row) => row.participant.name === `${team} ${RUN}`), team).id;
 

@@ -39,13 +39,23 @@ function isBracketSlot(slot: Pick<ContestTemplateSlot, 'slotKind' | 'matchFormat
 }
 
 /**
+ * Whether a slot of this kind plays knockout rounds (#2241): rounds a loss ends a team's run in,
+ * which knockout round points score. A WEEK slot is a week of games or a tournament's group
+ * matchday, where a team plays on after a loss; the third-place play-off is a match beside the
+ * bracket, no round of it. Every other kind is a knockout round, and a TOURNAMENT slot (a tennis
+ * Slam) holds an event's whole knockout.
+ */
+export function playsKnockoutRounds(slotKind: SlotKind): boolean {
+  return slotKind !== SlotKind.WEEK && slotKind !== SlotKind.THIRD_PLACE;
+}
+
+/**
  * Whether a listed slot is one round of a bracket (#2177): slots govern rounds, so each knockout
- * slot is a round, and the FINAL slot's round is the final. The third-place play-off is a match
- * beside the bracket, no round of it; a TOURNAMENT slot is an event of its own, whose rounds its
- * slot does not show.
+ * slot is a round, and the FINAL slot's round is the final (`playsKnockoutRounds`). A TOURNAMENT
+ * slot is an event of its own, whose rounds its slot does not show.
  */
 function isBracketRoundSlot(slot: Pick<ContestTemplateSlot, 'slotKind' | 'matchFormat'>): boolean {
-  return isBracketSlot(slot) && slot.slotKind !== SlotKind.THIRD_PLACE && slot.slotKind !== SlotKind.TOURNAMENT;
+  return isBracketSlot(slot) && playsKnockoutRounds(slot.slotKind) && slot.slotKind !== SlotKind.TOURNAMENT;
 }
 
 /**
@@ -115,7 +125,7 @@ export interface ContestRoundCoverage {
   slotDefinitionIds: readonly string[];
 }
 
-type CoverableMatch = { roundNumber: number; slot: { slotDefinitionId: string } };
+type CoverableMatch = { roundNumber: number; slot: { slotDefinitionId: string; slotKind: SlotKind } };
 
 /** Whether a contest covers a match's round: its slot's definition is one the contest's template lists. */
 export function coversMatchRound(coverage: ContestRoundCoverage, match: Pick<CoverableMatch, 'slot'>): boolean {
@@ -123,12 +133,17 @@ export function coversMatchRound(coverage: ContestRoundCoverage, match: Pick<Cov
 }
 
 /**
- * The rounds of an event a contest covers, in play order (lowest first), by number. Since #2184 an
- * event's play-in is its first round, and a bracket or knockout template leaves it out, so the
- * NCAA tournament's covered rounds start at round 2, the round of 64.
+ * The knockout rounds of an event a contest covers, in play order (lowest first), by number: the
+ * rounds knockout round points give a value each. Since #2184 an event's play-in is its first
+ * round, and a bracket or knockout template leaves it out, so the NCAA tournament's covered rounds
+ * start at round 2, the round of 64. A group matchday or a third-place play-off is no knockout
+ * round (`playsKnockoutRounds`, #2241), so a sweepstake covering a soccer tournament's group stage
+ * still numbers its knockout rounds from the first knockout round.
  */
 export function coveredRoundNumbers(coverage: ContestRoundCoverage, matches: readonly CoverableMatch[]): number[] {
-  return [...new Set(matches.filter((match) => coversMatchRound(coverage, match)).map((match) => match.roundNumber))]
+  return [...new Set(matches
+    .filter((match) => playsKnockoutRounds(match.slot.slotKind) && coversMatchRound(coverage, match))
+    .map((match) => match.roundNumber))]
     .sort((left, right) => left - right);
 }
 

@@ -14,6 +14,7 @@ import {
   compareCoveredSlots,
   contestRoundCoverage,
   coveredRoundNumbers,
+  playsKnockoutRounds,
   coveredRoundValue,
   coversMatchRound,
   isWeekEvent,
@@ -160,13 +161,28 @@ describe('compareCoveredSlots', () => {
 
 describe('a contest\'s covered rounds (#2014)', () => {
   // A play-in is the event's round 1 (#2184); the template lists the slots of rounds 2 and 3.
-  const match = (roundNumber: number, slotDefinitionId: string) => ({ roundNumber, slot: { slotDefinitionId } });
-  const EVENT = [match(1, 'def-play-in'), match(2, 'def-round-of-64'), match(2, 'def-round-of-64'), match(3, 'def-final')];
+  const match = (roundNumber: number, slotDefinitionId: string, slotKind: SlotKind = SlotKind.ROUND_OF_64) => ({ roundNumber, slot: { slotDefinitionId, slotKind } });
+  const EVENT = [match(1, 'def-play-in', SlotKind.PLAY_IN), match(2, 'def-round-of-64'), match(2, 'def-round-of-64'), match(3, 'def-final', SlotKind.FINAL)];
   const AFTER_PLAY_IN = { slotDefinitionIds: ['def-round-of-64', 'def-final'] };
 
   it('covers the rounds whose slot the template lists, lowest first, leaving the play-in out', () => {
     expect(coveredRoundNumbers(AFTER_PLAY_IN, EVENT)).toEqual([2, 3]);
     expect(coversMatchRound(AFTER_PLAY_IN, match(1, 'def-play-in'))).toBe(false);
+  });
+
+  it('numbers only the knockout rounds of a soccer tournament a sweepstake covers whole, leaving out its group matchdays and the third-place play-off (#2241)', () => {
+    const tournament = [
+      match(1, 'def-matchday-1', SlotKind.WEEK), match(2, 'def-matchday-2', SlotKind.WEEK), match(3, 'def-matchday-3', SlotKind.WEEK),
+      match(4, 'def-semifinal', SlotKind.SEMIFINAL), match(5, 'def-third-place', SlotKind.THIRD_PLACE), match(6, 'def-final', SlotKind.FINAL),
+    ];
+    const wholeTournament = { slotDefinitionIds: tournament.map((each) => each.slot.slotDefinitionId) };
+
+    expect(coveredRoundNumbers(wholeTournament, tournament)).toEqual([4, 6]);
+    expect(coveredRoundValue([1, 2], coveredRoundNumbers(wholeTournament, tournament), 6)).toBe(2);
+  });
+
+  it('plays knockout rounds in every slot kind but a week (a group matchday) and the third-place play-off, a tennis Slam\'s TOURNAMENT slot included (#2241)', () => {
+    expect(Object.values(SlotKind).filter((kind) => !playsKnockoutRounds(kind)).sort()).toEqual([SlotKind.THIRD_PLACE, SlotKind.WEEK]);
   });
 
   it('values a covered round by its place among the covered rounds, and an uncovered or unvalued round at nothing', () => {

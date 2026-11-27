@@ -246,7 +246,7 @@ function buildService(deps: Partial<ContestServiceDeps> = {}): ContestService {
     }),
     sportLeagues: { findById: jest.fn().mockResolvedValue({ id: 'pga-tour', name: 'PGA Tour' }) },
     eventParticipants: fieldReads(jest.fn().mockResolvedValue([]), jest.fn().mockResolvedValue([])),
-    tiers: { listTiers: jest.fn().mockResolvedValue([]) },
+    tiers: { tierSetSlots: jest.fn().mockResolvedValue(new Map()) },
     leaderboardSnapshots: new InMemoryLeaderboardSnapshots<StoredLeaderboard>(),
     leaderboardRebuilds: { contestsChanged: jest.fn(async () => undefined) },
     ...deps,
@@ -528,6 +528,19 @@ describe('ContestService', () => {
       const result = await service.getContest('draft', { userId: 'user-1', isRootAdmin: false });
 
       expect(result !== null).toBe(found);
+    });
+  });
+
+  describe('findTierSetSeasonSlots', () => {
+    it('gives a tiered contest\'s events the Season slot of the first slot it covers holding a set, read from the contest\'s covered slots, and reads nothing for a pick\'em contest (#2044)', async () => {
+      const tierSetSlots = jest.fn().mockResolvedValue(new Map([['event-1', { seasonSlotId: 'season-slot-r32' }]]));
+      const service = buildService({ tiers: { tierSetSlots } });
+
+      const tiered = await service.findTierSetSeasonSlots(buildContest({ id: 'c-1', selectionType: SharedDomainEnums.SelectionType.TIERED, sportEventIds: ['event-1'], coveredSlotDefinitionIds: ['def-r32'] }));
+      const pickEm = await service.findTierSetSeasonSlots(buildContest({ id: 'c-2', selectionType: SharedDomainEnums.SelectionType.PICK_EM, sportEventIds: ['event-1'] }));
+
+      expect([tiered, pickEm]).toEqual([new Map([['event-1', 'season-slot-r32']]), new Map()]);
+      expect(tierSetSlots.mock.calls).toEqual([[['event-1'], { coveredSlotDefinitionIds: ['def-r32'] }]]);
     });
   });
 

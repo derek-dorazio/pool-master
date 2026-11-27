@@ -5,13 +5,14 @@
  */
 import type {
   SportEventRoundMatchRepository,
+  SportEventRoundRepository,
   SportEventParticipantRepository,
   SportEventSlotParticipantValuationRepository,
   SportEventSlotTierRepository,
   SportEventRepository,
 } from '@poolmaster/shared/db';
-import { tierSetSlotOf, type SportEventTierSlot, MatchStatus, SportEventParticipantStatus, coveredRoundNumbers, eventPlaysMatches, isSquaresRound, hasSportEventStarted, matchSpread } from '@poolmaster/shared/domain';
-import { findBracketProblem, findKnockoutProblem } from '../scoring-families/head-to-head/bracket-picks';
+import { tierSetSlotOf, type SportEventTierSlot, MatchStatus, SportEventParticipantStatus, coveredRoundNumbers, eventPlaysMatches, playsKnockoutRounds, isSquaresRound, hasSportEventStarted, matchSpread } from '@poolmaster/shared/domain';
+import { findBracketProblem, findKnockoutProblem, knockoutGames } from '../scoring-families/head-to-head/bracket-picks';
 import { ContestCutoffKind, cutoffTiming } from '../contests/entry-window';
 import { knockoutSeeds } from '../scoring-families/head-to-head/score-team';
 import { BatchedRead, batchedByIds, batchedByKey, withReads } from '../../core/batched-read';
@@ -25,12 +26,13 @@ import type { ContestCreateSportEventReader, ContestCreateSportEventState } from
  * slot's set's (#2044). Composed
  * from the slice-2 ports (#247) — it was a raw Prisma read inlined here.
  */
-export function createContestSportEventReader({ sportEvents, field, tiers, valuations, matches }: {
+export function createContestSportEventReader({ sportEvents, field, tiers, valuations, matches, rounds }: {
   sportEvents: SportEventRepository;
   field: SportEventParticipantRepository;
   tiers: Pick<SportEventSlotTierRepository, 'findTierSlots'>;
   valuations: Pick<SportEventSlotParticipantValuationRepository, 'findBySlot'>;
   matches: SportEventRoundMatchRepository;
+  rounds: Pick<SportEventRoundRepository, 'findBySportEvent'>;
 }): ContestCreateSportEventReader {
   /**
    * The events' states from one read each of the events and their loaded field
@@ -57,6 +59,7 @@ export function createContestSportEventReader({ sportEvents, field, tiers, valua
       participantCount: loaded.get(event.id) ?? 0,
       rounds: event.rounds ?? null,
       slotDefinitionIds: event.slotDefinitions.map((definition) => definition.id),
+      playsOnlyKnockoutRounds: event.slotDefinitions.every((definition) => playsKnockoutRounds(definition.slotKind)),
       salaryCap: tierSetSlotOf(tierSlots.get(event.id) ?? [])?.pricing?.salaryCap ?? null,
       squaresFromRound: event.squaresFromRound ?? null,
       participantType: event.participantType,
@@ -89,16 +92,23 @@ export function createContestSportEventReader({ sportEvents, field, tiers, valua
       (await matches.findBySportEvent(sportEventId)).filter((match) => match.status !== MatchStatus.CANCELLED && matchSpread(match) === null).length,
     findBracketProblem: async (sportEventId) => {
       const [games, entries] = await Promise.all([matches.findBySportEvent(sportEventId), field.findBySportEvent(sportEventId)]);
-      // The event's own bracket, every round of it: whether its games form one is the event's fact,
-      // whichever rounds a contest on it covers.
-      return findBracketProblem(games.filter((match) => match.status !== MatchStatus.CANCELLED), knockoutSeeds(entries));
+      // The event's own bracket, every knockout round of it: whether its games form one is the
+      // event's fact, whichever rounds a contest on it covers. Its group matchdays and third-place
+      // play-off are no round of it (#2241).
+      return findBracketProblem(knockoutGames(games.filter((match) => match.status !== MatchStatus.CANCELLED)), knockoutSeeds(entries));
     },
     findKnockoutProblem: async (sportEventId) => {
       const [games, entries] = await Promise.all([matches.findBySportEvent(sportEventId), field.findBySportEvent(sportEventId)]);
-      return findKnockoutProblem(games.filter((match) => match.status !== MatchStatus.CANCELLED), knockoutSeeds(entries));
+      const played = games.filter((match) => match.status !== MatchStatus.CANCELLED);
+      // An event with a knockout game plays a knockout round, so only one without reads its rounds
+      // (#2241): whether it plays none, or its knockout games are not placed yet.
+      const eventRounds = knockoutGames(played).length > 0 ? played : await rounds.findBySportEvent(sportEventId);
+      return findKnockoutProblem(played, knockoutSeeds(entries), eventRounds);
     },
+    // Counted from the event's rounds and their slots, not its games (#2241): slots govern rounds,
+    // so a tournament's knockout rounds are known before any knockout game is placed.
     countCoveredRounds: async (sportEventId, coverage) =>
-      coveredRoundNumbers(coverage, await matches.findBySportEvent(sportEventId)).length,
+      coveredRoundNumbers(coverage, await rounds.findBySportEvent(sportEventId)).length,
     findGame: async (sportEventId, sportEventRoundMatchId) => {
       const game = (await matches.findBySportEvent(sportEventId)).find((match) => match.id === sportEventRoundMatchId);
       return game === undefined ? null : { status: game.status, roundNumber: game.roundNumber, seasonSlotId: game.slot.seasonSlotId };
@@ -110,12 +120,13 @@ export function createContestSportEventReader({ sportEvents, field, tiers, valua
 }
 
 /** The opening reader over its repositories, with the batching described on `createContestOpeningReader`. */
-export function createBatchedContestOpeningReader({ sportEvents, field, tiers, valuations, matches: eventMatches }: {
+export function createBatchedContestOpeningReader({ sportEvents, field, tiers, valuations, matches: eventMatches, rounds }: {
   sportEvents: SportEventRepository;
   field: SportEventParticipantRepository;
   tiers: Pick<SportEventSlotTierRepository, 'findTierSlots'>;
   valuations: Pick<SportEventSlotParticipantValuationRepository, 'findBySlot'>;
   matches: SportEventRoundMatchRepository;
+  rounds: Pick<SportEventRoundRepository, 'findBySportEvent'>;
 }): ContestOpeningReader {
   const eventsById = batchedByIds((ids) => sportEvents.findByIds(ids), (event) => event.id);
   const participantCounts = new BatchedRead<string, number>(async (sportEventIds) => {
@@ -141,6 +152,7 @@ export function createBatchedContestOpeningReader({ sportEvents, field, tiers, v
     },
     valuations,
     matches,
+    rounds,
   });
   return {
     ...reader,

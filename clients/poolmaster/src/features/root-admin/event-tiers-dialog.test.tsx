@@ -7,16 +7,16 @@ import { EventTiersDialog } from './event-tiers-dialog';
 import { eventTiersRequestBody, eventTiersValuesOf, nextTierKey, strandedCount } from './event-tiers-form';
 import { fieldEntryFixture, sportEventFixture, tierFixture, valuationFixture } from './sport-test-fixtures';
 
-// The event's own tiers, edited from ⚙ (#1890): reorder, add and remove, each named by its place
+// The tier-set slot's tiers, edited from ⚙ (#1890, #2044): reorder, add and remove, each named by its place
 // (Tier 1 first), with a removed tier's participants sent somewhere only once a tier was set by hand.
 
-const { mockLogger, replaceEventTiersMock } = vi.hoisted(() => {
+const { mockLogger, replaceEventSlotTiersMock } = vi.hoisted(() => {
   const logger = { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(), fatal: vi.fn(), child: vi.fn() };
   logger.child.mockReturnValue(logger);
-  return { mockLogger: logger, replaceEventTiersMock: vi.fn() };
+  return { mockLogger: logger, replaceEventSlotTiersMock: vi.fn() };
 });
 
-bindApiMocks({ replaceEventTiers: replaceEventTiersMock });
+bindApiMocks({ replaceEventSlotTiers: replaceEventSlotTiersMock });
 
 vi.mock('@/lib/logger', () => ({
   getOrCreateClientTraceId: () => 'test-trace-id',
@@ -33,10 +33,10 @@ function placed(id: string, tierId: string, source: 'MANUAL' | 'AUTO_ODDS') {
 
 function renderDialog(field = [placed('a', 'tier-3', 'AUTO_ODDS')]) {
   const onClose = vi.fn();
-  replaceEventTiersMock.mockResolvedValue({ data: { tiers: [] } });
+  replaceEventSlotTiersMock.mockResolvedValue({ data: { tiers: [] } });
   render(
     <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
-      <EventTiersDialog event={sportEventFixture({ id: 'evt-1', name: 'Open' })} field={field} onClose={onClose} tiers={TIERS} />
+      <EventTiersDialog event={sportEventFixture({ id: 'evt-1', name: 'Open' })} field={field} onClose={onClose} seasonSlotId="slot-1" tiers={TIERS} />
     </QueryClientProvider>,
   );
   return { onClose };
@@ -79,8 +79,8 @@ describe('the event tiers dialog', () => {
     await waitFor(() => expect(screen.getByTestId(`${TEST_ID}-save`)).toBeEnabled());
     await userEvent.click(screen.getByTestId(`${TEST_ID}-save`));
 
-    await waitFor(() => expect(replaceEventTiersMock).toHaveBeenCalledWith(expect.objectContaining({
-      path: { eventId: 'evt-1' },
+    await waitFor(() => expect(replaceEventSlotTiersMock).toHaveBeenCalledWith(expect.objectContaining({
+      path: { eventId: 'evt-1', seasonSlotId: 'slot-1' },
       body: {
         tiers: [
           { tierKey: 'TIER_2', tierNumber: 1 },
@@ -110,14 +110,14 @@ describe('the event tiers dialog', () => {
     await userEvent.selectOptions(reassign, 'TIER_2');
     await userEvent.click(screen.getByTestId(`${TEST_ID}-save`));
 
-    await waitFor(() => expect(replaceEventTiersMock).toHaveBeenCalledWith(expect.objectContaining({
+    await waitFor(() => expect(replaceEventSlotTiersMock).toHaveBeenCalledWith(expect.objectContaining({
       body: { tiers: [{ tierKey: 'TIER_1', tierNumber: 1 }, { tierKey: 'TIER_2', tierNumber: 2 }], reassignOrphansTo: 'TIER_2' },
     })));
   });
 
   it('shows the refusal and stays open when the save is rejected', async () => {
     const { onClose } = renderDialog();
-    replaceEventTiersMock.mockResolvedValue({ error: { error: { code: 'SPORT_EVENT_TIERS_LOCKED', message: 'Tiers are locked.' } } });
+    replaceEventSlotTiersMock.mockResolvedValue({ error: { error: { code: 'SPORT_EVENT_TIERS_LOCKED', message: 'Tiers are locked.' } } });
 
     await userEvent.click(screen.getByTestId(`${TEST_ID}-down-0`));
     await userEvent.click(screen.getByTestId(`${TEST_ID}-save`));
@@ -128,7 +128,7 @@ describe('the event tiers dialog', () => {
 
   it('says the tiers may have saved and to Save again when the save fails unexpectedly, as when placing the field fails', async () => {
     const { onClose } = renderDialog();
-    replaceEventTiersMock.mockResolvedValue({ error: { error: { code: 'INTERNAL_ERROR', message: 'Internal server error' } } });
+    replaceEventSlotTiersMock.mockResolvedValue({ error: { error: { code: 'INTERNAL_ERROR', message: 'Internal server error' } } });
 
     await userEvent.click(screen.getByTestId(`${TEST_ID}-down-0`));
     await userEvent.click(screen.getByTestId(`${TEST_ID}-save`));

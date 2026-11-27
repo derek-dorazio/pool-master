@@ -289,19 +289,6 @@ describe('sport catalog reads cost the same statements for 2 rows as for 20', ()
     });
   });
 
-  it("GET an event's tiers: the same statements for 2 tiers as for 20", async () => {
-    await expectConstantQueries({
-      route: 'GET /api/v1/events/{eventId}/tiers',
-      seed: async (tiers) => {
-        const { event, field } = await seedEventWithField(tiers);
-        await seedTiers(event.id, field, tiers);
-        return { event, rootAdmin: await createTestUser({ isRootAdmin: true }) };
-      },
-      call: ({ event, rootAdmin }) => get(`/api/v1/events/${event.id}/tiers`, rootAdmin),
-      rowsShown: (response) => okBody(response, SportEventTierListResponseSchema).tiers.length,
-    });
-  });
-
   it("GET a slot's tiers: the same statements for 2 tiers as for 20 (#2044)", async () => {
     await expectConstantQueries({
       route: 'GET /api/v1/events/{eventId}/slots/{seasonSlotId}/tiers',

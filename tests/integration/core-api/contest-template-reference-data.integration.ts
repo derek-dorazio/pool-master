@@ -1338,7 +1338,9 @@ describe('Seeded knockout templates follow the template review (#2164)', () => {
 
   it('offers tiered and budget on a knockout of more than eight teams, one that has a round of 16 or an earlier round, and on none smaller', async () => {
     const draws = (await knockoutTemplates()).filter((entry) => entry.template.selectionType === SelectionType.RANDOM_DRAW
-      && entry.template.slots.every((slot) => slot.definition.slotKind !== SlotKind.TOURNAMENT && slot.definition.slotKind !== SlotKind.WEEK)
+      // A knockout's draw: no tournament slot, and some knockout slot beside any group matchdays (#2241).
+      && entry.template.slots.every((slot) => slot.definition.slotKind !== SlotKind.TOURNAMENT)
+      && entry.template.slots.some((slot) => slot.definition.slotKind !== SlotKind.WEEK)
       && !LEAGUES_WITH_ONE_KNOCKOUT_TEMPLATE_EACH.includes(entry.template.sportLeague.urlSegment));
     const competitionIds = [...new Set(draws.flatMap((entry) => entry.template.slots.map((slot) => slot.definition.sportLeagueCompetitionId)))];
     const competitions = await getPrisma().sportLeagueCompetition.findMany({
@@ -1479,8 +1481,8 @@ describe('Seeded knockout round points cover every round a template lists', () =
    * Every template a knockout round-points contest scores a whole bracket by: it covers all its
    * listed slots, none of them a tournament (an event of its own, whose rounds its slots do not
    * show). Each listed slot is a round of the bracket but the third-place play-off, a match beside
-   * the bracket that is no round of it. Spelled out here, apart from the shared rule, so the two
-   * check each other.
+   * the bracket that is no round of it, and a group matchday (a WEEK slot, #2241), after which a
+   * team plays on. Spelled out here, apart from the shared rule, so the two check each other.
    */
   async function bracketTemplates() {
     const all = await new PrismaContestConfigTemplateRepository(getAppPrisma()).list();
@@ -1488,8 +1490,9 @@ describe('Seeded knockout round points cover every round a template lists', () =
       const scoring = template.configJson.scoring;
       if (template.coverageMode !== TemplateCoverageMode.ALL_LISTED || scoring?.participantScoringDefinitionId !== 'KNOCKOUT_ROUND_POINTS') return [];
       if (template.slots.some((slot) => slot.slotKind === SlotKind.TOURNAMENT)) return [];
-      const rounds = template.slots.filter((slot) => slot.slotKind !== SlotKind.THIRD_PLACE).map((slot) => slot.slotKind);
-      return [{ template, roundValues: scoring.config.roundValues, upsetBonus: scoring.config.upsetBonus, rounds }];
+      const rounds = template.slots.filter((slot) => slot.slotKind !== SlotKind.THIRD_PLACE && slot.slotKind !== SlotKind.WEEK).map((slot) => slot.slotKind);
+      const groupMatchdays = template.slots.filter((slot) => slot.slotKind === SlotKind.WEEK).length;
+      return [{ template, roundValues: scoring.config.roundValues, upsetBonus: scoring.config.upsetBonus, rounds, groupMatchdays }];
     });
   }
 
@@ -1512,6 +1515,35 @@ describe('Seeded knockout round points cover every round a template lists', () =
       return champion.score === expected ? [] : [`${template.templateKey}: the champion scores ${String(champion.score)}, not ${String(expected)}`];
     });
 
+    expect(problems).toEqual([]);
+  });
+
+  it('scores a soccer tournament\'s sweepstake champion its round values\' sum though the draw covers the group matchdays too, a group win scoring nothing (#2241)', async () => {
+    const templates = (await bracketTemplates()).filter(({ groupMatchdays }) => groupMatchdays > 0);
+    const problems = templates.flatMap(({ template, roundValues, upsetBonus, rounds, groupMatchdays }) => {
+      const slotKinds = [...Array.from({ length: groupMatchdays }, () => SlotKind.WEEK), ...rounds];
+      const [champion] = scoreKnockoutField(championRun(slotKinds), { roundValues, upsetBonus }, everyRound(slotKinds));
+      const expected = roundValues.reduce((total, value) => total + value, 0);
+      return champion.score === expected ? [] : [`${template.templateKey}: the champion scores ${String(champion.score)}, not ${String(expected)}`];
+    });
+
+    expect(templates.map(({ template }) => template.templateKey).sort()).toEqual(['copa-america', 'euro', 'womens-world-cup', 'world-cup']
+      .flatMap((prefix) => [`${prefix}-random-draw-doubling`, `${prefix}-random-draw-straight-up`]).sort());
+    expect(problems).toEqual([]);
+  });
+
+  it('covers every slot of a soccer tournament\'s competition, group matchdays and knockout, with its sweepstakes, so the draw is from the whole field (#2241)', async () => {
+    const draws = await getPrisma().contestConfigTemplate.findMany({
+      where: { selectionType: SelectionType.RANDOM_DRAW, sportLeague: { urlSegment: { in: ['world-cup', 'womens-world-cup', 'euro', 'copa-america'] } } },
+      select: { templateKey: true, slots: { select: { sportLeagueCompetitionSlotId: true, definition: { select: { competition: { select: { slots: { select: { id: true } } } } } } } } },
+    });
+    const problems = draws.flatMap((draw) => {
+      const listed = draw.slots.map((slot) => slot.sportLeagueCompetitionSlotId).sort();
+      const competition = [...new Set(draw.slots.flatMap((slot) => slot.definition.competition.slots.map((each) => each.id)))].sort();
+      return JSON.stringify(listed) === JSON.stringify(competition) ? [] : [draw.templateKey];
+    });
+
+    expect(draws).toHaveLength(8);
     expect(problems).toEqual([]);
   });
 

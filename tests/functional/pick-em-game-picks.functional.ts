@@ -2,8 +2,8 @@ import { deleteTestSportLeagues } from '../support/test-slots';
 import {
   acceptInvitation,
   addEventParticipants,
-  autoAssignEventPrices,
-  autoAssignEventTiers,
+  autoAssignEventSlotPrices,
+  autoAssignEventSlotTiers,
   clearGamePick,
   createContest,
   createParticipant,
@@ -46,6 +46,7 @@ import { AWAY_SIDE, HOME_SIDE } from '../support/match-sides';
 import { rowSideTeam } from '../support/match-rows';
 import { bracketMatch } from '../support/match-requests';
 import { setFieldRows } from './field-rows';
+import { tierSetSlotPath } from './tier-set-slot';
 
 // A confidence pick'em week end to end over HTTP (#716). An admin builds a four-team basketball
 // event and releases it; its final, whose teams are still to be decided, is called off, so the
@@ -138,8 +139,8 @@ describe('SDK Functional: a pick\'em week (#716)', () => {
       path: { eventId },
       body: { rows: TEAMS.map((name, index) => ({ playerName: `${name} ${RUN}`, seedNumber: index + 1 })) },
     })).response?.status).toBe(200);
-    expect((await autoAssignEventTiers({ client: a, path: { eventId }, body: { tierSize: 1 } })).response?.status).toBe(200);
-    expect((await autoAssignEventPrices({ client: a, path: { eventId }, body: await standardPricingFor(a) })).response?.status).toBe(200);
+    expect((await autoAssignEventSlotTiers({ client: a, path: await tierSetSlotPath(a, eventId), body: { tierSize: 1 } })).response?.status).toBe(200);
+    expect((await autoAssignEventSlotPrices({ client: a, path: await tierSetSlotPath(a, eventId), body: await standardPricingFor(a) })).response?.status).toBe(200);
     const field = expectDefined((await listEventParticipants({ client: a, path: { eventId } })).data).participants;
     const rowOf = (name: string) => expectDefined(field.find((row) => row.participant.name === `${name} ${RUN}`), name).id;
 

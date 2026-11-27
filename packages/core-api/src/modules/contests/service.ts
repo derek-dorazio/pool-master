@@ -48,6 +48,8 @@ import type {
   SquadMembership,
 } from '@poolmaster/shared/domain';
 import {
+  contestRoundCoverage,
+  TIER_SET_SELECTION_TYPES,
   championshipYearStart,
   ContestFormat,
   ContestStatus,
@@ -230,7 +232,8 @@ export interface ContestServiceDeps {
   /** An event's sport league, named on an entry receipt. */
   sportLeagues: Pick<SportLeagueRepository, 'findById'>;
   eventParticipants: EventFieldReads;
-  tiers: Pick<SportEventTierService, 'listTiers'>;
+  /** The set each event of a tiered or budget contest picks from (#2044). */
+  tiers: Pick<SportEventTierService, 'tierSetSlots'>;
   /** The league's plan caps (#947): how many entries a contest may hold. */
   planEntitlements: Pick<PlanEntitlementsService, 'forLeague'>;
   /** Each contest's expansion (#987), for the cap a contest read shows. */
@@ -373,6 +376,17 @@ export class ContestService {
     const eventIds = [...new Set(contests.flatMap((contest) => contest.sportEventIds))];
     const events = await this.deps.sportEvents.findByIds(eventIds);
     return new Map(events.map((event) => [event.id, event]));
+  }
+
+  /**
+   * The Season slot of each of a tiered or budget contest's events whose set its picks come from
+   * (#2044, `contestTierSetSlot`): the first slot the contest covers holding a set. Empty for a
+   * contest of another selection type, which picks from no set.
+   */
+  async findTierSetSeasonSlots(contest: Contest): Promise<Map<string, string>> {
+    if (!TIER_SET_SELECTION_TYPES.includes(contest.selectionType)) return new Map();
+    const slots = await this.deps.tiers.tierSetSlots(contest.sportEventIds, { coveredSlotDefinitionIds: contestRoundCoverage(contest).slotDefinitionIds });
+    return new Map([...slots].map(([sportEventId, slot]) => [sportEventId, slot.seasonSlotId]));
   }
 
   /** The contest's events, in its sequence order. */

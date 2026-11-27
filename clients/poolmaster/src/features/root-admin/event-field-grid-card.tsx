@@ -18,6 +18,7 @@ export function EventFieldGridCard({
   field,
   isSynced,
   overview,
+  tierAndPriceEditable,
   tiers,
 }: {
   /** The section's own actions, such as automatic tiers and prices, beside its title. */
@@ -26,6 +27,8 @@ export function EventFieldGridCard({
   field: readonly EventFieldEntry[];
   isSynced: boolean;
   overview: SportEventOverviewDto | undefined;
+  /** Whether a row's tier and price may be set by hand: only in the event's tier-set slot's set while it is open (#2044). */
+  tierAndPriceEditable: boolean;
   tiers: readonly SportEventTierDto[];
 }) {
   const [openRowId, setOpenRowId] = useState<string | null>(null);
@@ -62,6 +65,7 @@ export function EventFieldGridCard({
           key={openRow.id}
           onClose={() => setOpenRowId(null)}
           row={openRow}
+          tierAndPriceEditable={tierAndPriceEditable}
           tiers={tiers}
         />
       )}

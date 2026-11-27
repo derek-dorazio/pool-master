@@ -1,20 +1,22 @@
 import { useQuery } from '@tanstack/react-query';
 import { SelectionType } from '@poolmaster/shared/domain';
 import {
-  listEventTiers,
+  listEventSlotParticipants,
+  listEventSlotTiers,
   type ContestDto,
   type ContestEntryParticipantDetailDto,
+  type SportEventParticipantDto,
   type SportEventTierDto,
 } from '@/lib/api';
 import { throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
 import { sportEventQueryOptions } from './use-contest-schedule';
-import { eventFieldQueryOptions } from './use-event-games';
 
 /**
  * What a lineup pick shows beside its name on the contest page (#1740), by how the contest is
  * picked: a tiered pick its tier, a budget pick its price, and a random draw's nothing, since the
- * draw dealt it. Picks are pointers into the event's field, so the values are the field's own.
+ * draw dealt it. Picks are pointers into the event's field, so the values are the field's own, as
+ * the tier set of the slot the contest picks from holds them (#2044): the API names that slot.
  */
 export type LineupPickValues =
   | { kind: 'tier'; tierNumberByFieldRowId: ReadonlyMap<string, number> }
@@ -23,49 +25,59 @@ export type LineupPickValues =
 
 const SHARED_EVENT_READ = { retry: false, staleTime: 5 * 60_000 } as const;
 
-function useEventFieldQuery(sportEventId: string, enabled: boolean) {
+function useSlotFieldQuery(sportEventId: string, seasonSlotId: string, enabled: boolean) {
   return useQuery({
-    ...eventFieldQueryOptions(sportEventId),
     ...SHARED_EVENT_READ,
-    enabled: enabled && sportEventId !== '',
+    queryKey: QueryKeys.sportEvents.slotField(sportEventId, seasonSlotId),
+    queryFn: async (): Promise<SportEventParticipantDto[]> => {
+      const response = await listEventSlotParticipants({ path: { eventId: sportEventId, seasonSlotId } });
+      if (!response.data?.participants) {
+        throwApiError(response.error, 'Event slot field response is missing data.');
+      }
+      return response.data.participants;
+    },
+    enabled: enabled && sportEventId !== '' && seasonSlotId !== '',
   });
 }
 
-function useEventTiersQuery(sportEventId: string, enabled: boolean) {
+function useSlotTiersQuery(sportEventId: string, seasonSlotId: string, enabled: boolean) {
   return useQuery({
     ...SHARED_EVENT_READ,
-    queryKey: QueryKeys.sportEvents.tiers(sportEventId),
+    queryKey: QueryKeys.sportEvents.slotTiers(sportEventId, seasonSlotId),
     queryFn: async (): Promise<SportEventTierDto[]> => {
-      const response = await listEventTiers({ path: { eventId: sportEventId } });
+      const response = await listEventSlotTiers({ path: { eventId: sportEventId, seasonSlotId } });
       if (!response.data?.tiers) {
-        throwApiError(response.error, 'Event tiers response is missing data.');
+        throwApiError(response.error, 'Event slot tiers response is missing data.');
       }
       return response.data.tiers;
     },
-    enabled: enabled && sportEventId !== '',
+    enabled: enabled && sportEventId !== '' && seasonSlotId !== '',
   });
 }
 
 /**
  * The values a lineup contest's picks show for one of its events, read only while `enabled` (the
- * viewer has a lineup to show). Undefined until the reads it needs have answered; a failed read
- * leaves the values off rather than holding the picks back.
+ * viewer has a lineup to show), from the tier set of `seasonSlotId`: the slot the contest picks
+ * from on that event (`tierSetSeasonSlotId`), empty where it covers none. Undefined until the
+ * reads it needs have answered; a failed read, or no slot to read, leaves the values off rather
+ * than holding the picks back.
  */
 export function useLineupPickValues(
   selectionType: ContestDto['selectionType'] | undefined,
   sportEventId: string,
+  seasonSlotId: string,
   enabled: boolean,
 ): LineupPickValues | undefined {
   const isTiered = selectionType === SelectionType.TIERED;
   const isBudget = selectionType === SelectionType.BUDGET_PICK;
-  const fieldQuery = useEventFieldQuery(sportEventId, enabled && (isTiered || isBudget));
-  const tiersQuery = useEventTiersQuery(sportEventId, enabled && isTiered);
+  const fieldQuery = useSlotFieldQuery(sportEventId, seasonSlotId, enabled && (isTiered || isBudget));
+  const tiersQuery = useSlotTiersQuery(sportEventId, seasonSlotId, enabled && isTiered);
   const eventQuery = useQuery({ ...sportEventQueryOptions(sportEventId), enabled: enabled && isBudget && sportEventId !== '' });
 
   if (!selectionType) {
     return undefined;
   }
-  if (!isTiered && !isBudget) {
+  if ((!isTiered && !isBudget) || seasonSlotId === '') {
     return { kind: 'none' };
   }
   const field = fieldQuery.data;

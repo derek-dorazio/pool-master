@@ -12348,7 +12348,7 @@ export type SportEventTierSetDto = {
      */
     seasonSlotId: string;
     /**
-     * Whether this is the event's tier-set slot, the first holding a set: the one the event-level tier routes act on, released with the event.
+     * Whether this is the event's tier-set slot, the first holding a set: the one a contest starting at the first slot the event lists picks from, locked when the event is released.
      */
     isTierSetSlot: boolean;
     /**
@@ -12636,7 +12636,7 @@ export type SportEventDto = {
          */
         seasonSlotId: string;
         /**
-         * Whether this is the event's tier-set slot, the first holding a set: the one the event-level tier routes act on, released with the event.
+         * Whether this is the event's tier-set slot, the first holding a set: the one a contest starting at the first slot the event lists picks from, locked when the event is released.
          */
         isTierSetSlot: boolean;
         /**
@@ -13193,7 +13193,7 @@ export type SportEventListResponse = {
              */
             seasonSlotId: string;
             /**
-             * Whether this is the event's tier-set slot, the first holding a set: the one the event-level tier routes act on, released with the event.
+             * Whether this is the event's tier-set slot, the first holding a set: the one a contest starting at the first slot the event lists picks from, locked when the event is released.
              */
             isTierSetSlot: boolean;
             /**
@@ -13725,7 +13725,7 @@ export type SportEventResponse = {
              */
             seasonSlotId: string;
             /**
-             * Whether this is the event's tier-set slot, the first holding a set: the one the event-level tier routes act on, released with the event.
+             * Whether this is the event's tier-set slot, the first holding a set: the one a contest starting at the first slot the event lists picks from, locked when the event is released.
              */
             isTierSetSlot: boolean;
             /**
@@ -14526,7 +14526,7 @@ export type SlotTierLayout = {
 };
 
 /**
- * Prices the active field on the budget curve with these values, best seed first and golfers with no seed last, and records them on the event's first slot as its pricing (#2044). The values usually come from a Budget pricing profile, possibly changed; platformPricingProfileId names that profile (404 PLATFORM_PRICING_PROFILE_NOT_FOUND for none).
+ * Prices the active field on the budget curve with these values, best seed first and golfers with no seed last, and records them on the slot as its pricing (#2044). The values usually come from a Budget pricing profile, possibly changed; platformPricingProfileId names that profile (404 PLATFORM_PRICING_PROFILE_NOT_FOUND for none).
  */
 export type AutoAssignSportEventPricesRequest = {
     /**
@@ -14553,6 +14553,50 @@ export type AutoAssignSportEventPricesRequest = {
      * The pricing profile the values started from. The admin may have changed any value before assigning.
      */
     platformPricingProfileId: string;
+};
+
+/**
+ * Pricing values to preview on a slot's active field before assigning them (#2107): the same five values autoAssignEventSlotPrices takes, without the profile they started from.
+ */
+export type SportEventPricePreviewQuery = {
+    /**
+     * Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event.
+     */
+    salaryCap: number;
+    /**
+     * Whole dollars. Every price is rounded to a multiple of it. At most the worst golfer's price.
+     */
+    unit: number;
+    /**
+     * The best seed's price, as a percentage of the salary cap.
+     */
+    topSharePercent: number;
+    /**
+     * The worst seed's price, as a percentage of the salary cap. At most `topSharePercent`.
+     */
+    floorSharePercent: number;
+    /**
+     * How fast prices fall from the top: 1 is a straight line; higher keeps the top few expensive and drops the middle of the field towards the floor.
+     */
+    steepness: number;
+};
+
+/**
+ * What pricing a slot's active field with the values sent would charge its best and worst participant (#2107). Nothing is written.
+ */
+export type SportEventPricePreviewResponse = {
+    /**
+     * The participants the slot's prices would go to: its active field, less anyone knocked out in an earlier slot.
+     */
+    activeParticipantCount: number;
+    /**
+     * Whole dollars: the first participant's price on the curve; null with no active participant.
+     */
+    bestPrice: number | null;
+    /**
+     * Whole dollars: the last participant's price on the curve; null with no active participant.
+     */
+    worstPrice: number | null;
 };
 
 /**
@@ -15933,6 +15977,10 @@ export type ContestSportEventDto = {
      * How the event is scored, from its sport league. The same on every event of a contest, which covers one sport league.
      */
     scoringFamily: 'STROKE_PLAY' | 'FINISH_POSITION' | 'HEAD_TO_HEAD';
+    /**
+     * The Season slot whose tier set a tiered or budget contest picks from on this event (#2044): the first slot the contest covers that holds a set. Its tiers and prices are read with listEventSlotTiers and listEventSlotParticipants. Null for a contest of another selection type, or an event covering no slot. Present on the one-contest read only.
+     */
+    tierSetSeasonSlotId?: string | null;
 };
 
 /**
@@ -16051,6 +16099,10 @@ export type ContestDto = {
          * How the event is scored, from its sport league. The same on every event of a contest, which covers one sport league.
          */
         scoringFamily: 'STROKE_PLAY' | 'FINISH_POSITION' | 'HEAD_TO_HEAD';
+        /**
+         * The Season slot whose tier set a tiered or budget contest picks from on this event (#2044): the first slot the contest covers that holds a set. Its tiers and prices are read with listEventSlotTiers and listEventSlotParticipants. Null for a contest of another selection type, or an event covering no slot. Present on the one-contest read only.
+         */
+        tierSetSeasonSlotId?: string | null;
     }>;
     sport?: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS' | null;
     /**
@@ -16939,6 +16991,10 @@ export type ContestResponse = {
              * How the event is scored, from its sport league. The same on every event of a contest, which covers one sport league.
              */
             scoringFamily: 'STROKE_PLAY' | 'FINISH_POSITION' | 'HEAD_TO_HEAD';
+            /**
+             * The Season slot whose tier set a tiered or budget contest picks from on this event (#2044): the first slot the contest covers that holds a set. Its tiers and prices are read with listEventSlotTiers and listEventSlotParticipants. Null for a contest of another selection type, or an event covering no slot. Present on the one-contest read only.
+             */
+            tierSetSeasonSlotId?: string | null;
         }>;
         sport?: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS' | null;
         /**
@@ -17040,6 +17096,10 @@ export type ContestListResponse = {
              * How the event is scored, from its sport league. The same on every event of a contest, which covers one sport league.
              */
             scoringFamily: 'STROKE_PLAY' | 'FINISH_POSITION' | 'HEAD_TO_HEAD';
+            /**
+             * The Season slot whose tier set a tiered or budget contest picks from on this event (#2044): the first slot the contest covers that holds a set. Its tiers and prices are read with listEventSlotTiers and listEventSlotParticipants. Null for a contest of another selection type, or an event covering no slot. Present on the one-contest read only.
+             */
+            tierSetSeasonSlotId?: string | null;
         }>;
         sport?: 'GOLF' | 'HORSE_RACING' | 'AUTO_RACING' | 'CYCLING' | 'RUNNING' | 'BASKETBALL' | 'FOOTBALL' | 'HOCKEY' | 'BASEBALL' | 'SOCCER' | 'TENNIS' | null;
         /**
@@ -37389,209 +37449,6 @@ export type RemoveEventParticipantResponses = {
 
 export type RemoveEventParticipantResponse = RemoveEventParticipantResponses[keyof RemoveEventParticipantResponses];
 
-export type ListEventTiersData = {
-    body?: never;
-    path: {
-        eventId: string;
-    };
-    query?: never;
-    url: '/api/v1/events/{eventId}/tiers';
-};
-
-export type ListEventTiersErrors = {
-    /**
-     * Standard API error envelope.
-     */
-    401: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    404: ErrorEnvelope;
-};
-
-export type ListEventTiersError = ListEventTiersErrors[keyof ListEventTiersErrors];
-
-export type ListEventTiersResponses = {
-    /**
-     * An event's tiers.
-     */
-    200: SportEventTierListResponse;
-};
-
-export type ListEventTiersResponse = ListEventTiersResponses[keyof ListEventTiersResponses];
-
-export type ReplaceEventTiersData = {
-    body: ReplaceSportEventTiersRequest;
-    path: {
-        eventId: string;
-    };
-    query?: never;
-    url: '/api/v1/events/{eventId}/tiers';
-};
-
-export type ReplaceEventTiersErrors = {
-    /**
-     * Standard API error envelope.
-     */
-    401: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    403: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    404: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    409: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    422: ErrorEnvelope;
-};
-
-export type ReplaceEventTiersError = ReplaceEventTiersErrors[keyof ReplaceEventTiersErrors];
-
-export type ReplaceEventTiersResponses = {
-    /**
-     * An event's tiers.
-     */
-    200: SportEventTierListResponse;
-};
-
-export type ReplaceEventTiersResponse = ReplaceEventTiersResponses[keyof ReplaceEventTiersResponses];
-
-export type AutoAssignEventTiersData = {
-    body: AutoAssignSportEventTiersRequest;
-    path: {
-        eventId: string;
-    };
-    query?: never;
-    url: '/api/v1/events/{eventId}/tiers/auto-assign';
-};
-
-export type AutoAssignEventTiersErrors = {
-    /**
-     * Standard API error envelope.
-     */
-    401: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    403: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    404: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    409: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    422: ErrorEnvelope;
-};
-
-export type AutoAssignEventTiersError = AutoAssignEventTiersErrors[keyof AutoAssignEventTiersErrors];
-
-export type AutoAssignEventTiersResponses = {
-    /**
-     * An event's field.
-     */
-    200: SportEventParticipantListResponse;
-};
-
-export type AutoAssignEventTiersResponse = AutoAssignEventTiersResponses[keyof AutoAssignEventTiersResponses];
-
-export type ReplaceEventTierAssignmentsData = {
-    body: ReplaceSportEventTierAssignmentsRequest;
-    path: {
-        eventId: string;
-    };
-    query?: never;
-    url: '/api/v1/events/{eventId}/tiers/assignments';
-};
-
-export type ReplaceEventTierAssignmentsErrors = {
-    /**
-     * Standard API error envelope.
-     */
-    401: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    403: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    404: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    409: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    422: ErrorEnvelope;
-};
-
-export type ReplaceEventTierAssignmentsError = ReplaceEventTierAssignmentsErrors[keyof ReplaceEventTierAssignmentsErrors];
-
-export type ReplaceEventTierAssignmentsResponses = {
-    /**
-     * An event's field.
-     */
-    200: SportEventParticipantListResponse;
-};
-
-export type ReplaceEventTierAssignmentsResponse = ReplaceEventTierAssignmentsResponses[keyof ReplaceEventTierAssignmentsResponses];
-
-export type AutoAssignEventPricesData = {
-    body: AutoAssignSportEventPricesRequest;
-    path: {
-        eventId: string;
-    };
-    query?: never;
-    url: '/api/v1/events/{eventId}/prices/auto-assign';
-};
-
-export type AutoAssignEventPricesErrors = {
-    /**
-     * Standard API error envelope.
-     */
-    401: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    403: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    404: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    409: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    422: ErrorEnvelope;
-};
-
-export type AutoAssignEventPricesError = AutoAssignEventPricesErrors[keyof AutoAssignEventPricesErrors];
-
-export type AutoAssignEventPricesResponses = {
-    /**
-     * An event's field.
-     */
-    200: SportEventParticipantListResponse;
-};
-
-export type AutoAssignEventPricesResponse = AutoAssignEventPricesResponses[keyof AutoAssignEventPricesResponses];
-
 export type ListEventSlotParticipantsData = {
     body?: never;
     path: {
@@ -37831,6 +37688,71 @@ export type AutoAssignEventSlotPricesResponses = {
 };
 
 export type AutoAssignEventSlotPricesResponse = AutoAssignEventSlotPricesResponses[keyof AutoAssignEventSlotPricesResponses];
+
+export type PreviewEventSlotPricesData = {
+    body?: never;
+    path: {
+        eventId: string;
+        seasonSlotId: string;
+    };
+    query: {
+        /**
+         * Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event.
+         */
+        salaryCap: number;
+        /**
+         * Whole dollars. Every price is rounded to a multiple of it. At most the worst golfer's price.
+         */
+        unit: number;
+        /**
+         * The best seed's price, as a percentage of the salary cap.
+         */
+        topSharePercent: number;
+        /**
+         * The worst seed's price, as a percentage of the salary cap. At most `topSharePercent`.
+         */
+        floorSharePercent: number;
+        /**
+         * How fast prices fall from the top: 1 is a straight line; higher keeps the top few expensive and drops the middle of the field towards the floor.
+         */
+        steepness: number;
+    };
+    url: '/api/v1/events/{eventId}/slots/{seasonSlotId}/prices/preview';
+};
+
+export type PreviewEventSlotPricesErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    401: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    403: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    404: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    409: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    422: ErrorEnvelope;
+};
+
+export type PreviewEventSlotPricesError = PreviewEventSlotPricesErrors[keyof PreviewEventSlotPricesErrors];
+
+export type PreviewEventSlotPricesResponses = {
+    /**
+     * What pricing a slot's active field with the values sent would charge its best and worst participant (#2107). Nothing is written.
+     */
+    200: SportEventPricePreviewResponse;
+};
+
+export type PreviewEventSlotPricesResponse = PreviewEventSlotPricesResponses[keyof PreviewEventSlotPricesResponses];
 
 export type PreviewEventGolfRoundScoresData = {
     body: GolfRoundScoreUploadRequest;

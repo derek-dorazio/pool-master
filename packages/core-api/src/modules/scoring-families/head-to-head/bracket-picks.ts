@@ -35,6 +35,7 @@ import {
   finalRoundsOfMatches,
   coveredRoundValue,
   coversMatchRound,
+  playsKnockoutRounds,
   type ContestRoundCoverage,
   type KnockoutRoundPointsSettings,
   type SportEventRoundMatch,
@@ -246,15 +247,32 @@ function isOneRoundSlate(games: ReadonlyArray<Pick<SportEventRoundMatch, 'roundN
 
 /**
  * Why knockout round points cannot score an event's games, or null when they can (#2225): a
- * win scores its round's value, so the games must be a bracket (`findBracketProblem`) or a slate of
- * one-off games (`isOneRoundSlate`). A bracket pick'em still needs a bracket: its entry picks every
- * game to the one final.
+ * win scores its round's value, so the event must play a knockout round, and its knockout
+ * rounds' games must be a bracket (`findBracketProblem`) or a slate of one-off games
+ * (`isOneRoundSlate`). Only knockout-round games are judged (`playsKnockoutRounds`, #2241): a
+ * soccer tournament's group matchdays and its third-place play-off score nothing. An event whose
+ * knockout rounds have no games yet, such as a tournament before its group stage ends, passes:
+ * its rounds are its slots', and its bracket is checked as the sync places it. A bracket pick'em
+ * still needs a bracket: its entry picks every game to the one final.
  */
 export function findKnockoutProblem(
   games: readonly SportEventRoundMatch[],
   seedOf: ReadonlyMap<string, number | null>,
+  rounds: ReadonlyArray<{ slot: { slotKind: SlotKind } }>,
 ): string | null {
-  return isOneRoundSlate(games) ? null : findBracketProblem(games, seedOf);
+  if (!rounds.some((round) => playsKnockoutRounds(round.slot.slotKind))) {
+    return 'it plays no knockout round';
+  }
+  const knockout = knockoutGames(games);
+  if (knockout.length === 0) {
+    return null;
+  }
+  return isOneRoundSlate(knockout) ? null : findBracketProblem(knockout, seedOf);
+}
+
+/** An event's games played in knockout rounds (`playsKnockoutRounds`, #2241): its group matchdays' and third-place play-off's left out. */
+export function knockoutGames<Game extends Pick<SportEventRoundMatch, 'slot'>>(games: readonly Game[]): Game[] {
+  return games.filter((game) => playsKnockoutRounds(game.slot.slotKind));
 }
 
 /** One pick as the results score it. */

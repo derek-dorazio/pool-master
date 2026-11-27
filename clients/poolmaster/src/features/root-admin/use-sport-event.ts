@@ -1,8 +1,9 @@
 import { useQuery } from '@tanstack/react-query';
-import { getEvent, getEventBracket, listEventSlotTiebreakers, listEventTiers } from '@/lib/api';
+import { getEvent, getEventBracket, listEventSlotParticipants, listEventSlotTiebreakers, listEventSlotTiers } from '@/lib/api';
 import { sportEventRoundsQueryOptions } from '@/features/contests/use-bracket-round-label';
 import type {
   SportEventDto,
+  SportEventParticipantDto,
   SportEventRoundMatchDto,
   SportEventSlotTiebreakerDto,
   SportEventTierDto,
@@ -13,21 +14,21 @@ import { eventFieldQueryOptions } from '@/features/contests/use-event-games';
 
 /**
  * #236 — the tournament screens' reads of one sport event: the event, its round schedule, its
- * field and its tiers. The field read carries each golfer's valuation (tier and price), standing and
+ * field and each slot's tier set (#2044). The field read carries each golfer's valuation (tier and price), standing and
  * per-round golf scores, so the tiers board and the scores page read it too rather than a
  * golf projection of their own.
  */
 
 /**
- * The reads a change to an event's field reaches: the field, the event and its counts, the event
- * list's counts, and the tiers its participants sit in.
+ * The reads a change to an event's field reaches: the field (every slot's), the event and its
+ * counts, the event list's counts, and every slot's tiers its participants sit in (#2044).
  */
 export function fieldWriteKeys(eventId: string) {
   return [
     QueryKeys.rootAdmin.manageSport.field(eventId),
     QueryKeys.rootAdmin.manageSport.event(eventId),
     QueryKeys.rootAdmin.manageSport.events,
-    QueryKeys.rootAdmin.manageSport.tiers(eventId),
+    QueryKeys.rootAdmin.manageSport.tierSets(eventId),
   ];
 }
 
@@ -51,17 +52,34 @@ export function useSportEventFieldQuery(eventId: string) {
   return useQuery({ ...eventFieldQueryOptions(eventId), queryKey: QueryKeys.rootAdmin.manageSport.field(eventId) });
 }
 
-export function useSportEventTiersQuery(eventId: string) {
+/** One slot's field (#2044): its rows with that slot's tiers and prices. */
+export function useSportEventSlotFieldQuery(eventId: string, seasonSlotId: string) {
   return useQuery({
-    queryKey: QueryKeys.rootAdmin.manageSport.tiers(eventId),
+    queryKey: QueryKeys.rootAdmin.manageSport.slotField(eventId, seasonSlotId),
+    queryFn: async (): Promise<SportEventParticipantDto[]> => {
+      const response = await listEventSlotParticipants({ path: { eventId, seasonSlotId } });
+      if (!response.data?.participants) {
+        throwApiError(response.error, 'Slot field response is missing data.');
+      }
+      return response.data.participants;
+    },
+    enabled: eventId !== '' && seasonSlotId !== '',
+    retry: false,
+  });
+}
+
+/** One slot's tiers (#2044), in tier order. */
+export function useSportEventSlotTiersQuery(eventId: string, seasonSlotId: string) {
+  return useQuery({
+    queryKey: QueryKeys.rootAdmin.manageSport.slotTiers(eventId, seasonSlotId),
     queryFn: async (): Promise<SportEventTierDto[]> => {
-      const response = await listEventTiers({ path: { eventId } });
+      const response = await listEventSlotTiers({ path: { eventId, seasonSlotId } });
       if (!response.data?.tiers) {
-        throwApiError(response.error, 'Event tiers response is missing data.');
+        throwApiError(response.error, 'Slot tiers response is missing data.');
       }
       return response.data.tiers;
     },
-    enabled: eventId !== '',
+    enabled: eventId !== '' && seasonSlotId !== '',
     retry: false,
   });
 }

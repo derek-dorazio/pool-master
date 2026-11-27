@@ -1,3 +1,4 @@
+import { ValuationSource } from '@poolmaster/shared/domain';
 import { z } from 'zod';
 import type { ReplaceSportEventTiersRequest, SportEventTierDto } from '@/lib/api';
 import type { EventFieldEntry } from './event-field-patch';
@@ -36,7 +37,7 @@ export function nextTierKey(keys: readonly string[]): string {
  * placed by hand: until then a save places the whole field in the new tiers afresh.
  */
 export function strandedCount(values: EventTiersValues, tiers: readonly SportEventTierDto[], field: readonly EventFieldEntry[]): number {
-  if (!field.some((entry) => entry.valuation?.tierAssignedSource === 'MANUAL')) return 0;
+  if (!field.some((entry) => entry.valuation?.tierAssignedSource === ValuationSource.MANUAL)) return 0;
   const kept = new Set(values.tiers.map((tier) => tier.tierKey));
   const removedIds = new Set(tiers.filter((tier) => !kept.has(tier.tierKey)).map((tier) => tier.id));
   return field.filter((entry) => entry.valuation?.sportEventTierId != null && removedIds.has(entry.valuation.sportEventTierId)).length;

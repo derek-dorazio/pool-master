@@ -3,8 +3,8 @@ import {
   acceptInvitation,
   addEventParticipants,
   applyEventRaceResults,
-  autoAssignEventPrices,
-  autoAssignEventTiers,
+  autoAssignEventSlotPrices,
+  autoAssignEventSlotTiers,
   createContest,
   createParticipant,
   enterContest,
@@ -35,6 +35,7 @@ import { standardPricingFor } from './standard-pricing';
 import { sportRowKeys } from '../support/sport-rows';
 import { insertTestSportLeague } from '../support/test-sport-league';
 import { byParticipantId } from './field-rows';
+import { tierSetSlotPath } from './tier-set-slot';
 
 // Horse racing end to end over HTTP (#622, #623): an admin builds a race and its field, a
 // commissioner runs a Win/Place/Show contest from the sport's template, the draw deals each entry
@@ -135,8 +136,8 @@ describe('SDK Functional: Horse racing Win/Place/Show', () => {
       path: { eventId },
       body: { participants: field.map((row, index) => ({ sportEventParticipantId: row.id, oddsToWin: 2 + index * 3 })) },
     });
-    expect((await autoAssignEventTiers({ client: a, path: { eventId }, body: {} })).response?.status).toBe(200);
-    expect((await autoAssignEventPrices({ client: a, path: { eventId }, body: await standardPricingFor(a) })).response?.status).toBe(200);
+    expect((await autoAssignEventSlotTiers({ client: a, path: await tierSetSlotPath(a, eventId), body: {} })).response?.status).toBe(200);
+    expect((await autoAssignEventSlotPrices({ client: a, path: await tierSetSlotPath(a, eventId), body: await standardPricingFor(a) })).response?.status).toBe(200);
     expect((await releaseEvent({ client: a, path: { eventId } })).data?.event.status).toBe('SCHEDULED');
 
     // --- A Win/Place/Show contest from the sport's template, entered and drawn ------------------

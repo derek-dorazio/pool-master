@@ -10,8 +10,10 @@ import { EventTabOutlet } from './test/event-tab-outlet';
 import {
   fieldEntryFixture,
   participantFixture,
+  seasonSlotFixture,
   sportEventFixture,
   tierFixture,
+  tierSetFixture,
   valuationFixture,
 } from './sport-test-fixtures';
 
@@ -20,8 +22,9 @@ import {
 const {
   getEventMock,
   listEventParticipantsMock,
-  listEventTiersMock,
-  replaceEventTierAssignmentsMock,
+  listEventSlotParticipantsMock,
+  listEventSlotTiersMock,
+  replaceEventSlotTierAssignmentsMock,
   updateEventParticipantsMock,
   refreshEventParticipantsMock,
   addEventParticipantsMock,
@@ -41,8 +44,9 @@ const {
   return {
     getEventMock: vi.fn(),
     listEventParticipantsMock: vi.fn(),
-    listEventTiersMock: vi.fn(),
-    replaceEventTierAssignmentsMock: vi.fn(),
+    listEventSlotParticipantsMock: vi.fn(),
+    listEventSlotTiersMock: vi.fn(),
+    replaceEventSlotTierAssignmentsMock: vi.fn(),
     updateEventParticipantsMock: vi.fn(),
     refreshEventParticipantsMock: vi.fn(),
     addEventParticipantsMock: vi.fn(),
@@ -55,8 +59,9 @@ const {
 bindApiMocks({
   getEvent: getEventMock,
   listEventParticipants: listEventParticipantsMock,
-  listEventTiers: listEventTiersMock,
-  replaceEventTierAssignments: replaceEventTierAssignmentsMock,
+  listEventSlotParticipants: listEventSlotParticipantsMock,
+  listEventSlotTiers: listEventSlotTiersMock,
+  replaceEventSlotTierAssignments: replaceEventSlotTierAssignmentsMock,
   updateEventParticipants: updateEventParticipantsMock,
   refreshEventParticipants: refreshEventParticipantsMock,
   addEventParticipants: addEventParticipantsMock,
@@ -126,11 +131,11 @@ function fieldEntry({
 const TIERS = [tierFixture({ tierNumber: 1 }), tierFixture({ tierNumber: 2 })];
 
 function seed(overrides: { tournament?: Parameters<typeof tournament>[0]; entries?: unknown[] } = {}) {
-  listEventTiersMock.mockResolvedValue({ data: { tiers: TIERS } });
+  listEventSlotTiersMock.mockResolvedValue({ data: { tiers: TIERS } });
   getEventMock.mockResolvedValue({
     data: { event: tournament(overrides.tournament) },
   });
-  listEventParticipantsMock.mockResolvedValue({
+  listEventSlotParticipantsMock.mockResolvedValue({
     data: {
       participants: overrides.entries ?? [
         fieldEntry(),
@@ -274,7 +279,7 @@ describe('pool-master-za4 the Event page\'s Field tab', () => {
       body: { participants: [{ sportEventParticipantId: 'sep-rory', price: 8000, tierKey: 'TIER_2' }] },
     })));
     expect(updateEventParticipantsMock).toHaveBeenCalledTimes(1);
-    expect(replaceEventTierAssignmentsMock).not.toHaveBeenCalled();
+    expect(replaceEventSlotTierAssignmentsMock).not.toHaveBeenCalled();
   });
 
   it('shows a participant\'s odds but never offers them for editing, since odds come only from the feed', async () => {
@@ -407,6 +412,58 @@ describe('pool-master-za4 the Event page\'s Field tab', () => {
 
     await waitFor(() => expect(mockLogger.warn).toHaveBeenCalledWith(expect.objectContaining({ action: 'event.participant.save.failed' }), expect.any(String)));
     expect(screen.getByTestId('root-admin-event-participant-dialog-save')).toBeInTheDocument();
+  });
+
+  it('picks the slot whose tiers and prices the grid shows, the tier-set slot first, offering automatic tiers only while that slot\'s set is open and hand tiers only on the tier-set slot', async () => {
+    seed({
+      tournament: {
+        status: 'IN_PROGRESS',
+        tiersLocked: true,
+        slots: [seasonSlotFixture({ id: 'slot-1', label: 'QA 1' }), seasonSlotFixture({ id: 'slot-2', label: 'QA 2' })],
+        tierSets: [
+          tierSetFixture({ seasonSlotId: 'slot-1', isTierSetSlot: true, tiersLocked: true }),
+          tierSetFixture({ seasonSlotId: 'slot-2', isTierSetSlot: false, tiersLocked: false }),
+        ],
+      },
+    });
+    listEventSlotParticipantsMock.mockImplementation(({ path }: { path: { seasonSlotId: string } }) => Promise.resolve({
+      data: { participants: path.seasonSlotId === 'slot-2' ? [fieldEntry({ id: 'sep-late', participantId: 'p-late', name: 'Late Entry' })] : [fieldEntry()] },
+    }));
+    renderPage();
+
+    expect(await screen.findByText('Rory McIlroy')).toBeInTheDocument();
+    expect(screen.getByTestId('root-admin-event-field-slot')).toHaveValue('slot-1');
+    expect(screen.queryByTestId('root-admin-tier-auto-tiers')).not.toBeInTheDocument();
+
+    await userEvent.selectOptions(screen.getByTestId('root-admin-event-field-slot'), 'slot-2');
+
+    expect(await screen.findByText('Late Entry')).toBeInTheDocument();
+    expect(screen.getByTestId('root-admin-tier-auto-tiers')).toBeInTheDocument();
+    expect(listEventSlotTiersMock).toHaveBeenCalledWith(expect.objectContaining({ path: { eventId: 'evt-1', seasonSlotId: 'slot-2' } }));
+    await userEvent.click(within(screen.getByTestId('root-admin-event-field-row-sep-late')).getByRole('button', { name: /Open details/ }));
+    await userEvent.click(await screen.findByTestId('root-admin-event-participant-dialog-edit'));
+    expect(screen.getByTestId('root-admin-event-participant-dialog-edit-rank')).toBeInTheDocument();
+    expect(screen.queryByTestId('root-admin-event-participant-dialog-edit-tier')).not.toBeInTheDocument();
+  });
+
+  it('shows no slot picker on an event with one tier set', async () => {
+    seed();
+    renderPage();
+
+    expect(await screen.findByText('Rory McIlroy')).toBeInTheDocument();
+    expect(screen.queryByTestId('root-admin-event-field-slot')).not.toBeInTheDocument();
+  });
+
+  it('reads the event\'s own field, with no tiers, while the sync has placed it in no slot', async () => {
+    seed({ tournament: { slots: [], tierSets: [] } });
+    listEventParticipantsMock.mockResolvedValue({ data: { participants: [fieldEntry({ valuation: null })] } });
+    renderPage();
+
+    expect(await screen.findByText('Rory McIlroy')).toBeInTheDocument();
+    expect(listEventParticipantsMock).toHaveBeenCalledWith(expect.objectContaining({ path: { eventId: 'evt-1' } }));
+    expect(listEventSlotParticipantsMock).not.toHaveBeenCalled();
+    expect(listEventSlotTiersMock).not.toHaveBeenCalled();
+    expect(screen.queryByTestId('root-admin-tier-auto-tiers')).not.toBeInTheDocument();
   });
 
   it('pool-master-za4 adds participants from the event\'s own league roster', async () => {

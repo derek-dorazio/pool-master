@@ -56,18 +56,21 @@ export function EventParticipantDialog({
   isSynced,
   onClose,
   row,
+  tierAndPriceEditable,
   tiers,
 }: {
   event: SportEventDto;
   isSynced: boolean;
   onClose: () => void;
   row: EventFieldRow;
+  /** Whether its tier and price may be set by hand (#2044): the event's update writes the tier-set slot's set, so only that set while it is open. */
+  tierAndPriceEditable: boolean;
   tiers: readonly SportEventTierDto[];
 }) {
   const preferences = useDisplayPreferences();
   const { entry } = row;
   const [withdrawOpen, setWithdrawOpen] = useState(false);
-  const editable: ParticipantEditable = { tierAndPrice: !event.tiersLocked, orderValues: !isSynced };
+  const editable: ParticipantEditable = { tierAndPrice: tierAndPriceEditable, orderValues: !isSynced };
   const current = participantValuesOf(entry, tiers);
   const form = useForm<ParticipantValues>({ resolver: zodResolver(participantSchema), defaultValues: current, mode: 'onChange' });
   const dialog = useDetailEditDialog(form, current, onClose);
