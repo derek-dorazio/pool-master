@@ -765,8 +765,11 @@ period count), so no reader derives it. Its `status` is null while the golfer is
 `DISQUALIFIED`. The Game is `COMPLETED` once every golfer in it has a status, at the latest
 completion time sent (the time of the write when none is): a round's completion time is its
 Game's, not a golfer's. A golfer cut after round 2 has no side in rounds 3 and 4. The field
-read carries the row's side results as `fieldResults`; the API still shows them as the row's
-`rounds` (`MISSED_CUT` no longer appears there).
+read carries the row's side results as `fieldResults`; the API shows them as the row's
+`rounds`, each with its side `status` and `periodsCompleted`. The feed and the test-slot score
+routes send the same vocabulary: a round's side status, and `missedCut` on a cut golfer's last
+round, which turns their standing ELIMINATED (a DID_NOT_FINISH, DISQUALIFIED or DID_NOT_START
+round turns it WITHDRAWN).
 
 The standing is the running result in the event: `position`, `displayPosition`, `status`, and
 for golf the event totals `total` (strokes) and `scoreToPar`. The current round's holes thru is

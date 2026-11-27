@@ -186,7 +186,7 @@ export class MockContestFeedAdapter implements SportDataProvider, ProviderPayloa
           strokes: round.strokes,
           scoreToPar: round.scoreToPar,
           ...(typeof round.thru === 'number' ? { thru: round.thru } : {}),
-          status: round.status,
+          ...sideStatusOfMockRound(round.status),
           ...(round.completedAt ? { completedAt: round.completedAt } : {}),
         }));
       });
@@ -489,4 +489,23 @@ export function servePinControls(app: FastifyInstance, pinnedStates: Map<string,
     pinnedStates.delete(request.params.eventId);
     return reply.code(204).send();
   });
+}
+
+/**
+ * The mock feed's round status as a golf round update says it: how the round's Game side ended
+ * (null while it is being played), and the cut beside it, since the cut is the standing's.
+ */
+function sideStatusOfMockRound(status: 'IN_PROGRESS' | 'COMPLETED' | 'DNF' | 'DSQ' | 'MISSED_CUT'): Pick<GolfRoundUpdate, 'status' | 'missedCut'> {
+  switch (status) {
+    case 'IN_PROGRESS':
+      return { status: null };
+    case 'COMPLETED':
+      return { status: 'FINISHED' };
+    case 'MISSED_CUT':
+      return { status: 'FINISHED', missedCut: true };
+    case 'DNF':
+      return { status: 'DID_NOT_FINISH' };
+    case 'DSQ':
+      return { status: 'DISQUALIFIED' };
+  }
 }

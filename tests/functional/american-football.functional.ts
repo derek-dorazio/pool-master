@@ -189,7 +189,7 @@ describe('SDK Functional: American football', () => {
       recordEventMatchPeriodScore({ client: a, path: superBowlQuarter(2), body: periodBody({ homeScore: 0, awayScore: 9 }) }),
       cancelEventMatch({ client: a, path: matchPath }),
       setEventRoundMatchups({ client: a, path: { eventId: event.id, roundNumber: 2 }, body: { matches: [matchup({ matchNumber: 1, homeSportEventParticipantId: seahawks, awaySportEventParticipantId: rowOf('Los Angeles Rams') })] } }),
-      applyEventGolfRoundScores({ client: a, path: { eventId: event.id, roundNumber: 1 }, body: { rows: [{ participantId: ANY_UUID, strokes: 70, scoreToPar: -2, status: 'COMPLETED' }] } }),
+      applyEventGolfRoundScores({ client: a, path: { eventId: event.id, roundNumber: 1 }, body: { rows: [{ participantId: ANY_UUID, strokes: 70, scoreToPar: -2, status: 'FINISHED' }] } }),
       updateEventParticipantGolfRoundScore({ client: a, path: { eventId: event.id, roundNumber: 1, sportEventParticipantId: seahawks }, body: { strokes: 70 } }),
       applyEventRaceResults({ client: a, path: { eventId: event.id }, body: { isOfficial: true, rows: [{ participantId: ANY_UUID, resultStatus: 'FINISHED', finishPosition: 1, startPosition: null }] } }),
     ]);

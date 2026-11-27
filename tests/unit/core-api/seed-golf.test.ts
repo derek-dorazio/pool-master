@@ -84,21 +84,21 @@ describe('event dates for the API', () => {
 describe('golf seed round scores', () => {
   const golfer = { player: 'p', ranking: 1, oddsToWin: 5, rounds: [70, 75] };
 
-  it('stores a finished round as completed, eighteen holes, to par against the event par', () => {
-    expect(golferRoundScore(golfer, 1, 72)).toEqual({ strokes: 70, scoreToPar: -2, thru: 18, status: 'COMPLETED' });
+  it('stores a finished round as FINISHED, eighteen holes, to par against the event par', () => {
+    expect(golferRoundScore(golfer, 1, 72)).toEqual({ strokes: 70, scoreToPar: -2, thru: 18, status: 'FINISHED' });
   });
 
-  it('marks the last round of a golfer who missed the cut as MISSED_CUT and stores nothing after it', () => {
+  it('marks the last round of a golfer who missed the cut FINISHED with the cut beside it, and stores nothing after it', () => {
     const cut = { ...golfer, finish: 'MC' as const };
 
-    expect(golferRoundScore(cut, 2, 72)).toEqual({ strokes: 75, scoreToPar: 3, thru: 18, status: 'MISSED_CUT' });
+    expect(golferRoundScore(cut, 2, 72)).toEqual({ strokes: 75, scoreToPar: 3, thru: 18, status: 'FINISHED', missedCut: true });
     expect(golferRoundScore(cut, 3, 72)).toBeNull();
   });
 
-  it('stores a withdrawal as a DNF round through the holes played, to par for those holes', () => {
+  it('stores a withdrawal as a DID_NOT_FINISH round through the holes played, to par for those holes', () => {
     const withdrawn = { ...golfer, rounds: [70, 40], finish: 'WD' as const, withdrawnThru: 9 };
 
-    expect(golferRoundScore(withdrawn, 2, 72)).toEqual({ strokes: 40, scoreToPar: 4, thru: 9, status: 'DNF' });
+    expect(golferRoundScore(withdrawn, 2, 72)).toEqual({ strokes: 40, scoreToPar: 4, thru: 9, status: 'DID_NOT_FINISH' });
   });
 });
 

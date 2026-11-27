@@ -777,6 +777,12 @@
     },
     {
       "file": "scripts/retired-names.json",
+      "key": "isEventSyncKind",
+      "now": 0,
+      "reason": "retired by #2009"
+    },
+    {
+      "file": "scripts/retired-names.json",
       "key": "SCORING_FAMILY_ADMIN_UI",
       "now": 0,
       "reason": "retired by #2008"
@@ -870,6 +876,12 @@
       "key": "lookaheadDays",
       "now": 0,
       "reason": "retired by #2009"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "ParticipantRoundStatus",
+      "now": 0,
+      "reason": "retired by #2008"
     }
   ]
 }
