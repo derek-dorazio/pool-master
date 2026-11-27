@@ -7,6 +7,7 @@ import {
   ContestStatus,
   type ContestScoringSettings,
   MatchSide,
+  SlotKind,
   MatchStatus,
   type ParticipantContestScoringRule,
   type ParticipantType,
@@ -73,6 +74,7 @@ import { expectDefined } from '../../support/expect-defined';
 import { EIGHT_SEEDS, bracketMatches, eightTeamBracket, withResults } from '../../support/bracket-fixtures';
 import { InMemoryContestWorld } from '../../support/in-memory-contest-world';
 import { InMemorySportEvents } from '../../support/in-memory-sport-events';
+import { roundSlot, weekRoundSlot } from '../../support/round-slots';
 import { planEntitlementsOver, platinumEntitlements } from '../../support/plan-entitlements';
 import { buildLeague } from '../../factories';
 import { PLAN_SETTINGS } from '../../../packages/core-api/src/modules/plans/plan-settings';
@@ -3134,6 +3136,59 @@ describe('createContestSportEventReader field, game and price reads', () => {
     await expect(reader.countGamesWithoutSpread(EVENT)).resolves.toBe(1);
     await expect(reader.findGame(EVENT, 'g2')).resolves.toEqual({ status: MatchStatus.SCHEDULED, roundNumber: 2 });
     await expect(reader.findGame(EVENT, 'missing')).resolves.toBeNull();
+  });
+});
+
+describe('createContestSportEventReader knockout reads over a tournament with group matchdays (#2241)', () => {
+  const EVENT = 'event-tournament';
+  /** Three group matchdays, then a semifinal, a third-place play-off and the final: a round per slot. */
+  const ROUNDS = [weekRoundSlot(1), weekRoundSlot(2), weekRoundSlot(3), roundSlot(SlotKind.SEMIFINAL), roundSlot(SlotKind.THIRD_PLACE), roundSlot(SlotKind.FINAL)]
+    .map((slot, index) => ({ roundNumber: index + 1, slot }));
+  const GROUP_GAMES = bracketMatches(EVENT, [
+    { matchNumber: 1, round: 1, home: 'T1', away: 'T2' },
+    { matchNumber: 2, round: 2, home: 'T3', away: 'T4' },
+  ], (round) => weekRoundSlot(round));
+  const KNOCKOUT_GAMES = bracketMatches(EVENT, [
+    { matchNumber: 3, round: 4, home: 'T1', away: 'T2', advancesTo: { matchNumber: 5, side: MatchSide.HOME } },
+    { matchNumber: 4, round: 4, home: 'T3', away: 'T4', advancesTo: { matchNumber: 5, side: MatchSide.AWAY } },
+    { matchNumber: 5, round: 6, home: null, away: null },
+  ], (round) => round === 4 ? roundSlot(SlotKind.SEMIFINAL) : roundSlot(SlotKind.FINAL));
+  const THIRD_PLACE_GAME = bracketMatches(EVENT, [{ matchNumber: 6, round: 5, home: null, away: null }], () => roundSlot(SlotKind.THIRD_PLACE));
+
+  function readerOver(games: readonly unknown[], rounds: readonly unknown[] = ROUNDS) {
+    const findRounds = jest.fn(async () => rounds);
+    const reader = createContestSportEventReader({
+      sportEvents: new InMemorySportEvents().sportEventRepo(),
+      field: { findBySportEvent: async () => [] } as unknown as Parameters<typeof createContestSportEventReader>[0]['field'],
+      tiers: { findTierSlots: async () => new Map() },
+      valuations: { findBySlot: async () => [] },
+      matches: { findBySportEvent: async () => games } as unknown as Parameters<typeof createContestSportEventReader>[0]['matches'],
+      rounds: { findBySportEvent: findRounds } as unknown as Parameters<typeof createContestSportEventReader>[0]['rounds'],
+    });
+    return { reader, findRounds };
+  }
+
+  it('counts the covered knockout rounds from the event\'s rounds before any game is placed: the semifinal and the final', async () => {
+    await expect(readerOver([]).reader.countCoveredRounds(EVENT, { slotDefinitionIds: null })).resolves.toBe(2);
+  });
+
+  it('lets knockout round points take the event with only group games, reading its rounds to see it plays a knockout', async () => {
+    const { reader, findRounds } = readerOver(GROUP_GAMES);
+
+    await expect(reader.findKnockoutProblem(EVENT)).resolves.toBeNull();
+    expect(findRounds).toHaveBeenCalledTimes(1);
+  });
+
+  it('refuses knockout round points on an event whose rounds are all weeks', async () => {
+    await expect(readerOver(GROUP_GAMES, ROUNDS.slice(0, 3)).reader.findKnockoutProblem(EVENT)).resolves.toBe('it plays no knockout round');
+  });
+
+  it('judges a placed knockout from its games alone, without reading the rounds, and fills it in as a bracket with the group and third-place games left out', async () => {
+    const { reader, findRounds } = readerOver([...GROUP_GAMES, ...KNOCKOUT_GAMES, ...THIRD_PLACE_GAME]);
+
+    await expect(reader.findKnockoutProblem(EVENT)).resolves.toBeNull();
+    await expect(reader.findBracketProblem(EVENT)).resolves.toBeNull();
+    expect(findRounds).not.toHaveBeenCalled();
   });
 });
 
