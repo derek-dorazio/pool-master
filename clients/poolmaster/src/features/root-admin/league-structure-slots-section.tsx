@@ -69,6 +69,11 @@ const slotColumns = [
     meta: { info: 'Whether a squares pool can be played on the slot\'s games.', type: { kind: 'boolean' } },
     cell: ({ getValue }) => (getValue() ? 'Yes' : 'No'),
   }),
+  columnHelper.accessor('isNeutralSite', {
+    header: 'Neutral site',
+    meta: { info: 'Whether the slot\'s games are played at a neutral site, neither side at home. Its games then show "vs" rather than "at".', type: { kind: 'boolean' } },
+    cell: ({ getValue }) => (getValue() ? 'Yes' : 'No'),
+  }),
   columnHelper.accessor((slot) => slot.providerMappings.map(mappingText).join(', '), {
     id: 'mappings',
     header: 'Matched by',

@@ -181,7 +181,6 @@ describe('a World Cup bracket and its games from the feed (#1728)', () => {
       roundNumber: 1,
       homeTeamExternalId: '23',
       awayTeamExternalId: '33',
-      isNeutralSite: true,
       scheduledAt: new Date(byVendorNumber(74).datetime ?? ''),
       advancesTo: { roundNumber: 2, matchNumber: 1, side: MatchSide.HOME },
       regionLabel: null,
@@ -211,7 +210,7 @@ describe('a World Cup bracket and its games from the feed (#1728)', () => {
     expect(toWorldCupBracket(replaced(91, { home_team_source: null }))).toBeNull();
   });
 
-  it('gives each bracket match with both teams decided as a game in its round at a neutral site, and no third-place game', () => {
+  it('gives each bracket match with both teams decided as a game in its round, and no third-place game', () => {
     const games = toWorldCupScheduledGames(fullKnockout2026);
     expect(games).toHaveLength(16);
     expect(games[0]).toEqual({
@@ -220,7 +219,6 @@ describe('a World Cup bracket and its games from the feed (#1728)', () => {
       homeTeamExternalId: String(byVendorNumber(73).home_team?.id),
       awayTeamExternalId: String(byVendorNumber(73).away_team?.id),
       scheduledAt: new Date(byVendorNumber(73).datetime ?? ''),
-      isNeutralSite: true,
     });
     const settled = replaced(89, { away_team: { id: 7, name: 'Germany' }, away_team_source: null });
     expect(toWorldCupScheduledGames(settled).find((game) => game.games[0]?.providerGameId === '2689')).toMatchObject({ roundNumber: 2, homeTeamExternalId: '23', awayTeamExternalId: '7' });

@@ -245,7 +245,7 @@ describe('SPORT_EVENT_FIELD_SYNCED handlers', () => {
     sportEvent: { id: 'sport-event-1', status },
     providerId: 'balldontlie',
     externalId: 'week-2',
-    games: [{ games: [{ providerGameId: 'g1', gameNumber: 1 }], roundNumber: 1, homeTeamExternalId: 'bears', awayTeamExternalId: 'lions', scheduledAt: KICKOFF, isNeutralSite: false }],
+    games: [{ games: [{ providerGameId: 'g1', gameNumber: 1 }], roundNumber: 1, homeTeamExternalId: 'bears', awayTeamExternalId: 'lions', scheduledAt: KICKOFF }],
   });
 
   it('queues one job per event that syncs the provider\'s games, then tiers and prices the field, with the games as their kickoffs\' instants', async () => {
@@ -256,7 +256,7 @@ describe('SPORT_EVENT_FIELD_SYNCED handlers', () => {
         sportEventId: 'sport-event-1',
         providerId: 'balldontlie',
         externalId: 'week-2',
-        games: [{ games: [{ providerGameId: 'g1', gameNumber: 1 }], roundNumber: 1, homeTeamExternalId: 'bears', awayTeamExternalId: 'lions', scheduledAt: KICKOFF.toISOString(), isNeutralSite: false }],
+        games: [{ games: [{ providerGameId: 'g1', gameNumber: 1 }], roundNumber: 1, homeTeamExternalId: 'bears', awayTeamExternalId: 'lions', scheduledAt: KICKOFF.toISOString() }],
       },
       sportEventId: 'sport-event-1',
       runAt: undefined,
@@ -268,8 +268,8 @@ describe('SPORT_EVENT_FIELD_SYNCED handlers', () => {
   it('carries a playoff\'s whole bracket with the job, and a game or match with no kickoff yet as null', async () => {
     const synced: SportEventFieldSynced = {
       ...fieldSynced(SportEventStatus.DRAFT),
-      games: [{ games: [{ providerGameId: 'g1', gameNumber: 1 }], roundNumber: 1, homeTeamExternalId: 'bears', awayTeamExternalId: 'lions', scheduledAt: null, isNeutralSite: false }],
-      bracket: [{ matchNumber: 1, roundNumber: 1, homeTeamExternalId: 'bears', awayTeamExternalId: null, isNeutralSite: true, scheduledAt: KICKOFF, advancesTo: null, regionLabel: null }],
+      games: [{ games: [{ providerGameId: 'g1', gameNumber: 1 }], roundNumber: 1, homeTeamExternalId: 'bears', awayTeamExternalId: 'lions', scheduledAt: null }],
+      bracket: [{ matchNumber: 1, roundNumber: 1, homeTeamExternalId: 'bears', awayTeamExternalId: null, scheduledAt: KICKOFF, advancesTo: null, regionLabel: null }],
     };
 
     const [job] = await follow.jobs(synced, { queue: watchedQueue(), sportEventChanged: NOBODY_TOLD });
@@ -278,8 +278,8 @@ describe('SPORT_EVENT_FIELD_SYNCED handlers', () => {
       sportEventId: 'sport-event-1',
       providerId: 'balldontlie',
       externalId: 'week-2',
-      games: [{ games: [{ providerGameId: 'g1', gameNumber: 1 }], roundNumber: 1, homeTeamExternalId: 'bears', awayTeamExternalId: 'lions', scheduledAt: null, isNeutralSite: false }],
-      bracket: [{ matchNumber: 1, roundNumber: 1, homeTeamExternalId: 'bears', awayTeamExternalId: null, isNeutralSite: true, scheduledAt: KICKOFF.toISOString(), advancesTo: null, regionLabel: null }],
+      games: [{ games: [{ providerGameId: 'g1', gameNumber: 1 }], roundNumber: 1, homeTeamExternalId: 'bears', awayTeamExternalId: 'lions', scheduledAt: null }],
+      bracket: [{ matchNumber: 1, roundNumber: 1, homeTeamExternalId: 'bears', awayTeamExternalId: null, scheduledAt: KICKOFF.toISOString(), advancesTo: null, regionLabel: null }],
     });
   });
 

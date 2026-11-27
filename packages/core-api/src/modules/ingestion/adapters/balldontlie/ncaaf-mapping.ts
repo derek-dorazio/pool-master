@@ -107,7 +107,6 @@ export function toNcaafScheduledGames(games: readonly NcaafGame[]): ProviderSche
       homeTeamExternalId,
       awayTeamExternalId,
       scheduledAt: new Date(required(game.date, NCAAF_GAMES_PATH, gameName(game), 'date')),
-      isNeutralSite: false,
     };
   });
 }

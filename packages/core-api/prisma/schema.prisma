@@ -2901,6 +2901,10 @@ model SportLeagueCompetitionSlot {
   awardsTrophy             Boolean            @map("awards_trophy")
   /// Whether a squares pool can be played on the slot's games: single games with period scores.
   squaresEligible          Boolean            @map("squares_eligible")
+  /// Whether the slot's games are played at a neutral site, neither side at home (#2154): a Super
+  /// Bowl, a bowl game, a tournament game. Each Game of the slot takes it, so screens say "vs"
+  /// rather than "at"; the provider's feed does not decide it.
+  isNeutralSite            Boolean            @map("is_neutral_site")
   /// The series format each Season's slot is copied from (slice 6), so a later format change never
   /// rewrites a past Season.
   seriesFormat             PrismaSeriesFormat @map("series_format")

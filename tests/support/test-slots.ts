@@ -81,6 +81,7 @@ async function createTestDefinition(prisma: Db, sportLeagueId: string, key: type
       ...(key === LEVEL_TEST_DEFINITION_KEY ? { slotKind: 'WEEK' as const, weekNumber: LEVEL_TEST_WEEK_NUMBER } : { slotKind: 'TOURNAMENT' as const }),
       awardsTrophy: false,
       squaresEligible: true,
+      isNeutralSite: false,
       seriesFormat: 'SINGLE_GAME',
       seriesGames: 1,
       pairing: 'FIXED',
