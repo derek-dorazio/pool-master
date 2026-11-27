@@ -356,39 +356,41 @@ describe('platform config services on the settings registry', () => {
     return { repository, settings };
   }
 
-  it('ingestion config gives the field sync no switch, keeps live scores on, syncs event lists every six hours, and has no per-sport overrides', async () => {
+  const seasonal = (inSeason: Record<string, number>, offseason: Record<string, number>) => ({ IN_SEASON: inSeason, OFFSEASON: offseason });
+
+  it('ingestion config gives the field sync no switch, keeps live scores on, syncs event lists and fields every six hours in season and daily off it, and has no per-sport overrides', async () => {
     const { settings } = await loaded();
     const service = new IngestionConfigService(settings, fakeLogger());
 
     const config = await service.getConfig();
 
-    expect(config.FIELD).toEqual({ intervalMinutes: 360, lookaheadDays: 14 });
-    expect(config.SCORES.enabled).toBe(true);
-    expect(config.EVENTS).toEqual({ enabled: true, intervalMinutes: 360 });
+    expect(config.FIELD).toEqual({ intervals: seasonal({ intervalMinutes: 360 }, { intervalMinutes: 1440 }) });
+    expect(config.SCORES).toEqual({ enabled: true, intervals: seasonal({ intervalSeconds: 300 }, { intervalSeconds: 300 }) });
+    expect(config.EVENTS).toEqual({ enabled: true, intervals: seasonal({ intervalMinutes: 360 }, { intervalMinutes: 1440 }) });
     expect(Object.keys(config).sort()).toEqual(['EVENTS', 'FIELD', 'SCORES']);
     await expect(service.resetDefaults('admin-1')).resolves.toEqual(expect.objectContaining({
-      FIELD: { intervalMinutes: 360, lookaheadDays: 14 },
+      FIELD: { intervals: seasonal({ intervalMinutes: 360 }, { intervalMinutes: 1440 }) },
     }));
   });
 
-  it('a partial update changes only the policies and properties it names, and a reset restores the defaults', async () => {
+  it('a partial update changes only the policies, Season states and properties it names, and a reset restores the defaults', async () => {
     const { settings } = await loaded();
     const service = new IngestionConfigService(settings, fakeLogger());
 
     await expect(
       service.updateConfig({
-        SCORES: { intervalSeconds: 45 },
-        EVENTS: { intervalMinutes: 120 },
+        SCORES: { intervals: { IN_SEASON: { intervalSeconds: 45 } } },
+        EVENTS: { enabled: false, intervals: { OFFSEASON: { intervalMinutes: 720 } } },
       }, 'admin-1'),
-    ).resolves.toEqual(expect.objectContaining({
-      SCORES: { enabled: true, intervalSeconds: 45 },
-      EVENTS: { enabled: true, intervalMinutes: 120 },
-      FIELD: { intervalMinutes: 360, lookaheadDays: 14 },
-    }));
+    ).resolves.toEqual({
+      SCORES: { enabled: true, intervals: seasonal({ intervalSeconds: 45 }, { intervalSeconds: 300 }) },
+      EVENTS: { enabled: false, intervals: seasonal({ intervalMinutes: 360 }, { intervalMinutes: 720 }) },
+      FIELD: { intervals: seasonal({ intervalMinutes: 360 }, { intervalMinutes: 1440 }) },
+    });
     await expect(service.resetDefaults('admin-1')).resolves.toEqual(
       expect.objectContaining({
-        EVENTS: { enabled: true, intervalMinutes: 360 },
-        SCORES: expect.objectContaining({ intervalSeconds: 300 }),
+        EVENTS: { enabled: true, intervals: seasonal({ intervalMinutes: 360 }, { intervalMinutes: 1440 }) },
+        SCORES: expect.objectContaining({ intervals: seasonal({ intervalSeconds: 300 }, { intervalSeconds: 300 }) }),
       }),
     );
   });
@@ -400,31 +402,31 @@ describe('platform config services on the settings registry', () => {
     const ingestionOnA = new IngestionConfigService(taskA.settings, fakeLogger());
     const ingestionOnB = new IngestionConfigService(taskB.settings, fakeLogger());
 
-    await ingestionOnA.updateConfig({ EVENTS: { intervalMinutes: 90 } }, 'admin-1');
-    await ingestionOnB.updateConfig({ SCORES: { intervalSeconds: 45 } }, 'admin-2');
+    await ingestionOnA.updateConfig({ EVENTS: { intervals: { IN_SEASON: { intervalMinutes: 90 } } } }, 'admin-1');
+    await ingestionOnB.updateConfig({ SCORES: { intervals: { IN_SEASON: { intervalSeconds: 45 } } } }, 'admin-2');
 
     expect(repository.rows.get(INGESTION_SCHEDULE_SETTINGS.key)?.configJson).toEqual(expect.objectContaining({
-      SCORES: { enabled: true, intervalSeconds: 45 },
-      EVENTS: { enabled: true, intervalMinutes: 90 },
+      SCORES: { enabled: true, intervals: seasonal({ intervalSeconds: 45 }, { intervalSeconds: 300 }) },
+      EVENTS: { enabled: true, intervals: seasonal({ intervalMinutes: 90 }, { intervalMinutes: 1440 }) },
     }));
   });
 
-  it('a stored config loads with its sync settings intact, drops keys the schedule no longer names (the health check, per-sport overrides, the sports list, the field sync\'s old switch), takes the default for a sync it lacks, and is not rewritten on boot', async () => {
+  it('a stored config loads with its sync settings intact, drops keys the schedule no longer names (the health check, per-sport overrides, the sports list, the field sync\'s old switch and look-ahead days), takes the default for a sync it lacks, and is not rewritten on boot', async () => {
     const repository = inMemoryRuntimeConfigs();
     repository.put(INGESTION_SCHEDULE_SETTINGS.key, {
       scheduledSports: ['GOLF'],
       healthCheck: { enabled: true, intervalMinutes: 5 },
-      FIELD: { enabled: true, intervalMinutes: 720, lookaheadDays: 21 },
-      SCORES: { enabled: true, intervalSeconds: 45 },
+      FIELD: { enabled: true, lookaheadDays: 21, intervals: seasonal({ intervalMinutes: 720 }, { intervalMinutes: 2880 }) },
+      SCORES: { enabled: true, intervals: seasonal({ intervalSeconds: 45 }, { intervalSeconds: 600 }) },
       perSportOverrides: { GOLF: { SCORES: { intervalSeconds: 20 } } },
     });
     const { settings } = await loaded(repository);
     const service = new IngestionConfigService(settings, fakeLogger());
 
     await expect(service.getConfig()).resolves.toEqual({
-      EVENTS: { enabled: true, intervalMinutes: 360 },
-      FIELD: { intervalMinutes: 720, lookaheadDays: 21 },
-      SCORES: { enabled: true, intervalSeconds: 45 },
+      EVENTS: { enabled: true, intervals: seasonal({ intervalMinutes: 360 }, { intervalMinutes: 1440 }) },
+      FIELD: { intervals: seasonal({ intervalMinutes: 720 }, { intervalMinutes: 2880 }) },
+      SCORES: { enabled: true, intervals: seasonal({ intervalSeconds: 45 }, { intervalSeconds: 600 }) },
     });
     expect(repository.history).toHaveLength(0);
   });
@@ -434,19 +436,19 @@ describe('platform config services on the settings registry', () => {
     repository.put(INGESTION_SCHEDULE_SETTINGS.key, {
       scheduledSports: ['GOLF'],
       healthCheck: { enabled: true, intervalMinutes: 5 },
-      FIELD: { enabled: true, intervalMinutes: 720, lookaheadDays: 21 },
-      SCORES: { enabled: true, intervalSeconds: 45 },
+      FIELD: { intervals: seasonal({ intervalMinutes: 720 }, { intervalMinutes: 2880 }) },
+      SCORES: { enabled: true, intervals: seasonal({ intervalSeconds: 45 }, { intervalSeconds: 600 }) },
       perSportOverrides: { GOLF: { SCORES: { intervalSeconds: 20 } } },
     });
     const { settings } = await loaded(repository);
     const service = new IngestionConfigService(settings, fakeLogger());
 
-    await service.updateConfig({ EVENTS: { intervalMinutes: 10 } }, 'admin-1');
+    await service.updateConfig({ EVENTS: { intervals: { IN_SEASON: { intervalMinutes: 10 } } } }, 'admin-1');
 
     const stored = repository.rows.get(INGESTION_SCHEDULE_SETTINGS.key)?.configJson;
     expect(stored).not.toHaveProperty('perSportOverrides');
     expect(stored).not.toHaveProperty('scheduledSports');
     expect(stored).not.toHaveProperty('healthCheck');
-    expect(stored).toEqual(expect.objectContaining({ EVENTS: { enabled: true, intervalMinutes: 10 } }));
+    expect(stored).toEqual(expect.objectContaining({ EVENTS: { enabled: true, intervals: seasonal({ intervalMinutes: 10 }, { intervalMinutes: 1440 }) } }));
   });
 });

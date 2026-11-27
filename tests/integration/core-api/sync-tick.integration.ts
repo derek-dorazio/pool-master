@@ -9,7 +9,8 @@ import { randomUUID } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { SyncedLeagueRef } from '@poolmaster/shared/db';
-import { BackgroundJobType, fieldWindowEventIds, JobTrigger, MatchStatus, Sport } from '@poolmaster/shared/domain';
+import { BackgroundJobType, fieldWindowEventIds, JobTrigger, MatchStatus, Sport, SyncSeasonState, syncSeasonStateOf } from '@poolmaster/shared/domain';
+import { IngestionScheduleConfigSchema } from '@poolmaster/shared/dto/config.dto';
 import { PrismaBackgroundJobRepository, PrismaSportLeagueRepository } from '../../../packages/core-api/src/adapters';
 import { PrismaSyncDueWorkReader } from '../../../packages/core-api/src/adapters/prisma-sync-due-work-reader';
 import { BackgroundJobQueue } from '../../../packages/core-api/src/modules/background-jobs';
@@ -69,6 +70,30 @@ async function gameOf(event: { id: string; sportEventSlotId: string }, game: { s
     data: { sportEventId: event.id, sportEventRoundMatchId: match.id, sportEventSlotId: event.sportEventSlotId, gameNumber: 1, ...game },
   });
 }
+
+describe("whether each synced league is in season", () => {
+  it("reads each named league's Seasons that have not ended, one under way and one ahead, leaving out one that ended and another league's", async () => {
+    const league = await syncedLeague();
+    const other = await syncedLeague();
+    const prisma = getPrisma();
+    const season = (sportLeagueId: string, championshipYear: number, startsAt: Date, endsAt: Date) => prisma.sportLeagueSeason.create({
+      data: { sportLeagueId, name: String(championshipYear), championshipYear, startsAt, endsAt },
+    });
+    await season(league.sportLeagueId, 2091, at(-400 * 24 * HOUR), at(-30 * 24 * HOUR));
+    const underWay = await season(league.sportLeagueId, 2092, at(-24 * HOUR), at(90 * 24 * HOUR));
+    const ahead = await season(league.sportLeagueId, 2093, at(200 * 24 * HOUR), at(300 * 24 * HOUR));
+    await season(other.sportLeagueId, 2092, at(-24 * HOUR), at(90 * 24 * HOUR));
+
+    const spans = await new PrismaSyncDueWorkReader(getAppPrisma()).findSeasonSpans({ leagues: [league], now: NOW });
+
+    expect(spans.every((span) => span.sportLeagueId === league.sportLeagueId && span.endsAt >= NOW)).toBe(true);
+    expect(spans).toEqual(expect.arrayContaining([
+      { sportLeagueId: league.sportLeagueId, startsAt: underWay.startsAt, endsAt: underWay.endsAt },
+      { sportLeagueId: league.sportLeagueId, startsAt: ahead.startsAt, endsAt: ahead.endsAt },
+    ]));
+    expect(syncSeasonStateOf(spans, NOW)).toBe(SyncSeasonState.IN_SEASON);
+  });
+});
 
 describe('the slots each synced league plays next', () => {
   it("names the events of the league's earliest unstarted synced slot, judged by its start: not a started slot, a later one, a test slot or an unlinked event's", async () => {
@@ -273,5 +298,37 @@ describe('the migration retiring the old event sync jobs', () => {
     })).rejects.toBeInstanceOf(Rollback);
 
     expect(kept).toEqual(['SYNC_LEAGUE_EVENTS']);
+  });
+});
+
+describe('the migration giving each sync kind an interval per Season state', () => {
+  const MIGRATION = join(__dirname, '../../../packages/core-api/prisma/migrations/20271218029600_sync_intervals_by_season_state/migration.sql');
+  class Rollback extends Error {}
+
+  it("makes a saved schedule's intervals the in-season ones, keeps each switch, runs the events and field syncs daily off season, keeps live scores' interval, and drops the field's look-ahead days", async () => {
+    let migrated: unknown;
+    await expect(getPrisma().$transaction(async (tx) => {
+      await tx.platformRuntimeConfig.deleteMany({ where: { configKey: 'INGESTION_SCHEDULE_CONFIG' } });
+      await tx.platformRuntimeConfig.create({
+        data: {
+          configKey: 'INGESTION_SCHEDULE_CONFIG',
+          configJson: {
+            EVENTS: { enabled: false, intervalMinutes: 120 },
+            FIELD: { intervalMinutes: 360, lookaheadDays: 14 },
+            SCORES: { enabled: true, intervalSeconds: 60 },
+          },
+        },
+      });
+      await tx.$executeRawUnsafe(readFileSync(MIGRATION, 'utf8'));
+      migrated = (await tx.platformRuntimeConfig.findUniqueOrThrow({ where: { configKey: 'INGESTION_SCHEDULE_CONFIG' } })).configJson;
+      throw new Rollback();
+    })).rejects.toBeInstanceOf(Rollback);
+
+    expect(migrated).toEqual({
+      EVENTS: { enabled: false, intervals: { IN_SEASON: { intervalMinutes: 120 }, OFFSEASON: { intervalMinutes: 1440 } } },
+      FIELD: { intervals: { IN_SEASON: { intervalMinutes: 360 }, OFFSEASON: { intervalMinutes: 1440 } } },
+      SCORES: { enabled: true, intervals: { IN_SEASON: { intervalSeconds: 60 }, OFFSEASON: { intervalSeconds: 60 } } },
+    });
+    expect(IngestionScheduleConfigSchema.safeParse(migrated).success).toBe(true);
   });
 });

@@ -18,6 +18,8 @@ import {
   SlotPairing,
   slotNeedsDates,
   SlotWindowStatus,
+  syncSeasonStateOf,
+  SyncSeasonState,
   type CurrentSeasonCandidate,
   type SportLeagueSeasonCompetition,
   type SportLeagueSeasonDetail,
@@ -341,5 +343,26 @@ describe('mapSportLeagueSeasonToDto: which slots take a test event', () => {
       ['free', true], ['taken', false], ['synced', false],
     ]);
     expect(past.phases.flatMap((phase) => phase.competitions).flatMap((each) => each.slots).map((each) => each.takesTestEvent)).toEqual([false]);
+  });
+});
+
+describe('syncSeasonStateOf', () => {
+  const day = (iso: string) => new Date(`${iso}T00:00:00.000Z`);
+  const season = (startsAt: string, endsAt: string) => ({ startsAt: day(startsAt), endsAt: day(endsAt) });
+
+  it('is in season while one of the Seasons\' spans holds now, on its first and last day too', () => {
+    const nfl = [season('2026-09-01', '2027-02-15'), season('2027-09-01', '2028-02-15')];
+
+    expect(syncSeasonStateOf(nfl, day('2026-11-27'))).toBe(SyncSeasonState.IN_SEASON);
+    expect(syncSeasonStateOf(nfl, day('2026-09-01'))).toBe(SyncSeasonState.IN_SEASON);
+    expect(syncSeasonStateOf(nfl, day('2027-02-15'))).toBe(SyncSeasonState.IN_SEASON);
+  });
+
+  it('is off season between Seasons, before the first and for a league with no Season', () => {
+    const nfl = [season('2026-09-01', '2027-02-15'), season('2027-09-01', '2028-02-15')];
+
+    expect(syncSeasonStateOf(nfl, day('2027-05-01'))).toBe(SyncSeasonState.OFFSEASON);
+    expect(syncSeasonStateOf(nfl, day('2026-03-01'))).toBe(SyncSeasonState.OFFSEASON);
+    expect(syncSeasonStateOf([], day('2026-11-27'))).toBe(SyncSeasonState.OFFSEASON);
   });
 });

@@ -832,6 +832,21 @@ export const ProviderSyncKindOrder = explicitOrder<ProviderSyncKind>({
 });
 
 /**
+ * Whether a sport league is in season (#2009): one of its Seasons' spans holds now
+ * (`syncSeasonStateOf`). Each sync kind runs on its own interval for each state.
+ */
+export const SyncSeasonState = {
+  IN_SEASON: 'IN_SEASON',
+  OFFSEASON: 'OFFSEASON',
+} as const;
+export type SyncSeasonState = (typeof SyncSeasonState)[keyof typeof SyncSeasonState];
+/** The order the values are declared in. */
+export const SyncSeasonStateOrder = explicitOrder<SyncSeasonState>({
+  [SyncSeasonState.IN_SEASON]: 0,
+  [SyncSeasonState.OFFSEASON]: 1,
+});
+
+/**
  * How a sport event's latest automatic release check ended (#1847), as stored on the event. A
  * check that skips the event (released already, unsynced, outside its window) is not stored.
  */

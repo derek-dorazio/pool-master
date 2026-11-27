@@ -1814,89 +1814,171 @@
           "EVENTS": {
             "type": "object",
             "properties": {
-              "intervalMinutes": {
-                "description": "How often the feed should run, in minutes, for interval-driven orchestration.",
-                "type": "integer",
-                "minimum": 1,
-                "maximum": 9007199254740991
-              },
-              "intervalSeconds": {
-                "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.",
-                "type": "integer",
-                "minimum": 1,
-                "maximum": 9007199254740991
-              },
-              "lookaheadDays": {
-                "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).",
-                "type": "integer",
-                "minimum": 0,
-                "maximum": 9007199254740991
-              },
               "enabled": {
-                "type": "boolean",
-                "description": "Whether the feed should be scheduled automatically."
+                "type": "boolean"
+              },
+              "intervals": {
+                "type": "object",
+                "properties": {
+                  "IN_SEASON": {
+                    "type": "object",
+                    "properties": {
+                      "intervalMinutes": {
+                        "description": "How often the sync runs, in minutes.",
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 9007199254740991
+                      },
+                      "intervalSeconds": {
+                        "description": "How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes.",
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 9007199254740991
+                      }
+                    },
+                    "additionalProperties": false,
+                    "description": "How often a sync runs in one Season state."
+                  },
+                  "OFFSEASON": {
+                    "type": "object",
+                    "properties": {
+                      "intervalMinutes": {
+                        "description": "How often the sync runs, in minutes.",
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 9007199254740991
+                      },
+                      "intervalSeconds": {
+                        "description": "How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes.",
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 9007199254740991
+                      }
+                    },
+                    "additionalProperties": false,
+                    "description": "How often a sync runs in one Season state."
+                  }
+                },
+                "additionalProperties": false,
+                "description": "The Season states whose interval changes."
               }
             },
             "additionalProperties": false,
-            "description": "Partial feed-scheduling update payload."
+            "description": "Partial scheduling update for a sync kind with a switch."
           },
           "FIELD": {
             "type": "object",
             "properties": {
-              "intervalMinutes": {
-                "description": "How often the feed should run, in minutes, for interval-driven orchestration.",
-                "type": "integer",
-                "minimum": 1,
-                "maximum": 9007199254740991
-              },
-              "intervalSeconds": {
-                "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.",
-                "type": "integer",
-                "minimum": 1,
-                "maximum": 9007199254740991
-              },
-              "lookaheadDays": {
-                "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).",
-                "type": "integer",
-                "minimum": 0,
-                "maximum": 9007199254740991
+              "intervals": {
+                "type": "object",
+                "properties": {
+                  "IN_SEASON": {
+                    "type": "object",
+                    "properties": {
+                      "intervalMinutes": {
+                        "description": "How often the sync runs, in minutes.",
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 9007199254740991
+                      },
+                      "intervalSeconds": {
+                        "description": "How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes.",
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 9007199254740991
+                      }
+                    },
+                    "additionalProperties": false,
+                    "description": "How often a sync runs in one Season state."
+                  },
+                  "OFFSEASON": {
+                    "type": "object",
+                    "properties": {
+                      "intervalMinutes": {
+                        "description": "How often the sync runs, in minutes.",
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 9007199254740991
+                      },
+                      "intervalSeconds": {
+                        "description": "How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes.",
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 9007199254740991
+                      }
+                    },
+                    "additionalProperties": false,
+                    "description": "How often a sync runs in one Season state."
+                  }
+                },
+                "additionalProperties": false,
+                "description": "The Season states whose interval changes."
               }
             },
+            "required": [
+              "intervals"
+            ],
             "additionalProperties": false,
             "description": "Partial scheduling update for a sync kind with no switch."
           },
           "SCORES": {
             "type": "object",
             "properties": {
-              "intervalMinutes": {
-                "description": "How often the feed should run, in minutes, for interval-driven orchestration.",
-                "type": "integer",
-                "minimum": 1,
-                "maximum": 9007199254740991
-              },
-              "intervalSeconds": {
-                "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.",
-                "type": "integer",
-                "minimum": 1,
-                "maximum": 9007199254740991
-              },
-              "lookaheadDays": {
-                "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).",
-                "type": "integer",
-                "minimum": 0,
-                "maximum": 9007199254740991
-              },
               "enabled": {
-                "type": "boolean",
-                "description": "Whether the feed should be scheduled automatically."
+                "type": "boolean"
+              },
+              "intervals": {
+                "type": "object",
+                "properties": {
+                  "IN_SEASON": {
+                    "type": "object",
+                    "properties": {
+                      "intervalMinutes": {
+                        "description": "How often the sync runs, in minutes.",
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 9007199254740991
+                      },
+                      "intervalSeconds": {
+                        "description": "How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes.",
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 9007199254740991
+                      }
+                    },
+                    "additionalProperties": false,
+                    "description": "How often a sync runs in one Season state."
+                  },
+                  "OFFSEASON": {
+                    "type": "object",
+                    "properties": {
+                      "intervalMinutes": {
+                        "description": "How often the sync runs, in minutes.",
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 9007199254740991
+                      },
+                      "intervalSeconds": {
+                        "description": "How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes.",
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 9007199254740991
+                      }
+                    },
+                    "additionalProperties": false,
+                    "description": "How often a sync runs in one Season state."
+                  }
+                },
+                "additionalProperties": false,
+                "description": "The Season states whose interval changes."
               }
             },
             "additionalProperties": false,
-            "description": "Partial feed-scheduling update payload."
+            "description": "Partial scheduling update for a sync kind with a switch."
           }
         },
         "additionalProperties": false,
-        "description": "Partial ingestion schedule update: only the sync kinds and properties it names change."
+        "description": "Partial ingestion schedule update: only the sync kinds, states and properties it names change."
       },
       "IngestionScheduleConfig": {
         "type": "object",
@@ -1904,31 +1986,63 @@
           "EVENTS": {
             "type": "object",
             "properties": {
-              "intervalMinutes": {
-                "description": "How often the feed should run, in minutes, for interval-driven orchestration.",
-                "type": "integer",
-                "minimum": 1,
-                "maximum": 9007199254740991
-              },
-              "intervalSeconds": {
-                "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.",
-                "type": "integer",
-                "minimum": 1,
-                "maximum": 9007199254740991
-              },
-              "lookaheadDays": {
-                "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).",
-                "type": "integer",
-                "minimum": 0,
-                "maximum": 9007199254740991
-              },
               "enabled": {
                 "type": "boolean",
-                "description": "Whether the feed should be scheduled automatically."
+                "description": "Whether the sync is scheduled automatically."
+              },
+              "intervals": {
+                "type": "object",
+                "properties": {
+                  "IN_SEASON": {
+                    "type": "object",
+                    "properties": {
+                      "intervalMinutes": {
+                        "description": "How often the sync runs, in minutes.",
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 9007199254740991
+                      },
+                      "intervalSeconds": {
+                        "description": "How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes.",
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 9007199254740991
+                      }
+                    },
+                    "additionalProperties": false,
+                    "description": "How often the sync runs for a league in season."
+                  },
+                  "OFFSEASON": {
+                    "type": "object",
+                    "properties": {
+                      "intervalMinutes": {
+                        "description": "How often the sync runs, in minutes.",
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 9007199254740991
+                      },
+                      "intervalSeconds": {
+                        "description": "How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes.",
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 9007199254740991
+                      }
+                    },
+                    "additionalProperties": false,
+                    "description": "How often the sync runs for a league off season."
+                  }
+                },
+                "required": [
+                  "IN_SEASON",
+                  "OFFSEASON"
+                ],
+                "additionalProperties": false,
+                "description": "A sync kind's interval for each Season state."
               }
             },
             "required": [
-              "enabled"
+              "enabled",
+              "intervals"
             ],
             "additionalProperties": false,
             "description": "The EVENTS sync: how often each synced sport league's events sync is queued."
@@ -1936,59 +2050,125 @@
           "FIELD": {
             "type": "object",
             "properties": {
-              "intervalMinutes": {
-                "description": "How often the feed should run, in minutes, for interval-driven orchestration.",
-                "type": "integer",
-                "minimum": 1,
-                "maximum": 9007199254740991
-              },
-              "intervalSeconds": {
-                "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.",
-                "type": "integer",
-                "minimum": 1,
-                "maximum": 9007199254740991
-              },
-              "lookaheadDays": {
-                "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).",
-                "type": "integer",
-                "minimum": 0,
-                "maximum": 9007199254740991
+              "intervals": {
+                "type": "object",
+                "properties": {
+                  "IN_SEASON": {
+                    "type": "object",
+                    "properties": {
+                      "intervalMinutes": {
+                        "description": "How often the sync runs, in minutes.",
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 9007199254740991
+                      },
+                      "intervalSeconds": {
+                        "description": "How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes.",
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 9007199254740991
+                      }
+                    },
+                    "additionalProperties": false,
+                    "description": "How often the sync runs for a league in season."
+                  },
+                  "OFFSEASON": {
+                    "type": "object",
+                    "properties": {
+                      "intervalMinutes": {
+                        "description": "How often the sync runs, in minutes.",
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 9007199254740991
+                      },
+                      "intervalSeconds": {
+                        "description": "How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes.",
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 9007199254740991
+                      }
+                    },
+                    "additionalProperties": false,
+                    "description": "How often the sync runs for a league off season."
+                  }
+                },
+                "required": [
+                  "IN_SEASON",
+                  "OFFSEASON"
+                ],
+                "additionalProperties": false,
+                "description": "A sync kind's interval for each Season state."
               }
             },
+            "required": [
+              "intervals"
+            ],
             "additionalProperties": false,
-            "description": "The FIELD sync: event participants and event-scoped odds before the field locks, for synced sport leagues. It has no switch. Candidate events must be field-available and not field-locked."
+            "description": "The FIELD sync: the field and event-scoped odds of each event in a synced sport league's next slot. It has no switch."
           },
           "SCORES": {
             "type": "object",
             "properties": {
-              "intervalMinutes": {
-                "description": "How often the feed should run, in minutes, for interval-driven orchestration.",
-                "type": "integer",
-                "minimum": 1,
-                "maximum": 9007199254740991
-              },
-              "intervalSeconds": {
-                "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.",
-                "type": "integer",
-                "minimum": 1,
-                "maximum": 9007199254740991
-              },
-              "lookaheadDays": {
-                "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).",
-                "type": "integer",
-                "minimum": 0,
-                "maximum": 9007199254740991
-              },
               "enabled": {
                 "type": "boolean",
-                "description": "Whether the feed should be scheduled automatically."
+                "description": "Whether the sync is scheduled automatically."
+              },
+              "intervals": {
+                "type": "object",
+                "properties": {
+                  "IN_SEASON": {
+                    "type": "object",
+                    "properties": {
+                      "intervalMinutes": {
+                        "description": "How often the sync runs, in minutes.",
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 9007199254740991
+                      },
+                      "intervalSeconds": {
+                        "description": "How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes.",
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 9007199254740991
+                      }
+                    },
+                    "additionalProperties": false,
+                    "description": "How often the sync runs for a league in season."
+                  },
+                  "OFFSEASON": {
+                    "type": "object",
+                    "properties": {
+                      "intervalMinutes": {
+                        "description": "How often the sync runs, in minutes.",
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 9007199254740991
+                      },
+                      "intervalSeconds": {
+                        "description": "How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes.",
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 9007199254740991
+                      }
+                    },
+                    "additionalProperties": false,
+                    "description": "How often the sync runs for a league off season."
+                  }
+                },
+                "required": [
+                  "IN_SEASON",
+                  "OFFSEASON"
+                ],
+                "additionalProperties": false,
+                "description": "A sync kind's interval for each Season state."
               }
             },
             "required": [
-              "enabled"
+              "enabled",
+              "intervals"
             ],
             "additionalProperties": false,
-            "description": "The SCORES sync: live score polling."
+            "description": "The SCORES sync: live score polling for each event with a Game due or in play."
           }
         },
         "required": [
@@ -2002,27 +2182,58 @@
       "IngestionSyncSchedule": {
         "type": "object",
         "properties": {
-          "intervalMinutes": {
-            "description": "How often the feed should run, in minutes, for interval-driven orchestration.",
-            "type": "integer",
-            "minimum": 1,
-            "maximum": 9007199254740991
-          },
-          "intervalSeconds": {
-            "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.",
-            "type": "integer",
-            "minimum": 1,
-            "maximum": 9007199254740991
-          },
-          "lookaheadDays": {
-            "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).",
-            "type": "integer",
-            "minimum": 0,
-            "maximum": 9007199254740991
-          },
           "enabled": {
             "description": "The sync's switch; absent for a sync with none.",
             "type": "boolean"
+          },
+          "intervals": {
+            "type": "object",
+            "properties": {
+              "IN_SEASON": {
+                "type": "object",
+                "properties": {
+                  "intervalMinutes": {
+                    "description": "How often the sync runs, in minutes.",
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 9007199254740991
+                  },
+                  "intervalSeconds": {
+                    "description": "How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes.",
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 9007199254740991
+                  }
+                },
+                "additionalProperties": false,
+                "description": "How often the sync runs for a league in season."
+              },
+              "OFFSEASON": {
+                "type": "object",
+                "properties": {
+                  "intervalMinutes": {
+                    "description": "How often the sync runs, in minutes.",
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 9007199254740991
+                  },
+                  "intervalSeconds": {
+                    "description": "How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes.",
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 9007199254740991
+                  }
+                },
+                "additionalProperties": false,
+                "description": "How often the sync runs for a league off season."
+              }
+            },
+            "required": [
+              "IN_SEASON",
+              "OFFSEASON"
+            ],
+            "additionalProperties": false,
+            "description": "A sync kind's interval for each Season state."
           },
           "runs": {
             "type": "boolean",
@@ -2034,11 +2245,12 @@
           }
         },
         "required": [
+          "intervals",
           "runs",
           "switchable"
         ],
         "additionalProperties": false,
-        "description": "One sync kind's schedule as the read answers it: its policy, whether it runs, and whether it has a switch."
+        "description": "One sync kind's schedule as the read answers it: its intervals per Season state, whether it runs, and whether it has a switch."
       },
       "IngestionSchedule": {
         "type": "object",
@@ -2046,27 +2258,58 @@
           "EVENTS": {
             "type": "object",
             "properties": {
-              "intervalMinutes": {
-                "description": "How often the feed should run, in minutes, for interval-driven orchestration.",
-                "type": "integer",
-                "minimum": 1,
-                "maximum": 9007199254740991
-              },
-              "intervalSeconds": {
-                "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.",
-                "type": "integer",
-                "minimum": 1,
-                "maximum": 9007199254740991
-              },
-              "lookaheadDays": {
-                "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).",
-                "type": "integer",
-                "minimum": 0,
-                "maximum": 9007199254740991
-              },
               "enabled": {
                 "description": "The sync's switch; absent for a sync with none.",
                 "type": "boolean"
+              },
+              "intervals": {
+                "type": "object",
+                "properties": {
+                  "IN_SEASON": {
+                    "type": "object",
+                    "properties": {
+                      "intervalMinutes": {
+                        "description": "How often the sync runs, in minutes.",
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 9007199254740991
+                      },
+                      "intervalSeconds": {
+                        "description": "How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes.",
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 9007199254740991
+                      }
+                    },
+                    "additionalProperties": false,
+                    "description": "How often the sync runs for a league in season."
+                  },
+                  "OFFSEASON": {
+                    "type": "object",
+                    "properties": {
+                      "intervalMinutes": {
+                        "description": "How often the sync runs, in minutes.",
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 9007199254740991
+                      },
+                      "intervalSeconds": {
+                        "description": "How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes.",
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 9007199254740991
+                      }
+                    },
+                    "additionalProperties": false,
+                    "description": "How often the sync runs for a league off season."
+                  }
+                },
+                "required": [
+                  "IN_SEASON",
+                  "OFFSEASON"
+                ],
+                "additionalProperties": false,
+                "description": "A sync kind's interval for each Season state."
               },
               "runs": {
                 "type": "boolean",
@@ -2078,36 +2321,68 @@
               }
             },
             "required": [
+              "intervals",
               "runs",
               "switchable"
             ],
             "additionalProperties": false,
-            "description": "One sync kind's schedule as the read answers it: its policy, whether it runs, and whether it has a switch."
+            "description": "One sync kind's schedule as the read answers it: its intervals per Season state, whether it runs, and whether it has a switch."
           },
           "FIELD": {
             "type": "object",
             "properties": {
-              "intervalMinutes": {
-                "description": "How often the feed should run, in minutes, for interval-driven orchestration.",
-                "type": "integer",
-                "minimum": 1,
-                "maximum": 9007199254740991
-              },
-              "intervalSeconds": {
-                "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.",
-                "type": "integer",
-                "minimum": 1,
-                "maximum": 9007199254740991
-              },
-              "lookaheadDays": {
-                "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).",
-                "type": "integer",
-                "minimum": 0,
-                "maximum": 9007199254740991
-              },
               "enabled": {
                 "description": "The sync's switch; absent for a sync with none.",
                 "type": "boolean"
+              },
+              "intervals": {
+                "type": "object",
+                "properties": {
+                  "IN_SEASON": {
+                    "type": "object",
+                    "properties": {
+                      "intervalMinutes": {
+                        "description": "How often the sync runs, in minutes.",
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 9007199254740991
+                      },
+                      "intervalSeconds": {
+                        "description": "How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes.",
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 9007199254740991
+                      }
+                    },
+                    "additionalProperties": false,
+                    "description": "How often the sync runs for a league in season."
+                  },
+                  "OFFSEASON": {
+                    "type": "object",
+                    "properties": {
+                      "intervalMinutes": {
+                        "description": "How often the sync runs, in minutes.",
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 9007199254740991
+                      },
+                      "intervalSeconds": {
+                        "description": "How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes.",
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 9007199254740991
+                      }
+                    },
+                    "additionalProperties": false,
+                    "description": "How often the sync runs for a league off season."
+                  }
+                },
+                "required": [
+                  "IN_SEASON",
+                  "OFFSEASON"
+                ],
+                "additionalProperties": false,
+                "description": "A sync kind's interval for each Season state."
               },
               "runs": {
                 "type": "boolean",
@@ -2119,36 +2394,68 @@
               }
             },
             "required": [
+              "intervals",
               "runs",
               "switchable"
             ],
             "additionalProperties": false,
-            "description": "One sync kind's schedule as the read answers it: its policy, whether it runs, and whether it has a switch."
+            "description": "One sync kind's schedule as the read answers it: its intervals per Season state, whether it runs, and whether it has a switch."
           },
           "SCORES": {
             "type": "object",
             "properties": {
-              "intervalMinutes": {
-                "description": "How often the feed should run, in minutes, for interval-driven orchestration.",
-                "type": "integer",
-                "minimum": 1,
-                "maximum": 9007199254740991
-              },
-              "intervalSeconds": {
-                "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.",
-                "type": "integer",
-                "minimum": 1,
-                "maximum": 9007199254740991
-              },
-              "lookaheadDays": {
-                "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).",
-                "type": "integer",
-                "minimum": 0,
-                "maximum": 9007199254740991
-              },
               "enabled": {
                 "description": "The sync's switch; absent for a sync with none.",
                 "type": "boolean"
+              },
+              "intervals": {
+                "type": "object",
+                "properties": {
+                  "IN_SEASON": {
+                    "type": "object",
+                    "properties": {
+                      "intervalMinutes": {
+                        "description": "How often the sync runs, in minutes.",
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 9007199254740991
+                      },
+                      "intervalSeconds": {
+                        "description": "How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes.",
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 9007199254740991
+                      }
+                    },
+                    "additionalProperties": false,
+                    "description": "How often the sync runs for a league in season."
+                  },
+                  "OFFSEASON": {
+                    "type": "object",
+                    "properties": {
+                      "intervalMinutes": {
+                        "description": "How often the sync runs, in minutes.",
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 9007199254740991
+                      },
+                      "intervalSeconds": {
+                        "description": "How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes.",
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 9007199254740991
+                      }
+                    },
+                    "additionalProperties": false,
+                    "description": "How often the sync runs for a league off season."
+                  }
+                },
+                "required": [
+                  "IN_SEASON",
+                  "OFFSEASON"
+                ],
+                "additionalProperties": false,
+                "description": "A sync kind's interval for each Season state."
               },
               "runs": {
                 "type": "boolean",
@@ -2160,11 +2467,12 @@
               }
             },
             "required": [
+              "intervals",
               "runs",
               "switchable"
             ],
             "additionalProperties": false,
-            "description": "One sync kind's schedule as the read answers it: its policy, whether it runs, and whether it has a switch."
+            "description": "One sync kind's schedule as the read answers it: its intervals per Season state, whether it runs, and whether it has a switch."
           }
         },
         "required": [
@@ -44296,31 +44604,63 @@
                   "EVENTS": {
                     "type": "object",
                     "properties": {
-                      "intervalMinutes": {
-                        "description": "How often the feed should run, in minutes, for interval-driven orchestration.",
-                        "type": "integer",
-                        "minimum": 1,
-                        "maximum": 9007199254740991
-                      },
-                      "intervalSeconds": {
-                        "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.",
-                        "type": "integer",
-                        "minimum": 1,
-                        "maximum": 9007199254740991
-                      },
-                      "lookaheadDays": {
-                        "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).",
-                        "type": "integer",
-                        "minimum": 0,
-                        "maximum": 9007199254740991
-                      },
                       "enabled": {
                         "type": "boolean",
-                        "description": "Whether the feed should be scheduled automatically."
+                        "description": "Whether the sync is scheduled automatically."
+                      },
+                      "intervals": {
+                        "type": "object",
+                        "properties": {
+                          "IN_SEASON": {
+                            "type": "object",
+                            "properties": {
+                              "intervalMinutes": {
+                                "description": "How often the sync runs, in minutes.",
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 9007199254740991
+                              },
+                              "intervalSeconds": {
+                                "description": "How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes.",
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 9007199254740991
+                              }
+                            },
+                            "additionalProperties": false,
+                            "description": "How often the sync runs for a league in season."
+                          },
+                          "OFFSEASON": {
+                            "type": "object",
+                            "properties": {
+                              "intervalMinutes": {
+                                "description": "How often the sync runs, in minutes.",
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 9007199254740991
+                              },
+                              "intervalSeconds": {
+                                "description": "How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes.",
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 9007199254740991
+                              }
+                            },
+                            "additionalProperties": false,
+                            "description": "How often the sync runs for a league off season."
+                          }
+                        },
+                        "required": [
+                          "IN_SEASON",
+                          "OFFSEASON"
+                        ],
+                        "additionalProperties": false,
+                        "description": "A sync kind's interval for each Season state."
                       }
                     },
                     "required": [
-                      "enabled"
+                      "enabled",
+                      "intervals"
                     ],
                     "additionalProperties": false,
                     "description": "The EVENTS sync: how often each synced sport league's events sync is queued."
@@ -44328,59 +44668,125 @@
                   "FIELD": {
                     "type": "object",
                     "properties": {
-                      "intervalMinutes": {
-                        "description": "How often the feed should run, in minutes, for interval-driven orchestration.",
-                        "type": "integer",
-                        "minimum": 1,
-                        "maximum": 9007199254740991
-                      },
-                      "intervalSeconds": {
-                        "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.",
-                        "type": "integer",
-                        "minimum": 1,
-                        "maximum": 9007199254740991
-                      },
-                      "lookaheadDays": {
-                        "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).",
-                        "type": "integer",
-                        "minimum": 0,
-                        "maximum": 9007199254740991
+                      "intervals": {
+                        "type": "object",
+                        "properties": {
+                          "IN_SEASON": {
+                            "type": "object",
+                            "properties": {
+                              "intervalMinutes": {
+                                "description": "How often the sync runs, in minutes.",
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 9007199254740991
+                              },
+                              "intervalSeconds": {
+                                "description": "How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes.",
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 9007199254740991
+                              }
+                            },
+                            "additionalProperties": false,
+                            "description": "How often the sync runs for a league in season."
+                          },
+                          "OFFSEASON": {
+                            "type": "object",
+                            "properties": {
+                              "intervalMinutes": {
+                                "description": "How often the sync runs, in minutes.",
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 9007199254740991
+                              },
+                              "intervalSeconds": {
+                                "description": "How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes.",
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 9007199254740991
+                              }
+                            },
+                            "additionalProperties": false,
+                            "description": "How often the sync runs for a league off season."
+                          }
+                        },
+                        "required": [
+                          "IN_SEASON",
+                          "OFFSEASON"
+                        ],
+                        "additionalProperties": false,
+                        "description": "A sync kind's interval for each Season state."
                       }
                     },
+                    "required": [
+                      "intervals"
+                    ],
                     "additionalProperties": false,
-                    "description": "The FIELD sync: event participants and event-scoped odds before the field locks, for synced sport leagues. It has no switch. Candidate events must be field-available and not field-locked."
+                    "description": "The FIELD sync: the field and event-scoped odds of each event in a synced sport league's next slot. It has no switch."
                   },
                   "SCORES": {
                     "type": "object",
                     "properties": {
-                      "intervalMinutes": {
-                        "description": "How often the feed should run, in minutes, for interval-driven orchestration.",
-                        "type": "integer",
-                        "minimum": 1,
-                        "maximum": 9007199254740991
-                      },
-                      "intervalSeconds": {
-                        "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.",
-                        "type": "integer",
-                        "minimum": 1,
-                        "maximum": 9007199254740991
-                      },
-                      "lookaheadDays": {
-                        "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).",
-                        "type": "integer",
-                        "minimum": 0,
-                        "maximum": 9007199254740991
-                      },
                       "enabled": {
                         "type": "boolean",
-                        "description": "Whether the feed should be scheduled automatically."
+                        "description": "Whether the sync is scheduled automatically."
+                      },
+                      "intervals": {
+                        "type": "object",
+                        "properties": {
+                          "IN_SEASON": {
+                            "type": "object",
+                            "properties": {
+                              "intervalMinutes": {
+                                "description": "How often the sync runs, in minutes.",
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 9007199254740991
+                              },
+                              "intervalSeconds": {
+                                "description": "How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes.",
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 9007199254740991
+                              }
+                            },
+                            "additionalProperties": false,
+                            "description": "How often the sync runs for a league in season."
+                          },
+                          "OFFSEASON": {
+                            "type": "object",
+                            "properties": {
+                              "intervalMinutes": {
+                                "description": "How often the sync runs, in minutes.",
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 9007199254740991
+                              },
+                              "intervalSeconds": {
+                                "description": "How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes.",
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 9007199254740991
+                              }
+                            },
+                            "additionalProperties": false,
+                            "description": "How often the sync runs for a league off season."
+                          }
+                        },
+                        "required": [
+                          "IN_SEASON",
+                          "OFFSEASON"
+                        ],
+                        "additionalProperties": false,
+                        "description": "A sync kind's interval for each Season state."
                       }
                     },
                     "required": [
-                      "enabled"
+                      "enabled",
+                      "intervals"
                     ],
                     "additionalProperties": false,
-                    "description": "The SCORES sync: live score polling."
+                    "description": "The SCORES sync: live score polling for each event with a Game due or in play."
                   }
                 },
                 "required": [
@@ -44397,31 +44803,63 @@
                   "EVENTS": {
                     "type": "object",
                     "properties": {
-                      "intervalMinutes": {
-                        "description": "How often the feed should run, in minutes, for interval-driven orchestration.",
-                        "type": "integer",
-                        "minimum": 1,
-                        "maximum": 9007199254740991
-                      },
-                      "intervalSeconds": {
-                        "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.",
-                        "type": "integer",
-                        "minimum": 1,
-                        "maximum": 9007199254740991
-                      },
-                      "lookaheadDays": {
-                        "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).",
-                        "type": "integer",
-                        "minimum": 0,
-                        "maximum": 9007199254740991
-                      },
                       "enabled": {
                         "type": "boolean",
-                        "description": "Whether the feed should be scheduled automatically."
+                        "description": "Whether the sync is scheduled automatically."
+                      },
+                      "intervals": {
+                        "type": "object",
+                        "properties": {
+                          "IN_SEASON": {
+                            "type": "object",
+                            "properties": {
+                              "intervalMinutes": {
+                                "description": "How often the sync runs, in minutes.",
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 9007199254740991
+                              },
+                              "intervalSeconds": {
+                                "description": "How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes.",
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 9007199254740991
+                              }
+                            },
+                            "additionalProperties": false,
+                            "description": "How often the sync runs for a league in season."
+                          },
+                          "OFFSEASON": {
+                            "type": "object",
+                            "properties": {
+                              "intervalMinutes": {
+                                "description": "How often the sync runs, in minutes.",
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 9007199254740991
+                              },
+                              "intervalSeconds": {
+                                "description": "How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes.",
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 9007199254740991
+                              }
+                            },
+                            "additionalProperties": false,
+                            "description": "How often the sync runs for a league off season."
+                          }
+                        },
+                        "required": [
+                          "IN_SEASON",
+                          "OFFSEASON"
+                        ],
+                        "additionalProperties": false,
+                        "description": "A sync kind's interval for each Season state."
                       }
                     },
                     "required": [
-                      "enabled"
+                      "enabled",
+                      "intervals"
                     ],
                     "additionalProperties": false,
                     "description": "The EVENTS sync: how often each synced sport league's events sync is queued."
@@ -44429,59 +44867,125 @@
                   "FIELD": {
                     "type": "object",
                     "properties": {
-                      "intervalMinutes": {
-                        "description": "How often the feed should run, in minutes, for interval-driven orchestration.",
-                        "type": "integer",
-                        "minimum": 1,
-                        "maximum": 9007199254740991
-                      },
-                      "intervalSeconds": {
-                        "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.",
-                        "type": "integer",
-                        "minimum": 1,
-                        "maximum": 9007199254740991
-                      },
-                      "lookaheadDays": {
-                        "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).",
-                        "type": "integer",
-                        "minimum": 0,
-                        "maximum": 9007199254740991
+                      "intervals": {
+                        "type": "object",
+                        "properties": {
+                          "IN_SEASON": {
+                            "type": "object",
+                            "properties": {
+                              "intervalMinutes": {
+                                "description": "How often the sync runs, in minutes.",
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 9007199254740991
+                              },
+                              "intervalSeconds": {
+                                "description": "How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes.",
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 9007199254740991
+                              }
+                            },
+                            "additionalProperties": false,
+                            "description": "How often the sync runs for a league in season."
+                          },
+                          "OFFSEASON": {
+                            "type": "object",
+                            "properties": {
+                              "intervalMinutes": {
+                                "description": "How often the sync runs, in minutes.",
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 9007199254740991
+                              },
+                              "intervalSeconds": {
+                                "description": "How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes.",
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 9007199254740991
+                              }
+                            },
+                            "additionalProperties": false,
+                            "description": "How often the sync runs for a league off season."
+                          }
+                        },
+                        "required": [
+                          "IN_SEASON",
+                          "OFFSEASON"
+                        ],
+                        "additionalProperties": false,
+                        "description": "A sync kind's interval for each Season state."
                       }
                     },
+                    "required": [
+                      "intervals"
+                    ],
                     "additionalProperties": false,
-                    "description": "The FIELD sync: event participants and event-scoped odds before the field locks, for synced sport leagues. It has no switch. Candidate events must be field-available and not field-locked."
+                    "description": "The FIELD sync: the field and event-scoped odds of each event in a synced sport league's next slot. It has no switch."
                   },
                   "SCORES": {
                     "type": "object",
                     "properties": {
-                      "intervalMinutes": {
-                        "description": "How often the feed should run, in minutes, for interval-driven orchestration.",
-                        "type": "integer",
-                        "minimum": 1,
-                        "maximum": 9007199254740991
-                      },
-                      "intervalSeconds": {
-                        "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.",
-                        "type": "integer",
-                        "minimum": 1,
-                        "maximum": 9007199254740991
-                      },
-                      "lookaheadDays": {
-                        "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).",
-                        "type": "integer",
-                        "minimum": 0,
-                        "maximum": 9007199254740991
-                      },
                       "enabled": {
                         "type": "boolean",
-                        "description": "Whether the feed should be scheduled automatically."
+                        "description": "Whether the sync is scheduled automatically."
+                      },
+                      "intervals": {
+                        "type": "object",
+                        "properties": {
+                          "IN_SEASON": {
+                            "type": "object",
+                            "properties": {
+                              "intervalMinutes": {
+                                "description": "How often the sync runs, in minutes.",
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 9007199254740991
+                              },
+                              "intervalSeconds": {
+                                "description": "How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes.",
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 9007199254740991
+                              }
+                            },
+                            "additionalProperties": false,
+                            "description": "How often the sync runs for a league in season."
+                          },
+                          "OFFSEASON": {
+                            "type": "object",
+                            "properties": {
+                              "intervalMinutes": {
+                                "description": "How often the sync runs, in minutes.",
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 9007199254740991
+                              },
+                              "intervalSeconds": {
+                                "description": "How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes.",
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 9007199254740991
+                              }
+                            },
+                            "additionalProperties": false,
+                            "description": "How often the sync runs for a league off season."
+                          }
+                        },
+                        "required": [
+                          "IN_SEASON",
+                          "OFFSEASON"
+                        ],
+                        "additionalProperties": false,
+                        "description": "A sync kind's interval for each Season state."
                       }
                     },
                     "required": [
-                      "enabled"
+                      "enabled",
+                      "intervals"
                     ],
                     "additionalProperties": false,
-                    "description": "The SCORES sync: live score polling."
+                    "description": "The SCORES sync: live score polling for each event with a Game due or in play."
                   }
                 },
                 "required": [
@@ -46330,31 +46834,63 @@
                         "EVENTS": {
                           "type": "object",
                           "properties": {
-                            "intervalMinutes": {
-                              "description": "How often the feed should run, in minutes, for interval-driven orchestration.",
-                              "type": "integer",
-                              "minimum": 1,
-                              "maximum": 9007199254740991
-                            },
-                            "intervalSeconds": {
-                              "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.",
-                              "type": "integer",
-                              "minimum": 1,
-                              "maximum": 9007199254740991
-                            },
-                            "lookaheadDays": {
-                              "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).",
-                              "type": "integer",
-                              "minimum": 0,
-                              "maximum": 9007199254740991
-                            },
                             "enabled": {
                               "type": "boolean",
-                              "description": "Whether the feed should be scheduled automatically."
+                              "description": "Whether the sync is scheduled automatically."
+                            },
+                            "intervals": {
+                              "type": "object",
+                              "properties": {
+                                "IN_SEASON": {
+                                  "type": "object",
+                                  "properties": {
+                                    "intervalMinutes": {
+                                      "description": "How often the sync runs, in minutes.",
+                                      "type": "integer",
+                                      "minimum": 1,
+                                      "maximum": 9007199254740991
+                                    },
+                                    "intervalSeconds": {
+                                      "description": "How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes.",
+                                      "type": "integer",
+                                      "minimum": 1,
+                                      "maximum": 9007199254740991
+                                    }
+                                  },
+                                  "additionalProperties": false,
+                                  "description": "How often the sync runs for a league in season."
+                                },
+                                "OFFSEASON": {
+                                  "type": "object",
+                                  "properties": {
+                                    "intervalMinutes": {
+                                      "description": "How often the sync runs, in minutes.",
+                                      "type": "integer",
+                                      "minimum": 1,
+                                      "maximum": 9007199254740991
+                                    },
+                                    "intervalSeconds": {
+                                      "description": "How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes.",
+                                      "type": "integer",
+                                      "minimum": 1,
+                                      "maximum": 9007199254740991
+                                    }
+                                  },
+                                  "additionalProperties": false,
+                                  "description": "How often the sync runs for a league off season."
+                                }
+                              },
+                              "required": [
+                                "IN_SEASON",
+                                "OFFSEASON"
+                              ],
+                              "additionalProperties": false,
+                              "description": "A sync kind's interval for each Season state."
                             }
                           },
                           "required": [
-                            "enabled"
+                            "enabled",
+                            "intervals"
                           ],
                           "additionalProperties": false,
                           "description": "The EVENTS sync: how often each synced sport league's events sync is queued."
@@ -46362,59 +46898,125 @@
                         "FIELD": {
                           "type": "object",
                           "properties": {
-                            "intervalMinutes": {
-                              "description": "How often the feed should run, in minutes, for interval-driven orchestration.",
-                              "type": "integer",
-                              "minimum": 1,
-                              "maximum": 9007199254740991
-                            },
-                            "intervalSeconds": {
-                              "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.",
-                              "type": "integer",
-                              "minimum": 1,
-                              "maximum": 9007199254740991
-                            },
-                            "lookaheadDays": {
-                              "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).",
-                              "type": "integer",
-                              "minimum": 0,
-                              "maximum": 9007199254740991
+                            "intervals": {
+                              "type": "object",
+                              "properties": {
+                                "IN_SEASON": {
+                                  "type": "object",
+                                  "properties": {
+                                    "intervalMinutes": {
+                                      "description": "How often the sync runs, in minutes.",
+                                      "type": "integer",
+                                      "minimum": 1,
+                                      "maximum": 9007199254740991
+                                    },
+                                    "intervalSeconds": {
+                                      "description": "How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes.",
+                                      "type": "integer",
+                                      "minimum": 1,
+                                      "maximum": 9007199254740991
+                                    }
+                                  },
+                                  "additionalProperties": false,
+                                  "description": "How often the sync runs for a league in season."
+                                },
+                                "OFFSEASON": {
+                                  "type": "object",
+                                  "properties": {
+                                    "intervalMinutes": {
+                                      "description": "How often the sync runs, in minutes.",
+                                      "type": "integer",
+                                      "minimum": 1,
+                                      "maximum": 9007199254740991
+                                    },
+                                    "intervalSeconds": {
+                                      "description": "How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes.",
+                                      "type": "integer",
+                                      "minimum": 1,
+                                      "maximum": 9007199254740991
+                                    }
+                                  },
+                                  "additionalProperties": false,
+                                  "description": "How often the sync runs for a league off season."
+                                }
+                              },
+                              "required": [
+                                "IN_SEASON",
+                                "OFFSEASON"
+                              ],
+                              "additionalProperties": false,
+                              "description": "A sync kind's interval for each Season state."
                             }
                           },
+                          "required": [
+                            "intervals"
+                          ],
                           "additionalProperties": false,
-                          "description": "The FIELD sync: event participants and event-scoped odds before the field locks, for synced sport leagues. It has no switch. Candidate events must be field-available and not field-locked."
+                          "description": "The FIELD sync: the field and event-scoped odds of each event in a synced sport league's next slot. It has no switch."
                         },
                         "SCORES": {
                           "type": "object",
                           "properties": {
-                            "intervalMinutes": {
-                              "description": "How often the feed should run, in minutes, for interval-driven orchestration.",
-                              "type": "integer",
-                              "minimum": 1,
-                              "maximum": 9007199254740991
-                            },
-                            "intervalSeconds": {
-                              "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.",
-                              "type": "integer",
-                              "minimum": 1,
-                              "maximum": 9007199254740991
-                            },
-                            "lookaheadDays": {
-                              "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).",
-                              "type": "integer",
-                              "minimum": 0,
-                              "maximum": 9007199254740991
-                            },
                             "enabled": {
                               "type": "boolean",
-                              "description": "Whether the feed should be scheduled automatically."
+                              "description": "Whether the sync is scheduled automatically."
+                            },
+                            "intervals": {
+                              "type": "object",
+                              "properties": {
+                                "IN_SEASON": {
+                                  "type": "object",
+                                  "properties": {
+                                    "intervalMinutes": {
+                                      "description": "How often the sync runs, in minutes.",
+                                      "type": "integer",
+                                      "minimum": 1,
+                                      "maximum": 9007199254740991
+                                    },
+                                    "intervalSeconds": {
+                                      "description": "How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes.",
+                                      "type": "integer",
+                                      "minimum": 1,
+                                      "maximum": 9007199254740991
+                                    }
+                                  },
+                                  "additionalProperties": false,
+                                  "description": "How often the sync runs for a league in season."
+                                },
+                                "OFFSEASON": {
+                                  "type": "object",
+                                  "properties": {
+                                    "intervalMinutes": {
+                                      "description": "How often the sync runs, in minutes.",
+                                      "type": "integer",
+                                      "minimum": 1,
+                                      "maximum": 9007199254740991
+                                    },
+                                    "intervalSeconds": {
+                                      "description": "How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes.",
+                                      "type": "integer",
+                                      "minimum": 1,
+                                      "maximum": 9007199254740991
+                                    }
+                                  },
+                                  "additionalProperties": false,
+                                  "description": "How often the sync runs for a league off season."
+                                }
+                              },
+                              "required": [
+                                "IN_SEASON",
+                                "OFFSEASON"
+                              ],
+                              "additionalProperties": false,
+                              "description": "A sync kind's interval for each Season state."
                             }
                           },
                           "required": [
-                            "enabled"
+                            "enabled",
+                            "intervals"
                           ],
                           "additionalProperties": false,
-                          "description": "The SCORES sync: live score polling."
+                          "description": "The SCORES sync: live score polling for each event with a Game due or in play."
                         }
                       },
                       "required": [
@@ -46431,31 +47033,63 @@
                         "EVENTS": {
                           "type": "object",
                           "properties": {
-                            "intervalMinutes": {
-                              "description": "How often the feed should run, in minutes, for interval-driven orchestration.",
-                              "type": "integer",
-                              "minimum": 1,
-                              "maximum": 9007199254740991
-                            },
-                            "intervalSeconds": {
-                              "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.",
-                              "type": "integer",
-                              "minimum": 1,
-                              "maximum": 9007199254740991
-                            },
-                            "lookaheadDays": {
-                              "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).",
-                              "type": "integer",
-                              "minimum": 0,
-                              "maximum": 9007199254740991
-                            },
                             "enabled": {
                               "type": "boolean",
-                              "description": "Whether the feed should be scheduled automatically."
+                              "description": "Whether the sync is scheduled automatically."
+                            },
+                            "intervals": {
+                              "type": "object",
+                              "properties": {
+                                "IN_SEASON": {
+                                  "type": "object",
+                                  "properties": {
+                                    "intervalMinutes": {
+                                      "description": "How often the sync runs, in minutes.",
+                                      "type": "integer",
+                                      "minimum": 1,
+                                      "maximum": 9007199254740991
+                                    },
+                                    "intervalSeconds": {
+                                      "description": "How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes.",
+                                      "type": "integer",
+                                      "minimum": 1,
+                                      "maximum": 9007199254740991
+                                    }
+                                  },
+                                  "additionalProperties": false,
+                                  "description": "How often the sync runs for a league in season."
+                                },
+                                "OFFSEASON": {
+                                  "type": "object",
+                                  "properties": {
+                                    "intervalMinutes": {
+                                      "description": "How often the sync runs, in minutes.",
+                                      "type": "integer",
+                                      "minimum": 1,
+                                      "maximum": 9007199254740991
+                                    },
+                                    "intervalSeconds": {
+                                      "description": "How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes.",
+                                      "type": "integer",
+                                      "minimum": 1,
+                                      "maximum": 9007199254740991
+                                    }
+                                  },
+                                  "additionalProperties": false,
+                                  "description": "How often the sync runs for a league off season."
+                                }
+                              },
+                              "required": [
+                                "IN_SEASON",
+                                "OFFSEASON"
+                              ],
+                              "additionalProperties": false,
+                              "description": "A sync kind's interval for each Season state."
                             }
                           },
                           "required": [
-                            "enabled"
+                            "enabled",
+                            "intervals"
                           ],
                           "additionalProperties": false,
                           "description": "The EVENTS sync: how often each synced sport league's events sync is queued."
@@ -46463,59 +47097,125 @@
                         "FIELD": {
                           "type": "object",
                           "properties": {
-                            "intervalMinutes": {
-                              "description": "How often the feed should run, in minutes, for interval-driven orchestration.",
-                              "type": "integer",
-                              "minimum": 1,
-                              "maximum": 9007199254740991
-                            },
-                            "intervalSeconds": {
-                              "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.",
-                              "type": "integer",
-                              "minimum": 1,
-                              "maximum": 9007199254740991
-                            },
-                            "lookaheadDays": {
-                              "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).",
-                              "type": "integer",
-                              "minimum": 0,
-                              "maximum": 9007199254740991
+                            "intervals": {
+                              "type": "object",
+                              "properties": {
+                                "IN_SEASON": {
+                                  "type": "object",
+                                  "properties": {
+                                    "intervalMinutes": {
+                                      "description": "How often the sync runs, in minutes.",
+                                      "type": "integer",
+                                      "minimum": 1,
+                                      "maximum": 9007199254740991
+                                    },
+                                    "intervalSeconds": {
+                                      "description": "How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes.",
+                                      "type": "integer",
+                                      "minimum": 1,
+                                      "maximum": 9007199254740991
+                                    }
+                                  },
+                                  "additionalProperties": false,
+                                  "description": "How often the sync runs for a league in season."
+                                },
+                                "OFFSEASON": {
+                                  "type": "object",
+                                  "properties": {
+                                    "intervalMinutes": {
+                                      "description": "How often the sync runs, in minutes.",
+                                      "type": "integer",
+                                      "minimum": 1,
+                                      "maximum": 9007199254740991
+                                    },
+                                    "intervalSeconds": {
+                                      "description": "How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes.",
+                                      "type": "integer",
+                                      "minimum": 1,
+                                      "maximum": 9007199254740991
+                                    }
+                                  },
+                                  "additionalProperties": false,
+                                  "description": "How often the sync runs for a league off season."
+                                }
+                              },
+                              "required": [
+                                "IN_SEASON",
+                                "OFFSEASON"
+                              ],
+                              "additionalProperties": false,
+                              "description": "A sync kind's interval for each Season state."
                             }
                           },
+                          "required": [
+                            "intervals"
+                          ],
                           "additionalProperties": false,
-                          "description": "The FIELD sync: event participants and event-scoped odds before the field locks, for synced sport leagues. It has no switch. Candidate events must be field-available and not field-locked."
+                          "description": "The FIELD sync: the field and event-scoped odds of each event in a synced sport league's next slot. It has no switch."
                         },
                         "SCORES": {
                           "type": "object",
                           "properties": {
-                            "intervalMinutes": {
-                              "description": "How often the feed should run, in minutes, for interval-driven orchestration.",
-                              "type": "integer",
-                              "minimum": 1,
-                              "maximum": 9007199254740991
-                            },
-                            "intervalSeconds": {
-                              "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.",
-                              "type": "integer",
-                              "minimum": 1,
-                              "maximum": 9007199254740991
-                            },
-                            "lookaheadDays": {
-                              "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).",
-                              "type": "integer",
-                              "minimum": 0,
-                              "maximum": 9007199254740991
-                            },
                             "enabled": {
                               "type": "boolean",
-                              "description": "Whether the feed should be scheduled automatically."
+                              "description": "Whether the sync is scheduled automatically."
+                            },
+                            "intervals": {
+                              "type": "object",
+                              "properties": {
+                                "IN_SEASON": {
+                                  "type": "object",
+                                  "properties": {
+                                    "intervalMinutes": {
+                                      "description": "How often the sync runs, in minutes.",
+                                      "type": "integer",
+                                      "minimum": 1,
+                                      "maximum": 9007199254740991
+                                    },
+                                    "intervalSeconds": {
+                                      "description": "How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes.",
+                                      "type": "integer",
+                                      "minimum": 1,
+                                      "maximum": 9007199254740991
+                                    }
+                                  },
+                                  "additionalProperties": false,
+                                  "description": "How often the sync runs for a league in season."
+                                },
+                                "OFFSEASON": {
+                                  "type": "object",
+                                  "properties": {
+                                    "intervalMinutes": {
+                                      "description": "How often the sync runs, in minutes.",
+                                      "type": "integer",
+                                      "minimum": 1,
+                                      "maximum": 9007199254740991
+                                    },
+                                    "intervalSeconds": {
+                                      "description": "How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes.",
+                                      "type": "integer",
+                                      "minimum": 1,
+                                      "maximum": 9007199254740991
+                                    }
+                                  },
+                                  "additionalProperties": false,
+                                  "description": "How often the sync runs for a league off season."
+                                }
+                              },
+                              "required": [
+                                "IN_SEASON",
+                                "OFFSEASON"
+                              ],
+                              "additionalProperties": false,
+                              "description": "A sync kind's interval for each Season state."
                             }
                           },
                           "required": [
-                            "enabled"
+                            "enabled",
+                            "intervals"
                           ],
                           "additionalProperties": false,
-                          "description": "The SCORES sync: live score polling."
+                          "description": "The SCORES sync: live score polling for each event with a Game due or in play."
                         }
                       },
                       "required": [
@@ -48321,31 +49021,63 @@
                   "EVENTS": {
                     "type": "object",
                     "properties": {
-                      "intervalMinutes": {
-                        "description": "How often the feed should run, in minutes, for interval-driven orchestration.",
-                        "type": "integer",
-                        "minimum": 1,
-                        "maximum": 9007199254740991
-                      },
-                      "intervalSeconds": {
-                        "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.",
-                        "type": "integer",
-                        "minimum": 1,
-                        "maximum": 9007199254740991
-                      },
-                      "lookaheadDays": {
-                        "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).",
-                        "type": "integer",
-                        "minimum": 0,
-                        "maximum": 9007199254740991
-                      },
                       "enabled": {
                         "type": "boolean",
-                        "description": "Whether the feed should be scheduled automatically."
+                        "description": "Whether the sync is scheduled automatically."
+                      },
+                      "intervals": {
+                        "type": "object",
+                        "properties": {
+                          "IN_SEASON": {
+                            "type": "object",
+                            "properties": {
+                              "intervalMinutes": {
+                                "description": "How often the sync runs, in minutes.",
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 9007199254740991
+                              },
+                              "intervalSeconds": {
+                                "description": "How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes.",
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 9007199254740991
+                              }
+                            },
+                            "additionalProperties": false,
+                            "description": "How often the sync runs for a league in season."
+                          },
+                          "OFFSEASON": {
+                            "type": "object",
+                            "properties": {
+                              "intervalMinutes": {
+                                "description": "How often the sync runs, in minutes.",
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 9007199254740991
+                              },
+                              "intervalSeconds": {
+                                "description": "How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes.",
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 9007199254740991
+                              }
+                            },
+                            "additionalProperties": false,
+                            "description": "How often the sync runs for a league off season."
+                          }
+                        },
+                        "required": [
+                          "IN_SEASON",
+                          "OFFSEASON"
+                        ],
+                        "additionalProperties": false,
+                        "description": "A sync kind's interval for each Season state."
                       }
                     },
                     "required": [
-                      "enabled"
+                      "enabled",
+                      "intervals"
                     ],
                     "additionalProperties": false,
                     "description": "The EVENTS sync: how often each synced sport league's events sync is queued."
@@ -48353,59 +49085,125 @@
                   "FIELD": {
                     "type": "object",
                     "properties": {
-                      "intervalMinutes": {
-                        "description": "How often the feed should run, in minutes, for interval-driven orchestration.",
-                        "type": "integer",
-                        "minimum": 1,
-                        "maximum": 9007199254740991
-                      },
-                      "intervalSeconds": {
-                        "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.",
-                        "type": "integer",
-                        "minimum": 1,
-                        "maximum": 9007199254740991
-                      },
-                      "lookaheadDays": {
-                        "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).",
-                        "type": "integer",
-                        "minimum": 0,
-                        "maximum": 9007199254740991
+                      "intervals": {
+                        "type": "object",
+                        "properties": {
+                          "IN_SEASON": {
+                            "type": "object",
+                            "properties": {
+                              "intervalMinutes": {
+                                "description": "How often the sync runs, in minutes.",
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 9007199254740991
+                              },
+                              "intervalSeconds": {
+                                "description": "How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes.",
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 9007199254740991
+                              }
+                            },
+                            "additionalProperties": false,
+                            "description": "How often the sync runs for a league in season."
+                          },
+                          "OFFSEASON": {
+                            "type": "object",
+                            "properties": {
+                              "intervalMinutes": {
+                                "description": "How often the sync runs, in minutes.",
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 9007199254740991
+                              },
+                              "intervalSeconds": {
+                                "description": "How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes.",
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 9007199254740991
+                              }
+                            },
+                            "additionalProperties": false,
+                            "description": "How often the sync runs for a league off season."
+                          }
+                        },
+                        "required": [
+                          "IN_SEASON",
+                          "OFFSEASON"
+                        ],
+                        "additionalProperties": false,
+                        "description": "A sync kind's interval for each Season state."
                       }
                     },
+                    "required": [
+                      "intervals"
+                    ],
                     "additionalProperties": false,
-                    "description": "The FIELD sync: event participants and event-scoped odds before the field locks, for synced sport leagues. It has no switch. Candidate events must be field-available and not field-locked."
+                    "description": "The FIELD sync: the field and event-scoped odds of each event in a synced sport league's next slot. It has no switch."
                   },
                   "SCORES": {
                     "type": "object",
                     "properties": {
-                      "intervalMinutes": {
-                        "description": "How often the feed should run, in minutes, for interval-driven orchestration.",
-                        "type": "integer",
-                        "minimum": 1,
-                        "maximum": 9007199254740991
-                      },
-                      "intervalSeconds": {
-                        "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.",
-                        "type": "integer",
-                        "minimum": 1,
-                        "maximum": 9007199254740991
-                      },
-                      "lookaheadDays": {
-                        "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).",
-                        "type": "integer",
-                        "minimum": 0,
-                        "maximum": 9007199254740991
-                      },
                       "enabled": {
                         "type": "boolean",
-                        "description": "Whether the feed should be scheduled automatically."
+                        "description": "Whether the sync is scheduled automatically."
+                      },
+                      "intervals": {
+                        "type": "object",
+                        "properties": {
+                          "IN_SEASON": {
+                            "type": "object",
+                            "properties": {
+                              "intervalMinutes": {
+                                "description": "How often the sync runs, in minutes.",
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 9007199254740991
+                              },
+                              "intervalSeconds": {
+                                "description": "How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes.",
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 9007199254740991
+                              }
+                            },
+                            "additionalProperties": false,
+                            "description": "How often the sync runs for a league in season."
+                          },
+                          "OFFSEASON": {
+                            "type": "object",
+                            "properties": {
+                              "intervalMinutes": {
+                                "description": "How often the sync runs, in minutes.",
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 9007199254740991
+                              },
+                              "intervalSeconds": {
+                                "description": "How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes.",
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 9007199254740991
+                              }
+                            },
+                            "additionalProperties": false,
+                            "description": "How often the sync runs for a league off season."
+                          }
+                        },
+                        "required": [
+                          "IN_SEASON",
+                          "OFFSEASON"
+                        ],
+                        "additionalProperties": false,
+                        "description": "A sync kind's interval for each Season state."
                       }
                     },
                     "required": [
-                      "enabled"
+                      "enabled",
+                      "intervals"
                     ],
                     "additionalProperties": false,
-                    "description": "The SCORES sync: live score polling."
+                    "description": "The SCORES sync: live score polling for each event with a Game due or in play."
                   }
                 },
                 "required": [
@@ -49336,31 +50134,63 @@
                   "EVENTS": {
                     "type": "object",
                     "properties": {
-                      "intervalMinutes": {
-                        "description": "How often the feed should run, in minutes, for interval-driven orchestration.",
-                        "type": "integer",
-                        "minimum": 1,
-                        "maximum": 9007199254740991
-                      },
-                      "intervalSeconds": {
-                        "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.",
-                        "type": "integer",
-                        "minimum": 1,
-                        "maximum": 9007199254740991
-                      },
-                      "lookaheadDays": {
-                        "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).",
-                        "type": "integer",
-                        "minimum": 0,
-                        "maximum": 9007199254740991
-                      },
                       "enabled": {
                         "type": "boolean",
-                        "description": "Whether the feed should be scheduled automatically."
+                        "description": "Whether the sync is scheduled automatically."
+                      },
+                      "intervals": {
+                        "type": "object",
+                        "properties": {
+                          "IN_SEASON": {
+                            "type": "object",
+                            "properties": {
+                              "intervalMinutes": {
+                                "description": "How often the sync runs, in minutes.",
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 9007199254740991
+                              },
+                              "intervalSeconds": {
+                                "description": "How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes.",
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 9007199254740991
+                              }
+                            },
+                            "additionalProperties": false,
+                            "description": "How often the sync runs for a league in season."
+                          },
+                          "OFFSEASON": {
+                            "type": "object",
+                            "properties": {
+                              "intervalMinutes": {
+                                "description": "How often the sync runs, in minutes.",
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 9007199254740991
+                              },
+                              "intervalSeconds": {
+                                "description": "How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes.",
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 9007199254740991
+                              }
+                            },
+                            "additionalProperties": false,
+                            "description": "How often the sync runs for a league off season."
+                          }
+                        },
+                        "required": [
+                          "IN_SEASON",
+                          "OFFSEASON"
+                        ],
+                        "additionalProperties": false,
+                        "description": "A sync kind's interval for each Season state."
                       }
                     },
                     "required": [
-                      "enabled"
+                      "enabled",
+                      "intervals"
                     ],
                     "additionalProperties": false,
                     "description": "The EVENTS sync: how often each synced sport league's events sync is queued."
@@ -49368,59 +50198,125 @@
                   "FIELD": {
                     "type": "object",
                     "properties": {
-                      "intervalMinutes": {
-                        "description": "How often the feed should run, in minutes, for interval-driven orchestration.",
-                        "type": "integer",
-                        "minimum": 1,
-                        "maximum": 9007199254740991
-                      },
-                      "intervalSeconds": {
-                        "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.",
-                        "type": "integer",
-                        "minimum": 1,
-                        "maximum": 9007199254740991
-                      },
-                      "lookaheadDays": {
-                        "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).",
-                        "type": "integer",
-                        "minimum": 0,
-                        "maximum": 9007199254740991
+                      "intervals": {
+                        "type": "object",
+                        "properties": {
+                          "IN_SEASON": {
+                            "type": "object",
+                            "properties": {
+                              "intervalMinutes": {
+                                "description": "How often the sync runs, in minutes.",
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 9007199254740991
+                              },
+                              "intervalSeconds": {
+                                "description": "How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes.",
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 9007199254740991
+                              }
+                            },
+                            "additionalProperties": false,
+                            "description": "How often the sync runs for a league in season."
+                          },
+                          "OFFSEASON": {
+                            "type": "object",
+                            "properties": {
+                              "intervalMinutes": {
+                                "description": "How often the sync runs, in minutes.",
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 9007199254740991
+                              },
+                              "intervalSeconds": {
+                                "description": "How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes.",
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 9007199254740991
+                              }
+                            },
+                            "additionalProperties": false,
+                            "description": "How often the sync runs for a league off season."
+                          }
+                        },
+                        "required": [
+                          "IN_SEASON",
+                          "OFFSEASON"
+                        ],
+                        "additionalProperties": false,
+                        "description": "A sync kind's interval for each Season state."
                       }
                     },
+                    "required": [
+                      "intervals"
+                    ],
                     "additionalProperties": false,
-                    "description": "The FIELD sync: event participants and event-scoped odds before the field locks, for synced sport leagues. It has no switch. Candidate events must be field-available and not field-locked."
+                    "description": "The FIELD sync: the field and event-scoped odds of each event in a synced sport league's next slot. It has no switch."
                   },
                   "SCORES": {
                     "type": "object",
                     "properties": {
-                      "intervalMinutes": {
-                        "description": "How often the feed should run, in minutes, for interval-driven orchestration.",
-                        "type": "integer",
-                        "minimum": 1,
-                        "maximum": 9007199254740991
-                      },
-                      "intervalSeconds": {
-                        "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.",
-                        "type": "integer",
-                        "minimum": 1,
-                        "maximum": 9007199254740991
-                      },
-                      "lookaheadDays": {
-                        "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).",
-                        "type": "integer",
-                        "minimum": 0,
-                        "maximum": 9007199254740991
-                      },
                       "enabled": {
                         "type": "boolean",
-                        "description": "Whether the feed should be scheduled automatically."
+                        "description": "Whether the sync is scheduled automatically."
+                      },
+                      "intervals": {
+                        "type": "object",
+                        "properties": {
+                          "IN_SEASON": {
+                            "type": "object",
+                            "properties": {
+                              "intervalMinutes": {
+                                "description": "How often the sync runs, in minutes.",
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 9007199254740991
+                              },
+                              "intervalSeconds": {
+                                "description": "How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes.",
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 9007199254740991
+                              }
+                            },
+                            "additionalProperties": false,
+                            "description": "How often the sync runs for a league in season."
+                          },
+                          "OFFSEASON": {
+                            "type": "object",
+                            "properties": {
+                              "intervalMinutes": {
+                                "description": "How often the sync runs, in minutes.",
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 9007199254740991
+                              },
+                              "intervalSeconds": {
+                                "description": "How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes.",
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 9007199254740991
+                              }
+                            },
+                            "additionalProperties": false,
+                            "description": "How often the sync runs for a league off season."
+                          }
+                        },
+                        "required": [
+                          "IN_SEASON",
+                          "OFFSEASON"
+                        ],
+                        "additionalProperties": false,
+                        "description": "A sync kind's interval for each Season state."
                       }
                     },
                     "required": [
-                      "enabled"
+                      "enabled",
+                      "intervals"
                     ],
                     "additionalProperties": false,
-                    "description": "The SCORES sync: live score polling."
+                    "description": "The SCORES sync: live score polling for each event with a Game due or in play."
                   }
                 },
                 "required": [
@@ -49436,31 +50332,63 @@
                   "EVENTS": {
                     "type": "object",
                     "properties": {
-                      "intervalMinutes": {
-                        "description": "How often the feed should run, in minutes, for interval-driven orchestration.",
-                        "type": "integer",
-                        "minimum": 1,
-                        "maximum": 9007199254740991
-                      },
-                      "intervalSeconds": {
-                        "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.",
-                        "type": "integer",
-                        "minimum": 1,
-                        "maximum": 9007199254740991
-                      },
-                      "lookaheadDays": {
-                        "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).",
-                        "type": "integer",
-                        "minimum": 0,
-                        "maximum": 9007199254740991
-                      },
                       "enabled": {
                         "type": "boolean",
-                        "description": "Whether the feed should be scheduled automatically."
+                        "description": "Whether the sync is scheduled automatically."
+                      },
+                      "intervals": {
+                        "type": "object",
+                        "properties": {
+                          "IN_SEASON": {
+                            "type": "object",
+                            "properties": {
+                              "intervalMinutes": {
+                                "description": "How often the sync runs, in minutes.",
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 9007199254740991
+                              },
+                              "intervalSeconds": {
+                                "description": "How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes.",
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 9007199254740991
+                              }
+                            },
+                            "additionalProperties": false,
+                            "description": "How often the sync runs for a league in season."
+                          },
+                          "OFFSEASON": {
+                            "type": "object",
+                            "properties": {
+                              "intervalMinutes": {
+                                "description": "How often the sync runs, in minutes.",
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 9007199254740991
+                              },
+                              "intervalSeconds": {
+                                "description": "How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes.",
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 9007199254740991
+                              }
+                            },
+                            "additionalProperties": false,
+                            "description": "How often the sync runs for a league off season."
+                          }
+                        },
+                        "required": [
+                          "IN_SEASON",
+                          "OFFSEASON"
+                        ],
+                        "additionalProperties": false,
+                        "description": "A sync kind's interval for each Season state."
                       }
                     },
                     "required": [
-                      "enabled"
+                      "enabled",
+                      "intervals"
                     ],
                     "additionalProperties": false,
                     "description": "The EVENTS sync: how often each synced sport league's events sync is queued."
@@ -49468,59 +50396,125 @@
                   "FIELD": {
                     "type": "object",
                     "properties": {
-                      "intervalMinutes": {
-                        "description": "How often the feed should run, in minutes, for interval-driven orchestration.",
-                        "type": "integer",
-                        "minimum": 1,
-                        "maximum": 9007199254740991
-                      },
-                      "intervalSeconds": {
-                        "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.",
-                        "type": "integer",
-                        "minimum": 1,
-                        "maximum": 9007199254740991
-                      },
-                      "lookaheadDays": {
-                        "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).",
-                        "type": "integer",
-                        "minimum": 0,
-                        "maximum": 9007199254740991
+                      "intervals": {
+                        "type": "object",
+                        "properties": {
+                          "IN_SEASON": {
+                            "type": "object",
+                            "properties": {
+                              "intervalMinutes": {
+                                "description": "How often the sync runs, in minutes.",
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 9007199254740991
+                              },
+                              "intervalSeconds": {
+                                "description": "How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes.",
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 9007199254740991
+                              }
+                            },
+                            "additionalProperties": false,
+                            "description": "How often the sync runs for a league in season."
+                          },
+                          "OFFSEASON": {
+                            "type": "object",
+                            "properties": {
+                              "intervalMinutes": {
+                                "description": "How often the sync runs, in minutes.",
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 9007199254740991
+                              },
+                              "intervalSeconds": {
+                                "description": "How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes.",
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 9007199254740991
+                              }
+                            },
+                            "additionalProperties": false,
+                            "description": "How often the sync runs for a league off season."
+                          }
+                        },
+                        "required": [
+                          "IN_SEASON",
+                          "OFFSEASON"
+                        ],
+                        "additionalProperties": false,
+                        "description": "A sync kind's interval for each Season state."
                       }
                     },
+                    "required": [
+                      "intervals"
+                    ],
                     "additionalProperties": false,
-                    "description": "The FIELD sync: event participants and event-scoped odds before the field locks, for synced sport leagues. It has no switch. Candidate events must be field-available and not field-locked."
+                    "description": "The FIELD sync: the field and event-scoped odds of each event in a synced sport league's next slot. It has no switch."
                   },
                   "SCORES": {
                     "type": "object",
                     "properties": {
-                      "intervalMinutes": {
-                        "description": "How often the feed should run, in minutes, for interval-driven orchestration.",
-                        "type": "integer",
-                        "minimum": 1,
-                        "maximum": 9007199254740991
-                      },
-                      "intervalSeconds": {
-                        "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.",
-                        "type": "integer",
-                        "minimum": 1,
-                        "maximum": 9007199254740991
-                      },
-                      "lookaheadDays": {
-                        "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).",
-                        "type": "integer",
-                        "minimum": 0,
-                        "maximum": 9007199254740991
-                      },
                       "enabled": {
                         "type": "boolean",
-                        "description": "Whether the feed should be scheduled automatically."
+                        "description": "Whether the sync is scheduled automatically."
+                      },
+                      "intervals": {
+                        "type": "object",
+                        "properties": {
+                          "IN_SEASON": {
+                            "type": "object",
+                            "properties": {
+                              "intervalMinutes": {
+                                "description": "How often the sync runs, in minutes.",
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 9007199254740991
+                              },
+                              "intervalSeconds": {
+                                "description": "How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes.",
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 9007199254740991
+                              }
+                            },
+                            "additionalProperties": false,
+                            "description": "How often the sync runs for a league in season."
+                          },
+                          "OFFSEASON": {
+                            "type": "object",
+                            "properties": {
+                              "intervalMinutes": {
+                                "description": "How often the sync runs, in minutes.",
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 9007199254740991
+                              },
+                              "intervalSeconds": {
+                                "description": "How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes.",
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 9007199254740991
+                              }
+                            },
+                            "additionalProperties": false,
+                            "description": "How often the sync runs for a league off season."
+                          }
+                        },
+                        "required": [
+                          "IN_SEASON",
+                          "OFFSEASON"
+                        ],
+                        "additionalProperties": false,
+                        "description": "A sync kind's interval for each Season state."
                       }
                     },
                     "required": [
-                      "enabled"
+                      "enabled",
+                      "intervals"
                     ],
                     "additionalProperties": false,
-                    "description": "The SCORES sync: live score polling."
+                    "description": "The SCORES sync: live score polling for each event with a Game due or in play."
                   }
                 },
                 "required": [
@@ -51314,31 +52308,63 @@
                         "EVENTS": {
                           "type": "object",
                           "properties": {
-                            "intervalMinutes": {
-                              "description": "How often the feed should run, in minutes, for interval-driven orchestration.",
-                              "type": "integer",
-                              "minimum": 1,
-                              "maximum": 9007199254740991
-                            },
-                            "intervalSeconds": {
-                              "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.",
-                              "type": "integer",
-                              "minimum": 1,
-                              "maximum": 9007199254740991
-                            },
-                            "lookaheadDays": {
-                              "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).",
-                              "type": "integer",
-                              "minimum": 0,
-                              "maximum": 9007199254740991
-                            },
                             "enabled": {
                               "type": "boolean",
-                              "description": "Whether the feed should be scheduled automatically."
+                              "description": "Whether the sync is scheduled automatically."
+                            },
+                            "intervals": {
+                              "type": "object",
+                              "properties": {
+                                "IN_SEASON": {
+                                  "type": "object",
+                                  "properties": {
+                                    "intervalMinutes": {
+                                      "description": "How often the sync runs, in minutes.",
+                                      "type": "integer",
+                                      "minimum": 1,
+                                      "maximum": 9007199254740991
+                                    },
+                                    "intervalSeconds": {
+                                      "description": "How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes.",
+                                      "type": "integer",
+                                      "minimum": 1,
+                                      "maximum": 9007199254740991
+                                    }
+                                  },
+                                  "additionalProperties": false,
+                                  "description": "How often the sync runs for a league in season."
+                                },
+                                "OFFSEASON": {
+                                  "type": "object",
+                                  "properties": {
+                                    "intervalMinutes": {
+                                      "description": "How often the sync runs, in minutes.",
+                                      "type": "integer",
+                                      "minimum": 1,
+                                      "maximum": 9007199254740991
+                                    },
+                                    "intervalSeconds": {
+                                      "description": "How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes.",
+                                      "type": "integer",
+                                      "minimum": 1,
+                                      "maximum": 9007199254740991
+                                    }
+                                  },
+                                  "additionalProperties": false,
+                                  "description": "How often the sync runs for a league off season."
+                                }
+                              },
+                              "required": [
+                                "IN_SEASON",
+                                "OFFSEASON"
+                              ],
+                              "additionalProperties": false,
+                              "description": "A sync kind's interval for each Season state."
                             }
                           },
                           "required": [
-                            "enabled"
+                            "enabled",
+                            "intervals"
                           ],
                           "additionalProperties": false,
                           "description": "The EVENTS sync: how often each synced sport league's events sync is queued."
@@ -51346,59 +52372,125 @@
                         "FIELD": {
                           "type": "object",
                           "properties": {
-                            "intervalMinutes": {
-                              "description": "How often the feed should run, in minutes, for interval-driven orchestration.",
-                              "type": "integer",
-                              "minimum": 1,
-                              "maximum": 9007199254740991
-                            },
-                            "intervalSeconds": {
-                              "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.",
-                              "type": "integer",
-                              "minimum": 1,
-                              "maximum": 9007199254740991
-                            },
-                            "lookaheadDays": {
-                              "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).",
-                              "type": "integer",
-                              "minimum": 0,
-                              "maximum": 9007199254740991
+                            "intervals": {
+                              "type": "object",
+                              "properties": {
+                                "IN_SEASON": {
+                                  "type": "object",
+                                  "properties": {
+                                    "intervalMinutes": {
+                                      "description": "How often the sync runs, in minutes.",
+                                      "type": "integer",
+                                      "minimum": 1,
+                                      "maximum": 9007199254740991
+                                    },
+                                    "intervalSeconds": {
+                                      "description": "How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes.",
+                                      "type": "integer",
+                                      "minimum": 1,
+                                      "maximum": 9007199254740991
+                                    }
+                                  },
+                                  "additionalProperties": false,
+                                  "description": "How often the sync runs for a league in season."
+                                },
+                                "OFFSEASON": {
+                                  "type": "object",
+                                  "properties": {
+                                    "intervalMinutes": {
+                                      "description": "How often the sync runs, in minutes.",
+                                      "type": "integer",
+                                      "minimum": 1,
+                                      "maximum": 9007199254740991
+                                    },
+                                    "intervalSeconds": {
+                                      "description": "How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes.",
+                                      "type": "integer",
+                                      "minimum": 1,
+                                      "maximum": 9007199254740991
+                                    }
+                                  },
+                                  "additionalProperties": false,
+                                  "description": "How often the sync runs for a league off season."
+                                }
+                              },
+                              "required": [
+                                "IN_SEASON",
+                                "OFFSEASON"
+                              ],
+                              "additionalProperties": false,
+                              "description": "A sync kind's interval for each Season state."
                             }
                           },
+                          "required": [
+                            "intervals"
+                          ],
                           "additionalProperties": false,
-                          "description": "The FIELD sync: event participants and event-scoped odds before the field locks, for synced sport leagues. It has no switch. Candidate events must be field-available and not field-locked."
+                          "description": "The FIELD sync: the field and event-scoped odds of each event in a synced sport league's next slot. It has no switch."
                         },
                         "SCORES": {
                           "type": "object",
                           "properties": {
-                            "intervalMinutes": {
-                              "description": "How often the feed should run, in minutes, for interval-driven orchestration.",
-                              "type": "integer",
-                              "minimum": 1,
-                              "maximum": 9007199254740991
-                            },
-                            "intervalSeconds": {
-                              "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.",
-                              "type": "integer",
-                              "minimum": 1,
-                              "maximum": 9007199254740991
-                            },
-                            "lookaheadDays": {
-                              "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).",
-                              "type": "integer",
-                              "minimum": 0,
-                              "maximum": 9007199254740991
-                            },
                             "enabled": {
                               "type": "boolean",
-                              "description": "Whether the feed should be scheduled automatically."
+                              "description": "Whether the sync is scheduled automatically."
+                            },
+                            "intervals": {
+                              "type": "object",
+                              "properties": {
+                                "IN_SEASON": {
+                                  "type": "object",
+                                  "properties": {
+                                    "intervalMinutes": {
+                                      "description": "How often the sync runs, in minutes.",
+                                      "type": "integer",
+                                      "minimum": 1,
+                                      "maximum": 9007199254740991
+                                    },
+                                    "intervalSeconds": {
+                                      "description": "How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes.",
+                                      "type": "integer",
+                                      "minimum": 1,
+                                      "maximum": 9007199254740991
+                                    }
+                                  },
+                                  "additionalProperties": false,
+                                  "description": "How often the sync runs for a league in season."
+                                },
+                                "OFFSEASON": {
+                                  "type": "object",
+                                  "properties": {
+                                    "intervalMinutes": {
+                                      "description": "How often the sync runs, in minutes.",
+                                      "type": "integer",
+                                      "minimum": 1,
+                                      "maximum": 9007199254740991
+                                    },
+                                    "intervalSeconds": {
+                                      "description": "How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes.",
+                                      "type": "integer",
+                                      "minimum": 1,
+                                      "maximum": 9007199254740991
+                                    }
+                                  },
+                                  "additionalProperties": false,
+                                  "description": "How often the sync runs for a league off season."
+                                }
+                              },
+                              "required": [
+                                "IN_SEASON",
+                                "OFFSEASON"
+                              ],
+                              "additionalProperties": false,
+                              "description": "A sync kind's interval for each Season state."
                             }
                           },
                           "required": [
-                            "enabled"
+                            "enabled",
+                            "intervals"
                           ],
                           "additionalProperties": false,
-                          "description": "The SCORES sync: live score polling."
+                          "description": "The SCORES sync: live score polling for each event with a Game due or in play."
                         }
                       },
                       "required": [
@@ -51414,31 +52506,63 @@
                         "EVENTS": {
                           "type": "object",
                           "properties": {
-                            "intervalMinutes": {
-                              "description": "How often the feed should run, in minutes, for interval-driven orchestration.",
-                              "type": "integer",
-                              "minimum": 1,
-                              "maximum": 9007199254740991
-                            },
-                            "intervalSeconds": {
-                              "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.",
-                              "type": "integer",
-                              "minimum": 1,
-                              "maximum": 9007199254740991
-                            },
-                            "lookaheadDays": {
-                              "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).",
-                              "type": "integer",
-                              "minimum": 0,
-                              "maximum": 9007199254740991
-                            },
                             "enabled": {
                               "type": "boolean",
-                              "description": "Whether the feed should be scheduled automatically."
+                              "description": "Whether the sync is scheduled automatically."
+                            },
+                            "intervals": {
+                              "type": "object",
+                              "properties": {
+                                "IN_SEASON": {
+                                  "type": "object",
+                                  "properties": {
+                                    "intervalMinutes": {
+                                      "description": "How often the sync runs, in minutes.",
+                                      "type": "integer",
+                                      "minimum": 1,
+                                      "maximum": 9007199254740991
+                                    },
+                                    "intervalSeconds": {
+                                      "description": "How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes.",
+                                      "type": "integer",
+                                      "minimum": 1,
+                                      "maximum": 9007199254740991
+                                    }
+                                  },
+                                  "additionalProperties": false,
+                                  "description": "How often the sync runs for a league in season."
+                                },
+                                "OFFSEASON": {
+                                  "type": "object",
+                                  "properties": {
+                                    "intervalMinutes": {
+                                      "description": "How often the sync runs, in minutes.",
+                                      "type": "integer",
+                                      "minimum": 1,
+                                      "maximum": 9007199254740991
+                                    },
+                                    "intervalSeconds": {
+                                      "description": "How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes.",
+                                      "type": "integer",
+                                      "minimum": 1,
+                                      "maximum": 9007199254740991
+                                    }
+                                  },
+                                  "additionalProperties": false,
+                                  "description": "How often the sync runs for a league off season."
+                                }
+                              },
+                              "required": [
+                                "IN_SEASON",
+                                "OFFSEASON"
+                              ],
+                              "additionalProperties": false,
+                              "description": "A sync kind's interval for each Season state."
                             }
                           },
                           "required": [
-                            "enabled"
+                            "enabled",
+                            "intervals"
                           ],
                           "additionalProperties": false,
                           "description": "The EVENTS sync: how often each synced sport league's events sync is queued."
@@ -51446,59 +52570,125 @@
                         "FIELD": {
                           "type": "object",
                           "properties": {
-                            "intervalMinutes": {
-                              "description": "How often the feed should run, in minutes, for interval-driven orchestration.",
-                              "type": "integer",
-                              "minimum": 1,
-                              "maximum": 9007199254740991
-                            },
-                            "intervalSeconds": {
-                              "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.",
-                              "type": "integer",
-                              "minimum": 1,
-                              "maximum": 9007199254740991
-                            },
-                            "lookaheadDays": {
-                              "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).",
-                              "type": "integer",
-                              "minimum": 0,
-                              "maximum": 9007199254740991
+                            "intervals": {
+                              "type": "object",
+                              "properties": {
+                                "IN_SEASON": {
+                                  "type": "object",
+                                  "properties": {
+                                    "intervalMinutes": {
+                                      "description": "How often the sync runs, in minutes.",
+                                      "type": "integer",
+                                      "minimum": 1,
+                                      "maximum": 9007199254740991
+                                    },
+                                    "intervalSeconds": {
+                                      "description": "How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes.",
+                                      "type": "integer",
+                                      "minimum": 1,
+                                      "maximum": 9007199254740991
+                                    }
+                                  },
+                                  "additionalProperties": false,
+                                  "description": "How often the sync runs for a league in season."
+                                },
+                                "OFFSEASON": {
+                                  "type": "object",
+                                  "properties": {
+                                    "intervalMinutes": {
+                                      "description": "How often the sync runs, in minutes.",
+                                      "type": "integer",
+                                      "minimum": 1,
+                                      "maximum": 9007199254740991
+                                    },
+                                    "intervalSeconds": {
+                                      "description": "How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes.",
+                                      "type": "integer",
+                                      "minimum": 1,
+                                      "maximum": 9007199254740991
+                                    }
+                                  },
+                                  "additionalProperties": false,
+                                  "description": "How often the sync runs for a league off season."
+                                }
+                              },
+                              "required": [
+                                "IN_SEASON",
+                                "OFFSEASON"
+                              ],
+                              "additionalProperties": false,
+                              "description": "A sync kind's interval for each Season state."
                             }
                           },
+                          "required": [
+                            "intervals"
+                          ],
                           "additionalProperties": false,
-                          "description": "The FIELD sync: event participants and event-scoped odds before the field locks, for synced sport leagues. It has no switch. Candidate events must be field-available and not field-locked."
+                          "description": "The FIELD sync: the field and event-scoped odds of each event in a synced sport league's next slot. It has no switch."
                         },
                         "SCORES": {
                           "type": "object",
                           "properties": {
-                            "intervalMinutes": {
-                              "description": "How often the feed should run, in minutes, for interval-driven orchestration.",
-                              "type": "integer",
-                              "minimum": 1,
-                              "maximum": 9007199254740991
-                            },
-                            "intervalSeconds": {
-                              "description": "How often the feed should run, in seconds, for high-frequency orchestration such as live scoring.",
-                              "type": "integer",
-                              "minimum": 1,
-                              "maximum": 9007199254740991
-                            },
-                            "lookaheadDays": {
-                              "description": "How many days ahead the scheduler should scan for candidate events when the feed operates on a discovery window (event participant hydration).",
-                              "type": "integer",
-                              "minimum": 0,
-                              "maximum": 9007199254740991
-                            },
                             "enabled": {
                               "type": "boolean",
-                              "description": "Whether the feed should be scheduled automatically."
+                              "description": "Whether the sync is scheduled automatically."
+                            },
+                            "intervals": {
+                              "type": "object",
+                              "properties": {
+                                "IN_SEASON": {
+                                  "type": "object",
+                                  "properties": {
+                                    "intervalMinutes": {
+                                      "description": "How often the sync runs, in minutes.",
+                                      "type": "integer",
+                                      "minimum": 1,
+                                      "maximum": 9007199254740991
+                                    },
+                                    "intervalSeconds": {
+                                      "description": "How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes.",
+                                      "type": "integer",
+                                      "minimum": 1,
+                                      "maximum": 9007199254740991
+                                    }
+                                  },
+                                  "additionalProperties": false,
+                                  "description": "How often the sync runs for a league in season."
+                                },
+                                "OFFSEASON": {
+                                  "type": "object",
+                                  "properties": {
+                                    "intervalMinutes": {
+                                      "description": "How often the sync runs, in minutes.",
+                                      "type": "integer",
+                                      "minimum": 1,
+                                      "maximum": 9007199254740991
+                                    },
+                                    "intervalSeconds": {
+                                      "description": "How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes.",
+                                      "type": "integer",
+                                      "minimum": 1,
+                                      "maximum": 9007199254740991
+                                    }
+                                  },
+                                  "additionalProperties": false,
+                                  "description": "How often the sync runs for a league off season."
+                                }
+                              },
+                              "required": [
+                                "IN_SEASON",
+                                "OFFSEASON"
+                              ],
+                              "additionalProperties": false,
+                              "description": "A sync kind's interval for each Season state."
                             }
                           },
                           "required": [
-                            "enabled"
+                            "enabled",
+                            "intervals"
                           ],
                           "additionalProperties": false,
-                          "description": "The SCORES sync: live score polling."
+                          "description": "The SCORES sync: live score polling for each event with a Game due or in play."
                         }
                       },
                       "required": [

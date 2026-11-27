@@ -1,6 +1,6 @@
 /**
  * IngestionConfigService — admin-configurable lifecycle-aware ingestion policy, stored as the
- * INGESTION_SCHEDULE_CONFIG settings group (#450) and read by the scheduler on every tick and by
+ * INGESTION_SCHEDULE_CONFIG settings group (#450) and read by the sync tick on every pass and by
  * the root-admin configuration routes.
  */
 
@@ -12,7 +12,7 @@ import type {
   IngestionScheduleConfigPatch,
 } from '@poolmaster/shared/dto/config.dto';
 import { IngestionScheduleConfigSchema } from '@poolmaster/shared/dto/config.dto';
-import { ProviderSyncKind } from '@poolmaster/shared/domain';
+import { ProviderSyncKind, SyncSeasonState } from '@poolmaster/shared/domain';
 import type { AppSettingsService } from './app-settings-service';
 import { defineSettingsGroup } from './settings-group';
 
@@ -22,19 +22,28 @@ export const INGESTION_SCHEDULE_SETTINGS = defineSettingsGroup<IngestionSchedule
   description: 'How often each provider feed runs: one schedule for every sport league.',
   schema: IngestionScheduleConfigSchema,
   defaults: () => ({
-    // The synced sport leagues' events sync, every six hours (#1871; was a constant).
+    // The synced sport leagues' events sync: every six hours in season (#1871), daily off it (#2009).
     [ProviderSyncKind.EVENTS]: {
       enabled: true,
-      intervalMinutes: 360,
+      intervals: {
+        [SyncSeasonState.IN_SEASON]: { intervalMinutes: 360 },
+        [SyncSeasonState.OFFSEASON]: { intervalMinutes: 1440 },
+      },
     },
     // The field sync has no switch (#2086): it always runs, for synced sport leagues.
     [ProviderSyncKind.FIELD]: {
-      intervalMinutes: 360,
-      lookaheadDays: 14,
+      intervals: {
+        [SyncSeasonState.IN_SEASON]: { intervalMinutes: 360 },
+        [SyncSeasonState.OFFSEASON]: { intervalMinutes: 1440 },
+      },
     },
+    // Live scores poll only events with a Game due or in play, whatever the state.
     [ProviderSyncKind.SCORES]: {
       enabled: true,
-      intervalSeconds: 300,
+      intervals: {
+        [SyncSeasonState.IN_SEASON]: { intervalSeconds: 300 },
+        [SyncSeasonState.OFFSEASON]: { intervalSeconds: 300 },
+      },
     },
   }),
 });
@@ -45,7 +54,7 @@ export class IngestionConfigService {
     private readonly logger?: FastifyBaseLogger,
   ) {}
 
-  // The reads return promises for the scheduler's and the routes' sake; the read itself is
+  // The reads return promises for the sync tick's and the routes' sake; the read itself is
   // synchronous. Each is built in an executor so a throw still arrives as a rejection.
   getConfig(): Promise<IngestionScheduleConfig> {
     return new Promise((resolve) => {
@@ -122,12 +131,16 @@ function applyPatch(
   };
 }
 
+/** A policy with the patch's switch and intervals over it: each Season state's interval is replaced whole. */
 function mergePolicy<P extends IngestionFeedSchedulePolicy | IngestionAlwaysOnSchedulePolicy>(
   base: P,
-  patch?: Partial<P>,
+  patch?: { enabled?: boolean; intervals?: Partial<P['intervals']> },
 ): P {
+  if (patch === undefined) return base;
+  const { intervals, ...rest } = patch;
   return {
     ...base,
-    ...patch,
+    ...rest,
+    intervals: { ...base.intervals, ...intervals },
   };
 }

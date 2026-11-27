@@ -259,6 +259,10 @@ export const enUS = {
       FIELD: 'Field',
       SCORES: 'Live scores and results',
     },
+    SyncSeasonState: {
+      IN_SEASON: 'In season',
+      OFFSEASON: 'Off season',
+    },
     AutoReleaseCheckOutcome: {
       RELEASED: 'Released',
       HELD: 'Held',
