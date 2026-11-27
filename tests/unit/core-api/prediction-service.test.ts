@@ -3,7 +3,7 @@
  * submitting, and what another team sees — against an in-memory world, so each test asserts the
  * stored picks and the week's status rather than the calls that wrote them.
  */
-import { withHomeAway, homeAwayOf } from '../../support/match-sides';
+import { AWAY_SIDE, HOME_SIDE, pickSideOf, withHomeAway, homeAwayOf } from '../../support/match-sides';
 import { expect } from '@jest/globals';
 import type { ContestEntryMatchPredictionWrite } from '@poolmaster/shared/db';
 import {
@@ -11,6 +11,7 @@ import {
   ContestEntryStatus,
   ContestFormat,
   ContestStatus,
+  HomeAway,
   MatchStatus,
   PickEmMode,
   PredictedResult,
@@ -688,8 +689,7 @@ describe('PredictionService.getGamePicks — what each viewer sees', () => {
 
     expect(view).toMatchObject({ selectionType: SelectionType.PICK_EM, mode: PickEmMode.CONFIDENCE, againstTheSpread: false, tiebreakerValue: 41, points: 0, maxPossiblePoints: 6 });
     const thursday = expectDefined(view.games.find((game) => game.match.id === context.games.thursday.id));
-    expect(thursday.predictedHome).toEqual(thursday.home);
-    expect(thursday.predictedAway).toEqual(thursday.away);
+    expect(thursday.sides.map((side) => side.predictedTeam)).toEqual(thursday.sides.map((side) => side.team));
     expect(thursday.pickScore).toEqual({ outcome: 'PENDING', points: null });
   });
 
@@ -742,8 +742,19 @@ describe('PredictionService.getGamePicks — what each viewer sees', () => {
     const view = await context.service.getGamePicks(context.input);
     const monday = expectDefined(view.games.find((game) => game.match.id === 'game-3'));
     expect(monday.kickoff).toEqual(context.sportEvent.startDate);
-    expect(monday.home?.name).toBe('Home 3');
-    expect(monday.away?.name).toBe('Away 3');
+    expect(pickSideOf(monday, HOME_SIDE).team?.name).toBe('Home 3');
+    expect(pickSideOf(monday, AWAY_SIDE).team?.name).toBe('Away 3');
+  });
+
+  it('lists each game\'s sides in side order, each with where it plays game 1, its team and no spread on side 2', async () => {
+    const context = setup();
+    const view = await context.service.getGamePicks(context.input);
+    const monday = expectDefined(view.games.find((game) => game.match.id === 'game-3'));
+    expect(monday.sides.map((side) => [side.sideNumber, side.homeAway, side.team?.name ?? null])).toEqual([
+      [1, HomeAway.AWAY, 'Away 3'],
+      [2, HomeAway.HOME, 'Home 3'],
+    ]);
+    expect(pickSideOf(monday, HOME_SIDE).spread).toBeNull();
   });
 });
 

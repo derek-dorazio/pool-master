@@ -109,13 +109,14 @@ export function squaresMomentRows(board: Pick<SquaresBoardResponse, 'winners' | 
 
 /** A team's name for a game side, or the words for a side still to be decided. */
 function sideName(participantId: string | null, namesById: ReadonlyMap<string, string>) {
-  return participantId === null ? 'To be decided' : namesById.get(participantId) ?? 'To be decided';
+  const undecided = displayString('word.sideToBeDecided');
+  return participantId === null ? undecided : namesById.get(participantId) ?? undecided;
 }
 
 /** "Chiefs @ Eagles", or "vs" at a neutral site: how a game is named in the picker. */
 export function formatSquaresGameTeams(game: SportEventRoundMatchDto, namesById: ReadonlyMap<string, string>) {
   const { first, second, isNeutralSite } = billedSides(game);
-  return `${sideName(first?.sportEventParticipantId ?? null, namesById)} ${isNeutralSite ? 'vs' : '@'} ${sideName(second?.sportEventParticipantId ?? null, namesById)}`;
+  return `${sideName(first?.sportEventParticipantId ?? null, namesById)} ${isNeutralSite ? displayString('word.matchupVs') : displayString('word.matchupAtShort')} ${sideName(second?.sportEventParticipantId ?? null, namesById)}`;
 }
 
 /** Whether any period of the game has its score in. */

@@ -32,7 +32,7 @@ import {
   type User,
   matchSpread,
   sideOfParticipant,
-  matchIsNeutralSite,
+  HomeAway,
 } from '@poolmaster/shared/domain';
 import {
   emailRecipientOf,
@@ -46,7 +46,7 @@ import {
   type EntryReceipt,
   type GamePickLine,
 } from '../email';
-import type { GamePickGame, GamePickTeam, GamePicksView } from '../selections/prediction-service';
+import type { GamePickGame, GamePickSide, GamePickTeam, GamePicksView } from '../selections/prediction-service';
 import type { SquaresBoard } from '../selections/squares-service';
 import { errorMessage } from '../../core/error-message';
 
@@ -299,7 +299,7 @@ function bracketRounds(picked: GamePickGame[]): Array<{ name: string; picks: str
 function pickedTeam(game: GamePickGame): GamePickTeam | null {
   const id = game.pick?.sportEventParticipantId ?? null;
   if (id === null) return null;
-  return [game.predictedHome, game.predictedAway, game.home, game.away]
+  return [...game.sides.map((side) => side.predictedTeam), ...game.sides.map((side) => side.team)]
     .find((team) => team?.sportEventParticipantId === id) ?? null;
 }
 
@@ -318,11 +318,17 @@ function teamSpread(match: SportEventRoundMatch, team: GamePickTeam): number | n
   return sideOfParticipant(match, team.sportEventParticipantId)?.spread === spread ? spread : 0 - spread;
 }
 
-/** "Bills at Chiefs", or "Bills vs Chiefs" at a neutral site, as the app lists a game. */
+/**
+ * "Bills at Chiefs", the side playing away first, or "Bills vs Chiefs" side 1 first where neither
+ * side is home or away (a neutral site), as the app lists a game.
+ */
 function describeMatchup(game: GamePickGame): string {
-  const away = game.predictedAway ?? game.away;
-  const home = game.predictedHome ?? game.home;
-  return `${away?.name ?? 'To be decided'} ${matchIsNeutralSite(game.match) ? 'vs' : 'at'} ${home?.name ?? 'To be decided'}`;
+  const first = game.sides.find((side) => side.homeAway === HomeAway.AWAY)
+    ?? game.sides.find((side) => side.sideNumber === 1);
+  const second = game.sides.find((side) => side !== first);
+  const name = (side: GamePickSide | undefined) => (side?.predictedTeam ?? side?.team)?.name ?? 'To be decided';
+  const neutral = game.sides.every((side) => side.homeAway === HomeAway.NONE);
+  return `${name(first)} ${neutral ? 'vs' : 'at'} ${name(second)}`;
 }
 
 /** "45 total points (Bills at Chiefs)": the guess of its game's total score, in the sport's unit. */

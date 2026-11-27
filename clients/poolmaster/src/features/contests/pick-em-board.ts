@@ -1,4 +1,5 @@
 import { MatchStatus } from '@poolmaster/shared/domain';
+import { displayString } from '@poolmaster/shared/display-strings';
 import type { PickEmLeaderboardResponse, SportEventRoundMatchDto, SportEventParticipantDto } from '@/lib/api';
 import { formatOrdinal, type PeekFact } from '@/features/shared/ui';
 import { logger } from '@/lib/logger';
@@ -96,7 +97,8 @@ export function pickEmBoardGames(
     .sort((left, right) => (Date.parse(left.scheduledDate ?? '') || 0) - (Date.parse(right.scheduledDate ?? '') || 0) || left.roundNumber - right.roundNumber || left.matchNumber - right.matchNumber)
     .map((match) => {
       const { first, second, isNeutralSite } = billedSides(match);
-      const matchup = `${teamName(first?.sportEventParticipantId ?? null)} ${isNeutralSite ? 'vs' : 'at'} ${teamName(second?.sportEventParticipantId ?? null)}`;
+      const joiner = isNeutralSite ? displayString('word.matchupVs') : displayString('word.matchupAt');
+      const matchup = `${teamName(first?.sportEventParticipantId ?? null)} ${joiner} ${teamName(second?.sportEventParticipantId ?? null)}`;
       return { id: match.id, matchup, progress: gameProgress(match, teamName, formatKickoff), status: match.status };
     });
 }

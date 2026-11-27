@@ -95,7 +95,14 @@
     "findMatchingAny": "#2008 (10b): rows match by participant id or feed id, never by name (#2114)",
     "BulkUploadPanel": "#2008 (10b): results and fields come from the feed, with no paste or CSV upload",
     "UploadPreviewTable": "#2008 (10b): results and fields come from the feed, with no paste or CSV upload",
-    "parseGolfRoundScoreUpload": "#2008 (10b): golf round scores come from the feed by participant id"
+    "parseGolfRoundScoreUpload": "#2008 (10b): golf round scores come from the feed by participant id",
+    "homeSpread": "#2016: side 1's spread on the game's sides",
+    "predictedHome": "#2016: each side's predictedTeam",
+    "predictedAway": "#2016: each side's predictedTeam",
+    "MatchSide": "#2016 (17, main PR): bracket reseed; #2182: provider adapters, slate and synced field job advancesTo; #2019: squares. Sides by number",
+    "sideNumberOfMatchSide": "#2016 (17, main PR): bracket reseed; #2182: provider adapters, slate and synced field job advancesTo; #2019: squares. Sides by number",
+    "matchSideOfSideNumber": "#2016 (17, main PR): bracket reseed; #2182: provider adapters, slate and synced field job advancesTo; #2019: squares. Sides by number",
+    "teamOnMatchSide": "#2016: sideParticipantId by side number"
   },
   "ROUND_NAMES_FROM_FINAL": 0,
   "roundLabel": 0,
@@ -191,5 +198,12 @@
   "findMatchingAny": 0,
   "BulkUploadPanel": 0,
   "UploadPreviewTable": 0,
-  "parseGolfRoundScoreUpload": 0
+  "parseGolfRoundScoreUpload": 0,
+  "homeSpread": 0,
+  "predictedHome": 0,
+  "predictedAway": 0,
+  "MatchSide": 64,
+  "sideNumberOfMatchSide": 17,
+  "matchSideOfSideNumber": 3,
+  "teamOnMatchSide": 0
 }

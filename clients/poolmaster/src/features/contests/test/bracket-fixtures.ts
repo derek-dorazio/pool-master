@@ -7,6 +7,7 @@ import type {
 } from '@/lib/api';
 import { buildPlanEntitlements } from '@/features/plans/test/fixtures';
 import { SlotKind } from '@poolmaster/shared/domain';
+import { neutralSides } from './game-pick-sides';
 import { TOURNAMENT_ROUND_SLOTS } from './round-slots';
 
 /**
@@ -16,7 +17,7 @@ import { TOURNAMENT_ROUND_SLOTS } from './round-slots';
  */
 
 type Game = GamePicksResponse['games'][number];
-type Team = NonNullable<Game['predictedHome']>;
+type Team = NonNullable<Game['sides'][number]['predictedTeam']>;
 
 function team(key: string, name: string, seedNumber: number): Team {
   return { sportEventParticipantId: `sep-${key}`, participantId: `participant-${key}`, name, seedNumber };
@@ -61,11 +62,7 @@ export function bracketGame(overrides: Partial<Game> & Pick<Game, 'matchNumber' 
     status: 'SCHEDULED',
     isNeutralSite: true,
     regionLabel: null,
-    homeSpread: null,
-    home: null,
-    away: null,
-    predictedHome: null,
-    predictedAway: null,
+    sides: neutralSides(null, null),
     locked: false,
     revealed: false,
     pick: null,
@@ -74,8 +71,8 @@ export function bracketGame(overrides: Partial<Game> & Pick<Game, 'matchNumber' 
 }
 
 /** A first-round game: its teams are the bracket's own, so they are also the ones offered. */
-function openingGame(matchNumber: number, regionLabel: string, home: Team, away: Team): Game {
-  return bracketGame({ matchNumber, roundNumber: 1, regionLabel, home, away, predictedHome: home, predictedAway: away });
+function openingGame(matchNumber: number, regionLabel: string, sideOne: Team, sideTwo: Team): Game {
+  return bracketGame({ matchNumber, roundNumber: 1, regionLabel, sides: neutralSides(sideOne, sideTwo) });
 }
 
 /** The pick a game holds: its team, still pending until the games are played. */
@@ -83,6 +80,7 @@ export function gamePick(picked: Team, overrides: Partial<NonNullable<Game['pick
   return {
     predictedResult: 'TEAM',
     sportEventParticipantId: picked.sportEventParticipantId,
+    sideNumber: null,
     confidence: null,
     pickedAt: '2099-03-01T12:00:00.000Z',
     outcome: 'PENDING',
@@ -111,8 +109,8 @@ export function emptyBracketGames(): Game[] {
  * The Elite Eight's teams are decided, so they are offered as the first round's are.
  */
 export function secondChanceBracketGames(): Game[] {
-  const eliteEight = (matchNumber: number, regionLabel: string, home: Team, away: Team) =>
-    bracketGame({ matchNumber, roundNumber: 4, regionLabel, home, away, predictedHome: home, predictedAway: away });
+  const eliteEight = (matchNumber: number, regionLabel: string, sideOne: Team, sideTwo: Team) =>
+    bracketGame({ matchNumber, roundNumber: 4, regionLabel, sides: neutralSides(sideOne, sideTwo) });
   return [
     eliteEight(1, 'East', TEAMS.duke, TEAMS.vermont),
     eliteEight(2, 'East', TEAMS.houston, TEAMS.texas),
@@ -135,9 +133,9 @@ export function filledBracketGames(): Game[] {
     { ...g2, pick: gamePick(TEAMS.houston) },
     { ...g3, pick: gamePick(TEAMS.kansas) },
     { ...g4, pick: gamePick(TEAMS.gonzaga) },
-    bracketGame({ matchNumber: 1, roundNumber: 2, regionLabel: 'East', predictedHome: TEAMS.duke, predictedAway: TEAMS.houston, pick: gamePick(TEAMS.duke) }),
-    bracketGame({ matchNumber: 2, roundNumber: 2, regionLabel: 'West', predictedHome: TEAMS.kansas, predictedAway: TEAMS.gonzaga, pick: gamePick(TEAMS.kansas) }),
-    bracketGame({ matchNumber: 1, roundNumber: 3, predictedHome: TEAMS.duke, predictedAway: TEAMS.kansas, pick: gamePick(TEAMS.duke) }),
+    bracketGame({ matchNumber: 1, roundNumber: 2, regionLabel: 'East', sides: neutralSides(null, null, { predictedOne: TEAMS.duke, predictedTwo: TEAMS.houston }), pick: gamePick(TEAMS.duke) }),
+    bracketGame({ matchNumber: 2, roundNumber: 2, regionLabel: 'West', sides: neutralSides(null, null, { predictedOne: TEAMS.kansas, predictedTwo: TEAMS.gonzaga }), pick: gamePick(TEAMS.kansas) }),
+    bracketGame({ matchNumber: 1, roundNumber: 3, sides: neutralSides(null, null, { predictedOne: TEAMS.duke, predictedTwo: TEAMS.kansas }), pick: gamePick(TEAMS.duke) }),
   ];
 }
 

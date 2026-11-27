@@ -10,6 +10,7 @@ import {
   previewTiePick,
   toPreviewWeek,
 } from './pick-preview';
+import { awayAtHomeSides } from './test/game-pick-sides';
 import { weekSlot } from './test/round-slots';
 
 const golfer = { one: 'golfer', many: 'golfers' };
@@ -47,11 +48,7 @@ function previewGame(matchNumber: number, pick: PreviewGame['pick'] = null): Pre
     status: 'SCHEDULED',
     isNeutralSite: false,
     regionLabel: null,
-    homeSpread: null,
-    home: chiefs,
-    away: bills,
-    predictedHome: chiefs,
-    predictedAway: bills,
+    sides: awayAtHomeSides(bills, chiefs),
     locked: false,
     pick,
   };
@@ -77,6 +74,12 @@ const teamPickOf = (team: typeof bills, confidence?: number | null) => ({
   predictedResult: 'TEAM' as const,
   sportEventParticipantId: team.sportEventParticipantId,
   confidence: confidence ?? null,
+});
+
+/** A trial pick as the preview answers it: with its team's side, the Bills away on side 1 and the Chiefs home on side 2. */
+const previewPickOf = (team: typeof bills, confidence?: number | null) => ({
+  ...teamPickOf(team, confidence),
+  sideNumber: team === bills ? 1 : 2,
 });
 
 describe('previewRulesFor', () => {
@@ -143,20 +146,20 @@ describe('pickPreviewUnavailableReason', () => {
 
 describe('toPreviewWeek', () => {
   it('draws a setup\'s week as the commissioner\'s own unscored trial with the tiebreaker as typed', () => {
-    const week = toPreviewWeek(preview({ games: [previewGame(1, { ...teamPickOf(bills) }), previewGame(2)] }), 41);
+    const week = toPreviewWeek(preview({ games: [previewGame(1, { ...previewPickOf(bills) }), previewGame(2)] }), 41);
 
     expect(week.ownEntry).toBe(true);
     expect(week.survivor).toBeNull();
     expect(week.tiebreakerValue).toBe(41);
     expect(week.games[0]?.revealed).toBe(false);
-    expect(week.games[0]?.pick).toEqual({ ...teamPickOf(bills), outcome: null, points: null, survivorOutcome: null });
+    expect(week.games[0]?.pick).toEqual({ ...previewPickOf(bills), outcome: null, points: null, survivorOutcome: null });
     expect(week.games[1]?.pick).toBeNull();
   });
 });
 
 describe('trial game picks', () => {
   it('replaces the tapped game\'s pick and keeps the others that stand', () => {
-    const week = toPreviewWeek(preview({ games: [previewGame(1, teamPickOf(bills)), previewGame(2, teamPickOf(chiefs))] }), null);
+    const week = toPreviewWeek(preview({ games: [previewGame(1, previewPickOf(bills)), previewGame(2, previewPickOf(chiefs))] }), null);
 
     expect(previewTeamPick(week, week.games[0], chiefs)).toEqual([
       { sportEventRoundMatchId: 'match-2', predictedResult: 'TEAM', sportEventParticipantId: 'sep-chiefs' },
@@ -166,7 +169,7 @@ describe('trial game picks', () => {
 
   it('builds on the picks that still stand, so a bracket pick the server dropped stays dropped', () => {
     // Game 2's earlier pick no longer stands: the answer shows it with none.
-    const week = toPreviewWeek(preview({ selectionType: 'BRACKET', mode: null, games: [previewGame(1, teamPickOf(bills)), previewGame(2)] }), null);
+    const week = toPreviewWeek(preview({ selectionType: 'BRACKET', mode: null, games: [previewGame(1, previewPickOf(bills)), previewGame(2)] }), null);
 
     expect(previewTeamPick(week, week.games[0], chiefs)).toEqual([
       { sportEventRoundMatchId: 'match-1', predictedResult: 'TEAM', sportEventParticipantId: 'sep-chiefs' },
@@ -174,7 +177,7 @@ describe('trial game picks', () => {
   });
 
   it('keeps only the one new pick in a survivor week', () => {
-    const week = toPreviewWeek(preview({ selectionType: 'SURVIVOR', mode: null, games: [previewGame(1, teamPickOf(bills)), previewGame(2)] }), null);
+    const week = toPreviewWeek(preview({ selectionType: 'SURVIVOR', mode: null, games: [previewGame(1, previewPickOf(bills)), previewGame(2)] }), null);
 
     expect(previewTeamPick(week, week.games[1], chiefs)).toEqual([
       { sportEventRoundMatchId: 'match-2', predictedResult: 'TEAM', sportEventParticipantId: 'sep-chiefs' },
@@ -185,7 +188,7 @@ describe('trial game picks', () => {
     const week = toPreviewWeek(preview({
       mode: 'CONFIDENCE',
       tiePicksOffered: true,
-      games: [previewGame(1, teamPickOf(bills, 2)), previewGame(2, teamPickOf(chiefs, 1))],
+      games: [previewGame(1, previewPickOf(bills, 2)), previewGame(2, previewPickOf(chiefs, 1))],
     }), null);
 
     expect(previewTiePick(week, week.games[0])).toContainEqual(

@@ -239,6 +239,19 @@ refreshes the rows already there (#1715). Any game placed outside its Season's s
 `SLOT_OUTSIDE_SEASON` WARNING per place and is still written. An event starts at its slots' first
 game, so a season-long slate whose windowed games lie ahead is still created.
 
+**The rest of a phase (#2154).** A slot whose mapping row is `REST_OF_PHASE` takes every game in
+its window that no other slot places, whoever plays it, and is matched after every other slot. Its
+window is its phase's span (NCAA Men's Football's bowls, from the Sunday after Army-Navy to the day
+after the CFP final) or a weekend of title games (its conference championships, in their own
+`POSTSEASON_CONFERENCE` phase). So a CFP game between two seeds on the CFP's field goes to its CFP
+slot, and every other postseason game to the bowls; a CFP game played before the seeds are placed
+goes to the bowls until they are, and the next sync places it in the CFP. These windows may hold
+other slots' windows. A rest-of-phase slot's own games give it its dates and confirm its tentative
+window, as a date-window slot's do. One provider event's games can reach several competitions (a
+season's slate reaches its bowls, its title games and its CFP); the sync makes one event per
+competition it reaches, and an event never crosses competitions, so a linked event takes only its
+own competition's slots.
+
 For each provider event:
 
 - **New, start in the future, on a slot a contest template lists**: created as a `DRAFT`

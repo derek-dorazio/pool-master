@@ -25,11 +25,8 @@
  *   the entry closest to it ranks first among entries with the same points.
  */
 import {
-  MatchSide,
   MatchSideOutcome,
   opposingSideOf,
-  matchSideOfSideNumber,
-  sideNumberOfMatchSide,
   sideParticipantId,
   winningSide,
   MatchStatus,
@@ -51,10 +48,33 @@ export interface BracketPick {
   sportEventParticipantId: string;
 }
 
-/** The two teams an entry's picks put in one game, home on side 2 (#2046); null until the picks that decide it are made. */
-export interface PredictedSides {
-  home: string | null;
-  away: string | null;
+/**
+ * The teams an entry's picks put in one game, by side number (#2016): each of the game's sides,
+ * with null until the picks that decide it are made.
+ */
+export type PredictedSides = ReadonlyMap<number, string | null>;
+
+/** The team an entry's picks put on one side of a game, or null while none is. */
+export function predictedOn(sides: PredictedSides | undefined, sideNumber: number): string | null {
+  return sides?.get(sideNumber) ?? null;
+}
+
+/** The side number of a game an entry's picks put a team on, or null when they put it on neither. */
+export function predictedSideOf(sides: PredictedSides | undefined, sportEventParticipantId: string): number | null {
+  for (const [sideNumber, team] of sides ?? []) {
+    if (team === sportEventParticipantId) return sideNumber;
+  }
+  return null;
+}
+
+/** A game's real teams as predicted sides: what a pick'em or survivor pick chooses between. */
+export function realSides(match: Pick<SportEventRoundMatch, 'sides'>): PredictedSides {
+  return new Map(match.sides.map((side) => [side.sideNumber, side.sportEventParticipantId]));
+}
+
+/** A game's lowest side number: side 1. */
+function firstSideNumber(match: Pick<SportEventRoundMatch, 'sides'>): number {
+  return Math.min(...match.sides.map((side) => side.sideNumber));
 }
 
 export interface ResolvedBracket<Pick extends BracketPick> {
@@ -65,8 +85,6 @@ export interface ResolvedBracket<Pick extends BracketPick> {
   /** The picks whose team the entry's earlier picks no longer put in the game. */
   stranded: Pick[];
 }
-
-const SIDES = [MatchSide.HOME, MatchSide.AWAY] as const;
 
 /**
  * The games a bracket contest picks: every game of the rounds it covers (#2014), with cancelled
@@ -85,18 +103,13 @@ function bracketRoundNumbers(bracket: readonly Pick<SportEventRoundMatch, 'round
   return [...new Set(bracket.map((match) => match.roundNumber))].sort((left, right) => left - right);
 }
 
-function storedSide(match: SportEventRoundMatch, side: MatchSide): string | null {
-  return sideParticipantId(match, sideNumberOfMatchSide(side));
-}
-
-/** The game as the entry's picks play it: its predicted teams, and the side the entry picked to win, if any. */
-function withSides(match: SportEventRoundMatch, sides: PredictedSides, winner: MatchSide | null = null): SportEventRoundMatch {
-  const winnerNumber = winner === null ? null : sideNumberOfMatchSide(winner);
+/** The game as the entry's picks play it: its predicted teams, and the side number the entry picked to win, if any. */
+function withSides(match: SportEventRoundMatch, sides: PredictedSides, winnerNumber: number | null = null): SportEventRoundMatch {
   return {
     ...match,
     sides: match.sides.map((side) => ({
       ...side,
-      sportEventParticipantId: side.sideNumber === sideNumberOfMatchSide(MatchSide.HOME) ? sides.home : sides.away,
+      sportEventParticipantId: predictedOn(sides, side.sideNumber),
       outcome: winnerNumber === null ? MatchSideOutcome.PENDING : side.sideNumber === winnerNumber ? MatchSideOutcome.WON : MatchSideOutcome.LOST,
     })),
   };
@@ -118,7 +131,7 @@ export function resolveBracketPicks<Pick extends BracketPick>(
   const firstRound = rounds.at(0);
   const reseeded = reseededRounds(bracket);
   const pickByMatchId = new Map(picks.map((pick) => [pick.sportEventRoundMatchId, pick]));
-  const feederOf = (matchId: string, side: MatchSide) => bracket.find((match) => match.advancesToMatchId === matchId && match.advancesToSideNumber === sideNumberOfMatchSide(side));
+  const feederOf = (matchId: string, sideNumber: number) => bracket.find((match) => match.advancesToMatchId === matchId && match.advancesToSideNumber === sideNumber);
 
   const sides = new Map<string, PredictedSides>();
   const kept: Pick[] = [];
@@ -132,11 +145,11 @@ export function resolveBracketPicks<Pick extends BracketPick>(
     const round = bracket
       .filter((match) => match.roundNumber === roundNumber)
       .sort((left, right) => left.matchNumber - right.matchNumber);
-    for (const match of round) {
-      const placed: PredictedSides = { home: null, away: null };
-      for (const side of SIDES) {
-        const team = storedSide(match, side);
-        const feeder = feederOf(match.id, side);
+    const placeSides = (match: SportEventRoundMatch): PredictedSides => {
+      const placed = new Map<number, string | null>();
+      for (const { sideNumber } of match.sides) {
+        const team = sideParticipantId(match, sideNumber);
+        const feeder = feederOf(match.id, sideNumber);
         const value = roundNumber === firstRound
           ? team
           : feeder !== undefined
@@ -144,36 +157,26 @@ export function resolveBracketPicks<Pick extends BracketPick>(
             // A team the event placed here without playing an earlier round is a bye; any other
             // team on an unlinked side got there by results, which the entry predicts for itself.
             : team !== null && byes.get(team)?.entersAtRound === roundNumber ? team : null;
-        if (side === MatchSide.HOME) placed.home = value;
-        else placed.away = value;
+        placed.set(sideNumber, value);
       }
-      sides.set(match.id, placed);
-    }
+      return placed;
+    };
+    let placements = round.map((match) => ({ match, placed: placeSides(match) }));
     if (roundNumber !== firstRound && reseeded.has(roundNumber)) {
       const { matchups } = proposeRoundMatchups(
-        [...predicted, ...round.map((match) => withSides(match, sides.get(match.id) ?? { home: null, away: null }))],
+        [...predicted, ...placements.map(({ match, placed }) => withSides(match, placed))],
         roundNumber,
         seedOf,
       );
-      for (const matchup of matchups) {
-        const match = round.find((candidate) => candidate.matchNumber === matchup.matchNumber);
-        if (match) {
-          const proposed: { home: string | null; away: string | null } = { home: null, away: null };
-          for (const each of matchup.sides) {
-            if (matchSideOfSideNumber(each.sideNumber) === MatchSide.HOME) proposed.home = each.sportEventParticipantId;
-            else proposed.away = each.sportEventParticipantId;
-          }
-          sides.set(match.id, proposed);
-        }
-      }
+      placements = placements.map(({ match, placed }) => {
+        const matchup = matchups.find((candidate) => candidate.matchNumber === match.matchNumber);
+        return { match, placed: matchup === undefined ? placed : new Map(matchup.sides.map((each) => [each.sideNumber, each.sportEventParticipantId])) };
+      });
     }
-    for (const match of round) {
-      const placed = sides.get(match.id) ?? { home: null, away: null };
+    for (const { match, placed } of placements) {
+      sides.set(match.id, placed);
       const pick = pickByMatchId.get(match.id);
-      const winnerSide = pick === undefined ? null
-        : pick.sportEventParticipantId === placed.home ? MatchSide.HOME
-          : pick.sportEventParticipantId === placed.away ? MatchSide.AWAY
-            : null;
+      const winnerSide = pick === undefined ? null : predictedSideOf(placed, pick.sportEventParticipantId);
       // A first-round pick of a team withdrawn from this game stands, and carries the team on.
       const pickedWithdrawn = pick !== undefined && roundNumber === firstRound && withdrawn.has(pick.sportEventParticipantId);
       if (pick !== undefined && (winnerSide !== null || pickedWithdrawn)) {
@@ -184,7 +187,7 @@ export function resolveBracketPicks<Pick extends BracketPick>(
       }
       // A withdrawn team the entry picked wins its game in the entry's bracket, so reseeding moves it on.
       predicted.push(pickedWithdrawn
-        ? { ...withSides(match, { home: pick.sportEventParticipantId, away: null }, MatchSide.HOME), status: MatchStatus.COMPLETED }
+        ? { ...withSides(match, new Map([[firstSideNumber(match), pick.sportEventParticipantId]]), firstSideNumber(match)), status: MatchStatus.COMPLETED }
         : { ...withSides(match, placed, winnerSide), status: winnerSide === null ? MatchStatus.SCHEDULED : MatchStatus.COMPLETED });
     }
   }
@@ -195,7 +198,7 @@ export function resolveBracketPicks<Pick extends BracketPick>(
  * Why an event's games cannot be filled in as a bracket, or null when they can: every game must
  * offer two teams once the games before it are picked, so a first-round team still to be decided,
  * a later game no earlier game leads to, or a bracket without a single final is refused. Checked
- * by filling the bracket in with each game's home team.
+ * by filling the bracket in with each game's side-1 team.
  */
 export function findBracketProblem(
   bracket: readonly SportEventRoundMatch[],
@@ -216,10 +219,12 @@ export function findBracketProblem(
     const { sides } = resolveBracketPicks(bracket, picks, seedOf);
     for (const match of bracket.filter((candidate) => candidate.roundNumber === roundNumber)) {
       const placed = sides.get(match.id);
-      if (!placed?.home || !placed.away) {
+      const teams = match.sides.map((side) => predictedOn(placed, side.sideNumber));
+      const first = predictedOn(placed, firstSideNumber(match));
+      if (first === null || teams.some((team) => team === null)) {
         return `game ${match.matchNumber} of round ${roundNumber} has a team that no pick can decide`;
       }
-      picks.push({ sportEventRoundMatchId: match.id, sportEventParticipantId: placed.home });
+      picks.push({ sportEventRoundMatchId: match.id, sportEventParticipantId: first });
     }
   }
   return null;

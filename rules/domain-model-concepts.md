@@ -101,7 +101,7 @@ Two readings of this chain have both been held at once, so it is worth stating p
   always a team, and a survivor pick on a game that ends level is out. Only a game of a week can
   end level; a bracket match always has a winner.
 - **A pool against the spread scores the team that covers** (`againstTheSpread`, #720), in
-  either mode. Each game carries its spread from the home side (`homeSpread`, "Chiefs -3.5"); a
+  either mode. Each game carries its spread on side 1, the other side's its opposite ("Bills +3.5", "Chiefs -3.5"); a
   team covers when its score plus its spread beats the other team's. A game landing exactly on
   the spread is a **push**, worth nothing to either side. A game ended early (a retirement,
   walkover or default, #825) has no real final score, so its winner covers.

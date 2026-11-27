@@ -440,7 +440,7 @@ describe('the stored leaderboards answer with the board they hold', () => {
 describe('toSurvivorLeaderboardResponse', () => {
   it('sends each shown pick\'s game with its kickoff as an ISO time, a game with no kickoff as null, and a week with no shown pick as no game', () => {
     const game = {
-      opponent: 'Raiders', opponentShortName: 'LV', side: 'HOME' as const, isNeutralSite: false,
+      opponent: 'Raiders', opponentShortName: 'LV', sideNumber: HOME_SIDE, homeAway: HomeAway.HOME,
       status: 'SCHEDULED' as const, teamScore: null, opponentScore: null,
     };
     const week = { sportEventId: 'e1', roundNumber: 1, outcome: null, team: 'Chiefs', teamShortName: 'KC' };
@@ -466,10 +466,10 @@ describe('toGamePicksResponse', () => {
   const game = (overrides: Partial<GamePickGame>): GamePickGame => ({
     match: match(),
     kickoff: AT,
-    home: null,
-    away: null,
-    predictedHome: null,
-    predictedAway: null,
+    sides: [
+      { sideNumber: AWAY_SIDE, homeAway: HomeAway.AWAY, team: null, predictedTeam: { sportEventParticipantId: 'a', participantId: 'pa', name: 'Away', seedNumber: null }, spread: null },
+      { sideNumber: HOME_SIDE, homeAway: HomeAway.HOME, team: null, predictedTeam: { sportEventParticipantId: 'h', participantId: 'ph', name: 'Home', seedNumber: null }, spread: null },
+    ],
     locked: false,
     revealed: false,
     pick: null,
@@ -515,8 +515,18 @@ describe('toGamePicksResponse', () => {
 
     expect(dto.submittedAt).toBe(ISO);
     expect(dto.games[0].pick).toEqual({
-      predictedResult: PredictedResult.TEAM, sportEventParticipantId: 'h', confidence: 2, pickedAt: ISO, outcome: null, points: null, survivorOutcome: null,
+      predictedResult: PredictedResult.TEAM, sportEventParticipantId: 'h', sideNumber: HOME_SIDE, confidence: 2, pickedAt: ISO, outcome: null, points: null, survivorOutcome: null,
     });
+  });
+
+  it('sends each side with where it plays, and a pick\'s side as the side its team is predicted on, none for a tie or a team on no side', () => {
+    const tie = { predictedResult: PredictedResult.TIE, sportEventParticipantId: null, confidence: null, pickedAt: AT } as unknown as GamePickGame['pick'];
+    const elsewhere = { predictedResult: PredictedResult.TEAM, sportEventParticipantId: 'x', confidence: null, pickedAt: AT } as unknown as GamePickGame['pick'];
+
+    const dto = toGamePicksResponse(view([game({ pick }), game({ pick: tie }), game({ pick: elsewhere })], AT));
+
+    expect(dto.games[0].sides.map((side) => [side.sideNumber, side.homeAway])).toEqual([[AWAY_SIDE, HomeAway.AWAY], [HOME_SIDE, HomeAway.HOME]]);
+    expect(dto.games.map((each) => each.pick?.sideNumber)).toEqual([HOME_SIDE, null, null]);
   });
 
   it('sends a survivor pick\'s week outcome as the season decided it', () => {

@@ -10974,11 +10974,11 @@ export type SlotProviderMappingDto = {
     providerLeagueCode: string;
     providerLeagueName: string;
     /**
-     * How a provider's game is matched to the slot; the sync tries PROVIDER_CODE, then NAME_PATTERN, then DATE_WINDOW.
+     * How a provider's game is matched to the slot; the sync tries PROVIDER_CODE, then NAME_PATTERN, then DATE_WINDOW, and REST_OF_PHASE last, for the games of its window no other slot places.
      */
-    matchType: 'PROVIDER_CODE' | 'NAME_PATTERN' | 'DATE_WINDOW' | 'CALENDAR_WEEK';
+    matchType: 'PROVIDER_CODE' | 'NAME_PATTERN' | 'DATE_WINDOW' | 'CALENDAR_WEEK' | 'REST_OF_PHASE';
     /**
-     * The adapter's code (REG:5, POST:3) or the normalized tournament name a game is matched on; null for CALENDAR_WEEK, which matches by the global week rule.
+     * The adapter's code (REG:5, POST:3) or the normalized tournament name a game is matched on; null for CALENDAR_WEEK, which matches by the global week rule, and for DATE_WINDOW and REST_OF_PHASE, which match by the Season slot's window.
      */
     providerValue: string | null;
 };
@@ -11041,11 +11041,11 @@ export type SportLeagueSlotDefinitionDto = {
         providerLeagueCode: string;
         providerLeagueName: string;
         /**
-         * How a provider's game is matched to the slot; the sync tries PROVIDER_CODE, then NAME_PATTERN, then DATE_WINDOW.
+         * How a provider's game is matched to the slot; the sync tries PROVIDER_CODE, then NAME_PATTERN, then DATE_WINDOW, and REST_OF_PHASE last, for the games of its window no other slot places.
          */
-        matchType: 'PROVIDER_CODE' | 'NAME_PATTERN' | 'DATE_WINDOW' | 'CALENDAR_WEEK';
+        matchType: 'PROVIDER_CODE' | 'NAME_PATTERN' | 'DATE_WINDOW' | 'CALENDAR_WEEK' | 'REST_OF_PHASE';
         /**
-         * The adapter's code (REG:5, POST:3) or the normalized tournament name a game is matched on; null for CALENDAR_WEEK, which matches by the global week rule.
+         * The adapter's code (REG:5, POST:3) or the normalized tournament name a game is matched on; null for CALENDAR_WEEK, which matches by the global week rule, and for DATE_WINDOW and REST_OF_PHASE, which match by the Season slot's window.
          */
         providerValue: string | null;
     }>;
@@ -11122,11 +11122,11 @@ export type SportLeagueCompetitionDefinitionDto = {
             providerLeagueCode: string;
             providerLeagueName: string;
             /**
-             * How a provider's game is matched to the slot; the sync tries PROVIDER_CODE, then NAME_PATTERN, then DATE_WINDOW.
+             * How a provider's game is matched to the slot; the sync tries PROVIDER_CODE, then NAME_PATTERN, then DATE_WINDOW, and REST_OF_PHASE last, for the games of its window no other slot places.
              */
-            matchType: 'PROVIDER_CODE' | 'NAME_PATTERN' | 'DATE_WINDOW' | 'CALENDAR_WEEK';
+            matchType: 'PROVIDER_CODE' | 'NAME_PATTERN' | 'DATE_WINDOW' | 'CALENDAR_WEEK' | 'REST_OF_PHASE';
             /**
-             * The adapter's code (REG:5, POST:3) or the normalized tournament name a game is matched on; null for CALENDAR_WEEK, which matches by the global week rule.
+             * The adapter's code (REG:5, POST:3) or the normalized tournament name a game is matched on; null for CALENDAR_WEEK, which matches by the global week rule, and for DATE_WINDOW and REST_OF_PHASE, which match by the Season slot's window.
              */
             providerValue: string | null;
         }>;
@@ -11214,11 +11214,11 @@ export type SportLeaguePhaseDefinitionDto = {
                 providerLeagueCode: string;
                 providerLeagueName: string;
                 /**
-                 * How a provider's game is matched to the slot; the sync tries PROVIDER_CODE, then NAME_PATTERN, then DATE_WINDOW.
+                 * How a provider's game is matched to the slot; the sync tries PROVIDER_CODE, then NAME_PATTERN, then DATE_WINDOW, and REST_OF_PHASE last, for the games of its window no other slot places.
                  */
-                matchType: 'PROVIDER_CODE' | 'NAME_PATTERN' | 'DATE_WINDOW' | 'CALENDAR_WEEK';
+                matchType: 'PROVIDER_CODE' | 'NAME_PATTERN' | 'DATE_WINDOW' | 'CALENDAR_WEEK' | 'REST_OF_PHASE';
                 /**
-                 * The adapter's code (REG:5, POST:3) or the normalized tournament name a game is matched on; null for CALENDAR_WEEK, which matches by the global week rule.
+                 * The adapter's code (REG:5, POST:3) or the normalized tournament name a game is matched on; null for CALENDAR_WEEK, which matches by the global week rule, and for DATE_WINDOW and REST_OF_PHASE, which match by the Season slot's window.
                  */
                 providerValue: string | null;
             }>;
@@ -11311,11 +11311,11 @@ export type SportLeagueStructureResponse = {
                     providerLeagueCode: string;
                     providerLeagueName: string;
                     /**
-                     * How a provider's game is matched to the slot; the sync tries PROVIDER_CODE, then NAME_PATTERN, then DATE_WINDOW.
+                     * How a provider's game is matched to the slot; the sync tries PROVIDER_CODE, then NAME_PATTERN, then DATE_WINDOW, and REST_OF_PHASE last, for the games of its window no other slot places.
                      */
-                    matchType: 'PROVIDER_CODE' | 'NAME_PATTERN' | 'DATE_WINDOW' | 'CALENDAR_WEEK';
+                    matchType: 'PROVIDER_CODE' | 'NAME_PATTERN' | 'DATE_WINDOW' | 'CALENDAR_WEEK' | 'REST_OF_PHASE';
                     /**
-                     * The adapter's code (REG:5, POST:3) or the normalized tournament name a game is matched on; null for CALENDAR_WEEK, which matches by the global week rule.
+                     * The adapter's code (REG:5, POST:3) or the normalized tournament name a game is matched on; null for CALENDAR_WEEK, which matches by the global week rule, and for DATE_WINDOW and REST_OF_PHASE, which match by the Season slot's window.
                      */
                     providerValue: string | null;
                 }>;
@@ -17454,13 +17454,13 @@ export type SurvivorLeaderboardResponse = {
                  */
                 opponentShortName: string | null;
                 /**
-                 * Whether the picked team was HOME or AWAY: "KC v BUF" at home, "KC at BUF" away.
+                 * The picked team's side in the game (#2016).
                  */
-                side: 'HOME' | 'AWAY';
+                sideNumber: number;
                 /**
-                 * The game is at neither team's home ground: "KC v BUF" either way.
+                 * Where the picked team played: AWAY reads "KC at BUF", HOME "KC v BUF", and NONE, a neutral site, "KC vs BUF".
                  */
-                isNeutralSite: boolean;
+                homeAway: 'HOME' | 'AWAY' | 'NONE';
                 /**
                  * Kickoff, when known.
                  */
@@ -17828,69 +17828,52 @@ export type GamePicksResponse = {
          */
         regionLabel: string | null;
         /**
-         * The points spread from the home team's side (#720): -3.5 has the home team favoured by 3.5. Null until set.
+         * The game's two sides, side 1 then side 2 (#2016). A screen bills them from `homeAway`: "away at home", or "vs" where neither side is home.
          */
-        homeSpread: number | null;
-        /**
-         * The team really playing on this side; null until it is decided.
-         */
-        home: {
+        sides: Array<{
             /**
-             * The team's field row in the event: what a pick names.
+             * The side's fixed place in the game: 1 or 2.
              */
-            sportEventParticipantId: string;
-            participantId: string;
-            name: string;
+            sideNumber: number;
             /**
-             * The team's seed in the event ("1" in a navy square beside its name on a bracket); null where the event seeds no field, or this team.
+             * Where the side plays the game's game 1: HOME, AWAY, or NONE at a neutral site (and until the feed says).
              */
-            seedNumber: number | null;
-        } | null;
-        /**
-         * The team really playing on this side; null until it is decided.
-         */
-        away: {
+            homeAway: 'HOME' | 'AWAY' | 'NONE';
             /**
-             * The team's field row in the event: what a pick names.
+             * The team really playing on this side; null until it is decided.
              */
-            sportEventParticipantId: string;
-            participantId: string;
-            name: string;
+            team: {
+                /**
+                 * The team's field row in the event: what a pick names.
+                 */
+                sportEventParticipantId: string;
+                participantId: string;
+                name: string;
+                /**
+                 * The team's seed in the event ("1" in a navy square beside its name on a bracket); null where the event seeds no field, or this team.
+                 */
+                seedNumber: number | null;
+            } | null;
             /**
-             * The team's seed in the event ("1" in a navy square beside its name on a bracket); null where the event seeds no field, or this team.
+             * The team the entry's own picks put on this side, which its pick chooses between: in a bracket, the team it picked to win the game feeding this side (in a reseeded round, its picked winners paired by seed); otherwise the real team. Null until the picks that decide it are made. On another team's entry, the real team until the game is revealed.
              */
-            seedNumber: number | null;
-        } | null;
-        /**
-         * The team the entry's own picks put on this side, which its pick chooses between: in a bracket, the team it picked to win the game feeding this side (in a reseeded round, its picked winners paired by seed); otherwise the real team. Null until the picks that decide it are made. On another team's entry, the real team until the game is revealed.
-         */
-        predictedHome: {
+            predictedTeam: {
+                /**
+                 * The team's field row in the event: what a pick names.
+                 */
+                sportEventParticipantId: string;
+                participantId: string;
+                name: string;
+                /**
+                 * The team's seed in the event ("1" in a navy square beside its name on a bracket); null where the event seeds no field, or this team.
+                 */
+                seedNumber: number | null;
+            } | null;
             /**
-             * The team's field row in the event: what a pick names.
+             * The points spread, on side 1 only (#720): -3.5 has side 1 favoured by 3.5, +3.5 has it getting 3.5. Null until set, and always on side 2.
              */
-            sportEventParticipantId: string;
-            participantId: string;
-            name: string;
-            /**
-             * The team's seed in the event ("1" in a navy square beside its name on a bracket); null where the event seeds no field, or this team.
-             */
-            seedNumber: number | null;
-        } | null;
-        /**
-         * As predictedHome, for the away side.
-         */
-        predictedAway: {
-            /**
-             * The team's field row in the event: what a pick names.
-             */
-            sportEventParticipantId: string;
-            participantId: string;
-            name: string;
-            /**
-             * The team's seed in the event ("1" in a navy square beside its name on a bracket); null where the event seeds no field, or this team.
-             */
-            seedNumber: number | null;
-        } | null;
+            spread: number | null;
+        }>;
         /**
          * Whether the game's pick can no longer change: it has kicked off, or the contest no longer takes picks.
          */
@@ -17911,6 +17894,10 @@ export type GamePicksResponse = {
              * The team picked to win; null for a TIE pick.
              */
             sportEventParticipantId: string | null;
+            /**
+             * The side the picked team is on (#2016): its side in the game's `sides`, by the entry's own predicted teams in a bracket. Null for a TIE pick.
+             */
+            sideNumber: number | null;
             /**
              * The pick's confidence value; null in a straight-up pool, in a bracket, or until given.
              */
@@ -18207,69 +18194,52 @@ export type GamePickPreviewResponse = {
          */
         regionLabel: string | null;
         /**
-         * The points spread from the home team's side (#720): -3.5 has the home team favoured by 3.5. Null until set.
+         * The game's two sides, side 1 then side 2 (#2016). A screen bills them from `homeAway`: "away at home", or "vs" where neither side is home.
          */
-        homeSpread: number | null;
-        /**
-         * The team really playing on this side; null until it is decided.
-         */
-        home: {
+        sides: Array<{
             /**
-             * The team's field row in the event: what a pick names.
+             * The side's fixed place in the game: 1 or 2.
              */
-            sportEventParticipantId: string;
-            participantId: string;
-            name: string;
+            sideNumber: number;
             /**
-             * The team's seed in the event ("1" in a navy square beside its name on a bracket); null where the event seeds no field, or this team.
+             * Where the side plays the game's game 1: HOME, AWAY, or NONE at a neutral site (and until the feed says).
              */
-            seedNumber: number | null;
-        } | null;
-        /**
-         * The team really playing on this side; null until it is decided.
-         */
-        away: {
+            homeAway: 'HOME' | 'AWAY' | 'NONE';
             /**
-             * The team's field row in the event: what a pick names.
+             * The team really playing on this side; null until it is decided.
              */
-            sportEventParticipantId: string;
-            participantId: string;
-            name: string;
+            team: {
+                /**
+                 * The team's field row in the event: what a pick names.
+                 */
+                sportEventParticipantId: string;
+                participantId: string;
+                name: string;
+                /**
+                 * The team's seed in the event ("1" in a navy square beside its name on a bracket); null where the event seeds no field, or this team.
+                 */
+                seedNumber: number | null;
+            } | null;
             /**
-             * The team's seed in the event ("1" in a navy square beside its name on a bracket); null where the event seeds no field, or this team.
+             * The team the entry's own picks put on this side, which its pick chooses between: in a bracket, the team it picked to win the game feeding this side (in a reseeded round, its picked winners paired by seed); otherwise the real team. Null until the picks that decide it are made. On another team's entry, the real team until the game is revealed.
              */
-            seedNumber: number | null;
-        } | null;
-        /**
-         * The team the entry's own picks put on this side, which its pick chooses between: in a bracket, the team it picked to win the game feeding this side (in a reseeded round, its picked winners paired by seed); otherwise the real team. Null until the picks that decide it are made. On another team's entry, the real team until the game is revealed.
-         */
-        predictedHome: {
+            predictedTeam: {
+                /**
+                 * The team's field row in the event: what a pick names.
+                 */
+                sportEventParticipantId: string;
+                participantId: string;
+                name: string;
+                /**
+                 * The team's seed in the event ("1" in a navy square beside its name on a bracket); null where the event seeds no field, or this team.
+                 */
+                seedNumber: number | null;
+            } | null;
             /**
-             * The team's field row in the event: what a pick names.
+             * The points spread, on side 1 only (#720): -3.5 has side 1 favoured by 3.5, +3.5 has it getting 3.5. Null until set, and always on side 2.
              */
-            sportEventParticipantId: string;
-            participantId: string;
-            name: string;
-            /**
-             * The team's seed in the event ("1" in a navy square beside its name on a bracket); null where the event seeds no field, or this team.
-             */
-            seedNumber: number | null;
-        } | null;
-        /**
-         * As predictedHome, for the away side.
-         */
-        predictedAway: {
-            /**
-             * The team's field row in the event: what a pick names.
-             */
-            sportEventParticipantId: string;
-            participantId: string;
-            name: string;
-            /**
-             * The team's seed in the event ("1" in a navy square beside its name on a bracket); null where the event seeds no field, or this team.
-             */
-            seedNumber: number | null;
-        } | null;
+            spread: number | null;
+        }>;
         /**
          * Whether the game's pick would already be closed once the contest opens: it has kicked off, or in a bracket the event has started.
          */
@@ -18286,6 +18256,10 @@ export type GamePickPreviewResponse = {
              * The team picked to win; null for a TIE pick.
              */
             sportEventParticipantId: string | null;
+            /**
+             * The side the picked team is on (#2016): its side in the game's `sides`, by the entry's own predicted teams in a bracket. Null for a TIE pick.
+             */
+            sideNumber: number | null;
             /**
              * The pick's confidence value; null in a straight-up pool, in a bracket, or until given.
              */
