@@ -12,6 +12,10 @@ import {
   TemplateCoverageProblem,
   UpsetBonusRule,
   compareCoveredSlots,
+  contestRoundCoverage,
+  coveredRoundNumbers,
+  coveredRoundValue,
+  coversMatchRound,
   isWeekEvent,
   templateCoverageProblem,
   type ContestTemplateSlot,
@@ -148,5 +152,31 @@ describe('compareCoveredSlots', () => {
     ];
 
     expect([...slots].sort(compareCoveredSlots).map((each) => each.key)).toEqual(['BOWL_SEMI', 'BOWL_FINAL', 'ROUND_OF_16', 'FINAL']);
+  });
+});
+
+describe('a contest\'s covered rounds (#2014)', () => {
+  // A play-in is the event's round 1 (#2184); the template lists the slots of rounds 2 and 3.
+  const match = (roundNumber: number, slotDefinitionId: string) => ({ roundNumber, slot: { slotDefinitionId } });
+  const EVENT = [match(1, 'def-play-in'), match(2, 'def-round-of-64'), match(2, 'def-round-of-64'), match(3, 'def-final')];
+  const AFTER_PLAY_IN = { slotDefinitionIds: ['def-round-of-64', 'def-final'] };
+
+  it('covers the rounds whose slot the template lists, lowest first, leaving the play-in out', () => {
+    expect(coveredRoundNumbers(AFTER_PLAY_IN, EVENT)).toEqual([2, 3]);
+    expect(coversMatchRound(AFTER_PLAY_IN, match(1, 'def-play-in'))).toBe(false);
+  });
+
+  it('covers every round of a contest made with no template', () => {
+    expect(coveredRoundNumbers({ slotDefinitionIds: null }, EVENT)).toEqual([1, 2, 3]);
+  });
+
+  it('values a covered round by its place among the covered rounds, and an uncovered or unvalued round at nothing', () => {
+    expect([2, 3, 1].map((roundNumber) => coveredRoundValue([1, 4], [2, 3], roundNumber))).toEqual([1, 4, undefined]);
+    expect(coveredRoundValue([1], [2, 3], 3)).toBeUndefined();
+  });
+
+  it('reads a configuration\'s template slots as its coverage, and no configuration as every round', () => {
+    expect(contestRoundCoverage({ coveredSlotDefinitionIds: ['def-final'] })).toEqual({ slotDefinitionIds: ['def-final'] });
+    expect(contestRoundCoverage(null)).toEqual({ slotDefinitionIds: null });
   });
 });

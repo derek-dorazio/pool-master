@@ -10,7 +10,7 @@ import type {
   ContestEntryWithSquad,
   ParticipantContestScoringRuleRepository,
 } from '@poolmaster/shared/db';
-import { ContestEntryStatus, contestEntryEventStatus, type Contest, type ContestScoringSettings, type ScoreDirection } from '@poolmaster/shared/domain';
+import { ContestEntryStatus, contestEntryEventStatus, contestRoundCoverage, type Contest, type ContestRoundCoverage, type ContestScoringSettings, type ScoreDirection } from '@poolmaster/shared/domain';
 import type {
   SportEventParticipantService,
   SportEventParticipantView,
@@ -52,8 +52,9 @@ export function toParticipantScores(
   field: readonly SportEventParticipantView[],
   event: FieldScoringEvent,
   scoring: ContestScoringSettings,
+  coverage: ContestRoundCoverage,
 ): ParticipantScore[] {
-  return scoringFamilyForEvent(event).scoreField(field, event, scoring);
+  return scoringFamilyForEvent(event).scoreField(field, event, scoring, coverage);
 }
 
 /**
@@ -66,13 +67,15 @@ export function rankContestEvent(input: {
   field: readonly SportEventParticipantView[];
   event: FieldScoringEvent;
   scoring: ContestScoringSettings;
+  /** The rounds the contest covers (#2014): only their results score. */
+  coverage: ContestRoundCoverage;
   countingRule: ContestCountingRule;
   direction: ScoreDirection;
   submitted: readonly ContestLeaderboardEntryInput[];
   missed: readonly ContestLeaderboardEntryInput[];
 }): { rows: ContestEntryStandingRow[]; scores: ParticipantScore[] } {
-  const { field, event, scoring, countingRule, direction, submitted, missed } = input;
-  const scores = toParticipantScores(field, event, scoring);
+  const { field, event, scoring, coverage, countingRule, direction, submitted, missed } = input;
+  const scores = toParticipantScores(field, event, scoring, coverage);
   const scoreById = new Map(scores.map((score) => [score.sportEventParticipantId, score]));
   const missedScore = missed.length > 0 ? scoreMissedLineup(field, event, scoring, countingRule.count) : null;
   const rows = rankContestEntryStandings(
@@ -111,6 +114,7 @@ export async function loadContestScoringConfiguration(
   const rules = await deps.scoringRules.findByContestConfiguration(configuration.id);
   return {
     configJson: configuration.configJson ?? null,
+    coverage: contestRoundCoverage(configuration),
     participantScoringRules: rules.map((rule) => ({
       sortOrder: rule.sortOrder,
       scoring: rule.scoring,

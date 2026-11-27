@@ -406,11 +406,46 @@ describe('rankPredictionStandings', () => {
 });
 
 describe('contestBracketGames', () => {
-  it('picks every game of the event but a cancelled one', () => {
+  it('picks every game of the event but a cancelled one, for a contest covering every round', () => {
     const gameIds = (games: ReadonlyArray<{ id: string }>) => games.map((each) => each.id);
-    expect(gameIds(contestBracketGames(eightTeamBracket()))).toEqual(['m1', 'm2', 'm3', 'm4', 'm5', 'm6', 'm7']);
+    expect(gameIds(contestBracketGames(eightTeamBracket(), { slotDefinitionIds: null }))).toEqual(['m1', 'm2', 'm3', 'm4', 'm5', 'm6', 'm7']);
     const cancelled = eightTeamBracket().map((match) => (match.matchNumber === 6 ? { ...match, status: MatchStatus.CANCELLED } : match));
-    expect(gameIds(contestBracketGames(cancelled))).toEqual(['m1', 'm2', 'm3', 'm4', 'm5', 'm7']);
+    expect(gameIds(contestBracketGames(cancelled, { slotDefinitionIds: null }))).toEqual(['m1', 'm2', 'm3', 'm4', 'm5', 'm7']);
+  });
+});
+
+describe('a bracket over the rounds its contest covers, the play-in left out (#2014)', () => {
+  // The play-in is the event's round 1 (#2184): P1 and P2 play for the place against T1 in round
+  // 2, the first round the contest covers.
+  const playInBracket = () => bracketMatches('event-play-in', [
+    { matchNumber: 1, round: 1, home: 'P1', away: 'P2', advancesTo: { matchNumber: 2, side: AWAY } },
+    { matchNumber: 2, round: 2, home: 'T1', away: null, advancesTo: { matchNumber: 4, side: HOME } },
+    { matchNumber: 3, round: 2, home: 'T2', away: 'T3', advancesTo: { matchNumber: 4, side: AWAY } },
+    { matchNumber: 4, round: 3, home: null, away: null },
+  ]);
+  const coveringRoundsFrom = (bracket: ReturnType<typeof playInBracket>, firstRound: number) => ({
+    slotDefinitionIds: [...new Set(bracket.filter((match) => match.roundNumber >= firstRound).map((match) => match.slot.slotDefinitionId))],
+  });
+
+  it('asks no pick of a play-in game the contest does not cover', () => {
+    const bracket = playInBracket();
+
+    expect(contestBracketGames(bracket, coveringRoundsFrom(bracket, 2)).map((game) => game.id)).toEqual(['m2', 'm3', 'm4']);
+  });
+
+  it('scores a pick in the first covered round at the first round value, and the final at the second', () => {
+    const results = withResults(playInBracket(), new Map([
+      [1, { winner: HOME }],
+      [2, { away: 'P1', winner: HOME }],
+      [3, { winner: HOME }],
+      [4, { home: 'T1', away: 'T2', winner: HOME }],
+    ]));
+    const games = contestBracketGames(results, coveringRoundsFrom(results, 2));
+    const settings: KnockoutRoundPointsSettings = { roundValues: [1, 4], upsetBonus: { rule: UpsetBonusRule.NONE } };
+
+    const score = scoreBracketPicks(games, [pick(2, 'T1'), pick(3, 'T2'), pick(4, 'T1')], new Map(), settings);
+
+    expect(score).toMatchObject({ points: 6, maxPossiblePoints: 6, correctPickCount: 3 });
   });
 });
 

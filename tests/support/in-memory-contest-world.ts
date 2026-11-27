@@ -246,6 +246,7 @@ export class InMemoryContestWorld {
       id: this.nextId('configuration'),
       contestId,
       selectionType: SelectionType.TIERED,
+      coveredSlotDefinitionIds: null,
       // A managed tiered configuration stores picks per tier, never a roster size (#479).
       configJson: { selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 4 },
       maxEntriesPerSquad: null,
@@ -425,14 +426,6 @@ export class InMemoryContestWorld {
       clearDrawReceiptsPending: async () => undefined,
       create: async (input, limits) => this.seasonFull(input.leagueId, input.seasonYear, limits)
         ?? { status: 'created', contest: this.addContest(input.leagueId, input) },
-      moveToSeason: async (id, seasonYear, limits) => {
-        const existing = this.contests.get(id);
-        if (!existing) throw new Error(`Record to update not found: contest ${id}`);
-        const full = this.seasonFull(existing.leagueId, seasonYear, limits);
-        if (full) return full;
-        this.contests.set(id, { ...existing, seasonYear, updatedAt: this.tick() });
-        return { status: 'moved' };
-      },
       update: async (id, updates) => {
         const existing = this.contests.get(id);
         if (!existing) throw new Error(`Record to update not found: contest ${id}`);

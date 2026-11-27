@@ -241,7 +241,7 @@ export class ContestSettlementService {
         // Ranked by the one function the live leaderboard ranks an event with (#1435), from the
         // final scores: the standings frozen here are the board members saw as the event ended.
         const { rows: rankedEntries, scores: participants } = rankContestEvent({
-          field, event: sportEvent, scoring: scoring.scoring, countingRule, direction: scoringDefinition.direction, submitted: entries, missed,
+          field, event: sportEvent, scoring: scoring.scoring, coverage: scoring.coverage, countingRule, direction: scoringDefinition.direction, submitted: entries, missed,
         });
         const asOf = resolveContestStandingAsOf(participants, completedAt);
         // The single writer of ContestEntryEventStanding: one transaction per contest settled.

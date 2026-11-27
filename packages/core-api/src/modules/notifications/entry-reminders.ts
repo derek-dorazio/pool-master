@@ -53,6 +53,8 @@ import {
   type Contest,
   type ContestEntry,
   survivorLivesOf,
+  type ContestRoundCoverage,
+  contestRoundCoverage,
   type ContestSelectionConfig,
   type League,
   type SportEvent,
@@ -146,6 +148,8 @@ export interface EntryReminderDeps extends LeagueMemberDeps {
 interface DueReminder {
   contest: Contest;
   rules: ContestSelectionConfig | undefined;
+  /** The rounds the contest covers (#2014): a bracket draft's games are theirs. */
+  coverage: ContestRoundCoverage;
   sportEvent: SportEvent;
   closesAt: Date;
   hours: number;
@@ -237,7 +241,9 @@ export class EntryReminders implements DueNotifications {
     reminderHours: readonly number[],
     now: Date,
   ): Promise<{ due: DueReminder[]; next: Date | null }> {
-    const rules = (await deps.configurations.findByContest(contest.id))?.configJson;
+    const configuration = await deps.configurations.findByContest(contest.id);
+    const rules = configuration?.configJson;
+    const coverage = contestRoundCoverage(configuration);
     const cutoff = contestCutoff(rules, contest.squaresGameMatchId);
     // Each event's window closes at the contest's cutoff on it: a squares grid's is its game's kickoff.
     const games: SportEventRoundMatch[] = cutoff.kind === ContestCutoffKind.EVENT_START
@@ -251,7 +257,7 @@ export class EntryReminders implements DueNotifications {
     const open = windows.filter(({ window }) => !hasSportEventStarted(window, now));
     const due = open.flatMap(({ sportEvent, window }) => {
       const hours = dueReminderHours(window.startDate, reminderHours, now);
-      return hours === null ? [] : [{ contest, rules, sportEvent, closesAt: window.startDate, hours, entriesOpen, now }];
+      return hours === null ? [] : [{ contest, rules, coverage, sportEvent, closesAt: window.startDate, hours, entriesOpen, now }];
     });
     const ahead = open.flatMap(({ window }) => reminderHours
       .map((hours) => window.startDate.getTime() - hours * HOUR_MS)
@@ -429,7 +435,7 @@ export class EntryReminders implements DueNotifications {
       case SelectionType.BRACKET: {
         const allGames = await deps.matches.findBySportEvent(sportEvent.id);
         const games = rules.selectionType === SelectionType.BRACKET
-          ? contestBracketGames(allGames)
+          ? contestBracketGames(allGames, due.coverage)
           : allGames.filter((game) => game.status !== MatchStatus.CANCELLED);
         const gameIds = new Set(games.map((game) => game.id));
         const predictions = (await this.deps.predictions.findByEntriesAndEvent(ids, sportEvent.id))

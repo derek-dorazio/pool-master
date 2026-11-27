@@ -18,7 +18,7 @@ import type { PrismaClient } from '@prisma/client';
 import type { FastifyBaseLogger } from 'fastify';
 import type { DomainEvents } from '../domain-events';
 import type { EventLifecycleService } from '../events/event-lifecycle-service';
-import type { ContestScoringSettings, SportEvent } from '@poolmaster/shared/domain';
+import type { ContestRoundCoverage, ContestScoringSettings, SportEvent } from '@poolmaster/shared/domain';
 import type { LiveScoreResult } from '@poolmaster/shared/dto';
 import type { ParticipantScore } from '../contests/contest-leaderboard-calculator';
 import type { SportEventParticipantView } from '../events/sport-event-participant-service';
@@ -72,13 +72,14 @@ export interface ScoringFamilyModule {
   /**
    * Each field row's score in one contest, or null while it is unscored, under that contest's
    * scoring definition and settings (racing's points table is a contest setting; stroke play
-   * has none). The family's own rule for a missing result (golf's 80-stroke round, racing's
+   * has none), counting only the rounds the contest covers (`coverage`, #2014). The family's own rule for a missing result (golf's 80-stroke round, racing's
    * "did not finish" value) is applied here, and nowhere else.
    */
   scoreField(
     field: readonly SportEventParticipantView[],
     event: FieldScoringEvent,
     scoring: ContestScoringSettings,
+    coverage: ContestRoundCoverage,
   ): ParticipantScore[];
 
   /**

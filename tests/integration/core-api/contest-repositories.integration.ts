@@ -784,24 +784,6 @@ describe('ContestRepository sports leagues a year (#947)', () => {
       await second.remove();
     }
   });
-
-  it('refuses moving a contest into a season whose contests use the plan\'s sports leagues, keeping its season, and moves it with no limit', async () => {
-    const { league, event, suffix } = await createLeagueAndEvent();
-    const second = await createSecondTourEvent(event.sportLeagueId, suffix);
-    try {
-      await createContestRow(repos().contests, draftOn(league.id, second.event.id, 'Second Tour 2026'));
-      const nextYear = await createContestRow(repos().contests, draftOn(league.id, event.id, 'Fixture 2027', 2027));
-
-      const refused = await repos().contests.moveToSeason(nextYear.id, 2026, { sportLeaguesPerYear: 1, sportLeagueId: second.fixtureTourId });
-      expect(refused).toEqual({ status: 'sportsLeagueLimitReached', sportLeaguesPerYear: 1, sportLeagueCount: 1 });
-      expect((await repos().contests.findById(nextYear.id))?.seasonYear).toBe(2027);
-
-      expect(await repos().contests.moveToSeason(nextYear.id, 2026, { sportLeaguesPerYear: null })).toEqual({ status: 'moved' });
-      expect((await repos().contests.findById(nextYear.id))?.seasonYear).toBe(2026);
-    } finally {
-      await second.remove();
-    }
-  });
 });
 
 describe('ContestConfigurationRepository', () => {

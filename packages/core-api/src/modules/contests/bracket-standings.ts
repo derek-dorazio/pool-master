@@ -99,7 +99,7 @@ export async function loadBracketStandings(
     throw new BracketScoringUnavailableError(contestId, 'NOT_KNOCKOUT_ROUND_POINTS');
   }
   const settings = scoring.scoring.config;
-  const games = eventCancelled ? [] : contestBracketGames(matches);
+  const games = eventCancelled ? [] : contestBracketGames(matches, scoring.coverage);
   const seedOf = knockoutSeeds(field.map((row) => row.entry));
   const withdrawn = withdrawnRowIds(field.map((row) => row.entry), matches);
   const predictions = await deps.predictions.findByEntriesAndEvent(entries.map((entry) => entry.id), sportEventId);
