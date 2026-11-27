@@ -34,7 +34,7 @@ function service(overrides: Record<string, unknown> = {}) {
     listProviders: jest.fn((..._args: unknown[]) => Promise.resolve([{ providerId: 'feed', lastEventAt: null, settings: null }])),
     listSyncRuns: jest.fn((..._args: unknown[]) => Promise.resolve([run])),
     getSyncRun: jest.fn((..._args: unknown[]) => Promise.resolve({ ...run, details: null })),
-    syncSportEvent: jest.fn((..._args: unknown[]) => Promise.resolve({ sport: Sport.GOLF, eventId: 'e1', requestedFeeds: ['SCORES'], submittedAt: AT, syncRuns: [run] })),
+    syncSportEvent: jest.fn((..._args: unknown[]) => Promise.resolve({ sport: Sport.GOLF, eventId: 'e1', requestedKinds: ['SCORES'], submittedAt: AT, syncRuns: [run] })),
     ...overrides,
   };
 }
@@ -146,7 +146,7 @@ describe('manual event sync handler', () => {
     const fake = service();
 
     const reply = await callHandler(handlersOver(fake).submitEventSync, stubRequest({
-      params, body: { feeds: ['SCORES'] }, authUser: admin, contextLogger: false,
+      params, body: { kinds: ['SCORES'] }, authUser: admin, contextLogger: false,
     }));
 
     expect(fake.syncSportEvent).toHaveBeenCalledWith('e1', ['SCORES'], 'admin', 'admin@example.test');
@@ -160,27 +160,27 @@ describe('manual event sync handler', () => {
   ])('refuses a sync for %s', async (_label, error, status, code) => {
     const handlers = handlersOver(service({ syncSportEvent: () => Promise.reject(error) }));
 
-    const reply = await callHandler(handlers.submitEventSync, stubRequest({ params, body: { feeds: ['SCORES'] }, authUser: admin }));
+    const reply = await callHandler(handlers.submitEventSync, stubRequest({ params, body: { kinds: ['SCORES'] }, authUser: admin }));
 
     expect(reply).toMatchObject({ statusCode: status, body: { error: { code } } });
   });
 
   it('refuses a sync that fails validation with 422 SYNC_REQUEST_INVALID and the validation code', async () => {
-    const handlers = handlersOver(service({ syncSportEvent: () => Promise.reject(new SyncRequestValidationError('EMPTY_FEED_LIST', 'No feeds')) }));
+    const handlers = handlersOver(service({ syncSportEvent: () => Promise.reject(new SyncRequestValidationError('EMPTY_KIND_LIST', 'No feeds')) }));
 
-    const reply = await callHandler(handlers.submitEventSync, stubRequest({ params, body: { feeds: [] }, authUser: admin }));
+    const reply = await callHandler(handlers.submitEventSync, stubRequest({ params, body: { kinds: [] }, authUser: admin }));
 
-    expect(reply).toMatchObject({ statusCode: 422, body: { error: { code: 'SYNC_REQUEST_INVALID', details: { validationCode: 'EMPTY_FEED_LIST' } } } });
+    expect(reply).toMatchObject({ statusCode: 422, body: { error: { code: 'SYNC_REQUEST_INVALID', details: { validationCode: 'EMPTY_KIND_LIST' } } } });
   });
 
   it('passes an unexpected sync failure on to the global error handler', async () => {
     const handlers = handlersOver(service({ syncSportEvent: () => Promise.reject(boom) }));
 
-    await expect(callHandler(handlers.submitEventSync, stubRequest({ params, body: { feeds: ['SCORES'] }, authUser: admin }))).rejects.toBe(boom);
+    await expect(callHandler(handlers.submitEventSync, stubRequest({ params, body: { kinds: ['SCORES'] }, authUser: admin }))).rejects.toBe(boom);
   });
 
   it('refuses a sync with no session with 401 AUTH_SESSION_REQUIRED', async () => {
-    await expect(callHandler(handlersOver(service()).submitEventSync, stubRequest({ params, body: { feeds: ['SCORES'] } })))
+    await expect(callHandler(handlersOver(service()).submitEventSync, stubRequest({ params, body: { kinds: ['SCORES'] } })))
       .rejects.toMatchObject({ statusCode: 401, code: 'AUTH_SESSION_REQUIRED' });
   });
 });

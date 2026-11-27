@@ -71864,25 +71864,25 @@
       "EventSyncRequest": {
         "type": "object",
         "properties": {
-          "feeds": {
+          "kinds": {
             "minItems": 1,
             "type": "array",
             "items": {
               "type": "string",
               "enum": [
-                "EVENTPARTICIPANTS",
-                "EVENTLIVESCORES"
+                "FIELD",
+                "SCORES"
               ],
-              "description": "Explicit ingestion feed type requested by the caller. Every feed is event-scoped."
+              "description": "What an event sync syncs: the event's FIELD or its SCORES. A sport league's EVENTS are synced by league, not by event."
             },
-            "description": "Feed types to run for a specific event sync request."
+            "description": "The sync kinds to run for the event, each once."
           }
         },
         "required": [
-          "feeds"
+          "kinds"
         ],
         "additionalProperties": false,
-        "description": "Feed-aware event sync request."
+        "description": "A manual event sync request."
       },
       "ProviderLeagueDto": {
         "type": "object",
@@ -73392,14 +73392,6 @@
                 "description": "Raw/debug provider payload captured for this run.",
                 "type": "object",
                 "properties": {
-                  "operation": {
-                    "type": "string",
-                    "enum": [
-                      "EVENTPARTICIPANTS",
-                      "EVENTLIVESCORES"
-                    ],
-                    "description": "Provider feed operation represented by this payload."
-                  },
                   "rawCaptured": {
                     "type": "boolean",
                     "description": "Whether raw provider response JSON was captured for this run."
@@ -73413,7 +73405,6 @@
                   }
                 },
                 "required": [
-                  "operation",
                   "rawCaptured",
                   "rawTruncated"
                 ],
@@ -73940,16 +73931,17 @@
             "type": "string",
             "description": "Provider event identifier the submitted runs sync."
           },
-          "requestedFeeds": {
+          "requestedKinds": {
             "type": "array",
             "items": {
               "type": "string",
               "enum": [
-                "EVENTPARTICIPANTS",
-                "EVENTLIVESCORES"
+                "FIELD",
+                "SCORES"
               ],
-              "description": "Explicit ingestion feed type requested by the caller. Every feed is event-scoped."
-            }
+              "description": "What an event sync syncs: the event's FIELD or its SCORES. A sport league's EVENTS are synced by league, not by event."
+            },
+            "description": "The sync kinds the submission runs, each once."
           },
           "submittedAt": {
             "type": "string",
@@ -74131,7 +74123,7 @@
         "required": [
           "sport",
           "eventId",
-          "requestedFeeds",
+          "requestedKinds",
           "submittedAt",
           "syncRuns"
         ],

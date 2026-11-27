@@ -40,7 +40,7 @@ import type {
   SportEventRoundMatchupsResponse,
   UpdateSportEventRoundMatchRequest,
 } from '@poolmaster/shared/dto/bracket.dto';
-import { eventFeedRef, matchPlaceOf, OFFERABLE_SPORT_EVENT_STATUSES, type MatchPlace } from '@poolmaster/shared/domain';
+import { eventFeedRef, ProviderSyncKind, matchPlaceOf, OFFERABLE_SPORT_EVENT_STATUSES, type MatchPlace } from '@poolmaster/shared/domain';
 import { sendError } from '../../core/error-handler';
 import {
   mapGolfRoundScorePreviewToDto,
@@ -215,7 +215,7 @@ export function createEventHandlers({ services, eventLifecycle, ingestion, leade
       }
       try {
         const result = await ingestion.syncEventData(
-          { sport: event.sport, providerId: feedRef.providerId, eventId: feedRef.externalId, feeds: ['EVENTPARTICIPANTS'] },
+          { sport: event.sport, providerId: feedRef.providerId, eventId: feedRef.externalId, kinds: [ProviderSyncKind.FIELD] },
           request.authUser?.userId ?? '',
           request.authUser?.email ?? '',
         );

@@ -25854,10 +25854,10 @@ export interface components {
                 }[];
             }[];
         };
-        /** @description Feed-aware event sync request. */
+        /** @description A manual event sync request. */
         EventSyncRequest: {
-            /** @description Feed types to run for a specific event sync request. */
-            feeds: ("EVENTPARTICIPANTS" | "EVENTLIVESCORES")[];
+            /** @description The sync kinds to run for the event, each once. */
+            kinds: ("FIELD" | "SCORES")[];
         };
         /** @description One of a provider's own leagues (#1997). */
         ProviderLeagueDto: {
@@ -26441,11 +26441,6 @@ export interface components {
             details: ({
                 /** @description Raw/debug provider payload captured for this run. */
                 providerPayload?: {
-                    /**
-                     * @description Provider feed operation represented by this payload.
-                     * @enum {string}
-                     */
-                    operation: "EVENTPARTICIPANTS" | "EVENTLIVESCORES";
                     /** @description Whether raw provider response JSON was captured for this run. */
                     rawCaptured: boolean;
                     /** @description Whether the captured raw provider payload was truncated before storage. */
@@ -26651,7 +26646,8 @@ export interface components {
             sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
             /** @description Provider event identifier the submitted runs sync. */
             eventId: string;
-            requestedFeeds: ("EVENTPARTICIPANTS" | "EVENTLIVESCORES")[];
+            /** @description The sync kinds the submission runs, each once. */
+            requestedKinds: ("FIELD" | "SCORES")[];
             /**
              * Format: date-time
              * @description ISO 8601 datetime string.

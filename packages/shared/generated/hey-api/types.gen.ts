@@ -29532,13 +29532,13 @@ export type PerpetualTrophyListResponse = {
 };
 
 /**
- * Feed-aware event sync request.
+ * A manual event sync request.
  */
 export type EventSyncRequest = {
     /**
-     * Feed types to run for a specific event sync request.
+     * The sync kinds to run for the event, each once.
      */
-    feeds: Array<'EVENTPARTICIPANTS' | 'EVENTLIVESCORES'>;
+    kinds: Array<'FIELD' | 'SCORES'>;
 };
 
 /**
@@ -30339,10 +30339,6 @@ export type ProviderSyncRunDetailDto = {
          */
         providerPayload?: {
             /**
-             * Provider feed operation represented by this payload.
-             */
-            operation: 'EVENTPARTICIPANTS' | 'EVENTLIVESCORES';
-            /**
              * Whether raw provider response JSON was captured for this run.
              */
             rawCaptured: boolean;
@@ -30595,7 +30591,10 @@ export type ProviderManualSyncSubmissionResponse = {
      * Provider event identifier the submitted runs sync.
      */
     eventId: string;
-    requestedFeeds: Array<'EVENTPARTICIPANTS' | 'EVENTLIVESCORES'>;
+    /**
+     * The sync kinds the submission runs, each once.
+     */
+    requestedKinds: Array<'FIELD' | 'SCORES'>;
     /**
      * ISO 8601 datetime string.
      */

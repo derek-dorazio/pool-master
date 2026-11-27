@@ -34,14 +34,12 @@ import {
 import type { ProviderRegistry } from './core/provider-registry';
 import type {
   EventSyncRequest,
-  IngestionFeedType,
   IngestionScheduler,
 } from './core/ingestion-scheduler';
-import { SyncOrchestrator } from './core/sync-orchestrator';
+import { SyncOrchestrator, isEventSyncKind, type EventSyncKind } from './core/sync-orchestrator';
 import {
   ProviderSyncRunLedger,
   SyncRunOutcomeUnrecordedError,
-  feedOfSyncKind,
 } from './persistence/provider-sync-run-ledger';
 import type { BackgroundJobQueue } from '../background-jobs/background-job-queue';
 import type { ManualEventSyncJobPayload } from './manual-event-sync-job';
@@ -81,7 +79,7 @@ export interface ProviderSummary {
 export interface ProviderManualSyncSubmissionResult {
   sport: Sport;
   eventId: string;
-  requestedFeeds: IngestionFeedType[];
+  requestedKinds: EventSyncKind[];
   submittedAt: Date;
   syncRuns: ProviderSyncRun[];
 }
@@ -190,7 +188,7 @@ export class IngestionService {
   /**
    * The event of ours the provider knows by this id (#2004), so the runs and their job name it;
    * null when no event has it. Only the sync gives an event a provider id, so every such event is
-   * one the provider syncs: its live scores and its field (EVENTPARTICIPANTS). The field feed
+   * one the provider syncs: its live scores and its field. The field sync
    * writes only the field and its size; a synced event's details are kept current by
    * `SportEventService.keepProviderEventsCurrent`, never here (ADR 0011). A provider event linked
    * to several events, one per competition its games reach (#2154), names their league and no one
@@ -306,12 +304,12 @@ export class IngestionService {
   }
 
   /**
-   * A root admin's Sync now on one of our events (#2004): the requested feeds of the event at its
+   * A root admin's Sync now on one of our events (#2004): the requested sync kinds of the event at its
    * league's provider, by the id the sync gave it.
    */
   async syncSportEvent(
     sportEventId: string,
-    feeds: EventSyncRequest['feeds'],
+    kinds: EventSyncRequest['kinds'],
     rootAdminUserId: string,
     rootAdminEmail: string,
   ): Promise<ProviderManualSyncSubmissionResult> {
@@ -321,7 +319,7 @@ export class IngestionService {
     if (feedRef === undefined) {
       throw new SportEventNotSyncedError(`Sport event ${sportEventId} has no id at its league's provider, so nothing syncs it.`, 'EVENT_NOT_LINKED', 409);
     }
-    return this.syncEventData({ sport: event.sport, providerId: feedRef.providerId, eventId: feedRef.externalId, feeds }, rootAdminUserId, rootAdminEmail);
+    return this.syncEventData({ sport: event.sport, providerId: feedRef.providerId, eventId: feedRef.externalId, kinds }, rootAdminUserId, rootAdminEmail);
   }
 
   async syncEventData(
@@ -354,7 +352,7 @@ export class IngestionService {
         sport: request.sport,
         providerId: provider.providerId,
         eventId: request.eventId,
-        feeds: request.feeds,
+        kinds: request.kinds,
       },
     });
     const normalizedScope = normalizedRequest.scope;
@@ -364,7 +362,7 @@ export class IngestionService {
     this.logger?.info({
       sport: normalizedScope.sport,
       eventId: normalizedScope.eventId,
-      requestedFeeds: normalizedScope.feeds,
+      requestedKinds: normalizedScope.kinds,
       providerId: provider.providerId,
       rootAdminUserId,
     }, 'Submitting manual event sync');
@@ -392,14 +390,14 @@ export class IngestionService {
       sport: normalizedScope.sport,
       eventId: normalizedScope.eventId,
       providerId: provider.providerId,
-      requestedFeeds: normalizedScope.feeds,
+      requestedKinds: normalizedScope.kinds,
       syncRunIds: syncRuns.map((run) => run.id),
     }, 'Submitted manual event sync');
 
     return {
       sport: normalizedScope.sport,
       eventId: normalizedScope.eventId,
-      requestedFeeds: normalizedScope.feeds,
+      requestedKinds: normalizedScope.kinds,
       submittedAt,
       syncRuns,
     };
@@ -441,8 +439,8 @@ export class IngestionService {
         this.logger?.info({ ...scope, syncRunId, status: syncRun?.status ?? null }, 'Skipped a manual sync run that is no longer submitted');
         continue;
       }
-      const requestedFeed = feedOfSyncKind(syncRun.kind);
-      if (requestedFeed === null) {
+      const requestedKind = syncRun.kind;
+      if (!isEventSyncKind(requestedKind)) {
         await this.syncRunLedger.failSubmittedRun(syncRun, new Error(`Unsupported event sync kind: ${syncRun.kind}`));
         continue;
       }
@@ -453,7 +451,7 @@ export class IngestionService {
             sport: payload.sport,
             providerId: payload.providerId,
             eventId: payload.eventId,
-            feeds: [requestedFeed],
+            kinds: [requestedKind],
           }),
           { backgroundJobId: context.jobId },
         );
@@ -465,13 +463,13 @@ export class IngestionService {
         if (jobDeferredUntilOf(error) !== null) throw error;
         if (error instanceof SyncRunOutcomeUnrecordedError) {
           unrecorded.push(syncRun.id);
-          this.logger?.error({ ...scope, syncRunId: syncRun.id, requestedFeed, error }, 'Manual event sync feed failed and its run could not be marked FAILED; the job will be retried');
+          this.logger?.error({ ...scope, syncRunId: syncRun.id, requestedKind, error }, 'Manual event sync feed failed and its run could not be marked FAILED; the job will be retried');
           continue;
         }
         this.logger?.error({
           ...scope,
           syncRunId: syncRun.id,
-          requestedFeed,
+          requestedKind,
           error,
         }, 'Manual event sync feed failed; its run is marked FAILED');
         // The ledger marked the run failed; the job moves on to the remaining feeds.

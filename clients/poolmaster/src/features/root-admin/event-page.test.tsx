@@ -380,7 +380,7 @@ describe('Event page syncs', () => {
 
     await waitFor(() => expect(submitEventSyncMock).toHaveBeenCalledWith(expect.objectContaining({
       path: { eventId: 'tour-1' },
-      body: { feeds: ['EVENTLIVESCORES'] },
+      body: { kinds: ['SCORES'] },
     })));
   });
 

@@ -424,7 +424,7 @@ describe('Contract verification (root admin)', () => {
         providerId: BALLDONTLIE_TEST_PROVIDER_ID,
         status: 'COMPLETED',
         summary: 'Completed event participants sync.',
-        detailsJson: { providerPayload: { operation: 'EVENTPARTICIPANTS', rawCaptured: true, rawTruncated: false, raw: [] } },
+        detailsJson: { providerPayload: { rawCaptured: true, rawTruncated: false, raw: [] } },
       },
     });
     const ordinaryUser = await createTestUser({ displayName: 'Contract Non Admin Sync Run Reader' });
@@ -914,26 +914,41 @@ describe('Contract verification (root admin)', () => {
         method: 'POST',
         url: `/api/v1/ingestion/events/${syncTarget.id}/sync`,
         headers: withoutJsonBodyHeaders(rootAdmin.headers),
-        payload: { feeds: ['EVENTLIVESCORES'] },
+        payload: { kinds: ['SCORES'] },
       });
       expect(eventSyncRes.statusCode).toBe(202);
       expect(ProviderManualSyncSubmissionResponseSchema.safeParse(eventSyncRes.json()).success).toBe(true);
       expect(eventSyncRes.json<ProviderManualSyncSubmissionResponse>().sport).toBe('GOLF');
       expect(eventSyncRes.json<ProviderManualSyncSubmissionResponse>().eventId).toBe('contract-sync-event');
-      expect(eventSyncRes.json<ProviderManualSyncSubmissionResponse>().requestedFeeds).toEqual(['EVENTLIVESCORES']);
+      expect(eventSyncRes.json<ProviderManualSyncSubmissionResponse>().requestedKinds).toEqual(['SCORES']);
       expect(typeof eventSyncRes.json<ProviderManualSyncSubmissionResponse>().submittedAt).toBe('string');
       expect(eventSyncRes.json<ProviderManualSyncSubmissionResponse>().syncRuns.length).toBeGreaterThanOrEqual(1);
       expect(eventSyncRes.json<ProviderManualSyncSubmissionResponse>().syncRuns[0]?.status).toBe('SUBMITTED');
       await waitForProviderSyncRun(eventSyncRes.json<ProviderManualSyncSubmissionResponse>().syncRuns[0]?.id);
 
-      // #125 / #126 — PARTICIPANTRANKINGS, EVENTSCHEDULE and EVENTRESULTS are retired, not
-      // demoted: the event sync contract refuses each of them.
-      for (const retiredFeed of ['PARTICIPANTRANKINGS', 'EVENTSCHEDULE', 'EVENTRESULTS']) {
+      // An event sync takes the event's FIELD or SCORES kind (#2093): a league's EVENTS, the old
+      // feed names (#125, #126, #2093) and the old `feeds` list are all refused.
+      const oldFeedsRes = await app.inject({
+        method: 'POST',
+        url: `/api/v1/ingestion/events/${syncTarget.id}/sync`,
+        headers: withoutJsonBodyHeaders(rootAdmin.headers),
+        payload: { feeds: ['EVENTPARTICIPANTS'] },
+      });
+      expect(oldFeedsRes.statusCode).toBe(400);
+      // EVENTS is the one ProviderSyncKind an event sync leaves out: a league syncs its events.
+      const leagueKindRes = await app.inject({
+        method: 'POST',
+        url: `/api/v1/ingestion/events/${syncTarget.id}/sync`,
+        headers: withoutJsonBodyHeaders(rootAdmin.headers),
+        payload: { kinds: ['EVENTS'] },
+      });
+      expect(leagueKindRes.statusCode).toBe(400);
+      for (const retiredFeed of ['EVENTPARTICIPANTS', 'EVENTLIVESCORES', 'PARTICIPANTRANKINGS', 'EVENTSCHEDULE', 'EVENTRESULTS']) {
         const retiredFeedRes = await app.inject({
           method: 'POST',
           url: `/api/v1/ingestion/events/${syncTarget.id}/sync`,
           headers: withoutJsonBodyHeaders(rootAdmin.headers),
-          payload: { feeds: [retiredFeed] },
+          payload: { kinds: [retiredFeed] },
         });
         expect(retiredFeedRes.statusCode).toBe(400);
       }
@@ -944,7 +959,7 @@ describe('Contract verification (root admin)', () => {
         url: '/api/v1/ingestion/sports/GOLF/sync',
         headers: withoutJsonBodyHeaders(rootAdmin.headers),
         payload: {
-          feeds: ['EVENTSCHEDULE'],
+          kinds: ['EVENTSCHEDULE'],
         },
       });
       expect(sportSyncRes.statusCode).toBe(404);
@@ -966,7 +981,7 @@ describe('Contract verification (root admin)', () => {
         app.inject({ method: 'POST', url: '/api/v1/events/from-provider-event', headers: rootAdmin.headers, payload: {} }),
         app.inject({ method: 'PUT', url: `/api/v1/events/${someId}/score-source`, headers: rootAdmin.headers, payload: {} }),
         app.inject({ method: 'DELETE', url: `/api/v1/events/${someId}/score-source`, headers: withoutJsonBodyHeaders(rootAdmin.headers) }),
-        app.inject({ method: 'POST', url: `/api/v1/ingestion/sports/GOLF/events/${someId}/sync`, headers: rootAdmin.headers, payload: { feeds: ['EVENTLIVESCORES'] } }),
+        app.inject({ method: 'POST', url: `/api/v1/ingestion/sports/GOLF/events/${someId}/sync`, headers: rootAdmin.headers, payload: { kinds: ['SCORES'] } }),
       ]);
       expect(retired.map((res) => res.statusCode)).toEqual([404, 404, 404, 404, 404]);
     } finally {
@@ -990,7 +1005,7 @@ describe('Contract verification (root admin)', () => {
         method: 'POST',
         url: `/api/v1/ingestion/events/${target.id}/sync`,
         headers: withoutJsonBodyHeaders(rootAdmin.headers),
-        payload: { feeds: ['EVENTLIVESCORES'] },
+        payload: { kinds: ['SCORES'] },
       });
       expect(prepareSyncRes.statusCode).toBe(202);
       expect(ProviderManualSyncSubmissionResponseSchema.safeParse(prepareSyncRes.json()).success).toBe(true);
@@ -1086,7 +1101,7 @@ describe('Contract verification (root admin)', () => {
         method: 'POST',
         url: `/api/v1/ingestion/events/${eventId}/sync`,
         headers: withoutJsonBodyHeaders(rootAdmin.headers),
-        payload: { feeds: ['EVENTLIVESCORES'] },
+        payload: { kinds: ['SCORES'] },
       });
       const testEvent = await getPrisma().sportEvent.create({
         data: { ...(await freshEventEdition(getPrisma())), name: 'Contract Test Event', startDate: new Date('2026-04-10T15:00:00.000Z') },

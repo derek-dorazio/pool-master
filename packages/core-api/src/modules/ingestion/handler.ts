@@ -124,10 +124,10 @@ export function createIngestionHandlers(
     const { userId: rootAdminUserId, email: rootAdminEmail } = requireAuthUser(request);
     const logger = request.contextLogger ?? request.log;
     const { eventId } = request.params;
-    logger.debug({ eventId, requestedFeeds: request.body.feeds }, 'Running manual event sync');
+    logger.debug({ eventId, requestedKinds: request.body.kinds }, 'Running manual event sync');
 
     try {
-      const result = await ingestionService.syncSportEvent(eventId, request.body.feeds, rootAdminUserId, rootAdminEmail);
+      const result = await ingestionService.syncSportEvent(eventId, request.body.kinds, rootAdminUserId, rootAdminEmail);
       return reply.code(202).send(toProviderManualSyncSubmissionResponse(result));
     } catch (err) {
       if (err instanceof SportEventNotSyncedError) {

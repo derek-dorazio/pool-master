@@ -732,9 +732,8 @@ describe('mock contest feed provider event-first verification', () => {
     // synced from the provider league their events are mapped under.
     await syncLinkedEventsLeagues(prisma);
 
-    const eligibleEvents = await eventReader.listEventsForFeed({
+    const eligibleEvents = await eventReader.listFieldSyncEvents({
       sport: Sport.GOLF,
-      feed: 'EVENTPARTICIPANTS',
       from: syncVerificationNow,
       to: new Date(syncVerificationNow.getTime() + 7 * 24 * 60 * 60 * 1000),
       now: syncVerificationNow,
@@ -748,7 +747,7 @@ describe('mock contest feed provider event-first verification', () => {
         sport: Sport.GOLF,
         providerId: 'balldontlie',
         eventId: eventExternalId,
-        feeds: ['EVENTPARTICIPANTS'],
+        kinds: ['FIELD'],
       },
       rootAdmin.user.id,
       rootAdmin.user.email,
@@ -771,7 +770,7 @@ describe('mock contest feed provider event-first verification', () => {
         sport: Sport.GOLF,
         providerId: 'balldontlie',
         eventId: eventExternalId,
-        feeds: ['EVENTPARTICIPANTS'],
+        kinds: ['FIELD'],
       },
       rootAdmin.user.id,
       rootAdmin.user.email,
@@ -889,7 +888,7 @@ describe('mock contest feed provider event-first verification', () => {
         sport: Sport.GOLF,
         providerId: 'balldontlie',
         eventId: eventExternalId,
-        feeds: ['EVENTPARTICIPANTS'],
+        kinds: ['FIELD'],
       },
       rootAdmin.user.id,
       rootAdmin.user.email,
@@ -949,7 +948,7 @@ describe('mock contest feed provider event-first verification', () => {
         sport: Sport.GOLF,
         providerId: 'balldontlie',
         eventId: eventExternalId,
-        feeds: ['EVENTLIVESCORES'],
+        kinds: ['SCORES'],
       },
       rootAdmin.user.id,
       rootAdmin.user.email,
@@ -981,7 +980,7 @@ describe('mock contest feed provider event-first verification', () => {
         sport: Sport.GOLF,
         providerId: 'balldontlie',
         eventId: eventExternalId,
-        feeds: ['EVENTLIVESCORES'],
+        kinds: ['SCORES'],
       },
       rootAdmin.user.id,
       rootAdmin.user.email,
@@ -1001,7 +1000,7 @@ describe('mock contest feed provider event-first verification', () => {
         sport: Sport.GOLF,
         providerId: 'balldontlie',
         eventId: eventExternalId,
-        feeds: ['EVENTLIVESCORES'],
+        kinds: ['SCORES'],
       },
       rootAdmin.user.id,
       rootAdmin.user.email,
@@ -1070,7 +1069,7 @@ describe('mock contest feed provider event-first verification', () => {
         sport: Sport.GOLF,
         providerId: 'balldontlie',
         eventId: eventExternalId,
-        feeds: ['EVENTPARTICIPANTS'],
+        kinds: ['FIELD'],
       },
       rootAdmin.user.id,
       rootAdmin.user.email,
@@ -1120,7 +1119,7 @@ describe('mock contest feed provider event-first verification', () => {
       sport: Sport.GOLF,
       providerId: 'balldontlie',
       eventId: eventExternalId,
-      feeds: ['EVENTPARTICIPANTS'],
+      kinds: ['FIELD'],
     });
 
     expect(fieldJob.status).toBe('COMPLETED');

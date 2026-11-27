@@ -73,7 +73,7 @@ describe('SyncRunDialog', () => {
     const user = userEvent.setup();
     getProviderSyncRunMock.mockResolvedValue(detailResponse({
       providerPayload: {
-        operation: 'EVENTLIVESCORES',
+        
         rawCaptured: true,
         rawTruncated: false,
         raw: [{ path: '/v1/scenarios/golf/events/masters-2026/scores', raw: { contestants: [] } }],
@@ -102,7 +102,7 @@ describe('SyncRunDialog', () => {
   it('says no rows changed and points to the raw provider payload when a sync changed nothing', async () => {
     getProviderSyncRunMock.mockResolvedValue(detailResponse({
       providerPayload: {
-        operation: 'EVENTPARTICIPANTS',
+        
         rawCaptured: true,
         rawTruncated: false,
         raw: [{ path: '/vendor/events/future-open-2026/field', raw: { records: [{ id: 'vendor-player-1' }] } }],
