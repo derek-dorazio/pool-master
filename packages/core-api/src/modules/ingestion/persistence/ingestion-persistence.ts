@@ -362,7 +362,13 @@ export class IngestionPersistence {
         sportEventParticipantsPersisted += await this.persistEventField(
           { ...detail, participants: feed.participants },
           persistedEvent.id,
-          { seedsLocked, fieldFromFeed: feed.fieldFromFeed },
+          {
+            seedsLocked,
+            fieldFromFeed: feed.fieldFromFeed,
+            // A draft's field is its placed games' teams alone (#2221): a team whose game left its
+            // slots is withdrawn. A released event keeps its rows, since a contest may hold them.
+            withdrawUnlisted: feed.fromPlacedGames && persistedEvent.status === SportEventStatus.DRAFT,
+          },
           participantIdByKey,
           detailRows,
           followUps,
@@ -406,7 +412,7 @@ export class IngestionPersistence {
   private async persistEventField(
     detail: FieldFeed,
     sportEventId: string,
-    { seedsLocked, fieldFromFeed }: { seedsLocked: boolean; fieldFromFeed: boolean },
+    { seedsLocked, fieldFromFeed, withdrawUnlisted = false }: { seedsLocked: boolean; fieldFromFeed: boolean; withdrawUnlisted?: boolean },
     participantIdByKey: ReadonlyMap<string, string>,
     detailRows: SyncWriteDetailRow[],
     followUps: JobsForWrite,
@@ -416,11 +422,14 @@ export class IngestionPersistence {
       const participantId = participantIdByKey.get(providerKey(participant));
       if (participantId) mapped.set(participantId, participant);
     }
-    const existingByParticipantId = new Map(
-      (mapped.size === 0 ? [] : await this.prisma.sportEventParticipant.findMany({
-        where: { sportEventId, participantId: { in: [...mapped.keys()] } },
-      })).map((row) => [row.participantId, row]),
-    );
+    // A field that withdraws the teams the feed no longer lists reads the whole field, in the same one read.
+    const rows = withdrawUnlisted
+      ? await this.prisma.sportEventParticipant.findMany({ where: { sportEventId } })
+      : mapped.size === 0 ? [] : await this.prisma.sportEventParticipant.findMany({ where: { sportEventId, participantId: { in: [...mapped.keys()] } } });
+    const existingByParticipantId = new Map(rows.filter((row) => mapped.has(row.participantId)).map((row) => [row.participantId, row]));
+    const unlisted = withdrawUnlisted
+      ? rows.filter((row) => !mapped.has(row.participantId) && row.status !== SportEventParticipantStatus.WITHDRAWN).map((row) => row.id)
+      : [];
 
     const onField = fieldFromFeed ? [...mapped] : [...mapped].filter(([participantId]) => existingByParticipantId.has(participantId));
     const plans = onField.map(([participantId, participant]) => {
@@ -453,7 +462,7 @@ export class IngestionPersistence {
     const toCreate = plans.filter((plan) => !plan.existing);
     const toUpdate = plans.filter((plan) => plan.existing && plan.disposition !== 'UNCHANGED');
     let createdIdByParticipantId = new Map<string, string>();
-    if (toCreate.length > 0 || toUpdate.length > 0) {
+    if (toCreate.length > 0 || toUpdate.length > 0 || unlisted.length > 0) {
       // The field changed, so what follows it (the boards' rebuild, #1466) is written with it.
       const rebuild = await this.domainEvents.collect({ type: DomainEventType.SPORT_EVENT_RESULTS_CHANGED, sportEventId });
       const [created] = await this.prisma.$transaction([
@@ -466,6 +475,10 @@ export class IngestionPersistence {
           where: { id: (plan.existing as { id: string }).id },
           data: plan.data,
         })),
+        ...(unlisted.length === 0 ? [] : [this.prisma.sportEventParticipant.updateMany({
+          where: { id: { in: unlisted } },
+          data: { status: SportEventParticipantStatus.WITHDRAWN },
+        })]),
         ...(rebuild.jobs.length > 0 || followUps.jobs.length > 0 ? [backgroundJobsInsert(this.prisma, [...rebuild.jobs, ...followUps.jobs])] : []),
       ]);
       rebuild.queued();
@@ -507,14 +520,14 @@ type FieldFeed = Pick<SportEventDetail, 'providerId' | 'externalId' | 'participa
 function feedOfEvent(
   detail: Pick<SportEventDetail, 'participants' | 'games'>,
   slots: ReadonlyArray<{ seasonSlot: { definition: { providerMappings: ReadonlyArray<{ matchType: PrismaSlotProviderMatchType }> }; placedGames: ReadonlyArray<{ externalId: string }> } }>,
-): { participants: SportEventDetail['participants']; games: SportEventDetail['games']; fieldFromFeed: boolean } {
+): { participants: SportEventDetail['participants']; games: SportEventDetail['games']; fieldFromFeed: boolean; fromPlacedGames: boolean } {
   const matchTypes = slots.flatMap(({ seasonSlot }) => seasonSlot.definition.providerMappings.map((mapping) => mapping.matchType));
-  if (matchTypes.length === 0) return { participants: detail.participants, games: detail.games, fieldFromFeed: true };
-  if (!matchTypes.includes(PrismaSlotProviderMatchType.REST_OF_PHASE)) return { participants: detail.participants, games: undefined, fieldFromFeed: false };
+  if (matchTypes.length === 0) return { participants: detail.participants, games: detail.games, fieldFromFeed: true, fromPlacedGames: false };
+  if (!matchTypes.includes(PrismaSlotProviderMatchType.REST_OF_PHASE)) return { participants: detail.participants, games: undefined, fieldFromFeed: false, fromPlacedGames: false };
   const placed = new Set(slots.flatMap(({ seasonSlot }) => seasonSlot.placedGames.map((game) => game.externalId)));
   const games = (detail.games ?? []).filter((game) => game.games.some((each) => placed.has(each.providerGameId)));
   const teams = new Set(games.flatMap((game) => [game.homeTeamExternalId, game.awayTeamExternalId]));
-  return { participants: detail.participants.filter((participant) => teams.has(participant.externalId)), games, fieldFromFeed: true };
+  return { participants: detail.participants.filter((participant) => teams.has(participant.externalId)), games, fieldFromFeed: true, fromPlacedGames: true };
 }
 
 /** Whether an event's seeds are locked: a released bracket's are (#698), since the upset bonus reads them as they stood at release. */

@@ -14,6 +14,7 @@ import type { SportEventDetail } from '../../../packages/core-api/src/modules/in
 import { SportEventParticipantStatus, Sport } from '@poolmaster/shared/domain';
 import { keyedSlotDefinitionId, linkedProviderEvent, providerEventWhere, putEventInSlot } from '../../support/event-edition';
 import { recordStatements, statementsOn, StatementVerb } from '../statement-log';
+import { expectSameStatementCount } from '../query-scaling';
 
 const rankedEventIds = [
   'integration-ingestion-event',
@@ -363,6 +364,75 @@ describe('IngestionPersistence', () => {
     const [job] = await prisma.backgroundJob.findMany({ where: { type: 'SYNC_EVENT_GAMES_AND_TIERS', sportEventId: event.id } });
     expect((job.payload as { games: Array<{ games: Array<{ providerGameId: string }> }> }).games.map((each) => each.games[0].providerGameId)).toEqual(['bowl-game']);
     await prisma.backgroundJob.deleteMany({ where: { sportEventId: event.id } });
+  });
+
+  describe('a rest-of-phase draft\'s field follows its placed games (#2221)', () => {
+    const game = (id: string, home: string, away: string) => ({ games: [{ providerGameId: id, gameNumber: 1 }], roundNumber: 1, homeTeamExternalId: home, awayTeamExternalId: away, scheduledAt: new Date('2026-12-20T17:00:00.000Z'), isNeutralSite: false });
+    const TEAMS = ['ingestion-stale-bowl-home', 'ingestion-stale-bowl-away', 'ingestion-stale-cfp-1', 'ingestion-stale-cfp-4'];
+
+    /**
+     * A bowls event holding a bowl and `leaving` CFP games, synced once so its field has all their
+     * teams; then the CFP games are placed in the CFP, so the bowls hold the bowl alone.
+     */
+    async function bowlsHoldingBoth(externalId: string, leaving = 1) {
+      const cfpTeams = leaving === 1 ? [TEAMS[2], TEAMS[3]] : Array.from({ length: 2 * leaving }, (_, index) => `${externalId}-cfp-team-${String(index)}`);
+      const cfpGames = Array.from({ length: leaving }, (_, index) => game(`stale-cfp-${String(index)}`, cfpTeams[2 * index], cfpTeams[2 * index + 1]));
+      const games = [game('stale-bowl', TEAMS[0], TEAMS[1]), ...cfpGames];
+      const prisma = getPrisma();
+      const persistence = new IngestionPersistence(getAppPrisma(), testDomainEvents());
+      const event = await linkedProviderEvent(prisma, { providerId: 'balldontlie', externalId, name: 'Bowl Games', startDate: new Date('2026-12-20T12:00:00.000Z') });
+      await prisma.sportEvent.update({ where: { id: event.id }, data: { status: 'DRAFT' } });
+      const { sportLeagueProviderMappingId } = await prisma.sportEventProviderMapping.findFirstOrThrow({ where: { sportEventId: event.id }, select: { sportLeagueProviderMappingId: true } });
+      const definitionId = await keyedSlotDefinitionId(prisma, event.sportLeagueId, 'REST_OF_POSTSEASON', { phase: 'POSTSEASON', slotKind: 'TOURNAMENT' });
+      await prisma.sportLeagueCompetitionSlotProviderMapping.createMany({
+        data: [{ sportLeagueId: event.sportLeagueId, sportLeagueCompetitionSlotId: definitionId, sportLeagueProviderMappingId, matchType: 'REST_OF_PHASE', providerValue: null }],
+        skipDuplicates: true,
+      });
+      const seasonSlotId = await putEventInSlot(prisma, event.id, definitionId);
+      await prisma.sportLeagueSeasonCompetitionSlotGameProviderMapping.createMany({
+        data: games.map((each) => each.games[0].providerGameId).map((gameId) => ({ sportLeagueId: event.sportLeagueId, sportLeagueSeasonCompetitionSlotId: seasonSlotId, sportLeagueProviderMappingId, externalId: `${externalId}-${gameId}` })),
+      });
+      const detail = {
+        ...rankedFieldDetail(externalId, [TEAMS[0], TEAMS[1], ...cfpTeams].map((team) => rankedGolfer(team))),
+        games: games.map((each) => ({ ...each, games: [{ providerGameId: `${externalId}-${each.games[0].providerGameId}`, gameNumber: 1 }] })),
+      };
+      await persistence.persistEventDetailWithDiagnostics(detail);
+      // The CFP game is placed in the CFP once its seeds are: the bowls hold the bowl alone.
+      await prisma.sportLeagueSeasonCompetitionSlotGameProviderMapping.deleteMany({ where: { sportLeagueSeasonCompetitionSlotId: seasonSlotId, externalId: { not: `${externalId}-stale-bowl` } } });
+      const statuses = async () => Object.fromEntries((await prisma.sportEventParticipant.findMany({ where: { sportEventId: event.id }, include: { participant: { include: { providerMappings: true } } } }))
+        .map((row) => [feedIdOf(row.participant) ?? '', row.status]));
+      return { event, detail, persistence, statuses };
+    }
+
+    it('withdraws from a draft the teams whose game left its slots, and keeps the teams of the games it still holds', async () => {
+      const { detail, persistence, statuses } = await bowlsHoldingBoth('integration-stale-draft');
+
+      await persistence.persistEventDetailWithDiagnostics(detail);
+
+      expect(await statuses()).toEqual({
+        [TEAMS[0]]: 'ACTIVE', [TEAMS[1]]: 'ACTIVE', [TEAMS[2]]: 'WITHDRAWN', [TEAMS[3]]: 'WITHDRAWN',
+      });
+    });
+
+    it('withdraws 20 teams in the same statements as 2', async () => {
+      await expectSameStatementCount({
+        seed: async (teams) => bowlsHoldingBoth(`integration-stale-scaling-${String(teams)}`, teams / 2),
+        call: async ({ detail, persistence, statuses }) => {
+          await persistence.persistEventDetailWithDiagnostics(detail);
+          return Object.values(await statuses()).filter((status) => status === 'WITHDRAWN').length;
+        },
+        rowsShown: (withdrawn) => withdrawn,
+      });
+    });
+
+    it('keeps every team on a released event, since a contest may already hold them', async () => {
+      const { event, detail, persistence, statuses } = await bowlsHoldingBoth('integration-stale-released');
+      await getPrisma().sportEvent.update({ where: { id: event.id }, data: { status: 'SCHEDULED' } });
+
+      await persistence.persistEventDetailWithDiagnostics(detail);
+
+      expect(Object.values(await statuses())).toEqual(['ACTIVE', 'ACTIVE', 'ACTIVE', 'ACTIVE']);
+    });
   });
 
   it('hands no provider game to the follow-up of an event playing only a date-window slot, whose Matches are its seeds\' bracket', async () => {
