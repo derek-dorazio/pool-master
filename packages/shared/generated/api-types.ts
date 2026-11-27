@@ -1435,6 +1435,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/leagues/{id}/contest-management/contests/{contestId}/coverage": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Change the event and starting slot of a contest in Set up
+         * @description Changes the events a contest covers and its starting slot (#2014), and returns it as getContestConfiguration does. Commissioner only, and only while the contest is in Set up (DRAFT): from the moment it opens its coverage is fixed. The covered Season slots are resolved again from the contest's template, as at create, and the events are checked as at create (released, field loaded, not started, the contest's sport league and Season, the rules fit them).
+         */
+        put: operations["setContestCoverage"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/leagues/{id}/contest-management/contests/{contestId}/cup-weight": {
         parameters: {
             query?: never;
@@ -16420,6 +16440,16 @@ export interface components {
              * @description The Season slot whose tier set a tiered or budget contest picks from on this event (#2044): the first slot the contest covers that holds a set. Its tiers and prices are read with listEventSlotTiers and listEventSlotParticipants. Null for a contest of another selection type, or an event covering no slot. Present on the one-contest read only.
              */
             tierSetSeasonSlotId?: string | null;
+        };
+        /** @description Request payload for changing the event and starting slot of a contest still in Set up. */
+        SetContestCoverageRequest: {
+            /** @description The events the contest covers instead, as at create: from the contest's sport league and Season, each released, with its field loaded and not yet started. */
+            sportEventIds: string[];
+            /**
+             * Format: uuid
+             * @description The Season slot the contest starts at, as at create. Left out, the events' first slot the template lists.
+             */
+            startingSlotId?: string;
         };
         /** @description One Season slot a contest covers (#2014): what a screen names it by, its status and the event that plays it. */
         ContestCoveredSlotDto: {
@@ -33254,6 +33284,87 @@ export interface operations {
                 };
             };
             /** @description CONTEST_TIER_FIELD_OUT_OF_RANGE — the stored configuration no longer fits the event's tiers; edit the draft first. CONTEST_RULES_SELECTION_TYPE_MISMATCH or CONTEST_BUDGET_FIELD_OUT_OF_RANGE — stored rules that break their selection type's checks. CONTEST_SELECTION_TYPE_NOT_ALLOWED — the event's sport no longer offers the contest's selection type. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    setContestCoverage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                contestId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SetContestCoverageRequest"];
+            };
+        };
+        responses: {
+            /** @description Managed-contest detail response. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ContestManagementResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description CONTEST_NOT_FOUND, or SPORT_EVENT_NOT_FOUND for an event that does not exist. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description CONTEST_EVENTS_LOCKED — the contest is no longer in Set up. CONTEST_BUDGET_SALARY_CAP_MISMATCH, CONTEST_EVENT_NOT_PRICED or CONTEST_BUDGET_UNFILLABLE — budget rules the new events cannot fill. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description SPORT_EVENT_NOT_RELEASED, SPORT_EVENT_FIELD_NOT_LOADED or SPORT_EVENT_ALREADY_STARTED — an event contests cannot be built on. CONTEST_EVENTS_LEAGUE_MISMATCH — an event from another sport league. CONTEST_EVENTS_SEASON_MISMATCH — an event of another Season than the contest's, fixed at creation. CONTEST_COVERAGE_NO_LISTED_SLOT, CONTEST_COVERAGE_SLOT_NOT_CHOSEN or CONTEST_COVERAGE_SLOT_NOT_COVERABLE — the events and starting slot do not give the template a slot to cover, as at create. CONTEST_DRAW_SINGLE_EVENT, CONTEST_BRACKET_SINGLE_EVENT or CONTEST_SQUARES_SINGLE_EVENT — a one-event contest given more. CONTEST_TIER_FIELD_OUT_OF_RANGE or CONTEST_SCORING_ROUNDS_MISMATCH — the rules do not fit the new event. CONTEST_EVENT_HAS_NO_GAMES, CONTEST_EVENT_GAME_UNDECIDED or CONTEST_EVENT_SPREAD_MISSING — a week that cannot be picked under the pick'em rules. */
             422: {
                 headers: {
                     [name: string]: unknown;

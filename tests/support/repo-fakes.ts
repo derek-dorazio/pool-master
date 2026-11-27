@@ -392,6 +392,7 @@ export function fakeContestRepo(overrides: Partial<ContestRepository> = {}): Con
     clearDrawReceiptsPending: nothing(),
     create: createdContest(echoCreate('contest')),
     update: echoUpdate(),
+    replaceCoveredSlots: jest.fn().mockResolvedValue(undefined),
     transitionStatus: jest.fn().mockResolvedValue(true),
     transitionStatuses: jest.fn().mockImplementation(async (ids: readonly string[]) => [...ids]),
     setCupWeight: jest.fn().mockResolvedValue(true),

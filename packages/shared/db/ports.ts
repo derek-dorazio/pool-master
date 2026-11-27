@@ -587,6 +587,13 @@ export interface ContestRepository {
   create(contest: ContestCreate, limits: ContestSeasonLimits): Promise<ContestCreateResult>;
   update(id: string, updates: ContestUpdate): Promise<Contest>;
   /**
+   * Sets the Season slots the contest covers to `seasonSlotIds` (#2014), resolved again as at
+   * creation. In one transaction under the contest row lock: each entry gets a DRAFT status row for
+   * every added event, and loses its status row and its picks (roster and game picks) on every
+   * event it no longer covers.
+   */
+  replaceCoveredSlots(id: string, seasonSlotIds: readonly string[]): Promise<void>;
+  /**
    * Moves a contest to `to` (with its start or end time), but only while it is in one of the
    * `from` statuses. Returns whether this call made the change: a guarded single write, so two
    * runs of the same event transition (a provider re-sending it) cannot both apply it.
@@ -651,8 +658,9 @@ export type ContestCreate = Pick<
 > & { seasonSlotIds: readonly string[] };
 
 /**
- * What can change on a contest row itself; its covered slots and its season never (fixed at
- * creation, #2014), and its status only through `ContestLifecycle` (#1949).
+ * What can change on a contest row itself; its covered slots change through `replaceCoveredSlots`
+ * (in Set up only, #2014), its season never (fixed at creation), and its status only through
+ * `ContestLifecycle` (#1949).
  */
 export type ContestUpdate = Partial<Pick<Contest, 'name' | 'startsAt' | 'endsAt'>>;
 

@@ -335,6 +335,51 @@ export class PrismaContestRepository implements ContestRepository {
     return result.count > 0;
   }
 
+  async replaceCoveredSlots(id: string, seasonSlotIds: readonly string[]): Promise<void> {
+    // The contest row lock comes first, as every entry write and the draw take it (#644), so an
+    // entry created meanwhile is either seen here or created after with the new events.
+    return forgettingReads(ReadMemoKey.contest, () => this.prisma.$transaction(async (tx) => {
+      await lockContestRow(tx, id);
+      const contest = await tx.contest.findUniqueOrThrow({ where: { id }, select: { sportLeagueSeasonId: true } });
+      const current = await tx.contestSeasonSlot.findMany({
+        where: { contestId: id },
+        select: { seasonSlot: { select: { eventSlot: { select: { sportEventId: true } } } } },
+      });
+      const next = seasonSlotIds.length === 0 ? [] : await tx.sportEventSlot.findMany({
+        where: { sportLeagueSeasonId: contest.sportLeagueSeasonId, sportLeagueSeasonCompetitionSlotId: { in: [...seasonSlotIds] } },
+        select: { sportEventId: true },
+      });
+      const sportEventIds = [...new Set(next.map((slot) => slot.sportEventId))];
+      const removed = [...new Set(current.flatMap((row) => (row.seasonSlot.eventSlot ? [row.seasonSlot.eventSlot.sportEventId] : [])))]
+        .filter((eventId) => !sportEventIds.includes(eventId));
+      if (removed.length > 0) {
+        await tx.contestEntryPick.deleteMany({
+          where: { entry: { contestId: id }, sportEventParticipant: { sportEventId: { in: removed } } },
+        });
+        await tx.contestEntryMatchPrediction.deleteMany({
+          where: { contestEntry: { contestId: id }, sportEventRoundMatch: { sportEventId: { in: removed } } },
+        });
+        await tx.contestEntryEvent.deleteMany({
+          where: { contestEntry: { contestId: id }, sportEventId: { in: removed } },
+        });
+      }
+      // The covered slots are resolved again whole, as at creation (#2014).
+      await tx.contestSeasonSlot.deleteMany({ where: { contestId: id } });
+      await tx.contestSeasonSlot.createMany({
+        data: seasonSlotIds.map((sportLeagueSeasonCompetitionSlotId) => ({
+          contestId: id,
+          sportLeagueSeasonId: contest.sportLeagueSeasonId,
+          sportLeagueSeasonCompetitionSlotId,
+        })),
+      });
+      const entries = await tx.contestEntry.findMany({ where: { contestId: id }, select: { id: true } });
+      await tx.contestEntryEvent.createMany({
+        data: entries.flatMap((entry) => sportEventIds.map((sportEventId) => ({ contestEntryId: entry.id, sportEventId }))),
+        skipDuplicates: true,
+      });
+    }));
+  }
+
   async update(id: string, updates: ContestUpdate): Promise<Contest> {
     const row = await forgettingReads(ReadMemoKey.contest, () => this.prisma.contest.update({
       where: { id },

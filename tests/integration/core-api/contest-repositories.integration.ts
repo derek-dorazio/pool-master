@@ -645,6 +645,45 @@ describe('ContestRepository', () => {
     expect((await repos().contests.findBySportEvent(event.id)).map((contest) => contest.id)).toEqual([created.id]);
     expect((await repos().contests.findBySportEvent(later.event.id)).map((contest) => contest.id)).toEqual([created.id]);
   });
+
+  it('adds an event\'s slot to a contest with a DRAFT status for it on every entry, reading its events back in play order', async () => {
+    const { league, squads, event, suffix } = await createLeagueAndEvent();
+    const later = await createLaterEvent(suffix);
+    const contest = await createContest(league.id, event.id, 'Growing', ContestStatus.OPEN);
+    const entry = await createEntry(contest.id, squads[0].id, 1, 'Grower');
+    await submitEntryEvent(entry.id, event.id, new Date('2026-06-01T12:00:00.000Z'));
+
+    await repos().contests.replaceCoveredSlots(contest.id, (await coverageOfEvents(getPrisma(), [later.event.id, event.id])).seasonSlotIds);
+
+    expect((await repos().contests.findById(contest.id))?.sportEventIds).toEqual([event.id, later.event.id]);
+    const reread = expectDefined(await repos().entries.findByIdWithSquad(entry.id));
+    expect(byEvent(reread.events)).toEqual([
+      [event.id, 'SUBMITTED'],
+      [later.event.id, 'DRAFT'],
+    ].sort(([left], [right]) => left.localeCompare(right)));
+  });
+
+  it('removes an event\'s slot from a contest with each entry\'s status and picks in it, keeping the other event\'s', async () => {
+    const prisma = getPrisma();
+    const { league, squads, event, field, suffix } = await createLeagueAndEvent();
+    const later = await createLaterEvent(suffix);
+    const contest = await createContest(league.id, [event.id, later.event.id], 'Shrinking', ContestStatus.OPEN);
+    const entry = await createEntry(contest.id, squads[0].id, 1, 'Shrinker');
+    await prisma.contestEntryPick.createMany({
+      data: [
+        { entryId: entry.id, sportEventParticipantId: field[0].id },
+        { entryId: entry.id, sportEventParticipantId: later.field[0].id },
+      ],
+    });
+
+    await repos().contests.replaceCoveredSlots(contest.id, (await coverageOfEvents(prisma, [later.event.id])).seasonSlotIds);
+
+    expect((await repos().contests.findById(contest.id))?.sportEventIds).toEqual([later.event.id]);
+    const reread = expectDefined(await repos().entries.findByIdWithSquad(entry.id));
+    expect(byEvent(reread.events)).toEqual([[later.event.id, 'DRAFT']]);
+    const picks = await repos().picks.findByEntriesWithParticipant([entry.id]);
+    expect(picks.map((pick) => [pick.sportEventParticipantId, pick.sportEventId])).toEqual([[later.field[0].id, later.event.id]]);
+  });
 });
 
 /**

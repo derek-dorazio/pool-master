@@ -16388,6 +16388,20 @@ export type ContestSportEventDto = {
 };
 
 /**
+ * Request payload for changing the event and starting slot of a contest still in Set up.
+ */
+export type SetContestCoverageRequest = {
+    /**
+     * The events the contest covers instead, as at create: from the contest's sport league and Season, each released, with its field loaded and not yet started.
+     */
+    sportEventIds: Array<string>;
+    /**
+     * The Season slot the contest starts at, as at create. Left out, the events' first slot the template lists.
+     */
+    startingSlotId?: string;
+};
+
+/**
  * One Season slot a contest covers (#2014): what a screen names it by, its status and the event that plays it.
  */
 export type ContestCoveredSlotDto = {
@@ -36829,6 +36843,54 @@ export type OpenContestResponses = {
 };
 
 export type OpenContestResponse = OpenContestResponses[keyof OpenContestResponses];
+
+export type SetContestCoverageData = {
+    body: SetContestCoverageRequest;
+    path: {
+        id: string;
+        contestId: string;
+    };
+    query?: never;
+    url: '/api/v1/leagues/{id}/contest-management/contests/{contestId}/coverage';
+};
+
+export type SetContestCoverageErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    400: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    401: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    403: ErrorEnvelope;
+    /**
+     * CONTEST_NOT_FOUND, or SPORT_EVENT_NOT_FOUND for an event that does not exist.
+     */
+    404: ErrorEnvelope;
+    /**
+     * CONTEST_EVENTS_LOCKED — the contest is no longer in Set up. CONTEST_BUDGET_SALARY_CAP_MISMATCH, CONTEST_EVENT_NOT_PRICED or CONTEST_BUDGET_UNFILLABLE — budget rules the new events cannot fill.
+     */
+    409: ErrorEnvelope;
+    /**
+     * SPORT_EVENT_NOT_RELEASED, SPORT_EVENT_FIELD_NOT_LOADED or SPORT_EVENT_ALREADY_STARTED — an event contests cannot be built on. CONTEST_EVENTS_LEAGUE_MISMATCH — an event from another sport league. CONTEST_EVENTS_SEASON_MISMATCH — an event of another Season than the contest's, fixed at creation. CONTEST_COVERAGE_NO_LISTED_SLOT, CONTEST_COVERAGE_SLOT_NOT_CHOSEN or CONTEST_COVERAGE_SLOT_NOT_COVERABLE — the events and starting slot do not give the template a slot to cover, as at create. CONTEST_DRAW_SINGLE_EVENT, CONTEST_BRACKET_SINGLE_EVENT or CONTEST_SQUARES_SINGLE_EVENT — a one-event contest given more. CONTEST_TIER_FIELD_OUT_OF_RANGE or CONTEST_SCORING_ROUNDS_MISMATCH — the rules do not fit the new event. CONTEST_EVENT_HAS_NO_GAMES, CONTEST_EVENT_GAME_UNDECIDED or CONTEST_EVENT_SPREAD_MISSING — a week that cannot be picked under the pick'em rules.
+     */
+    422: ErrorEnvelope;
+};
+
+export type SetContestCoverageError = SetContestCoverageErrors[keyof SetContestCoverageErrors];
+
+export type SetContestCoverageResponses = {
+    /**
+     * Managed-contest detail response.
+     */
+    200: ContestManagementResponse;
+};
+
+export type SetContestCoverageResponse = SetContestCoverageResponses[keyof SetContestCoverageResponses];
 
 export type SetContestCupWeightData = {
     body: SetContestCupWeightRequest;

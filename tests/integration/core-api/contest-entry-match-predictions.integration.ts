@@ -26,7 +26,7 @@ import {
 } from '../helpers';
 import { recordStatements, statementCounts, statementsOn, StatementVerb } from '../statement-log';
 import { createRoundRows, createSportEventRow } from '../../support/sport-event-rows';
-import { createContestRow } from '../../support/contest-rows';
+import { coverageOfEvents, createContestRow } from '../../support/contest-rows';
 import { sportLeagueRowDefaults } from '../../support/league-profiles';
 import { sportRowKeys } from '../../support/sport-rows';
 import { fixtureSeasonId } from '../../support/event-edition';
@@ -646,5 +646,32 @@ describe('contest_entry_match_predictions constraints', () => {
     await getPrisma().contestEntryMatchPrediction.create({ data: row(1) });
 
     await expect(getPrisma().sportEventRoundMatch.delete({ where: { id: game(1).id } })).rejects.toMatchObject({ code: 'P2003' });
+  });
+});
+
+describe('PrismaContestRepository.replaceCoveredSlots with game picks', () => {
+  it('removes an event from a pick\'em contest with the entry\'s picks on its games, keeping the other week\'s picks', async () => {
+    const week1 = await createWeek('Week 1', AT);
+    const week2 = await createWeek('Week 2', LATER);
+    const { contest, entry } = await createPickEmEntry([week1.event.id, week2.event.id]);
+    for (const week of [week1, week2]) {
+      await writePicks(repos().predictions, {
+        contestEntryId: entry.id, sportEventId: week.event.id, clearedMatchIds: [], eventStatus: null, at: AT,
+        saves: [1, 2].map((matchNumber) => ({
+          sportEventRoundMatchId: week.game(matchNumber).id,
+          predictedResult: PredictedResult.TEAM,
+          sportEventParticipantId: expectDefined(sideParticipantId(week.game(matchNumber), 2)), sideNumber: 2,
+          confidence: matchNumber,
+        })),
+      });
+    }
+
+    await repos().contests.replaceCoveredSlots(contest.id, (await coverageOfEvents(getPrisma(), [week2.event.id])).seasonSlotIds);
+
+    await expect(repos().predictions.findByEntryAndEvent(entry.id, week1.event.id)).resolves.toEqual([]);
+    expect((await repos().predictions.findByEntryAndEvent(entry.id, week2.event.id)).map((pick) => pick.sportEventRoundMatchId))
+      .toEqual([week2.game(1).id, week2.game(2).id]);
+    // With its picks gone, the removed week's games can be deleted.
+    await expect(getPrisma().sportEventRoundMatch.deleteMany({ where: { sportEventId: week1.event.id } })).resolves.toMatchObject({ count: 3 });
   });
 });

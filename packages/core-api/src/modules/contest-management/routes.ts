@@ -110,6 +110,37 @@ export function contestManagementModule(
     handler: handlers.openContest,
   });
 
+  fastify.put('/contests/:contestId/coverage', {
+    schema: {
+      tags: ['Contest Management'],
+      summary: 'Change the event and starting slot of a contest in Set up',
+      description:
+        'Changes the events a contest covers and its starting slot (#2014), and returns it as getContestConfiguration does. Commissioner only, and only while the contest is in Set up (DRAFT): from the moment it opens its coverage is fixed. The covered Season slots are resolved again from the contest\'s template, as at create, and the events are checked as at create (released, field loaded, not started, the contest\'s sport league and Season, the rules fit them).',
+      operationId: 'setContestCoverage',
+      body: schemaRef('SetContestCoverageRequest'),
+      response: {
+        200: schemaRef('ContestManagementResponse'),
+        400: schemaRef('ErrorEnvelope'),
+        401: schemaRef('ErrorEnvelope'),
+        403: schemaRef('ErrorEnvelope'),
+        404: {
+          ...schemaRef('ErrorEnvelope'),
+          description: 'CONTEST_NOT_FOUND, or SPORT_EVENT_NOT_FOUND for an event that does not exist.',
+        },
+        409: {
+          ...schemaRef('ErrorEnvelope'),
+          description: 'CONTEST_EVENTS_LOCKED — the contest is no longer in Set up. CONTEST_BUDGET_SALARY_CAP_MISMATCH, CONTEST_EVENT_NOT_PRICED or CONTEST_BUDGET_UNFILLABLE — budget rules the new events cannot fill.',
+        },
+        422: {
+          ...schemaRef('ErrorEnvelope'),
+          description: 'SPORT_EVENT_NOT_RELEASED, SPORT_EVENT_FIELD_NOT_LOADED or SPORT_EVENT_ALREADY_STARTED — an event contests cannot be built on. CONTEST_EVENTS_LEAGUE_MISMATCH — an event from another sport league. CONTEST_EVENTS_SEASON_MISMATCH — an event of another Season than the contest\'s, fixed at creation. CONTEST_COVERAGE_NO_LISTED_SLOT, CONTEST_COVERAGE_SLOT_NOT_CHOSEN or CONTEST_COVERAGE_SLOT_NOT_COVERABLE — the events and starting slot do not give the template a slot to cover, as at create. CONTEST_DRAW_SINGLE_EVENT, CONTEST_BRACKET_SINGLE_EVENT or CONTEST_SQUARES_SINGLE_EVENT — a one-event contest given more. CONTEST_TIER_FIELD_OUT_OF_RANGE or CONTEST_SCORING_ROUNDS_MISMATCH — the rules do not fit the new event. CONTEST_EVENT_HAS_NO_GAMES, CONTEST_EVENT_GAME_UNDECIDED or CONTEST_EVENT_SPREAD_MISSING — a week that cannot be picked under the pick\'em rules.',
+        },
+      },
+    },
+    preHandler: requireCommissioner(membershipRepo),
+    handler: handlers.setContestCoverage,
+  });
+
   fastify.put('/contests/:contestId/cup-weight', {
     schema: {
       tags: ['Contest Management'],

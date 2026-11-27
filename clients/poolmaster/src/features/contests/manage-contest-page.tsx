@@ -45,6 +45,7 @@ import {
 import { eventOfFirstSlot, eventOfSlot } from './contest-events';
 import { ContestStatusBadge } from './contest-status-badge';
 import { ContestStatusCard } from './contest-status-card';
+import { ChangeContestEventDialog } from './change-contest-event-dialog';
 import { DeleteContestDialog } from './delete-contest-dialog';
 import { sportEventQueryOptions } from './use-contest-schedule';
 import { useContestQuery } from './use-contest-query';
@@ -118,6 +119,7 @@ export function ManageContestPage() {
     ?? managedContestQuery.data?.sportEvents.at(0)?.sportEventId;
   const eventQuery = useQuery(sportEventQueryOptions(firstEventId ?? ''));
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [isChangeEventOpen, setIsChangeEventOpen] = useState(false);
   const contestsPath = buildLeagueAdminContestsPath(leagueCode);
 
   if (!league) {
@@ -220,7 +222,18 @@ export function ManageContestPage() {
           <SectionRow layout="setting" name="Name" testId="manage-contest-name" value={<span className="font-semibold">{contest.name}</span>} />
           <SectionRow
             layout="setting"
-            aside={isNotOpen ? <FixedNote /> : undefined}
+            // In Set up a one-event contest can move to another event of its Season (#2014).
+            aside={isNotOpen ? (isMultiEvent ? <FixedNote /> : (
+              <Button
+                data-testid="manage-contest-change-event"
+                disabled={!league.isActive}
+                onClick={() => setIsChangeEventOpen(true)}
+                size="sm"
+                variant="secondary"
+              >
+                Change
+              </Button>
+            )) : undefined}
             name={isMultiEvent ? 'Events' : 'Event'}
             testId="manage-contest-event-row"
             value={(
@@ -343,6 +356,17 @@ export function ManageContestPage() {
             />
           </SectionRows>
         </SectionCard>
+      ) : null}
+
+      {isNotOpen && !isMultiEvent ? (
+        <ChangeContestEventDialog
+          contestId={contestId}
+          currentEvent={event}
+          leagueCode={leagueCode}
+          leagueId={leagueId}
+          onOpenChange={setIsChangeEventOpen}
+          open={isChangeEventOpen}
+        />
       ) : null}
 
       <DeleteContestDialog

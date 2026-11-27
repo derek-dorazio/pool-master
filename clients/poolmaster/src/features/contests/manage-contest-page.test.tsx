@@ -43,6 +43,8 @@ const getSelectionStateMock = vi.fn();
 const listEventRoundsMock = vi.fn();
 const runContestDrawMock = vi.fn();
 const setContestCupWeightMock = vi.fn();
+const setContestCoverageMock = vi.fn();
+const listEventsMock = vi.fn();
 const getContestMock = vi.fn();
 const listLeagueSquadsMock = vi.fn();
 const openContestMock = vi.fn();
@@ -63,6 +65,8 @@ bindApiMocks({
   listEventRounds: listEventRoundsMock,
   runContestDraw: runContestDrawMock,
   setContestCupWeight: setContestCupWeightMock,
+  setContestCoverage: setContestCoverageMock,
+  listEvents: listEventsMock,
   getContest: getContestMock,
   listLeagueSquads: listLeagueSquadsMock,
   openContest: openContestMock,
@@ -142,7 +146,7 @@ function primeMocks({
 afterEach(() => {
   for (const mock of [
     deleteContestMock, expandContestMock, getContestExpansionMock, grantContestExpansionMock, getContestConfigurationMock, getCurrentUserMock, getEventMock, getLeagueByCodeMock,
-    getSelectionStateMock, listEventRoundsMock, runContestDrawMock, setContestCupWeightMock,
+    getSelectionStateMock, listEventRoundsMock, runContestDrawMock, setContestCupWeightMock, setContestCoverageMock, listEventsMock,
     getContestMock, listLeagueSquadsMock, openContestMock, previewRosterPicksMock, refreshTokenMock,
     updateContestConfigurationMock, updateContestMock,
   ]) {
@@ -667,15 +671,63 @@ describe('Commissioner tools › Contests › one contest › what it covers', (
     ['bracket', SelectionType.BRACKET, buildManagedContest({
       configuration: { id: 'config-1', contestId: 'contest-1', maxEntriesPerSquad: 1, selectionType: SelectionType.BRACKET },
     })],
-  ] as const)('marks a set-up %s contest\'s event Fixed, with no way to change it, since a contest\'s event is set when it is created', async (_label, selectionType, managedContest) => {
+  ] as const)('offers a set-up %s contest\'s event a Change button, since its event can change until it opens', async (_label, selectionType, managedContest) => {
     primeMocks({ contest: buildContest({ selectionType }), managedContest });
 
     renderAt('/league/BIGDAWGS/admin/contests/contest-1');
 
     const row = await screen.findByTestId('manage-contest-event-row');
     expect(row).toHaveTextContent('Event');
-    expect(row).toHaveTextContent('Fixed');
-    expect(screen.queryByTestId('manage-contest-events-edit')).not.toBeInTheDocument();
+    expect(within(row).getByTestId('manage-contest-change-event')).toHaveTextContent('Change');
+  });
+
+  it('moves a set-up contest to another ready event of its Season, listing only the other events a contest can be built on', async () => {
+    primeMocks();
+    listEventsMock.mockResolvedValue(apiSuccess({ events: [
+      buildSportEvent(),
+      buildSportEvent({ id: 'event-3', name: 'The Open', startDate: '2099-07-16T12:00:00.000Z' }),
+      buildSportEvent({ id: 'event-2', name: 'PGA Championship', startDate: '2099-05-14T12:00:00.000Z' }),
+      buildSportEvent({ id: 'event-4', name: 'US Open', contestEligible: false }),
+    ] }));
+    setContestCoverageMock.mockResolvedValue(apiSuccess({ contest: buildManagedContest() }));
+
+    renderAt('/league/BIGDAWGS/admin/contests/contest-1');
+    fireEvent.click(await screen.findByTestId('manage-contest-change-event'));
+
+    const dialog = await screen.findByTestId('contest-change-event-dialog');
+    const select = await within(dialog).findByTestId('contest-change-event-select');
+        // Every event of the Season in start order; only one a contest can be built on now, other than its own, can be chosen.
+    expect(within(select).getAllByRole('option').map((option) => [option.textContent, (option as HTMLOptionElement).disabled])).toEqual([
+      ['Choose an event', false],
+      [expect.stringMatching(/^The Masters · /), true],
+      [expect.stringMatching(/^US Open · /), true],
+      [expect.stringMatching(/^PGA Championship · /), false],
+      [expect.stringMatching(/^The Open · /), false],
+    ]);
+    fireEvent.change(select, { target: { value: 'event-2' } });
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Change event' }));
+
+    await waitFor(() => expect(setContestCoverageMock).toHaveBeenCalledTimes(1));
+    expect(setContestCoverageMock.mock.calls[0]?.[0]).toMatchObject({
+      path: { id: 'league-1', contestId: 'contest-1' },
+      body: { sportEventIds: ['event-2'] },
+    });
+    await waitFor(() => expect(screen.queryByTestId('contest-change-event-dialog')).not.toBeInTheDocument());
+  });
+
+  it('keeps the dialog open with the reason when the server refuses the change because the contest has opened', async () => {
+    primeMocks();
+    listEventsMock.mockResolvedValue(apiSuccess({ events: [buildSportEvent({ id: 'event-2', name: 'PGA Championship' })] }));
+    setContestCoverageMock.mockResolvedValue({ error: { error: { code: 'CONTEST_EVENTS_LOCKED', message: 'server sentence' } } });
+
+    renderAt('/league/BIGDAWGS/admin/contests/contest-1');
+    fireEvent.click(await screen.findByTestId('manage-contest-change-event'));
+    const dialog = await screen.findByTestId('contest-change-event-dialog');
+    const select = await within(dialog).findByTestId('contest-change-event-select');
+        fireEvent.change(select, { target: { value: 'event-2' } });
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Change event' }));
+
+    expect(await within(dialog).findByText('This contest is open now, so its event can no longer change.')).toBeInTheDocument();
   });
 
   it('lists every slot a contest covers in play order, named as the league names it, under Covers, in order', async () => {
@@ -719,7 +771,7 @@ describe('Commissioner tools › Contests › one contest › what it covers', (
     renderAt('/league/BIGDAWGS/admin/contests/contest-1');
 
     expect(await screen.findByTestId('manage-contest-event-row')).toHaveTextContent('The Masters');
-    expect(screen.queryByTestId('manage-contest-events-edit')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('manage-contest-change-event')).not.toBeInTheDocument();
   });
 });
 

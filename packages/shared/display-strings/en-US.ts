@@ -939,6 +939,7 @@ export const enUS = {
     CONTEST_ENTRY_OPERATION_INVALID: 'This entry cannot be changed that way.',
     CONTEST_ENTRY_SELECTIONS_EXIST: 'Cannot leave a contest after making picks or draft selections.',
     CONTEST_EVENTS_LEAGUE_MISMATCH: 'Every event must belong to this contest\'s league.',
+    CONTEST_EVENTS_LOCKED: 'The contest is no longer in Set up, so its event can no longer change.',
     CONTEST_EVENTS_SEASON_MISMATCH: 'Every event must be in this contest\'s season.',
     CONTEST_EVENT_ALREADY_STARTED: 'The event has already started, so it’s too late to run the draw.',
     CONTEST_EVENT_GAME_UNDECIDED: 'That game has not been decided yet.',
@@ -1242,6 +1243,15 @@ export const enUS = {
     CONTEST_ENTRY_LOCKED: {
       bracketEntry: 'The {{matches}} have started, so this bracket can no longer change.',
       pickEm: 'The {{matches}} have started, so this can no longer change.',
+    },
+    CONTEST_EVENTS_LEAGUE_MISMATCH: {
+      contestEvents: 'Every event in a contest comes from the same league.',
+    },
+    CONTEST_EVENTS_LOCKED: {
+      contestEvents: 'This contest is open now, so its event can no longer change.',
+    },
+    CONTEST_EVENTS_SEASON_MISMATCH: {
+      contestEvents: 'Every event in a contest is in the season it was created in.',
     },
     CONTEST_EVENT_ALREADY_STARTED: {
       contestSetup: 'This contest’s event has already started, so it can no longer be opened. Delete the draft instead.',

@@ -1,5 +1,5 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
-import type { ContestConfigurationRequest, SetContestCupWeightRequest } from '@poolmaster/shared/dto';
+import type { ContestConfigurationRequest, SetContestCoverageRequest, SetContestCupWeightRequest } from '@poolmaster/shared/dto';
 import { createRequestContextLogger } from '../../core/logger';
 import { sendError } from '../../core/error-handler';
 import {
@@ -15,6 +15,7 @@ export function createContestManagementHandlers(
     updateContestConfiguration,
     openContest,
     setContestCupWeight,
+    setContestCoverage,
   };
 
   async function getContest(
@@ -94,6 +95,38 @@ export function createContestManagementHandlers(
         return sendError(reply, error.statusCode, error.code, error.message);
       }
       logger.error({ contestId: request.params.contestId, err: error }, 'contest management open route failed');
+      throw error;
+    }
+  }
+
+  async function setContestCoverage(
+    request: FastifyRequest<{
+      Params: { id: string; contestId: string };
+      Body: SetContestCoverageRequest;
+    }>,
+    reply: FastifyReply,
+  ): Promise<void> {
+    const logger = createRequestContextLogger(request);
+    logger.debug({ contestId: request.params.contestId }, 'contest management set coverage route start');
+    try {
+      const contest = await contestManagementService.setContestCoverage(
+        request.params.id,
+        request.params.contestId,
+        request.body,
+      );
+      logger.info({ contestId: request.params.contestId, sportEventCount: contest.sportEvents.length }, 'contest management set coverage route completed');
+      return reply.send({ contest });
+    } catch (error) {
+      if (error instanceof ContestManagementError) {
+        logger.warn({
+          contestId: request.params.contestId,
+          error: error.message,
+          code: error.code,
+          statusCode: error.statusCode,
+        }, 'contest management set coverage route rejected');
+        return sendError(reply, error.statusCode, error.code, error.message);
+      }
+      logger.error({ contestId: request.params.contestId, err: error }, 'contest management set coverage route failed');
       throw error;
     }
   }

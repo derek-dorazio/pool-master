@@ -80,6 +80,12 @@ export const ContestSportEventDtoSchema = z.object({
 }).describe('One event a contest covers, enough to name, order and pick it without reading the event (#713).');
 export type ContestSportEventDto = z.infer<typeof ContestSportEventDtoSchema>;
 
+const SetContestCoverageRequestSchema = z.object({
+  sportEventIds: z.array(z.uuid()).min(1).describe('The events the contest covers instead, as at create: from the contest\'s sport league and Season, each released, with its field loaded and not yet started.'),
+  startingSlotId: z.uuid().optional().describe('The Season slot the contest starts at, as at create. Left out, the events\' first slot the template lists.'),
+}).describe('Request payload for changing the event and starting slot of a contest still in Set up.');
+export type SetContestCoverageRequest = z.infer<typeof SetContestCoverageRequestSchema>;
+
 export const ContestCoveredSlotDtoSchema = z.object({
   seasonSlotId: z.uuid().describe('The Season slot (SportLeagueSeasonSlotDto.id).'),
   slotDefinitionId: z.uuid().describe('Its slot definition (SportLeagueCompetitionSlot).'),
@@ -349,6 +355,7 @@ registerSchema('CreateContestRequest', CreateContestRequestSchema);
 registerSchema('UpdateContestRequest', UpdateContestRequestSchema);
 registerSchema('UpdateContestEntryRequest', UpdateContestEntryRequestSchema);
 registerSchema('ContestSportEventDto', ContestSportEventDtoSchema);
+registerSchema('SetContestCoverageRequest', SetContestCoverageRequestSchema);
 registerSchema('ContestCoveredSlotDto', ContestCoveredSlotDtoSchema);
 registerSchema('SetContestCupWeightRequest', SetContestCupWeightRequestSchema);
 registerSchema('ContestEntryEventDto', ContestEntryEventDtoSchema);

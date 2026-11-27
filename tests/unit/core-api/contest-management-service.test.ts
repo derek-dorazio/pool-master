@@ -26,6 +26,7 @@ import {
 import {
   CONTEST_BUDGET_FIELD_OUT_OF_RANGE,
   CONTEST_BRACKET_SINGLE_EVENT,
+  CONTEST_EVENTS_LOCKED,
   CONTEST_BUDGET_UNFILLABLE,
   CONTEST_DRAW_FIELD_OUT_OF_RANGE,
   CONTEST_RULES_SELECTION_TYPE_MISMATCH,
@@ -2320,6 +2321,139 @@ describe('ContestManagementService — a contest of several events', () => {
     await expect(service.createContest({ leagueId: 'league-1' }, tiered([MASTERS])))
       .rejects.toMatchObject({ code: 'CONTEST_COVERAGE_NO_LISTED_SLOT', statusCode: 422 });
     expect(contestRepo.create).not.toHaveBeenCalled();
+  });
+
+  it('refuses changing the event of a contest whose template is gone with 404 CONTEST_CONFIG_TEMPLATE_NOT_FOUND, changing nothing', async () => {
+    const configTemplates = createContestConfigTemplateRepo();
+    jest.mocked(configTemplates.findById).mockResolvedValue(null);
+    const { service, contestRepo } = build({ contest: { status: ContestStatus.DRAFT }, configTemplates });
+
+    await expect(service.setContestCoverage('league-1', 'contest-1', { sportEventIds: [PGA] }))
+      .rejects.toMatchObject({ code: 'CONTEST_CONFIG_TEMPLATE_NOT_FOUND', statusCode: 404 });
+    expect(contestRepo.replaceCoveredSlots).not.toHaveBeenCalled();
+  });
+
+  it('refuses a contest mixing two sport leagues\' events with CONTEST_EVENTS_LEAGUE_MISMATCH, creating nothing', async () => {
+    const { service, contestRepo } = build();
+
+    await expect(service.createContest({ leagueId: 'league-1' }, tiered([MASTERS, LPGA_MAJOR])))
+      .rejects.toMatchObject({ code: 'CONTEST_EVENTS_LEAGUE_MISMATCH' });
+    expect(contestRepo.create).not.toHaveBeenCalled();
+  });
+
+  it('refuses a random-draw contest on more than one event with CONTEST_DRAW_SINGLE_EVENT, creating nothing', async () => {
+    const { service, contestRepo } = build();
+
+    await expect(service.createContest({ leagueId: 'league-1' }, {
+      templateId: templateIdFor(SelectionType.RANDOM_DRAW),
+      name: 'Draw',
+      sportEventIds: [MASTERS, PGA],
+      contestFormat: 'ROSTER',
+      selectionType: SelectionType.RANDOM_DRAW,
+      configuration: { selectionType: SelectionType.RANDOM_DRAW, maxEntriesPerSquad: 1, picksPerEntry: 1, countedScores: 1 },
+    })).rejects.toMatchObject({ code: 'CONTEST_DRAW_SINGLE_EVENT' });
+    expect(contestRepo.create).not.toHaveBeenCalled();
+  });
+
+  it('refuses a budget contest whose events were priced against different salary caps with 409 CONTEST_BUDGET_SALARY_CAP_MISMATCH', async () => {
+    const { service, contestRepo } = build({
+      reader: multiEventReader([
+        { id: MASTERS, startDate: '2026-05-01T12:00:00.000Z', salaryCap: 100 },
+        { id: PGA, startDate: '2026-05-14T12:00:00.000Z', salaryCap: 200 },
+      ]),
+    });
+
+    await expect(service.createContest({ leagueId: 'league-1' }, {
+      templateId: templateIdFor(SelectionType.BUDGET_PICK),
+      name: 'Budget Majors',
+      sportEventIds: [MASTERS, PGA],
+      contestFormat: 'ROSTER',
+      selectionType: SelectionType.BUDGET_PICK,
+      configuration: { selectionType: SelectionType.BUDGET_PICK, maxEntriesPerSquad: 1, rosterSize: 2, countedScores: 2 },
+    })).rejects.toMatchObject({ code: 'CONTEST_BUDGET_SALARY_CAP_MISMATCH', statusCode: 409 });
+    expect(contestRepo.create).not.toHaveBeenCalled();
+  });
+
+  describe('changing the event and starting slot of a contest in Set up', () => {
+    it('moves a draft to another event, covering that event\'s slot', async () => {
+      const { service, contestRepo } = build({ contest: { status: ContestStatus.DRAFT } });
+
+      await service.setContestCoverage('league-1', 'contest-1', { sportEventIds: [PGA] });
+
+      expect(contestRepo.replaceCoveredSlots).toHaveBeenCalledWith('contest-1', [PGA].map(slotOf));
+    });
+
+    it('refuses a change once the contest has left Set up with 409 CONTEST_EVENTS_LOCKED, changing nothing', async () => {
+      for (const status of [ContestStatus.OPEN, ContestStatus.ACTIVE, ContestStatus.COMPLETED]) {
+        const { service, contestRepo, configurationRepo } = build({ contest: { status } });
+
+        await expect(service.setContestCoverage('league-1', 'contest-1', { sportEventIds: [PGA] }))
+          .rejects.toMatchObject({ code: CONTEST_EVENTS_LOCKED, statusCode: 409 });
+        expect(contestRepo.replaceCoveredSlots).not.toHaveBeenCalled();
+        expect(configurationRepo.update).not.toHaveBeenCalled();
+      }
+    });
+
+    it('keeps a contest in the Season it was created in: an event of another Season is refused with 422 CONTEST_EVENTS_SEASON_MISMATCH, its coverage and cups unchanged', async () => {
+      const { service, contestRepo, cupsAsked } = build({
+        reader: multiEventReader([...READER_EVENTS, { id: NEXT_MASTERS, startDate: '2027-04-08T12:00:00.000Z', championshipYear: 2027 }]),
+        contest: { status: ContestStatus.DRAFT },
+      });
+
+      await expect(service.setContestCoverage('league-1', 'contest-1', { sportEventIds: [NEXT_MASTERS] }))
+        .rejects.toMatchObject({ code: 'CONTEST_EVENTS_SEASON_MISMATCH', statusCode: 422 });
+      expect(contestRepo.replaceCoveredSlots).not.toHaveBeenCalled();
+      expect(contestRepo.update).not.toHaveBeenCalled();
+      expect(cupsAsked).toEqual([]);
+    });
+
+    it('refuses another sport league\'s event with CONTEST_EVENTS_LEAGUE_MISMATCH, changing nothing', async () => {
+      const { service, contestRepo } = build({ contest: { status: ContestStatus.DRAFT } });
+
+      await expect(service.setContestCoverage('league-1', 'contest-1', { sportEventIds: [LPGA_MAJOR] }))
+        .rejects.toMatchObject({ code: 'CONTEST_EVENTS_LEAGUE_MISMATCH' });
+      expect(contestRepo.replaceCoveredSlots).not.toHaveBeenCalled();
+    });
+
+    it('refuses a second event on a bracket contest with 422 CONTEST_BRACKET_SINGLE_EVENT, changing nothing', async () => {
+      const { service, contestRepo } = build({ contest: { contestFormat: ContestFormat.PREDICTION, selectionType: SelectionType.BRACKET } });
+
+      await expect(service.setContestCoverage('league-1', 'contest-1', { sportEventIds: [MASTERS, PGA] }))
+        .rejects.toMatchObject({ code: CONTEST_BRACKET_SINGLE_EVENT, statusCode: 422 });
+      expect(contestRepo.replaceCoveredSlots).not.toHaveBeenCalled();
+    });
+
+    it('refuses a second event on a random-draw contest with CONTEST_DRAW_SINGLE_EVENT', async () => {
+      const { service, contestRepo } = build({ contest: { selectionType: SelectionType.RANDOM_DRAW } });
+
+      await expect(service.setContestCoverage('league-1', 'contest-1', { sportEventIds: [MASTERS, PGA] }))
+        .rejects.toMatchObject({ code: 'CONTEST_DRAW_SINGLE_EVENT' });
+      expect(contestRepo.replaceCoveredSlots).not.toHaveBeenCalled();
+    });
+
+    it('stores the new event\'s salary cap on a budget draft, so its entries are built under it', async () => {
+      const { service, contestRepo, configurationRepo } = build({
+        reader: multiEventReader([
+          { id: MASTERS, startDate: '2026-05-01T12:00:00.000Z', salaryCap: 100 },
+          { id: PGA, startDate: '2026-05-14T12:00:00.000Z', salaryCap: 200 },
+        ]),
+        contest: { status: ContestStatus.DRAFT, selectionType: SelectionType.BUDGET_PICK },
+        storedConfigJson: { selectionType: SelectionType.BUDGET_PICK, rosterSize: 2, salaryCap: 100, countedScores: 2 },
+      });
+
+      await service.setContestCoverage('league-1', 'contest-1', { sportEventIds: [PGA] });
+
+      expect(configurationRepo.update).toHaveBeenCalledWith('config-1', { configJson: expect.objectContaining({ salaryCap: 200 }) });
+      expect(contestRepo.replaceCoveredSlots).toHaveBeenCalledWith('contest-1', [PGA].map(slotOf));
+    });
+
+    it('answers 404 CONTEST_NOT_FOUND for another league\'s contest, changing nothing', async () => {
+      const { service, contestRepo } = build({ contest: {} });
+
+      await expect(service.setContestCoverage('league-2', 'contest-1', { sportEventIds: [PGA] }))
+        .rejects.toMatchObject({ code: 'CONTEST_NOT_FOUND', statusCode: 404 });
+      expect(contestRepo.replaceCoveredSlots).not.toHaveBeenCalled();
+    });
   });
 
 });

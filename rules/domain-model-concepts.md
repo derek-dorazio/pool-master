@@ -49,7 +49,8 @@ Two readings of this chain have both been held at once, so it is worth stating p
   this event's field* (a golfer, a horse, a team), with that event's rank, tier and status.
 - **A Contest belongs to one League and covers Season slots** (`ContestSeasonSlot`, in play
   order, #2014), each played by one of its events. Its covered slots are resolved from its
-  template when it is created and never change. A tournament pool covers one tournament slot, a
+  template when it is created, and again if its event or starting slot changes while it is in
+  Set up; once it opens they never change. A tournament pool covers one tournament slot, a
   bracket the rounds it lists of one event, and an NFL pick'em one week slot per week; a field
   pool never spans events (ADR 0014). Every event of a contest comes from the same sport league. Many contests, in many
   leagues, can run on the same event; they share its field, scores and tiers.
@@ -206,7 +207,7 @@ Rules that are not choices (the small-field even split) stay in code, not in a d
 | Model | On screen | What it is | Not to be confused with |
 |---|---|---|---|
 | `Contest` | contest | One league's game on the Season slots it covers: format, selection type and scoring | The `SportEvent`s that play those slots |
-| `ContestSeasonSlot` | what a contest covers (a week, a round, a tournament) | One Season slot a contest covers, fixed at creation; play order comes from the slot | The Season slot itself, which every contest on it shares |
+| `ContestSeasonSlot` | what a contest covers (a week, a round, a tournament) | One Season slot a contest covers, resolved from its template and event at creation and again when its event or starting slot changes in Set up, fixed once it opens; play order comes from the slot | The Season slot itself, which every contest on it shares |
 | `ContestConfiguration` | contest settings | The contest's rules: roster size, picks per tier, entries per member, counting picks, prizes, and its scoring (a scoring definition and its settings, such as a racing points table) | `ContestConfigTemplate`, a global starting point it may be created from: sport-wide, or one sport league's own preset (`sportLeagueId`) |
 | `ContestEntry` | entry | One lineup a squad submits to one contest. A squad may hold several (`entryNumber`) | The squad itself |
 | `ContestEntryEvent` | entry status (submitted, not submitted) | An entry's draft/submitted status for one event of its contest | The entry itself |

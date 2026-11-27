@@ -468,6 +468,27 @@ export class InMemoryContestWorld {
         this.contests.set(id, updated);
         return updated;
       },
+      replaceCoveredSlots: async (id, seasonSlotIds) => {
+        const existing = this.contests.get(id);
+        if (!existing) throw new Error(`Record to update not found: contest ${id}`);
+        const coverage = this.coverageOf(seasonSlotIds);
+        const { sportEventIds } = coverage;
+        const removed = existing.sportEventIds.filter((eventId) => !sportEventIds.includes(eventId));
+        this.contests.set(id, { ...existing, ...coverage });
+        for (const [pickId, pick] of this.picks) {
+          if (this.entries.get(pick.entryId)?.contestId === id && removed.includes(pick.sportEventId)) {
+            this.picks.delete(pickId);
+          }
+        }
+        for (const entry of this.entries.values()) {
+          if (entry.contestId !== id) continue;
+          const kept = entry.events.filter((event) => !removed.includes(event.sportEventId));
+          const added = sportEventIds
+            .filter((eventId) => !kept.some((event) => event.sportEventId === eventId))
+            .map((sportEventId) => ({ sportEventId, status: 'DRAFT' as const }));
+          this.entries.set(entry.id, { ...entry, events: [...kept, ...added] });
+        }
+      },
       setCupWeight: async (id, cupWeight, whileIn) => {
         const existing = this.contests.get(id);
         if (!existing || !whileIn.includes(existing.status)) return false;
