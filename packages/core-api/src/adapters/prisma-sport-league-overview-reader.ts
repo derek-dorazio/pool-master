@@ -19,7 +19,7 @@ export class PrismaSportLeagueOverviewReader implements SportLeagueOverviewReade
 
   async readFacts(now: Date): Promise<SportLeagueOverviewFacts> {
     const notCancelled = { not: SportEventStatus.CANCELLED };
-    const [leagues, runGroups, failedSyncs, heldEvents, countGroups, nextGroups, overdueCandidates, findingGroups] = await Promise.all([
+    const [leagues, leaguesWithRuns, failedSyncs, heldEvents, countGroups, nextGroups, overdueCandidates, findingGroups] = await Promise.all([
       this.prisma.sportLeague.findMany({
         select: {
           id: true,
@@ -31,7 +31,7 @@ export class PrismaSportLeagueOverviewReader implements SportLeagueOverviewReade
         },
       }),
       // The leagues with any run, on the (sport league, kind, created at) index.
-      this.prisma.providerSyncRun.groupBy({ by: ['sportLeagueId'], where: { sportLeagueId: { not: null } } }),
+      this.prisma.sportLeague.findMany({ where: { syncRuns: { some: {} } }, select: { id: true } }),
       this.failedSyncs(),
       this.prisma.sportEvent.findMany({
         where: { status: SportEventStatus.DRAFT, autoReleaseOutcome: AutoReleaseCheckOutcome.HELD },
@@ -70,7 +70,7 @@ export class PrismaSportLeagueOverviewReader implements SportLeagueOverviewReade
         syncProviderId: syncProviderIdOf(league),
         syncProviderName: syncProviderNameOf(league),
       })),
-      leaguesWithSyncRuns: new Set(runGroups.flatMap((group) => (group.sportLeagueId === null ? [] : [group.sportLeagueId]))),
+      leaguesWithSyncRuns: new Set(leaguesWithRuns.map((league) => league.id)),
       failedSyncs,
       heldEvents: heldEvents.flatMap((event) => {
         // The check constraint sets the time with the outcome.
