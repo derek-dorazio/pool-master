@@ -93,7 +93,7 @@ describe('ProviderGameSlateService', () => {
   it('loads a synced draft week\'s games as its matches in kickoff order, each side from the field', async () => {
     const { service, event, field, matchesNow } = setup();
 
-    await expect(service.syncGames({ providerId: PROVIDER, externalId: WEEK_EVENT, games: WEEK }))
+    await expect(service.syncGames({ sportEventId: event.id, providerId: PROVIDER, externalId: WEEK_EVENT, games: WEEK }))
       .resolves.toEqual({ outcome: 'LOADED', sportEventId: event.id, matchCount: 2 });
 
     expect(await matchesNow()).toEqual([
@@ -104,9 +104,9 @@ describe('ProviderGameSlateService', () => {
 
   it('keeps each game\'s number within its round when the provider adds a game kicking off later: the new game takes the next number', async () => {
     const { service, event, field, matchesNow } = setup();
-    await service.syncGames({ providerId: PROVIDER, externalId: WEEK_EVENT, games: [game('g1', 'Bears', 'Lions', 0)] });
+    await service.syncGames({ sportEventId: event.id, providerId: PROVIDER, externalId: WEEK_EVENT, games: [game('g1', 'Bears', 'Lions', 0)] });
 
-    await expect(service.syncGames({ providerId: PROVIDER, externalId: WEEK_EVENT, games: WEEK }))
+    await expect(service.syncGames({ sportEventId: event.id, providerId: PROVIDER, externalId: WEEK_EVENT, games: WEEK }))
       .resolves.toMatchObject({ sportEventId: event.id });
 
     expect(await matchesNow()).toEqual([
@@ -117,10 +117,10 @@ describe('ProviderGameSlateService', () => {
 
   it('writes nothing when a draft already holds the provider\'s games', async () => {
     const { service, event, store } = setup();
-    await service.syncGames({ providerId: PROVIDER, externalId: WEEK_EVENT, games: WEEK });
+    await service.syncGames({ sportEventId: event.id, providerId: PROVIDER, externalId: WEEK_EVENT, games: WEEK });
     const idsBefore = (await store.matchRepo().findBySportEvent(event.id)).map((match) => match.id);
 
-    await expect(service.syncGames({ providerId: PROVIDER, externalId: WEEK_EVENT, games: [...WEEK].reverse() }))
+    await expect(service.syncGames({ sportEventId: event.id, providerId: PROVIDER, externalId: WEEK_EVENT, games: [...WEEK].reverse() }))
       .resolves.toEqual({ outcome: 'UNCHANGED', sportEventId: event.id });
     expect((await store.matchRepo().findBySportEvent(event.id)).map((match) => match.id)).toEqual(idsBefore);
   });
@@ -128,7 +128,7 @@ describe('ProviderGameSlateService', () => {
   it('writes nothing again for a neutral-site draft whose match already has its Game 2, which took Game 1\'s neutral site', async () => {
     const { service, event, store } = setup();
     const neutralWeek = WEEK.map((each) => ({ ...each, isNeutralSite: true }));
-    await service.syncGames({ providerId: PROVIDER, externalId: WEEK_EVENT, games: neutralWeek });
+    await service.syncGames({ sportEventId: event.id, providerId: PROVIDER, externalId: WEEK_EVENT, games: neutralWeek });
     const [first] = await store.matchRepo().findBySportEvent(event.id);
     const gameOne = expectDefined(first.games.find((each) => each.gameNumber === 1));
     await store.gameRepo().applySync({
@@ -137,18 +137,18 @@ describe('ProviderGameSlateService', () => {
       mapped: [], moved: [], scores: [],
     });
 
-    await expect(service.syncGames({ providerId: PROVIDER, externalId: WEEK_EVENT, games: neutralWeek }))
+    await expect(service.syncGames({ sportEventId: event.id, providerId: PROVIDER, externalId: WEEK_EVENT, games: neutralWeek }))
       .resolves.toEqual({ outcome: 'UNCHANGED', sportEventId: event.id });
   });
 
   it('moves only the kickoff on a draft whose pairings are unchanged, keeping every match and the admin\'s spreads', async () => {
     const { service, event, store, matchesNow, field } = setup();
-    await service.syncGames({ providerId: PROVIDER, externalId: WEEK_EVENT, games: WEEK });
+    await service.syncGames({ sportEventId: event.id, providerId: PROVIDER, externalId: WEEK_EVENT, games: WEEK });
     store.matchRows = store.matchRows.map((match) => (withHomeAway(match, { homeSpread: match.matchNumber === 1 ? -3.5 : 6.5 })));
     const idsBefore = store.matchRows.map((match) => match.id);
 
     // The Packers game's kickoff firms up an hour earlier, so it now sorts first.
-    await expect(service.syncGames({ providerId: PROVIDER, externalId: WEEK_EVENT, games: [game('g1', 'Bears', 'Lions', 0), game('g2', 'Packers', 'Vikings', -1)] }))
+    await expect(service.syncGames({ sportEventId: event.id, providerId: PROVIDER, externalId: WEEK_EVENT, games: [game('g1', 'Bears', 'Lions', 0), game('g2', 'Packers', 'Vikings', -1)] }))
       .resolves.toEqual({ outcome: 'MATCHES_UPDATED', sportEventId: event.id, matches: [{ roundNumber: 1, matchNumber: 2 }] });
 
     expect(store.matchRows.map((match) => match.id)).toEqual(idsBefore);
@@ -161,10 +161,10 @@ describe('ProviderGameSlateService', () => {
 
   it('keeps a draft match\'s sides and the admin\'s spread when the provider swaps home and away, changing only where each side plays Game 1', async () => {
     const { service, event, store, matchesNow, field } = setup();
-    await service.syncGames({ providerId: PROVIDER, externalId: WEEK_EVENT, games: WEEK });
+    await service.syncGames({ sportEventId: event.id, providerId: PROVIDER, externalId: WEEK_EVENT, games: WEEK });
     store.matchRows = store.matchRows.map((match) => (withHomeAway(match, { homeSpread: match.matchNumber === 1 ? -3.5 : null })));
 
-    await expect(service.syncGames({ providerId: PROVIDER, externalId: WEEK_EVENT, games: [game('g1', 'Lions', 'Bears', 0), WEEK[0]] }))
+    await expect(service.syncGames({ sportEventId: event.id, providerId: PROVIDER, externalId: WEEK_EVENT, games: [game('g1', 'Lions', 'Bears', 0), WEEK[0]] }))
       .resolves.toEqual({ outcome: 'MATCHES_UPDATED', sportEventId: event.id, matches: [{ roundNumber: 1, matchNumber: 1 }] });
 
     // The Bears stay on side 2 and the Lions on side 1 (#2046): the Lions now play Game 1 at home.
@@ -178,10 +178,10 @@ describe('ProviderGameSlateService', () => {
 
   it('keeps a released match\'s sides when the provider swaps home and away, moving its kickoff and where each side plays Game 1', async () => {
     const { service, event, store, matchesNow, field, logger } = setup();
-    await service.syncGames({ providerId: PROVIDER, externalId: WEEK_EVENT, games: WEEK });
+    await service.syncGames({ sportEventId: event.id, providerId: PROVIDER, externalId: WEEK_EVENT, games: WEEK });
     await store.sportEventRepo().update(event.id, { status: SportEventStatus.SCHEDULED });
 
-    await expect(service.syncGames({ providerId: PROVIDER, externalId: WEEK_EVENT, games: [game('g1', 'Lions', 'Bears', 1), WEEK[0]] }))
+    await expect(service.syncGames({ sportEventId: event.id, providerId: PROVIDER, externalId: WEEK_EVENT, games: [game('g1', 'Lions', 'Bears', 1), WEEK[0]] }))
       .resolves.toEqual({ outcome: 'MATCHES_UPDATED', sportEventId: event.id, matches: [{ roundNumber: 1, matchNumber: 1 }] });
 
     expect((await matchesNow())[0]).toEqual([1, field.Bears, field.Lions, new Date(KICKOFF.getTime() + HOUR).toISOString()]);
@@ -190,10 +190,10 @@ describe('ProviderGameSlateService', () => {
   });
 
   it('replaces a draft\'s games, an admin\'s included, when the provider\'s pairings change', async () => {
-    const { service, field, matchesNow } = setup();
-    await service.syncGames({ providerId: PROVIDER, externalId: WEEK_EVENT, games: WEEK });
+    const { service, event, field, matchesNow } = setup();
+    await service.syncGames({ sportEventId: event.id, providerId: PROVIDER, externalId: WEEK_EVENT, games: WEEK });
 
-    await service.syncGames({ providerId: PROVIDER, externalId: WEEK_EVENT, games: [game('g3', 'Bears', 'Packers', 1), game('g4', 'Lions', 'Vikings', 2)] });
+    await service.syncGames({ sportEventId: event.id, providerId: PROVIDER, externalId: WEEK_EVENT, games: [game('g3', 'Bears', 'Packers', 1), game('g4', 'Lions', 'Vikings', 2)] });
 
     expect(await matchesNow()).toEqual([
       [1, field.Bears, field.Packers, new Date(KICKOFF.getTime() + HOUR).toISOString()],
@@ -203,13 +203,13 @@ describe('ProviderGameSlateService', () => {
 
   it('moves a released week\'s kickoff for a game not yet started, and keeps its pairings and every started game\'s time', async () => {
     const { service, event, store, matchesNow, field, logger } = setup();
-    await service.syncGames({ providerId: PROVIDER, externalId: WEEK_EVENT, games: WEEK });
+    await service.syncGames({ sportEventId: event.id, providerId: PROVIDER, externalId: WEEK_EVENT, games: WEEK });
     await store.sportEventRepo().update(event.id, { status: SportEventStatus.SCHEDULED });
     // The week's first game kicked off.
     store.matchRows = store.matchRows.map((match) => (match.matchNumber === 1 ? { ...match, status: MatchStatus.IN_PROGRESS } : match));
 
     const flexed = [game('g1', 'Bears', 'Lions', 5), game('g2', 'Packers', 'Vikings', 8), game('g9', 'Bears', 'Vikings', 9)];
-    await expect(service.syncGames({ providerId: PROVIDER, externalId: WEEK_EVENT, games: flexed }))
+    await expect(service.syncGames({ sportEventId: event.id, providerId: PROVIDER, externalId: WEEK_EVENT, games: flexed }))
       .resolves.toEqual({ outcome: 'MATCHES_UPDATED', sportEventId: event.id, matches: [{ roundNumber: 1, matchNumber: 2 }] });
 
     expect(await matchesNow()).toEqual([
@@ -224,12 +224,12 @@ describe('ProviderGameSlateService', () => {
 
   it('moves a released week\'s postponed game to the provider\'s new kickoff, leaving it postponed', async () => {
     const { service, event, store, matchesNow, field } = setup();
-    await service.syncGames({ providerId: PROVIDER, externalId: WEEK_EVENT, games: WEEK });
+    await service.syncGames({ sportEventId: event.id, providerId: PROVIDER, externalId: WEEK_EVENT, games: WEEK });
     await store.sportEventRepo().update(event.id, { status: SportEventStatus.SCHEDULED });
     store.matchRows = store.matchRows.map((match) => (match.matchNumber === 2 ? { ...match, status: MatchStatus.POSTPONED } : match));
 
     const rescheduled = [game('g1', 'Bears', 'Lions', 0), game('g2', 'Packers', 'Vikings', 26)];
-    await expect(service.syncGames({ providerId: PROVIDER, externalId: WEEK_EVENT, games: rescheduled }))
+    await expect(service.syncGames({ sportEventId: event.id, providerId: PROVIDER, externalId: WEEK_EVENT, games: rescheduled }))
       .resolves.toEqual({ outcome: 'MATCHES_UPDATED', sportEventId: event.id, matches: [{ roundNumber: 1, matchNumber: 2 }] });
 
     expect(await matchesNow()).toContainEqual([2, field.Packers, field.Vikings, new Date(KICKOFF.getTime() + 26 * HOUR).toISOString()]);
@@ -238,17 +238,17 @@ describe('ProviderGameSlateService', () => {
 
   it('reports a released week whose kickoffs all match as unchanged', async () => {
     const { service, event, store } = setup();
-    await service.syncGames({ providerId: PROVIDER, externalId: WEEK_EVENT, games: WEEK });
+    await service.syncGames({ sportEventId: event.id, providerId: PROVIDER, externalId: WEEK_EVENT, games: WEEK });
     await store.sportEventRepo().update(event.id, { status: SportEventStatus.SCHEDULED });
 
-    await expect(service.syncGames({ providerId: PROVIDER, externalId: WEEK_EVENT, games: WEEK }))
+    await expect(service.syncGames({ sportEventId: event.id, providerId: PROVIDER, externalId: WEEK_EVENT, games: WEEK }))
       .resolves.toEqual({ outcome: 'UNCHANGED', sportEventId: event.id });
   });
 
   it('leaves the games unloaded, and says which teams, while a team is not in the field yet', async () => {
-    const { service, logger, matchesNow } = setup();
+    const { service, event, logger, matchesNow } = setup();
 
-    await expect(service.syncGames({ providerId: PROVIDER, externalId: WEEK_EVENT, games: [...WEEK, game('g5', 'Bears', 'Saints', 6)] }))
+    await expect(service.syncGames({ sportEventId: event.id, providerId: PROVIDER, externalId: WEEK_EVENT, games: [...WEEK, game('g5', 'Bears', 'Saints', 6)] }))
       .resolves.toEqual({ outcome: 'SKIPPED', reason: 'TEAMS_NOT_IN_FIELD' });
 
     expect(await matchesNow()).toEqual([]);
@@ -256,15 +256,15 @@ describe('ProviderGameSlateService', () => {
   });
 
   it.each([
-    ['an event the provider has not linked', { externalId: 'nfl-2026-week-12' }, 'NO_EVENT'],
+    ['an event that no longer exists', { sportEventId: 'an-event-not-in-the-store' }, 'NO_EVENT'],
     ['an event of a league not synced', { synced: false }, 'NOT_SYNCED'],
     ['a completed event', { status: SportEventStatus.COMPLETED }, 'FINISHED'],
     ['a cancelled event', { status: SportEventStatus.CANCELLED }, 'FINISHED'],
   ] as const)('touches nothing for %s', async (_label, options, reason) => {
-    const { service, matchesNow } = setup('status' in options || 'synced' in options ? options : {});
-    const externalId = 'externalId' in options ? options.externalId : WEEK_EVENT;
+    const { service, event, matchesNow } = setup('status' in options || 'synced' in options ? options : {});
+    const sportEventId = 'sportEventId' in options ? options.sportEventId : event.id;
 
-    await expect(service.syncGames({ providerId: PROVIDER, externalId, games: WEEK })).resolves.toEqual({ outcome: 'SKIPPED', reason });
+    await expect(service.syncGames({ sportEventId, providerId: PROVIDER, externalId: WEEK_EVENT, games: WEEK })).resolves.toEqual({ outcome: 'SKIPPED', reason });
     expect(await matchesNow()).toEqual([]);
   });
 
@@ -272,7 +272,7 @@ describe('ProviderGameSlateService', () => {
     const { service, event } = setup();
     event.slotDefinitions = sportEventSlots(Sport.GOLF);
 
-    await expect(service.syncGames({ providerId: PROVIDER, externalId: WEEK_EVENT, games: WEEK }))
+    await expect(service.syncGames({ sportEventId: event.id, providerId: PROVIDER, externalId: WEEK_EVENT, games: WEEK }))
       .resolves.toEqual({ outcome: 'SKIPPED', reason: 'PLAYS_NO_GAMES' });
   });
 
@@ -280,16 +280,16 @@ describe('ProviderGameSlateService', () => {
     it('does nothing for an event detail with no games, and syncs one with games', async () => {
       const { service, event } = setup();
 
-      await expect(service.afterFieldLoad({ providerId: PROVIDER, externalId: WEEK_EVENT })).resolves.toBeNull();
-      await expect(service.afterFieldLoad({ providerId: PROVIDER, externalId: WEEK_EVENT, games: WEEK }))
+      await expect(service.afterFieldLoad({ sportEventId: event.id, providerId: PROVIDER, externalId: WEEK_EVENT })).resolves.toBeNull();
+      await expect(service.afterFieldLoad({ sportEventId: event.id, providerId: PROVIDER, externalId: WEEK_EVENT, games: WEEK }))
         .resolves.toEqual({ outcome: 'LOADED', sportEventId: event.id, matchCount: 2 });
     });
 
     it('logs a slate the bracket refuses instead of failing the field load, so the next load tries again', async () => {
-      const { service, bracket, logger } = setup();
+      const { service, event, bracket, logger } = setup();
       jest.spyOn(bracket, 'loadBracket').mockRejectedValueOnce(new Error('bracket refused'));
 
-      await expect(service.afterFieldLoad({ providerId: PROVIDER, externalId: WEEK_EVENT, games: WEEK })).resolves.toBeNull();
+      await expect(service.afterFieldLoad({ sportEventId: event.id, providerId: PROVIDER, externalId: WEEK_EVENT, games: WEEK })).resolves.toBeNull();
       expect(logger.error).toHaveBeenCalledWith(
         expect.objectContaining({ externalId: WEEK_EVENT, error: 'bracket refused' }),
         'Could not sync event games from provider',
@@ -353,7 +353,7 @@ describe('ProviderGameSlateService', () => {
         logger,
       });
       const sync = (games: readonly ProviderScheduledGame[], shape: readonly ProviderBracketMatch[] = BRACKET) =>
-        service.syncGames({ providerId: PROVIDER, externalId: POSTSEASON_EVENT, games, bracket: shape });
+        service.syncGames({ sportEventId: event.id, providerId: PROVIDER, externalId: POSTSEASON_EVENT, games, bracket: shape });
       const sides = () => store.matchRows
         .slice()
         .sort(compareMatchPlaces)
@@ -466,7 +466,7 @@ describe('ProviderGameSlateService', () => {
       const before = sides();
       const idsBefore = store.matchRows.map((match) => match.id);
 
-      await expect(service.syncGames({ providerId: PROVIDER, externalId: POSTSEASON_EVENT, games: [playoffGame('w1', 1, 2, 7, 2), WILD_CARD[1], WILD_CARD[2]] as ProviderScheduledGame[] }))
+      await expect(service.syncGames({ sportEventId: event.id, providerId: PROVIDER, externalId: POSTSEASON_EVENT, games: [playoffGame('w1', 1, 2, 7, 2), WILD_CARD[1], WILD_CARD[2]] as ProviderScheduledGame[] }))
         .resolves.toEqual({ outcome: 'MATCHES_UPDATED', sportEventId: event.id, matches: [{ roundNumber: 1, matchNumber: 1 }] });
       expect(sides()).toEqual(before);
       expect(store.matchRows.map((match) => match.id)).toEqual(idsBefore);
@@ -547,7 +547,7 @@ describe('ProviderGameSlateService', () => {
     it('syncs an event detail that carries a bracket but no games after a field load', async () => {
       const { service, event } = playoffSetup();
 
-      await expect(service.afterFieldLoad({ providerId: PROVIDER, externalId: POSTSEASON_EVENT, bracket: BRACKET }))
+      await expect(service.afterFieldLoad({ sportEventId: event.id, providerId: PROVIDER, externalId: POSTSEASON_EVENT, bracket: BRACKET }))
         .resolves.toEqual({ outcome: 'LOADED', sportEventId: event.id, matchCount: 6 });
     });
   });

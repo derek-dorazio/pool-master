@@ -112,12 +112,14 @@ describe('ProviderSyncRunLedger records each run\'s event and sport league (#184
     scope: { type: 'EVENT', sport: Sport.GOLF, providerId: 'balldontlie', eventId, feeds: ['EVENTLIVESCORES'] },
   });
   const linkedEvents = {
-    findByProviderRef: jest.fn(async (_providerId: string, externalId: string) => (externalId === 'linked'
-      ? { id: 'sport-event-1', sportLeagueId: 'pga-tour' } as SportEvent
-      : null)),
+    findByProviderRefs: jest.fn(async (_providerId: string, externalIds: readonly string[]): Promise<SportEvent[]> => {
+      if (externalIds.includes('linked')) return [{ id: 'sport-event-1', sportLeagueId: 'pga-tour' } as SportEvent];
+      if (externalIds.includes('season-slate')) return [{ id: 'cfp-event', sportLeagueId: 'ncaaf' } as SportEvent, { id: 'bowls-event', sportLeagueId: 'ncaaf' } as SportEvent];
+      return [];
+    }),
   };
 
-  beforeEach(() => linkedEvents.findByProviderRef.mockClear());
+  beforeEach(() => linkedEvents.findByProviderRefs.mockClear());
 
   it('fills in the linked event and its sport league for a scheduled run whose caller named neither', async () => {
     const ledger = new ProviderSyncRunLedger(inMemorySyncRuns(), undefined, linkedEvents);
@@ -125,7 +127,15 @@ describe('ProviderSyncRunLedger records each run\'s event and sport league (#184
     const [run] = await ledger.createSubmissions({ normalizedRequest: scheduled('linked'), providerId: 'balldontlie', submittedAt: now, trigger: JobTrigger.SCHEDULE });
 
     expect(run).toMatchObject({ sportEventId: 'sport-event-1', sportLeagueId: 'pga-tour' });
-    expect(linkedEvents.findByProviderRef).toHaveBeenCalledWith('balldontlie', 'linked');
+    expect(linkedEvents.findByProviderRefs).toHaveBeenCalledWith('balldontlie', ['linked']);
+  });
+
+  it('names the league and no one event for a provider event linked to an event in each of two competitions', async () => {
+    const ledger = new ProviderSyncRunLedger(inMemorySyncRuns(), undefined, linkedEvents);
+
+    const [run] = await ledger.createSubmissions({ normalizedRequest: scheduled('season-slate'), providerId: 'balldontlie', submittedAt: now, trigger: JobTrigger.SCHEDULE });
+
+    expect(run).toMatchObject({ sportEventId: null, sportLeagueId: 'ncaaf' });
   });
 
   it('leaves both null for a provider event linked to no event of ours', async () => {
@@ -150,7 +160,7 @@ describe('ProviderSyncRunLedger records each run\'s event and sport league (#184
     });
 
     expect(run).toMatchObject({ sportEventId: 'named-event', sportLeagueId: 'named-league' });
-    expect(linkedEvents.findByProviderRef).not.toHaveBeenCalled();
+    expect(linkedEvents.findByProviderRefs).not.toHaveBeenCalled();
   });
 });
 

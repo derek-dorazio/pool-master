@@ -131,9 +131,9 @@ describe('SportEventRepository — writes', () => {
     const externalId = `repo-${randomUUID()}`;
     await mapEventToProvider(getPrisma(), event.id, { providerId: 'balldontlie', externalId });
 
-    await expect(events.findByProviderRef('balldontlie', externalId)).resolves.toMatchObject({ id: event.id, providerMappings: [{ providerCode: ProviderCode.BALLDONTLIE, providerName: 'BALLDONTLIE', externalId }] });
-    await expect(events.findByProviderRef('balldontlie', 'nobody')).resolves.toBeNull();
-    await expect(events.findByProviderRef('no-such-provider', externalId)).resolves.toBeNull();
+    await expect(events.findByProviderRefs('balldontlie', [externalId])).resolves.toMatchObject([{ id: event.id, providerMappings: [{ providerCode: ProviderCode.BALLDONTLIE, providerName: 'BALLDONTLIE', externalId }] }]);
+    await expect(events.findByProviderRefs('balldontlie', ['nobody'])).resolves.toEqual([]);
+    await expect(events.findByProviderRefs('no-such-provider', [externalId])).resolves.toEqual([]);
 
     const updated = await events.update(event.id, { venue: null, endDate: null, name: 'Renamed Open', location: undefined });
 

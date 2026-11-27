@@ -43,7 +43,7 @@ export type ProviderGameSlateOutcome =
   | { outcome: 'SKIPPED'; reason: 'NO_EVENT' | 'NOT_SYNCED' | 'PLAYS_NO_GAMES' | 'FINISHED' | 'TEAMS_NOT_IN_FIELD' };
 
 export interface ProviderGameSlateDeps {
-  sportEvents: Pick<SportEventRepository, 'findByProviderRef'>;
+  sportEvents: Pick<SportEventRepository, 'findById'>;
   matches: Pick<SportEventRoundMatchRepository, 'findBySportEvent'>;
   games: Pick<SportEventRoundMatchGameRepository, 'findBySportEvent' | 'findByProviderExternalIds' | 'applySync'>;
   field: Pick<SportEventParticipantRepository, 'findBySportEvent'>;
@@ -66,6 +66,11 @@ function sidesOfProviderGame(home: string | null, away: string | null, isNeutral
 
 /** What a provider gives for an event's games: its games so far, and for a fixed-shape playoff its whole bracket. */
 export interface ProviderGameSlateInput {
+  /**
+   * The event whose field the provider just synced: one of the events its provider event's games
+   * reach, one per competition (#2154).
+   */
+  sportEventId: string;
   providerId: string;
   externalId: string;
   games: readonly ProviderScheduledGame[];
@@ -110,10 +115,10 @@ export class ProviderGameSlateService {
    * written either way, so a refused slate is logged, not thrown, and the next field load tries
    * again. Null when the provider listed no games.
    */
-  async afterFieldLoad(detail: { providerId: string; externalId: string; games?: readonly ProviderScheduledGame[]; bracket?: readonly ProviderBracketMatch[] }): Promise<ProviderGameSlateOutcome | null> {
+  async afterFieldLoad(detail: { sportEventId: string; providerId: string; externalId: string; games?: readonly ProviderScheduledGame[]; bracket?: readonly ProviderBracketMatch[] }): Promise<ProviderGameSlateOutcome | null> {
     if (detail.games === undefined && detail.bracket === undefined) return null;
     try {
-      const slate = await this.syncGames({ providerId: detail.providerId, externalId: detail.externalId, games: detail.games ?? [], bracket: detail.bracket });
+      const slate = await this.syncGames({ sportEventId: detail.sportEventId, providerId: detail.providerId, externalId: detail.externalId, games: detail.games ?? [], bracket: detail.bracket });
       this.deps.logger?.info({ providerId: detail.providerId, externalId: detail.externalId, slate }, 'Synced event games from provider');
       return slate;
     } catch (error) {
@@ -126,7 +131,7 @@ export class ProviderGameSlateService {
   }
 
   async syncGames(input: ProviderGameSlateInput): Promise<ProviderGameSlateOutcome> {
-    const event = await this.deps.sportEvents.findByProviderRef(input.providerId, input.externalId);
+    const event = await this.deps.sportEvents.findById(input.sportEventId);
     const skipped = skipReason(event);
     if (skipped !== null || event === null) {
       return { outcome: 'SKIPPED', reason: skipped ?? 'NO_EVENT' };

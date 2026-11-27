@@ -88,6 +88,7 @@ function build(options: {
         unplaced: [],
         slotsNeedingDates: null,
         unplacedNames: [],
+        competitionNames: new Map(),
       })),
     keepProviderEventsCurrent: options.keepProviderEventsCurrent ?? jest.fn(async (): Promise<ProviderEventDetailsChange[]> => []),
   };
@@ -292,8 +293,8 @@ describe('LeagueEventsSync', () => {
         [{ sportLeagueId: pga.id, sportLeagueSeasonId: own.next.id, providerId: 'balldontlie', sportLeagueProviderMappingId: pga.selectedProviderMapping?.id, providerEvents: [providerEvent(`${pga.id}-2027`)] }],
       ]);
       expect(sportEvents.keepProviderEventsCurrent.mock.calls).toEqual([
-        [{ sportLeagueId: pga.id, providerId: 'balldontlie', providerEvents: [providerEvent(`${pga.id}-2026`)] }],
-        [{ sportLeagueId: pga.id, providerId: 'balldontlie', providerEvents: [providerEvent(`${pga.id}-2027`)] }],
+        [{ sportLeagueId: pga.id, providerId: 'balldontlie', providerEvents: [providerEvent(`${pga.id}-2026`)], competitionNames: new Map() }],
+        [{ sportLeagueId: pga.id, providerId: 'balldontlie', providerEvents: [providerEvent(`${pga.id}-2027`)], competitionNames: new Map() }],
       ]);
       expect(sportEvents.importProviderSeason.mock.invocationCallOrder[0]).toBeLessThan(sportEvents.keepProviderEventsCurrent.mock.invocationCallOrder[0]);
     });
@@ -375,6 +376,7 @@ describe('LeagueEventsSync', () => {
         unplaced: [],
         slotsNeedingDates: null,
         unplacedNames: [],
+        competitionNames: new Map(),
       }));
       const { sync, findings } = build({ leagues: [pga], seasons, importProviderSeason });
 
@@ -414,6 +416,7 @@ describe('LeagueEventsSync', () => {
         ],
         slotsNeedingDates: null,
         unplacedNames: [],
+        competitionNames: new Map(),
       }));
       const { sync, findings } = build({ leagues: [pga], seasons, importProviderSeason });
 
@@ -454,6 +457,7 @@ describe('LeagueEventsSync', () => {
           { normalizedName: 'twin championship', name: 'Twin Championship', reason: 'AMBIGUOUS' },
           { normalizedName: 'masters tournament', name: 'Masters Tournament', reason: 'SEASON_COMPETITION_MISSING' },
         ],
+        competitionNames: new Map(),
       }));
       const { sync, findings } = build({ leagues: [pga], seasons, importProviderSeason });
 
@@ -472,7 +476,7 @@ describe('LeagueEventsSync', () => {
       const pga = syncedLeague(seasons, {}, own);
       const needing = jest.fn<Promise<string[] | null>, []>();
       const importProviderSeason = jest.fn(async (): Promise<ProviderSeasonImport> => ({
-        created: [], skipped: [], unmatched: [], placed: [], unplaced: [], slotsNeedingDates: await needing(), unplacedNames: [],
+        created: [], skipped: [], unmatched: [], placed: [], unplaced: [], slotsNeedingDates: await needing(), unplacedNames: [], competitionNames: new Map(),
       }));
       const { sync, findings } = build({ leagues: [pga], seasons, importProviderSeason });
       const runOnce = () => sync.run({ sportLeagueId: pga.id, sportLeagueSeasonId: own.current.id }, { jobId: randomUUID(), attempt: 1, renewLease: stillHeld, trigger: JobTrigger.SCHEDULE });
@@ -570,6 +574,7 @@ describe('LeagueEventsSync', () => {
         unplaced: [],
         slotsNeedingDates: null,
         unplacedNames: [],
+        competitionNames: new Map(),
       }));
       const { sync, syncRuns } = build({ leagues: [pga], seasons, importProviderSeason });
 

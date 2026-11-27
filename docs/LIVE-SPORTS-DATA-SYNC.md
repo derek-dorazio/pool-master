@@ -250,7 +250,11 @@ other slots' windows. A rest-of-phase slot's own games give it its dates and con
 window, as a date-window slot's do. One provider event's games can reach several competitions (a
 season's slate reaches its bowls, its title games and its CFP); the sync makes one event per
 competition it reaches, and an event never crosses competitions, so a linked event takes only its
-own competition's slots.
+own competition's slots. Those events all carry the provider event's one id, so that id is not
+unique per provider; a field sync writes each of their fields and queues each one's follow-up job
+by its event id. An event made for a competition with a name (`SportLeagueCompetition.name`, such
+as "Bowl Games") takes that name, and the sync that keeps events current keeps it, rather than the
+provider's slate name.
 
 For each provider event:
 

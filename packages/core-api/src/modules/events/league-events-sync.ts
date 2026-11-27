@@ -301,7 +301,7 @@ export class LeagueEventsSync {
     await this.raiseSlotsOutsideSeason(sportLeagueId, providerId, season, imported.placed);
     await this.raiseGamesUnplaced(sportLeagueId, providerId, season, imported.unplaced);
     await this.checkSlotDates(sportLeagueId, providerId, season, imported.slotsNeedingDates);
-    const updated = await this.options.sportEvents.keepProviderEventsCurrent({ sportLeagueId, providerId, providerEvents });
+    const updated = await this.options.sportEvents.keepProviderEventsCurrent({ sportLeagueId, providerId, providerEvents, competitionNames: imported.competitionNames });
     return { sportLeagueSeasonId: season.id, seasonName: season.name, created: imported.created, skipped: imported.skipped, updated };
   }
 

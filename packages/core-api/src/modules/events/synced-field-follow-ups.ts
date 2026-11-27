@@ -51,7 +51,7 @@ export class SyncedFieldFollowUps {
   constructor(private readonly deps: SyncedFieldFollowUpsDeps) {}
 
   async run(payload: SyncEventGamesAndTiersJobPayload): Promise<BackgroundJobAnswer> {
-    const ref = { providerId: payload.providerId, externalId: payload.externalId };
+    const ref = { sportEventId: payload.sportEventId, providerId: payload.providerId, externalId: payload.externalId };
     const slate = await this.deps.providerGames.afterFieldLoad({
       ...ref,
       ...(payload.games !== undefined && { games: payload.games.map((game) => ({ ...game, scheduledAt: dateOrNull(game.scheduledAt) })) }),

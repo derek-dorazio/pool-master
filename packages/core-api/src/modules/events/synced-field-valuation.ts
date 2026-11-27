@@ -10,7 +10,7 @@ export interface FieldValuationReport {
 }
 
 export interface SyncedFieldValuationDeps {
-  sportEvents: Pick<SportEventRepository, 'findByProviderRef'>;
+  sportEvents: Pick<SportEventRepository, 'findById'>;
   tiers: Pick<SportEventTierService, 'valueSyncedField'>;
   logger?: FastifyBaseLogger;
 }
@@ -35,9 +35,9 @@ export class SyncedFieldValuationService {
    * After a field load. The field is written either way, so a failure is logged and reported,
    * not thrown, and the next field sync tries again.
    */
-  async afterFieldLoad(detail: { providerId: string; externalId: string }): Promise<FieldValuationOutcome> {
+  async afterFieldLoad(detail: { sportEventId: string; providerId: string; externalId: string }): Promise<FieldValuationOutcome> {
     try {
-      const event = await this.deps.sportEvents.findByProviderRef(detail.providerId, detail.externalId);
+      const event = await this.deps.sportEvents.findById(detail.sportEventId);
       if (!event) return { outcome: 'SKIPPED', reason: 'NO_EVENT' };
       return await this.deps.tiers.valueSyncedField(event);
     } catch (error) {

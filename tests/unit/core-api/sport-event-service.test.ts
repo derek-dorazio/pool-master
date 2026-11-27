@@ -519,7 +519,7 @@ describe('SportEventService.importProviderSeason', () => {
     expect(seeded.slotsNeedingDates).toEqual(['FINAL']);
   });
 
-  it('makes no event that crosses competitions: a slate reaching the bowls and the CFP makes the CFP event on the CFP slot alone, and the linked event never takes the bowls slot (#2154)', async () => {
+  it('makes no event that crosses competitions: a slate reaching the bowls and the CFP makes the CFP event on the CFP slot alone, and once the bowls are covered they get an event of their own, named for their competition, while the linked CFP event never takes the bowls slot (#2154)', async () => {
     const { store, service, sportLeague } = setup();
     const kickoff = slate[0].startDate;
     const around = { startsAt: new Date(kickoff.getTime() - 60_000), endsAt: new Date(kickoff.getTime() + 60_000), status: SlotWindowStatus.CONFIRMED };
@@ -527,6 +527,7 @@ describe('SportEventService.importProviderSeason', () => {
     const bowls = store.addWindowSlot(sportLeague, 'BOWLS', { ...around, endsAt: new Date(kickoff.getTime() + 86_400_000) });
     store.restOfPhaseSlotIds.add(bowls);
     store.slotCompetitions.set(bowls, 'bowls-competition');
+    store.competitionNames.set('bowls-competition', 'Bowl Games');
     store.templateCoveredSlotIds.delete(bowls);
     const seasonOf = (...teams: string[][]) => ({
       ...providerEvent('ncaaf-2026', 'College Football Playoff', null, kickoff, kickoff),
@@ -536,11 +537,16 @@ describe('SportEventService.importProviderSeason', () => {
     const made = await service.importProviderSeason(importOf(sportLeague, [seasonOf(['1', '2'], ['8', '9'])]));
 
     expect(made.created.map(({ slots }) => slots.map((slot) => slot.id))).toEqual([[firstRound]]);
+    expect(made.created.map(({ event }) => event.name)).toEqual(['College Football Playoff']);
     store.templateCoveredSlotIds.add(bowls);
-    await service.importProviderSeason(importOf(sportLeague, [seasonOf(['1', '2'], ['8', '9'])]));
+    const again = await service.importProviderSeason(importOf(sportLeague, [seasonOf(['1', '2'], ['8', '9'])]));
     // Before the seeds are placed both games are the bowls' (the CFP's window places the event, not the game).
     expect(store.seasonSlots.find((slot) => slot.id === bowls)).toEqual(expect.objectContaining({ startsAt: kickoff, endsAt: new Date(kickoff.getTime() + 3_600_000) }));
-    expect([...store.slotsByEvent.values()].flat().map((slot) => slot.id)).toEqual([firstRound]);
+    expect(again.created.map(({ event, slots }) => [event.name, slots.map((slot) => slot.id)])).toEqual([['Bowl Games', [bowls]]]);
+    const cfpEventId = made.created[0].event.id;
+    expect(store.slotsByEvent.get(cfpEventId)?.map((slot) => slot.id)).toEqual([firstRound]);
+    // The sync that keeps events current keeps the bowls event's name, and the CFP its own.
+    expect([...again.competitionNames.values()]).toEqual(['Bowl Games']);
   });
 
   it('names no slot needing dates for a Season with no slot placed by date window', async () => {
@@ -670,6 +676,17 @@ describe('SportEventService.keepProviderEventsCurrent (#1727)', () => {
     expect(changes).toEqual([{ sportEventId: eventId, externalId: 'pga-2026-a', changed: ['name', 'venue', 'startDate', 'endDate'] }]);
     expect(await sportEvents.findById(eventId)).toEqual(expect.objectContaining({ name: 'Alpha Invitational', venue: 'B Links', startDate: moved.startDate, endDate: moved.endDate }));
     expect(notice.sportEventChangedJobs).toHaveBeenCalledWith({ id: eventId, startDate: moved.startDate }, { kind: 'RESCHEDULED', previousStart: listed.startDate }, { reopening: new Set() });
+  });
+
+  it('keeps the name of an event its competition names, writing the provider\'s slate name over it never, though it still takes the provider\'s venue (#2154)', async () => {
+    const { service, sportLeague, sportEvents, eventId } = await linkedEvent(SportEventStatus.SCHEDULED);
+    await sportEvents.update(eventId, { name: 'Bowl Games' });
+    const renamed = { ...listed, name: 'College football 2026 season', venue: 'B Links' };
+
+    const changes = await service.keepProviderEventsCurrent({ sportLeagueId: sportLeague.id, providerId: FEED, providerEvents: [renamed], competitionNames: new Map([[eventId, 'Bowl Games']]) });
+
+    expect(changes.map((change) => change.changed)).toEqual([['venue']]);
+    expect(await sportEvents.findById(eventId)).toEqual(expect.objectContaining({ name: 'Bowl Games', venue: 'B Links' }));
   });
 
   it('changes only the name, venue and end of an event under way, never the start that already happened', async () => {

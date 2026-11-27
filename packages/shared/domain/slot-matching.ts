@@ -52,6 +52,8 @@ export interface SyncSeasonSlot {
   endsAt: Date | null;
   /** The Season competition the slot is in: an event's slots are all of one (#2153). */
   seasonCompetitionId: string;
+  /** Its competition's own proper name, which names the event the sync makes for it; null for none (#2154). */
+  competitionName: string | null;
   /**
    * Whether the league's selected provider mapping matches the slot's definition by its Season
    * window: DATE_WINDOW or REST_OF_PHASE.

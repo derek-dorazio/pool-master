@@ -172,7 +172,7 @@ describe('IngestionService manual sync submission', () => {
       const scheduler = stubInstance(IngestionScheduler, { runEventSync: jest.fn().mockResolvedValue([]) });
       const syncRuns = inMemorySyncRuns();
       const service = new IngestionService({
-        ...ports({ syncRuns, sportEvents: fakeSportEventRepo({ findById, findByProviderRef: jest.fn().mockResolvedValue(null) }) }),
+        ...ports({ syncRuns, sportEvents: fakeSportEventRepo({ findById, findByProviderRefs: jest.fn().mockResolvedValue([]) }) }),
         registry,
         scheduler,
         logger: fakeLogger(),
