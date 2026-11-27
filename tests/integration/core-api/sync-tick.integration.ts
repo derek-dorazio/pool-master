@@ -214,7 +214,7 @@ describe('one sync tick', () => {
 });
 
 describe('the migration retiring the old event sync jobs', () => {
-  const MIGRATION = join(__dirname, '../../../packages/core-api/prisma/migrations/20271218029400_event_sync_jobs/migration.sql');
+  const MIGRATION = join(__dirname, '../../../packages/core-api/prisma/migrations/20271218029600_event_sync_jobs/migration.sql');
   const OLD_TYPES = [
     'MANUAL_EVENT_SYNC', 'PROVIDER_EVENT_SYNC', 'CONTEST_STARTED_EMAILS', 'CONTEST_SETTLED_EMAILS', 'CONTEST_EVENT_CHANGED_EMAILS',
     'SETTLE_SPORT_EVENT_CONTESTS', 'SETTLE_GAME_CONTESTS', 'REBUILD_LEADERBOARDS', 'CONTEST_REOPENED_EMAILS', 'SYNC_LEAGUE_EVENTS',
