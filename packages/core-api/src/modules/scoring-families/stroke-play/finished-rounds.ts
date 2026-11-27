@@ -5,7 +5,8 @@
  * end, and it finished when the last of them did. A weather delay that carries a round into the
  * next morning simply finishes it then.
  */
-import type { ParticipantRoundView, SportEventParticipantView } from '../../events/sport-event-participant-service';
+import type { SportEventParticipantView } from '../../events/sport-event-participant-service';
+import { scoredRoundsOf, type ScoredRound } from './scored-rounds';
 import { isOutOfEvent, isRoundFinished } from './unplayed-rounds';
 
 export interface FinishedRound {
@@ -15,19 +16,20 @@ export interface FinishedRound {
 
 /**
  * The highest round the whole field still in the event has finished, or null before any is. A
- * golfer's round finished at its `completedAt`, else when its score was last written: an admin
+ * round finished when its Game was completed, else when the last score was written: an admin
  * entering a final score need not stamp a time. `holes` is the event's `holesPerRound`.
  */
 export function lastFinishedRound(field: readonly SportEventParticipantView[], holes: number | null): FinishedRound | null {
   const playing = field.filter((row) => !isOutOfEvent(row));
-  const roundNumbers = [...new Set(playing.flatMap((row) => row.rounds.map((round) => round.round.roundNumber)))]
+  const roundsByRow = new Map(playing.map((row) => [row.entry.id, scoredRoundsOf(row)]));
+  const roundNumbers = [...new Set([...roundsByRow.values()].flatMap((rounds) => rounds.map((round) => round.roundNumber)))]
     .sort((left, right) => right - left);
   for (const roundNumber of roundNumbers) {
     const finished = playing
-      .map((row) => row.rounds.find((round) => round.round.roundNumber === roundNumber))
-      .filter((round): round is ParticipantRoundView => round !== undefined && isRoundFinished(round, holes));
+      .map((row) => roundsByRow.get(row.entry.id)?.find((round) => round.roundNumber === roundNumber))
+      .filter((round): round is ScoredRound => round !== undefined && isRoundFinished(round, holes));
     if (finished.length === playing.length) {
-      const finishedAt = Math.max(...finished.map((round) => (round.round.completedAt ?? round.round.updatedAt).getTime()));
+      const finishedAt = Math.max(...finished.map((round) => (round.gameCompletedAt ?? round.updatedAt).getTime()));
       return { roundNumber, finishedAt: new Date(finishedAt) };
     }
   }

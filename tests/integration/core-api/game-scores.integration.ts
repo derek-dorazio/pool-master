@@ -514,7 +514,6 @@ describe('game scores from a provider', () => {
       // The mappings' Provider rows, for their names (#2040), in one read for the batch; and each
       // read of the event names its provider ids' providers (#2004), one more each.
       ['SELECT providers', 3],
-      ['SELECT sport_event_participant_golf_standings', 1],
       ['SELECT sport_event_participant_standings', 2],
       ['SELECT sport_event_participants', 1],
       ['SELECT sport_event_provider_mappings', 3],

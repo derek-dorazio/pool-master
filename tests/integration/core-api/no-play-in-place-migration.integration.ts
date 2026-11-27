@@ -101,6 +101,8 @@ describe('the play-in place migration', () => {
       await tx.$executeRawUnsafe('ALTER TABLE "sport_event_participants" ADD COLUMN "is_play_in_place" BOOLEAN NOT NULL DEFAULT false');
       // The event-level valuations table this migration cleared, which a later migration (#2044) replaced with each slot's.
       await tx.$executeRawUnsafe('CREATE TABLE "sport_event_participant_valuations" ("sport_event_participant_id" UUID NOT NULL)');
+      // The golf round table this migration cleared, which a later migration (#2008) moved onto FIELD Games.
+      await tx.$executeRawUnsafe('CREATE TABLE "sport_event_participant_rounds" ("sport_event_participant_id" UUID NOT NULL)');
       await tx.$executeRaw`${uncachedStatement()} UPDATE "sport_event_participants" SET "is_play_in_place" = true WHERE "id" = ${placeRow}::uuid`;
       for (const statement of migrationStatements()) {
         // poolmaster-allow-query-in-loop: the migration's own statements, in order

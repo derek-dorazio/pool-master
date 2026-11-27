@@ -4,7 +4,7 @@
  */
 
 import type { GolfRoundScorePreviewResponse } from '@poolmaster/shared/dto/golf-scores.dto';
-import type { GolfScorePreviewRow } from '../modules/golf/golf-score-service';
+import type { GolfScorePreviewRow } from '../modules/scoring-families/stroke-play/stroke-play-result-service';
 
 export function mapGolfRoundScorePreviewToDto(rows: GolfScorePreviewRow[]): GolfRoundScorePreviewResponse {
   return {
