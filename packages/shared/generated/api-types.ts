@@ -16208,6 +16208,11 @@ export interface components {
              * @enum {string}
              */
             scoringFamily: "STROKE_PLAY" | "FINISH_POSITION" | "HEAD_TO_HEAD";
+            /**
+             * Format: uuid
+             * @description The Season slot whose tier set a tiered or budget contest picks from on this event (#2044): the first slot the contest covers that holds a set. Its tiers and prices are read with listEventSlotTiers and listEventSlotParticipants. Null for a contest of another selection type, or an event covering no slot. Present on the one-contest read only.
+             */
+            tierSetSeasonSlotId?: string | null;
         };
         /** @description Request payload for setting the events a contest covers. */
         SetContestSportEventsRequest: {
@@ -16300,6 +16305,11 @@ export interface components {
                  * @enum {string}
                  */
                 scoringFamily: "STROKE_PLAY" | "FINISH_POSITION" | "HEAD_TO_HEAD";
+                /**
+                 * Format: uuid
+                 * @description The Season slot whose tier set a tiered or budget contest picks from on this event (#2044): the first slot the contest covers that holds a set. Its tiers and prices are read with listEventSlotTiers and listEventSlotParticipants. Null for a contest of another selection type, or an event covering no slot. Present on the one-contest read only.
+                 */
+                tierSetSeasonSlotId?: string | null;
             }[];
             /** @enum {string|null} */
             sport?: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS" | null;
@@ -16928,6 +16938,11 @@ export interface components {
                      * @enum {string}
                      */
                     scoringFamily: "STROKE_PLAY" | "FINISH_POSITION" | "HEAD_TO_HEAD";
+                    /**
+                     * Format: uuid
+                     * @description The Season slot whose tier set a tiered or budget contest picks from on this event (#2044): the first slot the contest covers that holds a set. Its tiers and prices are read with listEventSlotTiers and listEventSlotParticipants. Null for a contest of another selection type, or an event covering no slot. Present on the one-contest read only.
+                     */
+                    tierSetSeasonSlotId?: string | null;
                 }[];
                 /** @enum {string|null} */
                 sport?: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS" | null;
@@ -17015,6 +17030,11 @@ export interface components {
                      * @enum {string}
                      */
                     scoringFamily: "STROKE_PLAY" | "FINISH_POSITION" | "HEAD_TO_HEAD";
+                    /**
+                     * Format: uuid
+                     * @description The Season slot whose tier set a tiered or budget contest picks from on this event (#2044): the first slot the contest covers that holds a set. Its tiers and prices are read with listEventSlotTiers and listEventSlotParticipants. Null for a contest of another selection type, or an event covering no slot. Present on the one-contest read only.
+                     */
+                    tierSetSeasonSlotId?: string | null;
                 }[];
                 /** @enum {string|null} */
                 sport?: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS" | null;

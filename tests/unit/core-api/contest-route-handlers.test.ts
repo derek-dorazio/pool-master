@@ -47,6 +47,7 @@ function contestService(overrides: Record<string, unknown> = {}) {
     listMyLeagueEntries: jest.fn((..._args: unknown[]) => Promise.resolve({ entries: [entry], places: [{ entryId: entry.id, position: 3, displayPosition: 'T3' }] })),
     getContest: jest.fn((..._args: unknown[]) => Promise.resolve(contest)),
     getContestEntrySummary: jest.fn((..._args: unknown[]) => Promise.resolve({ totals, myEntryIds: ['entry-1'] })),
+    findTierSetSeasonSlots: jest.fn((..._args: unknown[]) => Promise.resolve(new Map([['event-1', 'season-slot-1']]))),
     listEntries: jest.fn((..._args: unknown[]) => Promise.resolve({ entries: [entry], picksRevealed: false })),
     getEntryDetail: jest.fn((..._args: unknown[]) => Promise.resolve({ entry, picksRevealed: true })),
     getLeaderboard: jest.fn((..._args: unknown[]) => Promise.resolve(read({ entries: [], participants: [] }))),
@@ -101,13 +102,14 @@ describe('contest read handlers', () => {
     expect(mine.body).toEqual({ entries: [entry], places: [{ entryId: entry.id, position: 3, displayPosition: 'T3' }] });
   });
 
-  it('answers a contest with its events, entry cap and the reader\'s entry summary', async () => {
+  it('answers a contest with its events, each with the slot whose set it picks from, its entry cap and the reader\'s entry summary', async () => {
     const fake = contestService();
 
     const reply = await callHandler(handlersOver(fake).getContest, stubRequest({ params: contestParams, authUser: me }));
 
     expect(fake.getContestEntrySummary).toHaveBeenCalledWith(contest, 'user-1');
-    expect(reply).toMatchObject({ statusCode: 200, body: { contest: { id: 'contest-1', entriesPerContest: 50, sportEvents: [{ sportEventId: 'event-1' }] } } });
+    expect(fake.findTierSetSeasonSlots).toHaveBeenCalledWith(contest);
+    expect(reply).toMatchObject({ statusCode: 200, body: { contest: { id: 'contest-1', entriesPerContest: 50, sportEvents: [{ sportEventId: 'event-1', tierSetSeasonSlotId: 'season-slot-1' }] } } });
   });
 
   it('answers a contest with no entry cap with none', async () => {

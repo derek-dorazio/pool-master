@@ -74,6 +74,7 @@ export const ContestSportEventDtoSchema = z.object({
   status: z.enum(SportEventStatus).describe('The event\'s own status. Each event of a contest is picked, submitted, played and settled on its own (#713).'),
   participantType: z.enum(ParticipantType).describe('Who competes: teams or individuals, from the event\'s sport league. The same on every event of a contest, which covers one sport league.'),
   scoringFamily: z.enum(ScoringFamily).describe('How the event is scored, from its sport league. The same on every event of a contest, which covers one sport league.'),
+  tierSetSeasonSlotId: z.uuid().nullable().optional().describe('The Season slot whose tier set a tiered or budget contest picks from on this event (#2044): the first slot the contest covers that holds a set. Its tiers and prices are read with listEventSlotTiers and listEventSlotParticipants. Null for a contest of another selection type, or an event covering no slot. Present on the one-contest read only.'),
 }).describe('One event a contest covers, enough to name, order and pick it without reading the event (#713).');
 export type ContestSportEventDto = z.infer<typeof ContestSportEventDtoSchema>;
 
