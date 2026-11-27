@@ -15,6 +15,8 @@ import {
   ProviderSyncFindingKind,
   ProviderSyncFindingSeverity,
   ProviderSyncFindingStatus,
+  ProviderSyncKind,
+  ProviderSyncRunStatus,
   providerSourceIdOf,
   providerSyncFindingActions,
   RESOLVED_SYNC_FINDING_RETENTION_DAYS,
@@ -49,6 +51,7 @@ function finding(overrides: Partial<ProviderSyncFinding> = {}): ProviderSyncFind
     provider: { id: PROVIDER.id, name: PROVIDER.name },
     providerValue: 'golfer-9',
     providerValueName: 'Avery Hart',
+    syncKind: null,
     waiveNote: null,
     firstSeenAt: NOW,
     lastSeenAt: NOW,
@@ -340,6 +343,56 @@ describe('ProviderSyncFindingService event checks (#1999)', () => {
 
     expect(table.resolved).toEqual([check]);
     expect(table.raised).toEqual([]);
+  });
+});
+
+describe('ProviderSyncFindingService run outcome checks (#2092)', () => {
+  const run = { id: 'run-1', kind: ProviderSyncKind.FIELD, providerId: PROVIDER.id, sportLeagueId: 'nfl', sportEventId: 'week-1' };
+  const subject = { kind: ProviderSyncFindingKind.SYNC_FAILED, sportLeagueId: 'nfl', sportEventId: 'week-1', providerId: PROVIDER.id, syncKind: ProviderSyncKind.FIELD };
+
+  it('raises an ERROR on the run\'s league, event, Provider and sync kind, naming the run, when the run failed, and logs it for the alarm', async () => {
+    const { findings, table, logger } = service();
+
+    await findings.checkRunOutcome(run, ProviderSyncRunStatus.FAILED);
+
+    expect(table.raised).toEqual([[{ ...subject, severity: ProviderSyncFindingSeverity.ERROR, providerValue: null, providerValueName: null, syncRunId: 'run-1' }]]);
+    expect(table.resolved).toEqual([]);
+    expect(logger.error).toHaveBeenCalledWith(expect.objectContaining({ action: 'ingestion.syncFinding.errorOpened', kind: ProviderSyncFindingKind.SYNC_FAILED }), expect.any(String));
+  });
+
+  it('resolves only that sync\'s open failure, on that event, when the run completed', async () => {
+    const { findings, table } = service();
+
+    await findings.checkRunOutcome(run, ProviderSyncRunStatus.COMPLETED);
+
+    expect(table.raised).toEqual([]);
+    expect(table.resolved).toEqual([subject]);
+  });
+
+  it('resolves a league\'s events sync failure as the one with no event', async () => {
+    const { findings, table } = service();
+
+    await findings.checkRunOutcome({ ...run, kind: ProviderSyncKind.EVENTS, sportEventId: null }, ProviderSyncRunStatus.COMPLETED);
+
+    expect(table.resolved).toEqual([{ ...subject, sportEventId: null, syncKind: ProviderSyncKind.EVENTS }]);
+  });
+
+  it('checks nothing for a run with no sport league of ours', async () => {
+    const { findings, table } = service();
+
+    await findings.checkRunOutcome({ ...run, sportLeagueId: null }, ProviderSyncRunStatus.FAILED);
+
+    expect(table.raised).toEqual([]);
+    expect(table.resolved).toEqual([]);
+  });
+
+  it('logs, and does not throw, when the findings write fails, since the run\'s outcome is already recorded', async () => {
+    const { findings, table, logger } = service();
+    table.repository.resolveOpen = async () => { throw new Error('connection reset'); };
+
+    await expect(findings.checkRunOutcome(run, ProviderSyncRunStatus.COMPLETED)).resolves.toBeUndefined();
+
+    expect(logger.error).toHaveBeenCalledWith(expect.objectContaining({ action: 'ingestion.syncFinding.checkFailed' }), expect.any(String));
   });
 });
 

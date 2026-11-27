@@ -132,6 +132,7 @@ export function SyncFindingDialog({ finding, onClose }: { finding: ProviderSyncF
           { id: 'event', label: 'Event', value: finding.sportEvent?.name ?? NONE, testId: `${testId}-event` },
           { id: 'provider', label: 'Provider', value: finding.provider?.name ?? NONE, testId: `${testId}-provider` },
           { id: 'value', label: 'Feed value', value: finding.providerValue ?? NONE, detail: finding.providerValueName ?? undefined, testId: `${testId}-value` },
+          ...(finding.syncKind === null ? [] : [{ id: 'sync', label: 'Sync', value: enumLabel('ProviderSyncKind', finding.syncKind), testId: `${testId}-sync` }]),
           { id: 'first-seen', label: 'First seen', value: <DateDisplay value={finding.firstSeenAt} />, testId: `${testId}-first-seen` },
           { id: 'last-seen', label: 'Last seen', value: <DateDisplay value={finding.lastSeenAt} />, detail: `${String(finding.seenCount)} times`, testId: `${testId}-last-seen` },
           {

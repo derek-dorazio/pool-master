@@ -171,7 +171,7 @@ export type {
   SlotNamePatternChoice,
   TestSeasonSlotCreate,
   TestSlotCreateResult,
-  SportLeagueLatestSyncRun,
+  SportLeagueFailedSync,
   SportLeagueOverviewFacts,
   SportLeagueOverviewLeague,
   SportLeagueOverviewReader,

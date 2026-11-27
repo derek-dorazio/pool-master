@@ -12,12 +12,14 @@ import {
   ProviderSyncFindingKind,
   ProviderSyncFindingSeverity,
   ProviderSyncFindingStatus,
+  ProviderSyncRunStatus,
   providerCodeOfSourceId,
   providerSyncFindingActions,
   type ProviderSettings,
   type ProviderSyncFinding,
   type ProviderSyncFindingRaise,
   type ProviderSyncFindingStatusAction,
+  type ProviderSyncRun,
   type SportLeague,
 } from '@poolmaster/shared/domain';
 import type { ApiErrorCode } from '@poolmaster/shared/dto';
@@ -31,6 +33,9 @@ export class ProviderSyncFindingError extends Error {
     this.name = 'ProviderSyncFindingError';
   }
 }
+
+/** The outcomes a sync run ends in: the ones `checkRunOutcome` reads. */
+export type SyncRunOutcome = typeof ProviderSyncRunStatus.FAILED | typeof ProviderSyncRunStatus.COMPLETED;
 
 /** A participant id the feed sent that no participant of the league is mapped to. */
 export interface UnmappedFeedParticipant {
@@ -154,6 +159,39 @@ export class ProviderSyncFindingService {
       sportEventId: input.sportEventId,
       providerId: input.providerId,
     }, this.now());
+  }
+
+  /**
+   * A sync run's outcome, once recorded (#2092): a FAILED run raises SYNC_FAILED, an ERROR on its
+   * league, event (none for a league's events sync), Provider and sync kind, naming the run; a
+   * COMPLETED run resolves that finding. A run with no league of ours checks nothing. The run's
+   * outcome is already written, so a findings write that fails is logged, never thrown: it cannot
+   * fail a run that succeeded, nor hide why one failed.
+   */
+  async checkRunOutcome(
+    run: Pick<ProviderSyncRun, 'id' | 'kind' | 'providerId' | 'sportLeagueId' | 'sportEventId'>,
+    outcome: SyncRunOutcome,
+  ): Promise<void> {
+    if (run.sportLeagueId === null) return;
+    const subject = {
+      kind: ProviderSyncFindingKind.SYNC_FAILED,
+      sportLeagueId: run.sportLeagueId,
+      sportEventId: run.sportEventId,
+      providerId: run.providerId,
+      syncKind: run.kind,
+    };
+    try {
+      if (outcome === ProviderSyncRunStatus.FAILED) {
+        await this.raise([{ ...subject, severity: ProviderSyncFindingSeverity.ERROR, providerValue: null, providerValueName: null, syncRunId: run.id }]);
+        return;
+      }
+      await this.deps.repository.resolveOpen(subject, this.now());
+    } catch (error) {
+      this.deps.logger?.error(
+        { action: 'ingestion.syncFinding.checkFailed', data: { syncRunId: run.id, kind: ProviderSyncFindingKind.SYNC_FAILED, outcome }, err: error },
+        'Could not check the sync run\'s outcome for findings',
+      );
+    }
   }
 
   /**

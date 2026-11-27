@@ -39,6 +39,7 @@ function finding(overrides: Partial<ProviderSyncFindingDto> = {}): ProviderSyncF
     provider: { id: 'provider-1', name: 'BALLDONTLIE' },
     providerValue: 'golfer-77',
     providerValueName: 'Ludvig Aberg',
+    syncKind: null,
     waiveNote: null,
     firstSeenAt: '2026-11-20T12:00:00.000Z',
     lastSeenAt: '2026-11-23T12:00:00.000Z',
@@ -143,6 +144,26 @@ describe('RootAdminSyncFindingsPage', () => {
     expect(dialog.getByTestId(`${DIALOG}-RESOLVE`)).toBeEnabled();
     expect(dialog.getByTestId(`${DIALOG}-WAIVE`)).toBeEnabled();
     expect(dialog.queryByTestId(`${DIALOG}-REOPEN`)).not.toBeInTheDocument();
+  });
+
+  it('names the sync a failed-sync finding is about in its Details', async () => {
+    const failed = finding({ id: 'finding-1', kind: 'SYNC_FAILED', severity: 'ERROR', providerValue: null, providerValueName: null, syncKind: 'SCORES', actions: ['RESOLVE', 'WAIVE'] });
+    mocks.listProviderSyncFindings.mockResolvedValue({ data: { findings: [failed, WEBHOOK] } });
+    mocks.getProviderSyncFinding.mockResolvedValue({ data: { finding: failed } });
+    renderPage();
+
+    const dialog = within(await openFinding('finding-1'));
+
+    expect(dialog.getByTestId(`${DIALOG}-sync`)).toHaveTextContent('Live scores and results');
+    expect(dialog.queryByTestId(`${DIALOG}-MAP_PARTICIPANT`)).not.toBeInTheDocument();
+  });
+
+  it('shows no Sync line for a finding that is not about a failed sync', async () => {
+    renderPage();
+
+    const dialog = within(await openFinding('finding-1'));
+
+    expect(dialog.queryByTestId(`${DIALOG}-sync`)).not.toBeInTheDocument();
   });
 
   it('offers no Map participant for a finding whose kind has no fix in the app', async () => {

@@ -8,11 +8,13 @@ import { expect } from '@jest/globals';
 import { randomUUID } from 'node:crypto';
 import type { Prisma, PrismaClient } from '@prisma/client';
 import {
+  JobTrigger,
   ProviderCode,
   ProviderSyncFindingAction,
   ProviderSyncFindingKind,
   ProviderSyncFindingSeverity,
   ProviderSyncFindingStatus,
+  ProviderSyncRunStatus,
   Sport,
   type ProviderSyncFindingRaise,
 } from '@poolmaster/shared/domain';
@@ -23,7 +25,10 @@ import {
   ProviderSyncFindingSlotChoiceListResponseSchema,
   SportLeagueOverviewListResponseSchema,
 } from '@poolmaster/shared/dto';
-import { PrismaParticipantProviderMappingRepository, PrismaParticipantRepository, PrismaSportLeagueRepository } from '../../../packages/core-api/src/adapters';
+import { PrismaParticipantProviderMappingRepository, PrismaParticipantRepository, PrismaProviderSyncRunRepository, PrismaSportLeagueRepository } from '../../../packages/core-api/src/adapters';
+import type { IngestionJobRecord } from '../../../packages/core-api/src/modules/ingestion/core/event-feed-sync';
+import { ProviderSyncRunLedger } from '../../../packages/core-api/src/modules/ingestion/persistence/provider-sync-run-ledger';
+import { syncRunOutcome } from '../../support/sync-run-payload';
 import { PrismaProviderSettingsRepository } from '../../../packages/core-api/src/adapters/prisma-provider-settings-repository';
 import { PrismaProviderSyncFindingRepository } from '../../../packages/core-api/src/adapters/prisma-provider-sync-finding-repository';
 import { PrismaSlotNamePatternRepository } from '../../../packages/core-api/src/adapters/prisma-slot-name-pattern-repository';
@@ -546,5 +551,67 @@ describe('the sync findings routes (contract)', () => {
     expect(over.statusCode).toBe(429);
     expect(ErrorEnvelopeSchema.parse(over.json())).toMatchObject({ error: { code: 'SYNC_FINDINGS_RATE_LIMITED' } });
     expect((await read('10.2.0.10')).statusCode).toBe(200);
+  });
+});
+
+describe('the failed sync finding (#2092)', () => {
+  it('opens when a sync run fails, keeps one row naming the latest failed run, leaves another sync of the event alone when that one completes, resolves when the same sync completes, and the Sports page lists it on its Sync chip until then', async () => {
+    const prisma = getPrisma();
+    const rootAdmin = await createTestUser({ isRootAdmin: true });
+    const league = await golfLeague();
+    const event = await prisma.sportEvent.create({ data: { ...(await freshEventEdition(prisma, { sportLeagueId: league.id })), name: 'Failing Open', startDate: NOW }, select: { id: true } });
+    const provider = await balldontlie();
+    const syncRuns = new PrismaProviderSyncRunRepository(prisma);
+    const findings = new ProviderSyncFindingService({
+      repository: new PrismaProviderSyncFindingRepository(prisma),
+      providers: { all: () => [{ ...provider, leagues: [] }] },
+      participants: new ParticipantService(new PrismaParticipantRepository(prisma), new PrismaParticipantProviderMappingRepository(prisma), testDomainEvents()),
+      slotNamePatterns: new PrismaSlotNamePatternRepository(prisma),
+      now: () => NOW,
+    });
+    const ledger = new ProviderSyncRunLedger(syncRuns, undefined, findings);
+    const submitted = (kind: 'FIELD' | 'SCORES') => syncRuns.create({
+      providerCode: ProviderCode.BALLDONTLIE, kind, trigger: JobTrigger.SCHEDULE, sportLeagueId: league.id, sportEventId: event.id,
+      backgroundJobId: null, status: ProviderSyncRunStatus.SUBMITTED, startedAt: null, completedAt: null, ...syncRunOutcome(),
+    });
+    const completedJob = (): IngestionJobRecord => ({
+      jobType: 'EVENT_PARTICIPANTS_SYNC', providerId: 'balldontlie', sport: Sport.GOLF, eventExternalId: 'failing-open', status: 'COMPLETED',
+      startedAt: NOW, completedAt: NOW, recordsProcessed: 0, errors: 0, errorLog: [], stats: {},
+    });
+    const failedFindings = () => prisma.providerSyncFinding.findMany({
+      where: { sportLeagueId: league.id, kind: ProviderSyncFindingKind.SYNC_FAILED },
+      select: { syncKind: true, status: true, severity: true, sportEventId: true, providerId: true, syncRunId: true, seenCount: true },
+    });
+    const syncChip = async () => {
+      const res = await getApp().inject({ method: 'GET', url: '/api/v1/sport-leagues/overview', headers: rootAdmin.headers });
+      expect(res.statusCode).toBe(200);
+      return SportLeagueOverviewListResponseSchema.parse(res.json()).sportLeagues.find((row) => row.id === league.id)?.issues.find((issue) => issue.type === 'SYNC') ?? null;
+    };
+
+    const firstField = await submitted('FIELD');
+    await expect(ledger.executeFeedRun(firstField, async () => { throw new Error('provider down'); })).rejects.toThrow('provider down');
+    const secondField = await submitted('FIELD');
+    await ledger.failSubmittedRun(secondField, new Error('Interrupted'));
+
+    expect(await failedFindings()).toEqual([{
+      syncKind: 'FIELD', status: ProviderSyncFindingStatus.OPEN, severity: ProviderSyncFindingSeverity.ERROR, sportEventId: event.id, providerId: provider.id, syncRunId: secondField.id, seenCount: 2,
+    }]);
+    expect(await syncChip()).toMatchObject({ count: 1, items: [{ syncKind: 'FIELD', target: { type: 'SYNC_RUN', id: secondField.id }, label: expect.stringContaining('Interrupted') }] });
+
+    await ledger.executeFeedRun(await submitted('SCORES'), async () => completedJob());
+    expect((await failedFindings()).map((row) => row.status)).toEqual([ProviderSyncFindingStatus.OPEN]);
+
+    await ledger.executeFeedRun(await submitted('FIELD'), async () => completedJob());
+    expect((await failedFindings()).map((row) => row.status)).toEqual([ProviderSyncFindingStatus.RESOLVED]);
+    expect(await syncChip()).toBeNull();
+  });
+
+  it('refuses a failed sync finding with no sync kind, and a finding of another kind with one, as its check constraint says', async () => {
+    const league = await golfLeague();
+    const provider = await balldontlie();
+    const data = { severity: ProviderSyncFindingSeverity.ERROR, sportLeagueId: league.id, providerId: provider.id, firstSeenAt: NOW, lastSeenAt: NOW, statusChangedAt: NOW };
+
+    await expect(getPrisma().providerSyncFinding.create({ data: { ...data, kind: ProviderSyncFindingKind.SYNC_FAILED } })).rejects.toThrow(/provider_sync_findings_sync_kind_check/);
+    await expect(getPrisma().providerSyncFinding.create({ data: { ...data, kind: ProviderSyncFindingKind.SEASON_MISSING, syncKind: 'FIELD' } })).rejects.toThrow(/provider_sync_findings_sync_kind_check/);
   });
 });

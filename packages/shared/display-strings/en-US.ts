@@ -321,6 +321,7 @@ export const enUS = {
       GAME_MOVED: 'Game moved to another event',
       TIEBREAKER_GAME_REPLACED: 'Tiebreaker game chosen again',
       FIELD_TEAM_WITHOUT_GAME: 'Released field holds a team with no game',
+      SYNC_FAILED: 'Sync failed',
     },
     ProviderSyncFindingAction: {
       MAP_PARTICIPANT: 'Map participant',

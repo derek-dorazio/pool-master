@@ -34,7 +34,7 @@ import {
   type SportLeagueStructure,
   type SportLeagueSync,
 } from '@poolmaster/shared/domain';
-import { issuesOf, syncHealthOf } from './sport-league-overview';
+import { failedRunItemsOf, issuesOf, syncHealthOf } from './sport-league-overview';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -172,7 +172,7 @@ export function buildSportLeagueEvents(facts: SportLeagueEventFacts, now: Date):
       ...release,
       lastReleaseCheck: check,
       fieldSize: facts.fieldSizes.get(event.id) ?? null,
-      issues: issuesOf(failedRuns, held, overdue === undefined ? [] : [overdue], now),
+      issues: issuesOf(failedRunItemsOf(failedRuns), held, overdue === undefined ? [] : [overdue], now),
       lastSyncedAt,
     };
   });
@@ -234,7 +234,7 @@ export function buildSportEventOverview(
       failedRunCount: failedRuns.length,
     }),
     syncs,
-    issues: issuesOf(failedRuns, held, facts.overdueCandidates.filter((candidate) => candidate.id === event.id), context.now),
+    issues: issuesOf(failedRunItemsOf(failedRuns), held, facts.overdueCandidates.filter((candidate) => candidate.id === event.id), context.now),
     ...sportEventReleaseOf(event, league),
     tierOrderBasis: decision?.basis ?? null,
     tierOrderCoversField: decision?.coversField ?? true,

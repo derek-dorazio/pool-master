@@ -11,6 +11,10 @@
  * - SCORES: the scores of each linked event with a Game due or in play (`isGameScoresDue`), on the
  *   SCORES interval while that schedule is on, or, for a provider that sends webhooks, at its
  *   safety-net pace (#1499). The tick warns when such an event in play has gone quiet.
+ * - NO_PROVIDER_LIVE_SCORES (#2094): an event in play whose scores have not changed, nor its
+ *   provider sent a notification, for its provider league's quiet window raises the finding, once
+ *   per quiet stretch. An empty poll inside the window raises nothing: a game between scoring
+ *   plays is not a problem. The next scores sync that brings updates resolves it.
  *
  * Each kind's interval is the one for its league's Season state (`syncSeasonStateOf`): in season
  * while one of the league's Seasons' spans holds now, off season otherwise.
@@ -26,6 +30,8 @@ import {
   isQuietWarningDue,
   isSyncDue,
   playUnderwaySince,
+  ProviderSyncFindingKind,
+  ProviderSyncFindingSeverity,
   ProviderSyncKind,
   SYNC_TICK_MS,
   syncSeasonStateOf,
@@ -36,6 +42,7 @@ import {
 } from '@poolmaster/shared/domain';
 import type { IngestionAlwaysOnSchedulePolicy, IngestionFeedSchedulePolicy, IngestionScheduleConfig } from '@poolmaster/shared/dto/config.dto';
 import type { JobLock } from '../../core/job-lock';
+import type { ProviderSyncFindingService } from './findings/provider-sync-finding-service';
 import { SCHEDULE_START } from '../../core/job-start';
 import { LockedSweep } from '../../core/locked-sweep';
 import { schedulePolicyDelayMs } from '../../core/schedule-policy-delay';
@@ -49,16 +56,14 @@ import type { ProviderRegistry } from './core/provider-registry';
  * How the tick paces the scores of providers that send webhook notifications (#1499). Each
  * notification syncs its event within a minute, so the tick is only their safety net: it syncs each
  * such event every `pollIntervalMs`, one played as a FIELD (a golf round) every
- * `roundPollIntervalMs`, and warns when play has gone on for its league's `quietAfterMs` with no
- * notification. Other providers' events keep the SCORES interval.
+ * `roundPollIntervalMs`, and warns when play has gone on for its provider league's quiet window
+ * with no notification. Other providers' events keep the SCORES interval.
  */
 export interface NotifiedProviderCadence {
   /** The providers sending notifications, by the id their feeds carry. */
   providerIds: readonly string[];
   pollIntervalMs: number;
   roundPollIntervalMs: number;
-  /** How long an event of this provider league may be in play with no notification before the tick warns. */
-  quietAfterMs: (providerLeagueCode: string) => number;
 }
 
 const LOCK_KEY = 'sync-tick';
@@ -72,6 +77,14 @@ export interface SyncTickOptions {
   schedule: { getConfig(): Promise<IngestionScheduleConfig> };
   /** Read each tick, so a change to a Provider row takes effect (#1997); undefined while no provider sends webhooks. */
   notifiedProviderCadence: () => NotifiedProviderCadence | undefined;
+  /**
+   * How long an event of a provider league (`providerLeagues.id`) may be in play with nothing
+   * from its provider before the tick says so: its Provider row's `quietAfterMinutes`, read each
+   * tick. Zero says never.
+   */
+  quietAfterMs: (providerLeagueId: string) => number;
+  /** The quiet live scores finding (#2094) is raised here. */
+  findings: Pick<ProviderSyncFindingService, 'raiseOfSource'>;
   jobLock: JobLock;
   now?: () => Date;
   logger?: FastifyBaseLogger;
@@ -81,7 +94,8 @@ export interface SyncTickOptions {
 interface TickLeague extends SyncedLeagueRef {
   providerCode: ProviderCode;
   providerId: string;
-  providerLeagueCode: string;
+  /** The provider league's quiet window, read once per tick. */
+  quietAfterMs: number;
   /** Which of its kind's intervals each sync takes. */
   seasonState: SyncSeasonState;
 }
@@ -163,7 +177,7 @@ export class SyncTick {
         sportLeagueProviderMappingId: mapping.id,
         providerCode: mapping.providerCode,
         providerId: mapping.providerId,
-        providerLeagueCode: mapping.providerLeagueCode,
+        quietAfterMs: this.options.quietAfterMs(mapping.providerLeagueId),
       }];
     });
   }
@@ -198,11 +212,12 @@ export class SyncTick {
     const lastRunAt = await this.latestEventJobs(ProviderSyncKind.SCORES, live.map((event) => event.sportEventId), now);
     const cadence = this.options.notifiedProviderCadence();
     const leaguesById = new Map(leagues.map((league) => [league.sportLeagueId, league]));
+    await this.raiseQuietLiveScores(live, leaguesById, now);
     return live.flatMap((event) => {
       const league = leaguesById.get(event.sportLeagueId);
       if (league === undefined) return [];
       const notified = cadence !== undefined && cadence.providerIds.includes(league.providerId);
-      if (notified) this.warnIfQuiet(event, league, cadence, now);
+      if (notified) this.warnIfQuiet(event, league, now);
       const eventIntervalMs = !notified
         ? intervalMs(league)
         : event.games.some((game) => game.playedAsField) ? cadence.roundPollIntervalMs : cadence.pollIntervalMs;
@@ -221,11 +236,10 @@ export class SyncTick {
    * until it is fixed its scores move only at the safety-net pace. The warning's action is what
    * the log alarm counts (infrastructure/terraform).
    */
-  private warnIfQuiet(event: LiveEventView, league: TickLeague, cadence: NotifiedProviderCadence, now: Date): void {
+  private warnIfQuiet(event: LiveEventView, league: TickLeague, now: Date): void {
     const since = playUnderwaySince(event.games, now);
     if (since === null) return;
-    const quietAfterMs = cadence.quietAfterMs(league.providerLeagueCode);
-    if (!isQuietWarningDue({ playUnderwaySince: since, lastHeardAt: event.lastHeardAt, quietAfterMs, now, tickMs: SYNC_TICK_MS })) return;
+    if (!isQuietWarningDue({ playUnderwaySince: since, lastHeardAt: event.lastHeardAt, quietAfterMs: league.quietAfterMs, now, tickMs: SYNC_TICK_MS })) return;
     const heardFrom = Math.max(since.getTime(), event.lastHeardAt?.getTime() ?? 0);
     this.options.logger?.warn({
       action: 'ingestion.providerNotifications.quiet',
@@ -238,4 +252,48 @@ export class SyncTick {
       },
     }, 'An event in play has had no webhook notification from its provider for a while; its webhook may have stopped');
   }
+
+  /**
+   * The events in play whose live scores have been quiet for their provider league's window
+   * (#2094): nothing changed by a scores sync and no notification since play got under way, or
+   * since the last of either. Raised on the tick that crosses each whole window, so a long quiet
+   * stretch counts its sightings without a raise every tick. One raise per provider. A findings
+   * write that fails is logged and never stops the tick scheduling live scores.
+   */
+  private async raiseQuietLiveScores(live: readonly LiveEventView[], leaguesById: ReadonlyMap<string, TickLeague>, now: Date): Promise<void> {
+    const bySource = new Map<string, { sportLeagueId: string; sportEventId: string }[]>();
+    for (const event of live) {
+      const league = leaguesById.get(event.sportLeagueId);
+      const since = playUnderwaySince(event.games, now);
+      if (league === undefined || since === null) continue;
+      const lastHeardAt = latestOf(event.lastHeardAt, event.lastScoresChangedAt);
+      if (!isQuietWarningDue({ playUnderwaySince: since, lastHeardAt, quietAfterMs: league.quietAfterMs, now, tickMs: SYNC_TICK_MS })) continue;
+      const events = bySource.get(league.providerId) ?? [];
+      events.push({ sportLeagueId: league.sportLeagueId, sportEventId: event.sportEventId });
+      bySource.set(league.providerId, events);
+    }
+    for (const [providerId, events] of bySource) {
+      try {
+        await this.options.findings.raiseOfSource(providerId, events.map((event) => ({
+          kind: ProviderSyncFindingKind.NO_PROVIDER_LIVE_SCORES,
+          severity: ProviderSyncFindingSeverity.WARNING,
+          sportLeagueId: event.sportLeagueId,
+          sportEventId: event.sportEventId,
+          providerValue: null,
+          providerValueName: null,
+        })));
+      } catch (error) {
+        this.options.logger?.error(
+          { action: 'ingestion.syncFinding.quietLiveScoresFailed', data: { providerId, sportEventIds: events.map((event) => event.sportEventId) }, err: error },
+          'Could not raise No live scores for the quiet events in play',
+        );
+      }
+    }
+  }
+}
+
+function latestOf(left: Date | null, right: Date | null): Date | null {
+  if (left === null) return right;
+  if (right === null) return left;
+  return left > right ? left : right;
 }

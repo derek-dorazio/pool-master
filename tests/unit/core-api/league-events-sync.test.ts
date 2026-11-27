@@ -102,6 +102,7 @@ function build(options: {
   const findings = {
     raiseOfSource: jest.fn(async (_providerSourceId: string, _found: unknown) => undefined),
     resolveOfSource: jest.fn(async (_providerSourceId: string, _filter: unknown) => 0),
+    checkRunOutcome: jest.fn(async (_run: unknown, _outcome: unknown) => undefined),
   };
   const logger = fakeLogger();
   const sync = new LeagueEventsSync({
@@ -669,19 +670,22 @@ describe('LeagueEventsSync', () => {
         if (providerSeasonId === '2027') throw new Error('vendor unavailable');
         return [providerEvent(`${sportLeagueId}-${providerSeasonId}`)];
       });
-      const { sync, runner, jobs, syncRuns } = build({ leagues: [pga], seasons, listSeasonEvents });
+      const { sync, runner, jobs, syncRuns, findings } = build({ leagues: [pga], seasons, listSeasonEvents });
 
       await sync.queueScheduled();
       await runner.drain();
 
       expect(jobs.rows[0]).toMatchObject({ status: BackgroundJobStatus.QUEUED, attempts: 1, lastError: 'vendor unavailable' });
       expect(syncRuns.rows[0]).toMatchObject({ status: ProviderSyncRunStatus.FAILED, summary: 'Failed: vendor unavailable', stats: { created: 1, updated: 0, skipped: 1, alreadyStarted: 0 }, changedCount: null, errorCount: 1 });
+      // The failed run opens its SYNC_FAILED finding (#2092).
+      expect(findings.checkRunOutcome).toHaveBeenCalledWith(expect.objectContaining({ id: syncRuns.rows[0]?.id }), ProviderSyncRunStatus.FAILED);
+      expect(findings.checkRunOutcome).not.toHaveBeenCalledWith(expect.anything(), ProviderSyncRunStatus.COMPLETED);
     });
 
     it('marks the run an earlier try left IN_PROGRESS as interrupted, then records its own', async () => {
       const seasons = new Map<string, SyncableSportLeagueSeason[]>();
       const pga = syncedLeague(seasons);
-      const { sync, syncRuns } = build({ leagues: [pga], seasons });
+      const { sync, syncRuns, findings } = build({ leagues: [pga], seasons });
       const jobId = randomUUID();
       const stale = await syncRuns.create({
         providerCode: ProviderCode.BALLDONTLIE, kind: ProviderSyncKind.EVENTS, trigger: JobTrigger.SCHEDULE,
@@ -693,6 +697,11 @@ describe('LeagueEventsSync', () => {
 
       expect(syncRuns.rows.map((run) => [run.id === stale.id, run.status])).toEqual([[true, ProviderSyncRunStatus.FAILED], [false, ProviderSyncRunStatus.COMPLETED]]);
       expect(syncRuns.rows[0]).toMatchObject({ summary: expect.stringContaining('Interrupted'), errorCount: 1 });
+      // The interrupted run opens the league's SYNC_FAILED finding; the completed one then resolves it (#2092).
+      expect(findings.checkRunOutcome.mock.calls.map(([run, outcome]) => [(run as { id: string }).id === stale.id, outcome])).toEqual([
+        [true, ProviderSyncRunStatus.FAILED],
+        [false, ProviderSyncRunStatus.COMPLETED],
+      ]);
     });
 
     it('stops before importing or recording a run when another task has claimed the job', async () => {

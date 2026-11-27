@@ -28121,10 +28121,10 @@ export interface components {
             /** Format: uuid */
             id: string;
             /**
-             * @description What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here. PROVIDER_RATE_LIMITED: the Provider has rate limited every call for a while (WARNING after 15 minutes, ERROR after the league's quiet threshold); it resolves on the Provider's next answer. SLOT_NAME_UNMATCHED: a tournament whose normalized name (providerValue) no NAME_PATTERN mapping of the league matches, so it has no Season slot (INFO; LINK_SLOT adds the name as a pattern). SLOT_NAME_AMBIGUOUS: a tournament whose normalized name matches more than one slot, or one another tournament already has (ERROR). SLOT_SEASON_COMPETITION_MISSING: a tournament whose name matched a slot whose phase the Season does not have, so no Season slot could be made (ERROR).
+             * @description What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here. PROVIDER_RATE_LIMITED: the Provider has rate limited every call for a while (WARNING after 15 minutes, ERROR after the league's quiet threshold); it resolves on the Provider's next answer. SLOT_NAME_UNMATCHED: a tournament whose normalized name (providerValue) no NAME_PATTERN mapping of the league matches, so it has no Season slot (INFO; LINK_SLOT adds the name as a pattern). SLOT_NAME_AMBIGUOUS: a tournament whose normalized name matches more than one slot, or one another tournament already has (ERROR). SLOT_SEASON_COMPETITION_MISSING: a tournament whose name matched a slot whose phase the Season does not have, so no Season slot could be made (ERROR). SYNC_FAILED: a sync run of the league (of the event, when it names one) ended FAILED, and no run of the same sync has completed since (ERROR, syncKind says which sync).
              * @enum {string}
              */
-            kind: "PROVIDER_RATE_LIMITED" | "UNMAPPED_PARTICIPANT" | "WEBHOOK_SECRET_MISSING" | "SEASON_MISSING" | "NO_PROVIDER_PARTICIPANTS" | "NO_PROVIDER_LIVE_SCORES" | "GAMES_NOT_SYNCED" | "SLOT_VALUE_UNMAPPED" | "PROVIDER_LEAGUE_UNKNOWN" | "SLOT_NAME_UNMATCHED" | "SLOT_NAME_AMBIGUOUS" | "SLOT_SEASON_COMPETITION_MISSING" | "SLOT_OUTSIDE_SEASON" | "GAMES_UNPLACED" | "SLOT_DATES_NEEDED" | "FIELD_HAS_NO_ORDER" | "GAME_UNKNOWN" | "GAME_ID_REISSUED" | "GAME_MOVED" | "TIEBREAKER_GAME_REPLACED" | "FIELD_TEAM_WITHOUT_GAME";
+            kind: "PROVIDER_RATE_LIMITED" | "UNMAPPED_PARTICIPANT" | "WEBHOOK_SECRET_MISSING" | "SEASON_MISSING" | "NO_PROVIDER_PARTICIPANTS" | "NO_PROVIDER_LIVE_SCORES" | "GAMES_NOT_SYNCED" | "SLOT_VALUE_UNMAPPED" | "PROVIDER_LEAGUE_UNKNOWN" | "SLOT_NAME_UNMATCHED" | "SLOT_NAME_AMBIGUOUS" | "SLOT_SEASON_COMPETITION_MISSING" | "SLOT_OUTSIDE_SEASON" | "GAMES_UNPLACED" | "SLOT_DATES_NEEDED" | "FIELD_HAS_NO_ORDER" | "GAME_UNKNOWN" | "GAME_ID_REISSUED" | "GAME_MOVED" | "TIEBREAKER_GAME_REPLACED" | "FIELD_TEAM_WITHOUT_GAME" | "SYNC_FAILED";
             /**
              * @description ERROR: synced data is wrong or missing until someone acts (it also raises the alarm when it opens). WARNING: something the sync skipped or guessed at. INFO: something it noticed and left alone on purpose.
              * @enum {string}
@@ -28159,6 +28159,11 @@ export interface components {
             providerValue: string | null;
             /** @description The feed's own name for that value, when it sent one. */
             providerValueName: string | null;
+            /**
+             * @description The sync a SYNC_FAILED finding is about: the event list (EVENTS), the field (FIELD) or live scores and results (SCORES); null for every other kind.
+             * @enum {string|null}
+             */
+            syncKind: "EVENTS" | "FIELD" | "SCORES" | null;
             /** @description Why it was waived; set only while WAIVED. */
             waiveNote: string | null;
             /**
@@ -28241,10 +28246,10 @@ export interface components {
                 /** Format: uuid */
                 id: string;
                 /**
-                 * @description What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here. PROVIDER_RATE_LIMITED: the Provider has rate limited every call for a while (WARNING after 15 minutes, ERROR after the league's quiet threshold); it resolves on the Provider's next answer. SLOT_NAME_UNMATCHED: a tournament whose normalized name (providerValue) no NAME_PATTERN mapping of the league matches, so it has no Season slot (INFO; LINK_SLOT adds the name as a pattern). SLOT_NAME_AMBIGUOUS: a tournament whose normalized name matches more than one slot, or one another tournament already has (ERROR). SLOT_SEASON_COMPETITION_MISSING: a tournament whose name matched a slot whose phase the Season does not have, so no Season slot could be made (ERROR).
+                 * @description What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here. PROVIDER_RATE_LIMITED: the Provider has rate limited every call for a while (WARNING after 15 minutes, ERROR after the league's quiet threshold); it resolves on the Provider's next answer. SLOT_NAME_UNMATCHED: a tournament whose normalized name (providerValue) no NAME_PATTERN mapping of the league matches, so it has no Season slot (INFO; LINK_SLOT adds the name as a pattern). SLOT_NAME_AMBIGUOUS: a tournament whose normalized name matches more than one slot, or one another tournament already has (ERROR). SLOT_SEASON_COMPETITION_MISSING: a tournament whose name matched a slot whose phase the Season does not have, so no Season slot could be made (ERROR). SYNC_FAILED: a sync run of the league (of the event, when it names one) ended FAILED, and no run of the same sync has completed since (ERROR, syncKind says which sync).
                  * @enum {string}
                  */
-                kind: "PROVIDER_RATE_LIMITED" | "UNMAPPED_PARTICIPANT" | "WEBHOOK_SECRET_MISSING" | "SEASON_MISSING" | "NO_PROVIDER_PARTICIPANTS" | "NO_PROVIDER_LIVE_SCORES" | "GAMES_NOT_SYNCED" | "SLOT_VALUE_UNMAPPED" | "PROVIDER_LEAGUE_UNKNOWN" | "SLOT_NAME_UNMATCHED" | "SLOT_NAME_AMBIGUOUS" | "SLOT_SEASON_COMPETITION_MISSING" | "SLOT_OUTSIDE_SEASON" | "GAMES_UNPLACED" | "SLOT_DATES_NEEDED" | "FIELD_HAS_NO_ORDER" | "GAME_UNKNOWN" | "GAME_ID_REISSUED" | "GAME_MOVED" | "TIEBREAKER_GAME_REPLACED" | "FIELD_TEAM_WITHOUT_GAME";
+                kind: "PROVIDER_RATE_LIMITED" | "UNMAPPED_PARTICIPANT" | "WEBHOOK_SECRET_MISSING" | "SEASON_MISSING" | "NO_PROVIDER_PARTICIPANTS" | "NO_PROVIDER_LIVE_SCORES" | "GAMES_NOT_SYNCED" | "SLOT_VALUE_UNMAPPED" | "PROVIDER_LEAGUE_UNKNOWN" | "SLOT_NAME_UNMATCHED" | "SLOT_NAME_AMBIGUOUS" | "SLOT_SEASON_COMPETITION_MISSING" | "SLOT_OUTSIDE_SEASON" | "GAMES_UNPLACED" | "SLOT_DATES_NEEDED" | "FIELD_HAS_NO_ORDER" | "GAME_UNKNOWN" | "GAME_ID_REISSUED" | "GAME_MOVED" | "TIEBREAKER_GAME_REPLACED" | "FIELD_TEAM_WITHOUT_GAME" | "SYNC_FAILED";
                 /**
                  * @description ERROR: synced data is wrong or missing until someone acts (it also raises the alarm when it opens). WARNING: something the sync skipped or guessed at. INFO: something it noticed and left alone on purpose.
                  * @enum {string}
@@ -28279,6 +28284,11 @@ export interface components {
                 providerValue: string | null;
                 /** @description The feed's own name for that value, when it sent one. */
                 providerValueName: string | null;
+                /**
+                 * @description The sync a SYNC_FAILED finding is about: the event list (EVENTS), the field (FIELD) or live scores and results (SCORES); null for every other kind.
+                 * @enum {string|null}
+                 */
+                syncKind: "EVENTS" | "FIELD" | "SCORES" | null;
                 /** @description Why it was waived; set only while WAIVED. */
                 waiveNote: string | null;
                 /**
@@ -28316,10 +28326,10 @@ export interface components {
                 /** Format: uuid */
                 id: string;
                 /**
-                 * @description What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here. PROVIDER_RATE_LIMITED: the Provider has rate limited every call for a while (WARNING after 15 minutes, ERROR after the league's quiet threshold); it resolves on the Provider's next answer. SLOT_NAME_UNMATCHED: a tournament whose normalized name (providerValue) no NAME_PATTERN mapping of the league matches, so it has no Season slot (INFO; LINK_SLOT adds the name as a pattern). SLOT_NAME_AMBIGUOUS: a tournament whose normalized name matches more than one slot, or one another tournament already has (ERROR). SLOT_SEASON_COMPETITION_MISSING: a tournament whose name matched a slot whose phase the Season does not have, so no Season slot could be made (ERROR).
+                 * @description What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here. PROVIDER_RATE_LIMITED: the Provider has rate limited every call for a while (WARNING after 15 minutes, ERROR after the league's quiet threshold); it resolves on the Provider's next answer. SLOT_NAME_UNMATCHED: a tournament whose normalized name (providerValue) no NAME_PATTERN mapping of the league matches, so it has no Season slot (INFO; LINK_SLOT adds the name as a pattern). SLOT_NAME_AMBIGUOUS: a tournament whose normalized name matches more than one slot, or one another tournament already has (ERROR). SLOT_SEASON_COMPETITION_MISSING: a tournament whose name matched a slot whose phase the Season does not have, so no Season slot could be made (ERROR). SYNC_FAILED: a sync run of the league (of the event, when it names one) ended FAILED, and no run of the same sync has completed since (ERROR, syncKind says which sync).
                  * @enum {string}
                  */
-                kind: "PROVIDER_RATE_LIMITED" | "UNMAPPED_PARTICIPANT" | "WEBHOOK_SECRET_MISSING" | "SEASON_MISSING" | "NO_PROVIDER_PARTICIPANTS" | "NO_PROVIDER_LIVE_SCORES" | "GAMES_NOT_SYNCED" | "SLOT_VALUE_UNMAPPED" | "PROVIDER_LEAGUE_UNKNOWN" | "SLOT_NAME_UNMATCHED" | "SLOT_NAME_AMBIGUOUS" | "SLOT_SEASON_COMPETITION_MISSING" | "SLOT_OUTSIDE_SEASON" | "GAMES_UNPLACED" | "SLOT_DATES_NEEDED" | "FIELD_HAS_NO_ORDER" | "GAME_UNKNOWN" | "GAME_ID_REISSUED" | "GAME_MOVED" | "TIEBREAKER_GAME_REPLACED" | "FIELD_TEAM_WITHOUT_GAME";
+                kind: "PROVIDER_RATE_LIMITED" | "UNMAPPED_PARTICIPANT" | "WEBHOOK_SECRET_MISSING" | "SEASON_MISSING" | "NO_PROVIDER_PARTICIPANTS" | "NO_PROVIDER_LIVE_SCORES" | "GAMES_NOT_SYNCED" | "SLOT_VALUE_UNMAPPED" | "PROVIDER_LEAGUE_UNKNOWN" | "SLOT_NAME_UNMATCHED" | "SLOT_NAME_AMBIGUOUS" | "SLOT_SEASON_COMPETITION_MISSING" | "SLOT_OUTSIDE_SEASON" | "GAMES_UNPLACED" | "SLOT_DATES_NEEDED" | "FIELD_HAS_NO_ORDER" | "GAME_UNKNOWN" | "GAME_ID_REISSUED" | "GAME_MOVED" | "TIEBREAKER_GAME_REPLACED" | "FIELD_TEAM_WITHOUT_GAME" | "SYNC_FAILED";
                 /**
                  * @description ERROR: synced data is wrong or missing until someone acts (it also raises the alarm when it opens). WARNING: something the sync skipped or guessed at. INFO: something it noticed and left alone on purpose.
                  * @enum {string}
@@ -28354,6 +28364,11 @@ export interface components {
                 providerValue: string | null;
                 /** @description The feed's own name for that value, when it sent one. */
                 providerValueName: string | null;
+                /**
+                 * @description The sync a SYNC_FAILED finding is about: the event list (EVENTS), the field (FIELD) or live scores and results (SCORES); null for every other kind.
+                 * @enum {string|null}
+                 */
+                syncKind: "EVENTS" | "FIELD" | "SCORES" | null;
                 /** @description Why it was waived; set only while WAIVED. */
                 waiveNote: string | null;
                 /**
