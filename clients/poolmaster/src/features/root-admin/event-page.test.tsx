@@ -360,7 +360,7 @@ describe('Event page syncs', () => {
 
   it('shows the field sync on Field with its last run, and Sync now queues a field sync', async () => {
     refreshEventParticipantsMock.mockResolvedValue({ data: { syncRuns: [] } });
-    renderEventPage('/manage/sports/golf/events/tour-1/field', { overview: syncedOverview, synced: true });
+    renderEventPage('/manage/sports/golf/events/tour-1/field', { event: tournament({ syncKinds: ['FIELD'] }), overview: syncedOverview, synced: true });
 
     const row = await screen.findByTestId('root-admin-event-sync-FIELD', {}, { timeout: 5_000 });
     expect(row).toHaveTextContent('Field');
@@ -372,7 +372,7 @@ describe('Event page syncs', () => {
 
   it('shows the live scores sync on Rounds and matches, and Sync now asks the provider for the event\'s live scores by the event\'s own id', async () => {
     submitEventSyncMock.mockResolvedValue({ data: { syncRuns: [] } });
-    renderEventPage('/manage/sports/golf/events/tour-1/rounds', { overview: syncedOverview, synced: true });
+    renderEventPage('/manage/sports/golf/events/tour-1/rounds', { event: tournament({ status: 'IN_PROGRESS', syncKinds: ['FIELD', 'SCORES'] }), overview: syncedOverview, synced: true });
 
     const row = await screen.findByTestId('root-admin-event-sync-SCORES', {}, { timeout: 5_000 });
     expect(row).toHaveTextContent('Follows the webhook');
@@ -382,6 +382,13 @@ describe('Event page syncs', () => {
       path: { eventId: 'tour-1' },
       body: { kinds: ['SCORES'] },
     })));
+  });
+
+  it('keeps Sync now disabled on a sync the API says the event cannot run now: live scores before play', async () => {
+    renderEventPage('/manage/sports/golf/events/tour-1/rounds', { event: tournament({ syncKinds: ['FIELD'] }), overview: syncedOverview, synced: true });
+
+    const row = await screen.findByTestId('root-admin-event-sync-SCORES', {}, { timeout: 5_000 });
+    expect(within(row).getByTestId('root-admin-event-sync-now-SCORES')).toBeDisabled();
   });
 
   it('offers no Sync now on a sync that is off', async () => {

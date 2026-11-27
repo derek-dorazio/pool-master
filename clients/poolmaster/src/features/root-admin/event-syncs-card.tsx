@@ -67,7 +67,8 @@ export function EventSyncsCard({
             actions={sync.health === SportLeagueSyncHealth.OFF ? undefined : (
               <Button
                 data-testid={`root-admin-event-sync-now-${kind}`}
-                disabled={syncNow.isPending}
+                // The API says which syncs the event can run now (#2238): live scores only while in play.
+                disabled={syncNow.isPending || !event.syncKinds.includes(kind)}
                 onClick={() => syncNow.mutate()}
                 size="sm"
                 variant="secondary"

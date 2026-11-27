@@ -41,11 +41,11 @@ import type { JobsForWrite } from '../background-jobs/background-job-queue';
 import { DomainEventType, type DomainEvents } from '../domain-events';
 import { SportEventError } from './errors';
 import type { EventFieldCache } from './event-field-cache';
-import { EventFieldReader, type EventFieldReads } from './event-field-reader';
+import { EventFieldReader, fieldReadEventOf, type EventFieldReads } from './event-field-reader';
 import { assertTierSetEditable, requireTierSetSlot } from './sport-event-tier-service';
 
 // The field row a reader sees lives with the port that reads it (#1163).
-export type { ParticipantRoundView, ParticipantStandingView, SportEventParticipantView } from '@poolmaster/shared/db';
+export type { SportEventParticipantView } from '@poolmaster/shared/db';
 
 export interface AddFieldResult {
   added: number;
@@ -120,7 +120,7 @@ export class SportEventParticipantService implements EventFieldReads {
    */
   async getEventParticipant(sportEventId: string, sportEventParticipantId: string): Promise<SportEventParticipantView> {
     const event = await this.requireEvent(sportEventId);
-    const row = await this.deps.field.findFieldRow(sportEventId, sportEventParticipantId, event.sportLeagueId);
+    const row = await this.deps.field.findFieldRow(fieldReadEventOf(event), sportEventParticipantId);
     if (!row) {
       throw new SportEventError(
         `Field row ${sportEventParticipantId} is not on sport event ${sportEventId}.`,

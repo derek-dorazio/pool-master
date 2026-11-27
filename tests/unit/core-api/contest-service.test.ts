@@ -66,6 +66,8 @@ import { deliverQueuedEmail, emailServiceOver } from '../../support/email-servic
 import { platinumEntitlements } from '../../support/plan-entitlements';
 import { contestEntriesCap } from '../../../packages/core-api/src/modules/plans/plan-entitlements-service';
 import { fieldReads } from '../../support/field-reads';
+import { golfRound, golfStanding } from '../../support/golf-rounds';
+import { GameSideStatus, type ParticipantStandingStatus } from '../../../packages/shared/domain';
 
 function createMockContestRepo(overrides: Partial<ContestRepository> = {}): ContestRepository {
   return fakeContestRepo({
@@ -370,7 +372,6 @@ function buildGolfFieldView(input: {
   eventScoreToPar: number;
   eventStrokes: number;
   status: string;
-  currentRoundThru?: number;
   rounds?: Array<{
     round: number;
     strokes: number;
@@ -404,24 +405,19 @@ function buildGolfFieldView(input: {
       updatedAt: new Date('2026-01-01T00:00:00.000Z'),
     },
     valuation: null,
-    standing: {
-      standing: {
-        status: input.status,
-        position: undefined,
-        displayPosition: undefined,
-        asOf: new Date('2026-05-31T18:00:00.000Z'),
-      },
-      golf: {
-        eventScoreToPar: input.eventScoreToPar,
-        eventStrokes: input.eventStrokes,
-        currentRoundThru: input.currentRoundThru ?? 18,
-      },
-    },
-    rounds: (input.rounds ?? []).map((round) => ({
-      round: { status: round.status, roundNumber: round.round },
-      golf: { strokes: round.strokes, scoreToPar: round.scoreToPar, thru: round.thru },
+    standing: golfStanding({
+      sportEventParticipantId: input.id,
+      status: input.status as ParticipantStandingStatus,
+      scoreToPar: input.eventScoreToPar,
+      total: input.eventStrokes,
+    }),
+    fieldResults: (input.rounds ?? []).map((round) => golfRound({
+      roundNumber: round.round,
+      strokes: round.strokes,
+      scoreToPar: round.scoreToPar,
+      thru: round.thru ?? undefined,
+      status: round.status === 'IN_PROGRESS' ? null : GameSideStatus.FINISHED,
     })),
-    fieldResults: [],
     matches: [],
     affiliatedWithSportLeague: true,
   };
@@ -1130,7 +1126,6 @@ describe('ContestService', () => {
           eventScoreToPar: -5,
           eventStrokes: 139,
           status: 'IN_PROGRESS',
-          currentRoundThru: 9,
           rounds: [
             { round: 1, strokes: 69, scoreToPar: -3, thru: null, status: 'COMPLETED' },
             { round: 2, strokes: 47, scoreToPar: -2, thru: 9, status: 'IN_PROGRESS' },
@@ -1142,7 +1137,6 @@ describe('ContestService', () => {
           eventScoreToPar: -2,
           eventStrokes: 142,
           status: 'COMPLETE',
-          currentRoundThru: 18,
         }),
         buildGolfFieldView({
           id: 'sep-3',
@@ -2158,7 +2152,7 @@ describe('ContestService.getLeaderboard — refusals and the settled read', () =
     });
     const golfer = (id: string, eventScoreToPar: number, asOf: Date | undefined) => {
       const view = buildGolfFieldView({ id, participantName: `Golfer ${id}`, eventScoreToPar, eventStrokes: 140, status: 'ACTIVE' });
-      return { ...view, entry: { ...view.entry, sportEventId: 'event-3' }, standing: { ...view.standing, standing: { ...view.standing.standing, asOf } } };
+      return { ...view, entry: { ...view.entry, sportEventId: 'event-3' }, standing: { ...view.standing, asOf: asOf ?? null } };
     };
     const pick = (id: string, entryId: string, sportEventParticipantId: string) => ({ ...buildGolfLeaderboardPick(id, entryId, sportEventParticipantId), sportEventId: 'event-3' });
 

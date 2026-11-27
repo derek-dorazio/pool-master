@@ -17,10 +17,10 @@
 import type { FastifyBaseLogger } from 'fastify';
 import type {
   ParticipantRepository,
-  RaceOrderRepository,
-  RaceOrderResult,
-  RaceOrderSideWrite,
-  RaceStandingWrite,
+  FieldGameRepository,
+  FieldSideResult,
+  FieldSideWrite,
+  FieldStandingWrite,
   SportEventParticipantRepository,
   SportEventRepository,
   ParticipantProviderMappingRepository,
@@ -30,6 +30,7 @@ import {
   RaceResultOrderError,
   RaceResultRowError,
   GameSideStatus,
+  MatchStatus,
   type GameSideStatus as GameSideStatusValue,
   type SportEvent,
   SportEventParticipantStatus,
@@ -99,8 +100,8 @@ export interface RaceResultServiceDeps {
   participants: Pick<ParticipantRepository, 'findByIds'>;
   /** The participants' provider mappings, read when an upload row names a feed id (#2040). */
   mappings: Pick<ParticipantProviderMappingRepository, 'findByParticipantIds'>;
-  /** The race's FIELD Game: its side results, status and riders (#2008). */
-  raceOrder: RaceOrderRepository;
+  /** The race's FIELD Game: its side results and status (#2008). */
+  fieldGames: Pick<FieldGameRepository, 'findResults' | 'applyResults'>;
   /**
    * Whether an event of this sport keeps race results, by its sport's scoring family. Any other
    * event is refused rather than given rows its leaderboard never reads.
@@ -120,7 +121,7 @@ export class RaceResultService {
     await this.requireRaceScoredEvent(sportEventId);
     const [field, stored] = await Promise.all([
       this.deps.field.findBySportEvent(sportEventId),
-      this.deps.raceOrder.findBySportEvent(sportEventId),
+      this.deps.fieldGames.findResults(sportEventId).then(raceResultsOf),
     ]);
     const participants = await this.deps.participants.findByIds(field.map((entry) => entry.participantId));
     const entryIdByParticipantId = new Map(field.map((entry) => [entry.participantId, entry.id]));
@@ -225,29 +226,39 @@ export class RaceResultService {
       );
     }
 
-    const sides: RaceOrderSideWrite[] = preview.rows.map((row) => ({
+    const sides: FieldSideWrite[] = preview.rows.map((row) => ({
       sportEventParticipantId: row.sportEventParticipantId as string,
       status: row.row.resultStatus,
       position: row.row.finishPosition,
       startPosition: row.row.startPosition,
+      score: null,
+      scoreToPar: null,
+      periodsCompleted: null,
     }));
-    const stored = await this.deps.raceOrder.findBySportEvent(sportEventId);
+    const stored = raceResultsOf(await this.deps.fieldGames.findResults(sportEventId));
     const merged = new Map<string, Pick<RaceResultValues, 'resultStatus' | 'finishPosition'>>(
       stored.map((result) => [result.sportEventParticipantId, raceResultValues(result)]),
     );
-    for (const side of sides) merged.set(side.sportEventParticipantId, { resultStatus: side.status, finishPosition: side.position });
+    for (const row of preview.rows) merged.set(row.sportEventParticipantId as string, { resultStatus: row.row.resultStatus, finishPosition: row.row.finishPosition });
     const places = finishingPlaces(merged.values());
     const asOf = (this.deps.now ?? (() => new Date()))();
-    const standings: RaceStandingWrite[] = [...merged].map(([sportEventParticipantId, result]) => ({
+    const standings: FieldStandingWrite[] = [...merged].map(([sportEventParticipantId, result]) => ({
       sportEventParticipantId,
       position: result.finishPosition,
       displayPosition: result.finishPosition === null ? null : displayPlace(result.finishPosition, places),
       status: standingStatusForResult(result.resultStatus),
       asOf,
+      total: null,
+      scoreToPar: null,
     }));
 
     const rebuild = await this.deps.domainEvents.collect({ type: DomainEventType.SPORT_EVENT_RESULTS_CHANGED, sportEventId });
-    await this.deps.raceOrder.applyOrder(sportEventId, { sides, isOfficial: input.isOfficial, at: asOf, standings, jobs: rebuild.jobs });
+    const status = input.isOfficial ? MatchStatus.COMPLETED : MatchStatus.IN_PROGRESS;
+    await this.deps.fieldGames.applyResults(sportEventId, {
+      games: [{ roundNumber: RACE_ROUND_NUMBER, status, completedAt: input.isOfficial ? asOf : null, sides }],
+      standings,
+      jobs: rebuild.jobs,
+    });
     rebuild.queued();
     this.deps.logger?.info({
       sportEventId,
@@ -290,7 +301,30 @@ function finishingPlaces(results: Iterable<Pick<RaceResultValues, 'resultStatus'
   ));
 }
 
-function raceResultValues(result: RaceOrderResult): RaceResultValues {
+/** A race is its event's round 1 (#2008): one FIELD Game with every runner a side. */
+const RACE_ROUND_NUMBER = 1;
+
+/** A runner's stored result: its side result in the race's Game, which is official once COMPLETED. */
+interface RaceResult {
+  sportEventParticipantId: string;
+  status: GameSideStatusValue;
+  position: number | null;
+  startPosition: number | null;
+  isOfficial: boolean;
+}
+
+/** The race's results among the event's FIELD side results; a side result with no status is no race result. */
+function raceResultsOf(results: readonly FieldSideResult[]): RaceResult[] {
+  return results.flatMap((result) => (result.roundNumber === RACE_ROUND_NUMBER && result.status !== null ? [{
+    sportEventParticipantId: result.sportEventParticipantId,
+    status: result.status,
+    position: result.position,
+    startPosition: result.startPosition,
+    isOfficial: result.gameStatus === MatchStatus.COMPLETED,
+  }] : []));
+}
+
+function raceResultValues(result: RaceResult): RaceResultValues {
   return {
     resultStatus: result.status,
     finishPosition: result.position,

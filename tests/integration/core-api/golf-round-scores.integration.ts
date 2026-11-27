@@ -14,23 +14,23 @@ import {
   integrationBackgroundJobs, integrationSportEventServices, integrationSyncFindings } from '../helpers';
 import { PeriodUnit, Sport } from '@poolmaster/shared/domain';
 import {
-  GolfScoreError,
+  StrokePlayResultError,
   type GolfScoreRowInput,
-} from '../../../packages/core-api/src/modules/golf/golf-score-service';
-import { createGolfScoreService } from '../../../packages/core-api/src/modules/events/wiring';
+} from '../../../packages/core-api/src/modules/scoring-families/stroke-play/stroke-play-result-service';
+import { createStrokePlayResultService } from '../../../packages/core-api/src/modules/events/wiring';
 import { publishLiveScoreUpdate } from '../../../packages/core-api/src/modules/ingestion/core/score-publisher';
 import { scoringFamilyForEvent } from '../../../packages/core-api/src/modules/scoring-families';
 import { fixtureTourId, freshEventEdition, mapEventToProvider } from '../../support/event-edition';
 import { eventRebuildJob } from '../../support/recording-leaderboard-rebuilds';
-import { PrismaSportEventParticipantGolfStandingRepository } from '../../../packages/core-api/src/adapters';
+import { writeGolfRounds } from '../golf-rounds';
 import { sportRowKeys } from '../../support/sport-rows';
 import { linkTestSlot, setEventSlotPeriods } from '../../support/test-slots';
 import { oneEventSlotId } from '../../support/test-slots';
+import { expectDefined } from '../../support/expect-defined';
 
-// The admin round-score surface against real Postgres. A golfer's round is a core
-// SportEventParticipantRound plus its golf extension, and their standing is a core
-// SportEventParticipantStanding plus its golf extension; these cases assert what the
-// service reads and writes across that split, not how it calls the client.
+// The admin round-score surface against real Postgres. A golfer's round is their side result in
+// that round's FIELD Game (#2008), and their standing carries their event totals; these cases
+// assert what the service reads and writes there, not how it calls the client.
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
@@ -80,51 +80,47 @@ function row(participantId: string, overrides: Partial<GolfScoreRowInput> = {}):
   return { participantId, strokes: 68, scoreToPar: -4, thru: 18, status: 'COMPLETED', ...overrides };
 }
 
+/** The golfer's side results in the event's FIELD Games: their rounds as stored. */
+function roundsOf(sportEventParticipantId: string) {
+  return getPrisma().sportEventRoundMatchGameSideResult.findMany({ where: { side: { sportEventParticipantId } } });
+}
+
+/** How many rounds the golfer has stored. */
+function roundCount(sportEventParticipantId: string) {
+  return getPrisma().sportEventRoundMatchGameSideResult.count({ where: { side: { sportEventParticipantId } } });
+}
+
+/** The golfer's one stored round. */
+async function onlyRoundOf(sportEventParticipantId: string) {
+  const [round, ...more] = await roundsOf(sportEventParticipantId);
+  expect(more).toEqual([]);
+  return expectDefined(round);
+}
+
 describe('Golf round scores — admin correction surface', () => {
   it('reads every field golfer, with round scores and standing where they exist and nulls where they do not', async () => {
     const { event, round1, rory } = await createField('read');
-    await getPrisma().sportEventParticipantRound.create({
-      data: {
-        sportEventParticipantId: rory.sep.id,
-        sportEventRoundId: round1.id,
-        status: 'COMPLETED',
-        golf: { create: { strokes: 69, scoreToPar: -3, thru: 18 } },
-      },
-    });
+    await writeGolfRounds(getPrisma(), event.id, [{ roundNumber: round1.roundNumber, scores: [{ sportEventParticipantId: rory.sep.id, strokes: 69, scoreToPar: -3 }] }]);
     await getPrisma().sportEventParticipantStanding.create({
-      data: {
-        sportEventParticipantId: rory.sep.id,
-        status: 'COMPLETE',
-        golf: { create: { eventScoreToPar: -3, eventStrokes: 69, currentRoundThru: 18 } },
-      },
+      data: { sportEventParticipantId: rory.sep.id, status: 'COMPLETE', scoreToPar: -3, total: 69 },
     });
 
     // #236 — the per-round score read is the field read now: every field row with its
-    // rounds and standing, each carrying its golf extension.
+    // FIELD Game results (#2008) and its standing.
     const views = await integrationSportEventServices().field.listEventParticipants(event.id);
     const byName = new Map(views.map((view) => [view.participant.name, view]));
 
-    expect(byName.get('Jordan Spieth')).toMatchObject({ rounds: [], standing: null });
+    expect(byName.get('Jordan Spieth')).toMatchObject({ fieldResults: [], standing: null });
     expect(byName.get('Rory McIlroy')).toMatchObject({
-      rounds: [expect.objectContaining({ round: expect.objectContaining({ roundNumber: 1, status: 'COMPLETED' }), golf: expect.objectContaining({ strokes: 69, scoreToPar: -3 }) })],
-      standing: {
-        standing: expect.objectContaining({ status: 'COMPLETE' }),
-        golf: expect.objectContaining({ eventScoreToPar: -3, eventStrokes: 69 }),
-      },
+      fieldResults: [expect.objectContaining({ roundNumber: 1, result: expect.objectContaining({ score: 69, scoreToPar: -3, status: 'FINISHED' }) })],
+      standing: expect.objectContaining({ status: 'COMPLETE', scoreToPar: -3, total: 69 }),
     });
   });
 
   it('previews CREATE for a new round, UNCHANGED for an identical one, UPDATE for a changed one, and never fakes a match', async () => {
     const { event, round1, rory, jordan } = await createField('preview');
-    await getPrisma().sportEventParticipantRound.create({
-      data: {
-        sportEventParticipantId: rory.sep.id,
-        sportEventRoundId: round1.id,
-        status: 'COMPLETED',
-        golf: { create: { strokes: 68, scoreToPar: -4, thru: 18 } },
-      },
-    });
-    const service = createGolfScoreService(getAppPrisma(), testDomainEvents());
+    await writeGolfRounds(getPrisma(), event.id, [{ roundNumber: round1.roundNumber, scores: [{ sportEventParticipantId: rory.sep.id, strokes: 68, scoreToPar: -4 }] }]);
+    const service = createStrokePlayResultService(getAppPrisma(), testDomainEvents());
 
     const preview = await service.previewRoundScores(event.id, 1, [
       row(rory.participant.id),
@@ -141,87 +137,65 @@ describe('Golf round scores — admin correction surface', () => {
     ]);
     expect(preview[2].before).toEqual({ strokes: 68, scoreToPar: -4, thru: 18, status: 'COMPLETED' });
     expect(preview[3]).toMatchObject({ sportEventParticipantId: null, participantName: null, before: null });
-    expect(await getPrisma().sportEventParticipantGolfRound.count({
-      where: { participantRound: { sportEventParticipant: { sportEventId: event.id } } },
-    })).toBe(1);
+    expect(await getPrisma().sportEventRoundMatchGameSideResult.count({ where: { game: { sportEventId: event.id } } })).toBe(1);
   });
 
   it('refuses an upload with any unresolved row with 422 ROUND_SCORE_ROWS_UNRESOLVED, and writes nothing', async () => {
     const { event, rory } = await createField('unresolved');
-    const service = createGolfScoreService(getAppPrisma(), testDomainEvents());
+    const service = createStrokePlayResultService(getAppPrisma(), testDomainEvents());
 
     const attempt = service.applyRoundScores(event.id, 1, [
       row(rory.participant.id),
       row('00000000-0000-4000-8000-000000000000'),
     ]);
 
-    await expect(attempt).rejects.toBeInstanceOf(GolfScoreError);
+    await expect(attempt).rejects.toBeInstanceOf(StrokePlayResultError);
     await expect(attempt).rejects.toMatchObject({ code: 'ROUND_SCORE_ROWS_UNRESOLVED', statusCode: 422 });
-    expect(await getPrisma().sportEventParticipantRound.count({ where: { sportEventParticipant: { sportEventId: event.id } } })).toBe(0);
+    expect(await getPrisma().sportEventRoundMatchGameSideResult.count({ where: { game: { sportEventId: event.id } } })).toBe(0);
     expect(await getPrisma().sportEventParticipantStanding.count({ where: { sportEventParticipant: { sportEventId: event.id } } })).toBe(0);
   });
 
-  it('applies an upload: core round and golf extension written together, standing recomputed', async () => {
+  it('applies an upload: the round written as the golfer\'s side in the round\'s FIELD Game, completed once every golfer in it finished, and the standing recomputed', async () => {
     const { event, rory } = await createField('apply');
-    const service = createGolfScoreService(getAppPrisma(), testDomainEvents());
+    const service = createStrokePlayResultService(getAppPrisma(), testDomainEvents());
 
     await service.applyRoundScores(event.id, 1, [row(rory.participant.id)]);
 
-    const persisted = await getPrisma().sportEventParticipantRound.findMany({
-      where: { sportEventParticipantId: rory.sep.id },
-      include: { golf: true },
-    });
-    expect(persisted).toEqual([
-      expect.objectContaining({ status: 'COMPLETED', golf: expect.objectContaining({ strokes: 68, scoreToPar: -4, thru: 18 }) }),
+    await expect(roundsOf(rory.sep.id)).resolves.toEqual([
+      expect.objectContaining({ status: 'FINISHED', score: 68, scoreToPar: -4, periodsCompleted: 18 }),
     ]);
+    await expect(getPrisma().sportEventRoundMatchGame.findFirstOrThrow({ where: { sportEventId: event.id } }))
+      .resolves.toMatchObject({ gameNumber: 1, status: 'COMPLETED', completedAt: expect.any(Date) });
     const standing = await getPrisma().sportEventParticipantStanding.findUniqueOrThrow({
       where: { sportEventParticipantId: rory.sep.id },
-      include: { golf: true },
     });
-    expect(standing).toMatchObject({
-      status: 'COMPLETE',
-      golf: { eventScoreToPar: -4, eventStrokes: 68, currentRoundThru: 18 },
-    });
+    expect(standing).toMatchObject({ status: 'COMPLETE', scoreToPar: -4, total: 68, position: 1, displayPosition: '1' });
   });
 
   it('skips a row with no strokes, as the sync path does, persisting neither a round nor a standing', async () => {
     const { event, rory } = await createField('null-strokes');
-    const service = createGolfScoreService(getAppPrisma(), testDomainEvents());
+    const service = createStrokePlayResultService(getAppPrisma(), testDomainEvents());
 
     await service.applyRoundScores(event.id, 1, [row(rory.participant.id, { strokes: null })]);
 
-    expect(await getPrisma().sportEventParticipantRound.count({ where: { sportEventParticipantId: rory.sep.id } })).toBe(0);
+    expect(await roundCount(rory.sep.id)).toBe(0);
     expect(await getPrisma().sportEventParticipantStanding.count({ where: { sportEventParticipantId: rory.sep.id } })).toBe(0);
   });
 
   it('patches only the supplied round fields and recomputes the standing from the result', async () => {
     const { event, round1, rory } = await createField('patch');
-    await getPrisma().sportEventParticipantRound.create({
-      data: {
-        sportEventParticipantId: rory.sep.id,
-        sportEventRoundId: round1.id,
-        status: 'COMPLETED',
-        golf: { create: { strokes: 68, scoreToPar: -4, thru: 18 } },
-      },
-    });
+    await writeGolfRounds(getPrisma(), event.id, [{ roundNumber: round1.roundNumber, scores: [{ sportEventParticipantId: rory.sep.id, strokes: 68, scoreToPar: -4 }] }]);
 
-    await createGolfScoreService(getAppPrisma(), testDomainEvents()).updateRoundScore(event.id, 1, rory.sep.id, { strokes: 70, scoreToPar: -2 });
+    await createStrokePlayResultService(getAppPrisma(), testDomainEvents()).updateRoundScore(event.id, 1, rory.sep.id, { strokes: 70, scoreToPar: -2 });
 
-    const round = await getPrisma().sportEventParticipantRound.findFirstOrThrow({
-      where: { sportEventParticipantId: rory.sep.id },
-      include: { golf: true },
-    });
-    expect(round).toMatchObject({ status: 'COMPLETED', golf: { strokes: 70, scoreToPar: -2, thru: 18 } });
-    const standing = await getPrisma().sportEventParticipantStanding.findUniqueOrThrow({
-      where: { sportEventParticipantId: rory.sep.id },
-      include: { golf: true },
-    });
-    expect(standing.golf).toMatchObject({ eventScoreToPar: -2, eventStrokes: 70 });
+    await expect(onlyRoundOf(rory.sep.id)).resolves.toMatchObject({ status: 'FINISHED', score: 70, scoreToPar: -2, periodsCompleted: 18 });
+    await expect(getPrisma().sportEventParticipantStanding.findUniqueOrThrow({ where: { sportEventParticipantId: rory.sep.id } }))
+      .resolves.toMatchObject({ scoreToPar: -2, total: 70 });
   });
 
   it('a PATCH correcting strokes and to par stores both as sent, and the standing and rank follow the corrected to par', async () => {
     const { event, rory, jordan } = await createField('patch-route');
-    const service = createGolfScoreService(getAppPrisma(), testDomainEvents());
+    const service = createStrokePlayResultService(getAppPrisma(), testDomainEvents());
     await service.applyRoundScores(event.id, 1, [
       row(rory.participant.id, { strokes: 68, scoreToPar: -4 }),
       row(jordan.participant.id, { strokes: 70, scoreToPar: -2 }),
@@ -252,9 +226,9 @@ describe('Golf round scores — admin correction surface', () => {
     expect(jordanStanding.position).toBe(1);
   });
 
-  it('a PATCH with completedAt null clears the stored completion time', async () => {
+  it('a PATCH changing only the completion time writes nothing: a round\'s completion time is its Game\'s, stamped when its last golfer finished', async () => {
     const { event, rory } = await createField('patch-clear');
-    await createGolfScoreService(getAppPrisma(), testDomainEvents()).applyRoundScores(event.id, 1, [
+    await createStrokePlayResultService(getAppPrisma(), testDomainEvents()).applyRoundScores(event.id, 1, [
       row(rory.participant.id, { completedAt: '2026-05-07T22:15:00.000Z' }),
     ]);
     const admin = await createTestUser({ isRootAdmin: true });
@@ -267,12 +241,14 @@ describe('Golf round scores — admin correction surface', () => {
     });
 
     expect(res.statusCode).toBe(200);
-    expect(res.json<SportEventParticipantResponse>().participant.rounds[0]).toMatchObject({ completedAt: null, status: 'COMPLETED' });
+    expect(res.json<SportEventParticipantResponse>().participant.rounds).toEqual([
+      expect.objectContaining({ completedAt: '2026-05-07T22:15:00.000Z', status: 'COMPLETED' }),
+    ]);
   });
 
   it('a PATCH with thru null clears the stored thru, so the golfer no longer shows as mid-round', async () => {
     const { event, rory } = await createField('patch-clear-thru');
-    await createGolfScoreService(getAppPrisma(), testDomainEvents()).applyRoundScores(event.id, 1, [
+    await createStrokePlayResultService(getAppPrisma(), testDomainEvents()).applyRoundScores(event.id, 1, [
       row(rory.participant.id, { thru: 12, status: 'IN_PROGRESS' }),
     ]);
     const admin = await createTestUser({ isRootAdmin: true });
@@ -285,11 +261,7 @@ describe('Golf round scores — admin correction surface', () => {
     });
 
     expect(res.statusCode).toBe(200);
-    const round = await getPrisma().sportEventParticipantRound.findFirstOrThrow({
-      where: { sportEventParticipantId: rory.sep.id },
-      include: { golf: true },
-    });
-    expect(round.golf).toMatchObject({ strokes: 68, thru: null });
+    await expect(onlyRoundOf(rory.sep.id)).resolves.toMatchObject({ score: 68, periodsCompleted: null });
   });
 
   it.each([
@@ -298,7 +270,7 @@ describe('Golf round scores — admin correction surface', () => {
     ['a negative thru', { thru: -1 }],
   ])('a PATCH with %s is refused with 400 and leaves the stored round as it was', async (_label, payload) => {
     const { event, rory } = await createField(`patch-bounds-${Object.keys(payload)[0]}-${Object.values(payload)[0]}`);
-    await createGolfScoreService(getAppPrisma(), testDomainEvents()).applyRoundScores(event.id, 1, [row(rory.participant.id)]);
+    await createStrokePlayResultService(getAppPrisma(), testDomainEvents()).applyRoundScores(event.id, 1, [row(rory.participant.id)]);
     const admin = await createTestUser({ isRootAdmin: true });
 
     const res = await getApp().inject({
@@ -309,11 +281,7 @@ describe('Golf round scores — admin correction surface', () => {
     });
 
     expect(res.statusCode).toBe(400);
-    const round = await getPrisma().sportEventParticipantRound.findFirstOrThrow({
-      where: { sportEventParticipantId: rory.sep.id },
-      include: { golf: true },
-    });
-    expect(round.golf).toMatchObject({ strokes: 68, thru: 18 });
+    await expect(onlyRoundOf(rory.sep.id)).resolves.toMatchObject({ score: 68, periodsCompleted: 18 });
   });
 
   it.each([
@@ -333,14 +301,14 @@ describe('Golf round scores — admin correction surface', () => {
     });
 
     expect(res.statusCode).toBe(400);
-    expect(await getPrisma().sportEventParticipantRound.count({ where: { sportEventParticipantId: rory.sep.id } })).toBe(0);
+    expect(await roundCount(rory.sep.id)).toBe(0);
   });
 });
 
 describe('Golf round scores — holes completed are bounded by the round\'s slot', () => {
   it('refuses a correction and an upload with more holes completed than the round\'s 18 with 422 ROUND_THRU_BEYOND_HOLES, leaving the stored round as it was', async () => {
     const { event, rory } = await createField('thru-beyond-holes');
-    await createGolfScoreService(getAppPrisma(), testDomainEvents()).applyRoundScores(event.id, 1, [row(rory.participant.id)]);
+    await createStrokePlayResultService(getAppPrisma(), testDomainEvents()).applyRoundScores(event.id, 1, [row(rory.participant.id)]);
     const admin = await createTestUser({ isRootAdmin: true });
 
     const patch = await getApp().inject({
@@ -357,11 +325,7 @@ describe('Golf round scores — holes completed are bounded by the round\'s slot
     });
 
     expect([patch.statusCode, patch.json<{ error: { code: string } }>().error.code, upload.statusCode, upload.json<{ error: { code: string } }>().error.code]).toEqual([422, 'ROUND_THRU_BEYOND_HOLES', 422, 'ROUND_THRU_BEYOND_HOLES']);
-    const round = await getPrisma().sportEventParticipantRound.findFirstOrThrow({
-      where: { sportEventParticipantId: rory.sep.id },
-      include: { golf: true },
-    });
-    expect(round.golf).toMatchObject({ strokes: 68, thru: 18 });
+    await expect(onlyRoundOf(rory.sep.id)).resolves.toMatchObject({ score: 68, periodsCompleted: 18 });
   });
 });
 
@@ -395,18 +359,17 @@ describe('Golf round scores — bounded by the event\'s scheduled rounds', () =>
     expect(result).toMatchObject({ updatesReturned: 6, updatesPersisted: 4, updatesSkipped: 2 });
     const roundNumbers = (await prisma.sportEventRound.findMany({ where: { sportEventId: event.id } })).map((round) => round.roundNumber).sort((left, right) => left - right);
     expect(roundNumbers).toEqual([1, 2, 3, 4]);
-    expect(await prisma.sportEventParticipantRound.count({ where: { sportEventParticipantId: jordan.sep.id } })).toBe(0);
+    expect(await roundCount(jordan.sep.id)).toBe(0);
     const standing = await prisma.sportEventParticipantStanding.findUniqueOrThrow({
       where: { sportEventParticipantId: rory.sep.id },
-      include: { golf: true },
     });
-    expect(standing.golf?.eventScoreToPar).toBe(-8);
+    expect(standing.scoreToPar).toBe(-8);
   });
 
   it('refuses an admin upload for round 5 of a 4-round event with 422 ROUND_BEYOND_SCHEDULE, creating no round', async () => {
     const { event, rory } = await createField('beyond-schedule-admin');
     await getPrisma().sportEvent.update({ where: { id: event.id }, data: { rounds: 4 } });
-    const service = createGolfScoreService(getAppPrisma(), testDomainEvents());
+    const service = createStrokePlayResultService(getAppPrisma(), testDomainEvents());
 
     await expect(service.applyRoundScores(event.id, 5, [row(rory.participant.id)]))
       .rejects.toMatchObject({ code: 'ROUND_BEYOND_SCHEDULE', statusCode: 422 });
@@ -415,12 +378,12 @@ describe('Golf round scores — bounded by the event\'s scheduled rounds', () =>
 
   it('refuses a thru-only correction for a golfer with no stored round with 422 ROUND_VALUES_REQUIRED, writing no round and no standing', async () => {
     const { event, rory } = await createField('thru-only-no-round');
-    const service = createGolfScoreService(getAppPrisma(), testDomainEvents());
+    const service = createStrokePlayResultService(getAppPrisma(), testDomainEvents());
 
     await expect(service.updateRoundScore(event.id, 2, rory.sep.id, { thru: 9 }))
       .rejects.toMatchObject({ code: 'ROUND_VALUES_REQUIRED', statusCode: 422 });
     expect(await getPrisma().sportEventRound.count({ where: { sportEventId: event.id, roundNumber: 2 } })).toBe(0);
-    expect(await getPrisma().sportEventParticipantRound.count({ where: { sportEventParticipantId: rory.sep.id } })).toBe(0);
+    expect(await roundCount(rory.sep.id)).toBe(0);
     expect(await getPrisma().sportEventParticipantStanding.count({ where: { sportEventParticipantId: rory.sep.id } })).toBe(0);
   });
 });
@@ -449,9 +412,9 @@ describe('Golf round scores — a live sync writes only what changed', () => {
     const stamps = async (): Promise<Record<string, Array<string | undefined>>> => {
       const byEntry: Record<string, Array<string | undefined>> = {};
       for (const { sep } of [rory, jordan]) {
-        const round = await prisma.sportEventParticipantRound.findFirstOrThrow({ where: { sportEventParticipantId: sep.id }, include: { golf: true } });
-        const standing = await prisma.sportEventParticipantStanding.findUniqueOrThrow({ where: { sportEventParticipantId: sep.id }, include: { golf: true } });
-        byEntry[sep.id] = [round.updatedAt, round.golf?.updatedAt, standing.updatedAt, standing.golf?.updatedAt].map((at) => at?.toISOString());
+        const round = await onlyRoundOf(sep.id);
+        const standing = await prisma.sportEventParticipantStanding.findUniqueOrThrow({ where: { sportEventParticipantId: sep.id } });
+        byEntry[sep.id] = [round.updatedAt, standing.updatedAt].map((at) => at.toISOString());
       }
       return byEntry;
     };
@@ -466,9 +429,10 @@ describe('Golf round scores — a live sync writes only what changed', () => {
     await tick(-5);
     const afterChange = await stamps();
 
-    // Rory's scores did not move, so only his rank (on the core standing, index 2) is rewritten.
-    const [roundAt, golfRoundAt, , golfStandingAt] = afterFirst[rory.sep.id];
-    expect(afterChange[rory.sep.id]).toEqual([roundAt, golfRoundAt, expect.any(String), golfStandingAt]);
+    // Rory's scores did not move, so only his rank (on his standing) is rewritten.
+    const [roundAt, standingAt] = afterFirst[rory.sep.id];
+    expect(afterChange[rory.sep.id]).toEqual([roundAt, expect.any(String)]);
+    expect(afterChange[rory.sep.id][1]).not.toBe(standingAt);
     expect(afterChange[jordan.sep.id].every((at, index) => at !== afterFirst[jordan.sep.id][index])).toBe(true);
     const standings = await prisma.sportEventParticipantStanding.findMany({ where: { sportEventParticipantId: { in: [rory.sep.id, jordan.sep.id] } } });
     expect(Object.fromEntries(standings.map((standing) => [standing.sportEventParticipantId, standing.displayPosition]))).toEqual({
@@ -478,38 +442,28 @@ describe('Golf round scores — a live sync writes only what changed', () => {
   });
 });
 
-describe('Golf standings ranks — the leaderboard rebuild they carry (#1466)', () => {
+describe('Golf round scores — the leaderboard rebuild an admin upload carries (#1466)', () => {
   const rebuildJobCount = (sportEventId: string) => getPrisma().backgroundJob.count({ where: { dedupeKey: eventRebuildJob(sportEventId).dedupeKey } });
 
-  it('writes the rebuild job alone when no rank moved, and with the ranks when one did', async () => {
+  it('writes the event\'s rebuild job with the round and the standing it changes', async () => {
     const { event, round1, rory } = await createField('ranks-carry');
-    await createGolfScoreService(getAppPrisma(), testDomainEvents()).applyRoundScores(event.id, round1.roundNumber, [row(rory.participant.id)]);
-    const standings = new PrismaSportEventParticipantGolfStandingRepository(getAppPrisma());
-    const [stored] = await standings.findBySportEvent(event.id);
 
-    await standings.updateRanks([], [eventRebuildJob(event.id)]);
-    await expect(rebuildJobCount(event.id)).resolves.toBe(1);
+    await createStrokePlayResultService(getAppPrisma(), testDomainEvents({ queue: integrationBackgroundJobs().queue })).applyRoundScores(event.id, round1.roundNumber, [row(rory.participant.id)]);
 
-    await getPrisma().backgroundJob.deleteMany({ where: { dedupeKey: eventRebuildJob(event.id).dedupeKey } });
-    await standings.updateRanks([{ standingId: stored.standing.id, position: 7, displayPosition: 'T7' }], [eventRebuildJob(event.id)]);
     await expect(rebuildJobCount(event.id)).resolves.toBe(1);
-    await expect(getPrisma().sportEventParticipantStanding.findUniqueOrThrow({ where: { id: stored.standing.id } })).resolves.toMatchObject({ position: 7, displayPosition: 'T7' });
+    expect(await roundCount(rory.sep.id)).toBe(1);
   });
 
-  it('keeps the ranks as they were when the rebuild job cannot be written', async () => {
+  it('stores no round and no standing when the rebuild job cannot be written', async () => {
     const { event, round1, rory } = await createField('ranks-fail');
-    await createGolfScoreService(getAppPrisma(), testDomainEvents()).applyRoundScores(event.id, round1.roundNumber, [row(rory.participant.id)]);
-    const standings = new PrismaSportEventParticipantGolfStandingRepository(getAppPrisma());
-    const [stored] = await standings.findBySportEvent(event.id);
-    const jobsBefore = await rebuildJobCount(event.id);
+    const service = createStrokePlayResultService(getAppPrisma(), testDomainEvents({ queue: integrationBackgroundJobs().queue }));
 
-    await expect(withBackgroundJobsFailing('REBUILD_LEADERBOARDS', () => standings.updateRanks(
-      [{ standingId: stored.standing.id, position: 7, displayPosition: 'T7' }], [eventRebuildJob(event.id)],
-    ))).rejects.toThrow();
+    await expect(withBackgroundJobsFailing('REBUILD_LEADERBOARDS', () => service.applyRoundScores(event.id, round1.roundNumber, [row(rory.participant.id)])))
+      .rejects.toThrow();
 
-    await expect(getPrisma().sportEventParticipantStanding.findUniqueOrThrow({ where: { id: stored.standing.id } }))
-      .resolves.toMatchObject({ position: stored.standing.position, displayPosition: stored.standing.displayPosition ?? null });
-    await expect(rebuildJobCount(event.id)).resolves.toBe(jobsBefore);
+    expect(await roundCount(rory.sep.id)).toBe(0);
+    expect(await getPrisma().sportEventParticipantStanding.count({ where: { sportEventParticipantId: rory.sep.id } })).toBe(0);
+    await expect(rebuildJobCount(event.id)).resolves.toBe(0);
   });
 });
 

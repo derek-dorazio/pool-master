@@ -30,6 +30,17 @@ async function addFourRounds(prisma: ReturnType<typeof getPrisma>, sportEventId:
   });
 }
 
+/** The golfer's rounds as stored: their side results in the rounds' FIELD Games, in round order. */
+async function roundsOf(sportEventParticipantId: string) {
+  const results = await getPrisma().sportEventRoundMatchGameSideResult.findMany({
+    where: { side: { sportEventParticipantId } },
+    select: { score: true, scoreToPar: true, periodsCompleted: true, status: true, game: { select: { match: { select: { sportEventRound: { select: { roundNumber: true } } } } } } },
+  });
+  return results
+    .map(({ game, ...result }) => ({ roundNumber: game.match.sportEventRound.roundNumber, ...result }))
+    .sort((left, right) => left.roundNumber - right.roundNumber);
+}
+
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
   await cleanupTestData();
@@ -127,30 +138,15 @@ describe('pool-master-eux.2: Golf participant standing persistence', () => {
       },
     });
 
-    const row = await prisma.sportEventParticipant.findUniqueOrThrow({
-      where: { id: sportEventParticipant.id },
-      include: {
-        rounds: { include: { sportEventRound: true, golf: true } },
-        standing: { include: { golf: true } },
-      },
-    });
-
-    expect(row.rounds).toEqual(expect.arrayContaining([
-      expect.objectContaining({
-        sportEventRound: expect.objectContaining({ roundNumber: 1 }),
-        golf: expect.objectContaining({ strokes: 68, scoreToPar: -4, thru: null }),
-      }),
-      expect.objectContaining({
-        sportEventRound: expect.objectContaining({ roundNumber: 2 }),
-        golf: expect.objectContaining({ strokes: 33, scoreToPar: -3, thru: 9 }),
-      }),
-    ]));
-    expect(row.standing).toEqual(
-      expect.objectContaining({
-        status: 'IN_PROGRESS',
-        golf: expect.objectContaining({ eventScoreToPar: -7, eventStrokes: 101, currentRoundThru: 9 }),
-      }),
-    );
+    // Each round is the golfer's side result in that round's FIELD Game (#2008); a finished round
+    // with no thru sent counts every hole its slot gives a round.
+    await expect(roundsOf(sportEventParticipant.id)).resolves.toEqual([
+      { roundNumber: 1, score: 68, scoreToPar: -4, periodsCompleted: 18, status: 'FINISHED' },
+      { roundNumber: 2, score: 33, scoreToPar: -3, periodsCompleted: 9, status: null },
+    ]);
+    // The standing's holes thru is the current round's, read off it, never stored.
+    await expect(prisma.sportEventParticipantStanding.findUniqueOrThrow({ where: { sportEventParticipantId: sportEventParticipant.id } }))
+      .resolves.toMatchObject({ status: 'IN_PROGRESS', scoreToPar: -7, total: 101 });
     // One standing per event participant, enforced by the core table.
     await expect(
       prisma.sportEventParticipantStanding.create({
@@ -164,8 +160,8 @@ describe('pool-master-eux.2: Golf participant standing persistence', () => {
 });
 
 // Live-score persistence through `publishLiveScoreUpdate`, against real rows. Each golfer's round
-// lands as a core SportEventParticipantRound plus its golf extension; their standing is
-// recomputed as a core SportEventParticipantStanding plus its golf extension.
+// lands as their side result in the round's FIELD Game (#2008); their standing, with its totals,
+// is recomputed with it.
 describe('Golf live-score persistence', () => {
   const PROVIDER = 'balldontlie';
 
@@ -211,10 +207,7 @@ describe('Golf live-score persistence', () => {
   }
 
   async function standingOf(sportEventParticipantId: string) {
-    return getPrisma().sportEventParticipantStanding.findUnique({
-      where: { sportEventParticipantId },
-      include: { golf: true },
-    });
+    return getPrisma().sportEventParticipantStanding.findUnique({ where: { sportEventParticipantId } });
   }
 
   it('writes each round and standing only for the named event', async () => {
@@ -232,13 +225,15 @@ describe('Golf live-score persistence', () => {
     expect(persisted).toMatchObject({ updatesReturned: 2, updatesPersisted: 2, updatesSkipped: 0 });
     expect(await standingOf(expectDefined(sepByKey.get('rory')))).toMatchObject({
       status: 'COMPLETE',
-      golf: { eventScoreToPar: -2, eventStrokes: 70, currentRoundThru: 18 },
+      scoreToPar: -2,
+      total: 70,
     });
     expect(await standingOf(expectDefined(sepByKey.get('tiger')))).toMatchObject({
       status: 'IN_PROGRESS',
-      golf: { eventScoreToPar: 1, eventStrokes: 37, currentRoundThru: 9 },
+      scoreToPar: 1,
+      total: 37,
     });
-    expect(await getPrisma().sportEventParticipantRound.count({
+    expect(await getPrisma().sportEventRoundMatchSide.count({
       where: { sportEventParticipantId: { in: [...otherSepByKey.values()] } },
     })).toBe(0);
   });
@@ -276,14 +271,14 @@ describe('Golf live-score persistence', () => {
     expect(second.writeDiagnostics.summary).toEqual({ total: 2, unchanged: 2, created: 0, updated: 0, deleted: 0 });
     expect(second.writeDiagnostics.rows).toEqual(expect.arrayContaining([
       expect.objectContaining({
-        entityType: 'SportEventParticipantGolfRound',
+        entityType: 'SportEventRoundMatchGameSideResult',
         disposition: 'UNCHANGED',
         after: expect.objectContaining({ scoreToPar: -2, thru: 9 }),
       }),
       expect.objectContaining({
-        entityType: 'SportEventParticipantGolfStanding',
+        entityType: 'SportEventParticipantStanding',
         disposition: 'UNCHANGED',
-        after: expect.objectContaining({ eventScoreToPar: -2, currentRoundThru: 9 }),
+        after: expect.objectContaining({ eventScoreToPar: -2, eventStrokes: 34 }),
       }),
     ]));
   });
@@ -301,8 +296,8 @@ describe('Golf live-score persistence', () => {
       }, { contestActivation: NO_CONTEST_ACTIVATION, prisma: getAppPrisma(), providerId: PROVIDER, domainEvents: testDomainEvents(), scoringFamilyForEvent, findings: integrationSyncFindings() });
 
       expect(persisted).toMatchObject({ updatesReturned: 1, updatesPersisted: 0, updatesSkipped: 1 });
-      expect(await getPrisma().sportEventParticipantRound.count({
-        where: { sportEventParticipant: { sportEventId: event.id } },
+      expect(await getPrisma().sportEventRoundMatchGameSideResult.count({
+        where: { game: { sportEventId: event.id } },
       })).toBe(0);
       expect(await standingOf(expectDefined(sepByKey.get('rory')))).toBeNull();
     },
@@ -318,8 +313,8 @@ describe('Golf live-score persistence', () => {
     }, { contestActivation: NO_CONTEST_ACTIVATION, prisma: getAppPrisma(), providerId: PROVIDER, domainEvents: testDomainEvents(), scoringFamilyForEvent, findings: integrationSyncFindings() });
 
     expect(persisted).toMatchObject({ updatesReturned: 1, updatesPersisted: 0, updatesSkipped: 1 });
-    expect(await getPrisma().sportEventParticipantRound.count({
-      where: { sportEventParticipant: { sportEventId: event.id } },
+    expect(await getPrisma().sportEventRoundMatchGameSideResult.count({
+      where: { game: { sportEventId: event.id } },
     })).toBe(0);
     expect(await standingOf(expectDefined(sepByKey.get('rory')))).toBeNull();
   });
@@ -337,8 +332,8 @@ describe('Golf live-score persistence', () => {
     }, { contestActivation: NO_CONTEST_ACTIVATION, prisma: getAppPrisma(), providerId: PROVIDER, domainEvents: testDomainEvents(), scoringFamilyForEvent, findings: integrationSyncFindings() });
 
     expect(persisted).toMatchObject({ updatesReturned: 2, updatesPersisted: 1, updatesSkipped: 1 });
-    expect(await getPrisma().sportEventParticipantRound.count({
-      where: { sportEventParticipant: { sportEventId: event.id } },
+    expect(await getPrisma().sportEventRoundMatchGameSideResult.count({
+      where: { game: { sportEventId: event.id } },
     })).toBe(1);
   });
 });

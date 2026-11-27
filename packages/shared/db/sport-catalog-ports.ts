@@ -27,9 +27,6 @@ import type {
   SportEventRoundMatch,
   SportEventRoundMatchGameSideResult,
   SportEventParticipant,
-  SportEventParticipantGolfRound,
-  SportEventParticipantGolfStanding,
-  SportEventParticipantRound,
   SportEventParticipantStanding,
   SportEventSlotParticipantValuation,
   SportEventRound,
@@ -415,22 +412,14 @@ export interface SportEventParticipantFieldUpdate {
 }
 
 /** A round row with its sport extension, when the sport has one and it has been scored. */
-export interface ParticipantRoundView {
-  round: SportEventParticipantRound;
-  golf: SportEventParticipantGolfRound | null;
-}
-
-/** A standing row with its sport extension. */
-export interface ParticipantStandingView {
-  standing: SportEventParticipantStanding;
-  golf: SportEventParticipantGolfStanding | null;
-}
-
 /** A field row's side result in one FIELD Game of its event (#2008). */
 export interface FieldGameResultView {
+  sportEventRoundId: string;
   roundNumber: number;
-  /** The Game's status: a race's result is official once its Game is COMPLETED. */
+  /** The Game's status: a race's result is official once its Game is COMPLETED, a golf round once every golfer has finished it. */
   gameStatus: MatchStatus;
+  /** When the Game was completed; null while it is not. */
+  gameCompletedAt: Date | null;
   result: SportEventRoundMatchGameSideResult;
   updatedAt: Date;
 }
@@ -444,9 +433,7 @@ export interface SportEventParticipantView {
    * the set every field read shows); null when it has none there.
    */
   valuation: SportEventSlotParticipantValuation | null;
-  standing: ParticipantStandingView | null;
-  /** In round number order. */
-  rounds: ParticipantRoundView[];
+  standing: SportEventParticipantStanding | null;
   /**
    * This row's side result in each FIELD Game of its event (#2008), in round order: a race's one
    * Game, a golf round. A round with no side for the row (after a cut) has none.
@@ -456,6 +443,17 @@ export interface SportEventParticipantView {
   matches: SportEventRoundMatch[];
   /** Whether the participant is affiliated with the event's sport league — false flags an invite from elsewhere. */
   affiliatedWithSportLeague: boolean;
+}
+
+/**
+ * An event as the field reads take it (#2227): its id, its sport league (against which each
+ * participant's league is flagged), and whether any of its slots plays FIELD, which the caller
+ * already knows from the event's slot definitions. Only such an event's FIELD matches are looked up.
+ */
+export interface FieldReadEvent {
+  sportEventId: string;
+  sportLeagueId: string;
+  playsField: boolean;
 }
 
 export interface SportEventParticipantRepository {
@@ -470,17 +468,16 @@ export interface SportEventParticipantRepository {
    * The event's field as every reader sees it, in one read (#1163): each row with its
    * participant, valuation, standing, rounds, race result and matches, in seed order, unseeded
    * last. Every scoring family's rows come along; a family's empty ones cost nothing.
-   * `sportLeagueId` is the event's, against which each participant's league is flagged. Each
-   * row's valuation is its event's tier-set slot's (#2044), or the one played in `seasonSlotId`'s.
+   * Each row's valuation is its event's tier-set slot's (#2044), or the one played in `seasonSlotId`'s.
    */
-  findFieldForEvent(sportEventId: string, sportLeagueId: string, seasonSlotId?: string): Promise<SportEventParticipantView[]>;
+  findFieldForEvent(event: FieldReadEvent, seasonSlotId?: string): Promise<SportEventParticipantView[]>;
   /**
    * `findFieldForEvent` for several events in the same few statements (#1315), each event's
    * participants flagged against its own sport league: in the order of `events`, then in seed order.
    */
-  findFieldsForEvents(events: readonly { sportEventId: string; sportLeagueId: string }[]): Promise<SportEventParticipantView[]>;
+  findFieldsForEvents(events: readonly FieldReadEvent[]): Promise<SportEventParticipantView[]>;
   /** One field row of the event, read as `findFieldForEvent` reads each, or null when the event has no such row. */
-  findFieldRow(sportEventId: string, sportEventParticipantId: string, sportLeagueId: string): Promise<SportEventParticipantView | null>;
+  findFieldRow(event: FieldReadEvent, sportEventParticipantId: string): Promise<SportEventParticipantView | null>;
   /** How many different participants the events' fields hold between them: a season's teams (#836). */
   countDistinctParticipants(sportEventIds: readonly string[]): Promise<number>;
   /**

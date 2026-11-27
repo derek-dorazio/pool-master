@@ -1,6 +1,7 @@
 import {
   ContestStatus,
   ContestFormat,
+  eventPlaysField,
   eventPlaysMatches,
   formatParticipantStatusLabel,
   isContestFormatValidForEvent,
@@ -37,6 +38,17 @@ describe('Whether an event plays matches', () => {
 
   it('reads an event that covers no slot as playing none', () => {
     expect(eventPlaysMatches({ slotDefinitions: [] })).toBe(false);
+  });
+
+  it('reads an event with a FIELD slot as playing a field, even beside a HEAD_TO_HEAD one, so its field read looks up its FIELD matches', () => {
+    expect(eventPlaysField({ slotDefinitions: [slot(MatchFormat.HEAD_TO_HEAD), slot(MatchFormat.FIELD)] })).toBe(true);
+  });
+
+  it('reads an event whose slots are all HEAD_TO_HEAD, or that covers none, as playing no field, so its field read skips the FIELD match lookup', () => {
+    expect([
+      eventPlaysField({ slotDefinitions: [slot(MatchFormat.HEAD_TO_HEAD)] }),
+      eventPlaysField({ slotDefinitions: [] }),
+    ]).toEqual([false, false]);
   });
 });
 
