@@ -180,10 +180,11 @@ describe('Creating one event (#1253)', () => {
     // folds into the summary's; the definitions' competitions and phases once each (#2153). No
     // series is found or created (#2010). The rounds go in the event's slot, whose event slot row is
     // read once for every round, and the slots are read once together, with their events (#2006). The
-    // default tiers go in the event's first slot's set, and the summary reads its tier slots (#2044).
+    // default tiers go in the event's tier-set slot's set, and the summary reads its tier slots, with
+    // whether a tiered or budget template lists each (#2044).
     expect(statementCounts(statements)).toEqual([
       ['INSERT sport_event_rounds', 1], ['INSERT sport_event_slot_tiers', 1], ['INSERT sport_event_slots', 1], ['INSERT sport_events', 1],
-      ['SELECT platform_tier_profile_ranges', 1], ['SELECT platform_tier_profile_sources', 1],
+      ['SELECT contest_config_template_slots', 1], ['SELECT platform_tier_profile_ranges', 1], ['SELECT platform_tier_profile_sources', 1],
       ['SELECT platform_tier_profiles', 1], ['SELECT provider_leagues', 2], ['SELECT providers', 2],
       ['SELECT sport_event_provider_mappings', 1], ['SELECT sport_event_slots', 4], ['SELECT sport_events', 1], ['SELECT sport_league_competition_slots', 4],
       ['SELECT sport_league_competitions', 1], ['SELECT sport_league_phases', 1], ['SELECT sport_league_provider_mappings', 2], ['SELECT sport_league_season_competition_slots', 4],

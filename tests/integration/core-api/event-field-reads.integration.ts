@@ -129,6 +129,9 @@ describe('An event\'s field', () => {
     // row, and nothing else. A field row's games are read through the match sides naming it (#2046);
     // a field with no matches reads no further.
     expect(statementCounts(statements)).toEqual([
+      // In the field's query, whether a tiered or budget template lists each of its event's slots,
+      // which decides the slot whose set prices the field (#2044).
+      ['SELECT contest_config_template_slots', 1],
       ['SELECT participants', 1],
       ['SELECT sport_event_participant_golf_rounds', 1],
       ['SELECT sport_event_participant_golf_standings', 1],
@@ -139,10 +142,10 @@ describe('An event\'s field', () => {
       ['SELECT sport_event_provider_mappings', 1],
       ['SELECT sport_event_round_match_sides', 1],
       ['SELECT sport_event_rounds', 1],
-      // A field row's price is its first slot's set's (#2044).
+      // A field row's price is its event's tier-set slot's (#2044).
       ['SELECT sport_event_slot_participant_valuations', 1],
       // The event's slot definitions (#2010), where templates are offered; and in the field's own
-      // query, its event's slots in their places in play, whose first prices the field (#2044).
+      // query, its event's slots in their places in play, one of which prices the field (#2044).
       ['SELECT sport_event_slots', 2],
       ['SELECT sport_events', 2],
       // The event's rounds are played in its slot (#2006): the slot's definition and its place in
