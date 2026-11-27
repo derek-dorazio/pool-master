@@ -1,5 +1,5 @@
 -- #2225: a sweepstakes on NCAA Men's Football's bowl games. Knockout round points now score a slate
--- of one-off games (one round, no game leading to another, not a regular-season week), each game
+-- of one-off games (one round of a TOURNAMENT slot, no game leading to another), each game
 -- its own final, so a dealt team's bowl win scores its one round value: 1. Not the league's
 -- sweepstakes default: the College Football Playoff keeps it. Covers the bowls' one slot only, so
 -- no contest crosses into the CFP. Data only.

@@ -1042,7 +1042,7 @@ describe('The seeded NCAA Men\'s Football league and its knockout templates', ()
 
   it('gives the College Football Playoff one pick-3 tiered and one pick-3 budget template and Straight up, Escalating and Full random draws, Full the default, on round values 1, 2, 4, 8 but Straight up\'s 1 a round (#2164)', async () => {
     const templates = await getPrisma().contestConfigTemplate.findMany({
-      where: { sportLeague: { sport: { sport: Sport.FOOTBALL }, name: 'NCAA Men\'s Football' }, contestFormat: ContestFormat.ROSTER, slots: { some: { definition: { competition: { code: 'CFP' } } } } },
+      where: { sportLeague: { urlSegment: 'ncaamf' }, contestFormat: ContestFormat.ROSTER, slots: { some: { definition: { competition: { code: 'CFP' } } } } },
       orderBy: [{ templateKey: 'asc' }],
     });
 
@@ -1069,7 +1069,7 @@ describe('The seeded NCAA Men\'s Football league and its knockout templates', ()
 
   it('gives the bowls pick\'em straight up (the league\'s pick\'em default) and against the spread, squares and a Straight up sweepstakes, and the conference title games the same but the sweepstakes, each covering only its own competition\'s slot, with no tiered or budget template', async () => {
     const templates = await getPrisma().contestConfigTemplate.findMany({
-      where: { sportLeague: { sport: { sport: Sport.FOOTBALL }, name: 'NCAA Men\'s Football' }, slots: { some: { definition: { competition: { code: { in: ['BOWLS', 'CONFERENCE_CHAMPIONSHIPS'] } } } } } },
+      where: { sportLeague: { urlSegment: 'ncaamf' }, slots: { some: { definition: { competition: { code: { in: ['BOWLS', 'CONFERENCE_CHAMPIONSHIPS'] } } } } } },
       include: { slots: { select: { definition: { select: { key: true, competition: { select: { code: true } } } } } } },
       orderBy: [{ sortOrder: 'asc' }],
     });
@@ -1315,9 +1315,11 @@ describe('Seeded knockout templates follow the template review (#2164)', () => {
     const problems = [...groups].flatMap(([key, group]) => {
       const [{ template, rules, seeded }] = group;
       const oneEach = LEAGUES_WITH_ONE_KNOCKOUT_TEMPLATE_EACH.includes(template.sportLeague.urlSegment);
-      // A one-round table scores a slate of one-off games (a season's bowls), each game its own
-      // final: a win is 1, so only Straight up applies, and the league's playoff keeps its default.
-      const slate = rules.scoring?.participantScoringDefinitionId === 'KNOCKOUT_ROUND_POINTS' && rules.scoring.config.roundValues.length === 1;
+      // A one-round table on a TOURNAMENT slot scores a slate of one-off games (a season's bowls),
+      // each game its own final: a win is 1, so only Straight up applies, and the league's playoff
+      // keeps its default. A one-round knockout template (a final alone) is no slate.
+      const slate = rules.scoring?.participantScoringDefinitionId === 'KNOCKOUT_ROUND_POINTS' && rules.scoring.config.roundValues.length === 1
+        && template.slots.every((slot) => slot.definition.slotKind === SlotKind.TOURNAMENT);
       const expected: KnockoutVariant[] = slate ? ['STRAIGHT_UP'] : oneEach
         ? [template.selectionType === SelectionType.RANDOM_DRAW ? 'FULL' : 'ESCALATING']
         : seeded ? ['STRAIGHT_UP', 'ESCALATING', 'FULL'] : ['STRAIGHT_UP', 'ESCALATING'];

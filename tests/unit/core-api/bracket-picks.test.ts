@@ -199,6 +199,15 @@ describe('findKnockoutProblem (#2225)', () => {
     expect(findKnockoutProblem(week, EIGHT_SEEDS)).toBe('its final has 0 games, not one');
   });
 
+  it('refuses a knockout\'s first round placed before its later rounds are linked: one round of unlinked games in a knockout-round slot', () => {
+    const firstRound = bracketMatches('event-first-round', [
+      { matchNumber: 1, round: 1, home: 'T1', away: 'T8' },
+      { matchNumber: 2, round: 1, home: 'T4', away: 'T5' },
+    ], () => roundSlot(SlotKind.QUARTERFINAL));
+
+    expect(findKnockoutProblem(firstRound, EIGHT_SEEDS)).toBe('its final has 0 games, not one');
+  });
+
   it('refuses games over two rounds that no link joins, and an event with no games', () => {
     const unlinked = bracketMatches('event-unlinked', [
       { matchNumber: 1, round: 1, home: 'T1', away: 'T2' },
