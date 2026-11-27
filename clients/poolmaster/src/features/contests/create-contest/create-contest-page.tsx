@@ -88,7 +88,7 @@ export function CreateContestPage() {
         sportEventIds: [event.id],
         contestFormat: contestFormatForSelectionType(submitted.selectionType),
         selectionType: submitted.selectionType,
-        ...(submitted.selectionType === SelectionType.SQUARES ? { sportEventRoundMatchId: submitted.sportEventRoundMatchId } : {}),
+        ...(submitted.selectionType === SelectionType.SQUARES ? { sportEventRoundMatchGameId: submitted.sportEventRoundMatchGameId } : {}),
         templateId: submitted.selectedTemplateId,
         // A definition that takes settings sends them; one that takes none leaves the template's
         // preset or the sport's default to apply.
@@ -212,14 +212,14 @@ export function CreateContestPage() {
           }
         }}
         onSelectSport={draft.selectSport}
-        onSquaresGameChange={(next) => draft.setFormValues({ sportEventRoundMatchId: next })}
+        onSquaresGameChange={(next) => draft.setFormValues({ sportEventRoundMatchGameId: next })}
         offeredSports={draft.offeredSports}
         selectedEvent={selectedEvent}
         selectionType={values.selectionType}
         sport={values.sport}
         sportDefinition={draft.sportDefinition}
         sportEventId={sportEventId}
-        sportEventRoundMatchId={values.sportEventRoundMatchId}
+        sportEventRoundMatchGameId={values.sportEventRoundMatchGameId}
         sportLeagueCap={draft.sportLeagueCap}
         sportLeaguesUsedThisYear={selectedEvent ? draft.sportLeaguesUsed.get(selectedEvent.championshipYear)?.length ?? 0 : 0}
         squaresGames={draft.squaresGames}

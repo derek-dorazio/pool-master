@@ -41,6 +41,7 @@ const {
   listContestConfigTemplatesMock,
   listEventParticipantsMock,
   listEventRoundsMock,
+  listEventSquaresGamesMock,
   listEventsMock,
   listSportLeaguesMock,
   listSportLeaguesUsedMock,
@@ -65,6 +66,7 @@ const {
     listContestConfigTemplatesMock: vi.fn(),
     listEventParticipantsMock: vi.fn(),
     listEventRoundsMock: vi.fn(),
+    listEventSquaresGamesMock: vi.fn(),
     listEventsMock: vi.fn(),
     listSportLeaguesMock: vi.fn(),
     listSportLeaguesUsedMock: vi.fn(),
@@ -80,6 +82,7 @@ bindApiMocks({
   listContestConfigTemplates: listContestConfigTemplatesMock,
   listEventParticipants: listEventParticipantsMock,
   listEventRounds: listEventRoundsMock,
+  listEventSquaresGames: listEventSquaresGamesMock,
   listEvents: vi.fn(async (options: Record<string, unknown>) => withEventOpenings<unknown>(await (listEventsMock as (options: unknown) => unknown)(options)) as never),
   listSportLeagues: listSportLeaguesMock,
   listSportLeaguesUsed: listSportLeaguesUsedMock,
@@ -1584,13 +1587,15 @@ describe('Commissioner tools › Contests › Create contest › Squares format'
     listContestConfigTemplatesMock.mockImplementation((options: TemplateQuery): Promise<unknown> => (queriesSlot(options, sportSlotId('FOOTBALL'))
       ? Promise.resolve({ data: { templates: [NFL_SQUARES_TEMPLATE] } })
       : golfTemplates?.(options) ?? Promise.resolve({ data: { templates: [] } })));
-    getEventBracketMock.mockResolvedValue({
+    // The API's squares Game choices (#2050), the Super Bowl's first and the default; a played game is not one.
+    const choice = (match: ReturnType<typeof game>) => ({ sportEventRoundMatchGameId: `${match.id}-g1`, gameNumber: 1, scheduledDate: match.scheduledDate, match });
+    listEventSquaresGamesMock.mockResolvedValue({
       data: {
-        matches: [
-          game({ id: 'game-div', roundNumber: 2, matchNumber: 1, status: 'COMPLETED', scheduledDate: '2099-01-17T21:00:00.000Z', homeScore: 31, awayScore: 17 }),
-          game({ id: 'game-afc', roundNumber: 3, matchNumber: 1, scheduledDate: '2099-01-25T20:00:00.000Z', home: 'field-chiefs', away: 'field-bills' }),
-          game({ id: 'game-sb', roundNumber: 4, matchNumber: 1, isNeutralSite: true, scheduledDate: '2099-02-07T23:30:00.000Z', advancesTo: null }),
+        games: [
+          choice(game({ id: 'game-sb', roundNumber: 4, matchNumber: 1, isNeutralSite: true, scheduledDate: '2099-02-07T23:30:00.000Z', advancesTo: null })),
+          choice(game({ id: 'game-afc', roundNumber: 3, matchNumber: 1, scheduledDate: '2099-01-25T20:00:00.000Z', home: 'field-chiefs', away: 'field-bills' })),
         ],
+        defaultSportEventRoundMatchGameId: 'game-sb-g1',
       },
     });
     listEventParticipantsMock.mockResolvedValue({
@@ -1606,7 +1611,7 @@ describe('Commissioner tools › Contests › Create contest › Squares format'
   afterEach(() => {
     for (const mock of [
       createContestMock, getEventBracketMock, getLeagueByCodeMock, getSportLeagueMock,
-      listContestConfigTemplatesMock, listEventParticipantsMock, listEventRoundsMock, listEventsMock,
+      listContestConfigTemplatesMock, listEventParticipantsMock, listEventRoundsMock, listEventSquaresGamesMock, listEventsMock,
     ]) {
       mock.mockReset();
     }
@@ -1630,9 +1635,8 @@ describe('Commissioner tools › Contests › Create contest › Squares format'
 
     expect(await screen.findByTestId('contest-squares-games-loading')).toBeInTheDocument();
     await waitFor(() => {
-      expect(getEventBracketMock).toHaveBeenCalled();
+      expect(listEventSquaresGamesMock).toHaveBeenCalled();
       expect(listEventParticipantsMock).toHaveBeenCalled();
-      expect(getSportLeagueMock).toHaveBeenCalled();
     });
     await act(async () => {
       await new Promise((resolve) => setTimeout(resolve, 0));
@@ -1691,13 +1695,13 @@ describe('Commissioner tools › Contests › Create contest › Squares format'
       expect.stringContaining('Super Bowl · To be decided vs To be decided'),
       expect.stringContaining('Conference Championship · Buffalo Bills @ Kansas City Chiefs'),
     ]);
-    await waitFor(() => expect(picker).toHaveValue('game-sb'));
+    await waitFor(() => expect(picker).toHaveValue('game-sb-g1'));
     expect(screen.getByTestId('contest-squares-boxes-per-entry')).toHaveValue(10);
     expect(screen.getByTestId('contest-squares-one-entry')).toBeInTheDocument();
     expect(screen.queryByTestId('contest-max-entries')).not.toBeInTheDocument();
     expect(screen.queryByTestId('contest-scoring-round-values')).not.toBeInTheDocument();
 
-    fireEvent.change(picker, { target: { value: 'game-afc' } });
+    fireEvent.change(picker, { target: { value: 'game-afc-g1' } });
     await submitOnceReady();
 
     await waitFor(() => expect(createContestMock).toHaveBeenCalledTimes(1));
@@ -1705,7 +1709,7 @@ describe('Commissioner tools › Contests › Create contest › Squares format'
       sportEventIds: ['nfl-playoffs'],
       contestFormat: 'SQUARES',
       selectionType: 'SQUARES',
-      sportEventRoundMatchId: 'game-afc',
+      sportEventRoundMatchGameId: 'game-afc-g1',
       templateId: NFL_SQUARES_TEMPLATE.id,
       configuration: { selectionType: 'SQUARES', maxSquaresPerEntry: 10, maxEntriesPerSquad: 1 },
     });
@@ -1713,8 +1717,8 @@ describe('Commissioner tools › Contests › Create contest › Squares format'
 
   it('says the games could not load, in red with Retry, and offers them once Retry succeeds', async () => {
     primeFootballMocks();
-    const bracket = await (getEventBracketMock() as Promise<unknown>);
-    getEventBracketMock.mockResolvedValue({ error: { error: { code: 'INTERNAL_ERROR', message: 'Down' } }, status: 500 });
+    const choices = await (listEventSquaresGamesMock() as Promise<unknown>);
+    listEventSquaresGamesMock.mockResolvedValue({ error: { error: { code: 'INTERNAL_ERROR', message: 'Down' } }, status: 500 });
     renderCreateContestPage();
     await waitForStartingChoices();
 
@@ -1723,7 +1727,7 @@ describe('Commissioner tools › Contests › Create contest › Squares format'
 
     const error = await screen.findByTestId('contest-squares-games-error');
     expect(error).toHaveTextContent("We couldn't load this event's games.");
-    getEventBracketMock.mockResolvedValue(bracket);
+    listEventSquaresGamesMock.mockResolvedValue(choices);
     fireEvent.click(within(error).getByRole('button', { name: 'Retry' }));
 
     expect(await screen.findByTestId('contest-squares-game')).toBeInTheDocument();

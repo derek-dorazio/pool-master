@@ -98,6 +98,7 @@ export type {
 export type {
   Contest,
   ContestCoveredSlot,
+  ContestSquaresGame,
   Cup,
   CupStanding,
   LeagueYearFinish,

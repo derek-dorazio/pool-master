@@ -11,7 +11,7 @@ import type {
   SportEventSlotTierRepository,
   SportEventRepository,
 } from '@poolmaster/shared/db';
-import { tierSetSlotOf, type SportEventTierSlot, MatchStatus, SportEventParticipantStatus, coveredRoundNumbers, eventPlaysMatches, playsKnockoutRounds, isSquaresRound, hasSportEventStarted, matchSpread } from '@poolmaster/shared/domain';
+import { tierSetSlotOf, type SportEventTierSlot, MatchStatus, SportEventParticipantStatus, coveredRoundNumbers, eventPlaysMatches, playsKnockoutRounds, squaresGameChoices, hasSportEventStarted, matchSpread } from '@poolmaster/shared/domain';
 import { findBracketProblem, findKnockoutProblem, knockoutGames } from '../scoring-families/head-to-head/bracket-picks';
 import { ContestCutoffKind, cutoffTiming } from '../contests/entry-window';
 import { knockoutSeeds } from '../scoring-families/head-to-head/score-team';
@@ -61,7 +61,6 @@ export function createContestSportEventReader({ sportEvents, field, tiers, valua
       slotDefinitionIds: event.slotDefinitions.map((definition) => definition.id),
       playsOnlyKnockoutRounds: event.slotDefinitions.every((definition) => playsKnockoutRounds(definition.slotKind)),
       salaryCap: tierSetSlotOf(tierSlots.get(event.id) ?? [])?.pricing?.salaryCap ?? null,
-      squaresFromRound: event.squaresFromRound ?? null,
       participantType: event.participantType,
       scoringFamily: event.scoringFamily,
     }));
@@ -109,10 +108,7 @@ export function createContestSportEventReader({ sportEvents, field, tiers, valua
     // so a tournament's knockout rounds are known before any knockout game is placed.
     countCoveredRounds: async (sportEventId, coverage) =>
       coveredRoundNumbers(coverage, await rounds.findBySportEvent(sportEventId)).length,
-    findGame: async (sportEventId, sportEventRoundMatchId) => {
-      const game = (await matches.findBySportEvent(sportEventId)).find((match) => match.id === sportEventRoundMatchId);
-      return game === undefined ? null : { status: game.status, roundNumber: game.roundNumber, seasonSlotId: game.slot.seasonSlotId };
-    },
+    findSquaresGameChoices: async (sportEventId, now) => squaresGameChoices(await matches.findBySportEvent(sportEventId), now),
     findCutoffTiming: async (sportEvent, cutoff) => cutoff.kind === ContestCutoffKind.EVENT_START
       ? sportEvent
       : cutoffTiming(cutoff, sportEvent, await matches.findBySportEvent(sportEvent.id)),
@@ -158,9 +154,8 @@ export function createBatchedContestOpeningReader({ sportEvents, field, tiers, v
     ...reader,
     nextSquaresKickoff: async (sportEvent, now) => {
       const games = await matches.findBySportEvent(sportEvent.id);
-      const kickoffs = games
-        .filter((game) => game.status !== MatchStatus.CANCELLED && isSquaresRound(sportEvent.squaresFromRound, game.roundNumber))
-        .map((game) => cutoffTiming({ kind: ContestCutoffKind.MATCH_START, sportEventRoundMatchId: game.id }, sportEvent, games))
+      const kickoffs = squaresGameChoices(games, now)
+        .map(({ game }) => cutoffTiming({ kind: ContestCutoffKind.GAME_START, sportEventRoundMatchGameId: game.id }, sportEvent, games))
         .filter((timing) => !hasSportEventStarted(timing, now))
         .map((timing) => timing.startDate.getTime());
       return kickoffs.length === 0 ? null : new Date(Math.min(...kickoffs));

@@ -18,9 +18,10 @@ import {
   recordEventMatchPeriodScore,
   recordEventMatchResult,
   transitionEvent,
+  listEventSquaresGames,
 } from '@poolmaster/shared/generated/hey-api';
 import { ContestFormat, ContestStatus, isAtPlace, MatchSide, matchPlaceOf, PeriodUnit, SelectionType, Sport } from '@poolmaster/shared/domain';
-import { SquaresBoardResponseSchema } from '@poolmaster/shared/dto';
+import { SquaresBoardResponseSchema, SquaresGameChoicesResponseSchema } from '@poolmaster/shared/dto';
 import { LoadMode } from '../../packages/core-api/scripts/seed-golf/load-report';
 import { loadSportData } from '../../packages/core-api/scripts/seed-golf/seed-golf';
 import { parseSportDataFile } from '../../packages/core-api/scripts/seed-golf/sport-data-file';
@@ -31,6 +32,7 @@ import { expectMatchesSchema } from '../support/expect-matches-schema';
 import { EVERY_GAME_PLAYED, oneEventOf } from '../support/sport-test-seed';
 import { sportRowKeys } from '../support/sport-rows';
 import { periodBody, resultBody, withHomeAwayRead } from '../support/match-requests';
+import { squaresGameIdOf } from './squares-games';
 
 // Super Bowl squares end to end over HTTP (#711): the NFL playoffs test seed loads with its Super
 // Bowl still to play. A commissioner runs a squares contest on it from the NFL's squares preset,
@@ -52,7 +54,7 @@ async function cleanup(): Promise<void> {
   const runParticipantIds = (await db.sportEventParticipant.findMany({ where: { sportEventId: { in: eventIds } }, select: { participantId: true } }))
     .map((row) => row.participantId);
   if (eventIds.length) {
-    await db.contestSquaresGame.deleteMany({ where: { sportEventRoundMatch: { sportEventId: { in: eventIds } } } });
+    await db.contestSquaresGame.deleteMany({ where: { game: { sportEventId: { in: eventIds } } } });
     await db.sportEventRoundMatch.deleteMany({ where: { sportEventId: { in: eventIds } } });
     await db.sportEventParticipantStanding.deleteMany({ where: { sportEventParticipant: { sportEventId: { in: eventIds } } } });
     await db.sportEventSlotParticipantValuation.deleteMany({ where: { sportEventParticipant: { sportEventId: { in: eventIds } } } });
@@ -121,13 +123,20 @@ describe('SDK Functional: Super Bowl squares', () => {
       .filter((template) => template.contestFormat === ContestFormat.SQUARES);
     expect([preset.templateKey, preset.isDefault]).toEqual(['nfl-squares', true]);
 
+    // The API lists the Games a squares contest can be played on, the Super Bowl's first and its default (#2050).
+    const choices = expectMatchesSchema(SquaresGameChoicesResponseSchema, (await listEventSquaresGames({ client: commissioner.client, path: { eventId: event.id } })).data);
+    const [firstChoice] = choices.games;
+    expect([firstChoice.match.id, firstChoice.gameNumber]).toEqual([superBowl.id, 1]);
+    expect(choices.defaultSportEventRoundMatchGameId).toBe(firstChoice.sportEventRoundMatchGameId);
+    expect(choices.games.every((choice) => choice.match.status === 'SCHEDULED')).toBe(true);
+    const superBowlGameId = firstChoice.sportEventRoundMatchGameId;
     const contest = await createContest({
       client: commissioner.client,
       path: { id: league.id },
       body: {
         name: `Super Bowl Squares ${RUN}`,
         sportEventIds: [event.id],
-        sportEventRoundMatchId: superBowl.id,
+        sportEventRoundMatchGameId: superBowlGameId,
         contestFormat: ContestFormat.SQUARES,
         selectionType: SelectionType.SQUARES,
         templateId: preset.id,
@@ -143,7 +152,7 @@ describe('SDK Functional: Super Bowl squares', () => {
       body: {
         name: `Configured Squares ${RUN}`,
         sportEventIds: [event.id],
-        sportEventRoundMatchId: superBowl.id,
+        sportEventRoundMatchGameId: superBowlGameId,
         contestFormat: ContestFormat.SQUARES,
         selectionType: SelectionType.SQUARES,
         templateId: preset.id,
@@ -273,7 +282,7 @@ describe('SDK Functional: squares on each league\'s final, scored at the end of 
         body: {
           name: `College Squares ${tag}`,
           sportEventIds: [loaded.id],
-          sportEventRoundMatchId: final.id,
+          sportEventRoundMatchGameId: await squaresGameIdOf(commissioner.client, loaded.id, final.id),
           contestFormat: ContestFormat.SQUARES,
           selectionType: SelectionType.SQUARES,
           templateId: preset.id,

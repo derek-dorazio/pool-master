@@ -385,19 +385,22 @@ describe('ContestRepository', () => {
       });
       return contest;
     };
-    const squares = (name: string, gameMatchId?: string) => createContestRow(getPrisma(), repos().contests, {
+    const squares = (name: string, squaresGameId?: string) => createContestRow(getPrisma(), repos().contests, {
       leagueId, sportEventIds: [eventId], name,
       status: ContestStatus.DRAFT, contestFormat: ContestFormat.ROSTER, selectionType: SelectionType.SQUARES,
-      ...(gameMatchId !== undefined && { squaresGameMatchId: gameMatchId }),
+      ...(squaresGameId !== undefined && { squaresGameId }),
     });
     const round = await prisma.sportEventRound.create({ data: { sportEventId: eventId, sportEventSlotId: await oneEventSlotId(prisma, eventId), roundNumber: 1, scheduledDate: new Date('2026-06-04T12:00:00.000Z') } });
     const game = await prisma.sportEventRoundMatch.create({
       data: { sportEventId: eventId, sportEventRoundId: round.id, matchNumber: 1 },
     });
+    const gameOne = await prisma.sportEventRoundMatchGame.create({
+      data: { sportEventId: eventId, sportEventRoundMatchId: game.id, sportEventSlotId: round.sportEventSlotId, gameNumber: 1 },
+    });
     return {
       bracket: await bracket('Full Bracket'),
       noGame: await squares('Squares With No Game'),
-      withGame: await squares('Late Game Squares', game.id),
+      withGame: await squares('Late Game Squares', gameOne.id),
     };
   }
 

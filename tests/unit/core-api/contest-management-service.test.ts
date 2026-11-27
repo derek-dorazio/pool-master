@@ -1,4 +1,4 @@
-import { withHomeAway, legacyMatch } from '../../support/match-sides';
+import { withHomeAway, legacyMatch, squaresGameOf } from '../../support/match-sides';
 import { expect } from '@jest/globals';
 import {
   ContestFormat,
@@ -22,6 +22,7 @@ import {
   MatchFormat,
   type ContestTemplateSlot,
   SeasonSlotStatus,
+  squaresGameChoices,
 } from '@poolmaster/shared/domain';
 import {
   CONTEST_BUDGET_FIELD_OUT_OF_RANGE,
@@ -345,7 +346,6 @@ function createSportEventReader(overrides?: Partial<{
   /** The slot definitions the event's rounds play; a template listing all of them covers every round. */
   slotDefinitionIds: string[];
   playsOnlyKnockoutRounds: boolean;
-  squaresFromRound: number | null;
   participantType: ParticipantType;
   scoringFamily: ScoringFamily;
 }>): {
@@ -359,7 +359,7 @@ function createSportEventReader(overrides?: Partial<{
   findKnockoutProblem: jest.Mock;
   countCoveredRounds: jest.Mock;
   findCutoffTiming: jest.Mock;
-  findGame: jest.Mock;
+  findSquaresGameChoices: jest.Mock;
 } {
   const reader = {
     findActiveFieldPrices: jest.fn().mockResolvedValue(overrides?.activeFieldPrices ?? []),
@@ -371,7 +371,7 @@ function createSportEventReader(overrides?: Partial<{
     countCoveredRounds: jest.fn().mockResolvedValue(overrides?.coveredRoundCount ?? (overrides?.rounds === undefined ? 4 : overrides.rounds)),
     // The event's own timing for an ordinary contest; a later round's start would read its games, of which this event has none.
     findCutoffTiming: mockFn<ContestCreateSportEventReader['findCutoffTiming']>(async (sportEvent, cutoff) => cutoffTiming(cutoff, sportEvent, [])),
-    findGame: jest.fn().mockResolvedValue(null),
+    findSquaresGameChoices: jest.fn().mockResolvedValue([]),
     findById: jest.fn().mockResolvedValue({
       id: '11111111-1111-1111-1111-111111111111',
       status: overrides?.status ?? SportEventStatus.SCHEDULED,
@@ -386,7 +386,6 @@ function createSportEventReader(overrides?: Partial<{
       slotDefinitionIds: overrides?.slotDefinitionIds ?? [],
       playsOnlyKnockoutRounds: overrides?.playsOnlyKnockoutRounds ?? true,
       salaryCap: overrides?.salaryCap ?? null,
-      squaresFromRound: overrides?.squaresFromRound ?? null,
       ...(overrides?.participantType !== undefined && { participantType: overrides.participantType }),
       ...(overrides?.scoringFamily !== undefined && { scoringFamily: overrides.scoringFamily }),
     }),
@@ -2207,7 +2206,6 @@ describe('ContestManagementService — a contest of several events', () => {
       participantCount: 72,
       rounds: 4,
       salaryCap: null,
-      squaresFromRound: null,
       championshipYear: 2026,
       ...event,
       sportLeagueSeasonId: `season-${String(event.championshipYear ?? 2026)}`,
@@ -2224,7 +2222,7 @@ describe('ContestManagementService — a contest of several events', () => {
       findKnockoutProblem: jest.fn().mockResolvedValue(null),
       countCoveredRounds: jest.fn().mockResolvedValue(4),
       findCutoffTiming: mockFn<ContestCreateSportEventReader['findCutoffTiming']>(async (sportEvent, cutoff) => cutoffTiming(cutoff, sportEvent, [])),
-      findGame: jest.fn().mockResolvedValue(null),
+      findSquaresGameChoices: jest.fn().mockResolvedValue([]),
     };
   }
 
@@ -2453,7 +2451,7 @@ describe('ContestManagementService — a contest of several events', () => {
 
     it('refuses moving a squares contest, whose game was chosen with its event, with 409 CONTEST_EVENTS_LOCKED, changing nothing', async () => {
       const { service, contestRepo } = build({
-        contest: { status: ContestStatus.DRAFT, contestFormat: ContestFormat.SQUARES, selectionType: SelectionType.SQUARES, squaresGameMatchId: 'game-1' },
+        contest: { status: ContestStatus.DRAFT, contestFormat: ContestFormat.SQUARES, selectionType: SelectionType.SQUARES, squaresGame: squaresGameOf('game-1') },
       });
 
       await expect(service.setContestCoverage('league-1', 'contest-1', { sportEventIds: [PGA] }))
@@ -2977,7 +2975,7 @@ describe('ContestManagementService squares rules (#711)', () => {
     templateId: templateIdFor(SelectionType.SQUARES),
     name: 'Super Bowl Squares',
     sportEventIds: [EVENT_ID],
-    sportEventRoundMatchId: GAME_ID,
+    sportEventRoundMatchGameId: GAME_ID,
     contestFormat: 'SQUARES',
     selectionType: SelectionType.SQUARES,
     configuration: { selectionType: SelectionType.SQUARES, maxEntriesPerSquad: 1, maxSquaresPerEntry: 10 },
@@ -2986,20 +2984,26 @@ describe('ContestManagementService squares rules (#711)', () => {
 
   function squaresService(
     gameStatus: MatchStatus | null = MatchStatus.SCHEDULED,
-    { roundNumber = 4, squaresFromRound = null, gameSlotDefinitionId = EVENT_SLOT_DEFINITION_ID, configTemplates = createContestConfigTemplateRepo(null) }: {
-      roundNumber?: number;
-      squaresFromRound?: number | null;
+    { squaresEligible = true, gameSlotDefinitionId = EVENT_SLOT_DEFINITION_ID, configTemplates = createContestConfigTemplateRepo(null) }: {
+      /** Whether the Game's slot takes squares: a two-legged tie's does not. */
+      squaresEligible?: boolean;
       gameSlotDefinitionId?: string;
       configTemplates?: ContestConfigTemplateRepository;
     } = {},
   ) {
     const contestCoreRepo = createContestRepo();
     const contestConfigurationRepo = createContestConfigurationRepo();
-    const reader = createSportEventReader({ sport: Sport.FOOTBALL, playsMatches: true, rounds: 4, gameCount: 1, squaresFromRound });
-    reader.findGame.mockImplementation(async (sportEventId: string, sportEventRoundMatchId: string) =>
-      sportEventId === EVENT_ID && sportEventRoundMatchId === GAME_ID && gameStatus !== null
-        ? { status: gameStatus, roundNumber, seasonSlotId: `season-slot-${gameSlotDefinitionId}` }
-        : null);
+    const reader = createSportEventReader({ sport: Sport.FOOTBALL, playsMatches: true, rounds: 4, gameCount: 1 });
+    // The event's one match, its Game 1 the game sent, read through the shared choices rule.
+    const match = legacyMatch({
+      id: 'match-1',
+      status: gameStatus ?? MatchStatus.SCHEDULED,
+      scheduledDate: new Date('2099-02-07T23:30:00.000Z'),
+      slot: roundSlot(SlotKind.FINAL, { seasonSlotId: `season-slot-${gameSlotDefinitionId}`, squaresEligible }),
+    });
+    const withGame = { ...match, games: match.games.map((game) => ({ ...game, id: gameStatus === null ? 'another-game' : GAME_ID })) };
+    reader.findSquaresGameChoices.mockImplementation(async (sportEventId: string, now: Date) =>
+      (sportEventId === EVENT_ID ? squaresGameChoices([withGame], now) : []));
     const service = new ContestManagementService({
       domainEvents: testDomainEvents(),
       contests: contestCoreRepo,
@@ -3023,7 +3027,7 @@ describe('ContestManagementService squares rules (#711)', () => {
     expect(contestCoreRepo.create).toHaveBeenCalledWith(expect.objectContaining({
       contestFormat: ContestFormat.SQUARES,
       selectionType: SelectionType.SQUARES,
-      squaresGameMatchId: GAME_ID,
+      squaresGameId: GAME_ID,
     }), PLATINUM_SEASON_LIMIT);
     expect(contestConfigurationRepo.create).toHaveBeenCalledWith(expect.objectContaining({
       configJson: { selectionType: SelectionType.SQUARES, maxSquaresPerEntry: 10 },
@@ -3055,6 +3059,14 @@ describe('ContestManagementService squares rules (#711)', () => {
     expect(contestCoreRepo.create).toHaveBeenCalledWith(expect.objectContaining({ seasonSlotIds: ['season-slot-definition-final'] }), PLATINUM_SEASON_LIMIT);
   });
 
+  it('refuses a squares contest on a Game of a slot its template does not list with 422, so a squares Game is always in a covered slot', async () => {
+    const { contestCoreRepo, service } = squaresService(MatchStatus.SCHEDULED, { gameSlotDefinitionId: 'definition-not-listed' });
+
+    await expect(service.createContest({ leagueId: 'league-1' }, squaresRequest()))
+      .rejects.toMatchObject({ code: 'CONTEST_COVERAGE_SLOT_NOT_COVERABLE', statusCode: 422 });
+    expect(contestCoreRepo.create).not.toHaveBeenCalled();
+  });
+
   it.each([
     { name: 'two entries per squad', maxEntriesPerSquad: 2 },
     { name: 'no entry limit', maxEntriesPerSquad: null },
@@ -3074,7 +3086,7 @@ describe('ContestManagementService squares rules (#711)', () => {
       ...(await contestCoreRepo.findById('contest-1')),
       contestFormat: ContestFormat.SQUARES,
       selectionType: SelectionType.SQUARES,
-      squaresGameMatchId: GAME_ID,
+      squaresGame: squaresGameOf(GAME_ID),
     });
 
     await expect(service.updateContestConfiguration('contest-1', { selectionType: SelectionType.SQUARES, maxEntriesPerSquad: 2, maxSquaresPerEntry: 10 }))
@@ -3091,7 +3103,7 @@ describe('ContestManagementService squares rules (#711)', () => {
         status: ContestStatus.OPEN,
         contestFormat: ContestFormat.SQUARES,
         selectionType: SelectionType.SQUARES,
-        squaresGameMatchId: GAME_ID,
+        squaresGame: squaresGameOf(GAME_ID),
       });
       return built;
     }
@@ -3117,7 +3129,7 @@ describe('ContestManagementService squares rules (#711)', () => {
 
   it('refuses a squares contest sent no game with CONTEST_SQUARES_GAME_REQUIRED, writing nothing', async () => {
     const { contestCoreRepo, service } = squaresService();
-    const withoutGame = { ...squaresRequest(), sportEventRoundMatchId: undefined };
+    const withoutGame = { ...squaresRequest(), sportEventRoundMatchGameId: undefined };
 
     await expect(service.createContest({ leagueId: 'league-1' }, withoutGame))
       .rejects.toMatchObject({ code: CONTEST_SQUARES_GAME_REQUIRED });
@@ -3135,20 +3147,20 @@ describe('ContestManagementService squares rules (#711)', () => {
     expect(contestCoreRepo.create).not.toHaveBeenCalled();
   });
 
-  it('refuses a squares contest on a game before its sport league\'s first squares round (a two-legged tie) with CONTEST_SQUARES_GAME_INVALID, writing nothing', async () => {
-    const { contestCoreRepo, service } = squaresService(MatchStatus.SCHEDULED, { roundNumber: 4, squaresFromRound: 5 });
+  it('refuses a squares contest on a Game of a slot that takes no squares (a two-legged tie) with CONTEST_SQUARES_GAME_INVALID, writing nothing', async () => {
+    const { contestCoreRepo, service } = squaresService(MatchStatus.SCHEDULED, { squaresEligible: false });
 
     await expect(service.createContest({ leagueId: 'league-1' }, squaresRequest()))
       .rejects.toMatchObject({ code: CONTEST_SQUARES_GAME_INVALID, statusCode: 422 });
     expect(contestCoreRepo.create).not.toHaveBeenCalled();
   });
 
-  it('creates a squares contest on a game in its sport league\'s first squares round (the Champions League final)', async () => {
-    const { contestCoreRepo, service } = squaresService(MatchStatus.SCHEDULED, { roundNumber: 5, squaresFromRound: 5 });
+  it('creates a squares contest on a Game of a slot that takes squares (the Champions League final), storing that Game', async () => {
+    const { contestCoreRepo, service } = squaresService(MatchStatus.SCHEDULED);
 
     await service.createContest({ leagueId: 'league-1' }, squaresRequest());
 
-    expect(contestCoreRepo.create).toHaveBeenCalledWith(expect.objectContaining({ squaresGameMatchId: GAME_ID }), PLATINUM_SEASON_LIMIT);
+    expect(contestCoreRepo.create).toHaveBeenCalledWith(expect.objectContaining({ squaresGameId: GAME_ID }), PLATINUM_SEASON_LIMIT);
   });
 
   it('refuses a game sent for a contest that is not squares with CONTEST_SQUARES_GAME_INVALID', async () => {
@@ -3172,9 +3184,11 @@ describe('ContestManagementService squares rules (#711)', () => {
   });
 
   it('refuses a squares contest whose game has kicked off with SPORT_EVENT_ALREADY_STARTED, though its event started long before', async () => {
-    const { contestCoreRepo, reader, service } = squaresService(MatchStatus.IN_PROGRESS);
+    const { contestCoreRepo, reader, service } = squaresService(MatchStatus.SCHEDULED);
+    const live = legacyMatch({ id: 'match-1', roundNumber: 4, status: MatchStatus.IN_PROGRESS });
+    const liveMatch = { ...live, games: live.games.map((game) => ({ ...game, id: GAME_ID })) };
     reader.findCutoffTiming.mockImplementation(async (sportEvent: Parameters<ContestCreateSportEventReader['findCutoffTiming']>[0], cutoff: Parameters<ContestCreateSportEventReader['findCutoffTiming']>[1]) =>
-      cutoffTiming(cutoff, sportEvent, [legacyMatch({ id: GAME_ID, roundNumber: 4, status: MatchStatus.IN_PROGRESS })]));
+      cutoffTiming(cutoff, sportEvent, [liveMatch]));
 
     await expect(service.createContest({ leagueId: 'league-1' }, squaresRequest()))
       .rejects.toMatchObject({ code: 'SPORT_EVENT_ALREADY_STARTED' });
@@ -3324,7 +3338,7 @@ describe('createContestSportEventReader field, game and price reads', () => {
     await expect(reader.findActiveFieldPrices(EVENT)).resolves.toEqual([9000]);
   });
 
-  it('counts the games without a spread, leaving out a cancelled one, and finds a game by id or null', async () => {
+  it('counts the games without a spread, leaving out a cancelled one, and lists the squares Game choices', async () => {
     const reader = readerOver({
       games: [
         legacyMatch({ id: 'g1', status: MatchStatus.SCHEDULED, roundNumber: 1, homeSpread: null }),
@@ -3334,8 +3348,8 @@ describe('createContestSportEventReader field, game and price reads', () => {
     });
 
     await expect(reader.countGamesWithoutSpread(EVENT)).resolves.toBe(1);
-    await expect(reader.findGame(EVENT, 'g2')).resolves.toEqual({ status: MatchStatus.SCHEDULED, roundNumber: 2, seasonSlotId: expect.any(String) });
-    await expect(reader.findGame(EVENT, 'missing')).resolves.toBeNull();
+    // None of the three has a kickoff yet, so the open two are offered by round.
+    await expect(reader.findSquaresGameChoices(EVENT, new Date('2026-01-01T00:00:00.000Z')).then((choices) => choices.map(({ game }) => game.id))).resolves.toEqual(['g1-g1', 'g2-g1']);
   });
 });
 
@@ -3459,9 +3473,18 @@ describe('createBatchedContestOpeningReader', () => {
     };
   }
 
-  function addGame(store: InMemorySportEvents, sportEventId: string, id: string, roundNumber: number, scheduledDate: Date, status: MatchStatus = MatchStatus.SCHEDULED) {
+  function addGame(store: InMemorySportEvents, sportEventId: string, id: string, roundNumber: number, scheduledDate: Date, status: MatchStatus = MatchStatus.SCHEDULED, squaresEligible = true) {
     const [row] = bracketMatches(sportEventId, [{ matchNumber: store.matchRows.length + 1, round: roundNumber, home: 'home', away: 'away' }]);
-    store.matchRows.push({ ...expectDefined(row, 'game row'), id, status, scheduledDate });
+    const match = expectDefined(row, 'game row');
+    // Its Game 1 keeps the match's kickoff and status, as the sync writes them.
+    store.matchRows.push({
+      ...match,
+      id,
+      status,
+      scheduledDate,
+      slot: { ...match.slot, squaresEligible },
+      games: match.games.map((game) => ({ ...game, id: `${id}-g1`, sportEventRoundMatchId: id, status, scheduledDate })),
+    });
   }
 
   it('reads an event the participant count leaves out as having no loaded field', async () => {
@@ -3472,10 +3495,10 @@ describe('createBatchedContestOpeningReader', () => {
     await expect(reader.findById(event.id)).resolves.toEqual(expect.objectContaining({ participantCount: 0 }));
   });
 
-  it('finds the earliest squares kickoff still to come, leaving out cancelled, started and earlier-round games', async () => {
+  it('finds the earliest squares kickoff still to come, leaving out cancelled and started games and those of a slot that takes no squares', async () => {
     const store = new InMemorySportEvents();
-    const event = store.addEvent({ squaresFromRound: 2, startDate: new Date('2026-09-09T00:00:00Z') });
-    addGame(store, event.id, 'earlier-round', 1, new Date('2026-09-11T00:00:00Z'));
+    const event = store.addEvent({ startDate: new Date('2026-09-09T00:00:00Z') });
+    addGame(store, event.id, 'two-legged-tie', 1, new Date('2026-09-11T00:00:00Z'), MatchStatus.SCHEDULED, false);
     addGame(store, event.id, 'cancelled', 2, new Date('2026-09-11T01:00:00Z'), MatchStatus.CANCELLED);
     addGame(store, event.id, 'started', 2, new Date('2026-09-10T11:00:00Z'));
     addGame(store, event.id, 'later', 3, new Date('2026-09-13T00:00:00Z'));

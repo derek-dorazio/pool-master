@@ -63,13 +63,6 @@ export interface SportLeague extends DomainEntity {
   /** The pricing profile its events' fields are priced with after a sync (#1844). Every league names one. */
   platformPricingProfileId: string;
   /**
-   * The first round whose matches are single games a squares pool can be played on; null when
-   * every round's are (#787: the Champions League's two-legged ties and MLS's best-of-three
-   * series are one match each). Read through `isSquaresRound`. Reference data, set where the
-   * league is seeded.
-   */
-  squaresFromRound: number | null;
-  /**
    * What screens call it, when not what its sport calls a sport league (#834: the NCAA's tennis
    * championships are leagues, not tours); null takes the sport's. Read through
    * `sportLeagueNounOf`. Reference data, set where the league is seeded.
@@ -114,6 +107,8 @@ export interface SportEventRoundSlot {
   canEndTied: boolean;
   /** Whether the slot's games are played at a neutral site (#2154), read from its definition: each Game of it takes it. */
   isNeutralSite: boolean;
+  /** Whether a squares pool can be played on the slot's Games (#2050), read from its definition. */
+  squaresEligible: boolean;
   /** What a game of the slot is played in (#2047), from its definition; null for a game kept by no period. */
   periods: SlotPeriods | null;
   /**

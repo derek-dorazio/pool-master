@@ -31,6 +31,7 @@ import { unlinkContestsFromSportEvents } from '../support/contest-event-links';
 import { AWAY_SIDE, HOME_SIDE } from '../support/match-sides';
 import { rowSideTeam } from '../support/match-rows';
 import { resultBody } from '../support/match-requests';
+import { squaresGameIdOf } from './squares-games';
 
 // NCAA Men's Football's bowl games end to end over HTTP (#2154): two played bowls load into the
 // league's BOWLS slot as one event, a game each, released though its unseeded field fills no seed tier, because no
@@ -200,7 +201,7 @@ describe('SDK Functional: bowl games (#2154)', () => {
       body: {
         name: `Bowl Squares ${RUN}`,
         sportEventIds: [event.id],
-        sportEventRoundMatchId: bowl1.id,
+        sportEventRoundMatchGameId: await squaresGameIdOf(commissioner.client, event.id, bowl1.id),
         contestFormat: ContestFormat.SQUARES,
         selectionType: SelectionType.SQUARES,
         templateId: template('bowls-squares').id,

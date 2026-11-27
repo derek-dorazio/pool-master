@@ -100,6 +100,8 @@ async function migrate(rows: readonly OldMatchRow[], events: ReadonlyArray<{ eve
     await tx.$executeRawUnsafe('CREATE TYPE "PrismaMatchSide" AS ENUM (\'HOME\', \'AWAY\')');
     await tx.$executeRawUnsafe('ALTER TABLE "sport_event_round_matches" ADD COLUMN "winner_side" "PrismaMatchSide", ADD COLUMN "home_score" INTEGER, ADD COLUMN "away_score" INTEGER, ADD COLUMN "is_neutral_site" BOOLEAN NOT NULL DEFAULT false, ADD COLUMN "completed_at" TIMESTAMPTZ');
     await tx.$executeRawUnsafe('DROP TABLE "sport_event_round_match_game_provider_mappings"');
+    // A squares contest names its Game since a later migration (#2050); this one predates it.
+    await tx.$executeRawUnsafe('ALTER TABLE "contest_squares_games" DROP CONSTRAINT "contest_squares_games_sport_event_round_match_game_id_fkey"');
     await tx.$executeRawUnsafe('DROP TABLE "sport_event_round_match_games"');
     await tx.$executeRawUnsafe('ALTER TABLE "sport_event_round_match_sides" DROP CONSTRAINT "sport_event_round_match_sides_match_fkey"');
     await tx.$executeRawUnsafe('DROP INDEX "sport_event_round_matches_event_id_key"');

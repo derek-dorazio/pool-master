@@ -147,7 +147,7 @@ export function matchScoreOf(match: Pick<SportEventRoundMatch, 'slot' | 'games'>
 }
 
 /** Whether any of a match's Games has a period of play scored (#772): a game under way, though its status may not say so yet. A shoot-out is not a period of play. */
-export function hasPeriodScores(match: Pick<SportEventRoundMatch, 'games'>): boolean {
+export function hasPeriodScores(match: { games: readonly Pick<SportEventRoundMatchGame, 'sideResults'>[] }): boolean {
   return match.games.some((game) => game.sideResults.some((result) => result.periodScores.some((period) => period.kind !== PeriodKind.SHOOTOUT)));
 }
 

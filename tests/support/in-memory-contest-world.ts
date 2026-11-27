@@ -393,7 +393,7 @@ export class InMemoryContestWorld {
       return true;
     }
     const configuration = [...this.configurations.values()].find((row) => row.contestId === contest.id);
-    const closesAtEventStart = contestCutoff(configuration?.configJson, contest.squaresGameMatchId).kind === ContestCutoffKind.EVENT_START;
+    const closesAtEventStart = contestCutoff(configuration?.configJson, contest.squaresGame).kind === ContestCutoffKind.EVENT_START;
     return closesAtEventStart && events.some((event) => hasSportEventStarted(event, now));
   }
 

@@ -141,7 +141,7 @@ export function CreateContestEventSection({
   sport,
   sportDefinition,
   sportEventId,
-  sportEventRoundMatchId,
+  sportEventRoundMatchGameId,
   sportLeagueCap,
   sportLeaguesUsedThisYear,
   squaresGames,
@@ -152,7 +152,7 @@ export function CreateContestEventSection({
   lockedEventIds: readonly string[];
   onChooseEvent: (eventId: string) => void;
   onSelectSport: (sport: Sport) => void;
-  onSquaresGameChange: (sportEventRoundMatchId: string) => void;
+  onSquaresGameChange: (sportEventRoundMatchGameId: string) => void;
   /** The sports a contest can be made in: each with a sport league still on. */
   offeredSports: readonly Sport[];
   selectedEvent: SportEventDto | null;
@@ -160,7 +160,7 @@ export function CreateContestEventSection({
   sport: Sport;
   sportDefinition: SportDefinition;
   sportEventId: string;
-  sportEventRoundMatchId: string;
+  sportEventRoundMatchGameId: string;
   /** The plan's sports leagues a year (#947), or null when it has no cap. */
   sportLeagueCap: number | null;
   /** How many of them the chosen event's year already uses. */
@@ -218,7 +218,7 @@ export function CreateContestEventSection({
           choices={squaresGames}
           event={selectedEvent}
           onChange={onSquaresGameChange}
-          value={sportEventRoundMatchId}
+          value={sportEventRoundMatchGameId}
         />
       ) : null}
     </FormSection>

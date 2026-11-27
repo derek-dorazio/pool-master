@@ -1,4 +1,4 @@
-import { legacyMatch } from '../../support/match-sides';
+import { legacyMatch, squaresGameOf } from '../../support/match-sides';
 import type { ContestRepository, ContestStatusTransition } from '@poolmaster/shared/db';
 import {
   BackgroundJobType,
@@ -606,7 +606,7 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
       id: 'contest-squares',
       leagueId: 'league-2',
       selectionType: SelectionType.SQUARES,
-      squaresGameMatchId: 'game-1',
+      squaresGame: squaresGameOf('game-1'),
     });
     const written: unknown[] = [];
     const contests = contestDeps();
@@ -642,7 +642,7 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
       id: 'contest-squares',
       leagueId: 'league-2',
       selectionType: SelectionType.SQUARES,
-      squaresGameMatchId: 'game-1',
+      squaresGame: squaresGameOf('game-1'),
     });
     const written: unknown[] = [];
     const contests = contestDeps();
@@ -1081,7 +1081,7 @@ describe('EventLifecycleService — a postponed event\'s contests follow its sta
   });
 
   it('keeps live a squares contest and a contest whose draw dealt its picks, and reopens a bracket, reading no rules to decide', async () => {
-    const squares = buildContest({ ...LIVE, id: 'contest-squares', selectionType: SelectionType.SQUARES, squaresGameMatchId: 'game-1' });
+    const squares = buildContest({ ...LIVE, id: 'contest-squares', selectionType: SelectionType.SQUARES, squaresGame: squaresGameOf('game-1') });
     const drawn = buildContest({ ...LIVE, id: 'contest-drawn', drawnAt: new Date('2026-05-01T00:00:00.000Z') });
     const fullBracket = buildContest({ ...LIVE, id: 'contest-full-bracket', selectionType: SelectionType.BRACKET });
     const deps = liveContests([squares, drawn, fullBracket], {
@@ -1144,7 +1144,7 @@ describe('EventLifecycleService — a postponed event\'s contests follow its sta
     const store = new InMemorySportEvents();
     const newStart = new Date(Date.now() + 7 * 24 * 60 * 60_000);
     store.addEvent({ id: 'sport-event-1', name: 'Week 6', startDate: newStart, status: SportEventStatus.IN_PROGRESS });
-    const squares = buildContest({ ...LIVE, id: 'contest-squares', selectionType: SelectionType.SQUARES, squaresGameMatchId: 'game-1' });
+    const squares = buildContest({ ...LIVE, id: 'contest-squares', selectionType: SelectionType.SQUARES, squaresGame: squaresGameOf('game-1') });
     const deps = liveContests([LIVE, squares]);
     const notice = recordingSportEventChangedNotice();
 

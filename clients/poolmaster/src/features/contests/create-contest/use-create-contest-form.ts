@@ -66,13 +66,13 @@ export function useCreateContestForm(league: Pick<LeagueDto, 'id' | 'planEntitle
       selectionType: SelectionType.TIERED,
       sport: SUPPORTED_SPORTS[0],
       sportEventId: '',
-      sportEventRoundMatchId: '',
+      sportEventRoundMatchGameId: '',
       ...DEFAULT_CONTEST_RULES,
       ...EMPTY_SCORING_SETTINGS_VALUES,
     },
   });
   const values = form.watch();
-  const { scoringDefinitionId, selectedTemplateId, selectionType, sport, sportEventId, sportEventRoundMatchId } = values;
+  const { scoringDefinitionId, selectedTemplateId, selectionType, sport, sportEventId, sportEventRoundMatchGameId } = values;
   const scoringSettingsUi = scoringSettingsUiFor(selectionType, scoringDefinitionId);
   const [isNameEdited, setIsNameEdited] = useState(false);
   // The sport, sport league and slot definitions whose default preset was applied last: their
@@ -153,10 +153,9 @@ export function useCreateContestForm(league: Pick<LeagueDto, 'id' | 'planEntitle
     [eventsQuery.data, requestedSportLeagueId, requestedTemplate],
   );
   // A squares contest's games: read once a squares contest's event is chosen.
-  const [now] = useState(() => new Date());
-  const squaresGames = useSquaresGameChoices(selectionType === SelectionType.SQUARES ? selectedEvent : null, now);
+  const squaresGames = useSquaresGameChoices(selectionType === SelectionType.SQUARES ? selectedEvent : null);
   const isSquaresGameMissing = selectionType === SelectionType.SQUARES
-    && !squaresGames.games.some((game) => game.id === sportEventRoundMatchId);
+    && !squaresGames.games.some((choice) => choice.sportEventRoundMatchGameId === sportEventRoundMatchGameId);
   // The chosen event's sport league: only its own presets are offered, so the presets wait for an
   // event.
   const sportLeagueId = selectedEvent?.sportLeagueId;
@@ -270,13 +269,13 @@ export function useCreateContestForm(league: Pick<LeagueDto, 'id' | 'planEntitle
     });
   }, [form, setFormValues]);
 
-  // A squares contest starts on the first game offered: the event's final when it is to come.
-  const firstSquaresGameId = squaresGames.games.at(0)?.id;
+  // A squares contest starts on the API's default Game: the event's final when it is to come.
+  const defaultSquaresGameId = squaresGames.defaultGameId;
   useEffect(() => {
-    if (firstSquaresGameId && isSquaresGameMissing) {
-      setFormValues({ sportEventRoundMatchId: firstSquaresGameId });
+    if (defaultSquaresGameId !== null && isSquaresGameMissing) {
+      setFormValues({ sportEventRoundMatchGameId: defaultSquaresGameId });
     }
-  }, [firstSquaresGameId, isSquaresGameMissing, setFormValues]);
+  }, [defaultSquaresGameId, isSquaresGameMissing, setFormValues]);
 
   // A requested template starts the page on its sport and format, so its events are listed. Its
   // sport is its league's, so the start waits for the sport leagues too.

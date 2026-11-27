@@ -647,29 +647,6 @@ describe('SportEventSlotTierRepository and valuations', () => {
   });
 });
 
-// #787: a sport league's first squares round reads onto each of its events, as its period
-// layout does; a league without one leaves the event's unset.
-describe('The sport league\'s first squares round on the event read', () => {
-  it('reads the league\'s squaresFromRound onto its event, and leaves it unset for a league without one', async () => {
-    const prisma = getPrisma();
-    const { events } = repos();
-    const league = await prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(Sport.GOLF), sportId: await golfSportId(), name: `Squares round league ${randomUUID()}`, squaresFromRound: 3 } });
-    try {
-      const withRound = await createSportEventRow(events, {
-        sportLeagueId: league.id, sportLeagueSeasonId: await fixtureSeasonId(prisma, league.id, 2026),
-        name: 'Squares Round Open', startDate: new Date('2026-06-04T12:00:00.000Z'), status: 'SCHEDULED', autoLifecycleEnabled: true,
-      });
-      const withoutRound = await createEvent();
-
-      expect((await events.findById(withRound.id))?.squaresFromRound).toBe(3);
-      expect((await events.findById(withoutRound.id))?.squaresFromRound).toBeUndefined();
-    } finally {
-      await prisma.sportEvent.deleteMany({ where: { sportLeagueId: league.id } });
-      await prisma.sportLeague.delete({ where: { id: league.id } });
-    }
-  });
-});
-
 describe('Budget pricing on the event slot (#93, #2044)', () => {
   it('prices the field and records the pricing values on its slot in one write, read back typed with the profile\'s name', async () => {
     const { tiers, valuations, field } = repos();

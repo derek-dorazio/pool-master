@@ -296,10 +296,11 @@ Standing, a survivor pool whose teams can be picked again once an entry has used
 game's result has no winner. A postponed match is cancelled from its week; when it is
 replayed later, it is a game of the week it is played in.
 
-**Squares rounds.** A sport league whose early rounds are not single games names its first
-squares round (`squaresFromRound`): the Champions League's final (round 5) and MLS's conference
-semifinals (round 3). A squares contest is refused on an earlier game, and the create form does
-not offer one. Every other league takes squares on any round.
+**Squares slots.** Each slot definition says whether its Games take squares
+(`squaresEligible`, #2050): a slot whose ties are two legs does not, so the Champions League
+takes squares on its final only and MLS from its conference semifinals. The API offers a squares
+contest only the Games of an eligible slot, and create refuses any other. Every other league's
+slots take squares.
 
 **Series rounds.** A playoff round that is a best-of series takes its length from the Season
 slot it is played in (`seriesGames`, from the slot definition the migration seeds, #2006): the

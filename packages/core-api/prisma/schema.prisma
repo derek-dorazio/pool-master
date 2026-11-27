@@ -1143,11 +1143,6 @@ model SportLeague {
   /// The pricing profile an event of the sport league is priced with after a field sync (#1844),
   /// until an admin prices it with other values. Every league names one.
   platformPricingProfileId   String                 @map("platform_pricing_profile_id") @db.Uuid
-  /// The first round whose matches are single games a squares pool can be played on, when not
-  /// every round's are (#787: a Champions League two-legged tie or an MLS best-of-three series
-  /// is one match with no half-time score). Null: every round. Reference data, set by the
-  /// migration that seeds the league.
-  squaresFromRound           Int?                   @map("squares_from_round")
   /// What screens call the sport league, when not what its sport calls one (#834: the NCAA's
   /// tennis championships are leagues, not tours). Null: the sport's noun. Reference data, set by
   /// the migration that seeds the league.
@@ -2061,19 +2056,20 @@ model ContestDraw {
   @@map("contest_draws")
 }
 
-/// The one game a squares contest is played on (#711): one of the contest's event's matches,
-/// chosen at setup and changeable while the contest is a draft. Its kickoff closes the contest.
+/// The one Game a squares contest is played on (#711, #2050): a Game of a covered slot's match,
+/// chosen at setup (a best-of series has several; the choice defaults to Game 1). Its kickoff
+/// closes the contest. The service keeps it inside the contest's covered slots.
 model ContestSquaresGame {
-  id                     String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  contestId              String   @unique @map("contest_id") @db.Uuid
-  sportEventRoundMatchId String   @map("sport_event_round_match_id") @db.Uuid
-  createdAt              DateTime @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt              DateTime @updatedAt @map("updated_at") @db.Timestamptz
+  id                         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  contestId                  String   @unique @map("contest_id") @db.Uuid
+  sportEventRoundMatchGameId String   @map("sport_event_round_match_game_id") @db.Uuid
+  createdAt                  DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt                  DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
-  contest              Contest              @relation(fields: [contestId], references: [id], onDelete: Cascade)
-  sportEventRoundMatch SportEventRoundMatch @relation(fields: [sportEventRoundMatchId], references: [id], onDelete: Restrict)
+  contest Contest                  @relation(fields: [contestId], references: [id], onDelete: Cascade)
+  game    SportEventRoundMatchGame @relation(fields: [sportEventRoundMatchGameId], references: [id], onDelete: Restrict)
 
-  @@index([sportEventRoundMatchId])
+  @@index([sportEventRoundMatchGameId])
   @@map("contest_squares_games")
 }
 
@@ -2406,7 +2402,6 @@ model SportEventRoundMatch {
   advancesTo      SportEventRoundMatch?         @relation("SportEventRoundMatchAdvancesTo", fields: [advancesToMatchId], references: [id], onDelete: NoAction)
   fedBy           SportEventRoundMatch[]        @relation("SportEventRoundMatchAdvancesTo")
   predictions     ContestEntryMatchPrediction[]
-  squaresGames    ContestSquaresGame[]
   games           SportEventRoundMatchGame[]
   sides           SportEventRoundMatchSide[]
 
@@ -2492,6 +2487,7 @@ model SportEventRoundMatchGame {
   /// The slot this Game is the tiebreaker game of, if it is (#2048).
   tiebreakerOfSlot SportEventSlot?                           @relation("SportEventSlotTiebreakerGame")
   sideResults      SportEventRoundMatchGameSideResult[]
+  squaresGames     ContestSquaresGame[]
 
   @@unique([sportEventRoundMatchId, gameNumber])
   /// The target of a side result's composite key, which keeps the result in its Game's match.
