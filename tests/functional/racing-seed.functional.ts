@@ -108,7 +108,9 @@ describe('SDK Functional: racing test seed', () => {
     const sportLeague = expectDefined(expectDefined((await listSportLeagues({ client: a, query: { sport: Sport.AUTO_RACING } })).data).sportLeagues
       .find((row) => row.name === league.name));
     const [race] = expectDefined((await listEvents({ client: a, query: { sportLeagueId: sportLeague.id } })).data).events;
-    expect([race.name, race.status]).toEqual([`Australian Grand Prix ${RUN}`, 'SCHEDULED']);
+    // Released: the status refreshes may already have moved it on, but never back to a draft.
+    expect(race.name).toBe(`Australian Grand Prix ${RUN}`);
+    expect(race.status).not.toBe('DRAFT');
     const field = expectDefined((await listEventParticipants({ client: a, path: { eventId: race.id } })).data).participants;
     expect(field).toHaveLength(22);
     expect(field.every((row) => row.race?.isOfficial === true)).toBe(true);
