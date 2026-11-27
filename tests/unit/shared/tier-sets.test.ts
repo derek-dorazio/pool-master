@@ -1,5 +1,5 @@
 import { expect } from '@jest/globals';
-import { chooseTierSetSlot, SelectionType, TIER_SET_SELECTION_TYPES } from '@poolmaster/shared/domain';
+import { chooseTierSetSlot, isTierSetEditable, SeasonSlotStatus, SelectionType, SportEventStatus, TIER_SET_SELECTION_TYPES, tierSetSlotOf } from '@poolmaster/shared/domain';
 
 describe('chooseTierSetSlot', () => {
   it('picks the first slot in play order that a tiered or budget template lists, past a play-in no such template covers', () => {
@@ -25,5 +25,31 @@ describe('chooseTierSetSlot', () => {
 describe('TIER_SET_SELECTION_TYPES', () => {
   it('names the tiered roster and the budget pick as the only selection types that pick from a tier set', () => {
     expect([...TIER_SET_SELECTION_TYPES].sort()).toEqual([SelectionType.BUDGET_PICK, SelectionType.TIERED].sort());
+  });
+});
+
+describe('isTierSetEditable', () => {
+  it('lets the tier-set slot\'s set change while its event is a draft, and locks it once the event is released, whatever its slot\'s status', () => {
+    const slot = { isTierSetSlot: true, seasonSlotStatus: SeasonSlotStatus.SCHEDULED };
+
+    expect([isTierSetEditable({ status: SportEventStatus.DRAFT }, slot), isTierSetEditable({ status: SportEventStatus.SCHEDULED }, slot)]).toEqual([true, false]);
+  });
+
+  it('lets another slot\'s set change until that slot starts, whatever its event\'s status', () => {
+    const released = { status: SportEventStatus.SCHEDULED };
+
+    expect([
+      isTierSetEditable(released, { isTierSetSlot: false, seasonSlotStatus: SeasonSlotStatus.SCHEDULED }),
+      isTierSetEditable(released, { isTierSetSlot: false, seasonSlotStatus: SeasonSlotStatus.IN_PROGRESS }),
+    ]).toEqual([true, false]);
+  });
+});
+
+describe('tierSetSlotOf', () => {
+  it('finds the slot marked as its event\'s tier-set slot, and none for an event covering no slot', () => {
+    const playIn = { id: 'play-in', isTierSetSlot: false };
+    const roundOf64 = { id: 'round-of-64', isTierSetSlot: true };
+
+    expect([tierSetSlotOf([playIn, roundOf64]), tierSetSlotOf<typeof playIn>([])]).toEqual([roundOf64, undefined]);
   });
 });
