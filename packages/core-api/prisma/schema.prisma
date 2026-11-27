@@ -2820,8 +2820,12 @@ model SportLeagueConference {
   /// The conference's key within its league, capital letters, digits and underscores: AFC.
   /// Typed into migrations; nothing builds or parses it.
   code          String   @db.VarChar(40)
-  /// The conference's proper name: American Football Conference.
+  /// The conference's proper name: American Football Conference. A proper name is data, so it is
+  /// a column, never translated (rules/domain-model-conventions-rules.md §17).
   name          String   @db.VarChar(100)
+  /// Plain English for agents and root admins: what the conference is. Not translated and not
+  /// shown to commissioners or members.
+  description   String   @db.VarChar(500)
   /// Where the conference sits when the league's conferences are listed. Display only.
   displayOrder  Int      @map("display_order")
   createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz
@@ -2848,8 +2852,10 @@ model SportLeagueConferenceDivision {
   conferenceId  String   @map("conference_id") @db.Uuid
   /// The division's key within its conference: EAST. Typed into migrations.
   code          String   @db.VarChar(40)
-  /// The division's proper name: AFC East.
+  /// The division's proper name: AFC East. Never translated.
   name          String   @db.VarChar(100)
+  /// Plain English for agents and root admins: what the division is.
+  description   String   @db.VarChar(500)
   /// Where the division sits when its conference's divisions are listed. Display only.
   displayOrder  Int      @map("display_order")
   createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz

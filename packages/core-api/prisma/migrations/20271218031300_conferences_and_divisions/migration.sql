@@ -46,6 +46,7 @@ CREATE TABLE "sport_league_conferences" (
     "sport_league_id" UUID NOT NULL,
     "code" VARCHAR(40) NOT NULL,
     "name" VARCHAR(100) NOT NULL,
+    "description" VARCHAR(500) NOT NULL,
     "display_order" INTEGER NOT NULL,
     "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMPTZ NOT NULL,
@@ -60,6 +61,7 @@ CREATE TABLE "sport_league_conference_divisions" (
     "conference_id" UUID NOT NULL,
     "code" VARCHAR(40) NOT NULL,
     "name" VARCHAR(100) NOT NULL,
+    "description" VARCHAR(500) NOT NULL,
     "display_order" INTEGER NOT NULL,
     "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMPTZ NOT NULL,
@@ -185,53 +187,53 @@ ALTER TABLE "sport_league_competitions" ADD CONSTRAINT "sport_league_competition
 
 -- Seed: the professional leagues' conferences and divisions, each with BALLDONTLIE's code for it
 -- on the league's BALLDONTLIE mapping. A league missing from this database is skipped.
-CREATE TEMPORARY TABLE "seed_conferences" ("sport_league_id" UUID, "provider_league_code" TEXT, "code" TEXT, "name" TEXT, "display_order" INT, "provider_code" TEXT) ON COMMIT DROP;
+CREATE TEMPORARY TABLE "seed_conferences" ("sport_league_id" UUID, "provider_league_code" TEXT, "code" TEXT, "name" TEXT, "description" TEXT, "display_order" INT, "provider_code" TEXT) ON COMMIT DROP;
 INSERT INTO "seed_conferences" VALUES
-  ('f91f2566-1978-4171-a706-ae417c4d601a', 'nfl', 'AFC', 'American Football Conference', 1, 'AFC'),
-  ('f91f2566-1978-4171-a706-ae417c4d601a', 'nfl', 'NFC', 'National Football Conference', 2, 'NFC'),
-  ('09f45f12-11be-43ac-bfa6-70a53f6e0169', 'nba', 'EAST', 'Eastern Conference', 1, 'East'),
-  ('09f45f12-11be-43ac-bfa6-70a53f6e0169', 'nba', 'WEST', 'Western Conference', 2, 'West'),
-  ('c024b44e-bb26-42f7-954f-ecdd01a1991d', 'nhl', 'EAST', 'Eastern Conference', 1, 'Eastern'),
-  ('c024b44e-bb26-42f7-954f-ecdd01a1991d', 'nhl', 'WEST', 'Western Conference', 2, 'Western'),
-  ('e4d6bcae-cfca-40f3-b9a9-317fed090296', 'mlb', 'AL', 'American League', 1, 'American'),
-  ('e4d6bcae-cfca-40f3-b9a9-317fed090296', 'mlb', 'NL', 'National League', 2, 'National'),
-  ('15d608a9-d556-4a65-9cd9-1093f1a40b61', 'wnba', 'EAST', 'Eastern Conference', 1, 'Eastern'),
-  ('15d608a9-d556-4a65-9cd9-1093f1a40b61', 'wnba', 'WEST', 'Western Conference', 2, 'Western');
+  ('f91f2566-1978-4171-a706-ae417c4d601a', 'nfl', 'AFC', 'American Football Conference', 'One of the NFL''s two conferences; its champion meets the NFC''s in the Super Bowl.', 1, 'AFC'),
+  ('f91f2566-1978-4171-a706-ae417c4d601a', 'nfl', 'NFC', 'National Football Conference', 'One of the NFL''s two conferences; its champion meets the AFC''s in the Super Bowl.', 2, 'NFC'),
+  ('09f45f12-11be-43ac-bfa6-70a53f6e0169', 'nba', 'EAST', 'Eastern Conference', 'The NBA''s Eastern Conference, which seeds its own half of the playoffs.', 1, 'East'),
+  ('09f45f12-11be-43ac-bfa6-70a53f6e0169', 'nba', 'WEST', 'Western Conference', 'The NBA''s Western Conference, which seeds its own half of the playoffs.', 2, 'West'),
+  ('c024b44e-bb26-42f7-954f-ecdd01a1991d', 'nhl', 'EAST', 'Eastern Conference', 'The NHL''s Eastern Conference: the Atlantic and Metropolitan divisions, one half of the playoffs.', 1, 'Eastern'),
+  ('c024b44e-bb26-42f7-954f-ecdd01a1991d', 'nhl', 'WEST', 'Western Conference', 'The NHL''s Western Conference: the Central and Pacific divisions, one half of the playoffs.', 2, 'Western'),
+  ('e4d6bcae-cfca-40f3-b9a9-317fed090296', 'mlb', 'AL', 'American League', 'MLB''s American League, which seeds six clubs for its side of the postseason.', 1, 'American'),
+  ('e4d6bcae-cfca-40f3-b9a9-317fed090296', 'mlb', 'NL', 'National League', 'MLB''s National League, which seeds six clubs for its side of the postseason.', 2, 'National'),
+  ('15d608a9-d556-4a65-9cd9-1093f1a40b61', 'wnba', 'EAST', 'Eastern Conference', 'The WNBA''s Eastern Conference; the playoffs seed across the league, not by conference.', 1, 'Eastern'),
+  ('15d608a9-d556-4a65-9cd9-1093f1a40b61', 'wnba', 'WEST', 'Western Conference', 'The WNBA''s Western Conference; the playoffs seed across the league, not by conference.', 2, 'Western');
 
-CREATE TEMPORARY TABLE "seed_divisions" ("sport_league_id" UUID, "provider_league_code" TEXT, "conference_code" TEXT, "code" TEXT, "name" TEXT, "display_order" INT, "provider_code" TEXT) ON COMMIT DROP;
+CREATE TEMPORARY TABLE "seed_divisions" ("sport_league_id" UUID, "provider_league_code" TEXT, "conference_code" TEXT, "code" TEXT, "name" TEXT, "description" TEXT, "display_order" INT, "provider_code" TEXT) ON COMMIT DROP;
 INSERT INTO "seed_divisions" VALUES
-  ('f91f2566-1978-4171-a706-ae417c4d601a', 'nfl', 'AFC', 'EAST', 'AFC East', 1, 'EAST'),
-  ('f91f2566-1978-4171-a706-ae417c4d601a', 'nfl', 'AFC', 'NORTH', 'AFC North', 2, 'NORTH'),
-  ('f91f2566-1978-4171-a706-ae417c4d601a', 'nfl', 'AFC', 'SOUTH', 'AFC South', 3, 'SOUTH'),
-  ('f91f2566-1978-4171-a706-ae417c4d601a', 'nfl', 'AFC', 'WEST', 'AFC West', 4, 'WEST'),
-  ('f91f2566-1978-4171-a706-ae417c4d601a', 'nfl', 'NFC', 'EAST', 'NFC East', 1, 'EAST'),
-  ('f91f2566-1978-4171-a706-ae417c4d601a', 'nfl', 'NFC', 'NORTH', 'NFC North', 2, 'NORTH'),
-  ('f91f2566-1978-4171-a706-ae417c4d601a', 'nfl', 'NFC', 'SOUTH', 'NFC South', 3, 'SOUTH'),
-  ('f91f2566-1978-4171-a706-ae417c4d601a', 'nfl', 'NFC', 'WEST', 'NFC West', 4, 'WEST'),
-  ('09f45f12-11be-43ac-bfa6-70a53f6e0169', 'nba', 'EAST', 'ATLANTIC', 'Atlantic Division', 1, 'Atlantic'),
-  ('09f45f12-11be-43ac-bfa6-70a53f6e0169', 'nba', 'EAST', 'CENTRAL', 'Central Division', 2, 'Central'),
-  ('09f45f12-11be-43ac-bfa6-70a53f6e0169', 'nba', 'EAST', 'SOUTHEAST', 'Southeast Division', 3, 'Southeast'),
-  ('09f45f12-11be-43ac-bfa6-70a53f6e0169', 'nba', 'WEST', 'NORTHWEST', 'Northwest Division', 1, 'Northwest'),
-  ('09f45f12-11be-43ac-bfa6-70a53f6e0169', 'nba', 'WEST', 'PACIFIC', 'Pacific Division', 2, 'Pacific'),
-  ('09f45f12-11be-43ac-bfa6-70a53f6e0169', 'nba', 'WEST', 'SOUTHWEST', 'Southwest Division', 3, 'Southwest'),
-  ('c024b44e-bb26-42f7-954f-ecdd01a1991d', 'nhl', 'EAST', 'ATLANTIC', 'Atlantic Division', 1, 'Atlantic'),
-  ('c024b44e-bb26-42f7-954f-ecdd01a1991d', 'nhl', 'EAST', 'METROPOLITAN', 'Metropolitan Division', 2, 'Metropolitan'),
-  ('c024b44e-bb26-42f7-954f-ecdd01a1991d', 'nhl', 'WEST', 'CENTRAL', 'Central Division', 1, 'Central'),
-  ('c024b44e-bb26-42f7-954f-ecdd01a1991d', 'nhl', 'WEST', 'PACIFIC', 'Pacific Division', 2, 'Pacific'),
-  ('e4d6bcae-cfca-40f3-b9a9-317fed090296', 'mlb', 'AL', 'EAST', 'American League East', 1, 'East'),
-  ('e4d6bcae-cfca-40f3-b9a9-317fed090296', 'mlb', 'AL', 'CENTRAL', 'American League Central', 2, 'Central'),
-  ('e4d6bcae-cfca-40f3-b9a9-317fed090296', 'mlb', 'AL', 'WEST', 'American League West', 3, 'West'),
-  ('e4d6bcae-cfca-40f3-b9a9-317fed090296', 'mlb', 'NL', 'EAST', 'National League East', 1, 'East'),
-  ('e4d6bcae-cfca-40f3-b9a9-317fed090296', 'mlb', 'NL', 'CENTRAL', 'National League Central', 2, 'Central'),
-  ('e4d6bcae-cfca-40f3-b9a9-317fed090296', 'mlb', 'NL', 'WEST', 'National League West', 3, 'West');
+  ('f91f2566-1978-4171-a706-ae417c4d601a', 'nfl', 'AFC', 'EAST', 'AFC East', 'A division of the NFL''s AFC; division winners are seeded in the playoffs.', 1, 'EAST'),
+  ('f91f2566-1978-4171-a706-ae417c4d601a', 'nfl', 'AFC', 'NORTH', 'AFC North', 'A division of the NFL''s AFC; division winners are seeded in the playoffs.', 2, 'NORTH'),
+  ('f91f2566-1978-4171-a706-ae417c4d601a', 'nfl', 'AFC', 'SOUTH', 'AFC South', 'A division of the NFL''s AFC; division winners are seeded in the playoffs.', 3, 'SOUTH'),
+  ('f91f2566-1978-4171-a706-ae417c4d601a', 'nfl', 'AFC', 'WEST', 'AFC West', 'A division of the NFL''s AFC; division winners are seeded in the playoffs.', 4, 'WEST'),
+  ('f91f2566-1978-4171-a706-ae417c4d601a', 'nfl', 'NFC', 'EAST', 'NFC East', 'A division of the NFL''s NFC; division winners are seeded in the playoffs.', 1, 'EAST'),
+  ('f91f2566-1978-4171-a706-ae417c4d601a', 'nfl', 'NFC', 'NORTH', 'NFC North', 'A division of the NFL''s NFC; division winners are seeded in the playoffs.', 2, 'NORTH'),
+  ('f91f2566-1978-4171-a706-ae417c4d601a', 'nfl', 'NFC', 'SOUTH', 'NFC South', 'A division of the NFL''s NFC; division winners are seeded in the playoffs.', 3, 'SOUTH'),
+  ('f91f2566-1978-4171-a706-ae417c4d601a', 'nfl', 'NFC', 'WEST', 'NFC West', 'A division of the NFL''s NFC; division winners are seeded in the playoffs.', 4, 'WEST'),
+  ('09f45f12-11be-43ac-bfa6-70a53f6e0169', 'nba', 'EAST', 'ATLANTIC', 'Atlantic Division', 'A division of the NBA''s Eastern Conference; it decides no playoff place of its own.', 1, 'Atlantic'),
+  ('09f45f12-11be-43ac-bfa6-70a53f6e0169', 'nba', 'EAST', 'CENTRAL', 'Central Division', 'A division of the NBA''s Eastern Conference; it decides no playoff place of its own.', 2, 'Central'),
+  ('09f45f12-11be-43ac-bfa6-70a53f6e0169', 'nba', 'EAST', 'SOUTHEAST', 'Southeast Division', 'A division of the NBA''s Eastern Conference; it decides no playoff place of its own.', 3, 'Southeast'),
+  ('09f45f12-11be-43ac-bfa6-70a53f6e0169', 'nba', 'WEST', 'NORTHWEST', 'Northwest Division', 'A division of the NBA''s Western Conference; it decides no playoff place of its own.', 1, 'Northwest'),
+  ('09f45f12-11be-43ac-bfa6-70a53f6e0169', 'nba', 'WEST', 'PACIFIC', 'Pacific Division', 'A division of the NBA''s Western Conference; it decides no playoff place of its own.', 2, 'Pacific'),
+  ('09f45f12-11be-43ac-bfa6-70a53f6e0169', 'nba', 'WEST', 'SOUTHWEST', 'Southwest Division', 'A division of the NBA''s Western Conference; it decides no playoff place of its own.', 3, 'Southwest'),
+  ('c024b44e-bb26-42f7-954f-ecdd01a1991d', 'nhl', 'EAST', 'ATLANTIC', 'Atlantic Division', 'A division of the NHL''s Eastern Conference; division winners are seeded in the playoffs.', 1, 'Atlantic'),
+  ('c024b44e-bb26-42f7-954f-ecdd01a1991d', 'nhl', 'EAST', 'METROPOLITAN', 'Metropolitan Division', 'A division of the NHL''s Eastern Conference; division winners are seeded in the playoffs.', 2, 'Metropolitan'),
+  ('c024b44e-bb26-42f7-954f-ecdd01a1991d', 'nhl', 'WEST', 'CENTRAL', 'Central Division', 'A division of the NHL''s Western Conference; division winners are seeded in the playoffs.', 1, 'Central'),
+  ('c024b44e-bb26-42f7-954f-ecdd01a1991d', 'nhl', 'WEST', 'PACIFIC', 'Pacific Division', 'A division of the NHL''s Western Conference; division winners are seeded in the playoffs.', 2, 'Pacific'),
+  ('e4d6bcae-cfca-40f3-b9a9-317fed090296', 'mlb', 'AL', 'EAST', 'American League East', 'A division of the MLB''s American League; division winners are seeded in the playoffs.', 1, 'East'),
+  ('e4d6bcae-cfca-40f3-b9a9-317fed090296', 'mlb', 'AL', 'CENTRAL', 'American League Central', 'A division of the MLB''s American League; division winners are seeded in the playoffs.', 2, 'Central'),
+  ('e4d6bcae-cfca-40f3-b9a9-317fed090296', 'mlb', 'AL', 'WEST', 'American League West', 'A division of the MLB''s American League; division winners are seeded in the playoffs.', 3, 'West'),
+  ('e4d6bcae-cfca-40f3-b9a9-317fed090296', 'mlb', 'NL', 'EAST', 'National League East', 'A division of the MLB''s National League; division winners are seeded in the playoffs.', 1, 'East'),
+  ('e4d6bcae-cfca-40f3-b9a9-317fed090296', 'mlb', 'NL', 'CENTRAL', 'National League Central', 'A division of the MLB''s National League; division winners are seeded in the playoffs.', 2, 'Central'),
+  ('e4d6bcae-cfca-40f3-b9a9-317fed090296', 'mlb', 'NL', 'WEST', 'National League West', 'A division of the MLB''s National League; division winners are seeded in the playoffs.', 3, 'West');
 
-INSERT INTO "sport_league_conferences" ("sport_league_id", "code", "name", "display_order", "updated_at")
-SELECT s."sport_league_id", s."code", s."name", s."display_order", now()
+INSERT INTO "sport_league_conferences" ("sport_league_id", "code", "name", "description", "display_order", "updated_at")
+SELECT s."sport_league_id", s."code", s."name", s."description", s."display_order", now()
 FROM "seed_conferences" s
 WHERE EXISTS (SELECT 1 FROM "sport_leagues" l WHERE l."id" = s."sport_league_id");
 
-INSERT INTO "sport_league_conference_divisions" ("sport_league_id", "conference_id", "code", "name", "display_order", "updated_at")
-SELECT c."sport_league_id", c."id", s."code", s."name", s."display_order", now()
+INSERT INTO "sport_league_conference_divisions" ("sport_league_id", "conference_id", "code", "name", "description", "display_order", "updated_at")
+SELECT c."sport_league_id", c."id", s."code", s."name", s."description", s."display_order", now()
 FROM "seed_divisions" s
 JOIN "sport_league_conferences" c ON c."sport_league_id" = s."sport_league_id" AND c."code" = s."conference_code";
 

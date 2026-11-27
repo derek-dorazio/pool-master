@@ -39,12 +39,12 @@ async function conferenceLeague(teams = 2, { codes = true } = {}) {
   if (currentSeasonId === null) throw new Error('the test league has no current Season');
   const mappingId = await syncLeagueTo(prisma, league.id, 'nfl');
   const conference = async (code: string, displayOrder: number, divisions: string[]) => {
-    const row = await prisma.sportLeagueConference.create({ data: { sportLeagueId: league.id, code, name: `${code} name`, displayOrder } });
+    const row = await prisma.sportLeagueConference.create({ data: { sportLeagueId: league.id, code, name: `${code} name`, description: `The ${code} conference of a test league.`, displayOrder } });
     if (codes) await prisma.sportLeagueConferenceProviderMapping.create({ data: { sportLeagueId: league.id, conferenceId: row.id, sportLeagueProviderMappingId: mappingId, providerCode: code } });
     const divisionIds: Record<string, string> = {};
     for (const [index, division] of divisions.entries()) {
       // poolmaster-allow-query-in-loop: three fixture divisions
-      const divisionRow = await prisma.sportLeagueConferenceDivision.create({ data: { sportLeagueId: league.id, conferenceId: row.id, code: division, name: `${code} ${division}`, displayOrder: index + 1 } });
+      const divisionRow = await prisma.sportLeagueConferenceDivision.create({ data: { sportLeagueId: league.id, conferenceId: row.id, code: division, name: `${code} ${division}`, description: `A test division of the ${code}.`, displayOrder: index + 1 } });
       // poolmaster-allow-query-in-loop: three fixture divisions
       if (codes) await prisma.sportLeagueConferenceDivisionProviderMapping.create({ data: { sportLeagueId: league.id, conferenceId: row.id, divisionId: divisionRow.id, sportLeagueProviderMappingId: mappingId, providerCode: division } });
       divisionIds[division] = divisionRow.id;
@@ -100,6 +100,17 @@ describe('the migration\'s conferences and divisions', () => {
       { code: 'NFC', providerCodes: [{ providerCode: 'NFC' }], divisions },
     ]);
     expect(nba).toEqual([{ code: 'EAST', providerCodes: [{ providerCode: 'East' }] }, { code: 'WEST', providerCodes: [{ providerCode: 'West' }] }]);
+  });
+
+  it('describes every conference and division it adds, for agents and root admins', async () => {
+    const prisma = getPrisma();
+    const rows = [
+      ...await prisma.sportLeagueConference.findMany({ select: { code: true, description: true } }),
+      ...await prisma.sportLeagueConferenceDivision.findMany({ select: { code: true, description: true } }),
+    ];
+
+    expect(rows.length).toBeGreaterThan(0);
+    expect(rows.filter((row) => row.description.trim().length < 20)).toEqual([]);
   });
 
   it('carries each existing competition\'s phase onto it, so none disagrees with its phase', async () => {
