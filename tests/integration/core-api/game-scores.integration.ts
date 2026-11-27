@@ -525,7 +525,9 @@ describe('game scores from a provider', () => {
       ['SELECT sport_event_round_match_games', 4],
       ['SELECT sport_event_round_match_sides', 9],
       ['SELECT sport_event_round_matches', 3],
-      ['SELECT sport_event_rounds', 3],
+      // The batch's round reads, and each full read of the event counting its Round rows by event
+      // id (#2008): a fixed cost per read, not per round.
+      ['SELECT sport_event_rounds', 5],
       // Each full read of the event names its slot definitions (#2010), where templates are offered,
       // and each read of the rounds reads their slots (#2006): a fixed cost per read, not per round.
       ['SELECT sport_event_slots', 5],
