@@ -109,9 +109,7 @@ export function createContestSportEventReader({ sportEvents, field, tiers, valua
     countCoveredRounds: async (sportEventId, coverage) =>
       coveredRoundNumbers(coverage, await rounds.findBySportEvent(sportEventId)).length,
     findSquaresGameChoices: async (sportEventId, now) => squaresGameChoices(await matches.findBySportEvent(sportEventId), now),
-    findCutoffTiming: async (sportEvent, cutoff) => cutoff.kind === ContestCutoffKind.EVENT_START
-      ? sportEvent
-      : cutoffTiming(cutoff, sportEvent, await matches.findBySportEvent(sportEvent.id)),
+    findCutoffTiming: async (sportEvent, cutoff) => cutoffTiming(cutoff, sportEvent, cutoff.kind === ContestCutoffKind.GAME_START ? await matches.findBySportEvent(sportEvent.id) : []),
   };
 }
 

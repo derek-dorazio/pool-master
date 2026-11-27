@@ -119,7 +119,7 @@ export async function contestClosesAt(
 
 /** Whether the contest's picks close at one of its first event's games, so its close needs the event's games. */
 export function closesOnAGame(contest: Contest, rules: ContestSelectionConfig): boolean {
-  return contestCutoff(rules, contest.squaresGame).kind !== ContestCutoffKind.EVENT_START;
+  return contestCutoff(rules, contest).kind === ContestCutoffKind.GAME_START;
 }
 
 /** `contestClosesAt` with the first event's games already read, for a sweep that reads every contest's at once. */
@@ -129,8 +129,7 @@ export function contestClosesAtGiven(
   first: SportEvent,
   games: readonly SportEventRoundMatch[],
 ): Date {
-  const cutoff = contestCutoff(rules, contest.squaresGame);
-  return (cutoff.kind === ContestCutoffKind.EVENT_START ? first : cutoffTiming(cutoff, first, games)).startDate;
+  return cutoffTiming(contestCutoff(rules, contest), first, games).startDate;
 }
 
 /** How the event plays, as E1 lists it: "16 games" or "4 rounds"; null when neither is known. */

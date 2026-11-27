@@ -15,7 +15,7 @@ import {
   type SportLeagueEvent,
   type SportEvent,
 } from '@poolmaster/shared/domain';
-import { ContestCutoffKind, type ContestCutoff } from '../contests/entry-window';
+import { contestCutoff, type ContestCutoff } from '../contests/entry-window';
 import { evaluateEventOperationalState } from '../events/operational-timing';
 import type { ContestCreateSportEventReader, ContestCreateSportEventState } from './service';
 
@@ -63,7 +63,8 @@ export async function contestOpening(
     }
     closesAt = kickoff;
   } else {
-    const cutoff: ContestCutoff = { kind: ContestCutoffKind.EVENT_START };
+    // A contest not made yet covers no slot so far: its window is the event's own.
+    const cutoff: ContestCutoff = contestCutoff(undefined);
     const timing = await reader.findCutoffTiming(sportEvent, cutoff);
     if (hasSportEventStarted(timing, now)) {
       return CLOSED;

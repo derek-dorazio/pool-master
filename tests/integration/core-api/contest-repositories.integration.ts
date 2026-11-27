@@ -416,16 +416,28 @@ describe('ContestRepository', () => {
     expect(current.map((contest) => contest.id)).toEqual([drafts.withGame.id]);
   });
 
-  it('counts an event under way before its start date as started, leaving out its bracket draft and keeping its squares with a game (#1217)', async () => {
+  it('counts a slot under way before its start as started, leaving out its bracket draft and keeping its squares with a game (#1217, #2013)', async () => {
     const { league, event } = await createLeagueAndEvent();
-    // Before the June 4 start date, but the event is already IN_PROGRESS.
+    // Before the June 4 start date, but the event's slot, and so the event, is already under way.
     const now = new Date('2026-06-01T12:00:00.000Z');
     await getPrisma().sportEvent.update({ where: { id: event.id }, data: { status: 'IN_PROGRESS' } });
     const drafts = await createLateCutoffDrafts(league.id, event.id);
+    await getPrisma().sportLeagueSeasonCompetitionSlot.updateMany({ where: { eventSlot: { sportEventId: event.id } }, data: { status: 'IN_PROGRESS' } });
 
     const current = await repos().contests.findCurrentByLeague(league.id, now);
 
     expect(current.map((contest) => contest.id)).toEqual([drafts.withGame.id]);
+  });
+
+  it('keeps a draft on an event under way whose covered slot is still to start: its window is that slot\'s (#2013)', async () => {
+    const { league, event } = await createLeagueAndEvent();
+    const now = new Date('2026-06-05T12:00:00.000Z');
+    await getPrisma().sportEvent.update({ where: { id: event.id }, data: { status: 'IN_PROGRESS' } });
+    const draft = await createContest(league.id, event.id, 'Draft On A Later Slot', ContestStatus.DRAFT);
+    await getPrisma().sportLeagueSeasonCompetitionSlot.updateMany({ where: { eventSlot: { sportEventId: event.id } }, data: { status: 'SCHEDULED', startsAt: new Date('2026-06-06T12:00:00.000Z') } });
+
+    expect((await repos().contests.findCurrentByLeague(league.id, now)).map((contest) => contest.id)).toContain(draft.id);
+    expect((await repos().contests.findCurrentByLeague(league.id, new Date('2026-06-06T13:00:00.000Z'))).map((contest) => contest.id)).not.toContain(draft.id);
   });
 
   it('leaves out every draft with an event finished or cancelled, even squares with its game, or a draft whose event has not started (#1217)', async () => {

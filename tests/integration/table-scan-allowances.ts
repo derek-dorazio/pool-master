@@ -14,6 +14,13 @@ export interface TableScanAllowance {
 
 export const TABLE_SCAN_ALLOWANCES: readonly TableScanAllowance[] = [
   {
+    table: 'sport_league_season_competition_slots',
+    sqlIncludes: '"status" <> CAST($?::text AS "public"."PrismaSeasonSlotStatus")',
+    reason: "A league's current contests leave out a draft whose first covered slot has started (#2013): under way, or past its first game's start. Each draft's "
+      + 'covered slots are reached by key from contest_season_slots, and the test is on those few rows, so no index on status or start would serve it. The generic '
+      + "plan on the tests' near-empty tables walks the slots' league index instead; not yet measured at scale.",
+  },
+  {
     table: 'leagues',
     sqlIncludes: 'FROM "public"."leagues" WHERE "public"."leagues"."is_active" = $? ORDER BY',
     reason: 'The commissioner notices tell every active league of a due event, so they read every active league, and only when an event email is due; '

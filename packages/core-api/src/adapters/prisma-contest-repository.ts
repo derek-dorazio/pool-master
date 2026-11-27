@@ -16,7 +16,7 @@ import type {
   PendingDrawReceipts,
   ReminderCheck,
 } from '@poolmaster/shared/db';
-import { championshipYear, ContestStatus, SelectionType, SportEventStatus, type Contest, type ContestCoveredSlot, type ContestFormat, type CupWeight, FINISHED_SPORT_EVENT_STATUSES, type SeasonSlotStatus, type SlotKind } from '@poolmaster/shared/domain';
+import { championshipYear, ContestStatus, SelectionType, SportEventStatus, type Contest, type ContestCoveredSlot, type ContestFormat, type CupWeight, FINISHED_SPORT_EVENT_STATUSES, SeasonSlotStatus, type SlotKind } from '@poolmaster/shared/domain';
 import { forgettingReads, memoizedRead, memoizedReadMany, ReadMemoKey } from '../core/request-read-memo';
 import { lockContestRow, lockContestRowsAtOnce } from './contest-row-lock';
 import { insertBackgroundJobs } from './prisma-background-job-repository';
@@ -103,18 +103,23 @@ export class PrismaContestRepository implements ContestRepository {
         leagueId,
         status: { in: [ContestStatus.DRAFT, ContestStatus.OPEN, ContestStatus.ACTIVE] },
         // A draft that can never open is left out (#1161, #1217): one with an event finished or
-        // cancelled, which is past every cutoff, and one closing at its event's start once an
-        // event has started, since a started event cannot be removed. Only a squares contest with
-        // its game closes later, as `contestCutoff` says.
+        // cancelled, which is past every cutoff, and one closing at its first covered Game once a
+        // slot it covers has started (#2013), since a started slot cannot be removed. Only a
+        // squares contest with its game closes later, as `contestCutoff` says.
         NOT: {
           status: ContestStatus.DRAFT,
           OR: [
             { seasonSlots: { some: { seasonSlot: { eventSlot: { sportEvent: { status: { in: [...FINISHED_SPORT_EVENT_STATUSES] } } } } } } },
-            {
-              // Started as `hasSportEventStarted` has it: by its start date, or under way early.
-              seasonSlots: { some: { seasonSlot: { eventSlot: { sportEvent: { OR: [{ startDate: { lte: now } }, { status: SportEventStatus.IN_PROGRESS }] } } } } },
+            // Started as `cutoffTiming` has it: a covered slot under way, or past its first game's
+            // start; a slot with no start yet goes by its event's start, or the event under way.
+            ...[
+              { status: { not: SeasonSlotStatus.SCHEDULED } },
+              { startsAt: { lte: now } },
+              { startsAt: null, eventSlot: { sportEvent: { OR: [{ startDate: { lte: now } }, { status: SportEventStatus.IN_PROGRESS }] } } },
+            ].map((started) => ({
+              seasonSlots: { some: { seasonSlot: started } },
               NOT: { selectionType: SelectionType.SQUARES, squaresGame: { isNot: null } },
-            },
+            })),
           ],
         },
       },
