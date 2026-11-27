@@ -52,7 +52,7 @@ export class PrismaProviderSyncFindingRepository implements ProviderSyncFindingR
         sportLeagueId: filter.exceptSportLeagueIds === undefined ? filter.sportLeagueId : { notIn: [...filter.exceptSportLeagueIds] },
         sportEventId: filter.sportEventId,
         providerId: filter.providerId,
-        providerValue: filter.providerValues === undefined ? filter.providerValue : { in: [...filter.providerValues] },
+        providerValue: providerValueWhere(filter),
       },
       data: { status: ProviderSyncFindingStatus.RESOLVED, statusChangedAt: resolvedAt, statusChangedByUserId: null },
     });
@@ -161,6 +161,13 @@ async function raiseIn(tx: Prisma.TransactionClient, raises: readonly ProviderSy
     ...created,
     ...reopened.map(({ raise, row }) => ({ id: row.id, kind: raise.kind, severity: raise.severity, sportLeagueId: raise.sportLeagueId })),
   ];
+}
+
+/** The values a resolve reaches: one, any of a list, or every one but a list (a null value is never "but" one). */
+function providerValueWhere(filter: ProviderSyncFindingResolveFilter): Prisma.ProviderSyncFindingWhereInput['providerValue'] {
+  if (filter.providerValues !== undefined) return { in: [...filter.providerValues] };
+  if (filter.exceptProviderValues !== undefined) return { notIn: [...filter.exceptProviderValues] };
+  return filter.providerValue;
 }
 
 function subjectWhere(subject: ProviderSyncFindingSubject): Prisma.ProviderSyncFindingWhereInput {
