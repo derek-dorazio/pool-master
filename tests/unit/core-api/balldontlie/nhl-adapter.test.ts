@@ -118,7 +118,7 @@ describe('BalldontlieAdapter (NHL)', () => {
 
       expect(detail).toMatchObject({ externalId: 'nhl-2024-postseason', sport: Sport.HOCKEY, status: 'COMPLETED', fieldLocked: true });
       expect(detail?.participants).toHaveLength(16);
-      expect(detail?.participants[0]).toMatchObject({ externalId: '1', name: 'Washington Capitals', metadata: { abbreviation: 'WSH' } });
+      expect(detail?.participants[0]).toMatchObject({ externalId: '1', name: 'Washington Capitals', abbreviation: 'WSH' });
       expect(requestLine(harness.api)).toEqual(['/nhl/v1/games?seasons=2024&postseason=true&per_page=100', '/nhl/v1/standings?season=2024']);
     });
 

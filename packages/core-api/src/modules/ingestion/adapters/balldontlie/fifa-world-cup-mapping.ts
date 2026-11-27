@@ -143,7 +143,8 @@ export function toWorldCupTeamParticipant(team: FifaTeam, path: string): Provide
     sport: Sport.SOCCER,
     name: required(team.name, path, `team ${String(id)}`, 'name'),
     status: SportEventParticipantStatus.ACTIVE,
-    metadata: team.abbreviation ? { abbreviation: team.abbreviation } : {},
+    ...(team.abbreviation ? { abbreviation: team.abbreviation } : {}),
+    metadata: {},
   };
 }
 

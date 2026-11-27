@@ -202,4 +202,10 @@ export interface SportEventRoundMatchGameRepository {
   applySync(sync: SportEventRoundMatchGameSync, jobs?: readonly BackgroundJobRequest[]): Promise<void>;
   /** Records when a provider's notification about each of these Games arrived (#1499). */
   recordProviderNotification(gameIds: readonly string[], receivedAt: Date): Promise<void>;
+  /**
+   * Records when a provider's notification about each of these events themselves arrived (#2008),
+   * on each event's Games in play then (`isGameScoresDue`): a golf tournament's current round. An
+   * event with no Game in play, such as a round whose first score has not come, records nothing.
+   */
+  recordEventNotification(sportEventIds: readonly string[], receivedAt: Date): Promise<void>;
 }

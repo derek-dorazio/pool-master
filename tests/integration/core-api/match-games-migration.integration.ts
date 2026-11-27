@@ -46,11 +46,10 @@ async function eventWithRound(name: string, notifiedAt: Date | null, startDate =
     autoLifecycleEnabled: false,
   });
   await mapEventToProvider(prisma, event.id, { providerId: 'balldontlie', externalId: `migrated-${randomUUID()}` });
-  await prisma.sportEvent.update({ where: { id: event.id }, data: { lastProviderNotificationAt: notifiedAt } });
   const seasonSlotId = await linkTestSlot(prisma, event);
   const { id: sportEventSlotId } = await prisma.sportEventSlot.findFirstOrThrow({ where: { sportEventId: event.id, sportLeagueSeasonCompetitionSlotId: seasonSlotId }, select: { id: true } });
   const round = await prisma.sportEventRound.create({ data: { sportEventId: event.id, sportEventSlotId, roundNumber: 1, scheduledDate: event.startDate }, select: { id: true } });
-  return { eventId: event.id, roundId: round.id, sportEventSlotId };
+  return { eventId: event.id, roundId: round.id, sportEventSlotId, notifiedAt };
 }
 
 class Rollback extends Error {}
@@ -80,8 +79,16 @@ interface OldMatchRow {
 }
 
 /** Puts the tables back as they were, inserts `rows` as the old table held them, runs the migration and answers the events' Games, all rolled back. */
-async function migrate(rows: readonly OldMatchRow[], eventIds: readonly string[], kickoff: Date): Promise<MigratedGame[]> {
+async function migrate(rows: readonly OldMatchRow[], events: ReadonlyArray<{ eventId: string; notifiedAt: Date | null }>, kickoff: Date): Promise<MigratedGame[]> {
+  const eventIds = events.map((event) => event.eventId);
   return getPrisma().$transaction(async (tx) => {
+    // The event's own notification time, which this migration copied to its Games and a later one
+    // (#2008) dropped, back on the event as it held it.
+    await tx.$executeRawUnsafe('ALTER TABLE "sport_events" ADD COLUMN "last_provider_notification_at" TIMESTAMPTZ');
+    for (const event of events) {
+      // poolmaster-allow-query-in-loop: two fixture events, each given its notification time as the old table held it
+      await tx.$executeRaw`${uncachedStatement()} UPDATE "sport_events" SET "last_provider_notification_at" = ${event.notifiedAt} WHERE "id" = ${event.eventId}::uuid`;
+    }
     // The tables as they were before the migration, which came before a slot named its tiebreaker Game (#2048).
     await tx.$executeRawUnsafe('ALTER TABLE "sport_event_slots" DROP CONSTRAINT "sport_event_slots_tiebreaker_game_id_fkey"');
     // The tables as they were before the migration: first the match sides migration (#2046) taken
@@ -149,7 +156,7 @@ describe('the match games migration', () => {
       { id: randomUUID(), event: bracket, number: 1, gameId: null, status: 'SCHEDULED', winner: null, home: null, away: null },
     ];
 
-    const migrated = await migrate(rows, [week.eventId, bracket.eventId], kickoff);
+    const migrated = await migrate(rows, [week, bracket], kickoff);
 
     const byMatch = new Map(migrated.map((game) => [game.matchId, game]));
     expect(migrated).toHaveLength(3);
@@ -168,7 +175,7 @@ describe('the match games migration', () => {
     const gameId = `qa-${randomUUID()}`;
     const rows: OldMatchRow[] = [week12, week11].map((event) => ({ id: randomUUID(), event, number: 1, gameId, status: 'SCHEDULED', winner: null, home: null, away: null }));
 
-    const migrated = await migrate(rows, [week11.eventId, week12.eventId], new Date('2027-03-20T13:00:00.000Z'));
+    const migrated = await migrate(rows, [week11, week12], new Date('2027-03-20T13:00:00.000Z'));
 
     const byMatch = new Map(migrated.map((game) => [game.matchId, game.providerGameIds]));
     expect(rows.map((row) => byMatch.get(row.id))).toEqual([[`BALLDONTLIE:${gameId}`], []]);

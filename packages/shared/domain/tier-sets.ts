@@ -120,16 +120,13 @@ export function tierSetSlotOf<Slot extends Pick<SportEventTierSlot, 'isTierSetSl
 /**
  * The slot whose set a contest picks from (#2044): the first of its event's slots, in play order,
  * that holds a set and is one the contest covers (`coveredSlotDefinitionIds`, its slot definitions);
- * the event's tier-set slot for a contest whose coverage is not known (null) or that covers none
- * holding a set; undefined for an event covering no slot. The one rule every contest-side reader
- * goes through.
+ * the event's tier-set slot for a contest that covers none holding a set; undefined for an event
+ * covering no slot. The one rule every contest-side reader goes through.
  */
 export function contestTierSetSlot<Slot extends Pick<SportEventTierSlot, 'holdsTierSet' | 'isTierSetSlot' | 'slotDefinitionId'>>(
   slotsInPlayOrder: readonly Slot[],
-  coveredSlotDefinitionIds: readonly string[] | null,
+  coveredSlotDefinitionIds: readonly string[],
 ): Slot | undefined {
-  const covered = coveredSlotDefinitionIds === null
-    ? undefined
-    : slotsInPlayOrder.find((slot) => slot.holdsTierSet && coveredSlotDefinitionIds.includes(slot.slotDefinitionId));
-  return covered ?? tierSetSlotOf(slotsInPlayOrder);
+  return slotsInPlayOrder.find((slot) => slot.holdsTierSet && coveredSlotDefinitionIds.includes(slot.slotDefinitionId))
+    ?? tierSetSlotOf(slotsInPlayOrder);
 }

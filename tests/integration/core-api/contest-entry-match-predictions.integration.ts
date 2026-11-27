@@ -666,7 +666,7 @@ describe('PrismaContestRepository.replaceCoveredSlots with game picks', () => {
       });
     }
 
-    await repos().contests.replaceCoveredSlots(contest.id, (await coverageOfEvents(getPrisma(), [week2.event.id])).seasonSlotIds);
+    await expect(repos().contests.replaceCoveredSlots(contest.id, (await coverageOfEvents(getPrisma(), [week2.event.id])).seasonSlotIds, [contest.status])).resolves.toBe(true);
 
     await expect(repos().predictions.findByEntryAndEvent(entry.id, week1.event.id)).resolves.toEqual([]);
     expect((await repos().predictions.findByEntryAndEvent(entry.id, week2.event.id)).map((pick) => pick.sportEventRoundMatchId))

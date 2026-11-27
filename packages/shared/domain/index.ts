@@ -3,6 +3,7 @@ export * from './enum-order';
 export * from './unvalidated';
 export * from './contest-validity';
 export * from './tiered-roster';
+export * from './current-covered-slot';
 export * from './contest-events';
 export * from './budget-pricing';
 export * from './tier-profiles';
@@ -96,6 +97,7 @@ export type {
 } from './contest-management-types';
 export type {
   Contest,
+  ContestCoveredSlot,
   Cup,
   CupStanding,
   LeagueYearFinish,

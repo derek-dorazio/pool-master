@@ -70,10 +70,10 @@ describe('extractErrorMessage', () => {
 
   it('tries a screen\'s contexts in order, so the first with wording for the code wins', () => {
     const notPriced = new ApiError({ error: { code: 'CONTEST_EVENT_NOT_PRICED', message: 'x' } });
-    const locked = new ApiError({ error: { code: 'CONTEST_EVENTS_LOCKED', message: 'x' } });
-    const context = ['contestEvents', 'contestSetup'] as const;
+    const locked = new ApiError({ error: { code: 'CONTEST_ENTRY_LOCKED', message: 'x' } });
+    const context = ['bracketEntry', 'contestSetup'] as const;
     expect(extractErrorMessage(notPriced, { context })).toBe('This event’s field has no prices yet, so it cannot hold a budget contest.');
-    expect(extractErrorMessage(locked, { context })).toBe('An event in this contest has started, so its events can no longer be removed.');
+    expect(extractErrorMessage(locked, { context, values: { matches: 'games' } })).toBe('The games have started, so this bracket can no longer change.');
   });
 
   it('refuses at typecheck a context no screen wording names, such as a misspelled one', () => {

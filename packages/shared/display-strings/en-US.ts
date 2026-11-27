@@ -935,7 +935,7 @@ export const enUS = {
     CONTEST_ENTRY_OPERATION_INVALID: 'This entry cannot be changed that way.',
     CONTEST_ENTRY_SELECTIONS_EXIST: 'Cannot leave a contest after making picks or draft selections.',
     CONTEST_EVENTS_LEAGUE_MISMATCH: 'Every event must belong to this contest\'s league.',
-    CONTEST_EVENTS_LOCKED: 'The contest\'s events can no longer change.',
+    CONTEST_EVENTS_LOCKED: 'The contest is no longer in Set up, so its event can no longer change.',
     CONTEST_EVENTS_SEASON_MISMATCH: 'Every event must be in this contest\'s season.',
     CONTEST_EVENT_ALREADY_STARTED: 'The event has already started, so it’s too late to run the draw.',
     CONTEST_EVENT_GAME_UNDECIDED: 'That game has not been decided yet.',
@@ -1227,9 +1227,6 @@ export const enUS = {
     CONTEST_BRACKET_SINGLE_EVENT: {
       contestSetup: 'A bracket contest covers one tournament, so it can’t take another event.',
     },
-    CONTEST_BUDGET_SALARY_CAP_MISMATCH: {
-      contestEvents: 'These events have different salary caps, so they cannot share an open budget contest.',
-    },
     CONTEST_BUDGET_UNFILLABLE: {
       contestSetup: 'Even the cheapest picks for every place cost more than the salary cap, so nobody could enter. Pick fewer per entry.',
     },
@@ -1247,7 +1244,7 @@ export const enUS = {
       contestEvents: 'Every event in a contest comes from the same league.',
     },
     CONTEST_EVENTS_LOCKED: {
-      contestEvents: 'An event in this contest has started, so its events can no longer be removed.',
+      contestEvents: 'This contest is open now, so its event can no longer change.',
     },
     CONTEST_EVENTS_SEASON_MISMATCH: {
       contestEvents: 'Every event in a contest is in the season it was created in.',

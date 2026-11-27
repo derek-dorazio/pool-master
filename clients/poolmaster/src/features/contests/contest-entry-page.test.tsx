@@ -1,3 +1,5 @@
+import type { ContestDto } from '@/lib/api';
+import { coverageOfEvents } from './test/covered-slots';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router';
@@ -19,8 +21,6 @@ type SelectionGroup = {
     sportEventParticipantId: string;
     participantId: string;
     participantName: string;
-    role: string;
-    team: string | null;
     status: string;
     price: number | null;
     ranking: number | null;
@@ -153,7 +153,6 @@ const FUTURE_START = '2099-04-09T12:40:00.000Z';
 function contestEventFixture(overrides: Record<string, unknown> = {}) {
   return {
     sportEventId: 'event-1',
-    sequence: 1,
     name: 'The Masters',
     startDate: FUTURE_START,
     status: 'SCHEDULED',
@@ -165,7 +164,10 @@ function contestEventFixture(overrides: Record<string, unknown> = {}) {
 function contestFixture(overrides: Record<string, unknown> = {}) {
   const sport = (overrides['sport'] ?? Sport.GOLF) as Sport;
   const sportEvents = (overrides['sportEvents'] ?? [contestEventFixture()]) as Record<string, unknown>[];
+  // Each event carries its league's play, as the contest read does.
+  const events = sportEvents.map((event) => ({ ...sportPlay(sport), ...event })) as ContestDto['sportEvents'];
   return {
+    ...coverageOfEvents({ sportEvents: events }),
     id: 'contest-1',
     leagueId: 'league-1',
     sport,
@@ -175,8 +177,7 @@ function contestFixture(overrides: Record<string, unknown> = {}) {
     selectionType: 'TIERED',
     myEntryIds: ['entry-1'],
     ...overrides,
-    // Each event carries its league's play, as the contest read does.
-    sportEvents: sportEvents.map((event) => ({ ...sportPlay(sport), ...event })),
+    sportEvents: events,
   };
 }
 
@@ -275,8 +276,6 @@ function buildGolfParticipant(id: string, name: string, orderIndex: number, isSe
     sportEventParticipantId: id,
     participantId: `participant-${id}`,
     participantName: name,
-    role: 'GOLFER',
-    team: null,
     status: 'ACTIVE',
     price: null,
     ranking: orderIndex,
@@ -390,8 +389,6 @@ describe('ContestEntryPage', () => {
                 sportEventParticipantId: 'sep-1',
                 participantId: 'participant-1',
                 participantName: 'Scottie Scheffler',
-                role: 'GOLFER',
-                team: null,
                 status: 'ACTIVE',
                 price: null,
                 ranking: 1,
@@ -413,8 +410,6 @@ describe('ContestEntryPage', () => {
                 sportEventParticipantId: 'sep-2',
                 participantId: 'participant-2',
                 participantName: 'Rory McIlroy',
-                role: 'GOLFER',
-                team: null,
                 status: 'ACTIVE',
                 price: null,
                 ranking: 2,
@@ -538,7 +533,7 @@ describe('ContestEntryPage', () => {
           groupNumber: 1,
           picksFromGroup: 1,
           selectedParticipantIds: ['sep-1'],
-          participants: [{ ...buildGolfParticipant('sep-1', 'Sovereignty', 1, true), role: 'HORSE' }],
+          participants: [buildGolfParticipant('sep-1', 'Sovereignty', 1, true)],
         },
       ]),
     });
@@ -574,7 +569,7 @@ describe('ContestEntryPage', () => {
           groupNumber: 1,
           picksFromGroup: 1,
           selectedParticipantIds: ['sep-1'],
-          participants: [{ ...buildGolfParticipant('sep-1', 'Sovereignty', 1, true), role: 'HORSE' }],
+          participants: [buildGolfParticipant('sep-1', 'Sovereignty', 1, true)],
         },
       ]),
     });
@@ -690,8 +685,6 @@ describe('ContestEntryPage', () => {
                 sportEventParticipantId: 'sep-1',
                 participantId: 'participant-1',
                 participantName: 'Scottie Scheffler',
-                role: 'GOLFER',
-                team: null,
                 status: 'ACTIVE',
                 price: null,
                 ranking: 1,
@@ -1748,8 +1741,8 @@ describe('ContestEntryPage — a contest of two events', () => {
     updateContestEntryMock.mockReset();
   });
 
-  const WEEK_1 = contestEventFixture({ sportEventId: 'event-1', sequence: 1, name: 'Week 1', startDate: '2099-09-06T17:00:00.000Z' });
-  const WEEK_2 = contestEventFixture({ sportEventId: 'event-2', sequence: 2, name: 'Week 2', startDate: '2099-09-13T17:00:00.000Z' });
+  const WEEK_1 = contestEventFixture({ sportEventId: 'event-1', name: 'Week 1', startDate: '2099-09-06T17:00:00.000Z' });
+  const WEEK_2 = contestEventFixture({ sportEventId: 'event-2', name: 'Week 2', startDate: '2099-09-13T17:00:00.000Z' });
 
   /** The room for one event: its own field, each a complete one-pick lineup. */
   function eventRoom(sportEventId: string) {
@@ -1818,8 +1811,8 @@ describe('ContestEntryPage — a contest of two events', () => {
 
   it('still says a short lineup in the open second event is not submitted once the first event has started, with no tiebreaker to ask for', async () => {
     primeTwoEventMocks();
-    const started = contestEventFixture({ sportEventId: 'event-1', sequence: 1, name: 'Race 1', startDate: '2020-05-02T22:00:00.000Z', status: 'IN_PROGRESS' });
-    const next = contestEventFixture({ sportEventId: 'event-2', sequence: 2, name: 'Race 2', startDate: '2099-05-16T22:00:00.000Z' });
+    const started = contestEventFixture({ sportEventId: 'event-1', name: 'Race 1', startDate: '2020-05-02T22:00:00.000Z', status: 'IN_PROGRESS' });
+    const next = contestEventFixture({ sportEventId: 'event-2', name: 'Race 2', startDate: '2099-05-16T22:00:00.000Z' });
     getContestMock.mockResolvedValue({ data: { contest: contestFixture({ sport: 'HORSE_RACING', sportEvents: [started, next] }) } });
     const golfer = buildGolfParticipant('sep-21', 'Sovereignty', 1, false);
     getSelectionStateMock.mockResolvedValue({

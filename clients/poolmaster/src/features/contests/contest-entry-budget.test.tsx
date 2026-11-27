@@ -11,7 +11,6 @@ function buildGroup(selected: { id: string; name: string; price: number }[]): Se
     sportEventParticipantId: id,
     participantId: `participant-${id}`,
     participantName: name,
-    role: 'GOLFER',
     team: undefined,
     status: 'ACTIVE',
     price,

@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import type { ContestDto } from '@/lib/api';
 import { CheckList, ErrorState, LoadingState, refetchFailed } from '@/features/shared/ui';
-import { firstContestEvent } from './contest-events';
+import { eventOfFirstSlot } from './contest-events';
 import { getContestReadinessChecks } from './contest-readiness';
 import { OpenContestDialog } from './open-contest-action';
 import { sportEventQueryOptions } from './use-contest-schedule';
@@ -21,7 +21,7 @@ export function OpenContestFromListDialog({
   onOpenChange: (open: boolean) => void;
   open: boolean;
 }) {
-  const eventQuery = useQuery(sportEventQueryOptions(open ? firstContestEvent(contest)?.sportEventId ?? '' : ''));
+  const eventQuery = useQuery(sportEventQueryOptions(open ? eventOfFirstSlot(contest)?.sportEventId ?? '' : ''));
 
   const { isLoading, isError } = eventQuery;
   const checks = eventQuery.data && !isLoading && !isError

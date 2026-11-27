@@ -195,7 +195,6 @@ function contestResponse(status: ContestStatusFixture, myEntryIds: string[] = []
         endsAt: '2026-04-14T23:00:00.000Z',
         sportEvents: [{
           sportEventId: 'event-1',
-          sequence: 1,
           name: 'The Masters',
           startDate: '2026-04-09T12:00:00.000Z',
           ...sportPlay(Sport.GOLF),
@@ -1396,8 +1395,8 @@ describe('ContestLeaderboardPage', () => {
 });
 
 describe('ContestLeaderboardPage — a contest of two events', () => {
-  const MASTERS = { sportEventId: 'event-1', sequence: 1, name: 'The Masters', startDate: '2026-04-09T12:00:00.000Z', status: 'COMPLETED' };
-  const PGA = { sportEventId: 'event-2', sequence: 2, name: 'PGA Championship', startDate: '2026-05-14T12:00:00.000Z', status: 'IN_PROGRESS' };
+  const MASTERS = { sportEventId: 'event-1', name: 'The Masters', startDate: '2026-04-09T12:00:00.000Z', status: 'COMPLETED' };
+  const PGA = { sportEventId: 'event-2', name: 'PGA Championship', startDate: '2026-05-14T12:00:00.000Z', status: 'IN_PROGRESS' };
 
   function primeTwoEventMocks({ pgaPosition = 3 }: { pgaPosition?: number } = {}) {
     const base = leaderboardResponse(-3).data;

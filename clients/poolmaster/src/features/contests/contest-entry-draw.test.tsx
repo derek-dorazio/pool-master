@@ -31,7 +31,7 @@ describe('DrawLineup', () => {
             selectedParticipantIds: ['a', 'b'],
             participants: [
               participant('a', 'Scottie Scheffler'),
-              participant('b', 'Shohei Ohtani', { team: 'Los Angeles Dodgers', role: 'DH' }),
+              participant('b', 'Shohei Ohtani'),
               participant('c', 'Not Dealt', { isSelected: false }),
             ],
           }],
@@ -41,7 +41,7 @@ describe('DrawLineup', () => {
 
     expect(screen.getByTestId('contest-entry-draw-done')).toHaveTextContent('The draw is final.');
     const dealt = within(screen.getByRole('list', { name: 'Dealt golfers' })).getAllByRole('listitem');
-    expect(dealt.map((row) => row.textContent)).toEqual(['Scottie Scheffler', 'Shohei OhtaniLos Angeles Dodgers · DH']);
+    expect(dealt.map((row) => row.textContent)).toEqual(['Scottie Scheffler', 'Shohei Ohtani']);
   });
 
   it('shows an empty dealt list when the room sends no field', () => {

@@ -4,18 +4,18 @@ import { useState } from "react";
 import { DataGrid } from "./data-grid";
 import { optionsFromLabels } from "../../../test/data-grid-options";
 
-type Member = { id: string; name: string; role: string; entries: number };
+type Member = { id: string; name: string; memberLabel: string; entries: number };
 
 const MEMBERS: Member[] = Array.from({ length: 32 }, (_, index) => ({
   id: String(index + 1),
   name: ["Sam Rivera", "Alex Chen", "Jordan Lee", "Casey Park"][index % 4] + ` ${index + 1}`,
-  role: index === 0 ? "Owner" : "Member",
+  memberLabel: index === 0 ? "Owner" : "Member",
   entries: (index * 7) % 5,
 }));
 
 const COLUMNS: ColumnDef<Member>[] = [
   { accessorKey: "name", header: "Name", meta: { type: { kind: "text" } } },
-  { accessorKey: "role", header: "Role", meta: { type: { kind: "text" } } },
+  { accessorKey: "memberLabel", header: "Role", meta: { type: { kind: "text" } } },
   { accessorKey: "entries", header: "Entries", meta: { type: { kind: "number" } } },
 ];
 
@@ -47,7 +47,7 @@ export const ColumnFilters: Story = { args: { showColumnFilters: true, withSearc
 
 function MembersWithViews() {
   const [view, setView] = useState("all");
-  const owners = MEMBERS.filter((member) => member.role === "Owner");
+  const owners = MEMBERS.filter((member) => member.memberLabel === "Owner");
   return (
     <DataGrid
       columns={COLUMNS}
@@ -115,7 +115,7 @@ export const HeaderFilters: StoryObj = {
 
 const EXPLAINED_COLUMNS: ColumnDef<Member>[] = [
   { accessorKey: "name", header: "Name", meta: { info: "The member's display name in the league.", type: { kind: "text" } } },
-  { accessorKey: "role", header: "Role", meta: { info: "Owners run the league; members play in it.", type: { kind: "text" } } },
+  { accessorKey: "memberLabel", header: "Role", meta: { info: "Owners run the league; members play in it.", type: { kind: "text" } } },
   { accessorKey: "entries", header: "Entries", meta: { type: { kind: "number" } } },
 ];
 

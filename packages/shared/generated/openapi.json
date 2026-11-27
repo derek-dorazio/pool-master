@@ -9385,7 +9385,7 @@
                 "maximum": 9007199254740991
               },
               "scoring": {
-                "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.",
                 "anyOf": [
                   {
                     "type": "object",
@@ -9585,7 +9585,7 @@
                 "maximum": 9007199254740991
               },
               "scoring": {
-                "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.",
                 "anyOf": [
                   {
                     "type": "object",
@@ -9785,7 +9785,7 @@
                 "maximum": 9007199254740991
               },
               "scoring": {
-                "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.",
                 "anyOf": [
                   {
                     "type": "object",
@@ -9985,7 +9985,7 @@
                 "maximum": 9007199254740991
               },
               "scoring": {
-                "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.",
                 "anyOf": [
                   {
                     "type": "object",
@@ -10179,7 +10179,7 @@
                 "maximum": 9007199254740991
               },
               "scoring": {
-                "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.",
                 "anyOf": [
                   {
                     "type": "object",
@@ -10376,7 +10376,7 @@
                 "maximum": 9007199254740991
               },
               "scoring": {
-                "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.",
                 "anyOf": [
                   {
                     "type": "object",
@@ -10562,7 +10562,7 @@
                 "maximum": 9007199254740991
               },
               "scoring": {
-                "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.",
                 "anyOf": [
                   {
                     "type": "object",
@@ -11669,7 +11669,7 @@
                     "maximum": 9007199254740991
                   },
                   "scoring": {
-                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.",
                     "anyOf": [
                       {
                         "type": "object",
@@ -11869,7 +11869,7 @@
                     "maximum": 9007199254740991
                   },
                   "scoring": {
-                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.",
                     "anyOf": [
                       {
                         "type": "object",
@@ -12069,7 +12069,7 @@
                     "maximum": 9007199254740991
                   },
                   "scoring": {
-                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.",
                     "anyOf": [
                       {
                         "type": "object",
@@ -12269,7 +12269,7 @@
                     "maximum": 9007199254740991
                   },
                   "scoring": {
-                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.",
                     "anyOf": [
                       {
                         "type": "object",
@@ -12463,7 +12463,7 @@
                     "maximum": 9007199254740991
                   },
                   "scoring": {
-                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.",
                     "anyOf": [
                       {
                         "type": "object",
@@ -12660,7 +12660,7 @@
                     "maximum": 9007199254740991
                   },
                   "scoring": {
-                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.",
                     "anyOf": [
                       {
                         "type": "object",
@@ -12846,7 +12846,7 @@
                     "maximum": 9007199254740991
                   },
                   "scoring": {
-                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.",
                     "anyOf": [
                       {
                         "type": "object",
@@ -13774,7 +13774,7 @@
                           "maximum": 9007199254740991
                         },
                         "scoring": {
-                          "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                          "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.",
                           "anyOf": [
                             {
                               "type": "object",
@@ -13974,7 +13974,7 @@
                           "maximum": 9007199254740991
                         },
                         "scoring": {
-                          "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                          "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.",
                           "anyOf": [
                             {
                               "type": "object",
@@ -14174,7 +14174,7 @@
                           "maximum": 9007199254740991
                         },
                         "scoring": {
-                          "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                          "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.",
                           "anyOf": [
                             {
                               "type": "object",
@@ -14374,7 +14374,7 @@
                           "maximum": 9007199254740991
                         },
                         "scoring": {
-                          "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                          "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.",
                           "anyOf": [
                             {
                               "type": "object",
@@ -14568,7 +14568,7 @@
                           "maximum": 9007199254740991
                         },
                         "scoring": {
-                          "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                          "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.",
                           "anyOf": [
                             {
                               "type": "object",
@@ -14765,7 +14765,7 @@
                           "maximum": 9007199254740991
                         },
                         "scoring": {
-                          "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                          "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.",
                           "anyOf": [
                             {
                               "type": "object",
@@ -14951,7 +14951,7 @@
                           "maximum": 9007199254740991
                         },
                         "scoring": {
-                          "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                          "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.",
                           "anyOf": [
                             {
                               "type": "object",
@@ -15211,7 +15211,7 @@
                     "maximum": 9007199254740991
                   },
                   "scoring": {
-                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.",
                     "anyOf": [
                       {
                         "type": "object",
@@ -15411,7 +15411,7 @@
                     "maximum": 9007199254740991
                   },
                   "scoring": {
-                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.",
                     "anyOf": [
                       {
                         "type": "object",
@@ -15611,7 +15611,7 @@
                     "maximum": 9007199254740991
                   },
                   "scoring": {
-                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.",
                     "anyOf": [
                       {
                         "type": "object",
@@ -15811,7 +15811,7 @@
                     "maximum": 9007199254740991
                   },
                   "scoring": {
-                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.",
                     "anyOf": [
                       {
                         "type": "object",
@@ -16005,7 +16005,7 @@
                     "maximum": 9007199254740991
                   },
                   "scoring": {
-                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.",
                     "anyOf": [
                       {
                         "type": "object",
@@ -16202,7 +16202,7 @@
                     "maximum": 9007199254740991
                   },
                   "scoring": {
-                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.",
                     "anyOf": [
                       {
                         "type": "object",
@@ -16388,7 +16388,7 @@
                     "maximum": 9007199254740991
                   },
                   "scoring": {
-                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.",
                     "anyOf": [
                       {
                         "type": "object",
@@ -16789,7 +16789,7 @@
                         "maximum": 9007199254740991
                       },
                       "scoring": {
-                        "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                        "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.",
                         "anyOf": [
                           {
                             "type": "object",
@@ -16989,7 +16989,7 @@
                         "maximum": 9007199254740991
                       },
                       "scoring": {
-                        "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                        "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.",
                         "anyOf": [
                           {
                             "type": "object",
@@ -17189,7 +17189,7 @@
                         "maximum": 9007199254740991
                       },
                       "scoring": {
-                        "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                        "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.",
                         "anyOf": [
                           {
                             "type": "object",
@@ -17389,7 +17389,7 @@
                         "maximum": 9007199254740991
                       },
                       "scoring": {
-                        "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                        "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.",
                         "anyOf": [
                           {
                             "type": "object",
@@ -17583,7 +17583,7 @@
                         "maximum": 9007199254740991
                       },
                       "scoring": {
-                        "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                        "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.",
                         "anyOf": [
                           {
                             "type": "object",
@@ -17780,7 +17780,7 @@
                         "maximum": 9007199254740991
                       },
                       "scoring": {
-                        "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                        "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.",
                         "anyOf": [
                           {
                             "type": "object",
@@ -17966,7 +17966,7 @@
                         "maximum": 9007199254740991
                       },
                       "scoring": {
-                        "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                        "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.",
                         "anyOf": [
                           {
                             "type": "object",
@@ -20659,15 +20659,8 @@
             "description": "Participant nationality or country code when known.",
             "type": "string"
           },
-          "role": {
-            "description": "Playing role when known (\"GOLFER\", \"QB\"). Not a rank: `position` means rank on the standing objects.",
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "teamAffiliation": {
-            "description": "Current team affiliation when the participant is not itself a team.",
+          "abbreviation": {
+            "description": "A team's abbreviation as its feed sends it (KC); null for a player and for a team its feed gives none. A player's team and position are their roster row's.",
             "type": [
               "string",
               "null"
@@ -20773,7 +20766,7 @@
         "type": "object",
         "properties": {
           "q": {
-            "description": "Case-insensitive text matched against name, first, last and short name, and team.",
+            "description": "Case-insensitive text matched against name, first, last and short name, and a team's abbreviation.",
             "type": "string"
           },
           "sportLeagueId": {
@@ -20853,15 +20846,8 @@
                   "description": "Participant nationality or country code when known.",
                   "type": "string"
                 },
-                "role": {
-                  "description": "Playing role when known (\"GOLFER\", \"QB\"). Not a rank: `position` means rank on the standing objects.",
-                  "type": [
-                    "string",
-                    "null"
-                  ]
-                },
-                "teamAffiliation": {
-                  "description": "Current team affiliation when the participant is not itself a team.",
+                "abbreviation": {
+                  "description": "A team's abbreviation as its feed sends it (KC); null for a player and for a team its feed gives none. A player's team and position are their roster row's.",
                   "type": [
                     "string",
                     "null"
@@ -21028,15 +21014,8 @@
                 "description": "Participant nationality or country code when known.",
                 "type": "string"
               },
-              "role": {
-                "description": "Playing role when known (\"GOLFER\", \"QB\"). Not a rank: `position` means rank on the standing objects.",
-                "type": [
-                  "string",
-                  "null"
-                ]
-              },
-              "teamAffiliation": {
-                "description": "Current team affiliation when the participant is not itself a team.",
+              "abbreviation": {
+                "description": "A team's abbreviation as its feed sends it (KC); null for a player and for a team its feed gives none. A player's team and position are their roster row's.",
                 "type": [
                   "string",
                   "null"
@@ -21193,16 +21172,6 @@
             "type": "string",
             "maxLength": 10
           },
-          "role": {
-            "description": "Playing role (\"GOLFER\", \"QB\").",
-            "type": "string",
-            "maxLength": 50
-          },
-          "teamAffiliation": {
-            "description": "Current team affiliation.",
-            "type": "string",
-            "maxLength": 255
-          },
           "feedId": {
             "description": "The sport league's sync provider's own id for the participant, mapped to it in the same write. A provider-synced sport league requires it (409 PARTICIPANT_FEED_ID_REQUIRED otherwise) unless isTestData is true. 422 SPORT_LEAGUE_NOT_SYNCED in a league with no feed; 409 PARTICIPANT_FEED_ID_TAKEN when another participant of the league has it.",
             "type": "string",
@@ -21250,16 +21219,6 @@
             "description": "Participant nationality or country code.",
             "type": "string",
             "maxLength": 10
-          },
-          "role": {
-            "description": "Playing role (\"GOLFER\", \"QB\").",
-            "type": "string",
-            "maxLength": 50
-          },
-          "teamAffiliation": {
-            "description": "Current team affiliation.",
-            "type": "string",
-            "maxLength": 255
           },
           "status": {
             "description": "Participant lifecycle or availability status.",
@@ -25571,14 +25530,8 @@
               "null"
             ]
           },
-          "teamAffiliation": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "role": {
-            "description": "Playing role, such as a position; not a rank.",
+          "abbreviation": {
+            "description": "A team's abbreviation as its feed sends it (KC); null for a player and for a team its feed gives none.",
             "type": [
               "string",
               "null"
@@ -25628,8 +25581,7 @@
           "participantType",
           "shortName",
           "nationality",
-          "teamAffiliation",
-          "role",
+          "abbreviation",
           "ranking",
           "feedId",
           "lastInFeedAt",
@@ -25673,14 +25625,8 @@
                     "null"
                   ]
                 },
-                "teamAffiliation": {
-                  "type": [
-                    "string",
-                    "null"
-                  ]
-                },
-                "role": {
-                  "description": "Playing role, such as a position; not a rank.",
+                "abbreviation": {
+                  "description": "A team's abbreviation as its feed sends it (KC); null for a player and for a team its feed gives none.",
                   "type": [
                     "string",
                     "null"
@@ -25730,8 +25676,7 @@
                 "participantType",
                 "shortName",
                 "nationality",
-                "teamAffiliation",
-                "role",
+                "abbreviation",
                 "ranking",
                 "feedId",
                 "lastInFeedAt",
@@ -34623,15 +34568,8 @@
                 "description": "Participant nationality or country code when known.",
                 "type": "string"
               },
-              "role": {
-                "description": "Playing role when known (\"GOLFER\", \"QB\"). Not a rank: `position` means rank on the standing objects.",
-                "type": [
-                  "string",
-                  "null"
-                ]
-              },
-              "teamAffiliation": {
-                "description": "Current team affiliation when the participant is not itself a team.",
+              "abbreviation": {
+                "description": "A team's abbreviation as its feed sends it (KC); null for a player and for a team its feed gives none. A player's team and position are their roster row's.",
                 "type": [
                   "string",
                   "null"
@@ -35174,15 +35112,8 @@
                       "description": "Participant nationality or country code when known.",
                       "type": "string"
                     },
-                    "role": {
-                      "description": "Playing role when known (\"GOLFER\", \"QB\"). Not a rank: `position` means rank on the standing objects.",
-                      "type": [
-                        "string",
-                        "null"
-                      ]
-                    },
-                    "teamAffiliation": {
-                      "description": "Current team affiliation when the participant is not itself a team.",
+                    "abbreviation": {
+                      "description": "A team's abbreviation as its feed sends it (KC); null for a player and for a team its feed gives none. A player's team and position are their roster row's.",
                       "type": [
                         "string",
                         "null"
@@ -35852,15 +35783,8 @@
                     "description": "Participant nationality or country code when known.",
                     "type": "string"
                   },
-                  "role": {
-                    "description": "Playing role when known (\"GOLFER\", \"QB\"). Not a rank: `position` means rank on the standing objects.",
-                    "type": [
-                      "string",
-                      "null"
-                    ]
-                  },
-                  "teamAffiliation": {
-                    "description": "Current team affiliation when the participant is not itself a team.",
+                  "abbreviation": {
+                    "description": "A team's abbreviation as its feed sends it (KC); null for a player and for a team its feed gives none. A player's team and position are their roster row's.",
                     "type": [
                       "string",
                       "null"
@@ -36382,7 +36306,7 @@
                     "maximum": 9007199254740991
                   },
                   "scoring": {
-                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.",
                     "anyOf": [
                       {
                         "type": "object",
@@ -36582,7 +36506,7 @@
                     "maximum": 9007199254740991
                   },
                   "scoring": {
-                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.",
                     "anyOf": [
                       {
                         "type": "object",
@@ -36782,7 +36706,7 @@
                     "maximum": 9007199254740991
                   },
                   "scoring": {
-                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.",
                     "anyOf": [
                       {
                         "type": "object",
@@ -36982,7 +36906,7 @@
                     "maximum": 9007199254740991
                   },
                   "scoring": {
-                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.",
                     "anyOf": [
                       {
                         "type": "object",
@@ -37176,7 +37100,7 @@
                     "maximum": 9007199254740991
                   },
                   "scoring": {
-                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.",
                     "anyOf": [
                       {
                         "type": "object",
@@ -37373,7 +37297,7 @@
                     "maximum": 9007199254740991
                   },
                   "scoring": {
-                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.",
                     "anyOf": [
                       {
                         "type": "object",
@@ -37559,7 +37483,7 @@
                     "maximum": 9007199254740991
                   },
                   "scoring": {
-                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.",
                     "anyOf": [
                       {
                         "type": "object",
@@ -37800,12 +37724,6 @@
             "type": "string",
             "description": "The event."
           },
-          "sequence": {
-            "type": "integer",
-            "minimum": 1,
-            "maximum": 9007199254740991,
-            "description": "The event's place in the contest, 1 first: the contest's events in start-date order."
-          },
           "name": {
             "type": "string",
             "description": "The event's name."
@@ -37863,7 +37781,6 @@
         },
         "required": [
           "sportEventId",
-          "sequence",
           "name",
           "startDate",
           "endDate",
@@ -37874,7 +37791,7 @@
         "additionalProperties": false,
         "description": "One event a contest covers, enough to name, order and pick it without reading the event (#713)."
       },
-      "SetContestSportEventsRequest": {
+      "SetContestCoverageRequest": {
         "type": "object",
         "properties": {
           "sportEventIds": {
@@ -37884,14 +37801,131 @@
               "type": "string",
               "format": "uuid"
             },
-            "description": "Every event the contest should cover: the ones it keeps and the ones added. An event left out is removed. Kept in start-date order."
+            "description": "The events the contest covers instead, as at create: from the contest's sport league and Season, each released, with its field loaded and not yet started."
+          },
+          "startingSlotId": {
+            "description": "The Season slot the contest starts at, as at create. Left out, the events' first slot the template lists.",
+            "type": "string",
+            "format": "uuid"
           }
         },
         "required": [
           "sportEventIds"
         ],
         "additionalProperties": false,
-        "description": "Request payload for setting the events a contest covers."
+        "description": "Request payload for changing the event and starting slot of a contest still in Set up."
+      },
+      "ContestCoveredSlotDto": {
+        "type": "object",
+        "properties": {
+          "seasonSlotId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The Season slot (SportLeagueSeasonSlotDto.id)."
+          },
+          "slotDefinitionId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Its slot definition (SportLeagueCompetitionSlot)."
+          },
+          "key": {
+            "type": "string",
+            "description": "The definition's code in its league, such as WEEK_14, FINAL or MASTERS. An identifier; nothing parses it."
+          },
+          "name": {
+            "description": "The league's proper name for the slot, such as \"Super Bowl\", or a test slot's label; null: screens use the word for its kind.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "slotKind": {
+            "type": "string",
+            "enum": [
+              "WEEK",
+              "PLAY_IN",
+              "ROUND_OF_64",
+              "ROUND_OF_32",
+              "ROUND_OF_16",
+              "QUARTERFINAL",
+              "SEMIFINAL",
+              "THIRD_PLACE",
+              "FINAL",
+              "TOURNAMENT"
+            ],
+            "description": "What kind of slot it is: a WEEK of games, a postseason ROUND, a TOURNAMENT of its own, a PLAY_IN."
+          },
+          "weekNumber": {
+            "description": "For a WEEK slot, its week; null otherwise.",
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "SCHEDULED",
+              "IN_PROGRESS",
+              "COMPLETED",
+              "CANCELLED"
+            ],
+            "description": "The Season slot's own status."
+          },
+          "startsAt": {
+            "description": "The earliest start of the slot's games; null until the sync has placed one.",
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "endsAt": {
+            "description": "The latest end of the slot's games; null until the sync has placed one.",
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "sportEventId": {
+            "description": "The event that plays the slot, one of the contest's `sportEvents`; null until an event does.",
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "competitionCode": {
+            "type": "string",
+            "description": "The competition the slot is in, such as REGULAR or CFP; nothing parses it."
+          },
+          "competitionName": {
+            "description": "That competition's name, such as \"Bowls\", when it has one.",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "seasonSlotId",
+          "slotDefinitionId",
+          "key",
+          "name",
+          "slotKind",
+          "weekNumber",
+          "status",
+          "startsAt",
+          "endsAt",
+          "sportEventId",
+          "competitionCode",
+          "competitionName"
+        ],
+        "additionalProperties": false,
+        "description": "One Season slot a contest covers (#2014): what a screen names it by, its status and the event that plays it."
       },
       "SetContestCupWeightRequest": {
         "type": "object",
@@ -38049,12 +38083,6 @@
                   "type": "string",
                   "description": "The event."
                 },
-                "sequence": {
-                  "type": "integer",
-                  "minimum": 1,
-                  "maximum": 9007199254740991,
-                  "description": "The event's place in the contest, 1 first: the contest's events in start-date order."
-                },
                 "name": {
                   "type": "string",
                   "description": "The event's name."
@@ -38112,7 +38140,6 @@
               },
               "required": [
                 "sportEventId",
-                "sequence",
                 "name",
                 "startDate",
                 "endDate",
@@ -38123,7 +38150,131 @@
               "additionalProperties": false,
               "description": "One event a contest covers, enough to name, order and pick it without reading the event (#713)."
             },
-            "description": "The events the contest covers, in sequence order (#713). One for a golf or race contest."
+            "description": "The events that play the contest's covered slots, each once, in the order their slots are played (#713). One for a golf or race contest."
+          },
+          "coveredSlots": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "seasonSlotId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "description": "The Season slot (SportLeagueSeasonSlotDto.id)."
+                },
+                "slotDefinitionId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "description": "Its slot definition (SportLeagueCompetitionSlot)."
+                },
+                "key": {
+                  "type": "string",
+                  "description": "The definition's code in its league, such as WEEK_14, FINAL or MASTERS. An identifier; nothing parses it."
+                },
+                "name": {
+                  "description": "The league's proper name for the slot, such as \"Super Bowl\", or a test slot's label; null: screens use the word for its kind.",
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "slotKind": {
+                  "type": "string",
+                  "enum": [
+                    "WEEK",
+                    "PLAY_IN",
+                    "ROUND_OF_64",
+                    "ROUND_OF_32",
+                    "ROUND_OF_16",
+                    "QUARTERFINAL",
+                    "SEMIFINAL",
+                    "THIRD_PLACE",
+                    "FINAL",
+                    "TOURNAMENT"
+                  ],
+                  "description": "What kind of slot it is: a WEEK of games, a postseason ROUND, a TOURNAMENT of its own, a PLAY_IN."
+                },
+                "weekNumber": {
+                  "description": "For a WEEK slot, its week; null otherwise.",
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "SCHEDULED",
+                    "IN_PROGRESS",
+                    "COMPLETED",
+                    "CANCELLED"
+                  ],
+                  "description": "The Season slot's own status."
+                },
+                "startsAt": {
+                  "description": "The earliest start of the slot's games; null until the sync has placed one.",
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "date-time"
+                },
+                "endsAt": {
+                  "description": "The latest end of the slot's games; null until the sync has placed one.",
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "date-time"
+                },
+                "sportEventId": {
+                  "description": "The event that plays the slot, one of the contest's `sportEvents`; null until an event does.",
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "uuid"
+                },
+                "competitionCode": {
+                  "type": "string",
+                  "description": "The competition the slot is in, such as REGULAR or CFP; nothing parses it."
+                },
+                "competitionName": {
+                  "description": "That competition's name, such as \"Bowls\", when it has one.",
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "required": [
+                "seasonSlotId",
+                "slotDefinitionId",
+                "key",
+                "name",
+                "slotKind",
+                "weekNumber",
+                "status",
+                "startsAt",
+                "endsAt",
+                "sportEventId",
+                "competitionCode",
+                "competitionName"
+              ],
+              "additionalProperties": false,
+              "description": "One Season slot a contest covers (#2014): what a screen names it by, its status and the event that plays it."
+            },
+            "description": "The Season slots the contest covers, in play order (#2014), fixed at creation."
+          },
+          "currentSlotId": {
+            "description": "The covered slot the contest's pages open on when none is named (#2014): its first covered slot that has not started, the one being picked, else its last. A slot has started once its event has and, when its games give it a start, that start has passed. Null only for a contest that covers no slot.",
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
           },
           "sport": {
             "type": [
@@ -38259,6 +38410,8 @@
           "selectionType",
           "leagueId",
           "sportEvents",
+          "coveredSlots",
+          "currentSlotId",
           "entriesPerContest"
         ],
         "additionalProperties": false,
@@ -38408,19 +38561,6 @@
                     "null"
                   ]
                 },
-                "role": {
-                  "description": "The participant's playing role, when known.",
-                  "type": [
-                    "string",
-                    "null"
-                  ]
-                },
-                "teamAffiliation": {
-                  "type": [
-                    "string",
-                    "null"
-                  ]
-                },
                 "pickedAt": {
                   "type": "string",
                   "format": "date-time",
@@ -38475,19 +38615,6 @@
             "type": "string"
           },
           "participantStatus": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "role": {
-            "description": "The participant's playing role, when known.",
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "teamAffiliation": {
             "type": [
               "string",
               "null"
@@ -39226,15 +39353,8 @@
                       "description": "Participant nationality or country code when known.",
                       "type": "string"
                     },
-                    "role": {
-                      "description": "Playing role when known (\"GOLFER\", \"QB\"). Not a rank: `position` means rank on the standing objects.",
-                      "type": [
-                        "string",
-                        "null"
-                      ]
-                    },
-                    "teamAffiliation": {
-                      "description": "Current team affiliation when the participant is not itself a team.",
+                    "abbreviation": {
+                      "description": "A team's abbreviation as its feed sends it (KC); null for a player and for a team its feed gives none. A player's team and position are their roster row's.",
                       "type": [
                         "string",
                         "null"
@@ -40029,12 +40149,6 @@
                       "type": "string",
                       "description": "The event."
                     },
-                    "sequence": {
-                      "type": "integer",
-                      "minimum": 1,
-                      "maximum": 9007199254740991,
-                      "description": "The event's place in the contest, 1 first: the contest's events in start-date order."
-                    },
                     "name": {
                       "type": "string",
                       "description": "The event's name."
@@ -40092,7 +40206,6 @@
                   },
                   "required": [
                     "sportEventId",
-                    "sequence",
                     "name",
                     "startDate",
                     "endDate",
@@ -40103,7 +40216,131 @@
                   "additionalProperties": false,
                   "description": "One event a contest covers, enough to name, order and pick it without reading the event (#713)."
                 },
-                "description": "The events the contest covers, in sequence order (#713). One for a golf or race contest."
+                "description": "The events that play the contest's covered slots, each once, in the order their slots are played (#713). One for a golf or race contest."
+              },
+              "coveredSlots": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "seasonSlotId": {
+                      "type": "string",
+                      "format": "uuid",
+                      "description": "The Season slot (SportLeagueSeasonSlotDto.id)."
+                    },
+                    "slotDefinitionId": {
+                      "type": "string",
+                      "format": "uuid",
+                      "description": "Its slot definition (SportLeagueCompetitionSlot)."
+                    },
+                    "key": {
+                      "type": "string",
+                      "description": "The definition's code in its league, such as WEEK_14, FINAL or MASTERS. An identifier; nothing parses it."
+                    },
+                    "name": {
+                      "description": "The league's proper name for the slot, such as \"Super Bowl\", or a test slot's label; null: screens use the word for its kind.",
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "slotKind": {
+                      "type": "string",
+                      "enum": [
+                        "WEEK",
+                        "PLAY_IN",
+                        "ROUND_OF_64",
+                        "ROUND_OF_32",
+                        "ROUND_OF_16",
+                        "QUARTERFINAL",
+                        "SEMIFINAL",
+                        "THIRD_PLACE",
+                        "FINAL",
+                        "TOURNAMENT"
+                      ],
+                      "description": "What kind of slot it is: a WEEK of games, a postseason ROUND, a TOURNAMENT of its own, a PLAY_IN."
+                    },
+                    "weekNumber": {
+                      "description": "For a WEEK slot, its week; null otherwise.",
+                      "type": [
+                        "integer",
+                        "null"
+                      ],
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "SCHEDULED",
+                        "IN_PROGRESS",
+                        "COMPLETED",
+                        "CANCELLED"
+                      ],
+                      "description": "The Season slot's own status."
+                    },
+                    "startsAt": {
+                      "description": "The earliest start of the slot's games; null until the sync has placed one.",
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "date-time"
+                    },
+                    "endsAt": {
+                      "description": "The latest end of the slot's games; null until the sync has placed one.",
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "date-time"
+                    },
+                    "sportEventId": {
+                      "description": "The event that plays the slot, one of the contest's `sportEvents`; null until an event does.",
+                      "type": [
+                        "string",
+                        "null"
+                      ],
+                      "format": "uuid"
+                    },
+                    "competitionCode": {
+                      "type": "string",
+                      "description": "The competition the slot is in, such as REGULAR or CFP; nothing parses it."
+                    },
+                    "competitionName": {
+                      "description": "That competition's name, such as \"Bowls\", when it has one.",
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "seasonSlotId",
+                    "slotDefinitionId",
+                    "key",
+                    "name",
+                    "slotKind",
+                    "weekNumber",
+                    "status",
+                    "startsAt",
+                    "endsAt",
+                    "sportEventId",
+                    "competitionCode",
+                    "competitionName"
+                  ],
+                  "additionalProperties": false,
+                  "description": "One Season slot a contest covers (#2014): what a screen names it by, its status and the event that plays it."
+                },
+                "description": "The Season slots the contest covers, in play order (#2014), fixed at creation."
+              },
+              "currentSlotId": {
+                "description": "The covered slot the contest's pages open on when none is named (#2014): its first covered slot that has not started, the one being picked, else its last. A slot has started once its event has and, when its games give it a start, that start has passed. Null only for a contest that covers no slot.",
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "format": "uuid"
               },
               "sport": {
                 "type": [
@@ -40239,6 +40476,8 @@
               "selectionType",
               "leagueId",
               "sportEvents",
+              "coveredSlots",
+              "currentSlotId",
               "entriesPerContest"
             ],
             "additionalProperties": false,
@@ -40306,12 +40545,6 @@
                         "type": "string",
                         "description": "The event."
                       },
-                      "sequence": {
-                        "type": "integer",
-                        "minimum": 1,
-                        "maximum": 9007199254740991,
-                        "description": "The event's place in the contest, 1 first: the contest's events in start-date order."
-                      },
                       "name": {
                         "type": "string",
                         "description": "The event's name."
@@ -40369,7 +40602,6 @@
                     },
                     "required": [
                       "sportEventId",
-                      "sequence",
                       "name",
                       "startDate",
                       "endDate",
@@ -40380,7 +40612,131 @@
                     "additionalProperties": false,
                     "description": "One event a contest covers, enough to name, order and pick it without reading the event (#713)."
                   },
-                  "description": "The events the contest covers, in sequence order (#713). One for a golf or race contest."
+                  "description": "The events that play the contest's covered slots, each once, in the order their slots are played (#713). One for a golf or race contest."
+                },
+                "coveredSlots": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "seasonSlotId": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "The Season slot (SportLeagueSeasonSlotDto.id)."
+                      },
+                      "slotDefinitionId": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Its slot definition (SportLeagueCompetitionSlot)."
+                      },
+                      "key": {
+                        "type": "string",
+                        "description": "The definition's code in its league, such as WEEK_14, FINAL or MASTERS. An identifier; nothing parses it."
+                      },
+                      "name": {
+                        "description": "The league's proper name for the slot, such as \"Super Bowl\", or a test slot's label; null: screens use the word for its kind.",
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "slotKind": {
+                        "type": "string",
+                        "enum": [
+                          "WEEK",
+                          "PLAY_IN",
+                          "ROUND_OF_64",
+                          "ROUND_OF_32",
+                          "ROUND_OF_16",
+                          "QUARTERFINAL",
+                          "SEMIFINAL",
+                          "THIRD_PLACE",
+                          "FINAL",
+                          "TOURNAMENT"
+                        ],
+                        "description": "What kind of slot it is: a WEEK of games, a postseason ROUND, a TOURNAMENT of its own, a PLAY_IN."
+                      },
+                      "weekNumber": {
+                        "description": "For a WEEK slot, its week; null otherwise.",
+                        "type": [
+                          "integer",
+                          "null"
+                        ],
+                        "minimum": -9007199254740991,
+                        "maximum": 9007199254740991
+                      },
+                      "status": {
+                        "type": "string",
+                        "enum": [
+                          "SCHEDULED",
+                          "IN_PROGRESS",
+                          "COMPLETED",
+                          "CANCELLED"
+                        ],
+                        "description": "The Season slot's own status."
+                      },
+                      "startsAt": {
+                        "description": "The earliest start of the slot's games; null until the sync has placed one.",
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "format": "date-time"
+                      },
+                      "endsAt": {
+                        "description": "The latest end of the slot's games; null until the sync has placed one.",
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "format": "date-time"
+                      },
+                      "sportEventId": {
+                        "description": "The event that plays the slot, one of the contest's `sportEvents`; null until an event does.",
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "format": "uuid"
+                      },
+                      "competitionCode": {
+                        "type": "string",
+                        "description": "The competition the slot is in, such as REGULAR or CFP; nothing parses it."
+                      },
+                      "competitionName": {
+                        "description": "That competition's name, such as \"Bowls\", when it has one.",
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "seasonSlotId",
+                      "slotDefinitionId",
+                      "key",
+                      "name",
+                      "slotKind",
+                      "weekNumber",
+                      "status",
+                      "startsAt",
+                      "endsAt",
+                      "sportEventId",
+                      "competitionCode",
+                      "competitionName"
+                    ],
+                    "additionalProperties": false,
+                    "description": "One Season slot a contest covers (#2014): what a screen names it by, its status and the event that plays it."
+                  },
+                  "description": "The Season slots the contest covers, in play order (#2014), fixed at creation."
+                },
+                "currentSlotId": {
+                  "description": "The covered slot the contest's pages open on when none is named (#2014): its first covered slot that has not started, the one being picked, else its last. A slot has started once its event has and, when its games give it a start, that start has passed. Null only for a contest that covers no slot.",
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "uuid"
                 },
                 "sport": {
                   "type": [
@@ -40516,6 +40872,8 @@
                 "selectionType",
                 "leagueId",
                 "sportEvents",
+                "coveredSlots",
+                "currentSlotId",
                 "entriesPerContest"
               ],
               "additionalProperties": false,
@@ -40674,19 +41032,6 @@
                       "type": "string"
                     },
                     "participantStatus": {
-                      "type": [
-                        "string",
-                        "null"
-                      ]
-                    },
-                    "role": {
-                      "description": "The participant's playing role, when known.",
-                      "type": [
-                        "string",
-                        "null"
-                      ]
-                    },
-                    "teamAffiliation": {
                       "type": [
                         "string",
                         "null"
@@ -40851,19 +41196,6 @@
                       "type": "string"
                     },
                     "participantStatus": {
-                      "type": [
-                        "string",
-                        "null"
-                      ]
-                    },
-                    "role": {
-                      "description": "The participant's playing role, when known.",
-                      "type": [
-                        "string",
-                        "null"
-                      ]
-                    },
-                    "teamAffiliation": {
                       "type": [
                         "string",
                         "null"
@@ -41049,19 +41381,6 @@
                         "type": "string"
                       },
                       "participantStatus": {
-                        "type": [
-                          "string",
-                          "null"
-                        ]
-                      },
-                      "role": {
-                        "description": "The participant's playing role, when known.",
-                        "type": [
-                          "string",
-                          "null"
-                        ]
-                      },
-                      "teamAffiliation": {
                         "type": [
                           "string",
                           "null"
@@ -41264,19 +41583,6 @@
                         "type": "string"
                       },
                       "participantStatus": {
-                        "type": [
-                          "string",
-                          "null"
-                        ]
-                      },
-                      "role": {
-                        "description": "The participant's playing role, when known.",
-                        "type": [
-                          "string",
-                          "null"
-                        ]
-                      },
-                      "teamAffiliation": {
                         "type": [
                           "string",
                           "null"
@@ -41543,12 +41849,6 @@
                     "null"
                   ]
                 },
-                "role": {
-                  "type": "string"
-                },
-                "team": {
-                  "type": "string"
-                },
                 "price": {
                   "type": "number"
                 },
@@ -41646,18 +41946,6 @@
                       },
                       "participantName": {
                         "type": "string"
-                      },
-                      "role": {
-                        "type": [
-                          "string",
-                          "null"
-                        ]
-                      },
-                      "team": {
-                        "type": [
-                          "string",
-                          "null"
-                        ]
                       },
                       "status": {
                         "type": [
@@ -41854,12 +42142,6 @@
                     "string",
                     "null"
                   ]
-                },
-                "role": {
-                  "type": "string"
-                },
-                "team": {
-                  "type": "string"
                 },
                 "price": {
                   "type": "number"
@@ -43564,18 +43846,6 @@
                       },
                       "participantName": {
                         "type": "string"
-                      },
-                      "role": {
-                        "type": [
-                          "string",
-                          "null"
-                        ]
-                      },
-                      "team": {
-                        "type": [
-                          "string",
-                          "null"
-                        ]
                       },
                       "status": {
                         "type": [
@@ -60952,7 +61222,7 @@
                         "maximum": 9007199254740991
                       },
                       "scoring": {
-                        "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                        "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.",
                         "anyOf": [
                           {
                             "type": "object",
@@ -61152,7 +61422,7 @@
                         "maximum": 9007199254740991
                       },
                       "scoring": {
-                        "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                        "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.",
                         "anyOf": [
                           {
                             "type": "object",
@@ -61352,7 +61622,7 @@
                         "maximum": 9007199254740991
                       },
                       "scoring": {
-                        "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                        "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.",
                         "anyOf": [
                           {
                             "type": "object",
@@ -61552,7 +61822,7 @@
                         "maximum": 9007199254740991
                       },
                       "scoring": {
-                        "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                        "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.",
                         "anyOf": [
                           {
                             "type": "object",
@@ -61746,7 +62016,7 @@
                         "maximum": 9007199254740991
                       },
                       "scoring": {
-                        "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                        "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.",
                         "anyOf": [
                           {
                             "type": "object",
@@ -61943,7 +62213,7 @@
                         "maximum": 9007199254740991
                       },
                       "scoring": {
-                        "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                        "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.",
                         "anyOf": [
                           {
                             "type": "object",
@@ -62129,7 +62399,7 @@
                         "maximum": 9007199254740991
                       },
                       "scoring": {
-                        "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                        "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.",
                         "anyOf": [
                           {
                             "type": "object",
@@ -62733,7 +63003,7 @@
                               "maximum": 9007199254740991
                             },
                             "scoring": {
-                              "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                              "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.",
                               "anyOf": [
                                 {
                                   "type": "object",
@@ -62933,7 +63203,7 @@
                               "maximum": 9007199254740991
                             },
                             "scoring": {
-                              "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                              "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.",
                               "anyOf": [
                                 {
                                   "type": "object",
@@ -63133,7 +63403,7 @@
                               "maximum": 9007199254740991
                             },
                             "scoring": {
-                              "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                              "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.",
                               "anyOf": [
                                 {
                                   "type": "object",
@@ -63333,7 +63603,7 @@
                               "maximum": 9007199254740991
                             },
                             "scoring": {
-                              "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                              "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.",
                               "anyOf": [
                                 {
                                   "type": "object",
@@ -63527,7 +63797,7 @@
                               "maximum": 9007199254740991
                             },
                             "scoring": {
-                              "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                              "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.",
                               "anyOf": [
                                 {
                                   "type": "object",
@@ -63724,7 +63994,7 @@
                               "maximum": 9007199254740991
                             },
                             "scoring": {
-                              "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                              "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.",
                               "anyOf": [
                                 {
                                   "type": "object",
@@ -63910,7 +64180,7 @@
                               "maximum": 9007199254740991
                             },
                             "scoring": {
-                              "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                              "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.",
                               "anyOf": [
                                 {
                                   "type": "object",
@@ -64535,7 +64805,7 @@
                                   "maximum": 9007199254740991
                                 },
                                 "scoring": {
-                                  "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                                  "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.",
                                   "anyOf": [
                                     {
                                       "type": "object",
@@ -64735,7 +65005,7 @@
                                   "maximum": 9007199254740991
                                 },
                                 "scoring": {
-                                  "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                                  "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.",
                                   "anyOf": [
                                     {
                                       "type": "object",
@@ -64935,7 +65205,7 @@
                                   "maximum": 9007199254740991
                                 },
                                 "scoring": {
-                                  "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                                  "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.",
                                   "anyOf": [
                                     {
                                       "type": "object",
@@ -65135,7 +65405,7 @@
                                   "maximum": 9007199254740991
                                 },
                                 "scoring": {
-                                  "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                                  "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.",
                                   "anyOf": [
                                     {
                                       "type": "object",
@@ -65329,7 +65599,7 @@
                                   "maximum": 9007199254740991
                                 },
                                 "scoring": {
-                                  "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                                  "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.",
                                   "anyOf": [
                                     {
                                       "type": "object",
@@ -65526,7 +65796,7 @@
                                   "maximum": 9007199254740991
                                 },
                                 "scoring": {
-                                  "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                                  "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.",
                                   "anyOf": [
                                     {
                                       "type": "object",
@@ -65712,7 +65982,7 @@
                                   "maximum": 9007199254740991
                                 },
                                 "scoring": {
-                                  "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                                  "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.",
                                   "anyOf": [
                                     {
                                       "type": "object",
@@ -66374,7 +66644,7 @@
                                     "maximum": 9007199254740991
                                   },
                                   "scoring": {
-                                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.",
                                     "anyOf": [
                                       {
                                         "type": "object",
@@ -66574,7 +66844,7 @@
                                     "maximum": 9007199254740991
                                   },
                                   "scoring": {
-                                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.",
                                     "anyOf": [
                                       {
                                         "type": "object",
@@ -66774,7 +67044,7 @@
                                     "maximum": 9007199254740991
                                   },
                                   "scoring": {
-                                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.",
                                     "anyOf": [
                                       {
                                         "type": "object",
@@ -66974,7 +67244,7 @@
                                     "maximum": 9007199254740991
                                   },
                                   "scoring": {
-                                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.",
                                     "anyOf": [
                                       {
                                         "type": "object",
@@ -67168,7 +67438,7 @@
                                     "maximum": 9007199254740991
                                   },
                                   "scoring": {
-                                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.",
                                     "anyOf": [
                                       {
                                         "type": "object",
@@ -67365,7 +67635,7 @@
                                     "maximum": 9007199254740991
                                   },
                                   "scoring": {
-                                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.",
                                     "anyOf": [
                                       {
                                         "type": "object",
@@ -67551,7 +67821,7 @@
                                     "maximum": 9007199254740991
                                   },
                                   "scoring": {
-                                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
+                                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring.",
                                     "anyOf": [
                                       {
                                         "type": "object",
@@ -86345,6 +86615,116 @@
         }
       }
     },
+    "/api/v1/leagues/{id}/contest-management/contests/{contestId}/coverage": {
+      "put": {
+        "operationId": "setContestCoverage",
+        "summary": "Change the event and starting slot of a contest in Set up",
+        "tags": [
+          "Contest Management"
+        ],
+        "description": "Changes the events a contest covers and its starting slot (#2014), and returns it as getContestConfiguration does. Commissioner only, and only while the contest is in Set up (DRAFT): from the moment it opens its coverage is fixed. The covered Season slots are resolved again from the contest's template, as at create, and the events are checked as at create (released, field loaded, not started, the contest's sport league and Season, the rules fit them).",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetContestCoverageRequest"
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          },
+          {
+            "schema": {
+              "type": "string"
+            },
+            "in": "path",
+            "name": "contestId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Managed-contest detail response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContestManagementResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "CONTEST_NOT_FOUND, or SPORT_EVENT_NOT_FOUND for an event that does not exist.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "CONTEST_EVENTS_LOCKED — the contest is no longer in Set up (checked again under the contest row lock), or it is a squares contest, whose event came with its game. CONTEST_BUDGET_SALARY_CAP_MISMATCH, CONTEST_EVENT_NOT_PRICED or CONTEST_BUDGET_UNFILLABLE — budget rules the new events cannot fill.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "SPORT_EVENT_NOT_RELEASED, SPORT_EVENT_FIELD_NOT_LOADED or SPORT_EVENT_ALREADY_STARTED — an event contests cannot be built on. CONTEST_EVENTS_LEAGUE_MISMATCH — an event from another sport league. CONTEST_EVENTS_SEASON_MISMATCH — an event of another Season than the contest's, fixed at creation. CONTEST_COVERAGE_NO_LISTED_SLOT, CONTEST_COVERAGE_SLOT_NOT_CHOSEN or CONTEST_COVERAGE_SLOT_NOT_COVERABLE — the events and starting slot do not give the template a slot to cover, as at create. CONTEST_DRAW_SINGLE_EVENT, CONTEST_BRACKET_SINGLE_EVENT or CONTEST_SQUARES_SINGLE_EVENT — a one-event contest given more. CONTEST_TIER_FIELD_OUT_OF_RANGE or CONTEST_SCORING_ROUNDS_MISMATCH — the rules do not fit the new event. CONTEST_EVENT_HAS_NO_GAMES, CONTEST_EVENT_GAME_UNDECIDED or CONTEST_EVENT_SPREAD_MISSING — a week that cannot be picked under the pick'em rules.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/leagues/{id}/contest-management/contests/{contestId}/cup-weight": {
       "put": {
         "operationId": "setContestCupWeight",
@@ -86434,116 +86814,6 @@
           },
           "409": {
             "description": "CONTEST_FINAL — the contest is COMPLETED, so its weight is fixed.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/leagues/{id}/contest-management/contests/{contestId}/sport-events": {
-      "put": {
-        "operationId": "setContestSportEvents",
-        "summary": "Set the events a contest covers",
-        "tags": [
-          "Contest Management"
-        ],
-        "description": "Sets the events the contest covers (#713) and returns it as getContestConfiguration does. Commissioner only. Send every event the contest should cover; one left out is removed, and its picks with it. The contest keeps its events in start-date order. An added event must be released, have its field loaded, not have started, and be from the contest's sport league; the contest's rules are checked against it as at create. Events can be added while the contest is DRAFT, OPEN or ACTIVE, and removed only while none of its events has started.",
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SetContestSportEventsRequest"
-              }
-            }
-          }
-        },
-        "parameters": [
-          {
-            "schema": {
-              "type": "string"
-            },
-            "in": "path",
-            "name": "id",
-            "required": true
-          },
-          {
-            "schema": {
-              "type": "string"
-            },
-            "in": "path",
-            "name": "contestId",
-            "required": true
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Managed-contest detail response.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ContestManagementResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Standard API error envelope.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "CONTEST_NOT_FOUND, or SPORT_EVENT_NOT_FOUND for an event that does not exist.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "CONTEST_EVENTS_LOCKED — an event would be removed after one of the contest's events started, or the contest is COMPLETED or drawn. CONTEST_BUDGET_SALARY_CAP_MISMATCH — a budget contest's events were priced against different salary caps, or an open one's new event against another cap than its entries were built under. CONTEST_EVENT_NOT_PRICED or CONTEST_BUDGET_UNFILLABLE — budget rules an added event cannot fill.",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "SPORT_EVENT_NOT_RELEASED, SPORT_EVENT_FIELD_NOT_LOADED or SPORT_EVENT_ALREADY_STARTED — an added event is not one contests can be built on. CONTEST_EVENTS_LEAGUE_MISMATCH — an event from another sport league. CONTEST_EVENTS_SEASON_MISMATCH — an event of another Season than the contest's, fixed at creation. CONTEST_COVERAGE_NO_LISTED_SLOT — the events hold none of the slots the contest's template lists. CONTEST_DRAW_SINGLE_EVENT — a random-draw contest given more than one event. CONTEST_BRACKET_SINGLE_EVENT — a bracket contest given more than one event. CONTEST_SQUARES_SINGLE_EVENT — a squares contest given more than one event. CONTEST_TIER_FIELD_OUT_OF_RANGE or CONTEST_SCORING_ROUNDS_MISMATCH — the rules do not fit an added event. CONTEST_EVENT_HAS_NO_GAMES, CONTEST_EVENT_GAME_UNDECIDED or CONTEST_EVENT_SPREAD_MISSING — an added week cannot be picked under the pick'em rules. CONTEST_SPREAD_NOT_OFFERED — a pick'em pool against the spread in a sport whose pools have no spread (#792).",
             "content": {
               "application/json": {
                 "schema": {
@@ -94168,7 +94438,7 @@
             "in": "query",
             "name": "q",
             "required": false,
-            "description": "Case-insensitive text matched against name, first, last and short name, and team."
+            "description": "Case-insensitive text matched against name, first, last and short name, and a team's abbreviation."
           },
           {
             "schema": {

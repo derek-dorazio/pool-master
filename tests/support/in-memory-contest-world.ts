@@ -65,7 +65,7 @@ import {
   TeamIconKey, SportEventParticipantStatus } from '@poolmaster/shared/domain';
 import type { ContestServiceDeps, StoredLeaderboard } from '../../packages/core-api/src/modules/contests/service';
 import type { SetTier } from '../../packages/core-api/src/modules/events/sport-event-tier-service';
-import { buildLeague, buildUser } from '../factories';
+import { buildCoveredSlot, buildLeague, buildUser } from '../factories';
 import {
   fakeLeagueRepo,
   fakeParticipantContestScoringRuleRepo,
@@ -226,12 +226,16 @@ export class InMemoryContestWorld {
   }
 
   /** A contest's events and coverage from its covered Season slots, as the adapter reads them. */
-  private coverageOf(seasonSlotIds: readonly string[]): Pick<Contest, 'sportEventIds' | 'coveredSeasonSlotIds' | 'coveredSlotDefinitionIds'> {
-    const slots = seasonSlotIds.flatMap((seasonSlotId) => this.seasonSlots.get(seasonSlotId) ?? []);
+  private coverageOf(seasonSlotIds: readonly string[]): Pick<Contest, 'sportEventIds' | 'coveredSeasonSlotIds' | 'coveredSlotDefinitionIds' | 'coveredSlots'> {
+    const slots = seasonSlotIds.flatMap((seasonSlotId) => {
+      const slot = this.seasonSlots.get(seasonSlotId);
+      return slot ? [{ seasonSlotId, ...slot }] : [];
+    });
     return {
       sportEventIds: [...new Set(slots.map((slot) => slot.sportEventId))],
       coveredSeasonSlotIds: [...seasonSlotIds],
       coveredSlotDefinitionIds: slots.map((slot) => slot.slotDefinitionId),
+      coveredSlots: slots.map((slot) => buildCoveredSlot(slot)),
     };
   }
 
@@ -343,8 +347,6 @@ export class InMemoryContestWorld {
         participantId: `participant-of-${sportEventParticipantId}`,
         participantName: `Golfer ${sportEventParticipantId}`,
         status: SportEventParticipantStatus.ACTIVE,
-        role: null,
-        teamAffiliation: null,
       },
     };
     this.picks.set(pick.id, pick);
@@ -464,11 +466,10 @@ export class InMemoryContestWorld {
         this.contests.set(id, updated);
         return updated;
       },
-      // Mirrors the adapter: removed events take their picks and entry statuses with them, and
-      // every entry gets a DRAFT status for each added event.
-      replaceCoveredSlots: async (id, seasonSlotIds) => {
+      replaceCoveredSlots: async (id, seasonSlotIds, whileIn) => {
         const existing = this.contests.get(id);
         if (!existing) throw new Error(`Record to update not found: contest ${id}`);
+        if (!whileIn.includes(existing.status)) return false;
         const coverage = this.coverageOf(seasonSlotIds);
         const { sportEventIds } = coverage;
         const removed = existing.sportEventIds.filter((eventId) => !sportEventIds.includes(eventId));
@@ -486,6 +487,7 @@ export class InMemoryContestWorld {
             .map((sportEventId) => ({ sportEventId, status: 'DRAFT' as const }));
           this.entries.set(entry.id, { ...entry, events: [...kept, ...added] });
         }
+        return true;
       },
       setCupWeight: async (id, cupWeight, whileIn) => {
         const existing = this.contests.get(id);

@@ -56,7 +56,8 @@ export function toMlbPlayoffTeam(team: MlbTeam, path: string): PlayoffTeam {
   return {
     id,
     name: required(team.display_name, path, `team ${String(id)}`, 'display_name'),
-    metadata: { abbreviation: team.abbreviation, league: team.league, division: team.division },
+    ...(team.abbreviation ? { abbreviation: team.abbreviation } : {}),
+    metadata: { league: team.league, division: team.division },
   };
 }
 

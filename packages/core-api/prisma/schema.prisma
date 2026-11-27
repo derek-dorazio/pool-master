@@ -1364,9 +1364,9 @@ model Participant {
   lastName         String?                 @map("last_name")
   shortName        String?                 @map("short_name") @db.VarChar(100)
   nationality      String?                 @db.VarChar(10)
-  /// Playing role ("GOLFER", "QB"), not a rank — `position` means rank on the standing tables.
-  role             String?                 @db.VarChar(50)
-  teamAffiliation  String?                 @map("team_affiliation")
+  /// A team's abbreviation as its feed sends it (KC, LAL), for compact screens (#2025). Null for a
+  /// player and for a team its feed gives none. A player's team and position are their roster row's.
+  abbreviation     String?                 @db.VarChar(10)
   status           PrismaParticipantStatus @default(ACTIVE)
   injuryStatus     Json                    @default("{\"status\": \"HEALTHY\"}") @map("injury_status")
   photoUrl         String?                 @map("photo_url")
@@ -1380,7 +1380,13 @@ model Participant {
   providerMappings       ParticipantProviderMapping[]
   sportEventParticipants SportEventParticipant[]
   championOf             SportLeagueSeasonCompetition[]
+  /// A player's roster rows, one per Season (#2025).
+  rosterRows             SportLeagueSeasonParticipantTeam[] @relation("RosterPlayer")
+  /// A team's players' roster rows.
+  rosterPlayers          SportLeagueSeasonParticipantTeam[] @relation("RosterTeam")
 
+  /// The target of the composite keys that keep a participant's rows in its own league.
+  @@unique([sportLeagueId, id])
   @@index([sportLeagueId, status])
   /// A sport league's participants by name: the catalog list's filter and order.
   @@index([sportLeagueId, name])
@@ -1391,8 +1397,43 @@ model Participant {
   @@index([firstName(ops: raw("gin_trgm_ops"))], type: Gin, map: "participants_first_name_trgm_idx")
   @@index([lastName(ops: raw("gin_trgm_ops"))], type: Gin, map: "participants_last_name_trgm_idx")
   @@index([shortName(ops: raw("gin_trgm_ops"))], type: Gin, map: "participants_short_name_trgm_idx")
-  @@index([teamAffiliation(ops: raw("gin_trgm_ops"))], type: Gin, map: "participants_team_affiliation_trgm_idx")
+  @@index([abbreviation(ops: raw("gin_trgm_ops"))], type: Gin, map: "participants_abbreviation_trgm_idx")
   @@map("participants")
+}
+
+/// A player's roster row (#2025, plan §4): one per Season and player, naming their team and their
+/// position in that Season. Written by the roster sync, which keeps only field-eligible
+/// positions and never deletes a player missing from the feed; it updates their team and position
+/// and when the feed last listed them. No trade history is kept. Every key runs through the
+/// sport league, so the Season, the player, their team and their position are one league's.
+model SportLeagueSeasonParticipantTeam {
+  id                    String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sportLeagueId         String   @map("sport_league_id") @db.Uuid
+  sportLeagueSeasonId   String   @map("sport_league_season_id") @db.Uuid
+  /// The player.
+  participantId         String   @map("participant_id") @db.Uuid
+  /// The team they play for in the Season, a TEAM participant of the same league.
+  teamParticipantId     String   @map("team_participant_id") @db.Uuid
+  sportLeaguePositionId String   @map("sport_league_position_id") @db.Uuid
+  /// When the roster sync last found them in the feed.
+  lastSeenAt            DateTime @map("last_seen_at") @db.Timestamptz
+  createdAt             DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt             DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  season   SportLeagueSeason   @relation(fields: [sportLeagueId, sportLeagueSeasonId], references: [sportLeagueId, id], onDelete: Cascade, map: "sport_league_season_participant_teams_season_fkey")
+  player   Participant         @relation("RosterPlayer", fields: [sportLeagueId, participantId], references: [sportLeagueId, id], onDelete: Cascade, map: "sport_league_season_participant_teams_player_fkey")
+  team     Participant         @relation("RosterTeam", fields: [sportLeagueId, teamParticipantId], references: [sportLeagueId, id], onDelete: Cascade, map: "sport_league_season_participant_teams_team_fkey")
+  position SportLeaguePosition @relation(fields: [sportLeagueId, sportLeaguePositionId], references: [sportLeagueId, id], map: "sport_league_season_participant_teams_position_fkey")
+
+  /// One row per Season and player.
+  @@unique([sportLeagueSeasonId, participantId], map: "sport_league_season_participant_teams_season_player_key")
+  /// A player's rows, every Season.
+  @@index([sportLeagueId, participantId], map: "sport_league_season_participant_teams_player_idx")
+  /// A team's players in a Season.
+  @@index([sportLeagueId, teamParticipantId], map: "sport_league_season_participant_teams_team_idx")
+  @@index([sportLeagueId, sportLeagueSeasonId], map: "sport_league_season_participant_teams_season_idx")
+  @@index([sportLeagueId, sportLeaguePositionId], map: "sport_league_season_participant_teams_position_idx")
+  @@map("sport_league_season_participant_teams")
 }
 
 /// A provider's id for a participant (#2040): the only place a participant's feed id is kept. The
@@ -2112,9 +2153,6 @@ model SportEvent {
   // from ever touching this event's status, no matter what the recorded
   // round schedule says — a rain delay, a dispute, etc.
   autoLifecycleEnabled       Boolean                        @default(true) @map("auto_lifecycle_enabled")
-  // When the event's provider last sent a webhook notification about the event itself (#1499): a
-  // golf round's. Null until one arrives. A game's notification is recorded on its Game (#2007).
-  lastProviderNotificationAt DateTime?                      @map("last_provider_notification_at") @db.Timestamptz
   // The latest automatic release check (#1847): when the release job last judged the event,
   // whether it released or held it, and the checks that held it. Null and empty until the first
   // check; each check overwrites the one before, and a root admin's release by hand clears it. A
@@ -2402,8 +2440,9 @@ model SportEventRoundMatchGame {
   /// The Game a provider moved this one to (another week's): set once, never re-parented. This
   /// Game keeps its picks; the provider's id moves to the new Game.
   movedToGameId              String?           @map("moved_to_game_id") @db.Uuid
-  /// When a provider last sent a webhook notification about this game (#1499). Null until one
-  /// arrives. The scheduler warns when play is under way and none has arrived for a while.
+  /// When a provider last sent a webhook notification about this game (#1499), or about its event
+  /// while the game was in play, as a golf tournament's is about its current round (#2008). Null
+  /// until one arrives. The scheduler warns when play is under way and none has arrived for a while.
   lastProviderNotificationAt DateTime?         @map("last_provider_notification_at") @db.Timestamptz
   createdAt                  DateTime          @default(now()) @map("created_at") @db.Timestamptz
   updatedAt                  DateTime          @updatedAt @map("updated_at") @db.Timestamptz
@@ -2705,6 +2744,7 @@ model SportLeaguePosition {
 
   sportLeague   SportLeague                          @relation(fields: [sportLeagueId], references: [id], onDelete: Cascade)
   providerCodes SportLeaguePositionProviderMapping[]
+  rosterRows    SportLeagueSeasonParticipantTeam[]
 
   @@unique([sportLeagueId, code])
   /// The target of the provider code rows' composite key, which keeps a code on its own league.
@@ -3006,6 +3046,7 @@ model SportLeagueSeason {
   sportEvents      SportEvent[]
   contests         Contest[]
   cups             Cup[]
+  rosterRows       SportLeagueSeasonParticipantTeam[]
 
   @@unique([sportLeagueId, championshipYear])
   /// The target of the composite keys that keep a Season's rows in its own league.

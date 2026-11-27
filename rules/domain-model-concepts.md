@@ -13,7 +13,7 @@ Fields are
 
 ## 1. The Entity Chain
 
-> **Being replaced.** The sport half of this chain (`SportEvent` in a Season, `ContestSportEvent`, `SportEventRoundMatch` with home and away sides, `winnerSide` and the home/away shoot-out scores, squares on one match) describes today's schema. The target model, which new code is designed toward, is §5
+> **Being replaced.** The sport half of this chain (`SportEvent` in a Season, `SportEventRoundMatch` with home and away sides, `winnerSide` and the home/away shoot-out scores, squares on one match) describes today's schema. The target model, which new code is designed toward, is §5
 > *The Target Model* and ADR 0012. Rows marked here stay true of today's code until the
 > slices of #1917 replace them, and this file is rewritten for the new model when they land.
 
@@ -28,8 +28,8 @@ User                                         Sport                (golf)
  └─→ SquadMembership ─→ Squad                            └─→ SportEvent (the 2026 Masters)
        (an owner; one per user per league)                     ├─→ SportEventRound   (Round 1..4)
                           │                                    ├─→ SportEventSlotTier (Tier A..)
-League ─→ Contest ─→ ContestSportEvent[] ─→ SportEvent        └─→ SportEventParticipant ─→ Participant ─→ SportLeague
-             │        (sequence: 1, 2, ...)                          (the field)          (a golfer, or a team; one league's)
+League ─→ Contest ─→ ContestSeasonSlot[] ─→ Season slot ─→ SportEvent └─→ SportEventParticipant ─→ Participant ─→ SportLeague
+             │        (in play order)                                (the field)          (a golfer, or a team; one league's)
              └─→ ContestEntry ←── Squad
                     (entryNumber: a squad may hold several)
                     ├─→ ContestEntryEvent[]  (DRAFT | SUBMITTED, one per contest event)
@@ -47,9 +47,12 @@ Two readings of this chain have both been held at once, so it is worth stating p
   entries as their own (co-owners included).
 - **A pick points at a `SportEventParticipant`, not a `Participant`.** It picks a golfer *in
   this event's field* (a golfer, a horse, a team), with that event's rank, tier and status.
-- **A Contest belongs to one League and covers one or more SportEvents** (`ContestSportEvent`,
-  in `sequence` order, #713). A tournament pool covers one event, and an NFL pick'em one event per
-  week; a field pool never spans events (ADR 0014). Every event of a contest comes from the same sport league. Many contests, in many
+- **A Contest belongs to one League and covers Season slots** (`ContestSeasonSlot`, in play
+  order, #2014), each played by one of its events. Its covered slots are resolved from its
+  template when it is created, and again if its event or starting slot changes while it is in
+  Set up; once it opens they never change. A tournament pool covers one tournament slot, a
+  bracket the rounds it lists of one event, and an NFL pick'em one week slot per week; a field
+  pool never spans events (ADR 0014). Every event of a contest comes from the same sport league. Many contests, in many
   leagues, can run on the same event; they share its field, scores and tiers.
 - **Draft and submitted are per entry per event** (`ContestEntryEvent`). An entry submits each
   event's picks on its own; a pick belongs to an event through the field row it points at.
@@ -178,6 +181,7 @@ a Team On Screen*.
 | `SportEvent` | tournament, event | One event in one Season of its league (`sportLeagueSeasonId`, #2003), with a start date, status and Rounds (its round count is the count of its Round rows, never stored, #2008) | `Contest`, which is the pool's game played on it |
 | `SportEventRound` | round | One scheduled round of an event (golf Round 1–4), with its own date | A golfer's result in that round, their side result in the round's FIELD Game (#2008); and a pick's `lineupSlot`, its position in the entry's lineup |
 | `Participant` | golfer, horse, team (the sport's word) | A real competitor in one sport league (#1853): a golfer on the PGA Tour, or a team such as an NBA team (`participantType` `INDIVIDUAL` or `TEAM`). Its sport is its league's, and its `ranking` is its rank there. A playoff field's teams are its season league's. A provider's feed id names one participant per sport league | A league member (a person in the pool), and a `SportEventParticipant` |
+| `SportLeagueSeasonParticipantTeam` | roster, a player's team and position | A player's roster row (#2025): one per Season and player, naming their team (a `TEAM` participant of the same league) and their position in that Season, and when the roster sync last saw them. Written by the roster sync, which keeps only field-eligible positions and never deletes a player missing from the feed. No trade history: a move overwrites the row. A team's own abbreviation is a `Participant` column | A `Squad`'s list of owners, and an event's field |
 | `SportEventParticipant` | the field, a field member | A participant entered in one event, with that event's rank, odds, seed and active/withdrawn/cut state | The global `Participant` |
 | `SportEventSlotTier`, `SportEventSlotParticipantValuation` | tier, price | Tiers belong to an **event slot's set** and are shared by every contest starting there (#2044; today every tiered and budget template starts at its event's tier-set slot, the first slot in play order such a template lists, else the first slot); the valuation puts one field member in one tier of the set, with a price | A contest-level setting: there is no per-contest tier override |
 | `SportEventParticipantStanding` | position, leaderboard row | A field member's running position in the event (1 is best, every sport) | An entry's standing in a contest |
@@ -197,14 +201,14 @@ Rules that are not choices (the small-field even split) stay in code, not in a d
 
 ### Contests and entries
 
-> **Being replaced.** Stale against the target model: `Contest` covering events and `ContestSportEvent` (a contest covers Season slots through `ContestSeasonSlot`). The target model, which new code is designed toward, is §5
+> **Being replaced.** The target model, which new code is designed toward, is §5
 > *The Target Model* and ADR 0012. Rows marked here stay true of today's code until the
 > slices of #1917 replace them, and this file is rewritten for the new model when they land.
 
 | Model | On screen | What it is | Not to be confused with |
 |---|---|---|---|
-| `Contest` | contest | One league's game on one or more events: format, selection type and scoring | The `SportEvent`s it covers (`ContestSportEvent`) |
-| `ContestSportEvent` | event (of a contest) | One event a contest covers, with its place in the contest's order | The `SportEvent` itself |
+| `Contest` | contest | One league's game on the Season slots it covers: format, selection type and scoring | The `SportEvent`s that play those slots |
+| `ContestSeasonSlot` | what a contest covers (a week, a round, a tournament) | One Season slot a contest covers, resolved from its template and event at creation and again when its event or starting slot changes in Set up, fixed once it opens; play order comes from the slot | The Season slot itself, which every contest on it shares |
 | `ContestConfiguration` | contest settings | The contest's rules: roster size, picks per tier, entries per member, counting picks, prizes, and its scoring (a scoring definition and its settings, such as a racing points table) | `ContestConfigTemplate`, a global starting point it may be created from: sport-wide, or one sport league's own preset (`sportLeagueId`) |
 | `ContestEntry` | entry | One lineup a squad submits to one contest. A squad may hold several (`entryNumber`) | The squad itself |
 | `ContestEntryEvent` | entry status (submitted, not submitted) | An entry's draft/submitted status for one event of its contest | The entry itself |

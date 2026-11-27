@@ -181,8 +181,6 @@ export function createParticipantHandlers(participantService: ParticipantService
         lastName: body.lastName,
         shortName: body.shortName,
         nationality: body.nationality,
-        role: body.role,
-        teamAffiliation: body.teamAffiliation,
         feedId: body.feedId,
         isTestData: body.isTestData,
       });

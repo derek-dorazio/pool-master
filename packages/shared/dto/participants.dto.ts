@@ -47,8 +47,7 @@ export const ParticipantDtoSchema = z.object({
   lastName: z.string().optional().describe('Last name when the participant is a person.'),
   shortName: z.string().optional().describe('Short-form display name for compact UI surfaces.'),
   nationality: z.string().optional().describe('Participant nationality or country code when known.'),
-  role: z.string().nullable().optional().describe('Playing role when known ("GOLFER", "QB"). Not a rank: `position` means rank on the standing objects.'),
-  teamAffiliation: z.string().nullable().optional().describe('Current team affiliation when the participant is not itself a team.'),
+  abbreviation: z.string().nullable().optional().describe('A team\'s abbreviation as its feed sends it (KC); null for a player and for a team its feed gives none. A player\'s team and position are their roster row\'s.'),
   status: ParticipantStatusDtoSchema.describe('Current participant lifecycle or availability status.'),
   injuryStatus: ParticipantInjuryStatusDtoSchema,
   photoUrl: z.string().nullable().optional().describe('Optional participant image URL.'),
@@ -64,7 +63,7 @@ export type ParticipantDto = z.infer<typeof ParticipantDtoSchema>;
 
 /** Filters narrow the list; nothing pages it (§16). */
 export const ParticipantListQuerySchema = z.object({
-  q: z.string().optional().describe('Case-insensitive text matched against name, first, last and short name, and team.'),
+  q: z.string().optional().describe('Case-insensitive text matched against name, first, last and short name, and a team\'s abbreviation.'),
   sportLeagueId: z.uuid().optional().describe('Only participants of this sport league.'),
   status: ParticipantStatusDtoSchema.optional().describe('Only participants in this status. Omitted: every status.'),
 }).describe('Filters for the participant catalog.');
@@ -92,8 +91,6 @@ export const CreateParticipantRequestSchema = z.object({
   lastName: z.string().max(255).optional().describe('Last name when the participant is a person.'),
   shortName: z.string().max(100).optional().describe('Short-form display name for compact UI surfaces.'),
   nationality: z.string().max(10).optional().describe('Participant nationality or country code.'),
-  role: z.string().max(50).optional().describe('Playing role ("GOLFER", "QB").'),
-  teamAffiliation: z.string().max(255).optional().describe('Current team affiliation.'),
   feedId: z.string().min(1).max(255).optional().describe('The sport league\'s sync provider\'s own id for the participant, mapped to it in the same write. A provider-synced sport league requires it (409 PARTICIPANT_FEED_ID_REQUIRED otherwise) unless isTestData is true. 422 SPORT_LEAGUE_NOT_SYNCED in a league with no feed; 409 PARTICIPANT_FEED_ID_TAKEN when another participant of the league has it.'),
   isTestData: z.boolean().optional().describe('A test participant (QA only), for a test event\'s field: it joins only a test slot\'s event, never takes a feed id (422 TEST_PARTICIPANT_FEED_ID), and no roster or sync lists it. The one participant a provider-synced league takes without a feed id. False when omitted.'),
 }).describe('A new participant of a sport league.');
@@ -105,8 +102,6 @@ export const UpdateParticipantRequestSchema = z.object({
   lastName: z.string().max(255).optional().describe('Last name when the participant is a person.'),
   shortName: z.string().max(100).optional().describe('Short-form display name for compact UI surfaces.'),
   nationality: z.string().max(10).optional().describe('Participant nationality or country code.'),
-  role: z.string().max(50).optional().describe('Playing role ("GOLFER", "QB").'),
-  teamAffiliation: z.string().max(255).optional().describe('Current team affiliation.'),
   status: ParticipantStatusDtoSchema.optional().describe('Participant lifecycle or availability status.'),
   ranking: z.number().int().nullable().optional().describe('Rank in the sport league; null unranks.'),
   injuryStatus: ParticipantInjuryStatusDtoSchema.optional(),

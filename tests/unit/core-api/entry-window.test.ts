@@ -14,7 +14,6 @@ import {
   areMatchPicksOpen,
   areMatchPicksRevealed,
   contestCutoff,
-  currentContestEvent,
   cutoffTiming,
   hasMatchStarted,
   hasRoundMatchStarted,
@@ -119,21 +118,6 @@ describe('areEventPicksRevealed — who may see one event\'s picks', () => {
 
   it('reveals a dealt draw\'s picks while the contest is still OPEN', () => {
     expect(areEventPicksRevealed({ status: ContestStatus.OPEN, drawnAt: NOW }, upcoming, NOW)).toBe(true);
-  });
-});
-
-describe('currentContestEvent — the event a contest\'s pages open on', () => {
-  it('opens on the first event in sequence that has not started', () => {
-    expect(currentContestEvent([played, teedOffLate, upcoming, later], NOW)?.id).toBe('us-open');
-  });
-
-  it('opens on the last event once every event has started', () => {
-    expect(currentContestEvent([played, teedOffLate], NOW)?.id).toBe('pga-late-update');
-  });
-
-  it('answers no event for a contest with none', () => {
-    const none: ReturnType<typeof event>[] = [];
-    expect(currentContestEvent(none, NOW)?.id).toBeUndefined();
   });
 });
 

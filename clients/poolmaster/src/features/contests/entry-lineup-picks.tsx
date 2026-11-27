@@ -46,11 +46,6 @@ function orderPicks(picks: readonly ContestEntryParticipantDetailDto[], values: 
   });
 }
 
-/** A pick's team and playing role, where it has them: "KC QB". */
-function pickAffiliation(pick: ContestEntryParticipantDetailDto) {
-  return [pick.teamAffiliation, pick.role].filter(Boolean).join(' ');
-}
-
 /**
  * A lineup entry's picks, opened under the viewer's own row on the contest page before it goes
  * live (#1740): one row per pick on the leaderboard's pick-row grid, with its tier in a tiered
@@ -85,7 +80,6 @@ export function EntryLineupPicks({
       </div>
       {orderPicks(picks, values).map((pick) => {
         const value = pickValue(pick, values);
-        const affiliation = pickAffiliation(pick);
         return (
           <div
             className="grid items-baseline gap-2 px-4 py-2"
@@ -95,7 +89,6 @@ export function EntryLineupPicks({
           >
             <Text className="min-w-0 truncate" size="sm" tone="default" variant="body">
               {pick.participantName}
-              {affiliation ? <Text size="inherit" tone="muted" variant="meta">{` · ${affiliation}`}</Text> : null}
             </Text>
             <Text className="text-right" data-testid={`contest-entry-pick-value-${entryId}-${pick.participantId}`} size="sm" tone="default" variant="value">
               {value === undefined ? null : values?.kind === 'price' ? formatDollars(value) : String(value)}

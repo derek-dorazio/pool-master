@@ -27,6 +27,7 @@ import { MatchStatus, PeriodKind, UNPLAYED_MATCH_STATUSES } from '@poolmaster/sh
 import type { BackgroundJobRequest, HomeAway, ProviderCode, SportEventRoundMatch, SportEventRoundMatchGame, SportEventRoundMatchGameSideResult } from '@poolmaster/shared/domain';
 import { FIELD_MATCH_WHERE, ROUND_EVENT_SLOT_SELECT, toRoundSlot } from './season-slot-select';
 import { rewriteStandings } from './prisma-standing-rewrite';
+import { gameInPlayWhere } from './prisma-game-in-play';
 import { backgroundJobsInsert, insertBackgroundJobs } from './prisma-background-job-repository';
 
 /** What a Game is read with (#2046): each side's result, with the side's number and its period scores in order. */
@@ -367,5 +368,14 @@ export class PrismaSportEventRoundMatchGameRepository implements SportEventRound
   async recordProviderNotification(gameIds: readonly string[], receivedAt: Date): Promise<void> {
     if (gameIds.length === 0) return;
     await this.prisma.sportEventRoundMatchGame.updateMany({ where: { id: { in: [...gameIds] } }, data: { lastProviderNotificationAt: receivedAt } });
+  }
+
+  async recordEventNotification(sportEventIds: readonly string[], receivedAt: Date): Promise<void> {
+    if (sportEventIds.length === 0) return;
+    // On the (event, status) index: each event's Games in play, as the sync tick reads them.
+    await this.prisma.sportEventRoundMatchGame.updateMany({
+      where: { sportEventId: { in: [...sportEventIds] }, ...gameInPlayWhere(receivedAt) },
+      data: { lastProviderNotificationAt: receivedAt },
+    });
   }
 }

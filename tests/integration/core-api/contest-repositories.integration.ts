@@ -98,9 +98,9 @@ async function createLeagueAndEvent() {
     },
   });
   const field = [];
-  for (const [name, role] of [['Golfer One', 'GOLFER'], ['Golfer Two', null], ['Golfer Three', null]] as const) {
+  for (const name of ['Golfer One', 'Golfer Two', 'Golfer Three']) {
     const participant = await prisma.participant.create({
-      data: { sportLeagueId: await participantLeagueId(prisma, sport.id), name: `${name} ${suffix}`, participantType: 'INDIVIDUAL', status: 'ACTIVE', role },
+      data: { sportLeagueId: await participantLeagueId(prisma, sport.id), name: `${name} ${suffix}`, participantType: 'INDIVIDUAL', status: 'ACTIVE' },
     });
     field.push(await prisma.sportEventParticipant.create({
       data: { sportEventId: event.id, participantId: participant.id },
@@ -653,7 +653,7 @@ describe('ContestRepository', () => {
     const entry = await createEntry(contest.id, squads[0].id, 1, 'Grower');
     await submitEntryEvent(entry.id, event.id, new Date('2026-06-01T12:00:00.000Z'));
 
-    await repos().contests.replaceCoveredSlots(contest.id, (await coverageOfEvents(getPrisma(), [later.event.id, event.id])).seasonSlotIds);
+    await expect(repos().contests.replaceCoveredSlots(contest.id, (await coverageOfEvents(getPrisma(), [later.event.id, event.id])).seasonSlotIds, [ContestStatus.OPEN])).resolves.toBe(true);
 
     expect((await repos().contests.findById(contest.id))?.sportEventIds).toEqual([event.id, later.event.id]);
     const reread = expectDefined(await repos().entries.findByIdWithSquad(entry.id));
@@ -676,13 +676,28 @@ describe('ContestRepository', () => {
       ],
     });
 
-    await repos().contests.replaceCoveredSlots(contest.id, (await coverageOfEvents(prisma, [later.event.id])).seasonSlotIds);
+    await expect(repos().contests.replaceCoveredSlots(contest.id, (await coverageOfEvents(prisma, [later.event.id])).seasonSlotIds, [ContestStatus.OPEN])).resolves.toBe(true);
 
     expect((await repos().contests.findById(contest.id))?.sportEventIds).toEqual([later.event.id]);
     const reread = expectDefined(await repos().entries.findByIdWithSquad(entry.id));
     expect(byEvent(reread.events)).toEqual([[later.event.id, 'DRAFT']]);
     const picks = await repos().picks.findByEntriesWithParticipant([entry.id]);
     expect(picks.map((pick) => [pick.sportEventParticipantId, pick.sportEventId])).toEqual([[later.field[0].id, later.event.id]]);
+  });
+
+  it('leaves the coverage, entries and picks of a contest no longer in an allowed status as they were, answering false', async () => {
+    const prisma = getPrisma();
+    const { league, squads, event, field, suffix } = await createLeagueAndEvent();
+    const later = await createLaterEvent(suffix);
+    const contest = await createContest(league.id, event.id, 'Opened meanwhile', ContestStatus.OPEN);
+    const entry = await createEntry(contest.id, squads[0].id, 1, 'Early bird');
+    await prisma.contestEntryPick.create({ data: { entryId: entry.id, sportEventParticipantId: field[0].id } });
+
+    await expect(repos().contests.replaceCoveredSlots(contest.id, (await coverageOfEvents(prisma, [later.event.id])).seasonSlotIds, [ContestStatus.DRAFT]))
+      .resolves.toBe(false);
+
+    expect((await repos().contests.findById(contest.id))?.sportEventIds).toEqual([event.id]);
+    expect((await repos().picks.findByEntriesWithParticipant([entry.id])).map((pick) => pick.sportEventParticipantId)).toEqual([field[0].id]);
   });
 });
 
@@ -1469,15 +1484,11 @@ describe('ContestEntryPickRepository — read-only', () => {
         participantId: field[0].participantId,
         participantName: `Golfer One ${suffix}`,
         status: 'ACTIVE',
-        role: 'GOLFER',
-        teamAffiliation: null,
       },
       {
         participantId: field[1].participantId,
         participantName: `Golfer Two ${suffix}`,
         status: 'WITHDRAWN',
-        role: null,
-        teamAffiliation: null,
       },
     ]);
     // Each pick names the event its field row belongs to (#713).

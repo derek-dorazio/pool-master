@@ -146,14 +146,6 @@ export function areEventPicksRevealed(
 }
 
 /**
- * The event a contest's pages open on when none is named: its next event that has not started
- * (the one being picked), else its last (the latest played). `sportEvents` is in sequence order.
- */
-export function currentContestEvent<Event extends EventTiming>(sportEvents: readonly Event[], now: Date): Event | undefined {
-  return sportEvents.find((sportEvent) => !hasSportEventStarted(sportEvent, now)) ?? sportEvents.at(-1);
-}
-
-/**
  * Whether a game has kicked off: its scheduled time (else its event's start) has passed, or it
  * has moved on from SCHEDULED (a period score counts). As with an event, the status update can be late.
  */

@@ -677,8 +677,9 @@ ruleTester.run('no-parallel-api-types', noParallelApiTypes, {
 
 // Reads schema.prisma, so the fixtures below name real columns. `inviteType` is an enum on
 // every model that declares it; `status` is an enum on some and String on others, which
-// is exactly the case the rule must NOT flag. `role` became that case too in #246:
-// LeagueMembership.role is an enum, Participant.role (a playing role) is a String.
+// is exactly the case the rule must NOT flag. `code` is that case: an enum on some models and a
+// String on others (a position's code). `role` was one until #2025 dropped Participant.role, so
+// LeagueMembership.role, an enum, is the only `role` left and typing it `string` is flagged.
 ruleTester.run('no-widened-enum-fields', noWidenedEnumFields, {
   valid: [
     // Already the enum type.
@@ -688,10 +689,14 @@ ruleTester.run('no-widened-enum-fields', noWidenedEnumFields, {
     'interface R { id: string }',
     // A non-string annotation is a different question.
     'interface R { role: number }',
-    // `role` is String on Participant, so a row typing it `string` may be correct.
-    'interface R { role: string }',
+    // `code` is String on some models, so a row typing it `string` may be correct.
+    'interface R { code: string }',
   ],
   invalid: [
+    {
+      code: 'interface R { role: string }',
+      errors: [{ messageId: 'widenedEnum' }],
+    },
     // #186 made `status` and `contestFormat` an enum on every model that declares them,
     // so the rule now covers both with no edit to it.
     {

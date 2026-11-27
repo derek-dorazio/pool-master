@@ -67,8 +67,8 @@ export interface SportLeagueParticipantOverview {
   participantType: ParticipantType;
   shortName: string | null;
   nationality: string | null;
-  teamAffiliation: string | null;
-  role: string | null;
+  /** A team's abbreviation as its feed sends it; null for a player and a team with none. */
+  abbreviation: string | null;
   ranking: number | null;
   /** Its provider's id for it; null when it has no provider mapping. */
   feedId: string | null;

@@ -151,7 +151,7 @@ export function requireTierSetSlot(sportEventId: string, slot: SportEventTierSlo
  * or the one a contest picks from by what it covers (`contestTierSetSlot`). None is the event's
  * tier-set slot.
  */
-export type TierSetChoice = { seasonSlotId: string } | { coveredSlotDefinitionIds: readonly string[] | null };
+export type TierSetChoice = { seasonSlotId: string } | { coveredSlotDefinitionIds: readonly string[] };
 
 export interface SportEventTierServiceDeps {
   sportEvents: Pick<SportEventRepository, 'findById'>;

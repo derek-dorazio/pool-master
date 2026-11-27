@@ -408,7 +408,7 @@ describe('ParticipantRepository — search and matching', () => {
       participantType: 'INDIVIDUAL',
       isTestData: false,
       nationality: 'SWE',
-      role: 'GOLFER',
+      abbreviation: 'ABG',
       status: 'ACTIVE',
       injuryStatus: { status: 'HEALTHY' },
     });
@@ -420,7 +420,7 @@ describe('ParticipantRepository — search and matching', () => {
       status: 'INACTIVE',
       ranking: 12,
       nationality: 'SWE',
-      role: 'GOLFER',
+      abbreviation: 'ABG',
       injuryStatus: { status: 'HEALTHY' },
     }));
     await expect(participants.findById(created.id)).resolves.toEqual(updated);
@@ -454,8 +454,6 @@ describe('ParticipantRepository — search and matching', () => {
       lastName: 'Name',
       shortName: 'N. Name',
       nationality: 'USA',
-      role: 'GOLFER',
-      teamAffiliation: 'Team Blue',
       status: 'INACTIVE',
       injuryStatus: { status: 'OUT', detail: 'Wrist', expectedReturn, updatedAt: injuryUpdatedAt, source: 'feed' },
       photoUrl: 'https://example.test/photo.jpg',
@@ -463,8 +461,8 @@ describe('ParticipantRepository — search and matching', () => {
     });
 
     expect(updated).toEqual(expect.objectContaining({
-      name: 'New Name', firstName: 'New', lastName: 'Name', shortName: 'N. Name', nationality: 'USA', role: 'GOLFER',
-      teamAffiliation: 'Team Blue', status: 'INACTIVE', photoUrl: 'https://example.test/photo.jpg', photoLastUpdated,
+      name: 'New Name', firstName: 'New', lastName: 'Name', shortName: 'N. Name', nationality: 'USA',
+      status: 'INACTIVE', photoUrl: 'https://example.test/photo.jpg', photoLastUpdated,
       injuryStatus: { status: 'OUT', detail: 'Wrist', expectedReturn, updatedAt: injuryUpdatedAt, source: 'feed' },
     }));
     await expect(participants.findById(created.id)).resolves.toEqual(updated);

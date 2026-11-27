@@ -118,7 +118,7 @@ describe('Start from an event page', () => {
     listContestsMock.mockImplementation(({ path }: { path: { id: string } }) => Promise.resolve({
       data: {
         contests: path.id === 'league-FAMILY'
-          ? [{ id: 'contest-sq', selectionType: 'SQUARES', sportEvents: [{ sportEventId: 'event-nfl-squares', sequence: 1, name: 'NFL Playoffs' }] }]
+          ? [{ id: 'contest-sq', selectionType: 'SQUARES', sportEvents: [{ sportEventId: 'event-nfl-squares', name: 'NFL Playoffs' }] }]
           : [],
       },
     }));

@@ -41,7 +41,7 @@ import {
   type ParticipantContestScoringRule,
   type SportEvent,
 } from '@poolmaster/shared/domain';
-import { buildContest, buildMembership, buildUser } from '../../factories';
+import { buildContest, buildCoveredSlot, buildMembership, buildUser } from '../../factories';
 import {
   fakeContestConfigurationRepo,
   fakeContestEntryPickRepo,
@@ -316,8 +316,6 @@ function buildReceiptPick(
       participantId,
       participantName,
       status: 'ACTIVE' as const,
-      role: null,
-      teamAffiliation: null,
     },
   };
 }
@@ -541,6 +539,24 @@ describe('ContestService', () => {
 
       expect([tiered, pickEm]).toEqual([new Map([['event-1', 'season-slot-r32']]), new Map()]);
       expect(tierSetSlots.mock.calls).toEqual([[['event-1'], { coveredSlotDefinitionIds: ['def-r32'] }]]);
+    });
+  });
+
+  describe('findCurrentSlotIds', () => {
+    it('gives each contest the covered slot its pages open on at the service\'s clock, and leaves out a contest that covers none (#2014)', () => {
+      const now = new Date('2026-12-10T12:00:00.000Z');
+      const service = buildService({ now: () => now });
+      const played = { status: SharedDomainEnums.SportEventStatus.COMPLETED, startDate: new Date('2026-12-03T18:00:00.000Z') };
+      const coming = { status: SharedDomainEnums.SportEventStatus.SCHEDULED, startDate: new Date('2026-12-17T18:00:00.000Z') };
+      const weeks = [
+        buildCoveredSlot({ seasonSlotId: 'week-14', sportEventId: 'event-14' }),
+        buildCoveredSlot({ seasonSlotId: 'week-15', sportEventId: 'event-15' }),
+      ];
+      const eventsById = new Map<string, unknown>([['event-14', played], ['event-15', coming]]) as Parameters<typeof service.findCurrentSlotIds>[1];
+
+      const current = service.findCurrentSlotIds([buildContest({ id: 'pickem', coveredSlots: weeks }), buildContest({ id: 'empty', coveredSlots: [] })], eventsById);
+
+      expect(current).toEqual(new Map([['pickem', 'week-15']]));
     });
   });
 
@@ -1845,8 +1861,6 @@ describe('ContestService', () => {
                 participantId: 'participant-1',
                 participantName: 'Withdrawn Golfer',
                 status: 'WITHDRAWN' as const,
-                role: null,
-                teamAffiliation: null,
               },
             },
           ]),
@@ -1889,8 +1903,6 @@ describe('ContestService', () => {
                 participantId: 'participant-1',
                 participantName: 'Cut Golfer',
                 status: 'ELIMINATED' as const,
-                role: null,
-                teamAffiliation: null,
               },
             },
           ]),

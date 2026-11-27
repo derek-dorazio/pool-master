@@ -49,7 +49,8 @@ export function toWnbaPlayoffTeam(team: WnbaTeam, path: string): PlayoffTeam {
   return {
     id,
     name: required(team.full_name, path, `team ${String(id)}`, 'full_name'),
-    metadata: { abbreviation: team.abbreviation, conference: team.conference },
+    ...(team.abbreviation ? { abbreviation: team.abbreviation } : {}),
+    metadata: { conference: team.conference },
   };
 }
 

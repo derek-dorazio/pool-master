@@ -35,8 +35,8 @@ export function EventFieldGridCard({
   const rows = useMemo(() => eventFieldRows(field, tiers, overview?.fieldFeed ?? []), [field, tiers, overview?.fieldFeed]);
   const shown = eventFieldColumnsShown(rows, isSynced);
   const columns = useMemo(
-    () => eventFieldColumns({ team: shown.team, country: shown.country, seed: shown.seed, lastInFeed: shown.lastInFeed }),
-    [shown.team, shown.country, shown.seed, shown.lastInFeed],
+    () => eventFieldColumns({ abbreviation: shown.abbreviation, country: shown.country, seed: shown.seed, lastInFeed: shown.lastInFeed }),
+    [shown.abbreviation, shown.country, shown.seed, shown.lastInFeed],
   );
   const openRow = openRowId === null ? undefined : rows.find((row) => row.id === openRowId);
   const activeCount = field.filter((entry) => (entry.status === SportEventParticipantStatus.ACTIVE)).length;

@@ -160,8 +160,8 @@ BALLDONTLIE event every 15 minutes, or a golf event every 2 minutes while a roun
 the secret nothing changes. A game or tournament starting also syncs a linked event still
 `SCHEDULED` past its start, six minutes out so the lifecycle sweep has moved it in progress first.
 A game or tournament ending queues a second, reconciling sync ten minutes later for the provider's
-late corrections. Each notification sets `last_provider_notification_at` on the events it is
-about. While one is in play (a golf round under way, or a match in progress) with no
+late corrections. Each notification sets `last_provider_notification_at` on the Games it is
+about: a game's own Game, or a tournament's Games in play (its current round's). While one is in play (a golf round under way, or a match in progress) with no
 notification for longer than its league's normal gap between notifications, the sweep warns with
 action `ingestion.providerNotifications.quiet`, which a CloudWatch alarm sends to the alerts
 topic. Each league's gap is in the webhook table (`balldontlie-webhooks.ts`): a period or half plus

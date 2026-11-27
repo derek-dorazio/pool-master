@@ -109,7 +109,7 @@ describe('contest management handlers', () => {
       updateContestConfiguration: jest.fn(answer),
       openContest: jest.fn(answer),
       setContestCupWeight: jest.fn(answer),
-      setContestSportEvents: jest.fn(answer),
+      setContestCoverage: jest.fn(answer),
     };
   };
   const requests = {
@@ -117,7 +117,7 @@ describe('contest management handlers', () => {
     updateContestConfiguration: () => stubRequest({ params: { contestId: 'c1' }, body: { rosterSize: 4 } }),
     openContest: () => stubRequest({ params: { id: 'league-1', contestId: 'c1' } }),
     setContestCupWeight: () => stubRequest({ params: { id: 'league-1', contestId: 'c1' }, body: { cupWeight: 2 } }),
-    setContestSportEvents: () => stubRequest({ params: { id: 'league-1', contestId: 'c1' }, body: { sportEventIds: ['e1'] } }),
+    setContestCoverage: () => stubRequest({ params: { id: 'league-1', contestId: 'c1' }, body: { sportEventIds: ['e1'], startingSlotId: 's1' } }),
   };
   const names = Object.keys(requests) as Array<keyof typeof requests>;
 
@@ -131,7 +131,7 @@ describe('contest management handlers', () => {
     expect(fake.updateContestConfiguration).toHaveBeenCalledWith('c1', { rosterSize: 4 });
     expect(fake.openContest).toHaveBeenCalledWith('league-1', 'c1');
     expect(fake.setContestCupWeight).toHaveBeenCalledWith('league-1', 'c1', 2);
-    expect(fake.setContestSportEvents).toHaveBeenCalledWith('league-1', 'c1', ['e1']);
+    expect(fake.setContestCoverage).toHaveBeenCalledWith('league-1', 'c1', { sportEventIds: ['e1'], startingSlotId: 's1' });
   });
 
   it.each(names)('%s answers a refused change with the error\'s own status and code', async (name) => {

@@ -230,7 +230,7 @@ export class PrismaSportLeaguePageReader implements SportLeaguePageReader {
       this.prisma.participant.findMany({
         // The league's roster: a test participant is on none (#2096).
         where: { sportLeagueId, isTestData: false },
-        select: { id: true, name: true, participantType: true, shortName: true, nationality: true, teamAffiliation: true, role: true, ranking: true, createdAt: true },
+        select: { id: true, name: true, participantType: true, shortName: true, nationality: true, abbreviation: true, ranking: true, createdAt: true },
         orderBy: [{ name: 'asc' }, { id: 'asc' }],
       }),
       this.prisma.participantProviderMapping.findMany({

@@ -296,7 +296,7 @@ describe('buildSportEventOverview', () => {
 describe('SportLeaguePageService', () => {
   const participant = {
     id: '7b2eac0a-7c2a-4e3a-9f65-4b8a0a5a6d32', name: 'Aaron Judge', participantType: 'INDIVIDUAL' as const, shortName: null, nationality: 'USA',
-    teamAffiliation: 'Yankees', role: 'RF', ranking: 1, createdAt: NOW,
+    abbreviation: null, ranking: 1, createdAt: NOW,
   };
   const service = (rows: SportLeaguePageParticipant[] | null) => new SportLeaguePageService({
     reader: makeReader(rows),

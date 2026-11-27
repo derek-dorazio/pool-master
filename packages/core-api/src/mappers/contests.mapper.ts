@@ -4,6 +4,7 @@
 import type {
   ContestDto,
   ContestProgressDto,
+  ContestCoveredSlotDto,
   ContestSportEventDto,
   ContestResponse,
   ContestFinishedYearsResponse,
@@ -23,6 +24,7 @@ import {
   type ParticipantType,
   type Sport,
   type Contest,
+  type ContestCoveredSlot,
   type ContestEntry,
   type ContestStatus,
   type ContestFormat,
@@ -42,6 +44,7 @@ interface ContestRow {
   id: string;
   leagueId: string;
   sportEventIds: string[];
+  coveredSlots: ContestCoveredSlot[];
   name: string;
   status: ContestStatus;
   contestFormat: ContestFormat;
@@ -76,8 +79,6 @@ export interface ContestEntryParticipantRow {
   participantId: string;
   participantName: string;
   participantStatus?: string | null;
-  role?: string | null;
-  teamAffiliation?: string | null;
   pickedAt: Date;
 }
 
@@ -159,11 +160,10 @@ export interface ContestSportEventRow {
   scoringFamily: ScoringFamily;
 }
 
-function toContestSportEventDto(event: ContestSportEventRow, sequence: number, tierSetSeasonSlots?: ReadonlyMap<string, string>): ContestSportEventDto {
+function toContestSportEventDto(event: ContestSportEventRow, tierSetSeasonSlots?: ReadonlyMap<string, string>): ContestSportEventDto {
   return {
     ...(tierSetSeasonSlots === undefined ? {} : { tierSetSeasonSlotId: tierSetSeasonSlots.get(event.id) ?? null }),
     sportEventId: event.id,
-    sequence,
     name: event.name,
     startDate: event.startDate.toISOString(),
     endDate: event.endDate?.toISOString() ?? null,
@@ -173,11 +173,28 @@ function toContestSportEventDto(event: ContestSportEventRow, sequence: number, t
   };
 }
 
-/** A contest with its events, in its sequence order, read from `eventsById` (#713). */
+function toContestCoveredSlotDto(slot: ContestCoveredSlot): ContestCoveredSlotDto {
+  return {
+    seasonSlotId: slot.seasonSlotId,
+    slotDefinitionId: slot.slotDefinitionId,
+    key: slot.key,
+    name: slot.name,
+    slotKind: slot.slotKind,
+    weekNumber: slot.weekNumber,
+    status: slot.status,
+    startsAt: slot.startsAt?.toISOString() ?? null,
+    endsAt: slot.endsAt?.toISOString() ?? null,
+    sportEventId: slot.sportEventId,
+    competitionCode: slot.competitionCode,
+    competitionName: slot.competitionName,
+  };
+}
+
+/** A contest with its events in the order their covered slots are played, read from `eventsById` (#713). */
 export function toContestDto(
   contest: ContestRow,
   eventsById: ReadonlyMap<string, ContestSportEventRow>,
-  opts: { entriesPerContest: number | null; entryCount?: number; allEntryCount?: number; progress?: ContestProgressDto | null; detail?: ContestEntrySummaryRow; tierSetSeasonSlots?: ReadonlyMap<string, string> },
+  opts: { entriesPerContest: number | null; currentSlotId: string | null; entryCount?: number; allEntryCount?: number; progress?: ContestProgressDto | null; detail?: ContestEntrySummaryRow; tierSetSeasonSlots?: ReadonlyMap<string, string> },
 ): ContestDto {
   return {
     id: contest.id,
@@ -186,10 +203,12 @@ export function toContestDto(
     contestFormat: contest.contestFormat,
     selectionType: contest.selectionType,
     leagueId: contest.leagueId,
-    sportEvents: contest.sportEventIds.flatMap((sportEventId, index) => {
+    sportEvents: contest.sportEventIds.flatMap((sportEventId) => {
       const event = eventsById.get(sportEventId);
-      return event ? [toContestSportEventDto(event, index + 1, opts.tierSetSeasonSlots)] : [];
+      return event ? [toContestSportEventDto(event, opts.tierSetSeasonSlots)] : [];
     }),
+    coveredSlots: contest.coveredSlots.map(toContestCoveredSlotDto),
+    currentSlotId: opts.currentSlotId,
     sport: contest.sport ?? null,
     sportUrlSegment: contest.sportUrlSegment ?? null,
     entryCount: opts.detail?.totals.submittedEntryCount ?? opts.entryCount,
@@ -220,10 +239,10 @@ export interface ContestEntrySummaryRow {
 export function toContestResponse(
   contest: ContestRow,
   eventsById: ReadonlyMap<string, ContestSportEventRow>,
-  entriesPerContest: number | null,
+  counts: { entriesPerContest: number | null; currentSlotId: string | null },
   detail?: ContestEntrySummaryRow,
 ): ContestResponse {
-  return { contest: toContestDto(contest, eventsById, { entriesPerContest, detail, tierSetSeasonSlots: detail?.tierSetSeasonSlots }) };
+  return { contest: toContestDto(contest, eventsById, { ...counts, detail, tierSetSeasonSlots: detail?.tierSetSeasonSlots }) };
 }
 
 /**
@@ -237,6 +256,7 @@ export function toContestListResponse(
     entryCaps: ReadonlyMap<string, number | null>;
     entryCounts: ReadonlyMap<string, number>;
     progress: ReadonlyMap<string, ContestProgressDto>;
+    currentSlotIds: ReadonlyMap<string, string>;
   },
   eventsById: ReadonlyMap<string, ContestSportEventRow>,
 ): ContestListResponse {
@@ -246,6 +266,7 @@ export function toContestListResponse(
       allEntryCount: counts.allEntryCounts.get(c.id),
       entriesPerContest: counts.entryCaps.get(c.id) ?? null,
       progress: counts.progress.get(c.id) ?? null,
+      currentSlotId: counts.currentSlotIds.get(c.id) ?? null,
     })),
   };
 }
@@ -295,8 +316,6 @@ export function toContestEntryParticipantDetailDto(
     participantId: participant.participantId,
     participantName: participant.participantName,
     participantStatus: participant.participantStatus ?? null,
-    role: participant.role ?? null,
-    teamAffiliation: participant.teamAffiliation ?? null,
     pickedAt: participant.pickedAt.toISOString(),
   };
 }

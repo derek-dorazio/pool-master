@@ -42,7 +42,7 @@ export class PrismaContestEntryPickRepository implements ContestEntryPickReposit
             sportEventId: true,
             participantId: true,
             status: true,
-            participant: { select: { name: true, role: true, teamAffiliation: true } },
+            participant: { select: { name: true } },
           },
         },
       },
@@ -55,8 +55,6 @@ export class PrismaContestEntryPickRepository implements ContestEntryPickReposit
         participantId: row.sportEventParticipant.participantId,
         participantName: row.sportEventParticipant.participant.name,
         status: row.sportEventParticipant.status,
-        role: row.sportEventParticipant.participant.role ?? null,
-        teamAffiliation: row.sportEventParticipant.participant.teamAffiliation ?? null,
       },
     }));
   }
