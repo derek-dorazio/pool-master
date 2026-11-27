@@ -1,4 +1,4 @@
-import { MatchStatus, RoundStatus, SlotKind } from '@poolmaster/shared/domain';
+import { MatchStatus, RoundStatus } from '@poolmaster/shared/domain';
 import { dailyRoundSchedule, providerEventRoundSchedule, roundsInSlots, SportEventRoundService } from '../../../packages/core-api/src/modules/events/sport-event-round-service';
 import { InMemorySportEvents } from '../../support/in-memory-sport-events';
 import { expectDefined } from '../../support/expect-defined';
@@ -87,47 +87,6 @@ describe('SportEventRoundService.shiftSchedule', () => {
 
     await expect(service.shiftSchedule(event.id, 60_000)).resolves.toEqual([]);
     expect(store.roundRows).toHaveLength(0);
-  });
-});
-
-describe('SportEventRoundService.extendTo', () => {
-  it('adds each missing round a day after the round before it, following an irregular schedule', async () => {
-    const { store, event, service } = setup();
-    await store.addRounds(event.id, [
-      { roundNumber: 1, scheduledDate: START },
-      { roundNumber: 2, scheduledDate: new Date('2026-06-06T12:00:00.000Z') },
-    ]);
-
-    const rounds = await service.extendTo({ sportEventId: event.id, rounds: 4, startDate: START });
-
-    expect(rounds.map((round) => [round.roundNumber, round.scheduledDate.toISOString().slice(0, 10)])).toEqual([
-      [1, '2026-06-04'],
-      [2, '2026-06-06'],
-      [3, '2026-06-07'],
-      [4, '2026-06-08'],
-    ]);
-  });
-
-  it('adds the rounds in the event\'s one slot, and nothing when every round exists', async () => {
-    const { store, event, service } = setup();
-    await store.addRounds(event.id, [{ roundNumber: 1, scheduledDate: START }]);
-
-    await service.extendTo({ sportEventId: event.id, rounds: 2, startDate: START });
-    await service.extendTo({ sportEventId: event.id, rounds: 2, startDate: new Date('2030-01-01T00:00:00.000Z') });
-
-    expect(store.roundRows.map((round) => [round.scheduledDate.toISOString().slice(0, 10), round.slot.seasonSlotId])).toEqual([
-      ['2026-06-04', store.eventSlotOf(event.id).id],
-      ['2026-06-05', store.eventSlotOf(event.id).id],
-    ]);
-  });
-
-  it('refuses more rounds for an event played a round per slot (422 EVENT_ROUNDS_FROM_SLOTS): its slots give its round count', async () => {
-    const { store, event, service } = setup();
-    const [semifinal, final] = store.addRoundSlots(event.id, [{ slotKind: SlotKind.SEMIFINAL }, { slotKind: SlotKind.FINAL }]);
-    await store.addRounds(event.id, [{ roundNumber: 1, scheduledDate: START }, { roundNumber: 2, scheduledDate: START }], (roundNumber) => (roundNumber === 1 ? semifinal : final));
-
-    await expect(service.extendTo({ sportEventId: event.id, rounds: 3, startDate: START })).rejects.toMatchObject({ code: 'EVENT_ROUNDS_FROM_SLOTS', statusCode: 422 });
-    expect(store.roundRows).toHaveLength(2);
   });
 });
 

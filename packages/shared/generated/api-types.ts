@@ -2026,7 +2026,7 @@ export interface paths {
         put?: never;
         /**
          * Create a test event on a test slot
-         * @description A test event (QA only, #2004), DRAFT, on a free test slot of its league's current Season: the sync makes every other event. Its league, Season and dates are the slot's, with its league's default rounds and tiers. 404 SEASON_SLOT_NOT_FOUND; 422 SEASON_SLOT_NOT_TEST for a slot the sync keeps, SEASON_SLOT_NOT_CURRENT outside the current Season; 409 SEASON_SLOT_TAKEN when it has an event. Root admin only.
+         * @description A test event (QA only, #2004), DRAFT, on a free test slot of its league's current Season: the sync makes every other event. Its league, Season and dates are the slot's, with its league's tiers, and its rounds are the body's `rounds` in one slot or one in each of several. 404 SEASON_SLOT_NOT_FOUND; 422 SEASON_SLOT_NOT_TEST for a slot the sync keeps, SEASON_SLOT_NOT_CURRENT outside the current Season, EVENT_ROUNDS_FROM_SLOTS for `rounds` with several slots; 409 SEASON_SLOT_TAKEN when it has an event. Root admin only.
          */
         post: operations["createEvent"];
         delete?: never;
@@ -13507,14 +13507,8 @@ export interface components {
              * @description Scheduled or actual end time when known; null otherwise.
              */
             endDate: string | null;
-            /** @description Number of rounds when the format has them; null otherwise. */
-            rounds: number | null;
-            /** @description Par for every round, when an admin set it. Null: contest scoring derives each round's par from the field's finished rounds. Contest scoring uses it to turn an unplayed round's 80 strokes into to-par. */
-            roundsPar: number | null;
-            /** @description The lowest par per round an update takes; a lower one is refused with 400. */
-            roundsParMin: number;
-            /** @description The highest par per round an update takes; a higher one is refused with 400. */
-            roundsParMax: number;
+            /** @description How many rounds the event has (#2008): the count of its rounds (SportEventRoundDto), read on each request and never stored. A bracket has a round in each slot, so its count is its FINAL slot's round. 0 until the sync, or a test event, gives it any. */
+            roundCount: number;
             /** @description The event's field size: the teams or players on its field, counted on each read. 0 until the field loads. */
             participantCount: number;
             /** @description The values the event's first slot's set was last priced with for budget contests (#2044), or null until it is priced. Locked at release; its salaryCap is the cap of every budget contest on the event. */
@@ -13933,14 +13927,8 @@ export interface components {
                  * @description Scheduled or actual end time when known; null otherwise.
                  */
                 endDate: string | null;
-                /** @description Number of rounds when the format has them; null otherwise. */
-                rounds: number | null;
-                /** @description Par for every round, when an admin set it. Null: contest scoring derives each round's par from the field's finished rounds. Contest scoring uses it to turn an unplayed round's 80 strokes into to-par. */
-                roundsPar: number | null;
-                /** @description The lowest par per round an update takes; a lower one is refused with 400. */
-                roundsParMin: number;
-                /** @description The highest par per round an update takes; a higher one is refused with 400. */
-                roundsParMax: number;
+                /** @description How many rounds the event has (#2008): the count of its rounds (SportEventRoundDto), read on each request and never stored. A bracket has a round in each slot, so its count is its FINAL slot's round. 0 until the sync, or a test event, gives it any. */
+                roundCount: number;
                 /** @description The event's field size: the teams or players on its field, counted on each read. 0 until the field loads. */
                 participantCount: number;
                 /** @description The values the event's first slot's set was last priced with for budget contests (#2044), or null until it is priced. Locked at release; its salaryCap is the cap of every budget contest on the event. */
@@ -14338,14 +14326,8 @@ export interface components {
                  * @description Scheduled or actual end time when known; null otherwise.
                  */
                 endDate: string | null;
-                /** @description Number of rounds when the format has them; null otherwise. */
-                rounds: number | null;
-                /** @description Par for every round, when an admin set it. Null: contest scoring derives each round's par from the field's finished rounds. Contest scoring uses it to turn an unplayed round's 80 strokes into to-par. */
-                roundsPar: number | null;
-                /** @description The lowest par per round an update takes; a lower one is refused with 400. */
-                roundsParMin: number;
-                /** @description The highest par per round an update takes; a higher one is refused with 400. */
-                roundsParMax: number;
+                /** @description How many rounds the event has (#2008): the count of its rounds (SportEventRoundDto), read on each request and never stored. A bracket has a round in each slot, so its count is its FINAL slot's round. 0 until the sync, or a test event, gives it any. */
+                roundCount: number;
                 /** @description The event's field size: the teams or players on its field, counted on each read. 0 until the field loads. */
                 participantCount: number;
                 /** @description The values the event's first slot's set was last priced with for budget contests (#2044), or null until it is priced. Locked at release; its salaryCap is the cap of every budget contest on the event. */
@@ -14692,13 +14674,15 @@ export interface components {
                 updatedAt: string;
             };
         };
-        /** @description A test event, made by hand on test slots (QA only). Created DRAFT with a round in each slot (its league's default round count for one slot), its league's tiers, and its slots' dates; commissioners see it once it is released. */
+        /** @description A test event, made by hand on test slots (QA only). Created DRAFT with its rounds in its slots, its league's tiers, and its slots' dates; commissioners see it once it is released. */
         CreateSportEventRequest: {
-            /** @description The test slots the event is played on (SportLeagueSeasonSlotDto), all of one sport league's current Season: they decide the event's league, Season and dates. One slot plays the league's default round count in it; several play one round in each, in play order (a test bracket's rounds, its FINAL slot last, #2006). 404 SEASON_SLOT_NOT_FOUND; 422 SEASON_SLOT_NOT_TEST for a slot the sync keeps, SEASON_SLOT_NOT_CURRENT for one outside its league's current Season, SEASON_SLOTS_NOT_ONE_SEASON for slots of two Seasons; 409 SEASON_SLOT_TAKEN when one already has an event. */
+            /** @description The test slots the event is played on (SportLeagueSeasonSlotDto), all of one sport league's current Season: they decide the event's league, Season and dates. One slot plays `rounds` rounds in it; several play one round in each, in play order (a test bracket's rounds, its FINAL slot last, #2006). 404 SEASON_SLOT_NOT_FOUND; 422 SEASON_SLOT_NOT_TEST for a slot the sync keeps, SEASON_SLOT_NOT_CURRENT for one outside its league's current Season, SEASON_SLOTS_NOT_ONE_SEASON for slots of two Seasons; 409 SEASON_SLOT_TAKEN when one already has an event. */
             seasonSlotIds: string[];
             name: string;
             venue?: string;
             location?: string;
+            /** @description How many rounds a test event on one slot plays in it (a golf tournament's four), at most 8. Defaults to 1. 422 EVENT_ROUNDS_FROM_SLOTS with several slots, whose rounds are one in each. */
+            rounds?: number;
             autoLifecycleEnabled?: boolean;
         };
         /** @description Changes to an event; omitted fields are left alone. */
@@ -14718,10 +14702,6 @@ export interface components {
              * @description null clears it. 422 EVENT_DATES_FROM_SLOTS for an event with Season slots.
              */
             endDate?: string | null;
-            /** @description Raises an event played in one slot to this many rounds. 422 EVENT_ROUNDS_FROM_SLOTS for an event with several slots, which plays a round in each. */
-            rounds?: number;
-            /** @description Par for every round, 60 to 80. null clears it, so contest scoring derives each round's par from the field. */
-            roundsPar?: number | null;
             autoLifecycleEnabled?: boolean;
             /** @description false for a data correction, such as filling in the real start time of an event loaded with only its date: a released event's start moves without the "event moved" email to its leagues. Refused (400) when the start being moved is not the noon-UTC date-only placeholder. Defaults to true. */
             tellMembers?: boolean;

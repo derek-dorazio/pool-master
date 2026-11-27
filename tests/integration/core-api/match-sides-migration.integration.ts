@@ -117,7 +117,6 @@ async function eventWithField() {
     name: `Migrated Sides ${randomUUID().slice(0, 8)}`,
     startDate: new Date('2027-03-20T12:00:00.000Z'),
     status: 'IN_PROGRESS',
-    rounds: 1,
     autoLifecycleEnabled: false,
   });
   const seasonSlotId = await linkTestSlot(prisma, event);

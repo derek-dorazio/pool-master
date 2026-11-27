@@ -998,7 +998,6 @@ describe('Contract verification (web)', () => {
         name: 'Contract Pickem Event',
         startDate: new Date('2099-03-19T16:00:00.000Z'),
         status: 'SCHEDULED',
-        rounds: 1,
       },
     });
     const round = await prisma.sportEventRound.create({ data: { sportEventId: event.id, sportEventSlotId: await oneEventSlotId(prisma, event.id), roundNumber: 1, scheduledDate: event.startDate } });

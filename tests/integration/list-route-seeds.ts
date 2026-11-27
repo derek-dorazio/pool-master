@@ -139,7 +139,6 @@ export async function seedFootballWeek({ games, startDate, status, played = 0 }:
       name: `Scaling Week ${suffix}`,
       startDate,
       status,
-      rounds: 1,
     },
   });
   const round = await prisma.sportEventRound.create({ data: { sportEventId: event.id, sportEventSlotId: await oneEventSlotId(prisma, event.id), roundNumber: 1, scheduledDate: startDate } });

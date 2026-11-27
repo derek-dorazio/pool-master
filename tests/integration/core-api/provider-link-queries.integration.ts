@@ -93,7 +93,6 @@ describe('ProviderSyncRunRepository.findAll', () => {
       startDate: new Date('2026-06-04T12:00:00.000Z'),
       endDate: new Date('2026-06-07T12:00:00.000Z'),
       status: 'SCHEDULED',
-      rounds: 4,
       autoLifecycleEnabled: true,
     });
     await mapEventToProvider(getPrisma(), event.id, { providerId: SYNCED_PROVIDER_ID, externalId });

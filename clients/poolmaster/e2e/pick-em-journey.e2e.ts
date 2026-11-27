@@ -152,7 +152,6 @@ test('act 1: the root admin releases two American football weeks, each one game 
         slotLabel: weekName(run, index),
         name: weekName(run, index),
         startsAt: week.start,
-        rounds: 1,
         autoLifecycleEnabled: false,
       });
       eventIds.push(event.id);

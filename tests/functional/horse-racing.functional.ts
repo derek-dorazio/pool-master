@@ -113,7 +113,7 @@ describe('SDK Functional: Horse racing Win/Place/Show', () => {
     const eventId = expectDefined(race.data).event.id;
     created.sportEventIds.add(eventId);
     // A race is one round by the sport's default.
-    expect(expectDefined(race.data).event.rounds).toBe(1);
+    expect(expectDefined(race.data).event.roundCount).toBe(1);
 
     const horseIds: string[] = [];
     for (const horse of HORSES) {

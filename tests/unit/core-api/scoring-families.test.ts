@@ -46,7 +46,7 @@ describe.each(Object.values(ScoringFamily))('scoring family %s', (family) => {
   const event = expectDefined(EVENT_BY_SCORING_FAMILY.get(family), `an event scored by ${family}`);
 
   it('scores an empty field as no participants', () => {
-    expect(module.scoreField([], { ...event, rounds: 4, roundsPar: 72, status: SportEventStatus.IN_PROGRESS, slotDefinitions: [] }, defaultScoring(event), { slotDefinitionIds: [] })).toEqual([]);
+    expect(module.scoreField([], { ...event, roundCount: 4, status: SportEventStatus.IN_PROGRESS, slotDefinitions: [] }, defaultScoring(event), { slotDefinitionIds: [] })).toEqual([]);
   });
 
   it('is the module an event of its sport league resolves to', () => {
@@ -73,7 +73,7 @@ describe('head to head', () => {
 
     const result = await writer.persist(
       { contestActivation: NO_CONTEST_ACTIVATION, prisma: { sportEventRoundMatch: { findMany }, sportEventRoundMatchGame: { findMany: findGames } } as unknown as PrismaClient, providerId: 'balldontlie', domainEvents: testDomainEvents() },
-      { id: 'event-1', rounds: null },
+      { id: 'event-1' },
       { category: 'GAME', externalEventId: 'scope-1', games: [] },
     );
 

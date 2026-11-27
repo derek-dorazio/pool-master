@@ -42,7 +42,7 @@ import type {
 } from '@poolmaster/shared/db';
 import { TEST_PROVIDER_ROWS } from './balldontlie-provider-rows';
 import type { SportEventBracketServiceDeps } from '../../packages/core-api/src/modules/events/sport-event-bracket-service';
-import { chooseTierSetSlots, compareMatchPlaces, compareSeasonSlots, slotTierLayoutOf, MatchEnding, SeasonSlotStatus, SeriesFormat, SlotKind, SlotPairing, SlotWindowStatus, type SlotWindow, findSportRow, providerSourceIdOf, requireProviderCodeOfSourceId, type ProviderEventRef, type SportEventProviderMapping, HomeAway, isMatchUnplayed, MatchSideOutcome, MatchStatus, PeriodKind, PeriodKindOrder, Sport, FieldOrderBasis, TierProfileType, SportEventParticipantStatus, type TierSetTemplateListing } from '@poolmaster/shared/domain';
+import { chooseTierSetSlot, chooseTierSetSlots, compareMatchPlaces, compareSeasonSlots, slotTierLayoutOf, MatchEnding, SeasonSlotStatus, SeriesFormat, SlotKind, SlotPairing, SlotWindowStatus, type SlotWindow, findSportRow, providerSourceIdOf, requireProviderCodeOfSourceId, type ProviderEventRef, type SportEventProviderMapping, HomeAway, isMatchUnplayed, MatchSideOutcome, MatchStatus, PeriodKind, PeriodKindOrder, Sport, FieldOrderBasis, TierProfileType, SportEventParticipantStatus, type TierSetTemplateListing } from '@poolmaster/shared/domain';
 import { sportEventSlots, sportPlay } from './sport-play';
 import type {
   AutoReleaseCheck,
@@ -405,8 +405,8 @@ export class InMemorySportEvents {
    * Pass `sportLeagueId` (and `sportLeagueSeasonId`, `slotDefinitions`) to place it on a real one;
    * its championship year is its Season's.
    */
-  addEvent({ providerRef, ...overrides }: Partial<SportEvent> & { providerRef?: ProviderEventRef } = {}): SportEvent {
-    const event: SportEvent = stamp({
+  addEvent({ providerRef, ...overrides }: Partial<Omit<SportEvent, 'roundCount'>> & { providerRef?: ProviderEventRef } = {}): SportEvent {
+    const event = stamp({
       id: this.id('event'), providerMappings: providerRef === undefined ? [] : [providerMappingOf(providerRef)], sport: 'GOLF', sportUrlSegment: 'golf', name: 'Open',
       slotDefinitions: sportEventSlots(overrides.sport ?? Sport.GOLF), sportLeagueSeasonId: IN_MEMORY_SEASON_ID, sportLeagueId: UNPLACED_SPORT_LEAGUE_ID,
       startDate: new Date('2026-06-04T12:00:00.000Z'), status: 'SCHEDULED',
@@ -414,8 +414,13 @@ export class InMemorySportEvents {
       championshipYear: 0,
     });
     event.championshipYear = overrides.championshipYear ?? this.seasonYears.get(event.sportLeagueSeasonId) ?? IN_MEMORY_SEASON_YEAR;
-    this.events.push(event);
-    return event;
+    // Its round count is its Round rows, read with it (#2008), as the adapter's count does.
+    const counted = Object.defineProperty(event, 'roundCount', {
+      enumerable: true,
+      get: () => this.roundRows.filter((round) => round.sportEventId === event.id).length,
+    }) as SportEvent;
+    this.events.push(counted);
+    return counted;
   }
 
   /** The event's id at the provider with this adapter id, if the provider has one for it. */
@@ -466,11 +471,6 @@ export class InMemorySportEvents {
     return slot;
   }
 
-  private roundSlotOfEvent(sportEventId: string): SportEventRoundSlot {
-    const slot = this.eventSlotOf(sportEventId);
-    return roundSlotOf(slot, this.slotPeriods.get(slot.id) ?? null);
-  }
-
   /**
    * Gives an event these rounds, through the round repository's one insert: all in its one slot,
    * or each in the slot `seasonSlotIdOf` names for it.
@@ -515,8 +515,11 @@ export class InMemorySportEvents {
         tierSetTemplates: this.tierSetTemplates
           .filter((template) => template.slotDefinitionIds.includes(slot.slotDefinitionId))
           .map(({ templateId, coverageMode }) => ({ templateId, coverageMode })),
+        // Built when tiered or priced from a profile (#2226), as the slot's columns record it.
+        storesSet: this.slotTierSettings.has(slot.id) || this.slotPricings.has(slot.id),
       }));
     const holding = chooseTierSetSlots(ordered);
+    const tierSetSlot = chooseTierSetSlot(ordered);
     return ordered.map((entry) => {
       const { slot } = entry;
       const tierSettings = this.slotTierSettings.get(slot.id);
@@ -529,7 +532,7 @@ export class InMemorySportEvents {
         slotDefinitionId: slot.slotDefinitionId,
         seasonSlotStatus: slot.status,
         holdsTierSet: holding.includes(entry),
-        isTierSetSlot: entry === holding.at(0),
+        isTierSetSlot: entry === tierSetSlot,
         tierLayout: tierProfile ? slotTierLayoutOf(tierProfile, tierSettings.tierSize) : null,
         pricing: pricing ?? null,
       };
@@ -827,14 +830,6 @@ export class InMemorySportEvents {
           row.scheduledDate = round.scheduledDate;
           if (round.scheduledEndAt !== undefined) row.scheduledEndAt = round.scheduledEndAt;
         }
-      },
-      findOrCreate: async (sportEventId, roundNumber) => {
-        let row = this.roundRows.find((candidate) => candidate.sportEventId === sportEventId && candidate.roundNumber === roundNumber);
-        if (!row) {
-          row = stamp({ id: this.id('round'), sportEventId, roundNumber, scheduledDate: T0, scheduledEndAt: null, slot: this.roundSlotOfEvent(sportEventId) });
-          this.roundRows.push(row);
-        }
-        return row;
       },
       // The in-memory store keeps no match or participant-round rows: every round reads as scheduled.
       findResultFacts: async () => new Map(),

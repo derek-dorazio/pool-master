@@ -64,7 +64,6 @@ async function linkedBracket(sportOf: typeof Sport.BASKETBALL | typeof Sport.SOC
     name: 'Final Four',
     startDate: new Date('2027-04-03T22:00:00.000Z'),
     status: 'IN_PROGRESS',
-    rounds: 2,
     autoLifecycleEnabled: false,
   });
   // Under the league's own provider league, so a seeded league (the NBA) gains no second mapping

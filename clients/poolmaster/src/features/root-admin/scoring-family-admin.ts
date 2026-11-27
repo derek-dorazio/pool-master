@@ -17,11 +17,6 @@ export interface ScoringFamilyAdminUi {
    * Null for a family whose results come only from the feed (head to head, #2074).
    */
   ResultsPanel: ComponentType<{ event: SportEventDto }> | null;
-  /**
-   * Whether the family scores a round a participant did not play against the event's par per
-   * round (golf's 80 strokes), so the event's details show and edit that par.
-   */
-  scoresUnplayedRoundsAgainstPar: boolean;
 }
 
 /**
@@ -33,17 +28,14 @@ export const SCORING_FAMILY_ADMIN_UI: Readonly<Record<ScoringFamily, ScoringFami
   [ScoringFamily.STROKE_PLAY]: {
     resultsLabel: 'Scores',
     ResultsPanel: GolfRoundScoresPanel,
-    scoresUnplayedRoundsAgainstPar: true,
   },
   [ScoringFamily.FINISH_POSITION]: {
     resultsLabel: 'Results',
     ResultsPanel: RaceFinishingOrderPanel,
-    scoresUnplayedRoundsAgainstPar: false,
   },
   [ScoringFamily.HEAD_TO_HEAD]: {
     resultsLabel: 'Bracket',
     ResultsPanel: null,
-    scoresUnplayedRoundsAgainstPar: false,
   },
 };
 

@@ -2893,7 +2893,6 @@ describe('ContestManagementService — a bracket on a knockout already under way
       sport: Sport.BASKETBALL,
       status: options.eventStatus ?? SportEventStatus.IN_PROGRESS,
       startDate: at(options.eventStartHours ?? -48),
-      rounds: 3,
     });
     for (const [team, seed] of EIGHT_SEEDS) {
       const participant = store.addParticipant(sport.id, `Team ${team}`);

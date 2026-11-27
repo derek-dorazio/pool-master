@@ -17,7 +17,6 @@ import type { SportDefinition } from './sport-definition';
 export const basketballSportDefinition: SportDefinition = {
   sport: Sport.BASKETBALL,
   name: 'Basketball',
-  defaultRounds: 6,
   selectionTypes: [SelectionType.TIERED, SelectionType.BUDGET_PICK, SelectionType.RANDOM_DRAW, SelectionType.PICK_EM, SelectionType.BRACKET, SelectionType.SURVIVOR, SelectionType.SQUARES],
   scoringDefinitions: ['KNOCKOUT_ROUND_POINTS'],
   pickEm: { tiePicks: false, againstTheSpread: true },

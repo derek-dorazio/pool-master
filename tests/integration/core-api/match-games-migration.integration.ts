@@ -43,7 +43,6 @@ async function eventWithRound(name: string, notifiedAt: Date | null, startDate =
     name: `${name} ${randomUUID().slice(0, 8)}`,
     startDate,
     status: 'IN_PROGRESS',
-    rounds: 1,
     autoLifecycleEnabled: false,
   });
   await mapEventToProvider(prisma, event.id, { providerId: 'balldontlie', externalId: `migrated-${randomUUID()}` });

@@ -366,8 +366,6 @@ export class PrismaSportEventRepository implements SportEventRepository {
           startDate: input.startDate,
           endDate: input.endDate ?? null,
           status: input.status,
-          rounds: input.rounds ?? null,
-          roundsPar: input.roundsPar ?? null,
           sportLeagueId: input.sportLeagueId,
           sportLeagueSeasonId: input.sportLeagueSeasonId,
           autoLifecycleEnabled: input.autoLifecycleEnabled,
@@ -431,8 +429,6 @@ export class PrismaSportEventRepository implements SportEventRepository {
         ...(updates.location !== undefined && { location: updates.location }),
         ...(updates.startDate !== undefined && { startDate: updates.startDate }),
         ...(updates.endDate !== undefined && { endDate: updates.endDate }),
-        ...(updates.rounds !== undefined && { rounds: updates.rounds }),
-        ...(updates.roundsPar !== undefined && { roundsPar: updates.roundsPar }),
         ...(updates.autoLifecycleEnabled !== undefined && { autoLifecycleEnabled: updates.autoLifecycleEnabled }),
         ...(updates.status !== undefined && { status: updates.status }),
       },
@@ -564,7 +560,7 @@ export class PrismaSportEventRepository implements SportEventRepository {
     // (the write behind the guard reads the event again), and whether it covers a test slot.
     const row = await this.prisma.sportEvent.findUnique({
       where: { id: sportEventId },
-      include: { ...SPORT_EVENT_INCLUDE, _count: { select: { slots: { where: COVERS_TEST_SLOT } } } },
+      include: { ...SPORT_EVENT_INCLUDE, _count: { select: { roundSchedule: true, slots: { where: COVERS_TEST_SLOT } } } },
     });
     if (row === null) return null;
     await memoizedReadMany(this.prisma, ReadMemoKey.sportEvent, [sportEventId], () => Promise.resolve([toSportEvent(row)]));
@@ -884,25 +880,6 @@ export class PrismaSportEventRoundRepository implements SportEventRoundRepositor
       },
     })));
   }
-
-  async findOrCreate(sportEventId: string, roundNumber: number): Promise<SportEventRound> {
-    const stored = await this.prisma.sportEventRound.findUnique({
-      where: { sportEventId_roundNumber: { sportEventId, roundNumber } },
-      include: ROUND_SLOT_INCLUDE,
-    });
-    if (stored !== null) return toSportEventRound(stored);
-    // A round made for a score is played in the event's one slot.
-    const eventSlots = await this.prisma.sportEventSlot.findMany({ where: { sportEventId }, select: { id: true }, take: 2 });
-    if (eventSlots.length !== 1) {
-      throw new Error(`Sport event ${sportEventId} has ${eventSlots.length === 0 ? 'no slot' : 'several slots'}, so a round cannot be made for a score in round ${roundNumber}.`);
-    }
-    return toSportEventRound(await this.prisma.sportEventRound.upsert({
-      where: { sportEventId_roundNumber: { sportEventId, roundNumber } },
-      create: { sportEventId, sportEventSlotId: eventSlots[0].id, roundNumber, scheduledDate: new Date() },
-      update: {},
-      include: ROUND_SLOT_INCLUDE,
-    }));
-  }
 }
 
 /** A field in seed order, unseeded last, then by name. */
@@ -928,6 +905,12 @@ const TIER_SET_SEASON_SLOT_SELECT = {
 type TierSetSeasonSlotRow = Prisma.SportLeagueSeasonCompetitionSlotGetPayload<{ select: typeof TIER_SET_SEASON_SLOT_SELECT }>;
 
 /**
+ * Whether a set was built for an event slot (#2226): it was tiered or priced from a profile, which
+ * the slot's own columns record, so the read costs no statement of its own.
+ */
+const BUILT_SET_SELECT = { platformTierProfileId: true, platformPricingProfileId: true } as const satisfies Prisma.SportEventSlotSelect;
+
+/**
  * The events whose FIELD matches a field read looks up (#2227): those with a slot played as a
  * FIELD. A head-to-head event has none, so its read skips the lookup.
  */
@@ -946,7 +929,7 @@ function fieldRowInclude(fieldMatchIds: readonly string[]) {
     // Its valuation in each slot's set, and its event's slots as the tier-set rule reads them, in the
     // same query: a field row is read with its tier-set slot's (#2044).
     valuations: true,
-    sportEvent: { select: { slots: { select: { id: true, seasonSlot: { select: TIER_SET_SEASON_SLOT_SELECT } } } } },
+    sportEvent: { select: { slots: { select: { id: true, seasonSlot: { select: TIER_SET_SEASON_SLOT_SELECT }, ...BUILT_SET_SELECT } } } },
     standing: true,
     // FIELD matches (a golf round, a race) name every runner: their side results are read by
     // `readFieldResults`, the row's own only, rather than each match whole for every row.
@@ -1169,7 +1152,6 @@ const TIER_SLOT_SELECT = {
   id: true,
   sportEventId: true,
   tierSize: true,
-  platformPricingProfileId: true,
   salaryCap: true,
   pricingUnit: true,
   topSharePercent: true,
@@ -1177,20 +1159,27 @@ const TIER_SLOT_SELECT = {
   steepness: true,
   platformTierProfile: { include: TIER_PROFILE_INCLUDE },
   seasonSlot: { select: TIER_SET_SEASON_SLOT_SELECT },
+  ...BUILT_SET_SELECT,
 } as const satisfies Prisma.SportEventSlotSelect;
 
 type TierSlotRow = Prisma.SportEventSlotGetPayload<{ select: typeof TIER_SLOT_SELECT }>;
 
 /**
- * One event's slots in play order (`compareSeasonSlots`), each with its Season slot and whether a
- * tiered or budget templates of its league that list it: what `chooseTierSetSlots` picks the slots
- * holding a tier set from, and `chooseTierSetSlot` the event's tier-set slot (#2044).
+ * One event's slots in play order (`compareSeasonSlots`), each with its Season slot, the active
+ * tiered or budget templates of its league that list it, and whether a set was built for it (#2226): what
+ * `chooseTierSetSlots` picks the slots holding a tier set from, and `chooseTierSetSlot` the event's
+ * tier-set slot (#2044).
  */
-function inPlayOrder<Row extends { seasonSlot: TierSetSeasonSlotRow }>(rows: readonly Row[]): Array<{ row: Row; seasonSlot: SportLeagueSeasonSlot; tierSetTemplates: TierSetTemplateListing[] }> {
+function inPlayOrder<Row extends { seasonSlot: TierSetSeasonSlotRow; platformTierProfileId: string | null; platformPricingProfileId: string | null }>(rows: readonly Row[]): Array<{ row: Row; seasonSlot: SportLeagueSeasonSlot; tierSetTemplates: TierSetTemplateListing[]; storesSet: boolean }> {
   return rows
     .map((row) => {
       const { definition: { templateSlots, ...definition }, ...seasonSlot } = row.seasonSlot;
-      return { row, seasonSlot: toSeasonSlot({ ...seasonSlot, definition }), tierSetTemplates: templateSlots.map(({ template }) => ({ templateId: template.id, coverageMode: template.coverageMode })) };
+      return {
+        row,
+        seasonSlot: toSeasonSlot({ ...seasonSlot, definition }),
+        tierSetTemplates: templateSlots.map(({ template }) => ({ templateId: template.id, coverageMode: template.coverageMode })),
+        storesSet: row.platformTierProfileId !== null || row.platformPricingProfileId !== null,
+      };
     })
     .sort((a, b) => compareSeasonSlots(a.seasonSlot, b.seasonSlot));
 }
@@ -1240,7 +1229,8 @@ export class PrismaSportEventSlotTierRepository implements SportEventSlotTierRep
       return missing.map((id) => {
         const ordered = inPlayOrder(rows.filter((row) => row.sportEventId === id));
         const holding = chooseTierSetSlots(ordered);
-        return { id, slots: ordered.map((slot) => toTierSlot(slot.row, slot.seasonSlot, { holdsTierSet: holding.includes(slot), isTierSetSlot: slot === holding.at(0) })) };
+        const tierSetSlot = chooseTierSetSlot(ordered);
+        return { id, slots: ordered.map((slot) => toTierSlot(slot.row, slot.seasonSlot, { holdsTierSet: holding.includes(slot), isTierSetSlot: slot === tierSetSlot })) };
       });
     });
     const slotsByEvent = new Map(sportEventIds.map((id): [string, SportEventTierSlot[]] => [id, []]));
@@ -1509,6 +1499,8 @@ const SPORT_EVENT_INCLUDE = {
   },
   // The slot definitions it covers (#2010): where contest templates are offered on it.
   slots: { select: { seasonSlot: { select: { definition: { select: { id: true, key: true, slotKind: true, weekNumber: true, canEndTied: true, matchFormat: true, periodUnit: true, periodCount: true, ...SLOT_PLACE_SELECT } } } } } },
+  // Its round count (#2008): the count of its Round rows, in the same statement.
+  _count: { select: { roundSchedule: true } },
 } as const;
 
 function toSportEvent(row: Prisma.SportEventGetPayload<{ include: typeof SPORT_EVENT_INCLUDE }>): SportEvent {
@@ -1525,8 +1517,7 @@ function toSportEvent(row: Prisma.SportEventGetPayload<{ include: typeof SPORT_E
     startDate: row.startDate,
     endDate: row.endDate ?? undefined,
     status: row.status,
-    rounds: row.rounds ?? undefined,
-    roundsPar: row.roundsPar ?? undefined,
+    roundCount: row._count.roundSchedule,
     slotDefinitions: row.slots
       .map(({ seasonSlot: { definition } }) => ({ ...definition, ...slotPlaceOf(definition) }))
       .sort(compareCoveredSlots)

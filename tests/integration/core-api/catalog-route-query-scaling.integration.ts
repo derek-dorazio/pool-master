@@ -161,7 +161,7 @@ async function seedReseededRound(matchups: number) {
   const event = await prisma.sportEvent.create({
     data: {
       sportLeagueId: sportLeague.id, sportLeagueSeasonId: await fixtureSeasonId(prisma, sportLeague.id, startDate.getUTCFullYear()), 
-      name: `Scaling Reseed Playoffs ${suffix}`, startDate, status: SportEventStatus.SCHEDULED, rounds: 3,
+      name: `Scaling Reseed Playoffs ${suffix}`, startDate, status: SportEventStatus.SCHEDULED,
     },
   });
   // Round 2's slot reseeds, so its games are placed by seed (#2006).

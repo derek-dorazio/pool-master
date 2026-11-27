@@ -27,7 +27,7 @@ import { bracketRoundSlots, roundSlot, weekRoundSlot } from '../../support/round
 // contest's round values and upset bonus, and when a team is left unscored.
 
 const family = getScoringFamilyModule(ScoringFamily.HEAD_TO_HEAD);
-const TOURNAMENT: FieldScoringEvent = { sport: Sport.BASKETBALL, ...sportPlay(Sport.BASKETBALL), rounds: 2, roundsPar: undefined, status: SportEventStatus.IN_PROGRESS, slotDefinitions: [] };
+const TOURNAMENT: FieldScoringEvent = { sport: Sport.BASKETBALL, ...sportPlay(Sport.BASKETBALL), roundCount: 2, status: SportEventStatus.IN_PROGRESS, slotDefinitions: [] };
 const NO_BONUS: UpsetBonus = { rule: UpsetBonusRule.NONE };
 const SEED_DIFFERENCE: UpsetBonus = { rule: UpsetBonusRule.SEED_DIFFERENCE, multiplier: 1 };
 
@@ -58,7 +58,7 @@ interface MatchInput {
 function bracketField(teams: TeamInput[], matchInputs: MatchInput[]): SportEventParticipantView[] {
   const store = new InMemorySportEvents();
   const sport = store.addSport(Sport.BASKETBALL);
-  const event = store.addEvent({ sport: Sport.BASKETBALL, rounds: 2 });
+  const event = store.addEvent({ sport: Sport.BASKETBALL });
   const rows = teams.map(({ name, seed, withdrawn = false }) => {
     const participant = store.addParticipant(sport.id, name, { participantType: 'TEAM' });
     const entry = store.addToField(event.id, participant.id, {

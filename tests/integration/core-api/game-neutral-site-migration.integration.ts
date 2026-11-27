@@ -65,7 +65,6 @@ async function twoMatchEvent() {
     name: `Neutral Site Migration ${randomUUID().slice(0, 8)}`,
     startDate: new Date('2027-03-18T16:00:00.000Z'),
     status: 'SCHEDULED',
-    rounds: 1,
     autoLifecycleEnabled: false,
   });
   await createRoundRows(prisma, new PrismaSportEventRoundRepository(getAppPrisma()), event, [{ roundNumber: 1, scheduledDate: new Date('2027-03-18T16:00:00.000Z') }]);

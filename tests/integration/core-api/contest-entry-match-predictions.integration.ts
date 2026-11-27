@@ -75,7 +75,6 @@ async function createWeek(label: string, startDate: Date) {
     name: label,
     startDate,
     status: 'SCHEDULED',
-    rounds: 1,
     autoLifecycleEnabled: true,
   });
   await createRoundRows(getPrisma(), new PrismaSportEventRoundRepository(getAppPrisma()), event, [{ roundNumber: 1, scheduledDate: startDate }]);

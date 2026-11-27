@@ -27,8 +27,6 @@ export interface SportDefinition {
   sport: Sport;
   /** The sport's name as a heading or menu entry reads it: "Golf", "Horse racing". */
   name: string;
-  /** How many rounds an admin-authored event gets when the admin gives no count. */
-  defaultRounds: number;
   /** Selection types a commissioner may choose for this sport. Each has an engine. */
   selectionTypes: readonly [SelectionType, ...SelectionType[]];
   /** Scoring definitions a contest in this sport may rank by; the first is the default. */
