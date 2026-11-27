@@ -135,19 +135,22 @@ describe('An event\'s field', () => {
       ['SELECT sport_event_participant_race_results', 1],
       ['SELECT sport_event_participant_rounds', 1],
       ['SELECT sport_event_participant_standings', 1],
-      ['SELECT sport_event_participant_valuations', 1],
       ['SELECT sport_event_participants', 1],
       ['SELECT sport_event_provider_mappings', 1],
       ['SELECT sport_event_round_match_sides', 1],
       ['SELECT sport_event_rounds', 1],
-      // The event's slot definitions (#2010), where templates are offered.
-      ['SELECT sport_event_slots', 1],
+      // A field row's price is its first slot's set's (#2044).
+      ['SELECT sport_event_slot_participant_valuations', 1],
+      // The event's slot definitions (#2010), where templates are offered, and its first slot in
+      // play order, whose set prices the field (#2044).
+      ['SELECT sport_event_slots', 2],
       ['SELECT sport_events', 1],
-      // The event's rounds are played in its slot (#2006): the slot's definition and its place in play.
-      ['SELECT sport_league_competition_slots', 1],
+      // The event's rounds are played in its slot (#2006), and its first slot is found by play
+      // order (#2044): each read takes the slot's definition and its place in play.
+      ['SELECT sport_league_competition_slots', 2],
       ['SELECT sport_league_competitions', 1],
       ['SELECT sport_league_phases', 1],
-      ['SELECT sport_league_season_competition_slots', 1],
+      ['SELECT sport_league_season_competition_slots', 2],
       ['SELECT sport_league_seasons', 1],
       ['SELECT sport_leagues', 1],
       // The event's sport, read through its league (#2042).

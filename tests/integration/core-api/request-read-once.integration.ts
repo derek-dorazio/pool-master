@@ -356,11 +356,11 @@ describe('Opening a contest (#1355)', () => {
 
     expect(response.statusCode).toBe(200);
     expect(response.json<ContestResponse>().contest.status).toBe(ContestStatus.OPEN);
-    // Every read of the events or their slots but one takes both events together; the one is the
-    // first event's tier slots for the reply's pick groups. Tiers are read by slot, not event (#2044).
+    // Every read of the events or their slots takes both events together: the reply's pick groups
+    // read the first event's tier slots from the opening's read of both (#2044).
     const eachEvent = (table: string) => statementsOn(statements, StatementVerb.SELECT, table)
       .filter((statement) => !(statementParams(statement).includes(first.id) && statementParams(statement).includes(second.id))).length;
-    expect([eachEvent('sport_events'), eachEvent('sport_event_slots')]).toEqual([0, 1]);
+    expect([eachEvent('sport_events'), eachEvent('sport_event_slots')]).toEqual([0, 0]);
     expect(requestCounts(statements)).toEqual([
       ['INSERT background_jobs', 1], // the opened contest's board rebuild, written with the move (#1973)
       ['SELECT contest_configurations', 1],
@@ -376,15 +376,15 @@ describe('Opening a contest (#1355)', () => {
       ['SELECT sport_event_provider_mappings', 1],
       ['SELECT sport_event_slot_participant_valuations', 2],
       ['SELECT sport_event_slot_tiers', 3],
-      // The slot definitions the event plays, read with it (#2010), and four reads of the events'
-      // tier slots across the opening's steps, each with its Season slot and definition for play
-      // order (#2044); a fixed number however many events the contest covers.
-      ['SELECT sport_event_slots', 5],
+      // The slot definitions the event plays, read with it (#2010), and one read of both events'
+      // tier slots, each with its Season slot and definition for play order, remembered for the
+      // request's later steps (#2044); a fixed number however many events the contest covers.
+      ['SELECT sport_event_slots', 2],
       ['SELECT sport_events', 3],
-      ['SELECT sport_league_competition_slots', 5],
+      ['SELECT sport_league_competition_slots', 2],
       ['SELECT sport_league_competitions', 1],
       ['SELECT sport_league_phases', 1],
-      ['SELECT sport_league_season_competition_slots', 5],
+      ['SELECT sport_league_season_competition_slots', 2],
   ['SELECT sport_league_seasons', 3], // a sport is read through each contest read's event's Season and league (#2042, #2004)
       ['SELECT sport_leagues', 4],
       ['SELECT sports', 3], // contest setup's reader no longer reads the sport rows: whether an event plays matches is its slots' (#2008)

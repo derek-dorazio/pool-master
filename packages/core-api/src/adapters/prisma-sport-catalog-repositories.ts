@@ -1197,16 +1197,23 @@ export class PrismaSportEventSlotTierRepository implements SportEventSlotTierRep
   constructor(private readonly prisma: Db) {}
 
   async findTierSlots(sportEventIds: readonly string[]): Promise<Map<string, SportEventTierSlot[]>> {
-    const slotsByEvent = new Map(sportEventIds.map((id): [string, SportEventTierSlot[]] => [id, []]));
-    if (sportEventIds.length === 0) return slotsByEvent;
-    const rows = await this.prisma.sportEventSlot.findMany({
-      where: { sportEventId: { in: [...sportEventIds] } },
-      select: TIER_SLOT_SELECT,
+    if (sportEventIds.length === 0) return new Map();
+    // Read once per request (#2044): contest setup, opening and the reply each ask for the same
+    // events' tier slots. A write to an event or its slots forgets them with the event.
+    const events = await memoizedReadMany(this.prisma, ReadMemoKey.sportEventTierSlots, sportEventIds, async (missing) => {
+      const slotsByEvent = new Map(missing.map((id): [string, SportEventTierSlot[]] => [id, []]));
+      const rows = await this.prisma.sportEventSlot.findMany({
+        where: { sportEventId: { in: [...missing] } },
+        select: TIER_SLOT_SELECT,
+      });
+      for (const { row, seasonSlot } of inPlayOrder(rows)) {
+        const slots = slotsByEvent.get(row.sportEventId);
+        slots?.push(toTierSlot(row, seasonSlot, slots.length === 0));
+      }
+      return [...slotsByEvent].map(([id, slots]) => ({ id, slots }));
     });
-    for (const { row, seasonSlot } of inPlayOrder(rows)) {
-      const slots = slotsByEvent.get(row.sportEventId);
-      slots?.push(toTierSlot(row, seasonSlot, slots.length === 0));
-    }
+    const slotsByEvent = new Map(sportEventIds.map((id): [string, SportEventTierSlot[]] => [id, []]));
+    for (const { id, slots } of events) slotsByEvent.set(id, slots);
     return slotsByEvent;
   }
 
