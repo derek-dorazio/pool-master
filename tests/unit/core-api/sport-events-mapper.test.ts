@@ -215,6 +215,11 @@ describe('SportEvent next statuses on the wire', () => {
     expect(mapSportEventToDto(summary(event({ status: 'COMPLETED' }), 0)).allowedTransitions).toEqual([]);
   });
 
+  it('answers the sync kinds the event can run now: an in-play linked event its field and scores, a test event none', () => {
+    expect(mapSportEventToDto(summary(event({ status: 'IN_PROGRESS', syncProviderId: 'balldontlie' }), 0)).syncKinds).toEqual(['FIELD', 'SCORES']);
+    expect(mapSportEventToDto(summary(event({ status: 'IN_PROGRESS', syncProviderId: 'balldontlie', providerMappings: [] }), 0)).syncKinds).toEqual([]);
+  });
+
   it('does not offer SCHEDULED from a draft: releasing it is its own action (#431)', () => {
     expect(mapSportEventToDto(summary(event({ status: 'DRAFT' }), 0)).allowedTransitions).toEqual(['CANCELLED']);
   });
