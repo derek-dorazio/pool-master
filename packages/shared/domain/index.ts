@@ -6,6 +6,7 @@ export * from './tiered-roster';
 export * from './contest-events';
 export * from './budget-pricing';
 export * from './tier-profiles';
+export * from './tier-sets';
 export * from './contest-rules';
 export * from './contest-rules-text';
 export * from './sport-event-lifecycle';

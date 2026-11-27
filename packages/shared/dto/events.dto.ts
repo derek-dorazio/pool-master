@@ -1,13 +1,12 @@
 import { z } from 'zod';
 import { registerSchema } from './schema-registry';
 import {
-  BudgetPricingValuesSchema,
   ProviderCode,
   AutoReleaseCheckOutcome,
   ContestOpening,
   ContestStatus,
-  EventPricingConfigSchema,
-  EventTierConfigSchema,
+  SlotPricingSchema,
+  SlotTierLayoutSchema,
   SportEventParticipantStatus,
   ParticipantRoundStatus,
   ParticipantType,
@@ -108,6 +107,7 @@ export const SportEventProviderMappingDtoSchema = z.object({
 }).describe(`The provider's id for an event, written by the events sync when it created the event from the provider's schedule. ${ADMIN_ONLY}`);
 export type SportEventProviderMappingDto = z.infer<typeof SportEventProviderMappingDtoSchema>;
 
+
 export const SportEventDtoSchema = z.object({
   id: z.uuid().describe('Sport-event identifier.'),
   providerMappings: z.array(SportEventProviderMappingDtoSchema).describe(`The provider ids the events sync gave the event, one per provider, by provider name. Empty for a test event, made by hand on a test slot. ${ADMIN_ONLY}`),
@@ -125,13 +125,13 @@ export const SportEventDtoSchema = z.object({
   roundsParMin: z.number().int().describe('The lowest par per round an update takes; a lower one is refused with 400.'),
   roundsParMax: z.number().int().describe('The highest par per round an update takes; a higher one is refused with 400.'),
   participantCount: z.number().int().describe('The event\'s field size: the teams or players on its field, counted on each read. 0 until the field loads.'),
-  pricing: EventPricingConfigSchema.nullable().describe('The values the field was last priced with for budget contests, or null until prices are assigned. Locked at release; its salaryCap is the cap of every budget contest on the event.'),
-  tierLayout: EventTierConfigSchema.nullable().describe('The tier layout the field was last auto-tiered with: its sport league\'s tier profile at the time, with any tier size an admin sent instead. Null until the field is first auto-tiered. Hand placements do not change it.'),
+  pricing: SlotPricingSchema.nullable().describe('The values the event\'s first slot\'s set was last priced with for budget contests (#2044), or null until it is priced. Locked at release; its salaryCap is the cap of every budget contest on the event.'),
+  tierLayout: SlotTierLayoutSchema.nullable().describe('The tier layout the event\'s first slot\'s set was last auto-tiered with (#2044): its tier profile\'s, with any tier size an admin sent instead. Null until the set is first auto-tiered. Hand placements do not change it.'),
   readinessStatus: EventReadinessStatusDtoSchema.describe('Contest-setup readiness right now.'),
   readinessReasons: z.array(EventReadinessReasonDtoSchema).describe('Why the event is or is not contest-eligible right now: not released yet (DRAFT), no field loaded, or already started.'),
   contestEligible: z.boolean().describe('Whether a contest can be created on the event right now: it is released, its field is loaded, and it has not started.'),
   contestOpenings: z.array(SportEventContestOpeningDtoSchema).describe('One row per selection type the event\'s sport league offers, in the order it offers them: whether that selection type can start a contest on the event now. Contest setup lists an event under a selection type only when its row is OPEN.'),
-  tiersLocked: z.boolean().describe('Whether the event\'s tiers and prices are locked: true once it is released (#431). A tier or price write on a locked event is refused with 409 SPORT_EVENT_TIERS_LOCKED.'),
+  tiersLocked: z.boolean().describe('Whether the tiers and prices of the event\'s first slot are locked: true once the event is released (#431, #2044). A tier or price write on a locked set is refused with 409 SPORT_EVENT_TIERS_LOCKED.'),
   slotDefinitionIds: z.array(z.uuid()).describe('The slot definitions of the Season slots the event covers, in play order (#2010): the templates covering one of them are offered on it. Empty until the sync gives it its slots.'),
   sportLeagueSeasonId: z.uuid().describe('The Season the event is played in (SportLeagueSeasonDto).'),
   championshipYear: z.number().int().describe('The year the event\'s Season is named for: 2025 for the NFL 2025 Season\'s Super Bowl, played in February 2026; 2026 for an NBA 2025-26 game. Read through the Season.'),
@@ -257,14 +257,14 @@ export const SportEventContestListResponseSchema = z.object({
 }).describe('The customer contests on one event.');
 export type SportEventContestListResponse = z.infer<typeof SportEventContestListResponseSchema>;
 
-// --- SportEventTier --------------------------------------------------------------
+// --- SportEventTier: a SportEventSlotTier on the wire (#2044) ----------------------
 
 export const SportEventTierDtoSchema = z.object({
   id: z.uuid(),
-  sportEventId: z.uuid(),
+  seasonSlotId: z.uuid().describe('The Season slot of the event whose tier set the tier is in (#2044).'),
   tierKey: z.string().describe('Stable key; assignments name a tier by it.'),
   tierNumber: z.number().int().describe('Order among the event\'s tiers; 1 first. A tier stores no name: screens call it "Tier N" by this number.'),
-}).describe('A pick tier an event\'s field is divided into. Who is in it is on each field row\'s valuation.');
+}).describe('A pick tier of an event slot\'s team tier set (#2044). Who is in it is on each field row\'s valuation.');
 export type SportEventTierDto = z.infer<typeof SportEventTierDtoSchema>;
 
 export const SportEventTierListResponseSchema = z.object({
@@ -295,10 +295,8 @@ export const ReplaceSportEventTierAssignmentsRequestSchema = z.object({
 }).describe('The drag-and-drop tier save.');
 export type ReplaceSportEventTierAssignmentsRequest = z.infer<typeof ReplaceSportEventTierAssignmentsRequestSchema>;
 
-export const AutoAssignSportEventPricesRequestSchema = BudgetPricingValuesSchema.extend({
-  platformPricingProfileId: z.uuid().describe('The pricing profile the values started from. 404 PLATFORM_PRICING_PROFILE_NOT_FOUND when there is none with this id.'),
-}).describe(
-  'Prices the active field on the budget curve with these values, in the field\'s order, and records them on the event as its pricing, with the profile they started from. The values usually are the profile\'s, possibly changed.',
+export const AutoAssignSportEventPricesRequestSchema = SlotPricingSchema.describe(
+  'Prices the active field on the budget curve with these values, best seed first and golfers with no seed last, and records them on the event\'s first slot as its pricing (#2044). The values usually come from a Budget pricing profile, possibly changed; platformPricingProfileId names that profile (404 PLATFORM_PRICING_PROFILE_NOT_FOUND for none).',
 );
 export type AutoAssignSportEventPricesRequest = z.infer<typeof AutoAssignSportEventPricesRequestSchema>;
 
@@ -448,8 +446,8 @@ registerSchema('SportEventTierListResponse', SportEventTierListResponseSchema);
 registerSchema('ReplaceSportEventTiersRequest', ReplaceSportEventTiersRequestSchema);
 registerSchema('AutoAssignSportEventTiersRequest', AutoAssignSportEventTiersRequestSchema);
 registerSchema('ReplaceSportEventTierAssignmentsRequest', ReplaceSportEventTierAssignmentsRequestSchema);
-registerSchema('EventPricingConfig', EventPricingConfigSchema);
-registerSchema('EventTierConfig', EventTierConfigSchema);
+registerSchema('SlotPricing', SlotPricingSchema);
+registerSchema('SlotTierLayout', SlotTierLayoutSchema);
 registerSchema('AutoAssignSportEventPricesRequest', AutoAssignSportEventPricesRequestSchema);
 registerSchema('SportEventParticipantValuationDto', SportEventParticipantValuationDtoSchema);
 registerSchema('SportEventParticipantStandingDto', SportEventParticipantStandingDtoSchema);

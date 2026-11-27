@@ -20,7 +20,7 @@ import { SportEventAutoReleaseScheduler } from '../../../packages/core-api/src/m
 import { SportEventBracketService } from '../../../packages/core-api/src/modules/events/sport-event-bracket-service';
 import { SportEventRoundService } from '../../../packages/core-api/src/modules/events/sport-event-round-service';
 import { SportEventTierService } from '../../../packages/core-api/src/modules/events/sport-event-tier-service';
-import { standardEventPricing } from '../../support/budget-pricing';
+import { inMemoryStandardPricing } from '../../support/budget-pricing';
 import { inMemoryBackgroundJobs, testCurrentJobStart } from '../../support/in-memory-background-jobs';
 import { InMemorySportEvents, NO_PICKS_ON_EVENT } from '../../support/in-memory-sport-events';
 import { fakeContestConfigurationRepo, fakeContestRepo } from '../../support/repo-fakes';
@@ -56,8 +56,6 @@ function setup() {
       rounds: store.roundRepo(),
       field: store.fieldRepo(),
       matches: store.matchRepo(),
-      tiers: store.tierRepo(),
-      valuations: store.valuationRepo(),
       ...NO_PICKS_ON_EVENT,
       contests: { recheckReminders: async () => undefined },
     }),
@@ -90,15 +88,15 @@ async function readySyncedDraft(store: InMemorySportEvents, sportLeagueId: strin
   });
   await store.addRounds(event.id, [{ roundNumber: 1, scheduledDate: event.startDate }]);
   await store.addTiers(event.id, [{ tierKey: 'tier-1', tierNumber: 1 }]);
-  const tierId = store.tierRows.find((tier) => tier.sportEventId === event.id)?.id ?? '';
+  const tierId = store.tierRows.find((tier) => tier.sportEventSlotId === store.tierSetSlotOf(event.id).id)?.id ?? '';
   const entries = ['a', 'b', 'c'].map((name) => {
     const participantId = `participant-${event.id}-${name}`;
     return store.addToField(event.id, participantId);
   });
-  await store.valuationRepo().assignTiers(entries.map((entry, index) => ({ sportEventParticipantId: entry.id, sportEventTierId: tierId, tierOrderIndex: index + 1, source: 'MANUAL' })));
-  await store.valuationRepo().assignEventPrices({
-    sportEventId: event.id,
-    pricingConfig: standardEventPricing(),
+  await store.valuationRepo().assignTiers(store.tierSetSlotOf(event.id), entries.map((entry, index) => ({ sportEventParticipantId: entry.id, sportEventSlotTierId: tierId, tierOrderIndex: index + 1, source: 'MANUAL' })));
+  await store.valuationRepo().assignSlotPrices({
+    slot: store.tierSetSlotOf(event.id),
+    pricing: inMemoryStandardPricing(),
     assignments: entries.map((entry) => ({ sportEventParticipantId: entry.id, price: 6000, source: 'AUTO_RANKING' })),
   });
   return event;

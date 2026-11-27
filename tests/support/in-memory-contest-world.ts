@@ -44,7 +44,6 @@ import type {
   League,
   LeagueMembership,
   SportEvent,
-  SportEventTier,
   SportLeague,
   Squad,
   SquadMembership,
@@ -65,6 +64,7 @@ import {
   SquadMembershipStatus,
   TeamIconKey, SportEventParticipantStatus } from '@poolmaster/shared/domain';
 import type { ContestServiceDeps, StoredLeaderboard } from '../../packages/core-api/src/modules/contests/service';
+import type { SetTier } from '../../packages/core-api/src/modules/events/sport-event-tier-service';
 import { buildLeague, buildUser } from '../factories';
 import {
   fakeLeagueRepo,
@@ -122,7 +122,7 @@ export class InMemoryContestWorld {
   readonly fieldSizes = new Map<string, number>();
   readonly sportEvents = new Map<string, SportEvent>();
   /** The event's tiers, per sport event — what `listTiers` answers. */
-  readonly eventTiers = new Map<string, SportEventTier[]>();
+  readonly eventTiers = new Map<string, SetTier[]>();
   /** Each contest's expansion bands, in the order they were added (#980); the highest applies. */
   readonly contestExpansions = new Map<string, number[]>();
   /** The PLAN_CONFIG its leagues' plans read (#947): the shipped defaults until a test sets one. */
@@ -278,10 +278,12 @@ export class InMemoryContestWorld {
   }
 
   /** Seeds an event's tiers, numbered 1..tierCount. A tiered roster is tierCount × picksPerTier. */
-  addEventTiers(sportEventId: string, tierCount: number): SportEventTier[] {
-    const tiers = Array.from({ length: tierCount }, (_, index): SportEventTier => ({
+  addEventTiers(sportEventId: string, tierCount: number): SetTier[] {
+    const tiers = Array.from({ length: tierCount }, (_, index): SetTier => ({
       id: this.nextId('tier'),
       sportEventId,
+      sportEventSlotId: this.nextId('event-slot'),
+      seasonSlotId: this.nextId('season-slot'),
       tierKey: `tier-${index + 1}`,
       tierNumber: index + 1,
       createdAt: T0,

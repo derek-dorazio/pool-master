@@ -8,8 +8,6 @@ import type { ProviderSyncFindingOpenCount } from './provider-sync-finding-ports
 import type {
   AutoReleaseCheck,
   BackgroundJobRequest,
-  EventPricingConfig,
-  EventTierConfig,
   FieldOrderBasis,
   MatchStatus,
   PlatformPricingProfile,
@@ -33,10 +31,13 @@ import type {
   SportEventParticipantGolfStanding,
   SportEventParticipantRound,
   SportEventParticipantStanding,
-  SportEventParticipantValuation,
+  SportEventSlotParticipantValuation,
   SportEventRound,
   SportEventStatus,
-  SportEventTier,
+  SportEventSlotTier,
+  SportEventTierSlot,
+  SlotPricing,
+  SlotTierSettings,
   SportLeague,
   SportLeaguePosition,
   TierProfileValues,
@@ -142,7 +143,7 @@ export interface SportEventFilters {
  * for an event the sync creates (#2004): it is kept under its Season's league's selected provider
  * mapping, which must be that provider's. A test event has none.
  */
-export type SportEventCreate = Omit<SportEvent, 'id' | 'sport' | 'sportUrlSegment' | 'createdAt' | 'updatedAt' | 'slotDefinitions' | 'championshipYear' | 'participantType' | 'scoringFamily' | 'pricingConfig' | 'tierConfig' | 'providerMappings'> & {
+export type SportEventCreate = Omit<SportEvent, 'id' | 'sport' | 'sportUrlSegment' | 'createdAt' | 'updatedAt' | 'slotDefinitions' | 'championshipYear' | 'participantType' | 'scoringFamily' | 'providerMappings'> & {
   providerRef?: ProviderEventRef;
   /** The Season slots it covers (#2004), in its own Season: a test event's test slot. */
   seasonSlotIds?: readonly string[];
@@ -279,18 +280,20 @@ export interface SportEventRepository {
   /** Event participants per event, for each id asked about (0 where none). */
   countParticipants(sportEventIds: readonly string[]): Promise<Map<string, number>>;
   /**
-   * Active event participants with no tier, per event, for each id asked about (0 where none).
-   * An event can't be released while any remain (#431). One auto-tiering placed beyond a capped
-   * last tier (no tier, but a tier source) is not counted: the league's layout leaves it out (#1844).
+   * Active field rows with no tier in each event slot's set (#2044), per slot id, for each slot
+   * asked about (0 where none); at most one slot of an event. An event can't be released while
+   * any remain in its first slot's set (#431). One auto-tiering placed beyond a capped last tier
+   * (no tier, but a tier source) is not counted: the league's layout leaves it out (#1844).
    */
-  countUntieredActiveParticipants(sportEventIds: readonly string[]): Promise<Map<string, number>>;
+  countUntieredActiveParticipants(slots: readonly ValuedSlot[]): Promise<Map<string, number>>;
   /**
-   * Active event participants with no price, per event, for each id asked about (0 where none).
-   * An event can't be released while any remain (#93).
+   * Active field rows with no price in each event slot's set (#2044), per slot id, for each slot
+   * asked about (0 where none); at most one slot of an event. An event can't be released while
+   * any remain in its first slot's set (#93).
    */
-  countUnpricedActiveParticipants(sportEventIds: readonly string[]): Promise<Map<string, number>>;
-  /** Tiers per event, for each id asked about (0 where none). */
-  countTiers(sportEventIds: readonly string[]): Promise<Map<string, number>>;
+  countUnpricedActiveParticipants(slots: readonly ValuedSlot[]): Promise<Map<string, number>>;
+  /** Tiers in each event slot's set (#2044), per slot id, for each slot asked about (0 where none). */
+  countTiers(sportEventSlotIds: readonly string[]): Promise<Map<string, number>>;
   /**
    * The Season slots each event covers (#2004), in play order, for each id asked about (empty
    * where none), in a fixed number of reads however many events.
@@ -302,11 +305,11 @@ export interface SportEventRepository {
    */
   isTestEvent(sportEventId: string): Promise<boolean | null>;
   /**
-   * The labels of the tiers no active participant is in, per event, in tier order, for each id
-   * asked about (empty where none). An event can't be released while any remain: no entry could
-   * pick from them.
+   * The numbers of the tiers no active field row is in, per event slot id (#2044), in tier order,
+   * for each slot asked about (empty where none). An event can't be released while its first
+   * slot's set has any: no entry could pick from them.
    */
-  findEmptyTierNumbers(sportEventIds: readonly string[]): Promise<Map<string, number[]>>;
+  findEmptyTierNumbers(sportEventSlotIds: readonly string[]): Promise<Map<string, number[]>>;
   /**
    * What only a release's ready checks read of one event (#1823), each a count: its scheduled
    * rounds, and the active contest setups its sport league offers.
@@ -398,10 +401,17 @@ export type SportEventParticipantCreate = SportEventParticipantPatch & { partici
 export interface SportEventParticipantFieldUpdate {
   id: string;
   updates: SportEventParticipantPatch;
-  /** A manually set price, or null to clear it; undefined leaves the valuation alone. */
-  price?: number | null;
-  /** A manual move into another tier, at this place in it; undefined leaves the tier alone. */
-  tier?: { sportEventTierId: string; tierOrderIndex: number };
+  /**
+   * A hand edit of the row's valuation in one event slot's set (#2044); undefined leaves every
+   * valuation alone.
+   */
+  valuation?: {
+    slot: Pick<SportEventTierSlot, 'id' | 'sportEventId'>;
+    /** A manually set price, or null to clear it; undefined leaves the price alone. */
+    price?: number | null;
+    /** A manual move into another tier of the set, at this place in it; undefined leaves the tier alone. */
+    tier?: { sportEventSlotTierId: string; tierOrderIndex: number };
+  };
 }
 
 /** A round row with its sport extension, when the sport has one and it has been scored. */
@@ -429,7 +439,11 @@ export interface FieldGameResultView {
 export interface SportEventParticipantView {
   entry: SportEventParticipant;
   participant: Participant;
-  valuation: SportEventParticipantValuation | null;
+  /**
+   * The row's valuation in its event's first slot's set (#2044: today's only starting point, and
+   * the set every field read shows); null when it has none there.
+   */
+  valuation: SportEventSlotParticipantValuation | null;
   standing: ParticipantStandingView | null;
   /** In round number order. */
   rounds: ParticipantRoundView[];
@@ -481,32 +495,38 @@ export interface SportEventParticipantRepository {
   countPicks(id: string): Promise<number>;
 }
 
-export interface SportEventTierRepository {
-  /** Ordered by tier number. */
-  findBySportEvent(sportEventId: string): Promise<SportEventTier[]>;
-  /** Several events' tiers in one read (#1201), each event's ordered by tier number. */
-  findBySportEvents(sportEventIds: readonly string[]): Promise<SportEventTier[]>;
-  /** Creates the given tiers, of one event or several, in one insert (#1253). */
-  createMany(tiers: readonly SportEventTierCreate[]): Promise<void>;
+export interface SportEventSlotTierRepository {
   /**
-   * Replaces an event's tiers with `tiers`, keyed by tierKey, all or none. Valuations on a
-   * removed tier move to `reassignTo` (a tierKey in `tiers`) with no order, or lose their
-   * tier when none is given.
+   * Each event's slots as their team tier sets read them (#2044), in play order
+   * (`compareSeasonSlots`) with the first marked, for each id asked about (empty where none), in a
+   * fixed number of reads however many events.
    */
-  replace(sportEventId: string, tiers: readonly SportEventTierDefinition[], reassignTo?: string): Promise<void>;
-  /** Valuations placed in each of the event's tiers; a tier with none is left out. */
-  countValuations(sportEventId: string): Promise<Map<string, number>>;
+  findTierSlots(sportEventIds: readonly string[]): Promise<Map<string, SportEventTierSlot[]>>;
+  /** The slot's tiers, ordered by tier number. */
+  findBySlot(sportEventSlotId: string): Promise<SportEventSlotTier[]>;
+  /** Several slots' tiers in one read (#1201), each slot's ordered by tier number. */
+  findBySlots(sportEventSlotIds: readonly string[]): Promise<SportEventSlotTier[]>;
+  /** Creates the given tiers, of one slot or several, in one insert (#1253). */
+  createMany(tiers: readonly SportEventSlotTierCreate[]): Promise<void>;
+  /**
+   * Replaces a slot's tiers with `tiers`, keyed by tierKey, all or none. Valuations on a removed
+   * tier move to `reassignTo` (a tierKey in `tiers`) with no order, or lose their tier when none
+   * is given.
+   */
+  replace(sportEventSlotId: string, tiers: readonly SportEventSlotTierDefinition[], reassignTo?: string): Promise<void>;
+  /** Valuations placed in each of the slot's tiers; a tier with none is left out. */
+  countValuations(sportEventSlotId: string): Promise<Map<string, number>>;
 }
 
-export type SportEventTierDefinition = Pick<SportEventTier, 'tierKey' | 'tierNumber'>;
+export type SportEventSlotTierDefinition = Pick<SportEventSlotTier, 'tierKey' | 'tierNumber'>;
 
-/** A tier to create, on its event. */
-export type SportEventTierCreate = SportEventTierDefinition & { sportEventId: string };
+/** A tier to create, on its event slot. */
+export type SportEventSlotTierCreate = SportEventSlotTierDefinition & { sportEventSlotId: string };
 
 export interface TierAssignment {
   sportEventParticipantId: string;
   /** Null for a place beyond a capped last tier (#1844): ordered, but in no tier and not pickable. */
-  sportEventTierId: string | null;
+  sportEventSlotTierId: string | null;
   tierOrderIndex: number;
   source: ValuationSource;
 }
@@ -517,29 +537,32 @@ export interface PriceAssignment {
   source: ValuationSource;
 }
 
-export interface SportEventParticipantValuationRepository {
-  /** Every valuation on the event's field, with or without a tier. */
-  findBySportEvent(sportEventId: string): Promise<SportEventParticipantValuation[]>;
-  /** Every valuation on several events' fields in one read (#1201). */
-  findBySportEvents(sportEventIds: readonly string[]): Promise<SportEventParticipantValuation[]>;
-  /** Places field rows in tiers, all or none. Prices are untouched. */
-  assignTiers(assignments: readonly TierAssignment[]): Promise<void>;
+/** The slot a valuation write is on: its id, and its event's, which its field rows are of. */
+export type ValuedSlot = Pick<SportEventTierSlot, 'id' | 'sportEventId'>;
+
+export interface SportEventSlotParticipantValuationRepository {
+  /** Every valuation in the slot's set, with or without a tier. */
+  findBySlot(sportEventSlotId: string): Promise<SportEventSlotParticipantValuation[]>;
+  /** Every valuation in several slots' sets in one read (#1201). */
+  findBySlots(sportEventSlotIds: readonly string[]): Promise<SportEventSlotParticipantValuation[]>;
+  /** Places field rows in the slot's tiers, all or none. Prices are untouched. */
+  assignTiers(slot: ValuedSlot, assignments: readonly TierAssignment[]): Promise<void>;
   /**
-   * Auto-tiers field rows and records on the event the layout they were tiered with, all or none
-   * (#1844). Prices are untouched.
+   * Auto-tiers field rows and records on the slot the profile and tier size they were tiered
+   * with, all or none (#1844, #2044). Prices are untouched.
    */
-  assignEventTiers(input: {
-    sportEventId: string;
-    tierConfig: EventTierConfig;
+  assignSlotTiers(input: {
+    slot: ValuedSlot;
+    tierSettings: SlotTierSettings;
     assignments: readonly TierAssignment[];
   }): Promise<void>;
   /**
-   * Prices field rows and records on the event the values they were priced with, all or none
-   * (#93). Tiers are untouched.
+   * Prices field rows and records on the slot the values they were priced with, all or none
+   * (#93, #2044). Tiers are untouched.
    */
-  assignEventPrices(input: {
-    sportEventId: string;
-    pricingConfig: EventPricingConfig;
+  assignSlotPrices(input: {
+    slot: ValuedSlot;
+    pricing: SlotPricing;
     assignments: readonly PriceAssignment[];
   }): Promise<void>;
 }
@@ -773,9 +796,9 @@ export interface ProfileRepository<TProfile, TWrite> {
   /** The replaced profile, or which unique index refused it, as for create. */
   update(id: string, input: TWrite): Promise<TProfile | ProfileTaken>;
   /**
-   * Deletes the profile unless a sport league names it; the foreign key refuses a delete a league
-   * named meanwhile. Returns how many sport leagues name it: zero means it was deleted. Null when no such profile
-   * exists.
+   * Deletes the profile unless a sport league or an event slot's tier set names it (#2044); the
+   * foreign keys refuse a delete one named meanwhile. Returns how many sport leagues and tier sets
+   * name it: zero means it was deleted. Null when no such profile exists.
    */
   deleteUnlessUsed(id: string): Promise<number | null>;
 }

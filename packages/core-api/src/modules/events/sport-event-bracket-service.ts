@@ -27,10 +27,8 @@ import type {
   SportEventRoundMatchRepository,
   SportEventRoundMatchWrite,
   SportEventParticipantRepository,
-  SportEventParticipantValuationRepository,
   SportEventRepository,
   SportEventRoundRepository,
-  SportEventTierRepository,
 } from '@poolmaster/shared/db';
 import {
   eventPlaysMatches,
@@ -243,9 +241,6 @@ export interface SportEventBracketServiceDeps {
   rounds: Pick<SportEventRoundRepository, 'findBySportEvent'>;
   field: SportEventParticipantRepository;
   matches: SportEventRoundMatchRepository;
-  /** The event's tiers and valuations, which a replacement joins at the bottom of. */
-  tiers: Pick<SportEventTierRepository, 'findBySportEvent'>;
-  valuations: Pick<SportEventParticipantValuationRepository, 'findBySportEvent'>;
   /** Whether a game has picks: a released game's spread is fixed once it has (#720). */
   predictions: Pick<ContestEntryMatchPredictionRepository, 'hasAnyOnMatch'>;
   /** A game's new time can move its contests' entry reminders (#1170). */

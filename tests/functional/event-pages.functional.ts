@@ -26,7 +26,7 @@ afterAll(async () => {
     const where = { sportEventId: { in: createdEventIds } };
     await db.sportEventRoundMatch.deleteMany({ where });
     await db.sportEventRound.deleteMany({ where });
-    await db.sportEventTier.deleteMany({ where });
+    await db.sportEventSlotTier.deleteMany({ where: { slot: where } });
     await db.sportEvent.deleteMany({ where: { id: { in: createdEventIds } } });
     await db.sportLeagueSeasonCompetitionSlot.deleteMany({ where: { label: { in: createdEventIds.map((id) => `event ${id}`) } } });
   }

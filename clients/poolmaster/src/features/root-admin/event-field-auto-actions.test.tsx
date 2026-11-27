@@ -15,7 +15,6 @@ import {
   sportEventOverviewFixture,
   tierFixture,
   valuationFixture,
-  STANDARD_PLATFORM_PRICING_PROFILE_ID,
 } from './sport-test-fixtures';
 
 // The Field section's automatic tiers and prices (#1890), which replaced the tiers page's buttons.
@@ -114,7 +113,7 @@ function fieldEntry(
 }
 
 function tier(n: number, tierNumber = n) {
-  return tierFixture({ id: `tier-id-${n}`, sportEventId: 'evt-1', tierKey: `tier-${n}`, tierNumber });
+  return tierFixture({ id: `tier-id-${n}`, tierKey: `tier-${n}`, tierNumber });
 }
 
 function seed(overrides: { tournament?: Parameters<typeof tournament>[0] } = {}) {
@@ -181,12 +180,13 @@ describe('the Field section\'s automatic tiers and prices', () => {
 
   it('prices the field with its sport league\'s profile, previewing the best and worst price in domain words, and with a changed one', async () => {
     seed({ tournament: { pricing: null } });
+    const [small] = platformPricingProfilesFixture();
     autoAssignEventPricesMock.mockResolvedValue({ data: { participants: [] } });
     renderPage();
 
     await waitFor(() => expect(screen.getByTestId('root-admin-tier-auto-prices')).toBeEnabled());
     await userEvent.click(screen.getByTestId('root-admin-tier-auto-prices'));
-    expect(screen.getByTestId('root-admin-tier-auto-prices-profile')).toHaveValue(STANDARD_PLATFORM_PRICING_PROFILE_ID);
+    expect(screen.getByTestId('root-admin-tier-auto-prices-profile')).toHaveDisplayValue('Standard');
     expect(screen.getByTestId('root-admin-tier-auto-prices-salaryCap')).toHaveValue('50000');
     expect(screen.getByTestId('root-admin-tier-auto-prices-preview')).toHaveTextContent(
       'Best participant $12,000, worst $6,000, across 3 active participants.',
@@ -202,7 +202,8 @@ describe('the Field section\'s automatic tiers and prices', () => {
       expect(autoAssignEventPricesMock).toHaveBeenCalledWith(
         expect.objectContaining({
           path: { eventId: 'evt-1' },
-          body: { platformPricingProfileId: '00000000-0000-4000-8000-0000000000b1', salaryCap: 5000, unit: 10, topSharePercent: 24, floorSharePercent: 12, steepness: 1 },
+          // The profile goes by its id; its name is the picker's label only (#2044).
+          body: { platformPricingProfileId: small.id, salaryCap: 5000, unit: 10, topSharePercent: 24, floorSharePercent: 12, steepness: 1 },
         }),
       ),
     );
@@ -216,7 +217,7 @@ describe('the Field section\'s automatic tiers and prices', () => {
 
     await waitFor(() => expect(screen.getByTestId('root-admin-tier-auto-prices')).toBeEnabled());
     await userEvent.click(screen.getByTestId('root-admin-tier-auto-prices'));
-    expect(screen.getByTestId('root-admin-tier-auto-prices-profile')).toHaveValue('00000000-0000-4000-8000-0000000000b1');
+    expect(screen.getByTestId('root-admin-tier-auto-prices-profile')).toHaveDisplayValue('Small');
     expect(screen.getByTestId('root-admin-tier-auto-prices-salaryCap')).toHaveValue('5000');
     const [request] = getSportLeagueMock.mock.calls[0] as [{ path: { sportLeagueId: string } }];
     expect(request.path.sportLeagueId).toBe('league-1');
@@ -287,29 +288,8 @@ describe('the Field section\'s automatic tiers and prices', () => {
     })));
   });
 
-  it('opens the price dialog of an event whose pricing profile was deleted on the sport league\'s profile, keeping the values the event was priced with', async () => {
-    seed({ tournament: { pricing: { platformPricingProfileId: null, salaryCap: 50000, unit: 100, topSharePercent: 30, floorSharePercent: 12, steepness: 4 } } });
-    renderPage();
-
-    await waitFor(() => expect(screen.getByTestId('root-admin-tier-auto-prices')).toBeEnabled());
-    await userEvent.click(screen.getByTestId('root-admin-tier-auto-prices'));
-    expect(screen.getByTestId('root-admin-tier-auto-prices-profile')).toHaveValue(STANDARD_PLATFORM_PRICING_PROFILE_ID);
-    expect(screen.getByTestId('root-admin-tier-auto-prices-topSharePercent')).toHaveValue('30');
-  });
-
-  it('asks for a pricing profile, and will not assign, when the event\'s profile was deleted and its sport league names none in the list', async () => {
-    seed({ tournament: { pricing: { platformPricingProfileId: null, salaryCap: 50000, unit: 100, topSharePercent: 30, floorSharePercent: 12, steepness: 4 } } });
-    getSportLeagueMock.mockResolvedValue({ data: { sportLeague: sportLeagueFixture({ platformPricingProfileId: '00000000-0000-4000-8000-0000000000ff' }) } });
-    renderPage();
-
-    await waitFor(() => expect(screen.getByTestId('root-admin-tier-auto-prices')).toBeEnabled());
-    await userEvent.click(screen.getByTestId('root-admin-tier-auto-prices'));
-    expect(screen.getByTestId('root-admin-tier-auto-prices-modal')).toHaveTextContent('Choose the pricing profile the values start from.');
-    expect(screen.getByTestId('root-admin-tier-auto-prices-confirm')).toBeDisabled();
-  });
-
   it('starts the price dialog from the values the event was last priced with', async () => {
-    seed({ tournament: { pricing: { platformPricingProfileId: STANDARD_PLATFORM_PRICING_PROFILE_ID, salaryCap: 50000, unit: 100, topSharePercent: 30, floorSharePercent: 12, steepness: 4 } } });
+    seed({ tournament: { pricing: { platformPricingProfileId: '00000000-0000-4000-8000-0000000000b2', salaryCap: 50000, unit: 100, topSharePercent: 30, floorSharePercent: 12, steepness: 4 } } });
     renderPage();
 
     await waitFor(() => expect(screen.getByTestId('root-admin-tier-auto-prices')).toBeEnabled());

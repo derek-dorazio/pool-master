@@ -19,6 +19,7 @@ import {
   providerCodeOfSourceId,
   requireProviderCodeOfSourceId,
   SportEventParticipantStatus,
+  ProviderSyncFindingKind,
 } from '@poolmaster/shared/domain';
 import type {
   SportEvent,
@@ -33,6 +34,7 @@ import type { JobsForWrite } from '../../background-jobs/background-job-queue';
 import { backgroundJobsInsert, insertBackgroundJobs } from '../../../adapters/prisma-background-job-repository';
 import { DomainEventType, type DomainEvents } from '../../domain-events';
 import { PublicReadPath } from '../../../core/public-cache';
+import type { ProviderSyncFindingService } from '../findings/provider-sync-finding-service';
 
 interface PersistenceDiagnosticsResult<T> {
   count: number;
@@ -55,6 +57,8 @@ export class IngestionPersistence {
     private readonly logger?: FastifyBaseLogger,
     private readonly fieldCache?: Pick<EventFieldCache, 'forget'>,
     private readonly cdn?: CdnInvalidator,
+    /** A released rest-of-phase event's teams with no game left in its slots are a finding (#2223). */
+    private readonly findings?: Pick<ProviderSyncFindingService, 'checkEventParticipantsOfSource'>,
   ) {}
 
   async persistEventsWithDiagnostics(
@@ -358,21 +362,30 @@ export class IngestionPersistence {
         ...(detail.bracket !== undefined && { bracket: detail.bracket }),
       });
 
+      // A draft's field is its placed games' teams alone (#2221): a team whose game left its slots
+      // is withdrawn. A released event keeps its rows, since a contest may hold them, and each
+      // such team is a finding (#2223).
+      const unlisted = !feed.fromPlacedGames ? UnlistedTeams.KEEP
+        : persistedEvent.status === SportEventStatus.DRAFT ? UnlistedTeams.WITHDRAW : UnlistedTeams.REPORT;
       try {
-        sportEventParticipantsPersisted += await this.persistEventField(
+        const written = await this.persistEventField(
           { ...detail, participants: feed.participants },
           persistedEvent.id,
-          {
-            seedsLocked,
-            fieldFromFeed: feed.fieldFromFeed,
-            // A draft's field is its placed games' teams alone (#2221): a team whose game left its
-            // slots is withdrawn. A released event keeps its rows, since a contest may hold them.
-            withdrawUnlisted: feed.fromPlacedGames && persistedEvent.status === SportEventStatus.DRAFT,
-          },
+          { seedsLocked, fieldFromFeed: feed.fieldFromFeed, unlisted },
           participantIdByKey,
           detailRows,
           followUps,
         );
+        sportEventParticipantsPersisted += written.count;
+        if (unlisted === UnlistedTeams.REPORT) {
+          await this.findings?.checkEventParticipantsOfSource({
+            kind: ProviderSyncFindingKind.FIELD_TEAM_WITHOUT_GAME,
+            sportLeagueId: sportLeague.id,
+            sportEventId: persistedEvent.id,
+            providerSourceId: detail.providerId,
+            found: written.unlistedTeams,
+          });
+        }
       } finally {
         this.fieldCache?.forget(persistedEvent.id);
         this.cdn?.invalidate([PublicReadPath.EVENT_PAGES]);
@@ -412,23 +425,39 @@ export class IngestionPersistence {
   private async persistEventField(
     detail: FieldFeed,
     sportEventId: string,
-    { seedsLocked, fieldFromFeed, withdrawUnlisted = false }: { seedsLocked: boolean; fieldFromFeed: boolean; withdrawUnlisted?: boolean },
+    { seedsLocked, fieldFromFeed, unlisted: unlistedTeams = UnlistedTeams.KEEP }: { seedsLocked: boolean; fieldFromFeed: boolean; unlisted?: UnlistedTeams },
     participantIdByKey: ReadonlyMap<string, string>,
     detailRows: SyncWriteDetailRow[],
     followUps: JobsForWrite,
-  ): Promise<number> {
+  ): Promise<{ count: number; unlistedTeams: Array<{ externalId: string; name: string }> }> {
     const mapped = new Map<string, ProviderParticipant>();
     for (const participant of detail.participants) {
       const participantId = participantIdByKey.get(providerKey(participant));
       if (participantId) mapped.set(participantId, participant);
     }
-    // A field that withdraws the teams the feed no longer lists reads the whole field, in the same one read.
-    const rows = withdrawUnlisted
-      ? await this.prisma.sportEventParticipant.findMany({ where: { sportEventId } })
-      : mapped.size === 0 ? [] : await this.prisma.sportEventParticipant.findMany({ where: { sportEventId, participantId: { in: [...mapped.keys()] } } });
+    // A field that withdraws or reports the teams the feed no longer lists reads the whole field in
+    // the same one read; one that reports them reads each team's name and feed id with it.
+    const rows: FieldRow[] = unlistedTeams === UnlistedTeams.REPORT
+      ? await this.prisma.sportEventParticipant.findMany({
+        where: { sportEventId },
+        include: { participant: { select: {
+          name: true,
+          providerMappings: { where: { provider: { code: requireProviderCodeOfSourceId(detail.providerId) } }, select: { externalId: true }, take: 1 },
+        } } },
+      })
+      : unlistedTeams === UnlistedTeams.WITHDRAW
+        ? await this.prisma.sportEventParticipant.findMany({ where: { sportEventId } })
+        : mapped.size === 0 ? [] : await this.prisma.sportEventParticipant.findMany({ where: { sportEventId, participantId: { in: [...mapped.keys()] } } });
     const existingByParticipantId = new Map(rows.filter((row) => mapped.has(row.participantId)).map((row) => [row.participantId, row]));
-    const unlisted = withdrawUnlisted
-      ? rows.filter((row) => !mapped.has(row.participantId) && row.status !== SportEventParticipantStatus.WITHDRAWN).map((row) => row.id)
+    const unlistedRows = rows.filter((row) => !mapped.has(row.participantId) && row.status !== SportEventParticipantStatus.WITHDRAWN);
+    const unlisted = unlistedTeams === UnlistedTeams.WITHDRAW ? unlistedRows.map((row) => row.id) : [];
+    const reported = unlistedTeams === UnlistedTeams.REPORT
+      ? unlistedRows.flatMap(({ participant }) => {
+        const mapping = participant?.providerMappings.at(0);
+        // A team with no feed id at this provider (test data, or a team mapped since removed) has
+        // no feed id to name the finding by, so it is left out rather than raised nameless.
+        return participant === undefined || mapping === undefined ? [] : [{ externalId: mapping.externalId, name: participant.name }];
+      })
       : [];
 
     const onField = fieldFromFeed ? [...mapped] : [...mapped].filter(([participantId]) => existingByParticipantId.has(participantId));
@@ -501,9 +530,22 @@ export class IngestionPersistence {
         after: plan.after,
       });
     }
-    return plans.length;
+    return { count: plans.length, unlistedTeams: reported };
   }
 }
+
+/**
+ * What a field of its placed games' teams does with a team on the event none of whose games is
+ * placed in its slots any more (#2221, #2223): a field that is not one keeps every row; a draft
+ * withdraws it; a released event keeps it and reports it.
+ */
+const UnlistedTeams = { KEEP: 'KEEP', WITHDRAW: 'WITHDRAW', REPORT: 'REPORT' } as const;
+type UnlistedTeams = (typeof UnlistedTeams)[keyof typeof UnlistedTeams];
+
+/** A row of an event's field, with its team's name and feed id when the whole field is read. */
+type FieldRow = Prisma.SportEventParticipantGetPayload<object> & {
+  participant?: { name: string; providerMappings: ReadonlyArray<{ externalId: string }> };
+};
 
 /** What a field write reads of a provider's event detail: whose field it is, and its participants. */
 type FieldFeed = Pick<SportEventDetail, 'providerId' | 'externalId' | 'participants'>;

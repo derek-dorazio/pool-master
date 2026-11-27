@@ -15,7 +15,7 @@ import { TierProfileType, type FieldOrderBasis, type PlatformPricingProfile, typ
 
 /** A profile's sources in list order, and a tier profile's ranges by tier: every read loads them with the profile. */
 const SOURCES_IN_ORDER = { orderBy: { orderIndex: 'asc' }, select: { basis: true } } as const;
-const TIER_PROFILE_INCLUDE = {
+export const TIER_PROFILE_INCLUDE = {
   sources: SOURCES_IN_ORDER,
   ranges: { orderBy: { tierNumber: 'asc' }, select: { tierNumber: true, fromValue: true, toValue: true } },
 } as const satisfies Prisma.PlatformTierProfileInclude;
@@ -23,14 +23,14 @@ const PRICING_PROFILE_INCLUDE = { sources: SOURCES_IN_ORDER } as const satisfies
 /** The first source of a profile, for the first-source check across a league's two profiles. */
 const FIRST_SOURCE = { where: { orderIndex: 0 }, select: { basis: true } } as const;
 
-type PlatformTierProfileRow = Prisma.PlatformTierProfileGetPayload<{ include: typeof TIER_PROFILE_INCLUDE }>;
+export type PlatformTierProfileRow = Prisma.PlatformTierProfileGetPayload<{ include: typeof TIER_PROFILE_INCLUDE }>;
 type PlatformPricingProfileRow = Prisma.PlatformPricingProfileGetPayload<{ include: typeof PRICING_PROFILE_INCLUDE }>;
 
 /**
  * A tier profile row as the domain's layout union. The database check keeps the EQUAL_GROUPS
  * columns set exactly on EQUAL_GROUPS rows, so a null among them is a broken row.
  */
-function toPlatformTierProfile(row: PlatformTierProfileRow): PlatformTierProfile {
+export function toPlatformTierProfile(row: PlatformTierProfileRow): PlatformTierProfile {
   const identity = {
     id: row.id,
     code: row.code,
@@ -170,7 +170,8 @@ export class PrismaPlatformTierProfileRepository implements PlatformTierProfileR
   async deleteUnlessUsed(id: string): Promise<number | null> {
     return deleteUnlessUsed(
       () => this.prisma.platformTierProfile.delete({ where: { id }, select: { id: true } }),
-      () => this.countSportLeaguesNaming(id),
+      // An event slot's tier set records the profile it was tiered or priced with (#2044).
+      async () => (await this.countSportLeaguesNaming(id)) + (await this.prisma.sportEventSlot.count({ where: { platformTierProfileId: id } })),
     );
   }
 }
@@ -227,7 +228,8 @@ export class PrismaPlatformPricingProfileRepository implements PlatformPricingPr
   async deleteUnlessUsed(id: string): Promise<number | null> {
     return deleteUnlessUsed(
       () => this.prisma.platformPricingProfile.delete({ where: { id }, select: { id: true } }),
-      () => this.countSportLeaguesNaming(id),
+      // An event slot's tier set records the profile it was tiered or priced with (#2044).
+      async () => (await this.countSportLeaguesNaming(id)) + (await this.prisma.sportEventSlot.count({ where: { platformPricingProfileId: id } })),
     );
   }
 }

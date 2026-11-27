@@ -116,7 +116,7 @@ describe('field row mappers', () => {
     const view = {
       entry: { ...entry, status: 'WITHDRAWN', ranking: 1, oddsToWin: 450, seedNumber: 3 },
       participant: scottie,
-      valuation: { id: 'v-1', sportEventTierId: 'tier-a', tierOrderIndex: 0, tierAssignedSource: 'MANUAL', price: 12000, priceAssignedSource: 'UPLOAD' },
+      valuation: { id: 'v-1', sportEventSlotId: 'slot-1', sportEventSlotTierId: 'tier-a', tierOrderIndex: 0, tierAssignedSource: 'MANUAL', price: 12000, priceAssignedSource: 'UPLOAD' },
       standing: {
         standing: { id: 's-1', position: 1, displayPosition: 'T1', status: 'ACTIVE', asOf: new Date('2026-04-12T20:00:00.000Z') },
         golf: { eventScoreToPar: -12, eventStrokes: 276, currentRoundThru: 18 },

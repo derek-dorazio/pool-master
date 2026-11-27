@@ -316,6 +316,7 @@ export const enUS = {
       GAME_ID_REISSUED: 'Game id re-issued',
       GAME_MOVED: 'Game moved to another event',
       TIEBREAKER_GAME_REPLACED: 'Tiebreaker game chosen again',
+      FIELD_TEAM_WITHOUT_GAME: 'Released field holds a team with no game',
     },
     ProviderSyncFindingAction: {
       MAP_PARTICIPANT: 'Map participant',
@@ -1118,6 +1119,7 @@ export const enUS = {
     SPORT_EVENT_BRACKET_LOCKED: 'This event has been released, so its bracket is locked.',
     SPORT_EVENT_FIELD_NOT_LOADED: 'This event\'s field has not loaded yet.',
     SPORT_EVENT_FILTER_REQUIRED: 'Choose a sport, a sport league or a year to list events.',
+    SPORT_EVENT_HAS_NO_SLOT: 'This event is in no slot of its season yet, so it has no tiers or prices to set.',
     SPORT_EVENT_INVALID_TRANSITION: 'This event changed while you were working. Reload and try again.',
     SPORT_EVENT_ROUND_MATCH_RESULT_LOCKED: 'This result can no longer change.',
     SPORT_EVENT_NOT_BRACKET: 'This event is not played as a bracket.',
@@ -1409,8 +1411,6 @@ export const enUS = {
     stageDone: 'done',
     stageCurrent: 'current stage',
     stageUpcoming: 'to come',
-    // A profile an event recorded but a root admin has since deleted (#2205).
-    deletedProfile: 'A deleted profile',
     /** Between a survivor pick's team and its opponent: "KC v BUF" at home, "KC at BUF" away, "KC vs BUF" at a neutral site. */
     pickedAtHome: 'v',
     pickedAway: 'at',
