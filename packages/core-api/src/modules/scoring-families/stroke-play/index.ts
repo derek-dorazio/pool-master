@@ -6,7 +6,7 @@
  * scores.
  */
 import { ScoringFamily } from '@poolmaster/shared/domain';
-import { createGolfScoreService } from '../../events/wiring';
+import { createStrokePlayResultService } from '../../events/wiring';
 import type { ScoringFamilyModule } from '../scoring-family-module';
 import { buildUnplayedRoundContext, scoreGolferForContest, scoreUnplayedLineup } from './unplayed-rounds';
 
@@ -20,7 +20,7 @@ export const strokePlayScoringFamily: ScoringFamilyModule = {
         name: row.participant.name,
         score,
         detail: { scoringFamily: ScoringFamily.STROKE_PLAY, unplayedRoundNumbers },
-        asOf: row.standing?.standing.asOf ?? null,
+        asOf: row.standing?.asOf ?? null,
       };
     });
   },
@@ -32,7 +32,7 @@ export const strokePlayScoringFamily: ScoringFamilyModule = {
   liveScores: {
     category: 'GOLF',
     persist(deps, event, result) {
-      return createGolfScoreService(deps.prisma, deps.domainEvents, deps.logger).persistRoundUpdatesForSportEvent(
+      return createStrokePlayResultService(deps.prisma, deps.domainEvents, deps.logger).persistRoundUpdatesForSportEvent(
         event.id,
         result.rounds,
         deps.providerId,

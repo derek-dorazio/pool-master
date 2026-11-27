@@ -6,7 +6,7 @@
  */
 
 import type { ScoringFamily } from './sports/scoring-family';
-import type { ProviderCode, HomeAway, MatchEnding, MatchSideOutcome, MatchStatus, PeriodKind, ParticipantRoundStatus, ParticipantType, ParticipantStandingStatus, GameSideStatus, SeasonSlotStatus, SlotKind, SlotPairing, SportLeagueNoun, ValuationSource } from './enums';
+import type { ProviderCode, HomeAway, MatchEnding, MatchSideOutcome, MatchStatus, PeriodKind, ParticipantType, ParticipantStandingStatus, GameSideStatus, SeasonSlotStatus, SlotKind, SlotPairing, SportLeagueNoun, ValuationSource } from './enums';
 import type { DomainEntity } from './types';
 import type { SlotPricing } from './budget-pricing';
 import type { SlotTierLayout } from './tier-profiles';
@@ -132,19 +132,9 @@ export interface SportEventRound extends DomainEntity {
   slot: SportEventRoundSlot;
 }
 
-/** One participant's part in one round. What was scored lives in the sport's extension row. */
-export interface SportEventParticipantRound extends DomainEntity {
-  sportEventParticipantId: string;
-  sportEventRoundId: string;
-  roundNumber: number;
-  status: ParticipantRoundStatus;
-  completedAt: Date | null;
-}
-
 /**
- * A participant's running standing within an event. `position` is the cross-sport
- * rank key and is direction-free — 1 is best in every sport. The raw score behind it
- * lives in the sport's extension row, never here.
+ * A participant's running standing within an event whose rounds are FIELD matches (#2008).
+ * `position` is the cross-sport rank key and is direction-free: 1 is best in every sport.
  */
 export interface SportEventParticipantStanding extends DomainEntity {
   sportEventParticipantId: string;
@@ -152,6 +142,10 @@ export interface SportEventParticipantStanding extends DomainEntity {
   displayPosition: string | null;
   status: ParticipantStandingStatus;
   asOf: Date | null;
+  /** The event total it was ranked on (a golfer's strokes); null where the family keeps none. */
+  total: number | null;
+  /** The event total against par, as the feed sends it; null where the family has no par. */
+  scoreToPar: number | null;
 }
 
 /**
@@ -205,37 +199,6 @@ export interface SportEventTierSlot {
   tierLayout: SlotTierLayout | null;
   /** The values the set was last priced with, and the profile they started from; null until it is priced. */
   pricing: SlotPricing | null;
-}
-
-// --- Golf extension rows (#236) ---------------------------------------------
-// Keyed 1:1 to their core row. The score lives here, never on the core.
-
-/** What one golfer scored in one round. Extends a SportEventParticipantRound. */
-export interface SportEventParticipantGolfRound extends DomainEntity {
-  participantRoundId: string;
-  strokes: number;
-  scoreToPar: number;
-  thru: number | null;
-}
-
-/** The running event totals one golfer's standing was ranked from. Extends a SportEventParticipantStanding. */
-export interface SportEventParticipantGolfStanding extends DomainEntity {
-  standingId: string;
-  eventScoreToPar: number;
-  eventStrokes: number;
-  currentRoundThru: number | null;
-}
-
-/** A core round row with its golf extension — the unit a golf score write produces. */
-export interface GolfRoundResult {
-  participantRound: SportEventParticipantRound;
-  golf: SportEventParticipantGolfRound;
-}
-
-/** A core standing row with its golf extension. */
-export interface GolfStandingResult {
-  standing: SportEventParticipantStanding;
-  golf: SportEventParticipantGolfStanding;
 }
 
 // --- Matches (#698) -----------------------------------------------------------
@@ -340,7 +303,11 @@ export interface SportEventRoundMatchGameSideResult {
   position: number | null;
   /** Where the side started (a race's grid or post position); null where none was sent. */
   startPosition: number | null;
-  /** How the side's part in a FIELD Game ended; null on a head-to-head Game. */
+  /** The side's score against par, as the feed sends it (a golf round's to-par); null where there is no par. */
+  scoreToPar: number | null;
+  /** The periods the side has completed (a golfer's holes thru); the Game's full count once finished. */
+  periodsCompleted: number | null;
+  /** How the side's part in a FIELD Game ended; null on a head-to-head Game and while still playing. */
   status: GameSideStatus | null;
   /** The side's own points in each period, in play order; a shoot-out is one SHOOTOUT period. */
   periodScores: readonly GamePeriodScore[];

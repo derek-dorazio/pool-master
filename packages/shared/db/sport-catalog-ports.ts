@@ -27,9 +27,6 @@ import type {
   SportEventRoundMatch,
   SportEventRoundMatchGameSideResult,
   SportEventParticipant,
-  SportEventParticipantGolfRound,
-  SportEventParticipantGolfStanding,
-  SportEventParticipantRound,
   SportEventParticipantStanding,
   SportEventSlotParticipantValuation,
   SportEventRound,
@@ -415,22 +412,14 @@ export interface SportEventParticipantFieldUpdate {
 }
 
 /** A round row with its sport extension, when the sport has one and it has been scored. */
-export interface ParticipantRoundView {
-  round: SportEventParticipantRound;
-  golf: SportEventParticipantGolfRound | null;
-}
-
-/** A standing row with its sport extension. */
-export interface ParticipantStandingView {
-  standing: SportEventParticipantStanding;
-  golf: SportEventParticipantGolfStanding | null;
-}
-
 /** A field row's side result in one FIELD Game of its event (#2008). */
 export interface FieldGameResultView {
+  sportEventRoundId: string;
   roundNumber: number;
-  /** The Game's status: a race's result is official once its Game is COMPLETED. */
+  /** The Game's status: a race's result is official once its Game is COMPLETED, a golf round once every golfer has finished it. */
   gameStatus: MatchStatus;
+  /** When the Game was completed; null while it is not. */
+  gameCompletedAt: Date | null;
   result: SportEventRoundMatchGameSideResult;
   updatedAt: Date;
 }
@@ -444,9 +433,7 @@ export interface SportEventParticipantView {
    * the set every field read shows); null when it has none there.
    */
   valuation: SportEventSlotParticipantValuation | null;
-  standing: ParticipantStandingView | null;
-  /** In round number order. */
-  rounds: ParticipantRoundView[];
+  standing: SportEventParticipantStanding | null;
   /**
    * This row's side result in each FIELD Game of its event (#2008), in round order: a race's one
    * Game, a golf round. A round with no side for the row (after a cut) has none.

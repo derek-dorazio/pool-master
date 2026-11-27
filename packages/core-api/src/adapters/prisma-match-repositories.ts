@@ -25,7 +25,7 @@ import type {
 } from '@poolmaster/shared/db';
 import { MatchStatus, PeriodKind, UNPLAYED_MATCH_STATUSES } from '@poolmaster/shared/domain';
 import type { BackgroundJobRequest, HomeAway, ProviderCode, SportEventRoundMatch, SportEventRoundMatchGame, SportEventRoundMatchGameSideResult } from '@poolmaster/shared/domain';
-import { ROUND_EVENT_SLOT_SELECT, toRoundSlot } from './season-slot-select';
+import { FIELD_MATCH_WHERE, ROUND_EVENT_SLOT_SELECT, toRoundSlot } from './season-slot-select';
 import { rewriteStandings } from './prisma-standing-rewrite';
 import { backgroundJobsInsert, insertBackgroundJobs } from './prisma-background-job-repository';
 
@@ -64,7 +64,8 @@ export class PrismaSportEventRoundMatchRepository implements SportEventRoundMatc
   async findBySportEvents(sportEventIds: readonly string[]): Promise<SportEventRoundMatch[]> {
     if (sportEventIds.length === 0) return [];
     const rows = await this.prisma.sportEventRoundMatch.findMany({
-      where: { sportEventId: { in: [...sportEventIds] } },
+      // Head-to-head matches only: a golf round's or a race's FIELD match is read as its side results (#2008).
+      where: { sportEventId: { in: [...sportEventIds] }, NOT: FIELD_MATCH_WHERE },
       include: MATCH_INCLUDE,
       orderBy: [{ sportEventId: 'asc' }, { sportEventRound: { roundNumber: 'asc' } }, { matchNumber: 'asc' }],
     });
@@ -92,7 +93,8 @@ export class PrismaSportEventRoundMatchRepository implements SportEventRoundMatc
       };
     });
     await this.prisma.$transaction([
-      this.prisma.sportEventRoundMatch.deleteMany({ where: { sportEventId } }),
+      // The event's head-to-head matches; a FIELD match keeps its side results.
+      this.prisma.sportEventRoundMatch.deleteMany({ where: { sportEventId, NOT: FIELD_MATCH_WHERE } }),
       this.prisma.sportEventRoundMatch.createMany({ data: data.map((each) => each.match) }),
       this.prisma.sportEventRoundMatchSide.createMany({
         data: data.flatMap(({ match, sides }) => sides.map(({ homeAway: _homeAway, ...side }) => ({ ...side, sportEventId, sportEventRoundMatchId: match.id }))),
@@ -275,6 +277,8 @@ export function toGameSideResult(result: GameRow['sideResults'][number]): SportE
     homeAway: result.homeAway,
     position: result.position,
     startPosition: result.startPosition,
+    scoreToPar: result.scoreToPar,
+    periodsCompleted: result.periodsCompleted,
     status: result.status,
     periodScores: result.periodScores,
   };

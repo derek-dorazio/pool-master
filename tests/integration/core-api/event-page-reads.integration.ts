@@ -9,7 +9,7 @@ import {
   ContestStatus,
   MatchSide,
   MatchStatus,
-  ParticipantRoundStatus,
+  GameSideStatus,
   ReleaseCheckKey,
   RoundStatus,
   SelectionType,
@@ -26,6 +26,7 @@ import { resultBody } from '../../support/match-requests';
 import { cleanupTestData, createTestUser, getApp, getAppPrisma, getPrisma, setupIntegrationTests, teardownIntegrationTests, withoutJsonBodyHeaders, type TestUserResult } from '../helpers';
 import { DAY, get, okBody, seedEventWithField, seedFootballWeek, seedLeagueWithTeams } from '../list-route-seeds';
 import { expectConstantQueries } from '../query-scaling';
+import { writeGolfRounds } from '../golf-rounds';
 import { expectDefined } from '../../support/expect-defined';
 import { linkTestSlot } from '../../support/test-slots';
 import { oneEventSlotId } from '../../support/test-slots';
@@ -155,7 +156,7 @@ describe('GET /api/v1/events/{eventId}/contests', () => {
 });
 
 describe('an event\'s rounds read where each round stands', () => {
-  it('reads a golf round as completed once every recorded participant round is finished, in progress while one is under way, and scheduled with none', async () => {
+  it('reads a golf round, its one FIELD Game, as completed once every golfer in it is through, in progress while one is on the course, and scheduled with none', async () => {
     const prisma = getPrisma();
     const { event, field } = await seedEventWithField(2, { status: SportEventStatus.IN_PROGRESS, startsInDays: -1 });
     const [first, second] = field;
@@ -165,20 +166,30 @@ describe('an event\'s rounds read where each round stands', () => {
     }
     const [roundOne, roundTwo] = rounds;
     const finishedAt = new Date('2026-11-02T22:00:00.000Z');
-    await prisma.sportEventParticipantRound.createMany({
-      data: [
-        { sportEventParticipantId: expectDefined(first).id, sportEventRoundId: expectDefined(roundOne).id, status: ParticipantRoundStatus.COMPLETED, completedAt: new Date('2026-11-02T20:00:00.000Z') },
-        { sportEventParticipantId: expectDefined(second).id, sportEventRoundId: expectDefined(roundOne).id, status: ParticipantRoundStatus.DNF, completedAt: finishedAt },
-        { sportEventParticipantId: expectDefined(first).id, sportEventRoundId: expectDefined(roundTwo).id, status: ParticipantRoundStatus.COMPLETED, completedAt: finishedAt },
-        { sportEventParticipantId: expectDefined(second).id, sportEventRoundId: expectDefined(roundTwo).id, status: ParticipantRoundStatus.IN_PROGRESS },
-      ],
-    });
+    // Each round is one FIELD Game (#2008), completed once every golfer in it has a status.
+    await writeGolfRounds(prisma, event.id, [
+      {
+        roundNumber: expectDefined(roundOne).roundNumber,
+        completedAt: finishedAt,
+        scores: [
+          { sportEventParticipantId: expectDefined(first).id, strokes: 70, scoreToPar: -2 },
+          { sportEventParticipantId: expectDefined(second).id, strokes: 40, scoreToPar: 4, thru: 9, status: GameSideStatus.DID_NOT_FINISH },
+        ],
+      },
+      {
+        roundNumber: expectDefined(roundTwo).roundNumber,
+        scores: [
+          { sportEventParticipantId: expectDefined(first).id, strokes: 71, scoreToPar: -1 },
+          { sportEventParticipantId: expectDefined(second).id, strokes: 35, scoreToPar: 0, thru: 9, status: null },
+        ],
+      },
+    ]);
 
     const body = okBody(await get(`/api/v1/events/${event.id}/rounds`, await createTestUser({ isRootAdmin: true })), SportEventRoundListResponseSchema);
 
     expect(body.rounds.map(({ roundNumber, status, resultCount, completedAt }) => ({ roundNumber, status, resultCount, completedAt }))).toEqual([
-      { roundNumber: 1, status: RoundStatus.COMPLETED, resultCount: 2, completedAt: finishedAt.toISOString() },
-      { roundNumber: 2, status: RoundStatus.IN_PROGRESS, resultCount: 1, completedAt: null },
+      { roundNumber: 1, status: RoundStatus.COMPLETED, resultCount: 1, completedAt: finishedAt.toISOString() },
+      { roundNumber: 2, status: RoundStatus.IN_PROGRESS, resultCount: 0, completedAt: null },
       { roundNumber: 3, status: RoundStatus.SCHEDULED, resultCount: 0, completedAt: null },
     ]);
   });
@@ -192,7 +203,6 @@ describe('an event\'s rounds read where each round stands', () => {
 
     const round = expectDefined([...facts.values()].at(0));
     expect(facts.size).toBe(1);
-    expect(round.participantRounds).toEqual([]);
     expect([...round.matches].sort((left, right) => left.status.localeCompare(right.status))).toEqual([
       { status: MatchStatus.COMPLETED, count: 2, lastCompletedAt: completedAt },
       { status: MatchStatus.SCHEDULED, count: 1, lastCompletedAt: null },
