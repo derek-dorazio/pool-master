@@ -40,7 +40,6 @@ describe('tier sets on listed slots migration (#2044)', () => {
       name: `Listed Slots ${randomUUID().slice(0, 8)}`,
       startDate: new Date('2026-06-04T12:00:00.000Z'),
       status: 'DRAFT',
-      rounds: 4,
       autoLifecycleEnabled: false,
     });
     const [playInSlotId, roundOf64SlotId, roundOf32SlotId, sweet16SlotId] = await eventRoundSlots(prisma, event.id, [
@@ -87,7 +86,6 @@ describe('tier sets on listed slots migration (#2044)', () => {
       name: `Whole Playoffs ${randomUUID().slice(0, 8)}`,
       startDate: new Date('2026-12-19T12:00:00.000Z'),
       status: 'DRAFT',
-      rounds: 4,
       autoLifecycleEnabled: false,
     });
     const slotIds = await eventRoundSlots(prisma, event.id, [{ slotKind: 'ROUND_OF_16' }, { slotKind: 'QUARTERFINAL' }, { slotKind: 'SEMIFINAL' }, { slotKind: 'FINAL' }]);

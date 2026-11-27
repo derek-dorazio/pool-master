@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { DEFAULT_DISPLAY_PREFERENCES } from '@/features/shared/ui';
 import { EVENT_PAGE_TABS } from './event-page-context';
 import { releaseCheckValueText, releaseTriesText } from './event-release-checks-text';
-import { settingsRequestBody, settingsSchema } from './event-settings-form';
+import { settingsRequestBody } from './event-settings-form';
 
 // The Event page's pure parts (#1890): which tabs it shows, how a ready check's value and the
 // release's timing read, and what the ⚙ dialog's Save sends.
@@ -41,47 +41,20 @@ describe('releaseTriesText', () => {
 });
 
 describe('settingsRequestBody', () => {
-  const current = {
-    name: 'The Open', venue: 'Royal Liverpool', location: 'Hoylake', rounds: '4', roundsPar: '',
-  };
-  const options = { isTestData: true, sendsRoundsPar: true };
+  const current = { name: 'The Open', venue: 'Royal Liverpool', location: 'Hoylake' };
+  const options = { isTestData: true };
 
   it('sends nothing when nothing changed', () => {
     expect(settingsRequestBody(current, current, options)).toEqual({});
   });
 
   it('sends each changed value of a test event, a cleared one as null', () => {
-    expect(settingsRequestBody(
-      { ...current, name: 'The 154th Open', venue: '', location: '', rounds: '3', roundsPar: '71' },
-      current,
-      options,
-    )).toEqual({
-      name: 'The 154th Open', venue: null, location: null, rounds: 3, roundsPar: 71,
-    });
+    expect(settingsRequestBody({ name: 'The 154th Open', venue: '', location: '' }, current, options))
+      .toEqual({ name: 'The 154th Open', venue: null, location: null });
   });
 
-  it('never sends a synced event\'s name or venue, nor par for a family that does not read it', () => {
-    expect(settingsRequestBody(
-      { ...current, name: 'Other', venue: 'Other', roundsPar: '71', location: 'Wirral' },
-      current,
-      { isTestData: false, sendsRoundsPar: false },
-    )).toEqual({ location: 'Wirral' });
-  });
-});
-
-describe('settingsSchema', () => {
-  // Bounds other than the server's own, so a bound the web wrote itself would show.
-  const schema = settingsSchema({ roundsParMin: 50, roundsParMax: 55 });
-  const values = { name: 'Open', venue: '', location: '', rounds: '4' };
-
-  it('takes a par per round inside the bounds the event read sent, or blank', () => {
-    expect(schema.safeParse({ ...values, roundsPar: '55' }).success).toBe(true);
-    expect(schema.safeParse({ ...values, roundsPar: '' }).success).toBe(true);
-  });
-
-  it('refuses a par per round outside the bounds the event read sent, naming them', () => {
-    const result = schema.safeParse({ ...values, roundsPar: '56' });
-
-    expect(result.error?.issues[0]?.message).toBe('Par is a whole number from 50 to 55, or blank');
+  it('never sends a synced event\'s name or venue', () => {
+    expect(settingsRequestBody({ name: 'Other', venue: 'Other', location: 'Wirral' }, current, { isTestData: false }))
+      .toEqual({ location: 'Wirral' });
   });
 });

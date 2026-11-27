@@ -329,13 +329,12 @@ describe('Golf round scores — holes completed are bounded by the round\'s slot
   });
 });
 
-// #375 — nothing is scored after the 18th hole of the event's last scheduled round: a playoff
-// reported as a fifth round never becomes a round row or a score.
+// #375 — nothing is scored after the 18th hole of the event's last round: a playoff reported as a
+// fifth round of a four-round event (four Round rows) never becomes a round row or a score.
 describe('Golf round scores — bounded by the event\'s scheduled rounds', () => {
   it('a score sync of a 4-round event skips round 5 and holes past 18, so the 72-hole score stands', async () => {
     const { event, rory, jordan } = await createField('beyond-schedule-sync');
     const prisma = getPrisma();
-    await prisma.sportEvent.update({ where: { id: event.id }, data: { rounds: 4 } });
     const sportEventSlotId = await oneEventSlotId(prisma, event.id);
     await prisma.sportEventRound.createMany({
       data: [2, 3, 4].map((roundNumber) => ({ sportEventId: event.id, sportEventSlotId, roundNumber, scheduledDate: new Date('2026-05-07T12:00:00.000Z') })),
@@ -366,23 +365,21 @@ describe('Golf round scores — bounded by the event\'s scheduled rounds', () =>
     expect(standing.scoreToPar).toBe(-8);
   });
 
-  it('refuses an admin upload for round 5 of a 4-round event with 422 ROUND_BEYOND_SCHEDULE, creating no round', async () => {
+  it('refuses an admin upload for round 2 of an event that has only round 1 with 422 ROUND_BEYOND_SCHEDULE, creating no round', async () => {
     const { event, rory } = await createField('beyond-schedule-admin');
-    await getPrisma().sportEvent.update({ where: { id: event.id }, data: { rounds: 4 } });
     const service = createStrokePlayResultService(getAppPrisma(), testDomainEvents());
 
-    await expect(service.applyRoundScores(event.id, 5, [row(rory.participant.id)]))
+    await expect(service.applyRoundScores(event.id, 2, [row(rory.participant.id)]))
       .rejects.toMatchObject({ code: 'ROUND_BEYOND_SCHEDULE', statusCode: 422 });
-    expect(await getPrisma().sportEventRound.count({ where: { sportEventId: event.id, roundNumber: 5 } })).toBe(0);
+    expect(await getPrisma().sportEventRound.count({ where: { sportEventId: event.id, roundNumber: 2 } })).toBe(0);
   });
 
   it('refuses a thru-only correction for a golfer with no stored round with 422 ROUND_VALUES_REQUIRED, writing no round and no standing', async () => {
     const { event, rory } = await createField('thru-only-no-round');
     const service = createStrokePlayResultService(getAppPrisma(), testDomainEvents());
 
-    await expect(service.updateRoundScore(event.id, 2, rory.sep.id, { thru: 9 }))
+    await expect(service.updateRoundScore(event.id, 1, rory.sep.id, { thru: 9 }))
       .rejects.toMatchObject({ code: 'ROUND_VALUES_REQUIRED', statusCode: 422 });
-    expect(await getPrisma().sportEventRound.count({ where: { sportEventId: event.id, roundNumber: 2 } })).toBe(0);
     expect(await roundCount(rory.sep.id)).toBe(0);
     expect(await getPrisma().sportEventParticipantStanding.count({ where: { sportEventParticipantId: rory.sep.id } })).toBe(0);
   });
@@ -394,7 +391,6 @@ describe('Golf round scores — a live sync writes only what changed', () => {
   it('a repeated tick leaves every round and standing row untouched, and a changed golfer\'s rows are rewritten while the rest are only re-ranked', async () => {
     const { event, rory, jordan } = await createField('unchanged-sync');
     const prisma = getPrisma();
-    await prisma.sportEvent.update({ where: { id: event.id }, data: { rounds: 4 } });
     await prisma.participantProviderMapping.createMany({
       data: [
         { providerId: BALLDONTLIE_TEST_PROVIDER_ID, participantType: 'INDIVIDUAL', externalId: 'ext-rory', participantId: rory.participant.id, sportLeagueId: rory.participant.sportLeagueId },
@@ -471,7 +467,6 @@ describe('Golf round scores — a live tick\'s leaderboard rebuild (#1466)', () 
   it('writes the event\'s rebuild job with the tick\'s last write, the ranks', async () => {
     const { event, rory } = await createField('live-rebuild');
     const prisma = getPrisma();
-    await prisma.sportEvent.update({ where: { id: event.id }, data: { rounds: 4 } });
     await prisma.participantProviderMapping.create({ data: { providerId: BALLDONTLIE_TEST_PROVIDER_ID, participantType: 'INDIVIDUAL', externalId: 'ext-rory-live', participantId: rory.participant.id, sportLeagueId: rory.participant.sportLeagueId } });
 
     await publishLiveScoreUpdate({

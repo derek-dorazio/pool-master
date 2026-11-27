@@ -31,7 +31,7 @@ function setup({ sport = Sport.BASKETBALL, status = SportEventStatus.DRAFT, pick
   const store = new InMemorySportEvents();
   const sportRow = store.addSport(sport);
   const sportLeague = store.addSportLeague(sportRow.id, 'NCAA Men\'s Basketball');
-  const event = store.addEvent({ sportLeagueId: sportLeague.id, sport, status, rounds: 2 });
+  const event = store.addEvent({ sportLeagueId: sportLeague.id, sport, status });
   // The semifinals and the final, each round in a slot of its own (#2006).
   const [semifinal, final] = store.addRoundSlots(event.id, [{ slotKind: SlotKind.SEMIFINAL, pairing }, { slotKind: SlotKind.FINAL, pairing }]);
   void store.addRounds(event.id, [
@@ -393,7 +393,7 @@ describe('SportEventBracketService.releaseBlockers (reseeded bracket)', () => {
     const store = new InMemorySportEvents();
     const sportRow = store.addSport(Sport.FOOTBALL);
     const sportLeague = store.addSportLeague(sportRow.id, 'NFL');
-    const event = store.addEvent({ sportLeagueId: sportLeague.id, sport: Sport.FOOTBALL, status: SportEventStatus.DRAFT, rounds: 3 });
+    const event = store.addEvent({ sportLeagueId: sportLeague.id, sport: Sport.FOOTBALL, status: SportEventStatus.DRAFT });
     // Its postseason slots reseed, each round in its own (#2006).
     const slots = store.addRoundSlots(event.id, [
       { slotKind: SlotKind.QUARTERFINAL, name: 'Wild Card', pairing: SlotPairing.RESEEDED },

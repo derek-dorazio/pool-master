@@ -105,7 +105,6 @@ async function createEvent(name = 'Repository Open', championshipYear?: number) 
     startDate: new Date('2026-06-04T12:00:00.000Z'),
     endDate: new Date('2026-06-07T12:00:00.000Z'),
     status: 'SCHEDULED',
-    rounds: 4,
     autoLifecycleEnabled: true,
   });
 }
@@ -300,19 +299,6 @@ describe('SportEventRoundRepository — writes', () => {
 
     const [round] = await rounds.findBySportEvent(event.id);
     expect(round.scheduledDate).toEqual(new Date('2026-06-04T12:00:00.000Z'));
-  });
-
-  it('finds or creates a round by number without disturbing an existing one', async () => {
-    const { rounds } = repos();
-    const event = await createEvent();
-    await createRoundRows(getPrisma(), rounds, event, [{ roundNumber: 1, scheduledDate: new Date('2026-06-04T12:00:00.000Z') }]);
-
-    const existing = await rounds.findOrCreate(event.id, 1);
-    const created = await rounds.findOrCreate(event.id, 2);
-
-    expect(existing.scheduledDate).toEqual(new Date('2026-06-04T12:00:00.000Z'));
-    expect((await rounds.findBySportEvent(event.id)).map((row) => row.roundNumber)).toEqual([1, 2]);
-    expect(created.roundNumber).toBe(2);
   });
 
   it('reads several events\' rounds at once, in round order, with an empty list for an event without rounds', async () => {

@@ -105,7 +105,7 @@ describe('SDK Functional: American football', () => {
     const event = expectDefined((await seasonEvents(a, nfl.id, 2026))
       .find((row) => row.name === playoffs.name));
     created.sportEventIds.add(event.id);
-    expect([event.status, event.rounds]).toEqual(['SCHEDULED', 4]);
+    expect([event.status, event.roundCount]).toEqual(['SCHEDULED', 4]);
     const field = expectDefined((await listEventParticipants({ client: a, path: { eventId: event.id } })).data).participants;
     // Its field size is counted over its field rows on each read (#2047): the playoff teams, none of the league's players.
     expect([event.participantCount, field.length]).toEqual([playoffs.field.length, playoffs.field.length]);

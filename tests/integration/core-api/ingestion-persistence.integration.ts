@@ -663,7 +663,6 @@ describe('IngestionPersistence', () => {
         name: 'Provider Open',
         startDate: new Date('2026-07-01T12:00:00.000Z'),
         status: 'IN_PROGRESS',
-        rounds: 5,
         fieldLocked: true,
         providerSlots: [],
       }]);
@@ -672,7 +671,6 @@ describe('IngestionPersistence', () => {
       expect(row).toMatchObject({
         name: 'Admin Open',
         startDate,
-        rounds: created.rounds,
         status: created.status,
       });
     },

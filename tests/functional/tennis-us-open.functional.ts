@@ -123,7 +123,7 @@ describe('SDK Functional: the 2026 US Open singles draws', () => {
       [1, 'Elena Rybakina', 'Aryna Sabalenka', [2, 1], 32],
     ] as const) {
       const { event } = await findDraw(admin, file, leagueIndex);
-      expect([event.status, event.rounds]).toEqual(['SCHEDULED', 7]);
+      expect([event.status, event.roundCount]).toEqual(['SCHEDULED', 7]);
       const field = expectDefined((await listEventParticipants({ client: admin.client, path: { eventId: event.id } })).data).participants;
       expect(field).toHaveLength(128);
       expect(field.filter((row) => row.seedNumber !== null)).toHaveLength(seeded);

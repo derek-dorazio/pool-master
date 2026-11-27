@@ -140,7 +140,7 @@ export interface SportEventFilters {
  * for an event the sync creates (#2004): it is kept under its Season's league's selected provider
  * mapping, which must be that provider's. A test event has none.
  */
-export type SportEventCreate = Omit<SportEvent, 'id' | 'sport' | 'sportUrlSegment' | 'createdAt' | 'updatedAt' | 'slotDefinitions' | 'championshipYear' | 'participantType' | 'scoringFamily' | 'providerMappings'> & {
+export type SportEventCreate = Omit<SportEvent, 'id' | 'sport' | 'sportUrlSegment' | 'createdAt' | 'updatedAt' | 'slotDefinitions' | 'championshipYear' | 'participantType' | 'scoringFamily' | 'providerMappings' | 'roundCount'> & {
   providerRef?: ProviderEventRef;
   /** The Season slots it covers (#2004), in its own Season: a test event's test slot. */
   seasonSlotIds?: readonly string[];
@@ -153,8 +153,6 @@ export interface SportEventUpdate {
   location?: string | null;
   startDate?: Date;
   endDate?: Date | null;
-  rounds?: number | null;
-  roundsPar?: number | null;
   autoLifecycleEnabled?: boolean;
   status?: SportEventStatus;
 }
@@ -373,11 +371,6 @@ export interface SportEventRoundRepository {
   createMany(rounds: readonly SportEventRoundCreate[]): Promise<void>;
   /** Reschedules existing rounds, all or none. `scheduledEndAt` left undefined is kept. */
   reschedule(sportEventId: string, rounds: readonly SportEventRoundSchedule[]): Promise<void>;
-  /**
-   * The event's round of this number, created (scheduled now, in the event's one slot) when a score
-   * arrives for a round it lacks. An event with several slots has a round per slot from its create.
-   */
-  findOrCreate(sportEventId: string, roundNumber: number): Promise<SportEventRound>;
   /**
    * The results recorded in each of the event's rounds, by round id, grouped by status (#1889): two
    * grouped reads however many rounds and results. A round with nothing recorded is absent.

@@ -16,7 +16,6 @@ import type { SportDefinition } from './sport-definition';
 export const hockeySportDefinition: SportDefinition = {
   sport: Sport.HOCKEY,
   name: 'Hockey',
-  defaultRounds: 4,
   selectionTypes: [SelectionType.TIERED, SelectionType.BUDGET_PICK, SelectionType.RANDOM_DRAW, SelectionType.BRACKET, SelectionType.SURVIVOR, SelectionType.SQUARES],
   scoringDefinitions: ['KNOCKOUT_ROUND_POINTS'],
   // Playoff games play overtime to a goal, so none ends in a shoot-out (#791).

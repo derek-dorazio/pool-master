@@ -247,35 +247,6 @@ describe('pool-master-k6q — EventLifecycleScheduler.runSweep', () => {
   });
 });
 
-describe('EventLifecycleScheduler after an admin cuts an event\'s round count', () => {
-  it('completes the event once its last counted round ends, ignoring an old round past the new count', async () => {
-    // A four-round event the admin cut to three rounds (weather): round 4 is still stored.
-    const { sportEvents, rounds } = storeWith([
-      {
-        event: { id: 'evt-1', status: 'IN_PROGRESS', rounds: 3, startDate: new Date('2026-06-01T00:00:00.000Z') },
-        rounds: [
-          { scheduledDate: new Date('2026-06-01T12:00:00.000Z'), scheduledEndAt: new Date('2026-06-01T23:00:00.000Z') },
-          { scheduledDate: new Date('2026-06-02T12:00:00.000Z'), scheduledEndAt: new Date('2026-06-02T23:00:00.000Z') },
-          { scheduledDate: new Date('2026-06-03T12:00:00.000Z'), scheduledEndAt: new Date('2026-06-03T23:00:00.000Z') },
-          { scheduledDate: new Date('2026-06-04T12:00:00.000Z'), scheduledEndAt: new Date('2026-06-04T23:00:00.000Z') },
-        ],
-      },
-    ]);
-    const eventLifecycleService = { activateContestsPastCutoff: jest.fn().mockResolvedValue(0), followPostponedStart: jest.fn().mockResolvedValue(0), applySportEventStatusTransition: jest.fn().mockResolvedValue(undefined) };
-    const now = () => new Date('2026-06-04T00:00:00.000Z');
-    const scheduler = new EventLifecycleScheduler({ sportEvents, rounds, eventLifecycleService, jobLock: heldHere(), logger: fakeLogger(), now });
-
-    await scheduler.runSweep();
-
-    expect(eventLifecycleService.applySportEventStatusTransition).toHaveBeenCalledWith({
-      sportEventId: 'evt-1',
-      toStatus: 'COMPLETED',
-      actor: { type: 'SYSTEM' },
-      fromStatus: 'IN_PROGRESS',
-    });
-  });
-});
-
 describe('EventLifecycleScheduler and a contest whose cutoff comes mid-event (#721)', () => {
   it('asks the lifecycle to start the contests past their cutoff on every sweep of an IN_PROGRESS event, with the sweep\'s clock, whether or not the event is due to complete', async () => {
     const { sportEvents, rounds } = storeWith([

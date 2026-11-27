@@ -243,7 +243,7 @@ describe('SDK Functional: an NFL regular-season week (#715)', () => {
     const event = expectDefined(expectDefined((await listEvents({ client: a, query: { sportLeagueId: nfl.id } })).data).events
       .find((row) => row.name === week.name));
     created.sportEventIds.add(event.id);
-    expect([event.status, event.rounds]).toEqual(['SCHEDULED', 1]);
+    expect([event.status, event.roundCount]).toEqual(['SCHEDULED', 1]);
     const games = expectMatchesSchema(SportEventBracketResponseSchema, (await getEventBracket({ client: a, path: { eventId: event.id } })).data).matches.map(withHomeAwayRead);
     expect(games).toHaveLength(16);
     expect(games.every((game) => game.status === MatchStatus.COMPLETED && game.advancesToMatchId === null)).toBe(true);

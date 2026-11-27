@@ -1430,7 +1430,7 @@ describe('Seeded knockout templates follow the template review (#2164)', () => {
 function championRun(slotKinds: readonly SlotKind[]): SportEventParticipantView[] {
   const store = new InMemorySportEvents();
   const sport = store.addSport(Sport.SOCCER);
-  const event = store.addEvent({ sport: Sport.SOCCER, rounds: slotKinds.length });
+  const event = store.addEvent({ sport: Sport.SOCCER });
   const team = (name: string) => {
     const participant = store.addParticipant(sport.id, name, { participantType: 'TEAM' });
     return { entry: store.addToField(event.id, participant.id), participant };

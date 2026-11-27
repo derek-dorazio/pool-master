@@ -5,20 +5,18 @@ import { RaceFinishingOrderPanel } from './race-finishing-order-panel';
 import { SCORING_FAMILY_ADMIN_UI, getScoringFamilyAdminUi } from './scoring-family-admin';
 
 describe('Scoring family admin registry (plans/racing-sports.md Q9.6)', () => {
-  it('gives a stroke-play event round scores, named Scores, with par per round on its details', () => {
+  it('gives a stroke-play event round scores, named Scores', () => {
     const ui = getScoringFamilyAdminUi({ scoringFamily: ScoringFamily.STROKE_PLAY });
 
     expect(ui.ResultsPanel).toBe(GolfRoundScoresPanel);
     expect(ui.resultsLabel).toBe('Scores');
-    expect(ui.scoresUnplayedRoundsAgainstPar).toBe(true);
   });
 
-  it('gives a finish-position event the finishing-order card, named Results, with no par to set', () => {
+  it('gives a finish-position event the finishing-order card, named Results', () => {
     const ui = getScoringFamilyAdminUi({ scoringFamily: ScoringFamily.FINISH_POSITION });
 
     expect(ui.ResultsPanel).toBe(RaceFinishingOrderPanel);
     expect(ui.resultsLabel).toBe('Results');
-    expect(ui.scoresUnplayedRoundsAgainstPar).toBe(false);
   });
 
   it('reaches an event\'s results through its sport league\'s scoring family, with an entry for every family', () => {

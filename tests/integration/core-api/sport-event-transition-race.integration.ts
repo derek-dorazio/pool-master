@@ -62,7 +62,6 @@ async function createInProgressEvent() {
     startDate: new Date('2026-06-04T12:00:00.000Z'),
     endDate: new Date('2026-06-07T12:00:00.000Z'),
     status: SportEventStatus.IN_PROGRESS,
-    rounds: 4,
     autoLifecycleEnabled: true,
   });
 }

@@ -41,7 +41,6 @@ async function eventWithRounds(name: string, rounds: number) {
     name: `${name} ${randomUUID().slice(0, 8)}`,
     startDate: new Date('2027-03-20T12:00:00.000Z'),
     status: 'SCHEDULED',
-    rounds,
     autoLifecycleEnabled: false,
   });
   const seasonSlotId = await linkTestSlot(prisma, event);

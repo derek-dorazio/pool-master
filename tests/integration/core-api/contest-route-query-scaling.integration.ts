@@ -412,7 +412,6 @@ async function seedBracketContest(entries: number) {
   });
   await prisma.sportEventRoundMatch.update({ where: { id: first.id }, data: { advancesToMatchId: final.id, advancesToSideNumber: HOME_SIDE } });
   await prisma.sportEventRoundMatch.update({ where: { id: second.id }, data: { advancesToMatchId: final.id, advancesToSideNumber: AWAY_SIDE } });
-  await prisma.sportEvent.update({ where: { id: event.id }, data: { rounds: 2 } });
   const contest = await prisma.contest.create({
     data: {
       leagueId: seeded.league.id,

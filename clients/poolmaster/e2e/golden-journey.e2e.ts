@@ -224,6 +224,8 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
         slotLabel: run.tournamentName,
         startsAt: start,
         name: run.tournamentName,
+        // A tournament of four rounds, all in its one slot (#2008).
+        rounds: 4,
       });
       return { eventId: created.id, championshipYear: created.championshipYear };
     });
@@ -1356,7 +1358,7 @@ async function buildReleasedTournament(
   page: Page,
   { runId, tourId, name, start, playerIds }: { runId: string; tourId: string; name: string; start: Date; playerIds: readonly string[] },
 ): Promise<BuiltTournament> {
-  const { id: eventId } = await createTestEvent(page, { sportUrlSegment: 'golf', sportLeagueId: tourId, slotKind: 'TOURNAMENT', slotLabel: name, startsAt: start, name });
+  const { id: eventId } = await createTestEvent(page, { sportUrlSegment: 'golf', sportLeagueId: tourId, slotKind: 'TOURNAMENT', slotLabel: name, startsAt: start, name, rounds: 4 });
 
   await page.goto(`/manage/sports/golf/events/${eventId}/field`);
   await page.getByTestId('root-admin-event-field-add').click();

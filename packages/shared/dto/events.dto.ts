@@ -130,10 +130,7 @@ export const SportEventDtoSchema = z.object({
   status: EventStatusDtoSchema.describe('Event lifecycle status.'),
   startDate: DateTimeSchema.describe('Scheduled or actual start time.'),
   endDate: DateTimeSchema.nullable().describe('Scheduled or actual end time when known; null otherwise.'),
-  rounds: z.number().int().nullable().describe('Number of rounds when the format has them; null otherwise.'),
-  roundsPar: z.number().int().nullable().describe('Par for every round, when an admin set it. Null: contest scoring derives each round\'s par from the field\'s finished rounds. Contest scoring uses it to turn an unplayed round\'s 80 strokes into to-par.'),
-  roundsParMin: z.number().int().describe('The lowest par per round an update takes; a lower one is refused with 400.'),
-  roundsParMax: z.number().int().describe('The highest par per round an update takes; a higher one is refused with 400.'),
+  roundCount: z.number().int().describe('How many rounds the event has (#2008): the count of its rounds (SportEventRoundDto), read on each request and never stored. A bracket has a round in each slot, so its count is its FINAL slot\'s round. 0 until the sync, or a test event, gives it any.'),
   participantCount: z.number().int().describe('The event\'s field size: the teams or players on its field, counted on each read. 0 until the field loads.'),
   pricing: SlotPricingSchema.nullable().describe('The values the event\'s first slot\'s set was last priced with for budget contests (#2044), or null until it is priced. Locked at release; its salaryCap is the cap of every budget contest on the event.'),
   tierLayout: SlotTierLayoutSchema.nullable().describe('The tier layout the event\'s first slot\'s set was last auto-tiered with (#2044): its tier profile\'s, with any tier size an admin sent instead. Null until the set is first auto-tiered. Hand placements do not change it.'),
@@ -184,18 +181,19 @@ export const SportEventResponseSchema = z.object({
 }).describe('One sport event.');
 export type SportEventResponse = z.infer<typeof SportEventResponseSchema>;
 
+/** The most rounds a test event on one slot may play in it: a bound on the rows a create writes. */
+export const TEST_EVENT_ROUNDS_MAX = 8;
+
 export const CreateSportEventRequestSchema = z.object({
-  seasonSlotIds: z.array(z.uuid()).min(1).describe('The test slots the event is played on (SportLeagueSeasonSlotDto), all of one sport league\'s current Season: they decide the event\'s league, Season and dates. One slot plays the league\'s default round count in it; several play one round in each, in play order (a test bracket\'s rounds, its FINAL slot last, #2006). 404 SEASON_SLOT_NOT_FOUND; 422 SEASON_SLOT_NOT_TEST for a slot the sync keeps, SEASON_SLOT_NOT_CURRENT for one outside its league\'s current Season, SEASON_SLOTS_NOT_ONE_SEASON for slots of two Seasons; 409 SEASON_SLOT_TAKEN when one already has an event.'),
+  seasonSlotIds: z.array(z.uuid()).min(1).describe('The test slots the event is played on (SportLeagueSeasonSlotDto), all of one sport league\'s current Season: they decide the event\'s league, Season and dates. One slot plays `rounds` rounds in it; several play one round in each, in play order (a test bracket\'s rounds, its FINAL slot last, #2006). 404 SEASON_SLOT_NOT_FOUND; 422 SEASON_SLOT_NOT_TEST for a slot the sync keeps, SEASON_SLOT_NOT_CURRENT for one outside its league\'s current Season, SEASON_SLOTS_NOT_ONE_SEASON for slots of two Seasons; 409 SEASON_SLOT_TAKEN when one already has an event.'),
   name: z.string().min(1),
   venue: z.string().optional(),
   location: z.string().optional(),
+  rounds: z.number().int().min(1).max(TEST_EVENT_ROUNDS_MAX).optional()
+    .describe(`How many rounds a test event on one slot plays in it (a golf tournament's four), at most ${TEST_EVENT_ROUNDS_MAX}. Defaults to 1. 422 EVENT_ROUNDS_FROM_SLOTS with several slots, whose rounds are one in each.`),
   autoLifecycleEnabled: z.boolean().optional(),
-}).describe('A test event, made by hand on test slots (QA only). Created DRAFT with a round in each slot (its league\'s default round count for one slot), its league\'s tiers, and its slots\' dates; commissioners see it once it is released.');
+}).describe('A test event, made by hand on test slots (QA only). Created DRAFT with its rounds in its slots, its league\'s tiers, and its slots\' dates; commissioners see it once it is released.');
 export type CreateSportEventRequest = z.infer<typeof CreateSportEventRequestSchema>;
-
-/** The par range an admin may set for an event's rounds. Never above 80, so an unplayed round's 80 strokes is never under par. */
-export const ROUNDS_PAR_MIN = 60;
-export const ROUNDS_PAR_MAX = 80;
 
 export const UpdateSportEventRequestSchema = z.object({
   name: z.string().min(1).optional(),
@@ -203,9 +201,6 @@ export const UpdateSportEventRequestSchema = z.object({
   location: z.string().nullable().optional().describe('null clears it.'),
   startDate: DateTimeSchema.optional().describe('422 EVENT_DATES_FROM_SLOTS for an event with Season slots, whose dates are its slots\'.'),
   endDate: z.iso.datetime().nullable().optional().describe('null clears it. 422 EVENT_DATES_FROM_SLOTS for an event with Season slots.'),
-  rounds: z.number().int().min(1).optional().describe('Raises an event played in one slot to this many rounds. 422 EVENT_ROUNDS_FROM_SLOTS for an event with several slots, which plays a round in each.'),
-  roundsPar: z.number().int().min(ROUNDS_PAR_MIN).max(ROUNDS_PAR_MAX).nullable().optional()
-    .describe(`Par for every round, ${ROUNDS_PAR_MIN} to ${ROUNDS_PAR_MAX}. null clears it, so contest scoring derives each round's par from the field.`),
   autoLifecycleEnabled: z.boolean().optional(),
   tellMembers: z.boolean().optional()
     .describe('false for a data correction, such as filling in the real start time of an event loaded with only its date: a released event\'s start moves without the "event moved" email to its leagues. Refused (400) when the start being moved is not the noon-UTC date-only placeholder. Defaults to true.'),

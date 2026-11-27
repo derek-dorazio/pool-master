@@ -56,7 +56,6 @@ import {
   tierSetSlotOf,
   type SportLeagueSeasonSlot,
   slotDatesChange,
-  sportLeagueDefinitionOf,
   sportVocabulary,
   type SlotNamePattern,
   type SyncSeasonSlot,
@@ -128,6 +127,8 @@ export interface CreateSportEventInput {
   name: string;
   venue?: string;
   location?: string;
+  /** How many rounds an event on one slot plays in it; with several slots, one round in each. Defaults to 1. */
+  rounds?: number;
   autoLifecycleEnabled?: boolean;
 }
 
@@ -281,7 +282,7 @@ export class SportEventService {
     if (seasonIds.size !== 1) {
       throw new SportEventError('A test event\'s slots are all of one Season.', 'SEASON_SLOTS_NOT_ONE_SEASON', 422);
     }
-    const { sportLeague, sport } = await this.resolveSportLeague(first.sportLeagueId);
+    const { sportLeague } = await this.resolveSportLeague(first.sportLeagueId);
     for (const found of founds) {
       const refusal = testEventSlotRefusal(
         { isTestData: found.slot.isTestData, sportEventId: found.sportEventId },
@@ -293,7 +294,12 @@ export class SportEventService {
     // A test slot is always made with a start (createTestSlot), so its dates are never null.
     const dates = eventDatesFromSlots(slots);
     if (dates === null) throw new Error(`Season slots ${input.seasonSlotIds.join(', ')} have no start.`);
-    const rounds = slots.length > 1 ? slots.length : sportLeagueDefinitionOf(sport, sportLeague).defaultRounds;
+    // A round in each of several slots, or the rounds asked for in one (#2008): the event's round
+    // count is then its Round rows.
+    if (slots.length > 1 && input.rounds !== undefined) {
+      throw new SportEventError('A test event on several slots plays a round in each, so its rounds come from them.', 'EVENT_ROUNDS_FROM_SLOTS', 422);
+    }
+    const rounds = slots.length > 1 ? slots.length : input.rounds ?? 1;
     const found = first;
 
     const summary = onlyOne(await this.createEditions(sportLeague, [{
@@ -304,7 +310,6 @@ export class SportEventService {
         startDate: dates.startDate,
         endDate: dates.endDate ?? undefined,
         status: SportEventStatus.DRAFT,
-        rounds,
         sportLeagueId: sportLeague.id,
         sportLeagueSeasonId: found.sportLeagueSeasonId,
         autoLifecycleEnabled: input.autoLifecycleEnabled ?? true,
@@ -649,7 +654,7 @@ export class SportEventService {
     updates: SportEventUpdate,
     options: { tellMembers: boolean },
   ): Promise<SportEventAdminSummary> {
-    const { startDate: startedAt, rounds: roundCount, status } = await this.requireEvent(sportEventId);
+    const { startDate: startedAt, status } = await this.requireEvent(sportEventId);
     const movesStart = updates.startDate !== undefined && updates.startDate.getTime() !== startedAt.getTime();
     if (movesStart && !options.tellMembers && !isDateOnlyPlaceholder(startedAt)) {
       this.deps.logger?.warn(
@@ -680,9 +685,6 @@ export class SportEventService {
     if (shiftMs !== 0) {
       await this.deps.rounds.shiftSchedule(sportEventId, shiftMs);
       await this.deps.contests.recheckReminders({ sportEventId }, this.now());
-    }
-    if (updates.rounds && updates.rounds > (roundCount ?? 0)) {
-      await this.deps.rounds.extendTo({ sportEventId, rounds: updates.rounds, startDate });
     }
     return this.requireAdminSummary(sportEventId);
   }
@@ -1090,8 +1092,6 @@ function providerEdition(
       startDate: dates.startDate,
       endDate: dates.endDate ?? undefined,
       status: SportEventStatus.DRAFT,
-      // A round per slot when it covers several (#2006).
-      rounds: input.plays.length > 1 ? input.plays.length : schedule.length,
       sportLeagueId: input.sportLeagueId,
       sportLeagueSeasonId: input.sportLeagueSeasonId,
       autoLifecycleEnabled: true,

@@ -12,8 +12,9 @@
  * only (#2074): preview, apply and single-cell update, resolving each uploaded row against the
  * event's field with the shared participant-row resolver.
  *
- * Nothing is scored after the event's last scheduled round (#375), and an update past the
- * round's last hole (its slot's period count, #2047) is skipped: golf playoff holes are not a
+ * Rounds come only from the event's schedule, its Round rows (#375, #2008): a sync update for a
+ * round the event does not have is skipped, and an admin score for one is refused (422
+ * ROUND_BEYOND_SCHEDULE). An update past the round's last hole (its slot's period count, #2047) is skipped: golf playoff holes are not a
  * round and never count toward a score. A round's Game is COMPLETED once every golfer in it has
  * finished it. A golfer's sides come only from the rounds the feed reports them in, so a cut
  * golfer simply has no side in the rounds after it.
@@ -154,27 +155,18 @@ export class StrokePlayResultService {
     sportEventId: string,
     rounds: readonly GolfRoundUpdate[],
     providerId: string,
-    scheduledRounds: number | null,
   ): Promise<GolfRoundPersistenceResult> {
     if (rounds.length === 0) {
       return { updatesReturned: 0, updatesPersisted: 0, updatesSkipped: 0, writeDiagnostics: emptySyncWriteDiagnostics() };
     }
     const { logger } = this.deps;
 
-    // Nothing past the event's last scheduled round is scored (#375), and a score for a round
-    // the event does not have is skipped: rounds come only from the event's schedule, never
-    // from a score (#118, #435). `scheduledRounds` is the event's `SportEvent.rounds`.
+    // A score for a round the event does not have is skipped: rounds come only from the event's
+    // schedule, its Round rows, never from a score (#118, #375, #435, #2008).
     const reportedRoundNumbers = [...new Set(rounds.map((round) => round.round))];
-    const beyondScheduleRoundNumbers = reportedRoundNumbers.filter((roundNumber) => scheduledRounds !== null && roundNumber > scheduledRounds);
-    if (beyondScheduleRoundNumbers.length > 0) {
-      logger?.warn(
-        { action: 'liveScore.golf.roundBeyondScheduleSkipped', data: { sportEventId, scheduledRounds, roundNumbers: beyondScheduleRoundNumbers } },
-        'Skipping golf round update(s) for round(s) beyond the event\'s scheduled rounds',
-      );
-    }
     const eventRounds = await this.deps.rounds.findBySportEvent(sportEventId);
     const roundByNumber = new Map(eventRounds.map((round) => [round.roundNumber, round]));
-    const missingRoundNumbers = reportedRoundNumbers.filter((roundNumber) => !beyondScheduleRoundNumbers.includes(roundNumber) && !roundByNumber.has(roundNumber));
+    const missingRoundNumbers = reportedRoundNumbers.filter((roundNumber) => !roundByNumber.has(roundNumber));
     if (missingRoundNumbers.length > 0) {
       logger?.warn(
         { action: 'liveScore.golf.unscheduledRoundSkipped', data: { sportEventId, roundNumbers: missingRoundNumbers } },
@@ -194,7 +186,7 @@ export class StrokePlayResultService {
     const unmappedExternalIds = new Set<string>();
     const writes: Array<RoundWrite & { participantExternalId: string }> = [];
     for (const round of rounds) {
-      if (beyondScheduleRoundNumbers.includes(round.round) || missingRoundNumbers.includes(round.round)) {
+      if (missingRoundNumbers.includes(round.round)) {
         // Logged once above, with every round number skipped.
         skipped += 1;
         continue;
@@ -346,8 +338,8 @@ export class StrokePlayResultService {
 
   /** Dry run — resolves every row against the event's field and reports the change it would make. Writes nothing. */
   async previewRoundScores(sportEventId: string, roundNumber: number, rows: GolfScoreRowInput[]): Promise<GolfScorePreviewRow[]> {
-    const event = await this.requireGolfScoredEvent(sportEventId);
-    this.requireScheduledRound(event, sportEventId, roundNumber);
+    await this.requireGolfScoredEvent(sportEventId);
+    await this.requireRound(sportEventId, roundNumber);
     const [field, stored] = await Promise.all([
       this.deps.field.findBySportEvent(sportEventId),
       this.deps.fieldGames.findResults(sportEventId),
@@ -385,7 +377,7 @@ export class StrokePlayResultService {
         422,
       );
     }
-    const round = await this.deps.rounds.findOrCreate(sportEventId, roundNumber);
+    const round = await this.requireRound(sportEventId, roundNumber);
     for (const row of preview) requireThruWithinRound(round, row.row.thru ?? null);
     const writes = preview.flatMap((row): RoundWrite[] => (row.row.strokes === null || row.sportEventParticipantId === null ? [] : [{
       sportEventParticipantId: row.sportEventParticipantId,
@@ -405,7 +397,7 @@ export class StrokePlayResultService {
    * never fills either in (#116, #398).
    */
   async updateRoundScore(sportEventId: string, roundNumber: number, sportEventParticipantId: string, patch: GolfRoundScorePatch): Promise<void> {
-    const event = await this.requireGolfScoredEvent(sportEventId);
+    await this.requireGolfScoredEvent(sportEventId);
     const entry = await this.deps.field.findById(sportEventParticipantId);
     if (!entry || entry.sportEventId !== sportEventId) {
       throw new StrokePlayResultError(
@@ -414,7 +406,7 @@ export class StrokePlayResultService {
         404,
       );
     }
-    this.requireScheduledRound(event, sportEventId, roundNumber);
+    const round = await this.requireRound(sportEventId, roundNumber);
     const existing = (await this.deps.fieldGames.findResults(sportEventId))
       .find((result) => result.sportEventParticipantId === sportEventParticipantId && result.roundNumber === roundNumber);
     const before = existing ? roundValuesOf(existing) : null;
@@ -427,7 +419,6 @@ export class StrokePlayResultService {
         422,
       );
     }
-    const round = await this.deps.rounds.findOrCreate(sportEventId, roundNumber);
     const thru = patch.thru !== undefined ? patch.thru : before?.thru ?? null;
     requireThruWithinRound(round, patch.thru ?? null);
     await this.writeRounds(sportEventId, [{
@@ -447,6 +438,19 @@ export class StrokePlayResultService {
    * would leave results its leaderboard never reads. Null when there is no such event; the
    * handler has already answered 404 for that.
    */
+  /** The event's round of this number; an admin cannot score a round the event does not have (#375). */
+  private async requireRound(sportEventId: string, roundNumber: number): Promise<SportEventRound> {
+    const round = (await this.deps.rounds.findBySportEvent(sportEventId)).find((candidate) => candidate.roundNumber === roundNumber);
+    if (round === undefined) {
+      throw new StrokePlayResultError(
+        `Sport event ${sportEventId} has no round ${roundNumber}.`,
+        'ROUND_BEYOND_SCHEDULE',
+        422,
+      );
+    }
+    return round;
+  }
+
   private async requireGolfScoredEvent(sportEventId: string): Promise<SportEvent | null> {
     const event = await this.deps.events.findById(sportEventId);
     if (event && !this.deps.storesGolfRoundScores(event)) {
@@ -458,18 +462,6 @@ export class StrokePlayResultService {
       );
     }
     return event;
-  }
-
-  /** Refuses an admin score for a round the event does not have (#375). An event with no round count accepts any. */
-  private requireScheduledRound(event: SportEvent | null, sportEventId: string, roundNumber: number): void {
-    const scheduledRounds = event?.rounds ?? null;
-    if (scheduledRounds !== null && roundNumber > scheduledRounds) {
-      throw new StrokePlayResultError(
-        `Round ${roundNumber} is beyond sport event ${sportEventId}'s ${scheduledRounds} scheduled rounds.`,
-        'ROUND_BEYOND_SCHEDULE',
-        422,
-      );
-    }
   }
 }
 

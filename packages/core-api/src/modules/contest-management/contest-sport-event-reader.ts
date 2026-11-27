@@ -54,7 +54,7 @@ export function createContestSportEventReader({ sportEvents, field, tiers, valua
       championshipYear: event.championshipYear,
       playsMatches: eventPlaysMatches(event),
       participantCount: loaded.get(event.id) ?? 0,
-      rounds: event.rounds ?? null,
+      rounds: event.roundCount > 0 ? event.roundCount : null,
       slotDefinitionIds: event.slotDefinitions.map((definition) => definition.id),
       salaryCap: tierSetSlotOf(tierSlots.get(event.id) ?? [])?.pricing?.salaryCap ?? null,
       squaresFromRound: event.squaresFromRound ?? null,

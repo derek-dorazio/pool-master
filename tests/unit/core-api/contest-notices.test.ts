@@ -269,7 +269,7 @@ describe('ContestNotices', () => {
 
     it('queues the good luck email once per member and event, however often it is asked, counting only the emails each ask queued', async () => {
       const league = world.addLeague();
-      const event = world.addSportEvent({ startDate: STARTS_AT, rounds: 4 });
+      const event = world.addSportEvent({ startDate: STARTS_AT, roundCount: 4 });
       const contest = world.addContest(league.id, { sportEventIds: [event.id] });
       world.addConfiguration(contest.id);
       member(league.id, 'Nora');

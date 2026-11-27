@@ -102,19 +102,16 @@ type EventContext = Pick<ReturnType<typeof setup>, 'store' | 'service' | 'sportL
 /**
  * An event with no Season slots yet, as a synced golf event has until slice 12 matches them: its
  * dates are its own, and an edit can move them. Made through createEvent on a test slot, then
- * unlinked from it; a round count below its league's default trims the rounds the create scheduled.
+ * unlinked from it. The create schedules one round, in its one slot; `rounds` adds the rest a day apart.
  */
 async function slotlessEvent({ store, service, sportLeague }: EventContext, input: { name?: string; startDate?: Date; rounds?: number } = {}) {
   const startDate = input.startDate ?? MANUAL_INPUT.startDate;
   const created = await service.createEvent({ seasonSlotIds: [store.addTestSlot(sportLeague, startDate)], name: input.name ?? MANUAL_INPUT.name });
   const eventId = created.event.id;
+  const later = Array.from({ length: Math.max((input.rounds ?? 1) - 1, 0) }, (_, index) => ({ roundNumber: index + 2, scheduledDate: new Date(startDate.getTime() + (index + 1) * 24 * 60 * 60 * 1000) }));
+  await store.addRounds(eventId, later);
   // Its rounds keep the slot they are played in (#2006): only the event's list of slots goes.
   store.slotsByEvent.delete(eventId);
-  const { rounds } = input;
-  if (rounds !== undefined) {
-    store.roundRows = store.roundRows.filter((round) => round.sportEventId !== eventId || round.roundNumber <= rounds);
-    await store.sportEventRepo().update(eventId, { rounds });
-  }
   return { ...created, event: expectDefined(await store.sportEventRepo().findById(eventId)) };
 }
 
@@ -127,18 +124,18 @@ function feedIdOf(event: SportEvent): string | undefined {
 }
 
 describe('SportEventService.createEvent', () => {
-  it('creates a test event on a test slot as a DRAFT with no provider ids, its league\'s four golf rounds, six tiers and the slot\'s dates', async () => {
+  it('creates a test event on a test slot as a DRAFT with no provider ids, the four golf rounds asked for in its one slot, six tiers and the slot\'s dates', async () => {
     const { store, service, sportLeague } = setup();
     const endsAt = new Date('2026-06-07T23:00:00.000Z');
     const seasonSlotId = store.addTestSlot(sportLeague, MANUAL_INPUT.startDate, { endsAt });
 
-    const created = await service.createEvent({ seasonSlotIds: [seasonSlotId], name: MANUAL_INPUT.name });
+    const created = await service.createEvent({ seasonSlotIds: [seasonSlotId], name: MANUAL_INPUT.name, rounds: 4 });
 
     expect(created.event).toMatchObject({
       sport: Sport.GOLF,
       providerMappings: [],
       status: SportEventStatus.DRAFT,
-      rounds: 4,
+      roundCount: 4,
       startDate: MANUAL_INPUT.startDate,
       endDate: endsAt,
       sportLeagueId: sportLeague.id,
@@ -146,7 +143,7 @@ describe('SportEventService.createEvent', () => {
       championshipYear: 2026,
     });
     expect(created.slots.map((slot) => slot.id)).toEqual([seasonSlotId]);
-    expect(store.roundRows.map((round) => round.roundNumber)).toEqual([1, 2, 3, 4]);
+    expect(store.roundRows.map((round) => [round.roundNumber, round.slot.seasonSlotId])).toEqual([1, 2, 3, 4].map((roundNumber) => [roundNumber, seasonSlotId]));
     // The summary is read after the rounds and tiers exist, so its counts include them.
     expect(created.tierCount).toBe(6);
   });
@@ -214,12 +211,30 @@ describe('SportEventService.createEvent', () => {
 
     const created = await service.createEvent({ seasonSlotIds: [semifinal, final], name: 'Test Bracket' });
 
-    expect(created.event.rounds).toBe(2);
+    expect(created.event.roundCount).toBe(2);
     expect(created.slots.map((slot) => slot.id)).toEqual([semifinal, final]);
     expect(store.roundRows.map((round) => [round.roundNumber, round.slot.seasonSlotId, round.scheduledDate])).toEqual([
       [1, semifinal, MANUAL_INPUT.startDate],
       [2, final, new Date('2026-06-06T12:00:00.000Z')],
     ]);
+  });
+
+  it('makes one round on a one-slot test event when no round count is asked for', async () => {
+    const { store, service, sportLeague } = setup();
+
+    const created = await service.createEvent({ seasonSlotIds: [store.addTestSlot(sportLeague, MANUAL_INPUT.startDate)], name: MANUAL_INPUT.name });
+
+    expect(created.event.roundCount).toBe(1);
+  });
+
+  it('refuses a round count for a test event on several slots with 422 EVENT_ROUNDS_FROM_SLOTS, creating nothing: it plays a round in each', async () => {
+    const { store, service, sportLeague } = setup(Sport.BASKETBALL);
+    const semifinal = store.addTestSlot(sportLeague, MANUAL_INPUT.startDate, { slotKind: SlotKind.SEMIFINAL, name: 'Final Four' });
+    const final = store.addTestSlot(sportLeague, new Date('2026-06-06T12:00:00.000Z'), { slotKind: SlotKind.FINAL, name: 'National Championship' });
+
+    await expect(service.createEvent({ seasonSlotIds: [semifinal, final], name: 'Test Bracket', rounds: 3 }))
+      .rejects.toMatchObject({ code: 'EVENT_ROUNDS_FROM_SLOTS', statusCode: 422 });
+    expect(store.roundRows).toEqual([]);
   });
 
   it('refuses test slots of more than one Season with 422 SEASON_SLOTS_NOT_ONE_SEASON, creating nothing', async () => {
@@ -329,7 +344,7 @@ describe('SportEventService.importProviderSeason', () => {
 
     expect(result.skipped).toEqual([]);
     expect(result.unmatched).toEqual([]);
-    expect(result.created.map(({ event }) => ({ externalId: feedIdOf(event), sportLeagueSeasonId: event.sportLeagueSeasonId, rounds: event.rounds })))
+    expect(result.created.map(({ event }) => ({ externalId: feedIdOf(event), sportLeagueSeasonId: event.sportLeagueSeasonId, rounds: event.roundCount })))
       .toEqual(slate.map(({ externalId }) => ({ externalId, sportLeagueSeasonId: IN_MEMORY_SEASON_ID, rounds: 4 })));
   });
 
@@ -1133,20 +1148,6 @@ describe('SportEventService.updateEvent keeps the round schedule in step with th
       .map((round) => ({ roundNumber: round.roundNumber, scheduledDate: round.scheduledDate.toISOString() }));
   }
 
-  it('schedules the added rounds a day apart when an admin raises the round count, so their live scores are kept', async () => {
-    const { store, service, sportLeague } = setup();
-    const { event } = await slotlessEvent({ store, service, sportLeague }, { rounds: 3 });
-
-    await service.updateEvent(event.id, { rounds: 4 }, TELL);
-
-    expect(roundsOf(store, event.id)).toEqual([
-      { roundNumber: 1, scheduledDate: '2026-06-04T12:00:00.000Z' },
-      { roundNumber: 2, scheduledDate: '2026-06-05T12:00:00.000Z' },
-      { roundNumber: 3, scheduledDate: '2026-06-06T12:00:00.000Z' },
-      { roundNumber: 4, scheduledDate: '2026-06-07T12:00:00.000Z' },
-    ]);
-  });
-
   it('moves every round by the same amount when an admin moves the start date, so automatic lifecycle starts it on the new date', async () => {
     const { store, service, sportLeague } = setup();
     const { event } = await slotlessEvent({ store, service, sportLeague }, { rounds: 2 });
@@ -1255,12 +1256,12 @@ describe('SportEventService.updateEvent keeps the round schedule in step with th
     expect(reminderRechecks.mock.calls).toEqual([[{ sportEventId: released.id }, NOW]]);
   });
 
-  it('leaves the round schedule alone when an edit changes neither the start date nor the round count', async () => {
+  it('leaves the round schedule alone when an edit does not change the start date', async () => {
     const { store, service, sportLeague } = setup();
     const { event } = await slotlessEvent({ store, service, sportLeague }, { rounds: 2 });
     const before = roundsOf(store, event.id);
 
-    await service.updateEvent(event.id, { name: 'Renamed', startDate: MANUAL_INPUT.startDate, rounds: 2 }, TELL);
+    await service.updateEvent(event.id, { name: 'Renamed', startDate: MANUAL_INPUT.startDate }, TELL);
 
     expect(roundsOf(store, event.id)).toEqual(before);
   });

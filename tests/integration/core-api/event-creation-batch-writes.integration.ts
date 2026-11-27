@@ -131,7 +131,7 @@ describe('Importing a provider\'s Season of events (#1253, #2003)', () => {
 
     const { created } = await sportEvents.importProviderSeason({ sportLeagueId: tour.id, sportLeagueSeasonId, providerId: PROVIDER_ID, sportLeagueProviderMappingId: tour.sportLeagueProviderMappingId, providerEvents: slate });
 
-    expect(created.map(({ event }) => [event.name, event.providerMappings, event.status, event.rounds])).toEqual(
+    expect(created.map(({ event }) => [event.name, event.providerMappings, event.status, event.roundCount])).toEqual(
       slate.map((providerEvent) => [providerEvent.name, [{ providerCode: ProviderCode.BALLDONTLIE, providerName: 'BALLDONTLIE', externalId: providerEvent.externalId }], 'DRAFT', 4]),
     );
     for (const summary of created) {

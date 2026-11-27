@@ -118,7 +118,12 @@
     "RaceOrderRepository": "#2008 (10b part 3b): FieldGameRepository, one writer for every FIELD Game",
     "PrismaRaceOrderRepository": "#2008 (10b part 3b): PrismaFieldGameRepository",
     "ParticipantRoundView": "#2008 (10b part 3b): fieldResults on the field row",
-    "currentRoundThru": "#2008 (10b part 4): the DTO's current round thru goes with the rounds contract; stored nowhere since part 3b"
+    "currentRoundThru": "#2008 (10b part 4): the DTO's current round thru goes with the rounds contract; stored nowhere since part 3b",
+    "roundsPar": "#2008 (10b): no par per round; an unplayed round's par is read off finished rounds",
+    "ROUNDS_PAR_MIN": "#2008 (10b): par per round retired",
+    "ROUNDS_PAR_MAX": "#2008 (10b): par per round retired",
+    "extendTo": "#2008 (10b): a test event's rounds are set when it is made",
+    "scoresUnplayedRoundsAgainstPar": "#2008 (10b): par per round retired"
   },
   "ROUND_NAMES_FROM_FINAL": 0,
   "roundLabel": 0,
@@ -127,7 +132,7 @@
   "roundNames": 0,
   "roundSeriesLengths": 0,
   "bracketAdvancement": 0,
-  "defaultRounds": 13,
+  "defaultRounds": 0,
   "matchPeriodLayout": 0,
   "MATCH_PERIOD_LAYOUTS": 0,
   "FEED_LABELS": 0,
@@ -237,5 +242,10 @@
   "RaceOrderRepository": 0,
   "PrismaRaceOrderRepository": 0,
   "ParticipantRoundView": 0,
-  "currentRoundThru": 3
+  "currentRoundThru": 3,
+  "roundsPar": 0,
+  "ROUNDS_PAR_MIN": 0,
+  "ROUNDS_PAR_MAX": 0,
+  "extendTo": 0,
+  "scoresUnplayedRoundsAgainstPar": 0
 }

@@ -174,7 +174,7 @@ test('act 1: the root admin builds a race — the seeded series, ten test driver
   const raceId = await test.step('create the race on the series, a week out', async () => {
     const start = addDays(new Date(), 7);
     start.setHours(17, 0, 0, 0);
-    // A race is one race: the event takes the sport's own single round.
+    // A race is one race: the event plays one round in its slot.
     const created = await createTestEvent(page, {
       sportUrlSegment: 'auto-racing',
       sportLeagueId: seriesId,

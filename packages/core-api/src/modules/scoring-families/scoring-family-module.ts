@@ -28,7 +28,7 @@ import type { LiveScorePersistenceResult } from '../ingestion/core/score-publish
 export type ScoringFamilyEvent = Pick<SportEvent, 'sport' | 'scoringFamily'>;
 
 /** What scoring a field reads off its event. */
-export type FieldScoringEvent = ScoringFamilyEvent & Pick<SportEvent, 'rounds' | 'roundsPar' | 'status' | 'slotDefinitions'>;
+export type FieldScoringEvent = ScoringFamilyEvent & Pick<SportEvent, 'roundCount' | 'status' | 'slotDefinitions'>;
 
 export interface LiveScoreWriteDeps {
   prisma: PrismaClient;

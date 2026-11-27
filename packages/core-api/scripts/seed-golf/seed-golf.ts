@@ -590,14 +590,6 @@ class Loader {
       body.location = event.location;
       changes.push(`location ${stored.location ?? 'none'} → ${event.location ?? 'none'}`);
     }
-    if (stored.rounds !== event.rounds) {
-      body.rounds = event.rounds;
-      changes.push(`rounds ${stored.rounds ?? 'none'} → ${event.rounds}`);
-    }
-    if (stored.roundsPar !== event.roundsPar) {
-      body.roundsPar = event.roundsPar;
-      changes.push(`par ${stored.roundsPar ?? 'none'} → ${event.roundsPar ?? 'none'}`);
-    }
     return { body, changes };
   }
 
@@ -718,17 +710,11 @@ class Loader {
           name: event.name,
           ...(event.venue ? { venue: event.venue } : {}),
           ...(event.location ? { location: event.location } : {}),
+          // One slot plays the file's rounds in it; several play one round in each (#2008).
+          ...(seasonSlotIds.length === 1 && { rounds: event.rounds }),
           autoLifecycleEnabled: false,
         },
       }), `Create ${event.name}`);
-      // The create gives the league's default round count; the file's own count and par are edits.
-      const edits = {
-        ...(created.event.rounds !== event.rounds && { rounds: event.rounds }),
-        ...(event.roundsPar !== null && { roundsPar: event.roundsPar }),
-      };
-      if (Object.keys(edits).length > 0) {
-        await must(updateEvent({ client, path: { eventId: created.event.id }, body: edits }), `Set rounds and par for ${event.name}`);
-      }
       if (loadsField) await this.writeField(client, created.event.id, league, event, participantIds, []);
       if (loadsBracket) await this.writeBracket(client, created.event.id, event, participantIds, []);
       await this.finishTestEvent(client, created.event, event, participantIds);

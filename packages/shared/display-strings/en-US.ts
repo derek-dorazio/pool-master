@@ -994,7 +994,7 @@ export const enUS = {
     EVENT_PARTICIPANT_HAS_PICKS: 'Entries have picked them, so they cannot be removed. Withdraw them instead.',
     EVENT_PARTICIPANT_IN_BRACKET: 'They are in the bracket, so they cannot be removed. Take them out of their match first.',
     EVENT_PARTICIPANT_NOT_FOUND: 'They are not on this event\'s field.',
-    EVENT_ROUNDS_FROM_SLOTS: 'This event plays a round in each of its slots, so its round count comes from them.',
+    EVENT_ROUNDS_FROM_SLOTS: 'This event plays a round in each of its slots, so its rounds come from them.',
     EVENT_SCORING_FAMILY_MISMATCH: 'This event is not scored this way.',
     FIELD_HAS_NO_ORDER: 'No one in the field has a value for any of this league\'s order sources, so it cannot be put in tiers or priced.',
     FST_ERR_VALIDATION: 'The request is not valid. Check the details and try again.',

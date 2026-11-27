@@ -17,8 +17,6 @@ import {
   eventProviderNameOf,
 } from '@poolmaster/shared/domain';
 import {
-  ROUNDS_PAR_MAX,
-  ROUNDS_PAR_MIN,
   type ReleaseCheckDto,
   type SportEventContestListResponse,
   type SportEventDto,
@@ -73,10 +71,7 @@ export function mapSportEventToDto({
     status: event.status,
     startDate: event.startDate.toISOString(),
     endDate: event.endDate?.toISOString() ?? null,
-    rounds: event.rounds ?? null,
-    roundsPar: event.roundsPar ?? null,
-    roundsParMin: ROUNDS_PAR_MIN,
-    roundsParMax: ROUNDS_PAR_MAX,
+    roundCount: event.roundCount,
     participantCount,
     pricing: tierSetSlot?.pricing ?? null,
     tierLayout: tierSetSlot?.tierLayout ?? null,

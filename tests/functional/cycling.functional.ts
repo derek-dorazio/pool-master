@@ -95,7 +95,7 @@ describe('SDK Functional: Cycling UCI WorldTour Top 10 points', () => {
     const eventId = expectDefined(race.data).event.id;
     created.sportEventIds.add(eventId);
     // A stage race is one round: its result is the final overall classification, not one per stage.
-    expect(expectDefined(race.data).event.rounds).toBe(1);
+    expect(expectDefined(race.data).event.roundCount).toBe(1);
 
     const riderIds: string[] = [];
     for (const rider of RIDERS) {
