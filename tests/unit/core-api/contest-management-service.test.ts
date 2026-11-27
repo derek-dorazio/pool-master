@@ -2237,6 +2237,8 @@ describe('ContestManagementService — a contest of several events', () => {
     contest?: Record<string, unknown>;
     planEntitlements?: ContestManagementServiceDeps['planEntitlements'];
     storedConfigJson?: { selectionType: typeof SelectionType.BUDGET_PICK; rosterSize: number; salaryCap: number; countedScores: number };
+    configTemplates?: ContestManagementServiceDeps['configTemplates'];
+    seasons?: Pick<SportLeagueSeasonRepository, 'findCoverableSlots'>;
   } = {}) {
     const contestRepo = createContestRepo();
     const cupsAsked: CupKey[] = [];
@@ -2280,11 +2282,11 @@ describe('ContestManagementService — a contest of several events', () => {
     const service = new ContestManagementService({
       domainEvents: testDomainEvents(),
       contests: contestRepo,
-      configTemplates: allListedTemplates(),
+      configTemplates: options.configTemplates ?? allListedTemplates(),
       configurations: configurationRepo,
       scoringRules: createParticipantScoringRuleRepo(),
       tiers: createSportEventTierServiceStub(),
-      seasons: eachEventsSlot(),
+      seasons: options.seasons ?? eachEventsSlot(),
       sportEventReader: options.reader ?? multiEventReader(READER_EVENTS),
       now: () => CONTEST_MANAGEMENT_TEST_NOW,
       cups: createCupKeeper(cupsAsked),
@@ -2309,6 +2311,34 @@ describe('ContestManagementService — a contest of several events', () => {
     await service.createContest({ leagueId: 'league-1' }, tiered([US_OPEN, MASTERS, PGA]));
 
     expect(contestRepo.create).toHaveBeenCalledWith(expect.objectContaining({ seasonSlotIds: [MASTERS, PGA, US_OPEN].map(slotOf) }), PLATINUM_SEASON_LIMIT);
+  });
+
+  it('refuses a contest on events of two Seasons with 422 CONTEST_EVENTS_SEASON_MISMATCH, creating nothing', async () => {
+    const { service, contestRepo } = build({
+      reader: multiEventReader([...READER_EVENTS, { id: NEXT_MASTERS, startDate: '2027-04-08T12:00:00.000Z', championshipYear: 2027 }]),
+    });
+
+    await expect(service.createContest({ leagueId: 'league-1' }, tiered([MASTERS, NEXT_MASTERS])))
+      .rejects.toMatchObject({ code: 'CONTEST_EVENTS_SEASON_MISMATCH', statusCode: 422 });
+    expect(contestRepo.create).not.toHaveBeenCalled();
+  });
+
+  it('refuses a contest on an event holding no slot its template lists with 422 CONTEST_COVERAGE_NO_LISTED_SLOT, creating nothing', async () => {
+    const { service, contestRepo } = build({ seasons: { findCoverableSlots: jest.fn().mockResolvedValue([]) } });
+
+    await expect(service.createContest({ leagueId: 'league-1' }, tiered([MASTERS])))
+      .rejects.toMatchObject({ code: 'CONTEST_COVERAGE_NO_LISTED_SLOT', statusCode: 422 });
+    expect(contestRepo.create).not.toHaveBeenCalled();
+  });
+
+  it('refuses changing the events of a contest whose template is gone with 404 CONTEST_CONFIG_TEMPLATE_NOT_FOUND, changing nothing', async () => {
+    const configTemplates = createContestConfigTemplateRepo();
+    jest.mocked(configTemplates.findById).mockResolvedValue(null);
+    const { service, contestRepo } = build({ contest: { status: ContestStatus.DRAFT }, configTemplates });
+
+    await expect(service.setContestSportEvents('league-1', 'contest-1', [MASTERS, PGA]))
+      .rejects.toMatchObject({ code: 'CONTEST_CONFIG_TEMPLATE_NOT_FOUND', statusCode: 404 });
+    expect(contestRepo.replaceCoveredSlots).not.toHaveBeenCalled();
   });
 
   it('refuses a contest mixing two sport leagues\' events with CONTEST_EVENTS_LEAGUE_MISMATCH, creating nothing', async () => {

@@ -230,8 +230,14 @@ test('act 2: a new commissioner creates a Bracket contest on the tournament with
     await expect(tournament).toContainText(run.tournamentName);
     await tournament.click();
     await expect(tournament).toBeChecked();
+    // The league's default setup fills the form once its setups arrive; the commissioner waits for
+    // it, then picks Bracket, which starts from the league's default bracket setup (#2014).
+    const startFrom = page.getByRole('radiogroup', { name: 'Start from' });
+    await expect(startFrom.locator('[aria-checked="true"]')).toHaveCount(1);
     await page.getByTestId('contest-format-BRACKET').click();
+    await expect(page.getByTestId('contest-format-BRACKET')).toBeChecked();
     await expect(page.getByTestId('contest-bracket-rules')).toBeVisible();
+    await expect(startFrom.locator('[aria-checked="true"]')).toHaveCount(1);
     await page.getByTestId('contest-scoring-round-values').fill(ROUND_VALUES);
     await page.getByTestId('contest-name').fill(run.contestName);
   });

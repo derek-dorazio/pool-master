@@ -343,15 +343,42 @@ const MARCH_MADNESS_UNDER_WAY = {
   rounds: 6,
 } as const;
 
+const BASKETBALL_PICK_EM_TEMPLATE_ID = '80300000-0000-4000-8000-000000000001';
+const BASKETBALL_BRACKET_TEMPLATE_ID = '80300000-0000-4000-8000-000000000002';
+
+/** Basketball's own setups, one a format, since every contest starts from one (#2014). */
+function basketballPresets(): Array<Record<string, unknown>> {
+  const preset = (id: string, selectionType: string, contestFormat: string, configuration: Record<string, unknown>) => ({
+    id,
+    coverageMode: 'ONE_SLOT',
+    slots: [templateSlotFixture(sportSlotId('BASKETBALL'))],
+    sportLeagueId: 'ncaa-men',
+    contestFormat,
+    selectionType,
+    templateKey: `ncaa-men-${selectionType.toLowerCase()}`,
+    name: `NCAA ${selectionType}`,
+    description: `NCAA ${selectionType}.`,
+    sortOrder: 1,
+    isDefault: true,
+    active: true,
+    schemaVersion: 1,
+    configuration: { selectionType, maxEntriesPerSquad: 1, ...configuration },
+  });
+  return [
+    preset(BASKETBALL_PICK_EM_TEMPLATE_ID, 'PICK_EM', 'PREDICTION', { mode: 'STRAIGHT_UP', againstTheSpread: false }),
+    preset(BASKETBALL_BRACKET_TEMPLATE_ID, 'BRACKET', 'PREDICTION', {}),
+  ];
+}
+
 /**
  * The golf reads, plus basketball's events (one contest-ready tournament of three rounds unless
- * told otherwise) with no presets of their own unless given, and each event's rounds played in a
+ * told otherwise) with basketball's own presets unless given, and each event's rounds played in a
  * 64-team tournament's slots unless told otherwise, as the reads answer when Basketball is chosen.
  */
 function primeBasketballMocks(
   events: Array<Record<string, unknown>> = [basketballEvent()],
   roundSlots: readonly SportEventRoundSlotDto[] = TOURNAMENT_ROUND_SLOTS,
-  templates: Array<Record<string, unknown>> = [],
+  templates: Array<Record<string, unknown>> = basketballPresets(),
 ) {
   primeCommonMocks();
   getSportLeagueMock.mockResolvedValue({ data: { sportLeague: { id: 'ncaa-men', name: 'NCAA Men' } } });
@@ -516,7 +543,7 @@ describe('Commissioner tools › Contests › Create contest', () => {
     }));
   });
 
-  it('switches to Custom when a rule is changed by hand, and creates without a preset', async () => {
+  it('keeps the chosen setup when a rule is changed by hand, and creates from it with the edited rules', async () => {
     primeCommonMocks();
     createContestMock.mockResolvedValue({ data: { contest: { id: 'contest-custom' } } });
 
@@ -526,12 +553,13 @@ describe('Commissioner tools › Contests › Create contest', () => {
     fireEvent.change(screen.getByTestId('contest-tiered-counted-scores'), { target: { value: '5' } });
     fireEvent.click(screen.getByTestId('contest-max-entries-unlimited'));
 
-    expect(screen.getByTestId('contest-template-custom')).toBeChecked();
+    expect(screen.getByTestId('contest-template-golf-tiered-pick-6')).toBeChecked();
+    expect(screen.queryByTestId('contest-template-custom')).not.toBeInTheDocument();
     expect(screen.getByTestId('contest-members-will-see')).toHaveTextContent('The best 5 scores count. No limit on entries per member.');
     await submitOnceReady();
 
     await waitFor(() => expect(createContestMock).toHaveBeenCalledTimes(1));
-    expect(submittedBody()).not.toHaveProperty('templateId');
+    expect(submittedBody()).toHaveProperty('templateId', '11111111-1111-4111-8111-111111111111');
     expect(submittedBody()).toEqual(expect.objectContaining({ configuration: { selectionType: 'TIERED', picksPerTier: 1, countedScores: 5 } }));
   });
 
@@ -596,7 +624,6 @@ describe('Commissioner tools › Contests › Create contest', () => {
 
     await waitFor(() => expect(screen.getByTestId('contest-tiered-counted-scores')).toHaveValue(2));
     expect(screen.getByText('4 tiers × 1 = 4 golfers per entry')).toBeInTheDocument();
-    expect(screen.getByTestId('contest-template-custom')).toBeChecked();
   });
 
   it('keeps Create contest disabled and says why while the rules are incomplete or out of range', async () => {
@@ -689,11 +716,13 @@ describe('Commissioner tools › Contests › Create contest', () => {
 
     fireEvent.click(screen.getByTestId('contest-sport-BASKETBALL'));
     await waitFor(() => expect(screen.getByTestId('contest-event-week-1')).toBeChecked());
+    // The league's default setup, a pick'em, applies once its setups arrive.
+    await waitFor(() => expect(screen.getByTestId('contest-template-ncaa-men-pick_em')).toBeChecked());
     const before = (await screen.findByTestId('contest-members-will-see-picture')).innerHTML;
-    fireEvent.click(screen.getByTestId('contest-format-PICK_EM'));
+    fireEvent.click(screen.getByTestId('contest-format-BRACKET'));
 
-    await waitFor(() => expect(screen.getByTestId('contest-members-will-see-picture').innerHTML).toBe(formatPictureMarkup(SelectionType.PICK_EM)));
-    expect(before).not.toBe(formatPictureMarkup(SelectionType.PICK_EM));
+    await waitFor(() => expect(screen.getByTestId('contest-members-will-see-picture').innerHTML).toBe(formatPictureMarkup(SelectionType.BRACKET)));
+    expect(before).not.toBe(formatPictureMarkup(SelectionType.BRACKET));
   });
 
   it('creates a confidence pick\'em on its first week as a prediction contest with the mode chosen and no scoring settings, since the mode alone scores it', async () => {
@@ -706,6 +735,7 @@ describe('Commissioner tools › Contests › Create contest', () => {
     await waitFor(() => expect(screen.getByTestId('contest-event-week-1')).toBeChecked());
     fireEvent.click(screen.getByTestId('contest-format-PICK_EM'));
 
+    await waitFor(() => expect(screen.getByTestId('contest-template-ncaa-men-pick_em')).toBeChecked());
     expect(await screen.findByTestId('contest-pick-em-mode-STRAIGHT_UP')).toBeChecked();
     fireEvent.click(screen.getByTestId('create-contest-event-help'));
     expect(screen.getByTestId('create-contest-event-help-callout')).toHaveTextContent('you add the rest of the season from its Events page');
@@ -721,6 +751,7 @@ describe('Commissioner tools › Contests › Create contest', () => {
       sportEventIds: ['week-1'],
       contestFormat: 'PREDICTION',
       selectionType: 'PICK_EM',
+      templateId: BASKETBALL_PICK_EM_TEMPLATE_ID,
       configuration: { selectionType: 'PICK_EM', mode: 'CONFIDENCE', againstTheSpread: false, maxEntriesPerSquad: 1 },
     });
   });
@@ -733,8 +764,11 @@ describe('Commissioner tools › Contests › Create contest', () => {
 
     fireEvent.click(screen.getByTestId('contest-sport-BASKETBALL'));
     await waitFor(() => expect(screen.getByTestId('contest-event-bb-1')).toBeChecked());
+    // The league's default setup fills the form once its setups arrive.
+    await waitFor(() => expect(screen.getByTestId('contest-template-ncaa-men-pick_em')).toBeChecked());
     expect(screen.getByTestId('contest-format-BRACKET')).toHaveTextContent('Bracket');
     fireEvent.click(screen.getByTestId('contest-format-BRACKET'));
+    await waitFor(() => expect(screen.getByTestId('contest-template-ncaa-men-bracket')).toBeChecked());
 
     expect(await screen.findByTestId('contest-bracket-rules')).toBeInTheDocument();
     expect(screen.getByText('Points for a correct pick')).toBeInTheDocument();
@@ -751,6 +785,7 @@ describe('Commissioner tools › Contests › Create contest', () => {
       sportEventIds: ['bb-1'],
       contestFormat: 'PREDICTION',
       selectionType: 'BRACKET',
+      templateId: BASKETBALL_BRACKET_TEMPLATE_ID,
       configuration: {
         selectionType: 'BRACKET',
         maxEntriesPerSquad: 1,
@@ -906,7 +941,9 @@ describe('Commissioner tools › Contests › Create contest', () => {
 
     fireEvent.click(screen.getByTestId('contest-sport-BASKETBALL'));
     await waitFor(() => expect(screen.getByTestId('contest-event-bb-1')).toBeChecked());
+    await waitFor(() => expect(screen.getByTestId('contest-template-ncaa-men-pick_em')).toBeChecked());
     fireEvent.click(screen.getByTestId('contest-format-BRACKET'));
+    await waitFor(() => expect(screen.getByTestId('contest-template-ncaa-men-bracket')).toBeChecked());
     fireEvent.change(screen.getByTestId('contest-scoring-round-values'), { target: { value: '1, 2, 4' } });
     await submitOnceReady();
 
@@ -1079,7 +1116,7 @@ describe('Commissioner tools › Contests › Create contest › Budget format (
     );
 
     fireEvent.change(screen.getByTestId('contest-budget-roster-size'), { target: { value: '5' } });
-    expect(screen.getByTestId('contest-template-custom')).toBeChecked();
+    expect(screen.getByTestId('contest-template-golf-budget-pick-6')).toBeChecked();
     await submitOnceReady();
 
     await waitFor(() => expect(createContestMock).toHaveBeenCalledTimes(1));
@@ -1088,6 +1125,7 @@ describe('Commissioner tools › Contests › Create contest › Budget format (
       sportEventIds: ['event-1'],
       contestFormat: 'ROSTER',
       selectionType: 'BUDGET_PICK',
+      templateId: BUDGET_TEMPLATE.id,
       configuration: { selectionType: 'BUDGET_PICK', rosterSize: 5, countedScores: 4, maxEntriesPerSquad: 1 },
     });
   });
@@ -1304,6 +1342,7 @@ describe('Commissioner tools › Contests › Create contest for a horse race', 
       sportEventIds: ['race-1'],
       contestFormat: 'ROSTER',
       selectionType: 'TIERED',
+      templateId: RACE_PRESET_ID,
       configuration: {
         selectionType: 'TIERED',
         picksPerTier: 1,
@@ -1543,7 +1582,7 @@ describe('Commissioner tools › Contests › Create contest › Squares format'
       : golfEvents?.(options) ?? Promise.resolve({ data: { events: [] } })));
     const golfTemplates = listContestConfigTemplatesMock.getMockImplementation() as ((options: unknown) => Promise<unknown>) | undefined;
     listContestConfigTemplatesMock.mockImplementation((options: TemplateQuery): Promise<unknown> => (queriesSlot(options, sportSlotId('FOOTBALL'))
-      ? Promise.resolve({ data: { templates: [] } })
+      ? Promise.resolve({ data: { templates: [NFL_SQUARES_TEMPLATE] } })
       : golfTemplates?.(options) ?? Promise.resolve({ data: { templates: [] } })));
     getEventBracketMock.mockResolvedValue({
       data: {
@@ -1620,6 +1659,23 @@ describe('Commissioner tools › Contests › Create contest › Squares format'
     expect(within(picker).getAllByRole('option')[0]).toHaveTextContent('Round 4 · To be decided vs To be decided');
   });
 
+  const NFL_SQUARES_TEMPLATE = {
+    id: '80400000-0000-4000-8000-000000000001',
+    coverageMode: 'ONE_SLOT',
+    slots: [templateSlotFixture(sportSlotId('FOOTBALL'))],
+    sportLeagueId: 'nfl',
+    contestFormat: 'SQUARES',
+    selectionType: 'SQUARES',
+    templateKey: 'nfl-squares',
+    name: 'Squares',
+    description: 'Ten boxes an entry.',
+    sortOrder: 1,
+    isDefault: true,
+    active: true,
+    schemaVersion: 1,
+    configuration: { selectionType: 'SQUARES', maxSquaresPerEntry: 10, maxEntriesPerSquad: 1 },
+  };
+
   it('lists the playoffs under way for squares, offers its games still to kick off with the Super Bowl first, takes one entry per member, and creates the contest on the chosen game', async () => {
     primeFootballMocks();
     createContestMock.mockResolvedValue({ data: { contest: { id: 'contest-squares' } } });
@@ -1650,6 +1706,7 @@ describe('Commissioner tools › Contests › Create contest › Squares format'
       contestFormat: 'SQUARES',
       selectionType: 'SQUARES',
       sportEventRoundMatchId: 'game-afc',
+      templateId: NFL_SQUARES_TEMPLATE.id,
       configuration: { selectionType: 'SQUARES', maxSquaresPerEntry: 10, maxEntriesPerSquad: 1 },
     });
   });
