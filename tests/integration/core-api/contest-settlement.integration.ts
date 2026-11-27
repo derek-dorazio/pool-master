@@ -330,7 +330,7 @@ describe('golf contest settlement — which contests settle', () => {
       leagueId: league.id,
       sportEventId: event.id,
       name: `Retired Keys ${suffix}`,
-      scoringRuleConfig: { cutRule: { type: 'FIXED_SCORE', fixedScore: 80 }, playoffHandling: 'EXCLUDE_PLAYOFF_HOLES' },
+      scoringRuleConfig: { unplayedRoundToPar: 8, cutRule: { type: 'FIXED_SCORE', fixedScore: 80 }, playoffHandling: 'EXCLUDE_PLAYOFF_HOLES' },
     });
 
     const summary = await service.settleFinishedSportEvent(event.id);
@@ -570,7 +570,7 @@ async function createSettlementContest(input: {
           create: {
             participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL',
             sortOrder: 1,
-            ...(input.scoringRuleConfig !== undefined && { config: input.scoringRuleConfig }),
+            config: input.scoringRuleConfig ?? { unplayedRoundToPar: 8 },
           },
         },
       }),

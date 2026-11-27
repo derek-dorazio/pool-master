@@ -894,7 +894,7 @@ describe('ParticipantContestScoringRuleRepository', () => {
     const configuration = await configurationFor('Stored settings');
     await getPrisma().participantContestScoringRule.createMany({
       data: [
-        { contestConfigurationId: configuration.id, participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', sortOrder: 1, config: { cutRule: { type: 'FIXED_SCORE', fixedScore: 80 } } },
+        { contestConfigurationId: configuration.id, participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', sortOrder: 1, config: { unplayedRoundToPar: 8, cutRule: { type: 'FIXED_SCORE', fixedScore: 80 } } },
         { contestConfigurationId: configuration.id, participantScoringDefinitionId: 'STABLEFORD_POINTS', sortOrder: 2, config: {} },
         { contestConfigurationId: configuration.id, participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', sortOrder: 3, config: [] },
       ],
