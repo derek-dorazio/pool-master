@@ -1,5 +1,6 @@
 import { ContestEntryStatus, PickEmMode, PredictedResult, SelectionType, formatSpread } from '@poolmaster/shared/domain';
 import type { GamePicksResponse, SaveGamePicksRequest } from '@/lib/api';
+import { displayString } from '@poolmaster/shared/display-strings';
 import { billedPickSides } from '@/lib/match-sides';
 
 /**
@@ -42,7 +43,9 @@ export function gameTeams(game: Pick<PickEmGame, 'sides'>): [PickEmTeam | null, 
 export function describeMatchup(game: Pick<PickEmGame, 'sides'>): string {
   const { isNeutralSite } = billedPickSides(game);
   const [first, second] = gameTeams(game);
-  return `${first?.name ?? 'To be decided'} ${isNeutralSite ? 'vs' : 'at'} ${second?.name ?? 'To be decided'}`;
+  const undecided = displayString('word.sideToBeDecided');
+  const joiner = isNeutralSite ? displayString('word.matchupVs') : displayString('word.matchupAt');
+  return `${first?.name ?? undecided} ${joiner} ${second?.name ?? undecided}`;
 }
 
 /**
