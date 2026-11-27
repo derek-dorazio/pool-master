@@ -3022,6 +3022,18 @@ describe('ContestManagementService squares rules (#711)', () => {
     expect(contestCoreRepo.create).toHaveBeenCalledWith(expect.objectContaining({ seasonSlotIds: ['season-slot-definition-final'] }), PLATINUM_SEASON_LIMIT);
   });
 
+  it('covers its game\'s slot, not a different starting slot the commissioner sent, so a squares contest never covers a slot its game is not in', async () => {
+    const configTemplates = createContestConfigTemplateRepo();
+    const finalSlot = { ...EVENT_SLOT, id: 'definition-final', key: 'FINAL', slotKind: SlotKind.FINAL };
+    const listed = await configTemplates.findById(templateIdFor(SelectionType.SQUARES));
+    configTemplates.findById = jest.fn().mockResolvedValue({ ...expectDefined(listed), coverageMode: TemplateCoverageMode.ONE_SLOT, slots: [EVENT_SLOT, finalSlot] });
+    const { contestCoreRepo, service } = squaresService(MatchStatus.SCHEDULED, { gameSlotDefinitionId: finalSlot.id, configTemplates });
+
+    await service.createContest({ leagueId: 'league-1' }, squaresRequest({ startingSlotId: `season-slot-${EVENT_SLOT.id}` }));
+
+    expect(contestCoreRepo.create).toHaveBeenCalledWith(expect.objectContaining({ seasonSlotIds: ['season-slot-definition-final'] }), PLATINUM_SEASON_LIMIT);
+  });
+
   it.each([
     { name: 'two entries per squad', maxEntriesPerSquad: 2 },
     { name: 'no entry limit', maxEntriesPerSquad: null },

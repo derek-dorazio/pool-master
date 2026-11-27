@@ -72,7 +72,8 @@ WHERE EXISTS (
   WHERE other."sport_event_id" = cse."sport_event_id"
 );
 
--- 4. A draw's pending receipts point at the first covered slot of the pending event.
+-- 4. A draw's pending receipts point at the first covered slot of the pending event: the earliest
+--    to start, a slot with no dates yet last, and its id only between slots starting together.
 ALTER TABLE "contest_draws" ADD COLUMN "receipts_pending_contest_season_slot_id" UUID;
 
 UPDATE "contest_draws" d SET "receipts_pending_contest_season_slot_id" = (
@@ -80,8 +81,9 @@ UPDATE "contest_draws" d SET "receipts_pending_contest_season_slot_id" = (
   FROM "contest_season_slots" css
   JOIN "sport_event_slots" es ON es."sport_league_season_id" = css."sport_league_season_id"
     AND es."sport_league_season_competition_slot_id" = css."sport_league_season_competition_slot_id"
+  JOIN "sport_league_season_competition_slots" ss ON ss."id" = css."sport_league_season_competition_slot_id"
   WHERE css."contest_id" = d."contest_id" AND es."sport_event_id" = d."receipts_pending_sport_event_id"
-  ORDER BY css."id"
+  ORDER BY ss."starts_at" ASC NULLS LAST, css."id"
   LIMIT 1
 )
 WHERE d."receipts_pending_sport_event_id" IS NOT NULL;

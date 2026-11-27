@@ -345,8 +345,8 @@ export class ContestManagementService {
     // keep the season's year, because they are in the same Season.
     this.assertOneSeason(sportEvents, sportEvent.sportLeagueSeasonId);
     const { sportLeagueSeasonId, championshipYear: seasonYear } = sportEvent;
-    // A squares contest covers its game's slot (#2014), so its game chooses the slot.
-    const seasonSlotIds = await this.resolveCoverage(template, sportLeagueSeasonId, sportEvents.map((event) => event.id), input.startingSlotId ?? squaresGameSlotId);
+    // A squares contest covers its game's slot (#2014): its game chooses the slot, over any starting slot sent.
+    const seasonSlotIds = await this.resolveCoverage(template, sportLeagueSeasonId, sportEvents.map((event) => event.id), squaresGameSlotId ?? input.startingSlotId);
     const limits = await this.seasonLimits(context.leagueId, sportEvent.sportLeagueId);
     const created = await this.contestRepo.create({
       leagueId: context.leagueId,
