@@ -324,14 +324,14 @@ export function createEventHandlers({ services, eventLifecycle, ingestion, leade
     listEventSlotParticipants: async (request: FastifyRequest<SlotParams>): Promise<SportEventParticipantListResponse> => {
       const { eventId, seasonSlotId } = request.params;
       await requireEvent(eventId);
-      await tiers.listTiers(eventId, seasonSlotId);
+      await tiers.listTiers(eventId, { seasonSlotId });
       return fieldResponse(eventId, seasonSlotId);
     },
 
     listEventSlotTiers: async (request: FastifyRequest<SlotParams>): Promise<SportEventTierListResponse> => {
       const { eventId, seasonSlotId } = request.params;
       await requireEvent(eventId);
-      return { tiers: (await tiers.listTiers(eventId, seasonSlotId)).map(mapSportEventTierToDto) };
+      return { tiers: (await tiers.listTiers(eventId, { seasonSlotId })).map(mapSportEventTierToDto) };
     },
 
     replaceEventSlotTiers: async (
@@ -340,7 +340,7 @@ export function createEventHandlers({ services, eventLifecycle, ingestion, leade
       const { eventId, seasonSlotId } = request.params;
       await requireEvent(eventId);
       await tiers.replaceTiers({ sportEventId: eventId, seasonSlotId, ...request.body });
-      return { tiers: (await tiers.listTiers(eventId, seasonSlotId)).map(mapSportEventTierToDto) };
+      return { tiers: (await tiers.listTiers(eventId, { seasonSlotId })).map(mapSportEventTierToDto) };
     },
 
     autoAssignEventSlotTiers: async (

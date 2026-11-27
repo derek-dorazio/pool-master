@@ -34,6 +34,7 @@ import type {
 import {
   findBudgetPricingProblem,
   tierSetSlotOf,
+  contestTierSetSlot,
   isTierSetEditable,
   FieldOrderBasis,
   fieldOrderValue,
@@ -134,6 +135,13 @@ export function requireTierSetSlot(sportEventId: string, slot: SportEventTierSlo
   return slot;
 }
 
+/**
+ * Which of an event's sets a read takes (#2044): the slot played in a Season slot (a slot route),
+ * or the one a contest picks from by what it covers (`contestTierSetSlot`). None is the event's
+ * tier-set slot.
+ */
+export type TierSetChoice = { seasonSlotId: string } | { coveredSlotDefinitionIds: readonly string[] | null };
+
 export interface SportEventTierServiceDeps {
   sportEvents: Pick<SportEventRepository, 'findById'>;
   tiers: SportEventSlotTierRepository;
@@ -152,46 +160,32 @@ export class SportEventTierService {
   constructor(private readonly deps: SportEventTierServiceDeps) {}
 
   /**
-   * Each event's tier-set slot (#2044), with what its set was tiered and priced with:
-   * today's only starting point, so the set every event-level reader and write here acts on. An
-   * event covering no slot is left out. A fixed number of reads however many events.
+   * Each event's tier-set slot (#2044), or the slot `choice` names, with what its set was tiered
+   * and priced with: the set every reader and write here acts on. An event covering no slot is
+   * left out. A fixed number of reads however many events.
    */
-  async tierSetSlots(sportEventIds: readonly string[]): Promise<Map<string, SportEventTierSlot>> {
+  async tierSetSlots(sportEventIds: readonly string[], choice?: TierSetChoice): Promise<Map<string, SportEventTierSlot>> {
     const slotsByEvent = await this.deps.tiers.findTierSlots(sportEventIds);
     return new Map([...slotsByEvent].flatMap(([sportEventId, slots]): Array<[string, SportEventTierSlot]> => {
-      const first = tierSetSlotOf(slots);
-      return first === undefined ? [] : [[sportEventId, first]];
+      const chosen = chosenSlot(sportEventId, slots, choice);
+      return chosen === undefined ? [] : [[sportEventId, chosen]];
     }));
   }
 
   /** The event's tier-set slot (`tierSetSlots`), or undefined when it covers none. */
-  async tierSetSlot(sportEventId: string): Promise<SportEventTierSlot | undefined> {
-    return (await this.tierSetSlots([sportEventId])).get(sportEventId);
+  async tierSetSlot(sportEventId: string, choice?: TierSetChoice): Promise<SportEventTierSlot | undefined> {
+    return (await this.tierSetSlots([sportEventId], choice)).get(sportEventId);
   }
 
-  /**
-   * The slot whose set a read or write acts on (#2044): the one played in `seasonSlotId`, or the
-   * event's tier-set slot when none is named. Undefined when the event covers no slot; 404
-   * SPORT_EVENT_SLOT_NOT_FOUND when it is not played in the Season slot named.
-   */
-  private async slotOf(sportEventId: string, seasonSlotId?: string): Promise<SportEventTierSlot | undefined> {
-    if (seasonSlotId === undefined) return this.tierSetSlot(sportEventId);
-    const slot = ((await this.deps.tiers.findTierSlots([sportEventId])).get(sportEventId) ?? []).find((candidate) => candidate.seasonSlotId === seasonSlotId);
-    if (slot === undefined) {
-      throw new SportEventError(`Sport event ${sportEventId} is not played in Season slot ${seasonSlotId}.`, 'SPORT_EVENT_SLOT_NOT_FOUND', 404);
-    }
-    return slot;
-  }
-
-  /** The tiers of a slot's set (`slotOf`), in tier order; none when the event covers no slot. */
-  async listTiers(sportEventId: string, seasonSlotId?: string): Promise<SetTier[]> {
-    const slot = await this.slotOf(sportEventId, seasonSlotId);
+  /** The tiers of the slot's set `choice` names (`tierSetSlot`), in tier order; none when the event covers no slot. */
+  async listTiers(sportEventId: string, choice?: TierSetChoice): Promise<SetTier[]> {
+    const slot = await this.tierSetSlot(sportEventId, choice);
     return slot === undefined ? [] : setTiers(slot, await this.deps.tiers.findBySlot(slot.id));
   }
 
-  /** Every event's first-slot tiers from one read (#1355), each in tier order. */
-  async listTiersOfEvents(sportEventIds: readonly string[]): Promise<SetTier[]> {
-    const slots = await this.tierSetSlots(sportEventIds);
+  /** Every event's tiers of the set `choice` names from one read (#1355), each in tier order. */
+  async listTiersOfEvents(sportEventIds: readonly string[], choice?: TierSetChoice): Promise<SetTier[]> {
+    const slots = await this.tierSetSlots(sportEventIds, choice);
     const slotById = new Map([...slots.values()].map((slot) => [slot.id, slot]));
     const tiers = await this.deps.tiers.findBySlots([...slotById.keys()]);
     return tiers.flatMap((tier) => {
@@ -235,12 +229,12 @@ export class SportEventTierService {
     return tiersByEvent;
   }
 
-  async getEffectiveTiersForSportEvent(sportEventId: string, seasonSlotId?: string): Promise<SportEventTierGroup[]> {
-    return (await this.getEffectiveTiersAndValuations(sportEventId, undefined, seasonSlotId)).tiers;
+  async getEffectiveTiersForSportEvent(sportEventId: string, choice?: TierSetChoice): Promise<SportEventTierGroup[]> {
+    return (await this.getEffectiveTiersAndValuations(sportEventId, undefined, choice)).tiers;
   }
 
-  async getEffectiveValuationsForSportEvent(sportEventId: string, seasonSlotId?: string): Promise<ParticipantValuationView[]> {
-    return (await this.getEffectiveTiersAndValuations(sportEventId, undefined, seasonSlotId)).valuations;
+  async getEffectiveValuationsForSportEvent(sportEventId: string, choice?: TierSetChoice): Promise<ParticipantValuationView[]> {
+    return (await this.getEffectiveTiersAndValuations(sportEventId, undefined, choice)).valuations;
   }
 
   /**
@@ -250,9 +244,9 @@ export class SportEventTierService {
   async getEffectiveTiersAndValuations(
     sportEventId: string,
     field?: readonly SportEventParticipant[],
-    seasonSlotId?: string,
+    choice?: TierSetChoice,
   ): Promise<{ tiers: SportEventTierGroup[]; valuations: ParticipantValuationView[] }> {
-    const slot = await this.slotOf(sportEventId, seasonSlotId);
+    const slot = await this.tierSetSlot(sportEventId, choice);
     if (slot === undefined) return { tiers: [], valuations: [] };
     const [slotTiers, valuations, fieldRows] = await Promise.all([
       this.deps.tiers.findBySlot(slot.id),
@@ -280,11 +274,11 @@ export class SportEventTierService {
   }
 
   /**
-   * Each event's effective first-slot tiers from one read of the slots' tiers, valuations and the
+   * Each event's effective tiers of the set `choice` names from one read of the slots' tiers, valuations and the
    * events' fields (#1201), keyed by event; an event with no tiers has an empty list.
    */
-  async getEffectiveTiersForSportEvents(sportEventIds: readonly string[]): Promise<Map<string, SportEventTierGroup[]>> {
-    const slots = await this.tierSetSlots(sportEventIds);
+  async getEffectiveTiersForSportEvents(sportEventIds: readonly string[], choice?: TierSetChoice): Promise<Map<string, SportEventTierGroup[]>> {
+    const slots = await this.tierSetSlots(sportEventIds, choice);
     const slotIds = [...slots.values()].map((slot) => slot.id);
     const [tiers, valuations, fieldRows] = await Promise.all([
       this.deps.tiers.findBySlots(slotIds),
@@ -321,7 +315,7 @@ export class SportEventTierService {
       );
     }
     await this.placeFieldInTiers(event, slot, input.tierSize);
-    return this.getEffectiveTiersForSportEvent(input.sportEventId, slot.seasonSlotId);
+    return this.getEffectiveTiersForSportEvent(input.sportEventId, { seasonSlotId: slot.seasonSlotId });
   }
 
   /** `autoAssignTiers`' placement, for a set already checked editable. */
@@ -403,7 +397,7 @@ export class SportEventTierService {
     // next Auto-assign tiers or field sync places again.
     if (!placedByHand) await this.placeFieldInTiers(event, slot);
 
-    return this.getEffectiveTiersForSportEvent(input.sportEventId, slot.seasonSlotId);
+    return this.getEffectiveTiersForSportEvent(input.sportEventId, { seasonSlotId: slot.seasonSlotId });
   }
 
   /**
@@ -446,7 +440,7 @@ export class SportEventTierService {
       { sportEventId: input.sportEventId, sportEventSlotId: slot.id, assignedCount: input.assignments.length },
       'Replaced tier assignments',
     );
-    return this.getEffectiveTiersForSportEvent(input.sportEventId, slot.seasonSlotId);
+    return this.getEffectiveTiersForSportEvent(input.sportEventId, { seasonSlotId: slot.seasonSlotId });
   }
 
   /**
@@ -482,7 +476,7 @@ export class SportEventTierService {
       { sportEventId, sportEventSlotId: slot.id, source, platformPricingProfileId: pricing.platformPricingProfileId, salaryCap: pricing.salaryCap, pricedCount: assignments.length },
       'Auto-assigned prices',
     );
-    return this.getEffectiveValuationsForSportEvent(sportEventId, slot.seasonSlotId);
+    return this.getEffectiveValuationsForSportEvent(sportEventId, { seasonSlotId: slot.seasonSlotId });
   }
 
   /**
@@ -631,7 +625,7 @@ export class SportEventTierService {
   }
 
   /**
-   * The event and the slot whose set a write changes (#2044, `slotOf`): the one played in
+   * The event and the slot whose set a write changes (#2044, `tierSetSlot`): the one played in
    * `seasonSlotId`, or its tier-set slot. 404 EVENT_NOT_FOUND for an unknown event; 404
    * SPORT_EVENT_SLOT_NOT_FOUND for a Season slot it is not played in; 409 SPORT_EVENT_HAS_NO_SLOT
    * when it covers no slot; 409 SLOT_HOLDS_NO_TIER_SET for a slot no tiered or budget template
@@ -642,7 +636,7 @@ export class SportEventTierService {
     if (!event) {
       throw new SportEventError(`Sport event ${sportEventId} was not found.`, 'EVENT_NOT_FOUND', 404);
     }
-    const slot = requireTierSetSlot(sportEventId, await this.slotOf(sportEventId, seasonSlotId));
+    const slot = requireTierSetSlot(sportEventId, await this.tierSetSlot(sportEventId, seasonSlotId === undefined ? undefined : { seasonSlotId }));
     if (!slot.holdsTierSet) {
       throw new SportEventError(
         `No tiered or budget template of sport event ${sportEventId}'s league lists Season slot ${slot.seasonSlotId}, so it holds no tier set.`,
@@ -763,4 +757,19 @@ function tierGroups(
 /** A slot's tiers, with the event and the Season slot the set is of. */
 function setTiers(slot: SportEventTierSlot, tiers: readonly SportEventSlotTier[]): SetTier[] {
   return tiers.map((tier) => ({ ...tier, sportEventId: slot.sportEventId, seasonSlotId: slot.seasonSlotId }));
+}
+
+/**
+ * The slot `choice` names among an event's slots in play order (#2044): the one played in its Season
+ * slot (404 SPORT_EVENT_SLOT_NOT_FOUND when the event is not), the one a contest picks from
+ * (`contestTierSetSlot`), or with no choice the tier-set slot.
+ */
+function chosenSlot(sportEventId: string, slots: readonly SportEventTierSlot[], choice: TierSetChoice | undefined): SportEventTierSlot | undefined {
+  if (choice === undefined) return tierSetSlotOf(slots);
+  if ('coveredSlotDefinitionIds' in choice) return contestTierSetSlot(slots, choice.coveredSlotDefinitionIds);
+  const slot = slots.find((candidate) => candidate.seasonSlotId === choice.seasonSlotId);
+  if (slot === undefined) {
+    throw new SportEventError(`Sport event ${sportEventId} is not played in Season slot ${choice.seasonSlotId}.`, 'SPORT_EVENT_SLOT_NOT_FOUND', 404);
+  }
+  return slot;
 }

@@ -35,6 +35,7 @@ import {
   SelectionType,
   LeagueMembershipStatus,
   contestEntryEventStatus,
+  contestRoundCoverage,
   isPredictionSelectionType,
   type BudgetContestRules,
   type ContestEntry,
@@ -67,7 +68,7 @@ import {
 } from '../contest-entry-picks';
 import type { ContestService, EntrySubmittedReceiptInput } from '../contests/service';
 import { areEventPicksOpen, areEventPicksRevealed, currentContestEvent } from '../contests/entry-window';
-import type { SportEventTierGroup, SportEventTierService } from '../events/sport-event-tier-service';
+import type { SportEventTierGroup, SportEventTierService, TierSetChoice } from '../events/sport-event-tier-service';
 import { selectionErrors, type SelectionError } from './selection-errors';
 import {
   buildSelectionTiers,
@@ -733,7 +734,8 @@ export class SelectionService {
     const squadIds = Array.from(new Set(entries.map((entry) => entry.squadId)));
     const [squadMemberships, { selectionParticipants, tierGroups, valuations }] = await Promise.all([
       this.deps.squadMemberships.findBySquads(squadIds),
-      this.readEventField(sportEvent, field),
+      // The set the contest picks from: the first slot it covers holding one (#2044).
+      this.readEventField(sportEvent, field, { coveredSlotDefinitionIds: contestRoundCoverage(configuration).slotDefinitionIds }),
     ]);
 
     return {
@@ -754,13 +756,14 @@ export class SelectionService {
 
   /**
    * An event's field as members pick from it: each row with its participant, price and ranking,
-   * and the event's tiers and valuations. The room and a setup's preview both read it here, in
+   * and the set's tiers and valuations (`choice`: a contest's, else the event's tier-set slot's,
+   * #2044). The room and a setup's preview both read it here, in
    * two parallel batches whatever the field's size; the field is read once and handed in (#1196).
    */
-  private async readEventField(sportEvent: SportEvent, field: readonly SportEventParticipant[]) {
+  private async readEventField(sportEvent: SportEvent, field: readonly SportEventParticipant[], choice?: TierSetChoice) {
     const [participants, { tiers: tierGroups, valuations }] = await Promise.all([
       this.deps.participants.findByIds(field.map((entry) => entry.participantId)),
-      this.deps.tiers.getEffectiveTiersAndValuations(sportEvent.id, field),
+      this.deps.tiers.getEffectiveTiersAndValuations(sportEvent.id, field, choice),
     ]);
     return {
       tierGroups,
