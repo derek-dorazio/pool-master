@@ -9,6 +9,7 @@ import { parseSportDataFile, type SportDataFile } from '../../packages/core-api/
 import { addRunSportLeague, buildRegisteredUser, promoteToRootAdmin } from './builders';
 import { cleanupFunctionalData, disconnectFunctionalPrisma, getFunctionalPrisma } from './setup';
 import { expectDefined } from '../support/expect-defined';
+import { oneEventOf } from '../support/sport-test-seed';
 
 // A racing test seed end to end over HTTP (#705): the 2026 Triple Crown as run loads into its own
 // sport league, each race released and its real finishing order entered as the official result,
@@ -88,5 +89,32 @@ describe('SDK Functional: racing test seed', () => {
 
     const again = await loadSportData(file, { getClient: () => Promise.resolve(a), now: new Date(), mode: LoadMode.DRY_RUN });
     expect(again.filter((row) => row.action !== LoadAction.SKIP)).toEqual([]);
+  });
+
+  it('loads last season\'s Australian Grand Prix as run onto a Formula 1 test slot, the race released with its official finishing order, its retirements and its non-starters', async () => {
+    const admin = await buildRegisteredUser({ displayName: 'Race Steward' });
+    await promoteToRootAdmin(admin);
+    const a = admin.client;
+    const file = oneEventOf('auto-racing-2026-test.json', 'Formula 1', 'Australian Grand Prix')(RUN, 2026);
+    const [league] = file.sportLeagues;
+    league.name = `Formula 1 ${RUN}`;
+    file.scope.sportLeagues = [league.name];
+    // A league a test adds plays one test definition (TEST_EVENT), not the file's Grand Prix keys.
+    for (const event of league.events) event.slotKey = TEST_DEFINITION_KEY;
+    created.sportLeagueIds.add(await addRunSportLeague(Sport.AUTO_RACING, league.name));
+
+    await loadSportData(file, { getClient: () => Promise.resolve(a), now: new Date(), mode: LoadMode.APPLY });
+
+    const sportLeague = expectDefined(expectDefined((await listSportLeagues({ client: a, query: { sport: Sport.AUTO_RACING } })).data).sportLeagues
+      .find((row) => row.name === league.name));
+    const [race] = expectDefined((await listEvents({ client: a, query: { sportLeagueId: sportLeague.id } })).data).events;
+    expect([race.name, race.status]).toEqual([`Australian Grand Prix ${RUN}`, 'SCHEDULED']);
+    const field = expectDefined((await listEventParticipants({ client: a, path: { eventId: race.id } })).data).participants;
+    expect(field).toHaveLength(22);
+    expect(field.every((row) => row.race?.isOfficial === true)).toBe(true);
+    const podium = [1, 2, 3].map((place) => expectDefined(field.find((row) => row.race?.finishPosition === place)).participant.name);
+    expect(podium).toEqual(['George Russell', 'Kimi Antonelli', 'Charles Leclerc']);
+    expect(field.filter((row) => row.race?.resultStatus === GameSideStatus.DID_NOT_FINISH)).toHaveLength(4);
+    expect(field.filter((row) => row.race?.resultStatus === GameSideStatus.DID_NOT_START)).toHaveLength(2);
   });
 });
