@@ -6,6 +6,7 @@ import { buildRegisteredUser, promoteToRootAdmin, createTestEvent } from './buil
 import { cleanupFunctionalData, disconnectFunctionalPrisma, getFunctionalPrisma, getSdkClient } from './setup';
 import { putEventInSlot } from '../support/event-edition';
 import { oneEventSlotId } from '../support/test-slots';
+import { createMatchRow } from '../support/match-rows';
 import { expectDefined } from '../support/expect-defined';
 
 // The public event pages end to end over HTTP (#1007): a visitor with no session reads
@@ -64,9 +65,8 @@ describe('SDK Functional: event pages (#1007)', () => {
     const db = getFunctionalPrisma();
     const round = await db.sportEventRound.findFirst({ where: { sportEventId: eventId }, orderBy: { roundNumber: 'desc' } })
       ?? await db.sportEventRound.create({ data: { sportEventId: eventId, sportEventSlotId: await oneEventSlotId(db, eventId), roundNumber: 1, scheduledDate: new Date(`${YEAR}-01-24T20:00:00.000Z`) } });
-    await db.sportEventRoundMatch.create({
-      data: { sportEventId: eventId, sportEventRoundId: round.id, matchNumber: 1, scheduledDate: new Date(`${YEAR}-01-24T20:00:00.000Z`) },
-    });
+    // With its Game 1, which a squares contest is played on (#2050).
+    await createMatchRow(db, { sportEventId: eventId, sportEventRoundId: round.id, sportEventSlotId: round.sportEventSlotId, matchNumber: 1, teams: [null, null], isNeutralSite: false, scheduledDate: new Date(`${YEAR}-01-24T20:00:00.000Z`) });
     const visitor = getSdkClient();
 
     // --- The page: its squares offer is the primary -------------------------------------------

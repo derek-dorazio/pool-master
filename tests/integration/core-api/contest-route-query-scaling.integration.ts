@@ -54,6 +54,7 @@ import { oneEventSlotId } from '../../support/test-slots';
 import { AWAY_SIDE, HOME_SIDE } from '../../support/match-sides';
 import { createMatchRow, rowSideTeam } from '../../support/match-rows';
 import { anySeasonId, contestOnEvents, contestTemplateId } from '../../support/contest-rows';
+import { squaresGameCreate } from '../../support/squares-game-row';
 
 // No mocks.
 
@@ -465,7 +466,7 @@ async function seedSquaresContest(entries: number) {
     data: {
       leagueId: seeded.league.id,
       ...(await contestOnEvents(prisma, [event.id])),
-      squaresGame: { create: { sportEventRoundMatchId: expectDefined(game).id } },
+      squaresGame: await squaresGameCreate(prisma, expectDefined(game).id),
       name: `Squares ${seeded.suffix}`,
       status: ContestStatus.OPEN,
       contestFormat: 'SQUARES',

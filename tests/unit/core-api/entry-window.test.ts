@@ -3,7 +3,7 @@
  * when each event's picks can change, when each event's picks are revealed, and which event a
  * contest's pages open on.
  */
-import { withHomeAway, legacyMatch } from '../../support/match-sides';
+import { withHomeAway, legacyMatch, squaresGameOf } from '../../support/match-sides';
 import { ContestStatus, MatchStatus, PickEmMode, SelectionType, SportEventStatus } from '@poolmaster/shared/domain';
 import {
   ContestCutoffKind,
@@ -286,11 +286,11 @@ describe('cutoffTiming — a squares contest closes at its one game\'s kickoff (
     status,
     scheduledDate: startOffsetHours === null ? null : new Date(NOW.getTime() + startOffsetHours * HOUR),
   });
-  const SUPER_BOWL = { kind: ContestCutoffKind.MATCH_START, sportEventRoundMatchId: 'super-bowl' } as const;
+  const SUPER_BOWL = { kind: ContestCutoffKind.GAME_START, sportEventRoundMatchGameId: 'super-bowl-g1' } as const;
 
   it('closes a squares contest at its game\'s kickoff, and every other contest as before', () => {
-    expect(contestCutoff({ selectionType: SelectionType.SQUARES, maxSquaresPerEntry: 10 }, 'super-bowl')).toEqual(SUPER_BOWL);
-    expect(contestCutoff({ selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 4 }, 'super-bowl')).toEqual({ kind: ContestCutoffKind.EVENT_START });
+    expect(contestCutoff({ selectionType: SelectionType.SQUARES, maxSquaresPerEntry: 10 }, squaresGameOf('super-bowl'))).toEqual(SUPER_BOWL);
+    expect(contestCutoff({ selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 4 }, squaresGameOf('super-bowl'))).toEqual({ kind: ContestCutoffKind.EVENT_START });
   });
 
   it('is not yet started, at the game\'s kickoff, while the playoffs are under way and the game is still to play', () => {
@@ -321,6 +321,15 @@ describe('cutoffTiming — a squares contest closes at its one game\'s kickoff (
 
   it('times a game with no time of its own at the event\'s start', () => {
     expect(cutoffTiming(SUPER_BOWL, playoffs, [game('super-bowl', null)]).startDate).toEqual(playoffs.startDate);
+  });
+
+  it('closes a squares contest on a series\' Game 2 at Game 2\'s kickoff, though Game 1 has been played', () => {
+    const series = game('finals', -48, MatchStatus.IN_PROGRESS);
+    const [gameOne] = series.games;
+    const gameTwo = { ...gameOne, id: 'finals-g2', gameNumber: 2, status: MatchStatus.SCHEDULED, scheduledDate: new Date(NOW.getTime() + 6 * HOUR), sideResults: [] };
+    const timing = cutoffTiming({ kind: ContestCutoffKind.GAME_START, sportEventRoundMatchGameId: 'finals-g2' }, playoffs, [{ ...series, games: [{ ...gameOne, status: MatchStatus.COMPLETED }, gameTwo] }]);
+
+    expect(timing).toEqual({ status: SportEventStatus.SCHEDULED, startDate: new Date(NOW.getTime() + 6 * HOUR) });
   });
 
   it('keeps a finished event finished, whatever its game says', () => {

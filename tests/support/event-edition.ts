@@ -174,13 +174,13 @@ export async function keyedSlotDefinitionId(
   prisma: Db,
   sportLeagueId: string,
   key: string,
-  options: { phase?: 'REGULAR' | 'POSTSEASON'; slotKind?: PrismaSlotKind; name?: string; pairing?: PrismaSlotPairing; seriesGames?: number; periods?: { unit: PeriodUnit; count: number }; isNeutralSite?: boolean } = {},
+  options: { phase?: 'REGULAR' | 'POSTSEASON'; slotKind?: PrismaSlotKind; name?: string; pairing?: PrismaSlotPairing; seriesGames?: number; periods?: { unit: PeriodUnit; count: number }; isNeutralSite?: boolean; squaresEligible?: boolean } = {},
 ): Promise<string> {
   const { competitionId } = await competitionFor(prisma, { sportLeagueId, phase: options.phase ?? 'REGULAR' });
   await prisma.sportLeagueCompetitionSlot.createMany({
     data: [{
       sportLeagueId, sportLeagueCompetitionId: competitionId, key, slotKind: options.slotKind ?? 'TOURNAMENT', name: options.name ?? null,
-      awardsTrophy: false, squaresEligible: false, isNeutralSite: options.isNeutralSite ?? false,
+      awardsTrophy: false, squaresEligible: options.squaresEligible ?? false, isNeutralSite: options.isNeutralSite ?? false,
       seriesFormat: (options.seriesGames ?? 1) > 1 ? 'BEST_OF' : 'SINGLE_GAME', seriesGames: options.seriesGames ?? 1, pairing: options.pairing ?? 'FIXED',
       ...(await fixtureSlotPlay(prisma, sportLeagueId)),
       ...(options.periods ? { periodUnit: options.periods.unit, periodCount: options.periods.count } : {}),

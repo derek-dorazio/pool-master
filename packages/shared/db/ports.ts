@@ -658,8 +658,12 @@ export interface ContestStatusTransition {
  */
 export type ContestCreate = Pick<
   Contest,
-  'leagueId' | 'name' | 'status' | 'contestFormat' | 'selectionType' | 'squaresGameMatchId' | 'sportLeagueSeasonId' | 'seasonYear'
-> & { seasonSlotIds: readonly string[] };
+  'leagueId' | 'name' | 'status' | 'contestFormat' | 'selectionType' | 'sportLeagueSeasonId' | 'seasonYear'
+> & {
+  seasonSlotIds: readonly string[];
+  /** A squares contest's Game (#2050), one of a covered slot's. */
+  squaresGameId?: string;
+};
 
 /**
  * What can change on a contest row itself; its covered slots change through `replaceCoveredSlots`

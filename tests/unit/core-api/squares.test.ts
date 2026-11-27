@@ -31,7 +31,7 @@ import { inMemoryBackgroundJobs, TEST_JOB_START, testCurrentJobStart } from '../
 import type { ChampionshipService } from '../../../packages/core-api/src/modules/championship/service';
 import { SquaresService, type SquaresActor } from '../../../packages/core-api/src/modules/selections/squares-service';
 import { SquaresAutoDrawScheduler } from '../../../packages/core-api/src/modules/selections/squares-auto-draw-scheduler';
-import { homeAwayOf, legacyMatch, withHomeAway, type HomeAwayFields } from '../../support/match-sides';
+import { homeAwayOf, legacyMatch, withHomeAway, type HomeAwayFields, squaresGameOf } from '../../support/match-sides';
 import { expectDefined } from '../../support/expect-defined';
 import { InMemoryContestWorld } from '../../support/in-memory-contest-world';
 import { InMemoryGamePicks } from '../../support/in-memory-game-picks';
@@ -58,7 +58,7 @@ function setup(options: { status?: ContestStatus; maxSquaresPerEntry?: number } 
     contestFormat: ContestFormat.SQUARES,
     selectionType: SelectionType.SQUARES,
     sportEventIds: [superBowl.id],
-    squaresGameMatchId: game.id,
+    squaresGame: squaresGameOf(game.id),
   });
   world.addConfiguration(contest.id, {
     selectionType: SelectionType.SQUARES,
@@ -597,7 +597,7 @@ describe('SquaresAutoDrawScheduler', () => {
       contestFormat: ContestFormat.SQUARES,
       selectionType: SelectionType.SQUARES,
       sportEventIds: [context.superBowl.id],
-      squaresGameMatchId: game.id,
+      squaresGame: squaresGameOf(game.id),
     });
     context.world.addConfiguration(contest.id, {
       selectionType: SelectionType.SQUARES,
@@ -813,7 +813,7 @@ describe('ContestSettlementService settling a squares contest with its game', ()
       contestFormat: ContestFormat.SQUARES,
       selectionType: SelectionType.SQUARES,
       sportEventIds: [context.superBowl.id],
-      squaresGameMatchId: context.game.id,
+      squaresGame: squaresGameOf(context.game.id),
     });
     context.world.addConfiguration(second.id, {
       selectionType: SelectionType.SQUARES,

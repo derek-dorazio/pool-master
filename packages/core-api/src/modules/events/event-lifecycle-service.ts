@@ -445,7 +445,7 @@ export class EventLifecycleService {
     const dueByStart = new Map<number, Array<{ contest: Contest; cutoff: ContestCutoffKind }>>();
     for (const contest of candidates) {
       const cutoff = contest.selectionType === SelectionType.SQUARES
-        ? contestCutoff(configJsonByContest.get(contest.id), contest.squaresGameMatchId)
+        ? contestCutoff(configJsonByContest.get(contest.id), contest.squaresGame)
         : { kind: ContestCutoffKind.EVENT_START } as const;
       const window: EventTiming = cutoff.kind === ContestCutoffKind.EVENT_START
         ? sportEvent

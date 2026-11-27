@@ -1,5 +1,5 @@
 {
-  "$comment": "The one sanctioned way to raise a rule-scanner baseline, for a PR that makes a scanner stricter: one entry per raised baseline entry, { file, key, now, reason }. rules:check:baseline-ratchet lets that exact count through, and the reviewer sees it in the diff. Delete the entry once the baseline is back at or below its base. See rules/react-ui-rules.md \u00a75 Shared-Component and Helper Adoption Gate.",
+  "$comment": "The one sanctioned way to raise a rule-scanner baseline, for a PR that makes a scanner stricter: one entry per raised baseline entry, { file, key, now, reason }. rules:check:baseline-ratchet lets that exact count through, and the reviewer sees it in the diff. Delete the entry once the baseline is back at or below its base. See rules/react-ui-rules.md §5 Shared-Component and Helper Adoption Gate.",
   "raises": [
     {
       "file": "scripts/retired-names.json",
@@ -906,6 +906,30 @@
       "key": "ParticipantRoundStatus",
       "now": 0,
       "reason": "retired by #2008"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "isSquaresRound",
+      "now": 0,
+      "reason": "retired by #2050"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "squaresGameMatchId",
+      "now": 0,
+      "reason": "retired by #2050"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "MATCH_START",
+      "now": 0,
+      "reason": "retired by #2050"
+    },
+    {
+      "file": "scripts/dead-exports.json",
+      "key": "own:packages/shared/dto/bracket.dto.ts",
+      "now": 15,
+      "reason": "#2050: SquaresGameChoicesResponseSchema, a registered response schema the contract checks parse, as the other bracket responses are"
     }
   ]
 }

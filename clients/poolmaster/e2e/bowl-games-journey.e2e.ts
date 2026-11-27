@@ -7,6 +7,7 @@ import { createTestEventThroughApi, findSeededSportLeagueThroughApi } from './he
 import { registerFreshUser } from './helpers/user-session';
 import { newRunId, e2eName, e2eEmail, e2eUsername, e2eLeagueCode } from './helpers/test-marker';
 import { bracketLoadMatch } from './helpers/match-sides';
+import { squaresGameIdsThroughApi } from './helpers/squares-games';
 
 /**
  * #2154 — the bowl games journey: the root admin releases a bowls event of NCAA men's football
@@ -160,14 +161,17 @@ test('act 1: the root admin releases two bowl games on the BOWLS slot, with no s
         matchNumber: index + 1, roundNumber: 1, home: rowOf(bowl.home), away: rowOf(bowl.away), isNeutralSite: false, scheduledDate: bowl.kickoff, advancesTo: null,
       })),
     }, 'put');
-    journey.gameIds = BOWLS.map((_, index) => {
-      const game = matches.find((match) => match.matchNumber === index + 1);
-      if (!game) throw new Error(`bowl ${index + 1} is not in the bracket`);
-      return game.id;
-    });
     // No tiered or budget setup covers the bowls, so release asks for no tiers or prices.
     const released = await postJson<{ event: { status: string } }>(api, headers, `/api/v1/events/${event.id}/release`, undefined);
     expect(released.event.status).toBe('SCHEDULED');
+    // The squares picker offers each bowl's Game 1 (#2050).
+    const squaresGames = await squaresGameIdsThroughApi(api, headers, event.id);
+    journey.gameIds = BOWLS.map((_, index) => {
+      const game = matches.find((match) => match.matchNumber === index + 1);
+      const gameId = game === undefined ? undefined : squaresGames.get(game.id);
+      if (gameId === undefined) throw new Error(`bowl ${index + 1} is not a squares game choice`);
+      return gameId;
+    });
   } finally {
     await api.dispose();
   }

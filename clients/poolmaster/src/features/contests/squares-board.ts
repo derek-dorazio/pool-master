@@ -3,7 +3,7 @@ import {
   PeriodUnit,
   SQUARES_GRID_SIZE,
   assertNever,
-  isMatchUnplayed, isSquaresRound, pluralize,
+  pluralize,
 } from '@poolmaster/shared/domain';
 import { displayString, type DisplayForm } from '@poolmaster/shared/display-strings';
 import type {
@@ -119,31 +119,9 @@ export function formatSquaresGameTeams(game: SportEventRoundMatchDto, namesById:
   return `${sideName(first?.sportEventParticipantId ?? null, namesById)} ${isNeutralSite ? displayString('word.matchupVs') : displayString('word.matchupAtShort')} ${sideName(second?.sportEventParticipantId ?? null, namesById)}`;
 }
 
-/** Whether any period of the game has its score in. */
-function hasPeriodScore(game: SportEventRoundMatchDto) {
-  return game.games.some((each) => each.sideResults.some((result) => result.periodScores.length > 0));
-}
-
 /** The field's team names by field row. */
 export function teamNamesById(field: readonly SportEventParticipantDto[]): ReadonlyMap<string, string> {
   return new Map(field.map((row) => [row.id, row.participant.name]));
-}
-
-/**
- * The games a squares contest can be played on (design §4.2): those still to kick off (a postponed game too), with no
- * period score in, and in a round of single games (from the sport league's `squaresFromRound`), the
- * final first, then by kickoff. The server checks the same at create.
- */
-export function squaresGameChoices(games: readonly SportEventRoundMatchDto[], now: Date, squaresFromRound: number | null = null): SportEventRoundMatchDto[] {
-  const kickoff = (game: SportEventRoundMatchDto) => (game.scheduledDate === null ? Number.POSITIVE_INFINITY : Date.parse(game.scheduledDate));
-  return games
-    .filter((game) => isMatchUnplayed(game.status)
-      && !hasPeriodScore(game)
-      && isSquaresRound(squaresFromRound, game.roundNumber)
-      && (game.scheduledDate === null || Date.parse(game.scheduledDate) > now.getTime()))
-    .sort((left, right) => Number(left.advancesTo !== null) - Number(right.advancesTo !== null)
-      || kickoff(left) - kickoff(right)
-      || left.roundNumber - right.roundNumber || left.matchNumber - right.matchNumber);
 }
 
 /** A side's points in each period and in all, for the score-by-quarter table (#1758). */

@@ -21,6 +21,7 @@ import {
 import { freshEventEdition, putEventInSlot, keyedSlotDefinitionId } from '../../support/event-edition';
 import { sportLeagueRowDefaults } from '../../support/league-profiles';
 import { sportPlay } from '../../support/sport-play';
+import { createMatchRow } from '../../support/match-rows';
 import { oneEventSlotId } from '../../support/test-slots';
 
 beforeAll(() => setupIntegrationTests());
@@ -216,19 +217,19 @@ describe('createContestOpeningReader.nextSquaresKickoff', () => {
         name: 'Event page squares', startDate: new Date('2030-01-09T18:00:00.000Z'), status: SportEventStatus.IN_PROGRESS,
       },
     });
+    // A slot whose Games take squares (#2050).
+    await putEventInSlot(prisma, sportEvent.id, await keyedSlotDefinitionId(prisma, sportEvent.sportLeagueId, `SQUARES_${randomUUID().replace(/-/g, '_').toUpperCase()}`, { squaresEligible: true }));
     const round = await prisma.sportEventRound.create({ data: { sportEventId: sportEvent.id, sportEventSlotId: await oneEventSlotId(prisma, sportEvent.id), roundNumber: 1, scheduledDate: sportEvent.startDate } });
-    await prisma.sportEventRoundMatch.create({
-      data: { sportEventId: sportEvent.id, sportEventRoundId: round.id, matchNumber: 1, status: 'COMPLETED', scheduledDate: sportEvent.startDate },
-    });
-    const ahead = await prisma.sportEventRoundMatch.create({
-      data: { sportEventId: sportEvent.id, sportEventRoundId: round.id, matchNumber: 2, scheduledDate: new Date('2030-01-24T20:00:00.000Z') },
-    });
+    // Each match with its Game 1, which a squares contest is played on (#2050).
+    const onRound = { sportEventId: sportEvent.id, sportEventRoundId: round.id, sportEventSlotId: round.sportEventSlotId, teams: [null, null] as const, isNeutralSite: false };
+    await createMatchRow(prisma, { ...onRound, matchNumber: 1, scheduledDate: sportEvent.startDate, result: { winnerSideNumber: 1, scores: [24, 17] } });
+    const ahead = await createMatchRow(prisma, { ...onRound, matchNumber: 2, scheduledDate: new Date('2030-01-24T20:00:00.000Z') });
     const reader = createContestOpeningReader(getAppPrisma());
     const state = await reader.findById(sportEvent.id);
     if (state === null) throw new Error('The event was not read back.');
 
     expect(await reader.nextSquaresKickoff(state, NOW)).toEqual(new Date('2030-01-24T20:00:00.000Z'));
-    await prisma.sportEventRoundMatch.update({ where: { id: ahead.id }, data: { status: 'CANCELLED' } });
+    await prisma.sportEventRoundMatchGame.updateMany({ where: { sportEventRoundMatchId: ahead.id }, data: { status: 'CANCELLED' } });
     expect(await reader.nextSquaresKickoff(state, NOW)).toBeNull();
   });
 });
