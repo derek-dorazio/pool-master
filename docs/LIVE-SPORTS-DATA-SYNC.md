@@ -3,7 +3,7 @@
 How a sport league's data gets from a provider (BALLDONTLIE) into PoolMaster: which leagues
 sync, what each sync writes, what starts it, and what a new league adds. It describes `main` and
 is written for reviewing provider PRs. Derek's standing decisions for the provider are in §8
-(the BALLDONTLIE plan, epic #1494, was retired by #2009); the background jobs named here are
+(also in the BALLDONTLIE plan, `plans/live-sports-data-balldontlie.md`, until epic #1494 closes); the background jobs named here are
 specified in [`BACKGROUND-JOBS.md`](BACKGROUND-JOBS.md).
 
 ## The short version
@@ -646,7 +646,7 @@ every league, and the PR must say so.
 
 ## 8. Standing decisions
 
-Derek's decisions for the provider (2026-11-09 to 11-12), kept from the retired plan:
+Derek's decisions for the provider (2026-11-09 to 11-12), as recorded in the BALLDONTLIE plan:
 
 - **A provider's final completes a match by itself**, advancing the winner. Each match records who
   set its result (#1531): an admin's correction stands, and a later provider final that disagrees

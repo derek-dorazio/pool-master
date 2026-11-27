@@ -4683,14 +4683,14 @@ export interface components {
                 enabled?: boolean;
                 /** @description The Season states whose interval changes. */
                 intervals?: {
-                    /** @description How often a sync runs in one Season state. */
+                    /** @description How often a sync runs in one Season state: in minutes or in seconds, at least one. */
                     IN_SEASON?: {
                         /** @description How often the sync runs, in minutes. */
                         intervalMinutes?: number;
                         /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
                         intervalSeconds?: number;
                     };
-                    /** @description How often a sync runs in one Season state. */
+                    /** @description How often a sync runs in one Season state: in minutes or in seconds, at least one. */
                     OFFSEASON?: {
                         /** @description How often the sync runs, in minutes. */
                         intervalMinutes?: number;
@@ -4703,14 +4703,14 @@ export interface components {
             FIELD?: {
                 /** @description The Season states whose interval changes. */
                 intervals: {
-                    /** @description How often a sync runs in one Season state. */
+                    /** @description How often a sync runs in one Season state: in minutes or in seconds, at least one. */
                     IN_SEASON?: {
                         /** @description How often the sync runs, in minutes. */
                         intervalMinutes?: number;
                         /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
                         intervalSeconds?: number;
                     };
-                    /** @description How often a sync runs in one Season state. */
+                    /** @description How often a sync runs in one Season state: in minutes or in seconds, at least one. */
                     OFFSEASON?: {
                         /** @description How often the sync runs, in minutes. */
                         intervalMinutes?: number;
@@ -4724,14 +4724,14 @@ export interface components {
                 enabled?: boolean;
                 /** @description The Season states whose interval changes. */
                 intervals?: {
-                    /** @description How often a sync runs in one Season state. */
+                    /** @description How often a sync runs in one Season state: in minutes or in seconds, at least one. */
                     IN_SEASON?: {
                         /** @description How often the sync runs, in minutes. */
                         intervalMinutes?: number;
                         /** @description How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes. */
                         intervalSeconds?: number;
                     };
-                    /** @description How often a sync runs in one Season state. */
+                    /** @description How often a sync runs in one Season state: in minutes or in seconds, at least one. */
                     OFFSEASON?: {
                         /** @description How often the sync runs, in minutes. */
                         intervalMinutes?: number;

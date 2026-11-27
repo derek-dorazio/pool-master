@@ -395,6 +395,17 @@ describe('platform config services on the settings registry', () => {
     );
   });
 
+  it('refuses a partial update that empties a Season state\'s interval, keeping the saved schedule, so no sync is set to run every minute', async () => {
+    const { settings } = await loaded();
+    const service = new IngestionConfigService(settings, fakeLogger());
+
+    await expect(service.updateConfig({ EVENTS: { intervals: { OFFSEASON: {} } } }, 'admin-1'))
+      .rejects.toMatchObject({ statusCode: 400, code: 'SETTINGS_INVALID' });
+    await expect(service.getConfig()).resolves.toEqual(expect.objectContaining({
+      EVENTS: { enabled: true, intervals: seasonal({ intervalMinutes: 360 }, { intervalMinutes: 1440 }) },
+    }));
+  });
+
   it('a partial update on a task that has not yet refreshed keeps another task\'s save from moments earlier', async () => {
     const repository = inMemoryRuntimeConfigs();
     const taskA = await loaded(repository);

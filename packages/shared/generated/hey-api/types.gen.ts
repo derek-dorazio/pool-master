@@ -995,7 +995,7 @@ export type IngestionScheduleConfigPatch = {
          */
         intervals?: {
             /**
-             * How often a sync runs in one Season state.
+             * How often a sync runs in one Season state: in minutes or in seconds, at least one.
              */
             IN_SEASON?: {
                 /**
@@ -1008,7 +1008,7 @@ export type IngestionScheduleConfigPatch = {
                 intervalSeconds?: number;
             };
             /**
-             * How often a sync runs in one Season state.
+             * How often a sync runs in one Season state: in minutes or in seconds, at least one.
              */
             OFFSEASON?: {
                 /**
@@ -1031,7 +1031,7 @@ export type IngestionScheduleConfigPatch = {
          */
         intervals: {
             /**
-             * How often a sync runs in one Season state.
+             * How often a sync runs in one Season state: in minutes or in seconds, at least one.
              */
             IN_SEASON?: {
                 /**
@@ -1044,7 +1044,7 @@ export type IngestionScheduleConfigPatch = {
                 intervalSeconds?: number;
             };
             /**
-             * How often a sync runs in one Season state.
+             * How often a sync runs in one Season state: in minutes or in seconds, at least one.
              */
             OFFSEASON?: {
                 /**
@@ -1068,7 +1068,7 @@ export type IngestionScheduleConfigPatch = {
          */
         intervals?: {
             /**
-             * How often a sync runs in one Season state.
+             * How often a sync runs in one Season state: in minutes or in seconds, at least one.
              */
             IN_SEASON?: {
                 /**
@@ -1081,7 +1081,7 @@ export type IngestionScheduleConfigPatch = {
                 intervalSeconds?: number;
             };
             /**
-             * How often a sync runs in one Season state.
+             * How often a sync runs in one Season state: in minutes or in seconds, at least one.
              */
             OFFSEASON?: {
                 /**

@@ -22,7 +22,9 @@ const IngestionScheduleIntervalSchema = z.object({
   intervalSeconds: z.number().int().min(1).optional().describe(
     'How often the sync runs, in seconds, for a high-frequency sync such as live scores. Wins over intervalMinutes.',
   ),
-}).describe('How often a sync runs in one Season state.');
+}).refine((interval) => interval.intervalMinutes !== undefined || interval.intervalSeconds !== undefined, {
+  message: 'Give the interval in minutes or in seconds.',
+}).describe('How often a sync runs in one Season state: in minutes or in seconds, at least one.');
 
 /**
  * A sync kind's interval for each Season state (#2009): in season, while one of a league's
