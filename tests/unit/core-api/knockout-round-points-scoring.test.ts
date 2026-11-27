@@ -26,8 +26,6 @@ import { bracketRoundSlots } from '../../support/round-slots';
 
 const family = getScoringFamilyModule(ScoringFamily.HEAD_TO_HEAD);
 const TOURNAMENT: FieldScoringEvent = { sport: Sport.BASKETBALL, ...sportPlay(Sport.BASKETBALL), rounds: 2, roundsPar: undefined, status: SportEventStatus.IN_PROGRESS, slotDefinitions: [] };
-/** A contest covering every round of the event: one with no template's slots to narrow it. */
-const EVERY_ROUND: ContestRoundCoverage = { slotDefinitionIds: null };
 const NO_BONUS: UpsetBonus = { rule: UpsetBonusRule.NONE };
 const SEED_DIFFERENCE: UpsetBonus = { rule: UpsetBonusRule.SEED_DIFFERENCE, multiplier: 1 };
 
@@ -103,7 +101,12 @@ function bracketField(teams: TeamInput[], matchInputs: MatchInput[]): SportEvent
   }));
 }
 
-function scores(field: SportEventParticipantView[], scoring: ContestScoringSettings, coverage: ContestRoundCoverage = EVERY_ROUND): Record<string, number | null> {
+/** A contest covering every round of the field's bracket: every slot definition its games play. */
+function everyRound(field: SportEventParticipantView[]): ContestRoundCoverage {
+  return { slotDefinitionIds: [...new Set(field.flatMap((row) => row.matches).map((match) => match.slot.slotDefinitionId))] };
+}
+
+function scores(field: SportEventParticipantView[], scoring: ContestScoringSettings, coverage: ContestRoundCoverage = everyRound(field)): Record<string, number | null> {
   return Object.fromEntries(family.scoreField(field, TOURNAMENT, scoring, coverage).map((row) => [row.name, row.score]));
 }
 
@@ -231,7 +234,7 @@ describe('knockout round points — a bye counts as a win', () => {
     { matchNumber: 2, round: 1, home: 'Vermont', away: 'Utah', winner: MatchSide.AWAY, advancesTo: 4 },
   ];
   const detailsOf = (field: SportEventParticipantView[], scoring: ContestScoringSettings) =>
-    Object.fromEntries(family.scoreField(field, TOURNAMENT, scoring, EVERY_ROUND).map((row) => [row.name, row.detail]));
+    Object.fromEntries(family.scoreField(field, TOURNAMENT, scoring, everyRound(field)).map((row) => [row.name, row.detail]));
 
   it('scores a team on a bye the skipped round\'s value once every game of that round is decided, and counts the bye as a win', () => {
     const field = bracketField(BYES, [
@@ -395,7 +398,7 @@ describe('knockout round points — upset bonus', () => {
       { matchNumber: 3, round: 2, home: 'Vermont', away: 'Houston' },
     ]);
 
-    const details = Object.fromEntries(family.scoreField(field, TOURNAMENT, knockout([1, 2], SEED_DIFFERENCE), EVERY_ROUND).map((row) => [row.name, row.detail]));
+    const details = Object.fromEntries(family.scoreField(field, TOURNAMENT, knockout([1, 2], SEED_DIFFERENCE), everyRound(field)).map((row) => [row.name, row.detail]));
 
     expect(details).toMatchObject({
       Vermont: { scoringFamily: ScoringFamily.HEAD_TO_HEAD, wins: 1, upsetBonusPoints: 3, isAlive: true },
@@ -409,7 +412,7 @@ describe('knockout round points — upset bonus', () => {
       [{ matchNumber: 1, round: 1, home: 'Lucky Loser', away: 'Vermont', winner: MatchSide.HOME }],
     );
 
-    const rows = Object.fromEntries(family.scoreField(field, TOURNAMENT, knockout([1, 2]), EVERY_ROUND).map((row) => [row.name, row]));
+    const rows = Object.fromEntries(family.scoreField(field, TOURNAMENT, knockout([1, 2]), everyRound(field)).map((row) => [row.name, row]));
 
     expect(rows['Duke']).toMatchObject({ score: 0, detail: { wins: 0, isAlive: false } });
     expect(rows['Lucky Loser']).toMatchObject({ score: 1, detail: { wins: 1, isAlive: true } });
@@ -424,7 +427,7 @@ describe('knockout round points — upset bonus', () => {
       ],
     );
 
-    const rows = Object.fromEntries(family.scoreField(field, TOURNAMENT, knockout([1, 2]), EVERY_ROUND).map((row) => [row.name, row]));
+    const rows = Object.fromEntries(family.scoreField(field, TOURNAMENT, knockout([1, 2]), everyRound(field)).map((row) => [row.name, row]));
 
     expect(rows['Duke']).toMatchObject({ detail: { wins: 0, isAlive: true } });
   });

@@ -121,6 +121,8 @@ export class InMemoryContestWorld {
   /** Loaded field size per sport event — what `countParticipants` answers. */
   readonly fieldSizes = new Map<string, number>();
   readonly sportEvents = new Map<string, SportEvent>();
+  /** Each event's Season slots, one per slot definition it plays (#2014): what a contest covers. */
+  readonly seasonSlots = new Map<string, { sportEventId: string; slotDefinitionId: string }>();
   /** The event's tiers, per sport event — what `listTiers` answers. */
   readonly eventTiers = new Map<string, SportEventTier[]>();
   /** Each contest's expansion bands, in the order they were added (#980); the highest applies. */
@@ -216,12 +218,33 @@ export class InMemoryContestWorld {
     this.contestExpansions.set(contestId, [...(this.contestExpansions.get(contestId) ?? []), entriesPerContest]);
   }
 
+  /** The events' Season slots, in event order: a contest on them covers them whole. */
+  private slotsOfEvents(sportEventIds: readonly string[]): string[] {
+    return sportEventIds.flatMap((sportEventId) => [...this.seasonSlots]
+      .filter(([, slot]) => slot.sportEventId === sportEventId)
+      .map(([seasonSlotId]) => seasonSlotId));
+  }
+
+  /** A contest's events and coverage from its covered Season slots, as the adapter reads them. */
+  private coverageOf(seasonSlotIds: readonly string[]): Pick<Contest, 'sportEventIds' | 'coveredSeasonSlotIds' | 'coveredSlotDefinitionIds'> {
+    const slots = seasonSlotIds.flatMap((seasonSlotId) => this.seasonSlots.get(seasonSlotId) ?? []);
+    return {
+      sportEventIds: [...new Set(slots.map((slot) => slot.sportEventId))],
+      coveredSeasonSlotIds: [...seasonSlotIds],
+      coveredSlotDefinitionIds: slots.map((slot) => slot.slotDefinitionId),
+    };
+  }
+
+  /** Seeds a contest; one given its events and no coverage covers every slot of its events. */
   addContest(leagueId: string, overrides: Partial<Contest> = {}): Contest {
+    const coverage = overrides.coveredSeasonSlotIds !== undefined
+      ? this.coverageOf(overrides.coveredSeasonSlotIds)
+      : this.coverageOf(this.slotsOfEvents(overrides.sportEventIds ?? []));
     const contest: Contest = {
       id: this.nextId('contest'),
       leagueId,
-      sportEventIds: [],
       name: 'Masters Pool',
+      sportLeagueSeasonId: 'season-2026',
       seasonYear: 2026,
       cupWeight: CupWeight.NORMAL,
       status: ContestStatus.OPEN,
@@ -230,6 +253,9 @@ export class InMemoryContestWorld {
       createdAt: T0,
       updatedAt: T0,
       ...overrides,
+      ...coverage,
+      // An override's events stand where its events have no slot in the world.
+      sportEventIds: coverage.sportEventIds.length > 0 ? coverage.sportEventIds : (overrides.sportEventIds ?? []),
     };
     this.contests.set(contest.id, contest);
     if (contest.status === ContestStatus.OPEN || contest.status === ContestStatus.ACTIVE) {
@@ -246,7 +272,7 @@ export class InMemoryContestWorld {
       id: this.nextId('configuration'),
       contestId,
       selectionType: SelectionType.TIERED,
-      coveredSlotDefinitionIds: null,
+      templateId: 'template-tiered',
       // A managed tiered configuration stores picks per tier, never a roster size (#479).
       configJson: { selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 4 },
       maxEntriesPerSquad: null,
@@ -273,6 +299,9 @@ export class InMemoryContestWorld {
       ...overrides,
     } as SportEvent;
     this.sportEvents.set(event.id, event);
+    for (const definition of event.slotDefinitions) {
+      this.seasonSlots.set(this.nextId('season-slot'), { sportEventId: event.id, slotDefinitionId: definition.id });
+    }
     this.fieldSizes.set(event.id, 40);
     return event;
   }
@@ -424,8 +453,8 @@ export class InMemoryContestWorld {
       // The world records no draw rows, so none owes its receipts.
       findDrawReceiptsPending: async () => [],
       clearDrawReceiptsPending: async () => undefined,
-      create: async (input, limits) => this.seasonFull(input.leagueId, input.seasonYear, limits)
-        ?? { status: 'created', contest: this.addContest(input.leagueId, input) },
+      create: async ({ seasonSlotIds, ...input }, limits) => this.seasonFull(input.leagueId, input.seasonYear, limits)
+        ?? { status: 'created', contest: this.addContest(input.leagueId, { ...input, coveredSeasonSlotIds: [...seasonSlotIds] }) },
       update: async (id, updates) => {
         const existing = this.contests.get(id);
         if (!existing) throw new Error(`Record to update not found: contest ${id}`);
@@ -435,11 +464,13 @@ export class InMemoryContestWorld {
       },
       // Mirrors the adapter: removed events take their picks and entry statuses with them, and
       // every entry gets a DRAFT status for each added event.
-      replaceSportEvents: async (id, sportEventIds) => {
+      replaceCoveredSlots: async (id, seasonSlotIds) => {
         const existing = this.contests.get(id);
         if (!existing) throw new Error(`Record to update not found: contest ${id}`);
+        const coverage = this.coverageOf(seasonSlotIds);
+        const { sportEventIds } = coverage;
         const removed = existing.sportEventIds.filter((eventId) => !sportEventIds.includes(eventId));
-        this.contests.set(id, { ...existing, sportEventIds: [...sportEventIds] });
+        this.contests.set(id, { ...existing, ...coverage });
         for (const [pickId, pick] of this.picks) {
           if (this.entries.get(pick.entryId)?.contestId === id && removed.includes(pick.sportEventId)) {
             this.picks.delete(pickId);

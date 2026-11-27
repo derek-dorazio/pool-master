@@ -25,6 +25,7 @@ function event(overrides: Partial<ContestCreateSportEventState> = {}): ContestCr
     startDate: LATER,
     sport: Sport.FOOTBALL,
     sportLeagueId: 'league-1',
+    sportLeagueSeasonId: 'season-2027',
     championshipYear: 2027,
     playsMatches: true,
     participantCount: 14,

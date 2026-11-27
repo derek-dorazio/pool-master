@@ -405,12 +405,15 @@ describe('rankPredictionStandings', () => {
   });
 });
 
+/** A contest covering every round: every slot definition the bracket's games play. */
+const everySlotOf = (bracket: ReadonlyArray<{ slot: { slotDefinitionId: string } }>) => ({ slotDefinitionIds: [...new Set(bracket.map((match) => match.slot.slotDefinitionId))] });
+
 describe('contestBracketGames', () => {
   it('picks every game of the event but a cancelled one, for a contest covering every round', () => {
     const gameIds = (games: ReadonlyArray<{ id: string }>) => games.map((each) => each.id);
-    expect(gameIds(contestBracketGames(eightTeamBracket(), { slotDefinitionIds: null }))).toEqual(['m1', 'm2', 'm3', 'm4', 'm5', 'm6', 'm7']);
+    expect(gameIds(contestBracketGames(eightTeamBracket(), everySlotOf(eightTeamBracket())))).toEqual(['m1', 'm2', 'm3', 'm4', 'm5', 'm6', 'm7']);
     const cancelled = eightTeamBracket().map((match) => (match.matchNumber === 6 ? { ...match, status: MatchStatus.CANCELLED } : match));
-    expect(gameIds(contestBracketGames(cancelled, { slotDefinitionIds: null }))).toEqual(['m1', 'm2', 'm3', 'm4', 'm5', 'm7']);
+    expect(gameIds(contestBracketGames(cancelled, everySlotOf(cancelled)))).toEqual(['m1', 'm2', 'm3', 'm4', 'm5', 'm7']);
   });
 });
 

@@ -3,6 +3,7 @@ import type { Client } from '@poolmaster/shared/generated/hey-api/client';
 import { randomUUID } from 'node:crypto';
 import { fixtureSeasonId, keyedSlotDefinitionId, withCurrentSeason, type TestRoundSlot } from '../support/event-edition';
 import { seasonCompetitionFor } from '../support/competitions';
+import { contestOnEvents, fixtureTemplateId } from '../support/contest-rows';
 import { testSlotDefinitionId, uniqueTestSlotLabel } from '../support/test-slots';
 import type { ContestSelectionConfig, SelectionType, Sport } from '@poolmaster/shared/domain';
 import {
@@ -236,10 +237,13 @@ export async function seedContestFixture(leagueId: string, options: {
   };
 }): Promise<{ contestId: string }> {
   const prisma = getFunctionalPrisma();
+  // A contest is in a Season (#2014); one seeded before its event takes the event's when it is
+  // attached (`attachContestEvent`), so any 2026 Season holds it meanwhile.
+  const season = await prisma.sportLeagueSeason.findFirstOrThrow({ where: { championshipYear: 2026 }, orderBy: { id: 'asc' }, select: { id: true, sportLeagueId: true } });
   const contest = await prisma.contest.create({
     data: {
       leagueId,
-      seasonYear: 2026,
+      sportLeagueSeasonId: season.id,
       name: options.name,
       status: options.status ?? 'OPEN',
       contestFormat: 'ROSTER',
@@ -249,6 +253,12 @@ export async function seedContestFixture(leagueId: string, options: {
   await prisma.contestConfiguration.create({
     data: {
       contestId: contest.id,
+      templateId: await fixtureTemplateId(prisma, {
+        sportLeagueId: season.sportLeagueId,
+        selectionType: options.selectionType,
+        contestFormat: 'ROSTER',
+        configJson: options.configuration?.configJson ?? {},
+      }),
       selectionType: options.selectionType,
       maxEntriesPerSquad: 1,
       ...options.configuration,
@@ -265,8 +275,14 @@ export async function seedContestFixture(leagueId: string, options: {
  */
 export async function attachContestEvent(contestId: string, sportEventId: string): Promise<void> {
   const prisma = getFunctionalPrisma();
-  const sequence = (await prisma.contestSportEvent.count({ where: { contestId } })) + 1;
-  await prisma.contestSportEvent.create({ data: { contestId, sportEventId, sequence } });
+  const { sportLeagueSeasonId, seasonSlots } = await contestOnEvents(prisma, [sportEventId]);
+  // A contest seeded with no event takes its first event's Season (#2014).
+  if (await prisma.contestSeasonSlot.count({ where: { contestId } }) === 0) {
+    await prisma.contest.update({ where: { id: contestId }, data: { sportLeagueSeasonId } });
+  }
+  await prisma.contestSeasonSlot.createMany({
+    data: seasonSlots.create.map((slot) => ({ contestId, sportLeagueSeasonId, ...slot })),
+  });
   const entries = await prisma.contestEntry.findMany({ where: { contestId }, select: { id: true } });
   await prisma.contestEntryEvent.createMany({
     data: entries.map((entry) => ({ contestEntryId: entry.id, sportEventId })),

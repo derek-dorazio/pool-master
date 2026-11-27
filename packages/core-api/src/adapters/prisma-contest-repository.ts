@@ -147,7 +147,7 @@ export class PrismaContestRepository implements ContestRepository {
     return this.prisma.$transaction(async (tx) => {
       const full = await seasonWithoutRoom(tx, contest.leagueId, contest.seasonYear, limits);
       if (full) return full;
-      const { id } = await tx.contest.create({
+      const row = await tx.contest.create({
         data: {
           leagueId: contest.leagueId,
           name: contest.name,
@@ -155,21 +155,14 @@ export class PrismaContestRepository implements ContestRepository {
           contestFormat: contest.contestFormat,
           selectionType: contest.selectionType,
           sportLeagueSeasonId: contest.sportLeagueSeasonId,
+          // The covered slots are written once, here (#2014): no later write adds one.
+          seasonSlots: { create: contest.seasonSlotIds.map((sportLeagueSeasonCompetitionSlotId) => ({ sportLeagueSeasonCompetitionSlotId })) },
           ...(contest.squaresGameMatchId !== undefined && {
             squaresGame: { create: { sportEventRoundMatchId: contest.squaresGameMatchId } },
           }),
         },
-        select: { id: true },
+        include: CONTEST_INCLUDE,
       });
-      // The covered slots are written once, here (#2014): no later write adds one.
-      await tx.contestSeasonSlot.createMany({
-        data: contest.seasonSlotIds.map((sportLeagueSeasonCompetitionSlotId) => ({
-          contestId: id,
-          sportLeagueSeasonId: contest.sportLeagueSeasonId,
-          sportLeagueSeasonCompetitionSlotId,
-        })),
-      });
-      const row = await tx.contest.findUniqueOrThrow({ where: { id }, include: CONTEST_INCLUDE });
       return { status: 'created', contest: mapToContest(row) };
     });
   }

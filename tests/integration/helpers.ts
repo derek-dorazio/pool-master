@@ -1051,7 +1051,7 @@ export async function cleanupTestData(): Promise<void> {
   // foreign keys to the event, where a contest's single event column used to be set null.
   await prisma.contestEntryEventStanding.deleteMany();
   await prisma.contestEntryEvent.deleteMany();
-  await prisma.contestSportEvent.deleteMany();
+  await prisma.contestSeasonSlot.deleteMany();
   await prisma.sportEvent.deleteMany();
   // A sport league that a contest template names is reference data (auto racing's series, seeded
   // with their points presets), and the template's foreign key restricts its delete: it stays.

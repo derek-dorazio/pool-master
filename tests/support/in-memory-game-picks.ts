@@ -112,7 +112,11 @@ export class InMemoryGamePicks {
 
   /** Stores games as they are, replacing any with the same id: a bracket, or its results. */
   putMatches(matches: readonly SportEventRoundMatch[]): void {
-    for (const match of matches) this.matches.set(match.id, match);
+    for (const match of matches) {
+      this.matches.set(match.id, match);
+      // A game's slot is a Season slot of its event, so a contest added on the event covers it.
+      this.world.seasonSlots.set(match.slot.seasonSlotId, { sportEventId: match.sportEventId, slotDefinitionId: match.slot.slotDefinitionId });
+    }
   }
 
   /**

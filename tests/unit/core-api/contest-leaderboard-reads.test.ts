@@ -18,6 +18,9 @@ const GOLF_SCORING: ContestScoringSettings = { participantScoringDefinitionId: '
 // What the live leaderboard and settlement both read: a missing configuration, a configuration
 // with its optional counts unset, an entry with no picks, and a golfer with no standing yet.
 
+/** A golf contest covering its tournament's one slot. */
+const CONTEST = { id: 'contest-1', coveredSlotDefinitionIds: ['def-tournament'] };
+
 describe('contest leaderboard reads', () => {
   it('reads no scoring configuration for a contest that has none, without asking for its rules', async () => {
     const scoringRules = fakeParticipantContestScoringRuleRepo();
@@ -25,17 +28,17 @@ describe('contest leaderboard reads', () => {
     await expect(loadContestScoringConfiguration({
       configurations: fakeContestConfigurationRepo({ findByContest: jest.fn().mockResolvedValue(null) }),
       scoringRules,
-    }, 'contest-1')).resolves.toBeNull();
+    }, CONTEST)).resolves.toBeNull();
     expect(scoringRules.findByContestConfiguration).not.toHaveBeenCalled();
   });
 
-  it('reads the slot definitions the contest\'s template lists as the rounds it covers', async () => {
+  it('reads the definitions of the contest\'s covered slots as the rounds it covers', async () => {
     const configuration = await loadContestScoringConfiguration({
       configurations: fakeContestConfigurationRepo({
-        findByContest: jest.fn().mockResolvedValue({ id: 'config-1', contestId: 'contest-1', coveredSlotDefinitionIds: ['def-round-of-64', 'def-final'] }),
+        findByContest: jest.fn().mockResolvedValue({ id: 'config-1', contestId: 'contest-1' }),
       }),
       scoringRules: fakeParticipantContestScoringRuleRepo({ findByContestConfiguration: jest.fn().mockResolvedValue([]) }),
-    }, 'contest-1');
+    }, { id: 'contest-1', coveredSlotDefinitionIds: ['def-round-of-64', 'def-final'] });
 
     expect(configuration?.coverage).toEqual({ slotDefinitionIds: ['def-round-of-64', 'def-final'] });
   });
@@ -50,12 +53,11 @@ describe('contest leaderboard reads', () => {
           { sortOrder: 1, active: true, scoring: { success: true, data: GOLF_SCORING } },
         ]),
       }),
-    }, 'contest-1');
+    }, CONTEST);
 
     expect(configuration).toEqual({
       configJson: null,
-      // A configuration with no template's slots covers every round.
-      coverage: { slotDefinitionIds: null },
+      coverage: { slotDefinitionIds: ['def-tournament'] },
       participantScoringRules: [{ sortOrder: 1, active: true, scoring: { success: true, data: GOLF_SCORING } }],
     });
   });
@@ -95,7 +97,7 @@ describe('contest leaderboard reads', () => {
         rounds: [],
       },
       { entry: { id: 'sep-2', status: 'ACTIVE' }, participant: { name: 'Ben Cole' }, standing: null, rounds: [] },
-    ] as unknown as Parameters<typeof toParticipantScores>[0], scoringEvent({ rounds: 4, roundsPar: 72 }), GOLF_SCORING, { slotDefinitionIds: null });
+    ] as unknown as Parameters<typeof toParticipantScores>[0], scoringEvent({ rounds: 4, roundsPar: 72 }), GOLF_SCORING, { slotDefinitionIds: ['def-tournament'] });
 
     expect(scores).toEqual([
       { sportEventParticipantId: 'sep-1', name: 'Ana Park', score: 0, asOf, detail: { scoringFamily: 'STROKE_PLAY', unplayedRoundNumbers: [] } },
@@ -121,7 +123,7 @@ describe('contest scoring of unplayed rounds', () => {
       [2, 'MISSED_CUT', 74, 2],
     ]);
 
-    const [, score] = toParticipantScores(field(leader, cut), scoringEvent({ rounds: 4, roundsPar: null }), GOLF_SCORING, { slotDefinitionIds: null });
+    const [, score] = toParticipantScores(field(leader, cut), scoringEvent({ rounds: 4, roundsPar: null }), GOLF_SCORING, { slotDefinitionIds: ['def-tournament'] });
 
     expect(score).toMatchObject({ sportEventParticipantId: 'sep-cut', score: 18, detail: { scoringFamily: 'STROKE_PLAY', unplayedRoundNumbers: [3, 4] } });
   });
@@ -132,7 +134,7 @@ describe('contest scoring of unplayed rounds', () => {
       [2, 'DNF', 40, 3],
     ]);
 
-    const [, score] = toParticipantScores(field(leader, withdrawn), scoringEvent({ rounds: 4, roundsPar: null }), GOLF_SCORING, { slotDefinitionIds: null });
+    const [, score] = toParticipantScores(field(leader, withdrawn), scoringEvent({ rounds: 4, roundsPar: null }), GOLF_SCORING, { slotDefinitionIds: ['def-tournament'] });
 
     expect(score).toMatchObject({ score: 23, detail: { scoringFamily: 'STROKE_PLAY', unplayedRoundNumbers: [2, 3, 4] } });
   });
@@ -140,7 +142,7 @@ describe('contest scoring of unplayed rounds', () => {
   it('scores a golfer who withdrew before the event +8 for every scheduled round', () => {
     const removed = golfer('sep-removed', null, [], { status: 'WITHDRAWN' });
 
-    const [score] = toParticipantScores(field(removed), scoringEvent({ rounds: 4, roundsPar: 72 }), GOLF_SCORING, { slotDefinitionIds: null });
+    const [score] = toParticipantScores(field(removed), scoringEvent({ rounds: 4, roundsPar: 72 }), GOLF_SCORING, { slotDefinitionIds: ['def-tournament'] });
 
     expect(score).toMatchObject({ score: 32, detail: { scoringFamily: 'STROKE_PLAY', unplayedRoundNumbers: [1, 2, 3, 4] } });
   });
@@ -148,7 +150,7 @@ describe('contest scoring of unplayed rounds', () => {
   it('leaves a golfer who withdrew before the event unscored while no round\'s par is known yet', () => {
     const removed = golfer('sep-removed', null, [], { status: 'WITHDRAWN' });
 
-    const [score] = toParticipantScores(field(removed), scoringEvent({ rounds: 4, roundsPar: null }), GOLF_SCORING, { slotDefinitionIds: null });
+    const [score] = toParticipantScores(field(removed), scoringEvent({ rounds: 4, roundsPar: null }), GOLF_SCORING, { slotDefinitionIds: ['def-tournament'] });
 
     expect(score).toMatchObject({ score: null, detail: { scoringFamily: 'STROKE_PLAY', unplayedRoundNumbers: [] } });
   });
@@ -156,7 +158,7 @@ describe('contest scoring of unplayed rounds', () => {
   it('scores a golfer removed from the field after round 1 for that round plus 80 for each round after it', () => {
     const removed = golfer('sep-removed', 'COMPLETE', [[1, 'COMPLETED', 75, 3]], { status: 'WITHDRAWN' });
 
-    const [, score] = toParticipantScores(field(leader, removed), scoringEvent({ rounds: 4, roundsPar: null }), GOLF_SCORING, { slotDefinitionIds: null });
+    const [, score] = toParticipantScores(field(leader, removed), scoringEvent({ rounds: 4, roundsPar: null }), GOLF_SCORING, { slotDefinitionIds: ['def-tournament'] });
 
     expect(score).toMatchObject({ score: 27, detail: { scoringFamily: 'STROKE_PLAY', unplayedRoundNumbers: [2, 3, 4] } });
   });
@@ -167,7 +169,7 @@ describe('contest scoring of unplayed rounds', () => {
       [2, 'MISSED_CUT', 74, 2],
     ]);
 
-    const [, score] = toParticipantScores(field(leader, cut), scoringEvent({ rounds: 4, roundsPar: 70 }), GOLF_SCORING, { slotDefinitionIds: null });
+    const [, score] = toParticipantScores(field(leader, cut), scoringEvent({ rounds: 4, roundsPar: 70 }), GOLF_SCORING, { slotDefinitionIds: ['def-tournament'] });
 
     expect(score).toMatchObject({ score: 22, detail: { scoringFamily: 'STROKE_PLAY', unplayedRoundNumbers: [3, 4] } });
   });
@@ -184,7 +186,7 @@ describe('contest scoring of unplayed rounds', () => {
       [2, 'MISSED_CUT', 74, 2],
     ]);
 
-    const [, score] = toParticipantScores(field(midRound3, cut), scoringEvent({ rounds: 4, roundsPar: null }), GOLF_SCORING, { slotDefinitionIds: null });
+    const [, score] = toParticipantScores(field(midRound3, cut), scoringEvent({ rounds: 4, roundsPar: null }), GOLF_SCORING, { slotDefinitionIds: ['def-tournament'] });
 
     expect(score).toMatchObject({ score: 10, detail: { scoringFamily: 'STROKE_PLAY', unplayedRoundNumbers: [3] } });
   });
@@ -192,7 +194,7 @@ describe('contest scoring of unplayed rounds', () => {
   it('never scores a round past the event\'s scheduled rounds', () => {
     const withdrawn = golfer('sep-wd', 'WITHDRAWN', [[1, 'DNF', 30, 1]]);
 
-    const [score] = toParticipantScores(field(withdrawn), scoringEvent({ rounds: 2, roundsPar: 72 }), GOLF_SCORING, { slotDefinitionIds: null });
+    const [score] = toParticipantScores(field(withdrawn), scoringEvent({ rounds: 2, roundsPar: 72 }), GOLF_SCORING, { slotDefinitionIds: ['def-tournament'] });
 
     expect(score).toMatchObject({ score: 16, detail: { scoringFamily: 'STROKE_PLAY', unplayedRoundNumbers: [1, 2] } });
   });
@@ -201,21 +203,21 @@ describe('contest scoring of unplayed rounds', () => {
     const roundOneLeader = golfer('sep-leader', 'COMPLETE', [[1, 'COMPLETED', 70, -2]]);
     const noScore = golfer('sep-none', null, []);
 
-    expect(toParticipantScores(field(roundOneLeader, noScore), scoringEvent({ rounds: 4, roundsPar: null }), GOLF_SCORING, { slotDefinitionIds: null })[1])
+    expect(toParticipantScores(field(roundOneLeader, noScore), scoringEvent({ rounds: 4, roundsPar: null }), GOLF_SCORING, { slotDefinitionIds: ['def-tournament'] })[1])
       .toMatchObject({ score: null, detail: { scoringFamily: 'STROKE_PLAY', unplayedRoundNumbers: [] } });
 
     const roundTwoStarted = golfer('sep-leader', 'IN_PROGRESS', [
       [1, 'COMPLETED', 70, -2],
       [2, 'IN_PROGRESS', 20, -1],
     ]);
-    expect(toParticipantScores(field(roundTwoStarted, noScore), scoringEvent({ rounds: 4, roundsPar: null }), GOLF_SCORING, { slotDefinitionIds: null })[1])
+    expect(toParticipantScores(field(roundTwoStarted, noScore), scoringEvent({ rounds: 4, roundsPar: null }), GOLF_SCORING, { slotDefinitionIds: ['def-tournament'] })[1])
       .toMatchObject({ score: 8, detail: { scoringFamily: 'STROKE_PLAY', unplayedRoundNumbers: [1] } });
   });
 
   it('scores a golfer with no score 80 for every round once the event is complete', () => {
     const noScore = golfer('sep-none', null, []);
 
-    const [, score] = toParticipantScores(field(leader, noScore), scoringEvent({ rounds: 4, roundsPar: null, status: 'COMPLETED' }), GOLF_SCORING, { slotDefinitionIds: null });
+    const [, score] = toParticipantScores(field(leader, noScore), scoringEvent({ rounds: 4, roundsPar: null, status: 'COMPLETED' }), GOLF_SCORING, { slotDefinitionIds: ['def-tournament'] });
 
     expect(score).toMatchObject({ score: 32, detail: { scoringFamily: 'STROKE_PLAY', unplayedRoundNumbers: [1, 2, 3, 4] } });
   });
@@ -226,7 +228,7 @@ describe('contest scoring of unplayed rounds', () => {
       [2, 'COMPLETED', 72, 0],
     ]);
 
-    const [, score] = toParticipantScores(field(leader, neverFlagged), scoringEvent({ rounds: 4, roundsPar: null, status: 'COMPLETED' }), GOLF_SCORING, { slotDefinitionIds: null });
+    const [, score] = toParticipantScores(field(leader, neverFlagged), scoringEvent({ rounds: 4, roundsPar: null, status: 'COMPLETED' }), GOLF_SCORING, { slotDefinitionIds: ['def-tournament'] });
 
     expect(score).toMatchObject({ score: 16, detail: { scoringFamily: 'STROKE_PLAY', unplayedRoundNumbers: [3, 4] } });
   });
@@ -240,7 +242,7 @@ describe('contest scoring of unplayed rounds', () => {
     ]);
     lastGroup.rounds[3].golf = { strokes: 71, scoreToPar: -1, thru: 18 };
 
-    const [, score] = toParticipantScores(field(leader, lastGroup), scoringEvent({ rounds: 4, roundsPar: null, status: 'COMPLETED' }), GOLF_SCORING, { slotDefinitionIds: null });
+    const [, score] = toParticipantScores(field(leader, lastGroup), scoringEvent({ rounds: 4, roundsPar: null, status: 'COMPLETED' }), GOLF_SCORING, { slotDefinitionIds: ['def-tournament'] });
 
     expect(score).toMatchObject({ score: -7, detail: { scoringFamily: 'STROKE_PLAY', unplayedRoundNumbers: [] } });
   });
@@ -251,7 +253,7 @@ describe('contest scoring of unplayed rounds', () => {
       [2, 'IN_PROGRESS', 30, 1],
     ]);
 
-    const [, score] = toParticipantScores(field(leader, suspended), scoringEvent({ rounds: 4, roundsPar: null }), GOLF_SCORING, { slotDefinitionIds: null });
+    const [, score] = toParticipantScores(field(leader, suspended), scoringEvent({ rounds: 4, roundsPar: null }), GOLF_SCORING, { slotDefinitionIds: ['def-tournament'] });
 
     expect(score).toMatchObject({ score: -1, detail: { scoringFamily: 'STROKE_PLAY', unplayedRoundNumbers: [] } });
   });

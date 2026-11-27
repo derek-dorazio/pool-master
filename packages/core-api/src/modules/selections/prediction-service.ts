@@ -911,8 +911,8 @@ export class PredictionService {
       this.deps.field.findBySportEvent(sportEvent.id),
     ]);
     const team = await this.teamLookup(field);
-    // A setup's preview names no template yet, so it previews every slot of the event.
-    const setup = this.weekSetup(rules, { slotDefinitionIds: sportEvent.slotDefinitions.map((definition) => definition.id) }, sportEvent, matches, field);
+    // A setup's preview names no template yet, so it previews every game of the event.
+    const setup = this.weekSetup(rules, { slotDefinitionIds: matches.map((match) => match.slot.slotDefinitionId) }, sportEvent, matches, field);
     const { engine, games } = setup;
     const gameIds = new Set(games.map((game) => game.id));
     const unknown = input.picks.find((pick) => !gameIds.has(pick.sportEventRoundMatchId));
