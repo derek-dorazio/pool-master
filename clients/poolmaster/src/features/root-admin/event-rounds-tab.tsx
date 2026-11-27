@@ -7,22 +7,19 @@ import { eventRoundColumns, type EventRoundRow } from './event-round-columns';
 import { EventRoundDialog } from './event-round-dialog';
 import { EventMatchesCard } from './event-matches-card';
 import { EventSyncsCard } from './event-syncs-card';
-import { getScoringFamilyAdminUi } from './scoring-family-admin';
 import { roundLabels } from '@poolmaster/shared/display-strings';
 import { useSportEventRoundsQuery } from './use-sport-event';
 
 /**
  * The Event page's Rounds and matches tab (#1890): the event's live scores and results sync,
- * its rounds in one grid, each round's ⤢ opening its dialog, its matches where it plays any, then,
- * on an event no feed syncs, how its scoring family enters and corrects results. A synced
- * event's results are the feed's.
+ * its rounds in one grid, each round's ⤢ opening its dialog, and its matches where it plays any.
+ * Results come from the feed, or the test-data loader on a test event: no panel enters them (#2008).
  */
 export function EventRoundsTab() {
   const { event, isSynced, overview } = useEventPage();
   const roundsQuery = useSportEventRoundsQuery(event.id);
   const [openRoundId, setOpenRoundId] = useState<string | null>(null);
   const columns = useMemo(() => eventRoundColumns(), []);
-  const { ResultsPanel } = getScoringFamilyAdminUi(event);
   const rows = useMemo<EventRoundRow[] | undefined>(
     () => {
       if (roundsQuery.data === undefined) return undefined;
@@ -66,7 +63,6 @@ export function EventRoundsTab() {
         </QueryState>
       </SectionCard>
       {event.playsMatches ? <EventMatchesCard event={event} /> : null}
-      {isSynced || ResultsPanel === null ? null : <ResultsPanel event={event} />}
     </div>
   );
 }

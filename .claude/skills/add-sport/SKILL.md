@@ -163,16 +163,13 @@ In order:
    ingestion scheduler logs one warning per change in that set: expected, not a defect.
 5. **Field seeding and pricing.** Confirm the seeding source feeds tiers and budget prices
    through the existing event services, and that an event can be released (step 0).
-6. **Admin results.** An admin must be able to enter or correct every result without a
-   provider: admin entry is the fallback for a league no feed covers and for correcting one
-   (`rules/architecture-rules.md` §4 *A live provider sync is the source of its league's
-   events*). A new family's results route refuses an event of another family
-   with 422 `EVENT_SCORING_FAMILY_MISMATCH`, as golf's score routes do. On the web, the family
-   adds its entry to `SCORING_FAMILY_ADMIN_UI` (exhaustive, so the build asks for it): the
-   results page's name and body. The Manage event, field, tier, participant and sport league
-   pages are shared by every sport under `/manage/sports/<sport URL segment>/`, so a new sport
-   needs no new admin pages; its menu entry comes from the registry and its URL segment from its
-   row
+6. **Test-slot results.** Results come from the league's feed (`rules/architecture-rules.md`
+   §4 *A live provider sync is the source of its league's events*). A new family's result
+   route serves test slots only, for the test-data loader, and refuses an event of another
+   family with 422 `EVENT_SCORING_FAMILY_MISMATCH`, as golf's score routes do. The web has no
+   results entry: the Manage event, field, tier, participant and sport league pages are shared
+   by every sport under `/manage/sports/<sport URL segment>/`, so a new sport needs no new
+   admin pages; its menu entry comes from the registry and its URL segment from its row
    (`rules/architecture-rules.md` §4 *Sport extension*).
 7. **Contract.** Any new DTO, route or error code goes through the `add-endpoint` skill and
    regenerates the SDK in the same slice.

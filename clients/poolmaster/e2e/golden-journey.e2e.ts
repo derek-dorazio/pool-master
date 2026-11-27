@@ -748,9 +748,7 @@ test('act 4: the root admin scores round 1, starts the event, and reads every ro
         scoreToPar: index - 2,
       })),
     );
-    for (const fieldEntryId of state.fieldEntryIds) {
-      await expect(page.getByTestId(`root-admin-golf-scores-strokes-${fieldEntryId}`)).toBeVisible();
-    }
+    await expectRoundStrokes(page, state.eventId, 1, state.fieldEntryIds.map((fieldEntryId, index) => [fieldEntryId, 70 + index]));
   });
 
   // #362 — opened before play, as a member watching for the start would have it. The contest is
@@ -910,12 +908,8 @@ test('act 5: each round of scores moves the leaderboard, and only a counted pick
           scoreToPar: plan.scoresToPar[index],
         })),
       );
-      // The corrections grid lists only the golfers with a score in the selected round, so the
-      // six inputs carrying the uploaded strokes are this round's write read back in the UI.
-      for (const [index, fieldEntryId] of state.fieldEntryIds.entries()) {
-        await expect(page.getByTestId(`root-admin-golf-scores-strokes-${fieldEntryId}`))
-          .toHaveValue(String(PAR_PER_ROUND + plan.scoresToPar[index]));
-      }
+      // The event's field, read back: each golfer's strokes in this round are the write.
+      await expectRoundStrokes(page, state.eventId, plan.round, state.fieldEntryIds.map((fieldEntryId, index) => [fieldEntryId, PAR_PER_ROUND + plan.scoresToPar[index]]));
 
       const read = await readContestLeaderboardOnceRebuilt(page, state.contestId, state.entryId, (rebuilt) => {
         expectCountingPicksExplainTheTotal(rebuilt);
@@ -1039,10 +1033,7 @@ test('act 6: completing the event settles the contest and freezes its standing a
         scoreToPar: ACT_6_FINAL_ROUND_SCORES_TO_PAR[index],
       })),
     );
-    for (const [index, fieldEntryId] of state.fieldEntryIds.entries()) {
-      await expect(page.getByTestId(`root-admin-golf-scores-strokes-${fieldEntryId}`))
-        .toHaveValue(String(PAR_PER_ROUND + ACT_6_FINAL_ROUND_SCORES_TO_PAR[index]));
-    }
+    await expectRoundStrokes(page, state.eventId, ACT_6_FINAL_ROUND, state.fieldEntryIds.map((fieldEntryId, index) => [fieldEntryId, PAR_PER_ROUND + ACT_6_FINAL_ROUND_SCORES_TO_PAR[index]]));
 
     // A complete card, stated as the event states it: every scheduled round scored for every
     // golfer in the field.
@@ -1707,13 +1698,27 @@ async function uploadRoundScores(
     },
   });
   expect(response.ok(), `POST round ${round}'s golf scores answered ${response.status()}`).toBe(true);
+}
 
-  await page.goto(`/manage/sports/golf/events/${eventId}/results`);
-  await expect(page.getByTestId('root-admin-golf-tournament-scores-page')).toBeVisible();
-  await page
-    .getByRole('radiogroup', { name: 'Round' })
-    .getByRole('radio', { name: new RegExp(`^Round ${round}\\b`) })
-    .click();
+/**
+ * Reads the event's field back and checks each named golfer's strokes in `round`: the score
+ * write, as the API now holds it (the admin results panels are gone, #2008).
+ */
+async function expectRoundStrokes(
+  page: Page,
+  eventId: string,
+  round: number,
+  expected: ReadonlyArray<readonly [fieldEntryId: string, strokes: number]>,
+): Promise<void> {
+  const field = await page.request.get(`/api/v1/events/${eventId}/participants`);
+  expect(field.ok(), `GET the field answered ${field.status()}`).toBe(true);
+  const { participants } = (await field.json()) as {
+    participants: Array<{ id: string; rounds: Array<{ roundNumber: number; golf: { strokes: number } | null }> }>;
+  };
+  const strokesOf = (fieldEntryId: string) => participants
+    .find((row) => row.id === fieldEntryId)?.rounds
+    .find((candidate) => candidate.roundNumber === round)?.golf?.strokes ?? null;
+  expect(expected.map(([fieldEntryId]) => [fieldEntryId, strokesOf(fieldEntryId)])).toEqual(expected.map(([fieldEntryId, strokes]) => [fieldEntryId, strokes]));
 }
 
 /**
@@ -1734,9 +1739,8 @@ async function correctOneGolfersRound(
   const before = roundOn(read, fieldEntryId, roundNumber);
   const after = { strokes: before.strokes + strokes, scoreToPar: before.scoreToPar + strokes };
   await uploadRoundScores(page, eventId, roundNumber, [{ playerName: golfer.name, ...after }]);
-  // The round's own grid, re-read after the apply: the correction is in the golfer's row.
-  await expect(page.getByTestId(`root-admin-golf-scores-strokes-${fieldEntryId}`))
-    .toHaveValue(String(after.strokes));
+  // The event's field, re-read after the apply: the correction is the golfer's round.
+  await expectRoundStrokes(page, eventId, roundNumber, [[fieldEntryId, after.strokes]]);
   return after.scoreToPar - before.scoreToPar;
 }
 
