@@ -18,7 +18,8 @@ const {
   getLeagueMock,
   getSquaresBoardMock,
   listEventParticipantsMock,
-  listEventTiersMock,
+  listEventSlotParticipantsMock,
+  listEventSlotTiersMock,
   mockLogger,
   updateContestEntryMock,
 } = vi.hoisted(() => {
@@ -43,7 +44,8 @@ const {
     getSquaresBoardMock: vi.fn(),
     listContestEntriesMock: vi.fn(),
     listEventParticipantsMock: vi.fn(),
-    listEventTiersMock: vi.fn(),
+    listEventSlotParticipantsMock: vi.fn(),
+    listEventSlotTiersMock: vi.fn(),
     mockLogger: logger,
     updateContestEntryMock: vi.fn(),
   };
@@ -64,7 +66,8 @@ bindApiMocks({
   listContestEntries: listContestEntriesMock,
   // #1740 — a lineup pick's tier or price is its field row's: the event's field and tiers.
   listEventParticipants: listEventParticipantsMock,
-  listEventTiers: listEventTiersMock,
+  listEventSlotParticipants: listEventSlotParticipantsMock,
+  listEventSlotTiers: listEventSlotTiersMock,
   updateContestEntry: updateContestEntryMock,
 });
 
@@ -224,6 +227,8 @@ function primeMocks(opts?: {
         entriesPerContest: opts?.entriesPerContest ?? null,
         sportEvents: [{
           sportEventId: 'event-1',
+          // The slot whose tier set the contest picks from on the event (#2044).
+          tierSetSeasonSlotId: 'slot-1',
           sequence: 1,
           name: 'The Masters',
           startDate: opts?.eventStartDate ?? '2099-04-09T12:40:00.000Z',
@@ -236,7 +241,7 @@ function primeMocks(opts?: {
     },
   });
 
-  listEventParticipantsMock.mockResolvedValue({
+  const field = {
     data: {
       participants: Object.entries(opts?.field ?? {}).map(([id, values]) => ({
         id,
@@ -251,8 +256,10 @@ function primeMocks(opts?: {
         },
       })),
     },
-  });
-  listEventTiersMock.mockResolvedValue({
+  };
+  listEventParticipantsMock.mockResolvedValue(field);
+  listEventSlotParticipantsMock.mockResolvedValue(field);
+  listEventSlotTiersMock.mockResolvedValue({
     data: {
       tiers: Object.entries(opts?.tiers ?? {}).map(([id, tierNumber]) => ({
         id, sportEventId: 'event-1', tierKey: `tier-${tierNumber}`, tierNumber,
@@ -339,7 +346,8 @@ describe('ContestEntryListPage — a contest\'s page while entries are open', ()
     getGamePicksMock.mockReset();
     listContestEntriesMock.mockReset();
     listEventParticipantsMock.mockReset();
-    listEventTiersMock.mockReset();
+    listEventSlotParticipantsMock.mockReset();
+    listEventSlotTiersMock.mockReset();
     getLeagueMock.mockReset();
     getSquaresBoardMock.mockReset();
     updateContestEntryMock.mockReset();
@@ -480,7 +488,7 @@ describe('ContestEntryListPage — a contest\'s page while entries are open', ()
     scroll.mockRestore();
   });
 
-  it('opens the viewer\'s tiered entry to its picks, tier 1 first, each with its tier and team, and closes it again', async () => {
+  it('opens the viewer\'s tiered entry to its picks, tier 1 first, each with its tier and team from the tier set of the slot the contest picks from, and closes it again', async () => {
     primeMocks({ entries: [MINE], field: { 'sep-1': { tierId: 'tier-b' }, 'sep-2': { tierId: 'tier-a' } }, tiers: { 'tier-a': 1, 'tier-b': 2 } });
 
     renderContestBoard();
@@ -491,7 +499,8 @@ describe('ContestEntryListPage — a contest\'s page while entries are open', ()
       'Rory McIlroy · Northern Ireland2',
     ]));
     expect(within(picks).getByTestId('contest-entry-picks-head-entry-1')).toHaveTextContent(/^GolferTier$/);
-    expect(listEventParticipantsMock).toHaveBeenCalledWith(expect.objectContaining({ path: { eventId: 'event-1' } }));
+    expect(listEventSlotParticipantsMock).toHaveBeenCalledWith(expect.objectContaining({ path: { eventId: 'event-1', seasonSlotId: 'slot-1' } }));
+    expect(listEventSlotTiersMock).toHaveBeenCalledWith(expect.objectContaining({ path: { eventId: 'event-1', seasonSlotId: 'slot-1' } }));
     expect(getEventMock).not.toHaveBeenCalled();
 
     fireEvent.click(screen.getByTestId('contest-board-toggle-entry-1'));
@@ -510,7 +519,7 @@ describe('ContestEntryListPage — a contest\'s page while entries are open', ()
     ]));
     expect(within(picks).getByTestId('contest-entry-picks-head-entry-1')).toHaveTextContent(/^GolferPrice$/);
     expect(await screen.findByText('Submitted · $21,500 of $50,000')).toBeInTheDocument();
-    expect(listEventTiersMock).not.toHaveBeenCalled();
+    expect(listEventSlotTiersMock).not.toHaveBeenCalled();
   });
 
   it('shows a random draw entry\'s drawn picks by name with nothing beside them, reading nothing of the event', async () => {
@@ -525,7 +534,7 @@ describe('ContestEntryListPage — a contest\'s page while entries are open', ()
     ]);
     expect(screen.getByTestId('contest-board-entry-status-entry-1')).toHaveTextContent(/^Submitted$/);
     expect(listEventParticipantsMock).not.toHaveBeenCalled();
-    expect(listEventTiersMock).not.toHaveBeenCalled();
+    expect(listEventSlotTiersMock).not.toHaveBeenCalled();
   });
 
   it('shows a player pick with its team and playing role beside its name', async () => {

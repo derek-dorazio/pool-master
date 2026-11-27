@@ -99,12 +99,12 @@ describe('useUpdateSportLeague', () => {
 });
 
 describe('fieldWriteKeys', () => {
-  it('names the field, the event, the event list and the tiers a change to the field reaches', () => {
+  it('names the field, the event, the event list and the tier set of every slot, all of which a change to the field reaches', () => {
     expect(fieldWriteKeys('event-1')).toEqual([
       QueryKeys.rootAdmin.manageSport.field('event-1'),
       QueryKeys.rootAdmin.manageSport.event('event-1'),
       QueryKeys.rootAdmin.manageSport.events,
-      QueryKeys.rootAdmin.manageSport.tiers('event-1'),
+      QueryKeys.rootAdmin.manageSport.tierSets('event-1'),
     ]);
   });
 });

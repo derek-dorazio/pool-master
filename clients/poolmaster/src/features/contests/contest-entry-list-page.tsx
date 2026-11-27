@@ -279,10 +279,12 @@ export function ContestEntryListPage() {
   const linkedEntry = useLinkedEntry();
   const landOn = useLandOnEntry();
   // Each event takes its own submitted picks (#713): an entry's status is the current event's.
-  const currentEventId = contestQuery.data ? currentContestEvent(contestQuery.data)?.sportEventId : undefined;
+  const currentEvent = contestQuery.data ? currentContestEvent(contestQuery.data) : null;
+  const currentEventId = currentEvent?.sportEventId;
   const lineupValues = useLineupPickValues(
     contestQuery.data?.selectionType,
     currentEventId ?? '',
+    currentEvent?.tierSetSeasonSlotId ?? '',
     contestQuery.data !== undefined && opensToPicks(contestQuery.data) && myEntryIds.length > 0,
   );
 

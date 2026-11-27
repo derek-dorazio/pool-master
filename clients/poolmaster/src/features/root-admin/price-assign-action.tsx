@@ -8,7 +8,7 @@ import {
   type BudgetPricingProfile,
   type SlotPricing, SportEventParticipantStatus } from '@poolmaster/shared/domain';
 import { AutoAssignSportEventPricesRequestSchema, type AutoAssignSportEventPricesRequest } from '@poolmaster/shared/dto';
-import { autoAssignEventPrices, type SportEventOverviewDto } from '@/lib/api';
+import { autoAssignEventSlotPrices, type SportEventOverviewDto } from '@/lib/api';
 import {
   Button,
   ConfirmDialog,
@@ -79,6 +79,7 @@ export function PriceAssignAction({
   eventId,
   field,
   overview,
+  seasonSlotId,
   sportLeagueId,
 }: {
   /** The values the tournament was last priced with, and their profile, if any: the dialog starts from them. */
@@ -89,6 +90,8 @@ export function PriceAssignAction({
   field: readonly EventFieldEntry[];
   /** The event's overview: the order the server decided for its field, which the dialog names. */
   overview: SportEventOverviewDto | undefined;
+  /** The Season slot whose set is priced (#2044). */
+  seasonSlotId: string;
   /** The event's sport league, whose pricing profile the dialog starts on when the event was never priced. */
   sportLeagueId: string;
 }) {
@@ -103,7 +106,7 @@ export function PriceAssignAction({
 
   const mutation = useInvalidatingMutation({
     mutationFn: async (pricing: AutoAssignSportEventPricesRequest) => {
-      const response = await autoAssignEventPrices({ path: { eventId }, body: pricing });
+      const response = await autoAssignEventSlotPrices({ path: { eventId, seasonSlotId }, body: pricing });
       if (response.error) {
         throwApiError(response.error);
       }
@@ -111,7 +114,7 @@ export function PriceAssignAction({
     },
     // Prices land on the field's valuations; the tournament carries its pricing and readiness.
     invalidates: [
-      QueryKeys.rootAdmin.manageSport.tiers(eventId),
+      QueryKeys.rootAdmin.manageSport.tierSets(eventId),
       QueryKeys.rootAdmin.manageSport.field(eventId),
       QueryKeys.rootAdmin.manageSport.event(eventId),
       QueryKeys.rootAdmin.manageSport.eventOverview(eventId),

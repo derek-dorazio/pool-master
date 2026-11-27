@@ -21,8 +21,12 @@ export const QueryKeys = {
     games: (sportEventId: QueryKeyId) => ['poolmaster', 'sport-events', sportEventId, 'games'] as const,
     /** One event's field: the team names a squares game picker shows (#711), and each lineup pick's tier and price (#1740). */
     field: (sportEventId: QueryKeyId) => ['poolmaster', 'sport-events', sportEventId, 'field'] as const,
-    /** One event's pick tiers: the Tier a lineup's pick shows on the contest page (#1740). */
-    tiers: (sportEventId: QueryKeyId) => ['poolmaster', 'sport-events', sportEventId, 'tiers'] as const,
+    /**
+     * One slot's field and tier set (#2044): each lineup pick's tier and price on the contest page
+     * (#1740), from the slot the contest picks from. Under the event's field and tiers.
+     */
+    slotField: (sportEventId: QueryKeyId, seasonSlotId: QueryKeyId) => ['poolmaster', 'sport-events', sportEventId, 'field', seasonSlotId] as const,
+    slotTiers: (sportEventId: QueryKeyId, seasonSlotId: QueryKeyId) => ['poolmaster', 'sport-events', sportEventId, 'tiers', seasonSlotId] as const,
     /** One Season's events (#2003): what a contest's event picker offers. */
     bySportLeagueSeason: (sportLeagueSeasonId: QueryKeyId) =>
       ['poolmaster', 'sport-events', 'season', sportLeagueSeasonId] as const,
@@ -261,8 +265,15 @@ export const QueryKeys = {
         ['poolmaster', 'root-admin', 'manage-sport', 'event', eventId, 'slot-tiebreakers'] as const,
       field: (eventId: QueryKeyId) =>
         ['poolmaster', 'root-admin', 'manage-sport', 'event', eventId, 'field'] as const,
-      tiers: (eventId: QueryKeyId) =>
+      // Every slot's tier set (#2044), which a field or tier write refreshes together.
+      tierSets: (eventId: QueryKeyId) =>
         ['poolmaster', 'root-admin', 'manage-sport', 'event', eventId, 'tiers'] as const,
+      // One slot's tiers (#2044), under the event's tier sets.
+      slotTiers: (eventId: QueryKeyId, seasonSlotId: QueryKeyId) =>
+        ['poolmaster', 'root-admin', 'manage-sport', 'event', eventId, 'tiers', seasonSlotId] as const,
+      // One slot's field, with that slot's tiers and prices (#2044), under the event's field.
+      slotField: (eventId: QueryKeyId, seasonSlotId: QueryKeyId) =>
+        ['poolmaster', 'root-admin', 'manage-sport', 'event', eventId, 'field', seasonSlotId] as const,
       bracket: (eventId: QueryKeyId) =>
         ['poolmaster', 'root-admin', 'manage-sport', 'event', eventId, 'bracket'] as const,
       // Under the bracket, so a result that changes who is left refreshes the suggestion too.
