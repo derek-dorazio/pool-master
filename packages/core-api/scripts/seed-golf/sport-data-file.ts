@@ -34,7 +34,7 @@
  */
 
 import { z } from 'zod';
-import { describeMatchPlace, getSportDefinition, LEAGUE_PLAY_BY_SCORING_FAMILY, MatchFormat, ProviderCode, HomeAway, MatchEnding, ParticipantType, RaceResultStatus, ScoringFamily, type Sport, SUPPORTED_SPORTS, URL_SEGMENT_PATTERN } from '@poolmaster/shared/domain';
+import { describeMatchPlace, getSportDefinition, LEAGUE_PLAY_BY_SCORING_FAMILY, MatchFormat, ProviderCode, HomeAway, MatchEnding, ParticipantType, GameSideStatus, ScoringFamily, type Sport, SUPPORTED_SPORTS, URL_SEGMENT_PATTERN } from '@poolmaster/shared/domain';
 import { findBracketProblems, formsNoBracket } from '../../src/modules/events/sport-event-bracket-service';
 import { placesFormFinishingOrder } from '../../src/modules/scoring-families/finish-position/race-order';
 
@@ -97,12 +97,10 @@ const FieldEntrySchema = z.object({
    * order: a place for a finisher (a dead heat repeats it), none for any other status.
    */
   raceResult: z.object({
-    status: z.enum(RaceResultStatus),
+    status: z.enum(GameSideStatus),
     finishPosition: z.number().int().min(1).nullable(),
     /** Post position or grid slot. */
     startPosition: z.number().int().min(1).nullable().optional(),
-    /** The jockey, for a horse. */
-    riderName: z.string().min(1).nullable().optional(),
   }).strict().optional(),
 }).strict();
 
@@ -409,7 +407,7 @@ function checkLeague(league: SportDataLeague, file: ParsedSportDataFile, hasPar:
         if (results === SeedResults.FINISHING_ORDER && entry.raceResult === undefined) problems.push(`${where}: ${entry.player} needs raceResult in test data.`);
         if (results !== SeedResults.FINISHING_ORDER && entry.raceResult !== undefined) problems.push(`${where}: ${entry.player} carries raceResult, which only a race's test seed has.`);
         const result = entry.raceResult;
-        if (result !== undefined && (result.status === RaceResultStatus.FINISHED) !== (result.finishPosition !== null)) {
+        if (result !== undefined && (result.status === GameSideStatus.FINISHED) !== (result.finishPosition !== null)) {
           problems.push(`${where}: ${entry.player} has a finishing place only if it finished, and needs one if it did.`);
         }
       }

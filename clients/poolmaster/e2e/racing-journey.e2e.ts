@@ -416,7 +416,6 @@ test('act 4: the root admin starts the race, its official finishing order comes 
           finishPosition: place,
           resultStatus: status === 'DNF' ? 'DID_NOT_FINISH' : 'FINISHED',
           startPosition: driver,
-          riderName: null,
         })),
       },
     });

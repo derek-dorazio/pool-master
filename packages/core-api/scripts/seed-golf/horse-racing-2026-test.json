@@ -18,7 +18,7 @@
   "testData": true,
   "provenance": {
     "gatheredAt": "2026-10-18",
-    "gatheredBy": "load-sport-data, the 2026 Triple Crown races as played: each horse's post position, jockey and finishing place from its race's Wikipedia page (one source; no second source was reachable). Horses that did not start are listed as such. Every horse is marked US-bred, as the pages do not say. Rankings are each horse's average finish across these races; odds to win are made up from them.",
+    "gatheredBy": "load-sport-data, the 2026 Triple Crown races as played: each horse's post position and finishing place from its race's Wikipedia page (one source; no second source was reachable). Horses that did not start are listed as such. Every horse is marked US-bred, as the pages do not say. Rankings are each horse's average finish across these races; odds to win are made up from them.",
     "sources": [
       {
         "name": "2026 Kentucky Derby (Wikipedia)",
@@ -280,8 +280,7 @@
               "raceResult": {
                 "status": "FINISHED",
                 "finishPosition": 2,
-                "startPosition": 1,
-                "riderName": "Irad Ortiz Jr."
+                "startPosition": 1
               }
             },
             {
@@ -291,8 +290,7 @@
               "raceResult": {
                 "status": "FINISHED",
                 "finishPosition": 15,
-                "startPosition": 2,
-                "riderName": "Manuel Franco"
+                "startPosition": 2
               }
             },
             {
@@ -302,8 +300,7 @@
               "raceResult": {
                 "status": "FINISHED",
                 "finishPosition": 16,
-                "startPosition": 3,
-                "riderName": "Hector Berrios"
+                "startPosition": 3
               }
             },
             {
@@ -313,8 +310,7 @@
               "raceResult": {
                 "status": "FINISHED",
                 "finishPosition": 17,
-                "startPosition": 4,
-                "riderName": "Martin Garcia"
+                "startPosition": 4
               }
             },
             {
@@ -324,8 +320,7 @@
               "raceResult": {
                 "status": "DID_NOT_START",
                 "finishPosition": null,
-                "startPosition": 5,
-                "riderName": "Christopher Elliott"
+                "startPosition": 5
               }
             },
             {
@@ -335,8 +330,7 @@
               "raceResult": {
                 "status": "FINISHED",
                 "finishPosition": 7,
-                "startPosition": 6,
-                "riderName": "Luis Saez"
+                "startPosition": 6
               }
             },
             {
@@ -346,8 +340,7 @@
               "raceResult": {
                 "status": "FINISHED",
                 "finishPosition": 5,
-                "startPosition": 7,
-                "riderName": "Atsuya Nishimura"
+                "startPosition": 7
               }
             },
             {
@@ -357,8 +350,7 @@
               "raceResult": {
                 "status": "FINISHED",
                 "finishPosition": 9,
-                "startPosition": 8,
-                "riderName": "Mike Smith"
+                "startPosition": 8
               }
             },
             {
@@ -368,8 +360,7 @@
               "raceResult": {
                 "status": "DID_NOT_START",
                 "finishPosition": null,
-                "startPosition": 9,
-                "riderName": "Javier Castellano"
+                "startPosition": 9
               }
             },
             {
@@ -379,8 +370,7 @@
               "raceResult": {
                 "status": "FINISHED",
                 "finishPosition": 8,
-                "startPosition": 10,
-                "riderName": "Ryusei Sakai"
+                "startPosition": 10
               }
             },
             {
@@ -390,8 +380,7 @@
               "raceResult": {
                 "status": "FINISHED",
                 "finishPosition": 6,
-                "startPosition": 11,
-                "riderName": "Jaime Torres"
+                "startPosition": 11
               }
             },
             {
@@ -401,8 +390,7 @@
               "raceResult": {
                 "status": "FINISHED",
                 "finishPosition": 4,
-                "startPosition": 12,
-                "riderName": "Junior Alvarado"
+                "startPosition": 12
               }
             },
             {
@@ -412,8 +400,7 @@
               "raceResult": {
                 "status": "DID_NOT_START",
                 "finishPosition": null,
-                "startPosition": 13,
-                "riderName": "Cristian Torres"
+                "startPosition": 13
               }
             },
             {
@@ -423,8 +410,7 @@
               "raceResult": {
                 "status": "FINISHED",
                 "finishPosition": 12,
-                "startPosition": 14,
-                "riderName": "Juan Hernandez"
+                "startPosition": 14
               }
             },
             {
@@ -434,8 +420,7 @@
               "raceResult": {
                 "status": "FINISHED",
                 "finishPosition": 10,
-                "startPosition": 15,
-                "riderName": "Flavien Prat"
+                "startPosition": 15
               }
             },
             {
@@ -445,8 +430,7 @@
               "raceResult": {
                 "status": "FINISHED",
                 "finishPosition": 18,
-                "startPosition": 16,
-                "riderName": "Edwin Maldonado"
+                "startPosition": 16
               }
             },
             {
@@ -456,8 +440,7 @@
               "raceResult": {
                 "status": "FINISHED",
                 "finishPosition": 13,
-                "startPosition": 17,
-                "riderName": "Brian Hernandez Jr."
+                "startPosition": 17
               }
             },
             {
@@ -467,8 +450,7 @@
               "raceResult": {
                 "status": "FINISHED",
                 "finishPosition": 11,
-                "startPosition": 18,
-                "riderName": "John Velazquez"
+                "startPosition": 18
               }
             },
             {
@@ -478,8 +460,7 @@
               "raceResult": {
                 "status": "FINISHED",
                 "finishPosition": 1,
-                "startPosition": 19,
-                "riderName": "José Ortiz"
+                "startPosition": 19
               }
             },
             {
@@ -489,8 +470,7 @@
               "raceResult": {
                 "status": "DID_NOT_START",
                 "finishPosition": null,
-                "startPosition": 20,
-                "riderName": "Tyler Gaffalione"
+                "startPosition": 20
               }
             },
             {
@@ -500,8 +480,7 @@
               "raceResult": {
                 "status": "DID_NOT_START",
                 "finishPosition": null,
-                "startPosition": 21,
-                "riderName": "Alex Achard"
+                "startPosition": 21
               }
             },
             {
@@ -511,8 +490,7 @@
               "raceResult": {
                 "status": "FINISHED",
                 "finishPosition": 3,
-                "startPosition": 22,
-                "riderName": "Tyler Gaffalione"
+                "startPosition": 22
               }
             },
             {
@@ -522,8 +500,7 @@
               "raceResult": {
                 "status": "FINISHED",
                 "finishPosition": 14,
-                "startPosition": 23,
-                "riderName": "Cristian Torres"
+                "startPosition": 23
               }
             },
             {
@@ -533,8 +510,7 @@
               "raceResult": {
                 "status": "DID_NOT_START",
                 "finishPosition": null,
-                "startPosition": 24,
-                "riderName": "Brian Hernandez Jr."
+                "startPosition": 24
               }
             }
           ]
@@ -557,8 +533,7 @@
               "raceResult": {
                 "status": "FINISHED",
                 "finishPosition": 10,
-                "startPosition": 1,
-                "riderName": "Sheldon Russell"
+                "startPosition": 1
               }
             },
             {
@@ -568,8 +543,7 @@
               "raceResult": {
                 "status": "FINISHED",
                 "finishPosition": 4,
-                "startPosition": 2,
-                "riderName": "Tyler Gaffalione"
+                "startPosition": 2
               }
             },
             {
@@ -579,8 +553,7 @@
               "raceResult": {
                 "status": "FINISHED",
                 "finishPosition": 13,
-                "startPosition": 3,
-                "riderName": "Junior Alvarado"
+                "startPosition": 3
               }
             },
             {
@@ -590,8 +563,7 @@
               "raceResult": {
                 "status": "FINISHED",
                 "finishPosition": 9,
-                "startPosition": 4,
-                "riderName": "Rafael Bejarano"
+                "startPosition": 4
               }
             },
             {
@@ -601,8 +573,7 @@
               "raceResult": {
                 "status": "FINISHED",
                 "finishPosition": 12,
-                "startPosition": 5,
-                "riderName": "Irad Ortiz Jr."
+                "startPosition": 5
               }
             },
             {
@@ -612,8 +583,7 @@
               "raceResult": {
                 "status": "FINISHED",
                 "finishPosition": 3,
-                "startPosition": 6,
-                "riderName": "José Ortiz"
+                "startPosition": 6
               }
             },
             {
@@ -623,8 +593,7 @@
               "raceResult": {
                 "status": "FINISHED",
                 "finishPosition": 7,
-                "startPosition": 7,
-                "riderName": "Luis Saez"
+                "startPosition": 7
               }
             },
             {
@@ -634,8 +603,7 @@
               "raceResult": {
                 "status": "FINISHED",
                 "finishPosition": 6,
-                "startPosition": 8,
-                "riderName": "Micah Husbands"
+                "startPosition": 8
               }
             },
             {
@@ -645,8 +613,7 @@
               "raceResult": {
                 "status": "FINISHED",
                 "finishPosition": 2,
-                "startPosition": 9,
-                "riderName": "Flavien Prat"
+                "startPosition": 9
               }
             },
             {
@@ -656,8 +623,7 @@
               "raceResult": {
                 "status": "FINISHED",
                 "finishPosition": 1,
-                "startPosition": 10,
-                "riderName": "Paco Lopez"
+                "startPosition": 10
               }
             },
             {
@@ -667,8 +633,7 @@
               "raceResult": {
                 "status": "FINISHED",
                 "finishPosition": 11,
-                "startPosition": 11,
-                "riderName": "John Velazquez"
+                "startPosition": 11
               }
             },
             {
@@ -678,8 +643,7 @@
               "raceResult": {
                 "status": "FINISHED",
                 "finishPosition": 5,
-                "startPosition": 12,
-                "riderName": "Jaime Torres"
+                "startPosition": 12
               }
             },
             {
@@ -689,8 +653,7 @@
               "raceResult": {
                 "status": "FINISHED",
                 "finishPosition": 8,
-                "startPosition": 13,
-                "riderName": "Alex Achard"
+                "startPosition": 13
               }
             },
             {
@@ -700,8 +663,7 @@
               "raceResult": {
                 "status": "FINISHED",
                 "finishPosition": 14,
-                "startPosition": 14,
-                "riderName": "Ricardo Santana Jr."
+                "startPosition": 14
               }
             }
           ]
@@ -725,8 +687,7 @@
               "raceResult": {
                 "status": "FINISHED",
                 "finishPosition": 7,
-                "startPosition": 1,
-                "riderName": "Antonio Fresu"
+                "startPosition": 1
               }
             },
             {
@@ -736,8 +697,7 @@
               "raceResult": {
                 "status": "FINISHED",
                 "finishPosition": 9,
-                "startPosition": 2,
-                "riderName": "Luis Saez"
+                "startPosition": 2
               }
             },
             {
@@ -747,8 +707,7 @@
               "raceResult": {
                 "status": "FINISHED",
                 "finishPosition": 4,
-                "startPosition": 3,
-                "riderName": "Junior Alvarado"
+                "startPosition": 3
               }
             },
             {
@@ -758,8 +717,7 @@
               "raceResult": {
                 "status": "FINISHED",
                 "finishPosition": 3,
-                "startPosition": 4,
-                "riderName": "Irad Ortiz Jr."
+                "startPosition": 4
               }
             },
             {
@@ -769,8 +727,7 @@
               "raceResult": {
                 "status": "FINISHED",
                 "finishPosition": 8,
-                "startPosition": 5,
-                "riderName": "Dylan Davis"
+                "startPosition": 5
               }
             },
             {
@@ -780,8 +737,7 @@
               "raceResult": {
                 "status": "FINISHED",
                 "finishPosition": 6,
-                "startPosition": 6,
-                "riderName": "Manuel Franco"
+                "startPosition": 6
               }
             },
             {
@@ -791,8 +747,7 @@
               "raceResult": {
                 "status": "FINISHED",
                 "finishPosition": 2,
-                "startPosition": 7,
-                "riderName": "John Velazquez"
+                "startPosition": 7
               }
             },
             {
@@ -802,8 +757,7 @@
               "raceResult": {
                 "status": "FINISHED",
                 "finishPosition": 5,
-                "startPosition": 8,
-                "riderName": "Flavien Prat"
+                "startPosition": 8
               }
             },
             {
@@ -813,8 +767,7 @@
               "raceResult": {
                 "status": "FINISHED",
                 "finishPosition": 1,
-                "startPosition": 9,
-                "riderName": "José Ortiz"
+                "startPosition": 9
               }
             }
           ]

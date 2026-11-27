@@ -33459,21 +33459,13 @@
               "isOfficial": {
                 "type": "boolean",
                 "description": "Whether the race's result is official. Contest scoring counts a result only once it is."
-              },
-              "riderName": {
-                "description": "The jockey (or rider) for this start; null when not entered. The trainer is the participant's teamAffiliation.",
-                "type": [
-                  "string",
-                  "null"
-                ]
               }
             },
             "required": [
               "finishPosition",
               "startPosition",
               "resultStatus",
-              "isOfficial",
-              "riderName"
+              "isOfficial"
             ],
             "additionalProperties": false
           },
@@ -34024,21 +34016,13 @@
                     "isOfficial": {
                       "type": "boolean",
                       "description": "Whether the race's result is official. Contest scoring counts a result only once it is."
-                    },
-                    "riderName": {
-                      "description": "The jockey (or rider) for this start; null when not entered. The trainer is the participant's teamAffiliation.",
-                      "type": [
-                        "string",
-                        "null"
-                      ]
                     }
                   },
                   "required": [
                     "finishPosition",
                     "startPosition",
                     "resultStatus",
-                    "isOfficial",
-                    "riderName"
+                    "isOfficial"
                   ],
                   "additionalProperties": false
                 },
@@ -34716,21 +34700,13 @@
                   "isOfficial": {
                     "type": "boolean",
                     "description": "Whether the race's result is official. Contest scoring counts a result only once it is."
-                  },
-                  "riderName": {
-                    "description": "The jockey (or rider) for this start; null when not entered. The trainer is the participant's teamAffiliation.",
-                    "type": [
-                      "string",
-                      "null"
-                    ]
                   }
                 },
                 "required": [
                   "finishPosition",
                   "startPosition",
                   "resultStatus",
-                  "isOfficial",
-                  "riderName"
+                  "isOfficial"
                 ],
                 "additionalProperties": false
               },
@@ -37973,21 +37949,13 @@
                     "isOfficial": {
                       "type": "boolean",
                       "description": "Whether the race's result is official. Contest scoring counts a result only once it is."
-                    },
-                    "riderName": {
-                      "description": "The jockey (or rider) for this start; null when not entered. The trainer is the participant's teamAffiliation.",
-                      "type": [
-                        "string",
-                        "null"
-                      ]
                     }
                   },
                   "required": [
                     "finishPosition",
                     "startPosition",
                     "resultStatus",
-                    "isOfficial",
-                    "riderName"
+                    "isOfficial"
                   ],
                   "additionalProperties": false
                 },
@@ -52753,25 +52721,12 @@
                   ],
                   "minimum": 1,
                   "maximum": 9007199254740991
-                },
-                "riderName": {
-                  "description": "The jockey (or rider) for this start; null when not known.",
-                  "type": [
-                    "string",
-                    "null"
-                  ],
-                  "minLength": 1,
-                  "maxLength": 255,
-                  "x-transform": [
-                    "trim"
-                  ]
                 }
               },
               "required": [
                 "resultStatus",
                 "finishPosition",
-                "startPosition",
-                "riderName"
+                "startPosition"
               ],
               "additionalProperties": false,
               "description": "One runner's result. The first identifier present is used: participantId, then externalId (a feed id one of the participant's provider mappings holds), matched within the event's field. Every value is stored exactly as sent."
@@ -52829,25 +52784,12 @@
                       ],
                       "minimum": 1,
                       "maximum": 9007199254740991
-                    },
-                    "riderName": {
-                      "description": "The jockey (or rider) for this start; null when not known.",
-                      "type": [
-                        "string",
-                        "null"
-                      ],
-                      "minLength": 1,
-                      "maxLength": 255,
-                      "x-transform": [
-                        "trim"
-                      ]
                     }
                   },
                   "required": [
                     "resultStatus",
                     "finishPosition",
-                    "startPosition",
-                    "riderName"
+                    "startPosition"
                   ],
                   "additionalProperties": false,
                   "description": "One runner's result. The first identifier present is used: participantId, then externalId (a feed id one of the participant's provider mappings holds), matched within the event's field. Every value is stored exactly as sent."
@@ -52933,12 +52875,6 @@
                       "minimum": -9007199254740991,
                       "maximum": 9007199254740991
                     },
-                    "riderName": {
-                      "type": [
-                        "string",
-                        "null"
-                      ]
-                    },
                     "isOfficial": {
                       "type": "boolean"
                     }
@@ -52947,7 +52883,6 @@
                     "resultStatus",
                     "finishPosition",
                     "startPosition",
-                    "riderName",
                     "isOfficial"
                   ],
                   "additionalProperties": false
@@ -52980,12 +52915,6 @@
                       "minimum": -9007199254740991,
                       "maximum": 9007199254740991
                     },
-                    "riderName": {
-                      "type": [
-                        "string",
-                        "null"
-                      ]
-                    },
                     "isOfficial": {
                       "type": "boolean"
                     }
@@ -52994,7 +52923,6 @@
                     "resultStatus",
                     "finishPosition",
                     "startPosition",
-                    "riderName",
                     "isOfficial"
                   ],
                   "additionalProperties": false,

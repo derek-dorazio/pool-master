@@ -47,7 +47,7 @@ export type SharedEnums = {
   HomeAway: Enums.HomeAway;
   PeriodKind: Enums.PeriodKind;
   SportLeagueNoun: Enums.SportLeagueNoun;
-  RaceResultStatus: Enums.RaceResultStatus;
+  GameSideStatus: Enums.GameSideStatus;
   RaceResultRowError: Enums.RaceResultRowError;
   RaceResultOrderError: Enums.RaceResultOrderError;
   RaceResultChange: Enums.RaceResultChange;

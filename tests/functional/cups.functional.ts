@@ -96,6 +96,8 @@ async function cleanup(): Promise<void> {
     await db.contestEntryPick.deleteMany({ where: { sportEventParticipant: { sportEventId: { in: eventIds } } } });
     await db.sportEventParticipantStanding.deleteMany({ where: { sportEventParticipant: { sportEventId: { in: eventIds } } } });
     await db.sportEventParticipantValuation.deleteMany({ where: { sportEventParticipant: { sportEventId: { in: eventIds } } } });
+    // A race is a FIELD match in its event (#2008); its sides hold the field rows.
+    await db.sportEventRoundMatch.deleteMany({ where: { sportEventId: { in: eventIds } } });
     await db.sportEventParticipant.deleteMany({ where: { sportEventId: { in: eventIds } } });
     await db.sportEventRound.deleteMany({ where: { sportEventId: { in: eventIds } } });
     await db.sportEventTier.deleteMany({ where: { sportEventId: { in: eventIds } } });
@@ -188,7 +190,6 @@ describe('SDK Functional: sports league cups and the league championship (#841, 
         resultStatus: 'FINISHED' as const,
         finishPosition: expectDefined(finish[runner]),
         startPosition: null,
-        riderName: null,
       })));
       expect((await applyEventRaceResults({ client: a, path: { eventId }, body: { isOfficial: true, rows } })).response?.status).toBe(200);
     };

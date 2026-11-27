@@ -639,12 +639,13 @@ describe('sport_event_round_matches and match side database checks', () => {
     await expect(insertSide(match, { sideNumber: 2, sportEventParticipantId: entryOf('Duke').id })).rejects.toThrow(/Unique constraint/);
   });
 
-  it('refuses a side number other than 1 or 2, and a second side with the same number', async () => {
+  it('refuses a side number below 1, and a second side with the same number', async () => {
     const { event } = await createBracketEvent();
     const match = await insertMatch(event);
     await insertSide(match, { sideNumber: 1 });
 
-    await expect(insertSide(match, { sideNumber: 3 })).rejects.toThrow(/sport_event_round_match_sides_side_number_check/);
+    // A FIELD match numbers its sides 1 to n (#2008), so 3 is a side number; 0 is not.
+    await expect(insertSide(match, { sideNumber: 0 })).rejects.toThrow(/sport_event_round_match_sides_side_number_check/);
     await expect(insertSide(match, { sideNumber: 1 })).rejects.toThrow(/Unique constraint/);
   });
 
