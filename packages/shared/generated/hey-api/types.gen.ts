@@ -12340,6 +12340,106 @@ export type SportEventProviderMappingDto = {
 };
 
 /**
+ * A slot's tier set (#2044).
+ */
+export type SportEventTierSetDto = {
+    /**
+     * The Season slot the event plays in this slot: the slot tier routes take it.
+     */
+    seasonSlotId: string;
+    /**
+     * Whether this is the event's tier-set slot, the first holding a set: the one the event-level tier routes act on, released with the event.
+     */
+    isTierSetSlot: boolean;
+    /**
+     * Whether its tiers and prices are locked: the tier-set slot's at release, another slot's once it starts. A write on a locked set is refused with 409 SPORT_EVENT_TIERS_LOCKED.
+     */
+    tiersLocked: boolean;
+    /**
+     * Tiers in the set.
+     */
+    tierCount: number;
+    /**
+     * The values the set was last priced with, or null until it is priced.
+     */
+    pricing: {
+        /**
+         * Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event.
+         */
+        salaryCap: number;
+        /**
+         * Whole dollars. Every price is rounded to a multiple of it. At most the worst golfer's price.
+         */
+        unit: number;
+        /**
+         * The best seed's price, as a percentage of the salary cap.
+         */
+        topSharePercent: number;
+        /**
+         * The worst seed's price, as a percentage of the salary cap. At most `topSharePercent`.
+         */
+        floorSharePercent: number;
+        /**
+         * How fast prices fall from the top: 1 is a straight line; higher keeps the top few expensive and drops the middle of the field towards the floor.
+         */
+        steepness: number;
+        /**
+         * The pricing profile the values started from. The admin may have changed any value before assigning.
+         */
+        platformPricingProfileId: string;
+    } | null;
+    /**
+     * The tier layout the set was last auto-tiered with, or null until it first is.
+     */
+    tierLayout: {
+        type: 'EQUAL_GROUPS';
+        /**
+         * How many tiers a new event starts with.
+         */
+        tierCount: number;
+        /**
+         * How many participants auto-tiering puts in each tier before the last.
+         */
+        tierSize: number;
+        /**
+         * What the last tier takes: ALL_REMAINING, everyone left; or CAPPED, at most lastTierMax, with anyone beyond in no tier and not pickable.
+         */
+        lastTier: 'ALL_REMAINING' | 'CAPPED';
+        /**
+         * The most the last tier takes when lastTier is CAPPED. Null when it is ALL_REMAINING.
+         */
+        lastTierMax: number | null;
+        /**
+         * The tier profile the layout came from: the sport league's when the set was tiered.
+         */
+        platformTierProfileId: string;
+    } | null | {
+        type: 'RANGES';
+        /**
+         * Each tier's seeds or ranks, by tier number from 1: one per tier, with no gap or overlap, and only the last open-ended.
+         */
+        ranges: Array<{
+            /**
+             * The tier, from 1.
+             */
+            tierNumber: number;
+            /**
+             * The lowest seed or rank the tier takes.
+             */
+            fromValue: number;
+            /**
+             * The highest seed or rank the tier takes. Null: everyone from fromValue on, which only the last tier may be.
+             */
+            toValue: number | null;
+        }>;
+        /**
+         * The tier profile the layout came from: the sport league's when the set was tiered.
+         */
+        platformTierProfileId: string;
+    } | null;
+};
+
+/**
  * A real-world event a contest can be run on — a golf tournament, a race, a match.
  */
 export type SportEventDto = {
@@ -12527,6 +12627,105 @@ export type SportEventDto = {
      * Whether the tiers and prices of the event's first slot are locked: true once the event is released (#431, #2044). A tier or price write on a locked set is refused with 409 SPORT_EVENT_TIERS_LOCKED.
      */
     tiersLocked: boolean;
+    /**
+     * Every slot of the event holding a tier set (#2044), in play order, its tier-set slot first: each slot a tiered or budget template of its league lists, or its first slot alone when none lists any. A slot's tiers and prices are read and written through the slot tier routes (listEventSlotTiers). Empty for an event covering no slot.
+     */
+    tierSets: Array<{
+        /**
+         * The Season slot the event plays in this slot: the slot tier routes take it.
+         */
+        seasonSlotId: string;
+        /**
+         * Whether this is the event's tier-set slot, the first holding a set: the one the event-level tier routes act on, released with the event.
+         */
+        isTierSetSlot: boolean;
+        /**
+         * Whether its tiers and prices are locked: the tier-set slot's at release, another slot's once it starts. A write on a locked set is refused with 409 SPORT_EVENT_TIERS_LOCKED.
+         */
+        tiersLocked: boolean;
+        /**
+         * Tiers in the set.
+         */
+        tierCount: number;
+        /**
+         * The values the set was last priced with, or null until it is priced.
+         */
+        pricing: {
+            /**
+             * Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event.
+             */
+            salaryCap: number;
+            /**
+             * Whole dollars. Every price is rounded to a multiple of it. At most the worst golfer's price.
+             */
+            unit: number;
+            /**
+             * The best seed's price, as a percentage of the salary cap.
+             */
+            topSharePercent: number;
+            /**
+             * The worst seed's price, as a percentage of the salary cap. At most `topSharePercent`.
+             */
+            floorSharePercent: number;
+            /**
+             * How fast prices fall from the top: 1 is a straight line; higher keeps the top few expensive and drops the middle of the field towards the floor.
+             */
+            steepness: number;
+            /**
+             * The pricing profile the values started from. The admin may have changed any value before assigning.
+             */
+            platformPricingProfileId: string;
+        } | null;
+        /**
+         * The tier layout the set was last auto-tiered with, or null until it first is.
+         */
+        tierLayout: {
+            type: 'EQUAL_GROUPS';
+            /**
+             * How many tiers a new event starts with.
+             */
+            tierCount: number;
+            /**
+             * How many participants auto-tiering puts in each tier before the last.
+             */
+            tierSize: number;
+            /**
+             * What the last tier takes: ALL_REMAINING, everyone left; or CAPPED, at most lastTierMax, with anyone beyond in no tier and not pickable.
+             */
+            lastTier: 'ALL_REMAINING' | 'CAPPED';
+            /**
+             * The most the last tier takes when lastTier is CAPPED. Null when it is ALL_REMAINING.
+             */
+            lastTierMax: number | null;
+            /**
+             * The tier profile the layout came from: the sport league's when the set was tiered.
+             */
+            platformTierProfileId: string;
+        } | null | {
+            type: 'RANGES';
+            /**
+             * Each tier's seeds or ranks, by tier number from 1: one per tier, with no gap or overlap, and only the last open-ended.
+             */
+            ranges: Array<{
+                /**
+                 * The tier, from 1.
+                 */
+                tierNumber: number;
+                /**
+                 * The lowest seed or rank the tier takes.
+                 */
+                fromValue: number;
+                /**
+                 * The highest seed or rank the tier takes. Null: everyone from fromValue on, which only the last tier may be.
+                 */
+                toValue: number | null;
+            }>;
+            /**
+             * The tier profile the layout came from: the sport league's when the set was tiered.
+             */
+            platformTierProfileId: string;
+        } | null;
+    }>;
     /**
      * The slot definitions of the Season slots the event covers, in play order (#2010): the templates covering one of them are offered on it. Empty until the sync gives it its slots.
      */
@@ -12982,6 +13181,105 @@ export type SportEventListResponse = {
          */
         tiersLocked: boolean;
         /**
+         * Every slot of the event holding a tier set (#2044), in play order, its tier-set slot first: each slot a tiered or budget template of its league lists, or its first slot alone when none lists any. A slot's tiers and prices are read and written through the slot tier routes (listEventSlotTiers). Empty for an event covering no slot.
+         */
+        tierSets: Array<{
+            /**
+             * The Season slot the event plays in this slot: the slot tier routes take it.
+             */
+            seasonSlotId: string;
+            /**
+             * Whether this is the event's tier-set slot, the first holding a set: the one the event-level tier routes act on, released with the event.
+             */
+            isTierSetSlot: boolean;
+            /**
+             * Whether its tiers and prices are locked: the tier-set slot's at release, another slot's once it starts. A write on a locked set is refused with 409 SPORT_EVENT_TIERS_LOCKED.
+             */
+            tiersLocked: boolean;
+            /**
+             * Tiers in the set.
+             */
+            tierCount: number;
+            /**
+             * The values the set was last priced with, or null until it is priced.
+             */
+            pricing: {
+                /**
+                 * Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event.
+                 */
+                salaryCap: number;
+                /**
+                 * Whole dollars. Every price is rounded to a multiple of it. At most the worst golfer's price.
+                 */
+                unit: number;
+                /**
+                 * The best seed's price, as a percentage of the salary cap.
+                 */
+                topSharePercent: number;
+                /**
+                 * The worst seed's price, as a percentage of the salary cap. At most `topSharePercent`.
+                 */
+                floorSharePercent: number;
+                /**
+                 * How fast prices fall from the top: 1 is a straight line; higher keeps the top few expensive and drops the middle of the field towards the floor.
+                 */
+                steepness: number;
+                /**
+                 * The pricing profile the values started from. The admin may have changed any value before assigning.
+                 */
+                platformPricingProfileId: string;
+            } | null;
+            /**
+             * The tier layout the set was last auto-tiered with, or null until it first is.
+             */
+            tierLayout: {
+                type: 'EQUAL_GROUPS';
+                /**
+                 * How many tiers a new event starts with.
+                 */
+                tierCount: number;
+                /**
+                 * How many participants auto-tiering puts in each tier before the last.
+                 */
+                tierSize: number;
+                /**
+                 * What the last tier takes: ALL_REMAINING, everyone left; or CAPPED, at most lastTierMax, with anyone beyond in no tier and not pickable.
+                 */
+                lastTier: 'ALL_REMAINING' | 'CAPPED';
+                /**
+                 * The most the last tier takes when lastTier is CAPPED. Null when it is ALL_REMAINING.
+                 */
+                lastTierMax: number | null;
+                /**
+                 * The tier profile the layout came from: the sport league's when the set was tiered.
+                 */
+                platformTierProfileId: string;
+            } | null | {
+                type: 'RANGES';
+                /**
+                 * Each tier's seeds or ranks, by tier number from 1: one per tier, with no gap or overlap, and only the last open-ended.
+                 */
+                ranges: Array<{
+                    /**
+                     * The tier, from 1.
+                     */
+                    tierNumber: number;
+                    /**
+                     * The lowest seed or rank the tier takes.
+                     */
+                    fromValue: number;
+                    /**
+                     * The highest seed or rank the tier takes. Null: everyone from fromValue on, which only the last tier may be.
+                     */
+                    toValue: number | null;
+                }>;
+                /**
+                 * The tier profile the layout came from: the sport league's when the set was tiered.
+                 */
+                platformTierProfileId: string;
+            } | null;
+        }>;
+        /**
          * The slot definitions of the Season slots the event covers, in play order (#2010): the templates covering one of them are offered on it. Empty until the sync gives it its slots.
          */
         slotDefinitionIds: Array<string>;
@@ -13410,6 +13708,105 @@ export type SportEventResponse = {
          * Whether the tiers and prices of the event's first slot are locked: true once the event is released (#431, #2044). A tier or price write on a locked set is refused with 409 SPORT_EVENT_TIERS_LOCKED.
          */
         tiersLocked: boolean;
+        /**
+         * Every slot of the event holding a tier set (#2044), in play order, its tier-set slot first: each slot a tiered or budget template of its league lists, or its first slot alone when none lists any. A slot's tiers and prices are read and written through the slot tier routes (listEventSlotTiers). Empty for an event covering no slot.
+         */
+        tierSets: Array<{
+            /**
+             * The Season slot the event plays in this slot: the slot tier routes take it.
+             */
+            seasonSlotId: string;
+            /**
+             * Whether this is the event's tier-set slot, the first holding a set: the one the event-level tier routes act on, released with the event.
+             */
+            isTierSetSlot: boolean;
+            /**
+             * Whether its tiers and prices are locked: the tier-set slot's at release, another slot's once it starts. A write on a locked set is refused with 409 SPORT_EVENT_TIERS_LOCKED.
+             */
+            tiersLocked: boolean;
+            /**
+             * Tiers in the set.
+             */
+            tierCount: number;
+            /**
+             * The values the set was last priced with, or null until it is priced.
+             */
+            pricing: {
+                /**
+                 * Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event.
+                 */
+                salaryCap: number;
+                /**
+                 * Whole dollars. Every price is rounded to a multiple of it. At most the worst golfer's price.
+                 */
+                unit: number;
+                /**
+                 * The best seed's price, as a percentage of the salary cap.
+                 */
+                topSharePercent: number;
+                /**
+                 * The worst seed's price, as a percentage of the salary cap. At most `topSharePercent`.
+                 */
+                floorSharePercent: number;
+                /**
+                 * How fast prices fall from the top: 1 is a straight line; higher keeps the top few expensive and drops the middle of the field towards the floor.
+                 */
+                steepness: number;
+                /**
+                 * The pricing profile the values started from. The admin may have changed any value before assigning.
+                 */
+                platformPricingProfileId: string;
+            } | null;
+            /**
+             * The tier layout the set was last auto-tiered with, or null until it first is.
+             */
+            tierLayout: {
+                type: 'EQUAL_GROUPS';
+                /**
+                 * How many tiers a new event starts with.
+                 */
+                tierCount: number;
+                /**
+                 * How many participants auto-tiering puts in each tier before the last.
+                 */
+                tierSize: number;
+                /**
+                 * What the last tier takes: ALL_REMAINING, everyone left; or CAPPED, at most lastTierMax, with anyone beyond in no tier and not pickable.
+                 */
+                lastTier: 'ALL_REMAINING' | 'CAPPED';
+                /**
+                 * The most the last tier takes when lastTier is CAPPED. Null when it is ALL_REMAINING.
+                 */
+                lastTierMax: number | null;
+                /**
+                 * The tier profile the layout came from: the sport league's when the set was tiered.
+                 */
+                platformTierProfileId: string;
+            } | null | {
+                type: 'RANGES';
+                /**
+                 * Each tier's seeds or ranks, by tier number from 1: one per tier, with no gap or overlap, and only the last open-ended.
+                 */
+                ranges: Array<{
+                    /**
+                     * The tier, from 1.
+                     */
+                    tierNumber: number;
+                    /**
+                     * The lowest seed or rank the tier takes.
+                     */
+                    fromValue: number;
+                    /**
+                     * The highest seed or rank the tier takes. Null: everyone from fromValue on, which only the last tier may be.
+                     */
+                    toValue: number | null;
+                }>;
+                /**
+                 * The tier profile the layout came from: the sport league's when the set was tiered.
+                 */
+                platformTierProfileId: string;
+            } | null;
+        }>;
         /**
          * The slot definitions of the Season slots the event covers, in play order (#2010): the templates covering one of them are offered on it. Empty until the sync gives it its slots.
          */

@@ -105,6 +105,7 @@ export function buildSportEvent(overrides: Partial<SportEventDto> = {}): SportEv
     readinessReasons: [],
     contestEligible: true,
     tiersLocked: true,
+    tierSets: [],
     sportLeagueSeasonId: 'season-2099',
     slotDefinitionIds: [],
     championshipYear: 2099,

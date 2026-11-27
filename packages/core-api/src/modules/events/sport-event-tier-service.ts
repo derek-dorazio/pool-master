@@ -172,6 +172,15 @@ export class SportEventTierService {
     }));
   }
 
+  /**
+   * Each event's slots holding a tier set (#2044, `chooseTierSetSlots`), in play order, its
+   * tier-set slot first; an event covering no slot has none. One read however many events.
+   */
+  async holdingSlots(sportEventIds: readonly string[]): Promise<Map<string, SportEventTierSlot[]>> {
+    const slotsByEvent = await this.deps.tiers.findTierSlots(sportEventIds);
+    return new Map([...slotsByEvent].map(([sportEventId, slots]) => [sportEventId, slots.filter((slot) => slot.holdsTierSet)]));
+  }
+
   /** The event's tier-set slot (`tierSetSlots`), or undefined when it covers none. */
   async tierSetSlot(sportEventId: string, choice?: TierSetChoice): Promise<SportEventTierSlot | undefined> {
     return (await this.tierSetSlots([sportEventId], choice)).get(sportEventId);
@@ -207,7 +216,7 @@ export class SportEventTierService {
   async createDefaultTiers(
     sportLeague: Pick<SportLeague, 'id' | 'platformTierProfileId'>,
     sportEventIds: readonly string[],
-  ): Promise<Map<string, { slot: SportEventTierSlot; tiers: SportEventSlotTierDefinition[] }>> {
+  ): Promise<Map<string, { slot: SportEventTierSlot; holding: SportEventTierSlot[]; tiers: SportEventSlotTierDefinition[] }>> {
     if (sportEventIds.length === 0) return new Map();
     const [profile, slotsByEvent] = await Promise.all([
       this.deps.platformTierProfiles.findById(sportLeague.platformTierProfileId),
@@ -221,7 +230,10 @@ export class SportEventTierService {
     // Every slot holding a set gets the defaults (`chooseTierSetSlots`), a later one too (#2044).
     const holding = [...slotsByEvent.values()].flat().filter((slot) => slot.holdsTierSet);
     await this.deps.tiers.createMany(holding.flatMap((slot) => tiers.map((tier) => ({ sportEventSlotId: slot.id, ...tier }))));
-    const tiersByEvent = new Map(holding.filter((slot) => slot.isTierSetSlot).map((slot) => [slot.sportEventId, { slot, tiers }]));
+    const tiersByEvent = new Map(holding.filter((slot) => slot.isTierSetSlot).map((slot) => [
+      slot.sportEventId,
+      { slot, holding: holding.filter((each) => each.sportEventId === slot.sportEventId), tiers },
+    ]));
     this.deps.logger?.info(
       { sportEventIds: [...tiersByEvent.keys()], tierCount, slotCount: holding.length },
       'Created default tiers',
