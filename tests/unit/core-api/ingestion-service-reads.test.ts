@@ -299,7 +299,7 @@ describe('IngestionService.getSyncRun', () => {
 });
 
 describe('IngestionService.syncEventData refusals', () => {
-  const REQUEST = { sport: Sport.GOLF, providerId: 'mock-provider', eventId: 'evt-1', feeds: ['EVENTLIVESCORES' as const] };
+  const REQUEST = { sport: Sport.GOLF, providerId: 'mock-provider', eventId: 'evt-1', kinds: ['SCORES' as const] };
 
   it('fails when no scheduler is wired, since a manual sync has nothing to run it', async () => {
     await expect(service({ registry: registryWith(fakeSportDataProvider()) }).syncEventData(REQUEST, 'admin', 'a@x.test'))
@@ -345,7 +345,7 @@ describe('IngestionService manual sync job (#1441)', () => {
     const ingestion = service({ registry: registryWith(fakeSportDataProvider({ providerId: 'balldontlie' })), scheduler, syncRuns: runs, sportEvents });
 
     const submitted = await ingestion.syncEventData({
-      sport: Sport.GOLF, providerId: 'balldontlie', eventId: 'evt-1', feeds: ['EVENTPARTICIPANTS', 'EVENTLIVESCORES'],
+      sport: Sport.GOLF, providerId: 'balldontlie', eventId: 'evt-1', kinds: ['FIELD', 'SCORES'],
     }, 'admin', 'a@x.test');
 
     expect(runEventSync).not.toHaveBeenCalled();
@@ -376,13 +376,13 @@ describe('IngestionService manual sync job (#1441)', () => {
     const ingestion = service({ registry: registryWith(provider), scheduler, syncRuns: runs, sportEvents });
 
     const submitted = await ingestion.syncEventData({
-      sport: Sport.GOLF, providerId: 'balldontlie', eventId: 'evt-1', feeds: ['EVENTPARTICIPANTS', 'EVENTLIVESCORES'],
+      sport: Sport.GOLF, providerId: 'balldontlie', eventId: 'evt-1', kinds: ['FIELD', 'SCORES'],
     }, 'admin', 'a@x.test');
     await ingestion.jobsDone();
 
     const [fieldRun, scoresRun] = submitted.syncRuns;
-    expect(runEventSync).toHaveBeenNthCalledWith(1, expect.objectContaining({ feeds: ['EVENTPARTICIPANTS'] }));
-    expect(runEventSync).toHaveBeenNthCalledWith(2, expect.objectContaining({ feeds: ['EVENTLIVESCORES'] }));
+    expect(runEventSync).toHaveBeenNthCalledWith(1, expect.objectContaining({ kinds: ['FIELD'] }));
+    expect(runEventSync).toHaveBeenNthCalledWith(2, expect.objectContaining({ kinds: ['SCORES'] }));
     expect(runs.update).toHaveBeenCalledWith(fieldRun.id, expect.objectContaining({ status: 'FAILED' }));
     expect(runs.update).toHaveBeenCalledWith(scoresRun.id, expect.objectContaining({ status: 'COMPLETED' }));
     // A failed feed is the run's outcome, not the job's: the job is done.
@@ -408,7 +408,7 @@ describe('IngestionService manual sync job (#1441)', () => {
     await ingestion.runManualEventSync({ syncRunIds: [started.id, waiting.id], sport: Sport.GOLF, providerId: 'balldontlie', eventId: 'evt-1' }, { attempt: 2, jobId: 'job-1' });
 
     expect(runEventSync).toHaveBeenCalledTimes(1);
-    expect(runEventSync).toHaveBeenCalledWith(expect.objectContaining({ feeds: ['EVENTPARTICIPANTS'] }));
+    expect(runEventSync).toHaveBeenCalledWith(expect.objectContaining({ kinds: ['FIELD'] }));
     const interrupted = runs.rows.find((run) => run.id === started.id);
     expect(interrupted?.status).toBe('FAILED');
     expect(interrupted?.completedAt).toBeInstanceOf(Date);
@@ -508,7 +508,7 @@ describe('IngestionService manual sync job (#1441)', () => {
 
     await runWithReadMemo(async () => {
       await memoizedRead(root, `${ReadMemoKey.sportEvent}event-1`, load);
-      await ingestion.syncEventData({ sport: Sport.GOLF, providerId: 'balldontlie', eventId: 'evt-1', feeds: ['EVENTLIVESCORES'] }, 'admin', 'a@x.test');
+      await ingestion.syncEventData({ sport: Sport.GOLF, providerId: 'balldontlie', eventId: 'evt-1', kinds: ['SCORES'] }, 'admin', 'a@x.test');
     });
     await ingestion.jobsDone();
 

@@ -75,7 +75,7 @@ describe('toProviderManualSyncSubmissionResponse', () => {
     const result: ProviderManualSyncSubmissionResult = {
       sport: Sport.GOLF,
       eventId: 'event-1',
-      requestedFeeds: ['EVENTPARTICIPANTS'],
+      requestedKinds: ['FIELD'],
       submittedAt: new Date('2026-01-01T00:00:00Z'),
       syncRuns: [buildRun(), buildRun({ id: 'run-2' })],
     };

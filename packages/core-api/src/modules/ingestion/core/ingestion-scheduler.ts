@@ -26,8 +26,7 @@ import { SyncOrchestrator } from './sync-orchestrator';
 import type { SyncWriteDiagnostics } from './sync-write-diagnostics';
 import { syncWriteStats } from './sync-write-diagnostics';
 import type {
-  EventSyncFeed,
-  IngestionFeedType,
+  EventSyncKind,
   NormalizedSyncRequest,
   SyncOrchestratorRequest,
   SyncRequestSource,
@@ -45,8 +44,6 @@ import type { LiveScorePersistenceResult } from './score-publisher';
 import { countLiveScoreUpdates } from './live-score-count';
 import { runWithJobStart, SCHEDULE_START } from '../../../core/job-start';
 import { jobDeferredUntilOf } from '../../background-jobs/job-error-type';
-
-export type { IngestionFeedType } from './sync-orchestrator';
 
 export type JobType =
   | 'EVENT_PARTICIPANTS_SYNC'
@@ -82,7 +79,6 @@ export interface IngestionJobWarning {
 }
 
 export interface IngestionJobProviderPayload {
-  operation: IngestionFeedType;
   rawCaptured: boolean;
   rawTruncated: boolean;
   raw?: ProviderPayloadCapture[];
@@ -100,7 +96,7 @@ export interface EventSyncRequest {
   /** The provider the event is linked to (#1495). */
   providerId: string;
   eventId: string;
-  feeds: EventSyncFeed[];
+  kinds: EventSyncKind[];
 }
 
 /**
@@ -144,9 +140,8 @@ export interface IngestionScheduledEventReader {
    * The next events per provider whose fields a participant sync loads: the events of synced sport
    * leagues only, whose sync names the event's provider (ADR 0011, #2086).
    */
-  listEventsForFeed(input: {
+  listFieldSyncEvents(input: {
     sport: Sport;
-    feed: 'EVENTPARTICIPANTS';
     from?: Date;
     now: Date;
     to?: Date;
@@ -317,17 +312,17 @@ export class IngestionScheduler {
     return this.running;
   }
 
-  /** Runs a one-off event sync for explicit feed types. */
+  /** Runs a one-off event sync for the requested sync kinds. */
   async runEventSync(request: EventSyncRequest): Promise<IngestionJobRecord[]> {
     const jobs: IngestionJobRecord[] = [];
     this.logger?.info({
       sport: request.sport,
       eventId: request.eventId,
-      feeds: request.feeds,
+      kinds: request.kinds,
     }, 'Ad hoc event sync requested');
 
-    for (const feed of dedupe(request.feeds)) {
-      if (feed === 'EVENTPARTICIPANTS') {
+    for (const kind of dedupe(request.kinds)) {
+      if (kind === ProviderSyncKind.FIELD) {
         jobs.push(await this.runEventFieldSync(request.sport, request.providerId, request.eventId));
         continue;
       }
@@ -338,7 +333,7 @@ export class IngestionScheduler {
     this.logger?.info({
       sport: request.sport,
       eventId: request.eventId,
-      feeds: request.feeds,
+      kinds: request.kinds,
       jobs: jobs.map(toJobLogPayload),
     }, 'Ad hoc event sync completed');
 
@@ -358,7 +353,7 @@ export class IngestionScheduler {
       return createFailedJob('EVENT_LIVE_SCORES_SYNC', providerId, sport, 'No provider registered', eventId);
     }
 
-    return this.runJob('EVENT_LIVE_SCORES_SYNC', provider.providerId, sport, 'EVENTLIVESCORES', provider, async () => {
+    return this.runJob('EVENT_LIVE_SCORES_SYNC', provider.providerId, sport, provider, async () => {
       const result = await provider.getLiveScores(eventId);
       const updateCount = countLiveScoreUpdates(result);
       this.logger?.debug({
@@ -418,9 +413,8 @@ export class IngestionScheduler {
     window: { from: Date; to: Date },
     eventReader: IngestionScheduledEventReader,
   ): Promise<void> {
-    const events = await eventReader.listEventsForFeed({
+    const events = await eventReader.listFieldSyncEvents({
       sport,
-      feed: 'EVENTPARTICIPANTS',
       from: window.from,
       now: this.getNow(),
       to: window.to,
@@ -437,7 +431,7 @@ export class IngestionScheduler {
         sport,
         providerId: event.providerId,
         eventId: event.externalId,
-        feeds: ['EVENTPARTICIPANTS'],
+        kinds: [ProviderSyncKind.FIELD],
       });
       const { scope } = normalized;
       await this.executeScheduledSyncRun(normalized, () =>
@@ -447,10 +441,10 @@ export class IngestionScheduler {
   }
 
   private async runConfiguredLiveScoreSweep(sport: Sport, eventReader: IngestionScheduledEventReader): Promise<void> {
-    const feed = 'EVENTLIVESCORES' as const;
+    const kind = ProviderSyncKind.SCORES;
     const config = await this.getGlobalConfig();
     if (!config.SCORES.enabled) {
-      this.logger?.debug({ sport, feed }, 'Skipping scheduled event sync sweep because it is disabled');
+      this.logger?.debug({ sport, kind }, 'Skipping scheduled event sync sweep because it is disabled');
       return;
     }
 
@@ -460,15 +454,15 @@ export class IngestionScheduler {
 
     this.logger?.debug({
       sport,
-      feed,
+      kind,
       eventCount: events.length,
       events,
     }, 'Resolved scheduled event sync candidates');
 
     for (const event of events) {
-      const inFlightKey = buildScheduledEventSyncKey(sport, feed, event);
+      const inFlightKey = buildScheduledEventSyncKey(sport, kind, event);
       if (this.inFlightScheduledEventSyncs.has(inFlightKey)) {
-        this.logger?.debug({ sport, feed, ...event }, 'Skipping scheduled event sync because a run is already in flight');
+        this.logger?.debug({ sport, kind, ...event }, 'Skipping scheduled event sync because a run is already in flight');
         continue;
       }
       this.inFlightScheduledEventSyncs.add(inFlightKey);
@@ -476,7 +470,7 @@ export class IngestionScheduler {
         sport,
         providerId: event.providerId,
         eventId: event.externalId,
-        feeds: [feed],
+        kinds: [kind],
       });
       const { scope } = normalized;
       try {
@@ -569,13 +563,13 @@ export class IngestionScheduler {
    * only where the scheduled sweep would: its provider running here, with live scores on.
    */
   async runNotifiedEventSync(request: NotifiedEventSync, context: { jobId: string; trigger: JobTrigger }): Promise<IngestionJobRecord | null> {
-    const feed = 'EVENTLIVESCORES' as const;
+    const kind = ProviderSyncKind.SCORES;
     if (this.registry.bySourceId(request.providerId) === null) {
-      this.logger?.info({ ...request, feed }, 'Skipped a webhook event sync because its provider is not running here');
+      this.logger?.info({ ...request, kind }, 'Skipped a webhook event sync because its provider is not running here');
       return null;
     }
     if (!(await this.getGlobalConfig()).SCORES.enabled) {
-      this.logger?.info({ ...request, feed }, 'Skipped a webhook event sync because live score syncs are off for the sport');
+      this.logger?.info({ ...request, kind }, 'Skipped a webhook event sync because live score syncs are off for the sport');
       return null;
     }
 
@@ -587,7 +581,7 @@ export class IngestionScheduler {
         sport: request.sport,
         providerId: request.providerId,
         eventId: request.eventId,
-        feeds: [feed],
+        kinds: [kind],
       },
     } satisfies SyncOrchestratorRequest);
     const { scope } = normalized;
@@ -600,7 +594,7 @@ export class IngestionScheduler {
     sport: Sport;
     providerId: string;
     eventId: string;
-    feeds: readonly EventSyncFeed[];
+    kinds: readonly EventSyncKind[];
   }): NormalizedSyncRequest {
     return this.syncOrchestrator.normalizeRequest({
       source: SCHEDULED_SYNC_SOURCE,
@@ -610,7 +604,7 @@ export class IngestionScheduler {
         sport: input.sport,
         providerId: input.providerId,
         eventId: input.eventId,
-        feeds: input.feeds,
+        kinds: input.kinds,
       },
     } satisfies SyncOrchestratorRequest);
   }
@@ -654,7 +648,7 @@ export class IngestionScheduler {
       return createFailedJob('EVENT_PARTICIPANTS_SYNC', providerId, sport, 'No provider registered', eventId);
     }
 
-    return this.runJob('EVENT_PARTICIPANTS_SYNC', provider.providerId, sport, 'EVENTPARTICIPANTS', provider, async () => {
+    return this.runJob('EVENT_PARTICIPANTS_SYNC', provider.providerId, sport, provider, async () => {
       const detail = await provider.getEventDetails(eventId);
       if (!detail) {
         this.logger?.warn({ sport, eventId, providerId: provider.providerId }, 'Provider returned no event detail for participant sync');
@@ -691,7 +685,6 @@ export class IngestionScheduler {
     jobType: JobType,
     providerId: string,
     sport: Sport,
-    feed: IngestionFeedType,
     provider: SportDataProvider,
     work: () => Promise<IngestionJobWorkResult>,
     eventExternalId: string,
@@ -730,13 +723,13 @@ export class IngestionScheduler {
       job.stats = result.stats;
       job.warnings = result.warnings;
       job.writeDiagnostics = result.writeDiagnostics;
-      job.providerPayload = buildProviderPayload(feed, provider, payloadCaptureSession);
+      job.providerPayload = buildProviderPayload(provider, payloadCaptureSession);
       job.status = 'COMPLETED';
     } catch (err) {
       // The provider turned the call away for now (league model 1c): the caller's job is queued
       // again for when it will answer, so the failure is thrown, not kept as this run's outcome.
       if (jobDeferredUntilOf(err) !== null) throw err;
-      job.providerPayload = buildProviderPayload(feed, provider, payloadCaptureSession);
+      job.providerPayload = buildProviderPayload(provider, payloadCaptureSession);
       const failure = toIngestionFailureLog(err);
       this.logger?.error({
         jobType,
@@ -895,14 +888,13 @@ function createFailedJob(
 
 function buildScheduledEventSyncKey(
   sport: Sport,
-  feed: EventSyncFeed,
+  kind: EventSyncKind,
   event: ScheduledEventRef,
 ): string {
-  return `${sport}:${feed}:${event.providerId}:${event.externalId}`;
+  return `${sport}:${kind}:${event.providerId}:${event.externalId}`;
 }
 
 function buildProviderPayload(
-  operation: IngestionFeedType,
   provider: SportDataProvider,
   captureSession?: ProviderPayloadCaptureSession | null,
 ): IngestionJobProviderPayload {
@@ -910,7 +902,6 @@ function buildProviderPayload(
   const source = captureSession ?? (supportsProviderPayloadDiagnostics(provider) ? provider : null);
   if (!source) {
     return {
-      operation,
       rawCaptured: false,
       rawTruncated: false,
     };
@@ -918,7 +909,6 @@ function buildProviderPayload(
 
   const raw = source.consumeProviderPayloads();
   const payload: IngestionJobProviderPayload = {
-    operation,
     rawCaptured: raw.length > 0,
     rawTruncated: raw.some((entry) => entry.rawOmitted === true),
   };

@@ -118,7 +118,7 @@ function fakes() {
   };
   const lifecycle = { applySportEventStatusTransition: fn(undefined) };
   const eventOverviews = { getEventOverview: fn<SportEventOverview | null>(EVENT_OVERVIEW) };
-  const ingestion = { syncEventData: fn({ sport: 'GOLF', eventId: 'masters-2026', requestedFeeds: ['EVENTPARTICIPANTS'], submittedAt: AT, syncRuns: [] }) };
+  const ingestion = { syncEventData: fn({ sport: 'GOLF', eventId: 'masters-2026', requestedKinds: ['FIELD'], submittedAt: AT, syncRuns: [] }) };
   const leaderboards = { eventsChanged: fn(undefined) };
   const handlers = createEventHandlers({
     services: services as unknown as SportEventServices,
@@ -244,7 +244,7 @@ describe('field refresh from the provider', () => {
 
     const reply = await callHandler(handlers.refreshEventParticipants, stubRequest({ params, authUser: admin }));
 
-    expect(ingestion.syncEventData).toHaveBeenCalledWith({ sport: 'GOLF', providerId: 'balldontlie', eventId: 'masters-2026', feeds: ['EVENTPARTICIPANTS'] }, 'admin', 'admin@example.test');
+    expect(ingestion.syncEventData).toHaveBeenCalledWith({ sport: 'GOLF', providerId: 'balldontlie', eventId: 'masters-2026', kinds: ['FIELD'] }, 'admin', 'admin@example.test');
     expect(reply).toMatchObject({ statusCode: 202, body: { eventId: 'masters-2026' } });
   });
 

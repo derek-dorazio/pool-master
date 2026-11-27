@@ -5,13 +5,14 @@ import {
   MatchStatus,
   providerCodeOfSourceId,
   providerSourceIdOf,
+  ProviderSyncKind,
   SportEventStatus,
   type ProviderCode,
   type Sport,
 } from '@poolmaster/shared/domain';
 import type { ProviderRegistry } from './provider-registry';
 import type { IngestionScheduledEventReader, LiveScoreEventRef } from './ingestion-scheduler';
-import type { EventSyncFeed } from './sync-orchestrator';
+import type { EventSyncKind } from './sync-orchestrator';
 import { sportEventSportWhere } from '../../../adapters/sport-of';
 
 /** How many upcoming events per provider a field sync pass loads. */
@@ -32,17 +33,18 @@ export function createScheduledEventReader({
   logger,
 }: ScheduledEventReaderDependencies): IngestionScheduledEventReader {
   return {
-    async listEventsForFeed({ sport, feed, from, now, to }) {
+    async listFieldSyncEvents({ sport, from, now, to }) {
+      const kind = ProviderSyncKind.FIELD;
       logger?.debug({
         sport,
-        feed,
+        kind,
         from: from?.toISOString() ?? null,
         now: now.toISOString(),
         to: to?.toISOString() ?? null,
-      }, 'Listing sport events for scheduled ingestion feed');
+      }, 'Listing sport events for a scheduled field sync');
 
       // Each running provider syncs the events of the leagues whose selected mapping names it (#2073).
-      const providerIds = servingProviderIds(sport, feed);
+      const providerIds = servingProviderIds(sport, kind);
       // Each provider loads the fields of its own next two events, so one provider's earlier
       // events never hold another's back.
       const rows = (await Promise.all(providerIds.map(async (providerId) => {
@@ -78,17 +80,17 @@ export function createScheduledEventReader({
       }))).flat();
       logger?.debug({
         sport,
-        feed,
+        kind,
         providerIds,
         eventCount: rows.length,
         events: rows,
-      }, 'Listed sport events for scheduled ingestion feed');
+      }, 'Listed sport events for a scheduled event sync');
       return rows;
     },
 
     async listLiveScoreEvents({ sport, now }) {
-      const feed = 'EVENTLIVESCORES';
-      const providerIds = servingProviderIds(sport, feed);
+      const kind = ProviderSyncKind.SCORES;
+      const providerIds = servingProviderIds(sport, kind);
       if (providerIds.length === 0) return [];
       const codes = providerIds.flatMap((providerId) => {
         const code = providerCodeOfSourceId(providerId);
@@ -143,7 +145,7 @@ export function createScheduledEventReader({
           playUnderwaySince: roundUnderwaySince(roundSchedule, now),
         })));
       const events = [...roundEvents, ...await matchEventRefs(rows.filter(playsMatches))];
-      logger?.debug({ sport, feed, providerIds, eventCount: events.length, events }, 'Listed sport events for scheduled ingestion feed');
+      logger?.debug({ sport, kind, providerIds, eventCount: events.length, events }, 'Listed sport events for a scheduled event sync');
       return events;
     },
 
@@ -185,10 +187,10 @@ export function createScheduledEventReader({
   }
 
   /** The running providers' ids, as their feeds name them: each syncs only the leagues that select it. */
-  function servingProviderIds(sport: Sport, feed: EventSyncFeed): string[] {
+  function servingProviderIds(sport: Sport, kind: EventSyncKind): string[] {
     const providerIds = registry.all().map((provider) => provider.providerId);
     if (providerIds.length === 0) {
-      logger?.warn({ sport, feed }, 'Skipping scheduled event feed because no provider is running');
+      logger?.warn({ sport, kind }, 'Skipping scheduled event sync because no provider is running');
     }
     return providerIds;
   }

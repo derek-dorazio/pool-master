@@ -72,11 +72,11 @@ describe('IngestionService manual sync submission', () => {
       sport: Sport.GOLF,
       providerId: 'balldontlie',
       eventId: '  golf-open-championship-2026  ',
-      feeds: ['EVENTLIVESCORES', 'EVENTLIVESCORES'],
+      kinds: ['SCORES', 'SCORES'],
     }, 'admin-1', 'admin@example.com');
 
     expect(result.eventId).toBe('golf-open-championship-2026');
-    expect(result.requestedFeeds).toEqual(['EVENTLIVESCORES']);
+    expect(result.requestedKinds).toEqual(['SCORES']);
     expect(syncRuns.rows).toEqual([expect.objectContaining({
       providerId: BALLDONTLIE_TEST_PROVIDER_ID,
       providerName: 'BALLDONTLIE',
@@ -95,7 +95,7 @@ describe('IngestionService manual sync submission', () => {
       sport: Sport.GOLF,
       providerId: 'balldontlie',
       eventId: 'golf-open-championship-2026',
-      feeds: ['EVENTLIVESCORES'],
+      kinds: ['SCORES'],
     });
   });
 
@@ -121,7 +121,7 @@ describe('IngestionService manual sync submission', () => {
       sport: Sport.GOLF,
       providerId: 'balldontlie',
       eventId: 'open-2026',
-      feeds: ['EVENTLIVESCORES', 'EVENTPARTICIPANTS'],
+      kinds: ['SCORES', 'FIELD'],
     }, 'admin-1', 'admin@example.com');
 
     const runner = new BackgroundJobRunner({
@@ -131,7 +131,7 @@ describe('IngestionService manual sync submission', () => {
     await runner.drain();
 
     expect(scheduler.runEventSync).toHaveBeenCalledTimes(2);
-    expect(scheduler.runEventSync).toHaveBeenLastCalledWith(expect.objectContaining({ feeds: ['EVENTPARTICIPANTS'] }));
+    expect(scheduler.runEventSync).toHaveBeenLastCalledWith(expect.objectContaining({ kinds: ['FIELD'] }));
     expect(syncRuns.rows.map((run) => [run.kind, run.status])).toEqual([
       ['SCORES', 'FAILED'],
       ['FIELD', 'COMPLETED'],
@@ -188,9 +188,9 @@ describe('IngestionService manual sync submission', () => {
     it('queues the sync for the id its league\'s provider has for the event', async () => {
       const { service, syncRuns } = buildEventSyncService(jest.fn().mockResolvedValue(event()));
 
-      const result = await service.syncSportEvent('event-1', ['EVENTPARTICIPANTS'], 'admin-1', 'admin@example.com');
+      const result = await service.syncSportEvent('event-1', ['FIELD'], 'admin-1', 'admin@example.com');
 
-      expect(result).toMatchObject({ sport: Sport.GOLF, eventId: 'golf-open-2026', requestedFeeds: ['EVENTPARTICIPANTS'] });
+      expect(result).toMatchObject({ sport: Sport.GOLF, eventId: 'golf-open-2026', requestedKinds: ['FIELD'] });
       expect(syncRuns.rows).toEqual([expect.objectContaining({ kind: 'FIELD', status: 'SUBMITTED' })]);
     });
 
@@ -198,11 +198,11 @@ describe('IngestionService manual sync submission', () => {
       const testEvent = buildEventSyncService(jest.fn().mockResolvedValue(event({ providerMappings: [] })));
       const missing = buildEventSyncService(jest.fn().mockResolvedValue(null));
 
-      await expect(testEvent.service.syncSportEvent('event-1', ['EVENTLIVESCORES'], 'admin-1', 'admin@example.com'))
+      await expect(testEvent.service.syncSportEvent('event-1', ['SCORES'], 'admin-1', 'admin@example.com'))
         .rejects.toThrow(SportEventNotSyncedError);
-      await expect(testEvent.service.syncSportEvent('event-1', ['EVENTLIVESCORES'], 'admin-1', 'admin@example.com'))
+      await expect(testEvent.service.syncSportEvent('event-1', ['SCORES'], 'admin-1', 'admin@example.com'))
         .rejects.toMatchObject({ code: 'EVENT_NOT_LINKED', statusCode: 409 });
-      await expect(missing.service.syncSportEvent('event-1', ['EVENTLIVESCORES'], 'admin-1', 'admin@example.com'))
+      await expect(missing.service.syncSportEvent('event-1', ['SCORES'], 'admin-1', 'admin@example.com'))
         .rejects.toMatchObject({ code: 'EVENT_NOT_FOUND', statusCode: 404 });
       expect([...testEvent.syncRuns.rows, ...missing.syncRuns.rows]).toEqual([]);
     });

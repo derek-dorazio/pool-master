@@ -42,7 +42,7 @@ describe('createScheduledEventReader', () => {
   it('reads nothing and warns when no provider is running here, for fields and for scores', async () => {
     const { read, findMany, logger } = reader([]);
 
-    await expect(read.listEventsForFeed({ sport: Sport.GOLF, feed: 'EVENTPARTICIPANTS', now: NOW })).resolves.toEqual([]);
+    await expect(read.listFieldSyncEvents({ sport: Sport.GOLF, now: NOW })).resolves.toEqual([]);
     await expect(read.listLiveScoreEvents({ sport: Sport.GOLF, now: NOW })).resolves.toEqual([]);
 
     expect(findMany).not.toHaveBeenCalled();
@@ -54,11 +54,11 @@ describe('createScheduledEventReader', () => {
     const from = new Date('2026-11-10T00:00:00.000Z');
     const to = new Date('2026-11-20T00:00:00.000Z');
 
-    await expect(read.listEventsForFeed({ sport: Sport.GOLF, feed: 'EVENTPARTICIPANTS', now: NOW })).resolves.toEqual([
+    await expect(read.listFieldSyncEvents({ sport: Sport.GOLF, now: NOW })).resolves.toEqual([
       { providerId: 'balldontlie', externalId: 'BALLDONTLIE-ext' },
     ]);
     findMany.mockClear();
-    await read.listEventsForFeed({ sport: Sport.GOLF, feed: 'EVENTPARTICIPANTS', from, now: NOW, to });
+    await read.listFieldSyncEvents({ sport: Sport.GOLF, from, now: NOW, to });
 
     expect(findMany.mock.calls.map(([query]) => query.where)).toEqual([{
       providerMappings: { some: { provider: { code: 'BALLDONTLIE' } } },
@@ -72,7 +72,7 @@ describe('createScheduledEventReader', () => {
   it('narrows a provider\'s field query to active sport leagues whose selected mapping names that provider, and asks nothing of a provider with no Provider row', async () => {
     const { read, findMany } = reader(['mock', 'balldontlie']);
 
-    await expect(read.listEventsForFeed({ sport: Sport.GOLF, feed: 'EVENTPARTICIPANTS', now: NOW })).resolves.toEqual([
+    await expect(read.listFieldSyncEvents({ sport: Sport.GOLF, now: NOW })).resolves.toEqual([
       { providerId: 'balldontlie', externalId: 'BALLDONTLIE-ext' },
     ]);
 
@@ -85,7 +85,7 @@ describe('createScheduledEventReader', () => {
   it('issues one query per provider a league can sync from for the field feed and exactly one in all for the scores feed, however many events they hold', async () => {
     const { read, findMany } = reader(['mock', 'balldontlie']);
 
-    await read.listEventsForFeed({ sport: Sport.GOLF, feed: 'EVENTPARTICIPANTS', now: NOW });
+    await read.listFieldSyncEvents({ sport: Sport.GOLF, now: NOW });
     expect(findMany).toHaveBeenCalledTimes(1);
 
     findMany.mockClear();

@@ -30,7 +30,7 @@ async function queueEventSync(event: SportEventDto, kind: EventSyncKind): Promis
     if (!response.data?.syncRuns) throwApiError(response.error, 'Field sync response is missing data.');
     return;
   }
-  const response = await submitEventSync({ path: { eventId: event.id }, body: { feeds: ['EVENTLIVESCORES'] } });
+  const response = await submitEventSync({ path: { eventId: event.id }, body: { kinds: [ProviderSyncKind.SCORES] } });
   if (!response.data) throwApiError(response.error, 'Live scores sync response is missing data.');
 }
 

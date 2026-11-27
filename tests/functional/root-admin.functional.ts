@@ -88,7 +88,7 @@ describe('SDK Functional: Root Admin', () => {
     const prepareSyncResponse = await submitEventSync({
       client: user.client,
       path: { eventId: randomUUID() },
-      body: { feeds: ['EVENTLIVESCORES'] },
+      body: { kinds: ['SCORES'] },
     });
 
     expectFunctionalError(prepareSyncResponse, {

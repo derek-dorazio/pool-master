@@ -852,9 +852,9 @@ The `EVENTSCHEDULE` and `EVENTRESULTS` feeds were retired in #126, and with them
 sync (`submitSportSync`). ADR-0011 (superseding ADR-0009) makes a live league's sync the source of
 its events, built on the per-league readers rather than these retired feeds: each event it creates
 is kept under the provider's id for it, one `SportEventProviderMapping` row per provider, under the
-league's provider mapping (#2004). No admin links an event to a provider by hand any more. The two
-remaining feeds, `EVENTPARTICIPANTS` and `EVENTLIVESCORES`, are event-scoped and reach only the
-events their provider has such an id for; a test event has none. A field sync
+league's provider mapping (#2004). No admin links an event to a provider by hand any more. An event
+syncs two kinds, `FIELD` and `SCORES` (`ProviderSyncKind`, the one name for a sync kind, #2093),
+and reaches only the events their provider has such an id for; a test event has none. A field sync
 writes the field and its size, never the event's details or status (a synced league's sweep keeps
 those, #1727), and a score for a round the
 admin did not schedule is skipped, never creating the round (#435). A live score is written only

@@ -44,7 +44,7 @@ const OTHER_PROVIDER = 'OTHER_FEED' as ProviderCode;
 function readerOf({ fields = [], live = [], sports = [Sport.GOLF] }: { fields?: ScheduledEventRef[]; live?: Array<ScheduledEventRef & Partial<LiveScoreEventRef>>; sports?: Sport[] }) {
   return {
     listSyncedSports: jest.fn().mockResolvedValue(sports),
-    listEventsForFeed: jest.fn().mockResolvedValue(fields),
+    listFieldSyncEvents: jest.fn().mockResolvedValue(fields),
     listLiveScoreEvents: jest.fn().mockResolvedValue(live.map((event): LiveScoreEventRef => ({
       providerLeagueCode: 'pga',
       playedInRounds: true,
@@ -262,7 +262,7 @@ describe('IngestionScheduler', () => {
         sport: 'GOLF',
         providerId: 'mock-provider',
         eventId: 'evt-1',
-        feeds: ['EVENTPARTICIPANTS'],
+        kinds: ['FIELD'],
       });
 
       expect(mockCallbacks.onEventDetail).toHaveBeenCalledWith(detail);
@@ -360,11 +360,11 @@ describe('IngestionScheduler', () => {
         sport: 'GOLF',
         providerId: 'mock-provider',
         eventId: 'e1',
-        feeds: ['EVENTLIVESCORES'],
+        kinds: ['SCORES'],
       });
 
       expect(job.providerPayload).toEqual({
-        operation: 'EVENTLIVESCORES',
+        
         rawCaptured: true,
         rawTruncated: true,
         raw: captured,
@@ -379,7 +379,7 @@ describe('IngestionScheduler', () => {
         sport: 'GOLF',
         providerId: 'deferred-provider',
         eventId: 'evt-ext',
-        feeds: ['EVENTLIVESCORES'],
+        kinds: ['SCORES'],
       };
 
       const firstRun = scheduler.runEventSync(request);
@@ -561,7 +561,7 @@ describe('IngestionScheduler', () => {
         sport: 'GOLF',
         providerId: 'mock-provider',
         eventId: 'evt-1',
-        feeds: ['EVENTPARTICIPANTS', 'EVENTLIVESCORES'],
+        kinds: ['FIELD', 'SCORES'],
       });
 
       expect(provider.getEventDetails).toHaveBeenCalledWith('evt-1');
@@ -581,7 +581,7 @@ describe('IngestionScheduler', () => {
         sport: 'GOLF',
         providerId: 'mock-provider',
         eventId: 'masters-2026',
-        feeds: ['EVENTPARTICIPANTS'],
+        kinds: ['FIELD'],
       });
 
       expect(provider.getEventDetails).toHaveBeenCalledWith('masters-2026');
@@ -675,7 +675,7 @@ describe('IngestionScheduler', () => {
             type: 'EVENT',
             sport: 'GOLF',
             eventId: 'live-event',
-            feeds: ['EVENTLIVESCORES'],
+            kinds: ['SCORES'],
           }),
         }),
       }));
@@ -783,7 +783,7 @@ describe('IngestionScheduler', () => {
           sport: 'GOLF',
           providerId: 'mock-provider',
           eventId: 'active-event',
-          feeds: ['EVENTPARTICIPANTS'],
+          kinds: ['FIELD'],
         },
       }));
       expect(syncOrchestrator.normalizeRequest).toHaveBeenCalledWith(expect.objectContaining({
@@ -794,7 +794,7 @@ describe('IngestionScheduler', () => {
           sport: 'GOLF',
           providerId: 'mock-provider',
           eventId: 'live-event',
-          feeds: ['EVENTLIVESCORES'],
+          kinds: ['SCORES'],
         },
       }));
       expect(syncOrchestrator.normalizeRequest).toHaveBeenCalledTimes(2);
@@ -843,9 +843,8 @@ describe('IngestionScheduler', () => {
       await scheduler['runConfiguredSportFieldSync']('GOLF', eventReader);
 
       expect(provider.getUpcomingEvents).not.toHaveBeenCalled();
-      expect(eventReader.listEventsForFeed).toHaveBeenCalledWith({
+      expect(eventReader.listFieldSyncEvents).toHaveBeenCalledWith({
         sport: 'GOLF',
-        feed: 'EVENTPARTICIPANTS',
         from: now,
         now,
         to: new Date('2026-05-12T12:00:00.000Z'),
@@ -906,9 +905,8 @@ describe('IngestionScheduler', () => {
 
       expect(eventReader.listSyncedSports).toHaveBeenCalledWith({ providerCodes: [ProviderCode.BALLDONTLIE] });
       expect(provider.getUpcomingEvents).not.toHaveBeenCalled();
-      expect(eventReader.listEventsForFeed).toHaveBeenCalledWith(expect.objectContaining({
+      expect(eventReader.listFieldSyncEvents).toHaveBeenCalledWith(expect.objectContaining({
         sport: 'GOLF',
-        feed: 'EVENTPARTICIPANTS',
       }));
       expect(provider.getEventDetails).toHaveBeenCalled();
       expect(mockCallbacks.onEventDetail).toHaveBeenCalled();
@@ -933,7 +931,7 @@ describe('IngestionScheduler', () => {
 
       expect(provider.getUpcomingEvents).not.toHaveBeenCalled();
       expect(eventReader.listLiveScoreEvents).toHaveBeenCalledWith(expect.objectContaining({ sport: 'GOLF' }));
-      expect(eventReader.listEventsForFeed).toHaveBeenCalledWith(expect.objectContaining({ sport: 'GOLF', feed: 'EVENTPARTICIPANTS' }));
+      expect(eventReader.listFieldSyncEvents).toHaveBeenCalledWith(expect.objectContaining({ sport: 'GOLF' }));
     });
 
     it('paces the field loop at the admin\'s participant interval, since the field sync has no switch, never the short config recheck', async () => {
@@ -998,7 +996,7 @@ describe('IngestionScheduler job outcomes', () => {
     const callbacks = createMockCallbacks();
     const scheduler = new IngestionScheduler(createMockRegistry(null), callbacks);
 
-    const [job] = await scheduler.runEventSync({ sport: 'GOLF', providerId: 'mock-provider', eventId: 'evt-1', feeds: ['EVENTPARTICIPANTS'] });
+    const [job] = await scheduler.runEventSync({ sport: 'GOLF', providerId: 'mock-provider', eventId: 'evt-1', kinds: ['FIELD'] });
 
     expect(job).toMatchObject({ status: 'FAILED', providerId: 'mock-provider', errorLog: [expect.objectContaining({ error: 'No provider registered' })] });
     expect(callbacks.onEventDetail).not.toHaveBeenCalled();
@@ -1008,7 +1006,7 @@ describe('IngestionScheduler job outcomes', () => {
     const provider = fakeSportDataProvider({ getEventDetails: jest.fn().mockResolvedValue(detail([])) });
     const scheduler = new IngestionScheduler(createMockRegistry(provider), createMockCallbacks());
 
-    const [job] = await scheduler.runEventSync({ sport: 'GOLF', providerId: 'mock-provider', eventId: 'evt-1', feeds: ['EVENTPARTICIPANTS'] });
+    const [job] = await scheduler.runEventSync({ sport: 'GOLF', providerId: 'mock-provider', eventId: 'evt-1', kinds: ['FIELD'] });
 
     expect(job).toMatchObject({
       status: 'COMPLETED',
@@ -1077,7 +1075,7 @@ describe('IngestionScheduler scheduled loops', () => {
 
     expect(eventReader.listSyncedSports).not.toHaveBeenCalled();
     expect(eventReader.listLiveScoreEvents).not.toHaveBeenCalled();
-    expect(eventReader.listEventsForFeed).not.toHaveBeenCalled();
+    expect(eventReader.listFieldSyncEvents).not.toHaveBeenCalled();
   });
 
   it('runs loops only for the sports an active league syncs from a running provider', async () => {
@@ -1281,7 +1279,7 @@ describe('IngestionScheduler webhook-triggered event syncs (#1498)', () => {
       normalizedRequest: expect.objectContaining({
         source: 'WEBHOOK',
         actor: { type: 'SYSTEM', name: 'webhook' },
-        scope: expect.objectContaining({ sport: Sport.GOLF, eventId: 'live-event', feeds: ['EVENTLIVESCORES'] }),
+        scope: expect.objectContaining({ sport: Sport.GOLF, eventId: 'live-event', kinds: ['SCORES'] }),
       }),
     }));
   });
@@ -1548,7 +1546,7 @@ describe('IngestionScheduler loops, defaults and a provider that keeps its own p
     await flush();
 
     expect(eventReader.listSyncedSports).toHaveBeenCalled();
-    expect(eventReader.listEventsForFeed).not.toHaveBeenCalled();
+    expect(eventReader.listFieldSyncEvents).not.toHaveBeenCalled();
     expect(eventReader.listLiveScoreEvents).not.toHaveBeenCalled();
   });
 
@@ -1592,7 +1590,7 @@ describe('IngestionScheduler loops, defaults and a provider that keeps its own p
 
     await scheduler['runConfiguredSportFieldSync']('GOLF', eventReader);
 
-    expect(eventReader.listEventsForFeed).toHaveBeenCalledWith(expect.objectContaining({
+    expect(eventReader.listFieldSyncEvents).toHaveBeenCalledWith(expect.objectContaining({
       from: now,
       to: new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000),
     }));
@@ -1608,9 +1606,9 @@ describe('IngestionScheduler loops, defaults and a provider that keeps its own p
     });
     const scheduler = new IngestionScheduler(createMockRegistry(provider), createMockCallbacks());
 
-    const [job] = await scheduler.runEventSync({ sport: 'GOLF', providerId: 'mock-provider', eventId: 'e1', feeds: ['EVENTLIVESCORES'] });
+    const [job] = await scheduler.runEventSync({ sport: 'GOLF', providerId: 'mock-provider', eventId: 'e1', kinds: ['SCORES'] });
 
     expect(clearProviderPayloads).toHaveBeenCalledTimes(1);
-    expect(job.providerPayload).toEqual({ operation: 'EVENTLIVESCORES', rawCaptured: true, rawTruncated: false, raw: kept });
+    expect(job.providerPayload).toEqual({ rawCaptured: true, rawTruncated: false, raw: kept });
   });
 });

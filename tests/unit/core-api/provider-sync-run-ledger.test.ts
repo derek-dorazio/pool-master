@@ -2,7 +2,7 @@ import type { FastifyBaseLogger } from 'fastify';
 import { expect } from '@jest/globals';
 import { SCHEDULED_SCORES_RUN } from '../../support/sync-run-fixtures';
 import { BackgroundJobType, JobTrigger, ProviderCode, Sport, type ProviderSyncRun, type SportEvent } from '@poolmaster/shared/domain';
-import { ProviderSyncRunLedger, feedOfSyncKind } from '../../../packages/core-api/src/modules/ingestion/persistence/provider-sync-run-ledger';
+import { ProviderSyncRunLedger } from '../../../packages/core-api/src/modules/ingestion/persistence/provider-sync-run-ledger';
 import { SyncOrchestrator } from '../../../packages/core-api/src/modules/ingestion/core/sync-orchestrator';
 import type { IngestionJobRecord } from '../../../packages/core-api/src/modules/ingestion/core/ingestion-scheduler';
 import type { ProviderSyncRunRepository } from '@poolmaster/shared/db';
@@ -44,7 +44,7 @@ function createJob(overrides: Partial<IngestionJobRecord> = {}): IngestionJobRec
     errors: 0,
     errorLog: [],
     providerPayload: {
-      operation: 'EVENTPARTICIPANTS',
+      
       rawCaptured: true,
       rawTruncated: false,
       raw: [],
@@ -109,7 +109,7 @@ describe('ProviderSyncRunLedger records each run\'s event and sport league (#184
   const scheduled = (eventId: string) => new SyncOrchestrator({ now: () => now }).normalizeRequest({
     source: 'SCHEDULED',
     actor: { type: 'SYSTEM', name: 'scheduler' },
-    scope: { type: 'EVENT', sport: Sport.GOLF, providerId: 'balldontlie', eventId, feeds: ['EVENTLIVESCORES'] },
+    scope: { type: 'EVENT', sport: Sport.GOLF, providerId: 'balldontlie', eventId, kinds: ['SCORES'] },
   });
   const linkedEvents = {
     findByProviderRefs: jest.fn(async (_providerId: string, externalIds: readonly string[]): Promise<SportEvent[]> => {
@@ -170,7 +170,7 @@ describe('ProviderSyncRunLedger', () => {
     const normalizedRequest = new SyncOrchestrator({ now: () => now }).normalizeRequest({
       source: 'MANUAL',
       actor: { type: 'ROOT_ADMIN', userId: 'admin-1', email: 'admin@example.com' },
-      scope: { type: 'EVENT', sport: Sport.GOLF, providerId: 'balldontlie', eventId: 'event-1', feeds: ['EVENTPARTICIPANTS', 'EVENTLIVESCORES'] },
+      scope: { type: 'EVENT', sport: Sport.GOLF, providerId: 'balldontlie', eventId: 'event-1', kinds: ['FIELD', 'SCORES'] },
     });
     const syncRuns = inMemorySyncRuns();
     const ledger = new ProviderSyncRunLedger(syncRuns);
@@ -201,7 +201,7 @@ describe('ProviderSyncRunLedger', () => {
         sport: Sport.GOLF,
         providerId: 'balldontlie',
         eventId: 'event-1',
-        feeds: ['EVENTPARTICIPANTS'],
+        kinds: ['FIELD'],
       },
     });
     const providerSyncRunCreate = mockFn<ProviderSyncRunRepository['create']>(async (input) => ({
@@ -249,7 +249,7 @@ describe('ProviderSyncRunLedger', () => {
       changedCount: null,
       errorCount: 0,
       details: {
-        providerPayload: { operation: 'EVENTPARTICIPANTS', rawCaptured: false, rawTruncated: false },
+        providerPayload: { rawCaptured: false, rawTruncated: false },
       },
     }));
     expect(providerSyncRunUpdate).toHaveBeenNthCalledWith(2, syncRun.id, expect.objectContaining({
@@ -357,7 +357,7 @@ describe('ProviderSyncRunLedger', () => {
       changedCount: null,
       errorCount: 1,
       details: {
-        providerPayload: { operation: 'EVENTPARTICIPANTS', rawCaptured: false, rawTruncated: false },
+        providerPayload: { rawCaptured: false, rawTruncated: false },
         failurePayload: {
           error: {
             name: 'Error',
@@ -382,7 +382,7 @@ describe('ProviderSyncRunLedger', () => {
       summary: 'Failed Field sync: unsupported feed',
       errorCount: 1,
       details: {
-        providerPayload: { operation: 'EVENTPARTICIPANTS', rawCaptured: false, rawTruncated: false },
+        providerPayload: { rawCaptured: false, rawTruncated: false },
         failurePayload: {
           error: {
             name: 'Error',
@@ -439,11 +439,5 @@ describe('ProviderSyncRunLedger checks each completed run\'s event for its sync\
     await expect(ledger.executeFeedRun(createSyncRun(linked), async () => job)).resolves.toBe(job);
 
     expect(logger.error).toHaveBeenCalledWith(expect.objectContaining({ action: 'ingestion.syncFinding.checkFailed' }), expect.any(String));
-  });
-});
-
-describe('feedOfSyncKind', () => {
-  it('names the provider feed an event sync of each kind reads, and none for a league\'s EVENTS sync', () => {
-    expect([feedOfSyncKind('FIELD'), feedOfSyncKind('SCORES'), feedOfSyncKind('EVENTS')]).toEqual(['EVENTPARTICIPANTS', 'EVENTLIVESCORES', null]);
   });
 });
