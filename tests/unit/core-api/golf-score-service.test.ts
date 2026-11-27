@@ -9,6 +9,9 @@ import { eventRebuildJob } from '../../support/recording-leaderboard-rebuilds';
 import { RecordingDomainEvents } from '../../support/recording-domain-events';
 import { BALLDONTLIE_TEST_PROVIDER_ID } from '../../support/balldontlie-provider-rows';
 
+/** A test participant's id, fixed by its name, so a row names it by id as the feed does (#2114). */
+const idOf = (name: string): string => `participant-${name.toLowerCase().replace(/\s+/g, '-')}`;
+
 // The golf score-correction rules against an in-memory store: what a preview reports, that
 // apply is all or none, how a correction merges, and how a standing is totalled. The sync
 // path's writes against Postgres are in golf-round-scores.integration.
@@ -17,8 +20,8 @@ function setup(eventOverrides: { rounds?: number; sport?: Sport } = {}) {
   const store = new InMemorySportEvents();
   const sport = store.addSport(Sport.GOLF);
   const event = store.addEvent({ providerRef: { providerId: 'balldontlie', externalId: 'golf-event-1' }, ...eventOverrides });
-  const ana = store.addParticipant(sport.id, 'Ana Park', { externalId: 'ext-ana' });
-  const ben = store.addParticipant(sport.id, 'Ben Cole');
+  const ana = store.addParticipant(sport.id, 'Ana Park', { id: idOf('Ana Park'), externalId: 'ext-ana' });
+  const ben = store.addParticipant(sport.id, 'Ben Cole', { id: idOf('Ben Cole') });
   const anaEntry = store.addToField(event.id, ana.id);
   const benEntry = store.addToField(event.id, ben.id);
   const domainEvents = new RecordingDomainEvents();
@@ -62,8 +65,8 @@ describe('GolfScoreService — preview', () => {
 
     const preview = await service.previewRoundScores(event.id, 1, [
       { externalId: 'ext-ana', ...row() },
-      { playerName: 'ben cole', ...row({ strokes: 72, scoreToPar: 0 }) },
-      { playerName: 'Nobody', ...row() },
+      { participantId: idOf('Ben Cole'), ...row({ strokes: 72, scoreToPar: 0 }) },
+      { participantId: idOf('Nobody'), ...row() },
     ]);
 
     expect(preview.map((entry) => [entry.resolution, entry.participantName, entry.change])).toEqual([
@@ -74,11 +77,11 @@ describe('GolfScoreService — preview', () => {
   });
   it('a row with no strokes previews as SKIPPED, because apply never stores it', async () => {
     const { service, event } = setup();
-    await service.applyRoundScores(event.id, 1, [{ playerName: 'Ana Park', ...row() }]);
+    await service.applyRoundScores(event.id, 1, [{ participantId: idOf('Ana Park'), ...row() }]);
 
     const preview = await service.previewRoundScores(event.id, 1, [
-      { playerName: 'Ana Park', ...row({ strokes: null, scoreToPar: -3 }) },
-      { playerName: 'Ben Cole', ...row({ strokes: null }) },
+      { participantId: idOf('Ana Park'), ...row({ strokes: null, scoreToPar: -3 }) },
+      { participantId: idOf('Ben Cole'), ...row({ strokes: null }) },
     ]);
 
     expect(preview.map((entry) => [entry.resolution, entry.participantName, entry.change])).toEqual([
@@ -92,7 +95,7 @@ describe('GolfScoreService — apply', () => {
   it('writes nothing when any row is unresolved, 422 ROUND_SCORE_ROWS_UNRESOLVED', async () => {
     const { store, service, event } = setup();
 
-    await expect(service.applyRoundScores(event.id, 1, [{ playerName: 'Ana Park', ...row() }, { playerName: 'Nobody', ...row() }]))
+    await expect(service.applyRoundScores(event.id, 1, [{ participantId: idOf('Ana Park'), ...row() }, { participantId: idOf('Nobody'), ...row() }]))
       .rejects.toMatchObject({ code: 'ROUND_SCORE_ROWS_UNRESOLVED', statusCode: 422 });
     expect(store.golfRoundRows).toEqual([]);
   });
@@ -100,8 +103,8 @@ describe('GolfScoreService — apply', () => {
   it('creates the round if needed, skips rows with no strokes, and totals each standing', async () => {
     const { store, service, event, anaEntry } = setup();
 
-    await service.applyRoundScores(event.id, 1, [{ playerName: 'Ana Park', ...row() }, { playerName: 'Ben Cole', ...row({ strokes: null }) }]);
-    await service.applyRoundScores(event.id, 2, [{ playerName: 'Ana Park', ...row({ strokes: 68, scoreToPar: -4, status: 'IN_PROGRESS', thru: 9 }) }]);
+    await service.applyRoundScores(event.id, 1, [{ participantId: idOf('Ana Park'), ...row() }, { participantId: idOf('Ben Cole'), ...row({ strokes: null }) }]);
+    await service.applyRoundScores(event.id, 2, [{ participantId: idOf('Ana Park'), ...row({ strokes: 68, scoreToPar: -4, status: 'IN_PROGRESS', thru: 9 }) }]);
 
     expect(store.roundRows.map((round) => round.roundNumber)).toEqual([1, 2]);
     expect(store.golfRoundRows).toHaveLength(2);
@@ -115,7 +118,7 @@ describe('GolfScoreService — apply', () => {
   it('marks a golfer who missed the cut ELIMINATED on the cross-sport standing', async () => {
     const { service, store, event, anaEntry } = setup();
 
-    await service.applyRoundScores(event.id, 1, [{ playerName: 'Ana Park', ...row({ status: 'MISSED_CUT' }) }]);
+    await service.applyRoundScores(event.id, 1, [{ participantId: idOf('Ana Park'), ...row({ status: 'MISSED_CUT' }) }]);
 
     const [standing] = await store.golfStandingRepo().findBySportEventParticipants([anaEntry.id]);
     expect(standing.standing.status).toBe('ELIMINATED');
@@ -126,8 +129,8 @@ describe('GolfScoreService — single-cell correction', () => {
   it('a correction that sends strokes and to par updates the round, the event to-par and the rank', async () => {
     const { service, store, event, anaEntry, benEntry } = setup();
     await service.applyRoundScores(event.id, 1, [
-      { playerName: 'Ana Park', ...row({ strokes: 70, scoreToPar: -2 }) },
-      { playerName: 'Ben Cole', ...row({ strokes: 71, scoreToPar: -1 }) },
+      { participantId: idOf('Ana Park'), ...row({ strokes: 70, scoreToPar: -2 }) },
+      { participantId: idOf('Ben Cole'), ...row({ strokes: 71, scoreToPar: -1 }) },
     ]);
 
     await service.updateRoundScore(event.id, 1, anaEntry.id, { strokes: 73, scoreToPar: 1 });
@@ -146,7 +149,7 @@ describe('GolfScoreService — single-cell correction', () => {
 
   it('a correction stores completedAt exactly as sent, and never derives it from the status', async () => {
     const { service, store, event, anaEntry } = setup();
-    await service.applyRoundScores(event.id, 1, [{ playerName: 'Ana Park', ...row({ status: 'IN_PROGRESS', thru: 12 }) }]);
+    await service.applyRoundScores(event.id, 1, [{ participantId: idOf('Ana Park'), ...row({ status: 'IN_PROGRESS', thru: 12 }) }]);
 
     await service.updateRoundScore(event.id, 1, anaEntry.id, { status: 'COMPLETED', thru: 18 });
     let [round] = await store.golfRoundRepo().findBySportEventParticipants([anaEntry.id]);
@@ -201,7 +204,7 @@ describe('GolfScoreService — admin rounds are bounded by the event schedule', 
   it('refuses to apply scores for a round beyond the event\'s scheduled rounds with 422 ROUND_BEYOND_SCHEDULE, writing nothing', async () => {
     const { store, service, event } = setup({ rounds: 4 });
 
-    await expect(service.applyRoundScores(event.id, 5, [{ playerName: 'Ana Park', ...row() }]))
+    await expect(service.applyRoundScores(event.id, 5, [{ participantId: idOf('Ana Park'), ...row() }]))
       .rejects.toMatchObject({ code: 'ROUND_BEYOND_SCHEDULE', statusCode: 422 });
     expect(store.roundRows).toEqual([]);
     expect(store.golfRoundRows).toEqual([]);
@@ -247,14 +250,14 @@ describe('GolfScoreService — admin rounds are bounded by the event schedule', 
   it('refuses to preview a round beyond the event\'s scheduled rounds with 422 ROUND_BEYOND_SCHEDULE', async () => {
     const { service, event } = setup({ rounds: 4 });
 
-    await expect(service.previewRoundScores(event.id, 5, [{ playerName: 'Ana Park', ...row() }]))
+    await expect(service.previewRoundScores(event.id, 5, [{ participantId: idOf('Ana Park'), ...row() }]))
       .rejects.toMatchObject({ code: 'ROUND_BEYOND_SCHEDULE', statusCode: 422 });
   });
 
   it('still accepts the event\'s last scheduled round', async () => {
     const { store, service, event } = setup({ rounds: 4 });
 
-    await service.applyRoundScores(event.id, 4, [{ playerName: 'Ana Park', ...row() }]);
+    await service.applyRoundScores(event.id, 4, [{ participantId: idOf('Ana Park'), ...row() }]);
 
     expect(store.roundRows.map((round) => round.roundNumber)).toEqual([4]);
   });
@@ -262,7 +265,7 @@ describe('GolfScoreService — admin rounds are bounded by the event schedule', 
   it('creates any round when the event has no scheduled round count', async () => {
     const { store, service, event } = setup();
 
-    await service.applyRoundScores(event.id, 5, [{ playerName: 'Ana Park', ...row() }]);
+    await service.applyRoundScores(event.id, 5, [{ participantId: idOf('Ana Park'), ...row() }]);
 
     expect(store.roundRows.map((round) => round.roundNumber)).toEqual([5]);
   });
@@ -279,13 +282,13 @@ describe('GolfScoreService — event-side position', () => {
 
   it('ranks the field lower-is-better with ties shown as "T", and re-ranks everyone when one golfer is corrected', async () => {
     const { store, service, event, anaEntry, benEntry, sport } = setup();
-    const cara = store.addParticipant(sport.id, 'Cara Diaz');
+    const cara = store.addParticipant(sport.id, 'Cara Diaz', { id: idOf('Cara Diaz') });
     const caraEntry = store.addToField(event.id, cara.id);
 
     await service.applyRoundScores(event.id, 1, [
-      { playerName: 'Ana Park', ...row({ scoreToPar: -2 }) },
-      { playerName: 'Ben Cole', ...row({ scoreToPar: -2 }) },
-      { playerName: 'Cara Diaz', ...row({ scoreToPar: 1 }) },
+      { participantId: idOf('Ana Park'), ...row({ scoreToPar: -2 }) },
+      { participantId: idOf('Ben Cole'), ...row({ scoreToPar: -2 }) },
+      { participantId: idOf('Cara Diaz'), ...row({ scoreToPar: 1 }) },
     ]);
     await expect(positions(store, event.id)).resolves.toEqual({
       [anaEntry.id]: [1, 'T1'],
@@ -306,8 +309,8 @@ describe('GolfScoreService — event-side position', () => {
     const { store, service, event, anaEntry, benEntry } = setup();
 
     await service.applyRoundScores(event.id, 1, [
-      { playerName: 'Ana Park', ...row({ scoreToPar: 3 }) },
-      { playerName: 'Ben Cole', ...row({ scoreToPar: -4, status: 'MISSED_CUT' }) },
+      { participantId: idOf('Ana Park'), ...row({ scoreToPar: 3 }) },
+      { participantId: idOf('Ben Cole'), ...row({ scoreToPar: -4, status: 'MISSED_CUT' }) },
     ]);
 
     await expect(positions(store, event.id)).resolves.toEqual({
@@ -325,8 +328,8 @@ describe('GolfScoreService — provider sync', () => {
     const store = new InMemorySportEvents();
     const sport = store.addSport(Sport.GOLF);
     const event = store.addEvent({ providerRef: { providerId: 'balldontlie', externalId: 'golf-event-1' } });
-    const ana = store.addParticipant(sport.id, 'Ana Park');
-    const ben = store.addParticipant(sport.id, 'Ben Cole');
+    const ana = store.addParticipant(sport.id, 'Ana Park', { id: idOf('Ana Park') });
+    const ben = store.addParticipant(sport.id, 'Ben Cole', { id: idOf('Ben Cole') });
     const anaEntry = store.addToField(event.id, ana.id);
     const benEntry = store.addToField(event.id, ben.id);
     const mappedAt = new Date('2026-06-01T12:00:00.000Z');

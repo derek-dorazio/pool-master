@@ -291,6 +291,12 @@ export interface SportEventRoundMatchGame extends DomainEntity {
   scheduledDate: Date | null;
   /** Neither side plays at home (#2047); its side results then say NONE for home or away. */
   isNeutralSite: boolean;
+  /**
+   * Where the game is played (#2047), its arena and city: a series moves between both sides'
+   * homes, so each Game has its own. Null until a feed sends one; a golf course stays on its event.
+   */
+  venue: string | null;
+  location: string | null;
   status: MatchStatus;
   /** When the game was last written COMPLETED; null for any other status. */
   completedAt: Date | null;

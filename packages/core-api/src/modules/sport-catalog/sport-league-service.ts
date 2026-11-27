@@ -18,7 +18,6 @@ import type {
   SportLeagueUses,
   SportRepository,
   PlatformTierProfileRepository,
-  ParticipantProviderMappingRepository,
 } from '@poolmaster/shared/db';
 import {
   type Participant,
@@ -32,7 +31,6 @@ import {
 } from '@poolmaster/shared/domain';
 import { SportCatalogError } from './errors';
 import { requireSport } from './sport-row';
-import { feedIdsOfCandidates, matchAmong, participantMatchQuery, resolveParticipantRow, type ParticipantRowResolution } from './participant-row-resolver';
 
 /** A sport league with its sport and the two counts its list is read for. */
 export interface SportLeagueSummary extends SportLeague {
@@ -43,22 +41,6 @@ export interface SportLeagueSummary extends SportLeague {
   participantCount: number;
   /** Events of the sport league, every year. */
   sportEventCount: number;
-}
-
-export interface RankingUploadRow {
-  participantId?: string;
-  externalId?: string;
-  playerName?: string;
-  ranking?: number;
-}
-
-export type RankingUploadResolution = ParticipantRowResolution;
-
-export interface RankingUploadPreviewRow {
-  row: RankingUploadRow;
-  resolution: RankingUploadResolution;
-  participantId: string | null;
-  participantName: string | null;
 }
 
 /**
@@ -79,8 +61,6 @@ export interface SportLeagueServiceDeps {
   participants: ParticipantRepository;
   /** Where a labelled test slot is added (#2004) and removed (#2075). */
   seasons: Pick<SportLeagueSeasonRepository, 'createTestSlot' | 'findSlot'>;
-  /** The participants' provider mappings, read when an upload row names a feed id (#2040). */
-  mappings: Pick<ParticipantProviderMappingRepository, 'findByParticipantIds'>;
   /** Which providers can sync a sport league's events (ADR 0011). */
   providers: SportDataProviderLookup;
   /** The profiles a sport league names one of each (#1844). */
@@ -315,51 +295,6 @@ export class SportLeagueService {
   ): Promise<Participant[]> {
     await this.requireSportLeague(sportLeagueId);
     await this.deps.participants.updateRankings(sportLeagueId, rankings);
-    return this.deps.participants.findBySportLeague(sportLeagueId);
-  }
-
-  /**
-   * Dry run — resolves each row to an existing Participant of the sport league
-   * (participantId, then externalId, then an exact case-insensitive name),
-   * writing nothing. Never creates a Participant from a row.
-   */
-  async previewRankingUpload(
-    sportLeagueId: string,
-    rows: RankingUploadRow[],
-  ): Promise<RankingUploadPreviewRow[]> {
-    await this.requireSportLeague(sportLeagueId);
-    // Every row's candidates in one read, then each row matched among them (#1183), as the
-    // golf round-score preview matches among the event's field.
-    const queries = rows.flatMap((row) => {
-      const query = participantMatchQuery(row);
-      return query ? [query] : [];
-    });
-    const candidates = await this.deps.participants.findMatchingAny(sportLeagueId, queries);
-    const findCandidates = matchAmong(candidates, await feedIdsOfCandidates(rows, candidates, this.deps.mappings));
-    return Promise.all(rows.map(async (row) => {
-      const { resolution, participant } = await resolveParticipantRow(row, findCandidates);
-      return { row, resolution, participantId: participant?.id ?? null, participantName: participant?.name ?? null };
-    }));
-  }
-
-  /** Applies a previewed upload. Throws when any row is unresolved — all or nothing. */
-  async applyRankingUpload(
-    sportLeagueId: string,
-    rows: RankingUploadRow[],
-  ): Promise<Participant[]> {
-    const preview = await this.previewRankingUpload(sportLeagueId, rows);
-    const unresolved = preview.filter((row) => row.resolution !== 'MATCHED');
-    if (unresolved.length > 0) {
-      throw new SportCatalogError(
-        `${unresolved.length} upload row(s) could not be resolved to a participant.`,
-        'SPORT_LEAGUE_RANKING_UPLOAD_UNRESOLVED_ROWS',
-        422,
-      );
-    }
-    await this.deps.participants.updateRankings(sportLeagueId, preview.map((resolved) => ({
-      participantId: resolved.participantId as string,
-      ranking: resolved.row.ranking ?? null,
-    })));
     return this.deps.participants.findBySportLeague(sportLeagueId);
   }
 

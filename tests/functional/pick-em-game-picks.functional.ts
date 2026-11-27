@@ -2,7 +2,6 @@ import { deleteTestSportLeagues } from '../support/test-slots';
 import {
   acceptInvitation,
   addEventParticipants,
-  applyEventParticipantUpload,
   autoAssignEventPrices,
   autoAssignEventTiers,
   clearGamePick,
@@ -46,6 +45,7 @@ import { insertTestSportLeague } from '../support/test-sport-league';
 import { AWAY_SIDE, HOME_SIDE } from '../support/match-sides';
 import { rowSideTeam } from '../support/match-rows';
 import { bracketMatch } from '../support/match-requests';
+import { setFieldRows } from './field-rows';
 
 // A confidence pick'em week end to end over HTTP (#716). An admin builds a four-team basketball
 // event and releases it; its final, whose teams are still to be decided, is called off, so the
@@ -103,7 +103,7 @@ describe('SDK Functional: a pick\'em week (#716)', () => {
     // The migration's reference row, restored in case an earlier suite cleared the sports table.
     await db.sport.upsert({
       where: { sport: Sport.BASKETBALL },
-      create: { sport: Sport.BASKETBALL, ...sportRowKeys(Sport.BASKETBALL), tournamentFormat: 'MATCHES' },
+      create: { sport: Sport.BASKETBALL, ...sportRowKeys(Sport.BASKETBALL) },
       update: {},
     });
     const admin = await buildRegisteredUser({ displayName: 'Pickem Director' });
@@ -133,7 +133,7 @@ describe('SDK Functional: a pick\'em week (#716)', () => {
     }
     expect((await addEventParticipants({ client: a, path: { eventId }, body: { participantIds: teamIds } })).data?.added).toBe(4);
     // Release asks every event for its roster setup too: seeds, four tiers of one team, and prices.
-    expect((await applyEventParticipantUpload({
+    expect((await setFieldRows({
       client: a,
       path: { eventId },
       body: { rows: TEAMS.map((name, index) => ({ playerName: `${name} ${RUN}`, seedNumber: index + 1 })) },

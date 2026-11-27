@@ -796,7 +796,7 @@ export default tseslint.config(
       // `<label><span>Text</span><Input /></label>` it does not know `Input`
       // renders an <input>. Naming the primitives is the configuration answer.
       'jsx-a11y/label-has-associated-control': ['error', {
-        controlComponents: ['Input', 'Textarea', 'Checkbox', 'Select', 'FileInput'],
+        controlComponents: ['Input', 'Textarea', 'Checkbox', 'Select'],
       }],
       // The repo uses `role` as a domain prop (a league-membership role such as
       // "Member") on its own components. Those are not ARIA roles; DOM elements

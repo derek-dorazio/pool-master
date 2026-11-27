@@ -1,7 +1,6 @@
 import { deleteTestSportLeagues } from '../support/test-slots';
 import {
   addEventParticipants,
-  applyEventParticipantUpload,
   autoAssignEventPrices,
   autoAssignEventTiers,
   createParticipant,
@@ -31,6 +30,7 @@ import { standardPricingRequest } from './standard-pricing';
 import { expectMatchesSchema } from '../support/expect-matches-schema';
 import { sportRowKeys } from '../support/sport-rows';
 import { insertTestSportLeague } from '../support/test-sport-league';
+import { setFieldRows } from './field-rows';
 
 // A basketball bracket end to end over HTTP (#698): an admin builds a four-team tournament in the
 // run's own league, loads its bracket, and releases it only once the bracket holds the whole
@@ -81,7 +81,7 @@ describe('SDK Functional: Basketball bracket', () => {
     // The migration's reference row, restored in case an earlier suite cleared the sports table.
     await getFunctionalPrisma().sport.upsert({
       where: { sport: Sport.BASKETBALL },
-      create: { sport: Sport.BASKETBALL, ...sportRowKeys(Sport.BASKETBALL), tournamentFormat: 'MATCHES' },
+      create: { sport: Sport.BASKETBALL, ...sportRowKeys(Sport.BASKETBALL) },
       update: {},
     });
     const admin = await buildRegisteredUser({ displayName: 'Bracket Director' });
@@ -112,7 +112,7 @@ describe('SDK Functional: Basketball bracket', () => {
     const added = await addEventParticipants({ client: a, path: { eventId }, body: { participantIds: fieldTeamIds } });
     expect(expectMatchesSchema(AddSportEventParticipantsResponseSchema, added.data).added).toBe(4);
 
-    const upload = await applyEventParticipantUpload({
+    const upload = await setFieldRows({
       client: a,
       path: { eventId },
       body: { rows: FIELD.map((team) => ({ playerName: `${team.name} ${RUN}`, seedNumber: team.seed })) },

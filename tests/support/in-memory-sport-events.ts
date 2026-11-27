@@ -44,7 +44,7 @@ import type {
 import { TEST_PROVIDER_ROWS } from './balldontlie-provider-rows';
 import type { SportEventBracketServiceDeps } from '../../packages/core-api/src/modules/events/sport-event-bracket-service';
 import { compareMatchPlaces, MatchEnding, SeasonSlotStatus, SeriesFormat, SlotKind, SlotPairing, SlotWindowStatus, type SlotWindow, findSportRow, providerSourceIdOf, requireProviderCodeOfSourceId, type ProviderEventRef, type SportEventProviderMapping, HomeAway, isMatchUnplayed, MatchSideOutcome, MatchStatus, PeriodKind, PeriodKindOrder, Sport, FieldOrderBasis, TierProfileType, SportEventParticipantStatus } from '@poolmaster/shared/domain';
-import { sportPlay } from './sport-play';
+import { sportEventSlots, sportPlay } from './sport-play';
 import type {
   AutoReleaseCheck,
   BackgroundJobRequest,
@@ -331,7 +331,7 @@ export class InMemorySportEvents {
   // --- Fixtures ---------------------------------------------------------------------
 
   addSport(sport: SportConfig['sport']): SportConfig {
-    const row: SportConfig = stamp({ id: this.id('sport'), sport, ...sportRowKeys(sport), tournamentFormat: 'STROKE_PLAY_TOURNAMENT' });
+    const row: SportConfig = stamp({ id: this.id('sport'), sport, ...sportRowKeys(sport) });
     this.sports.push(row);
     return row;
   }
@@ -386,7 +386,7 @@ export class InMemorySportEvents {
   addEvent({ providerRef, ...overrides }: Partial<SportEvent> & { providerRef?: ProviderEventRef } = {}): SportEvent {
     const event: SportEvent = stamp({
       id: this.id('event'), providerMappings: providerRef === undefined ? [] : [providerMappingOf(providerRef)], sport: 'GOLF', sportUrlSegment: 'golf', name: 'Open',
-      slotDefinitions: [], sportLeagueSeasonId: IN_MEMORY_SEASON_ID, sportLeagueId: UNPLACED_SPORT_LEAGUE_ID,
+      slotDefinitions: sportEventSlots(overrides.sport ?? Sport.GOLF), sportLeagueSeasonId: IN_MEMORY_SEASON_ID, sportLeagueId: UNPLACED_SPORT_LEAGUE_ID,
       startDate: new Date('2026-06-04T12:00:00.000Z'), status: 'SCHEDULED',
       autoLifecycleEnabled: true, ...sportPlay(overrides.sport ?? Sport.GOLF), ...overrides,
       championshipYear: 0,
@@ -514,11 +514,6 @@ export class InMemorySportEvents {
       findById: async (id) => this.participants.find((row) => row.id === id) ?? null,
       findByIds: async (ids) => this.participants.filter((row) => ids.includes(row.id)),
       search: async () => [...this.participants],
-      findMatchingAny: async (sportLeagueId, queries) => this.participants.filter((row) => row.sportLeagueId === sportLeagueId && queries.some((query) => (
-        (query.id === undefined || row.id === query.id)
-        && (query.externalId === undefined || this.mappings.some((mapping) => mapping.participantId === row.id && mapping.externalId === query.externalId))
-        && (query.name === undefined || row.name.toLowerCase() === query.name.toLowerCase())
-      ))),
       findBySportLeague: async (sportLeagueId, testData = false) => this.participants
         .filter((row) => row.sportLeagueId === sportLeagueId && row.isTestData === testData)
         .sort((left, right) => (left.ranking ?? Infinity) - (right.ranking ?? Infinity) || left.name.localeCompare(right.name)),
@@ -1116,7 +1111,7 @@ export class InMemorySportEvents {
         for (const game of created) {
           const match = this.matchRows.find((row) => row.id === game.sportEventRoundMatchId);
           if (!match) throw new Error('unknown match');
-          this.putGame(match, stamp({ ...game, scheduledDate: null, status: MatchStatus.SCHEDULED, completedAt: null, movedToGameId: null, lastProviderNotificationAt: null, sideResults: [] }));
+          this.putGame(match, stamp({ ...game, scheduledDate: null, venue: null, location: null, status: MatchStatus.SCHEDULED, completedAt: null, movedToGameId: null, lastProviderNotificationAt: null, sideResults: [] }));
         }
         const ids = new Set(maps.map((each) => each.externalId));
         const games = new Set(maps.map((each) => each.sportEventRoundMatchGameId));
@@ -1189,7 +1184,7 @@ export class InMemorySportEvents {
               sides: stored,
               games: [stamp({
                 id: `${match.id}-g1`, sportEventId, sportEventRoundMatchId: match.id, sportEventSlotId: `event-slot-${String(match.roundNumber)}`, gameNumber: 1,
-                scheduledDate: match.scheduledDate, isNeutralSite, status: MatchStatus.SCHEDULED, completedAt: null, movedToGameId: null, lastProviderNotificationAt: null,
+                scheduledDate: match.scheduledDate, isNeutralSite, venue: null, location: null, status: MatchStatus.SCHEDULED, completedAt: null, movedToGameId: null, lastProviderNotificationAt: null,
                 sideResults: sides.map((side, index) => ({ sportEventRoundMatchSideId: stored[index].id, sideNumber: side.sideNumber, score: null, homeAway: side.homeAway, periodScores: [] })),
               })],
             });

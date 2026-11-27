@@ -46,7 +46,6 @@ import { toPickEmLeaderboardSnapshotResponse } from '../../../packages/core-api/
 import { mapRaceResultPreviewToDto } from '../../../packages/core-api/src/mappers/race-results.mapper';
 import { toSelectionGroupDto } from '../../../packages/core-api/src/mappers/selections.mapper';
 import {
-  mapRankingUploadPreviewRowToDto,
   mapSportLeaguePositionToDto,
   mapSportLeagueToDto,
   mapSportToDto,
@@ -395,9 +394,9 @@ describe('toSelectionGroupDto', () => {
 
 describe('sport catalog mappers', () => {
   it('sends a sport with its dates as ISO', () => {
-    const sport = { id: 's1', sport: 'GOLF', tournamentFormat: 'STROKE', createdAt: AT, updatedAt: AT } as unknown as SportConfig;
+    const sport = { id: 's1', sport: 'GOLF', createdAt: AT, updatedAt: AT } as unknown as SportConfig;
 
-    expect(mapSportToDto(sport)).toEqual({ id: 's1', sport: 'GOLF', tournamentFormat: 'STROKE', createdAt: ISO, updatedAt: ISO });
+    expect(mapSportToDto(sport)).toEqual({ id: 's1', sport: 'GOLF', createdAt: ISO, updatedAt: ISO });
   });
 
   it('sends a sport league with its counts, and its sport\'s name and ways of picking', () => {
@@ -423,11 +422,6 @@ describe('sport catalog mappers', () => {
     expect(synced.selectedProviderMapping).not.toBe(mapping);
     expect(synced.selectedProviderMapping?.providerName).toBe('BALLDONTLIE');
     expect(mapSportLeagueToDto({ ...base, selectedProviderMapping: null } as unknown as SportLeagueSummary).selectedProviderMapping).toBeNull();
-  });
-
-  it('sends a ranking upload row\'s resolution and participant', () => {
-    expect(mapRankingUploadPreviewRowToDto({ row: 2, resolution: 'MATCHED', participantId: 'p1', participantName: 'Scottie' } as never))
-      .toEqual({ row: 2, resolution: 'MATCHED', participantId: 'p1', participantName: 'Scottie' });
   });
 });
 

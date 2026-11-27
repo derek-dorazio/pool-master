@@ -25,7 +25,6 @@ import {
 import type {
   SportDto,
   SportLeagueDto,
-  SportLeagueRankingUploadPreviewRowDto,
   SportLeagueIssueDto,
   SportLeagueEventOverviewDto,
   SportEventOverviewDto,
@@ -37,7 +36,7 @@ import type {
   SportLeagueStructureResponse,
   SportLeagueSyncDto,
 } from '@poolmaster/shared/dto/sport-catalog.dto';
-import type { RankingUploadPreviewRow, SportLeagueSummary } from '../modules/sport-catalog/sport-league-service';
+import type { SportLeagueSummary } from '../modules/sport-catalog/sport-league-service';
 
 export function mapSportToDto(sport: SportConfig): SportDto {
   return {
@@ -45,7 +44,6 @@ export function mapSportToDto(sport: SportConfig): SportDto {
     sport: sport.sport,
     urlSegment: sport.urlSegment,
     displayOrder: sport.displayOrder,
-    tournamentFormat: sport.tournamentFormat,
     createdAt: sport.createdAt.toISOString(),
     updatedAt: sport.updatedAt.toISOString(),
   };
@@ -79,10 +77,6 @@ export function mapSportLeagueToDto(sportLeague: SportLeagueSummary): SportLeagu
     createdAt: sportLeague.createdAt.toISOString(),
     updatedAt: sportLeague.updatedAt.toISOString(),
   };
-}
-
-export function mapRankingUploadPreviewRowToDto(row: RankingUploadPreviewRow): SportLeagueRankingUploadPreviewRowDto {
-  return { row: row.row, resolution: row.resolution, participantId: row.participantId, participantName: row.participantName };
 }
 
 /** One sport league's row on the root admin's Sports page (#1847). */

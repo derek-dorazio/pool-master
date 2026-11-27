@@ -131,11 +131,6 @@ export const enUS = {
       PREDICTION: 'Prediction',
       SQUARES: 'Squares',
     },
-    TournamentFormat: {
-      STROKE_PLAY_TOURNAMENT: 'Stroke play tournament',
-      RACE: 'Race',
-      MATCHES: 'Matches',
-    },
     MatchStatus: {
       SCHEDULED: 'Scheduled',
       IN_PROGRESS: 'In progress',
@@ -997,7 +992,6 @@ export const enUS = {
     EVENT_PARTICIPANT_HAS_PICKS: 'Entries have picked them, so they cannot be removed. Withdraw them instead.',
     EVENT_PARTICIPANT_IN_BRACKET: 'They are in the bracket, so they cannot be removed. Take them out of their match first.',
     EVENT_PARTICIPANT_NOT_FOUND: 'They are not on this event\'s field.',
-    EVENT_PARTICIPANT_UPLOAD_ROWS_UNRESOLVED: 'Some rows do not name exactly one participant on the field.',
     EVENT_ROUNDS_FROM_SLOTS: 'This event plays a round in each of its slots, so its round count comes from them.',
     EVENT_SCORING_FAMILY_MISMATCH: 'This event is not scored this way.',
     FIELD_HAS_NO_ORDER: 'No one in the field has a value for any of this league\'s order sources, so it cannot be put in tiers or priced.',
@@ -1139,7 +1133,6 @@ export const enUS = {
     SPORT_LEAGUE_IN_USE: 'This league is in use, so it cannot be deleted.',
     SPORT_LEAGUE_NOT_FOUND: 'Sport league not found.',
     SPORT_LEAGUE_NOT_SYNCED: 'No provider syncs this league\'s events.',
-    SPORT_LEAGUE_RANKING_UPLOAD_UNRESOLVED_ROWS: 'Some rows do not name one participant.',
     SPORT_LEAGUE_SEASON_NOT_FOUND: 'That Season is not one of this league\'s.',
     SPORT_LEAGUE_SEASON_NOT_MAPPED: 'The provider has no id for that Season.',
     SPORT_NOT_FOUND: 'Sport not found.',
@@ -1289,15 +1282,6 @@ export const enUS = {
     PREDICTION_WEEK_INCOMPLETE: {
       bracketEntry: 'Every {{match}} needs a pick before your bracket can be submitted.',
       pickEm: 'Every {{match}} needs a pick before this week can be submitted.',
-    },
-    RACE_RESULT_FIELD_INCOMPLETE: {
-      raceResult: 'An official result needs every {{participant}} still in the field: a place for each finisher, or how its {{round}} ended.',
-    },
-    RACE_RESULT_POSITIONS_INVALID: {
-      raceResult: 'The places do not run 1, 2, 3 and on. Only a dead heat repeats a place, and the next place is then skipped (1, 2, 2, 4).',
-    },
-    RACE_RESULT_ROWS_INVALID: {
-      raceResult: 'A row does not match one {{participant}} in the field, or has a problem. Preview again to see which.',
     },
     SPORT_EVENT_ALREADY_STARTED: {
       contestSetup: 'This event has already started, so a contest can no longer be made on it.',

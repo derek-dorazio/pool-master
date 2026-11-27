@@ -8934,10 +8934,6 @@ export type SportDto = {
      */
     displayOrder: number;
     /**
-     * Structural format of the sport's events; decides which contest formats are valid.
-     */
-    tournamentFormat: 'STROKE_PLAY_TOURNAMENT' | 'RACE' | 'MATCHES';
-    /**
      * ISO 8601 datetime string.
      */
     createdAt: string;
@@ -8971,10 +8967,6 @@ export type SportListResponse = {
          * Where the sport sits wherever sports are listed together, lower first: the most popular first. Display only, never an identity.
          */
         displayOrder: number;
-        /**
-         * Structural format of the sport's events; decides which contest formats are valid.
-         */
-        tournamentFormat: 'STROKE_PLAY_TOURNAMENT' | 'RACE' | 'MATCHES';
         /**
          * ISO 8601 datetime string.
          */
@@ -12180,53 +12172,9 @@ export type SportLeagueParticipantRankingsRequest = {
 };
 
 /**
- * A ranking upload for a sport league's participants.
- */
-export type SportLeagueRankingUploadRequest = {
-    rows: Array<{
-        participantId?: string;
-        externalId?: string;
-        playerName?: string;
-        ranking?: number;
-    }>;
-};
-
-/**
  * How an uploaded row resolved to a participant: one match, none, or several.
  */
 export type UploadRowResolutionDto = 'MATCHED' | 'UNRESOLVED' | 'AMBIGUOUS';
-
-/**
- * A dry run of a ranking upload. Nothing is written.
- */
-export type SportLeagueRankingUploadPreviewResponse = {
-    /**
-     * One per uploaded row, in upload order.
-     */
-    rows: Array<{
-        /**
-         * One uploaded rank. The first identifier present is used: participantId, then externalId, then an exact case-insensitive playerName, among the sport league's participants.
-         */
-        row: {
-            participantId?: string;
-            externalId?: string;
-            playerName?: string;
-            ranking?: number;
-        };
-        /**
-         * How an uploaded row resolved to a participant: one match, none, or several.
-         */
-        resolution: 'MATCHED' | 'UNRESOLVED' | 'AMBIGUOUS';
-        /**
-         * Set only when MATCHED.
-         */
-        participantId: string | null;
-        /**
-         * Set only when MATCHED.
-         */
-        participantName: string | null;
-    }>;
-};
 
 export type EventStatusDto = 'DRAFT' | 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
 
@@ -12603,6 +12551,10 @@ export type SportEventDto = {
      * How the event is scored. Read through the sport league.
      */
     scoringFamily: 'STROKE_PLAY' | 'FINISH_POSITION' | 'HEAD_TO_HEAD';
+    /**
+     * Whether the event is played as games between two sides (#2008): one of its slots is HEAD_TO_HEAD. A golf tournament or a race, whose slots are FIELD, plays none. Its matches, bracket and seed locks apply only where true.
+     */
+    playsMatches: boolean;
     /**
      * Whether it is a test event, made by hand on a test slot (QA only). A league is synced or off, so every other event is one its sync keeps: the provider wins over an edit to its name and venue, so they are shown read-only. (Admin-only: operational detail no member surface reads.)
      */
@@ -13054,6 +13006,10 @@ export type SportEventListResponse = {
          */
         scoringFamily: 'STROKE_PLAY' | 'FINISH_POSITION' | 'HEAD_TO_HEAD';
         /**
+         * Whether the event is played as games between two sides (#2008): one of its slots is HEAD_TO_HEAD. A golf tournament or a race, whose slots are FIELD, plays none. Its matches, bracket and seed locks apply only where true.
+         */
+        playsMatches: boolean;
+        /**
          * Whether it is a test event, made by hand on a test slot (QA only). A league is synced or off, so every other event is one its sync keeps: the provider wins over an edit to its name and venue, so they are shown read-only. (Admin-only: operational detail no member surface reads.)
          */
         isTestData: boolean;
@@ -13478,6 +13434,10 @@ export type SportEventResponse = {
          * How the event is scored. Read through the sport league.
          */
         scoringFamily: 'STROKE_PLAY' | 'FINISH_POSITION' | 'HEAD_TO_HEAD';
+        /**
+         * Whether the event is played as games between two sides (#2008): one of its slots is HEAD_TO_HEAD. A golf tournament or a race, whose slots are FIELD, plays none. Its matches, bracket and seed locks apply only where true.
+         */
+        playsMatches: boolean;
         /**
          * Whether it is a test event, made by hand on a test slot (QA only). A league is synced or off, so every other event is one its sync keeps: the provider wins over an edit to its name and venue, so they are shown read-only. (Admin-only: operational detail no member surface reads.)
          */
@@ -15055,125 +15015,6 @@ export type SportEventParticipantResponse = {
          * ISO 8601 datetime string.
          */
         updatedAt: string;
-    };
-};
-
-/**
- * A field upload: changes to participants already on the event's field. It never adds one.
- */
-export type SportEventParticipantUploadRequest = {
-    rows: Array<{
-        participantId?: string;
-        /**
-         * The participant's canonical external id.
-         */
-        externalId?: string;
-        playerName?: string;
-        /**
-         * The field row's place in its event (#2184): ACTIVE while it competes; WITHDRAWN, ELIMINATED (a missed cut or a knock-out) or DISQUALIFIED once it is out.
-         */
-        status?: 'ACTIVE' | 'WITHDRAWN' | 'ELIMINATED' | 'DISQUALIFIED';
-        ranking?: number | null;
-        seedNumber?: number | null;
-    }>;
-};
-
-/**
- * A dry run of a field upload. Nothing is written.
- */
-export type SportEventParticipantUploadPreviewResponse = {
-    /**
-     * One per uploaded row, in upload order.
-     */
-    rows: Array<{
-        /**
-         * One uploaded field row. The first identifier present is used — participantId, then externalId, then an exact case-insensitive playerName — matched only within the event's field, with no fallback to the next. Each value omitted is left alone; null clears it.
-         */
-        row: {
-            participantId?: string;
-            /**
-             * The participant's canonical external id.
-             */
-            externalId?: string;
-            playerName?: string;
-            /**
-             * The field row's place in its event (#2184): ACTIVE while it competes; WITHDRAWN, ELIMINATED (a missed cut or a knock-out) or DISQUALIFIED once it is out.
-             */
-            status?: 'ACTIVE' | 'WITHDRAWN' | 'ELIMINATED' | 'DISQUALIFIED';
-            ranking?: number | null;
-            seedNumber?: number | null;
-        };
-        /**
-         * MATCHED: one participant on the field. UNRESOLVED: none on the field — the upload never adds one, so load the field from the provider first. AMBIGUOUS: several.
-         */
-        resolution: 'MATCHED' | 'UNRESOLVED' | 'AMBIGUOUS';
-        /**
-         * Set only when MATCHED.
-         */
-        participantId: string | null;
-        /**
-         * Set only when MATCHED.
-         */
-        participantName: string | null;
-        /**
-         * The field row it resolved to; set only when MATCHED.
-         */
-        sportEventParticipantId: string | null;
-        /**
-         * Set when a MATCHED row still cannot be applied.
-         */
-        rowError: 'DUPLICATE_PARTICIPANT' | null;
-        /**
-         * Null when the row cannot be applied.
-         */
-        change: 'UPDATE' | 'UNCHANGED' | null;
-        /**
-         * What is stored now; set whenever the row resolved.
-         */
-        before: {
-            /**
-             * The field row's place in its event (#2184): ACTIVE while it competes; WITHDRAWN, ELIMINATED (a missed cut or a knock-out) or DISQUALIFIED once it is out.
-             */
-            status: 'ACTIVE' | 'WITHDRAWN' | 'ELIMINATED' | 'DISQUALIFIED';
-            ranking: number | null;
-            seedNumber: number | null;
-        } | null;
-        /**
-         * What applying would store; null when the row cannot be applied.
-         */
-        after: {
-            /**
-             * The field row's place in its event (#2184): ACTIVE while it competes; WITHDRAWN, ELIMINATED (a missed cut or a knock-out) or DISQUALIFIED once it is out.
-             */
-            status: 'ACTIVE' | 'WITHDRAWN' | 'ELIMINATED' | 'DISQUALIFIED';
-            ranking: number | null;
-            seedNumber: number | null;
-        } | null;
-        /**
-         * Why the row cannot be applied, for display; null when it can.
-         */
-        message: string | null;
-    }>;
-    /**
-     * Counts by resolution and by change. Apply succeeds only when matched equals total and duplicate is 0.
-     */
-    rollup: {
-        total: number;
-        matched: number;
-        unresolved: number;
-        ambiguous: number;
-        /**
-         * MATCHED rows refused as DUPLICATE_PARTICIPANT.
-         */
-        duplicate: number;
-        /**
-         * Rows that would change a value.
-         */
-        update: number;
-        /**
-         * Rows that would change nothing.
-         */
-        unchanged: number;
     };
 };
 
@@ -23227,7 +23068,6 @@ export type GolfRoundScoreUploadRequest = {
     rows: Array<{
         participantId?: string;
         externalId?: string;
-        playerName?: string;
         /**
          * Null when only the score to par is known; such a row is not stored.
          */
@@ -23251,12 +23091,11 @@ export type GolfRoundScorePreviewResponse = {
      */
     rows: Array<{
         /**
-         * One golfer's result for one round. The first identifier present is used: participantId, then externalId, then an exact case-insensitive playerName, matched within the event's field.
+         * One golfer's result for one round. The first identifier present is used: participantId, then externalId (a feed id one of the participant's provider mappings holds), matched within the event's field.
          */
         row: {
             participantId?: string;
             externalId?: string;
-            playerName?: string;
             /**
              * Null when only the score to par is known; such a row is not stored.
              */
@@ -23340,7 +23179,6 @@ export type RaceResultUploadRequest = {
     rows: Array<{
         participantId?: string;
         externalId?: string;
-        playerName?: string;
         /**
          * How the race ended for this runner.
          */
@@ -23369,12 +23207,11 @@ export type RaceResultPreviewResponse = {
      */
     rows: Array<{
         /**
-         * One runner's result. The first identifier present is used: participantId, then externalId, then an exact case-insensitive playerName, matched within the event's field. Every value is stored exactly as sent.
+         * One runner's result. The first identifier present is used: participantId, then externalId (a feed id one of the participant's provider mappings holds), matched within the event's field. Every value is stored exactly as sent.
          */
         row: {
             participantId?: string;
             externalId?: string;
-            playerName?: string;
             /**
              * How the race ended for this runner.
              */
@@ -37146,92 +36983,6 @@ export type RefreshEventParticipantsResponses = {
 
 export type RefreshEventParticipantsResponse = RefreshEventParticipantsResponses[keyof RefreshEventParticipantsResponses];
 
-export type PreviewEventParticipantUploadData = {
-    body: SportEventParticipantUploadRequest;
-    path: {
-        eventId: string;
-    };
-    query?: never;
-    url: '/api/v1/events/{eventId}/participants/upload/preview';
-};
-
-export type PreviewEventParticipantUploadErrors = {
-    /**
-     * Standard API error envelope.
-     */
-    400: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    401: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    403: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    404: ErrorEnvelope;
-};
-
-export type PreviewEventParticipantUploadError = PreviewEventParticipantUploadErrors[keyof PreviewEventParticipantUploadErrors];
-
-export type PreviewEventParticipantUploadResponses = {
-    /**
-     * A dry run of a field upload. Nothing is written.
-     */
-    200: SportEventParticipantUploadPreviewResponse;
-};
-
-export type PreviewEventParticipantUploadResponse = PreviewEventParticipantUploadResponses[keyof PreviewEventParticipantUploadResponses];
-
-export type ApplyEventParticipantUploadData = {
-    body: SportEventParticipantUploadRequest;
-    path: {
-        eventId: string;
-    };
-    query?: never;
-    url: '/api/v1/events/{eventId}/participants/upload';
-};
-
-export type ApplyEventParticipantUploadErrors = {
-    /**
-     * Standard API error envelope.
-     */
-    400: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    401: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    403: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    404: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    409: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    422: ErrorEnvelope;
-};
-
-export type ApplyEventParticipantUploadError = ApplyEventParticipantUploadErrors[keyof ApplyEventParticipantUploadErrors];
-
-export type ApplyEventParticipantUploadResponses = {
-    /**
-     * An event's field.
-     */
-    200: SportEventParticipantListResponse;
-};
-
-export type ApplyEventParticipantUploadResponse = ApplyEventParticipantUploadResponses[keyof ApplyEventParticipantUploadResponses];
-
 export type RemoveEventParticipantData = {
     body?: never;
     path: {
@@ -38691,72 +38442,6 @@ export type UpdateSportLeagueParticipantRankingsResponses = {
 };
 
 export type UpdateSportLeagueParticipantRankingsResponse = UpdateSportLeagueParticipantRankingsResponses[keyof UpdateSportLeagueParticipantRankingsResponses];
-
-export type PreviewSportLeagueRankingUploadData = {
-    body: SportLeagueRankingUploadRequest;
-    path: {
-        sportLeagueId: string;
-    };
-    query?: never;
-    url: '/api/v1/sport-leagues/{sportLeagueId}/participants/rankings/upload/preview';
-};
-
-export type PreviewSportLeagueRankingUploadErrors = {
-    /**
-     * Standard API error envelope.
-     */
-    403: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    404: ErrorEnvelope;
-};
-
-export type PreviewSportLeagueRankingUploadError = PreviewSportLeagueRankingUploadErrors[keyof PreviewSportLeagueRankingUploadErrors];
-
-export type PreviewSportLeagueRankingUploadResponses = {
-    /**
-     * A dry run of a ranking upload. Nothing is written.
-     */
-    200: SportLeagueRankingUploadPreviewResponse;
-};
-
-export type PreviewSportLeagueRankingUploadResponse = PreviewSportLeagueRankingUploadResponses[keyof PreviewSportLeagueRankingUploadResponses];
-
-export type ApplySportLeagueRankingUploadData = {
-    body: SportLeagueRankingUploadRequest;
-    path: {
-        sportLeagueId: string;
-    };
-    query?: never;
-    url: '/api/v1/sport-leagues/{sportLeagueId}/participants/rankings/upload';
-};
-
-export type ApplySportLeagueRankingUploadErrors = {
-    /**
-     * Standard API error envelope.
-     */
-    403: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    404: ErrorEnvelope;
-    /**
-     * Standard API error envelope.
-     */
-    422: ErrorEnvelope;
-};
-
-export type ApplySportLeagueRankingUploadError = ApplySportLeagueRankingUploadErrors[keyof ApplySportLeagueRankingUploadErrors];
-
-export type ApplySportLeagueRankingUploadResponses = {
-    /**
-     * Participant-list response.
-     */
-    200: ParticipantListResponse;
-};
-
-export type ApplySportLeagueRankingUploadResponse = ApplySportLeagueRankingUploadResponses[keyof ApplySportLeagueRankingUploadResponses];
 
 export type ListPlatformTierProfilesData = {
     body?: never;

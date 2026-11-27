@@ -379,42 +379,6 @@ export async function eventsModule(fastify: FastifyInstance, opts: EventsModuleO
     handler: handler.refreshEventParticipants,
   });
 
-  fastify.post('/:eventId/participants/upload/preview', {
-    ...write,
-    schema: {
-      tags: TAGS,
-      summary: 'Preview a field upload',
-      description:
-        'Resolves each row against the event\'s field — participantId, then externalId, then an exact case-insensitive playerName, '
-        + 'with no fallback — and reports what applying it would change to ranking, seedNumber and status (odds come only from the feed). '
-        + 'A participant not on the field is UNRESOLVED: the upload never adds one, so the field is loaded from the provider first. '
-        + 'A participant named by two rows is a DUPLICATE_PARTICIPANT row error. Writes nothing. Root admin only.',
-      operationId: 'previewEventParticipantUpload',
-      params: EVENT_PARAMS,
-      body: schemaRef('SportEventParticipantUploadRequest'),
-      response: { 200: schemaRef('SportEventParticipantUploadPreviewResponse'), ...errors(400, 401, 403, 404) },
-    },
-    handler: handler.previewEventParticipantUpload,
-  });
-
-  fastify.post('/:eventId/participants/upload', {
-    ...write,
-    schema: {
-      tags: TAGS,
-      summary: 'Apply a field upload',
-      description:
-        'Re-runs the preview, then patches every changed row in one transaction, all or none. 422 EVENT_PARTICIPANT_UPLOAD_ROWS_UNRESOLVED, '
-        + 'with nothing written, when any row is not MATCHED or is a duplicate. Omitted values are left alone; null clears. '
-        + 'A later field refresh from the provider replaces these values as it does grid edits, except a released bracket event\'s seeds. '
-        + '409 SPORT_EVENT_SEEDS_LOCKED when a released bracket event\'s seed would change. Returns the field. Root admin only.',
-      operationId: 'applyEventParticipantUpload',
-      params: EVENT_PARAMS,
-      body: schemaRef('SportEventParticipantUploadRequest'),
-      response: { 200: schemaRef('SportEventParticipantListResponse'), ...errors(400, 401, 403, 404, 409, 422) },
-    },
-    handler: handler.applyEventParticipantUpload,
-  });
-
   fastify.delete('/:eventId/participants/:sportEventParticipantId', {
     ...write,
     schema: {

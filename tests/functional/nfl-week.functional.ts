@@ -3,7 +3,6 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import {
   addEventParticipants,
-  applyEventParticipantUpload,
   autoAssignEventPrices,
   autoAssignEventTiers,
   cancelEventMatch,
@@ -44,6 +43,7 @@ import { EVERY_GAME_PLAYED, oneEventOf } from '../support/sport-test-seed';
 import { sportRowKeys } from '../support/sport-rows';
 import { insertTestSportLeague } from '../support/test-sport-league';
 import { bracketMatch, resultBody, withHomeAwayRead } from '../support/match-requests';
+import { setFieldRows } from './field-rows';
 
 // An NFL regular-season week end to end over HTTP (#715). The week is its own event of one round,
 // its field the eight teams playing, and its four games link nowhere: they form no bracket, even
@@ -105,7 +105,7 @@ describe('SDK Functional: an NFL regular-season week (#715)', () => {
     // The migration's reference row, restored in case an earlier suite cleared the sports table.
     await db.sport.upsert({
       where: { sport: Sport.FOOTBALL },
-      create: { sport: Sport.FOOTBALL, ...sportRowKeys(Sport.FOOTBALL), tournamentFormat: 'MATCHES' },
+      create: { sport: Sport.FOOTBALL, ...sportRowKeys(Sport.FOOTBALL) },
       update: {},
     });
     const admin = await buildRegisteredUser({ displayName: 'Week Director' });
@@ -132,7 +132,7 @@ describe('SDK Functional: an NFL regular-season week (#715)', () => {
     created.sportEventIds.add(eventId);
     expect((await addEventParticipants({ client: a, path: { eventId }, body: { participantIds: teamIds } })).data?.added).toBe(TEAMS.length);
     // Release asks every event for its roster setup too: seeds, tiers and prices.
-    expect((await applyEventParticipantUpload({
+    expect((await setFieldRows({
       client: a,
       path: { eventId },
       body: { rows: TEAMS.map((team, index) => ({ playerName: `${team} ${RUN}`, seedNumber: index + 1 })) },

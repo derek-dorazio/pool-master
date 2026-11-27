@@ -1,4 +1,4 @@
-import { SelectionType, Sport, TournamentFormat } from '../enums';
+import { SelectionType, Sport } from '../enums';
 import type { SportDefinition } from './sport-definition';
 
 /**
@@ -18,7 +18,6 @@ import type { SportDefinition } from './sport-definition';
 export const tennisSportDefinition: SportDefinition = {
   sport: Sport.TENNIS,
   name: 'Tennis',
-  tournamentFormat: TournamentFormat.MATCHES,
   defaultRounds: 7,
   selectionTypes: [SelectionType.TIERED, SelectionType.BUDGET_PICK, SelectionType.RANDOM_DRAW, SelectionType.BRACKET, SelectionType.SURVIVOR],
   scoringDefinitions: ['KNOCKOUT_ROUND_POINTS'],

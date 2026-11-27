@@ -1,13 +1,11 @@
 /**
- * The one resolver for an uploaded row that names a participant (#236). Two uploads use
- * it — a sport league's participant rankings and an event's round scores — and they
- * differ only in where candidates come from: the sport's whole catalog, or the event's
- * field. Before #236 each carried its own copy of the precedence below.
+ * The one resolver for a result row that names a participant of an event's field (#236): a
+ * test event's golf round scores and race results.
  *
- * Precedence: `participantId`, then `externalId`, then an exact case-insensitive
- * `playerName`. Only the first identifier present is used; a row whose first identifier
- * matches nothing is unresolved, not retried on the next. One candidate is a match,
- * several are ambiguous, none is unresolved.
+ * Precedence: `participantId`, then `externalId` (a feed id one of the participant's provider
+ * mappings holds). A participant is never matched by name (#2114). Only the first identifier
+ * present is used; a row whose first identifier matches nothing is unresolved, not retried on the
+ * next. One candidate is a match, several are ambiguous, none is unresolved.
  */
 
 import type { ParticipantMatchQuery, ParticipantProviderMappingRepository } from '@poolmaster/shared/db';
@@ -19,7 +17,6 @@ export type FeedIdsByParticipant = ReadonlyMap<string, ReadonlySet<string>>;
 export interface ParticipantRowIdentifiers {
   participantId?: string;
   externalId?: string;
-  playerName?: string;
 }
 
 export type ParticipantRowResolution = 'MATCHED' | 'UNRESOLVED' | 'AMBIGUOUS';
@@ -31,14 +28,12 @@ export interface ResolvedParticipantRow {
 }
 
 /** The one identifier of a row that is matched, by the precedence above; null when it gives none. */
-export function participantMatchQuery(row: ParticipantRowIdentifiers): ParticipantMatchQuery | null {
+function participantMatchQuery(row: ParticipantRowIdentifiers): ParticipantMatchQuery | null {
   return row.participantId
     ? { id: row.participantId }
     : row.externalId
       ? { externalId: row.externalId }
-      : row.playerName
-        ? { name: row.playerName }
-        : null;
+      : null;
 }
 
 export async function resolveParticipantRow(
@@ -66,7 +61,6 @@ export function matchAmong(candidates: readonly Participant[], feedIds: FeedIdsB
   return (query: ParticipantMatchQuery): Promise<Participant[]> => Promise.resolve(candidates.filter((candidate) => (
     (query.id === undefined || candidate.id === query.id)
     && (query.externalId === undefined || (feedIds.get(candidate.id)?.has(query.externalId) ?? false))
-    && (query.name === undefined || candidate.name.toLowerCase() === query.name.toLowerCase())
   )));
 }
 

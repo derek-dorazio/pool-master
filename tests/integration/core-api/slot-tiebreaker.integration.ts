@@ -39,7 +39,7 @@ async function week() {
   const prisma = getPrisma();
   const sport = await prisma.sport.upsert({
     where: { sport: Sport.FOOTBALL },
-    create: { sport: Sport.FOOTBALL, ...sportRowKeys(Sport.FOOTBALL), tournamentFormat: 'MATCHES' },
+    create: { sport: Sport.FOOTBALL, ...sportRowKeys(Sport.FOOTBALL) },
     update: {},
   });
   const sportLeague = await prisma.sportLeague.create({

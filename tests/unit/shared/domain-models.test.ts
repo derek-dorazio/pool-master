@@ -1,13 +1,9 @@
 import {
-  Sport,
   ContestStatus,
   ContestFormat,
-  TournamentFormat,
-  VALID_CONTEST_FORMATS_BY_TOURNAMENT_FORMAT,
+  eventPlaysMatches,
   formatParticipantStatusLabel,
-  getDefaultTournamentFormatForSport,
-  getValidContestFormatsForTournamentFormat,
-  isContestFormatValidForSport,
+  isContestFormatValidForEvent,
   isLeaguePlayValid,
   LEAGUE_PLAY_BY_SCORING_FAMILY,
   MatchFormat,
@@ -15,28 +11,32 @@ import {
   ScoringFamily,
 } from '@poolmaster/shared/domain';
 
-describe('Contest validity matrix', () => {
-  it('pool-master-rop.78.14 covers every tournament format with a typed contest-format list', () => {
-    expect(
-      Object.keys(VALID_CONTEST_FORMATS_BY_TOURNAMENT_FORMAT).sort(),
-    ).toEqual(Object.values(TournamentFormat).sort());
+describe('Contest validity by whether the event plays matches', () => {
+  it.each([
+    [true, ContestFormat.ROSTER, true],
+    [true, ContestFormat.PREDICTION, true],
+    [true, ContestFormat.SQUARES, true],
+    [false, ContestFormat.ROSTER, true],
+    [false, ContestFormat.PREDICTION, false],
+    [false, ContestFormat.SQUARES, false],
+  ])('an event that plays matches: %s takes a %s contest: %s', (playsMatches, contestFormat, valid) => {
+    expect(isContestFormatValidForEvent(playsMatches, contestFormat)).toBe(valid);
+  });
+});
+
+describe('Whether an event plays matches', () => {
+  const slot = (matchFormat: MatchFormat) => ({ matchFormat });
+
+  it('reads an event with a HEAD_TO_HEAD slot as playing matches, even beside a FIELD one', () => {
+    expect(eventPlaysMatches({ slotDefinitions: [slot(MatchFormat.FIELD), slot(MatchFormat.HEAD_TO_HEAD)] })).toBe(true);
   });
 
-  it('allows roster contests on a stroke-play tournament', () => {
-    expect(
-      getValidContestFormatsForTournamentFormat(
-        TournamentFormat.STROKE_PLAY_TOURNAMENT,
-      ),
-    ).toEqual([ContestFormat.ROSTER]);
+  it('reads an event whose slots are all FIELD, a golf tournament or a race, as playing none', () => {
+    expect(eventPlaysMatches({ slotDefinitions: [slot(MatchFormat.FIELD)] })).toBe(false);
   });
 
-  it('pool-master-rop.78.14 derives sport defaults before validating contest format choices', () => {
-    expect(getDefaultTournamentFormatForSport(Sport.GOLF)).toBe(
-      TournamentFormat.STROKE_PLAY_TOURNAMENT,
-    );
-    expect(isContestFormatValidForSport(Sport.GOLF, ContestFormat.ROSTER)).toBe(
-      true,
-    );
+  it('reads an event that covers no slot as playing none', () => {
+    expect(eventPlaysMatches({ slotDefinitions: [] })).toBe(false);
   });
 });
 

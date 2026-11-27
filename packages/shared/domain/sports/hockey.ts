@@ -1,4 +1,4 @@
-import { SelectionType, Sport, TournamentFormat } from '../enums';
+import { SelectionType, Sport } from '../enums';
 import type { SportDefinition } from './sport-definition';
 
 /**
@@ -16,7 +16,6 @@ import type { SportDefinition } from './sport-definition';
 export const hockeySportDefinition: SportDefinition = {
   sport: Sport.HOCKEY,
   name: 'Hockey',
-  tournamentFormat: TournamentFormat.MATCHES,
   defaultRounds: 4,
   selectionTypes: [SelectionType.TIERED, SelectionType.BUDGET_PICK, SelectionType.RANDOM_DRAW, SelectionType.BRACKET, SelectionType.SURVIVOR, SelectionType.SQUARES],
   scoringDefinitions: ['KNOCKOUT_ROUND_POINTS'],

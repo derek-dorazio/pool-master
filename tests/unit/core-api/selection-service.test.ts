@@ -1,4 +1,5 @@
-import { ContestEntryStatus, ContestFormat, ContestStatus, CupWeight, SelectionType, SportEventParticipantStatus } from '@poolmaster/shared/domain';
+import { sportEventSlots } from '../../support/sport-play';
+import { ContestEntryStatus, ContestFormat, ContestStatus, CupWeight, SelectionType, Sport, SportEventParticipantStatus } from '@poolmaster/shared/domain';
 import type {
   Contest,
   ContestConfiguration,
@@ -331,7 +332,7 @@ function setup(options: SetupOptions = {}) {
 
 /** The contest's one golf event, scheduled to start at `startDate`. */
 function eventStarting(startDate: Date): SportEvent {
-  return { id: EVENT_ID, sport: 'GOLF', status: 'SCHEDULED', startDate } as SportEvent;
+  return { id: EVENT_ID, sport: 'GOLF', status: 'SCHEDULED', startDate, slotDefinitions: sportEventSlots(Sport.GOLF) } as SportEvent;
 }
 
 /** One pick change (#1259): sep-a on the owner's entry, unless told otherwise. */

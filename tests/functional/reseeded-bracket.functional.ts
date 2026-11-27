@@ -1,7 +1,6 @@
 import { deleteTestSportLeagues } from '../support/test-slots';
 import {
   addEventParticipants,
-  applyEventParticipantUpload,
   autoAssignEventPrices,
   autoAssignEventTiers,
   createParticipant,
@@ -30,6 +29,7 @@ import { sportRowKeys } from '../support/sport-rows';
 import { insertTestSportLeague } from '../support/test-sport-league';
 import type { SportEventRoundMatchDto } from '@poolmaster/shared/dto/bracket.dto';
 import { bracketMatch, dtoSideTeam, matchup, matchupTeams, resultBody } from '../support/match-requests';
+import { setFieldRows } from './field-rows';
 
 // A reseeded bracket end to end over HTTP (#722), shaped like one NFL conference: seven seeds, the
 // 1 seed on a bye, Wild Card games that link nowhere, a Divisional round the admin places by seed,
@@ -77,7 +77,7 @@ describe('SDK Functional: Reseeded bracket', () => {
     // The migration's reference row, restored in case an earlier suite cleared the sports table.
     await getFunctionalPrisma().sport.upsert({
       where: { sport: Sport.BASKETBALL },
-      create: { sport: Sport.BASKETBALL, ...sportRowKeys(Sport.BASKETBALL), tournamentFormat: 'MATCHES' },
+      create: { sport: Sport.BASKETBALL, ...sportRowKeys(Sport.BASKETBALL) },
       update: {},
     });
     const admin = await buildRegisteredUser({ displayName: 'Playoff Director' });
@@ -107,7 +107,7 @@ describe('SDK Functional: Reseeded bracket', () => {
       teamIds.push(id);
     }
     await addEventParticipants({ client: a, path: { eventId }, body: { participantIds: teamIds } });
-    await applyEventParticipantUpload({
+    await setFieldRows({
       client: a,
       path: { eventId },
       body: { rows: SEEDS.map((seed) => ({ playerName: `Seed ${seed} ${RUN}`, seedNumber: seed })) },

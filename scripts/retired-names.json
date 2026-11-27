@@ -9,7 +9,6 @@
     "roundSeriesLengths": "#2006 (9): seriesGames on the Season slot",
     "bracketAdvancement": "#2006 (9): pairing on the Season slot",
     "defaultRounds": "#2008 (10b): round count from Round rows, an API field",
-    "tournamentFormat": "#2008 (10b): matchFormat on the slot definition (5b)",
     "matchPeriodLayout": "#2047 (10f): period count and unit on the slot definition or Game",
     "MATCH_PERIOD_LAYOUTS": "#2047 (10f): period count and unit from the API",
     "FEED_LABELS": "#2093: enum.ProviderSyncKind display strings",
@@ -88,7 +87,15 @@
     "toPeriodScoreInput": "#2184 (10e-web): result routes take sides, no translation",
     "homeTeamName": "#2184 (10e-web): squares rowTeamName and columnTeamName, by side",
     "awayTeamName": "#2184 (10e-web): squares rowTeamName and columnTeamName, by side",
-    "profileName": "#2205: platformTierProfileId / platformPricingProfileId, the profile by key"
+    "profileName": "#2205: platformTierProfileId / platformPricingProfileId, the profile by key",
+    "previewEventParticipantUpload": "#2008 (10b): the feed sends the field; the grid save corrects it",
+    "applyEventParticipantUpload": "#2008 (10b): the feed sends the field; the grid save corrects it",
+    "previewRankingUpload": "#2008 (10b): the feed sends rankings; updateSportLeagueParticipantRankings corrects them",
+    "applyRankingUpload": "#2008 (10b): the feed sends rankings; updateSportLeagueParticipantRankings corrects them",
+    "findMatchingAny": "#2008 (10b): rows match by participant id or feed id, never by name (#2114)",
+    "BulkUploadPanel": "#2008 (10b): results and fields come from the feed, with no paste or CSV upload",
+    "UploadPreviewTable": "#2008 (10b): results and fields come from the feed, with no paste or CSV upload",
+    "parseGolfRoundScoreUpload": "#2008 (10b): golf round scores come from the feed by participant id"
   },
   "ROUND_NAMES_FROM_FINAL": 0,
   "roundLabel": 0,
@@ -98,7 +105,6 @@
   "roundSeriesLengths": 0,
   "bracketAdvancement": 0,
   "defaultRounds": 13,
-  "tournamentFormat": 36,
   "matchPeriodLayout": 0,
   "MATCH_PERIOD_LAYOUTS": 0,
   "FEED_LABELS": 3,
@@ -177,5 +183,13 @@
   "toPeriodScoreInput": 0,
   "homeTeamName": 0,
   "awayTeamName": 0,
-  "profileName": 0
+  "profileName": 0,
+  "previewEventParticipantUpload": 0,
+  "applyEventParticipantUpload": 0,
+  "previewRankingUpload": 0,
+  "applyRankingUpload": 0,
+  "findMatchingAny": 0,
+  "BulkUploadPanel": 0,
+  "UploadPreviewTable": 0,
+  "parseGolfRoundScoreUpload": 0
 }

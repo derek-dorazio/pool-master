@@ -355,22 +355,6 @@ export type ContestFormat = (typeof ContestFormat)[keyof typeof ContestFormat];
 /** No natural order: A to Z by its display strings. */
 export const ContestFormatOrder = alphabeticalOrder('ContestFormat');
 
-/** Tournament structural format: decides which contest formats are valid for a sport's events. */
-export const TournamentFormat = {
-  STROKE_PLAY_TOURNAMENT: 'STROKE_PLAY_TOURNAMENT',
-  /** One race: one field, one finishing order (#623). */
-  RACE: 'RACE',
-  /**
-   * Games between two sides (#698; renamed from KNOCKOUT_BRACKET in #715). Whether an event's
-   * games form a knockout bracket is read from their links (`advancesToMatchId`): a playoff's do,
-   * an NFL regular-season week's don't.
-   */
-  MATCHES: 'MATCHES',
-} as const;
-export type TournamentFormat = (typeof TournamentFormat)[keyof typeof TournamentFormat];
-/** No natural order: A to Z by its display strings. */
-export const TournamentFormatOrder = alphabeticalOrder('TournamentFormat');
-
 /**
  * Where one match of an event stands (#698). A match is COMPLETED once its result is in; a
  * CANCELLED one was never played. A POSTPONED one was put off before it began (#1791): it is

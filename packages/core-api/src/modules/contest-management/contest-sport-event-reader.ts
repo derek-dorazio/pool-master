@@ -8,9 +8,8 @@ import type {
   SportEventParticipantRepository,
   SportEventParticipantValuationRepository,
   SportEventRepository,
-  SportRepository,
 } from '@poolmaster/shared/db';
-import { MatchStatus, SportEventParticipantStatus, coveredRoundNumbers, getDefaultTournamentFormatForSport, isSquaresRound, hasSportEventStarted, matchSpread } from '@poolmaster/shared/domain';
+import { MatchStatus, SportEventParticipantStatus, coveredRoundNumbers, eventPlaysMatches, isSquaresRound, hasSportEventStarted, matchSpread } from '@poolmaster/shared/domain';
 import { findBracketProblem } from '../scoring-families/head-to-head/bracket-picks';
 import { ContestCutoffKind, cutoffTiming } from '../contests/entry-window';
 import { knockoutSeeds } from '../scoring-families/head-to-head/score-team';
@@ -20,19 +19,18 @@ import type { ContestCreateSportEventReader, ContestCreateSportEventState } from
 
 /**
  * What contest creation and opening need to know about the event: its status and start time,
- * its release and field-lock timing, its sport league (for a league's own template), its sport's tournament format, how much of its field has
+ * its release and field-lock timing, its sport league (for a league's own template), whether it plays matches, how much of its field has
  * loaded, and for budget rules its salary cap and its active golfers' prices (#93). Composed
  * from the slice-2 ports (#247) — it was a raw Prisma read inlined here.
  */
-export function createContestSportEventReader({ sportEvents, sports, field, valuations, matches }: {
+export function createContestSportEventReader({ sportEvents, field, valuations, matches }: {
   sportEvents: SportEventRepository;
-  sports: SportRepository;
   field: SportEventParticipantRepository;
   valuations: SportEventParticipantValuationRepository;
   matches: SportEventRoundMatchRepository;
 }): ContestCreateSportEventReader {
   /**
-   * The events' states from one read each of the events, their sports and their loaded field
+   * The events' states from one read each of the events and their loaded field
    * counts, however many events (#1355): a contest's events are all asked about at once.
    */
   const findByIds = async (sportEventIds: readonly string[]): Promise<ContestCreateSportEventState[]> => {
@@ -40,12 +38,7 @@ export function createContestSportEventReader({ sportEvents, sports, field, valu
     if (events.length === 0) {
       return [];
     }
-    // The sport rows are a fixed handful, so all of them are one read whatever sports the events have.
-    const [sportRows, loaded] = await Promise.all([
-      sports.findAll(),
-      sportEvents.countParticipants(events.map((event) => event.id)),
-    ]);
-    const sportByKind = new Map(sportRows.map((row) => [row.sport, row]));
+    const loaded = await sportEvents.countParticipants(events.map((event) => event.id));
     return events.map((event) => ({
       id: event.id,
       status: event.status,
@@ -53,7 +46,7 @@ export function createContestSportEventReader({ sportEvents, sports, field, valu
       sport: event.sport,
       sportLeagueId: event.sportLeagueId,
       championshipYear: event.championshipYear,
-      tournamentFormat: sportByKind.get(event.sport)?.tournamentFormat ?? getDefaultTournamentFormatForSport(event.sport),
+      playsMatches: eventPlaysMatches(event),
       participantCount: loaded.get(event.id) ?? 0,
       rounds: event.rounds ?? null,
       slotDefinitionIds: event.slotDefinitions.map((definition) => definition.id),
@@ -104,9 +97,8 @@ export function createContestSportEventReader({ sportEvents, sports, field, valu
 }
 
 /** The opening reader over its repositories, with the batching described on `createContestOpeningReader`. */
-export function createBatchedContestOpeningReader({ sportEvents, sports, field, valuations, matches: eventMatches }: {
+export function createBatchedContestOpeningReader({ sportEvents, field, valuations, matches: eventMatches }: {
   sportEvents: SportEventRepository;
-  sports: SportRepository;
   field: SportEventParticipantRepository;
   valuations: SportEventParticipantValuationRepository;
   matches: SportEventRoundMatchRepository;
@@ -116,8 +108,6 @@ export function createBatchedContestOpeningReader({ sportEvents, sports, field, 
     const counts = await sportEvents.countParticipants([...new Set(sportEventIds)]);
     return sportEventIds.map((sportEventId) => counts.get(sportEventId) ?? 0);
   });
-  // The sport rows are a fixed list of a handful: the first ask reads them all, for the whole page.
-  let sportRows: ReturnType<typeof sports.findAll> | undefined;
   const gamesOf = batchedByKey((sportEventIds) => eventMatches.findBySportEvents(sportEventIds), (game) => game.sportEventId);
   const fieldOf = batchedByKey((sportEventIds) => field.findBySportEvents(sportEventIds), (row) => row.sportEventId);
   const matches = withReads(eventMatches, { findBySportEvent: (sportEventId) => gamesOf.load(sportEventId) });
@@ -126,7 +116,6 @@ export function createBatchedContestOpeningReader({ sportEvents, sports, field, 
       findByIds: (ids) => eventsById.load(ids),
       countParticipants: async (sportEventIds) => new Map(await Promise.all(sportEventIds.map(async (sportEventId) => [sportEventId, await participantCounts.load(sportEventId)] as const))),
     }),
-    sports: withReads(sports, { findAll: () => (sportRows ??= sports.findAll()) }),
     field: withReads(field, { findBySportEvent: (sportEventId) => fieldOf.load(sportEventId) }),
     valuations,
     matches,

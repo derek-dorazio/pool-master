@@ -25,7 +25,7 @@ function setup(sportName: Sport = Sport.GOLF, status: SportEventStatus = SportEv
   const service = new SportEventParticipantService({
     sportEvents: store.sportEventRepo(),
     field: store.fieldRepo(),
-    participants: store.participantRepo(), mappings: store.mappingRepo(),
+    participants: store.participantRepo(),
     matches: store.matchRepo(), tiers: store.tierRepo(), valuations: store.valuationRepo(),
     domainEvents,
   });
@@ -88,7 +88,7 @@ describe('SportEventParticipantService — the field viewers share', () => {
     const serviceSharing = () => new SportEventParticipantService({ domainEvents: testDomainEvents(),
       sportEvents: context.store.sportEventRepo(),
       field: context.store.fieldRepo(),
-      participants: context.store.participantRepo(), mappings: context.store.mappingRepo(),
+      participants: context.store.participantRepo(),
       matches: context.store.matchRepo(), tiers: context.store.tierRepo(), valuations: context.store.valuationRepo(),
       fieldCache,
       now: () => now,
@@ -207,7 +207,7 @@ describe('SportEventParticipantService — changing the field', () => {
     const field = store.fieldRepo();
     const updateMany = jest.spyOn(field, 'updateMany');
     const service = new SportEventParticipantService({ domainEvents: testDomainEvents(),
-      sportEvents: store.sportEventRepo(), field, participants: store.participantRepo(), mappings: store.mappingRepo(),
+      sportEvents: store.sportEventRepo(), field, participants: store.participantRepo(),
       matches: store.matchRepo(), tiers: store.tierRepo(), valuations: store.valuationRepo(),
     });
     const same = store.addToField(event.id, store.addParticipant(sport.id, 'Same').id, { ranking: 4, oddsToWin: 20 });
@@ -366,146 +366,12 @@ describe('SportEventParticipantService — seeds on a released bracket', () => {
 
 // The field upload adjusts golfers already on the field; it resolves rows against the field
 // alone and never adds a field row or a participant.
-describe('SportEventParticipantService — field upload', () => {
-  function fieldWithTwo() {
-    const ctx = setup();
-    const { store, sport, event } = ctx;
-    const ana = store.addParticipant(sport.id, 'Ana Lee', { externalId: 'ext-ana' });
-    const bo = store.addParticipant(sport.id, 'Bo Kim', { externalId: 'ext-bo' });
-    const anaEntry = store.addToField(event.id, ana.id, { ranking: 5, oddsToWin: 12, seedNumber: 1 });
-    const boEntry = store.addToField(event.id, bo.id, { ranking: 9, seedNumber: 2 });
-    return { ...ctx, ana, bo, anaEntry, boEntry };
-  }
+describe('SportEventParticipantService — the field comes from the feed (#2008)', () => {
+  it('offers no field upload: a field row changes only through the grid save, named by its id', () => {
+    const methods = Object.getOwnPropertyNames(SportEventParticipantService.prototype);
 
-  it('matches a row by participantId, by externalId, and by case-insensitive playerName, each to its field row', async () => {
-    const { service, event, ana, bo, anaEntry, boEntry } = fieldWithTwo();
-
-    const rows = await service.previewUpload(event.id, [
-      { participantId: ana.id, ranking: 1 },
-      { externalId: 'ext-bo', ranking: 2 },
-    ]);
-    const byName = await service.previewUpload(event.id, [{ playerName: 'bo KIM', ranking: 2 }]);
-
-    expect(rows.map((row) => [row.resolution, row.participantId, row.sportEventParticipantId])).toEqual([
-      ['MATCHED', ana.id, anaEntry.id],
-      ['MATCHED', bo.id, boEntry.id],
-    ]);
-    expect(byName[0]).toMatchObject({ resolution: 'MATCHED', participantName: 'Bo Kim', sportEventParticipantId: boEntry.id });
-  });
-
-  it('uses only the first identifier present: a participantId that matches nothing is unresolved even when the playerName would match', async () => {
-    const { service, event } = fieldWithTwo();
-
-    const [row] = await service.previewUpload(event.id, [{ participantId: 'nobody', playerName: 'Ana Lee', ranking: 1 }]);
-
-    expect(row).toMatchObject({ resolution: 'UNRESOLVED', participantId: null, change: null, after: null });
-  });
-
-  it('reports a playerName shared by two golfers on the field as ambiguous, with no change', async () => {
-    const { store, service, sport, event } = fieldWithTwo();
-    store.addToField(event.id, store.addParticipant(sport.id, 'Ana Lee').id);
-
-    const [row] = await service.previewUpload(event.id, [{ playerName: 'Ana Lee', ranking: 1 }]);
-
-    expect(row).toMatchObject({ resolution: 'AMBIGUOUS', sportEventParticipantId: null, change: null });
-    expect(row.message).toMatch(/Several participants/);
-  });
-
-  it('reports a catalog golfer who is not on the field as unresolved, telling the admin to refresh the field first', async () => {
-    const { store, service, sport, event } = fieldWithTwo();
-    store.addParticipant(sport.id, 'Cy Park', { externalId: 'ext-cy' });
-
-    const [row] = await service.previewUpload(event.id, [{ externalId: 'ext-cy', ranking: 3 }]);
-
-    expect(row).toMatchObject({ resolution: 'UNRESOLVED', participantId: null, sportEventParticipantId: null, change: null });
-    expect(row.message).toMatch(/refresh the field from the provider first/);
-  });
-
-  it('flags every row that names the same participant as a DUPLICATE_PARTICIPANT row error, by different identifiers alike', async () => {
-    const { service, event, ana } = fieldWithTwo();
-
-    const rows = await service.previewUpload(event.id, [
-      { participantId: ana.id, ranking: 1 },
-      { externalId: 'ext-bo', ranking: 2 },
-      { playerName: 'Ana Lee', ranking: 3 },
-    ]);
-
-    expect(rows.map((row) => [row.resolution, row.rowError, row.change])).toEqual([
-      ['MATCHED', 'DUPLICATE_PARTICIPANT', null],
-      ['MATCHED', null, 'UPDATE'],
-      ['MATCHED', 'DUPLICATE_PARTICIPANT', null],
-    ]);
-    expect(rows[0].message).toMatch(/rows 1, 3/);
-  });
-
-  it('classifies a row that changes a value as UPDATE and one that restates stored values as UNCHANGED', async () => {
-    const { service, event } = fieldWithTwo();
-
-    const [changed, same] = await service.previewUpload(event.id, [
-      { externalId: 'ext-ana', ranking: 7 },
-      { externalId: 'ext-bo', ranking: 9, seedNumber: 2, status: SportEventParticipantStatus.ACTIVE },
-    ]);
-
-    expect(changed).toMatchObject({ change: 'UPDATE', before: { ranking: 5 }, after: { ranking: 7, seedNumber: 1 } });
-    expect(same).toMatchObject({ change: 'UNCHANGED' });
-    expect(same.after).toEqual(same.before);
-  });
-
-  it('leaves an omitted value untouched and clears a value sent as null, in preview and on apply', async () => {
-    const { store, service, event, anaEntry } = fieldWithTwo();
-    const row = { externalId: 'ext-ana', seedNumber: null, status: 'WITHDRAWN' as const };
-
-    const [preview] = await service.previewUpload(event.id, [row]);
-
-    // The upload has no odds column: odds come only from the feed (#2081), so they are not among its values.
-    expect(preview.after).toEqual({ status: 'WITHDRAWN', ranking: 5, seedNumber: null });
-    expect(anaEntry.seedNumber).toBe(1);
-
-    await service.applyUpload(event.id, [row]);
-
-    const stored = store.field.find((entry) => entry.id === anaEntry.id);
-    expect(stored).toMatchObject({ ranking: 5, status: 'WITHDRAWN', oddsToWin: 12 });
-    expect(stored?.seedNumber).toBeUndefined();
-  });
-
-  it('applies every changed row and returns the field, without adding a field row or a participant', async () => {
-    const { store, service, event, anaEntry, boEntry } = fieldWithTwo();
-    const participantsBefore = store.participants.length;
-
-    const field = await service.applyUpload(event.id, [
-      { externalId: 'ext-ana', ranking: 2 },
-      { playerName: 'Bo Kim', ranking: 9 },
-    ]);
-
-    expect(field.map((view) => [view.entry.id, view.entry.ranking])).toEqual([[anaEntry.id, 2], [boEntry.id, 9]]);
-    expect(store.field).toHaveLength(2);
-    expect(store.participants).toHaveLength(participantsBefore);
-  });
-
-  it('refuses to apply (422 EVENT_PARTICIPANT_UPLOAD_ROWS_UNRESOLVED) and writes nothing when any row is unresolved or a duplicate', async () => {
-    const { store, event, anaEntry } = fieldWithTwo();
-    const fieldRepo = store.fieldRepo();
-    const updateMany = jest.spyOn(fieldRepo, 'updateMany');
-    const guarded = new SportEventParticipantService({ domainEvents: testDomainEvents(),
-      sportEvents: store.sportEventRepo(),
-      field: fieldRepo,
-      participants: store.participantRepo(), mappings: store.mappingRepo(),
-      matches: store.matchRepo(), tiers: store.tierRepo(), valuations: store.valuationRepo(),
-    });
-
-    for (const rows of [
-      [{ externalId: 'ext-ana', ranking: 1 }, { externalId: 'ext-nobody', ranking: 2 }],
-      [{ externalId: 'ext-ana', ranking: 1 }, { playerName: 'ana lee', ranking: 2 }],
-    ]) {
-      await expect(guarded.applyUpload(event.id, rows)).rejects.toMatchObject({ code: 'EVENT_PARTICIPANT_UPLOAD_ROWS_UNRESOLVED', statusCode: 422 });
-    }
-    expect(updateMany).not.toHaveBeenCalled();
-    expect(anaEntry.ranking).toBe(5);
-  });
-
-  it('fails a preview for an unknown event with 404 EVENT_NOT_FOUND', async () => {
-    const { service } = setup();
-    await expect(service.previewUpload('missing', [{ externalId: 'x' }])).rejects.toMatchObject({ code: 'EVENT_NOT_FOUND', statusCode: 404 });
+    expect(methods.filter((name) => /upload/i.test(name))).toEqual([]);
+    expect(methods).toContain('updateParticipants');
   });
 });
 

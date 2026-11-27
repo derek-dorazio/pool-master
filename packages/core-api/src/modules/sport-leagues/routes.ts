@@ -65,8 +65,7 @@ export function sportLeaguesModule(fastify: FastifyInstance, opts: SportLeaguesM
   // (#1163, #1853). Rare enough to forget every event field this container read. A write that
   // lands also changes the public list, and the event pages that name the sport league (#1181).
   fastify.addHook('onSend', async (request, reply, payload) => {
-    // An upload preview resolves rows and writes nothing.
-    if (request.method === 'GET' || request.method === 'HEAD' || request.routeOptions.url?.endsWith('/upload/preview')) return payload;
+    if (request.method === 'GET' || request.method === 'HEAD') return payload;
     eventFieldCache.clear();
     if (reply.statusCode < 400) {
       lists.clear();
@@ -294,33 +293,5 @@ export function sportLeaguesModule(fastify: FastifyInstance, opts: SportLeaguesM
       response: { 200: schemaRef('ParticipantListResponse'), ...errors(403, 404) },
     },
     handler: handler.updateParticipantRankings,
-  });
-
-  fastify.post('/:sportLeagueId/participants/rankings/upload/preview', {
-    ...write,
-    schema: {
-      tags: TAGS,
-      summary: 'Preview a ranking upload',
-      description: 'Resolves each row to a participant of the sport league and writes nothing. Root admin only.',
-      operationId: 'previewSportLeagueRankingUpload',
-      params: SPORT_LEAGUE_PARAMS,
-      body: schemaRef('SportLeagueRankingUploadRequest'),
-      response: { 200: schemaRef('SportLeagueRankingUploadPreviewResponse'), ...errors(403, 404) },
-    },
-    handler: handler.previewRankingUpload,
-  });
-
-  fastify.post('/:sportLeagueId/participants/rankings/upload', {
-    ...write,
-    schema: {
-      tags: TAGS,
-      summary: 'Apply a ranking upload',
-      description: 'Ranks every row\'s participant, all or none; 422 SPORT_LEAGUE_RANKING_UPLOAD_UNRESOLVED_ROWS when any row does not resolve. Root admin only.',
-      operationId: 'applySportLeagueRankingUpload',
-      params: SPORT_LEAGUE_PARAMS,
-      body: schemaRef('SportLeagueRankingUploadRequest'),
-      response: { 200: schemaRef('ParticipantListResponse'), ...errors(403, 404, 422) },
-    },
-    handler: handler.applyRankingUpload,
   });
 }

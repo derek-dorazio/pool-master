@@ -2235,46 +2235,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/events/{eventId}/participants/upload/preview": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Preview a field upload
-         * @description Resolves each row against the event's field — participantId, then externalId, then an exact case-insensitive playerName, with no fallback — and reports what applying it would change to ranking, seedNumber and status (odds come only from the feed). A participant not on the field is UNRESOLVED: the upload never adds one, so the field is loaded from the provider first. A participant named by two rows is a DUPLICATE_PARTICIPANT row error. Writes nothing. Root admin only.
-         */
-        post: operations["previewEventParticipantUpload"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/events/{eventId}/participants/upload": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Apply a field upload
-         * @description Re-runs the preview, then patches every changed row in one transaction, all or none. 422 EVENT_PARTICIPANT_UPLOAD_ROWS_UNRESOLVED, with nothing written, when any row is not MATCHED or is a duplicate. Omitted values are left alone; null clears. A later field refresh from the provider replaces these values as it does grid edits, except a released bracket event's seeds. 409 SPORT_EVENT_SEEDS_LOCKED when a released bracket event's seed would change. Returns the field. Root admin only.
-         */
-        post: operations["applyEventParticipantUpload"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/v1/events/{eventId}/participants/{sportEventParticipantId}": {
         parameters: {
             query?: never;
@@ -2946,46 +2906,6 @@ export interface paths {
          * @description Root admin only. All or none; every participant named must be the sport league's.
          */
         patch: operations["updateSportLeagueParticipantRankings"];
-        trace?: never;
-    };
-    "/api/v1/sport-leagues/{sportLeagueId}/participants/rankings/upload/preview": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Preview a ranking upload
-         * @description Resolves each row to a participant of the sport league and writes nothing. Root admin only.
-         */
-        post: operations["previewSportLeagueRankingUpload"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/sport-leagues/{sportLeagueId}/participants/rankings/upload": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Apply a ranking upload
-         * @description Ranks every row's participant, all or none; 422 SPORT_LEAGUE_RANKING_UPLOAD_UNRESOLVED_ROWS when any row does not resolve. Root admin only.
-         */
-        post: operations["applySportLeagueRankingUpload"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
         trace?: never;
     };
     "/api/v1/tier-profiles/": {
@@ -10559,11 +10479,6 @@ export interface components {
             /** @description Where the sport sits wherever sports are listed together, lower first: the most popular first. Display only, never an identity. */
             displayOrder: number;
             /**
-             * @description Structural format of the sport's events; decides which contest formats are valid.
-             * @enum {string}
-             */
-            tournamentFormat: "STROKE_PLAY_TOURNAMENT" | "RACE" | "MATCHES";
-            /**
              * Format: date-time
              * @description ISO 8601 datetime string.
              */
@@ -10592,11 +10507,6 @@ export interface components {
                 urlSegment: string;
                 /** @description Where the sport sits wherever sports are listed together, lower first: the most popular first. Display only, never an identity. */
                 displayOrder: number;
-                /**
-                 * @description Structural format of the sport's events; decides which contest formats are valid.
-                 * @enum {string}
-                 */
-                tournamentFormat: "STROKE_PLAY_TOURNAMENT" | "RACE" | "MATCHES";
                 /**
                  * Format: date-time
                  * @description ISO 8601 datetime string.
@@ -13315,47 +13225,11 @@ export interface components {
                 ranking: number | null;
             }[];
         };
-        /** @description A ranking upload for a sport league's participants. */
-        SportLeagueRankingUploadRequest: {
-            rows: {
-                /** Format: uuid */
-                participantId?: string;
-                externalId?: string;
-                playerName?: string;
-                ranking?: number;
-            }[];
-        };
         /**
          * @description How an uploaded row resolved to a participant: one match, none, or several.
          * @enum {string}
          */
         UploadRowResolutionDto: "MATCHED" | "UNRESOLVED" | "AMBIGUOUS";
-        /** @description A dry run of a ranking upload. Nothing is written. */
-        SportLeagueRankingUploadPreviewResponse: {
-            /** @description One per uploaded row, in upload order. */
-            rows: {
-                /** @description One uploaded rank. The first identifier present is used: participantId, then externalId, then an exact case-insensitive playerName, among the sport league's participants. */
-                row: {
-                    /** Format: uuid */
-                    participantId?: string;
-                    externalId?: string;
-                    playerName?: string;
-                    ranking?: number;
-                };
-                /**
-                 * @description How an uploaded row resolved to a participant: one match, none, or several.
-                 * @enum {string}
-                 */
-                resolution: "MATCHED" | "UNRESOLVED" | "AMBIGUOUS";
-                /**
-                 * Format: uuid
-                 * @description Set only when MATCHED.
-                 */
-                participantId: string | null;
-                /** @description Set only when MATCHED. */
-                participantName: string | null;
-            }[];
-        };
         /** @enum {string} */
         EventStatusDto: "DRAFT" | "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
         /** @enum {string} */
@@ -13637,6 +13511,8 @@ export interface components {
              * @enum {string}
              */
             scoringFamily: "STROKE_PLAY" | "FINISH_POSITION" | "HEAD_TO_HEAD";
+            /** @description Whether the event is played as games between two sides (#2008): one of its slots is HEAD_TO_HEAD. A golf tournament or a race, whose slots are FIELD, plays none. Its matches, bracket and seed locks apply only where true. */
+            playsMatches: boolean;
             /** @description Whether it is a test event, made by hand on a test slot (QA only). A league is synced or off, so every other event is one its sync keeps: the provider wins over an edit to its name and venue, so they are shown read-only. (Admin-only: operational detail no member surface reads.) */
             isTestData: boolean;
             /** @description The Season slots the event covers, in play order: one for most events, one per round for a bracket. An event with slots takes its dates from them. Empty while the sync has not matched its slots yet. */
@@ -13989,6 +13865,8 @@ export interface components {
                  * @enum {string}
                  */
                 scoringFamily: "STROKE_PLAY" | "FINISH_POSITION" | "HEAD_TO_HEAD";
+                /** @description Whether the event is played as games between two sides (#2008): one of its slots is HEAD_TO_HEAD. A golf tournament or a race, whose slots are FIELD, plays none. Its matches, bracket and seed locks apply only where true. */
+                playsMatches: boolean;
                 /** @description Whether it is a test event, made by hand on a test slot (QA only). A league is synced or off, so every other event is one its sync keeps: the provider wins over an edit to its name and venue, so they are shown read-only. (Admin-only: operational detail no member surface reads.) */
                 isTestData: boolean;
                 /** @description The Season slots the event covers, in play order: one for most events, one per round for a bracket. An event with slots takes its dates from them. Empty while the sync has not matched its slots yet. */
@@ -14320,6 +14198,8 @@ export interface components {
                  * @enum {string}
                  */
                 scoringFamily: "STROKE_PLAY" | "FINISH_POSITION" | "HEAD_TO_HEAD";
+                /** @description Whether the event is played as games between two sides (#2008): one of its slots is HEAD_TO_HEAD. A golf tournament or a race, whose slots are FIELD, plays none. Its matches, bracket and seed locks apply only where true. */
+                playsMatches: boolean;
                 /** @description Whether it is a test event, made by hand on a test slot (QA only). A league is synced or off, so every other event is one its sync keeps: the provider wins over an edit to its name and venue, so they are shown read-only. (Admin-only: operational detail no member surface reads.) */
                 isTestData: boolean;
                 /** @description The Season slots the event covers, in play order: one for most events, one per round for a bracket. An event with slots takes its dates from them. Empty while the sync has not matched its slots yet. */
@@ -15567,104 +15447,6 @@ export interface components {
                  * @description ISO 8601 datetime string.
                  */
                 updatedAt: string;
-            };
-        };
-        /** @description A field upload: changes to participants already on the event's field. It never adds one. */
-        SportEventParticipantUploadRequest: {
-            rows: {
-                participantId?: string;
-                /** @description The participant's canonical external id. */
-                externalId?: string;
-                playerName?: string;
-                /**
-                 * @description The field row's place in its event (#2184): ACTIVE while it competes; WITHDRAWN, ELIMINATED (a missed cut or a knock-out) or DISQUALIFIED once it is out.
-                 * @enum {string}
-                 */
-                status?: "ACTIVE" | "WITHDRAWN" | "ELIMINATED" | "DISQUALIFIED";
-                ranking?: number | null;
-                seedNumber?: number | null;
-            }[];
-        };
-        /** @description A dry run of a field upload. Nothing is written. */
-        SportEventParticipantUploadPreviewResponse: {
-            /** @description One per uploaded row, in upload order. */
-            rows: {
-                /** @description One uploaded field row. The first identifier present is used — participantId, then externalId, then an exact case-insensitive playerName — matched only within the event's field, with no fallback to the next. Each value omitted is left alone; null clears it. */
-                row: {
-                    participantId?: string;
-                    /** @description The participant's canonical external id. */
-                    externalId?: string;
-                    playerName?: string;
-                    /**
-                     * @description The field row's place in its event (#2184): ACTIVE while it competes; WITHDRAWN, ELIMINATED (a missed cut or a knock-out) or DISQUALIFIED once it is out.
-                     * @enum {string}
-                     */
-                    status?: "ACTIVE" | "WITHDRAWN" | "ELIMINATED" | "DISQUALIFIED";
-                    ranking?: number | null;
-                    seedNumber?: number | null;
-                };
-                /**
-                 * @description MATCHED: one participant on the field. UNRESOLVED: none on the field — the upload never adds one, so load the field from the provider first. AMBIGUOUS: several.
-                 * @enum {string}
-                 */
-                resolution: "MATCHED" | "UNRESOLVED" | "AMBIGUOUS";
-                /**
-                 * Format: uuid
-                 * @description Set only when MATCHED.
-                 */
-                participantId: string | null;
-                /** @description Set only when MATCHED. */
-                participantName: string | null;
-                /**
-                 * Format: uuid
-                 * @description The field row it resolved to; set only when MATCHED.
-                 */
-                sportEventParticipantId: string | null;
-                /**
-                 * @description Set when a MATCHED row still cannot be applied.
-                 * @enum {string|null}
-                 */
-                rowError: "DUPLICATE_PARTICIPANT" | null;
-                /**
-                 * @description Null when the row cannot be applied.
-                 * @enum {string|null}
-                 */
-                change: "UPDATE" | "UNCHANGED" | null;
-                /** @description What is stored now; set whenever the row resolved. */
-                before: {
-                    /**
-                     * @description The field row's place in its event (#2184): ACTIVE while it competes; WITHDRAWN, ELIMINATED (a missed cut or a knock-out) or DISQUALIFIED once it is out.
-                     * @enum {string}
-                     */
-                    status: "ACTIVE" | "WITHDRAWN" | "ELIMINATED" | "DISQUALIFIED";
-                    ranking: number | null;
-                    seedNumber: number | null;
-                } | null;
-                /** @description What applying would store; null when the row cannot be applied. */
-                after: {
-                    /**
-                     * @description The field row's place in its event (#2184): ACTIVE while it competes; WITHDRAWN, ELIMINATED (a missed cut or a knock-out) or DISQUALIFIED once it is out.
-                     * @enum {string}
-                     */
-                    status: "ACTIVE" | "WITHDRAWN" | "ELIMINATED" | "DISQUALIFIED";
-                    ranking: number | null;
-                    seedNumber: number | null;
-                } | null;
-                /** @description Why the row cannot be applied, for display; null when it can. */
-                message: string | null;
-            }[];
-            /** @description Counts by resolution and by change. Apply succeeds only when matched equals total and duplicate is 0. */
-            rollup: {
-                total: number;
-                matched: number;
-                unresolved: number;
-                ambiguous: number;
-                /** @description MATCHED rows refused as DUPLICATE_PARTICIPANT. */
-                duplicate: number;
-                /** @description Rows that would change a value. */
-                update: number;
-                /** @description Rows that would change nothing. */
-                unchanged: number;
             };
         };
         /** @description Request payload for creating a contest. */
@@ -21414,7 +21196,6 @@ export interface components {
             rows: {
                 participantId?: string;
                 externalId?: string;
-                playerName?: string;
                 /** @description Null when only the score to par is known; such a row is not stored. */
                 strokes: number | null;
                 scoreToPar: number;
@@ -21430,11 +21211,10 @@ export interface components {
         GolfRoundScorePreviewResponse: {
             /** @description One per uploaded row, in upload order. */
             rows: {
-                /** @description One golfer's result for one round. The first identifier present is used: participantId, then externalId, then an exact case-insensitive playerName, matched within the event's field. */
+                /** @description One golfer's result for one round. The first identifier present is used: participantId, then externalId (a feed id one of the participant's provider mappings holds), matched within the event's field. */
                 row: {
                     participantId?: string;
                     externalId?: string;
-                    playerName?: string;
                     /** @description Null when only the score to par is known; such a row is not stored. */
                     strokes: number | null;
                     scoreToPar: number;
@@ -21507,7 +21287,6 @@ export interface components {
             rows: {
                 participantId?: string;
                 externalId?: string;
-                playerName?: string;
                 /**
                  * @description How the race ended for this runner.
                  * @enum {string}
@@ -21525,11 +21304,10 @@ export interface components {
         RaceResultPreviewResponse: {
             /** @description One per row sent, in the order sent. */
             rows: {
-                /** @description One runner's result. The first identifier present is used: participantId, then externalId, then an exact case-insensitive playerName, matched within the event's field. Every value is stored exactly as sent. */
+                /** @description One runner's result. The first identifier present is used: participantId, then externalId (a feed id one of the participant's provider mappings holds), matched within the event's field. Every value is stored exactly as sent. */
                 row: {
                     participantId?: string;
                     externalId?: string;
-                    playerName?: string;
                     /**
                      * @description How the race ended for this runner.
                      * @enum {string}
@@ -34997,148 +34775,6 @@ export interface operations {
             };
         };
     };
-    previewEventParticipantUpload: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                eventId: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["SportEventParticipantUploadRequest"];
-            };
-        };
-        responses: {
-            /** @description A dry run of a field upload. Nothing is written. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["SportEventParticipantUploadPreviewResponse"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-        };
-    };
-    applyEventParticipantUpload: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                eventId: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["SportEventParticipantUploadRequest"];
-            };
-        };
-        responses: {
-            /** @description An event's field. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["SportEventParticipantListResponse"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            400: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-        };
-    };
     removeEventParticipant: {
         parameters: {
             query?: never;
@@ -37353,103 +36989,6 @@ export interface operations {
             };
             /** @description Standard API error envelope. */
             404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-        };
-    };
-    previewSportLeagueRankingUpload: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                sportLeagueId: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["SportLeagueRankingUploadRequest"];
-            };
-        };
-        responses: {
-            /** @description A dry run of a ranking upload. Nothing is written. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["SportLeagueRankingUploadPreviewResponse"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-        };
-    };
-    applySportLeagueRankingUpload: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                sportLeagueId: string;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["SportLeagueRankingUploadRequest"];
-            };
-        };
-        responses: {
-            /** @description Participant-list response. */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ParticipantListResponse"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            403: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["ErrorEnvelope"];
-                };
-            };
-            /** @description Standard API error envelope. */
-            422: {
                 headers: {
                     [name: string]: unknown;
                 };

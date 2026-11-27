@@ -2,7 +2,6 @@ import { deleteTestSportLeagues } from '../support/test-slots';
 import {
   acceptInvitation,
   addEventParticipants,
-  applyEventParticipantUpload,
   autoAssignEventPrices,
   autoAssignEventTiers,
   createContest,
@@ -46,6 +45,7 @@ import { expectMatchesSchema } from '../support/expect-matches-schema';
 import { sportRowKeys } from '../support/sport-rows';
 import { insertTestSportLeague } from '../support/test-sport-league';
 import { bracketMatch, resultBody, withHomeAwayRead } from '../support/match-requests';
+import { setFieldRows } from './field-rows';
 
 // Knockout scoring end to end over HTTP (#699): an admin releases a four-team, two-round bracket, a
 // commissioner runs a contest scored by knockout round points (1 for a first-round win, 2 for the
@@ -105,7 +105,7 @@ describe('SDK Functional: Basketball knockout scoring', () => {
     // The migration's reference row, restored in case an earlier suite cleared the sports table.
     await getFunctionalPrisma().sport.upsert({
       where: { sport: Sport.BASKETBALL },
-      create: { sport: Sport.BASKETBALL, ...sportRowKeys(Sport.BASKETBALL), tournamentFormat: 'MATCHES' },
+      create: { sport: Sport.BASKETBALL, ...sportRowKeys(Sport.BASKETBALL) },
       update: {},
     });
     const admin = await buildRegisteredUser({ displayName: 'Bracket Director' });
@@ -131,7 +131,7 @@ describe('SDK Functional: Basketball knockout scoring', () => {
       teamIds.push(id);
     }
     expect((await addEventParticipants({ client: a, path: { eventId }, body: { participantIds: teamIds } })).data?.added).toBe(4);
-    await applyEventParticipantUpload({
+    await setFieldRows({
       client: a,
       path: { eventId },
       body: { rows: FIELD.map((team) => ({ playerName: `${team.name} ${RUN}`, seedNumber: team.seed })) },

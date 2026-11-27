@@ -31,7 +31,7 @@ import type {
   User, ParticipantStatus, TimeFormat, ColorScheme
 } from '../domain';
 
-import type { ParticipantMatchQuery, ParticipantRanking } from './sport-catalog-ports';
+import type { ParticipantRanking } from './sport-catalog-ports';
 import type { EmailMessageRepository } from './email-ports';
 
 // --- Identity ---
@@ -446,12 +446,6 @@ export interface ParticipantRepository {
   findByIds(ids: readonly string[]): Promise<Participant[]>;
   /** Whole result, narrowed by the query and filters — never paged (§16). Ordered by name. */
   search(query: string, filters: ParticipantSearchFilters): Promise<Participant[]>;
-  /**
-   * Candidates for a whole upload within one sport league, in one read (#1183): every participant
-   * any of the queries matches, exactly on each identifier a query gives, test participants left
-   * out (#2096). Ordered by name.
-   */
-  findMatchingAny(sportLeagueId: string, queries: readonly ParticipantMatchQuery[]): Promise<Participant[]>;
   /**
    * A sport league's roster (#1853), test participants left out (#2096), or with `testData` only
    * its test participants: best rank first, unranked last, then by name. Never paged.

@@ -4,7 +4,6 @@ import { singleGameResult } from '../support/match-rows';
 import {
   acceptInvitation,
   addEventParticipants,
-  applyEventParticipantUpload,
   autoAssignEventPrices,
   autoAssignEventTiers,
   createContest,
@@ -58,6 +57,7 @@ import { expectMatchesSchema } from '../support/expect-matches-schema';
 import { sportRowKeys } from '../support/sport-rows';
 import { insertTestSportLeague } from '../support/test-sport-league';
 import { bracketMatch, dtoSideTeam, resultBody } from '../support/match-requests';
+import { setFieldRows } from './field-rows';
 
 // A two-week confidence pick'em season end to end over HTTP (#717). An admin releases two weeks,
 // each an eight-team basketball event whose four first-round games are the week (its later
@@ -131,7 +131,7 @@ async function releasedWeek(a: Client, sportLeagueId: string, teamIds: readonly 
   created.sportEventIds.add(eventId);
   expect((await addEventParticipants({ client: a, path: { eventId }, body: { participantIds: [...teamIds] } })).data?.added).toBe(TEAMS.length);
   // Release asks every event for its roster setup too: seeds, tiers and prices.
-  expect((await applyEventParticipantUpload({
+  expect((await setFieldRows({
     client: a,
     path: { eventId },
     body: { rows: TEAMS.map((team, index) => ({ playerName: `${team} ${RUN}`, seedNumber: index + 1 })) },
@@ -195,7 +195,7 @@ describe('SDK Functional: a pick\'em season (#717)', () => {
     // The migration's reference row, restored in case an earlier suite cleared the sports table.
     await db.sport.upsert({
       where: { sport: Sport.BASKETBALL },
-      create: { sport: Sport.BASKETBALL, ...sportRowKeys(Sport.BASKETBALL), tournamentFormat: 'MATCHES' },
+      create: { sport: Sport.BASKETBALL, ...sportRowKeys(Sport.BASKETBALL) },
       update: {},
     });
     const admin = await buildRegisteredUser({ displayName: 'Season Director' });

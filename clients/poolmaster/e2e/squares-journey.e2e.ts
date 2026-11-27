@@ -85,7 +85,7 @@ function teamName(run: JourneyRun, name: string): string {
   return `${run.playerNamePrefix} ${name}`;
 }
 
-async function postJson<T>(api: APIRequestContext, headers: AuthHeaders, path: string, data: unknown, method: 'post' | 'put' = 'post'): Promise<T> {
+async function postJson<T>(api: APIRequestContext, headers: AuthHeaders, path: string, data: unknown, method: 'post' | 'put' | 'patch' = 'post'): Promise<T> {
   const options = data === undefined ? { headers } : { headers, data };
   const response = await expectOk(api[method](path, options), `${method.toUpperCase()} ${path}`);
   return (await response.json()) as T;
@@ -156,9 +156,16 @@ test('act 1: the root admin releases an American football event of one game betw
     }
     await postJson(api, headers, `/api/v1/events/${event.id}/participants`, { participantIds });
     // Release asks every event for its roster setup too: seeds, tiers and prices.
-    await postJson(api, headers, `/api/v1/events/${event.id}/participants/upload`, {
-      rows: teams.map((name, seed) => ({ playerName: teamName(run, name), seedNumber: seed + 1 })),
-    });
+    // Each seed goes in through the grid save, by field row id (the field upload is gone, #2008).
+    const added = await (await expectOk(api.get(`/api/v1/events/${event.id}/participants`, { headers }), 'read the added field')).json() as {
+      participants: Array<{ id: string; participantId: string }>;
+    };
+    await postJson(api, headers, `/api/v1/events/${event.id}/participants`, {
+      participants: teams.map((_, seed) => ({
+        sportEventParticipantId: added.participants.find((row) => row.participantId === participantIds[seed])?.id,
+        seedNumber: seed + 1,
+      })),
+    }, 'patch');
     await postJson(api, headers, `/api/v1/events/${event.id}/tiers`, { tiers: TWO_TIERS }, 'put');
     await postJson(api, headers, `/api/v1/events/${event.id}/tiers/auto-assign`, {});
     await postJson(api, headers, `/api/v1/events/${event.id}/prices/auto-assign`, await standardPricingRequest(api, headers));

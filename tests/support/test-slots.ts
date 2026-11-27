@@ -7,10 +7,10 @@
  */
 import { randomInt } from 'node:crypto';
 import type { PrismaClient } from '@prisma/client';
-import type { PeriodUnit } from '@poolmaster/shared/domain';
+import { LEAGUE_PLAY_BY_SCORING_FAMILY, type PeriodUnit } from '@poolmaster/shared/domain';
 import { competitionFor, seasonCompetitionFor, type TestCompetition } from './competitions';
 
-type Db = Pick<PrismaClient, 'sportLeaguePhase' | 'sportLeagueCompetition' | 'sportLeagueCompetitionSlot' | 'sportLeagueSeasonPhase' | 'sportLeagueSeasonCompetition'>;
+type Db = Pick<PrismaClient, 'sportLeague' | 'sportLeaguePhase' | 'sportLeagueCompetition' | 'sportLeagueCompetitionSlot' | 'sportLeagueSeasonPhase' | 'sportLeagueSeasonCompetition'>;
 
 /** A slot definition with the competition and phase it is in. */
 interface TestDefinition {
@@ -62,6 +62,10 @@ export async function removeTestDefinition(prisma: Db & Pick<PrismaClient, 'spor
 
 async function createTestDefinition(prisma: Db, sportLeagueId: string, key: typeof TEST_DEFINITION_KEY | typeof LEVEL_TEST_DEFINITION_KEY): Promise<TestDefinition> {
   const competition = await competitionFor(prisma, { sportLeagueId, phase: 'REGULAR' });
+  // Its games are played the way the league's scoring family plays them (#2008): a golf or race
+  // league's test slot ranks a FIELD, a head-to-head league's meets two sides.
+  const { scoringFamily } = await prisma.sportLeague.findUniqueOrThrow({ where: { id: sportLeagueId }, select: { scoringFamily: true } });
+  const [matchFormat] = LEAGUE_PLAY_BY_SCORING_FAMILY[scoringFamily].matchFormats;
   return testDefinitionOf(await prisma.sportLeagueCompetitionSlot.create({
     data: {
       sportLeagueId,
@@ -73,7 +77,7 @@ async function createTestDefinition(prisma: Db, sportLeagueId: string, key: type
       seriesFormat: 'SINGLE_GAME',
       seriesGames: 1,
       pairing: 'FIXED',
-      matchFormat: 'HEAD_TO_HEAD',
+      matchFormat,
       canEndTied: key === LEVEL_TEST_DEFINITION_KEY,
     },
     select: DEFINITION_SELECT,

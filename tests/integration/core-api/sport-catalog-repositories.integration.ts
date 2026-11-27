@@ -6,7 +6,7 @@ import {
   setupIntegrationTests,
   teardownIntegrationTests,
 } from '../helpers';
-import { MatchFormat, ParticipantType, ProviderCode, ScoringFamily, Sport, TournamentFormat, getSportDefinition, isLeaguePlayValid } from '@poolmaster/shared/domain';
+import { MatchFormat, ParticipantType, ProviderCode, ScoringFamily, Sport, isLeaguePlayValid } from '@poolmaster/shared/domain';
 import {
   PrismaParticipantProviderMappingRepository,
   PrismaParticipantRepository,
@@ -39,7 +39,7 @@ beforeEach(() => cleanupTestData());
 async function golfSport() {
   return getPrisma().sport.upsert({
     where: { sport: Sport.GOLF },
-    create: { sport: Sport.GOLF, ...sportRowKeys(Sport.GOLF), tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+    create: { sport: Sport.GOLF, ...sportRowKeys(Sport.GOLF) },
     update: {},
   });
 }
@@ -128,16 +128,6 @@ describe('Sport and SportLeague repositories', () => {
     await expect(getPrisma().sportLeague.create({
       data: { ...(await sportLeagueRowDefaults(getPrisma())), ...sportPlay(Sport.HOCKEY), sportId: hockey.id, name: 'Segment clash', timeZone: 'UTC', urlSegment: 'nba' },
     })).rejects.toThrow(/Unique constraint failed on the fields: \(`url_segment`\)/);
-  });
-
-  // #715 renamed KNOCKOUT_BRACKET to MATCHES in place, so the sports rows seeded with it carry the new value.
-  it('stores each seeded sport\'s tournament format as its sport definition gives it, basketball, football, hockey, baseball, soccer and tennis as MATCHES', async () => {
-    const sports = await new PrismaSportRepository(getAppPrisma()).findAll();
-
-    expect(sports.map((row) => [row.sport, row.tournamentFormat]))
-      .toEqual(sports.map((row) => [row.sport, getSportDefinition(row.sport).tournamentFormat]));
-    expect(sports.filter((row) => row.tournamentFormat === TournamentFormat.MATCHES).map((row) => row.sport).sort())
-      .toEqual([Sport.BASEBALL, Sport.BASKETBALL, Sport.FOOTBALL, Sport.HOCKEY, Sport.SOCCER, Sport.TENNIS]);
   });
 
   // #2083: no API adds a sport league, so the migrations that seed them are checked against the
@@ -392,35 +382,15 @@ describe('ParticipantRepository — a sport league\'s roster (#1853)', () => {
 });
 
 describe('ParticipantRepository — search and matching', () => {
-  it('returns every match unpaged, and matches upload identifiers exactly within one sport league', async () => {
+  it('returns every match of a search unpaged', async () => {
     const sport = await golfSport();
     const league = await participantLeagueId(getPrisma(), sport.id);
     const participants = new PrismaParticipantRepository(getAppPrisma());
     for (let index = 0; index < 60; index += 1) {
       await createParticipant(sport.id, `Search Golfer ${String(index).padStart(2, '0')}`);
     }
-    const rory = await createParticipant(sport.id, 'Rory McIlroy', 'owgr-rory');
 
     expect(await participants.search('Search Golfer', { sportLeagueId: league })).toHaveLength(60);
-    await expect(participants.findMatchingAny(league, [{ name: 'rory mcilroy' }])).resolves.toEqual([expect.objectContaining({ id: rory.id })]);
-    await expect(participants.findMatchingAny(league, [{ externalId: 'owgr-rory' }])).resolves.toHaveLength(1);
-    await expect(participants.findMatchingAny(league, [{ name: 'Rory' }])).resolves.toEqual([]);
-    await expect(participants.findMatchingAny(randomUUID(), [{ id: rory.id }])).resolves.toEqual([]);
-    await expect(participants.findMatchingAny(league, [])).resolves.toEqual([]);
-  });
-
-  it('reads the candidates for a whole upload at once: every participant of the sport league any row\'s identifier matches, and no other', async () => {
-    const sport = await golfSport();
-    const league = await participantLeagueId(getPrisma(), sport.id);
-    const participants = new PrismaParticipantRepository(getAppPrisma());
-    const rory = await createParticipant(sport.id, 'Rory McIlroy', 'owgr-rory');
-    const jon = await createParticipant(sport.id, 'Jon Rahm', 'owgr-jon');
-    const scottie = await createParticipant(sport.id, 'Scottie Scheffler', 'owgr-scottie');
-    await createParticipant(sport.id, 'Ludvig Aberg', 'owgr-ludvig');
-
-    const found = await participants.findMatchingAny(league, [{ id: rory.id }, { externalId: 'owgr-jon' }, { name: 'SCOTTIE scheffler' }, { name: 'Nobody' }]);
-
-    expect(found.map((candidate) => candidate.id).sort()).toEqual([rory.id, jon.id, scottie.id].sort());
   });
 
   it('creates a participant, reads it by id, and updates only the fields given', async () => {

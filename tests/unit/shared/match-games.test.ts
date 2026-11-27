@@ -16,6 +16,8 @@ function game(gameNumber: number, overrides: Partial<SportEventRoundMatchGame> =
     gameNumber,
     scheduledDate: null,
     isNeutralSite: false,
+    venue: null,
+    location: null,
     status: MatchStatus.SCHEDULED,
     completedAt: null,
     movedToGameId: null,

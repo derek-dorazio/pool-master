@@ -41,7 +41,7 @@ async function seedRace(status: 'SCHEDULED' | 'COMPLETED' = 'COMPLETED') {
   // cleanupTestData clears the sports table, the migration's reference row with it.
   const sport = await prisma.sport.upsert({
     where: { sport: Sport.HORSE_RACING },
-    create: { sport: Sport.HORSE_RACING, ...sportRowKeys(Sport.HORSE_RACING), tournamentFormat: 'RACE' },
+    create: { sport: Sport.HORSE_RACING, ...sportRowKeys(Sport.HORSE_RACING) },
     update: {},
   });
   const event = await prisma.sportEvent.create({
@@ -233,18 +233,19 @@ describe('horse racing contest — read and settled from the finishing order', (
     return { ...race, owner, contest, winners, scratch };
   }
 
-  const officialOrder = (suffix: string) => ({
+  const officialOrder = (race: { arrow: { participantId: string }; bolt: { participantId: string }; comet: { participantId: string } }) => ({
     isOfficial: true,
     rows: [
-      { playerName: `Arrow ${suffix}`, resultStatus: RaceResultStatus.FINISHED, finishPosition: 1, startPosition: null, riderName: null },
-      { playerName: `Bolt ${suffix}`, resultStatus: RaceResultStatus.FINISHED, finishPosition: 2, startPosition: null, riderName: null },
-      { playerName: `Comet ${suffix}`, resultStatus: RaceResultStatus.FINISHED, finishPosition: 3, startPosition: null, riderName: null },
+      { participantId: race.arrow.participantId, resultStatus: RaceResultStatus.FINISHED, finishPosition: 1, startPosition: null, riderName: null },
+      { participantId: race.bolt.participantId, resultStatus: RaceResultStatus.FINISHED, finishPosition: 2, startPosition: null, riderName: null },
+      { participantId: race.comet.participantId, resultStatus: RaceResultStatus.FINISHED, finishPosition: 3, startPosition: null, riderName: null },
     ],
   });
 
   it('ranks entries by points, higher first, with a scratched pick scoring the did-not-finish points', async () => {
-    const { suffix, event, owner, contest, winners, scratch } = await seedContest();
-    await createRaceResultService(getAppPrisma(), testDomainEvents()).applyResults(event.id, officialOrder(suffix));
+    const seeded = await seedContest();
+    const { suffix, event, owner, contest, winners, scratch } = seeded;
+    await createRaceResultService(getAppPrisma(), testDomainEvents()).applyResults(event.id, officialOrder(seeded));
 
     const response = await getApp().inject({ method: 'GET', url: `/api/v1/contests/${contest.id}/leaderboard`, headers: owner.headers });
 
@@ -260,8 +261,9 @@ describe('horse racing contest — read and settled from the finishing order', (
   });
 
   it('shows no points on the board while the result is provisional', async () => {
-    const { suffix, event, owner, contest } = await seedContest();
-    await createRaceResultService(getAppPrisma(), testDomainEvents()).applyResults(event.id, { ...officialOrder(suffix), isOfficial: false });
+    const seeded = await seedContest();
+    const { event, owner, contest } = seeded;
+    await createRaceResultService(getAppPrisma(), testDomainEvents()).applyResults(event.id, { ...officialOrder(seeded), isOfficial: false });
 
     const response = await getApp().inject({ method: 'GET', url: `/api/v1/contests/${contest.id}/leaderboard`, headers: owner.headers });
 
@@ -270,8 +272,9 @@ describe('horse racing contest — read and settled from the finishing order', (
   });
 
   it('settles the contest, freezing each entry\'s points as its standing total, and the completed board reads them back', async () => {
-    const { prisma, suffix, event, owner, contest, winners, scratch } = await seedContest();
-    await createRaceResultService(getAppPrisma(), testDomainEvents()).applyResults(event.id, officialOrder(suffix));
+    const seeded = await seedContest();
+    const { prisma, event, owner, contest, winners, scratch } = seeded;
+    await createRaceResultService(getAppPrisma(), testDomainEvents()).applyResults(event.id, officialOrder(seeded));
 
     await expect(createContestSettlementService(getAppPrisma(), undefined, { domainEvents: testDomainEvents() }).settleFinishedSportEvent(event.id))
       .resolves.toMatchObject({ contestsSettled: 1, contestsCompleted: 1, standingsUpserted: 2 });

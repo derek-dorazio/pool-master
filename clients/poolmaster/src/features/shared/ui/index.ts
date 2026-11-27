@@ -4,8 +4,6 @@ export { WebAddressBox } from "./web-address-box";
 export type { StatusPageKind } from "./status-page";
 export { LeagueMenu, ToolsArea } from "./nav-menus";
 export type { NavMenuItem } from "./nav-menus";
-export { BulkUploadPanel } from "./bulk-upload-panel";
-export { UploadPreviewTable } from "./upload-preview-table";
 export { BoardBand, BoardCellContent } from "./board-cell";
 export { boardAxisClassName, boardCellClassName, type BoardCellState } from "./board-cell-styles";
 export { Button, LinkButton, type LinkButtonProps } from "./button";

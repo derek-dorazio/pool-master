@@ -12,8 +12,6 @@ import type {
   SportEventListResponse,
   SportEventParticipantListResponse,
   SportEventParticipantResponse,
-  SportEventParticipantUploadPreviewResponse,
-  SportEventParticipantUploadRequest,
   SportEventResponse,
   SportEventContestListResponse,
   SportEventRoundListResponse,
@@ -45,7 +43,6 @@ import type {
 import { eventFeedRef, matchPlaceOf, OFFERABLE_SPORT_EVENT_STATUSES, type MatchPlace } from '@poolmaster/shared/domain';
 import { sendError } from '../../core/error-handler';
 import {
-  mapFieldUploadPreviewToDto,
   mapGolfRoundScorePreviewToDto,
   mapRaceResultPreviewToDto,
   mapSportEventRoundMatchToDto,
@@ -272,19 +269,6 @@ export function createEventHandlers({ services, eventLifecycle, ingestion, leade
       request: FastifyRequest<EventParams & { Body: UpdateSportEventParticipantsRequest }>,
     ): Promise<SportEventParticipantListResponse> => {
       const updated = await field.updateParticipants(request.params.eventId, request.body.participants);
-      return { participants: updated.map(mapSportEventParticipantToDto) };
-    },
-
-    previewEventParticipantUpload: async (
-      request: FastifyRequest<EventParams & { Body: SportEventParticipantUploadRequest }>,
-    ): Promise<SportEventParticipantUploadPreviewResponse> => {
-      return mapFieldUploadPreviewToDto(await field.previewUpload(request.params.eventId, request.body.rows));
-    },
-
-    applyEventParticipantUpload: async (
-      request: FastifyRequest<EventParams & { Body: SportEventParticipantUploadRequest }>,
-    ): Promise<SportEventParticipantListResponse> => {
-      const updated = await field.applyUpload(request.params.eventId, request.body.rows);
       return { participants: updated.map(mapSportEventParticipantToDto) };
     },
 

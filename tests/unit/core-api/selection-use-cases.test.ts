@@ -1,4 +1,5 @@
-import { ContestEntryStatus, ContestStatus, SelectionType, SportEventParticipantStatus } from '@poolmaster/shared/domain';
+import { sportEventSlots } from '../../support/sport-play';
+import { ContestEntryStatus, ContestStatus, SelectionType, Sport, SportEventParticipantStatus } from '@poolmaster/shared/domain';
 import type {
   Contest,
   ContestConfiguration,
@@ -193,6 +194,7 @@ function buildWorld(options: WorldOptions = {}) {
     id: EVENT_ID,
     sport: 'GOLF',
     status: 'SCHEDULED',
+    slotDefinitions: sportEventSlots(Sport.GOLF),
     startDate: options.eventStartDate ?? new Date(NOW.getTime() + 24 * 60 * 60 * 1000),
   } as unknown as SportEvent;
   // Each entry's status per event, as the locked writes leave it.

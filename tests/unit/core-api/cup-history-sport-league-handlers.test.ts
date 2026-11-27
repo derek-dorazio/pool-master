@@ -4,7 +4,7 @@
  * not own reaches the global error handler unchanged.
  */
 import { expect } from '@jest/globals';
-import { ContestStatus, CupStatus, PlanFeature, ProviderCode, Sport, FieldOrderBasis } from '@poolmaster/shared/domain';
+import { ContestStatus, CupStatus, PlanFeature, ProviderCode, SeasonSlotStatus, SeriesFormat, SlotKind, SlotPairing, Sport, FieldOrderBasis, type SportLeagueSeasonSlot } from '@poolmaster/shared/domain';
 import type { SportLeagueListResponse } from '@poolmaster/shared/dto/sport-catalog.dto';
 import { ReadCache } from '../../../packages/core-api/src/core/read-cache';
 import { createCupHandlers } from '../../../packages/core-api/src/modules/cups/handler';
@@ -223,6 +223,11 @@ describe('sport league handlers', () => {
     id: 'p1', sportLeagueId: 'sl1', ranking: 1, name: 'One', participantType: 'INDIVIDUAL', status: 'ACTIVE', externalIds: {},
     injuryStatus: { status: null, detail: null, expectedReturn: null, updatedAt: null }, createdAt: AT, updatedAt: AT,
   };
+  const testSlot = {
+    id: 'slot-1', slotDefinitionId: 'def-1', key: 'test-1', slotKind: SlotKind.TOURNAMENT, weekNumber: null, name: null,
+    startsAt: AT, endsAt: null, status: SeasonSlotStatus.SCHEDULED, seriesFormat: SeriesFormat.SINGLE_GAME, seriesGames: 1,
+    pairing: SlotPairing.FIXED, isTestData: true, label: 'QA run', window: null,
+  } satisfies SportLeagueSeasonSlot;
   const service = {
     listSportLeagues: jest.fn((..._args: unknown[]) => Promise.resolve([sportLeague])),
     getSportLeague: jest.fn((id: string) => Promise.resolve(id === 'sl1' ? sportLeague : null)),
@@ -230,8 +235,8 @@ describe('sport league handlers', () => {
     deleteSportLeague: jest.fn((..._args: unknown[]) => Promise.resolve()),
     listParticipants: jest.fn((..._args: unknown[]) => Promise.resolve([participant])),
     updateRankings: jest.fn((..._args: unknown[]) => Promise.resolve([participant])),
-    previewRankingUpload: jest.fn((..._args: unknown[]) => Promise.resolve([{ row: 1, resolution: 'MATCHED', participantId: 'p1', participantName: 'One' }])),
-    applyRankingUpload: jest.fn((..._args: unknown[]) => Promise.resolve([participant])),
+    createTestSlot: jest.fn((..._args: unknown[]) => Promise.resolve(testSlot)),
+    deleteTestSlot: jest.fn((..._args: unknown[]) => Promise.resolve()),
   };
   const overviews = new SportLeagueOverviewService({
     reader: {
@@ -313,6 +318,17 @@ describe('sport league handlers', () => {
     expect(missing).toMatchObject({ statusCode: 404, body: { error: { code: 'SPORT_LEAGUE_NOT_FOUND' } } });
   });
 
+  it('creates a test slot with 201, its dates read from the request\'s strings and an omitted end as none, and deletes one with 204', async () => {
+    const created = await callHandler(handlers.createTestSlot, stubRequest({ params, body: { slotDefinitionId: 'def-1', label: 'QA run', startsAt: AT.toISOString() } }));
+    const deleted = await callHandler(handlers.deleteTestSlot, stubRequest({ params: { sportLeagueId: 'sl1', seasonSlotId: 'slot-1' } }));
+
+    expect(created.statusCode).toBe(201);
+    expect(created.body).toMatchObject({ slot: { id: 'slot-1', isTestData: true, startsAt: AT.toISOString(), endsAt: null } });
+    expect(service.createTestSlot).toHaveBeenCalledWith('sl1', { slotDefinitionId: 'def-1', label: 'QA run', startsAt: AT, endsAt: null });
+    expect(deleted.statusCode).toBe(204);
+    expect(service.deleteTestSlot).toHaveBeenCalledWith('sl1', 'slot-1');
+  });
+
   it('updates a sport league and deletes one with 204', async () => {
     const updated = await callHandler(handlers.updateSportLeague, stubRequest({ params, body: { name: 'PGA' } }));
     const deleted = await callHandler(handlers.deleteSportLeague, stubRequest({ params }));
@@ -331,14 +347,6 @@ describe('sport league handlers', () => {
     expect(service.listParticipants).toHaveBeenNthCalledWith(2, 'sl1', true);
     expect(service.updateRankings).toHaveBeenCalledWith('sl1', [{ participantId: 'p1', ranking: 1 }]);
     expect(ranked.body).toMatchObject({ participants: [{ ranking: 1 }] });
-  });
-
-  it('previews and applies a ranking upload', async () => {
-    const preview = await callHandler(handlers.previewRankingUpload, stubRequest({ params, body: { rows: [] } }));
-    const applied = await callHandler(handlers.applyRankingUpload, stubRequest({ params, body: { rows: [] } }));
-
-    expect(preview.body).toEqual({ rows: [{ row: 1, resolution: 'MATCHED', participantId: 'p1', participantName: 'One' }] });
-    expect(applied.body).toMatchObject({ participants: [{ id: 'p1' }] });
   });
 
   it('answers a sport league\'s structure and its Seasons with their current flag, and either read of one that does not exist with 404 SPORT_LEAGUE_NOT_FOUND', async () => {
