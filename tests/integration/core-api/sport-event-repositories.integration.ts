@@ -150,7 +150,7 @@ describe('SportEventRepository — writes', () => {
 
     const updated = await events.update(event.id, { venue: null, endDate: null, name: 'Renamed Open', location: undefined });
 
-    expect(updated).toMatchObject({ name: 'Renamed Open', venue: undefined, endDate: undefined, rounds: 4 });
+    expect(updated).toMatchObject({ name: 'Renamed Open', venue: undefined, endDate: undefined, roundCount: 0 });
   });
 
   it('filters by a case-insensitive name substring', async () => {

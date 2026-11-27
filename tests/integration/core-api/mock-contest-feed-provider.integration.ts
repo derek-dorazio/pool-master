@@ -643,7 +643,7 @@ describe('mock contest feed provider event-first verification', () => {
     });
     await prisma.sportEvent.update({
       where: { id: linked.id },
-      data: { rounds: 4, venue: 'Admin Links' },
+      data: { venue: 'Admin Links' },
     });
     expect(expectDefined(detail).startDate.toISOString()).not.toBe(adminStart.toISOString());
     expect(expectDefined(detail).name).not.toBe('Admin Spring Classic');

@@ -1377,6 +1377,7 @@ describe('Contract verification (root admin)', () => {
         payload: {
           seasonSlotIds: [testSlotRes.json<SportLeagueSeasonSlotResponse>().slot.id],
           name: `Z3L Contract Open ${stamp}`,
+          rounds: 4,
           venue: 'Contract Links',
           location: 'Testshire',
           autoLifecycleEnabled: false,
