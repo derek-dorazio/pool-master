@@ -54,7 +54,7 @@ import {
   SquadHistoryResponseSchema,
   SquadYearResponseSchema,
 } from '@poolmaster/shared/dto';
-import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, inCurrentSeason, placedTemplate } from './builders';
+import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, inCurrentSeason } from './builders';
 import { cleanupFunctionalData, disconnectFunctionalPrisma, getFunctionalPrisma } from './setup';
 import { keyedSlotDefinitionId } from '../support/event-edition';
 import { uniqueTestSlotLabel } from '../support/test-slots';
@@ -104,6 +104,7 @@ async function cleanup(): Promise<void> {
     await db.sportEvent.deleteMany({ where: { id: { in: eventIds } } });
   }
   if (created.slotDefinitionIds.size) {
+    await db.contestConfigTemplateSlot.deleteMany({ where: { sportLeagueCompetitionSlotId: { in: [...created.slotDefinitionIds] } } });
     await db.sportLeagueSeasonCompetitionSlot.deleteMany({ where: { sportLeagueCompetitionSlotId: { in: [...created.slotDefinitionIds] } } });
     await db.sportLeagueCompetitionSlot.deleteMany({ where: { id: { in: [...created.slotDefinitionIds] } } });
   }
@@ -147,6 +148,12 @@ describe('SDK Functional: sports league cups and the league championship (#841, 
     const releaseRace = async (name: string, slotKey: string, startDate: string, eventYear = SEASON) => {
       const slotDefinitionId = await keyedSlotDefinitionId(getFunctionalPrisma(), majorsMen.id, `${slotKey}_${RUN_KEY}`, { name: `${name} ${RUN}` });
       created.slotDefinitionIds.add(slotDefinitionId);
+      // The contests are made from the league's tiered template, which lists the race's own
+      // definition as a migration's template lists the league's (#2014).
+      await getFunctionalPrisma().contestConfigTemplateSlot.createMany({
+        data: [{ sportLeagueId: majorsMen.id, templateId: tieredTemplate.id, sportLeagueCompetitionSlotId: slotDefinitionId }],
+        skipDuplicates: true,
+      });
       await inCurrentSeason(majorsMen.id, eventYear);
       const slot = expectDefined((await createTestSlot({
         client: a,
@@ -199,7 +206,7 @@ describe('SDK Functional: sports league cups and the league championship (#841, 
       const contestId = expectDefined((await createContest({
         client: commissioner.client,
         path: { id: league.id },
-        body: { name, sportEventIds: [eventId], contestFormat: ContestFormat.ROSTER, selectionType: SelectionType.TIERED, templateId: await placedTemplate([eventId], tieredTemplate.id) },
+        body: { name, sportEventIds: [eventId], contestFormat: ContestFormat.ROSTER, selectionType: SelectionType.TIERED, templateId: tieredTemplate.id },
       })).data).contest.id;
       await openContest({ client: commissioner.client, path: { id: league.id, contestId } });
       await enterSquads(eventId, contestId);
@@ -316,7 +323,7 @@ describe('SDK Functional: sports league cups and the league championship (#841, 
     const coastContest = expectDefined((await createContest({
       client: commissioner.client,
       path: { id: league.id },
-      body: { name: `Coast Picks ${RUN}`, sportEventIds: [coast], contestFormat: ContestFormat.ROSTER, selectionType: SelectionType.TIERED, templateId: await placedTemplate([coast], tieredTemplate.id) },
+      body: { name: `Coast Picks ${RUN}`, sportEventIds: [coast], contestFormat: ContestFormat.ROSTER, selectionType: SelectionType.TIERED, templateId: tieredTemplate.id },
     })).data).contest.id;
     await openContest({ client: commissioner.client, path: { id: league.id, contestId: coastContest } });
     const doubled = await setContestCupWeight({

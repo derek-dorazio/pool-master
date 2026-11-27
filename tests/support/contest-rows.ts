@@ -2,6 +2,7 @@ import type { Prisma, PrismaClient } from '@prisma/client';
 import type { ContestCreate, ContestRepository } from '@poolmaster/shared/db';
 import type { Contest, SelectionType } from '@poolmaster/shared/domain';
 import { fixtureSeasonId, fixtureTourId, putEventInSlot } from './event-edition';
+import { seasonCompetitionFor } from './competitions';
 import { linkTestSlot } from './test-slots';
 
 type Db = PrismaClient | Prisma.TransactionClient;
@@ -129,18 +130,33 @@ export async function placeEventForTemplate(prisma: PrismaClient, sportEventId: 
   const [event, template] = await Promise.all([
     prisma.sportEvent.findUniqueOrThrow({
       where: { id: sportEventId },
-      select: { slots: { select: { seasonSlot: { select: { sportLeagueCompetitionSlotId: true } } } } },
+      select: { sportLeagueId: true, sportLeagueSeasonId: true, slots: { select: { seasonSlot: { select: { id: true, sportLeagueCompetitionSlotId: true, label: true } } }, orderBy: { id: 'asc' } } },
     }),
     prisma.contestConfigTemplate.findUniqueOrThrow({
       where: { id: templateId },
-      select: { slots: { select: { sportLeagueCompetitionSlotId: true }, orderBy: { id: 'asc' } } },
+      select: { slots: { select: { definition: { select: { id: true, sportLeagueCompetitionId: true, competition: { select: { sportLeaguePhaseId: true } } } } }, orderBy: { id: 'asc' } } },
     }),
   ]);
-  const listed = new Set(template.slots.map((slot) => slot.sportLeagueCompetitionSlotId));
+  const listed = new Set(template.slots.map((slot) => slot.definition.id));
+  if (event.slots.some((slot) => listed.has(slot.seasonSlot.sportLeagueCompetitionSlotId))) return;
   // poolmaster-allow-position: the template's first listed slot, in id order
-  const first = template.slots.at(0);
+  const first = template.slots.at(0)?.definition;
   if (first === undefined) throw new Error(`fixture: template ${templateId} lists no slot`);
-  if (!event.slots.some((slot) => listed.has(slot.seasonSlot.sportLeagueCompetitionSlotId))) {
-    await putEventInSlot(prisma, sportEventId, first.sportLeagueCompetitionSlotId);
+  // poolmaster-allow-position: an event in a slot the template does not list moves its first one
+  const held = event.slots.at(0)?.seasonSlot;
+  if (held === undefined) {
+    await putEventInSlot(prisma, sportEventId, first.id);
+    return;
   }
+  // The event's own slot takes the listed definition, keeping the tiers, prices and rounds on it.
+  const seasonCompetitionId = await seasonCompetitionFor(prisma, {
+    sportLeagueId: event.sportLeagueId,
+    sportLeagueSeasonId: event.sportLeagueSeasonId,
+    competition: { competitionId: first.sportLeagueCompetitionId, phaseId: first.competition.sportLeaguePhaseId },
+  });
+  await prisma.sportLeagueSeasonCompetitionSlot.update({
+    where: { id: held.id },
+    // A label keeps it apart from a Season slot the definition already has.
+    data: { sportLeagueCompetitionSlotId: first.id, sportLeagueSeasonCompetitionId: seasonCompetitionId, label: held.label ?? `event ${sportEventId}`, isTestData: true },
+  });
 }

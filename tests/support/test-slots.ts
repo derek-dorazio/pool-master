@@ -55,9 +55,11 @@ export async function withTestDefinition(prisma: Db, sportLeagueId: string, key:
   return (existing ?? await createTestDefinition(prisma, sportLeagueId, key)).id;
 }
 
-/** Removes the league's test definitions and the test slots of them, once their events are gone. */
-export async function removeTestDefinition(prisma: Db & Pick<PrismaClient, 'sportLeagueSeasonCompetitionSlot'>, sportLeagueId: string): Promise<void> {
+/** Removes the league's test definitions, the test slots of them and template listings of them, once their events are gone. */
+export async function removeTestDefinition(prisma: Db & Pick<PrismaClient, 'sportLeagueSeasonCompetitionSlot' | 'contestConfigTemplateSlot'>, sportLeagueId: string): Promise<void> {
   const where = { sportLeagueId, key: { in: [TEST_DEFINITION_KEY, LEVEL_TEST_DEFINITION_KEY] } };
+  // A template a test fitted to its events lists the definition (#2014); that listing goes too.
+  await prisma.contestConfigTemplateSlot.deleteMany({ where: { definition: where } });
   await prisma.sportLeagueSeasonCompetitionSlot.deleteMany({ where: { definition: where } });
   await prisma.sportLeagueCompetitionSlot.deleteMany({ where });
 }
