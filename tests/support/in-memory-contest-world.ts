@@ -923,9 +923,7 @@ export class InMemoryContestWorld {
       sportEvents: this.sportEventRepo(),
       sportLeagues: this.sportLeagueRepo(),
       eventParticipants: fieldReads(async () => []),
-      tiers: {
-        listTiers: async (sportEventId: string) => this.eventTiers.get(sportEventId) ?? [],
-      },
+      tiers: { tierSetSlots: async () => new Map() },
       planEntitlements: this.planEntitlements(),
       ...overrides,
     };

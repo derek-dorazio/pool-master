@@ -1,10 +1,11 @@
+import type { ClientLogEntry } from '@/lib/api';
+
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error' | 'fatal';
 
 export type LogData = Record<string, unknown>;
 
-export type LogPayload = {
-  action: string;
-  data?: LogData;
+/** What a log call names: the entry's action and data as the ingest contract has them, and the error it reports. */
+export type LogPayload = Pick<ClientLogEntry, 'action' | 'data'> & {
   err?: unknown;
 };
 

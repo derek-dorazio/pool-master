@@ -26,6 +26,7 @@ import type {
   SportEventParticipantRepository,
   SportEventSlotParticipantValuationRepository,
   SportEventRepository,
+  SportEventRoundMatchRepository,
   SportEventSlotTierDefinition,
   SportEventSlotTierRepository,
   TierAssignment,
@@ -33,6 +34,9 @@ import type {
 } from '@poolmaster/shared/db';
 import {
   findBudgetPricingProblem,
+  priceOnBudgetCurve,
+  type BudgetPricingValues,
+  knockedOutBefore,
   tierSetSlotOf,
   contestTierSetSlot,
   isTierSetEditable,
@@ -81,6 +85,13 @@ export interface SportEventTierGroup extends SetTier {
 }
 
 /** One field row's effective tier and price; the tier fields and the price are independently nullable. */
+/** A price preview (#2107): who the slot's prices would go to, and the best and worst of them. */
+export interface PricePreview {
+  activeParticipantCount: number;
+  bestPrice: number | null;
+  worstPrice: number | null;
+}
+
 export interface ParticipantValuationView {
   sportEventParticipantId: string;
   participantId: string;
@@ -147,6 +158,8 @@ export interface SportEventTierServiceDeps {
   tiers: SportEventSlotTierRepository;
   valuations: SportEventSlotParticipantValuationRepository;
   field: SportEventParticipantRepository;
+  /** The event's matches, whose results say who is out before a later slot (#2044). */
+  matches: Pick<SportEventRoundMatchRepository, 'findBySportEvent'>;
   /** The field's names, the order's last tie-break (#1807). */
   participants: Pick<ParticipantRepository, 'findByIds'>;
   /** The event's sport league's tier profile (#1844), the layout auto-tiering fills. */
@@ -337,8 +350,8 @@ export class SportEventTierService {
       this.deps.logger?.warn({ sportEventId: event.id }, 'Cannot auto-assign tiers — the event has no tiers yet');
       return;
     }
-    const profile = await this.requirePlatformTierProfile(event);
-    const order = await this.orderedActiveField(event.id, profile.sources);
+    const [profile, knockedOut] = await Promise.all([this.requirePlatformTierProfile(event), this.knockedOutEntering(event.id, slot)]);
+    const order = await this.orderedActiveField(event.id, profile.sources, knockedOut);
     if (order === 'NO_FIELD') {
       this.deps.logger?.warn({ sportEventId: event.id }, 'Cannot auto-assign tiers — the event has no active field participants');
       return;
@@ -463,6 +476,25 @@ export class SportEventTierService {
    * PRICING_CONFIG_INVALID when the values contradict each other; 404
    * PLATFORM_PRICING_PROFILE_NOT_FOUND when the profile named is not one.
    */
+  /**
+   * What pricing the slot's set with `pricing` would charge its best and worst participant
+   * (#2107): the price dialog's preview, over the field `autoAssignPrices` prices and on the same
+   * curve, so the web app computes no price. Values the write would refuse are refused the same
+   * way (422 PRICING_CONFIG_INVALID). Nothing is written, so a locked set may be previewed too.
+   */
+  async previewPrices(input: { sportEventId: string; seasonSlotId: string; pricing: BudgetPricingValues }): Promise<PricePreview> {
+    const { sportEventId, pricing } = input;
+    const { slot } = await this.requireSet(sportEventId, input.seasonSlotId);
+    const problem = findBudgetPricingProblem(pricing);
+    if (problem) {
+      throw new SportEventError(problem, 'PRICING_CONFIG_INVALID', 422);
+    }
+    const fieldSize = (await this.activeField(sportEventId, await this.knockedOutEntering(sportEventId, slot))).length;
+    return fieldSize === 0
+      ? { activeParticipantCount: 0, bestPrice: null, worstPrice: null }
+      : { activeParticipantCount: fieldSize, bestPrice: priceOnBudgetCurve(pricing, 0, fieldSize), worstPrice: priceOnBudgetCurve(pricing, fieldSize - 1, fieldSize) };
+  }
+
   async autoAssignPrices(input: { sportEventId: string; seasonSlotId?: string; pricing: SlotPricing }): Promise<ParticipantValuationView[]> {
     const { sportEventId, pricing } = input;
     const { event, slot } = await this.requireEditableSet(sportEventId, input.seasonSlotId);
@@ -474,8 +506,8 @@ export class SportEventTierService {
     if (!startedFrom) {
       throw new SportEventError(`Pricing profile ${pricing.platformPricingProfileId} was not found.`, 'PLATFORM_PRICING_PROFILE_NOT_FOUND', 404);
     }
-    const { sources } = await this.requirePlatformPricingProfile(event);
-    const order = await this.orderedActiveField(sportEventId, sources);
+    const [{ sources }, knockedOut] = await Promise.all([this.requirePlatformPricingProfile(event), this.knockedOutEntering(sportEventId, slot)]);
+    const order = await this.orderedActiveField(sportEventId, sources, knockedOut);
     if (order === 'NO_FIELD') {
       this.deps.logger?.warn({ sportEventId }, 'Cannot auto-assign prices — the event has no active field participants');
       return [];
@@ -531,9 +563,10 @@ export class SportEventTierService {
 
   /** `valueSyncedField` for one slot whose set may change. */
   private async valueSlot(event: SportEvent, slot: SportEventTierSlot): Promise<SyncedFieldValuation> {
-    const [platformTierProfile, platformPricingProfile] = await Promise.all([
+    const [platformTierProfile, platformPricingProfile, knockedOut] = await Promise.all([
       this.requirePlatformTierProfile(event),
       this.requirePlatformPricingProfile(event),
+      this.knockedOutEntering(event.id, slot),
     ]);
     const pricing = slot.pricing ?? slotPricingOf(platformPricingProfile);
     // Checked before anything is written, so a bad profile never leaves tiers made and prices not.
@@ -544,8 +577,8 @@ export class SportEventTierService {
     // Tiers follow the tier profile's sources and prices the pricing profile's. Both start with
     // the same source (a league's two profiles must), so the two orders agree on who is best.
     const [tierOrder, priceOrder, tiers, valuations] = await Promise.all([
-      this.orderedActiveField(event.id, platformTierProfile.sources),
-      this.orderedActiveField(event.id, platformPricingProfile.sources),
+      this.orderedActiveField(event.id, platformTierProfile.sources, knockedOut),
+      this.orderedActiveField(event.id, platformPricingProfile.sources, knockedOut),
       this.deps.tiers.findBySlot(slot.id),
       this.deps.valuations.findBySlot(slot.id),
     ]);
@@ -601,11 +634,33 @@ export class SportEventTierService {
    * in, and the source the value that decided it records. NO_FIELD with no active participant;
    * NO_ORDER when none has any of `sources`, the profile's list (#2040, #2160): such a field has no order.
    */
-  private async orderedActiveField(sportEventId: string, sources: readonly FieldOrderBasis[]): Promise<FieldOrder | 'NO_FIELD' | 'NO_ORDER'> {
-    const active = (await this.deps.field.findBySportEvent(sportEventId))
-      .filter((entry) => entry.status === SportEventParticipantStatus.ACTIVE)
+  /**
+   * The teams out before `slot` (#2044): those that lost a decided match in one of the event's
+   * slots before it in play order (`knockedOutBefore`). None for the event's first slot, so its
+   * matches are read only for a later one.
+   */
+  private async knockedOutEntering(sportEventId: string, slot: SportEventTierSlot): Promise<ReadonlySet<string>> {
+    const slots = (await this.deps.tiers.findTierSlots([sportEventId])).get(sportEventId) ?? [];
+    const earlier = new Set<string>();
+    for (const candidate of slots) {
+      if (candidate.id === slot.id) break;
+      earlier.add(candidate.seasonSlotId);
+    }
+    if (earlier.size === 0) return earlier;
+    return knockedOutBefore(await this.deps.matches.findBySportEvent(sportEventId), earlier);
+  }
+
+  /** The field a slot's set covers: its active rows, less those `knockedOut` before the slot (`knockedOutEntering`). */
+  private async activeField(sportEventId: string, knockedOut: ReadonlySet<string>) {
+    return (await this.deps.field.findBySportEvent(sportEventId))
+      .filter((entry) => entry.status === SportEventParticipantStatus.ACTIVE && !knockedOut.has(entry.id))
       // A full tie keeps this order, so the result never depends on how the rows were read.
       .sort((left, right) => left.participantId.localeCompare(right.participantId));
+  }
+
+  /** The slot's field still in (`activeField`), in its one order. */
+  private async orderedActiveField(sportEventId: string, sources: readonly FieldOrderBasis[], knockedOut: ReadonlySet<string>): Promise<FieldOrder | 'NO_FIELD' | 'NO_ORDER'> {
+    const active = await this.activeField(sportEventId, knockedOut);
     const nameOf = new Map((active.length === 0 ? [] : await this.deps.participants.findByIds(active.map((entry) => entry.participantId)))
       .map((participant) => [participant.id, participant.name]));
     if (active.length === 0) return 'NO_FIELD';
@@ -644,6 +699,18 @@ export class SportEventTierService {
    * lists (`chooseTierSetSlots`); 409 SPORT_EVENT_TIERS_LOCKED once the set is locked.
    */
   private async requireEditableSet(sportEventId: string, seasonSlotId?: string): Promise<{ event: SportEvent; slot: SportEventTierSlot }> {
+    const { event, slot } = await this.requireSet(sportEventId, seasonSlotId);
+    try {
+      assertTierSetEditable(event, slot);
+    } catch (error) {
+      this.deps.logger?.warn({ sportEventId, sportEventSlotId: slot.id, status: event.status }, 'Refused a tier or price change on a locked tier set');
+      throw error;
+    }
+    return { event, slot };
+  }
+
+  /** The event and the slot `seasonSlotId` names (else the tier-set slot), refused unless the slot holds a set. */
+  private async requireSet(sportEventId: string, seasonSlotId?: string): Promise<{ event: SportEvent; slot: SportEventTierSlot }> {
     const event = await this.deps.sportEvents.findById(sportEventId);
     if (!event) {
       throw new SportEventError(`Sport event ${sportEventId} was not found.`, 'EVENT_NOT_FOUND', 404);
@@ -655,12 +722,6 @@ export class SportEventTierService {
         'SLOT_HOLDS_NO_TIER_SET',
         409,
       );
-    }
-    try {
-      assertTierSetEditable(event, slot);
-    } catch (error) {
-      this.deps.logger?.warn({ sportEventId, sportEventSlotId: slot.id, status: event.status }, 'Refused a tier or price change on a locked tier set');
-      throw error;
     }
     return { event, slot };
   }

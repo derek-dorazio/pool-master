@@ -21,10 +21,11 @@ import {
 
 const {
   getEventMock,
-  listEventTiersMock,
-  listEventParticipantsMock,
-  autoAssignEventTiersMock,
-  autoAssignEventPricesMock,
+  listEventSlotTiersMock,
+  listEventSlotParticipantsMock,
+  autoAssignEventSlotTiersMock,
+  autoAssignEventSlotPricesMock,
+  previewEventSlotPricesMock,
   updateEventParticipantsMock,
   listPlatformPricingProfilesMock,
   getSportLeagueMock,
@@ -41,10 +42,11 @@ const {
   logger.child.mockReturnValue(logger);
   return {
     getEventMock: vi.fn(),
-    listEventTiersMock: vi.fn(),
-    listEventParticipantsMock: vi.fn(),
-    autoAssignEventTiersMock: vi.fn(),
-    autoAssignEventPricesMock: vi.fn(),
+    listEventSlotTiersMock: vi.fn(),
+    listEventSlotParticipantsMock: vi.fn(),
+    autoAssignEventSlotTiersMock: vi.fn(),
+    autoAssignEventSlotPricesMock: vi.fn(),
+    previewEventSlotPricesMock: vi.fn(),
     updateEventParticipantsMock: vi.fn(),
     listPlatformPricingProfilesMock: vi.fn(),
     getSportLeagueMock: vi.fn(),
@@ -54,10 +56,11 @@ const {
 
 bindApiMocks({
   getEvent: getEventMock,
-  listEventTiers: listEventTiersMock,
-  listEventParticipants: listEventParticipantsMock,
-  autoAssignEventTiers: autoAssignEventTiersMock,
-  autoAssignEventPrices: autoAssignEventPricesMock,
+  listEventSlotTiers: listEventSlotTiersMock,
+  listEventSlotParticipants: listEventSlotParticipantsMock,
+  autoAssignEventSlotTiers: autoAssignEventSlotTiersMock,
+  autoAssignEventSlotPrices: autoAssignEventSlotPricesMock,
+  previewEventSlotPrices: previewEventSlotPricesMock,
   updateEventParticipants: updateEventParticipantsMock,
   listPlatformPricingProfiles: listPlatformPricingProfilesMock,
   getSportLeague: getSportLeagueMock,
@@ -120,7 +123,7 @@ function seed(overrides: { tournament?: Parameters<typeof tournament>[0] } = {})
   getEventMock.mockResolvedValue({
     data: { event: tournament(overrides.tournament) },
   });
-  listEventParticipantsMock.mockResolvedValue({
+  listEventSlotParticipantsMock.mockResolvedValue({
     data: {
       participants: [
         fieldEntry('sep-1', 'Rory', 9000, 'tier-id-1', 0),
@@ -129,9 +132,16 @@ function seed(overrides: { tournament?: Parameters<typeof tournament>[0] } = {})
       ],
     },
   });
-  listEventTiersMock.mockResolvedValue({
+  listEventSlotTiersMock.mockResolvedValue({
     data: { tiers: [tier(1), tier(2), tier(3)] },
   });
+  // The API's preview (#2107): what it answers for the Standard values on a field of three, and
+  // its refusal of a floor above the top, as the assignment would refuse it.
+  previewEventSlotPricesMock.mockImplementation(({ query }: { query: { topSharePercent: number; floorSharePercent: number } }) => Promise.resolve(
+    query.floorSharePercent > query.topSharePercent
+      ? { error: { error: { code: 'PRICING_CONFIG_INVALID', message: 'The worst seed\'s share can\'t be above the best seed\'s.' } } }
+      : { data: { activeParticipantCount: 3, bestPrice: 12000, worstPrice: 6000 } },
+  ));
   listPlatformPricingProfilesMock.mockResolvedValue({ data: { platformPricingProfiles: platformPricingProfilesFixture() } });
   getSportLeagueMock.mockResolvedValue({ data: { sportLeague: sportLeagueFixture() } });
 }
@@ -161,7 +171,7 @@ describe('the Field section\'s automatic tiers and prices', () => {
 
   it('auto-assigns tiers with one button behind a confirmation that names the value ordering the field, sending no source', async () => {
     seed();
-    autoAssignEventTiersMock.mockResolvedValue({ data: null });
+    autoAssignEventSlotTiersMock.mockResolvedValue({ data: null });
     renderPage();
 
     await userEvent.click(await screen.findByTestId('root-admin-tier-auto-tiers'));
@@ -169,28 +179,45 @@ describe('the Field section\'s automatic tiers and prices', () => {
     await userEvent.click(screen.getByTestId('root-admin-tier-auto-tiers-confirm'));
 
     await waitFor(() =>
-      expect(autoAssignEventTiersMock).toHaveBeenCalledWith(
+      expect(autoAssignEventSlotTiersMock).toHaveBeenCalledWith(
         expect.objectContaining({
-          path: { eventId: 'evt-1' },
+          path: { eventId: 'evt-1', seasonSlotId: 'slot-1' },
           body: {},
         }),
       ),
     );
   });
 
+  it('closes the tier confirmation on Escape without auto-assigning', async () => {
+    seed();
+    renderPage();
+
+    await userEvent.click(await screen.findByTestId('root-admin-tier-auto-tiers'));
+    expect(screen.getByTestId('root-admin-tier-auto-tiers-modal')).toBeInTheDocument();
+    await userEvent.keyboard('{Escape}');
+
+    await waitFor(() => expect(screen.queryByTestId('root-admin-tier-auto-tiers-modal')).not.toBeInTheDocument());
+    expect(autoAssignEventSlotTiersMock).not.toHaveBeenCalled();
+  });
+
   it('prices the field with its sport league\'s profile, previewing the best and worst price in domain words, and with a changed one', async () => {
     seed({ tournament: { pricing: null } });
     const [small] = platformPricingProfilesFixture();
-    autoAssignEventPricesMock.mockResolvedValue({ data: { participants: [] } });
+    autoAssignEventSlotPricesMock.mockResolvedValue({ data: { participants: [] } });
     renderPage();
 
     await waitFor(() => expect(screen.getByTestId('root-admin-tier-auto-prices')).toBeEnabled());
     await userEvent.click(screen.getByTestId('root-admin-tier-auto-prices'));
     expect(screen.getByTestId('root-admin-tier-auto-prices-profile')).toHaveDisplayValue('Standard');
     expect(screen.getByTestId('root-admin-tier-auto-prices-salaryCap')).toHaveValue('50000');
-    expect(screen.getByTestId('root-admin-tier-auto-prices-preview')).toHaveTextContent(
+    expect(await screen.findByTestId('root-admin-tier-auto-prices-preview')).toHaveTextContent(
       'Best participant $12,000, worst $6,000, across 3 active participants.',
     );
+    // The prices are the API's, for the slot and the five values (#2107).
+    expect(previewEventSlotPricesMock).toHaveBeenCalledWith(expect.objectContaining({
+      path: { eventId: 'evt-1', seasonSlotId: 'slot-1' },
+      query: { salaryCap: 50000, unit: 100, topSharePercent: 24, floorSharePercent: 12, steepness: 4 },
+    }));
 
     await userEvent.selectOptions(screen.getByTestId('root-admin-tier-auto-prices-profile'), 'Small');
     expect(screen.getByTestId('root-admin-tier-auto-prices-salaryCap')).toHaveValue('5000');
@@ -199,9 +226,9 @@ describe('the Field section\'s automatic tiers and prices', () => {
     await userEvent.click(screen.getByTestId('root-admin-tier-auto-prices-confirm'));
 
     await waitFor(() =>
-      expect(autoAssignEventPricesMock).toHaveBeenCalledWith(
+      expect(autoAssignEventSlotPricesMock).toHaveBeenCalledWith(
         expect.objectContaining({
-          path: { eventId: 'evt-1' },
+          path: { eventId: 'evt-1', seasonSlotId: 'slot-1' },
           // The profile goes by its id; its name is the picker's label only (#2044).
           body: { platformPricingProfileId: small.id, salaryCap: 5000, unit: 10, topSharePercent: 24, floorSharePercent: 12, steepness: 1 },
         }),
@@ -225,7 +252,7 @@ describe('the Field section\'s automatic tiers and prices', () => {
 
   it('auto-assigns tiers, and keeps the confirmation open with the reason when the server refuses', async () => {
     seed();
-    autoAssignEventTiersMock.mockResolvedValue({
+    autoAssignEventSlotTiersMock.mockResolvedValue({
       error: { error: { code: 'SPORT_EVENT_TIERS_LOCKED', message: 'Tiers are locked for this tournament.' } },
       response: { status: 409 },
     });
@@ -235,7 +262,7 @@ describe('the Field section\'s automatic tiers and prices', () => {
     await userEvent.click(screen.getByTestId('root-admin-tier-auto-tiers-confirm'));
 
     await waitFor(() =>
-      expect(autoAssignEventTiersMock).toHaveBeenCalledWith(
+      expect(autoAssignEventSlotTiersMock).toHaveBeenCalledWith(
         expect.objectContaining({ body: {} }),
       ),
     );
@@ -243,7 +270,7 @@ describe('the Field section\'s automatic tiers and prices', () => {
     expect(await within(modal).findByText('This event has been released, so its tiers and prices are locked.')).toBeInTheDocument();
   });
 
-  it('refuses pricing values that contradict each other or are not numbers, naming the problem', async () => {
+  it('shows the API\'s refusal of pricing values that contradict each other, and refuses values that are not numbers, naming the problem', async () => {
     seed();
     renderPage();
 
@@ -254,14 +281,15 @@ describe('the Field section\'s automatic tiers and prices', () => {
 
     await userEvent.clear(floor);
     await userEvent.type(floor, '30');
-    expect(screen.getByText('The worst seed\'s share can\'t be above the best seed\'s.')).toBeInTheDocument();
+    expect(await screen.findByText(/the worst participant’s share can’t be above the best’s/)).toBeInTheDocument();
+    expect(screen.queryByTestId('root-admin-tier-auto-prices-preview')).not.toBeInTheDocument();
     expect(confirm).toBeDisabled();
 
     await userEvent.clear(screen.getByTestId('root-admin-tier-auto-prices-salaryCap'));
     await userEvent.type(screen.getByTestId('root-admin-tier-auto-prices-salaryCap'), '500.5');
     expect(screen.getByText('Enter whole dollars for the cap and rounding, and shares and steepness above 0.')).toBeInTheDocument();
     expect(confirm).toBeDisabled();
-    expect(autoAssignEventPricesMock).not.toHaveBeenCalled();
+    expect(autoAssignEventSlotPricesMock).not.toHaveBeenCalled();
   });
 
   it('opens the price dialog on the profile the event was priced from even after a root admin renamed it, lists profiles by their display names, and sends the chosen one\'s id', async () => {
@@ -271,7 +299,7 @@ describe('the Field section\'s automatic tiers and prices', () => {
       { ...small, name: 'Renamed small one' },
       { ...standard, name: 'Renamed standard one' },
     ] } });
-    autoAssignEventPricesMock.mockResolvedValue({ data: { participants: [] } });
+    autoAssignEventSlotPricesMock.mockResolvedValue({ data: { participants: [] } });
     renderPage();
 
     await waitFor(() => expect(screen.getByTestId('root-admin-tier-auto-prices')).toBeEnabled());
@@ -283,7 +311,7 @@ describe('the Field section\'s automatic tiers and prices', () => {
     await userEvent.selectOptions(picker, 'Standard');
     await userEvent.click(screen.getByTestId('root-admin-tier-auto-prices-confirm'));
 
-    await waitFor(() => expect(autoAssignEventPricesMock).toHaveBeenCalledWith(expect.objectContaining({
+    await waitFor(() => expect(autoAssignEventSlotPricesMock).toHaveBeenCalledWith(expect.objectContaining({
       body: { platformPricingProfileId: standard.id, salaryCap: 50000, unit: 100, topSharePercent: 24, floorSharePercent: 12, steepness: 4 },
     })));
   });

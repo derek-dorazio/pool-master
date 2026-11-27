@@ -21,7 +21,7 @@ import {
   applyEventGolfRoundScores,
   updateEventParticipantGolfRoundScore,
   applyEventRaceResults,
-  autoAssignEventTiers,
+  autoAssignEventSlotTiers,
   submitContestEntry,
   selectContestPick,
   transitionEvent,
@@ -36,6 +36,7 @@ import { expectDefined } from '../support/expect-defined';
 import { EVERY_GAME_PLAYED } from '../support/sport-test-seed';
 import { sportRowKeys } from '../support/sport-rows';
 import { bracketMatch, matchup, periodBody, resultBody, withHomeAwayRead } from '../support/match-requests';
+import { tierSetSlotPath } from './tier-set-slot';
 
 // American football end to end over HTTP (#702): the NFL playoffs test seed loads into the seeded
 // NFL sport league, played out, with its Divisional round placed by the reseed. A commissioner
@@ -114,7 +115,7 @@ describe('SDK Functional: American football', () => {
     // --- The NFL's tiers are seed ranges (#2160): a per-event tier size has no meaning there -------
     // Tiers are edited only before release, so the event is a draft for this one call.
     await getFunctionalPrisma().sportEvent.update({ where: { id: event.id }, data: { status: 'DRAFT' } });
-    const sized = await autoAssignEventTiers({ client: a, path: { eventId: event.id }, body: { tierSize: 4 } });
+    const sized = await autoAssignEventSlotTiers({ client: a, path: await tierSetSlotPath(a, event.id), body: { tierSize: 4 } });
     expect([sized.response?.status, sized.error?.error.code]).toEqual([422, 'TIER_SIZE_NOT_FOR_RANGES']);
     await getFunctionalPrisma().sportEvent.update({ where: { id: event.id }, data: { status: 'SCHEDULED' } });
 
