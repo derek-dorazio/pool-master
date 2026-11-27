@@ -7,6 +7,7 @@ import {
   ContestStatus,
   type ContestScoringSettings,
   MatchSide,
+  SlotKind,
   MatchStatus,
   type ParticipantContestScoringRule,
   type ParticipantType,
@@ -73,6 +74,7 @@ import { expectDefined } from '../../support/expect-defined';
 import { EIGHT_SEEDS, bracketMatches, eightTeamBracket, withResults } from '../../support/bracket-fixtures';
 import { InMemoryContestWorld } from '../../support/in-memory-contest-world';
 import { InMemorySportEvents } from '../../support/in-memory-sport-events';
+import { roundSlot, weekRoundSlot } from '../../support/round-slots';
 import { planEntitlementsOver, platinumEntitlements } from '../../support/plan-entitlements';
 import { buildLeague } from '../../factories';
 import { PLAN_SETTINGS } from '../../../packages/core-api/src/modules/plans/plan-settings';
@@ -282,6 +284,7 @@ function createSportEventReader(overrides?: Partial<{
   coveredRoundCount: number;
   /** The slot definitions the event's rounds play; a template listing all of them covers every round. */
   slotDefinitionIds: string[];
+  playsOnlyKnockoutRounds: boolean;
   squaresFromRound: number | null;
   participantType: ParticipantType;
   scoringFamily: ScoringFamily;
@@ -320,6 +323,7 @@ function createSportEventReader(overrides?: Partial<{
       participantCount: overrides?.participantCount ?? 72,
       rounds: overrides?.rounds === undefined ? 4 : overrides.rounds,
       slotDefinitionIds: overrides?.slotDefinitionIds ?? [],
+      playsOnlyKnockoutRounds: overrides?.playsOnlyKnockoutRounds ?? true,
       salaryCap: overrides?.salaryCap ?? null,
       squaresFromRound: overrides?.squaresFromRound ?? null,
       ...(overrides?.participantType !== undefined && { participantType: overrides.participantType }),
@@ -2003,6 +2007,36 @@ describe('ContestManagementService finish-position scoring (#622)', () => {
     expect(contestCoreRepo.create).not.toHaveBeenCalled();
   });
 
+  it('holds a sweepstake covering every slot of a soccer tournament to its knockout rounds, not its group matchdays, reading the rounds its games cover (#2241)', async () => {
+    const templateRepo = createContestConfigTemplateRepo();
+    const template = await templateRepo.findById('11111111-1111-4111-8111-111111111111');
+    jest.mocked(templateRepo.findById).mockResolvedValue({
+      ...expectDefined(template, 'the stub template'),
+      coverageMode: TemplateCoverageMode.ALL_LISTED,
+      slots: [],
+      selectionType: SelectionType.RANDOM_DRAW,
+      configJson: { ...drawRules, scoring: knockoutScoring([1, 2, 4, 8, 16]) },
+    });
+    // Eight rounds: three group matchdays, then five knockout rounds; the template lists every slot.
+    const sportEventReader = createSportEventReader({ sport: Sport.BASKETBALL, playsMatches: true, rounds: 8, coveredRoundCount: 5, slotDefinitionIds: [], playsOnlyKnockoutRounds: false });
+    const contestCoreRepo = createContestRepo();
+    const service = new ContestManagementService({
+      domainEvents: testDomainEvents(),
+      contests: contestCoreRepo,
+      configTemplates: templateRepo,
+      configurations: createContestConfigurationRepo(),
+      scoringRules: createParticipantScoringRuleRepo(),
+      tiers: createSportEventTierServiceStub(),
+      sportEventReader,
+      cups: createCupKeeper(),
+      planEntitlements: platinumEntitlements(),
+    });
+
+    await service.createContest({ leagueId: 'league-1' }, raceRequest({ name: 'World Cup Sweep', templateId: '11111111-1111-4111-8111-111111111111', configuration: undefined }));
+    expect(sportEventReader.countCoveredRounds).toHaveBeenCalledWith('11111111-1111-1111-1111-111111111111', { slotDefinitionIds: [] });
+    expect(contestCoreRepo.create).toHaveBeenCalled();
+  });
+
   it('refuses knockout round values on an event with no rounds with 422 CONTEST_SCORING_ROUNDS_MISMATCH, saying the event has no rounds', async () => {
     const { contestCoreRepo, service } = basketballService(null);
 
@@ -2728,6 +2762,7 @@ describe('ContestManagementService — a bracket on a knockout already under way
         tiers: store.tierRepo(),
         valuations: store.valuationRepo(),
         matches: store.matchRepo(),
+        rounds: store.roundRepo(),
       }),
       now: () => now,
       cups: createCupKeeper(),
@@ -3046,6 +3081,7 @@ describe('createContestSportEventReader.findByIds (#1355, #2008)', () => {
       tiers: store.tierRepo(),
       valuations: store.valuationRepo(),
       matches: store.matchRepo(),
+      rounds: store.roundRepo(),
     });
 
     const states = await reader.findByIds([golf.id, tennis.id]);
@@ -3067,6 +3103,7 @@ describe('createContestSportEventReader field, game and price reads', () => {
       tiers: { findTierSlots: async () => new Map([[EVENT, [{ id: 'event-slot-1', sportEventId: EVENT, seasonSlotId: 'season-slot-1', slotDefinitionId: 'slot-definition-1', seasonSlotStatus: SeasonSlotStatus.SCHEDULED, holdsTierSet: true, isTierSetSlot: true, tierLayout: null, pricing: null }]]]) },
       valuations: { findBySlot: async () => ports.valuations ?? [] } as unknown as Parameters<typeof createContestSportEventReader>[0]['valuations'],
       matches: { findBySportEvent: async () => ports.games ?? [] } as unknown as Parameters<typeof createContestSportEventReader>[0]['matches'],
+      rounds: { findBySportEvent: async () => [] },
     });
   }
 
@@ -3102,6 +3139,59 @@ describe('createContestSportEventReader field, game and price reads', () => {
   });
 });
 
+describe('createContestSportEventReader knockout reads over a tournament with group matchdays (#2241)', () => {
+  const EVENT = 'event-tournament';
+  /** Three group matchdays, then a semifinal, a third-place play-off and the final: a round per slot. */
+  const ROUNDS = [weekRoundSlot(1), weekRoundSlot(2), weekRoundSlot(3), roundSlot(SlotKind.SEMIFINAL), roundSlot(SlotKind.THIRD_PLACE), roundSlot(SlotKind.FINAL)]
+    .map((slot, index) => ({ roundNumber: index + 1, slot }));
+  const GROUP_GAMES = bracketMatches(EVENT, [
+    { matchNumber: 1, round: 1, home: 'T1', away: 'T2' },
+    { matchNumber: 2, round: 2, home: 'T3', away: 'T4' },
+  ], (round) => weekRoundSlot(round));
+  const KNOCKOUT_GAMES = bracketMatches(EVENT, [
+    { matchNumber: 3, round: 4, home: 'T1', away: 'T2', advancesTo: { matchNumber: 5, side: MatchSide.HOME } },
+    { matchNumber: 4, round: 4, home: 'T3', away: 'T4', advancesTo: { matchNumber: 5, side: MatchSide.AWAY } },
+    { matchNumber: 5, round: 6, home: null, away: null },
+  ], (round) => round === 4 ? roundSlot(SlotKind.SEMIFINAL) : roundSlot(SlotKind.FINAL));
+  const THIRD_PLACE_GAME = bracketMatches(EVENT, [{ matchNumber: 6, round: 5, home: null, away: null }], () => roundSlot(SlotKind.THIRD_PLACE));
+
+  function readerOver(games: readonly unknown[], rounds: readonly unknown[] = ROUNDS) {
+    const findRounds = jest.fn(async () => rounds);
+    const reader = createContestSportEventReader({
+      sportEvents: new InMemorySportEvents().sportEventRepo(),
+      field: { findBySportEvent: async () => [] } as unknown as Parameters<typeof createContestSportEventReader>[0]['field'],
+      tiers: { findTierSlots: async () => new Map() },
+      valuations: { findBySlot: async () => [] },
+      matches: { findBySportEvent: async () => games } as unknown as Parameters<typeof createContestSportEventReader>[0]['matches'],
+      rounds: { findBySportEvent: findRounds } as unknown as Parameters<typeof createContestSportEventReader>[0]['rounds'],
+    });
+    return { reader, findRounds };
+  }
+
+  it('counts the covered knockout rounds from the event\'s rounds before any game is placed: the semifinal and the final', async () => {
+    await expect(readerOver([]).reader.countCoveredRounds(EVENT, { slotDefinitionIds: null })).resolves.toBe(2);
+  });
+
+  it('lets knockout round points take the event with only group games, reading its rounds to see it plays a knockout', async () => {
+    const { reader, findRounds } = readerOver(GROUP_GAMES);
+
+    await expect(reader.findKnockoutProblem(EVENT)).resolves.toBeNull();
+    expect(findRounds).toHaveBeenCalledTimes(1);
+  });
+
+  it('refuses knockout round points on an event whose rounds are all weeks', async () => {
+    await expect(readerOver(GROUP_GAMES, ROUNDS.slice(0, 3)).reader.findKnockoutProblem(EVENT)).resolves.toBe('it plays no knockout round');
+  });
+
+  it('judges a placed knockout from its games alone, without reading the rounds, and fills it in as a bracket with the group and third-place games left out', async () => {
+    const { reader, findRounds } = readerOver([...GROUP_GAMES, ...KNOCKOUT_GAMES, ...THIRD_PLACE_GAME]);
+
+    await expect(reader.findKnockoutProblem(EVENT)).resolves.toBeNull();
+    await expect(reader.findBracketProblem(EVENT)).resolves.toBeNull();
+    expect(findRounds).not.toHaveBeenCalled();
+  });
+});
+
 describe('createContestSportEventReader event and game counts', () => {
   function readerOn(store: InMemorySportEvents, countParticipants?: () => Promise<Map<string, number>>) {
     const sportEvents = store.sportEventRepo();
@@ -3111,6 +3201,7 @@ describe('createContestSportEventReader event and game counts', () => {
       tiers: store.tierRepo(),
       valuations: store.valuationRepo(),
       matches: store.matchRepo(),
+      rounds: store.roundRepo(),
     });
   }
 
@@ -3163,6 +3254,7 @@ describe('createBatchedContestOpeningReader', () => {
         tiers: store.tierRepo(),
         valuations: store.valuationRepo(),
         matches: store.matchRepo(),
+        rounds: store.roundRepo(),
       }),
     };
   }

@@ -33,6 +33,7 @@ import {
   coveredRoundNumbers,
   coveredRoundValue,
   coversMatchRound,
+  playsKnockoutRounds,
   type ContestRoundCoverage,
   type KnockoutRoundPointsSettings,
   type SportEventRoundMatch,
@@ -90,13 +91,32 @@ export function byeEntries(
   }));
 }
 
+/**
+ * The field rows a group stage put out (#2241): once the knockout's first round has every side
+ * drawn, a team that played group matchdays and is named by no knockout match is out. A field with
+ * no group stage puts nobody out here.
+ */
+function leftOutOfKnockout(
+  field: readonly SportEventParticipantView[],
+  knockout: ReadonlyArray<Pick<SportEventRoundMatch, 'id' | 'roundNumber' | 'sides'>>,
+): Set<string> {
+  if (knockout.length === 0) return new Set();
+  const firstRound = Math.min(...knockout.map((match) => match.roundNumber));
+  const drawn = knockout.filter((match) => match.roundNumber === firstRound).every((match) => match.sides.every((side) => side.sportEventParticipantId !== null));
+  if (!drawn) return new Set();
+  const named = new Set(knockout.flatMap(matchParticipantIds));
+  return new Set(field
+    .filter((row) => !named.has(row.entry.id) && row.matches.some((match) => !playsKnockoutRounds(match.slot.slotKind)))
+    .map((row) => row.entry.id));
+}
+
 /** How a team's knockout score came about: what a leaderboard pick shows beside its points. */
 export interface KnockoutTeamRecord {
   /** Matches won in covered rounds, with each bye whose skipped round is decided counted as a win. */
   wins: number;
   /** The part of the score that is upset bonus; 0 with the bonus off. */
   upsetBonusPoints: number;
-  /** False once the team has lost a match. */
+  /** False once the team has lost a knockout match, or a group stage left it out of the knockout. */
   isAlive: boolean;
 }
 
@@ -146,9 +166,12 @@ export function scoreKnockoutField(
   settings: KnockoutRoundPointsSettings,
   coverage: ContestRoundCoverage,
 ): KnockoutTeamScore[] {
+  // Only knockout rounds score or put a team out (#2241): a group matchday or the third-place
+  // play-off is no round of the bracket.
+  const knockoutMatches = (row: SportEventParticipantView) => row.matches.filter((match) => playsKnockoutRounds(match.slot.slotKind));
   const decided = new Map<string, DecidedMatch>();
   for (const row of field) {
-    for (const match of row.matches) {
+    for (const match of knockoutMatches(row)) {
       const result = decidedResult(match);
       if (result !== null) {
         decided.set(match.id, { match, ...result });
@@ -156,9 +179,10 @@ export function scoreKnockoutField(
     }
   }
   const seedById = knockoutSeeds(field.map((row) => row.entry));
-  // Each row carries the matches it is in; the bracket is every one of them, once.
-  const bracket = [...new Map(field.flatMap((row) => row.matches).map((match) => [match.id, match])).values()];
+  // Each row carries the matches it is in; the bracket is every knockout one of them, once.
+  const bracket = [...new Map(field.flatMap(knockoutMatches).map((match) => [match.id, match])).values()];
   const withdrawn = withdrawnRowIds(field.map((row) => row.entry), bracket);
+  const leftOut = leftOutOfKnockout(field, bracket);
   // The contest's own bracket is its covered rounds: a bye is a skipped covered round, and only a
   // covered round's result is scored.
   const covered = bracket.filter((match) => coversMatchRound(coverage, match));
@@ -167,7 +191,7 @@ export function scoreKnockoutField(
   const anyCoveredResult = [...decided.values()].some((result) => coversMatchRound(coverage, result.match));
 
   return field.map((row) => {
-    const results = row.matches.flatMap((match) => {
+    const results = knockoutMatches(row).flatMap((match) => {
       const result = decided.get(match.id);
       return result ? [result] : [];
     });
@@ -184,7 +208,7 @@ export function scoreKnockoutField(
     const record: KnockoutTeamRecord = {
       wins: wonCovered.length + byeRounds.length,
       upsetBonusPoints,
-      isAlive: !withdrawn.has(row.entry.id) && results.length === won.length,
+      isAlive: !withdrawn.has(row.entry.id) && !leftOut.has(row.entry.id) && results.length === won.length,
     };
     const scoredRounds = roundPoints.filter((points): points is number => points !== undefined);
     if (!anyCoveredResult || scoredRounds.length < roundPoints.length) {

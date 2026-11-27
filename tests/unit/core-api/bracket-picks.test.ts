@@ -13,6 +13,7 @@ import {
   SlotKind,
   UpsetBonusRule,
   type KnockoutRoundPointsSettings,
+  type SportEventRoundMatch,
 } from '@poolmaster/shared/domain';
 import {
   contestBracketGames,
@@ -180,14 +181,17 @@ describe('findKnockoutProblem (#2225)', () => {
     { matchNumber: 2, round: 1, home: 'T3', away: 'T4' },
     { matchNumber: 3, round: 1, home: 'T5', away: 'T6' },
   ], () => roundSlot(SlotKind.TOURNAMENT));
+  /** The event's rounds as its games' slots give them: one per round number. */
+  const roundsOf = (games: readonly SportEventRoundMatch[]) =>
+    [...new Map(games.map((game) => [game.roundNumber, { slot: game.slot }])).values()];
 
   it('lets knockout round points score a slate of one-off games, each its own final, though they form no bracket', () => {
     expect(findBracketProblem(bowls(), EIGHT_SEEDS)).toBe('its final has 0 games, not one');
-    expect(findKnockoutProblem(bowls(), EIGHT_SEEDS)).toBeNull();
+    expect(findKnockoutProblem(bowls(), EIGHT_SEEDS, roundsOf(bowls()))).toBeNull();
   });
 
   it('lets them score a bracket, as before', () => {
-    expect(findKnockoutProblem(eightTeamBracket(), EIGHT_SEEDS)).toBeNull();
+    expect(findKnockoutProblem(eightTeamBracket(), EIGHT_SEEDS, roundsOf(eightTeamBracket()))).toBeNull();
   });
 
   it('refuses a regular-season week, played by pick\'em and survivor rather than a round reached, with the bracket\'s problem', () => {
@@ -196,7 +200,7 @@ describe('findKnockoutProblem (#2225)', () => {
       { matchNumber: 2, round: 1, home: 'T3', away: 'T4' },
     ], () => weekRoundSlot(1));
 
-    expect(findKnockoutProblem(week, EIGHT_SEEDS)).toBe('its final has 0 games, not one');
+    expect(findKnockoutProblem(week, EIGHT_SEEDS, roundsOf(week))).toBe('it plays no knockout round');
   });
 
   it('refuses a knockout\'s first round placed before its later rounds are linked: one round of unlinked games in a knockout-round slot', () => {
@@ -205,17 +209,54 @@ describe('findKnockoutProblem (#2225)', () => {
       { matchNumber: 2, round: 1, home: 'T4', away: 'T5' },
     ], () => roundSlot(SlotKind.QUARTERFINAL));
 
-    expect(findKnockoutProblem(firstRound, EIGHT_SEEDS)).toBe('its final has 0 games, not one');
+    expect(findKnockoutProblem(firstRound, EIGHT_SEEDS, roundsOf(firstRound))).toBe('its final has 0 games, not one');
   });
 
-  it('refuses games over two rounds that no link joins, and an event with no games', () => {
+  it('refuses games over two rounds that no link joins, and an event with no rounds', () => {
     const unlinked = bracketMatches('event-unlinked', [
       { matchNumber: 1, round: 1, home: 'T1', away: 'T2' },
       { matchNumber: 2, round: 2, home: 'T3', away: 'T4' },
     ], () => roundSlot(SlotKind.TOURNAMENT));
 
-    expect(findKnockoutProblem(unlinked, EIGHT_SEEDS)).not.toBeNull();
-    expect(findKnockoutProblem([], EIGHT_SEEDS)).toBe('it has no games');
+    expect(findKnockoutProblem(unlinked, EIGHT_SEEDS, roundsOf(unlinked))).not.toBeNull();
+    expect(findKnockoutProblem([], EIGHT_SEEDS, [])).toBe('it plays no knockout round');
+  });
+
+  /** A soccer tournament's rounds: three group matchdays, then a semifinal, a third-place play-off and the final. */
+  const tournamentRounds = [
+    { slot: weekRoundSlot(1) }, { slot: weekRoundSlot(2) }, { slot: weekRoundSlot(3) },
+    { slot: roundSlot(SlotKind.SEMIFINAL) }, { slot: roundSlot(SlotKind.THIRD_PLACE) }, { slot: roundSlot(SlotKind.FINAL) },
+  ];
+  const groupGames = () => bracketMatches('event-tournament', [
+    { matchNumber: 1, round: 1, home: 'T1', away: 'T2' },
+    { matchNumber: 2, round: 2, home: 'T3', away: 'T4' },
+    { matchNumber: 3, round: 3, home: 'T1', away: 'T4' },
+  ], (round) => weekRoundSlot(round));
+
+  it('lets knockout round points score a tournament before its knockout games are placed: before any game, and with only its group matchdays\' games', () => {
+    expect(findKnockoutProblem([], EIGHT_SEEDS, tournamentRounds)).toBeNull();
+    expect(findKnockoutProblem(groupGames(), EIGHT_SEEDS, tournamentRounds)).toBeNull();
+  });
+
+  it('judges a tournament\'s knockout games alone once placed, its group games and third-place play-off left out', () => {
+    const knockout = bracketMatches('event-tournament', [
+      { matchNumber: 4, round: 4, home: 'T1', away: 'T2', advancesTo: { matchNumber: 6, side: MatchSide.HOME } },
+      { matchNumber: 5, round: 4, home: 'T3', away: 'T4', advancesTo: { matchNumber: 6, side: MatchSide.AWAY } },
+      { matchNumber: 6, round: 6, home: null, away: null },
+    ], (round) => round === 4 ? roundSlot(SlotKind.SEMIFINAL) : roundSlot(SlotKind.FINAL));
+    const thirdPlace = bracketMatches('event-tournament', [{ matchNumber: 7, round: 5, home: null, away: null }], () => roundSlot(SlotKind.THIRD_PLACE));
+
+    expect(findBracketProblem([...groupGames(), ...knockout, ...thirdPlace], EIGHT_SEEDS)).not.toBeNull();
+    expect(findKnockoutProblem([...groupGames(), ...knockout, ...thirdPlace], EIGHT_SEEDS, tournamentRounds)).toBeNull();
+  });
+
+  it('still refuses a tournament whose placed knockout games form no bracket', () => {
+    const unlinked = bracketMatches('event-tournament', [
+      { matchNumber: 4, round: 4, home: 'T1', away: 'T2' },
+      { matchNumber: 6, round: 6, home: null, away: null },
+    ], (round) => round === 4 ? roundSlot(SlotKind.SEMIFINAL) : roundSlot(SlotKind.FINAL));
+
+    expect(findKnockoutProblem([...groupGames(), ...unlinked], EIGHT_SEEDS, tournamentRounds)).toBe('game 6 of round 6 has a team that no pick can decide');
   });
 });
 
