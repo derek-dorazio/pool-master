@@ -744,6 +744,7 @@ export function authHeaders(userId: string, email: string): Record<string, strin
   };
 }
 
+
 /**
  * Removes JSON body headers for bodyless POST/DELETE requests.
  * Some live Fastify routes reject an empty request body when the

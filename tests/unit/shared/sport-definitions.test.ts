@@ -1,9 +1,5 @@
 import {
-  contestFormatForSelectionType,
-  getDefaultTournamentFormatForSport,
   getSportDefinition,
-  getValidContestFormatsForTournamentFormat,
-  isContestFormatValidForTournamentFormat,
   isPredictionSelectionType,
   PARTICIPANT_SCORING_DEFINITIONS,
   SelectionType,
@@ -11,9 +7,7 @@ import {
   SPORT_DEFINITIONS,
   sportAllowsSelectionType,
   type SportDefinition,
-  sportPlaysMatches,
   sportVocabulary,
-  TournamentFormat,
 } from '@poolmaster/shared/domain';
 import { enUS } from '@poolmaster/shared/display-strings';
 import { getSelectionEngine } from '../../../packages/core-api/src/modules/selections/selection-engines/registry';
@@ -42,24 +36,10 @@ describe.each(definitions.map((definition) => [definition.sport, definition] as 
     }
   });
 
-  it('allows only selection types whose contest format its tournament format admits', () => {
-    for (const selectionType of definition.selectionTypes) {
-      expect(isContestFormatValidForTournamentFormat(
-        definition.tournamentFormat,
-        contestFormatForSelectionType(selectionType),
-      )).toBe(true);
-    }
-  });
-
   it('ranks only by scoring definitions that are declared with a direction', () => {
     for (const id of definition.scoringDefinitions) {
       expect(PARTICIPANT_SCORING_DEFINITIONS[id].direction).toMatch(/^(LOWER|HIGHER)_IS_BETTER$/);
     }
-  });
-
-  it('names a tournament format that admits at least one contest format', () => {
-    expect(getDefaultTournamentFormatForSport(sport)).toBe(definition.tournamentFormat);
-    expect(getValidContestFormatsForTournamentFormat(definition.tournamentFormat).length).toBeGreaterThan(0);
   });
 
   it('gives a new event at least one round', () => {
@@ -70,8 +50,8 @@ describe.each(definitions.map((definition) => [definition.sport, definition] as 
     expect(definition.pickEm !== undefined).toBe(definition.selectionTypes.includes(SelectionType.PICK_EM));
   });
 
-  it('has its own display string for a game that ends level exactly when it plays matches, so results and picks call a tie by its word (#792)', () => {
-    expect('tie' in enUS.sport[definition.sport]).toBe(sportPlaysMatches(definition.sport));
+  it('has its own display string for a game that ends level exactly when it offers a prediction contest, so results and picks call a tie by its word (#792)', () => {
+    expect('tie' in enUS.sport[definition.sport]).toBe(definition.selectionTypes.some(isPredictionSelectionType));
   });
 
   it('has a name and every sport word filled in, its own or the generic one', () => {
@@ -220,9 +200,7 @@ describe('basketball', () => {
 
   it('is a team sport played as a knockout bracket, scored by knockout round points', () => {
     expect(basketball.name).toBe('Basketball');
-    expect(basketball.tournamentFormat).toBe(TournamentFormat.MATCHES);
     expect(basketball.scoringDefinitions).toEqual(['KNOCKOUT_ROUND_POINTS']);
-    expect(sportPlaysMatches(Sport.BASKETBALL)).toBe(true);
   });
 
   it('gives a new tournament six rounds', () => {
@@ -249,7 +227,6 @@ describe('American football', () => {
   it('is a team sport played as a knockout bracket, scored by knockout round points', () => {
     expect(americanFootball.name).toBe('Football');
     expect(americanFootball.scoringDefinitions).toEqual(['KNOCKOUT_ROUND_POINTS']);
-    expect(sportPlaysMatches(Sport.FOOTBALL)).toBe(true);
   });
 
   it('gives new playoffs four rounds', () => {
@@ -280,7 +257,6 @@ describe('hockey', () => {
   it('is a team sport played as a knockout bracket, scored by knockout round points', () => {
     expect(hockey.name).toBe('Hockey');
     expect(hockey.scoringDefinitions).toEqual(['KNOCKOUT_ROUND_POINTS']);
-    expect(sportPlaysMatches(Sport.HOCKEY)).toBe(true);
   });
 
   it('gives new playoffs four rounds, for a 16-team bracket', () => {
@@ -306,7 +282,6 @@ describe('baseball', () => {
   it('is a team sport played as a knockout bracket, scored by knockout round points', () => {
     expect(baseball.name).toBe('Baseball');
     expect(baseball.scoringDefinitions).toEqual(['KNOCKOUT_ROUND_POINTS']);
-    expect(sportPlaysMatches(Sport.BASEBALL)).toBe(true);
   });
 
   it('gives a new postseason four rounds, for a 12-team bracket', () => {
@@ -330,7 +305,6 @@ describe('soccer', () => {
   it('is a team sport played as a knockout bracket, scored by knockout round points', () => {
     expect(soccer.name).toBe('Soccer');
     expect(soccer.scoringDefinitions).toEqual(['KNOCKOUT_ROUND_POINTS']);
-    expect(sportPlaysMatches(Sport.SOCCER)).toBe(true);
   });
 
   it('labels a shoot-out pens, and calls overtime extra time', () => {
@@ -365,7 +339,6 @@ describe('tennis', () => {
     expect(tennis.name).toBe('Tennis');
     expect(tennis.scoringDefinitions).toEqual(['KNOCKOUT_ROUND_POINTS']);
     expect(sportVocabulary(tennis).shootout).toBeUndefined();
-    expect(sportPlaysMatches(Sport.TENNIS)).toBe(true);
   });
 
   it('gives a new draw seven rounds', () => {
@@ -388,12 +361,3 @@ describe('tennis', () => {
     expect(sportVocabulary(tennis).eventStart).toBe('first match');
   });
 });
-
-describe('sportPlaysMatches', () => {
-  it('is true only for a sport whose tournament format is a knockout bracket', () => {
-    for (const definition of definitions) {
-      expect(sportPlaysMatches(definition.sport)).toBe(definition.tournamentFormat === TournamentFormat.MATCHES);
-    }
-  });
-});
-

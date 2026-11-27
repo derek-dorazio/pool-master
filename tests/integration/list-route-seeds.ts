@@ -68,7 +68,7 @@ export async function seedEventWithField(golfers: number, { startsInDays = 30, s
   const suffix = randomUUID().slice(0, 8);
   const sport = await prisma.sport.upsert({
     where: { sport: Sport.GOLF },
-    create: { sport: Sport.GOLF, ...sportRowKeys(Sport.GOLF), tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+    create: { sport: Sport.GOLF, ...sportRowKeys(Sport.GOLF) },
     update: {},
   });
   const startDate = new Date(Date.now() + startsInDays * DAY);
@@ -122,7 +122,7 @@ export async function seedFootballWeek({ games, startDate, status, played = 0 }:
   // The integration cleanup empties sport leagues no template names, so the football rows are set up here.
   const sport = await prisma.sport.upsert({
     where: { sport: Sport.FOOTBALL },
-    create: { sport: Sport.FOOTBALL, ...sportRowKeys(Sport.FOOTBALL), tournamentFormat: 'MATCHES' },
+    create: { sport: Sport.FOOTBALL, ...sportRowKeys(Sport.FOOTBALL) },
     update: {},
   });
   const sportLeague = await prisma.sportLeague.upsert({

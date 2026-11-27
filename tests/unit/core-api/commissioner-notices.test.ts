@@ -8,6 +8,7 @@ import {
   ContestStatus,
   EventEmailDelivery,
   LeagueRole,
+  MatchFormat,
   SelectionType,
   SlotKind,
   Sport,
@@ -135,7 +136,7 @@ describe('CommissionerNotices', () => {
   /** An event in its own tournament slot, a definition per name: last year's edition of a name shares it (#2010). */
   function event(overrides: Partial<SportEvent> & { startDate: Date }): SportEvent {
     return world.addSportEvent({
-      slotDefinitions: [{ id: slotOf(overrides.name ?? 'Open'), slotKind: SlotKind.TOURNAMENT, canEndTied: false, periods: null }],
+      slotDefinitions: [{ id: slotOf(overrides.name ?? 'Open'), slotKind: SlotKind.TOURNAMENT, canEndTied: false, periods: null, matchFormat: MatchFormat.FIELD }],
       sportLeagueId: 'pga-tour',
       sportLeagueSeasonId: 'season-2026',
       championshipYear: 2026,
@@ -249,7 +250,7 @@ describe('CommissionerNotices', () => {
         name,
         sport: Sport.FOOTBALL,
         rounds: 1,
-        slotDefinitions: [{ id: slotOf(name), slotKind: SlotKind.WEEK, canEndTied: false, periods: null }],
+        slotDefinitions: [{ id: slotOf(name), slotKind: SlotKind.WEEK, canEndTied: false, periods: null, matchFormat: MatchFormat.HEAD_TO_HEAD }],
         sportLeagueId: 'nfl',
         sportLeagueSeasonId: 'season-2026',
         championshipYear: 2026,
@@ -527,7 +528,7 @@ describe('CommissionerNotices', () => {
         name,
         sport: Sport.FOOTBALL,
         rounds: 1,
-        slotDefinitions: [{ id: slotOf(name), slotKind: SlotKind.WEEK, canEndTied: false, periods: null }],
+        slotDefinitions: [{ id: slotOf(name), slotKind: SlotKind.WEEK, canEndTied: false, periods: null, matchFormat: MatchFormat.HEAD_TO_HEAD }],
         sportLeagueId: 'nfl',
         sportLeagueSeasonId: 'season-2026',
         championshipYear: 2026,

@@ -99,7 +99,7 @@ export function buildSportEvent(overrides: Partial<SportEventDto> = {}): SportEv
     roundsParMin: 60,
     roundsParMax: 80,
     participantCount: 89,
-    pricing: { platformPricingProfileId: '00000000-0000-4000-8000-0000000000b2', profileName: 'Standard', salaryCap: 50000, unit: 100, topSharePercent: 24, floorSharePercent: 12, steepness: 4 },
+    pricing: { platformPricingProfileId: '00000000-0000-4000-8000-0000000000b2', salaryCap: 50000, unit: 100, topSharePercent: 24, floorSharePercent: 12, steepness: 4 },
     tierLayout: null,
     readinessStatus: 'CONTEST_ELIGIBLE',
     readinessReasons: [],
@@ -111,6 +111,7 @@ export function buildSportEvent(overrides: Partial<SportEventDto> = {}): SportEv
     sportLeagueId: '00000000-0000-4000-8000-000000000002',
     ...sportPlay(overrides.sport ?? 'GOLF'),
     // The API answers it from the sport's definition; a test of a shoot-out sets it.
+    playsMatches: false,
     isTestData: true,
     slots: [],
     autoLifecycleEnabled: true,

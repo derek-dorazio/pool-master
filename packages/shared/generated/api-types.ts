@@ -2370,7 +2370,7 @@ export interface paths {
         put?: never;
         /**
          * Price a sport event's seeded field
-         * @description Prices the active field on the budget curve with the values sent, in the order of the league's pricing profile's sources, and stores the values as the event's pricing. Repeatable until release. Returns the field with its new valuations. Root admin only. 409 SPORT_EVENT_TIERS_LOCKED once the event is released: its tiers and prices are locked. 422 PRICING_CONFIG_INVALID when the floor share is above the top share or the rounding unit is above the worst golfer's price (salaryCap × floorSharePercent / 100), which could round prices to $0. 409 FIELD_HAS_NO_ORDER when no active participant has a value for any source the league's pricing profile lists: a field is never ordered by name.
+         * @description Prices the active field on the budget curve with the values sent, in the order of the league's pricing profile's sources, and stores the values as the event's pricing, with the profile they started from by id. Repeatable until release. Returns the field with its new valuations. Root admin only. 409 SPORT_EVENT_TIERS_LOCKED once the event is released: its tiers and prices are locked. 422 PRICING_CONFIG_INVALID when the floor share is above the top share or the rounding unit is above the worst golfer's price (salaryCap × floorSharePercent / 100), which could round prices to $0. 409 FIELD_HAS_NO_ORDER when no active participant has a value for any source the league's pricing profile lists: a field is never ordered by name. 404 PLATFORM_PRICING_PROFILE_NOT_FOUND when no pricing profile has the id sent.
          */
         post: operations["autoAssignEventPrices"];
         delete?: never;
@@ -10559,11 +10559,6 @@ export interface components {
             /** @description Where the sport sits wherever sports are listed together, lower first: the most popular first. Display only, never an identity. */
             displayOrder: number;
             /**
-             * @description Structural format of the sport's events; decides which contest formats are valid.
-             * @enum {string}
-             */
-            tournamentFormat: "STROKE_PLAY_TOURNAMENT" | "RACE" | "MATCHES";
-            /**
              * Format: date-time
              * @description ISO 8601 datetime string.
              */
@@ -10592,11 +10587,6 @@ export interface components {
                 urlSegment: string;
                 /** @description Where the sport sits wherever sports are listed together, lower first: the most popular first. Display only, never an identity. */
                 displayOrder: number;
-                /**
-                 * @description Structural format of the sport's events; decides which contest formats are valid.
-                 * @enum {string}
-                 */
-                tournamentFormat: "STROKE_PLAY_TOURNAMENT" | "RACE" | "MATCHES";
                 /**
                  * Format: date-time
                  * @description ISO 8601 datetime string.
@@ -13550,8 +13540,6 @@ export interface components {
                  * @description The pricing profile the values started from. The admin may have changed any value before assigning.
                  */
                 platformPricingProfileId: string;
-                /** @description The name of the pricing profile the values started from, a label only. */
-                profileName: string;
             } | null;
             /** @description The tier layout the event's first slot's set was last auto-tiered with (#2044): its tier profile's, with any tier size an admin sent instead. Null until the set is first auto-tiered. Hand placements do not change it. */
             tierLayout: ({
@@ -13573,8 +13561,6 @@ export interface components {
                  * @description The tier profile the layout came from: the sport league's when the set was tiered.
                  */
                 platformTierProfileId: string;
-                /** @description That profile's name, a label only. */
-                profileName: string;
             } | null) | ({
                 /** @enum {string} */
                 type: "RANGES";
@@ -13592,8 +13578,6 @@ export interface components {
                  * @description The tier profile the layout came from: the sport league's when the set was tiered.
                  */
                 platformTierProfileId: string;
-                /** @description That profile's name, a label only. */
-                profileName: string;
             } | null);
             /**
              * @description Contest-setup readiness right now.
@@ -13643,6 +13627,8 @@ export interface components {
              * @enum {string}
              */
             scoringFamily: "STROKE_PLAY" | "FINISH_POSITION" | "HEAD_TO_HEAD";
+            /** @description Whether the event is played as games between two sides (#2008): one of its slots is HEAD_TO_HEAD. A golf tournament or a race, whose slots are FIELD, plays none. Its matches, bracket and seed locks apply only where true. */
+            playsMatches: boolean;
             /** @description Whether it is a test event, made by hand on a test slot (QA only). A league is synced or off, so every other event is one its sync keeps: the provider wins over an edit to its name and venue, so they are shown read-only. (Admin-only: operational detail no member surface reads.) */
             isTestData: boolean;
             /** @description The Season slots the event covers, in play order: one for most events, one per round for a bracket. An event with slots takes its dates from them. Empty while the sync has not matched its slots yet. */
@@ -13908,8 +13894,6 @@ export interface components {
                      * @description The pricing profile the values started from. The admin may have changed any value before assigning.
                      */
                     platformPricingProfileId: string;
-                    /** @description The name of the pricing profile the values started from, a label only. */
-                    profileName: string;
                 } | null;
                 /** @description The tier layout the event's first slot's set was last auto-tiered with (#2044): its tier profile's, with any tier size an admin sent instead. Null until the set is first auto-tiered. Hand placements do not change it. */
                 tierLayout: ({
@@ -13931,8 +13915,6 @@ export interface components {
                      * @description The tier profile the layout came from: the sport league's when the set was tiered.
                      */
                     platformTierProfileId: string;
-                    /** @description That profile's name, a label only. */
-                    profileName: string;
                 } | null) | ({
                     /** @enum {string} */
                     type: "RANGES";
@@ -13950,8 +13932,6 @@ export interface components {
                      * @description The tier profile the layout came from: the sport league's when the set was tiered.
                      */
                     platformTierProfileId: string;
-                    /** @description That profile's name, a label only. */
-                    profileName: string;
                 } | null);
                 /**
                  * @description Contest-setup readiness right now.
@@ -14001,6 +13981,8 @@ export interface components {
                  * @enum {string}
                  */
                 scoringFamily: "STROKE_PLAY" | "FINISH_POSITION" | "HEAD_TO_HEAD";
+                /** @description Whether the event is played as games between two sides (#2008): one of its slots is HEAD_TO_HEAD. A golf tournament or a race, whose slots are FIELD, plays none. Its matches, bracket and seed locks apply only where true. */
+                playsMatches: boolean;
                 /** @description Whether it is a test event, made by hand on a test slot (QA only). A league is synced or off, so every other event is one its sync keeps: the provider wins over an edit to its name and venue, so they are shown read-only. (Admin-only: operational detail no member surface reads.) */
                 isTestData: boolean;
                 /** @description The Season slots the event covers, in play order: one for most events, one per round for a bracket. An event with slots takes its dates from them. Empty while the sync has not matched its slots yet. */
@@ -14245,8 +14227,6 @@ export interface components {
                      * @description The pricing profile the values started from. The admin may have changed any value before assigning.
                      */
                     platformPricingProfileId: string;
-                    /** @description The name of the pricing profile the values started from, a label only. */
-                    profileName: string;
                 } | null;
                 /** @description The tier layout the event's first slot's set was last auto-tiered with (#2044): its tier profile's, with any tier size an admin sent instead. Null until the set is first auto-tiered. Hand placements do not change it. */
                 tierLayout: ({
@@ -14268,8 +14248,6 @@ export interface components {
                      * @description The tier profile the layout came from: the sport league's when the set was tiered.
                      */
                     platformTierProfileId: string;
-                    /** @description That profile's name, a label only. */
-                    profileName: string;
                 } | null) | ({
                     /** @enum {string} */
                     type: "RANGES";
@@ -14287,8 +14265,6 @@ export interface components {
                      * @description The tier profile the layout came from: the sport league's when the set was tiered.
                      */
                     platformTierProfileId: string;
-                    /** @description That profile's name, a label only. */
-                    profileName: string;
                 } | null);
                 /**
                  * @description Contest-setup readiness right now.
@@ -14338,6 +14314,8 @@ export interface components {
                  * @enum {string}
                  */
                 scoringFamily: "STROKE_PLAY" | "FINISH_POSITION" | "HEAD_TO_HEAD";
+                /** @description Whether the event is played as games between two sides (#2008): one of its slots is HEAD_TO_HEAD. A golf tournament or a race, whose slots are FIELD, plays none. Its matches, bracket and seed locks apply only where true. */
+                playsMatches: boolean;
                 /** @description Whether it is a test event, made by hand on a test slot (QA only). A league is synced or off, so every other event is one its sync keeps: the provider wins over an edit to its name and venue, so they are shown read-only. (Admin-only: operational detail no member surface reads.) */
                 isTestData: boolean;
                 /** @description The Season slots the event covers, in play order: one for most events, one per round for a bracket. An event with slots takes its dates from them. Empty while the sync has not matched its slots yet. */
@@ -14810,8 +14788,8 @@ export interface components {
                 tierOrderIndex: number;
             }[];
         };
-        /** @description The values an event slot's set was priced with for budget contests, and the profile they started from (#2044). */
-        SlotPricingDto: {
+        /** @description The values an event slot's set was priced with for budget contests, and the profile they started from. */
+        SlotPricing: {
             /** @description Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event. */
             salaryCap: number;
             /** @description Whole dollars. Every price is rounded to a multiple of it. At most the worst golfer's price. */
@@ -14827,8 +14805,6 @@ export interface components {
              * @description The pricing profile the values started from. The admin may have changed any value before assigning.
              */
             platformPricingProfileId: string;
-            /** @description The name of the pricing profile the values started from, a label only. */
-            profileName: string;
         };
         /** @description The tier layout an event slot's set was last auto-tiered with: its tier profile's, with any tier size an admin sent instead. */
         SlotTierLayout: {
@@ -14850,8 +14826,6 @@ export interface components {
              * @description The tier profile the layout came from: the sport league's when the set was tiered.
              */
             platformTierProfileId: string;
-            /** @description That profile's name, a label only. */
-            profileName: string;
         } | {
             /** @enum {string} */
             type: "RANGES";
@@ -14869,8 +14843,6 @@ export interface components {
              * @description The tier profile the layout came from: the sport league's when the set was tiered.
              */
             platformTierProfileId: string;
-            /** @description That profile's name, a label only. */
-            profileName: string;
         };
         /** @description Prices the active field on the budget curve with these values, best seed first and golfers with no seed last, and records them on the event's first slot as its pricing (#2044). The values usually come from a Budget pricing profile, possibly changed; platformPricingProfileId names that profile (404 PLATFORM_PRICING_PROFILE_NOT_FOUND for none). */
         AutoAssignSportEventPricesRequest: {

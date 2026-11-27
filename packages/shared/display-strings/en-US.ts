@@ -131,11 +131,6 @@ export const enUS = {
       PREDICTION: 'Prediction',
       SQUARES: 'Squares',
     },
-    TournamentFormat: {
-      STROKE_PLAY_TOURNAMENT: 'Stroke play tournament',
-      RACE: 'Race',
-      MATCHES: 'Matches',
-    },
     MatchStatus: {
       SCHEDULED: 'Scheduled',
       IN_PROGRESS: 'In progress',
@@ -1421,6 +1416,8 @@ export const enUS = {
     stageDone: 'done',
     stageCurrent: 'current stage',
     stageUpcoming: 'to come',
+    // The price dialog, when no pricing profile is chosen for the values to start from (#2205).
+    choosePricingProfile: 'Choose the pricing profile the values start from.',
   },
   // What each sport's audience calls things, by role (`SportWordRole`); a role a sport leaves
   // out reads the generic `word.<role>`. Proper names (Super Bowl, PGA Tour) are model columns.

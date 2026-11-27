@@ -63,10 +63,12 @@ describe('Synced field valuation (#1822)', () => {
     const { event, ref } = await syncedEvent(4);
     const service = valuationService();
 
+    const { platformPricingProfileId } = await getPrisma().sportLeague.findUniqueOrThrow({ where: { id: event.sportLeagueId }, select: { platformPricingProfileId: true } });
+
     expect(await service.afterFieldLoad(ref)).toMatchObject({
       outcome: 'VALUED',
       tiers: { result: 'MADE', basis: 'ODDS', tierCount: 2 },
-      prices: { result: 'MADE', basis: 'ODDS', pricedCount: 4, profileName: 'Standard' },
+      prices: { result: 'MADE', basis: 'ODDS', pricedCount: 4, platformPricingProfileId },
     });
     const made = await valuationsOf(event.id);
     expect(made).toHaveLength(4);

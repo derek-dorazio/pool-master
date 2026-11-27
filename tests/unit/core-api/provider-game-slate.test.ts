@@ -1,3 +1,4 @@
+import { sportEventSlots } from '../../support/sport-play';
 import { expectDefined } from '../../support/expect-defined';
 import { withHomeAway, homeAwayOf } from '../../support/match-sides';
 import { testDomainEvents } from '../../support/domain-events';
@@ -265,9 +266,9 @@ describe('ProviderGameSlateService', () => {
     expect(await matchesNow()).toEqual([]);
   });
 
-  it('touches nothing for an event whose sport league plays no matches', async () => {
-    const { service, event, store } = setup();
-    await store.sportEventRepo().update(event.id, { sport: Sport.GOLF } as never);
+  it('touches nothing for an event whose slots are all FIELD, so it plays no matches', async () => {
+    const { service, event } = setup();
+    event.slotDefinitions = sportEventSlots(Sport.GOLF);
 
     await expect(service.syncGames({ providerId: PROVIDER, externalId: WEEK_EVENT, games: WEEK }))
       .resolves.toEqual({ outcome: 'SKIPPED', reason: 'PLAYS_NO_GAMES' });

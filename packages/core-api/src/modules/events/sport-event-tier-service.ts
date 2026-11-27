@@ -98,7 +98,7 @@ export type SyncedTiers =
 
 /** What a field sync's pricing did (#1822): made or found already made, or kept as an admin edited them. */
 export type SyncedPrices =
-  | { result: 'MADE' | 'UNCHANGED'; basis: FieldOrderBasis; pricedCount: number; profileName: string }
+  | { result: 'MADE' | 'UNCHANGED'; basis: FieldOrderBasis; pricedCount: number; platformPricingProfileId: string }
   | { result: 'KEPT_AS_EDITED'; unpriced: number };
 
 /** What tiering and pricing a synced field did, or why it did neither. */
@@ -334,7 +334,7 @@ export class SportEventTierService {
         sportEventId: event.id,
         sportEventSlotId: slot.id,
         source,
-        profileName: profile.name,
+        platformTierProfileId: profile.id,
         tierSize: profile.type === TierProfileType.EQUAL_GROUPS && spread !== 'EVEN' ? tierSize ?? profile.tierSize : null,
         spread,
         tierCount: tiers.length,
@@ -466,7 +466,7 @@ export class SportEventTierService {
     await this.deps.valuations.assignSlotPrices({ slot, pricing, assignments });
 
     this.deps.logger?.info(
-      { sportEventId, sportEventSlotId: slot.id, source, profileName: startedFrom.name, salaryCap: pricing.salaryCap, pricedCount: assignments.length },
+      { sportEventId, sportEventSlotId: slot.id, source, platformPricingProfileId: pricing.platformPricingProfileId, salaryCap: pricing.salaryCap, pricedCount: assignments.length },
       'Auto-assigned prices',
     );
     return this.getEffectiveValuationsForSportEvent(sportEventId);
@@ -503,7 +503,7 @@ export class SportEventTierService {
       this.requirePlatformTierProfile(event),
       this.requirePlatformPricingProfile(event),
     ]);
-    const pricing = slot.pricing ?? { ...slotPricingOf(platformPricingProfile), profileName: platformPricingProfile.name };
+    const pricing = slot.pricing ?? slotPricingOf(platformPricingProfile);
     // Checked before anything is written, so a bad profile never leaves tiers made and prices not.
     const problem = findBudgetPricingProblem(pricing);
     if (problem) {
@@ -554,7 +554,7 @@ export class SportEventTierService {
         return current?.price === assignment.price && current.priceAssignedSource === assignment.source;
       });
       if (!unchanged) await this.deps.valuations.assignSlotPrices({ slot, pricing, assignments });
-      pricesResult = { result: unchanged ? 'UNCHANGED' : 'MADE', basis: priceOrder.basis, pricedCount: assignments.length, profileName: pricing.profileName };
+      pricesResult = { result: unchanged ? 'UNCHANGED' : 'MADE', basis: priceOrder.basis, pricedCount: assignments.length, platformPricingProfileId: pricing.platformPricingProfileId };
     }
 
     this.deps.logger?.info(

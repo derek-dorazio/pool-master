@@ -107,9 +107,6 @@ export const SportEventProviderMappingDtoSchema = z.object({
 }).describe(`The provider's id for an event, written by the events sync when it created the event from the provider's schedule. ${ADMIN_ONLY}`);
 export type SportEventProviderMappingDto = z.infer<typeof SportEventProviderMappingDtoSchema>;
 
-const SlotPricingDtoSchema = SlotPricingSchema.extend({
-  profileName: z.string().describe('The name of the pricing profile the values started from, a label only.'),
-}).describe('The values an event slot\'s set was priced with for budget contests, and the profile they started from (#2044).');
 
 export const SportEventDtoSchema = z.object({
   id: z.uuid().describe('Sport-event identifier.'),
@@ -128,7 +125,7 @@ export const SportEventDtoSchema = z.object({
   roundsParMin: z.number().int().describe('The lowest par per round an update takes; a lower one is refused with 400.'),
   roundsParMax: z.number().int().describe('The highest par per round an update takes; a higher one is refused with 400.'),
   participantCount: z.number().int().describe('The event\'s field size: the teams or players on its field, counted on each read. 0 until the field loads.'),
-  pricing: SlotPricingDtoSchema.nullable().describe('The values the event\'s first slot\'s set was last priced with for budget contests (#2044), or null until it is priced. Locked at release; its salaryCap is the cap of every budget contest on the event.'),
+  pricing: SlotPricingSchema.nullable().describe('The values the event\'s first slot\'s set was last priced with for budget contests (#2044), or null until it is priced. Locked at release; its salaryCap is the cap of every budget contest on the event.'),
   tierLayout: SlotTierLayoutSchema.nullable().describe('The tier layout the event\'s first slot\'s set was last auto-tiered with (#2044): its tier profile\'s, with any tier size an admin sent instead. Null until the set is first auto-tiered. Hand placements do not change it.'),
   readinessStatus: EventReadinessStatusDtoSchema.describe('Contest-setup readiness right now.'),
   readinessReasons: z.array(EventReadinessReasonDtoSchema).describe('Why the event is or is not contest-eligible right now: not released yet (DRAFT), no field loaded, or already started.'),
@@ -141,6 +138,7 @@ export const SportEventDtoSchema = z.object({
   sportLeagueId: z.uuid().describe('The sport league the event belongs to; its Season is the same league\'s.'),
   participantType: z.enum(ParticipantType).describe('Who competes: teams or individuals. Read through the sport league.'),
   scoringFamily: z.enum(ScoringFamily).describe('How the event is scored. Read through the sport league.'),
+  playsMatches: z.boolean().describe('Whether the event is played as games between two sides (#2008): one of its slots is HEAD_TO_HEAD. A golf tournament or a race, whose slots are FIELD, plays none. Its matches, bracket and seed locks apply only where true.'),
   isTestData: z.boolean().describe(`Whether it is a test event, made by hand on a test slot (QA only). A league is synced or off, so every other event is one its sync keeps: the provider wins over an edit to its name and venue, so they are shown read-only. ${ADMIN_ONLY}`),
   slots: z.array(SportLeagueSeasonSlotDtoSchema).describe('The Season slots the event covers, in play order: one for most events, one per round for a bracket. An event with slots takes its dates from them. Empty while the sync has not matched its slots yet.'),
   autoLifecycleEnabled: z.boolean().describe(`Whether the lifecycle scheduler may move this event's status. ${ADMIN_ONLY}`),
@@ -513,7 +511,7 @@ registerSchema('SportEventTierListResponse', SportEventTierListResponseSchema);
 registerSchema('ReplaceSportEventTiersRequest', ReplaceSportEventTiersRequestSchema);
 registerSchema('AutoAssignSportEventTiersRequest', AutoAssignSportEventTiersRequestSchema);
 registerSchema('ReplaceSportEventTierAssignmentsRequest', ReplaceSportEventTierAssignmentsRequestSchema);
-registerSchema('SlotPricingDto', SlotPricingDtoSchema);
+registerSchema('SlotPricing', SlotPricingSchema);
 registerSchema('SlotTierLayout', SlotTierLayoutSchema);
 registerSchema('AutoAssignSportEventPricesRequest', AutoAssignSportEventPricesRequestSchema);
 registerSchema('SportEventParticipantValuationDto', SportEventParticipantValuationDtoSchema);

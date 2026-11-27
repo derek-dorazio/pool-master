@@ -64,7 +64,6 @@ import type {
   ScoringFamily,
   SportEventStatus,
   TieredContestRules,
-  TournamentFormat,
   Sport,
   CupWeight,
   OneEventSelectionType,
@@ -79,7 +78,7 @@ import {
   sportAllowsSelectionType,
   getTieredRosterSize,
   contestFormatForSelectionType,
-  isContestFormatValidForTournamentFormat,
+  isContestFormatValidForEvent,
   isSquaresRound,
   UpsetBonusRule,
   PlanCap,
@@ -106,7 +105,8 @@ export interface ContestCreateSportEventState {
   sportLeagueId: string;
   /** Its Season's championship year (#2003): a majors pool's events share one (#714). */
   championshipYear: number;
-  tournamentFormat: TournamentFormat;
+  /** Whether the event plays matches (`eventPlaysMatches`): a field-only event takes roster contests only. */
+  playsMatches: boolean;
   participantCount: number;
   /** The event's round count, which a knockout round-points table must match (#699); null when unset. */
   rounds: number | null;
@@ -262,17 +262,14 @@ export class ContestManagementService {
       );
     }
     if (
-      !isContestFormatValidForTournamentFormat(
-        sportEvent.tournamentFormat,
-        input.contestFormat,
-      )
+      !isContestFormatValidForEvent(sportEvent.playsMatches, input.contestFormat)
       // A selection type plays one contest format (#716): pick'em is a prediction contest.
       || contestFormatForSelectionType(input.selectionType) !== input.contestFormat
     ) {
       this.logger.warn({
         sportEventId: sportEvent.id,
         sport: sportEvent.sport,
-        tournamentFormat: sportEvent.tournamentFormat,
+        playsMatches: sportEvent.playsMatches,
         contestFormat: input.contestFormat,
       }, 'contest management create contest rejected for invalid sport contest format');
       throw new ContestManagementError(

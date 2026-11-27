@@ -57,7 +57,7 @@ export function sportEventFixture(overrides: Partial<SportEventDto> = {}): Sport
     roundsParMin: 60,
     roundsParMax: 80,
     participantCount: 0,
-    pricing: { platformPricingProfileId: STANDARD_PLATFORM_PRICING_PROFILE_ID, profileName: 'Standard', salaryCap: 50000, unit: 100, topSharePercent: 24, floorSharePercent: 12, steepness: 4 },
+    pricing: { platformPricingProfileId: STANDARD_PLATFORM_PRICING_PROFILE_ID, salaryCap: 50000, unit: 100, topSharePercent: 24, floorSharePercent: 12, steepness: 4 },
     tierLayout: null,
     readinessStatus: 'NOT_RELEASED',
     readinessReasons: ['EVENT_NOT_RELEASED', 'FIELD_NOT_LOADED'],
@@ -74,6 +74,7 @@ export function sportEventFixture(overrides: Partial<SportEventDto> = {}): Sport
     sportLeagueId: 'league-1',
     ...sportPlay(overrides.sport ?? 'GOLF'),
     // The API answers it from the sport's definition; a test of a shoot-out sets it.
+    playsMatches: false,
     // A test event: one made on a test slot (#2004).
     isTestData: true,
     slots: [seasonSlotFixture()],
@@ -267,7 +268,6 @@ export const GOLF_SPORT_FIXTURE: SportDto = {
   sport: 'GOLF',
   urlSegment: 'golf',
   displayOrder: 5,
-  tournamentFormat: 'STROKE_PLAY_TOURNAMENT',
   createdAt: '2026-01-01T00:00:00.000Z',
   updatedAt: '2026-01-01T00:00:00.000Z',
 };
@@ -310,25 +310,24 @@ export function planGroupFixture(): Extract<SettingsGroup, { key: 'PLAN_CONFIG' 
 
 /** Every sport as `listSports` answers, in display order, each with its stored URL segment. */
 export const SPORTS_FIXTURE: SportDto[] = ([
-  ['FOOTBALL', 'football', 'TEAM', 'MATCHES'],
-  ['BASKETBALL', 'basketball', 'TEAM', 'MATCHES'],
-  ['BASEBALL', 'baseball', 'TEAM', 'MATCHES'],
-  ['HOCKEY', 'hockey', 'TEAM', 'MATCHES'],
-  ['SOCCER', 'soccer', 'TEAM', 'MATCHES'],
-  ['GOLF', 'golf', 'INDIVIDUAL', 'STROKE_PLAY_TOURNAMENT'],
-  ['AUTO_RACING', 'auto-racing', 'INDIVIDUAL', 'RACE'],
-  ['TENNIS', 'tennis', 'INDIVIDUAL', 'MATCHES'],
-  ['HORSE_RACING', 'horse-racing', 'INDIVIDUAL', 'RACE'],
-  ['CYCLING', 'cycling', 'INDIVIDUAL', 'RACE'],
-  ['RUNNING', 'running', 'INDIVIDUAL', 'RACE'],
-] as const).map(([sport, urlSegment, participantType, tournamentFormat], displayOrder) => ({
+  ['FOOTBALL', 'football', 'TEAM'],
+  ['BASKETBALL', 'basketball', 'TEAM'],
+  ['BASEBALL', 'baseball', 'TEAM'],
+  ['HOCKEY', 'hockey', 'TEAM'],
+  ['SOCCER', 'soccer', 'TEAM'],
+  ['GOLF', 'golf', 'INDIVIDUAL'],
+  ['AUTO_RACING', 'auto-racing', 'INDIVIDUAL'],
+  ['TENNIS', 'tennis', 'INDIVIDUAL'],
+  ['HORSE_RACING', 'horse-racing', 'INDIVIDUAL'],
+  ['CYCLING', 'cycling', 'INDIVIDUAL'],
+  ['RUNNING', 'running', 'INDIVIDUAL'],
+] as const).map(([sport, urlSegment, participantType], displayOrder) => ({
   ...GOLF_SPORT_FIXTURE,
   id: `sport-${urlSegment}`,
   sport,
   urlSegment,
   displayOrder,
   participantType,
-  tournamentFormat,
 }));
 
 /**

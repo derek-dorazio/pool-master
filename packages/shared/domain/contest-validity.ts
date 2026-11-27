@@ -1,5 +1,4 @@
-import { ContestFormat, MatchFormat, ParticipantType, SelectionType, type Sport, TournamentFormat } from './enums';
-import { getSportDefinition } from './sports/registry';
+import { ContestFormat, MatchFormat, ParticipantType, SelectionType } from './enums';
 import { ScoringFamily } from './sports/scoring-family';
 
 /**
@@ -8,9 +7,9 @@ import { ScoringFamily } from './sports/scoring-family';
  * individuals (tennis). A sport league's scoring family is checked against the match format of
  * each of its slot definitions, the model home of how its games are played. Every sport league is
  * added by a migration, so the reference-data test that checks each seeded league against this
- * table is its one reader; a league that no row admits fails that test.
+ * table is its check; a league that no row admits fails that test. The test-data loader reads it
+ * too, to know whether a data file's league plays matches (#2008).
  */
-// poolmaster-allow-test-export: sport leagues are written only by migrations, so the reference-data test that checks every seeded league is the table's reader
 export const LEAGUE_PLAY_BY_SCORING_FAMILY = {
   [ScoringFamily.STROKE_PLAY]: { matchFormats: [MatchFormat.FIELD], participantTypes: [ParticipantType.INDIVIDUAL] },
   [ScoringFamily.FINISH_POSITION]: { matchFormats: [MatchFormat.FIELD], participantTypes: [ParticipantType.INDIVIDUAL] },
@@ -25,11 +24,19 @@ export function isLeaguePlayValid(scoringFamily: ScoringFamily, participantType:
     && (play.participantTypes as readonly ParticipantType[]).includes(participantType);
 }
 
-export const VALID_CONTEST_FORMATS_BY_TOURNAMENT_FORMAT = {
-  [TournamentFormat.STROKE_PLAY_TOURNAMENT]: [ContestFormat.ROSTER],
-  [TournamentFormat.RACE]: [ContestFormat.ROSTER],
-  [TournamentFormat.MATCHES]: [ContestFormat.ROSTER, ContestFormat.PREDICTION, ContestFormat.SQUARES],
-} as const satisfies Record<TournamentFormat, readonly ContestFormat[]>;
+/**
+ * The contest formats an event's games allow, by whether it plays matches (#2008): a field is
+ * picked from, while games between two sides can also be predicted or played as squares.
+ */
+const VALID_CONTEST_FORMATS = {
+  playsMatches: [ContestFormat.ROSTER, ContestFormat.PREDICTION, ContestFormat.SQUARES],
+  fieldOnly: [ContestFormat.ROSTER],
+} as const satisfies Record<string, readonly ContestFormat[]>;
+
+/** Whether a contest of this format can be played on an event, by whether the event plays matches (`eventPlaysMatches`). */
+export function isContestFormatValidForEvent(playsMatches: boolean, contestFormat: ContestFormat): boolean {
+  return (VALID_CONTEST_FORMATS[playsMatches ? 'playsMatches' : 'fieldOnly'] as readonly ContestFormat[]).includes(contestFormat);
+}
 
 /**
  * The contest format each selection type plays (#716): a roster type picks field members, a
@@ -66,36 +73,4 @@ export function isPredictionSelectionType(selectionType: SelectionType): selecti
 /** Whether the selection type picks a lineup from the field: neither a prediction type nor squares. */
 export function isRosterSelectionType(selectionType: SelectionType): selectionType is RosterSelectionType {
   return contestFormatForSelectionType(selectionType) === ContestFormat.ROSTER;
-}
-
-export function getValidContestFormatsForTournamentFormat(
-  tournamentFormat: TournamentFormat,
-): readonly ContestFormat[] {
-  return VALID_CONTEST_FORMATS_BY_TOURNAMENT_FORMAT[tournamentFormat];
-}
-
-export function isContestFormatValidForTournamentFormat(
-  tournamentFormat: TournamentFormat,
-  contestFormat: ContestFormat,
-): boolean {
-  return getValidContestFormatsForTournamentFormat(tournamentFormat)
-    .includes(contestFormat);
-}
-
-/**
- * The tournament format a sport's events get, from its sport definition. A bridge for APIs and
- * screens that only know the sport, while the persisted `Sport.tournamentFormat` is the authority.
- */
-export function getDefaultTournamentFormatForSport(sport: Sport): TournamentFormat {
-  return getSportDefinition(sport).tournamentFormat;
-}
-
-export function isContestFormatValidForSport(
-  sport: Sport,
-  contestFormat: ContestFormat,
-): boolean {
-  return isContestFormatValidForTournamentFormat(
-    getDefaultTournamentFormatForSport(sport),
-    contestFormat,
-  );
 }

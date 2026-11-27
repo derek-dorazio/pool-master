@@ -192,8 +192,8 @@ export interface SportEventTierSlot {
   isFirstSlot: boolean;
   /** The layout the set was last auto-tiered with; null until it first is. */
   tierLayout: SlotTierLayout | null;
-  /** The values the set was last priced with, and its profile's name; null until it is priced. */
-  pricing: (SlotPricing & { profileName: string }) | null;
+  /** The values the set was last priced with, and the profile they started from; null until it is priced. */
+  pricing: SlotPricing | null;
 }
 
 // --- Golf extension rows (#236) ---------------------------------------------
@@ -314,6 +314,12 @@ export interface SportEventRoundMatchGame extends DomainEntity {
   scheduledDate: Date | null;
   /** Neither side plays at home (#2047); its side results then say NONE for home or away. */
   isNeutralSite: boolean;
+  /**
+   * Where the game is played (#2047), its arena and city: a series moves between both sides'
+   * homes, so each Game has its own. Null until a feed sends one; a golf course stays on its event.
+   */
+  venue: string | null;
+  location: string | null;
   status: MatchStatus;
   /** When the game was last written COMPLETED; null for any other status. */
   completedAt: Date | null;

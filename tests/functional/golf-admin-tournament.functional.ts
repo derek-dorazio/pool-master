@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { deleteTestSportLeagues } from '../support/test-slots';
 import {
   addEventParticipants,
@@ -32,6 +33,7 @@ import {
 } from './setup';
 import { expectDefined } from '../support/expect-defined';
 import { standardPricingFor } from './standard-pricing';
+import { standardSlotPricing } from '../support/budget-pricing';
 import { sportRowKeys } from '../support/sport-rows';
 import { Sport, SportEventParticipantStatus } from '@poolmaster/shared/domain';
 import { insertTestSportLeague } from '../support/test-sport-league';
@@ -56,7 +58,6 @@ async function ensureGolfSportRow(): Promise<void> {
     create: {
       sport: 'GOLF',
       ...sportRowKeys('GOLF'),
-      tournamentFormat: 'STROKE_PLAY_TOURNAMENT',
     },
     update: {},
   });
@@ -438,7 +439,7 @@ describe('SDK Functional: Golf tournament admin (pool-master-z3l, plans/124 §8;
     expectFunctionalError(await rebuildEventLeaderboards({ client: c, path: { eventId: 'x' } }), deny);
     expectFunctionalError(await addEventParticipants({ client: c, path: { eventId: 'x' }, body: { participantIds: [] } }), deny);
     expectFunctionalError(await autoAssignEventTiers({ client: c, path: { eventId: 'x' }, body: {} }), deny);
-    expectFunctionalError(await autoAssignEventPrices({ client: c, path: { eventId: 'x' }, body: await standardPricingFor(c) }), deny);
+    expectFunctionalError(await autoAssignEventPrices({ client: c, path: { eventId: 'x' }, body: standardSlotPricing(randomUUID()) }), deny);
     expectFunctionalError(await replaceEventTierAssignments({ client: c, path: { eventId: 'x' }, body: { assignments: [] } }), deny);
     expectFunctionalError(await applyEventGolfRoundScores({ client: c, path: { eventId: 'x', roundNumber: 1 }, body: { rows: [] } }), deny);
     expectFunctionalError(await previewEventParticipantUpload({ client: c, path: { eventId: 'x' }, body: { rows: [] } }), deny);

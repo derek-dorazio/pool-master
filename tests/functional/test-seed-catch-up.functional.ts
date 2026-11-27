@@ -54,7 +54,7 @@ describe('SDK Functional: a test seed\'s results as its games are played', () =>
   it('loads the NFL playoffs with no game played, then a later run enters the games played since and moves the event to In Progress, and to Completed once the Super Bowl is in', async () => {
     await getFunctionalPrisma().sport.upsert({
       where: { sport: Sport.FOOTBALL },
-      create: { sport: Sport.FOOTBALL, ...sportRowKeys(Sport.FOOTBALL), tournamentFormat: 'MATCHES' },
+      create: { sport: Sport.FOOTBALL, ...sportRowKeys(Sport.FOOTBALL) },
       update: {},
     });
     const admin = await buildRegisteredUser({ displayName: 'Catch-up Loader' });

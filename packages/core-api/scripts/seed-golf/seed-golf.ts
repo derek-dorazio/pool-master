@@ -40,7 +40,7 @@
  * instead, because removing it would break that entry.
  */
 
-import { describeMatchPlace, eventPlaysMatches, findSportRow, isAtPlace, MatchPlaceMap, matchPlaceOf, MatchStatus, type ProviderCode, ScoringFamily, type MatchPlace, type Sport, SportEventStatus, type SportLeagueDefinition, sportLeagueDefinitionOf, sportPlaysMatches } from '@poolmaster/shared/domain';
+import { describeMatchPlace, findSportRow, isAtPlace, MatchPlaceMap, matchPlaceOf, MatchStatus, type ProviderCode, ScoringFamily, type MatchPlace, type Sport, SportEventStatus, type SportLeagueDefinition, sportLeagueDefinitionOf } from '@poolmaster/shared/domain';
 import type { Client } from '@poolmaster/shared/generated/hey-api/client';
 import type {
   AutoAssignSportEventPricesRequest,
@@ -731,13 +731,13 @@ class Loader {
       }
       if (loadsField) await this.writeField(client, created.event.id, league, event, participantIds, []);
       if (loadsBracket) await this.writeBracket(client, created.event.id, event, participantIds, []);
-      await this.finishTestEvent(client, created.event.id, event, participantIds);
+      await this.finishTestEvent(client, created.event, event, participantIds);
       return;
     }
 
     const editable = EDITABLE_STATUSES.has(stored.status);
     // Release locks a bracket event's pairings, seeds and play-in places with its field.
-    const bracketLocked = eventPlaysMatches(stored) && stored.status !== SportEventStatus.DRAFT;
+    const bracketLocked = stored.playsMatches && stored.status !== SportEventStatus.DRAFT;
     const eventPlan = loadsSchedule ? this.eventChanges(event, stored) : { body: {}, changes: [] };
     const storedField = loadsField || loadsBracket
       ? (await must(listEventParticipants({ client, path: { eventId: stored.id } }), `Read the field of ${event.name}`)).participants
@@ -796,7 +796,7 @@ class Loader {
         await this.writeBracket(client, stored.id, event, participantIds, storedBracket);
       }
     }
-    if (finishesDraft) await this.finishTestEvent(client, stored.id, event, participantIds);
+    if (finishesDraft) await this.finishTestEvent(client, stored, event, participantIds);
   }
 
   /** The Standard pricing profile, read on first use and kept for the rest of the run. */
@@ -913,7 +913,8 @@ class Loader {
    * release. An event the run holds back stays a draft with what goes in before release; a bracket
    * event's play-in winners, cancellations and results go in on a later run, after its release.
    */
-  private async finishTestEvent(client: Client, eventId: string, event: SportDataEvent, participantIds: ReadonlyMap<string, string | null>): Promise<void> {
+  private async finishTestEvent(client: Client, stored: Pick<SportEventDto, 'id' | 'playsMatches'>, event: SportDataEvent, participantIds: ReadonlyMap<string, string | null>): Promise<void> {
+    const eventId = stored.id;
     const path = { eventId };
     const release = async (): Promise<void> => {
       if (this.releaseTestEvents) await must(releaseEvent({ client, path }), `Release ${event.name}`);
@@ -921,7 +922,7 @@ class Loader {
     // Tiers and prices follow the field's one order (#1807).
     await must(autoAssignEventTiers({ client, path, body: {} }), `Assign tiers for ${event.name}`);
     await must(autoAssignEventPrices({ client, path, body: await this.defaultPricing(client) }), `Assign prices for ${event.name}`);
-    if (sportPlaysMatches(this.sport)) {
+    if (stored.playsMatches) {
       if (!this.releaseTestEvents) return;
       await release();
       await cancelPostponedGamesFor(client, eventId, event);
@@ -1040,7 +1041,7 @@ export async function catchUpTestEvents(
       const fileEvent = fileName === null ? undefined : league.events.find((event) => event.name === fileName);
       if (!fileEvent) continue;
       const eventStart = new Date(stored.startDate);
-      const playsMatches = eventPlaysMatches(stored);
+      const { playsMatches } = stored;
       const details: string[] = [];
       let everyResultIn = true;
       if (playsMatches) {

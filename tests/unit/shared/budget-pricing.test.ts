@@ -1,4 +1,4 @@
-import { priceFieldOnBudgetCurve } from '@poolmaster/shared/domain';
+import { SlotPricingSchema, priceFieldOnBudgetCurve, slotPricingOf } from '@poolmaster/shared/domain';
 import { inMemoryStandardPricing } from '../../support/budget-pricing';
 
 describe('priceFieldOnBudgetCurve — a pricing profile\'s budget curve (#93), over a field already in order', () => {
@@ -46,5 +46,21 @@ describe('priceFieldOnBudgetCurve — a pricing profile\'s budget curve (#93), o
 
   it('returns an empty array for an empty field', () => {
     expect(priceFieldOnBudgetCurve(standard, [])).toEqual([]);
+  });
+});
+
+describe('A slot\'s recorded pricing names the profile its values started from by id', () => {
+  const PROFILE_ID = '00000000-0000-4000-8000-0000000000b1';
+  const values = { salaryCap: 50_000, unit: 100, topSharePercent: 24, floorSharePercent: 12, steepness: 4 };
+
+  it('records a profile\'s values with the profile\'s id, not its name', () => {
+    const now = new Date();
+    const profile = { id: PROFILE_ID, code: 'STANDARD', name: 'Standard', description: 'The usual curve.', sources: [], createdAt: now, updatedAt: now, ...values };
+
+    expect(slotPricingOf(profile)).toEqual({ platformPricingProfileId: PROFILE_ID, ...values });
+  });
+
+  it('refuses recorded pricing that names its profile by name rather than id', () => {
+    expect(SlotPricingSchema.safeParse({ profileName: 'Standard', ...values }).success).toBe(false);
   });
 });

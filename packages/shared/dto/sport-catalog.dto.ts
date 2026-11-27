@@ -38,7 +38,6 @@ import {
   SportLeagueNoun,
   SportLeagueSyncHealth,
   SportLeagueSyncMode,
-  TournamentFormat,
   FieldOrderBasis,
   ReleaseCheckKey,
 } from '../domain/enums';
@@ -54,7 +53,6 @@ export const SportDtoSchema = z.object({
   sport: z.enum(Sport).describe('The sport.'),
   urlSegment: z.string().regex(URL_SEGMENT_PATTERN).describe('The sport\'s name in web addresses, such as football (/play/football/..., /manage/sports/football, ?sport=football). Stored, never built from the code: link with it as given.'),
   displayOrder: z.number().int().describe('Where the sport sits wherever sports are listed together, lower first: the most popular first. Display only, never an identity.'),
-  tournamentFormat: z.enum(TournamentFormat).describe('Structural format of the sport\'s events; decides which contest formats are valid.'),
   createdAt: DateTimeSchema,
   updatedAt: DateTimeSchema,
 }).describe('A sport the platform runs contests on.');

@@ -90,7 +90,7 @@ describe('SDK Functional: the 2025 NCAA singles championships', () => {
     // The migration's reference row, restored in case an earlier suite cleared the sports table.
     await getFunctionalPrisma().sport.upsert({
       where: { sport: Sport.TENNIS },
-      create: { sport: Sport.TENNIS, ...sportRowKeys(Sport.TENNIS), tournamentFormat: 'MATCHES' },
+      create: { sport: Sport.TENNIS, ...sportRowKeys(Sport.TENNIS) },
       update: {},
     });
   });

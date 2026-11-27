@@ -4,7 +4,7 @@ import {
   SyncedFieldValuationService,
   fieldValuationReport,
 } from '../../../packages/core-api/src/modules/events/synced-field-valuation';
-import { IN_MEMORY_PLATFORM_TIER_PROFILE_ID, InMemorySportEvents } from '../../support/in-memory-sport-events';
+import { IN_MEMORY_PLATFORM_PRICING_PROFILE_ID, IN_MEMORY_PLATFORM_TIER_PROFILE_ID, InMemorySportEvents } from '../../support/in-memory-sport-events';
 import { inMemoryStandardPricing } from '../../support/budget-pricing';
 import { expectDefined } from '../../support/expect-defined';
 
@@ -37,7 +37,7 @@ async function setup(options: { status?: SportEventStatus; fieldSize?: number; t
     platformPricingProfiles: store.platformPricingProfileRepo(),
   });
   const valuation = new SyncedFieldValuationService({ sportEvents: store.sportEventRepo(), tiers });
-  return { store, event, tiers, valuation };
+  return { store, event, tiers, valuation, league };
 }
 
 function tierOf(store: InMemorySportEvents, participantId: string) {
@@ -56,13 +56,13 @@ describe('SyncedFieldValuationService — a field sync makes tiers and prices on
       outcome: 'VALUED',
       sportEventId: event.id,
       tiers: { result: 'MADE', basis: 'ODDS', tierCount: 2 },
-      prices: { result: 'MADE', basis: 'ODDS', pricedCount: 4, profileName: 'Standard' },
+      prices: { result: 'MADE', basis: 'ODDS', pricedCount: 4, platformPricingProfileId: IN_MEMORY_PLATFORM_PRICING_PROFILE_ID },
     });
     expect(['p-01', 'p-02', 'p-03', 'p-04'].map((id) => tierOf(store, id))).toEqual(['tier-1', 'tier-1', 'tier-2', 'tier-2']);
     expect(store.valuationRows.every((row) => row.tierAssignedSource === 'AUTO_ODDS' && row.priceAssignedSource === 'AUTO_ODDS')).toBe(true);
     const prices = store.valuationRows.map((row) => row.price as number);
     expect(prices).toEqual([...prices].sort((left, right) => right - left));
-    expect(store.firstTierSlotOf(event.id).pricing).toEqual({ ...inMemoryStandardPricing(), profileName: 'Standard' });
+    expect(store.firstTierSlotOf(event.id).pricing).toEqual(inMemoryStandardPricing());
   });
 
   it('re-makes the tiers when a later sync moves the odds, so the new favourite leads tier 1', async () => {
@@ -101,25 +101,24 @@ describe('SyncedFieldValuationService — a field sync makes tiers and prices on
   });
 
   it('prices a never-priced field with the pricing profile its own sport league names, not the first profile there is', async () => {
-    const small = { name: 'Small', salaryCap: 5000, unit: 10, topSharePercent: 24, floorSharePercent: 12, steepness: 4 };
-    const { store, event, valuation } = await setup({ pricing: small });
+    const values = { salaryCap: 5000, unit: 10, topSharePercent: 24, floorSharePercent: 12, steepness: 4 };
+    const { store, event, valuation } = await setup({ pricing: { name: 'Small', ...values } });
     const profileId = expectDefined(store.sportLeagues.find((league) => league.id === event.sportLeagueId)?.platformPricingProfileId, 'the league names a pricing profile');
 
     const outcome = await valuation.afterFieldLoad(SYNCED);
 
-    expect(outcome).toMatchObject({ prices: { result: 'MADE', profileName: 'Small' } });
-    const { name, ...values } = small;
-    expect(store.firstTierSlotOf(event.id).pricing).toEqual({ platformPricingProfileId: profileId, profileName: name, ...values });
+    expect(outcome).toMatchObject({ prices: { result: 'MADE', platformPricingProfileId: profileId } });
+    expect(store.firstTierSlotOf(event.id).pricing).toEqual({ platformPricingProfileId: profileId, ...values });
     expect(store.valuationRows.every((row) => (row.price as number) <= 5000 && (row.price as number) % 10 === 0)).toBe(true);
   });
 
-  it('records on the event the tier layout it was tiered with, named for the league\'s tier profile', async () => {
+  it('records on the event the tier layout it was tiered with, naming the league\'s tier profile by id', async () => {
     const { store, event, valuation } = await setup();
 
     await valuation.afterFieldLoad(SYNCED);
 
     expect(store.firstTierSlotOf(event.id).tierLayout).toEqual({
-      platformTierProfileId: IN_MEMORY_PLATFORM_TIER_PROFILE_ID, profileName: '6 tiers of 10', type: 'EQUAL_GROUPS', tierCount: 6, tierSize: 10, lastTier: 'ALL_REMAINING', lastTierMax: null,
+      platformTierProfileId: IN_MEMORY_PLATFORM_TIER_PROFILE_ID, type: 'EQUAL_GROUPS', tierCount: 6, tierSize: 10, lastTier: 'ALL_REMAINING', lastTierMax: null,
     });
   });
 
@@ -131,7 +130,7 @@ describe('SyncedFieldValuationService — a field sync makes tiers and prices on
 
     await valuation.afterFieldLoad(SYNCED);
 
-    expect(store.firstTierSlotOf(event.id).pricing).toEqual({ ...handPriced, profileName: 'Standard' });
+    expect(store.firstTierSlotOf(event.id).pricing).toEqual(handPriced);
     expect(Math.max(...store.valuationRows.map((row) => row.price as number))).toBeLessThanOrEqual(5000);
   });
 });
@@ -246,13 +245,13 @@ describe('fieldValuationReport — what the field sync run shows', () => {
       outcome: 'VALUED',
       sportEventId: 'e',
       tiers: { result: 'MADE', basis: 'ODDS', tierCount: 6 },
-      prices: { result: 'MADE', basis: 'RANKING', pricedCount: 64, profileName: 'Standard' },
+      prices: { result: 'MADE', basis: 'RANKING', pricedCount: 64, platformPricingProfileId: IN_MEMORY_PLATFORM_PRICING_PROFILE_ID },
     })).toEqual({ stats: { tiersMadeFromOdds: 6, pricesMadeFromRank: 64 }, warnings: [] });
   });
 
   it.each([
     [{ outcome: 'VALUED' as const, sportEventId: 'e', tiers: { result: 'UNCHANGED' as const, basis: 'SEED' as const, tierCount: 4 }, prices: { result: 'KEPT_AS_EDITED' as const, unpriced: 0 } }, { tiersUnchanged: 4, pricesKeptAsEdited: 1 }],
-    [{ outcome: 'VALUED' as const, sportEventId: 'e', tiers: { result: 'KEPT_AS_EDITED' as const, untiered: 0 }, prices: { result: 'UNCHANGED' as const, basis: 'RANKING' as const, pricedCount: 9, profileName: 'Small' } }, { tiersKeptAsEdited: 1, pricesUnchanged: 9 }],
+    [{ outcome: 'VALUED' as const, sportEventId: 'e', tiers: { result: 'KEPT_AS_EDITED' as const, untiered: 0 }, prices: { result: 'UNCHANGED' as const, basis: 'RANKING' as const, pricedCount: 9, platformPricingProfileId: IN_MEMORY_PLATFORM_PRICING_PROFILE_ID } }, { tiersKeptAsEdited: 1, pricesUnchanged: 9 }],
     [{ outcome: 'SKIPPED' as const, reason: 'LOCKED' as const }, { tiersAndPricesLocked: 1 }],
     [{ outcome: 'SKIPPED' as const, reason: 'NO_EVENT' as const }, {}],
   ])('counts outcome %j in the run\'s stats as %j, with no warning', (outcome, stats) => {
@@ -268,7 +267,7 @@ describe('fieldValuationReport — what the field sync run shows', () => {
 
   it('reports an event with no tiers and a failure as warnings on the run', () => {
     expect(fieldValuationReport({
-      outcome: 'VALUED', sportEventId: 'e', tiers: { result: 'NO_TIERS' }, prices: { result: 'MADE', basis: 'SEED', pricedCount: 3, profileName: 'Standard' },
+      outcome: 'VALUED', sportEventId: 'e', tiers: { result: 'NO_TIERS' }, prices: { result: 'MADE', basis: 'SEED', pricedCount: 3, platformPricingProfileId: IN_MEMORY_PLATFORM_PRICING_PROFILE_ID },
     }).warnings).toEqual([expect.objectContaining({ code: 'EVENT_HAS_NO_TIERS' })]);
     expect(fieldValuationReport({ outcome: 'FAILED', message: 'boom' }))
       .toEqual({ stats: {}, warnings: [{ code: 'TIERS_AND_PRICES_NOT_MADE', message: 'Tiers and prices were not made from the field: boom' }] });

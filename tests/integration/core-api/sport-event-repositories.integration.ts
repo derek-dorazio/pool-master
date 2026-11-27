@@ -77,7 +77,7 @@ function repos() {
 async function golfSportId(): Promise<string> {
   const sport = await getPrisma().sport.upsert({
     where: { sport: Sport.GOLF },
-    create: { sport: Sport.GOLF, ...sportRowKeys(Sport.GOLF), tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+    create: { sport: Sport.GOLF, ...sportRowKeys(Sport.GOLF) },
     update: {},
   });
   return sport.id;
@@ -690,7 +690,7 @@ describe('Budget pricing on the event slot (#93, #2044)', () => {
     });
 
     const [read] = expectDefined((await tiers.findTierSlots([event.id])).get(event.id), 'the event\'s slots');
-    expect(read.pricing).toEqual({ ...(await standardPricingIn(getPrisma())), profileName: 'Standard' });
+    expect(read.pricing).toEqual(await standardPricingIn(getPrisma()));
     expect((await valuations.findBySlot((await slotOf(event)).id)).map((row) => row.price)).toEqual(expect.arrayContaining([12000, 6000]));
   });
 

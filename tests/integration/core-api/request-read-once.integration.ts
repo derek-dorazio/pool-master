@@ -301,7 +301,7 @@ async function tieredGolfEvent(name: string) {
   const prisma = getPrisma();
   const sport = await prisma.sport.upsert({
     where: { sport: Sport.GOLF },
-    create: { sport: Sport.GOLF, ...sportRowKeys(Sport.GOLF), tournamentFormat: 'STROKE_PLAY_TOURNAMENT' },
+    create: { sport: Sport.GOLF, ...sportRowKeys(Sport.GOLF) },
     update: {},
   });
   const event = await prisma.sportEvent.create({
@@ -387,7 +387,7 @@ describe('Opening a contest (#1355)', () => {
       ['SELECT sport_league_season_competition_slots', 5],
   ['SELECT sport_league_seasons', 3], // a sport is read through each contest read's event's Season and league (#2042, #2004)
       ['SELECT sport_leagues', 4],
-      ['SELECT sports', 4],
+      ['SELECT sports', 3], // contest setup's reader no longer reads the sport rows: whether an event plays matches is its slots' (#2008)
       ['SELECT users', 1],
       ['UPDATE contests', 1],
     ]);
@@ -407,7 +407,7 @@ async function squaresContestUnderWay(options: { gameFinished: boolean; contests
   const suffix = randomUUID().slice(0, 8);
   const sport = await prisma.sport.upsert({
     where: { sport: Sport.FOOTBALL },
-    create: { sport: Sport.FOOTBALL, ...sportRowKeys(Sport.FOOTBALL), tournamentFormat: 'MATCHES' },
+    create: { sport: Sport.FOOTBALL, ...sportRowKeys(Sport.FOOTBALL) },
     update: {},
   });
   const event = await prisma.sportEvent.create({

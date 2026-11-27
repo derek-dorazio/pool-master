@@ -1,5 +1,5 @@
 import type { ParticipantScoringDefinitionId } from '../contest-scoring';
-import type { SelectionType, Sport, TournamentFormat } from '../enums';
+import type { SelectionType, Sport } from '../enums';
 
 /** A noun in its singular and plural, as the audience says it, read from the display strings. */
 export interface SportNoun {
@@ -27,8 +27,6 @@ export interface SportDefinition {
   sport: Sport;
   /** The sport's name as a heading or menu entry reads it: "Golf", "Horse racing". */
   name: string;
-  /** The tournament format a new event of this sport gets. */
-  tournamentFormat: TournamentFormat;
   /** How many rounds an admin-authored event gets when the admin gives no count. */
   defaultRounds: number;
   /** Selection types a commissioner may choose for this sport. Each has an engine. */

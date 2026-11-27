@@ -54,6 +54,7 @@ export const SlotPricingSchema = BudgetPricingValuesSchema.extend({
 }).describe('The values an event slot\'s set was priced with for budget contests, and the profile they started from.');
 export type SlotPricing = z.infer<typeof SlotPricingSchema>;
 
+
 /** A pricing profile, defined once for the platform; each sport league names one (`SportLeague.platformPricingProfileId`). */
 export interface PlatformPricingProfile extends DomainEntity, BudgetPricingProfile {
   /** The profile's key: what migrations, seed scripts and test data find it by, never its name. */

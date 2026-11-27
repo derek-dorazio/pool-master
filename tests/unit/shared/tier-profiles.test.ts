@@ -162,18 +162,18 @@ describe('EqualGroupsLayoutSchema and SlotTierLayoutSchema', () => {
     expect(EqualGroupsLayoutSchema.safeParse(SIX_OF_TEN).success).toBe(true);
   });
 
-  it('reads back a slot\'s recorded layout with the profile it came from, by id and name', () => {
-    const recorded = { platformTierProfileId: PROFILE_ID, profileName: '6 tiers of 10', ...SIX_OF_TEN_CAPPED };
+  it('reads back a slot\'s recorded layout with the profile it came from, by id', () => {
+    const recorded = { platformTierProfileId: PROFILE_ID, ...SIX_OF_TEN_CAPPED };
 
     expect(SlotTierLayoutSchema.parse(recorded)).toEqual(recorded);
   });
 
-  it('refuses a slot\'s recorded layout that names its profile by name alone', () => {
+  it('refuses a slot\'s recorded layout that names its profile by name rather than id', () => {
     expect(SlotTierLayoutSchema.safeParse({ profileName: '6 tiers of 10', ...SIX_OF_TEN }).success).toBe(false);
   });
 
   it('reads back a slot\'s recorded ranges layout with its ranges', () => {
-    const recorded = { platformTierProfileId: PROFILE_ID, profileName: 'Playoff seeds 1, 2-4, rest', type: TierProfileType.RANGES, ranges: SEED_RANGES.ranges };
+    const recorded = { platformTierProfileId: PROFILE_ID, type: TierProfileType.RANGES, ranges: SEED_RANGES.ranges };
 
     expect(SlotTierLayoutSchema.parse(recorded)).toEqual(recorded);
   });
@@ -185,13 +185,13 @@ describe('slotTierLayoutOf', () => {
   it('lays a slot out by its profile, with the tier size an admin sent in place of the profile\'s', () => {
     const profile: PlatformTierProfile = { id: PROFILE_ID, ...stamps, ...SIX_OF_TEN };
 
-    expect(slotTierLayoutOf(profile, 8)).toEqual({ platformTierProfileId: PROFILE_ID, profileName: '6 tiers of 10', ...SIX_OF_TEN, tierSize: 8 });
-    expect(slotTierLayoutOf(profile, null)).toEqual({ platformTierProfileId: PROFILE_ID, profileName: '6 tiers of 10', ...SIX_OF_TEN });
+    expect(slotTierLayoutOf(profile, 8)).toEqual({ platformTierProfileId: PROFILE_ID, ...SIX_OF_TEN, tierSize: 8 });
+    expect(slotTierLayoutOf(profile, null)).toEqual({ platformTierProfileId: PROFILE_ID, ...SIX_OF_TEN });
   });
 
   it('lays a slot out by a ranges profile\'s own ranges, which take no tier size', () => {
     const profile: PlatformTierProfile = { id: PROFILE_ID, ...stamps, name: 'Seeds', type: TierProfileType.RANGES, ranges: SEED_RANGES.ranges };
 
-    expect(slotTierLayoutOf(profile, null)).toEqual({ platformTierProfileId: PROFILE_ID, profileName: 'Seeds', type: TierProfileType.RANGES, ranges: SEED_RANGES.ranges });
+    expect(slotTierLayoutOf(profile, null)).toEqual({ platformTierProfileId: PROFILE_ID, type: TierProfileType.RANGES, ranges: SEED_RANGES.ranges });
   });
 });

@@ -1,12 +1,13 @@
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
+import { displayString, profileWords } from '@poolmaster/shared/display-strings';
 import {
   findBudgetPricingProblem,
   formatDollars,
   priceOnBudgetCurve,
-  SlotPricingSchema,
   type BudgetPricingProfile,
   type SlotPricing, SportEventParticipantStatus } from '@poolmaster/shared/domain';
+import { AutoAssignSportEventPricesRequestSchema, type AutoAssignSportEventPricesRequest } from '@poolmaster/shared/dto';
 import { autoAssignEventPrices, type SportEventOverviewDto } from '@/lib/api';
 import {
   Button,
@@ -46,9 +47,12 @@ function toDraft(values: BudgetPricingProfile | SlotPricing): PricingDraft {
   };
 }
 
-/** The values the dialog would send, or the first thing wrong with them. */
-function parseDraft(platformPricingProfileId: string, draft: PricingDraft): { pricing: SlotPricing; error: null } | { pricing: null; error: string } {
-  const parsed = SlotPricingSchema.safeParse({
+/** The request the dialog would send, with the profile the values started from, or the first thing wrong with it. */
+function parseDraft(platformPricingProfileId: string, draft: PricingDraft): { pricing: AutoAssignSportEventPricesRequest; error: null } | { pricing: null; error: string } {
+  if (platformPricingProfileId === '') {
+    return { pricing: null, error: displayString('word.choosePricingProfile') };
+  }
+  const parsed = AutoAssignSportEventPricesRequestSchema.safeParse({
     platformPricingProfileId,
     salaryCap: Number(draft.salaryCap),
     unit: Number(draft.unit),
@@ -98,7 +102,7 @@ export function PriceAssignAction({
   const [draft, setDraft] = useState<PricingDraft | null>(null);
 
   const mutation = useInvalidatingMutation({
-    mutationFn: async (pricing: SlotPricing) => {
+    mutationFn: async (pricing: AutoAssignSportEventPricesRequest) => {
       const response = await autoAssignEventPrices({ path: { eventId }, body: pricing });
       if (response.error) {
         throwApiError(response.error);
@@ -120,14 +124,15 @@ export function PriceAssignAction({
 
   function openDialog() {
     mutation.reset();
+    // poolmaster-allow-list-lookup: the dialog's profile picker shows this whole list
+    const leagueProfile = profiles.find((profile) => profile.id === sportLeagueQuery.data?.platformPricingProfileId);
     if (current) {
+      // The profile the event was priced from (#2205), which a priced slot keeps (#2044).
       setProfileId(current.platformPricingProfileId);
       setDraft(toDraft(current));
     } else {
-      // poolmaster-allow-list-lookup: the dialog's profile picker shows this whole list
-      const defaultProfile = profiles.find((profile) => profile.id === sportLeagueQuery.data?.platformPricingProfileId);
-      setProfileId(defaultProfile?.id ?? '');
-      setDraft(defaultProfile ? toDraft(defaultProfile) : null);
+      setProfileId(leagueProfile?.id ?? '');
+      setDraft(leagueProfile ? toDraft(leagueProfile) : null);
     }
     setOpen(true);
   }
@@ -186,7 +191,7 @@ export function PriceAssignAction({
               value={profileId}
             >
               {profiles.map((profile) => (
-                <option key={profile.id} value={profile.id}>{profile.name}</option>
+                <option key={profile.id} value={profile.id}>{profileWords('pricingProfile', profile).name}</option>
               ))}
             </Select>
           </FormField>

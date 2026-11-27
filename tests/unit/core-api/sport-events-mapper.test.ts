@@ -1,5 +1,5 @@
 import { sportPlay } from '../../support/sport-play';
-import { AutoReleaseCheckOutcome, ContestStatus, ReleaseCheckKey, RoundStatus, SeasonSlotStatus, SeriesFormat, SlotKind, SlotPairing, Sport, type SportEvent, type SportEventTierSlot } from '@poolmaster/shared/domain';
+import { AutoReleaseCheckOutcome, ContestStatus, MatchFormat, ReleaseCheckKey, RoundStatus, SeasonSlotStatus, SeriesFormat, SlotKind, SlotPairing, Sport, type SportEvent, type SportEventTierSlot } from '@poolmaster/shared/domain';
 import {
   mapSportEventContestsToResponse,
   mapSportEventRoundToDto,
@@ -52,7 +52,7 @@ function summary(sportEvent: SportEvent, participantCount: number, untieredParti
 
 describe('SportEvent pricing on the wire (#93)', () => {
   it('carries the values the event\'s first slot was priced with, whose salary cap every budget contest on the event uses', () => {
-    const pricing = { ...inMemoryStandardPricing(), profileName: 'Standard' };
+    const pricing = inMemoryStandardPricing();
     const priced = event();
 
     expect(mapSportEventToDto(summary(priced, 72, 0, firstSlot(priced, { pricing }))).pricing).toEqual(pricing);
@@ -143,13 +143,19 @@ describe('SportEvent readiness on the wire', () => {
 
   // The Season and the sport league are always present: an event has exactly one of each (#2010).
   it('carries the event\'s slot definitions in play order, its Season with that Season\'s championship year, and its sport league', () => {
-    const slotted = event({ slotDefinitions: [{ id: 'afc-championship', slotKind: SlotKind.SEMIFINAL, canEndTied: false, periods: null }, { id: 'nfc-championship', slotKind: SlotKind.SEMIFINAL, canEndTied: false, periods: null }] });
+    const slotted = event({ slotDefinitions: [{ id: 'afc-championship', slotKind: SlotKind.SEMIFINAL, canEndTied: false, periods: null, matchFormat: MatchFormat.HEAD_TO_HEAD }, { id: 'nfc-championship', slotKind: SlotKind.SEMIFINAL, canEndTied: false, periods: null, matchFormat: MatchFormat.HEAD_TO_HEAD }] });
     expect(mapSportEventToDto(summary(slotted, 1))).toMatchObject({
       slotDefinitionIds: ['afc-championship', 'nfc-championship'],
       sportLeagueSeasonId: 'season-2026',
       championshipYear: 2026,
       sportLeagueId: '33333333-3333-4333-8333-333333333333',
     });
+  });
+
+  it('says the event plays matches when one of its slots is HEAD_TO_HEAD, and not when its slots are all FIELD (#2008)', () => {
+    const slot = (id: string, matchFormat: MatchFormat) => ({ id, slotKind: SlotKind.TOURNAMENT, canEndTied: true, periods: null, matchFormat });
+    expect(mapSportEventToDto(summary(event({ slotDefinitions: [slot('final', MatchFormat.HEAD_TO_HEAD)] }), 1)).playsMatches).toBe(true);
+    expect(mapSportEventToDto(summary(event({ slotDefinitions: [slot('masters', MatchFormat.FIELD)] }), 1)).playsMatches).toBe(false);
   });
 });
 

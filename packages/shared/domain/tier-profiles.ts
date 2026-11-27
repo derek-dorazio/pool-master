@@ -70,10 +70,9 @@ export function tierCountOf(layout: TierLayout): number {
   return layout.type === TierProfileType.EQUAL_GROUPS ? layout.tierCount : layout.ranges.length;
 }
 
-/** The profile a slot's layout came from (#2044): by id, with its name as a label only. */
+/** The profile a slot's layout came from (#2205, #2044), by id; screens name it by its code's words. */
 const ProfileOfLayoutSchema = {
   platformTierProfileId: z.uuid().describe('The tier profile the layout came from: the sport league\'s when the set was tiered.'),
-  profileName: z.string().trim().min(1).max(50).describe('That profile\'s name, a label only.'),
 };
 
 /**
@@ -94,7 +93,7 @@ export interface SlotTierSettings {
 
 /** The layout a slot was tiered with: its profile's own, with the slot's tier size where one was sent. */
 export function slotTierLayoutOf(profile: PlatformTierProfile, tierSize: number | null): SlotTierLayout {
-  const of = { platformTierProfileId: profile.id, profileName: profile.name };
+  const of = { platformTierProfileId: profile.id };
   return profile.type === TierProfileType.RANGES
     ? { type: TierProfileType.RANGES, ...of, ranges: profile.ranges.map(({ tierNumber, fromValue, toValue }) => ({ tierNumber, fromValue, toValue })) }
     : {
@@ -106,6 +105,7 @@ export function slotTierLayoutOf(profile: PlatformTierProfile, tierSize: number 
       lastTierMax: profile.lastTierMax,
     };
 }
+
 
 /** A named tier layout, defined once for the platform; each sport league names one (`SportLeague.platformTierProfileId`). */
 export type PlatformTierProfile = DomainEntity & TierLayout & {

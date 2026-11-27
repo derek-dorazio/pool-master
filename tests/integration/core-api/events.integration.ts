@@ -40,7 +40,6 @@ describe('events routes', () => {
         id: randomUUID(),
         sport: Sport.GOLF,
         ...sportRowKeys(Sport.GOLF),
-        tournamentFormat: 'STROKE_PLAY_TOURNAMENT',
       },
     });
 
@@ -138,7 +137,6 @@ describe('events routes', () => {
         id: randomUUID(),
         sport: Sport.GOLF,
         ...sportRowKeys(Sport.GOLF),
-        tournamentFormat: 'STROKE_PLAY_TOURNAMENT',
       },
     });
 
@@ -357,6 +355,40 @@ describe('events routes', () => {
       });
       expect(againRes.statusCode).toBe(409);
       expect(againRes.json()).toMatchObject({ error: { code: 'SPORT_EVENT_NOT_DRAFT' } });
+    });
+
+    it('prices with the profile a request names by id and records that id, dropping a profile name sent with it like any unknown key (#2205)', async () => {
+      const admin = await createTestUser({ displayName: 'Price By Id Admin', isRootAdmin: true });
+      const eventId = await seedDraftGolfEvent({ tiered: true });
+      const standard = await standardPricingIn(getPrisma());
+
+      const res = await getApp().inject({
+        method: 'POST',
+        url: `/api/v1/events/${eventId}/prices/auto-assign`,
+        headers: admin.headers,
+        payload: { ...standard, profileName: 'Standard' },
+      });
+
+      expect(res.statusCode).toBe(200);
+      const stored = await getPrisma().sportEventSlot.findFirstOrThrow({ where: { sportEventId: eventId }, select: { platformPricingProfileId: true, salaryCap: true } });
+      expect(stored).toEqual({ platformPricingProfileId: standard.platformPricingProfileId, salaryCap: standard.salaryCap });
+    });
+
+    it('refuses to price with a pricing profile id there is no profile for with 404 PLATFORM_PRICING_PROFILE_NOT_FOUND and records no pricing (#2205)', async () => {
+      const admin = await createTestUser({ displayName: 'Price Unknown Profile Admin', isRootAdmin: true });
+      const eventId = await seedDraftGolfEvent({ tiered: true });
+
+      const res = await getApp().inject({
+        method: 'POST',
+        url: `/api/v1/events/${eventId}/prices/auto-assign`,
+        headers: admin.headers,
+        payload: { ...(await standardPricingIn(getPrisma())), platformPricingProfileId: randomUUID() },
+      });
+
+      expect(res.statusCode).toBe(404);
+      expect(res.json()).toMatchObject({ error: { code: 'PLATFORM_PRICING_PROFILE_NOT_FOUND' } });
+      const stored = await getPrisma().sportEventSlot.findFirstOrThrow({ where: { sportEventId: eventId }, select: { platformPricingProfileId: true, salaryCap: true } });
+      expect(stored).toEqual({ platformPricingProfileId: null, salaryCap: null });
     });
 
     it('refuses to release a draft whose golfer has no tier with 422 SPORT_EVENT_NOT_READY and leaves it a draft', async () => {

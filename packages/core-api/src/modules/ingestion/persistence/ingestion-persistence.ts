@@ -12,9 +12,9 @@ import {
   ParticipantStatus,
   type ProviderCode,
   type ParticipantType,
-  type Sport,
   SportEventStatus,
   eventPlaysMatches,
+  type MatchFormat,
   providerSourceIdOf,
   providerCodeOfSourceId,
   requireProviderCodeOfSourceId,
@@ -297,14 +297,20 @@ export class IngestionPersistence {
         sportEvent: {
           include: {
             sportLeagueSeason: { select: { sportLeague: { select: { id: true, participantType: true, scoringFamily: true, sport: { select: { sport: true } } } } } },
-            // A slot this provider's games reach by date window (#1715): one is enough to know.
+            // Each slot's match format (#2008), and whether this provider's games reach it by date
+            // window (#1715): one such mapping is enough to know.
             slots: {
-              where: { seasonSlot: { definition: { providerMappings: { some: {
-                matchType: PrismaSlotProviderMatchType.DATE_WINDOW,
-                sportLeagueProviderMapping: { providerLeague: { provider: { code: providerCode } } },
+              select: { seasonSlot: { select: { definition: { select: {
+                matchFormat: true,
+                providerMappings: {
+                  where: {
+                    matchType: PrismaSlotProviderMatchType.DATE_WINDOW,
+                    sportLeagueProviderMapping: { providerLeague: { provider: { code: providerCode } } },
+                  },
+                  select: { id: true },
+                  take: 1,
+                },
               } } } } },
-              select: { id: true },
-              take: 1,
             },
           },
         },
@@ -344,7 +350,7 @@ export class IngestionPersistence {
     try {
       // A date window holds every game in its dates, other schools' too, so its feed names no field:
       // the field is the one placed on the event, and the feed only refreshes it (#1715).
-      const fieldFromFeed = persistedEvent.slots.length === 0;
+      const fieldFromFeed = persistedEvent.slots.every(({ seasonSlot }) => seasonSlot.definition.providerMappings.length === 0);
       sportEventParticipantsPersisted = await this.persistEventField(detail, persistedEvent.id, { seedsLocked, fieldFromFeed }, participantIdByKey, detailRows, followUps);
     } finally {
       this.fieldCache?.forget(persistedEvent.id);
@@ -476,10 +482,9 @@ type FieldFeed = Pick<SportEventDetail, 'providerId' | 'externalId' | 'participa
 /** Whether an event's seeds are locked: a released bracket's are (#698), since the upset bonus reads them as they stood at release. */
 function seedsLockedOn(event: {
   status: SportEventStatus;
-  sportLeagueSeason: { sportLeague: { participantType: ParticipantType; scoringFamily: Parameters<typeof eventPlaysMatches>[0]['scoringFamily']; sport: { sport: Sport } } };
+  slots: ReadonlyArray<{ seasonSlot: { definition: { matchFormat: MatchFormat } } }>;
 }): boolean {
-  const { sportLeague } = event.sportLeagueSeason;
-  return eventPlaysMatches({ sport: sportLeague.sport.sport, participantType: sportLeague.participantType, scoringFamily: sportLeague.scoringFamily }) && event.status !== SportEventStatus.DRAFT;
+  return eventPlaysMatches({ slotDefinitions: event.slots.map(({ seasonSlot }) => seasonSlot.definition) }) && event.status !== SportEventStatus.DRAFT;
 }
 
 /** The sport league an event's participants belong to (#1853), and the kind of participant it holds. */

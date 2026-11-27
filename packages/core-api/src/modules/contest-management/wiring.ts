@@ -17,7 +17,6 @@ import {
   PrismaSportEventSlotParticipantValuationRepository,
   PrismaSportEventSlotTierRepository,
   PrismaSportEventRepository,
-  PrismaSportRepository,
 } from '../../adapters';
 import { createSportEventTierService } from '../events/wiring';
 import { createCupService } from '../cups/wiring';
@@ -47,7 +46,6 @@ export function createContestManagementService(
     logger,
     sportEventReader: createContestSportEventReader({
       sportEvents: new PrismaSportEventRepository(prisma),
-      sports: new PrismaSportRepository(prisma),
       field: new PrismaSportEventParticipantRepository(prisma),
       tiers: new PrismaSportEventSlotTierRepository(prisma),
       valuations: new PrismaSportEventSlotParticipantValuationRepository(prisma),
@@ -69,7 +67,6 @@ export function createContestManagementService(
 export function createContestOpeningReader(prisma: PrismaClient): ContestOpeningReader {
   return createBatchedContestOpeningReader({
     sportEvents: new PrismaSportEventRepository(prisma),
-    sports: new PrismaSportRepository(prisma),
     field: new PrismaSportEventParticipantRepository(prisma),
     tiers: new PrismaSportEventSlotTierRepository(prisma),
     valuations: new PrismaSportEventSlotParticipantValuationRepository(prisma),

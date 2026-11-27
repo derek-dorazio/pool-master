@@ -8,7 +8,6 @@ import {
   type ContestScoringSettings,
   MatchSide,
   MatchStatus,
-  getDefaultTournamentFormatForSport,
   type ParticipantContestScoringRule,
   type ParticipantType,
   PickEmMode,
@@ -17,7 +16,6 @@ import {
   Sport,
   SportEventStatus,
   TemplateCoverageMode,
-  TournamentFormat,
   LeaguePlan,
   SeasonSlotStatus,
 } from '@poolmaster/shared/domain';
@@ -269,7 +267,7 @@ function createSportEventReader(overrides?: Partial<{
   sport: Sport;
   sportLeagueId: string;
   championshipYear: number;
-  tournamentFormat: TournamentFormat;
+  playsMatches: boolean;
   participantCount: number;
   rounds: number | null;
   salaryCap: number | null;
@@ -308,8 +306,7 @@ function createSportEventReader(overrides?: Partial<{
       sport: overrides?.sport ?? Sport.GOLF,
       sportLeagueId: overrides?.sportLeagueId ?? PGA_TOUR_LEAGUE_ID,
       championshipYear: overrides?.championshipYear ?? 2026,
-      tournamentFormat:
-        overrides?.tournamentFormat ?? TournamentFormat.STROKE_PLAY_TOURNAMENT,
+      playsMatches: overrides?.playsMatches ?? false,
       participantCount: overrides?.participantCount ?? 72,
       rounds: overrides?.rounds === undefined ? 4 : overrides.rounds,
       salaryCap: overrides?.salaryCap ?? null,
@@ -1767,7 +1764,7 @@ describe('ContestManagementService finish-position scoring (#622)', () => {
       configurations: createContestConfigurationRepo(),
       scoringRules: scoringRuleRepo,
       tiers: createSportEventTierServiceStub(),
-      sportEventReader: createSportEventReader({ sport: Sport.HORSE_RACING, tournamentFormat: TournamentFormat.RACE }),
+      sportEventReader: createSportEventReader({ sport: Sport.HORSE_RACING, playsMatches: false }),
       cups: createCupKeeper(),
       planEntitlements: platinumEntitlements(),
     });
@@ -1824,7 +1821,7 @@ describe('ContestManagementService finish-position scoring (#622)', () => {
       configurations: createContestConfigurationRepo(),
       scoringRules: scoringRuleRepo,
       tiers: createSportEventTierServiceStub(),
-      sportEventReader: createSportEventReader({ sport: Sport.BASKETBALL, tournamentFormat: TournamentFormat.MATCHES, rounds, bracketProblem }),
+      sportEventReader: createSportEventReader({ sport: Sport.BASKETBALL, playsMatches: true, rounds, bracketProblem }),
       cups: createCupKeeper(),
       planEntitlements: platinumEntitlements(),
     });
@@ -1982,7 +1979,7 @@ describe('ContestManagementService — a contest of several events', () => {
       status: SportEventStatus.SCHEDULED,
       sport: Sport.GOLF,
       sportLeagueId: PGA_TOUR_LEAGUE_ID,
-      tournamentFormat: TournamentFormat.STROKE_PLAY_TOURNAMENT,
+      playsMatches: false,
       participantCount: 72,
       rounds: 4,
       salaryCap: null,
@@ -2315,7 +2312,7 @@ describe('ContestManagementService pick\'em rules (#716)', () => {
     undecidedGameCount?: number;
     gamesWithoutSpreadCount?: number;
     sport?: Sport;
-    tournamentFormat?: TournamentFormat;
+    playsMatches?: boolean;
     rounds?: number;
   }) {
     const contestCoreRepo = createContestRepo();
@@ -2323,7 +2320,7 @@ describe('ContestManagementService pick\'em rules (#716)', () => {
     const scoringRuleRepo = createParticipantScoringRuleRepo();
     const reader = createSportEventReader({
       sport: options.sport ?? Sport.FOOTBALL,
-      tournamentFormat: options.tournamentFormat ?? TournamentFormat.MATCHES,
+      playsMatches: options.playsMatches ?? true,
       rounds: options.rounds ?? 4,
       gameCount: options.gameCount,
       undecidedGameCount: options.undecidedGameCount,
@@ -2476,9 +2473,9 @@ describe('ContestManagementService pick\'em rules (#716)', () => {
     expect(contestCoreRepo.create).not.toHaveBeenCalled();
   });
 
-  it('refuses a PREDICTION contest on a stroke-play golf event with 422 CONTEST_FORMAT_NOT_ALLOWED', async () => {
+  it('refuses a PREDICTION contest on a golf event, whose slots are all FIELD so it plays no matches, with 422 CONTEST_FORMAT_NOT_ALLOWED', async () => {
     const { contestCoreRepo, service } = pickEmService({
-      gameCount: 3, sport: Sport.GOLF, tournamentFormat: TournamentFormat.STROKE_PLAY_TOURNAMENT,
+      gameCount: 3, sport: Sport.GOLF, playsMatches: false,
     });
 
     await expect(service.createContest({ leagueId: 'league-1' }, pickEmRequest({ configuration: pickEmRules })))
@@ -2558,7 +2555,7 @@ describe('ContestManagementService bracket rules (#721)', () => {
     const contestConfigurationRepo = createContestConfigurationRepo();
     const reader = createSportEventReader({
       sport: Sport.BASKETBALL,
-      tournamentFormat: TournamentFormat.MATCHES,
+      playsMatches: true,
       rounds: 4,
       gameCount: 15,
       bracketProblem: options.bracketProblem ?? null,
@@ -2634,7 +2631,6 @@ describe('ContestManagementService — a bracket on a knockout already under way
   function underWay(options: { roundOnePlayed?: boolean; eventStatus?: SportEventStatus; eventStartHours?: number } = {}) {
     const store = new InMemorySportEvents();
     const sport = store.addSport(Sport.BASKETBALL);
-    sport.tournamentFormat = TournamentFormat.MATCHES;
     const event = store.addEvent({
       sport: Sport.BASKETBALL,
       status: options.eventStatus ?? SportEventStatus.IN_PROGRESS,
@@ -2674,7 +2670,6 @@ describe('ContestManagementService — a bracket on a knockout already under way
       tiers: createSportEventTierServiceStub(),
       sportEventReader: createContestSportEventReader({
         sportEvents: store.sportEventRepo(),
-        sports: store.sportRepo(),
         field: store.fieldRepo(),
         tiers: store.tierRepo(),
         valuations: store.valuationRepo(),
@@ -2742,7 +2737,7 @@ describe('ContestManagementService squares rules (#711)', () => {
   ) {
     const contestCoreRepo = createContestRepo();
     const contestConfigurationRepo = createContestConfigurationRepo();
-    const reader = createSportEventReader({ sport: Sport.FOOTBALL, tournamentFormat: TournamentFormat.MATCHES, rounds: 4, gameCount: 1, squaresFromRound });
+    const reader = createSportEventReader({ sport: Sport.FOOTBALL, playsMatches: true, rounds: 4, gameCount: 1, squaresFromRound });
     reader.findGame.mockImplementation(async (sportEventId: string, sportEventRoundMatchId: string) =>
       sportEventId === EVENT_ID && sportEventRoundMatchId === GAME_ID && gameStatus !== null ? { status: gameStatus, roundNumber } : null);
     const service = new ContestManagementService({
@@ -2986,17 +2981,13 @@ describe('ContestManagementService sports leagues a year (#947)', () => {
   });
 });
 
-describe('createContestSportEventReader.findByIds (#1355)', () => {
-  it('gives each event its own sport\'s stored tournament format, even when the events are of different sports', async () => {
+describe('createContestSportEventReader.findByIds (#1355, #2008)', () => {
+  it('reads whether each event plays matches from its own slots, a golf tournament and a tennis draw read together', async () => {
     const store = new InMemorySportEvents();
-    // Formats other than each sport's default, so a fall back to the default would show.
-    store.addSport(Sport.GOLF).tournamentFormat = TournamentFormat.RACE;
-    store.addSport(Sport.TENNIS).tournamentFormat = TournamentFormat.STROKE_PLAY_TOURNAMENT;
     const golf = store.addEvent({ sport: Sport.GOLF });
     const tennis = store.addEvent({ sport: Sport.TENNIS });
     const reader = createContestSportEventReader({
       sportEvents: store.sportEventRepo(),
-      sports: store.sportRepo(),
       field: store.fieldRepo(),
       tiers: store.tierRepo(),
       valuations: store.valuationRepo(),
@@ -3005,9 +2996,9 @@ describe('createContestSportEventReader.findByIds (#1355)', () => {
 
     const states = await reader.findByIds([golf.id, tennis.id]);
 
-    expect(states.map(({ id, tournamentFormat }) => [id, tournamentFormat])).toEqual([
-      [golf.id, TournamentFormat.RACE],
-      [tennis.id, TournamentFormat.STROKE_PLAY_TOURNAMENT],
+    expect(states.map(({ id, playsMatches }) => [id, playsMatches])).toEqual([
+      [golf.id, false],
+      [tennis.id, true],
     ]);
   });
 });
@@ -3018,7 +3009,6 @@ describe('createContestSportEventReader field, game and price reads', () => {
     const store = new InMemorySportEvents();
     return createContestSportEventReader({
       sportEvents: store.sportEventRepo(),
-      sports: store.sportRepo(),
       field: { findBySportEvent: async () => ports.entries ?? [] } as unknown as Parameters<typeof createContestSportEventReader>[0]['field'],
       tiers: { findTierSlots: async () => new Map([[EVENT, [{ id: 'event-slot-1', sportEventId: EVENT, seasonSlotId: 'season-slot-1', seasonSlotStatus: SeasonSlotStatus.SCHEDULED, isFirstSlot: true, tierLayout: null, pricing: null }]]]) },
       valuations: { findBySlot: async () => ports.valuations ?? [] } as unknown as Parameters<typeof createContestSportEventReader>[0]['valuations'],
@@ -3063,7 +3053,6 @@ describe('createContestSportEventReader event and game counts', () => {
     const sportEvents = store.sportEventRepo();
     return createContestSportEventReader({
       sportEvents: countParticipants ? { ...sportEvents, countParticipants } : sportEvents,
-      sports: store.sportRepo(),
       field: store.fieldRepo(),
       tiers: store.tierRepo(),
       valuations: store.valuationRepo(),
@@ -3082,15 +3071,6 @@ describe('createContestSportEventReader event and game counts', () => {
     }]);
     store.matchRows.push({ ...expectDefined(row, 'game row'), id: game.id, status: game.status ?? MatchStatus.SCHEDULED, scheduledDate: game.scheduledDate ?? null });
   }
-
-  it('falls back to the sport\'s default tournament format when its sport has no stored row', async () => {
-    const store = new InMemorySportEvents();
-    const golf = store.addEvent({ sport: Sport.GOLF });
-
-    const state = await readerOn(store).findById(golf.id);
-
-    expect(state?.tournamentFormat).toBe(getDefaultTournamentFormatForSport(Sport.GOLF));
-  });
 
   it('reads an event the participant count leaves out as having no loaded field', async () => {
     const store = new InMemorySportEvents();
@@ -3122,13 +3102,9 @@ describe('createBatchedContestOpeningReader', () => {
 
   function openingReaderOn(store: InMemorySportEvents, overrides: { countParticipants?: () => Promise<Map<string, number>> } = {}) {
     const sportEvents = store.sportEventRepo();
-    const sports = store.sportRepo();
-    const sportReads = { count: 0 };
     return {
-      sportReads,
       reader: createBatchedContestOpeningReader({
         sportEvents: { ...sportEvents, ...overrides },
-        sports: { ...sports, findAll: () => { sportReads.count += 1; return sports.findAll(); } },
         field: store.fieldRepo(),
         tiers: store.tierRepo(),
         valuations: store.valuationRepo(),
@@ -3141,19 +3117,6 @@ describe('createBatchedContestOpeningReader', () => {
     const [row] = bracketMatches(sportEventId, [{ matchNumber: store.matchRows.length + 1, round: roundNumber, home: 'home', away: 'away' }]);
     store.matchRows.push({ ...expectDefined(row, 'game row'), id, status, scheduledDate });
   }
-
-  it('reads the sport rows once for every event asked about on one page', async () => {
-    const store = new InMemorySportEvents();
-    store.addSport(Sport.GOLF);
-    const first = store.addEvent({ sport: Sport.GOLF });
-    const second = store.addEvent({ sport: Sport.GOLF });
-    const { reader, sportReads } = openingReaderOn(store);
-
-    await reader.findById(first.id);
-    await reader.findById(second.id);
-
-    expect(sportReads.count).toBe(1);
-  });
 
   it('reads an event the participant count leaves out as having no loaded field', async () => {
     const store = new InMemorySportEvents();

@@ -1136,7 +1136,6 @@ const TIER_SLOT_SELECT = {
   floorSharePercent: true,
   steepness: true,
   platformTierProfile: { include: TIER_PROFILE_INCLUDE },
-  platformPricingProfile: { select: { name: true } },
   seasonSlot: { select: SEASON_SLOT_SELECT },
 } as const satisfies Prisma.SportEventSlotSelect;
 
@@ -1178,15 +1177,14 @@ function toTierSlot(row: TierSlotRow, seasonSlot: SportLeagueSeasonSlot, isFirst
 }
 
 /** The values a slot's set was priced with; the database check sets all six columns together. */
-function toSlotPricing(row: TierSlotRow): (SlotPricing & { profileName: string }) | null {
-  const { platformPricingProfileId, platformPricingProfile, salaryCap, pricingUnit, topSharePercent, floorSharePercent, steepness } = row;
-  if (platformPricingProfileId === null || platformPricingProfile === null) return null;
+function toSlotPricing(row: TierSlotRow): SlotPricing | null {
+  const { platformPricingProfileId, salaryCap, pricingUnit, topSharePercent, floorSharePercent, steepness } = row;
+  if (platformPricingProfileId === null) return null;
   if (salaryCap === null || pricingUnit === null || topSharePercent === null || floorSharePercent === null || steepness === null) {
     throw new Error(`Event slot ${row.id} names a pricing profile without the values it was priced with.`);
   }
   return {
     platformPricingProfileId,
-    profileName: platformPricingProfile.name,
     salaryCap,
     unit: pricingUnit,
     topSharePercent,
@@ -1313,13 +1311,13 @@ export class PrismaSportEventSlotParticipantValuationRepository implements Sport
     tierSettings: SlotTierSettings;
     assignments: readonly TierAssignment[];
   }): Promise<void> {
-    await this.prisma.$transaction(async (tx) => {
+    await forgettingReads(ReadMemoKey.sportEvent, () => this.prisma.$transaction(async (tx) => {
       await rewriteValuations(tx, tierChanges(input.slot, input.assignments));
       await tx.sportEventSlot.update({
         where: { id: input.slot.id },
         data: { platformTierProfileId: input.tierSettings.platformTierProfileId, tierSize: input.tierSettings.tierSize },
       });
-    });
+    }));
   }
 
   async assignSlotPrices(input: {
@@ -1328,7 +1326,7 @@ export class PrismaSportEventSlotParticipantValuationRepository implements Sport
     assignments: readonly PriceAssignment[];
   }): Promise<void> {
     const { pricing } = input;
-    await this.prisma.$transaction(async (tx) => {
+    await forgettingReads(ReadMemoKey.sportEvent, () => this.prisma.$transaction(async (tx) => {
       await rewriteValuations(tx, input.assignments.map((assignment) => ({
         ...valuedRow(input.slot, assignment.sportEventParticipantId),
         price: assignment.price,
@@ -1345,7 +1343,7 @@ export class PrismaSportEventSlotParticipantValuationRepository implements Sport
           steepness: pricing.steepness,
         },
       });
-    });
+    }));
   }
 }
 
@@ -1426,7 +1424,6 @@ function toSport(row: Prisma.SportGetPayload<object>): SportConfig {
     sport: row.sport,
     urlSegment: row.urlSegment,
     displayOrder: row.displayOrder,
-    tournamentFormat: row.tournamentFormat,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
   };
@@ -1473,7 +1470,7 @@ const SPORT_EVENT_INCLUDE = {
     orderBy: { provider: { name: 'asc' } },
   },
   // The slot definitions it covers (#2010): where contest templates are offered on it.
-  slots: { select: { seasonSlot: { select: { definition: { select: { id: true, key: true, slotKind: true, weekNumber: true, canEndTied: true, periodUnit: true, periodCount: true, ...SLOT_PLACE_SELECT } } } } } },
+  slots: { select: { seasonSlot: { select: { definition: { select: { id: true, key: true, slotKind: true, weekNumber: true, canEndTied: true, matchFormat: true, periodUnit: true, periodCount: true, ...SLOT_PLACE_SELECT } } } } } },
 } as const;
 
 function toSportEvent(row: Prisma.SportEventGetPayload<{ include: typeof SPORT_EVENT_INCLUDE }>): SportEvent {
@@ -1495,7 +1492,7 @@ function toSportEvent(row: Prisma.SportEventGetPayload<{ include: typeof SPORT_E
     slotDefinitions: row.slots
       .map(({ seasonSlot: { definition } }) => ({ ...definition, ...slotPlaceOf(definition) }))
       .sort(compareCoveredSlots)
-      .map((definition) => ({ id: definition.id, slotKind: definition.slotKind, canEndTied: definition.canEndTied, periods: slotPeriodsOf(definition) })),
+      .map((definition) => ({ id: definition.id, slotKind: definition.slotKind, canEndTied: definition.canEndTied, periods: slotPeriodsOf(definition), matchFormat: definition.matchFormat })),
     sportLeagueSeasonId: row.sportLeagueSeasonId,
     championshipYear: row.sportLeagueSeason.championshipYear,
     sportLeagueId: row.sportLeagueId,

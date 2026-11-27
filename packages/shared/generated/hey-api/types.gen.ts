@@ -8934,10 +8934,6 @@ export type SportDto = {
      */
     displayOrder: number;
     /**
-     * Structural format of the sport's events; decides which contest formats are valid.
-     */
-    tournamentFormat: 'STROKE_PLAY_TOURNAMENT' | 'RACE' | 'MATCHES';
-    /**
      * ISO 8601 datetime string.
      */
     createdAt: string;
@@ -8971,10 +8967,6 @@ export type SportListResponse = {
          * Where the sport sits wherever sports are listed together, lower first: the most popular first. Display only, never an identity.
          */
         displayOrder: number;
-        /**
-         * Structural format of the sport's events; decides which contest formats are valid.
-         */
-        tournamentFormat: 'STROKE_PLAY_TOURNAMENT' | 'RACE' | 'MATCHES';
         /**
          * ISO 8601 datetime string.
          */
@@ -12500,10 +12492,6 @@ export type SportEventDto = {
          * The pricing profile the values started from. The admin may have changed any value before assigning.
          */
         platformPricingProfileId: string;
-        /**
-         * The name of the pricing profile the values started from, a label only.
-         */
-        profileName: string;
     } | null;
     /**
      * The tier layout the event's first slot's set was last auto-tiered with (#2044): its tier profile's, with any tier size an admin sent instead. Null until the set is first auto-tiered. Hand placements do not change it.
@@ -12530,10 +12518,6 @@ export type SportEventDto = {
          * The tier profile the layout came from: the sport league's when the set was tiered.
          */
         platformTierProfileId: string;
-        /**
-         * That profile's name, a label only.
-         */
-        profileName: string;
     } | null | {
         type: 'RANGES';
         /**
@@ -12557,10 +12541,6 @@ export type SportEventDto = {
          * The tier profile the layout came from: the sport league's when the set was tiered.
          */
         platformTierProfileId: string;
-        /**
-         * That profile's name, a label only.
-         */
-        profileName: string;
     } | null;
     /**
      * Contest-setup readiness right now.
@@ -12615,6 +12595,10 @@ export type SportEventDto = {
      * How the event is scored. Read through the sport league.
      */
     scoringFamily: 'STROKE_PLAY' | 'FINISH_POSITION' | 'HEAD_TO_HEAD';
+    /**
+     * Whether the event is played as games between two sides (#2008): one of its slots is HEAD_TO_HEAD. A golf tournament or a race, whose slots are FIELD, plays none. Its matches, bracket and seed locks apply only where true.
+     */
+    playsMatches: boolean;
     /**
      * Whether it is a test event, made by hand on a test slot (QA only). A league is synced or off, so every other event is one its sync keeps: the provider wins over an edit to its name and venue, so they are shown read-only. (Admin-only: operational detail no member surface reads.)
      */
@@ -12962,10 +12946,6 @@ export type SportEventListResponse = {
              * The pricing profile the values started from. The admin may have changed any value before assigning.
              */
             platformPricingProfileId: string;
-            /**
-             * The name of the pricing profile the values started from, a label only.
-             */
-            profileName: string;
         } | null;
         /**
          * The tier layout the event's first slot's set was last auto-tiered with (#2044): its tier profile's, with any tier size an admin sent instead. Null until the set is first auto-tiered. Hand placements do not change it.
@@ -12992,10 +12972,6 @@ export type SportEventListResponse = {
              * The tier profile the layout came from: the sport league's when the set was tiered.
              */
             platformTierProfileId: string;
-            /**
-             * That profile's name, a label only.
-             */
-            profileName: string;
         } | null | {
             type: 'RANGES';
             /**
@@ -13019,10 +12995,6 @@ export type SportEventListResponse = {
              * The tier profile the layout came from: the sport league's when the set was tiered.
              */
             platformTierProfileId: string;
-            /**
-             * That profile's name, a label only.
-             */
-            profileName: string;
         } | null;
         /**
          * Contest-setup readiness right now.
@@ -13077,6 +13049,10 @@ export type SportEventListResponse = {
          * How the event is scored. Read through the sport league.
          */
         scoringFamily: 'STROKE_PLAY' | 'FINISH_POSITION' | 'HEAD_TO_HEAD';
+        /**
+         * Whether the event is played as games between two sides (#2008): one of its slots is HEAD_TO_HEAD. A golf tournament or a race, whose slots are FIELD, plays none. Its matches, bracket and seed locks apply only where true.
+         */
+        playsMatches: boolean;
         /**
          * Whether it is a test event, made by hand on a test slot (QA only). A league is synced or off, so every other event is one its sync keeps: the provider wins over an edit to its name and venue, so they are shown read-only. (Admin-only: operational detail no member surface reads.)
          */
@@ -13399,10 +13375,6 @@ export type SportEventResponse = {
              * The pricing profile the values started from. The admin may have changed any value before assigning.
              */
             platformPricingProfileId: string;
-            /**
-             * The name of the pricing profile the values started from, a label only.
-             */
-            profileName: string;
         } | null;
         /**
          * The tier layout the event's first slot's set was last auto-tiered with (#2044): its tier profile's, with any tier size an admin sent instead. Null until the set is first auto-tiered. Hand placements do not change it.
@@ -13429,10 +13401,6 @@ export type SportEventResponse = {
              * The tier profile the layout came from: the sport league's when the set was tiered.
              */
             platformTierProfileId: string;
-            /**
-             * That profile's name, a label only.
-             */
-            profileName: string;
         } | null | {
             type: 'RANGES';
             /**
@@ -13456,10 +13424,6 @@ export type SportEventResponse = {
              * The tier profile the layout came from: the sport league's when the set was tiered.
              */
             platformTierProfileId: string;
-            /**
-             * That profile's name, a label only.
-             */
-            profileName: string;
         } | null;
         /**
          * Contest-setup readiness right now.
@@ -13514,6 +13478,10 @@ export type SportEventResponse = {
          * How the event is scored. Read through the sport league.
          */
         scoringFamily: 'STROKE_PLAY' | 'FINISH_POSITION' | 'HEAD_TO_HEAD';
+        /**
+         * Whether the event is played as games between two sides (#2008): one of its slots is HEAD_TO_HEAD. A golf tournament or a race, whose slots are FIELD, plays none. Its matches, bracket and seed locks apply only where true.
+         */
+        playsMatches: boolean;
         /**
          * Whether it is a test event, made by hand on a test slot (QA only). A league is synced or off, so every other event is one its sync keeps: the provider wins over an edit to its name and venue, so they are shown read-only. (Admin-only: operational detail no member surface reads.)
          */
@@ -14113,9 +14081,9 @@ export type ReplaceSportEventTierAssignmentsRequest = {
 };
 
 /**
- * The values an event slot's set was priced with for budget contests, and the profile they started from (#2044).
+ * The values an event slot's set was priced with for budget contests, and the profile they started from.
  */
-export type SlotPricingDto = {
+export type SlotPricing = {
     /**
      * Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event.
      */
@@ -14140,10 +14108,6 @@ export type SlotPricingDto = {
      * The pricing profile the values started from. The admin may have changed any value before assigning.
      */
     platformPricingProfileId: string;
-    /**
-     * The name of the pricing profile the values started from, a label only.
-     */
-    profileName: string;
 };
 
 /**
@@ -14171,10 +14135,6 @@ export type SlotTierLayout = {
      * The tier profile the layout came from: the sport league's when the set was tiered.
      */
     platformTierProfileId: string;
-    /**
-     * That profile's name, a label only.
-     */
-    profileName: string;
 } | {
     type: 'RANGES';
     /**
@@ -14198,10 +14158,6 @@ export type SlotTierLayout = {
      * The tier profile the layout came from: the sport league's when the set was tiered.
      */
     platformTierProfileId: string;
-    /**
-     * That profile's name, a label only.
-     */
-    profileName: string;
 };
 
 /**

@@ -1,7 +1,8 @@
 /**
  * The tier set migration (#2044) run on QA-shaped rows in real Postgres: an event's tiers,
  * valuations and tier and pricing settings, made when they were the event's, move onto the event's
- * first slot in play order; an event with no slot loses them. The test puts the tables back as
+ * first slot in play order, with the profiles the event named by id (#2205); an event with no slot
+ * loses them. The test puts the tables back as
  * they were before the migration, inserts the rows, runs the migration's own statements from its
  * file, reads where everything went, and rolls everything back. No mocks.
  */
@@ -38,7 +39,12 @@ ALTER TABLE "sport_event_slots" DROP COLUMN "floor_share_percent", DROP COLUMN "
   DROP COLUMN "pricing_unit", DROP COLUMN "salary_cap", DROP COLUMN "steepness", DROP COLUMN "tier_size", DROP COLUMN "top_share_percent";
 DROP TABLE "sport_event_slot_participant_valuations";
 DROP TABLE "sport_event_slot_tiers";
-ALTER TABLE "sport_events" ADD COLUMN "pricing_config" JSONB, ADD COLUMN "tier_config" JSONB;
+ALTER TABLE "sport_events" ADD COLUMN "pricing_config" JSONB, ADD COLUMN "tier_config" JSONB,
+  ADD COLUMN "platform_pricing_profile_id" UUID, ADD COLUMN "platform_tier_profile_id" UUID;
+CREATE INDEX "sport_events_platform_pricing_profile_id_idx" ON "sport_events"("platform_pricing_profile_id");
+CREATE INDEX "sport_events_platform_tier_profile_id_idx" ON "sport_events"("platform_tier_profile_id");
+ALTER TABLE "sport_events" ADD CONSTRAINT "sport_events_platform_pricing_profile_id_fkey" FOREIGN KEY ("platform_pricing_profile_id") REFERENCES "platform_pricing_profiles"("id") ON DELETE SET NULL;
+ALTER TABLE "sport_events" ADD CONSTRAINT "sport_events_platform_tier_profile_id_fkey" FOREIGN KEY ("platform_tier_profile_id") REFERENCES "platform_tier_profiles"("id") ON DELETE SET NULL;
 CREATE TABLE "sport_event_tiers" (
   "id" UUID NOT NULL DEFAULT gen_random_uuid(),
   "sport_event_id" UUID NOT NULL REFERENCES "sport_events"("id"),
@@ -105,7 +111,7 @@ interface Migrated {
 }
 
 describe('the tier set migration', () => {
-  it('moves an event\'s tiers, valuations and settings onto its first slot in play order, keeping their ids, and drops an unslotted event\'s', async () => {
+  it('moves an event\'s tiers, valuations and settings onto its first slot in play order, keeping their ids and the profile it priced from, and drops an unslotted event\'s', async () => {
     const prisma = getPrisma();
     const bracket = await eventOf('Two Slot Cup');
     // Made out of play order, so the first slot follows the slots' kinds, not when they were made.
@@ -120,8 +126,10 @@ describe('the tier set migration', () => {
     // profile's own size would be stored as null.
     expect(league.platformTierProfile.type).toBe('EQUAL_GROUPS');
     const sentTierSize = (league.platformTierProfile.tierSize ?? 0) + 1;
-    const tierConfig = { profileName: 'Old name', type: league.platformTierProfile.type, tierCount: 2, tierSize: sentTierSize, lastTier: 'ALL_REMAINING', lastTierMax: null };
-    const pricingConfig = { profileName: 'Old name', salaryCap: 40_000, unit: 50, topSharePercent: 20, floorSharePercent: 10, steepness: 3 };
+    const tierConfig = { type: league.platformTierProfile.type, tierCount: 2, tierSize: sentTierSize, lastTier: 'ALL_REMAINING', lastTierMax: null };
+    const pricingConfig = { salaryCap: 40_000, unit: 50, topSharePercent: 20, floorSharePercent: 10, steepness: 3 };
+    // The event was priced from another profile than its league's, which the slot keeps.
+    const pricedFrom = await prisma.platformPricingProfile.findFirstOrThrow({ where: { id: { not: league.platformPricingProfileId } }, select: { id: true } });
     const [tierOne, tierTwo, unslottedTier, bracketValuation, unslottedValuation] = [randomUUID(), randomUUID(), randomUUID(), randomUUID(), randomUUID()];
 
     const migrated = await prisma.$transaction(async (tx) => {
@@ -129,7 +137,8 @@ describe('the tier set migration', () => {
         // poolmaster-allow-query-in-loop: the put-back statements, in order
         await tx.$executeRawUnsafe(statement);
       }
-      await tx.$executeRaw`${uncachedStatement()} UPDATE "sport_events" SET "tier_config" = ${JSON.stringify(tierConfig)}::jsonb, "pricing_config" = ${JSON.stringify(pricingConfig)}::jsonb WHERE "id" = ${bracket.id}::uuid`;
+      await tx.$executeRaw`${uncachedStatement()} UPDATE "sport_events" SET "tier_config" = ${JSON.stringify(tierConfig)}::jsonb, "platform_tier_profile_id" = ${league.platformTierProfileId}::uuid,
+        "pricing_config" = ${JSON.stringify(pricingConfig)}::jsonb, "platform_pricing_profile_id" = ${pricedFrom.id}::uuid WHERE "id" = ${bracket.id}::uuid`;
       await tx.$executeRaw`${uncachedStatement()} INSERT INTO "sport_event_tiers" ("id", "sport_event_id", "tier_key", "tier_number", "updated_at") VALUES
         (${tierOne}::uuid, ${bracket.id}::uuid, 'tier-1', 1, now()), (${tierTwo}::uuid, ${bracket.id}::uuid, 'tier-2', 2, now()), (${unslottedTier}::uuid, ${noSlot.id}::uuid, 'tier-1', 1, now())`;
       await tx.$executeRaw`${uncachedStatement()} INSERT INTO "sport_event_participant_valuations" ("id", "sport_event_participant_id", "sport_event_tier_id", "tier_order_index", "tier_assigned_source", "price", "price_assigned_source", "updated_at") VALUES
@@ -148,7 +157,7 @@ describe('the tier set migration', () => {
           where: { sportEventId: bracket.id },
           select: { id: true, platformTierProfileId: true, tierSize: true, platformPricingProfileId: true, salaryCap: true, pricingUnit: true, topSharePercent: true, floorSharePercent: true, steepness: true },
         }),
-        eventColumns: (await tx.$queryRaw<{ name: string }[]>`${uncachedStatement()} SELECT "column_name" AS "name" FROM information_schema.columns WHERE "table_name" = 'sport_events' AND "column_name" IN ('tier_config', 'pricing_config')`).map((column) => column.name),
+        eventColumns: (await tx.$queryRaw<{ name: string }[]>`${uncachedStatement()} SELECT "column_name" AS "name" FROM information_schema.columns WHERE "table_name" = 'sport_events' AND "column_name" IN ('tier_config', 'pricing_config', 'platform_tier_profile_id', 'platform_pricing_profile_id')`).map((column) => column.name),
       };
       throw new Rollback(JSON.stringify(result));
     }, { timeout: 60_000 }).catch((error: unknown) => {
@@ -168,7 +177,7 @@ describe('the tier set migration', () => {
       id: semifinalSlotId,
       platformTierProfileId: league.platformTierProfileId,
       tierSize: sentTierSize,
-      platformPricingProfileId: league.platformPricingProfileId,
+      platformPricingProfileId: pricedFrom.id,
       salaryCap: 40_000, pricingUnit: 50, topSharePercent: 20, floorSharePercent: 10, steepness: 3,
     });
     expect(slotById.get(finalSlotId)).toEqual({

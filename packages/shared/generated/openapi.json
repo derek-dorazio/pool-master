@@ -20672,15 +20672,6 @@
             "maximum": 9007199254740991,
             "description": "Where the sport sits wherever sports are listed together, lower first: the most popular first. Display only, never an identity."
           },
-          "tournamentFormat": {
-            "type": "string",
-            "enum": [
-              "STROKE_PLAY_TOURNAMENT",
-              "RACE",
-              "MATCHES"
-            ],
-            "description": "Structural format of the sport's events; decides which contest formats are valid."
-          },
           "createdAt": {
             "type": "string",
             "format": "date-time",
@@ -20697,7 +20688,6 @@
           "sport",
           "urlSegment",
           "displayOrder",
-          "tournamentFormat",
           "createdAt",
           "updatedAt"
         ],
@@ -20745,15 +20735,6 @@
                   "maximum": 9007199254740991,
                   "description": "Where the sport sits wherever sports are listed together, lower first: the most popular first. Display only, never an identity."
                 },
-                "tournamentFormat": {
-                  "type": "string",
-                  "enum": [
-                    "STROKE_PLAY_TOURNAMENT",
-                    "RACE",
-                    "MATCHES"
-                  ],
-                  "description": "Structural format of the sport's events; decides which contest formats are valid."
-                },
                 "createdAt": {
                   "type": "string",
                   "format": "date-time",
@@ -20770,7 +20751,6 @@
                 "sport",
                 "urlSegment",
                 "displayOrder",
-                "tournamentFormat",
                 "createdAt",
                 "updatedAt"
               ],
@@ -28867,10 +28847,6 @@
                 "type": "string",
                 "format": "uuid",
                 "description": "The pricing profile the values started from. The admin may have changed any value before assigning."
-              },
-              "profileName": {
-                "type": "string",
-                "description": "The name of the pricing profile the values started from, a label only."
               }
             },
             "required": [
@@ -28879,8 +28855,7 @@
               "topSharePercent",
               "floorSharePercent",
               "steepness",
-              "platformPricingProfileId",
-              "profileName"
+              "platformPricingProfileId"
             ],
             "additionalProperties": false
           },
@@ -28932,15 +28907,6 @@
                     "type": "string",
                     "format": "uuid",
                     "description": "The tier profile the layout came from: the sport league's when the set was tiered."
-                  },
-                  "profileName": {
-                    "type": "string",
-                    "minLength": 1,
-                    "maxLength": 50,
-                    "description": "That profile's name, a label only.",
-                    "x-transform": [
-                      "trim"
-                    ]
                   }
                 },
                 "required": [
@@ -28949,8 +28915,7 @@
                   "tierSize",
                   "lastTier",
                   "lastTierMax",
-                  "platformTierProfileId",
-                  "profileName"
+                  "platformTierProfileId"
                 ],
                 "additionalProperties": false
               },
@@ -29009,22 +28974,12 @@
                     "type": "string",
                     "format": "uuid",
                     "description": "The tier profile the layout came from: the sport league's when the set was tiered."
-                  },
-                  "profileName": {
-                    "type": "string",
-                    "minLength": 1,
-                    "maxLength": 50,
-                    "description": "That profile's name, a label only.",
-                    "x-transform": [
-                      "trim"
-                    ]
                   }
                 },
                 "required": [
                   "type",
                   "ranges",
-                  "platformTierProfileId",
-                  "profileName"
+                  "platformTierProfileId"
                 ],
                 "additionalProperties": false
               }
@@ -29137,6 +29092,10 @@
               "HEAD_TO_HEAD"
             ],
             "description": "How the event is scored. Read through the sport league."
+          },
+          "playsMatches": {
+            "type": "boolean",
+            "description": "Whether the event is played as games between two sides (#2008): one of its slots is HEAD_TO_HEAD. A golf tournament or a race, whose slots are FIELD, plays none. Its matches, bracket and seed locks apply only where true."
           },
           "isTestData": {
             "type": "boolean",
@@ -29691,6 +29650,7 @@
           "sportLeagueId",
           "participantType",
           "scoringFamily",
+          "playsMatches",
           "isTestData",
           "slots",
           "autoLifecycleEnabled",
@@ -29950,10 +29910,6 @@
                       "type": "string",
                       "format": "uuid",
                       "description": "The pricing profile the values started from. The admin may have changed any value before assigning."
-                    },
-                    "profileName": {
-                      "type": "string",
-                      "description": "The name of the pricing profile the values started from, a label only."
                     }
                   },
                   "required": [
@@ -29962,8 +29918,7 @@
                     "topSharePercent",
                     "floorSharePercent",
                     "steepness",
-                    "platformPricingProfileId",
-                    "profileName"
+                    "platformPricingProfileId"
                   ],
                   "additionalProperties": false
                 },
@@ -30015,15 +29970,6 @@
                           "type": "string",
                           "format": "uuid",
                           "description": "The tier profile the layout came from: the sport league's when the set was tiered."
-                        },
-                        "profileName": {
-                          "type": "string",
-                          "minLength": 1,
-                          "maxLength": 50,
-                          "description": "That profile's name, a label only.",
-                          "x-transform": [
-                            "trim"
-                          ]
                         }
                       },
                       "required": [
@@ -30032,8 +29978,7 @@
                         "tierSize",
                         "lastTier",
                         "lastTierMax",
-                        "platformTierProfileId",
-                        "profileName"
+                        "platformTierProfileId"
                       ],
                       "additionalProperties": false
                     },
@@ -30092,22 +30037,12 @@
                           "type": "string",
                           "format": "uuid",
                           "description": "The tier profile the layout came from: the sport league's when the set was tiered."
-                        },
-                        "profileName": {
-                          "type": "string",
-                          "minLength": 1,
-                          "maxLength": 50,
-                          "description": "That profile's name, a label only.",
-                          "x-transform": [
-                            "trim"
-                          ]
                         }
                       },
                       "required": [
                         "type",
                         "ranges",
-                        "platformTierProfileId",
-                        "profileName"
+                        "platformTierProfileId"
                       ],
                       "additionalProperties": false
                     }
@@ -30220,6 +30155,10 @@
                     "HEAD_TO_HEAD"
                   ],
                   "description": "How the event is scored. Read through the sport league."
+                },
+                "playsMatches": {
+                  "type": "boolean",
+                  "description": "Whether the event is played as games between two sides (#2008): one of its slots is HEAD_TO_HEAD. A golf tournament or a race, whose slots are FIELD, plays none. Its matches, bracket and seed locks apply only where true."
                 },
                 "isTestData": {
                   "type": "boolean",
@@ -30774,6 +30713,7 @@
                 "sportLeagueId",
                 "participantType",
                 "scoringFamily",
+                "playsMatches",
                 "isTestData",
                 "slots",
                 "autoLifecycleEnabled",
@@ -30987,10 +30927,6 @@
                     "type": "string",
                     "format": "uuid",
                     "description": "The pricing profile the values started from. The admin may have changed any value before assigning."
-                  },
-                  "profileName": {
-                    "type": "string",
-                    "description": "The name of the pricing profile the values started from, a label only."
                   }
                 },
                 "required": [
@@ -30999,8 +30935,7 @@
                   "topSharePercent",
                   "floorSharePercent",
                   "steepness",
-                  "platformPricingProfileId",
-                  "profileName"
+                  "platformPricingProfileId"
                 ],
                 "additionalProperties": false
               },
@@ -31052,15 +30987,6 @@
                         "type": "string",
                         "format": "uuid",
                         "description": "The tier profile the layout came from: the sport league's when the set was tiered."
-                      },
-                      "profileName": {
-                        "type": "string",
-                        "minLength": 1,
-                        "maxLength": 50,
-                        "description": "That profile's name, a label only.",
-                        "x-transform": [
-                          "trim"
-                        ]
                       }
                     },
                     "required": [
@@ -31069,8 +30995,7 @@
                       "tierSize",
                       "lastTier",
                       "lastTierMax",
-                      "platformTierProfileId",
-                      "profileName"
+                      "platformTierProfileId"
                     ],
                     "additionalProperties": false
                   },
@@ -31129,22 +31054,12 @@
                         "type": "string",
                         "format": "uuid",
                         "description": "The tier profile the layout came from: the sport league's when the set was tiered."
-                      },
-                      "profileName": {
-                        "type": "string",
-                        "minLength": 1,
-                        "maxLength": 50,
-                        "description": "That profile's name, a label only.",
-                        "x-transform": [
-                          "trim"
-                        ]
                       }
                     },
                     "required": [
                       "type",
                       "ranges",
-                      "platformTierProfileId",
-                      "profileName"
+                      "platformTierProfileId"
                     ],
                     "additionalProperties": false
                   }
@@ -31257,6 +31172,10 @@
                   "HEAD_TO_HEAD"
                 ],
                 "description": "How the event is scored. Read through the sport league."
+              },
+              "playsMatches": {
+                "type": "boolean",
+                "description": "Whether the event is played as games between two sides (#2008): one of its slots is HEAD_TO_HEAD. A golf tournament or a race, whose slots are FIELD, plays none. Its matches, bracket and seed locks apply only where true."
               },
               "isTestData": {
                 "type": "boolean",
@@ -31811,6 +31730,7 @@
               "sportLeagueId",
               "participantType",
               "scoringFamily",
+              "playsMatches",
               "isTestData",
               "slots",
               "autoLifecycleEnabled",
@@ -32636,7 +32556,7 @@
         "additionalProperties": false,
         "description": "The drag-and-drop tier save."
       },
-      "SlotPricingDto": {
+      "SlotPricing": {
         "type": "object",
         "properties": {
           "salaryCap": {
@@ -32673,10 +32593,6 @@
             "type": "string",
             "format": "uuid",
             "description": "The pricing profile the values started from. The admin may have changed any value before assigning."
-          },
-          "profileName": {
-            "type": "string",
-            "description": "The name of the pricing profile the values started from, a label only."
           }
         },
         "required": [
@@ -32685,11 +32601,10 @@
           "topSharePercent",
           "floorSharePercent",
           "steepness",
-          "platformPricingProfileId",
-          "profileName"
+          "platformPricingProfileId"
         ],
         "additionalProperties": false,
-        "description": "The values an event slot's set was priced with for budget contests, and the profile they started from (#2044)."
+        "description": "The values an event slot's set was priced with for budget contests, and the profile they started from."
       },
       "SlotTierLayout": {
         "description": "The tier layout an event slot's set was last auto-tiered with: its tier profile's, with any tier size an admin sent instead.",
@@ -32736,15 +32651,6 @@
                 "type": "string",
                 "format": "uuid",
                 "description": "The tier profile the layout came from: the sport league's when the set was tiered."
-              },
-              "profileName": {
-                "type": "string",
-                "minLength": 1,
-                "maxLength": 50,
-                "description": "That profile's name, a label only.",
-                "x-transform": [
-                  "trim"
-                ]
               }
             },
             "required": [
@@ -32753,8 +32659,7 @@
               "tierSize",
               "lastTier",
               "lastTierMax",
-              "platformTierProfileId",
-              "profileName"
+              "platformTierProfileId"
             ],
             "additionalProperties": false
           },
@@ -32810,22 +32715,12 @@
                 "type": "string",
                 "format": "uuid",
                 "description": "The tier profile the layout came from: the sport league's when the set was tiered."
-              },
-              "profileName": {
-                "type": "string",
-                "minLength": 1,
-                "maxLength": 50,
-                "description": "That profile's name, a label only.",
-                "x-transform": [
-                  "trim"
-                ]
               }
             },
             "required": [
               "type",
               "ranges",
-              "platformTierProfileId",
-              "profileName"
+              "platformTierProfileId"
             ],
             "additionalProperties": false
           }
@@ -88273,7 +88168,7 @@
         "tags": [
           "Events"
         ],
-        "description": "Prices the active field on the budget curve with the values sent, in the order of the league's pricing profile's sources, and stores the values as the event's pricing. Repeatable until release. Returns the field with its new valuations. Root admin only. 409 SPORT_EVENT_TIERS_LOCKED once the event is released: its tiers and prices are locked. 422 PRICING_CONFIG_INVALID when the floor share is above the top share or the rounding unit is above the worst golfer's price (salaryCap × floorSharePercent / 100), which could round prices to $0. 409 FIELD_HAS_NO_ORDER when no active participant has a value for any source the league's pricing profile lists: a field is never ordered by name.",
+        "description": "Prices the active field on the budget curve with the values sent, in the order of the league's pricing profile's sources, and stores the values as the event's pricing, with the profile they started from by id. Repeatable until release. Returns the field with its new valuations. Root admin only. 409 SPORT_EVENT_TIERS_LOCKED once the event is released: its tiers and prices are locked. 422 PRICING_CONFIG_INVALID when the floor share is above the top share or the rounding unit is above the worst golfer's price (salaryCap × floorSharePercent / 100), which could round prices to $0. 409 FIELD_HAS_NO_ORDER when no active participant has a value for any source the league's pricing profile lists: a field is never ordered by name. 404 PLATFORM_PRICING_PROFILE_NOT_FOUND when no pricing profile has the id sent.",
         "requestBody": {
           "required": true,
           "content": {

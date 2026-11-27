@@ -1,5 +1,4 @@
 import {
-  eventPlaysMatches,
   eventSportDefinition,
   getSportDefinition,
   ParticipantType,
@@ -38,12 +37,5 @@ describe('An event read through its sport league', () => {
     const definition = eventSportDefinition({ sport: Sport.GOLF, participantType: ParticipantType.TEAM, scoringFamily: ScoringFamily.STROKE_PLAY });
 
     expect([definition.sport, definition.participantType, definition.scoringFamily]).toEqual([Sport.GOLF, ParticipantType.TEAM, ScoringFamily.STROKE_PLAY]);
-  });
-
-  it('plays matches when its sport does', () => {
-    expect([
-      eventPlaysMatches({ sport: Sport.BASEBALL, ...sportPlay(Sport.BASEBALL) }),
-      eventPlaysMatches({ sport: Sport.GOLF, ...sportPlay(Sport.GOLF) }),
-    ]).toEqual([true, false]);
   });
 });

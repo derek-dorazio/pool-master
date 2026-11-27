@@ -88,7 +88,7 @@ describe('SDK Functional: Horse racing Win/Place/Show', () => {
     // The migration's reference row, restored in case an earlier suite cleared the sports table.
     await getFunctionalPrisma().sport.upsert({
       where: { sport: Sport.HORSE_RACING },
-      create: { sport: Sport.HORSE_RACING, ...sportRowKeys(Sport.HORSE_RACING), tournamentFormat: 'RACE' },
+      create: { sport: Sport.HORSE_RACING, ...sportRowKeys(Sport.HORSE_RACING) },
       update: {},
     });
     const admin = await buildRegisteredUser({ displayName: 'Race Admin' });

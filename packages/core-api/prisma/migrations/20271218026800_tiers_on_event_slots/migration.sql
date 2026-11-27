@@ -3,8 +3,8 @@
 -- order, so each event's tiers, valuations and settings move onto that slot. The slot keeps the
 -- settings as typed columns: the tier profile (the layout is the profile's) with any tier size an
 -- admin sent, and the pricing profile with the five values the field was priced with. The old
--- JSON stored a profile's name; the slot takes its sport league's profiles instead, so nothing is
--- matched by name, and the values the prices were made with are kept as they were.
+-- event named its profiles by id (#2205); the slot keeps those, or its sport league's where one
+-- was deleted, and the values the prices were made with are kept as they were.
 
 -- New columns and tables.
 ALTER TABLE "sport_event_slots" ADD COLUMN     "floor_share_percent" DOUBLE PRECISION,
@@ -94,14 +94,15 @@ FROM "sport_event_participant_valuations" v
 JOIN "sport_event_participants" p ON p."id" = v."sport_event_participant_id"
 JOIN "first_event_slots" f ON f."sport_event_id" = p."sport_event_id";
 
--- The settings: the league's profiles, any tier size the admin sent, and the pricing values used.
+-- The settings: the profiles the event recorded by id (#2205), its sport league's where that
+-- profile has since been deleted, any tier size the admin sent, and the pricing values used.
 UPDATE "sport_event_slots" es
-SET "platform_tier_profile_id" = CASE WHEN e."tier_config" IS NULL THEN NULL ELSE l."platform_tier_profile_id" END,
+SET "platform_tier_profile_id" = CASE WHEN e."tier_config" IS NULL THEN NULL ELSE tp."id" END,
     "tier_size" = CASE
       WHEN e."tier_config" IS NOT NULL AND e."tier_config"->>'type' = 'EQUAL_GROUPS'
         AND (e."tier_config"->>'tierSize')::int IS DISTINCT FROM tp."tier_size"
       THEN (e."tier_config"->>'tierSize')::int END,
-    "platform_pricing_profile_id" = CASE WHEN e."pricing_config" IS NULL THEN NULL ELSE l."platform_pricing_profile_id" END,
+    "platform_pricing_profile_id" = CASE WHEN e."pricing_config" IS NULL THEN NULL ELSE COALESCE(e."platform_pricing_profile_id", l."platform_pricing_profile_id") END,
     "salary_cap" = (e."pricing_config"->>'salaryCap')::int,
     "pricing_unit" = (e."pricing_config"->>'unit')::int,
     "top_share_percent" = (e."pricing_config"->>'topSharePercent')::double precision,
@@ -110,7 +111,7 @@ SET "platform_tier_profile_id" = CASE WHEN e."tier_config" IS NULL THEN NULL ELS
 FROM "first_event_slots" f
 JOIN "sport_events" e ON e."id" = f."sport_event_id"
 JOIN "sport_leagues" l ON l."id" = e."sport_league_id"
-JOIN "platform_tier_profiles" tp ON tp."id" = l."platform_tier_profile_id"
+JOIN "platform_tier_profiles" tp ON tp."id" = COALESCE(e."platform_tier_profile_id", l."platform_tier_profile_id")
 WHERE es."id" = f."sport_event_slot_id"
   AND (e."tier_config" IS NOT NULL OR e."pricing_config" IS NOT NULL);
 
@@ -119,5 +120,11 @@ DROP TABLE "first_event_slots";
 -- An event with no slot has nowhere to keep tiers: its tiers and valuations go with the old tables.
 DROP TABLE "sport_event_participant_valuations";
 DROP TABLE "sport_event_tiers";
+ALTER TABLE "sport_events" DROP CONSTRAINT "sport_events_platform_pricing_profile_id_fkey";
+ALTER TABLE "sport_events" DROP CONSTRAINT "sport_events_platform_tier_profile_id_fkey";
+DROP INDEX "sport_events_platform_pricing_profile_id_idx";
+DROP INDEX "sport_events_platform_tier_profile_id_idx";
 ALTER TABLE "sport_events" DROP COLUMN "pricing_config",
-DROP COLUMN "tier_config";
+DROP COLUMN "platform_pricing_profile_id",
+DROP COLUMN "tier_config",
+DROP COLUMN "platform_tier_profile_id";

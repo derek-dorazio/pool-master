@@ -625,7 +625,7 @@ describe('Event page ⚙ dialog', () => {
 
   it('says what the event was priced with, or that it is not priced yet', async () => {
     renderEventPage('/manage/sports/golf/events/tour-1/field', {
-      event: tournament({ pricing: { platformPricingProfileId: '00000000-0000-4000-8000-0000000000b2', profileName: 'Standard', salaryCap: 50000, unit: 100, topSharePercent: 30, floorSharePercent: 12, steepness: 4 } }),
+      event: tournament({ pricing: { platformPricingProfileId: '00000000-0000-4000-8000-0000000000b2', salaryCap: 50000, unit: 100, topSharePercent: 30, floorSharePercent: 12, steepness: 4 } }),
     });
 
     const dialog = await openSettings();

@@ -116,6 +116,13 @@ export function EventSettingsDialog({
   const tierOrder = overview === undefined ? '…' : overview.tierOrderBasis === null ? 'No active field' : enumLabel('FieldOrderBasis', overview.tierOrderBasis);
   const testId = 'root-admin-event-settings-dialog';
 
+  /** The profile the event was priced from, by its words (#2205). */
+  const pricedFromName = (profileId: string): string => {
+    // poolmaster-allow-list-lookup: profiles are platform reference data, a handful of rows
+    const profile = platformPricingProfilesQuery.data?.find((candidate) => candidate.id === profileId);
+    return profile ? profileWords('pricingProfile', profile).name : '…';
+  };
+
   const facts: Fact[] = [
     { id: 'league', label: 'Sport league', value: sportLeague?.name ?? '…', testId: `${testId}-league` },
     { id: 'status', label: 'Status', value: formatSportEventStatus(event.status), testId: `${testId}-status` },
@@ -144,7 +151,7 @@ export function EventSettingsDialog({
     {
       id: 'pricedWith',
       label: 'Priced with',
-      value: event.pricing === null ? 'Not priced yet' : `${event.pricing.profileName}: ${describeBudgetPricing(event.pricing)}`,
+      value: event.pricing === null ? 'Not priced yet' : `${pricedFromName(event.pricing.platformPricingProfileId)}: ${describeBudgetPricing(event.pricing)}`,
       testId: `${testId}-priced-with`,
     },
     {
