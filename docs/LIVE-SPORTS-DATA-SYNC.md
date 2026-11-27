@@ -421,7 +421,7 @@ for those leagues. It reads the provider's roster for the current Season's provi
   eligible for a field, and a team. A code the league has no position for is not one of its
   positions, and is dropped without a finding.
 - reads the team only through a provider mapping of one of the league's TEAM participants. A team
-  id mapped to none raises `UNMAPPED_PARTICIPANT` for the team; the writer refuses a row whose team
+  id mapped to none raises `UNMAPPED_PARTICIPANT` for the team, named as the feed names it; the writer refuses a row whose team
   is not a TEAM participant of the league.
 - creates a player named for the first time, with its provider mapping, renames one the feed names
   differently, and moves a traded one. A player the feed stops listing keeps their row, with the

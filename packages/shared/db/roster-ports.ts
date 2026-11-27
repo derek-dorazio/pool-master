@@ -25,6 +25,13 @@ export interface RosterIds {
 }
 
 /** One roster's writes, in one transaction. */
+/** One player's roster row: their team and position by id. */
+export interface RosterRowWrite {
+  participantId: string;
+  teamParticipantId: string;
+  sportLeaguePositionId: string;
+}
+
 export interface RosterWrite {
   sportLeagueId: string;
   sportLeagueSeasonId: string;
@@ -34,8 +41,10 @@ export interface RosterWrite {
   newPlayers: ReadonlyArray<{ participantId: string; externalId: string; name: string }>;
   /** Players the feed now names differently. */
   renamedPlayers: ReadonlyArray<{ participantId: string; name: string }>;
-  /** Roster rows to create, or to point at a new team or position. */
-  rows: ReadonlyArray<{ participantId: string; teamParticipantId: string; sportLeaguePositionId: string }>;
+  /** Roster rows the Season has none of yet, for players it now lists: written together, however many. */
+  newRows: ReadonlyArray<RosterRowWrite>;
+  /** The Season's rows of players now on another team or at another position (trades: few). */
+  movedRows: ReadonlyArray<RosterRowWrite>;
   /** Every player the feed listed: their mapping and roster row were seen now. */
   seenPlayerIds: readonly string[];
   seenAt: Date;

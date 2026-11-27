@@ -43,7 +43,7 @@ export const nflTeamListSchema = z.object({
  * `NFLPlayer` from `/nfl/v1/players/active` (#2025): an active player with their team and the
  * position code a roster row's position is mapped from (`position_abbreviation`).
  */
-export const nflPlayerSchema = z.object({
+const nflPlayerSchema = z.object({
   id: z.number().int().optional(),
   first_name: z.string().optional(),
   last_name: z.string().optional(),

@@ -4,7 +4,6 @@ import {
   nflGameListSchema,
   nflGameSchema,
   nflPlayerListSchema,
-  nflPlayerSchema,
   NflSeasonType,
   nflStandingListSchema,
   nflStandingSchema,
@@ -55,7 +54,7 @@ describe('BALLDONTLIE NFL fields the adapter reads', () => {
     ['NFLGame', nflGameSchema],
     ['NFLTeam', nflTeamSchema],
     ['NFLStandings', nflStandingSchema],
-    ['NFLPlayer', nflPlayerSchema],
+    ['NFLPlayer', nflPlayerListSchema.shape.data.element],
     ['Pagination', balldontliePaginationSchema],
   ];
 

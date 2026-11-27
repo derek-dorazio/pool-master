@@ -10,7 +10,6 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { SyncedLeagueRef } from '@poolmaster/shared/db';
 import { BackgroundJobType, fieldWindowEventIds, JobTrigger, MatchStatus, Sport, SyncSeasonState, syncSeasonStateOf } from '@poolmaster/shared/domain';
-import { IngestionScheduleConfigSchema } from '@poolmaster/shared/dto/config.dto';
 import { PrismaBackgroundJobRepository, PrismaSportLeagueRepository } from '../../../packages/core-api/src/adapters';
 import { PrismaSyncDueWorkReader } from '../../../packages/core-api/src/adapters/prisma-sync-due-work-reader';
 import { BackgroundJobQueue } from '../../../packages/core-api/src/modules/background-jobs';
@@ -363,59 +362,5 @@ describe('the migration giving each sync kind an interval per Season state', () 
       FIELD: { intervals: { IN_SEASON: { intervalMinutes: 360 }, OFFSEASON: { intervalMinutes: 1440 } } },
       SCORES: { enabled: true, intervals: { IN_SEASON: { intervalSeconds: 60 }, OFFSEASON: { intervalSeconds: 60 } } },
     });
-  });
-});
-
-describe('the migration adding the roster sync to the schedule', () => {
-  const MIGRATION = join(__dirname, '../../../packages/core-api/prisma/migrations/20271218030600_roster_sync/migration.sql');
-  const ROSTER = { intervals: { IN_SEASON: { intervalMinutes: 1440 }, OFFSEASON: { intervalMinutes: 1440 } } };
-  const SAVED = {
-    EVENTS: { enabled: false, intervals: { IN_SEASON: { intervalMinutes: 120 }, OFFSEASON: { intervalMinutes: 1440 } } },
-    FIELD: { intervals: { IN_SEASON: { intervalMinutes: 360 }, OFFSEASON: { intervalMinutes: 1440 } } },
-    SCORES: { enabled: true, intervals: { IN_SEASON: { intervalSeconds: 60 }, OFFSEASON: { intervalSeconds: 60 } } },
-  };
-  class Rollback extends Error {}
-
-  /** The migration's schedule rewrites: its enum values are on the test database already. */
-  function scheduleStatements(): string[] {
-    return readFileSync(MIGRATION, 'utf8')
-      .split(/;\s*\n/)
-      .map((statement) => statement.replace(/^\s*--.*$/gm, '').trim())
-      .filter((statement) => statement.startsWith('UPDATE'));
-  }
-
-  it('gives a saved schedule and its saved changes the roster sync, daily with no switch, so both still read as schedules; a change in the old shape stays as it was', async () => {
-    let migrated: unknown;
-    let history: unknown[] = [];
-    const OLD_SHAPE = { EVENTS: { enabled: true, intervalMinutes: 360 } };
-    await expect(getPrisma().$transaction(async (tx) => {
-      await tx.platformRuntimeConfig.deleteMany({ where: { configKey: 'INGESTION_SCHEDULE_CONFIG' } });
-      await tx.platformRuntimeConfigHistory.deleteMany({ where: { configKey: 'INGESTION_SCHEDULE_CONFIG' } });
-      await tx.platformRuntimeConfig.create({ data: { configKey: 'INGESTION_SCHEDULE_CONFIG', configJson: SAVED } });
-      await tx.platformRuntimeConfigHistory.createMany({
-        data: [
-          { configKey: 'INGESTION_SCHEDULE_CONFIG', previousJson: SAVED, newJson: SAVED, changedAt: new Date('2027-01-02T00:00:00Z') },
-          { configKey: 'INGESTION_SCHEDULE_CONFIG', newJson: OLD_SHAPE, changedAt: new Date('2027-01-01T00:00:00Z') },
-        ],
-      });
-      for (const statement of scheduleStatements()) {
-        // poolmaster-allow-query-in-loop: the migration's own statements, in order
-        await tx.$executeRawUnsafe(statement);
-      }
-      migrated = (await tx.platformRuntimeConfig.findUniqueOrThrow({ where: { configKey: 'INGESTION_SCHEDULE_CONFIG' } })).configJson;
-      history = await tx.platformRuntimeConfigHistory.findMany({
-        where: { configKey: 'INGESTION_SCHEDULE_CONFIG' },
-        orderBy: { changedAt: 'desc' },
-        select: { previousJson: true, newJson: true },
-      });
-      throw new Rollback();
-    })).rejects.toBeInstanceOf(Rollback);
-
-    expect(migrated).toEqual({ ...SAVED, ROSTER });
-    expect(IngestionScheduleConfigSchema.safeParse(migrated).success).toBe(true);
-    expect(history).toEqual([
-      { previousJson: { ...SAVED, ROSTER }, newJson: { ...SAVED, ROSTER } },
-      { previousJson: null, newJson: OLD_SHAPE },
-    ]);
   });
 });

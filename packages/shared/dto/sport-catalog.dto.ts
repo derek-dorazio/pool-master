@@ -284,7 +284,7 @@ export const SportLeagueEventOverviewListResponseSchema = z.object({
 }).describe('A sport league\'s events.');
 export type SportLeagueEventOverviewListResponse = z.infer<typeof SportLeagueEventOverviewListResponseSchema>;
 
-export const SportLeagueRosterRowDtoSchema = z.object({
+const SportLeagueRosterRowDtoSchema = z.object({
   teamParticipantId: z.uuid().describe('The player\'s team: a TEAM participant of the league.'),
   teamName: z.string().describe('The team\'s name.'),
   positionCode: z.string().describe('The player\'s position\'s code in the league (QB). Screens read its words by this code.'),

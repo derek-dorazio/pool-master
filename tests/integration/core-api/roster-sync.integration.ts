@@ -12,6 +12,7 @@ import { PrismaSportLeagueRosterRepository } from '../../../packages/core-api/sr
 import { PrismaSportLeagueSeasonRepository } from '../../../packages/core-api/src/adapters/prisma-sport-league-season-repository';
 import type { ProviderRosterPlayer } from '../../../packages/core-api/src/modules/ingestion/core/provider-interface';
 import { LeagueRosterSync } from '../../../packages/core-api/src/modules/ingestion/roster/league-roster-sync';
+import { expectSameStatementCount } from '../query-scaling';
 import { inMemorySyncRuns } from '../../support/in-memory-sync-runs';
 import { syncLeagueTo, syncSeasonsTo } from '../../support/league-sync';
 import { insertTestSportLeague } from '../../support/test-sport-league';
@@ -69,10 +70,10 @@ describe('the roster sync', () => {
   it('rosters each player with an eligible position on a mapped team as a new player of the league, and leaves off the rest', async () => {
     const { league, seasonId } = await rosteredLeague();
     const { run } = rosterSync(() => [
-      { externalId: '33', name: 'Patrick Mahomes', teamExternalId: '17', positionCode: 'QB' },
-      { externalId: '35', name: 'Harrison Butker', teamExternalId: '17', positionCode: 'K' },
-      { externalId: '36', name: 'Nick Bolton', teamExternalId: '17', positionCode: 'LB' },
-      { externalId: '39', name: 'Free Agent', teamExternalId: null, positionCode: 'QB' },
+      { externalId: '33', name: 'Patrick Mahomes', teamExternalId: '17', teamName: 'Kansas City Chiefs', positionCode: 'QB' },
+      { externalId: '35', name: 'Harrison Butker', teamExternalId: '17', teamName: 'Kansas City Chiefs', positionCode: 'K' },
+      { externalId: '36', name: 'Nick Bolton', teamExternalId: '17', teamName: 'Kansas City Chiefs', positionCode: 'LB' },
+      { externalId: '39', name: 'Free Agent', teamExternalId: null, teamName: null, positionCode: 'QB' },
     ]);
 
     await run(league.id);
@@ -83,17 +84,34 @@ describe('the roster sync', () => {
     await expect(getPrisma().participantProviderMapping.count({ where: { sportLeagueId: league.id, participantType: ParticipantType.INDIVIDUAL } })).resolves.toBe(1);
   });
 
+  it('writes a Season\'s first roster in the same statements for 2 new players as for 20', async () => {
+    await expectSameStatementCount({
+      seed: async (players) => {
+        const { league, seasonId } = await rosteredLeague();
+        const roster = Array.from({ length: players }, (_, index): ProviderRosterPlayer => (
+          { externalId: String(100 + index), name: `Rookie ${String(index)}`, teamExternalId: '17', teamName: 'Kansas City Chiefs', positionCode: 'QB' }
+        ));
+        return { league, seasonId, run: rosterSync(() => roster).run };
+      },
+      call: async ({ league, seasonId, run }) => {
+        await run(league.id);
+        return rowsOf(seasonId);
+      },
+      rowsShown: (rows) => rows.length,
+    });
+  });
+
   it('keeps a player the feed no longer lists, with the time it last listed them, and renames one it names differently', async () => {
     const { league, seasonId } = await rosteredLeague();
     let roster: ProviderRosterPlayer[] = [
-      { externalId: '33', name: 'Patrick Mahomes', teamExternalId: '17', positionCode: 'QB' },
-      { externalId: '34', name: 'Carson Wentz', teamExternalId: '17', positionCode: 'QB' },
+      { externalId: '33', name: 'Patrick Mahomes', teamExternalId: '17', teamName: 'Kansas City Chiefs', positionCode: 'QB' },
+      { externalId: '34', name: 'Carson Wentz', teamExternalId: '17', teamName: 'Kansas City Chiefs', positionCode: 'QB' },
     ];
     const { run } = rosterSync(() => roster);
     await run(league.id);
     const [, wentz] = await rowsOf(seasonId);
 
-    roster = [{ externalId: '33', name: 'Patrick Mahomes II', teamExternalId: '17', positionCode: 'QB' }];
+    roster = [{ externalId: '33', name: 'Patrick Mahomes II', teamExternalId: '17', teamName: 'Kansas City Chiefs', positionCode: 'QB' }];
     await run(league.id);
 
     const rows = await rowsOf(seasonId);
@@ -110,7 +128,7 @@ describe('the roster sync', () => {
     await prisma.participantProviderMapping.create({
       data: { participantId: notATeam.id, sportLeagueId: league.id, participantType: ParticipantType.INDIVIDUAL, providerId, externalId: '50' },
     });
-    const { run, findings } = rosterSync(() => [{ externalId: '51', name: 'Pat Doe', teamExternalId: '50', positionCode: 'QB' }]);
+    const { run, findings } = rosterSync(() => [{ externalId: '51', name: 'Pat Doe', teamExternalId: '50', teamName: null, positionCode: 'QB' }]);
 
     await run(league.id);
 
@@ -130,7 +148,8 @@ describe('the roster sync', () => {
       providerId,
       newPlayers: [],
       renamedPlayers: [],
-      rows: [{ participantId: player.id, teamParticipantId: player.id, sportLeaguePositionId: position.id }],
+      newRows: [{ participantId: player.id, teamParticipantId: player.id, sportLeaguePositionId: position.id }],
+      movedRows: [],
       seenPlayerIds: [player.id],
       seenAt: new Date(),
       jobs: [],
@@ -140,7 +159,7 @@ describe('the roster sync', () => {
 
   it('keeps a rostered player out of the league\'s team lookups when the provider numbers them as it numbers a team', async () => {
     const { league, chiefs } = await rosteredLeague();
-    const { run } = rosterSync(() => [{ externalId: '17', name: 'Player Seventeen', teamExternalId: '17', positionCode: 'QB' }]);
+    const { run } = rosterSync(() => [{ externalId: '17', name: 'Player Seventeen', teamExternalId: '17', teamName: 'Kansas City Chiefs', positionCode: 'QB' }]);
     await run(league.id);
 
     const mappings = await new PrismaParticipantProviderMappingRepository(getPrisma())

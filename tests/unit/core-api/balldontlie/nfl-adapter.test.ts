@@ -234,15 +234,15 @@ describe('BalldontlieAdapter (NFL)', () => {
     expect(harness.api.requests).toHaveLength(2);
   });
 
-  it('reads the NFL roster as every active player, each with their team\'s feed id and position code, and none for a player on no team', async () => {
+  it('reads the NFL roster as every active player, each with their team\'s feed id and name and their position code, and none for a player on no team', async () => {
     const harness = setup();
     restore = harness.restore;
 
     const roster = await harness.adapter.getRoster(Sport.FOOTBALL, { providerLeagueCode: 'nfl', providerSeasonId: '2026' });
 
     expect(roster).toHaveLength(7);
-    expect(roster[0]).toEqual({ externalId: '33', name: 'Patrick Mahomes', teamExternalId: '17', positionCode: 'QB' });
-    expect(roster.find((player) => player.name === 'Free Agent')).toMatchObject({ teamExternalId: null, positionCode: 'WR' });
+    expect(roster[0]).toEqual({ externalId: '33', name: 'Patrick Mahomes', teamExternalId: '17', teamName: 'Kansas City Chiefs', positionCode: 'QB' });
+    expect(roster.find((player) => player.name === 'Free Agent')).toMatchObject({ teamExternalId: null, teamName: null, positionCode: 'WR' });
     expect(requestLine(harness.api)).toEqual(['/nfl/v1/players/active?per_page=100']);
   });
 

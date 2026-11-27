@@ -62,7 +62,7 @@ export class PrismaSportLeagueRosterRepository implements SportLeagueRosterRepos
   }
 
   async applyRoster(write: RosterWrite): Promise<void> {
-    const teamIds = [...new Set(write.rows.map((row) => row.teamParticipantId))];
+    const teamIds = [...new Set([...write.newRows, ...write.movedRows].map((row) => row.teamParticipantId))];
     if (teamIds.length > 0) {
       const teams = await this.prisma.participant.count({
         where: { id: { in: teamIds }, sportLeagueId: write.sportLeagueId, participantType: ParticipantType.TEAM },
@@ -92,11 +92,14 @@ export class PrismaSportLeagueRosterRepository implements SportLeagueRosterRepos
       }),
       // poolmaster-allow-query-in-loop: the players one roster renames (per-row values, one transaction)
       ...write.renamedPlayers.map((player) => this.prisma.participant.update({ where: { id: player.participantId }, data: { name: player.name } })),
-      // poolmaster-allow-query-in-loop: the roster rows one sync creates or moves (per-row values, one transaction)
-      ...write.rows.map((row) => this.prisma.sportLeagueSeasonParticipantTeam.upsert({
+      // A Season's first roster is every player's row at once: one statement, however many.
+      this.prisma.sportLeagueSeasonParticipantTeam.createMany({
+        data: write.newRows.map((row) => ({ sportLeagueId, sportLeagueSeasonId, ...row, lastSeenAt: seenAt })),
+      }),
+      // poolmaster-allow-query-in-loop: the players one sync sees traded or moved to another position (few; per-row values, one transaction)
+      ...write.movedRows.map((row) => this.prisma.sportLeagueSeasonParticipantTeam.update({
         where: { sportLeagueSeasonId_participantId: { sportLeagueSeasonId, participantId: row.participantId } },
-        create: { sportLeagueId, sportLeagueSeasonId, participantId: row.participantId, teamParticipantId: row.teamParticipantId, sportLeaguePositionId: row.sportLeaguePositionId, lastSeenAt: seenAt },
-        update: { teamParticipantId: row.teamParticipantId, sportLeaguePositionId: row.sportLeaguePositionId },
+        data: { teamParticipantId: row.teamParticipantId, sportLeaguePositionId: row.sportLeaguePositionId },
       })),
       this.prisma.participantProviderMapping.updateMany({
         where: { sportLeagueId, providerId, participantType: ParticipantType.INDIVIDUAL, participantId: { in: [...write.seenPlayerIds] } },

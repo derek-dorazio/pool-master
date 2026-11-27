@@ -164,6 +164,7 @@ export function toNflRosterPlayer(player: NflPlayer, path: string): ProviderRost
     externalId: participantFeedId(player.id),
     name,
     teamExternalId: player.team?.id === undefined ? null : participantFeedId(player.team.id),
+    teamName: player.team?.full_name ?? null,
     positionCode: player.position_abbreviation === undefined || player.position_abbreviation === '' ? null : player.position_abbreviation,
   };
 }

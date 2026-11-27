@@ -24,7 +24,7 @@
 
 import { randomUUID } from 'node:crypto';
 import type { FastifyBaseLogger } from 'fastify';
-import type { ProviderSyncRunRepository, SportLeagueRepository, SportLeagueRosterRepository, SportLeagueSeasonRepository } from '@poolmaster/shared/db';
+import type { ProviderSyncRunRepository, RosterRowWrite, SportLeagueRepository, SportLeagueRosterRepository, SportLeagueSeasonRepository } from '@poolmaster/shared/db';
 import {
   ProviderSyncKind,
   ProviderSyncRunStatus,
@@ -166,12 +166,13 @@ export class LeagueRosterSync {
     const unmappedTeams = new Map<string, string>();
     const newPlayers: Array<{ participantId: string; externalId: string; name: string }> = [];
     const renamedPlayers: Array<{ participantId: string; name: string }> = [];
-    const rows: Array<{ participantId: string; teamParticipantId: string; sportLeaguePositionId: string }> = [];
+    const newRows: RosterRowWrite[] = [];
+    const movedRows: RosterRowWrite[] = [];
     const seenPlayerIds: string[] = [];
     for (const { player, teamExternalId, sportLeaguePositionId } of placed) {
       const teamParticipantId = ids.teamIdByExternalId.get(teamExternalId);
       if (teamParticipantId === undefined) {
-        unmappedTeams.set(teamExternalId, `${player.name}'s team`);
+        unmappedTeams.set(teamExternalId, player.teamName ?? `${player.name}'s team`);
         continue;
       }
       const known = ids.playerByExternalId.get(player.externalId);
@@ -180,8 +181,9 @@ export class LeagueRosterSync {
       // poolmaster-allow-name-match: a rename check of the player found by their feed id, not a lookup
       else if (known.name !== player.name) renamedPlayers.push({ participantId, name: player.name });
       const row = ids.rowByPlayerId.get(participantId);
-      if (row?.teamParticipantId !== teamParticipantId || row.sportLeaguePositionId !== sportLeaguePositionId) {
-        rows.push({ participantId, teamParticipantId, sportLeaguePositionId });
+      if (row === undefined) newRows.push({ participantId, teamParticipantId, sportLeaguePositionId });
+      else if (row.teamParticipantId !== teamParticipantId || row.sportLeaguePositionId !== sportLeaguePositionId) {
+        movedRows.push({ participantId, teamParticipantId, sportLeaguePositionId });
       }
       seenPlayerIds.push(participantId);
     }
@@ -199,7 +201,8 @@ export class LeagueRosterSync {
       providerId: ids.providerId,
       newPlayers,
       renamedPlayers,
-      rows,
+      newRows,
+      movedRows,
       seenPlayerIds,
       seenAt: this.now(),
       jobs: followUps?.jobs ?? [],
@@ -216,7 +219,7 @@ export class LeagueRosterSync {
       listed: players.length,
       rostered: seenPlayerIds.length,
       playersCreated: newPlayers.length,
-      rowsChanged: rows.length,
+      rowsChanged: newRows.length + movedRows.length,
       notEligible: players.length - placed.length,
       teamUnmapped,
     };

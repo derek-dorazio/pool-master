@@ -33,7 +33,7 @@ function season(overrides: Partial<SyncableSportLeagueSeason> = {}): SyncableSpo
 }
 
 function player(externalId: string, overrides: Partial<ProviderRosterPlayer> = {}): ProviderRosterPlayer {
-  return { externalId, name: `Player ${externalId}`, teamExternalId: '17', positionCode: 'QB', ...overrides };
+  return { externalId, name: `Player ${externalId}`, teamExternalId: '17', teamName: 'Kansas City Chiefs', positionCode: 'QB', ...overrides };
 }
 
 const POSITION_CODES: RosterPositionCode[] = [
@@ -108,7 +108,8 @@ describe('LeagueRosterSync', () => {
     const [write] = writes;
     expect(write.sportLeagueSeasonId).toBe(seasons[0].id);
     expect(write.newPlayers).toEqual([{ participantId: expect.any(String), externalId: '33', name: 'Patrick Mahomes' }]);
-    expect(write.rows).toEqual([{ participantId: write.newPlayers[0].participantId, teamParticipantId: KC, sportLeaguePositionId: QB }]);
+    expect(write.newRows).toEqual([{ participantId: write.newPlayers[0].participantId, teamParticipantId: KC, sportLeaguePositionId: QB }]);
+    expect(write.movedRows).toEqual([]);
     expect(write.seenPlayerIds).toEqual([write.newPlayers[0].participantId]);
     expect(write.seenAt).toEqual(NOW);
     expect(collect).toHaveBeenCalledWith(expect.objectContaining({ externalIds: ['33'], providerId: 'provider-row' }));
@@ -126,20 +127,24 @@ describe('LeagueRosterSync', () => {
     expect(outcome.result).toMatchObject({ listed: 4, rostered: 1, notEligible: 3 });
   });
 
-  it('leaves off a player on no team, and one whose team is mapped to no team of the league with an unmapped participant finding for the team', async () => {
+  it('leaves off a player on no team, and one whose team is mapped to no team of the league with an unmapped participant finding named for the team as the feed names it', async () => {
     const { run, writes, findings, league } = build({
-      roster: [player('39', { teamExternalId: null }), player('40', { teamExternalId: '99', name: 'Pat Doe' })],
+      roster: [
+        player('39', { teamExternalId: null }),
+        player('40', { teamExternalId: '99', teamName: 'Buffalo Bills', name: 'Pat Doe' }),
+        player('41', { teamExternalId: '98', teamName: null, name: 'Sam Roe' }),
+      ],
     });
 
     const outcome = await run();
 
-    expect(writes[0].rows).toEqual([]);
+    expect(writes[0].newRows).toEqual([]);
     expect(findings.raiseUnmappedParticipants).toHaveBeenCalledWith({
       sportLeagueId: league.id,
       providerSourceId: league.selectedProviderMapping?.providerId,
-      participants: [{ externalId: '99', name: 'Pat Doe\'s team' }],
+      participants: [{ externalId: '99', name: 'Buffalo Bills' }, { externalId: '98', name: 'Sam Roe\'s team' }],
     });
-    expect(outcome.result).toMatchObject({ listed: 2, rostered: 0, notEligible: 1, teamUnmapped: 1 });
+    expect(outcome.result).toMatchObject({ listed: 3, rostered: 0, notEligible: 1, teamUnmapped: 2 });
   });
 
   it('keeps a known player\'s row as it is when the team and position have not changed, renames them when the feed does, and moves them on a trade', async () => {
@@ -162,7 +167,8 @@ describe('LeagueRosterSync', () => {
 
     expect(writes[0].newPlayers).toEqual([]);
     expect(writes[0].renamedPlayers).toEqual([{ participantId: 'p-renamed', name: 'New Name' }]);
-    expect(writes[0].rows).toEqual([{ participantId: 'p-traded', teamParticipantId: KC, sportLeaguePositionId: QB }]);
+    expect(writes[0].newRows).toEqual([]);
+    expect(writes[0].movedRows).toEqual([{ participantId: 'p-traded', teamParticipantId: KC, sportLeaguePositionId: QB }]);
     expect(writes[0].seenPlayerIds).toEqual(['p-same', 'p-renamed', 'p-traded']);
   });
 
