@@ -2,8 +2,8 @@
  * The ready checks of a DRAFT event's release (#1823), judged in one place for the manual
  * "Release for contests", the automatic release job and the root admin's event read. Each check
  * says whether it passed and the value it was judged on; a check that does not apply to the
- * event (a bracket for an event not played as matches, provider links for an unsynced event) is
- * left out rather than passed.
+ * event (a bracket for an event not played as matches, tiers and prices for an event no tiered or
+ * budget setup covers, provider links for an unsynced event) is left out rather than passed.
  */
 
 import { assertNever, ReleaseCheckKey, type ReleaseCheck, type SportNoun } from '@poolmaster/shared/domain';
@@ -22,6 +22,11 @@ export interface ReleaseCheckInputs {
   /** What its bracket still lacks; null for an event not played as matches. */
   bracketBlockers: readonly string[] | null;
   contestSetupCount: number;
+  /**
+   * The active tiered and budget setups that cover one of the event's slots. Only they pick from
+   * tiers or under a price cap, so with none (a bowl slate) the tier and price checks are left out.
+   */
+  rosterSetupCount: number;
 }
 
 export function evaluateReleaseChecks(inputs: ReleaseCheckInputs): ReleaseCheck[] {
@@ -30,7 +35,7 @@ export function evaluateReleaseChecks(inputs: ReleaseCheckInputs): ReleaseCheck[
     { key: ReleaseCheckKey.ROUNDS_SCHEDULED, passed: inputs.scheduledRoundCount > 0, value: inputs.scheduledRoundCount },
     { key: ReleaseCheckKey.FIELD_LOADED, passed: inputs.participantCount > 0, value: inputs.participantCount },
   ];
-  checks.push(
+  if (inputs.rosterSetupCount > 0) checks.push(
     { key: ReleaseCheckKey.TIERS_ASSIGNED, passed: inputs.untieredParticipantCount === 0, value: inputs.untieredParticipantCount },
     { key: ReleaseCheckKey.TIERS_FILLED, passed: inputs.emptyTierNumbers.length === 0, value: [...inputs.emptyTierNumbers] },
     inputs.isPriced

@@ -841,6 +841,7 @@ export class SportEventService {
       unpricedParticipantCount: summary.adminCounts.unpricedParticipantCount,
       bracketBlockers,
       contestSetupCount: facts.contestSetupCount,
+      rosterSetupCount: facts.rosterSetupCount,
     });
   }
 
