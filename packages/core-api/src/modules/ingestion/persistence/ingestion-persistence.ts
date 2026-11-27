@@ -298,20 +298,26 @@ export class IngestionPersistence {
         sportEvent: {
           include: {
             sportLeagueSeason: { select: { sportLeague: { select: { id: true, participantType: true, scoringFamily: true, sport: { select: { sport: true } } } } } },
-            // Each slot's match format (#2008), and whether this provider's games reach it by date
-            // window (#1715) or as the rest of its phase (#2154): one such mapping is enough to know.
+            // Each slot's match format (#2008), whether this provider's games reach it by date window
+            // (#1715) or as the rest of its phase (#2154), and the games the events sync placed in it.
             slots: {
-              select: { seasonSlot: { select: { definition: { select: {
-                matchFormat: true,
-                providerMappings: {
-                  where: {
-                    matchType: { in: [PrismaSlotProviderMatchType.DATE_WINDOW, PrismaSlotProviderMatchType.REST_OF_PHASE] },
-                    sportLeagueProviderMapping: { providerLeague: { provider: { code: providerCode } } },
+              select: { seasonSlot: { select: {
+                definition: { select: {
+                  matchFormat: true,
+                  providerMappings: {
+                    where: {
+                      matchType: { in: [PrismaSlotProviderMatchType.DATE_WINDOW, PrismaSlotProviderMatchType.REST_OF_PHASE] },
+                      sportLeagueProviderMapping: { providerLeague: { provider: { code: providerCode } } },
+                    },
+                    select: { matchType: true },
+                    take: 1,
                   },
-                  select: { id: true },
-                  take: 1,
+                } },
+                placedGames: {
+                  where: { sportLeagueProviderMapping: { providerLeague: { provider: { code: providerCode } } } },
+                  select: { externalId: true },
                 },
-              } } } } },
+              } } },
             },
           },
         },
@@ -342,20 +348,25 @@ export class IngestionPersistence {
       const seedsLocked = seedsLockedOn(persistedEvent);
       // What follows the field (#1952): the provider's games, then the tiers and prices, in a job
       // written with the field, so a task that stops after the write still has them run.
+      const feed = feedOfEvent(detail, persistedEvent.slots);
       const followUps = await this.domainEvents.collect({
         type: DomainEventType.SPORT_EVENT_FIELD_SYNCED,
         sportEvent: { id: persistedEvent.id, status: persistedEvent.status },
         providerId: detail.providerId,
         externalId: detail.externalId,
-        ...(detail.games !== undefined && { games: detail.games }),
+        ...(feed.games !== undefined && { games: feed.games }),
         ...(detail.bracket !== undefined && { bracket: detail.bracket }),
       });
 
       try {
-        // A window holds every game in its dates, other schools' too, so its feed names no field: the
-        // field is the one placed on the event, and the feed only refreshes it (#1715, #2154).
-        const fieldFromFeed = persistedEvent.slots.every(({ seasonSlot }) => seasonSlot.definition.providerMappings.length === 0);
-        sportEventParticipantsPersisted += await this.persistEventField(detail, persistedEvent.id, { seedsLocked, fieldFromFeed }, participantIdByKey, detailRows, followUps);
+        sportEventParticipantsPersisted += await this.persistEventField(
+          { ...detail, participants: feed.participants },
+          persistedEvent.id,
+          { seedsLocked, fieldFromFeed: feed.fieldFromFeed },
+          participantIdByKey,
+          detailRows,
+          followUps,
+        );
       } finally {
         this.fieldCache?.forget(persistedEvent.id);
         this.cdn?.invalidate([PublicReadPath.EVENT_PAGES]);
@@ -483,6 +494,28 @@ export class IngestionPersistence {
 
 /** What a field write reads of a provider's event detail: whose field it is, and its participants. */
 type FieldFeed = Pick<SportEventDetail, 'providerId' | 'externalId' | 'participants'>;
+
+/**
+ * What one event of a provider event takes from its feed (#1715, #2154):
+ * - an event playing no slot placed by window or as the rest of its phase takes the whole feed;
+ * - a window holds every game in its dates, other schools' too, so an event playing only window
+ *   slots takes no team and no game: its field is the seeds placed on it, which the feed only
+ *   refreshes, and its Matches are their bracket;
+ * - an event playing a rest-of-phase slot (a season's bowls, its title games) takes the games the
+ *   events sync placed in its slots, and its field is those games' teams.
+ */
+function feedOfEvent(
+  detail: Pick<SportEventDetail, 'participants' | 'games'>,
+  slots: ReadonlyArray<{ seasonSlot: { definition: { providerMappings: ReadonlyArray<{ matchType: PrismaSlotProviderMatchType }> }; placedGames: ReadonlyArray<{ externalId: string }> } }>,
+): { participants: SportEventDetail['participants']; games: SportEventDetail['games']; fieldFromFeed: boolean } {
+  const matchTypes = slots.flatMap(({ seasonSlot }) => seasonSlot.definition.providerMappings.map((mapping) => mapping.matchType));
+  if (matchTypes.length === 0) return { participants: detail.participants, games: detail.games, fieldFromFeed: true };
+  if (!matchTypes.includes(PrismaSlotProviderMatchType.REST_OF_PHASE)) return { participants: detail.participants, games: undefined, fieldFromFeed: false };
+  const placed = new Set(slots.flatMap(({ seasonSlot }) => seasonSlot.placedGames.map((game) => game.externalId)));
+  const games = (detail.games ?? []).filter((game) => game.games.some((each) => placed.has(each.providerGameId)));
+  const teams = new Set(games.flatMap((game) => [game.homeTeamExternalId, game.awayTeamExternalId]));
+  return { participants: detail.participants.filter((participant) => teams.has(participant.externalId)), games, fieldFromFeed: true };
+}
 
 /** Whether an event's seeds are locked: a released bracket's are (#698), since the upset bonus reads them as they stood at release. */
 function seedsLockedOn(event: {

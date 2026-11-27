@@ -391,7 +391,7 @@ describe('IngestionPersistence', () => {
       const prisma = fieldSyncPrisma({
         externalId: 'golfer-01',
         eventRow: linkedRow(),
-        linkedEvent: { id: 'sport-event-1', status: 'SCHEDULED', slots: [{ seasonSlot: { definition: { matchFormat: 'FIELD', providerMappings: [{ id: 'date-window-mapping-1' }] } } }], sportLeagueSeason: { sportLeague: { id: 'league-event', participantType: 'INDIVIDUAL', scoringFamily: 'STROKE_PLAY', sport: { sport: Sport.GOLF } } } },
+        linkedEvent: { id: 'sport-event-1', status: 'SCHEDULED', slots: [{ seasonSlot: { definition: { matchFormat: 'FIELD', providerMappings: [{ matchType: 'DATE_WINDOW' }] }, placedGames: [] } }], sportLeagueSeason: { sportLeague: { id: 'league-event', participantType: 'INDIVIDUAL', scoringFamily: 'STROKE_PLAY', sport: { sport: Sport.GOLF } } } },
         fieldRow: null,
         createField,
       });
