@@ -10,7 +10,7 @@ import type {
   SportEventSlotTierRepository,
   SportEventRepository,
 } from '@poolmaster/shared/db';
-import { tierSetSlotOf, type SportEventTierSlot, MatchStatus, SportEventParticipantStatus, coveredRoundNumbers, eventPlaysMatches, isSquaresRound, hasSportEventStarted, matchSpread } from '@poolmaster/shared/domain';
+import { tierSetSlotOf, type SportEventTierSlot, MatchStatus, SportEventParticipantStatus, coveredRoundNumbers, eventPlaysMatches, playsKnockoutRounds, isSquaresRound, hasSportEventStarted, matchSpread } from '@poolmaster/shared/domain';
 import { findBracketProblem, findKnockoutProblem } from '../scoring-families/head-to-head/bracket-picks';
 import { ContestCutoffKind, cutoffTiming } from '../contests/entry-window';
 import { knockoutSeeds } from '../scoring-families/head-to-head/score-team';
@@ -56,6 +56,7 @@ export function createContestSportEventReader({ sportEvents, field, tiers, valua
       participantCount: loaded.get(event.id) ?? 0,
       rounds: event.rounds ?? null,
       slotDefinitionIds: event.slotDefinitions.map((definition) => definition.id),
+      playsOnlyKnockoutRounds: event.slotDefinitions.every((definition) => playsKnockoutRounds(definition.slotKind)),
       salaryCap: tierSetSlotOf(tierSlots.get(event.id) ?? [])?.pricing?.salaryCap ?? null,
       squaresFromRound: event.squaresFromRound ?? null,
       participantType: event.participantType,

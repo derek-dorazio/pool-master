@@ -115,6 +115,12 @@ export interface ContestCreateSportEventState {
   rounds: number | null;
   /** The slot definitions its Season slots play (#2010): a contest whose template lists every one covers all its rounds (#2014). */
   slotDefinitionIds: string[];
+  /**
+   * Whether every slot it plays is a knockout round's (`playsKnockoutRounds`, #2241): then its round
+   * count is its knockout's. A soccer tournament's group matchdays are rounds that knockout round
+   * points do not score.
+   */
+  playsOnlyKnockoutRounds: boolean;
   /** The salary cap the event's field was priced against, or null when it never was (#93). */
   salaryCap: number | null;
   /** Its sport league's first round of single games a squares contest can be played on; null for every round (#787). */
@@ -1170,10 +1176,12 @@ export class ContestManagementService {
         return;
       case 'KNOCKOUT_ROUND_POINTS': {
         const valueCount = scoring.config.roundValues.length;
-        // A contest covering every slot of the event covers all its rounds; only one whose
-        // template leaves a slot out (a play-in) reads which rounds its games' slots cover.
+        // A contest covering every slot of an event played in knockout rounds only covers all its
+        // rounds; one whose template leaves a slot out (a play-in), or an event with group
+        // matchdays (#2241), reads which knockout rounds its games' slots cover.
         const listed = coverage.slotDefinitionIds;
-        const rounds = listed === null || sportEvent.slotDefinitionIds.every((id) => listed.includes(id))
+        const coversAll = listed === null || sportEvent.slotDefinitionIds.every((id) => listed.includes(id));
+        const rounds = coversAll && sportEvent.playsOnlyKnockoutRounds
           ? sportEvent.rounds
           : await this.sportEventReader.countCoveredRounds(sportEvent.id, coverage);
         if (valueCount === rounds) {

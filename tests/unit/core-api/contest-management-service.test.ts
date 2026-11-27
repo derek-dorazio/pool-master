@@ -282,6 +282,7 @@ function createSportEventReader(overrides?: Partial<{
   coveredRoundCount: number;
   /** The slot definitions the event's rounds play; a template listing all of them covers every round. */
   slotDefinitionIds: string[];
+  playsOnlyKnockoutRounds: boolean;
   squaresFromRound: number | null;
   participantType: ParticipantType;
   scoringFamily: ScoringFamily;
@@ -320,6 +321,7 @@ function createSportEventReader(overrides?: Partial<{
       participantCount: overrides?.participantCount ?? 72,
       rounds: overrides?.rounds === undefined ? 4 : overrides.rounds,
       slotDefinitionIds: overrides?.slotDefinitionIds ?? [],
+      playsOnlyKnockoutRounds: overrides?.playsOnlyKnockoutRounds ?? true,
       salaryCap: overrides?.salaryCap ?? null,
       squaresFromRound: overrides?.squaresFromRound ?? null,
       ...(overrides?.participantType !== undefined && { participantType: overrides.participantType }),
@@ -2001,6 +2003,36 @@ describe('ContestManagementService finish-position scoring (#622)', () => {
 
     await expect(create()).rejects.toMatchObject({ code: CONTEST_SCORING_ROUNDS_MISMATCH, statusCode: 422 });
     expect(contestCoreRepo.create).not.toHaveBeenCalled();
+  });
+
+  it('holds a sweepstake covering every slot of a soccer tournament to its knockout rounds, not its group matchdays, reading the rounds its games cover (#2241)', async () => {
+    const templateRepo = createContestConfigTemplateRepo();
+    const template = await templateRepo.findById('11111111-1111-4111-8111-111111111111');
+    jest.mocked(templateRepo.findById).mockResolvedValue({
+      ...expectDefined(template, 'the stub template'),
+      coverageMode: TemplateCoverageMode.ALL_LISTED,
+      slots: [],
+      selectionType: SelectionType.RANDOM_DRAW,
+      configJson: { ...drawRules, scoring: knockoutScoring([1, 2, 4, 8, 16]) },
+    });
+    // Eight rounds: three group matchdays, then five knockout rounds; the template lists every slot.
+    const sportEventReader = createSportEventReader({ sport: Sport.BASKETBALL, playsMatches: true, rounds: 8, coveredRoundCount: 5, slotDefinitionIds: [], playsOnlyKnockoutRounds: false });
+    const contestCoreRepo = createContestRepo();
+    const service = new ContestManagementService({
+      domainEvents: testDomainEvents(),
+      contests: contestCoreRepo,
+      configTemplates: templateRepo,
+      configurations: createContestConfigurationRepo(),
+      scoringRules: createParticipantScoringRuleRepo(),
+      tiers: createSportEventTierServiceStub(),
+      sportEventReader,
+      cups: createCupKeeper(),
+      planEntitlements: platinumEntitlements(),
+    });
+
+    await service.createContest({ leagueId: 'league-1' }, raceRequest({ name: 'World Cup Sweep', templateId: '11111111-1111-4111-8111-111111111111', configuration: undefined }));
+    expect(sportEventReader.countCoveredRounds).toHaveBeenCalledWith('11111111-1111-1111-1111-111111111111', { slotDefinitionIds: [] });
+    expect(contestCoreRepo.create).toHaveBeenCalled();
   });
 
   it('refuses knockout round values on an event with no rounds with 422 CONTEST_SCORING_ROUNDS_MISMATCH, saying the event has no rounds', async () => {
