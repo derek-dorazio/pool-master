@@ -163,7 +163,7 @@ export function toNflFieldParticipants(games: readonly NflGame[]): ProviderParti
 
 /**
  * A week's games as scheduled, each in the week's one round, for a synced league's event to take
- * its matches from (#1728). The vendor does not mark a neutral site, so none is.
+ * its matches from (#1728). Whether a game is at a neutral site is its slot's (#2154), not the feed's.
  */
 export function toNflScheduledGames(games: readonly NflGame[]): ProviderScheduledGame[] {
   return games.map(toNflScheduledGame);
@@ -176,7 +176,6 @@ function toNflScheduledGame(game: NflGame): ProviderScheduledGame {
     homeTeamExternalId: participantFeedId(required(required(game.home_team, game.id, 'home_team').id, game.id, 'home_team.id')),
     awayTeamExternalId: participantFeedId(required(required(game.visitor_team, game.id, 'visitor_team').id, game.id, 'visitor_team.id')),
     scheduledAt: new Date(required(game.date, game.id, 'date')),
-    isNeutralSite: false,
   };
 }
 
@@ -210,7 +209,7 @@ function seedOf(participant: ProviderParticipant): number {
  * each conference's Wild Card games (2 hosts 7, 3 hosts 6, 4 hosts 5) are matches 1 to 3 for the
  * AFC and 4 to 6 for the NFC, its Divisional games 7 and 8 (AFC) and 9 and 10 (NFC) with the 1
  * seed waiting at home in the first, its Conference Championship 11 (AFC) and 12 (NFC), and the
- * Super Bowl 13 at a neutral site, the AFC champion on the home side. The NFL reseeds after the
+ * Super Bowl 13, the AFC champion on the home side (its slot says neutral site, #2154). The NFL reseeds after the
  * Wild Card and after the Divisional round, so only the Conference Championships link on. A Wild
  * Card match takes its game's kickoff once the provider lists it. Null unless both conferences
  * have exactly the seeds 1 to 7.
@@ -242,7 +241,7 @@ export function toNflPlayoffBracket(field: readonly ProviderParticipant[], games
     bracketSlot(2 + index * 2, 2, label),
   ]);
   // The Super Bowl is the one match of its round (#2161: matches are numbered within their round).
-  const superBowl = bracketSlot(1, NFL_POSTSEASON_ROUNDS, null, { isNeutralSite: true });
+  const superBowl = bracketSlot(1, NFL_POSTSEASON_ROUNDS, null);
   const championships = conferences.map(({ label }, index) =>
     bracketSlot(1 + index, 3, label, { advancesTo: { roundNumber: superBowl.roundNumber, matchNumber: superBowl.matchNumber, side: index === 0 ? MatchSide.HOME : MatchSide.AWAY } }));
   return [...wildCard, ...divisional, ...championships, superBowl];
@@ -259,9 +258,9 @@ function bracketSlot(
   matchNumber: number,
   roundNumber: number,
   regionLabel: string | null,
-  fill: Partial<Pick<ProviderBracketMatch, 'homeTeamExternalId' | 'awayTeamExternalId' | 'scheduledAt' | 'advancesTo' | 'isNeutralSite'>> = {},
+  fill: Partial<Pick<ProviderBracketMatch, 'homeTeamExternalId' | 'awayTeamExternalId' | 'scheduledAt' | 'advancesTo'>> = {},
 ): ProviderBracketMatch {
-  return { matchNumber, roundNumber, homeTeamExternalId: null, awayTeamExternalId: null, isNeutralSite: false, scheduledAt: null, advancesTo: null, regionLabel, ...fill };
+  return { matchNumber, roundNumber, homeTeamExternalId: null, awayTeamExternalId: null, scheduledAt: null, advancesTo: null, regionLabel, ...fill };
 }
 
 /**
@@ -277,10 +276,7 @@ export function toNflPostseasonGames(games: readonly NflGame[], fieldTeamIds: Re
   });
   const weekOf = (game: NflGame): number => required(game.week, game.id, 'week');
   const weeks = [...new Set(decided.map(weekOf))].sort((left, right) => left - right);
-  return decided.map((game) => {
-    const roundNumber = weeks.indexOf(weekOf(game)) + 1;
-    return { ...toNflScheduledGame(game), roundNumber, isNeutralSite: roundNumber === NFL_POSTSEASON_ROUNDS };
-  });
+  return decided.map((game) => ({ ...toNflScheduledGame(game), roundNumber: weeks.indexOf(weekOf(game)) + 1 }));
 }
 
 /** Each game's teams, state and score, for the GAME live-score category. */

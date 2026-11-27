@@ -16,15 +16,13 @@ import type {
   SportLeagueRepository,
 } from '@poolmaster/shared/db';
 import {
-  BackgroundJobType,
   eventFeedRef,
   eventSyncKindsOf,
   type ProviderEventRef,
   JobErrorType,
   JobTrigger,
   type ProviderHealthStatus,
-  ProviderSyncRunStatus,
-  type BackgroundJobOutcome,
+  type ProviderSyncRunStatus,
   type JobStart,
   type Sport,
   type ProviderSyncRun,
@@ -34,21 +32,12 @@ import {
   providerSourceIdOf,
 } from '@poolmaster/shared/domain';
 import type { ProviderRegistry } from './core/provider-registry';
-import type {
-  EventSyncRequest,
-  IngestionScheduler,
-} from './core/ingestion-scheduler';
-import { SyncOrchestrator, isEventSyncKind, type EventSyncKind } from './core/sync-orchestrator';
-import {
-  ProviderSyncRunLedger,
-  SyncRunOutcomeUnrecordedError,
-} from './persistence/provider-sync-run-ledger';
+import { SyncOrchestrator, type EventSyncKind } from './core/sync-orchestrator';
+import { ProviderSyncRunLedger } from './persistence/provider-sync-run-ledger';
 import type { BackgroundJobQueue } from '../background-jobs/background-job-queue';
-import type { ManualEventSyncJobPayload } from './manual-event-sync-job';
-import { syncChangedRows } from './core/sync-write-diagnostics';
+import { eventSyncJob } from './event-sync-job-requests';
 import type { ProviderSettingsStore } from './provider-settings-store';
 import type { ProviderWebhookSwitch } from './provider-webhook-switch';
-import { jobDeferredUntilOf } from '../background-jobs/job-error-type';
 
 /** The window the provider list counts rate-limited jobs over (#1881). */
 const HOUR_MS = 3_600_000;
@@ -141,7 +130,7 @@ export class SportEventNotSyncedError extends Error {
  * when its league's provider has no id for it (409 EVENT_NOT_LINKED), and for a kind it cannot run
  * now (422 EVENT_SYNC_KIND_UNAVAILABLE, #2238), the same rule its DTO's `syncKinds` answers.
  */
-export function requireSyncableEvent(
+function requireSyncableEvent(
   event: Parameters<typeof eventSyncKindsOf>[0] & { id: string },
   kinds: readonly EventSyncKind[],
 ): ProviderEventRef {
@@ -178,7 +167,6 @@ export interface IngestionServiceDependencies {
   /** Background jobs that hit a provider's rate limit, counted per provider on the provider list. */
   jobHistory: Pick<BackgroundJobRepository, 'countByScope'>;
   now?: () => Date;
-  scheduler?: IngestionScheduler;
   syncOrchestrator?: Pick<SyncOrchestrator, 'normalizeRequest'>;
   syncRunLedger?: ProviderSyncRunLedger;
   /** Queues the job that runs a manual event sync's submitted runs (#1441). */
@@ -195,7 +183,6 @@ export class IngestionService {
   private readonly webhooks: Pick<ProviderWebhookSwitch, 'isOn' | 'isSecretSet'>;
   private readonly jobHistory: Pick<BackgroundJobRepository, 'countByScope'>;
   private readonly now: () => Date;
-  private readonly scheduler?: IngestionScheduler;
   private readonly syncOrchestrator: Pick<SyncOrchestrator, 'normalizeRequest'>;
   private readonly syncRunLedger: ProviderSyncRunLedger;
   private readonly jobs: Pick<BackgroundJobQueue, 'request' | 'queued'>;
@@ -210,27 +197,10 @@ export class IngestionService {
     this.webhooks = deps.webhooks;
     this.jobHistory = deps.jobHistory;
     this.now = deps.now ?? (() => new Date());
-    this.scheduler = deps.scheduler;
     this.jobs = deps.jobs;
     this.logger = deps.logger;
     this.syncOrchestrator = deps.syncOrchestrator ?? new SyncOrchestrator();
-    this.syncRunLedger = deps.syncRunLedger ?? new ProviderSyncRunLedger(deps.syncRuns, deps.logger, deps.sportEvents);
-  }
-
-  /**
-   * The event of ours the provider knows by this id (#2004), so the runs and their job name it;
-   * null when no event has it. Only the sync gives an event a provider id, so every such event is
-   * one the provider syncs: its live scores and its field. The field sync
-   * writes only the field and its size; a synced event's details are kept current by
-   * `SportEventService.keepProviderEventsCurrent`, never here (ADR 0011). A provider event linked
-   * to several events, one per competition its games reach (#2154), names their league and no one
-   * event.
-   */
-  private async linkedEventOf(providerId: string, eventId: string): Promise<{ sportEventId?: string; sportLeagueId: string } | null> {
-    const events = await this.sportEvents.findByProviderRefs(providerId, [eventId]);
-    const [event] = events;
-    if (events.length === 0) return null;
-    return { ...(events.length === 1 && { sportEventId: event.id }), sportLeagueId: event.sportLeagueId };
+    this.syncRunLedger = deps.syncRunLedger ?? new ProviderSyncRunLedger(deps.syncRuns, deps.logger);
   }
 
   // -------------------------------------------------------------------------
@@ -337,177 +307,56 @@ export class IngestionService {
 
   /**
    * A root admin's Sync now on one of our events (#2004): the requested sync kinds of the event at its
-   * league's provider, by the id the sync gave it.
+   * league's provider, by the id the sync gave it. Each kind's run is submitted with the event sync
+   * job that runs it (#2009), the same job the sync tick and a webhook queue, in one transaction.
    */
   async syncSportEvent(
     sportEventId: string,
-    kinds: EventSyncRequest['kinds'],
+    kinds: readonly EventSyncKind[],
     rootAdminUserId: string,
     rootAdminEmail: string,
   ): Promise<ProviderManualSyncSubmissionResult> {
     const event = await this.sportEvents.findById(sportEventId);
     if (!event) throw new SportEventNotSyncedError(`Sport event ${sportEventId} was not found.`, 'EVENT_NOT_FOUND', 404);
     const feedRef = requireSyncableEvent(event, kinds);
-    return this.syncEventData({ sport: event.sport, providerId: feedRef.providerId, eventId: feedRef.externalId, kinds }, rootAdminUserId, rootAdminEmail);
-  }
-
-  async syncEventData(
-    request: EventSyncRequest,
-    rootAdminUserId: string,
-    rootAdminEmail: string,
-  ): Promise<ProviderManualSyncSubmissionResult> {
-    if (!this.scheduler) {
-      throw new Error('Ingestion scheduler is required for manual event sync');
-    }
-
     // The provider the event's league selects (#2073), by the id its feed gives the event.
-    const provider = this.registry.bySourceId(request.providerId);
+    const provider = this.registry.bySourceId(feedRef.providerId);
     if (provider === null) {
-      this.logger?.error(
-        { sport: request.sport, providerId: request.providerId, eventId: request.eventId },
-        'Manual event sync was requested without a configured provider',
-      );
-      throw new SportProviderNotFoundError(request.sport, request.providerId);
+      this.logger?.error({ sport: event.sport, providerId: feedRef.providerId, sportEventId }, 'Manual event sync was requested without a configured provider');
+      throw new SportProviderNotFoundError(event.sport, feedRef.providerId);
     }
-    const normalizedRequest = this.syncOrchestrator.normalizeRequest({
-      source: 'MANUAL',
-      actor: {
-        type: 'ROOT_ADMIN',
-        userId: rootAdminUserId,
-        email: rootAdminEmail,
-      },
-      scope: {
-        type: 'EVENT',
-        sport: request.sport,
-        providerId: provider.providerId,
-        eventId: request.eventId,
-        kinds: request.kinds,
-      },
-    });
-    const normalizedScope = normalizedRequest.scope;
-    const linkedEvent = await this.linkedEventOf(provider.providerId, normalizedScope.eventId);
-
-    const submittedAt = new Date();
-    this.logger?.info({
-      sport: normalizedScope.sport,
-      eventId: normalizedScope.eventId,
-      requestedKinds: normalizedScope.kinds,
-      providerId: provider.providerId,
-      rootAdminUserId,
-    }, 'Submitting manual event sync');
-    // The runs and the job that runs them commit together; the job runs on whichever task claims it.
-    // Both record the root admin who asked (#1861).
+    const scope = { type: 'EVENT', sport: event.sport, providerId: provider.providerId, eventId: feedRef.externalId } as const;
+    const actor = { type: 'ROOT_ADMIN', userId: rootAdminUserId, email: rootAdminEmail } as const;
+    const requestedKinds = this.syncOrchestrator.normalizeRequest({ source: 'MANUAL', actor, scope: { ...scope, kinds } }).scope.kinds;
+    const submittedAt = this.now();
+    // Each run records the root admin who asked, as its job does (#1861).
     const start: JobStart = { trigger: JobTrigger.ADMIN, startedByUserId: rootAdminUserId };
-    const syncRuns = await this.syncRunLedger.createSubmissionsWithJob({
-      normalizedRequest,
-      providerId: provider.providerId,
-      submittedAt,
-      trigger: start.trigger,
-      ...(linkedEvent && linkedEvent),
-      // poolmaster-allow-direct-job: a root admin's manual event sync starts the job
-      job: (runs) => this.jobs.request(BackgroundJobType.MANUAL_EVENT_SYNC, {
-        syncRunIds: runs.map((run) => run.id),
-        sport: normalizedScope.sport,
-        providerId: normalizedScope.providerId,
-        eventId: normalizedScope.eventId,
-        ...(linkedEvent?.sportEventId !== undefined && { sportEventId: linkedEvent.sportEventId }),
-      }, { start }),
-    });
+    this.logger?.info({ sport: event.sport, sportEventId, requestedKinds, providerId: provider.providerId, rootAdminUserId }, 'Submitting manual event sync');
+    const syncRuns: ProviderSyncRun[] = [];
+    for (const kind of requestedKinds) {
+      // One run and its job per requested sync kind, two at most.
+      syncRuns.push(...await this.syncRunLedger.createSubmissionsWithJob({
+        normalizedRequest: this.syncOrchestrator.normalizeRequest({ source: 'MANUAL', actor, scope: { ...scope, kinds: [kind] } }),
+        providerId: provider.providerId,
+        submittedAt,
+        trigger: start.trigger,
+        sportEventId: event.id,
+        sportLeagueId: event.sportLeagueId,
+        job: (runs) => eventSyncJob(this.jobs, kind, { sportEventId: event.id, syncRunId: requireSubmittedRun(runs).id }, {
+          start,
+          providerCode: provider.providerCode,
+        }),
+      }));
+    }
     this.jobs.queued();
-
-    this.logger?.info({
-      sport: normalizedScope.sport,
-      eventId: normalizedScope.eventId,
-      providerId: provider.providerId,
-      requestedKinds: normalizedScope.kinds,
-      syncRunIds: syncRuns.map((run) => run.id),
-    }, 'Submitted manual event sync');
-
-    return {
-      sport: normalizedScope.sport,
-      eventId: normalizedScope.eventId,
-      requestedKinds: normalizedScope.kinds,
-      submittedAt,
-      syncRuns,
-    };
+    this.logger?.info({ sport: event.sport, sportEventId, providerId: provider.providerId, requestedKinds, syncRunIds: syncRuns.map((run) => run.id) }, 'Submitted manual event sync');
+    return { sport: event.sport, eventId: feedRef.externalId, requestedKinds, submittedAt, syncRuns };
   }
+}
 
-  /**
-   * The MANUAL_EVENT_SYNC job (#1441): runs each submitted run's feed, one after another. A run
-   * that is no longer SUBMITTED was started by an earlier try of this job, so a retry skips it:
-   * the sync-run ledger is what makes the job idempotent. A feed that fails is recorded on its run
-   * and the rest still run; only a failure the ledger could not record fails the job.
-   *
-   * On a retry, a run still IN_PROGRESS was left so by an earlier try that stopped mid-feed, or
-   * whose failure could not be written (#1445): it is marked FAILED as interrupted, rather than
-   * left showing as running for good, and is not run again.
-   */
-  async runManualEventSync(payload: ManualEventSyncJobPayload, context: { attempt: number; jobId: string }): Promise<BackgroundJobOutcome> {
-    const scheduler = this.scheduler;
-    if (!scheduler) {
-      throw new Error('Ingestion scheduler is required for manual event sync');
-    }
-    const scope = { sport: payload.sport, providerId: payload.providerId, eventId: payload.eventId };
-    this.logger?.debug({ ...scope, syncRunIds: payload.syncRunIds }, 'Executing submitted manual event sync');
-    const stored = new Map((await this.syncRuns.findManyByIds(payload.syncRunIds)).map((run) => [run.id, run]));
-    // Runs whose outcome the ledger could not write: the job fails after the rest have run.
-    const unrecorded: string[] = [];
-    // The rows the feeds this try ran wrote (#1861).
-    let changedCount = 0;
-    for (const syncRunId of payload.syncRunIds) {
-      const syncRun = stored.get(syncRunId);
-      if (syncRun?.status === ProviderSyncRunStatus.IN_PROGRESS && context.attempt > 1) {
-        await this.syncRunLedger.failSubmittedRun(
-          syncRun,
-          new Error('Interrupted: an earlier try of this sync stopped before the feed finished'),
-          syncRun.startedAt,
-        );
-        continue;
-      }
-      if (syncRun?.status !== ProviderSyncRunStatus.SUBMITTED) {
-        this.logger?.info({ ...scope, syncRunId, status: syncRun?.status ?? null }, 'Skipped a manual sync run that is no longer submitted');
-        continue;
-      }
-      const requestedKind = syncRun.kind;
-      if (!isEventSyncKind(requestedKind)) {
-        await this.syncRunLedger.failSubmittedRun(syncRun, new Error(`Unsupported event sync kind: ${syncRun.kind}`));
-        continue;
-      }
-
-      try {
-        const record = await this.syncRunLedger.executeFeedRun(syncRun, () =>
-          scheduler.runEventSync({
-            sport: payload.sport,
-            providerId: payload.providerId,
-            eventId: payload.eventId,
-            kinds: [requestedKind],
-          }),
-          { backgroundJobId: context.jobId },
-        );
-        changedCount += syncChangedRows(record.writeDiagnostics);
-      } catch (error) {
-        // The provider turned the feed away for now (league model 1c): its run is marked FAILED
-        // as rate limited, and the job is queued again for when the provider will answer, so the
-        // runs still SUBMITTED run then rather than be refused one after another now.
-        if (jobDeferredUntilOf(error) !== null) throw error;
-        if (error instanceof SyncRunOutcomeUnrecordedError) {
-          unrecorded.push(syncRun.id);
-          this.logger?.error({ ...scope, syncRunId: syncRun.id, requestedKind, error }, 'Manual event sync feed failed and its run could not be marked FAILED; the job will be retried');
-          continue;
-        }
-        this.logger?.error({
-          ...scope,
-          syncRunId: syncRun.id,
-          requestedKind,
-          error,
-        }, 'Manual event sync feed failed; its run is marked FAILED');
-        // The ledger marked the run failed; the job moves on to the remaining feeds.
-      }
-    }
-    if (unrecorded.length > 0) {
-      // A retry marks these runs interrupted rather than leaving them IN_PROGRESS for good.
-      throw new Error(`Manual event sync left ${String(unrecorded.length)} run(s) without a recorded outcome: ${unrecorded.join(', ')}`);
-    }
-    return { changedCount };
-  }
+/** The one run a Sync now submits for one sync kind, which its job runs. */
+function requireSubmittedRun(runs: readonly ProviderSyncRun[]): ProviderSyncRun {
+  const run = runs.at(0);
+  if (run === undefined || runs.length !== 1) throw new Error(`A Sync now of one kind submitted ${String(runs.length)} runs, not one`);
+  return run;
 }

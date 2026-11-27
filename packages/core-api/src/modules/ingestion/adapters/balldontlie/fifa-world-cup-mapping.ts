@@ -189,8 +189,8 @@ const decided = (team: FifaTeam | null | undefined): DecidedTeam | null => (team
 
 /**
  * The bracket's matches with both teams decided, each in its round (#1728), for a synced event's
- * matches to take their kickoffs from. Every one is at a neutral site, the hosts' included, as an
- * admin loads them. None while the rounds cannot be told (`roundsOf`).
+ * matches to take their kickoffs from; their slots say neutral site (#2154), the hosts' included.
+ * None while the rounds cannot be told (`roundsOf`).
  */
 export function toWorldCupScheduledGames(knockout: readonly FifaMatch[]): ProviderScheduledGame[] {
   const bracketMatches = bracketMatchesOf(knockout);
@@ -206,7 +206,6 @@ export function toWorldCupScheduledGames(knockout: readonly FifaMatch[]): Provid
       homeTeamExternalId: participantFeedId(home.id),
       awayTeamExternalId: participantFeedId(away.id),
       scheduledAt: match.datetime ? new Date(match.datetime) : null,
-      isNeutralSite: true,
     }];
   });
 }
@@ -216,7 +215,7 @@ export function toWorldCupScheduledGames(knockout: readonly FifaMatch[]): Provid
  * matches in bracket order, each two consecutive ones' winners meeting next, then each later
  * round below them the same way, to the final. The order is read back from the final, each match
  * placing the match its home side comes from before the one its away side comes from, and each
- * side keeps the vendor's home and away. Every match is at a neutral site, with no region.
+ * side keeps the vendor's home and away. No match has a region; their slots say neutral site (#2154).
  *
  * Null until the first round's teams are all decided, and whenever the matches do not make one
  * bracket: rounds that cannot be told (`roundsOf`), a round not half the one before, or a side
@@ -267,7 +266,6 @@ export function toWorldCupBracket(knockout: readonly FifaMatch[]): ProviderBrack
       matchNumber: position + 1,
       homeTeamExternalId: home ? participantFeedId(home.id) : null,
       awayTeamExternalId: away ? participantFeedId(away.id) : null,
-      isNeutralSite: true,
       scheduledAt: match.datetime ? new Date(match.datetime) : null,
       advancesTo: next ? { roundNumber: index + 2, matchNumber: Math.floor(position / 2) + 1, side: position % 2 === 0 ? MatchSide.HOME : MatchSide.AWAY } : null,
       regionLabel: null,

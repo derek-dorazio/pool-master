@@ -10,12 +10,12 @@ export const SEASON_SLOT_SELECT = {
   id: true, sportLeagueCompetitionSlotId: true, startsAt: true, endsAt: true, status: true,
   seriesFormat: true, seriesGames: true, pairing: true, isTestData: true, label: true,
   windowStartsAt: true, windowEndsAt: true, windowStatus: true,
-  definition: { select: { key: true, slotKind: true, weekNumber: true, name: true, canEndTied: true, periodUnit: true, periodCount: true } },
+  definition: { select: { key: true, slotKind: true, weekNumber: true, name: true, canEndTied: true, isNeutralSite: true, periodUnit: true, periodCount: true } },
 } as const satisfies Prisma.SportLeagueSeasonCompetitionSlotSelect;
 
 export type SeasonSlotRow = Prisma.SportLeagueSeasonCompetitionSlotGetPayload<{ select: typeof SEASON_SLOT_SELECT }>;
 
-export function toSeasonSlot({ sportLeagueCompetitionSlotId, definition: { canEndTied: _canEndTied, periodUnit: _periodUnit, periodCount: _periodCount, ...definition }, windowStartsAt, windowEndsAt, windowStatus, ...slot }: SeasonSlotRow): SportLeagueSeasonSlot {
+export function toSeasonSlot({ sportLeagueCompetitionSlotId, definition: { canEndTied: _canEndTied, isNeutralSite: _isNeutralSite, periodUnit: _periodUnit, periodCount: _periodCount, ...definition }, windowStartsAt, windowEndsAt, windowStatus, ...slot }: SeasonSlotRow): SportLeagueSeasonSlot {
   return {
     ...slot,
     ...definition,
@@ -45,7 +45,7 @@ export const ROUND_EVENT_SLOT_SELECT = {
 export function toRoundSlot(eventSlot: Prisma.SportEventSlotGetPayload<typeof ROUND_EVENT_SLOT_SELECT>): SportEventRoundSlot {
   const { id, slotDefinitionId, name, slotKind, weekNumber, seriesGames, pairing } = toSeasonSlot(eventSlot.seasonSlot);
   const { definition } = eventSlot.seasonSlot;
-  return { seasonSlotId: id, slotDefinitionId, name, slotKind, weekNumber, seriesGames, pairing, canEndTied: definition.canEndTied, periods: slotPeriodsOf(definition), tiebreakerMatchId: eventSlot.tiebreakerGame?.sportEventRoundMatchId ?? null };
+  return { seasonSlotId: id, slotDefinitionId, name, slotKind, weekNumber, seriesGames, pairing, canEndTied: definition.canEndTied, isNeutralSite: definition.isNeutralSite, periods: slotPeriodsOf(definition), tiebreakerMatchId: eventSlot.tiebreakerGame?.sportEventRoundMatchId ?? null };
 }
 
 /**

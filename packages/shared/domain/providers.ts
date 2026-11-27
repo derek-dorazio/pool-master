@@ -73,17 +73,17 @@ export const EVENT_SYNC_KINDS = [ProviderSyncKind.FIELD, ProviderSyncKind.SCORES
 export type EventSyncKind = (typeof EVENT_SYNC_KINDS)[number];
 
 /**
- * The statuses the scheduled field sync loads an event's field in (#431): a draft, before release
- * (a loaded field is a release check), or a released event not yet started.
+ * The statuses an event's field loads in before play (#431): a draft, before release (a loaded
+ * field is a release check), or a released event not yet started.
  */
-export const SCHEDULED_FIELD_SYNC_STATUSES = [SportEventStatus.DRAFT, SportEventStatus.SCHEDULED] as const;
+const PRE_PLAY_FIELD_SYNC_STATUSES = [SportEventStatus.DRAFT, SportEventStatus.SCHEDULED] as const;
 
 /**
- * The statuses each event sync kind runs in on a root admin's ask: its field whenever the schedule
- * loads it, and again once play starts or ends; its scores while play is on.
+ * The statuses each event sync kind runs in on a root admin's ask: its field before play, and
+ * again once play starts or ends; its scores while play is on.
  */
 const EVENT_SYNC_KIND_STATUSES: Readonly<Record<EventSyncKind, readonly SportEventStatus[]>> = {
-  [ProviderSyncKind.FIELD]: [...SCHEDULED_FIELD_SYNC_STATUSES, SportEventStatus.IN_PROGRESS, SportEventStatus.COMPLETED],
+  [ProviderSyncKind.FIELD]: [...PRE_PLAY_FIELD_SYNC_STATUSES, SportEventStatus.IN_PROGRESS, SportEventStatus.COMPLETED],
   [ProviderSyncKind.SCORES]: [SportEventStatus.IN_PROGRESS],
 };
 

@@ -705,6 +705,81 @@
     },
     {
       "file": "scripts/retired-names.json",
+      "key": "IngestionScheduler",
+      "now": 0,
+      "reason": "retired by #2009"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "SyncedEventCreationScheduler",
+      "now": 0,
+      "reason": "retired by #2009"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "createScheduledEventReader",
+      "now": 0,
+      "reason": "retired by #2009"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "listFieldSyncEvents",
+      "now": 0,
+      "reason": "retired by #2009"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "listLiveScoreEvents",
+      "now": 0,
+      "reason": "retired by #2009"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "MANUAL_EVENT_SYNC",
+      "now": 0,
+      "reason": "retired by #2009"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "PROVIDER_EVENT_SYNC",
+      "now": 0,
+      "reason": "retired by #2009"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "runManualEventSync",
+      "now": 0,
+      "reason": "retired by #2009"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "syncEventData",
+      "now": 0,
+      "reason": "retired by #2009"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "providerEventSyncKey",
+      "now": 0,
+      "reason": "retired by #2009"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "providerEventReconcileKey",
+      "now": 0,
+      "reason": "retired by #2009"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "SCHEDULED_FIELD_SYNC_STATUSES",
+      "now": 0,
+      "reason": "retired by #2009"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "isEventSyncKind",
+      "now": 0,
+      "reason": "retired by #2009",
       "key": "SCORING_FAMILY_ADMIN_UI",
       "now": 0,
       "reason": "retired by #2008"

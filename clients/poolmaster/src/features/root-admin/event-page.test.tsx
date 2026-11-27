@@ -188,7 +188,7 @@ function job(overrides: Partial<ActivityJobDto> = {}): ActivityJobDto {
     result: null,
     syncRunIds: [],
     ...overrides,
-  } as ActivityJobDto;
+  };
 }
 
 function refusal(code: string, message: string, status = 422) {

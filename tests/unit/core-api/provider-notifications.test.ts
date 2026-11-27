@@ -6,8 +6,6 @@ import {
   PROVIDER_NOTIFICATION_RECONCILE_DELAY_MS,
   PROVIDER_NOTIFICATION_STARTING_SYNC_DELAY_MS,
   ProviderNotificationService,
-  providerEventReconcileKey,
-  providerEventSyncKey,
   type ProviderNotification,
 } from '../../../packages/core-api/src/modules/ingestion/provider-notifications';
 import { inMemoryBackgroundJobs, testCurrentJobStart } from '../../support/in-memory-background-jobs';
@@ -89,7 +87,7 @@ function setup(
 }
 
 describe('provider notifications (#1498)', () => {
-  it('queues one live-score sync of the event holding the Game the notified game id is mapped to, due a minute out under its event key', async () => {
+  it('queues one live-score sync of the event holding the Game the notified game id is mapped to, due a minute out under the event\'s key', async () => {
     const { jobs, service, findLiveNotifiedEvents, findByProviderExternalIds } = setup([liveEvent('nfl-2026-week-11', Sport.FOOTBALL)]);
 
     await expect(service.receive(nflPeriodEnded)).resolves.toEqual({ events: 1, queued: 1 });
@@ -97,11 +95,11 @@ describe('provider notifications (#1498)', () => {
     expect(findByProviderExternalIds).toHaveBeenCalledWith('BALLDONTLIE', ['424095']);
     expect(findLiveNotifiedEvents).toHaveBeenCalledWith({ providerId: 'balldontlie', sport: Sport.FOOTBALL, sportEventIds: [LIVE_EVENT_ID] });
     expect(jobs.rows).toEqual([expect.objectContaining({
-      type: BackgroundJobType.PROVIDER_EVENT_SYNC,
-      payload: { sport: Sport.FOOTBALL, providerId: 'balldontlie', eventId: 'nfl-2026-week-11', sportEventId: LIVE_EVENT_ID },
+      type: BackgroundJobType.SYNC_EVENT_SCORES,
+      payload: { sportEventId: LIVE_EVENT_ID },
       sportEventId: LIVE_EVENT_ID,
       runAt: new Date(NOW.getTime() + PROVIDER_NOTIFICATION_COALESCE_MS),
-      dedupeKey: 'provider-event-sync:balldontlie:nfl-2026-week-11',
+      dedupeKey: `SYNC_EVENT_SCORES:SYNC:${LIVE_EVENT_ID}`,
     })]);
   });
 
@@ -167,15 +165,6 @@ describe('provider notifications (#1498)', () => {
     expect(jobs.rows[0]?.runAt).toEqual(new Date(NOW.getTime() + 5_000));
   });
 
-  it('keys an event whose id is too long for the dedupe column by a hash of its provider and id, still one key per event', () => {
-    const longId = 'x'.repeat(250);
-
-    const key = providerEventSyncKey({ providerId: 'balldontlie', externalId: longId });
-
-    expect(key).toMatch(/^provider-event-sync:sha256:[0-9a-f]{64}$/);
-    expect(providerEventSyncKey({ providerId: 'balldontlie', externalId: longId })).toBe(key);
-    expect(providerEventSyncKey({ providerId: 'balldontlie', externalId: `${longId}y` })).not.toBe(key);
-  });
 });
 
 describe('provider notifications as play starts and ends (#1499)', () => {
@@ -189,7 +178,7 @@ describe('provider notifications as play starts and ends (#1499)', () => {
     expect(findLiveNotifiedEvents).toHaveBeenCalledWith(expect.objectContaining({ startedBy: NOW, sportEventIds: [LIVE_EVENT_ID] }));
     expect(jobs.rows).toEqual([expect.objectContaining({
       runAt: new Date(NOW.getTime() + PROVIDER_NOTIFICATION_STARTING_SYNC_DELAY_MS),
-      dedupeKey: 'provider-event-sync:balldontlie:nfl-2026-week-11',
+      dedupeKey: `SYNC_EVENT_SCORES:SYNC:${LIVE_EVENT_ID}`,
     })]);
   });
 
@@ -221,14 +210,14 @@ describe('provider notifications as play starts and ends (#1499)', () => {
     expect(jobs.rows).toEqual([
       expect.objectContaining({
         runAt: new Date(NOW.getTime() + PROVIDER_NOTIFICATION_COALESCE_MS),
-        dedupeKey: 'provider-event-sync:balldontlie:nfl-2026-week-11',
+        dedupeKey: `SYNC_EVENT_SCORES:SYNC:${LIVE_EVENT_ID}`,
       }),
       expect.objectContaining({
-        type: BackgroundJobType.PROVIDER_EVENT_SYNC,
-        payload: { sport: Sport.FOOTBALL, providerId: 'balldontlie', eventId: 'nfl-2026-week-11', sportEventId: LIVE_EVENT_ID },
+        type: BackgroundJobType.SYNC_EVENT_SCORES,
+        payload: { sportEventId: LIVE_EVENT_ID },
         sportEventId: LIVE_EVENT_ID,
         runAt: new Date(NOW.getTime() + PROVIDER_NOTIFICATION_RECONCILE_DELAY_MS),
-        dedupeKey: 'provider-event-reconcile:balldontlie:nfl-2026-week-11',
+        dedupeKey: `SYNC_EVENT_SCORES:RECONCILE:${LIVE_EVENT_ID}`,
       }),
     ]);
   });
@@ -258,9 +247,4 @@ describe('provider notifications as play starts and ends (#1499)', () => {
     expect(golf.recordGameNotification).not.toHaveBeenCalled();
   });
 
-  it('keys an event\'s reconciling sync apart from its coalesced one, hashing an id too long for the column', () => {
-    const event = { providerId: 'balldontlie', externalId: 'nfl-2026-week-11' };
-    expect(providerEventReconcileKey(event)).not.toBe(providerEventSyncKey(event));
-    expect(providerEventReconcileKey({ providerId: 'balldontlie', externalId: 'x'.repeat(250) })).toMatch(/^provider-event-reconcile:sha256:[0-9a-f]{64}$/);
-  });
 });

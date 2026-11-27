@@ -25725,6 +25725,10 @@
             "type": "boolean",
             "description": "Whether a squares pool can be played on its games."
           },
+          "isNeutralSite": {
+            "type": "boolean",
+            "description": "Whether its games are played at a neutral site, neither side at home (a Super Bowl, a bowl game). Each game of the slot takes it, and screens then say \"vs\" rather than \"at\"."
+          },
           "seriesFormat": {
             "type": "string",
             "enum": [
@@ -25847,6 +25851,7 @@
           "name",
           "awardsTrophy",
           "squaresEligible",
+          "isNeutralSite",
           "seriesFormat",
           "seriesGames",
           "pairing",
@@ -25926,6 +25931,10 @@
                 "squaresEligible": {
                   "type": "boolean",
                   "description": "Whether a squares pool can be played on its games."
+                },
+                "isNeutralSite": {
+                  "type": "boolean",
+                  "description": "Whether its games are played at a neutral site, neither side at home (a Super Bowl, a bowl game). Each game of the slot takes it, and screens then say \"vs\" rather than \"at\"."
                 },
                 "seriesFormat": {
                   "type": "string",
@@ -26049,6 +26058,7 @@
                 "name",
                 "awardsTrophy",
                 "squaresEligible",
+                "isNeutralSite",
                 "seriesFormat",
                 "seriesGames",
                 "pairing",
@@ -26162,6 +26172,10 @@
                       "squaresEligible": {
                         "type": "boolean",
                         "description": "Whether a squares pool can be played on its games."
+                      },
+                      "isNeutralSite": {
+                        "type": "boolean",
+                        "description": "Whether its games are played at a neutral site, neither side at home (a Super Bowl, a bowl game). Each game of the slot takes it, and screens then say \"vs\" rather than \"at\"."
                       },
                       "seriesFormat": {
                         "type": "string",
@@ -26285,6 +26299,7 @@
                       "name",
                       "awardsTrophy",
                       "squaresEligible",
+                      "isNeutralSite",
                       "seriesFormat",
                       "seriesGames",
                       "pairing",
@@ -26416,6 +26431,10 @@
                               "type": "boolean",
                               "description": "Whether a squares pool can be played on its games."
                             },
+                            "isNeutralSite": {
+                              "type": "boolean",
+                              "description": "Whether its games are played at a neutral site, neither side at home (a Super Bowl, a bowl game). Each game of the slot takes it, and screens then say \"vs\" rather than \"at\"."
+                            },
                             "seriesFormat": {
                               "type": "string",
                               "enum": [
@@ -26538,6 +26557,7 @@
                             "name",
                             "awardsTrophy",
                             "squaresEligible",
+                            "isNeutralSite",
                             "seriesFormat",
                             "seriesGames",
                             "pairing",
@@ -75890,8 +75910,8 @@
           "type": {
             "type": "string",
             "enum": [
-              "MANUAL_EVENT_SYNC",
-              "PROVIDER_EVENT_SYNC",
+              "SYNC_EVENT_FIELD",
+              "SYNC_EVENT_SCORES",
               "CONTEST_STARTED_EMAILS",
               "CONTEST_SETTLED_EMAILS",
               "CONTEST_EVENT_CHANGED_EMAILS",
@@ -76199,8 +76219,8 @@
                 "type": {
                   "type": "string",
                   "enum": [
-                    "MANUAL_EVENT_SYNC",
-                    "PROVIDER_EVENT_SYNC",
+                    "SYNC_EVENT_FIELD",
+                    "SYNC_EVENT_SCORES",
                     "CONTEST_STARTED_EMAILS",
                     "CONTEST_SETTLED_EMAILS",
                     "CONTEST_EVENT_CHANGED_EMAILS",
@@ -76467,8 +76487,8 @@
               "type": {
                 "type": "string",
                 "enum": [
-                  "MANUAL_EVENT_SYNC",
-                  "PROVIDER_EVENT_SYNC",
+                  "SYNC_EVENT_FIELD",
+                  "SYNC_EVENT_SCORES",
                   "CONTEST_STARTED_EMAILS",
                   "CONTEST_SETTLED_EMAILS",
                   "CONTEST_EVENT_CHANGED_EMAILS",

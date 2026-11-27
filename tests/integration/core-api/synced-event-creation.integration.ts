@@ -1,14 +1,16 @@
 import { expect } from '@jest/globals';
 import { randomUUID } from 'node:crypto';
 import { ProviderCode, Sport } from '@poolmaster/shared/domain';
-import { PrismaProviderSyncRunRepository, PrismaSportLeagueRepository } from '../../../packages/core-api/src/adapters';
+import { PrismaBackgroundJobRepository, PrismaProviderSyncRunRepository, PrismaSportLeagueRepository } from '../../../packages/core-api/src/adapters';
+import { PrismaSyncDueWorkReader } from '../../../packages/core-api/src/adapters/prisma-sync-due-work-reader';
 import { PrismaSportLeagueSeasonRepository } from '../../../packages/core-api/src/adapters/prisma-sport-league-season-repository';
 import { LeagueEventsSync } from '../../../packages/core-api/src/modules/events/league-events-sync';
 import { INGESTION_SCHEDULE_SETTINGS } from '../../../packages/core-api/src/modules/platform/ingestion-config-service';
-import { SyncedEventCreationScheduler } from '../../../packages/core-api/src/modules/events/synced-event-creation-scheduler';
+import { SyncTick } from '../../../packages/core-api/src/modules/ingestion/sync-tick';
 import { mapSportEventToDto } from '../../../packages/core-api/src/mappers/sport-events.mapper';
 import { cleanupTestData, getAppPrisma, getPrisma, integrationBackgroundJobs, integrationSyncFindings, setupIntegrationTests, teardownIntegrationTests, integrationSportEventServices } from '../helpers';
 import { heldHere } from '../../support/job-locks';
+import { fakeSportDataProvider, registryWith } from '../../support/fake-sport-data-provider';
 import { sportLeagueRowDefaults } from '../../support/league-profiles';
 import { syncLeagueTo, syncSeasonsTo } from '../../support/league-sync';
 import { sportRowKeys } from '../../support/sport-rows';
@@ -16,9 +18,9 @@ import { sportPlay } from '../../support/sport-play';
 import { testSlotId } from '../../support/test-slots';
 import { syncSlotsFor } from '../../support/sync-slots';
 
-// A synced sport league's events created by the six-hourly sweep (ADR 0011, #1725) against real
-// Postgres: the sweep queues one events sync job per synced league (#1819), the job runner runs
-// them, and they write the league's events; a second sweep writes nothing. The provider's tour list is the one stand-in: which provider events
+// A synced sport league's events created by the sync tick (ADR 0011, #1725, #2009) against real
+// Postgres: the tick queues one events sync job per synced league (#1819), the job runner runs
+// them, and they write the league's events; a second tick writes nothing. The provider's tour list is the one stand-in: which provider events
 // belong to a league's tour is ProviderSeasonScheduleReader's, tested on its own.
 
 beforeAll(() => setupIntegrationTests());
@@ -81,16 +83,27 @@ function buildScheduler(feed: { shiftDays: number; name?: string } = { shiftDays
     jobs: backgroundJobs.queue,
     now: () => NOW,
   });
-  const runner = backgroundJobs.runWith({ SYNC_LEAGUE_EVENTS: (payload, context) => leagueEventsSync.run(payload, context) });
-  const sweeper = new SyncedEventCreationScheduler({
-    leagueEventsSync,
-    schedule: { getConfig: () => Promise.resolve(INGESTION_SCHEDULE_SETTINGS.defaults({})) },
-    jobLock: heldHere(),
+  const runner = backgroundJobs.runWith({
+    SYNC_LEAGUE_EVENTS: (payload, context) => leagueEventsSync.run(payload, context),
+    // The tick also syncs the field of the events it created; that sync is not this test's.
+    SYNC_EVENT_FIELD: () => Promise.resolve({ changedCount: 0 }),
   });
-  /** One sweep, and the jobs it queued run to the end. */
+  const tick = new SyncTick({
+    sportLeagues: new PrismaSportLeagueRepository(prisma),
+    dueWork: new PrismaSyncDueWorkReader(prisma),
+    jobHistory: new PrismaBackgroundJobRepository(prisma),
+    jobs: backgroundJobs.queue,
+    registry: registryWith(fakeSportDataProvider()),
+    schedule: { getConfig: () => Promise.resolve(INGESTION_SCHEDULE_SETTINGS.defaults({})) },
+    notifiedProviderCadence: () => undefined,
+    jobLock: heldHere(),
+    // A tick six hours after the last, so each league's events sync is due again.
+    now: () => new Date(Date.now() + 6 * 60 * 60 * 1000),
+  });
+  /** One tick, and the jobs it queued run to the end. */
   const scheduler = {
     async runSweep(): Promise<void> {
-      await sweeper.runSweep();
+      await tick.tick();
       await runner.drain();
     },
   };

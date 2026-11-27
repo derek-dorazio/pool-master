@@ -89,7 +89,7 @@ describe('series playoffs bracket', () => {
       [4, 1, null],
     ]);
     expect(bracket.filter((match) => match.roundNumber > 1).every((match) => match.homeTeamExternalId === null && match.awayTeamExternalId === null && match.scheduledAt === null)).toBe(true);
-    expect(bracket.find((match) => match.roundNumber === 4 && match.matchNumber === 1)).toMatchObject({ regionLabel: null, isNeutralSite: false });
+    expect(bracket.find((match) => match.roundNumber === 4 && match.matchNumber === 1)).toMatchObject({ regionLabel: null });
   });
 
   it('builds no bracket until the whole first round is out', () => {
@@ -131,7 +131,7 @@ describe('series playoffs bracket', () => {
     const third = game(west8, west1, 4);
 
     expect(toPlayoffSeriesGames([third, second, opener], null)).toEqual([
-      { games: [{ providerGameId: String(opener.id), gameNumber: 1 }, { providerGameId: String(second.id), gameNumber: 2 }, { providerGameId: String(third.id), gameNumber: 3 }], roundNumber: 1, homeTeamExternalId: external('West', 1), awayTeamExternalId: external('West', 8), scheduledAt: new Date(opener.start), isNeutralSite: false },
+      { games: [{ providerGameId: String(opener.id), gameNumber: 1 }, { providerGameId: String(second.id), gameNumber: 2 }, { providerGameId: String(third.id), gameNumber: 3 }], roundNumber: 1, homeTeamExternalId: external('West', 1), awayTeamExternalId: external('West', 8), scheduledAt: new Date(opener.start) },
     ]);
   });
 

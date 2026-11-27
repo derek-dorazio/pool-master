@@ -5,7 +5,6 @@ import * as ingestionDtos from '@poolmaster/shared/dto/ingestion.dto';
 import * as syncOrchestratorModule from '../../../packages/core-api/src/modules/ingestion/core/sync-orchestrator';
 import {
   SyncOrchestrator,
-  isEventSyncKind,
   SyncRequestValidationError,
   normalizeSyncRequest,
 } from '../../../packages/core-api/src/modules/ingestion/core/sync-orchestrator';
@@ -148,7 +147,6 @@ describe('SyncOrchestrator request model', () => {
 
   it('#126: there is no sport-level sync — an event syncs its FIELD and SCORES, and a league\'s EVENTS is no event sync', () => {
     expect(EventSyncKindSchema.options).toEqual(['FIELD', 'SCORES']);
-    expect([isEventSyncKind('FIELD'), isEventSyncKind('SCORES'), isEventSyncKind('EVENTS')]).toEqual([true, true, false]);
     expect(Reflect.get(ingestionDtos, 'SportSyncRequestSchema')).toBeUndefined();
     expect(Reflect.get(syncOrchestratorModule, 'SPORT_SYNC_FEEDS')).toBeUndefined();
     expect(Reflect.get(syncOrchestratorModule, 'resolveSportSyncWindowPolicy')).toBeUndefined();

@@ -4,10 +4,9 @@
  */
 
 import type { z } from 'zod';
-import { BackgroundJobType, providerCodeOfSourceId, type BackgroundJobScope, type ProviderCode } from '@poolmaster/shared/domain';
+import { BackgroundJobType, type BackgroundJobScope, type ProviderCode } from '@poolmaster/shared/domain';
 import { SyncLeagueEventsJobPayloadSchema } from '../events/league-events-sync-job';
-import { ManualEventSyncJobPayloadSchema } from '../ingestion/manual-event-sync-job';
-import { ProviderEventSyncJobPayloadSchema } from '../ingestion/provider-event-sync-job';
+import { EventSyncJobPayloadSchema } from '../ingestion/event-sync-job-requests';
 import {
   ContestEventChangedEmailsJobPayloadSchema,
   ContestReopenedEmailsJobPayloadSchema,
@@ -24,8 +23,8 @@ import { ResolveMappedParticipantFindingsJobPayloadSchema } from '../ingestion/f
 import { RefreshSlotTiebreakersJobPayloadSchema } from '../events/slot-tiebreaker-job';
 
 export const BACKGROUND_JOB_PAYLOADS = {
-  [BackgroundJobType.MANUAL_EVENT_SYNC]: ManualEventSyncJobPayloadSchema,
-  [BackgroundJobType.PROVIDER_EVENT_SYNC]: ProviderEventSyncJobPayloadSchema,
+  [BackgroundJobType.SYNC_EVENT_FIELD]: EventSyncJobPayloadSchema,
+  [BackgroundJobType.SYNC_EVENT_SCORES]: EventSyncJobPayloadSchema,
   [BackgroundJobType.CONTEST_STARTED_EMAILS]: ContestStartedEmailsJobPayloadSchema,
   [BackgroundJobType.CONTEST_SETTLED_EMAILS]: ContestSettledEmailsJobPayloadSchema,
   [BackgroundJobType.CONTEST_EVENT_CHANGED_EMAILS]: ContestEventChangedEmailsJobPayloadSchema,
@@ -53,9 +52,9 @@ export type BackgroundJobPayload<T extends BackgroundJobType> = z.infer<(typeof 
 export const BACKGROUND_JOB_SCOPES: {
   [T in BackgroundJobType]: (payload: BackgroundJobPayload<T>) => BackgroundJobScope & { providerCode?: ProviderCode };
 } = {
-  // An event sync names the provider it reads (#2040), by the id its adapter's events carry.
-  [BackgroundJobType.MANUAL_EVENT_SYNC]: ({ sportEventId, providerId }) => ({ sportEventId, providerCode: providerCodeOfSourceId(providerId) }),
-  [BackgroundJobType.PROVIDER_EVENT_SYNC]: ({ sportEventId, providerId }) => ({ sportEventId, providerCode: providerCodeOfSourceId(providerId) }),
+  // An event sync's Provider is named by whoever queues it (#2040, #2009): its payload holds our ids only.
+  [BackgroundJobType.SYNC_EVENT_FIELD]: ({ sportEventId }) => ({ sportEventId }),
+  [BackgroundJobType.SYNC_EVENT_SCORES]: ({ sportEventId }) => ({ sportEventId }),
   [BackgroundJobType.CONTEST_STARTED_EMAILS]: ({ sportEventId }) => ({ sportEventId }),
   // A contest's results may span several events, so the job names none.
   [BackgroundJobType.CONTEST_SETTLED_EMAILS]: () => ({}),

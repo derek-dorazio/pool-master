@@ -6,17 +6,13 @@ import {
   SportEventNotSyncedError,
 } from '../../../packages/core-api/src/modules/ingestion/ingestion-service';
 import { SyncOrchestrator } from '../../../packages/core-api/src/modules/ingestion/core/sync-orchestrator';
-import { JobTrigger, ProviderCode, ProviderSyncKind, ProviderSyncRunStatus, Sport } from '../../../packages/shared/domain';
+import { BackgroundJobType, Sport } from '../../../packages/shared/domain';
 import { fakeSportEventRepo } from '../../support/repo-fakes';
 import { inMemorySyncRuns, type InMemorySyncRuns } from '../../support/in-memory-sync-runs';
-import { BackgroundJobQueue, BackgroundJobRunner } from '../../../packages/core-api/src/modules/background-jobs';
+import { BackgroundJobQueue } from '../../../packages/core-api/src/modules/background-jobs';
 import { fakeLogger } from '../../support/fake-logger';
-import { syncRunOutcome } from '../../support/sync-run-payload';
-import { jobHandlers, testCurrentJobStart } from '../../support/in-memory-background-jobs';
+import { testCurrentJobStart } from '../../support/in-memory-background-jobs';
 import { fakeSportDataProvider, registryWith } from '../../support/fake-sport-data-provider';
-import { stubInstance } from '../../support/stub-instance';
-import { ProviderRateLimitedError } from '../../../packages/core-api/src/modules/ingestion/core/provider-call-policy';
-import { IngestionScheduler } from '../../../packages/core-api/src/modules/ingestion/core/ingestion-scheduler';
 
 type IngestionPorts = Pick<IngestionServiceDependencies, 'sportEvents' | 'syncRuns' | 'jobs' | 'sportLeagues' | 'providerSettings' | 'webhooks' | 'jobHistory'>;
 
@@ -34,153 +30,27 @@ function ports(overrides: Partial<Omit<IngestionPorts, 'syncRuns'>> & { syncRuns
   };
 }
 
+/** Our event's id: a job names the event by it. */
+const EVENT_ID = '5d0b8f2e-7c1a-4e3b-9f60-2a4c8e1d7b35';
+
 describe('IngestionService manual sync submission', () => {
-  it('pool-master-rop.68.2.3 normalizes manual event sync before submission, and its job runs the normalized scope', async () => {
-    const now = new Date('2026-05-30T12:00:00.000Z');
-    const syncRuns = inMemorySyncRuns();
-    const registry = registryWith(fakeSportDataProvider({
-      providerId: 'balldontlie',
-      providerName: 'Mock Contest Feed Provider',
-      getEventDetails: jest.fn(),
-    }));
-    const scheduler = stubInstance(IngestionScheduler, {
-      runEventSync: jest.fn().mockResolvedValue([{
-        jobType: 'EVENT_LIVE_SCORES_SYNC',
-        providerId: 'balldontlie',
-        sport: Sport.GOLF,
-        eventExternalId: 'golf-open-championship-2026',
-        status: 'COMPLETED',
-        startedAt: new Date(),
-        completedAt: new Date(),
-        recordsProcessed: 1,
-        errors: 0,
-        errorLog: [],
-        warnings: [],
-        stats: { liveScoreUpdatesReturned: 1 },
-      }]),
-    });
-    const service = new IngestionService({
-      // No local SportEvent row exists yet for this manual sync target, so its runs name none.
-      ...ports({ syncRuns }),
-      registry,
-      scheduler,
-      logger: fakeLogger(),
-      syncOrchestrator: new SyncOrchestrator({ now: () => now }),
-    });
-
-    const result = await service.syncEventData({
-      sport: Sport.GOLF,
-      providerId: 'balldontlie',
-      eventId: '  golf-open-championship-2026  ',
-      kinds: ['SCORES', 'SCORES'],
-    }, 'admin-1', 'admin@example.com');
-
-    expect(result.eventId).toBe('golf-open-championship-2026');
-    expect(result.requestedKinds).toEqual(['SCORES']);
-    expect(syncRuns.rows).toEqual([expect.objectContaining({
-      providerId: BALLDONTLIE_TEST_PROVIDER_ID,
-      providerName: 'BALLDONTLIE',
-      status: 'SUBMITTED',
-      kind: 'SCORES',
-      trigger: 'ADMIN',
-    })]);
-    expect(scheduler.runEventSync).not.toHaveBeenCalled();
-
-    const runner = new BackgroundJobRunner({
-      jobs: syncRuns.jobs,
-      handlers: jobHandlers({ MANUAL_EVENT_SYNC: (payload, context) => service.runManualEventSync(payload, context) }),
-    });
-    await runner.drain();
-    expect(scheduler.runEventSync).toHaveBeenCalledWith({
-      sport: Sport.GOLF,
-      providerId: 'balldontlie',
-      eventId: 'golf-open-championship-2026',
-      kinds: ['SCORES'],
-    });
-  });
-
-  it('ends a manual sync\'s try when the provider rate limits a feed, and runs the feeds still waiting when the job is queued again, without counting the try', async () => {
-    const syncRuns = inMemorySyncRuns();
-    const completed = {
-      jobType: 'EVENT_PARTICIPANTS_SYNC', providerId: 'balldontlie', sport: Sport.GOLF, eventExternalId: 'open-2026',
-      status: 'COMPLETED', startedAt: new Date(), completedAt: new Date(), recordsProcessed: 1, errors: 0, errorLog: [], warnings: [], stats: {},
-    };
-    // Already due again, so the one drain runs the deferred try too.
-    const refusal = new ProviderRateLimitedError('balldontlie', new Date(Date.now() - 1_000), 'its circuit is open');
-    const scheduler = stubInstance(IngestionScheduler, {
-      runEventSync: jest.fn().mockRejectedValueOnce(refusal).mockResolvedValue([completed]),
-    });
-    const service = new IngestionService({
-      ...ports({ syncRuns }),
-      registry: registryWith(fakeSportDataProvider({ providerId: 'balldontlie' })),
-      scheduler,
-      logger: fakeLogger(),
-      syncOrchestrator: new SyncOrchestrator({ now: () => new Date() }),
-    });
-    await service.syncEventData({
-      sport: Sport.GOLF,
-      providerId: 'balldontlie',
-      eventId: 'open-2026',
-      kinds: ['SCORES', 'FIELD'],
-    }, 'admin-1', 'admin@example.com');
-
-    const runner = new BackgroundJobRunner({
-      jobs: syncRuns.jobs,
-      handlers: jobHandlers({ MANUAL_EVENT_SYNC: (payload, context) => service.runManualEventSync(payload, context) }),
-    });
-    await runner.drain();
-
-    expect(scheduler.runEventSync).toHaveBeenCalledTimes(2);
-    expect(scheduler.runEventSync).toHaveBeenLastCalledWith(expect.objectContaining({ kinds: ['FIELD'] }));
-    expect(syncRuns.rows.map((run) => [run.kind, run.status])).toEqual([
-      ['SCORES', 'FAILED'],
-      ['FIELD', 'COMPLETED'],
-    ]);
-    expect(syncRuns.jobs.rows).toEqual([expect.objectContaining({ status: 'SUCCEEDED', attempts: 1 })]);
-  });
-
-  it('fails a submitted run whose kind no event feed serves, an events sync, without calling the provider, and runs the rest', async () => {
-    const syncRuns = inMemorySyncRuns();
-    const scheduler = stubInstance(IngestionScheduler, { runEventSync: jest.fn().mockResolvedValue([]) });
-    const service = new IngestionService({
-      ...ports({ syncRuns }),
-      registry: registryWith(fakeSportDataProvider({ providerId: 'balldontlie' })),
-      scheduler,
-      logger: fakeLogger(),
-    });
-    const eventsRun = await syncRuns.create({
-      providerCode: ProviderCode.BALLDONTLIE, kind: ProviderSyncKind.EVENTS, trigger: JobTrigger.ADMIN,
-      sportLeagueId: null, sportEventId: null, backgroundJobId: null, status: ProviderSyncRunStatus.SUBMITTED,
-      startedAt: null, completedAt: null, ...syncRunOutcome(),
-    });
-
-    await service.runManualEventSync(
-      { syncRunIds: [eventsRun.id], sport: Sport.GOLF, providerId: 'balldontlie', eventId: 'open-2026' },
-      { attempt: 1, jobId: 'job-1' },
-    );
-
-    expect(scheduler.runEventSync).not.toHaveBeenCalled();
-    expect(syncRuns.rows[0]).toMatchObject({ status: ProviderSyncRunStatus.FAILED, summary: expect.stringContaining('Unsupported event sync kind: EVENTS') });
-  });
-
   describe('a root admin\'s sync of one event, by its own id (#2004)', () => {
     function buildEventSyncService(findById: jest.Mock) {
       const registry = registryWith(fakeSportDataProvider({
         providerId: 'balldontlie',
         providerName: 'Mock Contest Feed Provider',
         }));
-      const scheduler = stubInstance(IngestionScheduler, { runEventSync: jest.fn().mockResolvedValue([]) });
       const syncRuns = inMemorySyncRuns();
       const service = new IngestionService({
         ...ports({ syncRuns, sportEvents: fakeSportEventRepo({ findById, findByProviderRefs: jest.fn().mockResolvedValue([]) }) }),
         registry,
-        scheduler,
         logger: fakeLogger(),
+        syncOrchestrator: new SyncOrchestrator({ now: () => new Date('2026-05-30T12:00:00.000Z') }),
       });
       return { service, syncRuns };
     }
     const event = (overrides: Record<string, unknown> = {}) => ({
-      id: 'event-1', sport: Sport.GOLF, status: 'SCHEDULED', syncProviderId: 'balldontlie',
+      id: EVENT_ID, sportLeagueId: 'pga-tour', sport: Sport.GOLF, status: 'SCHEDULED', syncProviderId: 'balldontlie',
       providerMappings: [{ providerCode: 'BALLDONTLIE', providerName: 'BALLDONTLIE', externalId: 'golf-open-2026' }],
       ...overrides,
     });
@@ -188,7 +58,7 @@ describe('IngestionService manual sync submission', () => {
     it('queues the sync for the id its league\'s provider has for the event', async () => {
       const { service, syncRuns } = buildEventSyncService(jest.fn().mockResolvedValue(event()));
 
-      const result = await service.syncSportEvent('event-1', ['FIELD'], 'admin-1', 'admin@example.com');
+      const result = await service.syncSportEvent(EVENT_ID, ['FIELD'], 'admin-1', 'admin@example.com');
 
       expect(result).toMatchObject({ sport: Sport.GOLF, eventId: 'golf-open-2026', requestedKinds: ['FIELD'] });
       expect(syncRuns.rows).toEqual([expect.objectContaining({ kind: 'FIELD', status: 'SUBMITTED' })]);
@@ -198,11 +68,11 @@ describe('IngestionService manual sync submission', () => {
       const testEvent = buildEventSyncService(jest.fn().mockResolvedValue(event({ providerMappings: [] })));
       const missing = buildEventSyncService(jest.fn().mockResolvedValue(null));
 
-      await expect(testEvent.service.syncSportEvent('event-1', ['SCORES'], 'admin-1', 'admin@example.com'))
+      await expect(testEvent.service.syncSportEvent(EVENT_ID, ['SCORES'], 'admin-1', 'admin@example.com'))
         .rejects.toThrow(SportEventNotSyncedError);
-      await expect(testEvent.service.syncSportEvent('event-1', ['SCORES'], 'admin-1', 'admin@example.com'))
+      await expect(testEvent.service.syncSportEvent(EVENT_ID, ['SCORES'], 'admin-1', 'admin@example.com'))
         .rejects.toMatchObject({ code: 'EVENT_NOT_LINKED', statusCode: 409 });
-      await expect(missing.service.syncSportEvent('event-1', ['SCORES'], 'admin-1', 'admin@example.com'))
+      await expect(missing.service.syncSportEvent(EVENT_ID, ['SCORES'], 'admin-1', 'admin@example.com'))
         .rejects.toMatchObject({ code: 'EVENT_NOT_FOUND', statusCode: 404 });
       expect([...testEvent.syncRuns.rows, ...missing.syncRuns.rows]).toEqual([]);
     });
@@ -210,15 +80,31 @@ describe('IngestionService manual sync submission', () => {
     it('refuses a sync kind the event cannot run now with 422 EVENT_SYNC_KIND_UNAVAILABLE: live scores before play starts, queuing nothing', async () => {
       const { service, syncRuns } = buildEventSyncService(jest.fn().mockResolvedValue(event({ status: 'SCHEDULED' })));
 
-      await expect(service.syncSportEvent('event-1', ['FIELD', 'SCORES'], 'admin-1', 'admin@example.com'))
+      await expect(service.syncSportEvent(EVENT_ID, ['FIELD', 'SCORES'], 'admin-1', 'admin@example.com'))
         .rejects.toMatchObject({ code: 'EVENT_SYNC_KIND_UNAVAILABLE', statusCode: 422 });
       expect(syncRuns.rows).toEqual([]);
+    });
+
+    it('submits one run per distinct kind asked for, each with the job that runs it naming the event and the run, and calls no provider', async () => {
+      const { service, syncRuns } = buildEventSyncService(jest.fn().mockResolvedValue(event({ status: 'IN_PROGRESS' })));
+
+      const result = await service.syncSportEvent(EVENT_ID, ['FIELD', 'SCORES', 'SCORES'], 'admin-1', 'admin@example.com');
+
+      expect(result.requestedKinds).toEqual(['FIELD', 'SCORES']);
+      expect(syncRuns.rows).toEqual([
+        expect.objectContaining({ providerId: BALLDONTLIE_TEST_PROVIDER_ID, kind: 'FIELD', status: 'SUBMITTED', trigger: 'ADMIN', sportEventId: EVENT_ID, sportLeagueId: 'pga-tour' }),
+        expect.objectContaining({ providerId: BALLDONTLIE_TEST_PROVIDER_ID, kind: 'SCORES', status: 'SUBMITTED', trigger: 'ADMIN', sportEventId: EVENT_ID, sportLeagueId: 'pga-tour' }),
+      ]);
+      expect(syncRuns.jobs.rows).toEqual([
+        expect.objectContaining({ type: BackgroundJobType.SYNC_EVENT_FIELD, payload: { sportEventId: EVENT_ID, syncRunId: syncRuns.rows[0].id }, startedByUserId: 'admin-1', dedupeKey: undefined }),
+        expect.objectContaining({ type: BackgroundJobType.SYNC_EVENT_SCORES, payload: { sportEventId: EVENT_ID, syncRunId: syncRuns.rows[1].id }, startedByUserId: 'admin-1', dedupeKey: undefined }),
+      ]);
     });
 
     it('queues live scores for an event in play, where its sync kinds include them', async () => {
       const { service, syncRuns } = buildEventSyncService(jest.fn().mockResolvedValue(event({ status: 'IN_PROGRESS' })));
 
-      await service.syncSportEvent('event-1', ['SCORES'], 'admin-1', 'admin@example.com');
+      await service.syncSportEvent(EVENT_ID, ['SCORES'], 'admin-1', 'admin@example.com');
 
       expect(syncRuns.rows).toEqual([expect.objectContaining({ kind: 'SCORES', status: 'SUBMITTED' })]);
     });

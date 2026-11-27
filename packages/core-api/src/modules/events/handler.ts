@@ -56,7 +56,7 @@ import {
   toProviderManualSyncSubmissionResponse,
 } from '../../mappers';
 import type { IngestionService } from '../ingestion/ingestion-service';
-import { requireSyncableEvent, SportEventNotSyncedError, SportProviderNotFoundError } from '../ingestion/ingestion-service';
+import { SportEventNotSyncedError, SportProviderNotFoundError } from '../ingestion/ingestion-service';
 import type { EventLifecycleService } from './event-lifecycle-service';
 import { SportEventError } from './errors';
 import type { SportEventServices } from './wiring';
@@ -215,12 +215,13 @@ export function createEventHandlers({ services, eventLifecycle, ingestion, leade
      * Queues a provider sync of the event's field. 409 EVENT_NOT_LINKED for an event with no provider
      * link, 422 EVENT_SYNC_KIND_UNAVAILABLE for a postponed or cancelled event (#2238).
      */
+    // The Sync now reads the event and refuses one it cannot sync (#2009): unknown, unlinked, or
+    // in a status no field sync runs in.
     refreshEventParticipants: async (request: FastifyRequest<EventParams>, reply: FastifyReply) => {
-      const event = await sportEvents.requireEvent(request.params.eventId);
       try {
-        const feedRef = requireSyncableEvent(event, [ProviderSyncKind.FIELD]);
-        const result = await ingestion.syncEventData(
-          { sport: event.sport, providerId: feedRef.providerId, eventId: feedRef.externalId, kinds: [ProviderSyncKind.FIELD] },
+        const result = await ingestion.syncSportEvent(
+          request.params.eventId,
+          [ProviderSyncKind.FIELD],
           request.authUser?.userId ?? '',
           request.authUser?.email ?? '',
         );

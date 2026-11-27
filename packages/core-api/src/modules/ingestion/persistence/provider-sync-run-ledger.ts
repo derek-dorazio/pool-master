@@ -1,6 +1,6 @@
 import type { FastifyBaseLogger } from 'fastify';
 import { enumLabel } from '@poolmaster/shared/display-strings';
-import type { ProviderSyncRunCreate, ProviderSyncRunRepository, ProviderSyncRunUpdate, SportEventRepository } from '@poolmaster/shared/db';
+import type { ProviderSyncRunCreate, ProviderSyncRunRepository, ProviderSyncRunUpdate } from '@poolmaster/shared/db';
 import {
   IngestionJobStatus,
   ProviderSyncFindingKind,
@@ -11,7 +11,7 @@ import {
   type ProviderSyncRun,
   requireProviderCodeOfSourceId,
 } from '@poolmaster/shared/domain';
-import type { IngestionJobRecord } from '../core/ingestion-scheduler';
+import type { IngestionJobRecord } from '../core/event-feed-sync';
 import type { NormalizedSyncRequest } from '../core/sync-orchestrator';
 import { syncChangedRows, type SyncWriteDiagnostics } from '../core/sync-write-diagnostics';
 import type { ProviderSyncFindingService } from '../findings/provider-sync-finding-service';
@@ -35,20 +35,17 @@ export class SyncRunOutcomeUnrecordedError extends Error {
 
 export class ProviderSyncRunLedger {
   /**
-   * `linkedEvents` finds the event of ours a provider event is linked to, so a run whose caller
-   * did not name its event and sport league still records them (#1847): the Sports page reads
-   * each sport league's runs by them. `findings` takes each completed run's check of its event
-   * (#1999): a field with no participants, or a scores sync with no updates.
+   * `findings` takes each completed run's check of its event (#1999): a field with no
+   * participants, or a scores sync with no updates.
    */
   constructor(
     private readonly syncRuns: ProviderSyncRunRepository,
     private readonly logger?: FastifyBaseLogger,
-    private readonly linkedEvents?: Pick<SportEventRepository, 'findByProviderRefs'>,
     private readonly findings?: Pick<ProviderSyncFindingService, 'checkEvent'>,
   ) {}
 
   async createSubmissions(input: SubmissionInput): Promise<ProviderSyncRun[]> {
-    const runs = submissionRuns(await this.withLinkedEvent(input));
+    const runs = submissionRuns(input);
     return Promise.all(
       // poolmaster-allow-query-in-loop: one run per requested feed, a handful per sync request
       runs.map((run) => this.syncRuns.create(run)),
@@ -62,20 +59,7 @@ export class ProviderSyncRunLedger {
   async createSubmissionsWithJob(
     input: SubmissionInput & { job: (runs: ProviderSyncRun[]) => BackgroundJobRequest },
   ): Promise<ProviderSyncRun[]> {
-    return this.syncRuns.createWithJob(submissionRuns(await this.withLinkedEvent(input)), input.job);
-  }
-
-  /**
-   * The input with the linked event and its sport league filled in, when the caller left the league
-   * out and one is linked. A provider event linked to several events, one per competition its games
-   * reach (#2154), names their league and no one event.
-   */
-  private async withLinkedEvent(input: SubmissionInput): Promise<SubmissionInput> {
-    if (input.sportLeagueId !== undefined || this.linkedEvents === undefined) return input;
-    const events = await this.linkedEvents.findByProviderRefs(input.providerId, [input.normalizedRequest.scope.eventId]);
-    const [event] = events;
-    if (events.length === 0) return input;
-    return { ...input, ...(events.length === 1 && { sportEventId: event.id }), sportLeagueId: event.sportLeagueId };
+    return this.syncRuns.createWithJob(submissionRuns(input), input.job);
   }
 
   /**
@@ -302,9 +286,9 @@ interface SubmissionInput {
   trigger: JobTrigger;
   /** The job the runs are created in, when one is (a webhook's sync, #1819). */
   backgroundJobId?: string;
-  /** PoolMaster's event the provider event is linked to, when the caller knows it. */
-  sportEventId?: string;
-  sportLeagueId?: string;
+  /** The event of ours the runs sync (#2009), and its sport league: the Sports page reads each league's runs by them (#1847). */
+  sportEventId: string;
+  sportLeagueId: string;
 }
 
 /** One SUBMITTED run per requested sync kind, as the sync history shows it before it starts. */
@@ -316,8 +300,8 @@ function submissionRuns(input: SubmissionInput): ProviderSyncRunCreate[] {
       sport,
       kind,
       trigger: input.trigger,
-      sportLeagueId: input.sportLeagueId ?? null,
-      sportEventId: input.sportEventId ?? null,
+      sportLeagueId: input.sportLeagueId,
+      sportEventId: input.sportEventId,
       backgroundJobId: input.backgroundJobId ?? null,
       status: ProviderSyncRunStatus.SUBMITTED,
       startedAt: null,

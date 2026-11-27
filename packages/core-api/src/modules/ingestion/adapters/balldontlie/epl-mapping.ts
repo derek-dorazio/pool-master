@@ -139,7 +139,6 @@ export function toEplScheduledGames(matches: readonly SoccerMatch[]): ProviderSc
     homeTeamExternalId: participantFeedId(required(match.home_team_id, EPL_MATCHES_PATH, matchName(match), 'home_team_id')),
     awayTeamExternalId: participantFeedId(required(match.away_team_id, EPL_MATCHES_PATH, matchName(match), 'away_team_id')),
     scheduledAt: new Date(required(match.date, EPL_MATCHES_PATH, matchName(match), 'date')),
-    isNeutralSite: false,
   }));
 }
 

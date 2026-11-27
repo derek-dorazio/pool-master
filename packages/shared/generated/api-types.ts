@@ -12406,6 +12406,8 @@ export interface components {
             awardsTrophy: boolean;
             /** @description Whether a squares pool can be played on its games. */
             squaresEligible: boolean;
+            /** @description Whether its games are played at a neutral site, neither side at home (a Super Bowl, a bowl game). Each game of the slot takes it, and screens then say "vs" rather than "at". */
+            isNeutralSite: boolean;
             /** @enum {string} */
             seriesFormat: "SINGLE_GAME" | "BEST_OF" | "AGGREGATE";
             /** @description Games in one meeting: 1 for SINGLE_GAME, the series length for BEST_OF, the legs for AGGREGATE. */
@@ -12468,6 +12470,8 @@ export interface components {
                 awardsTrophy: boolean;
                 /** @description Whether a squares pool can be played on its games. */
                 squaresEligible: boolean;
+                /** @description Whether its games are played at a neutral site, neither side at home (a Super Bowl, a bowl game). Each game of the slot takes it, and screens then say "vs" rather than "at". */
+                isNeutralSite: boolean;
                 /** @enum {string} */
                 seriesFormat: "SINGLE_GAME" | "BEST_OF" | "AGGREGATE";
                 /** @description Games in one meeting: 1 for SINGLE_GAME, the series length for BEST_OF, the legs for AGGREGATE. */
@@ -12539,6 +12543,8 @@ export interface components {
                     awardsTrophy: boolean;
                     /** @description Whether a squares pool can be played on its games. */
                     squaresEligible: boolean;
+                    /** @description Whether its games are played at a neutral site, neither side at home (a Super Bowl, a bowl game). Each game of the slot takes it, and screens then say "vs" rather than "at". */
+                    isNeutralSite: boolean;
                     /** @enum {string} */
                     seriesFormat: "SINGLE_GAME" | "BEST_OF" | "AGGREGATE";
                     /** @description Games in one meeting: 1 for SINGLE_GAME, the series length for BEST_OF, the legs for AGGREGATE. */
@@ -12613,6 +12619,8 @@ export interface components {
                         awardsTrophy: boolean;
                         /** @description Whether a squares pool can be played on its games. */
                         squaresEligible: boolean;
+                        /** @description Whether its games are played at a neutral site, neither side at home (a Super Bowl, a bowl game). Each game of the slot takes it, and screens then say "vs" rather than "at". */
+                        isNeutralSite: boolean;
                         /** @enum {string} */
                         seriesFormat: "SINGLE_GAME" | "BEST_OF" | "AGGREGATE";
                         /** @description Games in one meeting: 1 for SINGLE_GAME, the series length for BEST_OF, the legs for AGGREGATE. */
@@ -27381,7 +27389,7 @@ export interface components {
              * @description The job's handler. Its kind follows from it.
              * @enum {string}
              */
-            type: "MANUAL_EVENT_SYNC" | "PROVIDER_EVENT_SYNC" | "CONTEST_STARTED_EMAILS" | "CONTEST_SETTLED_EMAILS" | "CONTEST_EVENT_CHANGED_EMAILS" | "CONTEST_REOPENED_EMAILS" | "SETTLE_SPORT_EVENT_CONTESTS" | "SETTLE_GAME_CONTESTS" | "REBUILD_LEADERBOARDS" | "SYNC_LEAGUE_EVENTS" | "RELEASE_SPORT_EVENT" | "SYNC_EVENT_GAMES_AND_TIERS" | "ACTIVATE_EVENT_CONTESTS" | "FOLLOW_POSTPONED_EVENT_CONTESTS" | "RESOLVE_MAPPED_PARTICIPANT_FINDINGS" | "REFRESH_SLOT_TIEBREAKERS";
+            type: "SYNC_EVENT_FIELD" | "SYNC_EVENT_SCORES" | "CONTEST_STARTED_EMAILS" | "CONTEST_SETTLED_EMAILS" | "CONTEST_EVENT_CHANGED_EMAILS" | "CONTEST_REOPENED_EMAILS" | "SETTLE_SPORT_EVENT_CONTESTS" | "SETTLE_GAME_CONTESTS" | "REBUILD_LEADERBOARDS" | "SYNC_LEAGUE_EVENTS" | "RELEASE_SPORT_EVENT" | "SYNC_EVENT_GAMES_AND_TIERS" | "ACTIVATE_EVENT_CONTESTS" | "FOLLOW_POSTPONED_EVENT_CONTESTS" | "RESOLVE_MAPPED_PARTICIPANT_FINDINGS" | "REFRESH_SLOT_TIEBREAKERS";
             /**
              * @description What a job is about: a provider SYNC, EMAIL to a league, contest SETTLEMENT, an event's RELEASE, or OTHER.
              * @enum {string}
@@ -27505,7 +27513,7 @@ export interface components {
                  * @description The job's handler. Its kind follows from it.
                  * @enum {string}
                  */
-                type: "MANUAL_EVENT_SYNC" | "PROVIDER_EVENT_SYNC" | "CONTEST_STARTED_EMAILS" | "CONTEST_SETTLED_EMAILS" | "CONTEST_EVENT_CHANGED_EMAILS" | "CONTEST_REOPENED_EMAILS" | "SETTLE_SPORT_EVENT_CONTESTS" | "SETTLE_GAME_CONTESTS" | "REBUILD_LEADERBOARDS" | "SYNC_LEAGUE_EVENTS" | "RELEASE_SPORT_EVENT" | "SYNC_EVENT_GAMES_AND_TIERS" | "ACTIVATE_EVENT_CONTESTS" | "FOLLOW_POSTPONED_EVENT_CONTESTS" | "RESOLVE_MAPPED_PARTICIPANT_FINDINGS" | "REFRESH_SLOT_TIEBREAKERS";
+                type: "SYNC_EVENT_FIELD" | "SYNC_EVENT_SCORES" | "CONTEST_STARTED_EMAILS" | "CONTEST_SETTLED_EMAILS" | "CONTEST_EVENT_CHANGED_EMAILS" | "CONTEST_REOPENED_EMAILS" | "SETTLE_SPORT_EVENT_CONTESTS" | "SETTLE_GAME_CONTESTS" | "REBUILD_LEADERBOARDS" | "SYNC_LEAGUE_EVENTS" | "RELEASE_SPORT_EVENT" | "SYNC_EVENT_GAMES_AND_TIERS" | "ACTIVATE_EVENT_CONTESTS" | "FOLLOW_POSTPONED_EVENT_CONTESTS" | "RESOLVE_MAPPED_PARTICIPANT_FINDINGS" | "REFRESH_SLOT_TIEBREAKERS";
                 /**
                  * @description What a job is about: a provider SYNC, EMAIL to a league, contest SETTLEMENT, an event's RELEASE, or OTHER.
                  * @enum {string}
@@ -27601,7 +27609,7 @@ export interface components {
                  * @description The job's handler. Its kind follows from it.
                  * @enum {string}
                  */
-                type: "MANUAL_EVENT_SYNC" | "PROVIDER_EVENT_SYNC" | "CONTEST_STARTED_EMAILS" | "CONTEST_SETTLED_EMAILS" | "CONTEST_EVENT_CHANGED_EMAILS" | "CONTEST_REOPENED_EMAILS" | "SETTLE_SPORT_EVENT_CONTESTS" | "SETTLE_GAME_CONTESTS" | "REBUILD_LEADERBOARDS" | "SYNC_LEAGUE_EVENTS" | "RELEASE_SPORT_EVENT" | "SYNC_EVENT_GAMES_AND_TIERS" | "ACTIVATE_EVENT_CONTESTS" | "FOLLOW_POSTPONED_EVENT_CONTESTS" | "RESOLVE_MAPPED_PARTICIPANT_FINDINGS" | "REFRESH_SLOT_TIEBREAKERS";
+                type: "SYNC_EVENT_FIELD" | "SYNC_EVENT_SCORES" | "CONTEST_STARTED_EMAILS" | "CONTEST_SETTLED_EMAILS" | "CONTEST_EVENT_CHANGED_EMAILS" | "CONTEST_REOPENED_EMAILS" | "SETTLE_SPORT_EVENT_CONTESTS" | "SETTLE_GAME_CONTESTS" | "REBUILD_LEADERBOARDS" | "SYNC_LEAGUE_EVENTS" | "RELEASE_SPORT_EVENT" | "SYNC_EVENT_GAMES_AND_TIERS" | "ACTIVATE_EVENT_CONTESTS" | "FOLLOW_POSTPONED_EVENT_CONTESTS" | "RESOLVE_MAPPED_PARTICIPANT_FINDINGS" | "REFRESH_SLOT_TIEBREAKERS";
                 /**
                  * @description What a job is about: a provider SYNC, EMAIL to a league, contest SETTLEMENT, an event's RELEASE, or OTHER.
                  * @enum {string}

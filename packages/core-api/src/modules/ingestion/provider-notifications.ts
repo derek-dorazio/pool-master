@@ -1,7 +1,8 @@
 /**
  * Provider notifications (#1498): a provider's webhook saying something happened in a game or
- * an event. A notification is a trigger, never a record: it queues a PROVIDER_EVENT_SYNC job for
- * each linked event it is about, and the job reads the event's current scores over REST.
+ * an event. A notification is a trigger, never a record: it queues a SYNC_EVENT_SCORES job for
+ * each linked event it is about (#2009), the job the sync tick queues too, and the job reads the
+ * event's current scores over REST.
  *
  * Bursts coalesce: each event's job is due a short while out under a dedupe key, so every
  * notification that arrives while it waits queues nothing. The key is released when a worker
@@ -11,7 +12,7 @@
  * whose sync waits until the lifecycle sweep has moved them in progress (a live score is written
  * only then). Play ending queues a second, reconciling sync a while later, for the corrections a
  * provider makes after the final whistle. And every notification records when it arrived on the
- * events it is about, so the scheduler can tell when an event in play has gone quiet.
+ * events it is about, so the sync tick can tell when an event in play has gone quiet.
  *
  * A game's notification routes by its game id alone (#2007): the id's Game provider mapping names
  * the one Game, and so the one event, it is about. Its arrival is recorded on that Game. An id no
@@ -19,13 +20,13 @@
  * it for; nothing is synced on a guess.
  */
 
-import { createHash } from 'node:crypto';
 import type { FastifyBaseLogger } from 'fastify';
 import type { ProviderNotifiedEvent, SportEventRepository, SportEventRoundMatchGameRepository, SportLeagueRepository } from '@poolmaster/shared/db';
-import { BackgroundJobType, ProviderSyncFindingKind, ProviderSyncFindingSeverity, requireProviderCodeOfSourceId, type Sport } from '@poolmaster/shared/domain';
+import { ProviderSyncFindingKind, ProviderSyncFindingSeverity, ProviderSyncKind, requireProviderCodeOfSourceId, type Sport } from '@poolmaster/shared/domain';
 import type { BackgroundJobQueue } from '../background-jobs/background-job-queue';
 import type { ProviderSyncFindingService } from './findings/provider-sync-finding-service';
 import { WEBHOOK_START } from '../../core/job-start';
+import { eventSyncJob, EventSyncWait } from './event-sync-job-requests';
 
 /** Where in play a notification falls: play starting, under way, or ended. */
 export type ProviderNotificationPhase = 'START' | 'PROGRESS' | 'END';
@@ -103,18 +104,14 @@ export class ProviderNotificationService {
     const now = this.deps.now?.() ?? new Date();
     const events = await this.notifiedEvents(notification, now);
     const after = (ms: number) => new Date(now.getTime() + ms);
-    // poolmaster-allow-direct-job: a provider's webhook starts the syncs of the events it names
-    const syncs = events.map((event) => this.deps.jobs.request(
-      BackgroundJobType.PROVIDER_EVENT_SYNC,
-      { sport: event.sport, providerId: event.providerId, eventId: event.externalId, sportEventId: event.sportEventId },
-      { runAt: after(event.inProgress ? this.coalesceMs : this.startingSyncDelayMs), dedupeKey: providerEventSyncKey(event), start: WEBHOOK_START },
-    ));
-    // poolmaster-allow-direct-job: a provider's webhook starts the reconciling syncs after a game ends
-    const reconciles = notification.phase !== 'END' ? [] : events.map((event) => this.deps.jobs.request(
-      BackgroundJobType.PROVIDER_EVENT_SYNC,
-      { sport: event.sport, providerId: event.providerId, eventId: event.externalId, sportEventId: event.sportEventId },
-      { runAt: after(this.reconcileDelayMs), dedupeKey: providerEventReconcileKey(event), start: WEBHOOK_START },
-    ));
+    const scoresJob = (event: ProviderNotifiedEvent, runAt: Date, wait: EventSyncWait) => eventSyncJob(
+      this.deps.jobs,
+      ProviderSyncKind.SCORES,
+      { sportEventId: event.sportEventId },
+      { runAt, wait, start: WEBHOOK_START, providerCode: requireProviderCodeOfSourceId(event.providerId) },
+    );
+    const syncs = events.map((event) => scoresJob(event, after(event.inProgress ? this.coalesceMs : this.startingSyncDelayMs), EventSyncWait.SYNC));
+    const reconciles = notification.phase !== 'END' ? [] : events.map((event) => scoresJob(event, after(this.reconcileDelayMs), EventSyncWait.RECONCILE));
     // poolmaster-allow-direct-job: the webhook's syncs, in one write
     const queued = await this.deps.jobs.enqueueAll([...syncs, ...reconciles]);
     this.deps.logger?.debug({
@@ -173,27 +170,4 @@ export class ProviderNotificationService {
       );
     }
   }
-}
-
-/** The longest dedupe key a background job can hold (its column's width). */
-const DEDUPE_KEY_MAX_LENGTH = 200;
-
-/**
- * One waiting sync per event: the dedupe key a notified event's sync job holds. Readable where it
- * fits the column; an id too long for it is keyed by its hash instead.
- */
-export function providerEventSyncKey(event: Pick<ProviderNotifiedEvent, 'providerId' | 'externalId'>): string {
-  return eventDedupeKey('provider-event-sync', event);
-}
-
-/** One waiting reconciling sync per event (#1499), apart from the event's coalesced sync. */
-export function providerEventReconcileKey(event: Pick<ProviderNotifiedEvent, 'providerId' | 'externalId'>): string {
-  return eventDedupeKey('provider-event-reconcile', event);
-}
-
-function eventDedupeKey(kind: string, event: Pick<ProviderNotifiedEvent, 'providerId' | 'externalId'>): string {
-  const key = `${kind}:${event.providerId}:${event.externalId}`;
-  return key.length <= DEDUPE_KEY_MAX_LENGTH
-    ? key
-    : `${kind}:sha256:${createHash('sha256').update(`${event.providerId}:${event.externalId}`).digest('hex')}`;
 }
