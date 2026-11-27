@@ -155,8 +155,6 @@ function buildEntry(overrides: Partial<{
     participantId: string;
     participantName: string;
     pickedAt: string;
-    teamAffiliation?: string;
-    role?: string;
   }> | undefined;
 }> = {}) {
   return {
@@ -330,7 +328,7 @@ function primeMocks(opts?: {
 
 const PICKS = [
   { pickId: 'pick-2', sportEventParticipantId: 'sep-2', sportEventId: 'event-1', participantId: 'participant-2', participantName: 'Scottie Scheffler', pickedAt: '2026-04-01T00:00:00.000Z' },
-  { pickId: 'pick-1', sportEventParticipantId: 'sep-1', sportEventId: 'event-1', participantId: 'participant-1', participantName: 'Rory McIlroy', pickedAt: '2026-04-01T00:00:00.000Z', teamAffiliation: 'Northern Ireland' },
+  { pickId: 'pick-1', sportEventParticipantId: 'sep-1', sportEventId: 'event-1', participantId: 'participant-1', participantName: 'Rory McIlroy', pickedAt: '2026-04-01T00:00:00.000Z' },
 ];
 
 const MINE = buildEntry({ id: 'entry-1', squadId: 'squad-1', name: 'Birdie Hunters 1', picksCount: 2, participants: PICKS });
@@ -496,7 +494,7 @@ describe('ContestEntryListPage — a contest\'s page while entries are open', ()
     const picks = await screen.findByTestId('contest-entry-picks-entry-1');
     await waitFor(() => expect(within(picks).getAllByTestId(/^contest-entry-pick-entry-1-participant/).map((row) => row.textContent)).toEqual([
       'Scottie Scheffler1',
-      'Rory McIlroy · Northern Ireland2',
+      'Rory McIlroy2',
     ]));
     expect(within(picks).getByTestId('contest-entry-picks-head-entry-1')).toHaveTextContent(/^GolferTier$/);
     expect(listEventSlotParticipantsMock).toHaveBeenCalledWith(expect.objectContaining({ path: { eventId: 'event-1', seasonSlotId: 'slot-1' } }));
@@ -514,7 +512,7 @@ describe('ContestEntryListPage — a contest\'s page while entries are open', ()
 
     const picks = await screen.findByTestId('contest-entry-picks-entry-1');
     await waitFor(() => expect(within(picks).getAllByTestId(/^contest-entry-pick-entry-1-participant/).map((row) => row.textContent)).toEqual([
-      'Rory McIlroy · Northern Ireland$12,000',
+      'Rory McIlroy$12,000',
       'Scottie Scheffler$9,500',
     ]));
     expect(within(picks).getByTestId('contest-entry-picks-head-entry-1')).toHaveTextContent(/^GolferPrice$/);
@@ -529,21 +527,12 @@ describe('ContestEntryListPage — a contest\'s page while entries are open', ()
 
     const picks = await screen.findByTestId('contest-entry-picks-entry-1');
     expect(within(picks).getAllByTestId(/^contest-entry-pick-entry-1-participant/).map((row) => row.textContent)).toEqual([
-      'Rory McIlroy · Northern Ireland',
+      'Rory McIlroy',
       'Scottie Scheffler',
     ]);
     expect(screen.getByTestId('contest-board-entry-status-entry-1')).toHaveTextContent(/^Submitted$/);
     expect(listEventParticipantsMock).not.toHaveBeenCalled();
     expect(listEventSlotTiersMock).not.toHaveBeenCalled();
-  });
-
-  it('shows a player pick with its team and playing role beside its name', async () => {
-    const player = { pickId: 'pick-9', sportEventParticipantId: 'sep-9', sportEventId: 'event-1', participantId: 'participant-9', participantName: 'Patrick Mahomes', pickedAt: '2026-04-01T00:00:00.000Z', teamAffiliation: 'KC', role: 'QB' };
-    primeMocks({ entries: [buildEntry({ id: 'entry-1', name: 'Birdie Hunters 1', picksCount: 1, participants: [player] })], field: { 'sep-9': { tierId: 'tier-a' } }, tiers: { 'tier-a': 1 } });
-
-    renderContestBoard();
-
-    expect(await screen.findByTestId('contest-entry-pick-entry-1-participant-9')).toHaveTextContent('Patrick Mahomes · KC QB');
   });
 
   it('leaves out an entry\'s picks in the contest\'s other events', async () => {

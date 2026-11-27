@@ -19,8 +19,6 @@ type SelectionGroup = {
     sportEventParticipantId: string;
     participantId: string;
     participantName: string;
-    role: string;
-    team: string | null;
     status: string;
     price: number | null;
     ranking: number | null;
@@ -275,8 +273,6 @@ function buildGolfParticipant(id: string, name: string, orderIndex: number, isSe
     sportEventParticipantId: id,
     participantId: `participant-${id}`,
     participantName: name,
-    role: 'GOLFER',
-    team: null,
     status: 'ACTIVE',
     price: null,
     ranking: orderIndex,
@@ -390,8 +386,6 @@ describe('ContestEntryPage', () => {
                 sportEventParticipantId: 'sep-1',
                 participantId: 'participant-1',
                 participantName: 'Scottie Scheffler',
-                role: 'GOLFER',
-                team: null,
                 status: 'ACTIVE',
                 price: null,
                 ranking: 1,
@@ -413,8 +407,6 @@ describe('ContestEntryPage', () => {
                 sportEventParticipantId: 'sep-2',
                 participantId: 'participant-2',
                 participantName: 'Rory McIlroy',
-                role: 'GOLFER',
-                team: null,
                 status: 'ACTIVE',
                 price: null,
                 ranking: 2,
@@ -538,7 +530,7 @@ describe('ContestEntryPage', () => {
           groupNumber: 1,
           picksFromGroup: 1,
           selectedParticipantIds: ['sep-1'],
-          participants: [{ ...buildGolfParticipant('sep-1', 'Sovereignty', 1, true), role: 'HORSE' }],
+          participants: [buildGolfParticipant('sep-1', 'Sovereignty', 1, true)],
         },
       ]),
     });
@@ -574,7 +566,7 @@ describe('ContestEntryPage', () => {
           groupNumber: 1,
           picksFromGroup: 1,
           selectedParticipantIds: ['sep-1'],
-          participants: [{ ...buildGolfParticipant('sep-1', 'Sovereignty', 1, true), role: 'HORSE' }],
+          participants: [buildGolfParticipant('sep-1', 'Sovereignty', 1, true)],
         },
       ]),
     });
@@ -690,8 +682,6 @@ describe('ContestEntryPage', () => {
                 sportEventParticipantId: 'sep-1',
                 participantId: 'participant-1',
                 participantName: 'Scottie Scheffler',
-                role: 'GOLFER',
-                team: null,
                 status: 'ACTIVE',
                 price: null,
                 ranking: 1,

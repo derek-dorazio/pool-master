@@ -306,7 +306,7 @@ describe('contest entry mappers', () => {
     expect(dto.events.map((event) => event.submittedAt)).toEqual([CREATED.toISOString(), null]);
   });
 
-  it('shows an entry\'s picks when given, an omitted status, role and team as null', () => {
+  it('shows an entry\'s picks when given, an omitted status as null', () => {
     const dto = toContestEntryDto({ ...row, tiebreakerValue: 140 }, { name: 'Squad' }, [
       { pickId: 'p1', sportEventParticipantId: 'sep-1', sportEventId: 'event-1', participantId: 'x1', participantName: 'One', pickedAt: CREATED },
       {
@@ -316,15 +316,12 @@ describe('contest entry mappers', () => {
         participantId: 'x2',
         participantName: 'Two',
         participantStatus: 'ACTIVE',
-        role: 'QB',
-        teamAffiliation: 'KC',
         pickedAt: CREATED,
       },
     ]);
 
     expect(dto.tiebreakerValue).toBe(140);
-    expect(dto.participants?.map((pick) => [pick.participantStatus, pick.role, pick.teamAffiliation]))
-      .toEqual([[null, null, null], ['ACTIVE', 'QB', 'KC']]);
+    expect(dto.participants?.map((pick) => pick.participantStatus)).toEqual([null, 'ACTIVE']);
   });
 
   it('wraps an entry for its single, detail, list and own-entries responses, the list counting its entries', () => {

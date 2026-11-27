@@ -807,6 +807,24 @@
       "key": "lookaheadDays",
       "now": 0,
       "reason": "retired by #2009"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "teamAffiliation",
+      "now": 0,
+      "reason": "retired by #2025"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "participantAffiliation",
+      "now": 0,
+      "reason": "retired by #2025"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "pickAffiliation",
+      "now": 0,
+      "reason": "retired by #2025"
     }
   ]
 }

@@ -359,7 +359,7 @@ describe('toLeagueDto', () => {
 });
 
 describe('toSelectionGroupDto', () => {
-  it('sends a participant\'s omitted role, team, status, price, ranking and order as null, and lists the selected ids', () => {
+  it('sends a participant\'s omitted status, price, ranking and order as null, and lists the selected ids', () => {
     const group: SelectionGroup = {
       groupId: 'g1',
       groupName: 'Tier 1',
@@ -371,8 +371,6 @@ describe('toSelectionGroupDto', () => {
           sportEventParticipantId: 'sep2',
           participantId: 'p2',
           participantName: 'Two',
-          role: 'QB',
-          teamAffiliation: 'KC',
           status: 'ACTIVE',
           price: 12,
           ranking: 3,
@@ -387,8 +385,8 @@ describe('toSelectionGroupDto', () => {
     const dto = toSelectionGroupDto(group);
 
     expect(dto.selectedParticipantIds).toEqual(['sep1']);
-    expect(dto.participants[0]).toEqual(expect.objectContaining({ role: null, team: null, status: null, price: null, ranking: null, orderIndex: null }));
-    expect(dto.participants[1]).toEqual(expect.objectContaining({ role: 'QB', team: 'KC', status: 'ACTIVE', price: 12, ranking: 3, orderIndex: 1 }));
+    expect(dto.participants[0]).toEqual(expect.objectContaining({ status: null, price: null, ranking: null, orderIndex: null }));
+    expect(dto.participants[1]).toEqual(expect.objectContaining({ status: 'ACTIVE', price: 12, ranking: 3, orderIndex: 1 }));
   });
 });
 

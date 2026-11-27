@@ -244,9 +244,8 @@ export interface ProviderParticipant {
   firstName?: string;
   lastName?: string;
   nationality?: string;
-  /** Playing role ("GOLFER"), not a rank. */
-  role?: string;
-  teamAffiliation?: string;
+  /** A team's abbreviation as the feed sends it (KC, LAL); none for a player (#2025). */
+  abbreviation?: string;
   photoUrl?: string;
   /** The participant's place in the event as the provider lists it: ACTIVE, or how it went out. */
   status: SportEventParticipantStatus;

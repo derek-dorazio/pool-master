@@ -9,12 +9,12 @@ type ParticipantRow = SportLeagueParticipantOverviewDto;
 const columnHelper = createColumnHelper<ParticipantRow>();
 
 /** The participant columns a league can show beyond its name and when it was added. */
-export type ParticipantColumnId = 'ranking' | 'feedId' | 'lastInFeedAt' | 'nationality' | 'shortName' | 'teamAffiliation' | 'role';
+export type ParticipantColumnId = 'ranking' | 'feedId' | 'lastInFeedAt' | 'nationality' | 'shortName' | 'abbreviation';
 
 /**
  * Which columns a league's Participants grid shows (the League page spec): Rank, Feed id and Last
- * in feed on every league, Country for individual players, Short name for teams, Team and
- * Position for players who have them. A column no participant has a value for is left out, so none is
+ * in feed on every league, Country for individual players, Short name and Abbreviation for
+ * teams. A column no participant has a value for is left out, so none is
  * ever blank for the whole league.
  */
 export function leagueParticipantColumnIds(
@@ -28,8 +28,7 @@ export function leagueParticipantColumnIds(
     ['ranking', hasValue('ranking')],
     ['nationality', hasValue('nationality', isIndividual)],
     ['shortName', hasValue('shortName', isTeam)],
-    ['teamAffiliation', hasValue('teamAffiliation')],
-    ['role', hasValue('role')],
+    ['abbreviation', hasValue('abbreviation', isTeam)],
     ['feedId', hasValue('feedId')],
     ['lastInFeedAt', hasValue('lastInFeedAt')],
   ];
@@ -49,13 +48,9 @@ const OPTIONAL_COLUMNS = {
     header: 'Short name',
     meta: { info: 'The team\'s short name, where space is tight.', type: { kind: 'text' } },
   }),
-  teamAffiliation: columnHelper.accessor('teamAffiliation', {
-    header: 'Team',
-    meta: { info: 'The team the player plays for.', type: { kind: 'enum' } },
-  }),
-  role: columnHelper.accessor('role', {
-    header: 'Position',
-    meta: { info: 'Where the player plays.', type: { kind: 'enum' } },
+  abbreviation: columnHelper.accessor('abbreviation', {
+    header: 'Abbreviation',
+    meta: { info: 'The team\'s abbreviation as its feed sends it.', type: { kind: 'text' } },
   }),
   feedId: columnHelper.accessor('feedId', {
     header: 'Feed id',

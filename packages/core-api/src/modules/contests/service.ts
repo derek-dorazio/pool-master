@@ -2187,8 +2187,6 @@ function toContestEntryParticipantRow(pick: ContestEntryPickWithParticipant): Co
     participantId: pick.participant.participantId,
     participantName: pick.participant.participantName,
     participantStatus: pick.participant.status,
-    role: pick.participant.role,
-    teamAffiliation: pick.participant.teamAffiliation,
     pickedAt: pick.pickedAt,
   };
 }

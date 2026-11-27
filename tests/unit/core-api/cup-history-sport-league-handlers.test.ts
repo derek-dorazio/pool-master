@@ -280,7 +280,7 @@ describe('sport league handlers', () => {
         overdueCandidates: [],
       }),
       readParticipants: (sportLeagueId) => known(sportLeagueId, [{
-        participant: { id: 'p1', name: 'One', participantType: 'INDIVIDUAL' as const, shortName: null, nationality: null, teamAffiliation: null, role: null, ranking: 1, createdAt: AT },
+        participant: { id: 'p1', name: 'One', participantType: 'INDIVIDUAL' as const, shortName: null, nationality: null, abbreviation: null, ranking: 1, createdAt: AT },
         mapping: null,
       }]),
     },

@@ -29,8 +29,6 @@ export interface CreateParticipantInput {
   lastName?: string;
   shortName?: string;
   nationality?: string;
-  role?: string;
-  teamAffiliation?: string;
   /** The sport league's sync provider's id for the participant, mapped in the same write (#2096). */
   feedId?: string;
   /** A test participant for a test slot's field (#2096); it never takes a feed id. */
@@ -43,8 +41,6 @@ export interface UpdateParticipantInput {
   lastName?: string;
   shortName?: string;
   nationality?: string;
-  role?: string;
-  teamAffiliation?: string;
   ranking?: number | null;
   status?: Participant['status'];
   injuryStatus?: InjuryStatus;
@@ -121,8 +117,6 @@ export class ParticipantService {
       lastName: input.lastName,
       shortName: input.shortName,
       nationality: input.nationality,
-      role: input.role,
-      teamAffiliation: input.teamAffiliation,
       status: ParticipantStatus.ACTIVE,
       injuryStatus: DEFAULT_INJURY_STATUS,
       isTestData,

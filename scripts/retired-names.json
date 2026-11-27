@@ -146,7 +146,10 @@
     "getScoringFamilyAdminUi": "#2008 (10b part 4b): no per-family results page in Manage; results come from the feed or the test-data loader",
     "ScoreSyncNotice": "#2008 (10b part 4b): no per-family results page in Manage; results come from the feed or the test-data loader",
     "useRowCorrections": "#2008 (10b part 4b): no per-family results page in Manage; results come from the feed or the test-data loader",
-    "lookaheadDays": "#2009 (10c part B): the field sync covers the league's next slot; each sync kind has an interval per Season state"
+    "lookaheadDays": "#2009 (10c part B): the field sync covers the league's next slot; each sync kind has an interval per Season state",
+    "teamAffiliation": "#2025 (21 part A): a player's team and position are their roster row's (SportLeagueSeasonParticipantTeam); a team's abbreviation is a Participant column",
+    "participantAffiliation": "#2025 (21 part A): a player's team and position are their roster row's (SportLeagueSeasonParticipantTeam); a team's abbreviation is a Participant column",
+    "pickAffiliation": "#2025 (21 part A): a player's team and position are their roster row's (SportLeagueSeasonParticipantTeam); a team's abbreviation is a Participant column"
   },
   "ROUND_NAMES_FROM_FINAL": 0,
   "roundLabel": 0,
@@ -293,5 +296,8 @@
   "getScoringFamilyAdminUi": 0,
   "ScoreSyncNotice": 0,
   "useRowCorrections": 0,
-  "lookaheadDays": 0
+  "lookaheadDays": 0,
+  "teamAffiliation": 0,
+  "participantAffiliation": 0,
+  "pickAffiliation": 0
 }

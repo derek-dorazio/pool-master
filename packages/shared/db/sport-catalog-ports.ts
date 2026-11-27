@@ -693,8 +693,7 @@ export interface SportLeaguePageParticipant {
     participantType: ParticipantType;
     shortName: string | null;
     nationality: string | null;
-    teamAffiliation: string | null;
-    role: string | null;
+    abbreviation: string | null;
     ranking: number | null;
     createdAt: Date;
   };

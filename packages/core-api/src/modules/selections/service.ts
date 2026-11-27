@@ -943,8 +943,6 @@ export class SelectionService {
         entryName: entry?.name ?? pick.entryId,
         sportEventParticipantId: pick.sportEventParticipantId,
         participantName: pick.participant.participantName,
-        role: pick.participant.role ?? undefined,
-        teamAffiliation: pick.participant.teamAffiliation ?? undefined,
         price: input.priceBySportEventParticipantId.get(pick.sportEventParticipantId),
         tierId: tier?.tierId,
         tierName: tier === undefined ? undefined : tierLabel(tier.tierNumber),

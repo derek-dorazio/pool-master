@@ -86,17 +86,6 @@ export function selectionParticipantLabel(participant: Pick<SelectionParticipant
     : `(${participant.seedNumber}) ${participant.participantName}`;
 }
 
-/**
- * Who a participant plays for, with their position when it is known, as a roster row's second
- * line: "Los Angeles Dodgers · SS". Null for a participant with no team, such as a golfer.
- */
-export function participantAffiliation(participant: Pick<SelectionParticipant, 'team' | 'role'>): string | null {
-  if (!participant.team) {
-    return null;
-  }
-  return participant.role ? `${participant.team} · ${participant.role}` : participant.team;
-}
-
 /** The sport's words a game-picks screen's error wording takes (#700). */
 export function gamePickErrorValues(sport: Sport | null | undefined): DisplayStringValues {
   const match = contestMatchNoun(sport);

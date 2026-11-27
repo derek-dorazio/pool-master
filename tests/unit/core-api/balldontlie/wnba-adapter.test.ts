@@ -123,7 +123,7 @@ describe('BalldontlieAdapter (WNBA playoffs)', () => {
       expect(detail).toMatchObject({ externalId: 'wnba-2025-postseason', sport: Sport.BASKETBALL, status: 'COMPLETED', fieldLocked: true });
       expect(detail?.participants).toHaveLength(8);
       expect(detail?.participants.map((team) => team.externalId)).not.toContain('3');
-      expect(detail?.participants[0]).toMatchObject({ externalId: '8', name: 'Minnesota Lynx', metadata: { abbreviation: 'MIN' } });
+      expect(detail?.participants[0]).toMatchObject({ externalId: '8', name: 'Minnesota Lynx', abbreviation: 'MIN' });
       expect(requestLine(harness.api)).toEqual(['/wnba/v1/games?seasons[]=2025&per_page=100', '/wnba/v1/standings?season=2025']);
     });
 

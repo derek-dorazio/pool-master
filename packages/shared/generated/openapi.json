@@ -20659,15 +20659,8 @@
             "description": "Participant nationality or country code when known.",
             "type": "string"
           },
-          "role": {
-            "description": "Playing role when known (\"GOLFER\", \"QB\"). Not a rank: `position` means rank on the standing objects.",
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "teamAffiliation": {
-            "description": "Current team affiliation when the participant is not itself a team.",
+          "abbreviation": {
+            "description": "A team's abbreviation as its feed sends it (KC); null for a player and for a team its feed gives none. A player's team and position are their roster row's.",
             "type": [
               "string",
               "null"
@@ -20773,7 +20766,7 @@
         "type": "object",
         "properties": {
           "q": {
-            "description": "Case-insensitive text matched against name, first, last and short name, and team.",
+            "description": "Case-insensitive text matched against name, first, last and short name, and a team's abbreviation.",
             "type": "string"
           },
           "sportLeagueId": {
@@ -20853,15 +20846,8 @@
                   "description": "Participant nationality or country code when known.",
                   "type": "string"
                 },
-                "role": {
-                  "description": "Playing role when known (\"GOLFER\", \"QB\"). Not a rank: `position` means rank on the standing objects.",
-                  "type": [
-                    "string",
-                    "null"
-                  ]
-                },
-                "teamAffiliation": {
-                  "description": "Current team affiliation when the participant is not itself a team.",
+                "abbreviation": {
+                  "description": "A team's abbreviation as its feed sends it (KC); null for a player and for a team its feed gives none. A player's team and position are their roster row's.",
                   "type": [
                     "string",
                     "null"
@@ -21028,15 +21014,8 @@
                 "description": "Participant nationality or country code when known.",
                 "type": "string"
               },
-              "role": {
-                "description": "Playing role when known (\"GOLFER\", \"QB\"). Not a rank: `position` means rank on the standing objects.",
-                "type": [
-                  "string",
-                  "null"
-                ]
-              },
-              "teamAffiliation": {
-                "description": "Current team affiliation when the participant is not itself a team.",
+              "abbreviation": {
+                "description": "A team's abbreviation as its feed sends it (KC); null for a player and for a team its feed gives none. A player's team and position are their roster row's.",
                 "type": [
                   "string",
                   "null"
@@ -21193,16 +21172,6 @@
             "type": "string",
             "maxLength": 10
           },
-          "role": {
-            "description": "Playing role (\"GOLFER\", \"QB\").",
-            "type": "string",
-            "maxLength": 50
-          },
-          "teamAffiliation": {
-            "description": "Current team affiliation.",
-            "type": "string",
-            "maxLength": 255
-          },
           "feedId": {
             "description": "The sport league's sync provider's own id for the participant, mapped to it in the same write. A provider-synced sport league requires it (409 PARTICIPANT_FEED_ID_REQUIRED otherwise) unless isTestData is true. 422 SPORT_LEAGUE_NOT_SYNCED in a league with no feed; 409 PARTICIPANT_FEED_ID_TAKEN when another participant of the league has it.",
             "type": "string",
@@ -21250,16 +21219,6 @@
             "description": "Participant nationality or country code.",
             "type": "string",
             "maxLength": 10
-          },
-          "role": {
-            "description": "Playing role (\"GOLFER\", \"QB\").",
-            "type": "string",
-            "maxLength": 50
-          },
-          "teamAffiliation": {
-            "description": "Current team affiliation.",
-            "type": "string",
-            "maxLength": 255
           },
           "status": {
             "description": "Participant lifecycle or availability status.",
@@ -25571,14 +25530,8 @@
               "null"
             ]
           },
-          "teamAffiliation": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "role": {
-            "description": "Playing role, such as a position; not a rank.",
+          "abbreviation": {
+            "description": "A team's abbreviation as its feed sends it (KC); null for a player and for a team its feed gives none.",
             "type": [
               "string",
               "null"
@@ -25628,8 +25581,7 @@
           "participantType",
           "shortName",
           "nationality",
-          "teamAffiliation",
-          "role",
+          "abbreviation",
           "ranking",
           "feedId",
           "lastInFeedAt",
@@ -25673,14 +25625,8 @@
                     "null"
                   ]
                 },
-                "teamAffiliation": {
-                  "type": [
-                    "string",
-                    "null"
-                  ]
-                },
-                "role": {
-                  "description": "Playing role, such as a position; not a rank.",
+                "abbreviation": {
+                  "description": "A team's abbreviation as its feed sends it (KC); null for a player and for a team its feed gives none.",
                   "type": [
                     "string",
                     "null"
@@ -25730,8 +25676,7 @@
                 "participantType",
                 "shortName",
                 "nationality",
-                "teamAffiliation",
-                "role",
+                "abbreviation",
                 "ranking",
                 "feedId",
                 "lastInFeedAt",
@@ -34623,15 +34568,8 @@
                 "description": "Participant nationality or country code when known.",
                 "type": "string"
               },
-              "role": {
-                "description": "Playing role when known (\"GOLFER\", \"QB\"). Not a rank: `position` means rank on the standing objects.",
-                "type": [
-                  "string",
-                  "null"
-                ]
-              },
-              "teamAffiliation": {
-                "description": "Current team affiliation when the participant is not itself a team.",
+              "abbreviation": {
+                "description": "A team's abbreviation as its feed sends it (KC); null for a player and for a team its feed gives none. A player's team and position are their roster row's.",
                 "type": [
                   "string",
                   "null"
@@ -35174,15 +35112,8 @@
                       "description": "Participant nationality or country code when known.",
                       "type": "string"
                     },
-                    "role": {
-                      "description": "Playing role when known (\"GOLFER\", \"QB\"). Not a rank: `position` means rank on the standing objects.",
-                      "type": [
-                        "string",
-                        "null"
-                      ]
-                    },
-                    "teamAffiliation": {
-                      "description": "Current team affiliation when the participant is not itself a team.",
+                    "abbreviation": {
+                      "description": "A team's abbreviation as its feed sends it (KC); null for a player and for a team its feed gives none. A player's team and position are their roster row's.",
                       "type": [
                         "string",
                         "null"
@@ -35852,15 +35783,8 @@
                     "description": "Participant nationality or country code when known.",
                     "type": "string"
                   },
-                  "role": {
-                    "description": "Playing role when known (\"GOLFER\", \"QB\"). Not a rank: `position` means rank on the standing objects.",
-                    "type": [
-                      "string",
-                      "null"
-                    ]
-                  },
-                  "teamAffiliation": {
-                    "description": "Current team affiliation when the participant is not itself a team.",
+                  "abbreviation": {
+                    "description": "A team's abbreviation as its feed sends it (KC); null for a player and for a team its feed gives none. A player's team and position are their roster row's.",
                     "type": [
                       "string",
                       "null"
@@ -38408,19 +38332,6 @@
                     "null"
                   ]
                 },
-                "role": {
-                  "description": "The participant's playing role, when known.",
-                  "type": [
-                    "string",
-                    "null"
-                  ]
-                },
-                "teamAffiliation": {
-                  "type": [
-                    "string",
-                    "null"
-                  ]
-                },
                 "pickedAt": {
                   "type": "string",
                   "format": "date-time",
@@ -38475,19 +38386,6 @@
             "type": "string"
           },
           "participantStatus": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "role": {
-            "description": "The participant's playing role, when known.",
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "teamAffiliation": {
             "type": [
               "string",
               "null"
@@ -39226,15 +39124,8 @@
                       "description": "Participant nationality or country code when known.",
                       "type": "string"
                     },
-                    "role": {
-                      "description": "Playing role when known (\"GOLFER\", \"QB\"). Not a rank: `position` means rank on the standing objects.",
-                      "type": [
-                        "string",
-                        "null"
-                      ]
-                    },
-                    "teamAffiliation": {
-                      "description": "Current team affiliation when the participant is not itself a team.",
+                    "abbreviation": {
+                      "description": "A team's abbreviation as its feed sends it (KC); null for a player and for a team its feed gives none. A player's team and position are their roster row's.",
                       "type": [
                         "string",
                         "null"
@@ -40679,19 +40570,6 @@
                         "null"
                       ]
                     },
-                    "role": {
-                      "description": "The participant's playing role, when known.",
-                      "type": [
-                        "string",
-                        "null"
-                      ]
-                    },
-                    "teamAffiliation": {
-                      "type": [
-                        "string",
-                        "null"
-                      ]
-                    },
                     "pickedAt": {
                       "type": "string",
                       "format": "date-time",
@@ -40851,19 +40729,6 @@
                       "type": "string"
                     },
                     "participantStatus": {
-                      "type": [
-                        "string",
-                        "null"
-                      ]
-                    },
-                    "role": {
-                      "description": "The participant's playing role, when known.",
-                      "type": [
-                        "string",
-                        "null"
-                      ]
-                    },
-                    "teamAffiliation": {
                       "type": [
                         "string",
                         "null"
@@ -41049,19 +40914,6 @@
                         "type": "string"
                       },
                       "participantStatus": {
-                        "type": [
-                          "string",
-                          "null"
-                        ]
-                      },
-                      "role": {
-                        "description": "The participant's playing role, when known.",
-                        "type": [
-                          "string",
-                          "null"
-                        ]
-                      },
-                      "teamAffiliation": {
                         "type": [
                           "string",
                           "null"
@@ -41264,19 +41116,6 @@
                         "type": "string"
                       },
                       "participantStatus": {
-                        "type": [
-                          "string",
-                          "null"
-                        ]
-                      },
-                      "role": {
-                        "description": "The participant's playing role, when known.",
-                        "type": [
-                          "string",
-                          "null"
-                        ]
-                      },
-                      "teamAffiliation": {
                         "type": [
                           "string",
                           "null"
@@ -41543,12 +41382,6 @@
                     "null"
                   ]
                 },
-                "role": {
-                  "type": "string"
-                },
-                "team": {
-                  "type": "string"
-                },
                 "price": {
                   "type": "number"
                 },
@@ -41646,18 +41479,6 @@
                       },
                       "participantName": {
                         "type": "string"
-                      },
-                      "role": {
-                        "type": [
-                          "string",
-                          "null"
-                        ]
-                      },
-                      "team": {
-                        "type": [
-                          "string",
-                          "null"
-                        ]
                       },
                       "status": {
                         "type": [
@@ -41854,12 +41675,6 @@
                     "string",
                     "null"
                   ]
-                },
-                "role": {
-                  "type": "string"
-                },
-                "team": {
-                  "type": "string"
                 },
                 "price": {
                   "type": "number"
@@ -43564,18 +43379,6 @@
                       },
                       "participantName": {
                         "type": "string"
-                      },
-                      "role": {
-                        "type": [
-                          "string",
-                          "null"
-                        ]
-                      },
-                      "team": {
-                        "type": [
-                          "string",
-                          "null"
-                        ]
                       },
                       "status": {
                         "type": [
@@ -94085,7 +93888,7 @@
             "in": "query",
             "name": "q",
             "required": false,
-            "description": "Case-insensitive text matched against name, first, last and short name, and team."
+            "description": "Case-insensitive text matched against name, first, last and short name, and a team's abbreviation."
           },
           {
             "schema": {

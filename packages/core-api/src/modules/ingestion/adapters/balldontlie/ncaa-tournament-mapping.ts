@@ -142,7 +142,8 @@ export function toNcaaTeamParticipant(league: NcaaTournamentLeague, team: NcaaTe
     sport: Sport.BASKETBALL,
     name: required(team.full_name, path, `team ${String(id)}`, 'full_name'),
     status: SportEventParticipantStatus.ACTIVE,
-    metadata: team.abbreviation ? { abbreviation: team.abbreviation } : {},
+    ...(team.abbreviation ? { abbreviation: team.abbreviation } : {}),
+    metadata: {},
   };
 }
 

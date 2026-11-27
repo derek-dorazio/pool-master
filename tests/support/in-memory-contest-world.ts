@@ -343,8 +343,6 @@ export class InMemoryContestWorld {
         participantId: `participant-of-${sportEventParticipantId}`,
         participantName: `Golfer ${sportEventParticipantId}`,
         status: SportEventParticipantStatus.ACTIVE,
-        role: null,
-        teamAffiliation: null,
       },
     };
     this.picks.set(pick.id, pick);

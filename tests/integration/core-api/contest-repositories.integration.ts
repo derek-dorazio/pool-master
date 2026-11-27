@@ -1469,15 +1469,11 @@ describe('ContestEntryPickRepository — read-only', () => {
         participantId: field[0].participantId,
         participantName: `Golfer One ${suffix}`,
         status: 'ACTIVE',
-        role: 'GOLFER',
-        teamAffiliation: null,
       },
       {
         participantId: field[1].participantId,
         participantName: `Golfer Two ${suffix}`,
         status: 'WITHDRAWN',
-        role: null,
-        teamAffiliation: null,
       },
     ]);
     // Each pick names the event its field row belongs to (#713).

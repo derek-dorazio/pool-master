@@ -76,7 +76,9 @@ export type PlayoffsBracketShape =
 export interface PlayoffTeam {
   id: number;
   name: string;
-  /** The league's own facts about the team (abbreviation, conference), kept on the participant. */
+  /** The team's abbreviation as the feed sends it, stored on the participant (#2025). */
+  abbreviation?: string;
+  /** The league's own facts about the team (conference, division), read while mapping and not stored. */
   metadata: Record<string, unknown>;
 }
 
@@ -220,6 +222,7 @@ export function toPlayoffsTeamParticipant(league: PlayoffsLeague, team: PlayoffT
     sport: league.sport,
     name: team.name,
     status: SportEventParticipantStatus.ACTIVE,
+    ...(team.abbreviation === undefined ? {} : { abbreviation: team.abbreviation }),
     metadata: team.metadata,
   };
 }

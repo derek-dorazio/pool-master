@@ -52,7 +52,8 @@ describe('toMlbPlayoffTeam', () => {
     expect(toMlbPlayoffTeam(dodgers, '/mlb/v1/teams')).toEqual({
       id: 18,
       name: 'Los Angeles Dodgers',
-      metadata: { abbreviation: 'LAD', league: 'National', division: 'West' },
+      abbreviation: 'LAD',
+      metadata: { league: 'National', division: 'West' },
     });
   });
 

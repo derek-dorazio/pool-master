@@ -169,8 +169,7 @@ function participant(overrides: Partial<SportLeagueParticipantOverviewDto>): Spo
     participantType: 'TEAM',
     shortName: 'BOS',
     nationality: null,
-    teamAffiliation: null,
-    role: null,
+    abbreviation: null,
     ranking: null,
     feedId: '2',
     lastInFeedAt: '2027-01-01T00:00:00.000Z',
@@ -410,14 +409,14 @@ describe('League page', () => {
     })));
   });
 
-  it('gives a league\'s Participants grid Team and Position when a participant has them', async () => {
+  it('gives a league\'s Participants grid an Abbreviation column when a team has one', async () => {
     listSportLeagueParticipantOverviewsMock.mockResolvedValue({
-      data: { participants: [participant({ id: 'p-jt', name: 'Jayson Tatum', participantType: 'INDIVIDUAL', shortName: null, teamAffiliation: 'Celtics', role: 'F' })] },
+      data: { participants: [participant({ abbreviation: 'BOS' })] },
     });
     renderLeaguePage('/manage/sports/basketball/leagues/nba/participants');
 
-    await screen.findByTestId('root-admin-league-participant-p-jt');
-    expect(columnHeaders('root-admin-league-participants-table')).toEqual(expect.arrayContaining(['Team', 'Position']));
+    await screen.findByTestId('root-admin-league-participant-p-bos');
+    expect(columnHeaders('root-admin-league-participants-table')).toEqual(expect.arrayContaining(['Abbreviation']));
   });
 
   it('opens a contest template in view mode, and Edit then Cancel returns to view without saving', async () => {

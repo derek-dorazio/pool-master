@@ -605,8 +605,7 @@ function participantValues(participant: ProviderParticipant) {
     firstName: participant.firstName ?? null,
     lastName: participant.lastName ?? null,
     nationality: participant.nationality ?? null,
-    role: participant.role ?? null,
-    teamAffiliation: participant.teamAffiliation ?? null,
+    abbreviation: participant.abbreviation ?? null,
     photoUrl: participant.photoUrl ?? null,
     status: participant.status === SportEventParticipantStatus.ACTIVE ? ParticipantStatus.ACTIVE : ParticipantStatus.INACTIVE,
   };

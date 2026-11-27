@@ -134,8 +134,6 @@ export const ContestEntryParticipantDetailDtoSchema = z.object({
   participantId: z.string(),
   participantName: z.string(),
   participantStatus: z.string().nullable().optional(),
-  role: z.string().nullable().optional().describe('The participant\'s playing role, when known.'),
-  teamAffiliation: z.string().nullable().optional(),
   pickedAt: z.iso.datetime().describe('When the participant was added to the contest entry.'),
 }).describe('Contest entry participant detail. Picks remain pointers to event participants; scores are returned by the contest leaderboard endpoint.');
 export type ContestEntryParticipantDetailDto = z.infer<typeof ContestEntryParticipantDetailDtoSchema>;

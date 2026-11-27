@@ -62,8 +62,6 @@ export interface ContestEntryPickParticipant {
   participantId: string;
   participantName: string;
   status: SportEventParticipantStatus;
-  role: string | null;
-  teamAffiliation: string | null;
 }
 
 /** A pick with the event its field row belongs to (#1162). */
