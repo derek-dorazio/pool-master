@@ -25,7 +25,7 @@ function defaultScoring(event: SportLeagueEvent): ContestScoringSettings {
   const participantScoringDefinitionId = expectDefined(eventSportDefinition(event).scoringDefinitions.at(0), `${event.sport}'s scoring definition`);
   switch (participantScoringDefinitionId) {
     case 'GOLF_RELATIVE_TO_PAR_TOTAL':
-      return { participantScoringDefinitionId, config: {} };
+      return { participantScoringDefinitionId, config: { unplayedRoundToPar: 8 } };
     case 'FINISH_POSITION_POINTS':
       return { participantScoringDefinitionId, config: { pointsTable: [5, 3, 1], didNotFinishPoints: 0 } };
     case 'KNOCKOUT_ROUND_POINTS':

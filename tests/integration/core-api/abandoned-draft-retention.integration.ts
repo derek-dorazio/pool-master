@@ -46,7 +46,7 @@ async function seedContest(leagueId: string, status: ContestStatus, sportEventId
         create: {
           templateId,
           selectionType: 'TIERED',
-          participantScoringRules: { create: { participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', sortOrder: 1 } },
+          participantScoringRules: { create: { participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', sortOrder: 1, config: { unplayedRoundToPar: 8 } } },
         },
       },
     },

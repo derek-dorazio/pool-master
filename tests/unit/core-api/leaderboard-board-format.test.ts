@@ -43,6 +43,8 @@ const SHAPE_HASH_BY_FORMAT: Readonly<Record<number, string>> = {
   14: '041fc703ac77df1be21a5b77c82941a903def1b8873028268b34b3d6bde2bf7c',
   // #2008: a runner's race result carries no rider (riderName removed).
   15: '6df34293138ea11a33fa7de84b80b1931a7bea35b1a39ce023b3af129cc0cb5e',
+  // #2008: a golf contest's unplayed-round score (unplayedRoundToPar) and the field's current round (currentRound) on the response.
+  16: '15e1a63073ea692898ecd4b9dddba7beb303fd17b120b575f54bb1dd0a502ff9',
 };
 
 const LEADERBOARD_RESPONSES = ['ContestLeaderboardResponse', 'BracketLeaderboardResponse', 'PickEmLeaderboardResponse', 'SurvivorLeaderboardResponse'];

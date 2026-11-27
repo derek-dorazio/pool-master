@@ -144,6 +144,8 @@ describe('toContestLeaderboardResponse', () => {
       scoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL',
       countingRule: { type: 'BEST_N', count: 4, pickCount: 6 },
       upsetBonus: false,
+      unplayedRoundToPar: 8,
+      currentRound: { roundNumber: 2, isComplete: false },
       participants: [],
       entries: [],
       asOf: null,
@@ -151,6 +153,8 @@ describe('toContestLeaderboardResponse', () => {
 
     expect(response.sport).toBe(Sport.GOLF);
     expect(ContestLeaderboardResponseSchema.parse(response).sport).toBe(Sport.GOLF);
+    // The contest's unplayed-round score and the field's round, for the footnote and the header.
+    expect(response).toMatchObject({ unplayedRoundToPar: 8, currentRound: { roundNumber: 2, isComplete: false } });
   });
 
   it('publishes a horse racing entry\'s total as its totalScore and each pick\'s points on the race block, leaving the golf one null', () => {
@@ -162,6 +166,8 @@ describe('toContestLeaderboardResponse', () => {
       scoringDefinitionId: 'FINISH_POSITION_POINTS',
       countingRule: { type: 'BEST_N', count: 3, pickCount: 6 },
       upsetBonus: false,
+      unplayedRoundToPar: null,
+      currentRound: null,
       participants: [],
       entries: [{
         entryId: 'entry-1',
@@ -210,6 +216,8 @@ describe('toContestLeaderboardResponse per-sport pick detail', () => {
     scoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL',
     countingRule: { type: 'BEST_N', count: 4, pickCount: 6 },
     upsetBonus: false,
+    unplayedRoundToPar: null,
+    currentRound: null,
     participants: [],
     entries: [{
       entryId: 'entry-1',
