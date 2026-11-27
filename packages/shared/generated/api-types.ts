@@ -7146,7 +7146,7 @@ export interface components {
             countedScores: number;
             /** @description Maximum entries a Squad may create. Null means unlimited. */
             maxEntriesPerSquad?: number | null;
-            /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring. */
+            /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
             scoring?: {
                 /** @enum {string} */
                 participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
@@ -7193,7 +7193,7 @@ export interface components {
             countedScores: number;
             /** @description Maximum entries a Squad may create. Null means unlimited. */
             maxEntriesPerSquad?: number | null;
-            /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring. */
+            /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
             scoring?: {
                 /** @enum {string} */
                 participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
@@ -7240,7 +7240,7 @@ export interface components {
             countedScores: number;
             /** @description Maximum entries a Squad may create. Null means unlimited. */
             maxEntriesPerSquad?: number | null;
-            /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring. */
+            /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
             scoring?: {
                 /** @enum {string} */
                 participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
@@ -7290,7 +7290,7 @@ export interface components {
             againstTheSpread: boolean;
             /** @description Maximum entries a Squad may create. Null means unlimited. */
             maxEntriesPerSquad?: number | null;
-            /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring. */
+            /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
             scoring?: {
                 /** @enum {string} */
                 participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
@@ -7335,7 +7335,7 @@ export interface components {
             maxSquaresPerEntry: number;
             /** @description Maximum entries a Squad may create. Null means unlimited. */
             maxEntriesPerSquad?: number | null;
-            /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring. */
+            /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
             scoring?: {
                 /** @enum {string} */
                 participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
@@ -7382,7 +7382,7 @@ export interface components {
             reuseTeamsOnceAllUsed?: boolean;
             /** @description Maximum entries a Squad may create. Null means unlimited. */
             maxEntriesPerSquad?: number | null;
-            /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring. */
+            /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
             scoring?: {
                 /** @enum {string} */
                 participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
@@ -7425,7 +7425,7 @@ export interface components {
             selectionType: "BRACKET";
             /** @description Maximum entries a Squad may create. Null means unlimited. */
             maxEntriesPerSquad?: number | null;
-            /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring. */
+            /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
             scoring?: {
                 /** @enum {string} */
                 participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
@@ -7780,7 +7780,7 @@ export interface components {
                 countedScores: number;
                 /** @description Maximum entries a Squad may create. Null means unlimited. */
                 maxEntriesPerSquad?: number | null;
-                /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring. */
+                /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                 scoring?: {
                     /** @enum {string} */
                     participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
@@ -7827,7 +7827,7 @@ export interface components {
                 countedScores: number;
                 /** @description Maximum entries a Squad may create. Null means unlimited. */
                 maxEntriesPerSquad?: number | null;
-                /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring. */
+                /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                 scoring?: {
                     /** @enum {string} */
                     participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
@@ -7874,7 +7874,7 @@ export interface components {
                 countedScores: number;
                 /** @description Maximum entries a Squad may create. Null means unlimited. */
                 maxEntriesPerSquad?: number | null;
-                /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring. */
+                /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                 scoring?: {
                     /** @enum {string} */
                     participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
@@ -7924,7 +7924,7 @@ export interface components {
                 againstTheSpread: boolean;
                 /** @description Maximum entries a Squad may create. Null means unlimited. */
                 maxEntriesPerSquad?: number | null;
-                /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring. */
+                /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                 scoring?: {
                     /** @enum {string} */
                     participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
@@ -7969,7 +7969,7 @@ export interface components {
                 maxSquaresPerEntry: number;
                 /** @description Maximum entries a Squad may create. Null means unlimited. */
                 maxEntriesPerSquad?: number | null;
-                /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring. */
+                /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                 scoring?: {
                     /** @enum {string} */
                     participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
@@ -8016,7 +8016,7 @@ export interface components {
                 reuseTeamsOnceAllUsed?: boolean;
                 /** @description Maximum entries a Squad may create. Null means unlimited. */
                 maxEntriesPerSquad?: number | null;
-                /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring. */
+                /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                 scoring?: {
                     /** @enum {string} */
                     participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
@@ -8059,7 +8059,7 @@ export interface components {
                 selectionType: "BRACKET";
                 /** @description Maximum entries a Squad may create. Null means unlimited. */
                 maxEntriesPerSquad?: number | null;
-                /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring. */
+                /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                 scoring?: {
                     /** @enum {string} */
                     participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
@@ -8352,7 +8352,7 @@ export interface components {
                     countedScores: number;
                     /** @description Maximum entries a Squad may create. Null means unlimited. */
                     maxEntriesPerSquad?: number | null;
-                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring. */
+                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                     scoring?: {
                         /** @enum {string} */
                         participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
@@ -8399,7 +8399,7 @@ export interface components {
                     countedScores: number;
                     /** @description Maximum entries a Squad may create. Null means unlimited. */
                     maxEntriesPerSquad?: number | null;
-                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring. */
+                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                     scoring?: {
                         /** @enum {string} */
                         participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
@@ -8446,7 +8446,7 @@ export interface components {
                     countedScores: number;
                     /** @description Maximum entries a Squad may create. Null means unlimited. */
                     maxEntriesPerSquad?: number | null;
-                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring. */
+                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                     scoring?: {
                         /** @enum {string} */
                         participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
@@ -8496,7 +8496,7 @@ export interface components {
                     againstTheSpread: boolean;
                     /** @description Maximum entries a Squad may create. Null means unlimited. */
                     maxEntriesPerSquad?: number | null;
-                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring. */
+                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                     scoring?: {
                         /** @enum {string} */
                         participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
@@ -8541,7 +8541,7 @@ export interface components {
                     maxSquaresPerEntry: number;
                     /** @description Maximum entries a Squad may create. Null means unlimited. */
                     maxEntriesPerSquad?: number | null;
-                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring. */
+                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                     scoring?: {
                         /** @enum {string} */
                         participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
@@ -8588,7 +8588,7 @@ export interface components {
                     reuseTeamsOnceAllUsed?: boolean;
                     /** @description Maximum entries a Squad may create. Null means unlimited. */
                     maxEntriesPerSquad?: number | null;
-                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring. */
+                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                     scoring?: {
                         /** @enum {string} */
                         participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
@@ -8631,7 +8631,7 @@ export interface components {
                     selectionType: "BRACKET";
                     /** @description Maximum entries a Squad may create. Null means unlimited. */
                     maxEntriesPerSquad?: number | null;
-                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring. */
+                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                     scoring?: {
                         /** @enum {string} */
                         participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
@@ -8694,7 +8694,7 @@ export interface components {
                 countedScores: number;
                 /** @description Maximum entries a Squad may create. Null means unlimited. */
                 maxEntriesPerSquad?: number | null;
-                /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring. */
+                /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                 scoring?: {
                     /** @enum {string} */
                     participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
@@ -8741,7 +8741,7 @@ export interface components {
                 countedScores: number;
                 /** @description Maximum entries a Squad may create. Null means unlimited. */
                 maxEntriesPerSquad?: number | null;
-                /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring. */
+                /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                 scoring?: {
                     /** @enum {string} */
                     participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
@@ -8788,7 +8788,7 @@ export interface components {
                 countedScores: number;
                 /** @description Maximum entries a Squad may create. Null means unlimited. */
                 maxEntriesPerSquad?: number | null;
-                /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring. */
+                /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                 scoring?: {
                     /** @enum {string} */
                     participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
@@ -8838,7 +8838,7 @@ export interface components {
                 againstTheSpread: boolean;
                 /** @description Maximum entries a Squad may create. Null means unlimited. */
                 maxEntriesPerSquad?: number | null;
-                /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring. */
+                /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                 scoring?: {
                     /** @enum {string} */
                     participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
@@ -8883,7 +8883,7 @@ export interface components {
                 maxSquaresPerEntry: number;
                 /** @description Maximum entries a Squad may create. Null means unlimited. */
                 maxEntriesPerSquad?: number | null;
-                /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring. */
+                /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                 scoring?: {
                     /** @enum {string} */
                     participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
@@ -8930,7 +8930,7 @@ export interface components {
                 reuseTeamsOnceAllUsed?: boolean;
                 /** @description Maximum entries a Squad may create. Null means unlimited. */
                 maxEntriesPerSquad?: number | null;
-                /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring. */
+                /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                 scoring?: {
                     /** @enum {string} */
                     participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
@@ -8973,7 +8973,7 @@ export interface components {
                 selectionType: "BRACKET";
                 /** @description Maximum entries a Squad may create. Null means unlimited. */
                 maxEntriesPerSquad?: number | null;
-                /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring. */
+                /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                 scoring?: {
                     /** @enum {string} */
                     participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
@@ -9111,7 +9111,7 @@ export interface components {
                     countedScores: number;
                     /** @description Maximum entries a Squad may create. Null means unlimited. */
                     maxEntriesPerSquad?: number | null;
-                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring. */
+                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                     scoring?: {
                         /** @enum {string} */
                         participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
@@ -9158,7 +9158,7 @@ export interface components {
                     countedScores: number;
                     /** @description Maximum entries a Squad may create. Null means unlimited. */
                     maxEntriesPerSquad?: number | null;
-                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring. */
+                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                     scoring?: {
                         /** @enum {string} */
                         participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
@@ -9205,7 +9205,7 @@ export interface components {
                     countedScores: number;
                     /** @description Maximum entries a Squad may create. Null means unlimited. */
                     maxEntriesPerSquad?: number | null;
-                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring. */
+                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                     scoring?: {
                         /** @enum {string} */
                         participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
@@ -9255,7 +9255,7 @@ export interface components {
                     againstTheSpread: boolean;
                     /** @description Maximum entries a Squad may create. Null means unlimited. */
                     maxEntriesPerSquad?: number | null;
-                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring. */
+                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                     scoring?: {
                         /** @enum {string} */
                         participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
@@ -9300,7 +9300,7 @@ export interface components {
                     maxSquaresPerEntry: number;
                     /** @description Maximum entries a Squad may create. Null means unlimited. */
                     maxEntriesPerSquad?: number | null;
-                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring. */
+                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                     scoring?: {
                         /** @enum {string} */
                         participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
@@ -9347,7 +9347,7 @@ export interface components {
                     reuseTeamsOnceAllUsed?: boolean;
                     /** @description Maximum entries a Squad may create. Null means unlimited. */
                     maxEntriesPerSquad?: number | null;
-                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring. */
+                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                     scoring?: {
                         /** @enum {string} */
                         participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
@@ -9390,7 +9390,7 @@ export interface components {
                     selectionType: "BRACKET";
                     /** @description Maximum entries a Squad may create. Null means unlimited. */
                     maxEntriesPerSquad?: number | null;
-                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring. */
+                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                     scoring?: {
                         /** @enum {string} */
                         participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
@@ -15948,7 +15948,7 @@ export interface components {
                 countedScores: number;
                 /** @description Maximum entries a Squad may create. Null means unlimited. */
                 maxEntriesPerSquad?: number | null;
-                /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring. */
+                /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                 scoring?: {
                     /** @enum {string} */
                     participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
@@ -15995,7 +15995,7 @@ export interface components {
                 countedScores: number;
                 /** @description Maximum entries a Squad may create. Null means unlimited. */
                 maxEntriesPerSquad?: number | null;
-                /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring. */
+                /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                 scoring?: {
                     /** @enum {string} */
                     participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
@@ -16042,7 +16042,7 @@ export interface components {
                 countedScores: number;
                 /** @description Maximum entries a Squad may create. Null means unlimited. */
                 maxEntriesPerSquad?: number | null;
-                /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring. */
+                /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                 scoring?: {
                     /** @enum {string} */
                     participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
@@ -16092,7 +16092,7 @@ export interface components {
                 againstTheSpread: boolean;
                 /** @description Maximum entries a Squad may create. Null means unlimited. */
                 maxEntriesPerSquad?: number | null;
-                /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring. */
+                /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                 scoring?: {
                     /** @enum {string} */
                     participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
@@ -16137,7 +16137,7 @@ export interface components {
                 maxSquaresPerEntry: number;
                 /** @description Maximum entries a Squad may create. Null means unlimited. */
                 maxEntriesPerSquad?: number | null;
-                /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring. */
+                /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                 scoring?: {
                     /** @enum {string} */
                     participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
@@ -16184,7 +16184,7 @@ export interface components {
                 reuseTeamsOnceAllUsed?: boolean;
                 /** @description Maximum entries a Squad may create. Null means unlimited. */
                 maxEntriesPerSquad?: number | null;
-                /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring. */
+                /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                 scoring?: {
                     /** @enum {string} */
                     participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
@@ -16227,7 +16227,7 @@ export interface components {
                 selectionType: "BRACKET";
                 /** @description Maximum entries a Squad may create. Null means unlimited. */
                 maxEntriesPerSquad?: number | null;
-                /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring. */
+                /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                 scoring?: {
                     /** @enum {string} */
                     participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
@@ -23324,7 +23324,7 @@ export interface components {
                     countedScores: number;
                     /** @description Maximum entries a Squad may create. Null means unlimited. */
                     maxEntriesPerSquad?: number | null;
-                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring. */
+                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                     scoring?: {
                         /** @enum {string} */
                         participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
@@ -23371,7 +23371,7 @@ export interface components {
                     countedScores: number;
                     /** @description Maximum entries a Squad may create. Null means unlimited. */
                     maxEntriesPerSquad?: number | null;
-                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring. */
+                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                     scoring?: {
                         /** @enum {string} */
                         participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
@@ -23418,7 +23418,7 @@ export interface components {
                     countedScores: number;
                     /** @description Maximum entries a Squad may create. Null means unlimited. */
                     maxEntriesPerSquad?: number | null;
-                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring. */
+                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                     scoring?: {
                         /** @enum {string} */
                         participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
@@ -23468,7 +23468,7 @@ export interface components {
                     againstTheSpread: boolean;
                     /** @description Maximum entries a Squad may create. Null means unlimited. */
                     maxEntriesPerSquad?: number | null;
-                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring. */
+                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                     scoring?: {
                         /** @enum {string} */
                         participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
@@ -23513,7 +23513,7 @@ export interface components {
                     maxSquaresPerEntry: number;
                     /** @description Maximum entries a Squad may create. Null means unlimited. */
                     maxEntriesPerSquad?: number | null;
-                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring. */
+                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                     scoring?: {
                         /** @enum {string} */
                         participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
@@ -23560,7 +23560,7 @@ export interface components {
                     reuseTeamsOnceAllUsed?: boolean;
                     /** @description Maximum entries a Squad may create. Null means unlimited. */
                     maxEntriesPerSquad?: number | null;
-                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring. */
+                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                     scoring?: {
                         /** @enum {string} */
                         participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
@@ -23603,7 +23603,7 @@ export interface components {
                     selectionType: "BRACKET";
                     /** @description Maximum entries a Squad may create. Null means unlimited. */
                     maxEntriesPerSquad?: number | null;
-                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring. */
+                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                     scoring?: {
                         /** @enum {string} */
                         participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
@@ -23822,7 +23822,7 @@ export interface components {
                         countedScores: number;
                         /** @description Maximum entries a Squad may create. Null means unlimited. */
                         maxEntriesPerSquad?: number | null;
-                        /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring. */
+                        /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                         scoring?: {
                             /** @enum {string} */
                             participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
@@ -23869,7 +23869,7 @@ export interface components {
                         countedScores: number;
                         /** @description Maximum entries a Squad may create. Null means unlimited. */
                         maxEntriesPerSquad?: number | null;
-                        /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring. */
+                        /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                         scoring?: {
                             /** @enum {string} */
                             participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
@@ -23916,7 +23916,7 @@ export interface components {
                         countedScores: number;
                         /** @description Maximum entries a Squad may create. Null means unlimited. */
                         maxEntriesPerSquad?: number | null;
-                        /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring. */
+                        /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                         scoring?: {
                             /** @enum {string} */
                             participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
@@ -23966,7 +23966,7 @@ export interface components {
                         againstTheSpread: boolean;
                         /** @description Maximum entries a Squad may create. Null means unlimited. */
                         maxEntriesPerSquad?: number | null;
-                        /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring. */
+                        /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                         scoring?: {
                             /** @enum {string} */
                             participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
@@ -24011,7 +24011,7 @@ export interface components {
                         maxSquaresPerEntry: number;
                         /** @description Maximum entries a Squad may create. Null means unlimited. */
                         maxEntriesPerSquad?: number | null;
-                        /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring. */
+                        /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                         scoring?: {
                             /** @enum {string} */
                             participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
@@ -24058,7 +24058,7 @@ export interface components {
                         reuseTeamsOnceAllUsed?: boolean;
                         /** @description Maximum entries a Squad may create. Null means unlimited. */
                         maxEntriesPerSquad?: number | null;
-                        /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring. */
+                        /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                         scoring?: {
                             /** @enum {string} */
                             participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
@@ -24101,7 +24101,7 @@ export interface components {
                         selectionType: "BRACKET";
                         /** @description Maximum entries a Squad may create. Null means unlimited. */
                         maxEntriesPerSquad?: number | null;
-                        /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring. */
+                        /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                         scoring?: {
                             /** @enum {string} */
                             participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
@@ -24323,7 +24323,7 @@ export interface components {
                             countedScores: number;
                             /** @description Maximum entries a Squad may create. Null means unlimited. */
                             maxEntriesPerSquad?: number | null;
-                            /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring. */
+                            /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                             scoring?: {
                                 /** @enum {string} */
                                 participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
@@ -24370,7 +24370,7 @@ export interface components {
                             countedScores: number;
                             /** @description Maximum entries a Squad may create. Null means unlimited. */
                             maxEntriesPerSquad?: number | null;
-                            /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring. */
+                            /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                             scoring?: {
                                 /** @enum {string} */
                                 participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
@@ -24417,7 +24417,7 @@ export interface components {
                             countedScores: number;
                             /** @description Maximum entries a Squad may create. Null means unlimited. */
                             maxEntriesPerSquad?: number | null;
-                            /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring. */
+                            /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                             scoring?: {
                                 /** @enum {string} */
                                 participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
@@ -24467,7 +24467,7 @@ export interface components {
                             againstTheSpread: boolean;
                             /** @description Maximum entries a Squad may create. Null means unlimited. */
                             maxEntriesPerSquad?: number | null;
-                            /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring. */
+                            /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                             scoring?: {
                                 /** @enum {string} */
                                 participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
@@ -24512,7 +24512,7 @@ export interface components {
                             maxSquaresPerEntry: number;
                             /** @description Maximum entries a Squad may create. Null means unlimited. */
                             maxEntriesPerSquad?: number | null;
-                            /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring. */
+                            /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                             scoring?: {
                                 /** @enum {string} */
                                 participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
@@ -24559,7 +24559,7 @@ export interface components {
                             reuseTeamsOnceAllUsed?: boolean;
                             /** @description Maximum entries a Squad may create. Null means unlimited. */
                             maxEntriesPerSquad?: number | null;
-                            /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring. */
+                            /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                             scoring?: {
                                 /** @enum {string} */
                                 participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
@@ -24602,7 +24602,7 @@ export interface components {
                             selectionType: "BRACKET";
                             /** @description Maximum entries a Squad may create. Null means unlimited. */
                             maxEntriesPerSquad?: number | null;
-                            /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring. */
+                            /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                             scoring?: {
                                 /** @enum {string} */
                                 participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
@@ -24835,7 +24835,7 @@ export interface components {
                             countedScores: number;
                             /** @description Maximum entries a Squad may create. Null means unlimited. */
                             maxEntriesPerSquad?: number | null;
-                            /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring. */
+                            /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                             scoring?: {
                                 /** @enum {string} */
                                 participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
@@ -24882,7 +24882,7 @@ export interface components {
                             countedScores: number;
                             /** @description Maximum entries a Squad may create. Null means unlimited. */
                             maxEntriesPerSquad?: number | null;
-                            /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring. */
+                            /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                             scoring?: {
                                 /** @enum {string} */
                                 participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
@@ -24929,7 +24929,7 @@ export interface components {
                             countedScores: number;
                             /** @description Maximum entries a Squad may create. Null means unlimited. */
                             maxEntriesPerSquad?: number | null;
-                            /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring. */
+                            /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                             scoring?: {
                                 /** @enum {string} */
                                 participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
@@ -24979,7 +24979,7 @@ export interface components {
                             againstTheSpread: boolean;
                             /** @description Maximum entries a Squad may create. Null means unlimited. */
                             maxEntriesPerSquad?: number | null;
-                            /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring. */
+                            /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                             scoring?: {
                                 /** @enum {string} */
                                 participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
@@ -25024,7 +25024,7 @@ export interface components {
                             maxSquaresPerEntry: number;
                             /** @description Maximum entries a Squad may create. Null means unlimited. */
                             maxEntriesPerSquad?: number | null;
-                            /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring. */
+                            /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                             scoring?: {
                                 /** @enum {string} */
                                 participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
@@ -25071,7 +25071,7 @@ export interface components {
                             reuseTeamsOnceAllUsed?: boolean;
                             /** @description Maximum entries a Squad may create. Null means unlimited. */
                             maxEntriesPerSquad?: number | null;
-                            /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring. */
+                            /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                             scoring?: {
                                 /** @enum {string} */
                                 participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
@@ -25114,7 +25114,7 @@ export interface components {
                             selectionType: "BRACKET";
                             /** @description Maximum entries a Squad may create. Null means unlimited. */
                             maxEntriesPerSquad?: number | null;
-                            /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring. */
+                            /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring. */
                             scoring?: {
                                 /** @enum {string} */
                                 participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";

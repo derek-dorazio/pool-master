@@ -9077,7 +9077,7 @@
                 "maximum": 9007199254740991
               },
               "scoring": {
-                "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring.",
+                "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                 "anyOf": [
                   {
                     "type": "object",
@@ -9277,7 +9277,7 @@
                 "maximum": 9007199254740991
               },
               "scoring": {
-                "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring.",
+                "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                 "anyOf": [
                   {
                     "type": "object",
@@ -9477,7 +9477,7 @@
                 "maximum": 9007199254740991
               },
               "scoring": {
-                "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring.",
+                "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                 "anyOf": [
                   {
                     "type": "object",
@@ -9677,7 +9677,7 @@
                 "maximum": 9007199254740991
               },
               "scoring": {
-                "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring.",
+                "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                 "anyOf": [
                   {
                     "type": "object",
@@ -9871,7 +9871,7 @@
                 "maximum": 9007199254740991
               },
               "scoring": {
-                "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring.",
+                "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                 "anyOf": [
                   {
                     "type": "object",
@@ -10068,7 +10068,7 @@
                 "maximum": 9007199254740991
               },
               "scoring": {
-                "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring.",
+                "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                 "anyOf": [
                   {
                     "type": "object",
@@ -10254,7 +10254,7 @@
                 "maximum": 9007199254740991
               },
               "scoring": {
-                "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring.",
+                "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                 "anyOf": [
                   {
                     "type": "object",
@@ -11361,7 +11361,7 @@
                     "maximum": 9007199254740991
                   },
                   "scoring": {
-                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring.",
+                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                     "anyOf": [
                       {
                         "type": "object",
@@ -11561,7 +11561,7 @@
                     "maximum": 9007199254740991
                   },
                   "scoring": {
-                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring.",
+                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                     "anyOf": [
                       {
                         "type": "object",
@@ -11761,7 +11761,7 @@
                     "maximum": 9007199254740991
                   },
                   "scoring": {
-                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring.",
+                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                     "anyOf": [
                       {
                         "type": "object",
@@ -11961,7 +11961,7 @@
                     "maximum": 9007199254740991
                   },
                   "scoring": {
-                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring.",
+                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                     "anyOf": [
                       {
                         "type": "object",
@@ -12155,7 +12155,7 @@
                     "maximum": 9007199254740991
                   },
                   "scoring": {
-                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring.",
+                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                     "anyOf": [
                       {
                         "type": "object",
@@ -12352,7 +12352,7 @@
                     "maximum": 9007199254740991
                   },
                   "scoring": {
-                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring.",
+                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                     "anyOf": [
                       {
                         "type": "object",
@@ -12538,7 +12538,7 @@
                     "maximum": 9007199254740991
                   },
                   "scoring": {
-                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring.",
+                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                     "anyOf": [
                       {
                         "type": "object",
@@ -13466,7 +13466,7 @@
                           "maximum": 9007199254740991
                         },
                         "scoring": {
-                          "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring.",
+                          "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                           "anyOf": [
                             {
                               "type": "object",
@@ -13666,7 +13666,7 @@
                           "maximum": 9007199254740991
                         },
                         "scoring": {
-                          "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring.",
+                          "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                           "anyOf": [
                             {
                               "type": "object",
@@ -13866,7 +13866,7 @@
                           "maximum": 9007199254740991
                         },
                         "scoring": {
-                          "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring.",
+                          "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                           "anyOf": [
                             {
                               "type": "object",
@@ -14066,7 +14066,7 @@
                           "maximum": 9007199254740991
                         },
                         "scoring": {
-                          "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring.",
+                          "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                           "anyOf": [
                             {
                               "type": "object",
@@ -14260,7 +14260,7 @@
                           "maximum": 9007199254740991
                         },
                         "scoring": {
-                          "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring.",
+                          "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                           "anyOf": [
                             {
                               "type": "object",
@@ -14457,7 +14457,7 @@
                           "maximum": 9007199254740991
                         },
                         "scoring": {
-                          "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring.",
+                          "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                           "anyOf": [
                             {
                               "type": "object",
@@ -14643,7 +14643,7 @@
                           "maximum": 9007199254740991
                         },
                         "scoring": {
-                          "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring.",
+                          "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                           "anyOf": [
                             {
                               "type": "object",
@@ -14903,7 +14903,7 @@
                     "maximum": 9007199254740991
                   },
                   "scoring": {
-                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring.",
+                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                     "anyOf": [
                       {
                         "type": "object",
@@ -15103,7 +15103,7 @@
                     "maximum": 9007199254740991
                   },
                   "scoring": {
-                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring.",
+                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                     "anyOf": [
                       {
                         "type": "object",
@@ -15303,7 +15303,7 @@
                     "maximum": 9007199254740991
                   },
                   "scoring": {
-                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring.",
+                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                     "anyOf": [
                       {
                         "type": "object",
@@ -15503,7 +15503,7 @@
                     "maximum": 9007199254740991
                   },
                   "scoring": {
-                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring.",
+                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                     "anyOf": [
                       {
                         "type": "object",
@@ -15697,7 +15697,7 @@
                     "maximum": 9007199254740991
                   },
                   "scoring": {
-                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring.",
+                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                     "anyOf": [
                       {
                         "type": "object",
@@ -15894,7 +15894,7 @@
                     "maximum": 9007199254740991
                   },
                   "scoring": {
-                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring.",
+                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                     "anyOf": [
                       {
                         "type": "object",
@@ -16080,7 +16080,7 @@
                     "maximum": 9007199254740991
                   },
                   "scoring": {
-                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring.",
+                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                     "anyOf": [
                       {
                         "type": "object",
@@ -16481,7 +16481,7 @@
                         "maximum": 9007199254740991
                       },
                       "scoring": {
-                        "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring.",
+                        "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                         "anyOf": [
                           {
                             "type": "object",
@@ -16681,7 +16681,7 @@
                         "maximum": 9007199254740991
                       },
                       "scoring": {
-                        "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring.",
+                        "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                         "anyOf": [
                           {
                             "type": "object",
@@ -16881,7 +16881,7 @@
                         "maximum": 9007199254740991
                       },
                       "scoring": {
-                        "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring.",
+                        "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                         "anyOf": [
                           {
                             "type": "object",
@@ -17081,7 +17081,7 @@
                         "maximum": 9007199254740991
                       },
                       "scoring": {
-                        "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring.",
+                        "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                         "anyOf": [
                           {
                             "type": "object",
@@ -17275,7 +17275,7 @@
                         "maximum": 9007199254740991
                       },
                       "scoring": {
-                        "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring.",
+                        "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                         "anyOf": [
                           {
                             "type": "object",
@@ -17472,7 +17472,7 @@
                         "maximum": 9007199254740991
                       },
                       "scoring": {
-                        "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring.",
+                        "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                         "anyOf": [
                           {
                             "type": "object",
@@ -17658,7 +17658,7 @@
                         "maximum": 9007199254740991
                       },
                       "scoring": {
-                        "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring.",
+                        "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                         "anyOf": [
                           {
                             "type": "object",
@@ -36078,7 +36078,7 @@
                     "maximum": 9007199254740991
                   },
                   "scoring": {
-                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring.",
+                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                     "anyOf": [
                       {
                         "type": "object",
@@ -36278,7 +36278,7 @@
                     "maximum": 9007199254740991
                   },
                   "scoring": {
-                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring.",
+                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                     "anyOf": [
                       {
                         "type": "object",
@@ -36478,7 +36478,7 @@
                     "maximum": 9007199254740991
                   },
                   "scoring": {
-                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring.",
+                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                     "anyOf": [
                       {
                         "type": "object",
@@ -36678,7 +36678,7 @@
                     "maximum": 9007199254740991
                   },
                   "scoring": {
-                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring.",
+                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                     "anyOf": [
                       {
                         "type": "object",
@@ -36872,7 +36872,7 @@
                     "maximum": 9007199254740991
                   },
                   "scoring": {
-                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring.",
+                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                     "anyOf": [
                       {
                         "type": "object",
@@ -37069,7 +37069,7 @@
                     "maximum": 9007199254740991
                   },
                   "scoring": {
-                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring.",
+                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                     "anyOf": [
                       {
                         "type": "object",
@@ -37255,7 +37255,7 @@
                     "maximum": 9007199254740991
                   },
                   "scoring": {
-                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring.",
+                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                     "anyOf": [
                       {
                         "type": "object",
@@ -59740,7 +59740,7 @@
                         "maximum": 9007199254740991
                       },
                       "scoring": {
-                        "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring.",
+                        "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                         "anyOf": [
                           {
                             "type": "object",
@@ -59940,7 +59940,7 @@
                         "maximum": 9007199254740991
                       },
                       "scoring": {
-                        "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring.",
+                        "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                         "anyOf": [
                           {
                             "type": "object",
@@ -60140,7 +60140,7 @@
                         "maximum": 9007199254740991
                       },
                       "scoring": {
-                        "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring.",
+                        "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                         "anyOf": [
                           {
                             "type": "object",
@@ -60340,7 +60340,7 @@
                         "maximum": 9007199254740991
                       },
                       "scoring": {
-                        "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring.",
+                        "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                         "anyOf": [
                           {
                             "type": "object",
@@ -60534,7 +60534,7 @@
                         "maximum": 9007199254740991
                       },
                       "scoring": {
-                        "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring.",
+                        "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                         "anyOf": [
                           {
                             "type": "object",
@@ -60731,7 +60731,7 @@
                         "maximum": 9007199254740991
                       },
                       "scoring": {
-                        "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring.",
+                        "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                         "anyOf": [
                           {
                             "type": "object",
@@ -60917,7 +60917,7 @@
                         "maximum": 9007199254740991
                       },
                       "scoring": {
-                        "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring.",
+                        "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                         "anyOf": [
                           {
                             "type": "object",
@@ -61521,7 +61521,7 @@
                               "maximum": 9007199254740991
                             },
                             "scoring": {
-                              "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring.",
+                              "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                               "anyOf": [
                                 {
                                   "type": "object",
@@ -61721,7 +61721,7 @@
                               "maximum": 9007199254740991
                             },
                             "scoring": {
-                              "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring.",
+                              "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                               "anyOf": [
                                 {
                                   "type": "object",
@@ -61921,7 +61921,7 @@
                               "maximum": 9007199254740991
                             },
                             "scoring": {
-                              "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring.",
+                              "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                               "anyOf": [
                                 {
                                   "type": "object",
@@ -62121,7 +62121,7 @@
                               "maximum": 9007199254740991
                             },
                             "scoring": {
-                              "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring.",
+                              "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                               "anyOf": [
                                 {
                                   "type": "object",
@@ -62315,7 +62315,7 @@
                               "maximum": 9007199254740991
                             },
                             "scoring": {
-                              "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring.",
+                              "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                               "anyOf": [
                                 {
                                   "type": "object",
@@ -62512,7 +62512,7 @@
                               "maximum": 9007199254740991
                             },
                             "scoring": {
-                              "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring.",
+                              "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                               "anyOf": [
                                 {
                                   "type": "object",
@@ -62698,7 +62698,7 @@
                               "maximum": 9007199254740991
                             },
                             "scoring": {
-                              "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring.",
+                              "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                               "anyOf": [
                                 {
                                   "type": "object",
@@ -63323,7 +63323,7 @@
                                   "maximum": 9007199254740991
                                 },
                                 "scoring": {
-                                  "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring.",
+                                  "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                                   "anyOf": [
                                     {
                                       "type": "object",
@@ -63523,7 +63523,7 @@
                                   "maximum": 9007199254740991
                                 },
                                 "scoring": {
-                                  "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring.",
+                                  "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                                   "anyOf": [
                                     {
                                       "type": "object",
@@ -63723,7 +63723,7 @@
                                   "maximum": 9007199254740991
                                 },
                                 "scoring": {
-                                  "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring.",
+                                  "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                                   "anyOf": [
                                     {
                                       "type": "object",
@@ -63923,7 +63923,7 @@
                                   "maximum": 9007199254740991
                                 },
                                 "scoring": {
-                                  "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring.",
+                                  "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                                   "anyOf": [
                                     {
                                       "type": "object",
@@ -64117,7 +64117,7 @@
                                   "maximum": 9007199254740991
                                 },
                                 "scoring": {
-                                  "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring.",
+                                  "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                                   "anyOf": [
                                     {
                                       "type": "object",
@@ -64314,7 +64314,7 @@
                                   "maximum": 9007199254740991
                                 },
                                 "scoring": {
-                                  "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring.",
+                                  "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                                   "anyOf": [
                                     {
                                       "type": "object",
@@ -64500,7 +64500,7 @@
                                   "maximum": 9007199254740991
                                 },
                                 "scoring": {
-                                  "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring.",
+                                  "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                                   "anyOf": [
                                     {
                                       "type": "object",
@@ -65162,7 +65162,7 @@
                                     "maximum": 9007199254740991
                                   },
                                   "scoring": {
-                                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring.",
+                                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                                     "anyOf": [
                                       {
                                         "type": "object",
@@ -65362,7 +65362,7 @@
                                     "maximum": 9007199254740991
                                   },
                                   "scoring": {
-                                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring.",
+                                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                                     "anyOf": [
                                       {
                                         "type": "object",
@@ -65562,7 +65562,7 @@
                                     "maximum": 9007199254740991
                                   },
                                   "scoring": {
-                                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring.",
+                                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                                     "anyOf": [
                                       {
                                         "type": "object",
@@ -65762,7 +65762,7 @@
                                     "maximum": 9007199254740991
                                   },
                                   "scoring": {
-                                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring.",
+                                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                                     "anyOf": [
                                       {
                                         "type": "object",
@@ -65956,7 +65956,7 @@
                                     "maximum": 9007199254740991
                                   },
                                   "scoring": {
-                                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring.",
+                                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                                     "anyOf": [
                                       {
                                         "type": "object",
@@ -66153,7 +66153,7 @@
                                     "maximum": 9007199254740991
                                   },
                                   "scoring": {
-                                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring.",
+                                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                                     "anyOf": [
                                       {
                                         "type": "object",
@@ -66339,7 +66339,7 @@
                                     "maximum": 9007199254740991
                                   },
                                   "scoring": {
-                                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; a contest made without a template must send it. Omitted on a rules change, the contest keeps its scoring.",
+                                    "description": "The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies, else the sport's default definition with its default settings (golf: +8 an unplayed round); a definition whose settings have no default (finish-position or knockout points) must then be sent. Omitted on a rules change, the contest keeps its scoring.",
                                     "anyOf": [
                                       {
                                         "type": "object",
