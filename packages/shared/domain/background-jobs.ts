@@ -107,8 +107,8 @@ export interface BackgroundJobRequest extends BackgroundJobScope {
  * fails typecheck.
  */
 export const BACKGROUND_JOB_KINDS = {
-  [BackgroundJobType.MANUAL_EVENT_SYNC]: BackgroundJobKind.SYNC,
-  [BackgroundJobType.PROVIDER_EVENT_SYNC]: BackgroundJobKind.SYNC,
+  [BackgroundJobType.SYNC_EVENT_FIELD]: BackgroundJobKind.SYNC,
+  [BackgroundJobType.SYNC_EVENT_SCORES]: BackgroundJobKind.SYNC,
   [BackgroundJobType.SYNC_LEAGUE_EVENTS]: BackgroundJobKind.SYNC,
   [BackgroundJobType.CONTEST_STARTED_EMAILS]: BackgroundJobKind.EMAIL,
   [BackgroundJobType.CONTEST_SETTLED_EMAILS]: BackgroundJobKind.EMAIL,

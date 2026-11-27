@@ -1,4 +1,4 @@
-import { ProviderCode, Sport, type ProviderSettings } from '@poolmaster/shared/domain';
+import { ProviderCode, type ProviderSettings } from '@poolmaster/shared/domain';
 import { notifiedProviderCadenceOf } from '../../../packages/core-api/src/modules/ingestion/notified-provider-cadence';
 import { ProviderSettingsStore } from '../../../packages/core-api/src/modules/ingestion/provider-settings-store';
 import { ProviderWebhookSwitch } from '../../../packages/core-api/src/modules/ingestion/provider-webhook-switch';
@@ -31,12 +31,10 @@ describe('the live-score pace for providers that send webhook notifications (#14
 
   it('takes each event\'s quiet window from its league row, not one window for every sport', async () => {
     const cadence = await cadenceFor(balldontlieTestProvider(), 'whsec_x');
-    const quietMinutes = (sport: Sport, providerLeagueCode: string, externalId: string) => (cadence?.quietAfterMs(sport, {
-      providerId: 'balldontlie', externalId, providerLeagueCode, playedInRounds: false, playUnderwaySince: null, lastProviderNotificationAt: null,
-    }) ?? 0) / 60_000;
+    const quietMinutes = (providerLeagueCode: string) => (cadence?.quietAfterMs(providerLeagueCode) ?? 0) / 60_000;
 
-    expect(quietMinutes(Sport.FOOTBALL, 'nfl', 'nfl-2026-week-11')).toBe(90);
-    expect(quietMinutes(Sport.BASKETBALL, 'nba', 'nba-2025-postseason-round-4')).toBe(75);
-    expect(quietMinutes(Sport.GOLF, 'pga', '1133')).toBe(360);
+    expect(quietMinutes('nfl')).toBe(90);
+    expect(quietMinutes('nba')).toBe(75);
+    expect(quietMinutes('pga')).toBe(360);
   });
 });

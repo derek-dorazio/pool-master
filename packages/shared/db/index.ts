@@ -237,3 +237,4 @@ export type {
   ProviderSyncFindingRepository,
   ProviderSyncFindingResolveFilter,
 } from './provider-sync-finding-ports';
+export type { LiveEventView, SyncDueWorkReader, SyncedLeagueRef } from './sync-due-work-ports';

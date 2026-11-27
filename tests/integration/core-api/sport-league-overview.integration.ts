@@ -1,23 +1,20 @@
 import { BALLDONTLIE_TEST_PROVIDER_ID } from '../../support/balldontlie-provider-rows';
 /**
  * The root admin's sport league overview (#1847) against real Postgres: what the reader gathers
- * for each sport league, that a sport event keeps its latest automatic release check, and that a
- * scheduled sync run records the event and sport league its provider event is linked to. No mocks.
+ * for each sport league, and that a sport event keeps its latest automatic release check. No mocks.
  */
 import { expect } from '@jest/globals';
 import { randomUUID } from 'node:crypto';
-import { AutoReleaseCheckOutcome, JobTrigger, ProviderSyncKind, ProviderSyncRunStatus, ReleaseCheckKey, Sport } from '@poolmaster/shared/domain';
-import { PrismaProviderSyncRunRepository, PrismaSportEventRepository } from '../../../packages/core-api/src/adapters';
+import { AutoReleaseCheckOutcome, ProviderSyncKind, ProviderSyncRunStatus, ReleaseCheckKey, Sport } from '@poolmaster/shared/domain';
+import { PrismaSportEventRepository } from '../../../packages/core-api/src/adapters';
 import { PrismaSportLeagueOverviewReader } from '../../../packages/core-api/src/adapters/prisma-sport-league-overview-reader';
-import { SyncOrchestrator } from '../../../packages/core-api/src/modules/ingestion/core/sync-orchestrator';
-import { ProviderSyncRunLedger } from '../../../packages/core-api/src/modules/ingestion/persistence/provider-sync-run-ledger';
 import { cleanupTestData, createTestUser, getApp, getAppPrisma, getPrisma, setupIntegrationTests, teardownIntegrationTests } from '../helpers';
 import { findUnindexedScans } from '../index-check';
 import { recordStatements } from '../statement-log';
 import { sportLeagueRowDefaults } from '../../support/league-profiles';
 import { syncLeagueTo } from '../../support/league-sync';
 import { sportRowKeys } from '../../support/sport-rows';
-import { fixtureSeasonId, mapEventToProvider } from '../../support/event-edition';
+import { fixtureSeasonId } from '../../support/event-edition';
 import { sportPlay } from '../../support/sport-play';
 
 beforeAll(() => setupIntegrationTests());
@@ -151,25 +148,6 @@ describe('PrismaSportEventRepository.recordAutoReleaseCheck', () => {
     })).rejects.toThrow(/sport_events_auto_release_released_has_no_failed_checks/);
     await expect(getPrisma().sportEvent.update({ where: { id: draft.id }, data: { autoReleaseOutcome: 'HELD' } }))
       .rejects.toThrow(/sport_events_auto_release_check_complete/);
-  });
-});
-
-describe('ProviderSyncRunLedger with the event repository', () => {
-  it('records on a scheduled run the event and sport league its provider event is linked to', async () => {
-    const tour = await sportLeague('Ledger Tour');
-    const linked = await event(tour.id, { championshipYear: 2027, startDate: days(3) });
-    const externalId = `ledger-${linked.id}`;
-    await mapEventToProvider(getPrisma(), linked.id, { providerId: 'balldontlie', externalId });
-    const ledger = new ProviderSyncRunLedger(new PrismaProviderSyncRunRepository(getAppPrisma()), undefined, new PrismaSportEventRepository(getAppPrisma()));
-    const normalizedRequest = new SyncOrchestrator({ now: () => NOW }).normalizeRequest({
-      source: 'SCHEDULED',
-      actor: { type: 'SYSTEM', name: 'scheduler' },
-      scope: { type: 'EVENT', sport: Sport.GOLF, providerId: 'balldontlie', eventId: externalId, kinds: ['SCORES'] },
-    });
-
-    const [run] = await ledger.createSubmissions({ normalizedRequest, providerId: 'balldontlie', submittedAt: NOW, trigger: JobTrigger.SCHEDULE });
-
-    expect(run).toMatchObject({ kind: ProviderSyncKind.SCORES, sportEventId: linked.id, sportLeagueId: tour.id });
   });
 });
 

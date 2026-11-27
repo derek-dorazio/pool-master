@@ -1,12 +1,12 @@
 /**
- * Unit tests — Ingestion module (ProviderRegistry, IngestionScheduler)
+ * Unit tests — Ingestion module (ProviderRegistry, EventFeedSync)
  *
  * Tests the core ingestion classes with mocked providers.
  */
 
 import { LeagueProviderNotResolvedError, ProviderRegistry } from '../../../packages/core-api/src/modules/ingestion/core/provider-registry';
-import { IngestionScheduler } from '../../../packages/core-api/src/modules/ingestion/core/ingestion-scheduler';
-import type { IngestionCallbacks } from '../../../packages/core-api/src/modules/ingestion/core/ingestion-scheduler';
+import { EventFeedSync } from '../../../packages/core-api/src/modules/ingestion/core/event-feed-sync';
+import type { IngestionCallbacks } from '../../../packages/core-api/src/modules/ingestion/core/event-feed-sync';
 import { emptySyncWriteDiagnostics } from '../../../packages/core-api/src/modules/ingestion/core/sync-write-diagnostics';
 import type {
   SportDataProvider,
@@ -143,10 +143,10 @@ describe('ProviderRegistry', () => {
 });
 
 // ---------------------------------------------------------------------------
-// IngestionScheduler
+// EventFeedSync
 // ---------------------------------------------------------------------------
 
-describe('IngestionScheduler', () => {
+describe('EventFeedSync', () => {
   let registry: ProviderRegistry;
   let callbacks: IngestionCallbacks;
 
@@ -175,8 +175,8 @@ describe('IngestionScheduler', () => {
       });
       registry.register(provider);
 
-      const scheduler = new IngestionScheduler(registry, callbacks);
-      const job = await scheduler.pollLiveScores('GOLF', 'mock-provider', 'evt-1');
+      const feeds = new EventFeedSync(registry, callbacks);
+      const job = await feeds.pollLiveScores('GOLF', 'mock-provider', 'evt-1');
 
       expect(job.status).toBe('COMPLETED');
       expect(job.recordsProcessed).toBe(1);

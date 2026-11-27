@@ -7,13 +7,13 @@ export type {
 } from './provider-interface';
 
 export { ProviderRegistry } from './provider-registry';
-export { IngestionScheduler } from './ingestion-scheduler';
+export { EventFeedSync } from './event-feed-sync';
 export type {
   EventSyncRequest,
   IngestionCallbacks,
   IngestionJobRecord,
   JobType,
-} from './ingestion-scheduler';
+} from './event-feed-sync';
 export {
   publishLiveScoreUpdate,
   LiveScoreValidationError,

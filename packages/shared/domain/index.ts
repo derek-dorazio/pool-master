@@ -20,6 +20,7 @@ export * from './email-images';
 export * from './providers';
 export * from './provider-settings';
 export * from './provider-sync-findings';
+export * from './sync-due-work';
 export * from './sport-catalog-types';
 export * from './match-place';
 export * from './match-sides';

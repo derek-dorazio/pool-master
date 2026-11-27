@@ -59,7 +59,8 @@ import { sportLeaguesModule } from '../../packages/core-api/src/modules/sport-le
 import { platformPricingProfilesModule, platformTierProfilesModule } from '../../packages/core-api/src/modules/profiles/routes';
 import { createProfileServices } from '../../packages/core-api/src/modules/profiles/wiring';
 import { platformModule } from '../../packages/core-api/src/modules/platform/routes';
-import { IngestionConfigService } from '../../packages/core-api/src/modules/platform/ingestion-config-service';
+import { IngestionConfigService, INGESTION_SCHEDULE_SETTINGS } from '../../packages/core-api/src/modules/platform/ingestion-config-service';
+import type { IngestionScheduleConfig } from '@poolmaster/shared/dto/config.dto';
 import { AppSettingsService } from '../../packages/core-api/src/modules/platform/app-settings-service';
 import { SETTINGS_GROUPS } from '../../packages/core-api/src/modules/platform/settings-groups';
 import { PlanEntitlementsService } from '../../packages/core-api/src/modules/plans/plan-entitlements-service';
@@ -95,6 +96,9 @@ import { createContestService, createContestSettlementService } from '../../pack
 import { JobLeaderboardRebuilds } from '../../packages/core-api/src/modules/contests/leaderboard-rebuild-job-requests';
 import { leaderboardChangesOf } from '../../packages/core-api/src/modules/contests/leaderboard-rebuild-job-requests';
 import { IngestionService } from '../../packages/core-api/src/modules/ingestion/ingestion-service';
+import { EventSyncJobs } from '../../packages/core-api/src/modules/ingestion/event-sync-jobs';
+import { EventFeedSync, type IngestionCallbacks } from '../../packages/core-api/src/modules/ingestion/core';
+import { ProviderSyncRunLedger } from '../../packages/core-api/src/modules/ingestion/persistence/provider-sync-run-ledger';
 import { ProviderRegistry } from '../../packages/core-api/src/modules/ingestion/core/provider-registry';
 import { ProviderSettingsStore } from '../../packages/core-api/src/modules/ingestion/provider-settings-store';
 import { ProviderWebhookSwitch } from '../../packages/core-api/src/modules/ingestion/provider-webhook-switch';
@@ -265,6 +269,27 @@ export function integrationSyncFindings(
   });
 }
 
+/**
+ * The event sync jobs (#2009) as index.ts builds them, over `registry`'s providers and the feed
+ * writes `callbacks` stands for, on the ingestion schedule's defaults unless a test passes its own.
+ */
+export function integrationEventSyncJobs(
+  registry: ProviderRegistry,
+  callbacks: IngestionCallbacks,
+  options: { prisma?: PrismaClient; schedule?: { getConfig(): Promise<IngestionScheduleConfig> } } = {},
+): EventSyncJobs {
+  const prisma = options.prisma ?? getAppPrisma();
+  const syncRuns = new PrismaProviderSyncRunRepository(prisma);
+  return new EventSyncJobs({
+    sportEvents: new PrismaSportEventRepository(prisma),
+    feeds: new EventFeedSync(registry, callbacks),
+    syncRuns,
+    syncRunLedger: new ProviderSyncRunLedger(syncRuns),
+    registry,
+    schedule: options.schedule ?? { getConfig: () => Promise.resolve(INGESTION_SCHEDULE_SETTINGS.defaults(process.env)) },
+  });
+}
+
 /** The shared app's Provider rows, once it is built. */
 let sharedProviderSettings: { all(): readonly ProviderSettings[] } | undefined;
 
@@ -390,7 +415,6 @@ async function buildTestApp(prisma: PrismaClient): Promise<FastifyInstance> {
     jobs: backgroundJobs.queue,
   });
   const runner = backgroundJobs.runWith({
-    MANUAL_EVENT_SYNC: (payload, context) => ingestionService.runManualEventSync(payload, context),
     SYNC_LEAGUE_EVENTS: (payload, context) => leagueEventsSync.run(payload, context),
     CONTEST_STARTED_EMAILS: (payload) => contestEmailJobs.contestStarted(payload),
     CONTEST_SETTLED_EMAILS: (payload) => contestEmailJobs.contestSettled(payload),

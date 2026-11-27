@@ -1,6 +1,6 @@
 import Fastify, { type FastifyRequest } from 'fastify';
 import jwt from 'jsonwebtoken';
-import { BackgroundJobType, JobTrigger, LeagueRole, Sport } from '@poolmaster/shared/domain';
+import { BackgroundJobType, JobTrigger, LeagueRole } from '@poolmaster/shared/domain';
 import { FASTIFY_AJV_OPTIONS } from '../../../packages/core-api/src/plugins/string-transforms';
 import { requireRootAdmin } from '../../../packages/core-api/src/core/root-admin-guard';
 import { globalErrorHandler } from '../../../packages/core-api/src/core/error-handler';
@@ -35,7 +35,7 @@ async function buildApp(role: LeagueRole = LeagueRole.COMMISSIONER) {
     findByLeagueAndUser: jest.fn((leagueId: string, userId: string) => Promise.resolve(buildMembership({ leagueId, userId, role }))),
   });
   const queueOne = async () => {
-    await queue.enqueue(BackgroundJobType.MANUAL_EVENT_SYNC, { syncRunIds: ['00000000-0000-4000-8000-000000000001'], sport: Sport.GOLF, providerId: 'p', eventId: 'e' });
+    await queue.enqueue(BackgroundJobType.SYNC_EVENT_FIELD, { sportEventId: '00000000-0000-4000-8000-000000000001' });
     return { queued: true };
   };
   const app = Fastify({ logger: false, ajv: FASTIFY_AJV_OPTIONS });

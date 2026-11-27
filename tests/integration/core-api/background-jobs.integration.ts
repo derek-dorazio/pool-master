@@ -42,8 +42,13 @@ beforeEach(async () => {
 const MINUTE = 60_000;
 const DAY_MS = 24 * 60 * MINUTE;
 
-function syncPayload(eventId: string) {
-  return { syncRunIds: [randomUUID()], sport: Sport.GOLF, providerId: 'integration-background-jobs', eventId };
+/** Each job's event, by the label a test gave it: a job names its event by id. */
+const labelOfEvent = new Map<string, string>();
+
+function syncPayload(label: string) {
+  const sportEventId = randomUUID();
+  labelOfEvent.set(sportEventId, label);
+  return { sportEventId };
 }
 
 /** A claim time just after the jobs were queued: their run time is the database's clock, not this one's. */
@@ -61,14 +66,14 @@ describe('background job table (#1440)', () => {
     const queue = new BackgroundJobQueue({ jobs, currentStart: testCurrentJobStart });
     const eventIds = Array.from({ length: 8 }, (_, index) => `two-runners-${String(index)}`);
     for (const eventId of eventIds) {
-      await queue.enqueue(BackgroundJobType.MANUAL_EVENT_SYNC, syncPayload(eventId));
+      await queue.enqueue(BackgroundJobType.SYNC_EVENT_FIELD, syncPayload(eventId));
     }
     const ran: string[] = [];
     const runner = () => new BackgroundJobRunner({
       jobs: repository(),
       handlers: jobHandlers({
-        MANUAL_EVENT_SYNC: async (payload) => {
-          ran.push(payload.eventId);
+        SYNC_EVENT_FIELD: async (payload) => {
+          ran.push(labelOfEvent.get(payload.sportEventId) ?? payload.sportEventId);
           await new Promise((resolve) => { setTimeout(resolve, 5); });
           return { changedCount: 1 };
         },
@@ -84,7 +89,7 @@ describe('background job table (#1440)', () => {
 
   it('claims a running job again only once its lease has ended, counting one more attempt', async () => {
     const jobs = repository();
-    await jobs.enqueue({ type: BackgroundJobType.MANUAL_EVENT_SYNC, payload: syncPayload('lease'), start: TEST_JOB_START });
+    await jobs.enqueue({ type: BackgroundJobType.SYNC_EVENT_FIELD, payload: syncPayload('lease'), start: TEST_JOB_START });
     const now = soonAfterQueued();
     const [claimed] = await jobs.claimDue({ now, limit: 5, leaseUntil: new Date(now.getTime() + 5 * MINUTE) });
     expect(claimed).toMatchObject({ status: BackgroundJobStatus.RUNNING, attempts: 1 });
@@ -99,7 +104,7 @@ describe('background job table (#1440)', () => {
 
   it('writes no mark from a stale claim once the job was claimed again on a later attempt', async () => {
     const jobs = repository();
-    await jobs.enqueue({ type: BackgroundJobType.MANUAL_EVENT_SYNC, payload: syncPayload('stale'), start: TEST_JOB_START });
+    await jobs.enqueue({ type: BackgroundJobType.SYNC_EVENT_FIELD, payload: syncPayload('stale'), start: TEST_JOB_START });
     const now = soonAfterQueued();
     const [stale] = await jobs.claimDue({ now, limit: 1, leaseUntil: new Date(now.getTime() + 5 * MINUTE) });
     const [current] = await jobs.claimDue({ now: new Date(now.getTime() + 5 * MINUTE), limit: 1, leaseUntil: new Date(now.getTime() + 10 * MINUTE) });
@@ -114,7 +119,7 @@ describe('background job table (#1440)', () => {
 
   it('queues a deferred try again for its time with the attempt handed back, and a stale claim cannot defer it', async () => {
     const jobs = repository();
-    await jobs.enqueue({ type: BackgroundJobType.MANUAL_EVENT_SYNC, payload: syncPayload('deferred'), start: TEST_JOB_START });
+    await jobs.enqueue({ type: BackgroundJobType.SYNC_EVENT_FIELD, payload: syncPayload('deferred'), start: TEST_JOB_START });
     const now = soonAfterQueued();
     const [claimed] = await jobs.claimDue({ now, limit: 1, leaseUntil: new Date(now.getTime() + 5 * MINUTE) });
     const deferUntil = new Date(now.getTime() + 2 * MINUTE);
@@ -135,7 +140,7 @@ describe('background job table (#1440)', () => {
 
   it('lets a new job with the same dedupe key queue while the first waits to be retried', async () => {
     const jobs = repository();
-    const request = { type: BackgroundJobType.MANUAL_EVENT_SYNC, payload: syncPayload('retry-key'), dedupeKey: 'MANUAL_EVENT_SYNC:retry-key', start: TEST_JOB_START };
+    const request = { type: BackgroundJobType.SYNC_EVENT_FIELD, payload: syncPayload('retry-key'), dedupeKey: 'SYNC_EVENT_FIELD:retry-key', start: TEST_JOB_START };
     await jobs.enqueue(request);
     const now = soonAfterQueued();
     const [claimed] = await jobs.claimDue({ now, limit: 1, leaseUntil: new Date(now.getTime() + 5 * MINUTE) });
@@ -147,7 +152,7 @@ describe('background job table (#1440)', () => {
 
   it('leaves no job behind when the transaction that queued it rolls back', async () => {
     await expect(getAppPrisma().$transaction(async (tx) => {
-      await insertBackgroundJobs(tx, [{ type: BackgroundJobType.MANUAL_EVENT_SYNC, payload: syncPayload('rolled-back'), start: TEST_JOB_START }]);
+      await insertBackgroundJobs(tx, [{ type: BackgroundJobType.SYNC_EVENT_FIELD, payload: syncPayload('rolled-back'), start: TEST_JOB_START }]);
       throw new Error('the change that caused the job failed');
     })).rejects.toThrow('the change that caused the job failed');
 
@@ -156,7 +161,7 @@ describe('background job table (#1440)', () => {
 
   it('coalesces queued jobs sharing a dedupe key, and queues a fresh one once the first is claimed', async () => {
     const jobs = repository();
-    const request = { type: BackgroundJobType.MANUAL_EVENT_SYNC, payload: syncPayload('dedupe'), dedupeKey: 'MANUAL_EVENT_SYNC:dedupe', start: TEST_JOB_START };
+    const request = { type: BackgroundJobType.SYNC_EVENT_FIELD, payload: syncPayload('dedupe'), dedupeKey: 'SYNC_EVENT_FIELD:dedupe', start: TEST_JOB_START };
 
     await expect(jobs.enqueue(request)).resolves.toBe(true);
     await expect(jobs.enqueue(request)).resolves.toBe(false);
@@ -169,14 +174,14 @@ describe('background job table (#1440)', () => {
     const rows = await getPrisma().backgroundJob.findMany({ orderBy: { createdAt: 'asc' } });
     expect(rows.map((row) => [row.status, row.dedupeKey])).toEqual([
       [BackgroundJobStatus.RUNNING, null],
-      [BackgroundJobStatus.QUEUED, 'MANUAL_EVENT_SYNC:dedupe'],
+      [BackgroundJobStatus.QUEUED, 'SYNC_EVENT_FIELD:dedupe'],
     ]);
   });
 
   it('records a retry as QUEUED at its new run time and a failure as FAILED, each keeping its error type and the error cut to its limit, with no changed count', async () => {
     const jobs = repository();
-    await jobs.enqueue({ type: BackgroundJobType.MANUAL_EVENT_SYNC, payload: syncPayload('retry'), start: TEST_JOB_START });
-    await jobs.enqueue({ type: BackgroundJobType.MANUAL_EVENT_SYNC, payload: syncPayload('fail'), start: TEST_JOB_START });
+    await jobs.enqueue({ type: BackgroundJobType.SYNC_EVENT_FIELD, payload: syncPayload('retry'), start: TEST_JOB_START });
+    await jobs.enqueue({ type: BackgroundJobType.SYNC_EVENT_FIELD, payload: syncPayload('fail'), start: TEST_JOB_START });
     const now = soonAfterQueued();
     const [retried, failed] = await jobs.claimDue({ now, limit: 2, leaseUntil: new Date(now.getTime() + 5 * MINUTE) });
     const longError = 'x'.repeat(BACKGROUND_JOB_ERROR_MAX_LENGTH + 50);
@@ -210,7 +215,7 @@ describe('background job table (#1440)', () => {
     ];
     for (const [index, { scope, ...row }] of rows.entries()) {
       await getPrisma().backgroundJob.create({
-        data: { type: BackgroundJobType.MANUAL_EVENT_SYNC, trigger: JobTrigger.SYSTEM, payload: syncPayload(String(index)), runAt: later, ...scope, ...row },
+        data: { type: BackgroundJobType.SYNC_EVENT_FIELD, trigger: JobTrigger.SYSTEM, payload: syncPayload(String(index)), runAt: later, ...scope, ...row },
       });
     }
 
@@ -236,14 +241,14 @@ describe('background job table (#1440)', () => {
     };
     for (const [eventId, row] of Object.entries(rows)) {
       await getPrisma().backgroundJob.create({
-        data: { type: BackgroundJobType.MANUAL_EVENT_SYNC, trigger: JobTrigger.SYSTEM, payload: syncPayload(eventId), createdAt: ago(60), runAt: ago(60), ...row },
+        data: { type: BackgroundJobType.SYNC_EVENT_FIELD, trigger: JobTrigger.SYSTEM, payload: syncPayload(eventId), createdAt: ago(60), runAt: ago(60), ...row },
       });
     }
 
     await expect(new BackgroundJobRetention(repository()).purge(now)).resolves.toBe(2);
 
     const kept = await getPrisma().backgroundJob.findMany({ select: { payload: true } });
-    expect(kept.map((row) => (row.payload as { eventId: string }).eventId).sort())
+    expect(kept.map((row) => labelOfEvent.get((row.payload as { sportEventId: string }).sportEventId) ?? '').sort((a, b) => a.localeCompare(b)))
       .toEqual(['failedLastWeek', 'queuedOld', 'succeededRecently']);
   });
 
@@ -281,7 +286,7 @@ describe('background job table (#1440)', () => {
 
   it('deletes a discarded job only under its current claim, leaving it in place for a claim lost to a later attempt', async () => {
     const jobs = repository();
-    await jobs.enqueue({ type: BackgroundJobType.MANUAL_EVENT_SYNC, payload: syncPayload('lost-discard'), start: TEST_JOB_START });
+    await jobs.enqueue({ type: BackgroundJobType.SYNC_EVENT_FIELD, payload: syncPayload('lost-discard'), start: TEST_JOB_START });
     const now = soonAfterQueued();
     const [stale] = await jobs.claimDue({ now, limit: 1, leaseUntil: new Date(now.getTime() + 5 * MINUTE) });
     const [current] = await jobs.claimDue({ now: new Date(now.getTime() + 5 * MINUTE), limit: 1, leaseUntil: new Date(now.getTime() + 10 * MINUTE) });
@@ -340,7 +345,7 @@ describe('Activity reads and job results (#1819)', () => {
 
   it('answers the job it queued, and the waiting job when its dedupe key is held', async () => {
     const jobs = repository();
-    const request = { type: BackgroundJobType.MANUAL_EVENT_SYNC, payload: syncPayload('returning'), dedupeKey: 'returning-key', start: TEST_JOB_START };
+    const request = { type: BackgroundJobType.SYNC_EVENT_FIELD, payload: syncPayload('returning'), dedupeKey: 'returning-key', start: TEST_JOB_START };
 
     const first = await jobs.enqueueReturning(request);
     const second = await jobs.enqueueReturning(request);
@@ -351,7 +356,7 @@ describe('Activity reads and job results (#1819)', () => {
 
   it('writes the request\'s own job when a worker claims the waiting one between the skipped insert and its read', async () => {
     const plain = repository();
-    const request = { type: BackgroundJobType.MANUAL_EVENT_SYNC, payload: syncPayload('raced'), dedupeKey: 'raced-key', start: TEST_JOB_START };
+    const request = { type: BackgroundJobType.SYNC_EVENT_FIELD, payload: syncPayload('raced'), dedupeKey: 'raced-key', start: TEST_JOB_START };
     const waiting = await plain.enqueueReturning(request);
     let claimedBetween = false;
     // A client whose first skipped insert is followed by a worker's claim, which frees the key.
@@ -380,7 +385,7 @@ describe('Activity reads and job results (#1819)', () => {
 
   it('fails loudly rather than answer no job when a worker frees the key between each skipped insert and its read, and another request takes it again', async () => {
     const plain = repository();
-    const request = { type: BackgroundJobType.MANUAL_EVENT_SYNC, payload: syncPayload('raced-twice'), dedupeKey: 'raced-twice-key', start: TEST_JOB_START };
+    const request = { type: BackgroundJobType.SYNC_EVENT_FIELD, payload: syncPayload('raced-twice'), dedupeKey: 'raced-twice-key', start: TEST_JOB_START };
     await plain.enqueueReturning(request);
     // After each skipped insert a worker claims the waiting job, which frees the key; after each
     // read that then finds nothing, another request takes the key before this one tries again.
@@ -402,20 +407,20 @@ describe('Activity reads and job results (#1819)', () => {
     });
 
     await expect(new PrismaBackgroundJobRepository(racing as unknown as PrismaClient).enqueueReturning(request))
-      .rejects.toThrow('A MANUAL_EVENT_SYNC job was neither written nor found waiting');
+      .rejects.toThrow('A SYNC_EVENT_FIELD job was neither written nor found waiting');
   });
 
   it('queues a job to run at the time its request names, not now', async () => {
     const runAt = new Date(Date.now() + 60 * MINUTE);
 
-    await repository().enqueue({ type: BackgroundJobType.MANUAL_EVENT_SYNC, payload: syncPayload('later'), runAt, start: TEST_JOB_START });
+    await repository().enqueue({ type: BackgroundJobType.SYNC_EVENT_FIELD, payload: syncPayload('later'), runAt, start: TEST_JOB_START });
 
     await expect(getPrisma().backgroundJob.findFirstOrThrow()).resolves.toMatchObject({ runAt });
     await expect(repository().claimDue({ now: soonAfterQueued(), limit: 5, leaseUntil: new Date(Date.now() + MINUTE) })).resolves.toEqual([]);
   });
 
   it('deletes nothing and answers 0 when no finished job is older than the cutoff', async () => {
-    await repository().enqueue({ type: BackgroundJobType.MANUAL_EVENT_SYNC, payload: syncPayload('kept'), start: TEST_JOB_START });
+    await repository().enqueue({ type: BackgroundJobType.SYNC_EVENT_FIELD, payload: syncPayload('kept'), start: TEST_JOB_START });
 
     await expect(repository().deleteBatchCompletedBefore(BackgroundJobStatus.SUCCEEDED, new Date(), 100)).resolves.toBe(0);
     await expect(getPrisma().backgroundJob.count()).resolves.toBe(1);
@@ -423,7 +428,7 @@ describe('Activity reads and job results (#1819)', () => {
 
   it('keeps a succeeded job\'s changed count and reported result, with no error type', async () => {
     const jobs = repository();
-    await jobs.enqueue({ type: BackgroundJobType.MANUAL_EVENT_SYNC, payload: syncPayload('result'), start: TEST_JOB_START });
+    await jobs.enqueue({ type: BackgroundJobType.SYNC_EVENT_FIELD, payload: syncPayload('result'), start: TEST_JOB_START });
     const [claimed] = await jobs.claimDue({ now: soonAfterQueued(), limit: 1, leaseUntil: new Date(Date.now() + MINUTE) });
 
     await expect(jobs.markSucceeded(expectDefined(claimed), new Date(), { changedCount: 3, result: { created: 3 } })).resolves.toBe(true);
@@ -471,7 +476,7 @@ describe('Activity reads and job results (#1819)', () => {
   });
 
   it('finds only the sync runs the named jobs ran, leaving out a run with no job, and answers none for no jobs', async () => {
-    const job = await getPrisma().backgroundJob.create({ data: { type: 'MANUAL_EVENT_SYNC', trigger: JobTrigger.SYSTEM, payload: {} } });
+    const job = await getPrisma().backgroundJob.create({ data: { type: 'SYNC_EVENT_FIELD', trigger: JobTrigger.SYSTEM, payload: {} } });
     const runs = new PrismaProviderSyncRunRepository(getAppPrisma());
     const mine = await runs.create({
       providerCode: ProviderCode.BALLDONTLIE, ...SCHEDULED_SCORES_RUN, backgroundJobId: job.id,
@@ -504,22 +509,18 @@ describe('manual sync runs and their job (#1441)', () => {
   });
 
   it('writes the runs, in the order given, and the job naming them in one transaction', async () => {
+    const sportEventId = randomUUID();
     const queue = new BackgroundJobQueue({ jobs: repository(), currentStart: testCurrentJobStart });
 
     const runs = await new PrismaProviderSyncRunRepository(getAppPrisma()).createWithJob(
       [run('first'), run('second')],
-      (written) => queue.request(BackgroundJobType.MANUAL_EVENT_SYNC, {
-        syncRunIds: written.map((one) => one.id),
-        sport: Sport.GOLF,
-        providerId: 'integration-background-jobs',
-        eventId: 'jobs-event',
-      }),
+      (written) => queue.request(BackgroundJobType.SYNC_EVENT_FIELD, { sportEventId, syncRunId: written[0].id }),
     );
 
     expect(runs.map((written) => written.summary)).toEqual(['first', 'second']);
     const job = await getPrisma().backgroundJob.findFirstOrThrow();
-    expect(job).toMatchObject({ type: BackgroundJobType.MANUAL_EVENT_SYNC, status: BackgroundJobStatus.QUEUED });
-    expect(job.payload).toEqual({ syncRunIds: runs.map((written) => written.id), sport: Sport.GOLF, providerId: 'integration-background-jobs', eventId: 'jobs-event' });
+    expect(job).toMatchObject({ type: BackgroundJobType.SYNC_EVENT_FIELD, status: BackgroundJobStatus.QUEUED });
+    expect(job.payload).toEqual({ sportEventId, syncRunId: runs[0].id });
     await expect(new PrismaProviderSyncRunRepository(getAppPrisma()).findManyByIds(runs.map((written) => written.id)))
       .resolves.toHaveLength(2);
   });
@@ -529,8 +530,8 @@ describe('manual sync runs and their job (#1441)', () => {
 
     await expect(new PrismaProviderSyncRunRepository(getAppPrisma()).createWithJob(
       [run('only')],
-      () => queue.request(BackgroundJobType.MANUAL_EVENT_SYNC, { syncRunIds: [], sport: Sport.GOLF, providerId: 'integration-background-jobs', eventId: 'jobs-event' }),
-    )).rejects.toThrow(/Invalid MANUAL_EVENT_SYNC job payload/);
+      () => queue.request(BackgroundJobType.SYNC_EVENT_FIELD, { sportEventId: 'not-an-event-id' }),
+    )).rejects.toThrow(/Invalid SYNC_EVENT_FIELD job payload/);
 
     await expect(getPrisma().providerSyncRun.count()).resolves.toBe(0);
     await expect(getPrisma().backgroundJob.count()).resolves.toBe(0);
