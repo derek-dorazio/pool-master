@@ -278,6 +278,34 @@ describe('event lifecycle sweep through the app client (#1303)', () => {
     expect(await statusOf(byClock.contest.id)).toEqual({ status: ContestStatus.ACTIVE, startsAt: slotStart });
   });
 
+  it('keeps a contest open on an event under way whose covered round the sync has not scheduled yet, rather than at the event\'s start, and takes it live once the round is under way (#2013)', async () => {
+    const { league } = await seedLeagueWithTeams(1);
+    const week = await seedFootballWeek({ games: 1, startDate: new Date(Date.now() - 2 * HOUR), status: SportEventStatus.IN_PROGRESS });
+    const { sportLeagueSeasonCompetitionSlotId: slotId } = await getPrisma().sportEventSlot.findFirstOrThrow({ where: { sportEventId: week.event.id }, select: { sportLeagueSeasonCompetitionSlotId: true } });
+    await getPrisma().sportLeagueSeasonCompetitionSlot.update({ where: { id: slotId }, data: { startsAt: null, endsAt: null, status: 'SCHEDULED', isTestData: false, label: null } });
+    const contest = await contestOn(league.id, [week.event.id], ContestStatus.OPEN);
+    const statusOf = async () => getPrisma().contest.findUniqueOrThrow({ where: { id: contest.id }, select: { status: true } });
+
+    await lifecycleSweep(new Date(Date.now() + 24 * HOUR)).sweep();
+    expect((await statusOf()).status).toBe(ContestStatus.OPEN);
+
+    await getPrisma().sportLeagueSeasonCompetitionSlot.update({ where: { id: slotId }, data: { status: 'IN_PROGRESS' } });
+    await lifecycleSweep(new Date()).sweep();
+    expect((await statusOf()).status).toBe(ContestStatus.ACTIVE);
+  });
+
+  it('starts no contest on a cancelled covered slot whose first game\'s time has passed (#2013)', async () => {
+    const { league } = await seedLeagueWithTeams(1);
+    const week = await seedFootballWeek({ games: 1, startDate: new Date(Date.now() - 2 * HOUR), status: SportEventStatus.IN_PROGRESS });
+    const { sportLeagueSeasonCompetitionSlotId: slotId } = await getPrisma().sportEventSlot.findFirstOrThrow({ where: { sportEventId: week.event.id }, select: { sportLeagueSeasonCompetitionSlotId: true } });
+    await getPrisma().sportLeagueSeasonCompetitionSlot.update({ where: { id: slotId }, data: { startsAt: new Date(Date.now() - HOUR), status: 'CANCELLED' } });
+    const contest = await contestOn(league.id, [week.event.id], ContestStatus.OPEN);
+
+    await lifecycleSweep(new Date()).sweep();
+
+    expect((await getPrisma().contest.findUniqueOrThrow({ where: { id: contest.id }, select: { status: true } })).status).toBe(ContestStatus.OPEN);
+  });
+
   it('runs a sweep with nothing due as a no-op, sending no email and logging no failure', async () => {
     const { league } = await seedLeagueWithTeams(1);
     const { sweep, logger } = lifecycleSweep(new Date());

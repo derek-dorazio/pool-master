@@ -254,13 +254,16 @@ export class EntryReminders implements DueNotifications {
       window: cutoffTiming(cutoff, sportEvent, games.filter((game) => game.sportEventId === sportEvent.id)),
     }));
     const entriesOpen = areContestEntriesOpen(contest, windows.map(({ window }) => window), now);
-    const open = windows.filter(({ window }) => !hasSportEventStarted(window, now));
-    const due = open.flatMap(({ sportEvent, window }) => {
-      const hours = dueReminderHours(window.startDate, reminderHours, now);
-      return hours === null ? [] : [{ contest, rules, coverage, sportEvent, closesAt: window.startDate, hours, entriesOpen, now }];
+    // A window with no start yet (its slot not scheduled, #2013) has no reminder until it has one.
+    const open = windows.flatMap(({ sportEvent, window }) => (
+      hasSportEventStarted(window, now) || window.startDate === null ? [] : [{ sportEvent, closesAt: window.startDate }]
+    ));
+    const due = open.flatMap(({ sportEvent, closesAt }) => {
+      const hours = dueReminderHours(closesAt, reminderHours, now);
+      return hours === null ? [] : [{ contest, rules, coverage, sportEvent, closesAt, hours, entriesOpen, now }];
     });
-    const ahead = open.flatMap(({ window }) => reminderHours
-      .map((hours) => window.startDate.getTime() - hours * HOUR_MS)
+    const ahead = open.flatMap(({ closesAt }) => reminderHours
+      .map((hours) => closesAt.getTime() - hours * HOUR_MS)
       .filter((at) => at > now.getTime()));
     return { due, next: ahead.length === 0 ? null : new Date(Math.min(...ahead)) };
   }

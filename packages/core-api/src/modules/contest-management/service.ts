@@ -975,7 +975,7 @@ export class ContestManagementService {
         sportEventId,
         status: sportEvent.status,
         cutoff: cutoff.kind,
-        cutoffAt: timing.startDate.toISOString(),
+        cutoffAt: timing.startDate?.toISOString() ?? null,
       }, 'contest management create contest rejected for a sport event past the contest cutoff');
       throw new ContestManagementError(
         cutoff.kind === ContestCutoffKind.GAME_START

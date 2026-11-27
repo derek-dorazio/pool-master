@@ -457,7 +457,8 @@ export class EventLifecycleService {
       if (!hasSportEventStarted(window, now)) {
         continue;
       }
-      const startsAt = window.startDate.getTime();
+      // A window that started with no start yet (its slot under way before the sync scheduled it) starts now.
+      const startsAt = (window.startDate ?? now).getTime();
       dueByStart.set(startsAt, [...(dueByStart.get(startsAt) ?? []), { contest, cutoff: cutoff.kind }]);
     }
 

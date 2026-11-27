@@ -192,8 +192,8 @@ export interface GamePicksView {
   survivor: GamePicksSurvivorView | null;
   status: ContestEntryStatus;
   submittedAt: Date | null;
-  /** When the entry's picks for the event close as a whole: the event's start. */
-  picksCloseAt: Date;
+  /** When the entry's picks for the event close as a whole: its first covered Game's start; null while that slot is not scheduled yet (#2013). */
+  picksCloseAt: Date | null;
   ownEntry: boolean;
   canSubmit: boolean;
   pickedCount: number;

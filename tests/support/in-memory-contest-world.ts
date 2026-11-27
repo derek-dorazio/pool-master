@@ -247,7 +247,8 @@ export class InMemoryContestWorld {
       sportEventIds: [...new Set(slots.map((slot) => slot.sportEventId))],
       coveredSeasonSlotIds: [...seasonSlotIds],
       coveredSlotDefinitionIds: slots.map((slot) => slot.slotDefinitionId),
-      coveredSlots: slots.map((slot) => buildCoveredSlot(slot)),
+      // A synced slot's start is its first game's, written by the sync; here every slot of an event starts with it.
+      coveredSlots: slots.map((slot) => buildCoveredSlot({ ...slot, startsAt: this.sportEvents.get(slot.sportEventId)?.startDate ?? null })),
     };
   }
 

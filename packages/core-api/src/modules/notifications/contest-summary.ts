@@ -46,8 +46,8 @@ export interface ContestSummary {
   rules: string;
   /** "1 entry per member", or "No limit on entries per member". */
   entriesPerMember: string;
-  /** When the first event's picks close: its start or a squares game's kickoff. */
-  closesAt: Date;
+  /** When the first event's picks close: its first covered Game or a squares game's kickoff; null while the slot it covers is not scheduled yet (#2013). */
+  closesAt: Date | null;
 }
 
 /**
@@ -105,15 +105,16 @@ export async function summarizeContest(deps: ContestSummaryDeps, contest: Contes
 }
 
 /**
- * When the contest's picks close on its first event: the event's start or a squares game's
- * kickoff. Never before the event starts.
+ * When the contest's picks close on its first event: the first Game of the slots it covers there
+ * or a squares game's kickoff, and null while those slots are not scheduled yet (#2013). Never
+ * before the event starts.
  */
 export async function contestClosesAt(
   deps: { matches: Pick<SportEventRoundMatchRepository, 'findBySportEvent'> },
   contest: Contest,
   rules: ContestSelectionConfig,
   first: SportEvent,
-): Promise<Date> {
+): Promise<Date | null> {
   return contestClosesAtGiven(contest, rules, first, closesOnAGame(contest, rules) ? await deps.matches.findBySportEvent(first.id) : []);
 }
 
@@ -128,7 +129,7 @@ export function contestClosesAtGiven(
   rules: ContestSelectionConfig,
   first: SportEvent,
   games: readonly SportEventRoundMatch[],
-): Date {
+): Date | null {
   return cutoffTiming(contestCutoff(rules, contest), first, games).startDate;
 }
 

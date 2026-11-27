@@ -155,7 +155,7 @@ export function createBatchedContestOpeningReader({ sportEvents, field, tiers, v
       const kickoffs = squaresGameChoices(games, now)
         .map(({ game }) => cutoffTiming({ kind: ContestCutoffKind.GAME_START, sportEventRoundMatchGameId: game.id }, sportEvent, games))
         .filter((timing) => !hasSportEventStarted(timing, now))
-        .map((timing) => timing.startDate.getTime());
+        .flatMap((timing) => (timing.startDate === null ? [] : [timing.startDate.getTime()]));
       return kickoffs.length === 0 ? null : new Date(Math.min(...kickoffs));
     },
   };

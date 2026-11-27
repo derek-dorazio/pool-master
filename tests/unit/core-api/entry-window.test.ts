@@ -264,7 +264,7 @@ describe('areMatchPicksRevealed — who may see one game\'s pick', () => {
 
 describe('contestCutoff — where a contest\'s window closes', () => {
   it('closes every contest but squares at the first Game of the slots it covers, a bracket included', () => {
-    const coveredSlots = [{ sportEventId: 'playoffs', status: SeasonSlotStatus.SCHEDULED, startsAt: NOW }];
+    const coveredSlots = [{ sportEventId: 'playoffs', status: SeasonSlotStatus.SCHEDULED, startsAt: NOW, isTestData: false }];
     expect(contestCutoff(undefined)).toEqual({ kind: ContestCutoffKind.FIRST_COVERED_GAME, coveredSlots: [] });
     expect(contestCutoff({ selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 4 }, { coveredSlots })).toEqual({ kind: ContestCutoffKind.FIRST_COVERED_GAME, coveredSlots });
     expect(contestCutoff({ selectionType: SelectionType.PICK_EM, mode: PickEmMode.CONFIDENCE, againstTheSpread: false })).toEqual({ kind: ContestCutoffKind.FIRST_COVERED_GAME, coveredSlots: [] });
@@ -274,8 +274,8 @@ describe('contestCutoff — where a contest\'s window closes', () => {
 
 describe('cutoffTiming — a contest\'s window opens and closes at its first covered Game (#2013)', () => {
   const playoffs = event('playoffs', -48, SportEventStatus.IN_PROGRESS);
-  const slot = (sportEventId: string, status: SeasonSlotStatus, startOffsetHours: number | null) => ({
-    sportEventId, status, startsAt: startOffsetHours === null ? null : new Date(NOW.getTime() + startOffsetHours * HOUR),
+  const slot = (sportEventId: string, status: SeasonSlotStatus, startOffsetHours: number | null, isTestData = false) => ({
+    sportEventId, status, isTestData, startsAt: startOffsetHours === null ? null : new Date(NOW.getTime() + startOffsetHours * HOUR),
   });
   const covering = (...coveredSlots: ReturnType<typeof slot>[]) => ({ kind: ContestCutoffKind.FIRST_COVERED_GAME, coveredSlots }) as const;
 
@@ -293,10 +293,29 @@ describe('cutoffTiming — a contest\'s window opens and closes at its first cov
     expect(cutoffTiming(covering(slot('playoffs', SeasonSlotStatus.IN_PROGRESS, 30)), playoffs, []).status).toBe(SportEventStatus.IN_PROGRESS);
   });
 
-  it('reads only the slots it covers on this event, and is the event\'s own timing where it covers none or none has a time', () => {
+  it('reads only the slots it covers on this event, and is the event\'s own timing where it covers none', () => {
     expect(cutoffTiming(covering(slot('another-event', SeasonSlotStatus.IN_PROGRESS, -5)), playoffs, [])).toBe(playoffs);
     expect(cutoffTiming(covering(), playoffs, [])).toBe(playoffs);
-    expect(cutoffTiming(covering(slot('playoffs', SeasonSlotStatus.SCHEDULED, null)), playoffs, []).startDate).toEqual(playoffs.startDate);
+  });
+
+  it('keeps taking entries and picks for a later round not scheduled yet on an event under way, until that round starts, rather than closing at the event\'s start', () => {
+    const conferenceFinals = cutoffTiming(covering(slot('playoffs', SeasonSlotStatus.SCHEDULED, null)), playoffs, []);
+
+    expect(conferenceFinals).toEqual({ status: SportEventStatus.SCHEDULED, startDate: null });
+    expect(areContestEntriesOpen({ status: ContestStatus.OPEN }, [conferenceFinals], NOW)).toBe(true);
+    expect(areEventPicksOpen({ status: ContestStatus.ACTIVE }, conferenceFinals, NOW)).toBe(true);
+    expect(cutoffTiming(covering(slot('playoffs', SeasonSlotStatus.IN_PROGRESS, null)), playoffs, [])).toEqual({ status: SportEventStatus.IN_PROGRESS, startDate: null });
+  });
+
+  it('stands a test slot, which the sync never schedules, on its event\'s start', () => {
+    expect(cutoffTiming(covering(slot('playoffs', SeasonSlotStatus.SCHEDULED, null, true)), playoffs, []))
+      .toEqual({ status: SportEventStatus.SCHEDULED, startDate: playoffs.startDate });
+  });
+
+  it('leaves a cancelled slot out: it neither starts the window nor gives it its start', () => {
+    expect(cutoffTiming(covering(slot('playoffs', SeasonSlotStatus.CANCELLED, -5), slot('playoffs', SeasonSlotStatus.SCHEDULED, 30)), playoffs, []))
+      .toEqual({ status: SportEventStatus.SCHEDULED, startDate: new Date(NOW.getTime() + 30 * HOUR) });
+    expect(cutoffTiming(covering(slot('playoffs', SeasonSlotStatus.COMPLETED, -5)), playoffs, []).status).toBe(SportEventStatus.IN_PROGRESS);
   });
 
   it('keeps a finished event finished, whatever its slots say', () => {

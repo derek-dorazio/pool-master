@@ -16,7 +16,7 @@ import type {
   PendingDrawReceipts,
   ReminderCheck,
 } from '@poolmaster/shared/db';
-import { championshipYear, ContestStatus, SelectionType, SportEventStatus, type Contest, type ContestCoveredSlot, type ContestFormat, type CupWeight, FINISHED_SPORT_EVENT_STATUSES, SeasonSlotStatus, type SlotKind } from '@poolmaster/shared/domain';
+import { championshipYear, ContestStatus, SelectionType, type SportEventStatus, type Contest, type ContestCoveredSlot, type ContestFormat, type CupWeight, FINISHED_SPORT_EVENT_STATUSES, SeasonSlotStatus, type SlotKind } from '@poolmaster/shared/domain';
 import { forgettingReads, memoizedRead, memoizedReadMany, ReadMemoKey } from '../core/request-read-memo';
 import { lockContestRow, lockContestRowsAtOnce } from './contest-row-lock';
 import { insertBackgroundJobs } from './prisma-background-job-repository';
@@ -44,6 +44,7 @@ const COVERED_SEASON_SLOT_SELECT = {
   startsAt: true,
   endsAt: true,
   label: true,
+  isTestData: true,
   definition: { select: { key: true, name: true, slotKind: true, weekNumber: true, competition: { select: { code: true, name: true } } } },
   eventSlot: { select: { sportEventId: true } },
 } as const;
@@ -110,12 +111,13 @@ export class PrismaContestRepository implements ContestRepository {
           status: ContestStatus.DRAFT,
           OR: [
             { seasonSlots: { some: { seasonSlot: { eventSlot: { sportEvent: { status: { in: [...FINISHED_SPORT_EVENT_STATUSES] } } } } } } },
-            // Started as `cutoffTiming` has it: a covered slot under way, or past its first game's
-            // start; a slot with no start yet goes by its event's start, or the event under way.
+            // Started as `cutoffTiming` has it: a covered slot in progress or complete, or a slot not
+            // cancelled past its first game's start. A synced slot with no start yet is not
+            // scheduled, so it has not started; a test slot with none goes by its event's start.
             ...[
-              { status: { not: SeasonSlotStatus.SCHEDULED } },
-              { startsAt: { lte: now } },
-              { startsAt: null, eventSlot: { sportEvent: { OR: [{ startDate: { lte: now } }, { status: SportEventStatus.IN_PROGRESS }] } } },
+              { status: { in: [SeasonSlotStatus.IN_PROGRESS, SeasonSlotStatus.COMPLETED] } },
+              { status: { not: SeasonSlotStatus.CANCELLED }, startsAt: { lte: now } },
+              { status: { not: SeasonSlotStatus.CANCELLED }, startsAt: null, isTestData: true, eventSlot: { sportEvent: { startDate: { lte: now } } } },
             ].map((started) => ({
               seasonSlots: { some: { seasonSlot: started } },
               NOT: { selectionType: SelectionType.SQUARES, squaresGame: { isNot: null } },
@@ -461,6 +463,7 @@ type CoveredSeasonSlotRow = {
   startsAt: Date | null;
   endsAt: Date | null;
   label: string | null;
+  isTestData: boolean;
   definition: { key: string; name: string | null; slotKind: SlotKind; weekNumber: number | null; competition: { code: string; name: string | null } };
   eventSlot: { sportEventId: string } | null;
 };
@@ -477,6 +480,7 @@ function toCoveredSlot(seasonSlotId: string, slot: CoveredSeasonSlotRow): Contes
     status: slot.status,
     startsAt: slot.startsAt,
     endsAt: slot.endsAt,
+    isTestData: slot.isTestData,
     sportEventId: slot.eventSlot?.sportEventId ?? null,
     competitionCode: slot.definition.competition.code,
     competitionName: slot.definition.competition.name,

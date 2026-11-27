@@ -440,6 +440,24 @@ describe('ContestRepository', () => {
     expect((await repos().contests.findCurrentByLeague(league.id, new Date('2026-06-06T13:00:00.000Z'))).map((contest) => contest.id)).not.toContain(draft.id);
   });
 
+  it('keeps a draft on an event under way whose covered slot is not scheduled yet or is cancelled, and leaves out one on a test slot, which stands on its event\'s start (#2013)', async () => {
+    const { league, event } = await createLeagueAndEvent();
+    const now = new Date('2026-06-05T12:00:00.000Z');
+    await getPrisma().sportEvent.update({ where: { id: event.id }, data: { status: 'IN_PROGRESS', startDate: new Date('2026-06-04T12:00:00.000Z') } });
+    const draft = await createContest(league.id, event.id, 'Draft On A Round To Come', ContestStatus.DRAFT);
+    const slots = { eventSlot: { sportEventId: event.id } };
+    const currentIds = async () => (await repos().contests.findCurrentByLeague(league.id, now)).map((contest) => contest.id);
+
+    await getPrisma().sportLeagueSeasonCompetitionSlot.updateMany({ where: slots, data: { status: 'SCHEDULED', startsAt: null, endsAt: null, isTestData: false, label: null } });
+    expect(await currentIds()).toContain(draft.id);
+
+    await getPrisma().sportLeagueSeasonCompetitionSlot.updateMany({ where: slots, data: { status: 'CANCELLED', startsAt: new Date('2026-06-04T12:00:00.000Z') } });
+    expect(await currentIds()).toContain(draft.id);
+
+    await getPrisma().sportLeagueSeasonCompetitionSlot.updateMany({ where: slots, data: { status: 'SCHEDULED', startsAt: null, isTestData: true, label: 'Test slot' } });
+    expect(await currentIds()).not.toContain(draft.id);
+  });
+
   it('leaves out every draft with an event finished or cancelled, even squares with its game, or a draft whose event has not started (#1217)', async () => {
     const { league, event, suffix } = await createLeagueAndEvent();
     const prisma = getPrisma();
