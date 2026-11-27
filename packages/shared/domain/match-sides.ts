@@ -42,6 +42,32 @@ export function winningSide(match: MatchWithSides): SportEventRoundMatchSide | n
   return match.sides.find((side) => side.outcome === MatchSideOutcome.WON) ?? null;
 }
 
+/**
+ * A completed match's winning and losing teams (field row ids), or null while it is undecided or
+ * when it ended level. The one reading of a knockout result: knockout scoring reads who won, and a
+ * later slot's tier set who is out (`knockedOutBefore`).
+ */
+export function decidedResult(match: MatchWithSides & Pick<SportEventRoundMatch, 'status'>): { winner: string | null; loser: string | null } | null {
+  const winner = winningSide(match);
+  if (match.status !== MatchStatus.COMPLETED || winner === null) return null;
+  return { winner: winner.sportEventParticipantId, loser: opposingSideOf(match, winner.sideNumber).sportEventParticipantId };
+}
+
+/**
+ * The teams (field row ids) knocked out before a slot (#2044): each that lost a decided match
+ * (`decidedResult`) played in one of `earlierSeasonSlotIds`, the event's slots before it in play
+ * order. A team on a bye lost nothing, so it is still in.
+ */
+export function knockedOutBefore(
+  matches: ReadonlyArray<MatchWithSides & Pick<SportEventRoundMatch, 'status' | 'slot'>>,
+  earlierSeasonSlotIds: ReadonlySet<string>,
+): Set<string> {
+  return new Set(matches.flatMap((match) => {
+    const loser = earlierSeasonSlotIds.has(match.slot.seasonSlotId) ? decidedResult(match)?.loser ?? null : null;
+    return loser === null ? [] : [loser];
+  }));
+}
+
 /** The team that won the match, or null while none has. */
 export function winnerParticipantId(match: MatchWithSides): string | null {
   return winningSide(match)?.sportEventParticipantId ?? null;

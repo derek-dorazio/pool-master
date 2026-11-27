@@ -26,6 +26,7 @@ import type {
   SportEventParticipantRepository,
   SportEventSlotParticipantValuationRepository,
   SportEventRepository,
+  SportEventRoundMatchRepository,
   SportEventSlotTierDefinition,
   SportEventSlotTierRepository,
   TierAssignment,
@@ -33,6 +34,7 @@ import type {
 } from '@poolmaster/shared/db';
 import {
   findBudgetPricingProblem,
+  knockedOutBefore,
   tierSetSlotOf,
   contestTierSetSlot,
   isTierSetEditable,
@@ -147,6 +149,8 @@ export interface SportEventTierServiceDeps {
   tiers: SportEventSlotTierRepository;
   valuations: SportEventSlotParticipantValuationRepository;
   field: SportEventParticipantRepository;
+  /** The event's matches, whose results say who is out before a later slot (#2044). */
+  matches: Pick<SportEventRoundMatchRepository, 'findBySportEvent'>;
   /** The field's names, the order's last tie-break (#1807). */
   participants: Pick<ParticipantRepository, 'findByIds'>;
   /** The event's sport league's tier profile (#1844), the layout auto-tiering fills. */
@@ -337,8 +341,8 @@ export class SportEventTierService {
       this.deps.logger?.warn({ sportEventId: event.id }, 'Cannot auto-assign tiers — the event has no tiers yet');
       return;
     }
-    const profile = await this.requirePlatformTierProfile(event);
-    const order = await this.orderedActiveField(event.id, profile.sources);
+    const [profile, knockedOut] = await Promise.all([this.requirePlatformTierProfile(event), this.knockedOutEntering(event.id, slot)]);
+    const order = await this.orderedActiveField(event.id, profile.sources, knockedOut);
     if (order === 'NO_FIELD') {
       this.deps.logger?.warn({ sportEventId: event.id }, 'Cannot auto-assign tiers — the event has no active field participants');
       return;
@@ -474,8 +478,8 @@ export class SportEventTierService {
     if (!startedFrom) {
       throw new SportEventError(`Pricing profile ${pricing.platformPricingProfileId} was not found.`, 'PLATFORM_PRICING_PROFILE_NOT_FOUND', 404);
     }
-    const { sources } = await this.requirePlatformPricingProfile(event);
-    const order = await this.orderedActiveField(sportEventId, sources);
+    const [{ sources }, knockedOut] = await Promise.all([this.requirePlatformPricingProfile(event), this.knockedOutEntering(sportEventId, slot)]);
+    const order = await this.orderedActiveField(sportEventId, sources, knockedOut);
     if (order === 'NO_FIELD') {
       this.deps.logger?.warn({ sportEventId }, 'Cannot auto-assign prices — the event has no active field participants');
       return [];
@@ -531,9 +535,10 @@ export class SportEventTierService {
 
   /** `valueSyncedField` for one slot whose set may change. */
   private async valueSlot(event: SportEvent, slot: SportEventTierSlot): Promise<SyncedFieldValuation> {
-    const [platformTierProfile, platformPricingProfile] = await Promise.all([
+    const [platformTierProfile, platformPricingProfile, knockedOut] = await Promise.all([
       this.requirePlatformTierProfile(event),
       this.requirePlatformPricingProfile(event),
+      this.knockedOutEntering(event.id, slot),
     ]);
     const pricing = slot.pricing ?? slotPricingOf(platformPricingProfile);
     // Checked before anything is written, so a bad profile never leaves tiers made and prices not.
@@ -544,8 +549,8 @@ export class SportEventTierService {
     // Tiers follow the tier profile's sources and prices the pricing profile's. Both start with
     // the same source (a league's two profiles must), so the two orders agree on who is best.
     const [tierOrder, priceOrder, tiers, valuations] = await Promise.all([
-      this.orderedActiveField(event.id, platformTierProfile.sources),
-      this.orderedActiveField(event.id, platformPricingProfile.sources),
+      this.orderedActiveField(event.id, platformTierProfile.sources, knockedOut),
+      this.orderedActiveField(event.id, platformPricingProfile.sources, knockedOut),
       this.deps.tiers.findBySlot(slot.id),
       this.deps.valuations.findBySlot(slot.id),
     ]);
@@ -601,9 +606,29 @@ export class SportEventTierService {
    * in, and the source the value that decided it records. NO_FIELD with no active participant;
    * NO_ORDER when none has any of `sources`, the profile's list (#2040, #2160): such a field has no order.
    */
-  private async orderedActiveField(sportEventId: string, sources: readonly FieldOrderBasis[]): Promise<FieldOrder | 'NO_FIELD' | 'NO_ORDER'> {
+  /**
+   * The teams out before `slot` (#2044): those that lost a decided match in one of the event's
+   * slots before it in play order (`knockedOutBefore`). None for the event's first slot, so its
+   * matches are read only for a later one.
+   */
+  private async knockedOutEntering(sportEventId: string, slot: SportEventTierSlot): Promise<ReadonlySet<string>> {
+    const slots = (await this.deps.tiers.findTierSlots([sportEventId])).get(sportEventId) ?? [];
+    const earlier = new Set<string>();
+    for (const candidate of slots) {
+      if (candidate.id === slot.id) break;
+      earlier.add(candidate.seasonSlotId);
+    }
+    if (earlier.size === 0) return earlier;
+    return knockedOutBefore(await this.deps.matches.findBySportEvent(sportEventId), earlier);
+  }
+
+  /**
+   * The event's field still in for a slot in its one order: its active rows less `knockedOut`, the
+   * teams a later slot's set leaves out (`knockedOutEntering`).
+   */
+  private async orderedActiveField(sportEventId: string, sources: readonly FieldOrderBasis[], knockedOut: ReadonlySet<string>): Promise<FieldOrder | 'NO_FIELD' | 'NO_ORDER'> {
     const active = (await this.deps.field.findBySportEvent(sportEventId))
-      .filter((entry) => entry.status === SportEventParticipantStatus.ACTIVE)
+      .filter((entry) => entry.status === SportEventParticipantStatus.ACTIVE && !knockedOut.has(entry.id))
       // A full tie keeps this order, so the result never depends on how the rows were read.
       .sort((left, right) => left.participantId.localeCompare(right.participantId));
     const nameOf = new Map((active.length === 0 ? [] : await this.deps.participants.findByIds(active.map((entry) => entry.participantId)))

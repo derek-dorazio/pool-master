@@ -1,7 +1,10 @@
-import { FieldOrderBasis, SeasonSlotStatus, SlotKind, Sport, SportEventStatus, SportEventParticipantStatus, TemplateCoverageMode } from '@poolmaster/shared/domain';
+import { FieldOrderBasis, MatchSide, MatchStatus, SeasonSlotStatus, SlotKind, Sport, SportEventStatus, SportEventParticipantStatus, TemplateCoverageMode } from '@poolmaster/shared/domain';
 import { SportEventTierService } from '../../../packages/core-api/src/modules/events/sport-event-tier-service';
 import { IN_MEMORY_PLATFORM_TIER_PROFILE_ID, InMemorySportEvents } from '../../support/in-memory-sport-events';
 import { inMemoryStandardPricing } from '../../support/budget-pricing';
+import { expectDefined } from '../../support/expect-defined';
+import { legacyMatch } from '../../support/match-sides';
+import { roundSlot } from '../../support/round-slots';
 
 // Tier and valuation rules against an in-memory store: defaults, the fill order of
 // auto-assignment, the orphan guard on replacement, the drag-and-drop save's checks,
@@ -32,7 +35,7 @@ function setup(status: SportEventStatus = SportEventStatus.DRAFT) {
     sportEvents: store.sportEventRepo(),
     tiers: store.tierRepo(),
     valuations: store.valuationRepo(),
-    field: store.fieldRepo(),
+    field: store.fieldRepo(), matches: store.matchRepo(),
     participants: store.participantRepo(),
     platformTierProfiles: store.platformTierProfileRepo(),
     platformPricingProfiles: store.platformPricingProfileRepo(),
@@ -581,7 +584,7 @@ describe('SportEventTierService — prices and the contest-side read', () => {
     const findBySportEvent = jest.spyOn(field, 'findBySportEvent');
     const tiers = store.tierRepo();
     const findTiers = jest.spyOn(tiers, 'findBySlot');
-    const service = new SportEventTierService({ sportEvents: store.sportEventRepo(), tiers, valuations: store.valuationRepo(), field, participants: store.participantRepo(), platformTierProfiles: store.platformTierProfileRepo(), platformPricingProfiles: store.platformPricingProfileRepo() });
+    const service = new SportEventTierService({ sportEvents: store.sportEventRepo(), tiers, valuations: store.valuationRepo(), field, matches: store.matchRepo(), participants: store.participantRepo(), platformTierProfiles: store.platformTierProfileRepo(), platformPricingProfiles: store.platformPricingProfileRepo() });
     const heldField = await store.fieldRepo().findBySportEvent(event.id);
 
     const both = await service.getEffectiveTiersAndValuations(event.id, heldField);
@@ -617,7 +620,7 @@ describe('SportEventTierService — prices and the contest-side read', () => {
       jest.spyOn(valuations, 'findBySlots'),
       jest.spyOn(field, 'findBySportEvents'),
     ];
-    const service = new SportEventTierService({ sportEvents: store.sportEventRepo(), tiers, valuations, field, participants: store.participantRepo(), platformTierProfiles: store.platformTierProfileRepo(), platformPricingProfiles: store.platformPricingProfileRepo() });
+    const service = new SportEventTierService({ sportEvents: store.sportEventRepo(), tiers, valuations, field, matches: store.matchRepo(), participants: store.participantRepo(), platformTierProfiles: store.platformTierProfileRepo(), platformPricingProfiles: store.platformPricingProfileRepo() });
 
     const byEvent = await service.getEffectiveTiersForSportEvents([event.id, second.id, untiered.id]);
 
@@ -748,7 +751,7 @@ describe('SportEventTierService — a set on each slot a tiered or budget templa
       sportEvents: store.sportEventRepo(),
       tiers: store.tierRepo(),
       valuations: store.valuationRepo(),
-      field: store.fieldRepo(),
+      field: store.fieldRepo(), matches: store.matchRepo(),
       participants: store.participantRepo(),
       platformTierProfiles: store.platformTierProfileRepo(),
       platformPricingProfiles: store.platformPricingProfileRepo(),
@@ -770,14 +773,28 @@ describe('SportEventTierService — a set on each slot a tiered or budget templa
     expect(new Set(store.tierRows.map((tier) => store.tierSlotsOf(event.id).find((slot) => slot.id === tier.sportEventSlotId)?.seasonSlotId))).toEqual(new Set([roundOf64, roundOf32]));
   });
 
-  it('tiers the round of 32 from the teams still in, leaving the round of 64\'s set as it was', async () => {
+  it('tiers the round of 32 from the teams that lost no decided round of 64 game, with a team on a bye and both teams of an unplayed game still in, leaving the round of 64\'s set as it was', async () => {
     const { store, event, service, roundOf64, roundOf32 } = await knockout();
     await service.autoAssignTiers({ sportEventId: event.id });
-    for (const entry of store.field.filter((row) => ['p-02', 'p-05'].includes(row.participantId))) entry.status = SportEventParticipantStatus.ELIMINATED;
+    const rowOf = (participantId: string) => expectDefined(store.field.find((row) => row.participantId === participantId), participantId).id;
+    const game = (matchNumber: number, home: string, away: string, outcome: { winnerSide: MatchSide } | null) => legacyMatch({
+      id: `r64-${String(matchNumber)}`, sportEventId: event.id, roundNumber: 2, matchNumber, slot: roundSlot(SlotKind.ROUND_OF_64, { seasonSlotId: roundOf64 }),
+      homeSportEventParticipantId: rowOf(home), awaySportEventParticipantId: rowOf(away),
+      ...(outcome === null ? {} : { status: MatchStatus.COMPLETED, winnerSide: outcome.winnerSide }),
+    });
+    // p-02 and p-05 lose; p-03 and p-04 have not played; every other team waits on a bye.
+    store.matchRows.push(
+      game(1, 'p-11', 'p-02', { winnerSide: MatchSide.HOME }),
+      game(2, 'p-05', 'p-08', { winnerSide: MatchSide.AWAY }),
+      game(3, 'p-03', 'p-04', null),
+    );
 
     const later = await service.autoAssignTiers({ sportEventId: event.id, seasonSlotId: roundOf32 });
 
-    expect([placed(later), placed(await service.getEffectiveTiersForSportEvent(event.id, { seasonSlotId: roundOf64 }))]).toEqual([10, 12]);
+    const tiered = later.flatMap((group) => group.participants.map((placement) => placement.participantId)).sort();
+    expect([tiered, placed(await service.getEffectiveTiersForSportEvent(event.id, { seasonSlotId: roundOf64 }))]).toEqual([
+      ['p-01', 'p-03', 'p-04', 'p-06', 'p-07', 'p-08', 'p-09', 'p-10', 'p-11', 'p-12'], 12,
+    ]);
   });
 
   it('keeps a later slot\'s set open once the event is released, until that slot starts', async () => {
