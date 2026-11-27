@@ -18,6 +18,9 @@ import type {
 import type { SlotNamePattern, SportLeagueSeason, SyncSeasonSlot } from '@poolmaster/shared/domain';
 import { SEASON_SLOT_SELECT, toSeasonSlot, type SeasonSlotRow } from './season-slot-select';
 
+/** The match types that place a game by its Season slot's window (#2012, #2154). */
+const WINDOW_MATCH_TYPES: readonly PrismaSlotProviderMatchType[] = [PrismaSlotProviderMatchType.DATE_WINDOW, PrismaSlotProviderMatchType.REST_OF_PHASE];
+
 const SEASON_SELECT = { id: true, sportLeagueId: true, name: true, championshipYear: true, startsAt: true, endsAt: true } as const;
 const SLOT_WITH_EVENT_SELECT = {
   ...SEASON_SLOT_SELECT,
@@ -136,6 +139,7 @@ export class PrismaSportLeagueSeasonRepository implements SportLeagueSeasonRepos
       select: {
         id: true,
         sportLeagueCompetitionSlotId: true,
+        sportLeagueSeasonCompetitionId: true,
         startsAt: true,
         endsAt: true,
         windowStartsAt: true,
@@ -147,7 +151,7 @@ export class PrismaSportLeagueSeasonRepository implements SportLeagueSeasonRepos
           select: {
             key: true,
             providerMappings: {
-              where: { sportLeagueProviderMappingId, matchType: { in: [PrismaSlotProviderMatchType.PROVIDER_CODE, PrismaSlotProviderMatchType.DATE_WINDOW] } },
+              where: { sportLeagueProviderMappingId, matchType: { in: [PrismaSlotProviderMatchType.PROVIDER_CODE, ...WINDOW_MATCH_TYPES] } },
               select: { matchType: true, providerValue: true },
             },
             _count: { select: { templateSlots: { where: { template: { active: true } } } } },
@@ -158,7 +162,7 @@ export class PrismaSportLeagueSeasonRepository implements SportLeagueSeasonRepos
     });
     return rows.map((row) => {
       const mappings = row.definition.providerMappings;
-      const byWindow = mappings.some((mapping) => mapping.matchType === PrismaSlotProviderMatchType.DATE_WINDOW);
+      const byWindow = mappings.some((mapping) => WINDOW_MATCH_TYPES.includes(mapping.matchType));
       return {
         seasonSlotId: row.id,
         slotDefinitionId: row.sportLeagueCompetitionSlotId,
@@ -169,9 +173,11 @@ export class PrismaSportLeagueSeasonRepository implements SportLeagueSeasonRepos
         linkedCode: row.providerLinks.at(0)?.providerValue ?? null,
         coveredByTemplate: row.definition._count.templateSlots > 0,
         sportEventId: row.eventSlot?.sportEventId ?? null,
+        seasonCompetitionId: row.sportLeagueSeasonCompetitionId,
         startsAt: row.startsAt,
         endsAt: row.endsAt,
         placedByWindow: byWindow,
+        restOfPhase: mappings.some((mapping) => mapping.matchType === PrismaSlotProviderMatchType.REST_OF_PHASE),
         // The database check sets the three window columns together.
         window: byWindow && row.windowStartsAt !== null && row.windowEndsAt !== null && row.windowStatus !== null
           ? { startsAt: row.windowStartsAt, endsAt: row.windowEndsAt, status: row.windowStatus }

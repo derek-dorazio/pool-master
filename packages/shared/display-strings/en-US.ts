@@ -94,6 +94,7 @@ export const enUS = {
       NAME_PATTERN: 'Name pattern',
       DATE_WINDOW: 'Date window',
       CALENDAR_WEEK: 'Calendar week',
+      REST_OF_PHASE: 'Rest of the phase',
     },
     MatchFormat: {
       HEAD_TO_HEAD: 'Head to head',
