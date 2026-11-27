@@ -289,12 +289,9 @@
   "providerEventReconcileKey": 0,
   "SCHEDULED_FIELD_SYNC_STATUSES": 0,
   "isEventSyncKind": 0,
-<<<<<<< HEAD
   "SCORING_FAMILY_ADMIN_UI": 0,
   "getScoringFamilyAdminUi": 0,
   "ScoreSyncNotice": 0,
-  "useRowCorrections": 0
-=======
+  "useRowCorrections": 0,
   "lookaheadDays": 0
->>>>>>> 9acbccc7a (10c part B: web schedule by Season state, docs, BALLDONTLIE plan retired)
 }

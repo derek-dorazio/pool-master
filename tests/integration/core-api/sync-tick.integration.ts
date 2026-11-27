@@ -181,6 +181,7 @@ describe('the linked events whose Games are due or in play', () => {
 
     await expect(reader.findLiveEvents({ leagues: [], now: NOW })).resolves.toEqual([]);
     await expect(reader.findNextSlots({ leagues: [], now: NOW })).resolves.toEqual([]);
+    await expect(reader.findSeasonSpans({ leagues: [], now: NOW })).resolves.toEqual([]);
   });
 });
 
@@ -302,7 +303,7 @@ describe('the migration retiring the old event sync jobs', () => {
 });
 
 describe('the migration giving each sync kind an interval per Season state', () => {
-  const MIGRATION = join(__dirname, '../../../packages/core-api/prisma/migrations/20271218029600_sync_intervals_by_season_state/migration.sql');
+  const MIGRATION = join(__dirname, '../../../packages/core-api/prisma/migrations/20271218030000_sync_intervals_by_season_state/migration.sql');
   class Rollback extends Error {}
 
   it("makes a saved schedule's intervals the in-season ones, keeps each switch, runs the events and field syncs daily off season, keeps live scores' interval, and drops the field's look-ahead days", async () => {
