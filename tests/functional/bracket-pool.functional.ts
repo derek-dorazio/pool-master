@@ -47,7 +47,7 @@ import {
   SportEventBracketResponseSchema,
   SportEventRoundMatchupsResponseSchema,
 } from '@poolmaster/shared/dto';
-import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, createTestEvent } from './builders';
+import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, createTestEvent, contestTemplateFor } from './builders';
 import {
   cleanupFunctionalData,
   disconnectFunctionalPrisma,
@@ -247,9 +247,11 @@ describe('SDK Functional: a bracket pool (#721)', () => {
     // --- A bracket contest, opened and entered by three teams ----------------------------------
     const { commissioner, league, bob, cara } = await leagueOfThree('Sixteen');
     const alice = commissioner;
+    const templateId = await contestTemplateFor([eventId], SelectionType.BRACKET);
     const contestBody = (overrides: Record<string, unknown> = {}) => ({
       name: `Bracket Pool ${RUN}`,
       sportEventIds: [eventId],
+      templateId,
       contestFormat: ContestFormat.PREDICTION,
       selectionType: SelectionType.BRACKET,
       configuration: {
@@ -481,6 +483,7 @@ describe('SDK Functional: a bracket pool (#721)', () => {
       body: {
         name: `Playoff Bracket ${RUN}`,
         sportEventIds: [eventId],
+        templateId: await contestTemplateFor([eventId], SelectionType.BRACKET),
         contestFormat: ContestFormat.PREDICTION,
         selectionType: SelectionType.BRACKET,
         configuration: {

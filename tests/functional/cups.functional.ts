@@ -54,7 +54,7 @@ import {
   SquadHistoryResponseSchema,
   SquadYearResponseSchema,
 } from '@poolmaster/shared/dto';
-import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, inCurrentSeason } from './builders';
+import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, inCurrentSeason, placedTemplate } from './builders';
 import { cleanupFunctionalData, disconnectFunctionalPrisma, getFunctionalPrisma } from './setup';
 import { keyedSlotDefinitionId } from '../support/event-edition';
 import { uniqueTestSlotLabel } from '../support/test-slots';
@@ -199,7 +199,7 @@ describe('SDK Functional: sports league cups and the league championship (#841, 
       const contestId = expectDefined((await createContest({
         client: commissioner.client,
         path: { id: league.id },
-        body: { name, sportEventIds: [eventId], contestFormat: ContestFormat.ROSTER, selectionType: SelectionType.TIERED, templateId: tieredTemplate.id },
+        body: { name, sportEventIds: [eventId], contestFormat: ContestFormat.ROSTER, selectionType: SelectionType.TIERED, templateId: await placedTemplate([eventId], tieredTemplate.id) },
       })).data).contest.id;
       await openContest({ client: commissioner.client, path: { id: league.id, contestId } });
       await enterSquads(eventId, contestId);
@@ -316,7 +316,7 @@ describe('SDK Functional: sports league cups and the league championship (#841, 
     const coastContest = expectDefined((await createContest({
       client: commissioner.client,
       path: { id: league.id },
-      body: { name: `Coast Picks ${RUN}`, sportEventIds: [coast], contestFormat: ContestFormat.ROSTER, selectionType: SelectionType.TIERED, templateId: tieredTemplate.id },
+      body: { name: `Coast Picks ${RUN}`, sportEventIds: [coast], contestFormat: ContestFormat.ROSTER, selectionType: SelectionType.TIERED, templateId: await placedTemplate([coast], tieredTemplate.id) },
     })).data).contest.id;
     await openContest({ client: commissioner.client, path: { id: league.id, contestId: coastContest } });
     const doubled = await setContestCupWeight({

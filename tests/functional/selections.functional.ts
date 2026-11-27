@@ -10,7 +10,7 @@ import {
   unselectContestPick,
 } from '@poolmaster/shared/generated/hey-api';
 import { ContestFormat, SelectionType } from '@poolmaster/shared/domain';
-import { attachContestEvent, buildLeagueWithCommissioner, buildRegisteredUser, seedContestFixture } from './builders';
+import { attachContestEvent, buildLeagueWithCommissioner, buildRegisteredUser, seedContestFixture, contestTemplateFor } from './builders';
 import {
   cleanupFunctionalData,
   disconnectFunctionalPrisma,
@@ -907,6 +907,7 @@ describe('SDK Functional: Roster Selection', () => {
       body: {
         name: 'Two Per Tier Contest',
         sportEventIds: [event.sportEventId],
+        templateId: await contestTemplateFor([event.sportEventId], SelectionType.TIERED),
         contestFormat: ContestFormat.ROSTER,
         selectionType: SelectionType.TIERED,
         configuration: { maxEntriesPerSquad: 1, selectionType: SelectionType.TIERED, picksPerTier: 2, countedScores: 4 },

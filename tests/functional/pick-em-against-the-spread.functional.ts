@@ -38,7 +38,7 @@ import {
   PickEmLeaderboardResponseSchema,
   SportEventBracketResponseSchema,
 } from '@poolmaster/shared/dto';
-import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, createTestEvent } from './builders';
+import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, createTestEvent, contestTemplateFor } from './builders';
 import {
   cleanupFunctionalData,
   disconnectFunctionalPrisma,
@@ -197,12 +197,13 @@ describe('SDK Functional: a pick\'em week against the spread (#720)', () => {
     const bob = await buildRegisteredUser({ displayName: 'Spread Bob' });
     const invite = await generateInviteLink({ client: alice.client, path: { id: league.id }, body: { maxUses: 1 } });
     await acceptInvitation({ client: bob.client, body: { inviteCode: expectDefined(invite.data).invitation.inviteCode } });
-    const createAts = () => createContest({
+    const createAts = async () => createContest({
       client: alice.client,
       path: { id: league.id },
       body: {
         name: `Against the Spread ${RUN}`,
         sportEventIds: [eventId],
+        templateId: await contestTemplateFor([eventId], SelectionType.PICK_EM),
         contestFormat: ContestFormat.PREDICTION,
         selectionType: SelectionType.PICK_EM,
         configuration: { selectionType: SelectionType.PICK_EM, mode: PickEmMode.STRAIGHT_UP, againstTheSpread: true, maxEntriesPerSquad: 1 },

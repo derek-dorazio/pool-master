@@ -2928,17 +2928,24 @@ describe('ContestManagementService squares rules (#711)', () => {
 
   function squaresService(
     gameStatus: MatchStatus | null = MatchStatus.SCHEDULED,
-    { roundNumber = 4, squaresFromRound = null }: { roundNumber?: number; squaresFromRound?: number | null } = {},
+    { roundNumber = 4, squaresFromRound = null, gameSlotDefinitionId = EVENT_SLOT_DEFINITION_ID, configTemplates = createContestConfigTemplateRepo() }: {
+      roundNumber?: number;
+      squaresFromRound?: number | null;
+      gameSlotDefinitionId?: string;
+      configTemplates?: ContestConfigTemplateRepository;
+    } = {},
   ) {
     const contestCoreRepo = createContestRepo();
     const contestConfigurationRepo = createContestConfigurationRepo();
     const reader = createSportEventReader({ sport: Sport.FOOTBALL, playsMatches: true, rounds: 4, gameCount: 1, squaresFromRound });
     reader.findGame.mockImplementation(async (sportEventId: string, sportEventRoundMatchId: string) =>
-      sportEventId === EVENT_ID && sportEventRoundMatchId === GAME_ID && gameStatus !== null ? { status: gameStatus, roundNumber } : null);
+      sportEventId === EVENT_ID && sportEventRoundMatchId === GAME_ID && gameStatus !== null
+        ? { status: gameStatus, roundNumber, seasonSlotId: `season-slot-${gameSlotDefinitionId}` }
+        : null);
     const service = new ContestManagementService({
       domainEvents: testDomainEvents(),
       contests: contestCoreRepo,
-      configTemplates: createContestConfigTemplateRepo(),
+      configTemplates,
       configurations: contestConfigurationRepo,
       scoringRules: createParticipantScoringRuleRepo(),
       tiers: createSportEventTierServiceStub(),
@@ -2964,6 +2971,18 @@ describe('ContestManagementService squares rules (#711)', () => {
       configJson: { selectionType: SelectionType.SQUARES, maxSquaresPerEntry: 10 },
       maxEntriesPerSquad: 1,
     }));
+  });
+
+  it('covers the slot its game is played in when its event holds several slots its one-slot template lists, so no starting slot need be chosen', async () => {
+    const configTemplates = createContestConfigTemplateRepo();
+    const finalSlot = { ...EVENT_SLOT, id: 'definition-final', key: 'FINAL', slotKind: SlotKind.FINAL };
+    const listed = await configTemplates.findById(templateIdFor(SelectionType.SQUARES));
+    configTemplates.findById = jest.fn().mockResolvedValue({ ...expectDefined(listed), coverageMode: TemplateCoverageMode.ONE_SLOT, slots: [EVENT_SLOT, finalSlot] });
+    const { contestCoreRepo, service } = squaresService(MatchStatus.SCHEDULED, { gameSlotDefinitionId: finalSlot.id, configTemplates });
+
+    await service.createContest({ leagueId: 'league-1' }, squaresRequest());
+
+    expect(contestCoreRepo.create).toHaveBeenCalledWith(expect.objectContaining({ seasonSlotIds: ['season-slot-definition-final'] }), PLATINUM_SEASON_LIMIT);
   });
 
   it.each([
@@ -3243,7 +3262,7 @@ describe('createContestSportEventReader field, game and price reads', () => {
     });
 
     await expect(reader.countGamesWithoutSpread(EVENT)).resolves.toBe(1);
-    await expect(reader.findGame(EVENT, 'g2')).resolves.toEqual({ status: MatchStatus.SCHEDULED, roundNumber: 2 });
+    await expect(reader.findGame(EVENT, 'g2')).resolves.toEqual({ status: MatchStatus.SCHEDULED, roundNumber: 2, seasonSlotId: expect.any(String) });
     await expect(reader.findGame(EVENT, 'missing')).resolves.toBeNull();
   });
 });

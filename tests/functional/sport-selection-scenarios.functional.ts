@@ -40,7 +40,7 @@ import {
   type SportDataFile,
 } from '../../packages/core-api/scripts/seed-golf/sport-data-file';
 import { EVERY_GAME_PLAYED, inSeason, oneEventOf } from '../support/sport-test-seed';
-import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, type RegisteredUserContext } from './builders';
+import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, type RegisteredUserContext, placeEventsForTemplate } from './builders';
 import { cleanupFunctionalData, disconnectFunctionalPrisma, getFunctionalPrisma } from './setup';
 import { expectDefined } from '../support/expect-defined';
 import { expectMatchesSchema } from '../support/expect-matches-schema';
@@ -268,6 +268,7 @@ describe('SDK Functional: one journey per sport and selection type', () => {
         .filter((template) => template.selectionType === selectionType)
         .sort((left, right) => left.sortOrder - right.sortOrder);
       const preset = expectDefined(templates.at(0), `a ${selectionType} preset for ${sportLeague.name}`);
+      await placeEventsForTemplate([event.id], preset.id);
 
       const contest = await createContest({
         client: commissioner.client,

@@ -43,7 +43,7 @@ import {
   SportEventBracketResponseSchema,
   type PickEmLeaderboardResponse,
 } from '@poolmaster/shared/dto';
-import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, createTestEvent } from './builders';
+import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, createTestEvent, contestTemplateFor } from './builders';
 import {
   cleanupFunctionalData,
   disconnectFunctionalPrisma,
@@ -237,6 +237,7 @@ describe('SDK Functional: a pick\'em season (#717)', () => {
       body: {
         name: `Season Confidence ${RUN}`,
         sportEventIds: [week1.eventId, week2.eventId],
+        templateId: await contestTemplateFor([week1.eventId, week2.eventId], SelectionType.PICK_EM),
         contestFormat: ContestFormat.PREDICTION,
         selectionType: SelectionType.PICK_EM,
         configuration: {

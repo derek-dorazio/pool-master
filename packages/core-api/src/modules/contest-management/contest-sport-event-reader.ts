@@ -101,7 +101,7 @@ export function createContestSportEventReader({ sportEvents, field, tiers, valua
       coveredRoundNumbers(coverage, await matches.findBySportEvent(sportEventId)).length,
     findGame: async (sportEventId, sportEventRoundMatchId) => {
       const game = (await matches.findBySportEvent(sportEventId)).find((match) => match.id === sportEventRoundMatchId);
-      return game === undefined ? null : { status: game.status, roundNumber: game.roundNumber };
+      return game === undefined ? null : { status: game.status, roundNumber: game.roundNumber, seasonSlotId: game.slot.seasonSlotId };
     },
     findCutoffTiming: async (sportEvent, cutoff) => cutoff.kind === ContestCutoffKind.EVENT_START
       ? sportEvent

@@ -157,7 +157,7 @@ export interface ContestCreateSportEventReader {
   /** How many of the event's rounds, by its games' slots, a contest of this coverage covers (#2014). */
   countCoveredRounds(sportEventId: string, coverage: ContestRoundCoverage): Promise<number>;
   /** The status and round of one of the event's games, or null when the game is not the event's (#711). */
-  findGame(sportEventId: string, sportEventRoundMatchId: string): Promise<{ status: MatchStatus; roundNumber: number } | null>;
+  findGame(sportEventId: string, sportEventRoundMatchId: string): Promise<{ status: MatchStatus; roundNumber: number; seasonSlotId: string } | null>;
   /** When a contest with this cutoff closes on the event (#721): at its start, or at its squares game's kickoff. */
   findCutoffTiming(sportEvent: ContestCreateSportEventState, cutoff: ContestCutoff): Promise<EventTiming>;
 }
@@ -292,7 +292,7 @@ export class ContestManagementService {
       input.sportEventIds,
       contestCutoff(resolvedConfiguration.configuration, input.sportEventRoundMatchId),
     );
-    await this.assertSquaresGame(input, sportEvents);
+    const squaresGameSlotId = await this.assertSquaresGame(input, sportEvents);
     const sportEvent = this.assertOneSportLeague(sportEvents);
     // Every template is one sport league's (#1825), offered only on that league's events.
     const { template } = resolvedConfiguration;
@@ -339,7 +339,8 @@ export class ContestManagementService {
     // keep the season's year, because they are in the same Season.
     this.assertOneSeason(sportEvents, sportEvent.sportLeagueSeasonId);
     const { sportLeagueSeasonId, championshipYear: seasonYear } = sportEvent;
-    const seasonSlotIds = await this.resolveCoverage(template, sportLeagueSeasonId, sportEvents.map((event) => event.id), input.startingSlotId);
+    // A squares contest covers its game's slot (#2014), so its game chooses the slot.
+    const seasonSlotIds = await this.resolveCoverage(template, sportLeagueSeasonId, sportEvents.map((event) => event.id), input.startingSlotId ?? squaresGameSlotId);
     const limits = await this.seasonLimits(context.leagueId, sportEvent.sportLeagueId);
     const created = await this.contestRepo.create({
       leagueId: context.leagueId,
@@ -859,14 +860,15 @@ export class ContestManagementService {
    * League two-legged tie); whether it has kicked off is the contest's cutoff, checked with the
    * event. Only a squares contest names a game.
    */
-  private async assertSquaresGame(input: CreateContestRequest, sportEvents: readonly ContestCreateSportEventState[]): Promise<void> {
+  /** Refuses a squares game the contest cannot be played on; answers the Season slot of its game, or undefined for a contest that is not squares. */
+  private async assertSquaresGame(input: CreateContestRequest, sportEvents: readonly ContestCreateSportEventState[]): Promise<string | undefined> {
     const gameId = input.sportEventRoundMatchId;
     if (input.selectionType !== SelectionType.SQUARES) {
       if (gameId !== undefined) {
         this.logger.warn({ selectionType: input.selectionType, sportEventRoundMatchId: gameId }, 'contest management create refused a game for a contest that is not squares');
         throw new ContestManagementError('Only a squares contest is played on one game.', CONTEST_SQUARES_GAME_INVALID);
       }
-      return;
+      return undefined;
     }
     if (gameId === undefined) {
       this.logger.warn({ sportEventIds: input.sportEventIds }, 'contest management create refused a squares contest without its game');
@@ -891,6 +893,7 @@ export class ContestManagementService {
         CONTEST_SQUARES_GAME_INVALID,
       );
     }
+    return game.seasonSlotId;
   }
 
   /** The sports leagues the league's contests use in one season (#947), for Create contest's counter. */

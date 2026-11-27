@@ -1,3 +1,4 @@
+import { fixtureTourId } from '../support/event-edition';
 import {
   acceptInvitation,
   addEventParticipants,
@@ -205,10 +206,11 @@ describe('SDK Functional: plan caps (#947)', () => {
       client: commissioner.client,
       path: { id: league.id },
     })).data));
-    // Two draft entries, never submitted, count against the cap the same as submitted ones.
+    // Two draft entries, never submitted, count against the cap the same as submitted ones. The
+    // contests, on no event yet, sit in a Season of the fixture tour (#2014), so it is used.
     expect(usage).toEqual({
       seasonYear: new Date().getUTCFullYear(),
-      sportLeagueIds: [],
+      sportLeagueIds: [await fixtureTourId(getFunctionalPrisma())],
       openContests: [{ contestId, name: `Usage Picks ${RUN}`, entryCount: 2 }],
     });
 

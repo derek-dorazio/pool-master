@@ -18,7 +18,7 @@ import { ContestEntryStatus, ContestFormat, ContestStatus, PredictedResult, Sele
 import { SportEventBracketResponseSchema, SurvivorLeaderboardResponseSchema } from '@poolmaster/shared/dto';
 import { LoadMode } from '../../packages/core-api/scripts/seed-golf/load-report';
 import { loadSportData } from '../../packages/core-api/scripts/seed-golf/seed-golf';
-import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin } from './builders';
+import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, contestTemplateFor } from './builders';
 import { cleanupFunctionalData, disconnectFunctionalPrisma, expectFunctionalError, getFunctionalPrisma } from './setup';
 import { expectDefined } from '../support/expect-defined';
 import { expectMatchesSchema } from '../support/expect-matches-schema';
@@ -113,6 +113,7 @@ describe('SDK Functional: a playoff survivor pool on the NFL playoffs (#785)', (
       body: {
         name: `Playoff Survivor ${RUN}`,
         sportEventIds: [eventId],
+        templateId: await contestTemplateFor([eventId], SelectionType.SURVIVOR),
         contestFormat: ContestFormat.PREDICTION,
         selectionType: SelectionType.SURVIVOR,
         configuration: { selectionType: SelectionType.SURVIVOR, maxEntriesPerSquad: 1 },
