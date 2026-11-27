@@ -17,6 +17,7 @@ import {
 import { expectDefined } from '../../support/expect-defined';
 import { cleanupTestData, createTestUser, getPrisma, setupIntegrationTests, teardownIntegrationTests } from '../helpers';
 import { DAY, seedFootballWeek, seedLeagueWithTeams } from '../list-route-seeds';
+import { contestOnEvents } from '../../support/contest-rows';
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
@@ -31,8 +32,7 @@ async function contestOn(leagueId: string, sportEventIds: readonly string[], sta
   return getPrisma().contest.create({
     data: {
       leagueId,
-      seasonYear: 2026,
-      sportEvents: { create: sportEventIds.map((sportEventId, index) => ({ sportEventId, sequence: index + 1 })) },
+      ...(await contestOnEvents(getPrisma(), sportEventIds)),
       name: `Batch ${randomUUID().slice(0, 8)}`,
       status,
       contestFormat: 'PREDICTION',
@@ -54,7 +54,8 @@ describe('notification batch reads (#1255)', () => {
     const all = await contests.findBySportEvents([first.event.id, second.event.id]);
 
     expect(all.map((contest) => contest.id)).toEqual([onFirst.id, season.id, draft.id]);
-    expect(expectDefined(all.find((contest) => contest.id === season.id)).sportEventIds).toEqual([first.event.id, second.event.id]);
+    // The two events start together, so their play order is their slots' (#2014): compare as sets.
+    expect([...expectDefined(all.find((contest) => contest.id === season.id)).sportEventIds].sort()).toEqual([first.event.id, second.event.id].sort());
     await expect(contests.findBySportEvents([])).resolves.toEqual([]);
   });
 

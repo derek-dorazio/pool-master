@@ -85,14 +85,14 @@ function createMockContestConfigurationRepo(
   return fakeContestConfigurationRepo({
     create: mockFn<ContestConfigurationRepository['create']>(async (input) => ({
       ...input,
-      coveredSlotDefinitionIds: null,
+      templateId: 'template-1',
       id: 'new-config-id',
       createdAt: new Date(),
       updatedAt: new Date(),
     })),
     update: mockFn<ContestConfigurationRepository['update']>(async (id, updates) => ({
       id,
-      coveredSlotDefinitionIds: null,
+      templateId: 'template-1',
       contestId: 'c-1',
       selectionType: SharedDomainEnums.SelectionType.TIERED,
       createdAt: new Date(),
@@ -532,20 +532,15 @@ describe('ContestService', () => {
   });
 
   describe('findTierSetSeasonSlots', () => {
-    it('gives a tiered contest\'s events the Season slot of the first slot it covers holding a set, and reads nothing for a pick\'em contest (#2044)', async () => {
+    it('gives a tiered contest\'s events the Season slot of the first slot it covers holding a set, read from the contest\'s covered slots, and reads nothing for a pick\'em contest (#2044)', async () => {
       const tierSetSlots = jest.fn().mockResolvedValue(new Map([['event-1', { seasonSlotId: 'season-slot-r32' }]]));
-      const findByContest = jest.fn().mockResolvedValue({ contestId: 'c-1', coveredSlotDefinitionIds: ['def-r32'] });
-      const service = buildService({
-        tiers: { tierSetSlots },
-        configurations: createMockContestConfigurationRepo({ findByContest }),
-      });
+      const service = buildService({ tiers: { tierSetSlots } });
 
-      const tiered = await service.findTierSetSeasonSlots(buildContest({ id: 'c-1', selectionType: SharedDomainEnums.SelectionType.TIERED, sportEventIds: ['event-1'] }));
+      const tiered = await service.findTierSetSeasonSlots(buildContest({ id: 'c-1', selectionType: SharedDomainEnums.SelectionType.TIERED, sportEventIds: ['event-1'], coveredSlotDefinitionIds: ['def-r32'] }));
       const pickEm = await service.findTierSetSeasonSlots(buildContest({ id: 'c-2', selectionType: SharedDomainEnums.SelectionType.PICK_EM, sportEventIds: ['event-1'] }));
 
       expect([tiered, pickEm]).toEqual([new Map([['event-1', 'season-slot-r32']]), new Map()]);
       expect(tierSetSlots.mock.calls).toEqual([[['event-1'], { coveredSlotDefinitionIds: ['def-r32'] }]]);
-      expect(findByContest.mock.calls).toEqual([['c-1']]);
     });
   });
 
@@ -2186,7 +2181,7 @@ describe('ContestService.getLeaderboard — refusals and the settled read', () =
       });
     }
 
-    it('shows the latest live event: a settled event from its frozen standings, nothing from a cancelled one, an entry that skipped the live event ranked at its missed lineup, until the next event starts', async () => {
+    it('shows the latest live event: a settled event from its frozen standings, nothing from a cancelled one, and an entry that skipped the live event by its settled standing alone, until the next event starts', async () => {
       const snapshots = new InMemoryLeaderboardSnapshots<StoredLeaderboard>();
       const service = multiEventService({
         events: [SETTLED, CANCELLED, LIVE, NEXT, LATER],
@@ -2203,7 +2198,7 @@ describe('ContestService.getLeaderboard — refusals and the settled read', () =
       expect(first).toMatchObject({ squadId: 'squad-1', squadName: 'Team 1', totalScore: -11 });
       expect(first.events.map((result) => result.sportEventId)).toEqual(['event-1', 'event-3']);
       const skipped = expectDefined(board.entries.find((row) => row.entryId === 'entry-2'));
-      expect(skipped.events.map((result) => result.sportEventId)).toEqual(['event-1', 'event-3']);
+      expect(skipped.events.map((result) => result.sportEventId)).toEqual(['event-1']);
       expect([...snapshots.rows.values()].map((row) => row.validUntil)).toEqual([NEXT.startDate]);
     });
 

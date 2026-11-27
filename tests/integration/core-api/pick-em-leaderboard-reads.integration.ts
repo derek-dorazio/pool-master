@@ -41,7 +41,7 @@ import {
 import { recordStatements, statementsOn, StatementVerb } from '../statement-log';
 import { createRoundRows, createSportEventRow } from '../../support/sport-event-rows';
 import { integrationPlanEntitlements } from '../plan-entitlements';
-import { createContestRow } from '../../support/contest-rows';
+import { contestTemplateId, createContestRow } from '../../support/contest-rows';
 import { sportLeagueRowDefaults } from '../../support/league-profiles';
 import { sportRowKeys } from '../../support/sport-rows';
 import { fixtureSeasonId } from '../../support/event-edition';
@@ -138,9 +138,8 @@ async function createPickEmContest(sportEventIds: string[]) {
     data: { leagueId: league.id, userId: owner.user.id, role: 'COMMISSIONER', status: 'ACTIVE', joinedAt: new Date() },
   });
   const squad = await prisma.squad.create({ data: { leagueId: league.id, createdBy: owner.user.id, name: `Pickers ${suffix}` } });
-  const contest = await createContestRow(new PrismaContestRepository(getAppPrisma()), {
+  const contest = await createContestRow(getPrisma(), new PrismaContestRepository(getAppPrisma()), {
     leagueId: league.id,
-    seasonYear: 2026,
     sportEventIds,
     name: `Season ${suffix}`,
     status: ContestStatus.ACTIVE,
@@ -149,6 +148,7 @@ async function createPickEmContest(sportEventIds: string[]) {
   });
   await new PrismaContestConfigurationRepository(getAppPrisma()).create({
     contestId: contest.id,
+    templateId: await contestTemplateId(getPrisma(), contest.id),
     selectionType: SelectionType.PICK_EM,
     configJson: { selectionType: SelectionType.PICK_EM, mode: PickEmMode.STRAIGHT_UP, againstTheSpread: false },
   });
@@ -343,9 +343,10 @@ describe('Stored pick\'em leaderboards (#1435)', () => {
       expect(statementsOn(statements, StatementVerb.SELECT, table)).toEqual([]);
     }
     expect(statementsOn(statements, StatementVerb.SELECT, 'contest_leaderboard_snapshots')).toHaveLength(1);
-    // The contest (9: its sport is read through its events' Season and league since #2042), the reader's squad membership (1; the task keeps the league membership,
-    // #1438), and the snapshot (1): pinned however many weeks, games, entries and picks the season has.
-    expect(statements).toHaveLength(11);
+    // The contest (10: its Season, league and sport, and its covered slots with each one's Season
+    // slot and event slot since #2014), the reader's squad membership (1; the task keeps the league
+    // membership, #1438), and the snapshot (1): pinned however many weeks, games, entries and picks the season has.
+    expect(statements).toHaveLength(12);
   });
 
   it('stores the board until the next game kicks off, whose picks it would then reveal', async () => {

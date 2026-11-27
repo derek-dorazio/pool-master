@@ -146,15 +146,3 @@ export function scoreGolferForContest(
   );
   return { score: unplayedRoundNumbers.length > 0 ? penalty : null, unplayedRoundNumbers };
 }
-
-/**
- * A lineup that played no round (#714): each of its `pickCount` counting picks scores the
- * unplayed score for every scheduled round, as a golfer who never teed off does once the event is
- * complete. Null while the event has no scheduled rounds.
- */
-export function scoreUnplayedLineup(context: UnplayedRoundContext, pickCount: number): number | null {
-  if (context.scheduledRoundNumbers.length === 0) {
-    return null;
-  }
-  return context.scheduledRoundNumbers.length * context.unplayedRoundToPar * pickCount;
-}

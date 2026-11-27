@@ -27,6 +27,7 @@ import { participantLeagueId } from '../../support/participant-league';
 import { testDomainEvents } from '../../support/domain-events';
 import { sportRowKeys } from '../../support/sport-rows';
 import { oneEventSlotId } from '../../support/test-slots';
+import { contestOnEvents, contestTemplateId } from '../../support/contest-rows';
 
 // The roster contest leaderboard's reads against real Postgres (#1162): however many events the
 // contest has, its entries come from one query and its picks from one more, and only the picks
@@ -114,8 +115,7 @@ async function fourMajors(status: ContestStatus, lastSettled: boolean) {
   const contest = await prisma.contest.create({
     data: {
       leagueId: league.id,
-      seasonYear: 2026,
-      sportEvents: { create: majors.map(({ event }, index) => ({ sportEventId: event.id, sequence: index + 1 })) },
+      ...(await contestOnEvents(prisma, majors.map(({ event }) => event.id))),
       name: `Majors ${suffix}`,
       status,
       contestFormat: 'ROSTER',
@@ -125,6 +125,7 @@ async function fourMajors(status: ContestStatus, lastSettled: boolean) {
   await prisma.contestConfiguration.create({
     data: {
       contestId: contest.id,
+      templateId: await contestTemplateId(prisma, contest.id),
       selectionType: 'TIERED',
       configJson: { selectionType: 'TIERED', picksPerTier: 1, countedScores: 2 },
       participantScoringRules: { create: { participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', sortOrder: 1, config: { unplayedRoundToPar: 8 } } },
@@ -202,8 +203,7 @@ async function golfContest(events: ReadonlyArray<{ event: { id: string } }>) {
   const contest = await prisma.contest.create({
     data: {
       leagueId: league.id,
-      seasonYear: 2026,
-      sportEvents: { create: events.map(({ event }, index) => ({ sportEventId: event.id, sequence: index + 1 })) },
+      ...(await contestOnEvents(prisma, events.map(({ event }) => event.id))),
       name: `Season ${suffix}`,
       status: ContestStatus.ACTIVE,
       contestFormat: 'ROSTER',
@@ -213,6 +213,7 @@ async function golfContest(events: ReadonlyArray<{ event: { id: string } }>) {
   await prisma.contestConfiguration.create({
     data: {
       contestId: contest.id,
+      templateId: await contestTemplateId(prisma, contest.id),
       selectionType: 'TIERED',
       configJson: { selectionType: 'TIERED', picksPerTier: 1, countedScores: 2 },
       participantScoringRules: { create: { participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', sortOrder: 1, config: { unplayedRoundToPar: 8 } } },
@@ -390,14 +391,14 @@ describe('ContestService.getLeaderboard reads (#1162)', () => {
     expect(leaderboard.sportEventId).toBe(live.event.id);
     expect(leaderboard.entries.map((entry) => [entry.entryId, entry.totalScore, entry.events.map((event) => event.sportEventId)])).toEqual([
       [both.id, -8, [live.event.id]],
-      // It skipped the live major, so it ranks there at its missed lineup's score, as settling it will.
-      [onlyCancelled.id, 32, [live.event.id]],
+      // It skipped the live major, so it has no score there: a missed lineup scores nothing.
+      [onlyCancelled.id, null, []],
     ]);
   });
 });
 
 describe('Roster settlement freezes the last live board (#1435)', () => {
-  it('freezes the same entries, totals and places, a shared T1 and a missed lineup included, that the live board showed just before the event ended, and nothing for a cancelled event', async () => {
+  it('freezes the same entries, totals and places, a shared T1 included, that the live board showed just before the event ended, and nothing for a cancelled event', async () => {
     const cancelled = await createEvent('Masters', 200, SportEventStatus.CANCELLED);
     // Golfers 1 to 4 finish the live major at -5, -3, -2 and level par; two count per entry.
     const live = await createEvent('PGA', 1, SportEventStatus.IN_PROGRESS, [-5, -3, -2, 0]);
@@ -407,8 +408,6 @@ describe('Roster settlement freezes the last live board (#1435)', () => {
     // -5 + 0 and -3 - 2 are level at -5, so the two share first.
     const first = await addEntry('First Pair', [cancelledPicks, { eventId: live.event.id, fieldRowIds: [golfer(live, 0), golfer(live, 3)] }]);
     const second = await addEntry('Second Pair', [cancelledPicks, { eventId: live.event.id, fieldRowIds: [golfer(live, 1), golfer(live, 2)] }]);
-    // It skipped the live major, so both paths rank it there at its missed lineup's score (#714).
-    const skipped = await addEntry('Skipped Live', [cancelledPicks]);
 
     const { board } = await serviceOn(getAppPrisma()).getLeaderboard(contest.id, viewerId, live.event.id);
     const liveTotals = board.entries.map((entry) => [entry.entryId, entry.totalScore, entry.displayPosition]);
@@ -416,7 +415,7 @@ describe('Roster settlement freezes the last live board (#1435)', () => {
       const result = expectDefined(entry.events.find((event) => event.sportEventId === live.event.id));
       return [entry.entryId, result.totalScore, result.position];
     });
-    expect(liveTotals.map(([entryId, , place]) => [entryId, place])).toEqual([[first.id, 'T1'], [second.id, 'T1'], [skipped.id, '3']]);
+    expect(liveTotals.map(([entryId, , place]) => [entryId, place])).toEqual([[first.id, 'T1'], [second.id, 'T1']]);
 
     const prisma = getPrisma();
     await prisma.sportEvent.update({ where: { id: live.event.id }, data: { status: SportEventStatus.COMPLETED } });
@@ -468,10 +467,10 @@ describe('Contest leaderboard snapshots (#1435)', () => {
     for (const table of ['contest_entries', 'contest_entry_picks', 'sport_event_participants', 'contest_configurations']) {
       expect(statementsOn(statements, StatementVerb.SELECT, table)).toEqual([]);
     }
-    // The contest (9: its sport is read through its events' Season and league since #2042), the reader's squad membership (1; the league membership is kept by the
+    // The contest (10: its sport through its Season and league since #2042, its covered slots since #2014), the reader's squad membership (1; the league membership is kept by the
     // task since the first read, #1438), and the snapshot (1): pinned, however many entries,
     // picks and golfers.
-    expect(statements).toHaveLength(11);
+    expect(statements).toHaveLength(12);
   });
 
   it('rebuilds a stored board from the new scores after a score write, moving its version up, and builds none for a contest no one has read', async () => {

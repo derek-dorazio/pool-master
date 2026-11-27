@@ -6,6 +6,7 @@
  */
 import { Prisma, PrismaSlotProviderMatchType, PrismaSlotWindowStatus, type PrismaClient } from '@prisma/client';
 import type {
+  CoverableSeasonSlotRow,
   NameMatchedSlotsRecord,
   SeasonSlotWithEvent,
   SportLeagueCurrentSeasonFacts,
@@ -86,6 +87,21 @@ export class PrismaSportLeagueSeasonRepository implements SportLeagueSeasonRepos
   async findSlot(seasonSlotId: string): Promise<SeasonSlotWithEvent | null> {
     const row = await this.prisma.sportLeagueSeasonCompetitionSlot.findUnique({ where: { id: seasonSlotId }, select: SLOT_WITH_EVENT_SELECT });
     return row === null ? null : toSlotWithEvent(row);
+  }
+
+  async findCoverableSlots(sportLeagueSeasonId: string, slotDefinitionIds: readonly string[]): Promise<CoverableSeasonSlotRow[]> {
+    if (slotDefinitionIds.length === 0) return [];
+    const rows = await this.prisma.sportLeagueSeasonCompetitionSlot.findMany({
+      where: { sportLeagueSeasonId, sportLeagueCompetitionSlotId: { in: [...slotDefinitionIds] } },
+      select: { id: true, sportLeagueCompetitionSlotId: true, sportLeagueSeasonCompetitionId: true, isTestData: true, eventSlot: { select: { sportEventId: true } } },
+    });
+    return rows.map((row) => ({
+      id: row.id,
+      slotDefinitionId: row.sportLeagueCompetitionSlotId,
+      seasonCompetitionId: row.sportLeagueSeasonCompetitionId,
+      sportEventId: row.eventSlot?.sportEventId ?? null,
+      isTestData: row.isTestData,
+    }));
   }
 
   async findSlotsByIds(seasonSlotIds: readonly string[]): Promise<SeasonSlotWithEvent[]> {

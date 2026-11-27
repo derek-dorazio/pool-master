@@ -18,7 +18,8 @@ import {
   updateSettingsGroup,
 } from '@poolmaster/shared/generated/hey-api';
 import { ContestFormat, LeaguePlan, SelectionType, Sport } from '@poolmaster/shared/domain';
-import { LeaguePlanUsageResponseSchema, SportLeaguesUsedResponseSchema } from '@poolmaster/shared/dto';
+import { LeagueMembershipResponseSchema, LeaguePlanUsageResponseSchema, SportLeaguesUsedResponseSchema } from '@poolmaster/shared/dto';
+import { expectMatchesSchema } from '../support/expect-matches-schema';
 import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin, seedContestFixture, createTestEvent } from './builders';
 import { cleanupFunctionalData, disconnectFunctionalPrisma, getFunctionalPrisma } from './setup';
 import { expectDefined } from '../support/expect-defined';
@@ -206,17 +207,19 @@ describe('SDK Functional: plan caps (#947)', () => {
       client: commissioner.client,
       path: { id: league.id },
     })).data));
-    // Two draft entries, never submitted, count against the cap the same as submitted ones.
+    // Two draft entries, never submitted, count against the cap the same as submitted ones. The
+    // contests, on no event yet, sit in a Season (#2014), so its league is used.
     expect(usage).toEqual({
       seasonYear: new Date().getUTCFullYear(),
-      sportLeagueIds: [],
+      sportLeagueIds: [(await getFunctionalPrisma().contest.findUniqueOrThrow({ where: { id: contestId }, select: { sportLeagueSeason: { select: { sportLeagueId: true } } } })).sportLeagueSeason.sportLeagueId],
       openContests: [{ contestId, name: `Usage Picks ${RUN}`, entryCount: 2 }],
     });
 
     // A member of the league, not a commissioner, never sees the plan or what it uses.
     const member = await buildRegisteredUser({ displayName: 'Usage Member' });
     const invite = expectDefined((await generateInviteLink({ client: commissioner.client, path: { id: league.id }, body: { maxUses: 1 } })).data);
-    expect((await acceptInvitation({ client: member.client, body: { inviteCode: invite.invitation.inviteCode } })).data?.membership.userId).toBe(member.userId);
+    const joined = await acceptInvitation({ client: member.client, body: { inviteCode: invite.invitation.inviteCode } });
+    expect(expectMatchesSchema(LeagueMembershipResponseSchema, joined.data).membership.userId).toBe(member.userId);
     expect((await getLeaguePlanUsage({ client: member.client, path: { id: league.id } })).response?.status).toBe(403);
   });
 });

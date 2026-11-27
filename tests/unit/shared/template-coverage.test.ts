@@ -18,6 +18,9 @@ import {
   coveredRoundValue,
   coversMatchRound,
   isWeekEvent,
+  resolveCoveredSeasonSlots,
+  ContestCoverageProblem,
+  type CoverableSeasonSlot,
   templateCoverageProblem,
   type ContestTemplateSlot,
 } from '@poolmaster/shared/domain';
@@ -167,18 +170,15 @@ describe('a contest\'s covered rounds (#2014)', () => {
     expect(coversMatchRound(AFTER_PLAY_IN, match(1, 'def-play-in'))).toBe(false);
   });
 
-  it('covers every round of a contest made with no template', () => {
-    expect(coveredRoundNumbers({ slotDefinitionIds: null }, EVENT)).toEqual([1, 2, 3]);
-  });
-
   it('numbers only the knockout rounds of a soccer tournament a sweepstake covers whole, leaving out its group matchdays and the third-place play-off (#2241)', () => {
     const tournament = [
       match(1, 'def-matchday-1', SlotKind.WEEK), match(2, 'def-matchday-2', SlotKind.WEEK), match(3, 'def-matchday-3', SlotKind.WEEK),
       match(4, 'def-semifinal', SlotKind.SEMIFINAL), match(5, 'def-third-place', SlotKind.THIRD_PLACE), match(6, 'def-final', SlotKind.FINAL),
     ];
+    const wholeTournament = { slotDefinitionIds: tournament.map((each) => each.slot.slotDefinitionId) };
 
-    expect(coveredRoundNumbers({ slotDefinitionIds: null }, tournament)).toEqual([4, 6]);
-    expect(coveredRoundValue([1, 2], coveredRoundNumbers({ slotDefinitionIds: null }, tournament), 6)).toBe(2);
+    expect(coveredRoundNumbers(wholeTournament, tournament)).toEqual([4, 6]);
+    expect(coveredRoundValue([1, 2], coveredRoundNumbers(wholeTournament, tournament), 6)).toBe(2);
   });
 
   it('plays knockout rounds in every slot kind but a week (a group matchday) and the third-place play-off, a tennis Slam\'s TOURNAMENT slot included (#2241)', () => {
@@ -190,8 +190,110 @@ describe('a contest\'s covered rounds (#2014)', () => {
     expect(coveredRoundValue([1], [2, 3], 3)).toBeUndefined();
   });
 
-  it('reads a configuration\'s template slots as its coverage, and no configuration as every round', () => {
+  it('reads a contest\'s covered slots\' definitions as its coverage', () => {
     expect(contestRoundCoverage({ coveredSlotDefinitionIds: ['def-final'] })).toEqual({ slotDefinitionIds: ['def-final'] });
-    expect(contestRoundCoverage(null)).toEqual({ slotDefinitionIds: null });
+  });
+});
+
+describe('resolveCoveredSeasonSlots: the Season slots a new contest covers (#2014)', () => {
+  /** A Season slot of the 2026 Season: its definition, competition and place, and the event covering it. */
+  function seasonSlot(id: string, overrides: Partial<CoverableSeasonSlot> = {}): CoverableSeasonSlot {
+    return {
+      id,
+      slotDefinitionId: `definition-${id}`,
+      seasonCompetitionId: 'season-postseason',
+      sportEventId: 'playoffs',
+      isTestData: false,
+      phase: LeaguePhase.POSTSEASON,
+      competitionOrderIndex: 1,
+      slotKind: SlotKind.QUARTERFINAL,
+      weekNumber: null,
+      key: id,
+      ...overrides,
+    };
+  }
+  const week = (n: number, overrides: Partial<CoverableSeasonSlot> = {}) => seasonSlot(`week-${String(n)}`, {
+    seasonCompetitionId: 'season-regular', sportEventId: `week-event-${String(n)}`, phase: LeaguePhase.REGULAR,
+    competitionOrderIndex: 0, slotKind: SlotKind.WEEK, weekNumber: n, ...overrides,
+  });
+  const playIn = seasonSlot('play-in', { slotKind: SlotKind.PLAY_IN });
+  const quarters = seasonSlot('quarters');
+  const semis = seasonSlot('semis', { slotKind: SlotKind.SEMIFINAL });
+  const final = seasonSlot('final', { slotKind: SlotKind.FINAL });
+  const playoffs = [final, playIn, semis, quarters];
+  const listing = (...slots: CoverableSeasonSlot[]) => slots.map((each) => each.slotDefinitionId);
+
+  it('covers every listed slot of the chosen event under ALL_LISTED, in play order, leaving the play-in out', () => {
+    expect(resolveCoveredSeasonSlots(
+      { coverageMode: TemplateCoverageMode.ALL_LISTED, slotDefinitionIds: listing(quarters, semis, final) },
+      { sportEventIds: ['playoffs'], seasonSlots: playoffs },
+    )).toEqual({ seasonSlotIds: ['quarters', 'semis', 'final'] });
+  });
+
+  it('covers the one listed slot of the chosen event under ONE_SLOT, or the chosen one when the event has several', () => {
+    const oneSlot = { coverageMode: TemplateCoverageMode.ONE_SLOT, slotDefinitionIds: listing(final) };
+    expect(resolveCoveredSeasonSlots(oneSlot, { sportEventIds: ['playoffs'], seasonSlots: playoffs })).toEqual({ seasonSlotIds: ['final'] });
+
+    const eachRound = { coverageMode: TemplateCoverageMode.ONE_SLOT, slotDefinitionIds: listing(quarters, semis, final) };
+    expect(resolveCoveredSeasonSlots(eachRound, { sportEventIds: ['playoffs'], seasonSlots: playoffs, startingSlotId: 'semis' })).toEqual({ seasonSlotIds: ['semis'] });
+  });
+
+  it('refuses ONE_SLOT on an event with several listed slots and none chosen, with SLOT_NOT_CHOSEN', () => {
+    expect(resolveCoveredSeasonSlots(
+      { coverageMode: TemplateCoverageMode.ONE_SLOT, slotDefinitionIds: listing(quarters, semis) },
+      { sportEventIds: ['playoffs'], seasonSlots: playoffs },
+    )).toEqual({ problem: ContestCoverageProblem.SLOT_NOT_CHOSEN });
+  });
+
+  it('refuses an event with none of the listed slots with NO_LISTED_SLOT, and a starting slot the template does not list or the event does not hold with SLOT_NOT_COVERABLE', () => {
+    const allListed = { coverageMode: TemplateCoverageMode.ALL_LISTED, slotDefinitionIds: listing(semis, final) };
+    expect(resolveCoveredSeasonSlots(allListed, { sportEventIds: ['week-event-1'], seasonSlots: [...playoffs, week(1)] })).toEqual({ problem: ContestCoverageProblem.NO_LISTED_SLOT });
+
+    const oneSlot = { coverageMode: TemplateCoverageMode.ONE_SLOT, slotDefinitionIds: listing(semis, final) };
+    expect(resolveCoveredSeasonSlots(oneSlot, { sportEventIds: ['playoffs'], seasonSlots: playoffs, startingSlotId: 'play-in' })).toEqual({ problem: ContestCoverageProblem.SLOT_NOT_COVERABLE });
+    expect(resolveCoveredSeasonSlots(oneSlot, { sportEventIds: ['week-event-1'], seasonSlots: [...playoffs, week(1)], startingSlotId: 'final' })).toEqual({ problem: ContestCoverageProblem.SLOT_NOT_COVERABLE });
+  });
+
+  it('covers the starting week and every later listed week of the Season under FROM_SLOT, across their events', () => {
+    const weeks = [week(3), week(1), week(2), week(4, { slotDefinitionId: 'unlisted' })];
+    expect(resolveCoveredSeasonSlots(
+      { coverageMode: TemplateCoverageMode.FROM_SLOT, slotDefinitionIds: listing(week(1), week(2), week(3)) },
+      { sportEventIds: ['week-event-2'], seasonSlots: weeks },
+    )).toEqual({ seasonSlotIds: ['week-2', 'week-3'] });
+  });
+
+  it('stops FROM_SLOT at its starting slot\'s competition: a survivor from the last regular week covers no postseason slot', () => {
+    const lastWeek = week(18);
+    const wildCard = seasonSlot('wild-card', { slotDefinitionId: 'definition-wild-card' });
+    expect(resolveCoveredSeasonSlots(
+      { coverageMode: TemplateCoverageMode.FROM_SLOT, slotDefinitionIds: [lastWeek.slotDefinitionId, wildCard.slotDefinitionId] },
+      { sportEventIds: ['week-event-18'], seasonSlots: [lastWeek, wildCard] },
+    )).toEqual({ seasonSlotIds: ['week-18'] });
+  });
+
+  it('stops FROM_SLOT before the next competition of the same phase: a survivor from a playoff round covers no bowl after it', () => {
+    const cfpSemis = seasonSlot('cfp-semis', { seasonCompetitionId: 'season-cfp', sportEventId: 'cfp', competitionOrderIndex: 1, slotKind: SlotKind.SEMIFINAL });
+    const cfpFinal = seasonSlot('cfp-final', { seasonCompetitionId: 'season-cfp', sportEventId: 'cfp', competitionOrderIndex: 1, slotKind: SlotKind.FINAL });
+    const lateBowl = seasonSlot('late-bowl', { seasonCompetitionId: 'season-bowls', sportEventId: 'bowl', competitionOrderIndex: 2, slotKind: SlotKind.FINAL });
+    expect(resolveCoveredSeasonSlots(
+      { coverageMode: TemplateCoverageMode.FROM_SLOT, slotDefinitionIds: listing(cfpSemis, cfpFinal, lateBowl) },
+      { sportEventIds: ['cfp'], seasonSlots: [lateBowl, cfpFinal, cfpSemis] },
+    )).toEqual({ seasonSlotIds: ['cfp-semis', 'cfp-final'] });
+  });
+
+  it('covers a later listed slot under FROM_SLOT before any event holds it, so a survivor covers weeks not yet synced', () => {
+    const weeks = [week(1), week(2, { sportEventId: null })];
+    expect(resolveCoveredSeasonSlots(
+      { coverageMode: TemplateCoverageMode.FROM_SLOT, slotDefinitionIds: listing(week(1), week(2)) },
+      { sportEventIds: ['week-event-1'], seasonSlots: weeks },
+    )).toEqual({ seasonSlotIds: ['week-1', 'week-2'] });
+  });
+
+  it('keeps FROM_SLOT to slots of its starting slot\'s kind: a synced survivor covers no test slot of the same definition', () => {
+    const testWeek = week(2, { id: 'test-week-2', sportEventId: 'test-event', isTestData: true });
+    expect(resolveCoveredSeasonSlots(
+      { coverageMode: TemplateCoverageMode.FROM_SLOT, slotDefinitionIds: listing(week(1), week(2)) },
+      { sportEventIds: ['week-event-1'], seasonSlots: [week(1), week(2), testWeek] },
+    )).toEqual({ seasonSlotIds: ['week-1', 'week-2'] });
   });
 });

@@ -20,6 +20,7 @@ import { participantLeagueId } from '../../support/participant-league';
 import { testDomainEvents } from '../../support/domain-events';
 import { sportRowKeys } from '../../support/sport-rows';
 import { oneEventSlotId } from '../../support/test-slots';
+import { contestOnEvents, contestTemplateId } from '../../support/contest-rows';
 
 beforeAll(() => setupIntegrationTests());
 afterEach(() => cleanupTestData());
@@ -127,8 +128,7 @@ describe('pool-master-eux.6: schedule-driven Golf contest settlement', () => {
       prisma.contest.create({
         data: {
           leagueId: league.id,
-          seasonYear: 2026,
-          sportEvents: { create: { sportEventId: event.id, sequence: 1 } },
+          ...(await contestOnEvents(prisma, [event.id])),
           name: `Invalid Settlement ${suffix}`,
           status: 'ACTIVE',
           contestFormat: 'ROSTER',
@@ -448,8 +448,7 @@ describe('golf contest settlement — unplayed rounds score 80 strokes', () => {
     const contest = await prisma.contest.create({
       data: {
         leagueId: league.id,
-        seasonYear: 2026,
-        sportEvents: { create: { sportEventId: event.id, sequence: 1 } },
+        ...(await contestOnEvents(prisma, [event.id])),
         name: `Unplayed Settlement ${suffix}`,
         status: 'ACTIVE',
         contestFormat: 'ROSTER',
@@ -459,6 +458,7 @@ describe('golf contest settlement — unplayed rounds score 80 strokes', () => {
     await prisma.contestConfiguration.create({
       data: {
         contestId: contest.id,
+        templateId: await contestTemplateId(prisma, contest.id),
         selectionType: 'TIERED',
         configJson: { selectionType: 'TIERED', picksPerTier: 1, countedScores: 2 },
         participantScoringRules: { create: { participantScoringDefinitionId: 'GOLF_RELATIVE_TO_PAR_TOTAL', sortOrder: 1, config: { unplayedRoundToPar: 8 } } },
@@ -552,8 +552,7 @@ async function createSettlementContest(input: {
   const contest = await prisma.contest.create({
     data: {
       leagueId: input.leagueId,
-      seasonYear: 2026,
-      sportEvents: { create: { sportEventId: input.sportEventId, sequence: 1 } },
+      ...(await contestOnEvents(prisma, [input.sportEventId])),
       name: input.name,
       status: input.status ?? 'ACTIVE',
       contestFormat: 'ROSTER',
@@ -563,6 +562,7 @@ async function createSettlementContest(input: {
   await prisma.contestConfiguration.create({
     data: {
       contestId: contest.id,
+      templateId: await contestTemplateId(prisma, contest.id),
       selectionType: 'TIERED',
       configJson: { selectionType: 'TIERED', picksPerTier: 1, countedScores: 2 },
       ...(input.withScoringRule !== false && {

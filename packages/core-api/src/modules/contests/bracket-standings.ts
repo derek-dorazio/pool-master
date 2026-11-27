@@ -9,7 +9,7 @@ import type {
   ContestEntryWithSquad,
   SportEventRoundMatchRepository,
 } from '@poolmaster/shared/db';
-import { PickOutcome, SportEventStatus, contestEntryEventTiebreaker, isTeamChoice, type SportEvent } from '@poolmaster/shared/domain';
+import { PickOutcome, SportEventStatus, contestEntryEventTiebreaker, isTeamChoice, type Contest, type SportEvent } from '@poolmaster/shared/domain';
 import {
   bracketFinal,
   contestBracketGames,
@@ -80,13 +80,14 @@ export class BracketScoringUnavailableError extends Error {
  */
 export async function loadBracketStandings(
   deps: BracketStandingsReadDeps,
-  contestId: string,
+  contest: Pick<Contest, 'id' | 'coveredSlotDefinitionIds'>,
   sportEvent: Pick<SportEvent, 'id' | 'status'>,
 ): Promise<BracketStandings> {
+  const contestId = contest.id;
   const sportEventId = sportEvent.id;
   const eventCancelled = sportEvent.status === SportEventStatus.CANCELLED;
   const [configuration, entries, matches, field] = await Promise.all([
-    loadContestScoringConfiguration(deps, contestId),
+    loadContestScoringConfiguration(deps, contest),
     deps.entries.findByContestWithSquad(contestId, { submittedFor: sportEventId }),
     deps.matches.findBySportEvent(sportEventId),
     loadEventField(deps, sportEventId),

@@ -53,6 +53,7 @@ export function createContestSportEventReader({ sportEvents, field, tiers, valua
       startDate: event.startDate,
       sport: event.sport,
       sportLeagueId: event.sportLeagueId,
+      sportLeagueSeasonId: event.sportLeagueSeasonId,
       championshipYear: event.championshipYear,
       playsMatches: eventPlaysMatches(event),
       participantCount: loaded.get(event.id) ?? 0,
@@ -110,7 +111,7 @@ export function createContestSportEventReader({ sportEvents, field, tiers, valua
       coveredRoundNumbers(coverage, await rounds.findBySportEvent(sportEventId)).length,
     findGame: async (sportEventId, sportEventRoundMatchId) => {
       const game = (await matches.findBySportEvent(sportEventId)).find((match) => match.id === sportEventRoundMatchId);
-      return game === undefined ? null : { status: game.status, roundNumber: game.roundNumber };
+      return game === undefined ? null : { status: game.status, roundNumber: game.roundNumber, seasonSlotId: game.slot.seasonSlotId };
     },
     findCutoffTiming: async (sportEvent, cutoff) => cutoff.kind === ContestCutoffKind.EVENT_START
       ? sportEvent

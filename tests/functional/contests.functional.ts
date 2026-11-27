@@ -24,7 +24,7 @@ import {
   SelectionType,
   Sport,
 } from '@poolmaster/shared/domain';
-import { attachContestEvent, buildLeagueWithCommissioner, buildRegisteredUser, seedContestFixture } from './builders';
+import { attachContestEvent, buildLeagueWithCommissioner, buildRegisteredUser, seedContestFixture, placedTemplate } from './builders';
 import {
   cleanupFunctionalData,
   disconnectFunctionalPrisma,
@@ -257,7 +257,7 @@ describe('SDK Functional: Contests and Entries', () => {
         sportEventIds: [importedEvent.sportEventId],
         contestFormat: ContestFormat.ROSTER,
         selectionType: SelectionType.TIERED,
-        templateId: defaultTemplate?.id,
+        templateId: await placedTemplate([importedEvent.sportEventId], defaultTemplate?.id),
       },
     });
 
@@ -364,7 +364,7 @@ describe('SDK Functional: Contests and Entries', () => {
         sportEventIds: [importedEvent.sportEventId],
         contestFormat: ContestFormat.ROSTER,
         selectionType: SelectionType.TIERED,
-        templateId: defaultTemplate?.id,
+        templateId: await placedTemplate([importedEvent.sportEventId], defaultTemplate?.id),
         configuration: {
           maxEntriesPerSquad: 3,
           selectionType: SelectionType.TIERED,

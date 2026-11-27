@@ -17,6 +17,7 @@ import { forgetStoredLeaderboards, passReadCacheTtl, restoreReadCacheClock } fro
 import { participantLeagueId } from '../../support/participant-league';
 import { sportRowKeys } from '../../support/sport-rows';
 import { oneEventSlotId } from '../../support/test-slots';
+import { contestOnEvents, contestTemplateId } from '../../support/contest-rows';
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
@@ -144,8 +145,7 @@ describe('pool-master-eux.4: Golf leaderboard read API', () => {
     const contest = await prisma.contest.create({
       data: {
         leagueId: league.id,
-        seasonYear: 2026,
-        sportEvents: { create: { sportEventId: event.id, sequence: 1 } },
+        ...(await contestOnEvents(prisma, [event.id])),
         name: `Golf Leaderboard Contest ${suffix}`,
         status: 'ACTIVE',
         contestFormat: 'ROSTER',
@@ -155,6 +155,7 @@ describe('pool-master-eux.4: Golf leaderboard read API', () => {
     await prisma.contestConfiguration.create({
       data: {
         contestId: contest.id,
+        templateId: await contestTemplateId(prisma, contest.id),
         selectionType: 'TIERED',
         configJson: {
           selectionType: 'TIERED',

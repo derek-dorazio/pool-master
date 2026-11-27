@@ -82,7 +82,7 @@ describe('createContestSportEventReader over a soccer tournament before its grou
       expect([draw.templateKey, listed.length, covered]).toEqual([draw.templateKey, definitions.length, scoring.config.roundValues.length]);
     }
     // Five knockout rounds, Round of 32 to the final: the matchdays and the third-place play-off are none.
-    await expect(reader().countCoveredRounds(event.id, { slotDefinitionIds: null })).resolves.toBe(5);
+    await expect(reader().countCoveredRounds(event.id, { slotDefinitionIds: definitions.map((definition) => definition.id) })).resolves.toBe(5);
   });
 
   it('lets knockout round points take the event while its knockout has no games, and a bracket still waits for its games', async () => {

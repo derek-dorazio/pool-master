@@ -131,7 +131,6 @@ import {
   loadContestScoringConfiguration,
   loadEventField,
   loadEventPicks,
-  missedEventEntries,
   rankContestEvent,
   submittedLeaderboardEntries,
   toLeaderboardEntryInput,
@@ -388,8 +387,7 @@ export class ContestService {
    */
   async findTierSetSeasonSlots(contest: Contest): Promise<Map<string, string>> {
     if (!TIER_SET_SELECTION_TYPES.includes(contest.selectionType)) return new Map();
-    const configuration = await this.deps.configurations.findByContest(contest.id);
-    const slots = await this.deps.tiers.tierSetSlots(contest.sportEventIds, { coveredSlotDefinitionIds: contestRoundCoverage(configuration).slotDefinitionIds });
+    const slots = await this.deps.tiers.tierSetSlots(contest.sportEventIds, { coveredSlotDefinitionIds: contestRoundCoverage(contest).slotDefinitionIds });
     return new Map([...slots].map(([sportEventId, slot]) => [sportEventId, slot.seasonSlotId]));
   }
 
@@ -923,7 +921,7 @@ export class ContestService {
         'CONTEST_FORMAT_MISMATCH',
       );
     }
-    const configuration = await loadContestScoringConfiguration(this.deps, contestId);
+    const configuration = await loadContestScoringConfiguration(this.deps, contest);
     const countingRule = resolveContestCountingRule(configuration);
     if (!countingRule) {
       throw new ContestOperationError(
@@ -968,14 +966,7 @@ export class ContestService {
       let rows: ContestEntryStandingRow[] | null = null;
       if (isShown || (settled.length === 0 && event.status !== SportEventStatus.CANCELLED)) {
         const field = await readField(event.id);
-        // An entry that skipped a live event is ranked at its missed lineup's score (#714), as its
-        // settlement will rank it, so the last live board is the settled result. A settled event's
-        // frozen standings already hold it, and a cancelled event scores nobody (#743).
-        const missed = settled.length === 0 && event.status !== SportEventStatus.CANCELLED
-          ? missedEventEntries(contest, contestEntries, new Set(entries.map((entry) => entry.id)))
-          : [];
-        for (const entry of missed) entriesById.set(entry.id, entry);
-        const { rows: rankedRows, scores } = rankContestEvent({ field, event, scoring: scoring.scoring, coverage: scoring.coverage, countingRule, direction, submitted: entries, missed });
+        const { rows: rankedRows, scores } = rankContestEvent({ field, event, scoring: scoring.scoring, coverage: scoring.coverage, countingRule, direction, submitted: entries });
         rows = rankedRows;
         if (settled.length > 0) {
           rows = applySettledContestStandings(rows, settled.map(toSettledStanding));
@@ -1112,7 +1103,7 @@ export class ContestService {
     }
     let standings: Awaited<ReturnType<typeof loadBracketStandings>>;
     try {
-      standings = await loadBracketStandings(this.deps, contestId, event);
+      standings = await loadBracketStandings(this.deps, contest, event);
     } catch (error) {
       if (!(error instanceof BracketScoringUnavailableError)) throw error;
       this.logger.error({ contestId, reason: error.reason }, 'bracket leaderboard refused: the contest cannot be scored');
