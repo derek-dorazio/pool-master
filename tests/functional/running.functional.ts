@@ -62,6 +62,8 @@ async function cleanup(): Promise<void> {
     await db.contestEntryPick.deleteMany({ where: { sportEventParticipant: { sportEventId: { in: eventIds } } } });
     await db.sportEventParticipantStanding.deleteMany({ where: { sportEventParticipant: { sportEventId: { in: eventIds } } } });
     await db.sportEventParticipantValuation.deleteMany({ where: { sportEventParticipant: { sportEventId: { in: eventIds } } } });
+    // A race is a FIELD match in its event (#2008); its sides hold the field rows.
+    await db.sportEventRoundMatch.deleteMany({ where: { sportEventId: { in: eventIds } } });
     await db.sportEventParticipant.deleteMany({ where: { sportEventId: { in: eventIds } } });
     await db.sportEventRound.deleteMany({ where: { sportEventId: { in: eventIds } } });
     await db.sportEventTier.deleteMany({ where: { sportEventId: { in: eventIds } } });
@@ -196,7 +198,6 @@ describe('SDK Functional: Running World Marathon Majors Top 10 points', () => {
       resultStatus: FINISH[runner] === null ? 'DID_NOT_FINISH' as const : 'FINISHED' as const,
       finishPosition: FINISH[runner],
       startPosition: null,
-      riderName: null,
     })));
     const official = await applyEventRaceResults({ client: a, path: { eventId }, body: { isOfficial: true, rows } });
     expect(official.response?.status).toBe(200);

@@ -486,7 +486,7 @@ Milano-Sanremo, both Giros and the marathons carry only their leading ten finish
 | File | Sport leagues and races |
 |---|---|
 | `auto-racing-2026-test.json` | Formula 1 (17 Grands Prix, Australia to Singapore), NASCAR Cup Series (32 points races, the Daytona 500 to Charlotte in October), IndyCar (all 18 races, the Indianapolis 500 among them) |
-| `horse-racing-2026-test.json` | US Thoroughbred: the Kentucky Derby, Preakness Stakes and Belmont Stakes, with jockeys and post positions; the Derby's scratched horses did not start |
+| `horse-racing-2026-test.json` | US Thoroughbred: the Kentucky Derby, Preakness Stakes and Belmont Stakes, with post positions; the Derby's scratched horses did not start |
 | `cycling-2026-test.json` | UCI WorldTour: Milano-Sanremo, the Giro d'Italia and the Tour de France; UCI Women's WorldTour: the Giro d'Italia Women |
 | `running-2026-test.json` | World Marathon Majors men and women: Tokyo, Boston, London, Sydney, Berlin and Chicago |
 
@@ -497,7 +497,7 @@ Load one with `mode` `apply` like any file. Because its envelope says `testData`
   priced. The finishing order goes in just before release, so a run that stops between the two
   leaves a draft that the next run finishes.
 - **The official finishing order already entered**: every runner's place (or did not finish,
-  did not start), grid or post position, and jockey, as *The finishing order* in
+  did not start), and grid or post position, as *The finishing order* in
   [`RACE-SETUP-PROCEDURES.md`](RACE-SETUP-PROCEDURES.md) step 4 would.
 
 Then create a contest on a race, enter it, and move the race through *In Progress* and

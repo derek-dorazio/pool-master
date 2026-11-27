@@ -4,8 +4,10 @@
  * runner's place and status, the server stores each value exactly as sent and derives none of
  * them (the score-correction pattern of #116), and refuses an order it cannot store whole.
  *
- * Rows resolve against the event's field with the shared participant-row resolver, the same
- * precedence the field upload and golf scores use. Runners not named keep what is stored, so a
+ * A race is one FIELD Match in the event's first round (#2008): each runner's result is its side
+ * result in the race's Game, and the race is official once that Game is COMPLETED. Rows resolve
+ * against the event's field with the shared participant-row resolver, by id or feed id, as the
+ * golf scores do. Runners not named keep what is stored, so a
  * stewards' change is a one-row correction. The race is official as a whole: the official flag
  * sent is set on every result of the race.
  *
@@ -15,9 +17,10 @@
 import type { FastifyBaseLogger } from 'fastify';
 import type {
   ParticipantRepository,
-  RaceResultWrite,
+  RaceOrderRepository,
+  RaceOrderResult,
+  RaceOrderSideWrite,
   RaceStandingWrite,
-  SportEventParticipantRaceResultRepository,
   SportEventParticipantRepository,
   SportEventRepository,
   ParticipantProviderMappingRepository,
@@ -26,10 +29,9 @@ import {
   RaceResultChange,
   RaceResultOrderError,
   RaceResultRowError,
-  RaceResultStatus,
-  type RaceResultStatus as RaceResultStatusValue,
+  GameSideStatus,
+  type GameSideStatus as GameSideStatusValue,
   type SportEvent,
-  type SportEventParticipantRaceResult,
   SportEventParticipantStatus,
 } from '@poolmaster/shared/domain';
 import type { ApiErrorCode } from '@poolmaster/shared/dto';
@@ -57,10 +59,9 @@ export class RaceResultError extends Error {
 
 /** One runner's result as sent: who it names, and every value. */
 export interface RaceResultRowInput extends ParticipantRowIdentifiers {
-  resultStatus: RaceResultStatusValue;
+  resultStatus: GameSideStatusValue;
   finishPosition: number | null;
   startPosition: number | null;
-  riderName: string | null;
 }
 
 export interface RaceResultInput {
@@ -69,10 +70,9 @@ export interface RaceResultInput {
 }
 
 export interface RaceResultValues {
-  resultStatus: RaceResultStatusValue;
+  resultStatus: GameSideStatusValue;
   finishPosition: number | null;
   startPosition: number | null;
-  riderName: string | null;
   isOfficial: boolean;
 }
 
@@ -99,7 +99,8 @@ export interface RaceResultServiceDeps {
   participants: Pick<ParticipantRepository, 'findByIds'>;
   /** The participants' provider mappings, read when an upload row names a feed id (#2040). */
   mappings: Pick<ParticipantProviderMappingRepository, 'findByParticipantIds'>;
-  raceResults: SportEventParticipantRaceResultRepository;
+  /** The race's FIELD Game: its side results, status and riders (#2008). */
+  raceOrder: RaceOrderRepository;
   /**
    * Whether an event of this sport keeps race results, by its sport's scoring family. Any other
    * event is refused rather than given rows its leaderboard never reads.
@@ -119,7 +120,7 @@ export class RaceResultService {
     await this.requireRaceScoredEvent(sportEventId);
     const [field, stored] = await Promise.all([
       this.deps.field.findBySportEvent(sportEventId),
-      this.deps.raceResults.findBySportEvent(sportEventId),
+      this.deps.raceOrder.findBySportEvent(sportEventId),
     ]);
     const participants = await this.deps.participants.findByIds(field.map((entry) => entry.participantId));
     const entryIdByParticipantId = new Map(field.map((entry) => [entry.participantId, entry.id]));
@@ -139,7 +140,6 @@ export class RaceResultService {
         resultStatus: row.resultStatus,
         finishPosition: row.finishPosition,
         startPosition: row.startPosition,
-        riderName: row.riderName,
         isOfficial: input.isOfficial,
       };
       const sportEventParticipantId = participant ? entryIdByParticipantId.get(participant.id) ?? null : null;
@@ -184,7 +184,7 @@ export class RaceResultService {
     // An official result leaves no active runner without one, and no finisher without a place.
     if (input.isOfficial && (
       field.some((entry) => entry.status === SportEventParticipantStatus.ACTIVE && !merged.has(entry.id))
-      || [...merged.values()].some((values) => values.resultStatus === RaceResultStatus.FINISHED && values.finishPosition === null)
+      || [...merged.values()].some((values) => values.resultStatus === GameSideStatus.FINISHED && values.finishPosition === null)
     )) {
       orderErrors.push(RaceResultOrderError.FIELD_INCOMPLETE);
     }
@@ -225,18 +225,17 @@ export class RaceResultService {
       );
     }
 
-    const results: RaceResultWrite[] = preview.rows.map((row) => ({
+    const sides: RaceOrderSideWrite[] = preview.rows.map((row) => ({
       sportEventParticipantId: row.sportEventParticipantId as string,
-      resultStatus: row.row.resultStatus,
-      finishPosition: row.row.finishPosition,
+      status: row.row.resultStatus,
+      position: row.row.finishPosition,
       startPosition: row.row.startPosition,
-      riderName: row.row.riderName,
     }));
-    const stored = await this.deps.raceResults.findBySportEvent(sportEventId);
-    const merged = new Map<string, Pick<RaceResultWrite, 'resultStatus' | 'finishPosition'>>(
-      stored.map((result) => [result.sportEventParticipantId, result]),
+    const stored = await this.deps.raceOrder.findBySportEvent(sportEventId);
+    const merged = new Map<string, Pick<RaceResultValues, 'resultStatus' | 'finishPosition'>>(
+      stored.map((result) => [result.sportEventParticipantId, raceResultValues(result)]),
     );
-    for (const result of results) merged.set(result.sportEventParticipantId, result);
+    for (const side of sides) merged.set(side.sportEventParticipantId, { resultStatus: side.status, finishPosition: side.position });
     const places = finishingPlaces(merged.values());
     const asOf = (this.deps.now ?? (() => new Date()))();
     const standings: RaceStandingWrite[] = [...merged].map(([sportEventParticipantId, result]) => ({
@@ -248,11 +247,11 @@ export class RaceResultService {
     }));
 
     const rebuild = await this.deps.domainEvents.collect({ type: DomainEventType.SPORT_EVENT_RESULTS_CHANGED, sportEventId });
-    await this.deps.raceResults.applyResults(sportEventId, { results, isOfficial: input.isOfficial, standings, jobs: rebuild.jobs });
+    await this.deps.raceOrder.applyOrder(sportEventId, { sides, isOfficial: input.isOfficial, at: asOf, standings, jobs: rebuild.jobs });
     rebuild.queued();
     this.deps.logger?.info({
       sportEventId,
-      rows: results.length,
+      rows: sides.length,
       isOfficial: input.isOfficial,
     }, 'Applied a race result');
   }
@@ -278,7 +277,7 @@ export class RaceResultService {
 
 function raceResultRowError(row: RaceResultRowInput, isOfficial: boolean, rowsNamingRunner: number): RaceResultRowError | null {
   if (rowsNamingRunner > 1) return RaceResultRowError.DUPLICATE_PARTICIPANT;
-  const finished = row.resultStatus === RaceResultStatus.FINISHED;
+  const finished = row.resultStatus === GameSideStatus.FINISHED;
   if (!finished && row.finishPosition !== null) return RaceResultRowError.POSITION_WITHOUT_FINISH;
   if (finished && isOfficial && row.finishPosition === null) return RaceResultRowError.FINISH_WITHOUT_POSITION;
   return null;
@@ -287,16 +286,15 @@ function raceResultRowError(row: RaceResultRowInput, isOfficial: boolean, rowsNa
 /** The places of every finisher that has one. */
 function finishingPlaces(results: Iterable<Pick<RaceResultValues, 'resultStatus' | 'finishPosition'>>): number[] {
   return [...results].flatMap((result) => (
-    result.resultStatus === RaceResultStatus.FINISHED && result.finishPosition !== null ? [result.finishPosition] : []
+    result.resultStatus === GameSideStatus.FINISHED && result.finishPosition !== null ? [result.finishPosition] : []
   ));
 }
 
-function raceResultValues(result: SportEventParticipantRaceResult): RaceResultValues {
+function raceResultValues(result: RaceOrderResult): RaceResultValues {
   return {
-    resultStatus: result.resultStatus,
-    finishPosition: result.finishPosition,
+    resultStatus: result.status,
+    finishPosition: result.position,
     startPosition: result.startPosition,
-    riderName: result.riderName,
     isOfficial: result.isOfficial,
   };
 }
@@ -305,6 +303,5 @@ function raceResultValuesEqual(before: RaceResultValues, after: RaceResultValues
   return before.resultStatus === after.resultStatus
     && before.finishPosition === after.finishPosition
     && before.startPosition === after.startPosition
-    && before.riderName === after.riderName
     && before.isOfficial === after.isOfficial;
 }

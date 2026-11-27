@@ -163,7 +163,7 @@ a Team On Screen*.
 
 ### The sport side
 
-> **Being replaced.** Stale against the target model: `PlatformTierProfile` and `PlatformPricingProfile` (become `PlatformTierProfile` and `PlatformPricingProfile`); `SportEventRound` and the golfer's `SportEventParticipantRound`; `SportEventTier` and `…Valuation` (keyed by event slot); `SportEventRoundMatch`, `SportEventMatchPeriodScore` and `SportEventParticipantRaceResult` (Match sides, Games and Game side results). The target model, which new code is designed toward, is §5
+> **Being replaced.** Stale against the target model: `PlatformTierProfile` and `PlatformPricingProfile` (become `PlatformTierProfile` and `PlatformPricingProfile`); `SportEventRound` and the golfer's `SportEventParticipantRound`; `SportEventTier` and `…Valuation` (keyed by event slot); `SportEventRoundMatch` and `SportEventMatchPeriodScore` (Match sides, Games and Game side results; a race's result moved onto a FIELD Game's side result in #2008). The target model, which new code is designed toward, is §5
 > *The Target Model* and ADR 0012. Rows marked here stay true of today's code until the
 > slices of #1917 replace them, and this file is rewritten for the new model when they land.
 
@@ -182,7 +182,7 @@ a Team On Screen*.
 | `SportEventParticipantStanding` | position, leaderboard row | A field member's running position in the event (1 is best, every sport) | An entry's standing in a contest |
 | `SportEventRoundMatch` | match, game, bracket | One game of an event played as matches (#698): a knockout bracket's, or an NFL week's: its round, its home and away field members (either empty until an earlier match's winner fills it), a neutral-site flag, a time, a status, the winning side and both scores, the match and side its winner advances to, and its region or conference. A playoff series is one match whose score is games won. Only a sport whose tournament format is `MATCHES` has them; whether they form a bracket is read from their links (#715) | A `Contest`, and a `SportEventRound`, the round it is played in |
 | `SportEventMatchPeriodScore` | quarter score | Both sides' score at the end of one period of a game but the last (#772): the end of a quarter in American football or a period in hockey, as the scoreboard shows it, earlier periods included. Only a game whose slot definition has a period unit and count keeps them (`periodUnit`, `periodCount`, #2047: men's college basketball plays two halves; read as the round slot's `periods`). The final score, overtime included, is the match's own `homeScore`/`awayScore`, never a period row. Squares pools read them | The points scored in that period alone, which nothing stores |
-| `SportEventParticipantRaceResult` | finish, result | How one runner's race ended (finish position): its place, or did not finish, disqualified, did not start; whether the race's result is official; its rider and post position. The admin enters it | `SportEventParticipantStanding`, its place in the event, which the finishing order writes beside it |
+| Race result (a FIELD Game's side result) | finish, result | How one runner's race ended (finish position, #2008): the race is one FIELD Match in its event's first round, every runner a side, with one Game; the runner's side result holds its `position`, `startPosition`, and `status` (`GameSideStatus`: finished, did not finish, disqualified, did not start). No jockey is stored (#2008). The race is official once that Game is `COMPLETED` | `SportEventParticipantStanding`, its place in the event, which the finishing order writes beside it |
 
 **Platform definitions, league picks; nothing at sport level** (Derek, 2026-11-18, #1844). A
 setting that varies between real-world leagues is a named definition the root admin keeps once
@@ -235,20 +235,20 @@ Rules that are not choices (the small-field even split) stay in code, not in a d
   squad owner (`SquadMembership`).
 - **Player / golfer**: a `Participant`, never a league member.
 - **Horse, runner**: a horse racing `Participant`, and on a race's field a `SportEventParticipant`.
-  The jockey is the result's `riderName`, not a participant.
+  The jockey is not stored: neither a participant nor part of the result (#2008).
 - **Driver**: an auto racing `Participant`, one per person in each series they race in. An
-  auto racing result names only the driver, so its `riderName` stays empty.
+  auto racing result names only the driver.
 - **Series**: what auto racing calls a `SportLeague` (NASCAR Cup Series, IndyCar, Formula 1),
   and running too (World Marathon Majors (men), World Marathon Majors (women)).
-- **Rider (cycling)**: a cycling `Participant`. Not the result's `riderName`, which is horse
-  racing's jockey: a cycling result names only the rider, so its `riderName` stays empty. A rider
+- **Rider (cycling)**: a cycling `Participant`, not horse racing's jockey: a cycling result
+  names only the rider. A rider
   who abandons mid-race is a `DID_NOT_FINISH` result, not a withdrawal.
 - **Tour (cycling)**: what cycling calls a `SportLeague` (UCI WorldTour, UCI Women's WorldTour).
   A Grand Tour (the Tour de France) is one `SportEvent` with one round; its result is the final
   overall classification, and its stages are not rounds.
 - **Runner (running)**: a running `Participant`, one of a marathon's elite field. Horse racing
   also says "runner" for a horse in a race; the word is the sport's vocabulary, not a model. A
-  running result names only the runner, so its `riderName` stays empty, and a runner who drops
+  running result names only the runner, and a runner who drops
   out is a `DID_NOT_FINISH` result, not a withdrawal. A marathon is one `SportEvent` with one
   round.
 - **Scratched, withdrawn**: a runner taken out of a race before the start is a field row whose

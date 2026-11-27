@@ -165,7 +165,7 @@ export class InMemoryGamePicks {
         valuation: null,
         standing: null,
         rounds: [],
-        raceResult: null,
+        fieldResults: [],
         matches: [],
         affiliatedWithSportLeague: true,
       }));

@@ -763,13 +763,19 @@ The per-round join and the running standing. **The score lives in the sport exte
 | Write | *(scoring feed or `rootAdmin`)* | Written base-then-extension in one nested write. Golf corrections: `previewEventGolfRoundScores`, `applyEventGolfRoundScores`, `updateEventParticipantGolfRoundScore` — 422 for a non-golf event. A race's standings are written by its finishing order (below) |
 | Rank | *(every score write)* | `position` and `displayPosition` are computed from the extension's score after each write — the feed or a correction — across the whole event, so no reader re-derives them (#246). Ties share a position and display as "T3"; a withdrawn or eliminated golfer is unranked. The provider supplies no live rank to copy |
 
-### SportEventParticipantRaceResult — the finish-position extension
+### A race's result — a FIELD Game's side results
 
-How one runner's race ended (#622): `resultStatus` (`FINISHED`, `DID_NOT_FINISH`,
-`DISQUALIFIED`, `DID_NOT_START`), `finishPosition` (1 the winner; a dead heat shares a place),
-`startPosition`, `riderName` and `isOfficial`, keyed 1:1 to the field row and removed with it.
-The table refuses a place below 1, a place on a runner that did not finish, and an official
-finisher with no place. There is no racing feed: the admin's finishing order is the only writer.
+How one runner's race ended (#622, #2008). A race is one FIELD Match in its event's first round
+(the round's slot definition plays `FIELD`), every runner a side numbered 1 to n, with one Game.
+A runner's result is its side result there: `status` (`GameSideStatus`: `FINISHED`,
+`DID_NOT_FINISH`, `DISQUALIFIED`, `DID_NOT_START`), `position` (1 the winner; a dead heat shares a
+place) and `startPosition`; no jockey is stored. The race is official once its Game is `COMPLETED`
+(`completedAt` the time it was made official); while provisional the Game is `IN_PROGRESS`. A
+runner's side goes with its field row. The table refuses a place or start below 1 and a place on
+a runner that did not finish; an official finisher's place is the finishing order's check. The
+race's FIELD Match is not one of a runner's head-to-head `matches` on a field read: the field
+read carries the row's own side results as `fieldResults`. The admin's finishing order writes
+them only on a test slot (#2074).
 
 | Operation | Role | Notes |
 |---|---|---|

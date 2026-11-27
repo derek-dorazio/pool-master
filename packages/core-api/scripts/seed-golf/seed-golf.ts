@@ -955,7 +955,6 @@ async function enterRaceResultsFor(client: Client, eventId: string, event: Sport
     resultStatus: raceResult.status,
     finishPosition: raceResult.finishPosition,
     startPosition: raceResult.startPosition ?? null,
-    riderName: raceResult.riderName ?? null,
   }]));
   await must(applyEventRaceResults({ client, path: { eventId }, body: { isOfficial: true, rows } }), `Enter the finishing order of ${event.name}`);
 }

@@ -148,7 +148,7 @@ const INDEXES = new Map<string, IndexLead>([
   ['contest_entries_id_contest_id_key', { table: 'contest_entries', column: 'id', operatorClass: 'uuid_ops' }],
   ['contest_entries_contest_id_squad_id_entry_number_key', { table: 'contest_entries', column: 'contest_id', operatorClass: 'uuid_ops' }],
   ['league_memberships_user_id_status_idx', { table: 'league_memberships', column: 'user_id', operatorClass: 'uuid_ops' }],
-  ['race_results_participant_key', { table: 'sport_event_participant_race_results', column: 'sport_event_participant_id', operatorClass: 'uuid_ops' }],
+  ['sport_event_participant_standings_sport_event_participant_i_key', { table: 'sport_event_participant_standings', column: 'sport_event_participant_id', operatorClass: 'uuid_ops' }],
   ['sport_event_participants_pkey', { table: 'sport_event_participants', column: 'id', operatorClass: 'uuid_ops' }],
   ['sport_event_participants_sport_event_id_participant_id_key', { table: 'sport_event_participants', column: 'sport_event_id', operatorClass: 'uuid_ops' }],
 ]);
@@ -203,13 +203,13 @@ describe('missing-index check on fixed plans: whether another index could serve 
 
   it('passes a walked side of a join looked up by its indexed join key from a side a bound value could enter by index', () => {
     const lookedUp = nestedLoop(
-      indexScan('race_results_participant_key', 'r', { Filter: '(is_official = $2)' }),
-      indexScan('sport_event_participants_pkey', 'p', { 'Index Cond': '(id = r.sport_event_participant_id)', Filter: '(sport_event_id = $1)' }),
+      indexScan('sport_event_participant_standings_sport_event_participant_i_key', 's', { Filter: '(status = $2)' }),
+      indexScan('sport_event_participants_pkey', 'p', { 'Index Cond': '(id = s.sport_event_participant_id)', Filter: '(sport_event_id = $1)' }),
     );
     const joinFiltered = nestedLoop(
-      indexScan('race_results_participant_key', 'r', { Filter: '(is_official = $2)' }),
+      indexScan('sport_event_participant_standings_sport_event_participant_i_key', 's', { Filter: '(status = $2)' }),
       indexScan('sport_event_participants_pkey', 'p', { Filter: '(sport_event_id = $1)' }),
-      '(r.sport_event_participant_id = p.id)',
+      '(s.sport_event_participant_id = p.id)',
     );
     expect(findWholeScans(lookedUp, INDEXES)).toEqual([]);
     expect(findWholeScans(joinFiltered, INDEXES)).toEqual([]);

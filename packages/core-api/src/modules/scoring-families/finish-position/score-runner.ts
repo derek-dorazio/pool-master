@@ -12,12 +12,23 @@
  * - Anything else is unscored: no result yet, or a result not yet official. The family never
  *   invents a place for a runner the admin did not enter.
  */
-import { RaceResultStatus, SportEventParticipantStatus, assertNever, type FinishPositionPointsSettings } from '@poolmaster/shared/domain';
+import { GameSideStatus, MatchStatus, SportEventParticipantStatus, assertNever, type FinishPositionPointsSettings } from '@poolmaster/shared/domain';
+import type { FieldGameResultView } from '@poolmaster/shared/db';
 import type { SportEventParticipantView } from '../../events/sport-event-participant-service';
 
-/** Whether an admin has made the race's result official: any official result in the field. */
+/** A runner's result in its race (#2008): its side result in the race's one FIELD Game, if it has one. */
+export function raceResultOf(row: Pick<SportEventParticipantView, 'fieldResults'>): FieldGameResultView | null {
+  return row.fieldResults[0] ?? null;
+}
+
+/** Whether the race's result is official: its Game is COMPLETED. */
+export function isRaceOfficial(result: Pick<FieldGameResultView, 'gameStatus'> | null): boolean {
+  return result?.gameStatus === MatchStatus.COMPLETED;
+}
+
+/** Whether the race's result is official, read off any runner with a result. */
 export function isRaceResultOfficial(field: readonly SportEventParticipantView[]): boolean {
-  return field.some((row) => row.raceResult?.isOfficial === true);
+  return field.some((row) => isRaceOfficial(raceResultOf(row)));
 }
 
 /** The points a finishing place earns: the table's value at that place, 0 beyond the table. */
@@ -31,19 +42,22 @@ export function scoreRunner(
   settings: FinishPositionPointsSettings,
   raceOfficial: boolean,
 ): number | null {
-  const result = row.raceResult;
-  if (result?.isOfficial) {
-    switch (result.resultStatus) {
-      case RaceResultStatus.FINISHED:
+  const raced = raceResultOf(row);
+  const result = raced?.result;
+  if (result && isRaceOfficial(raced)) {
+    // A side result with no status is not a race result: unscored, never given one.
+    if (result.status === null) return null;
+    switch (result.status) {
+      case GameSideStatus.FINISHED:
         // Storage holds every official finisher to a place; a row without one stays unscored
         // rather than being given one.
-        return result.finishPosition === null ? null : pointsForPlace(settings, result.finishPosition);
-      case RaceResultStatus.DID_NOT_FINISH:
-      case RaceResultStatus.DISQUALIFIED:
-      case RaceResultStatus.DID_NOT_START:
+        return result.position === null ? null : pointsForPlace(settings, result.position);
+      case GameSideStatus.DID_NOT_FINISH:
+      case GameSideStatus.DISQUALIFIED:
+      case GameSideStatus.DID_NOT_START:
         return settings.didNotFinishPoints;
       default:
-        return assertNever(result.resultStatus);
+        return assertNever(result.status);
     }
   }
   if (!result && row.entry.status !== SportEventParticipantStatus.ACTIVE && raceOfficial) {
