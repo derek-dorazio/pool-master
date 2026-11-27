@@ -1,4 +1,4 @@
-import { ProviderCode, ProviderHealthStatus } from './enums';
+import { ProviderCode, ProviderHealthStatus, ProviderSyncKind, SportEventStatus } from './enums';
 
 /**
  * Each provider adapter's own id, by its Provider code (#1997): the key the provider registry and
@@ -66,6 +66,29 @@ export function eventFeedRef(event: {
   if (event.syncProviderId === undefined) return undefined;
   const mapping = event.providerMappings.find((each) => providerSourceIdOf(each.providerCode) === event.syncProviderId);
   return mapping === undefined ? undefined : { providerId: event.syncProviderId, externalId: mapping.externalId };
+}
+
+/** A sync kind one event runs: its FIELD or its SCORES; a league's EVENTS is synced by league. */
+type EventSyncKind = typeof ProviderSyncKind.FIELD | typeof ProviderSyncKind.SCORES;
+
+/** The statuses each event sync kind runs in: a field while there is one to load, scores while play is on. */
+const EVENT_SYNC_KIND_STATUSES: Readonly<Record<EventSyncKind, readonly SportEventStatus[]>> = {
+  [ProviderSyncKind.FIELD]: [SportEventStatus.SCHEDULED, SportEventStatus.IN_PROGRESS, SportEventStatus.COMPLETED],
+  [ProviderSyncKind.SCORES]: [SportEventStatus.IN_PROGRESS],
+};
+
+/**
+ * The sync kinds a root admin can run on an event now (#2234): none for an event its league's
+ * provider has no id for (a test event, or a league no provider syncs); its FIELD while it is
+ * scheduled, in play or completed; and its SCORES while it is in play.
+ */
+export function eventSyncKindsOf(event: {
+  status: SportEventStatus;
+  providerMappings: readonly SportEventProviderMapping[];
+  syncProviderId?: string;
+}): EventSyncKind[] {
+  if (eventFeedRef(event) === undefined) return [];
+  return [ProviderSyncKind.FIELD, ProviderSyncKind.SCORES].filter((kind) => EVENT_SYNC_KIND_STATUSES[kind].includes(event.status));
 }
 
 /**

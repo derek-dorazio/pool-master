@@ -30,15 +30,6 @@ import { seasonIdOrCurrent, useSportLeagueSeasonsQuery } from '@/features/contes
 import { useSportLeagueOverviewsQuery } from './use-sport-league-overviews';
 import { ProviderSyncKind, type Sport } from '@poolmaster/shared/domain';
 
-function getValidEventStatusesForKind(kind: EventSyncKind): SportEventDto['status'][] {
-  switch (kind) {
-    case ProviderSyncKind.SCORES:
-      return ['IN_PROGRESS'];
-    case ProviderSyncKind.FIELD:
-      return ['SCHEDULED', 'IN_PROGRESS', 'COMPLETED'];
-  }
-}
-
 function formatEventOptionLabel(event: SportEventDto, displayPreferences: DisplayPreferences) {
   const participantText = `${event.participantCount} participants`;
 
@@ -102,11 +93,11 @@ export function RootAdminRunEventSyncPage() {
     retry: false,
   });
 
-  const selectableEvents = useMemo(() => {
-    const validStatuses = getValidEventStatusesForKind(eventSyncKind);
-    // Only an event its league's provider syncs can sync; the server refuses a test event.
-    return (eventsQuery.data ?? []).filter((event) => !event.isTestData && validStatuses.includes(event.status));
-  }, [eventSyncKind, eventsQuery.data]);
+  // The events the API says can run the chosen sync now (#2234); a test event runs none.
+  const selectableEvents = useMemo(
+    () => (eventsQuery.data ?? []).filter((event) => event.syncKinds.includes(eventSyncKind)),
+    [eventSyncKind, eventsQuery.data],
+  );
   // Events are chosen by id: two providers' events can share an external id.
   const selectedEvent = selectableEvents.find((event) => event.id === chosenEventId);
   // An event the sport, Season or sync kind rules out is no longer selected.

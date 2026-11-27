@@ -9996,6 +9996,883 @@ export interface components {
                 }[];
             }[];
         };
+        /** @description A manual event sync request. */
+        EventSyncRequest: {
+            /** @description The sync kinds to run for the event, each once. */
+            kinds: ("FIELD" | "SCORES")[];
+        };
+        /** @description One of a provider's own leagues (#1997). */
+        ProviderLeagueDto: {
+            /**
+             * Format: uuid
+             * @description The provider league.
+             */
+            id: string;
+            /** @description The provider's own code for the league, as its API names it, e.g. "nfl". */
+            code: string;
+            /** @description The provider's own name for the league. */
+            name: string;
+            /**
+             * @description The sport the league plays.
+             * @enum {string}
+             */
+            sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
+            /**
+             * @description Which of the provider's webhook events the league sends for its games.
+             * @enum {string}
+             */
+            webhookEventSet: "GAME_PERIODS" | "GAME_HALVES" | "GOLF_ROUNDS";
+            /** @description How long a game may go between two of its notifications in normal play, in minutes; past it the live-score sweep warns that the webhook may have stopped. */
+            quietAfterMinutes: number;
+            /** @description How long one of its games usually takes from its scheduled start, in minutes: a start plus this is when a game with no scheduled end should have ended, for the overdue results check. */
+            typicalGameMinutes: number;
+            /** @description Whether the provider's adapter reads the league. A change takes effect when the server tasks next start. */
+            isEnabled: boolean;
+        };
+        /** @description A data provider's settings (#1997): its Provider row and its leagues. The API key and webhook secret are not here: they stay in Secrets Manager. */
+        ProviderSettingsDto: {
+            /**
+             * Format: uuid
+             * @description The Provider row.
+             */
+            id: string;
+            /**
+             * @description Which provider the row is; it picks the adapter.
+             * @enum {string}
+             */
+            code: "BALLDONTLIE";
+            /** @description The provider's display name. */
+            name: string;
+            /**
+             * Format: uri
+             * @description Where the adapter calls the provider. Taken by each task within a minute.
+             */
+            baseUrl: string;
+            /** @description The provider plan's request limit a minute, which every sync service holds its calls to. Taken by each task within a minute. */
+            requestsPerMinute: number;
+            /** @description Whether the provider's webhook notifications are taken. They are only while its signing secret is set too (webhookSecretSet). */
+            webhooksEnabled: boolean;
+            /** @description Whether the provider's webhook signing secret is set in this environment (Secrets Manager). Read only. */
+            webhookSecretSet: boolean;
+            /** @description How often a notified event's scores are polled anyway while it is in play, in minutes. */
+            webhookPollMinutes: number;
+            /** @description How often a notified event played in rounds is polled while a round is under way, in minutes. */
+            webhookRoundPollMinutes: number;
+            /** @description Whether the provider plan includes player box scores. */
+            hasPlayerStats: boolean;
+            /** @description Whether the provider is used at all. A change takes effect when the server tasks next start. */
+            isEnabled: boolean;
+            /** @description The provider's own leagues, by code. */
+            leagues: {
+                /**
+                 * Format: uuid
+                 * @description The provider league.
+                 */
+                id: string;
+                /** @description The provider's own code for the league, as its API names it, e.g. "nfl". */
+                code: string;
+                /** @description The provider's own name for the league. */
+                name: string;
+                /**
+                 * @description The sport the league plays.
+                 * @enum {string}
+                 */
+                sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
+                /**
+                 * @description Which of the provider's webhook events the league sends for its games.
+                 * @enum {string}
+                 */
+                webhookEventSet: "GAME_PERIODS" | "GAME_HALVES" | "GOLF_ROUNDS";
+                /** @description How long a game may go between two of its notifications in normal play, in minutes; past it the live-score sweep warns that the webhook may have stopped. */
+                quietAfterMinutes: number;
+                /** @description How long one of its games usually takes from its scheduled start, in minutes: a start plus this is when a game with no scheduled end should have ended, for the overdue results check. */
+                typicalGameMinutes: number;
+                /** @description Whether the provider's adapter reads the league. A change takes effect when the server tasks next start. */
+                isEnabled: boolean;
+            }[];
+        };
+        /** @description A sports-data provider with its health from its sync runs, and its settings. */
+        ProviderSummaryDto: {
+            /** @description The id the provider's events carry as their providerId. */
+            providerId: string;
+            /** @description Provider display name. */
+            providerName: string;
+            /**
+             * @description Health from the provider's sync runs submitted in the last hour (#1999): HEALTHY when none failed, DOWN when all did, DEGRADED when some did; null when none finished. No route calls the provider live.
+             * @enum {string|null}
+             */
+            status: "HEALTHY" | "DEGRADED" | "DOWN" | null;
+            /** @description The share of the provider's sync runs of the last hour that failed, 0 to 1; null when none finished. */
+            errorRate: number | null;
+            /**
+             * Format: date-time
+             * @description When one of the provider's events last changed; null when none is known.
+             */
+            lastEventAt: string | null;
+            /** @description The provider's events that are scheduled or in progress. */
+            activeEventCount: number;
+            /** @description The request rate core-api holds its calls to the provider to, a minute: its Provider row's requestsPerMinute. Null when the provider is not paced. */
+            requestsPerMinute: number | null;
+            /** @description True when the provider's webhooks are on: switched on for it and its signing secret is set, so its notifications are accepted. */
+            webhooksEnabled: boolean;
+            /** @description The active sport leagues whose selected provider mapping is to one of this provider's leagues. */
+            syncedSportLeagueCount: number;
+            /** @description Background jobs for this provider whose latest try hit its rate limit in the last 24 hours: ended FAILED on it, or waiting to retry after it. A job belongs to the provider syncing its sport league, or the provider its event is linked to. */
+            rateLimitedJobsLast24h: number;
+            /** @description The provider's row and leagues, which the Providers page edits; null for a provider running without a Provider row. */
+            settings: {
+                /**
+                 * Format: uuid
+                 * @description The Provider row.
+                 */
+                id: string;
+                /**
+                 * @description Which provider the row is; it picks the adapter.
+                 * @enum {string}
+                 */
+                code: "BALLDONTLIE";
+                /** @description The provider's display name. */
+                name: string;
+                /**
+                 * Format: uri
+                 * @description Where the adapter calls the provider. Taken by each task within a minute.
+                 */
+                baseUrl: string;
+                /** @description The provider plan's request limit a minute, which every sync service holds its calls to. Taken by each task within a minute. */
+                requestsPerMinute: number;
+                /** @description Whether the provider's webhook notifications are taken. They are only while its signing secret is set too (webhookSecretSet). */
+                webhooksEnabled: boolean;
+                /** @description Whether the provider's webhook signing secret is set in this environment (Secrets Manager). Read only. */
+                webhookSecretSet: boolean;
+                /** @description How often a notified event's scores are polled anyway while it is in play, in minutes. */
+                webhookPollMinutes: number;
+                /** @description How often a notified event played in rounds is polled while a round is under way, in minutes. */
+                webhookRoundPollMinutes: number;
+                /** @description Whether the provider plan includes player box scores. */
+                hasPlayerStats: boolean;
+                /** @description Whether the provider is used at all. A change takes effect when the server tasks next start. */
+                isEnabled: boolean;
+                /** @description The provider's own leagues, by code. */
+                leagues: {
+                    /**
+                     * Format: uuid
+                     * @description The provider league.
+                     */
+                    id: string;
+                    /** @description The provider's own code for the league, as its API names it, e.g. "nfl". */
+                    code: string;
+                    /** @description The provider's own name for the league. */
+                    name: string;
+                    /**
+                     * @description The sport the league plays.
+                     * @enum {string}
+                     */
+                    sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
+                    /**
+                     * @description Which of the provider's webhook events the league sends for its games.
+                     * @enum {string}
+                     */
+                    webhookEventSet: "GAME_PERIODS" | "GAME_HALVES" | "GOLF_ROUNDS";
+                    /** @description How long a game may go between two of its notifications in normal play, in minutes; past it the live-score sweep warns that the webhook may have stopped. */
+                    quietAfterMinutes: number;
+                    /** @description How long one of its games usually takes from its scheduled start, in minutes: a start plus this is when a game with no scheduled end should have ended, for the overdue results check. */
+                    typicalGameMinutes: number;
+                    /** @description Whether the provider's adapter reads the league. A change takes effect when the server tasks next start. */
+                    isEnabled: boolean;
+                }[];
+            } | null;
+        };
+        /** @description Changes to a provider's settings; omitted fields are left alone. */
+        UpdateProviderRequest: {
+            /**
+             * Format: uri
+             * @description An https URL.
+             */
+            baseUrl?: string;
+            requestsPerMinute?: number;
+            /** @description true is refused with 422 PROVIDER_WEBHOOK_SECRET_MISSING while the provider's signing secret is not set in this environment. */
+            webhooksEnabled?: boolean;
+            webhookPollMinutes?: number;
+            webhookRoundPollMinutes?: number;
+            hasPlayerStats?: boolean;
+            isEnabled?: boolean;
+        };
+        /** @description A provider's settings as saved. */
+        ProviderSettingsResponse: {
+            /** @description A data provider's settings (#1997): its Provider row and its leagues. The API key and webhook secret are not here: they stay in Secrets Manager. */
+            provider: {
+                /**
+                 * Format: uuid
+                 * @description The Provider row.
+                 */
+                id: string;
+                /**
+                 * @description Which provider the row is; it picks the adapter.
+                 * @enum {string}
+                 */
+                code: "BALLDONTLIE";
+                /** @description The provider's display name. */
+                name: string;
+                /**
+                 * Format: uri
+                 * @description Where the adapter calls the provider. Taken by each task within a minute.
+                 */
+                baseUrl: string;
+                /** @description The provider plan's request limit a minute, which every sync service holds its calls to. Taken by each task within a minute. */
+                requestsPerMinute: number;
+                /** @description Whether the provider's webhook notifications are taken. They are only while its signing secret is set too (webhookSecretSet). */
+                webhooksEnabled: boolean;
+                /** @description Whether the provider's webhook signing secret is set in this environment (Secrets Manager). Read only. */
+                webhookSecretSet: boolean;
+                /** @description How often a notified event's scores are polled anyway while it is in play, in minutes. */
+                webhookPollMinutes: number;
+                /** @description How often a notified event played in rounds is polled while a round is under way, in minutes. */
+                webhookRoundPollMinutes: number;
+                /** @description Whether the provider plan includes player box scores. */
+                hasPlayerStats: boolean;
+                /** @description Whether the provider is used at all. A change takes effect when the server tasks next start. */
+                isEnabled: boolean;
+                /** @description The provider's own leagues, by code. */
+                leagues: {
+                    /**
+                     * Format: uuid
+                     * @description The provider league.
+                     */
+                    id: string;
+                    /** @description The provider's own code for the league, as its API names it, e.g. "nfl". */
+                    code: string;
+                    /** @description The provider's own name for the league. */
+                    name: string;
+                    /**
+                     * @description The sport the league plays.
+                     * @enum {string}
+                     */
+                    sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
+                    /**
+                     * @description Which of the provider's webhook events the league sends for its games.
+                     * @enum {string}
+                     */
+                    webhookEventSet: "GAME_PERIODS" | "GAME_HALVES" | "GOLF_ROUNDS";
+                    /** @description How long a game may go between two of its notifications in normal play, in minutes; past it the live-score sweep warns that the webhook may have stopped. */
+                    quietAfterMinutes: number;
+                    /** @description How long one of its games usually takes from its scheduled start, in minutes: a start plus this is when a game with no scheduled end should have ended, for the overdue results check. */
+                    typicalGameMinutes: number;
+                    /** @description Whether the provider's adapter reads the league. A change takes effect when the server tasks next start. */
+                    isEnabled: boolean;
+                }[];
+            };
+        };
+        /** @description Changes to one of a provider's leagues; omitted fields are left alone. */
+        UpdateProviderLeagueRequest: {
+            quietAfterMinutes?: number;
+            typicalGameMinutes?: number;
+            isEnabled?: boolean;
+        };
+        /** @description A provider league as saved. */
+        ProviderLeagueResponse: {
+            /** @description One of a provider's own leagues (#1997). */
+            league: {
+                /**
+                 * Format: uuid
+                 * @description The provider league.
+                 */
+                id: string;
+                /** @description The provider's own code for the league, as its API names it, e.g. "nfl". */
+                code: string;
+                /** @description The provider's own name for the league. */
+                name: string;
+                /**
+                 * @description The sport the league plays.
+                 * @enum {string}
+                 */
+                sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
+                /**
+                 * @description Which of the provider's webhook events the league sends for its games.
+                 * @enum {string}
+                 */
+                webhookEventSet: "GAME_PERIODS" | "GAME_HALVES" | "GOLF_ROUNDS";
+                /** @description How long a game may go between two of its notifications in normal play, in minutes; past it the live-score sweep warns that the webhook may have stopped. */
+                quietAfterMinutes: number;
+                /** @description How long one of its games usually takes from its scheduled start, in minutes: a start plus this is when a game with no scheduled end should have ended, for the overdue results check. */
+                typicalGameMinutes: number;
+                /** @description Whether the provider's adapter reads the league. A change takes effect when the server tasks next start. */
+                isEnabled: boolean;
+            };
+        };
+        /** @description The ranges the API and the database hold each provider setting to (#1997), so the Providers page checks a value before it saves without holding the ranges itself. */
+        ProviderSettingRangesDto: {
+            /** @description A provider's requestsPerMinute. */
+            requestsPerMinute: {
+                /** @description The smallest value the API takes. */
+                min: number;
+                /** @description The largest value the API takes. */
+                max: number;
+            };
+            /** @description A provider's webhookPollMinutes and webhookRoundPollMinutes. */
+            pollMinutes: {
+                /** @description The smallest value the API takes. */
+                min: number;
+                /** @description The largest value the API takes. */
+                max: number;
+            };
+            /** @description A provider league's quietAfterMinutes and typicalGameMinutes. */
+            leagueMinutes: {
+                /** @description The smallest value the API takes. */
+                min: number;
+                /** @description The largest value the API takes. */
+                max: number;
+            };
+        };
+        /** @description Every registered provider, and the ranges their settings may take. */
+        ProviderListResponse: {
+            providers: {
+                /** @description The id the provider's events carry as their providerId. */
+                providerId: string;
+                /** @description Provider display name. */
+                providerName: string;
+                /**
+                 * @description Health from the provider's sync runs submitted in the last hour (#1999): HEALTHY when none failed, DOWN when all did, DEGRADED when some did; null when none finished. No route calls the provider live.
+                 * @enum {string|null}
+                 */
+                status: "HEALTHY" | "DEGRADED" | "DOWN" | null;
+                /** @description The share of the provider's sync runs of the last hour that failed, 0 to 1; null when none finished. */
+                errorRate: number | null;
+                /**
+                 * Format: date-time
+                 * @description When one of the provider's events last changed; null when none is known.
+                 */
+                lastEventAt: string | null;
+                /** @description The provider's events that are scheduled or in progress. */
+                activeEventCount: number;
+                /** @description The request rate core-api holds its calls to the provider to, a minute: its Provider row's requestsPerMinute. Null when the provider is not paced. */
+                requestsPerMinute: number | null;
+                /** @description True when the provider's webhooks are on: switched on for it and its signing secret is set, so its notifications are accepted. */
+                webhooksEnabled: boolean;
+                /** @description The active sport leagues whose selected provider mapping is to one of this provider's leagues. */
+                syncedSportLeagueCount: number;
+                /** @description Background jobs for this provider whose latest try hit its rate limit in the last 24 hours: ended FAILED on it, or waiting to retry after it. A job belongs to the provider syncing its sport league, or the provider its event is linked to. */
+                rateLimitedJobsLast24h: number;
+                /** @description The provider's row and leagues, which the Providers page edits; null for a provider running without a Provider row. */
+                settings: {
+                    /**
+                     * Format: uuid
+                     * @description The Provider row.
+                     */
+                    id: string;
+                    /**
+                     * @description Which provider the row is; it picks the adapter.
+                     * @enum {string}
+                     */
+                    code: "BALLDONTLIE";
+                    /** @description The provider's display name. */
+                    name: string;
+                    /**
+                     * Format: uri
+                     * @description Where the adapter calls the provider. Taken by each task within a minute.
+                     */
+                    baseUrl: string;
+                    /** @description The provider plan's request limit a minute, which every sync service holds its calls to. Taken by each task within a minute. */
+                    requestsPerMinute: number;
+                    /** @description Whether the provider's webhook notifications are taken. They are only while its signing secret is set too (webhookSecretSet). */
+                    webhooksEnabled: boolean;
+                    /** @description Whether the provider's webhook signing secret is set in this environment (Secrets Manager). Read only. */
+                    webhookSecretSet: boolean;
+                    /** @description How often a notified event's scores are polled anyway while it is in play, in minutes. */
+                    webhookPollMinutes: number;
+                    /** @description How often a notified event played in rounds is polled while a round is under way, in minutes. */
+                    webhookRoundPollMinutes: number;
+                    /** @description Whether the provider plan includes player box scores. */
+                    hasPlayerStats: boolean;
+                    /** @description Whether the provider is used at all. A change takes effect when the server tasks next start. */
+                    isEnabled: boolean;
+                    /** @description The provider's own leagues, by code. */
+                    leagues: {
+                        /**
+                         * Format: uuid
+                         * @description The provider league.
+                         */
+                        id: string;
+                        /** @description The provider's own code for the league, as its API names it, e.g. "nfl". */
+                        code: string;
+                        /** @description The provider's own name for the league. */
+                        name: string;
+                        /**
+                         * @description The sport the league plays.
+                         * @enum {string}
+                         */
+                        sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
+                        /**
+                         * @description Which of the provider's webhook events the league sends for its games.
+                         * @enum {string}
+                         */
+                        webhookEventSet: "GAME_PERIODS" | "GAME_HALVES" | "GOLF_ROUNDS";
+                        /** @description How long a game may go between two of its notifications in normal play, in minutes; past it the live-score sweep warns that the webhook may have stopped. */
+                        quietAfterMinutes: number;
+                        /** @description How long one of its games usually takes from its scheduled start, in minutes: a start plus this is when a game with no scheduled end should have ended, for the overdue results check. */
+                        typicalGameMinutes: number;
+                        /** @description Whether the provider's adapter reads the league. A change takes effect when the server tasks next start. */
+                        isEnabled: boolean;
+                    }[];
+                } | null;
+            }[];
+            /** @description The ranges the API and the database hold each provider setting to (#1997), so the Providers page checks a value before it saves without holding the ranges itself. */
+            settingRanges: {
+                /** @description A provider's requestsPerMinute. */
+                requestsPerMinute: {
+                    /** @description The smallest value the API takes. */
+                    min: number;
+                    /** @description The largest value the API takes. */
+                    max: number;
+                };
+                /** @description A provider's webhookPollMinutes and webhookRoundPollMinutes. */
+                pollMinutes: {
+                    /** @description The smallest value the API takes. */
+                    min: number;
+                    /** @description The largest value the API takes. */
+                    max: number;
+                };
+                /** @description A provider league's quietAfterMinutes and typicalGameMinutes. */
+                leagueMinutes: {
+                    /** @description The smallest value the API takes. */
+                    min: number;
+                    /** @description The largest value the API takes. */
+                    max: number;
+                };
+            };
+        };
+        /** @description One sync against a provider: its kind, status and outcome. */
+        ProviderSyncRunDto: {
+            id: string;
+            /**
+             * Format: uuid
+             * @description The Provider the run read.
+             */
+            providerId: string;
+            /** @description That Provider's name. */
+            providerName: string;
+            /**
+             * @description The run's sport, its sport league's; null for a run with no sport league.
+             * @enum {string|null}
+             */
+            sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS" | null;
+            /** @description The provider's id for the run's event, read through sportEventId; null for a whole-sport run and for a provider event linked to no event of ours. */
+            eventId: string | null;
+            /**
+             * @description What a sync run syncs: a sport league's EVENTS, an event's FIELD, or an event's SCORES.
+             * @enum {string}
+             */
+            kind: "EVENTS" | "FIELD" | "SCORES";
+            /**
+             * @description What started a job or sync run: a SCHEDULE, the provider's WEBHOOK, a person acting through a root ADMIN route (Sync now, Release) or a league's COMMISSIONER tools, or the SYSTEM (another job, or upkeep such as a stale board's rebuild). A person's trigger is the role the route requires, not their highest role. A sync run has its job's.
+             * @enum {string}
+             */
+            trigger: "SCHEDULE" | "WEBHOOK" | "ADMIN" | "COMMISSIONER" | "SYSTEM";
+            /**
+             * Format: uuid
+             * @description The sport league an EVENTS run synced, or a FIELD or SCORES run's event's league, where known.
+             */
+            sportLeagueId: string | null;
+            /**
+             * Format: uuid
+             * @description The PoolMaster event a FIELD or SCORES run synced, where known.
+             */
+            sportEventId: string | null;
+            /**
+             * Format: uuid
+             * @description The background job that ran it (its Activity row); null when no job ran it.
+             */
+            backgroundJobId: string | null;
+            /** @enum {string} */
+            status: "SUBMITTED" | "IN_PROGRESS" | "COMPLETED" | "FAILED" | "CANCELLED";
+            /**
+             * Format: date-time
+             * @description ISO 8601 datetime string.
+             */
+            startedAt: string | null;
+            /**
+             * Format: date-time
+             * @description ISO 8601 datetime string.
+             */
+            completedAt: string | null;
+            /**
+             * Format: date-time
+             * @description When the run was submitted.
+             */
+            createdAt: string;
+            /** @description One line for the sync history: what the run did, or why it failed. */
+            summary: string;
+            /** @description The run's numeric counts by name, for diagnostics; empty until it reports any. */
+            stats: {
+                [key: string]: number;
+            };
+            /** @description The rows the run created, updated or deleted; null until it completes, and for a failed run. */
+            changedCount: number | null;
+            /** @description The errors the run hit; a FAILED run has at least one. A problem the sync found is a sync finding, not part of the run. */
+            errorCount: number;
+        };
+        /** @description One feed's sync against a provider, with its summary and its detailed diagnostics. */
+        ProviderSyncRunDetailDto: {
+            id: string;
+            /**
+             * Format: uuid
+             * @description The Provider the run read.
+             */
+            providerId: string;
+            /** @description That Provider's name. */
+            providerName: string;
+            /**
+             * @description The run's sport, its sport league's; null for a run with no sport league.
+             * @enum {string|null}
+             */
+            sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS" | null;
+            /** @description The provider's id for the run's event, read through sportEventId; null for a whole-sport run and for a provider event linked to no event of ours. */
+            eventId: string | null;
+            /**
+             * @description What a sync run syncs: a sport league's EVENTS, an event's FIELD, or an event's SCORES.
+             * @enum {string}
+             */
+            kind: "EVENTS" | "FIELD" | "SCORES";
+            /**
+             * @description What started a job or sync run: a SCHEDULE, the provider's WEBHOOK, a person acting through a root ADMIN route (Sync now, Release) or a league's COMMISSIONER tools, or the SYSTEM (another job, or upkeep such as a stale board's rebuild). A person's trigger is the role the route requires, not their highest role. A sync run has its job's.
+             * @enum {string}
+             */
+            trigger: "SCHEDULE" | "WEBHOOK" | "ADMIN" | "COMMISSIONER" | "SYSTEM";
+            /**
+             * Format: uuid
+             * @description The sport league an EVENTS run synced, or a FIELD or SCORES run's event's league, where known.
+             */
+            sportLeagueId: string | null;
+            /**
+             * Format: uuid
+             * @description The PoolMaster event a FIELD or SCORES run synced, where known.
+             */
+            sportEventId: string | null;
+            /**
+             * Format: uuid
+             * @description The background job that ran it (its Activity row); null when no job ran it.
+             */
+            backgroundJobId: string | null;
+            /** @enum {string} */
+            status: "SUBMITTED" | "IN_PROGRESS" | "COMPLETED" | "FAILED" | "CANCELLED";
+            /**
+             * Format: date-time
+             * @description ISO 8601 datetime string.
+             */
+            startedAt: string | null;
+            /**
+             * Format: date-time
+             * @description ISO 8601 datetime string.
+             */
+            completedAt: string | null;
+            /**
+             * Format: date-time
+             * @description When the run was submitted.
+             */
+            createdAt: string;
+            /** @description One line for the sync history: what the run did, or why it failed. */
+            summary: string;
+            /** @description The run's numeric counts by name, for diagnostics; empty until it reports any. */
+            stats: {
+                [key: string]: number;
+            };
+            /** @description The rows the run created, updated or deleted; null until it completes, and for a failed run. */
+            changedCount: number | null;
+            /** @description The errors the run hit; a FAILED run has at least one. A problem the sync found is a sync finding, not part of the run. */
+            errorCount: number;
+            /** @description The run's detailed diagnostics; null before the run starts and once they are cleared, 30 days after submission. */
+            details: ({
+                /** @description Raw/debug provider payload captured for this run. */
+                providerPayload?: {
+                    /** @description Whether raw provider response JSON was captured for this run. */
+                    rawCaptured: boolean;
+                    /** @description Whether the captured raw provider payload was truncated before storage. */
+                    rawTruncated: boolean;
+                    /** @description Raw provider response JSON retained for debugging when capture is available. */
+                    raw?: unknown;
+                } & {
+                    [key: string]: unknown;
+                };
+                /** @description Serialized ingestion job details after an ingestion job is available. */
+                jobPayload?: {
+                    /** @description Internal ingestion job type that executed this sync feed. */
+                    jobType: string;
+                    /** @description Provider that executed the ingestion job. */
+                    providerId: string;
+                    /** @enum {string} */
+                    sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
+                    /** @description External event id for event-scoped jobs, when applicable. */
+                    eventExternalId?: string;
+                    /**
+                     * @description Internal ingestion job status.
+                     * @enum {string}
+                     */
+                    status: "PENDING" | "RUNNING" | "COMPLETED" | "FAILED";
+                    /**
+                     * Format: date-time
+                     * @description When the ingestion job started.
+                     */
+                    startedAt?: string;
+                    /**
+                     * Format: date-time
+                     * @description When the ingestion job completed.
+                     */
+                    completedAt?: string;
+                    /** @description Canonical records processed by the ingestion job. */
+                    recordsProcessed: number;
+                    /** @description Error count captured by the ingestion job. */
+                    errors: number;
+                    /** @description Ingestion error-log entries for root-admin investigation. */
+                    errorLog: {
+                        /** @description Failure message the ingestion job recorded. */
+                        error: string;
+                        /**
+                         * Format: date-time
+                         * @description When the failure was recorded.
+                         */
+                        at: string;
+                    }[];
+                };
+                /** @description Normalized write-effect diagnostics for PoolMaster writes: every row counted, changed rows kept. */
+                writeDiagnostics?: {
+                    /** @description Aggregate normalized write-effect counts for a provider sync run. */
+                    summary: {
+                        total: number;
+                        unchanged: number;
+                        created: number;
+                        updated: number;
+                        deleted: number;
+                    };
+                    rows: {
+                        /** @description Stable row id for this normalized write diagnostic row. */
+                        id: string;
+                        /** @description Normalized PoolMaster entity type represented by this row. */
+                        entityType: string;
+                        /**
+                         * @description Write effect for the normalized row.
+                         * @enum {string}
+                         */
+                        disposition: "UNCHANGED" | "CREATED" | "UPDATED" | "DELETED";
+                        /** @description Provider id associated with this row, when applicable. */
+                        providerId?: string;
+                        /** @description Provider external id associated with this row, when applicable. */
+                        externalId?: string;
+                        /** @description Provider participant id associated with this row, when applicable. */
+                        participantExternalId?: string;
+                        /** @description PoolMaster internal id associated with this row, when known. */
+                        internalId?: string;
+                        /** @description Display name for the row, when known. */
+                        name?: string;
+                        /** @description Normalized before-state of the entity `entityType` names, for UPDATED or DELETED rows; shaped by that entity and shown only as a diff. */
+                        before?: {
+                            [key: string]: unknown;
+                        };
+                        /** @description Normalized after-state of the entity `entityType` names, for CREATED or UPDATED rows; shaped by that entity and shown only as a diff. */
+                        after?: {
+                            [key: string]: unknown;
+                        };
+                    }[];
+                };
+                /** @description Present when the run failed unexpectedly. */
+                failurePayload?: {
+                    /** @description The error that failed the run. */
+                    error: {
+                        /** @description The error's class name, when it was an Error. */
+                        name?: string;
+                        message: string;
+                    };
+                };
+            } & {
+                [key: string]: unknown;
+            }) | null;
+        };
+        /** @description Filters over the sync-run history. A submission-time window bounds it; nothing pages it. */
+        ProviderSyncRunListQuery: {
+            /**
+             * Format: uuid
+             * @description Only the runs of this Provider.
+             */
+            providerId?: string;
+            /**
+             * @description Only the runs of this sport's sport leagues. A run with no sport league is in no sport.
+             * @enum {string}
+             */
+            sport?: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
+            /** @enum {string} */
+            status?: "SUBMITTED" | "IN_PROGRESS" | "COMPLETED" | "FAILED" | "CANCELLED";
+            /**
+             * Format: date-time
+             * @description Earliest submission time to include. Defaults to 6 hours before `to`.
+             */
+            from?: string;
+            /**
+             * Format: date-time
+             * @description Latest submission time to include. Defaults to now.
+             */
+            to?: string;
+        };
+        /** @description Sync runs submitted inside the requested window, newest submission first, each with its summary only. */
+        ProviderSyncRunListResponse: {
+            syncRuns: {
+                id: string;
+                /**
+                 * Format: uuid
+                 * @description The Provider the run read.
+                 */
+                providerId: string;
+                /** @description That Provider's name. */
+                providerName: string;
+                /**
+                 * @description The run's sport, its sport league's; null for a run with no sport league.
+                 * @enum {string|null}
+                 */
+                sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS" | null;
+                /** @description The provider's id for the run's event, read through sportEventId; null for a whole-sport run and for a provider event linked to no event of ours. */
+                eventId: string | null;
+                /**
+                 * @description What a sync run syncs: a sport league's EVENTS, an event's FIELD, or an event's SCORES.
+                 * @enum {string}
+                 */
+                kind: "EVENTS" | "FIELD" | "SCORES";
+                /**
+                 * @description What started a job or sync run: a SCHEDULE, the provider's WEBHOOK, a person acting through a root ADMIN route (Sync now, Release) or a league's COMMISSIONER tools, or the SYSTEM (another job, or upkeep such as a stale board's rebuild). A person's trigger is the role the route requires, not their highest role. A sync run has its job's.
+                 * @enum {string}
+                 */
+                trigger: "SCHEDULE" | "WEBHOOK" | "ADMIN" | "COMMISSIONER" | "SYSTEM";
+                /**
+                 * Format: uuid
+                 * @description The sport league an EVENTS run synced, or a FIELD or SCORES run's event's league, where known.
+                 */
+                sportLeagueId: string | null;
+                /**
+                 * Format: uuid
+                 * @description The PoolMaster event a FIELD or SCORES run synced, where known.
+                 */
+                sportEventId: string | null;
+                /**
+                 * Format: uuid
+                 * @description The background job that ran it (its Activity row); null when no job ran it.
+                 */
+                backgroundJobId: string | null;
+                /** @enum {string} */
+                status: "SUBMITTED" | "IN_PROGRESS" | "COMPLETED" | "FAILED" | "CANCELLED";
+                /**
+                 * Format: date-time
+                 * @description ISO 8601 datetime string.
+                 */
+                startedAt: string | null;
+                /**
+                 * Format: date-time
+                 * @description ISO 8601 datetime string.
+                 */
+                completedAt: string | null;
+                /**
+                 * Format: date-time
+                 * @description When the run was submitted.
+                 */
+                createdAt: string;
+                /** @description One line for the sync history: what the run did, or why it failed. */
+                summary: string;
+                /** @description The run's numeric counts by name, for diagnostics; empty until it reports any. */
+                stats: {
+                    [key: string]: number;
+                };
+                /** @description The rows the run created, updated or deleted; null until it completes, and for a failed run. */
+                changedCount: number | null;
+                /** @description The errors the run hit; a FAILED run has at least one. A problem the sync found is a sync finding, not part of the run. */
+                errorCount: number;
+            }[];
+        };
+        /** @description A manual sync submission. The runs execute asynchronously after the request is accepted. */
+        ProviderManualSyncSubmissionResponse: {
+            /** @enum {string} */
+            sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
+            /** @description Provider event identifier the submitted runs sync. */
+            eventId: string;
+            /** @description The sync kinds the submission runs, each once. */
+            requestedKinds: ("FIELD" | "SCORES")[];
+            /**
+             * Format: date-time
+             * @description ISO 8601 datetime string.
+             */
+            submittedAt: string;
+            syncRuns: {
+                id: string;
+                /**
+                 * Format: uuid
+                 * @description The Provider the run read.
+                 */
+                providerId: string;
+                /** @description That Provider's name. */
+                providerName: string;
+                /**
+                 * @description The run's sport, its sport league's; null for a run with no sport league.
+                 * @enum {string|null}
+                 */
+                sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS" | null;
+                /** @description The provider's id for the run's event, read through sportEventId; null for a whole-sport run and for a provider event linked to no event of ours. */
+                eventId: string | null;
+                /**
+                 * @description What a sync run syncs: a sport league's EVENTS, an event's FIELD, or an event's SCORES.
+                 * @enum {string}
+                 */
+                kind: "EVENTS" | "FIELD" | "SCORES";
+                /**
+                 * @description What started a job or sync run: a SCHEDULE, the provider's WEBHOOK, a person acting through a root ADMIN route (Sync now, Release) or a league's COMMISSIONER tools, or the SYSTEM (another job, or upkeep such as a stale board's rebuild). A person's trigger is the role the route requires, not their highest role. A sync run has its job's.
+                 * @enum {string}
+                 */
+                trigger: "SCHEDULE" | "WEBHOOK" | "ADMIN" | "COMMISSIONER" | "SYSTEM";
+                /**
+                 * Format: uuid
+                 * @description The sport league an EVENTS run synced, or a FIELD or SCORES run's event's league, where known.
+                 */
+                sportLeagueId: string | null;
+                /**
+                 * Format: uuid
+                 * @description The PoolMaster event a FIELD or SCORES run synced, where known.
+                 */
+                sportEventId: string | null;
+                /**
+                 * Format: uuid
+                 * @description The background job that ran it (its Activity row); null when no job ran it.
+                 */
+                backgroundJobId: string | null;
+                /** @enum {string} */
+                status: "SUBMITTED" | "IN_PROGRESS" | "COMPLETED" | "FAILED" | "CANCELLED";
+                /**
+                 * Format: date-time
+                 * @description ISO 8601 datetime string.
+                 */
+                startedAt: string | null;
+                /**
+                 * Format: date-time
+                 * @description ISO 8601 datetime string.
+                 */
+                completedAt: string | null;
+                /**
+                 * Format: date-time
+                 * @description When the run was submitted.
+                 */
+                createdAt: string;
+                /** @description One line for the sync history: what the run did, or why it failed. */
+                summary: string;
+                /** @description The run's numeric counts by name, for diagnostics; empty until it reports any. */
+                stats: {
+                    [key: string]: number;
+                };
+                /** @description The rows the run created, updated or deleted; null until it completes, and for a failed run. */
+                changedCount: number | null;
+                /** @description The errors the run hit; a FAILED run has at least one. A problem the sync found is a sync finding, not part of the run. */
+                errorCount: number;
+            }[];
+        };
+        /** @description A root admin's Sync now on a sport league's events. */
+        LeagueEventsSyncRequest: {
+            /**
+             * Format: uuid
+             * @description The one Season to sync (SportLeagueSeasonDto); omitted, the league's current Season and every later one, as the schedule syncs. 404 SPORT_LEAGUE_SEASON_NOT_FOUND for one that is not the league's.
+             */
+            sportLeagueSeasonId?: string;
+        };
         /** @description A provider's identifier for a participant — how synced data finds them. */
         ParticipantProviderMappingDto: {
             /** Format: uuid */
@@ -13667,6 +14544,8 @@ export interface components {
             } | null;
             /** @description Statuses the event may move to next, from the declared transition map. (Admin-only: operational detail no member surface reads.) */
             allowedTransitions: ("DRAFT" | "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED")[];
+            /** @description The sync kinds a root admin can run on the event now (#2234): its FIELD while it is scheduled, in play or completed, and its SCORES while it is in play. Empty for an event its league's provider has no id for, such as a test event. (Admin-only: operational detail no member surface reads.) */
+            syncKinds: ("FIELD" | "SCORES")[];
             /**
              * Format: date-time
              * @description When the event row was created.
@@ -14021,6 +14900,8 @@ export interface components {
                 } | null;
                 /** @description Statuses the event may move to next, from the declared transition map. (Admin-only: operational detail no member surface reads.) */
                 allowedTransitions: ("DRAFT" | "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED")[];
+                /** @description The sync kinds a root admin can run on the event now (#2234): its FIELD while it is scheduled, in play or completed, and its SCORES while it is in play. Empty for an event its league's provider has no id for, such as a test event. (Admin-only: operational detail no member surface reads.) */
+                syncKinds: ("FIELD" | "SCORES")[];
                 /**
                  * Format: date-time
                  * @description When the event row was created.
@@ -14354,6 +15235,8 @@ export interface components {
                 } | null;
                 /** @description Statuses the event may move to next, from the declared transition map. (Admin-only: operational detail no member surface reads.) */
                 allowedTransitions: ("DRAFT" | "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED")[];
+                /** @description The sync kinds a root admin can run on the event now (#2234): its FIELD while it is scheduled, in play or completed, and its SCORES while it is in play. Empty for an event its league's provider has no id for, such as a test event. (Admin-only: operational detail no member surface reads.) */
+                syncKinds: ("FIELD" | "SCORES")[];
                 /**
                  * Format: date-time
                  * @description When the event row was created.
@@ -25853,883 +26736,6 @@ export interface components {
                     }[];
                 }[];
             }[];
-        };
-        /** @description A manual event sync request. */
-        EventSyncRequest: {
-            /** @description The sync kinds to run for the event, each once. */
-            kinds: ("FIELD" | "SCORES")[];
-        };
-        /** @description One of a provider's own leagues (#1997). */
-        ProviderLeagueDto: {
-            /**
-             * Format: uuid
-             * @description The provider league.
-             */
-            id: string;
-            /** @description The provider's own code for the league, as its API names it, e.g. "nfl". */
-            code: string;
-            /** @description The provider's own name for the league. */
-            name: string;
-            /**
-             * @description The sport the league plays.
-             * @enum {string}
-             */
-            sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
-            /**
-             * @description Which of the provider's webhook events the league sends for its games.
-             * @enum {string}
-             */
-            webhookEventSet: "GAME_PERIODS" | "GAME_HALVES" | "GOLF_ROUNDS";
-            /** @description How long a game may go between two of its notifications in normal play, in minutes; past it the live-score sweep warns that the webhook may have stopped. */
-            quietAfterMinutes: number;
-            /** @description How long one of its games usually takes from its scheduled start, in minutes: a start plus this is when a game with no scheduled end should have ended, for the overdue results check. */
-            typicalGameMinutes: number;
-            /** @description Whether the provider's adapter reads the league. A change takes effect when the server tasks next start. */
-            isEnabled: boolean;
-        };
-        /** @description A data provider's settings (#1997): its Provider row and its leagues. The API key and webhook secret are not here: they stay in Secrets Manager. */
-        ProviderSettingsDto: {
-            /**
-             * Format: uuid
-             * @description The Provider row.
-             */
-            id: string;
-            /**
-             * @description Which provider the row is; it picks the adapter.
-             * @enum {string}
-             */
-            code: "BALLDONTLIE";
-            /** @description The provider's display name. */
-            name: string;
-            /**
-             * Format: uri
-             * @description Where the adapter calls the provider. Taken by each task within a minute.
-             */
-            baseUrl: string;
-            /** @description The provider plan's request limit a minute, which every sync service holds its calls to. Taken by each task within a minute. */
-            requestsPerMinute: number;
-            /** @description Whether the provider's webhook notifications are taken. They are only while its signing secret is set too (webhookSecretSet). */
-            webhooksEnabled: boolean;
-            /** @description Whether the provider's webhook signing secret is set in this environment (Secrets Manager). Read only. */
-            webhookSecretSet: boolean;
-            /** @description How often a notified event's scores are polled anyway while it is in play, in minutes. */
-            webhookPollMinutes: number;
-            /** @description How often a notified event played in rounds is polled while a round is under way, in minutes. */
-            webhookRoundPollMinutes: number;
-            /** @description Whether the provider plan includes player box scores. */
-            hasPlayerStats: boolean;
-            /** @description Whether the provider is used at all. A change takes effect when the server tasks next start. */
-            isEnabled: boolean;
-            /** @description The provider's own leagues, by code. */
-            leagues: {
-                /**
-                 * Format: uuid
-                 * @description The provider league.
-                 */
-                id: string;
-                /** @description The provider's own code for the league, as its API names it, e.g. "nfl". */
-                code: string;
-                /** @description The provider's own name for the league. */
-                name: string;
-                /**
-                 * @description The sport the league plays.
-                 * @enum {string}
-                 */
-                sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
-                /**
-                 * @description Which of the provider's webhook events the league sends for its games.
-                 * @enum {string}
-                 */
-                webhookEventSet: "GAME_PERIODS" | "GAME_HALVES" | "GOLF_ROUNDS";
-                /** @description How long a game may go between two of its notifications in normal play, in minutes; past it the live-score sweep warns that the webhook may have stopped. */
-                quietAfterMinutes: number;
-                /** @description How long one of its games usually takes from its scheduled start, in minutes: a start plus this is when a game with no scheduled end should have ended, for the overdue results check. */
-                typicalGameMinutes: number;
-                /** @description Whether the provider's adapter reads the league. A change takes effect when the server tasks next start. */
-                isEnabled: boolean;
-            }[];
-        };
-        /** @description A sports-data provider with its health from its sync runs, and its settings. */
-        ProviderSummaryDto: {
-            /** @description The id the provider's events carry as their providerId. */
-            providerId: string;
-            /** @description Provider display name. */
-            providerName: string;
-            /**
-             * @description Health from the provider's sync runs submitted in the last hour (#1999): HEALTHY when none failed, DOWN when all did, DEGRADED when some did; null when none finished. No route calls the provider live.
-             * @enum {string|null}
-             */
-            status: "HEALTHY" | "DEGRADED" | "DOWN" | null;
-            /** @description The share of the provider's sync runs of the last hour that failed, 0 to 1; null when none finished. */
-            errorRate: number | null;
-            /**
-             * Format: date-time
-             * @description When one of the provider's events last changed; null when none is known.
-             */
-            lastEventAt: string | null;
-            /** @description The provider's events that are scheduled or in progress. */
-            activeEventCount: number;
-            /** @description The request rate core-api holds its calls to the provider to, a minute: its Provider row's requestsPerMinute. Null when the provider is not paced. */
-            requestsPerMinute: number | null;
-            /** @description True when the provider's webhooks are on: switched on for it and its signing secret is set, so its notifications are accepted. */
-            webhooksEnabled: boolean;
-            /** @description The active sport leagues whose selected provider mapping is to one of this provider's leagues. */
-            syncedSportLeagueCount: number;
-            /** @description Background jobs for this provider whose latest try hit its rate limit in the last 24 hours: ended FAILED on it, or waiting to retry after it. A job belongs to the provider syncing its sport league, or the provider its event is linked to. */
-            rateLimitedJobsLast24h: number;
-            /** @description The provider's row and leagues, which the Providers page edits; null for a provider running without a Provider row. */
-            settings: {
-                /**
-                 * Format: uuid
-                 * @description The Provider row.
-                 */
-                id: string;
-                /**
-                 * @description Which provider the row is; it picks the adapter.
-                 * @enum {string}
-                 */
-                code: "BALLDONTLIE";
-                /** @description The provider's display name. */
-                name: string;
-                /**
-                 * Format: uri
-                 * @description Where the adapter calls the provider. Taken by each task within a minute.
-                 */
-                baseUrl: string;
-                /** @description The provider plan's request limit a minute, which every sync service holds its calls to. Taken by each task within a minute. */
-                requestsPerMinute: number;
-                /** @description Whether the provider's webhook notifications are taken. They are only while its signing secret is set too (webhookSecretSet). */
-                webhooksEnabled: boolean;
-                /** @description Whether the provider's webhook signing secret is set in this environment (Secrets Manager). Read only. */
-                webhookSecretSet: boolean;
-                /** @description How often a notified event's scores are polled anyway while it is in play, in minutes. */
-                webhookPollMinutes: number;
-                /** @description How often a notified event played in rounds is polled while a round is under way, in minutes. */
-                webhookRoundPollMinutes: number;
-                /** @description Whether the provider plan includes player box scores. */
-                hasPlayerStats: boolean;
-                /** @description Whether the provider is used at all. A change takes effect when the server tasks next start. */
-                isEnabled: boolean;
-                /** @description The provider's own leagues, by code. */
-                leagues: {
-                    /**
-                     * Format: uuid
-                     * @description The provider league.
-                     */
-                    id: string;
-                    /** @description The provider's own code for the league, as its API names it, e.g. "nfl". */
-                    code: string;
-                    /** @description The provider's own name for the league. */
-                    name: string;
-                    /**
-                     * @description The sport the league plays.
-                     * @enum {string}
-                     */
-                    sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
-                    /**
-                     * @description Which of the provider's webhook events the league sends for its games.
-                     * @enum {string}
-                     */
-                    webhookEventSet: "GAME_PERIODS" | "GAME_HALVES" | "GOLF_ROUNDS";
-                    /** @description How long a game may go between two of its notifications in normal play, in minutes; past it the live-score sweep warns that the webhook may have stopped. */
-                    quietAfterMinutes: number;
-                    /** @description How long one of its games usually takes from its scheduled start, in minutes: a start plus this is when a game with no scheduled end should have ended, for the overdue results check. */
-                    typicalGameMinutes: number;
-                    /** @description Whether the provider's adapter reads the league. A change takes effect when the server tasks next start. */
-                    isEnabled: boolean;
-                }[];
-            } | null;
-        };
-        /** @description Changes to a provider's settings; omitted fields are left alone. */
-        UpdateProviderRequest: {
-            /**
-             * Format: uri
-             * @description An https URL.
-             */
-            baseUrl?: string;
-            requestsPerMinute?: number;
-            /** @description true is refused with 422 PROVIDER_WEBHOOK_SECRET_MISSING while the provider's signing secret is not set in this environment. */
-            webhooksEnabled?: boolean;
-            webhookPollMinutes?: number;
-            webhookRoundPollMinutes?: number;
-            hasPlayerStats?: boolean;
-            isEnabled?: boolean;
-        };
-        /** @description A provider's settings as saved. */
-        ProviderSettingsResponse: {
-            /** @description A data provider's settings (#1997): its Provider row and its leagues. The API key and webhook secret are not here: they stay in Secrets Manager. */
-            provider: {
-                /**
-                 * Format: uuid
-                 * @description The Provider row.
-                 */
-                id: string;
-                /**
-                 * @description Which provider the row is; it picks the adapter.
-                 * @enum {string}
-                 */
-                code: "BALLDONTLIE";
-                /** @description The provider's display name. */
-                name: string;
-                /**
-                 * Format: uri
-                 * @description Where the adapter calls the provider. Taken by each task within a minute.
-                 */
-                baseUrl: string;
-                /** @description The provider plan's request limit a minute, which every sync service holds its calls to. Taken by each task within a minute. */
-                requestsPerMinute: number;
-                /** @description Whether the provider's webhook notifications are taken. They are only while its signing secret is set too (webhookSecretSet). */
-                webhooksEnabled: boolean;
-                /** @description Whether the provider's webhook signing secret is set in this environment (Secrets Manager). Read only. */
-                webhookSecretSet: boolean;
-                /** @description How often a notified event's scores are polled anyway while it is in play, in minutes. */
-                webhookPollMinutes: number;
-                /** @description How often a notified event played in rounds is polled while a round is under way, in minutes. */
-                webhookRoundPollMinutes: number;
-                /** @description Whether the provider plan includes player box scores. */
-                hasPlayerStats: boolean;
-                /** @description Whether the provider is used at all. A change takes effect when the server tasks next start. */
-                isEnabled: boolean;
-                /** @description The provider's own leagues, by code. */
-                leagues: {
-                    /**
-                     * Format: uuid
-                     * @description The provider league.
-                     */
-                    id: string;
-                    /** @description The provider's own code for the league, as its API names it, e.g. "nfl". */
-                    code: string;
-                    /** @description The provider's own name for the league. */
-                    name: string;
-                    /**
-                     * @description The sport the league plays.
-                     * @enum {string}
-                     */
-                    sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
-                    /**
-                     * @description Which of the provider's webhook events the league sends for its games.
-                     * @enum {string}
-                     */
-                    webhookEventSet: "GAME_PERIODS" | "GAME_HALVES" | "GOLF_ROUNDS";
-                    /** @description How long a game may go between two of its notifications in normal play, in minutes; past it the live-score sweep warns that the webhook may have stopped. */
-                    quietAfterMinutes: number;
-                    /** @description How long one of its games usually takes from its scheduled start, in minutes: a start plus this is when a game with no scheduled end should have ended, for the overdue results check. */
-                    typicalGameMinutes: number;
-                    /** @description Whether the provider's adapter reads the league. A change takes effect when the server tasks next start. */
-                    isEnabled: boolean;
-                }[];
-            };
-        };
-        /** @description Changes to one of a provider's leagues; omitted fields are left alone. */
-        UpdateProviderLeagueRequest: {
-            quietAfterMinutes?: number;
-            typicalGameMinutes?: number;
-            isEnabled?: boolean;
-        };
-        /** @description A provider league as saved. */
-        ProviderLeagueResponse: {
-            /** @description One of a provider's own leagues (#1997). */
-            league: {
-                /**
-                 * Format: uuid
-                 * @description The provider league.
-                 */
-                id: string;
-                /** @description The provider's own code for the league, as its API names it, e.g. "nfl". */
-                code: string;
-                /** @description The provider's own name for the league. */
-                name: string;
-                /**
-                 * @description The sport the league plays.
-                 * @enum {string}
-                 */
-                sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
-                /**
-                 * @description Which of the provider's webhook events the league sends for its games.
-                 * @enum {string}
-                 */
-                webhookEventSet: "GAME_PERIODS" | "GAME_HALVES" | "GOLF_ROUNDS";
-                /** @description How long a game may go between two of its notifications in normal play, in minutes; past it the live-score sweep warns that the webhook may have stopped. */
-                quietAfterMinutes: number;
-                /** @description How long one of its games usually takes from its scheduled start, in minutes: a start plus this is when a game with no scheduled end should have ended, for the overdue results check. */
-                typicalGameMinutes: number;
-                /** @description Whether the provider's adapter reads the league. A change takes effect when the server tasks next start. */
-                isEnabled: boolean;
-            };
-        };
-        /** @description The ranges the API and the database hold each provider setting to (#1997), so the Providers page checks a value before it saves without holding the ranges itself. */
-        ProviderSettingRangesDto: {
-            /** @description A provider's requestsPerMinute. */
-            requestsPerMinute: {
-                /** @description The smallest value the API takes. */
-                min: number;
-                /** @description The largest value the API takes. */
-                max: number;
-            };
-            /** @description A provider's webhookPollMinutes and webhookRoundPollMinutes. */
-            pollMinutes: {
-                /** @description The smallest value the API takes. */
-                min: number;
-                /** @description The largest value the API takes. */
-                max: number;
-            };
-            /** @description A provider league's quietAfterMinutes and typicalGameMinutes. */
-            leagueMinutes: {
-                /** @description The smallest value the API takes. */
-                min: number;
-                /** @description The largest value the API takes. */
-                max: number;
-            };
-        };
-        /** @description Every registered provider, and the ranges their settings may take. */
-        ProviderListResponse: {
-            providers: {
-                /** @description The id the provider's events carry as their providerId. */
-                providerId: string;
-                /** @description Provider display name. */
-                providerName: string;
-                /**
-                 * @description Health from the provider's sync runs submitted in the last hour (#1999): HEALTHY when none failed, DOWN when all did, DEGRADED when some did; null when none finished. No route calls the provider live.
-                 * @enum {string|null}
-                 */
-                status: "HEALTHY" | "DEGRADED" | "DOWN" | null;
-                /** @description The share of the provider's sync runs of the last hour that failed, 0 to 1; null when none finished. */
-                errorRate: number | null;
-                /**
-                 * Format: date-time
-                 * @description When one of the provider's events last changed; null when none is known.
-                 */
-                lastEventAt: string | null;
-                /** @description The provider's events that are scheduled or in progress. */
-                activeEventCount: number;
-                /** @description The request rate core-api holds its calls to the provider to, a minute: its Provider row's requestsPerMinute. Null when the provider is not paced. */
-                requestsPerMinute: number | null;
-                /** @description True when the provider's webhooks are on: switched on for it and its signing secret is set, so its notifications are accepted. */
-                webhooksEnabled: boolean;
-                /** @description The active sport leagues whose selected provider mapping is to one of this provider's leagues. */
-                syncedSportLeagueCount: number;
-                /** @description Background jobs for this provider whose latest try hit its rate limit in the last 24 hours: ended FAILED on it, or waiting to retry after it. A job belongs to the provider syncing its sport league, or the provider its event is linked to. */
-                rateLimitedJobsLast24h: number;
-                /** @description The provider's row and leagues, which the Providers page edits; null for a provider running without a Provider row. */
-                settings: {
-                    /**
-                     * Format: uuid
-                     * @description The Provider row.
-                     */
-                    id: string;
-                    /**
-                     * @description Which provider the row is; it picks the adapter.
-                     * @enum {string}
-                     */
-                    code: "BALLDONTLIE";
-                    /** @description The provider's display name. */
-                    name: string;
-                    /**
-                     * Format: uri
-                     * @description Where the adapter calls the provider. Taken by each task within a minute.
-                     */
-                    baseUrl: string;
-                    /** @description The provider plan's request limit a minute, which every sync service holds its calls to. Taken by each task within a minute. */
-                    requestsPerMinute: number;
-                    /** @description Whether the provider's webhook notifications are taken. They are only while its signing secret is set too (webhookSecretSet). */
-                    webhooksEnabled: boolean;
-                    /** @description Whether the provider's webhook signing secret is set in this environment (Secrets Manager). Read only. */
-                    webhookSecretSet: boolean;
-                    /** @description How often a notified event's scores are polled anyway while it is in play, in minutes. */
-                    webhookPollMinutes: number;
-                    /** @description How often a notified event played in rounds is polled while a round is under way, in minutes. */
-                    webhookRoundPollMinutes: number;
-                    /** @description Whether the provider plan includes player box scores. */
-                    hasPlayerStats: boolean;
-                    /** @description Whether the provider is used at all. A change takes effect when the server tasks next start. */
-                    isEnabled: boolean;
-                    /** @description The provider's own leagues, by code. */
-                    leagues: {
-                        /**
-                         * Format: uuid
-                         * @description The provider league.
-                         */
-                        id: string;
-                        /** @description The provider's own code for the league, as its API names it, e.g. "nfl". */
-                        code: string;
-                        /** @description The provider's own name for the league. */
-                        name: string;
-                        /**
-                         * @description The sport the league plays.
-                         * @enum {string}
-                         */
-                        sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
-                        /**
-                         * @description Which of the provider's webhook events the league sends for its games.
-                         * @enum {string}
-                         */
-                        webhookEventSet: "GAME_PERIODS" | "GAME_HALVES" | "GOLF_ROUNDS";
-                        /** @description How long a game may go between two of its notifications in normal play, in minutes; past it the live-score sweep warns that the webhook may have stopped. */
-                        quietAfterMinutes: number;
-                        /** @description How long one of its games usually takes from its scheduled start, in minutes: a start plus this is when a game with no scheduled end should have ended, for the overdue results check. */
-                        typicalGameMinutes: number;
-                        /** @description Whether the provider's adapter reads the league. A change takes effect when the server tasks next start. */
-                        isEnabled: boolean;
-                    }[];
-                } | null;
-            }[];
-            /** @description The ranges the API and the database hold each provider setting to (#1997), so the Providers page checks a value before it saves without holding the ranges itself. */
-            settingRanges: {
-                /** @description A provider's requestsPerMinute. */
-                requestsPerMinute: {
-                    /** @description The smallest value the API takes. */
-                    min: number;
-                    /** @description The largest value the API takes. */
-                    max: number;
-                };
-                /** @description A provider's webhookPollMinutes and webhookRoundPollMinutes. */
-                pollMinutes: {
-                    /** @description The smallest value the API takes. */
-                    min: number;
-                    /** @description The largest value the API takes. */
-                    max: number;
-                };
-                /** @description A provider league's quietAfterMinutes and typicalGameMinutes. */
-                leagueMinutes: {
-                    /** @description The smallest value the API takes. */
-                    min: number;
-                    /** @description The largest value the API takes. */
-                    max: number;
-                };
-            };
-        };
-        /** @description One sync against a provider: its kind, status and outcome. */
-        ProviderSyncRunDto: {
-            id: string;
-            /**
-             * Format: uuid
-             * @description The Provider the run read.
-             */
-            providerId: string;
-            /** @description That Provider's name. */
-            providerName: string;
-            /**
-             * @description The run's sport, its sport league's; null for a run with no sport league.
-             * @enum {string|null}
-             */
-            sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS" | null;
-            /** @description The provider's id for the run's event, read through sportEventId; null for a whole-sport run and for a provider event linked to no event of ours. */
-            eventId: string | null;
-            /**
-             * @description What a sync run syncs: a sport league's EVENTS, an event's FIELD, or an event's SCORES.
-             * @enum {string}
-             */
-            kind: "EVENTS" | "FIELD" | "SCORES";
-            /**
-             * @description What started a job or sync run: a SCHEDULE, the provider's WEBHOOK, a person acting through a root ADMIN route (Sync now, Release) or a league's COMMISSIONER tools, or the SYSTEM (another job, or upkeep such as a stale board's rebuild). A person's trigger is the role the route requires, not their highest role. A sync run has its job's.
-             * @enum {string}
-             */
-            trigger: "SCHEDULE" | "WEBHOOK" | "ADMIN" | "COMMISSIONER" | "SYSTEM";
-            /**
-             * Format: uuid
-             * @description The sport league an EVENTS run synced, or a FIELD or SCORES run's event's league, where known.
-             */
-            sportLeagueId: string | null;
-            /**
-             * Format: uuid
-             * @description The PoolMaster event a FIELD or SCORES run synced, where known.
-             */
-            sportEventId: string | null;
-            /**
-             * Format: uuid
-             * @description The background job that ran it (its Activity row); null when no job ran it.
-             */
-            backgroundJobId: string | null;
-            /** @enum {string} */
-            status: "SUBMITTED" | "IN_PROGRESS" | "COMPLETED" | "FAILED" | "CANCELLED";
-            /**
-             * Format: date-time
-             * @description ISO 8601 datetime string.
-             */
-            startedAt: string | null;
-            /**
-             * Format: date-time
-             * @description ISO 8601 datetime string.
-             */
-            completedAt: string | null;
-            /**
-             * Format: date-time
-             * @description When the run was submitted.
-             */
-            createdAt: string;
-            /** @description One line for the sync history: what the run did, or why it failed. */
-            summary: string;
-            /** @description The run's numeric counts by name, for diagnostics; empty until it reports any. */
-            stats: {
-                [key: string]: number;
-            };
-            /** @description The rows the run created, updated or deleted; null until it completes, and for a failed run. */
-            changedCount: number | null;
-            /** @description The errors the run hit; a FAILED run has at least one. A problem the sync found is a sync finding, not part of the run. */
-            errorCount: number;
-        };
-        /** @description One feed's sync against a provider, with its summary and its detailed diagnostics. */
-        ProviderSyncRunDetailDto: {
-            id: string;
-            /**
-             * Format: uuid
-             * @description The Provider the run read.
-             */
-            providerId: string;
-            /** @description That Provider's name. */
-            providerName: string;
-            /**
-             * @description The run's sport, its sport league's; null for a run with no sport league.
-             * @enum {string|null}
-             */
-            sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS" | null;
-            /** @description The provider's id for the run's event, read through sportEventId; null for a whole-sport run and for a provider event linked to no event of ours. */
-            eventId: string | null;
-            /**
-             * @description What a sync run syncs: a sport league's EVENTS, an event's FIELD, or an event's SCORES.
-             * @enum {string}
-             */
-            kind: "EVENTS" | "FIELD" | "SCORES";
-            /**
-             * @description What started a job or sync run: a SCHEDULE, the provider's WEBHOOK, a person acting through a root ADMIN route (Sync now, Release) or a league's COMMISSIONER tools, or the SYSTEM (another job, or upkeep such as a stale board's rebuild). A person's trigger is the role the route requires, not their highest role. A sync run has its job's.
-             * @enum {string}
-             */
-            trigger: "SCHEDULE" | "WEBHOOK" | "ADMIN" | "COMMISSIONER" | "SYSTEM";
-            /**
-             * Format: uuid
-             * @description The sport league an EVENTS run synced, or a FIELD or SCORES run's event's league, where known.
-             */
-            sportLeagueId: string | null;
-            /**
-             * Format: uuid
-             * @description The PoolMaster event a FIELD or SCORES run synced, where known.
-             */
-            sportEventId: string | null;
-            /**
-             * Format: uuid
-             * @description The background job that ran it (its Activity row); null when no job ran it.
-             */
-            backgroundJobId: string | null;
-            /** @enum {string} */
-            status: "SUBMITTED" | "IN_PROGRESS" | "COMPLETED" | "FAILED" | "CANCELLED";
-            /**
-             * Format: date-time
-             * @description ISO 8601 datetime string.
-             */
-            startedAt: string | null;
-            /**
-             * Format: date-time
-             * @description ISO 8601 datetime string.
-             */
-            completedAt: string | null;
-            /**
-             * Format: date-time
-             * @description When the run was submitted.
-             */
-            createdAt: string;
-            /** @description One line for the sync history: what the run did, or why it failed. */
-            summary: string;
-            /** @description The run's numeric counts by name, for diagnostics; empty until it reports any. */
-            stats: {
-                [key: string]: number;
-            };
-            /** @description The rows the run created, updated or deleted; null until it completes, and for a failed run. */
-            changedCount: number | null;
-            /** @description The errors the run hit; a FAILED run has at least one. A problem the sync found is a sync finding, not part of the run. */
-            errorCount: number;
-            /** @description The run's detailed diagnostics; null before the run starts and once they are cleared, 30 days after submission. */
-            details: ({
-                /** @description Raw/debug provider payload captured for this run. */
-                providerPayload?: {
-                    /** @description Whether raw provider response JSON was captured for this run. */
-                    rawCaptured: boolean;
-                    /** @description Whether the captured raw provider payload was truncated before storage. */
-                    rawTruncated: boolean;
-                    /** @description Raw provider response JSON retained for debugging when capture is available. */
-                    raw?: unknown;
-                } & {
-                    [key: string]: unknown;
-                };
-                /** @description Serialized ingestion job details after an ingestion job is available. */
-                jobPayload?: {
-                    /** @description Internal ingestion job type that executed this sync feed. */
-                    jobType: string;
-                    /** @description Provider that executed the ingestion job. */
-                    providerId: string;
-                    /** @enum {string} */
-                    sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
-                    /** @description External event id for event-scoped jobs, when applicable. */
-                    eventExternalId?: string;
-                    /**
-                     * @description Internal ingestion job status.
-                     * @enum {string}
-                     */
-                    status: "PENDING" | "RUNNING" | "COMPLETED" | "FAILED";
-                    /**
-                     * Format: date-time
-                     * @description When the ingestion job started.
-                     */
-                    startedAt?: string;
-                    /**
-                     * Format: date-time
-                     * @description When the ingestion job completed.
-                     */
-                    completedAt?: string;
-                    /** @description Canonical records processed by the ingestion job. */
-                    recordsProcessed: number;
-                    /** @description Error count captured by the ingestion job. */
-                    errors: number;
-                    /** @description Ingestion error-log entries for root-admin investigation. */
-                    errorLog: {
-                        /** @description Failure message the ingestion job recorded. */
-                        error: string;
-                        /**
-                         * Format: date-time
-                         * @description When the failure was recorded.
-                         */
-                        at: string;
-                    }[];
-                };
-                /** @description Normalized write-effect diagnostics for PoolMaster writes: every row counted, changed rows kept. */
-                writeDiagnostics?: {
-                    /** @description Aggregate normalized write-effect counts for a provider sync run. */
-                    summary: {
-                        total: number;
-                        unchanged: number;
-                        created: number;
-                        updated: number;
-                        deleted: number;
-                    };
-                    rows: {
-                        /** @description Stable row id for this normalized write diagnostic row. */
-                        id: string;
-                        /** @description Normalized PoolMaster entity type represented by this row. */
-                        entityType: string;
-                        /**
-                         * @description Write effect for the normalized row.
-                         * @enum {string}
-                         */
-                        disposition: "UNCHANGED" | "CREATED" | "UPDATED" | "DELETED";
-                        /** @description Provider id associated with this row, when applicable. */
-                        providerId?: string;
-                        /** @description Provider external id associated with this row, when applicable. */
-                        externalId?: string;
-                        /** @description Provider participant id associated with this row, when applicable. */
-                        participantExternalId?: string;
-                        /** @description PoolMaster internal id associated with this row, when known. */
-                        internalId?: string;
-                        /** @description Display name for the row, when known. */
-                        name?: string;
-                        /** @description Normalized before-state of the entity `entityType` names, for UPDATED or DELETED rows; shaped by that entity and shown only as a diff. */
-                        before?: {
-                            [key: string]: unknown;
-                        };
-                        /** @description Normalized after-state of the entity `entityType` names, for CREATED or UPDATED rows; shaped by that entity and shown only as a diff. */
-                        after?: {
-                            [key: string]: unknown;
-                        };
-                    }[];
-                };
-                /** @description Present when the run failed unexpectedly. */
-                failurePayload?: {
-                    /** @description The error that failed the run. */
-                    error: {
-                        /** @description The error's class name, when it was an Error. */
-                        name?: string;
-                        message: string;
-                    };
-                };
-            } & {
-                [key: string]: unknown;
-            }) | null;
-        };
-        /** @description Filters over the sync-run history. A submission-time window bounds it; nothing pages it. */
-        ProviderSyncRunListQuery: {
-            /**
-             * Format: uuid
-             * @description Only the runs of this Provider.
-             */
-            providerId?: string;
-            /**
-             * @description Only the runs of this sport's sport leagues. A run with no sport league is in no sport.
-             * @enum {string}
-             */
-            sport?: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
-            /** @enum {string} */
-            status?: "SUBMITTED" | "IN_PROGRESS" | "COMPLETED" | "FAILED" | "CANCELLED";
-            /**
-             * Format: date-time
-             * @description Earliest submission time to include. Defaults to 6 hours before `to`.
-             */
-            from?: string;
-            /**
-             * Format: date-time
-             * @description Latest submission time to include. Defaults to now.
-             */
-            to?: string;
-        };
-        /** @description Sync runs submitted inside the requested window, newest submission first, each with its summary only. */
-        ProviderSyncRunListResponse: {
-            syncRuns: {
-                id: string;
-                /**
-                 * Format: uuid
-                 * @description The Provider the run read.
-                 */
-                providerId: string;
-                /** @description That Provider's name. */
-                providerName: string;
-                /**
-                 * @description The run's sport, its sport league's; null for a run with no sport league.
-                 * @enum {string|null}
-                 */
-                sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS" | null;
-                /** @description The provider's id for the run's event, read through sportEventId; null for a whole-sport run and for a provider event linked to no event of ours. */
-                eventId: string | null;
-                /**
-                 * @description What a sync run syncs: a sport league's EVENTS, an event's FIELD, or an event's SCORES.
-                 * @enum {string}
-                 */
-                kind: "EVENTS" | "FIELD" | "SCORES";
-                /**
-                 * @description What started a job or sync run: a SCHEDULE, the provider's WEBHOOK, a person acting through a root ADMIN route (Sync now, Release) or a league's COMMISSIONER tools, or the SYSTEM (another job, or upkeep such as a stale board's rebuild). A person's trigger is the role the route requires, not their highest role. A sync run has its job's.
-                 * @enum {string}
-                 */
-                trigger: "SCHEDULE" | "WEBHOOK" | "ADMIN" | "COMMISSIONER" | "SYSTEM";
-                /**
-                 * Format: uuid
-                 * @description The sport league an EVENTS run synced, or a FIELD or SCORES run's event's league, where known.
-                 */
-                sportLeagueId: string | null;
-                /**
-                 * Format: uuid
-                 * @description The PoolMaster event a FIELD or SCORES run synced, where known.
-                 */
-                sportEventId: string | null;
-                /**
-                 * Format: uuid
-                 * @description The background job that ran it (its Activity row); null when no job ran it.
-                 */
-                backgroundJobId: string | null;
-                /** @enum {string} */
-                status: "SUBMITTED" | "IN_PROGRESS" | "COMPLETED" | "FAILED" | "CANCELLED";
-                /**
-                 * Format: date-time
-                 * @description ISO 8601 datetime string.
-                 */
-                startedAt: string | null;
-                /**
-                 * Format: date-time
-                 * @description ISO 8601 datetime string.
-                 */
-                completedAt: string | null;
-                /**
-                 * Format: date-time
-                 * @description When the run was submitted.
-                 */
-                createdAt: string;
-                /** @description One line for the sync history: what the run did, or why it failed. */
-                summary: string;
-                /** @description The run's numeric counts by name, for diagnostics; empty until it reports any. */
-                stats: {
-                    [key: string]: number;
-                };
-                /** @description The rows the run created, updated or deleted; null until it completes, and for a failed run. */
-                changedCount: number | null;
-                /** @description The errors the run hit; a FAILED run has at least one. A problem the sync found is a sync finding, not part of the run. */
-                errorCount: number;
-            }[];
-        };
-        /** @description A manual sync submission. The runs execute asynchronously after the request is accepted. */
-        ProviderManualSyncSubmissionResponse: {
-            /** @enum {string} */
-            sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
-            /** @description Provider event identifier the submitted runs sync. */
-            eventId: string;
-            /** @description The sync kinds the submission runs, each once. */
-            requestedKinds: ("FIELD" | "SCORES")[];
-            /**
-             * Format: date-time
-             * @description ISO 8601 datetime string.
-             */
-            submittedAt: string;
-            syncRuns: {
-                id: string;
-                /**
-                 * Format: uuid
-                 * @description The Provider the run read.
-                 */
-                providerId: string;
-                /** @description That Provider's name. */
-                providerName: string;
-                /**
-                 * @description The run's sport, its sport league's; null for a run with no sport league.
-                 * @enum {string|null}
-                 */
-                sport: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS" | null;
-                /** @description The provider's id for the run's event, read through sportEventId; null for a whole-sport run and for a provider event linked to no event of ours. */
-                eventId: string | null;
-                /**
-                 * @description What a sync run syncs: a sport league's EVENTS, an event's FIELD, or an event's SCORES.
-                 * @enum {string}
-                 */
-                kind: "EVENTS" | "FIELD" | "SCORES";
-                /**
-                 * @description What started a job or sync run: a SCHEDULE, the provider's WEBHOOK, a person acting through a root ADMIN route (Sync now, Release) or a league's COMMISSIONER tools, or the SYSTEM (another job, or upkeep such as a stale board's rebuild). A person's trigger is the role the route requires, not their highest role. A sync run has its job's.
-                 * @enum {string}
-                 */
-                trigger: "SCHEDULE" | "WEBHOOK" | "ADMIN" | "COMMISSIONER" | "SYSTEM";
-                /**
-                 * Format: uuid
-                 * @description The sport league an EVENTS run synced, or a FIELD or SCORES run's event's league, where known.
-                 */
-                sportLeagueId: string | null;
-                /**
-                 * Format: uuid
-                 * @description The PoolMaster event a FIELD or SCORES run synced, where known.
-                 */
-                sportEventId: string | null;
-                /**
-                 * Format: uuid
-                 * @description The background job that ran it (its Activity row); null when no job ran it.
-                 */
-                backgroundJobId: string | null;
-                /** @enum {string} */
-                status: "SUBMITTED" | "IN_PROGRESS" | "COMPLETED" | "FAILED" | "CANCELLED";
-                /**
-                 * Format: date-time
-                 * @description ISO 8601 datetime string.
-                 */
-                startedAt: string | null;
-                /**
-                 * Format: date-time
-                 * @description ISO 8601 datetime string.
-                 */
-                completedAt: string | null;
-                /**
-                 * Format: date-time
-                 * @description When the run was submitted.
-                 */
-                createdAt: string;
-                /** @description One line for the sync history: what the run did, or why it failed. */
-                summary: string;
-                /** @description The run's numeric counts by name, for diagnostics; empty until it reports any. */
-                stats: {
-                    [key: string]: number;
-                };
-                /** @description The rows the run created, updated or deleted; null until it completes, and for a failed run. */
-                changedCount: number | null;
-                /** @description The errors the run hit; a FAILED run has at least one. A problem the sync found is a sync finding, not part of the run. */
-                errorCount: number;
-            }[];
-        };
-        /** @description A root admin's Sync now on a sport league's events. */
-        LeagueEventsSyncRequest: {
-            /**
-             * Format: uuid
-             * @description The one Season to sync (SportLeagueSeasonDto); omitted, the league's current Season and every later one, as the schedule syncs. 404 SPORT_LEAGUE_SEASON_NOT_FOUND for one that is not the league's.
-             */
-            sportLeagueSeasonId?: string;
         };
         /** @description One background job on the Activity grid. */
         ActivityJobDto: {
