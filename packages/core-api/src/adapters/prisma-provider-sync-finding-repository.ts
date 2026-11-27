@@ -53,6 +53,7 @@ export class PrismaProviderSyncFindingRepository implements ProviderSyncFindingR
         sportEventId: filter.sportEventId,
         providerId: filter.providerId,
         providerValue: providerValueWhere(filter),
+        syncKind: filter.syncKind,
       },
       data: { status: ProviderSyncFindingStatus.RESOLVED, statusChangedAt: resolvedAt, statusChangedByUserId: null },
     });
@@ -114,7 +115,7 @@ export class PrismaProviderSyncFindingRepository implements ProviderSyncFindingR
 async function raiseIn(tx: Prisma.TransactionClient, raises: readonly ProviderSyncFindingRaise[], seenAt: Date): Promise<ProviderSyncFindingOpened[]> {
   const existing = await tx.providerSyncFinding.findMany({
     where: { OR: raises.map(subjectWhere) },
-    select: { id: true, kind: true, sportLeagueId: true, sportEventId: true, providerId: true, providerValue: true, status: true },
+    select: { id: true, kind: true, sportLeagueId: true, sportEventId: true, providerId: true, providerValue: true, syncKind: true, status: true },
   });
   const existingByKey = new Map(existing.map((row) => [subjectKey(row), row]));
   const fresh = raises.filter((raise) => !existingByKey.has(subjectKey(raise)));
@@ -128,6 +129,8 @@ async function raiseIn(tx: Prisma.TransactionClient, raises: readonly ProviderSy
       providerId: raise.providerId,
       providerValue: raise.providerValue,
       providerValueName: raise.providerValueName,
+      syncKind: raise.syncKind ?? null,
+      syncRunId: raise.syncRunId ?? null,
       firstSeenAt: seenAt,
       lastSeenAt: seenAt,
       statusChangedAt: seenAt,
@@ -149,6 +152,12 @@ async function raiseIn(tx: Prisma.TransactionClient, raises: readonly ProviderSy
       where: { id: { in: ids } },
       data: { severity, lastSeenAt: seenAt, seenCount: { increment: 1 } },
     });
+  }
+  // A raise naming its run keeps it as the latest: a SYNC_FAILED finding, one run per raise.
+  for (const { raise, row } of seenAgain) {
+    if (raise.syncRunId === undefined || raise.syncRunId === null) continue;
+    // poolmaster-allow-query-in-loop: only a failed run's raise names its run, one finding per raise
+    await tx.providerSyncFinding.update({ where: { id: row.id }, data: { syncRunId: raise.syncRunId } });
   }
   const reopened = seenAgain.filter(({ row }) => row.status === ProviderSyncFindingStatus.RESOLVED);
   if (reopened.length > 0) {
@@ -177,12 +186,13 @@ function subjectWhere(subject: ProviderSyncFindingSubject): Prisma.ProviderSyncF
     sportEventId: subject.sportEventId,
     providerId: subject.providerId,
     providerValue: subject.providerValue,
+    syncKind: subject.syncKind ?? null,
   };
 }
 
 /** A subject's parts in a fixed order, to match raises against rows read back in this call. */
 function subjectKey(subject: ProviderSyncFindingSubject): string {
-  return JSON.stringify([subject.kind, subject.sportLeagueId, subject.sportEventId, subject.providerId, subject.providerValue]);
+  return JSON.stringify([subject.kind, subject.sportLeagueId, subject.sportEventId, subject.providerId, subject.providerValue, subject.syncKind ?? null]);
 }
 
 function isUniqueViolation(error: unknown): boolean {
@@ -200,6 +210,7 @@ function toFinding(row: FindingRow): ProviderSyncFinding {
     provider: row.provider,
     providerValue: row.providerValue,
     providerValueName: row.providerValueName,
+    syncKind: row.syncKind,
     waiveNote: row.waiveNote,
     firstSeenAt: row.firstSeenAt,
     lastSeenAt: row.lastSeenAt,

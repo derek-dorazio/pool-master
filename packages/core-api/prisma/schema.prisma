@@ -585,6 +585,7 @@ enum PrismaProviderSyncFindingKind {
   GAME_MOVED
   TIEBREAKER_GAME_REPLACED
   FIELD_TEAM_WITHOUT_GAME
+  SYNC_FAILED
 }
 
 /// How a sport event's latest automatic release check ended (#1847).
@@ -3266,6 +3267,8 @@ model ProviderSyncRun {
   sportLeague SportLeague? @relation(fields: [sportLeagueId], references: [id], onDelete: SetNull)
   /// The run's event (#2040); a deleted event leaves its runs, unscoped.
   sportEvent  SportEvent?  @relation(fields: [sportEventId], references: [id], onDelete: SetNull)
+  /// The SYNC_FAILED findings that name this run as their latest failure (#2092).
+  failedFindings ProviderSyncFinding[]
 
   @@index([createdAt(sort: Desc)])
   @@index([providerId, createdAt(sort: Desc)])
@@ -3295,6 +3298,10 @@ model ProviderSyncFinding {
   providerValue         String?                           @map("provider_value") @db.VarChar(255)
   /// The feed's own name for that value, when it sent one. Not part of the subject.
   providerValueName     String?                           @map("provider_value_name") @db.VarChar(255)
+  /// The sync a SYNC_FAILED finding is about (#2092). Part of the subject; null for other kinds.
+  syncKind              PrismaProviderSyncKind?           @map("sync_kind")
+  /// The latest run that raised it (a SYNC_FAILED finding's failed run). Not part of the subject.
+  syncRunId             String?                           @map("sync_run_id") @db.Uuid
   /// Why an admin waived it; required while WAIVED (a check in the migration).
   waiveNote             String?                           @map("waive_note")
   firstSeenAt           DateTime                          @map("first_seen_at") @db.Timestamptz
@@ -3310,15 +3317,17 @@ model ProviderSyncFinding {
   sportLeague     SportLeague @relation(fields: [sportLeagueId], references: [id], onDelete: Cascade)
   sportEvent      SportEvent? @relation(fields: [sportEventId], references: [id], onDelete: Cascade)
   provider        Provider?   @relation(fields: [providerId], references: [id], onDelete: Cascade)
+  syncRun         ProviderSyncRun? @relation(fields: [syncRunId], references: [id], onDelete: SetNull)
   statusChangedBy User?       @relation("SyncFindingStatusChangedBy", fields: [statusChangedByUserId], references: [id], onDelete: SetNull)
 
   /// One row per kind and subject. The migration builds it NULLS NOT DISTINCT, so a subject
   /// with no event or value still has one row; Prisma cannot say so here.
-  @@unique([kind, sportLeagueId, sportEventId, providerId, providerValue], map: "provider_sync_findings_subject_key")
+  @@unique([kind, sportLeagueId, sportEventId, providerId, providerValue, syncKind], map: "provider_sync_findings_subject_key")
   /// The Sports page's open counts per league, and a league's findings.
   @@index([sportLeagueId, status, severity])
   @@index([sportEventId])
   @@index([providerId])
+  @@index([syncRunId])
   @@index([statusChangedByUserId])
   /// The retention cleanup's resolved rows, oldest first.
   @@index([status, statusChangedAt])

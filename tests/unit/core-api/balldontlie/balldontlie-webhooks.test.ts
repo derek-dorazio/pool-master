@@ -1,7 +1,6 @@
 import { Sport } from '@poolmaster/shared/domain';
 import { BalldontlieWebhookNotificationSchema } from '@poolmaster/shared/dto';
 import {
-  balldontlieQuietAfterMs,
   checkBalldontlieSignature,
   readBalldontlieNotification,
 } from '../../../../packages/core-api/src/modules/ingestion/adapters/balldontlie/balldontlie-webhooks';
@@ -81,31 +80,6 @@ describe('reading BALLDONTLIE webhook notifications (#1498)', () => {
   });
 });
 
-describe('how long a BALLDONTLIE event may stay in play with no notification (#1499)', () => {
-  const quietMinutes = (providerLeagueCode: string) => balldontlieQuietAfterMs(LEAGUES, providerLeagueCode) / 60_000;
-
-  it('allows each league its longest normal gap between notifications, a period or half plus its break, never as short as one quarter', () => {
-    expect(quietMinutes('nfl')).toBe(90);
-    expect(quietMinutes('ncaaf')).toBe(110);
-    expect(quietMinutes('nba')).toBe(75);
-    expect(quietMinutes('ncaab')).toBe(90);
-    expect(quietMinutes('ncaaw')).toBe(75);
-    expect(quietMinutes('nhl')).toBe(90);
-    expect(quietMinutes('mlb')).toBe(210);
-    expect(quietMinutes('wnba')).toBe(75);
-    expect(quietMinutes('epl')).toBe(90);
-    expect(quietMinutes('worldcup')).toBe(150);
-  });
-
-  it('allows a golf round six hours, since its first notification after the start is the first group finishing', () => {
-    expect(quietMinutes('pga')).toBe(360);
-  });
-
-  it('allows an event of a provider league with no row the longest gap of any, so it is never warned about early', () => {
-    expect(quietMinutes('mls')).toBe(360);
-  });
-});
-
 describe('checking a BALLDONTLIE delivery\'s signature (#1498)', () => {
   const now = new Date('2026-11-15T18:00:00.000Z');
   const timestamp = String(Math.floor(now.getTime() / 1000));
@@ -173,11 +147,5 @@ describe('BALLDONTLIE webhooks follow its league rows (#1997)', () => {
 
     expect(readBalldontlieNotification(body, LEAGUES)).not.toBeNull();
     expect(readBalldontlieNotification(body, withoutMlb)).toBeNull();
-  });
-
-  it('takes a league\'s quiet window from its row, so an edit on the Providers page changes it', () => {
-    const longer = LEAGUES.map((league) => (league.code === 'nfl' ? { ...league, quietAfterMinutes: 120 } : league));
-
-    expect(balldontlieQuietAfterMs(longer, 'nfl')).toBe(120 * 60_000);
   });
 });

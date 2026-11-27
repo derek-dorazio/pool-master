@@ -582,15 +582,17 @@ export interface SportLeagueOverviewLeague {
   isActive: boolean;
 }
 
-/** The latest finished (COMPLETED or FAILED) run of one sync kind for one sport league. */
-export interface SportLeagueLatestSyncRun {
-  id: string;
+/**
+ * A sync of a sport league that failed and has not completed since (#2092): its OPEN SYNC_FAILED
+ * finding, with the latest run that failed while the sync history still keeps it.
+ */
+export interface SportLeagueFailedSync {
   sportLeagueId: string;
-  kind: ProviderSyncKind;
-  status: ProviderSyncRunStatus;
-  createdAt: Date;
-  /** The run's outcome summary as the sync history shows it; null when it has none. */
-  summary: string | null;
+  syncKind: ProviderSyncKind;
+  /** When a run last failed: the finding's last sighting. */
+  lastFailedAt: Date;
+  /** That run, with its outcome summary as the sync history shows it; null once the history has cleared it. */
+  run: { id: string; summary: string | null } | null;
 }
 
 /** A DRAFT event whose latest automatic release check held it. */
@@ -606,7 +608,10 @@ export interface SportLeagueHeldEvent {
 /** Everything the overview is computed from, read in a fixed number of grouped queries. */
 export interface SportLeagueOverviewFacts {
   leagues: SportLeagueOverviewLeague[];
-  latestSyncRuns: SportLeagueLatestSyncRun[];
+  /** The sport leagues with any sync run kept: one with none has not synced yet. */
+  leaguesWithSyncRuns: Set<string>;
+  /** Every sport league's failed syncs (#2092): the Sync chip and the ERROR health read them. */
+  failedSyncs: SportLeagueFailedSync[];
   heldEvents: SportLeagueHeldEvent[];
   /** Every event, cancelled ones too, per sport league. */
   eventCounts: Map<string, number>;
@@ -616,7 +621,10 @@ export interface SportLeagueOverviewFacts {
   nextEventStarts: Map<string, Date>;
   /** Every event that may be overdue (#1865): released, neither completed nor cancelled, started long enough ago. */
   overdueCandidates: SportLeagueOverdueCandidate[];
-  /** Each sport league's OPEN sync findings, per severity (#1999); a league with none has no entry. */
+  /**
+   * Each sport league's OPEN sync findings, per severity (#1999); a league with none has no entry.
+   * A failed sync whose run is kept is left out, since the Sync chip lists it with its run.
+   */
   openFindings: ProviderSyncFindingOpenCount[];
 }
 

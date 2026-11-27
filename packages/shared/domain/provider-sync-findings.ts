@@ -9,6 +9,7 @@ import {
   ProviderSyncFindingKind,
   ProviderSyncFindingStatus,
   type ProviderSyncFindingSeverity,
+  type ProviderSyncKind,
   type Sport,
 } from './enums';
 
@@ -21,12 +22,16 @@ export interface ProviderSyncFindingSubject {
   providerId: string | null;
   /** What the feed sent that nothing maps, such as a participant id. */
   providerValue: string | null;
+  /** The sync a SYNC_FAILED finding is about (#2092); no other kind has one, so it is left out. */
+  syncKind?: ProviderSyncKind | null;
 }
 
 /** The sync raising a finding: its subject, how serious it is, and the feed's name for the value. */
 export interface ProviderSyncFindingRaise extends ProviderSyncFindingSubject {
   severity: ProviderSyncFindingSeverity;
   providerValueName: string | null;
+  /** The run that raised it, kept as the latest (a SYNC_FAILED finding's failed run). */
+  syncRunId?: string | null;
 }
 
 /** A finding the sync's raise opened: new, or resolved before and seen again. */
@@ -50,6 +55,8 @@ export interface ProviderSyncFinding {
   provider: { id: string; name: string } | null;
   providerValue: string | null;
   providerValueName: string | null;
+  /** The sync a SYNC_FAILED finding is about; null for every other kind. */
+  syncKind: ProviderSyncKind | null;
   waiveNote: string | null;
   firstSeenAt: Date;
   lastSeenAt: Date;
@@ -91,6 +98,7 @@ const KIND_ACTIONS: Readonly<Record<ProviderSyncFindingKind, readonly ProviderSy
   [ProviderSyncFindingKind.GAME_MOVED]: [],
   [ProviderSyncFindingKind.TIEBREAKER_GAME_REPLACED]: [],
   [ProviderSyncFindingKind.FIELD_TEAM_WITHOUT_GAME]: [],
+  [ProviderSyncFindingKind.SYNC_FAILED]: [],
 };
 
 /**
