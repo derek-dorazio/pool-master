@@ -21,7 +21,7 @@ import {
   ValuationSource,
 } from '@poolmaster/shared/domain';
 import { SportEventRoundSlotDtoSchema } from './bracket.dto';
-import { DateTimeSchema } from './common.dto';
+import { DateTimeSchema, EventSyncKindSchema } from './common.dto';
 import { ParticipantDtoSchema } from './participants.dto';
 import { SportLeagueSeasonSlotDtoSchema } from './sport-catalog.dto';
 
@@ -108,6 +108,16 @@ export const SportEventProviderMappingDtoSchema = z.object({
 export type SportEventProviderMappingDto = z.infer<typeof SportEventProviderMappingDtoSchema>;
 
 
+/** One slot's tier set as the event read lists it (#2044). */
+const SportEventTierSetDtoSchema = z.object({
+  seasonSlotId: z.uuid().describe('The Season slot the event plays in this slot: the slot tier routes take it.'),
+  isTierSetSlot: z.boolean().describe('Whether this is the event\'s tier-set slot, the first holding a set: the one the event-level tier routes act on, released with the event.'),
+  tiersLocked: z.boolean().describe('Whether its tiers and prices are locked: the tier-set slot\'s at release, another slot\'s once it starts. A write on a locked set is refused with 409 SPORT_EVENT_TIERS_LOCKED.'),
+  tierCount: z.number().int().describe('Tiers in the set.'),
+  pricing: SlotPricingSchema.nullable().describe('The values the set was last priced with, or null until it is priced.'),
+  tierLayout: SlotTierLayoutSchema.nullable().describe('The tier layout the set was last auto-tiered with, or null until it first is.'),
+}).describe('A slot\'s tier set (#2044).');
+
 export const SportEventDtoSchema = z.object({
   id: z.uuid().describe('Sport-event identifier.'),
   providerMappings: z.array(SportEventProviderMappingDtoSchema).describe(`The provider ids the events sync gave the event, one per provider, by provider name. Empty for a test event, made by hand on a test slot. ${ADMIN_ONLY}`),
@@ -132,6 +142,7 @@ export const SportEventDtoSchema = z.object({
   contestEligible: z.boolean().describe('Whether a contest can be created on the event right now: it is released, its field is loaded, and it has not started.'),
   contestOpenings: z.array(SportEventContestOpeningDtoSchema).describe('One row per selection type the event\'s sport league offers, in the order it offers them: whether that selection type can start a contest on the event now. Contest setup lists an event under a selection type only when its row is OPEN.'),
   tiersLocked: z.boolean().describe('Whether the tiers and prices of the event\'s first slot are locked: true once the event is released (#431, #2044). A tier or price write on a locked set is refused with 409 SPORT_EVENT_TIERS_LOCKED.'),
+  tierSets: z.array(SportEventTierSetDtoSchema).describe('Every slot of the event holding a tier set (#2044), in play order, its tier-set slot first: each slot a contest of a tiered or budget template of its league may start at (every slot a one-slot or from-slot template lists, the first a whole-event template lists), or its first slot alone when no such template lists any. A slot\'s tiers and prices are read and written through the slot tier routes (listEventSlotTiers). Empty for an event covering no slot.'),
   slotDefinitionIds: z.array(z.uuid()).describe('The slot definitions of the Season slots the event covers, in play order (#2010): the templates covering one of them are offered on it. Empty until the sync gives it its slots.'),
   sportLeagueSeasonId: z.uuid().describe('The Season the event is played in (SportLeagueSeasonDto).'),
   championshipYear: z.number().int().describe('The year the event\'s Season is named for: 2025 for the NFL 2025 Season\'s Super Bowl, played in February 2026; 2026 for an NBA 2025-26 game. Read through the Season.'),
@@ -147,6 +158,7 @@ export const SportEventDtoSchema = z.object({
   lastAutoReleaseCheck: SportEventAutoReleaseCheckDtoSchema.nullable().describe(`The latest automatic release try, as the sweep stored it, so a page shows the last try without judging the checks again. Null until the first try, and once a root admin releases the event by hand. The checks as they stand now are releaseChecks. ${ADMIN_ONLY}`),
   adminCounts: SportEventAdminCountsDtoSchema.nullable().describe('The root admin\'s counts: release readiness and the contest count across every league. Null for anyone but a root admin, whose reads alone count them.'),
   allowedTransitions: z.array(EventStatusDtoSchema).describe(`Statuses the event may move to next, from the declared transition map. ${ADMIN_ONLY}`),
+  syncKinds: z.array(EventSyncKindSchema).describe(`The sync kinds a root admin can run on the event now (#2234): its FIELD while it is scheduled, in play or completed, and its SCORES while it is in play. Empty for an event its league's provider has no id for, such as a test event. ${ADMIN_ONLY}`),
   createdAt: DateTimeSchema.describe('When the event row was created.'),
   updatedAt: DateTimeSchema.describe('When the event row was last updated.'),
 }).describe('A real-world event a contest can be run on — a golf tournament, a race, a match.');
@@ -429,6 +441,7 @@ registerSchema('SportEventContestOpeningDto', SportEventContestOpeningDtoSchema)
 registerSchema('SportEventAutoReleaseCheckDto', SportEventAutoReleaseCheckDtoSchema);
 registerSchema('SportEventProviderMappingDto', SportEventProviderMappingDtoSchema);
 registerSchema('SportEventProviderMappingDto', SportEventProviderMappingDtoSchema);
+registerSchema('SportEventTierSetDto', SportEventTierSetDtoSchema);
 registerSchema('SportEventDto', SportEventDtoSchema);
 registerSchema('SportEventListQuery', SportEventListQuerySchema);
 registerSchema('SportEventListResponse', SportEventListResponseSchema);

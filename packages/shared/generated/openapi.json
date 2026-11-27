@@ -28555,6 +28555,219 @@
         "additionalProperties": false,
         "description": "The provider's id for an event, written by the events sync when it created the event from the provider's schedule. (Admin-only: operational detail no member surface reads.)"
       },
+      "SportEventTierSetDto": {
+        "type": "object",
+        "properties": {
+          "seasonSlotId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The Season slot the event plays in this slot: the slot tier routes take it."
+          },
+          "isTierSetSlot": {
+            "type": "boolean",
+            "description": "Whether this is the event's tier-set slot, the first holding a set: the one the event-level tier routes act on, released with the event."
+          },
+          "tiersLocked": {
+            "type": "boolean",
+            "description": "Whether its tiers and prices are locked: the tier-set slot's at release, another slot's once it starts. A write on a locked set is refused with 409 SPORT_EVENT_TIERS_LOCKED."
+          },
+          "tierCount": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991,
+            "description": "Tiers in the set."
+          },
+          "pricing": {
+            "description": "The values the set was last priced with, or null until it is priced.",
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "salaryCap": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 10000000,
+                "description": "Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event."
+              },
+              "unit": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 10000000,
+                "description": "Whole dollars. Every price is rounded to a multiple of it. At most the worst golfer's price."
+              },
+              "topSharePercent": {
+                "type": "number",
+                "minimum": 0.1,
+                "maximum": 100,
+                "description": "The best seed's price, as a percentage of the salary cap."
+              },
+              "floorSharePercent": {
+                "type": "number",
+                "minimum": 0.1,
+                "maximum": 100,
+                "description": "The worst seed's price, as a percentage of the salary cap. At most `topSharePercent`."
+              },
+              "steepness": {
+                "type": "number",
+                "minimum": 0.1,
+                "maximum": 10,
+                "description": "How fast prices fall from the top: 1 is a straight line; higher keeps the top few expensive and drops the middle of the field towards the floor."
+              },
+              "platformPricingProfileId": {
+                "type": "string",
+                "format": "uuid",
+                "description": "The pricing profile the values started from. The admin may have changed any value before assigning."
+              }
+            },
+            "required": [
+              "salaryCap",
+              "unit",
+              "topSharePercent",
+              "floorSharePercent",
+              "steepness",
+              "platformPricingProfileId"
+            ],
+            "additionalProperties": false
+          },
+          "tierLayout": {
+            "description": "The tier layout the set was last auto-tiered with, or null until it first is.",
+            "anyOf": [
+              {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "EQUAL_GROUPS"
+                    ]
+                  },
+                  "tierCount": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 20,
+                    "description": "How many tiers a new event starts with."
+                  },
+                  "tierSize": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 500,
+                    "description": "How many participants auto-tiering puts in each tier before the last."
+                  },
+                  "lastTier": {
+                    "type": "string",
+                    "enum": [
+                      "ALL_REMAINING",
+                      "CAPPED"
+                    ],
+                    "description": "What the last tier takes: ALL_REMAINING, everyone left; or CAPPED, at most lastTierMax, with anyone beyond in no tier and not pickable."
+                  },
+                  "lastTierMax": {
+                    "description": "The most the last tier takes when lastTier is CAPPED. Null when it is ALL_REMAINING.",
+                    "type": [
+                      "integer",
+                      "null"
+                    ],
+                    "minimum": 1,
+                    "maximum": 500
+                  },
+                  "platformTierProfileId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "The tier profile the layout came from: the sport league's when the set was tiered."
+                  }
+                },
+                "required": [
+                  "type",
+                  "tierCount",
+                  "tierSize",
+                  "lastTier",
+                  "lastTierMax",
+                  "platformTierProfileId"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": [
+                  "object",
+                  "null"
+                ],
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "enum": [
+                      "RANGES"
+                    ]
+                  },
+                  "ranges": {
+                    "minItems": 1,
+                    "maxItems": 20,
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "tierNumber": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 20,
+                          "description": "The tier, from 1."
+                        },
+                        "fromValue": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 1000,
+                          "description": "The lowest seed or rank the tier takes."
+                        },
+                        "toValue": {
+                          "description": "The highest seed or rank the tier takes. Null: everyone from fromValue on, which only the last tier may be.",
+                          "type": [
+                            "integer",
+                            "null"
+                          ],
+                          "minimum": 1,
+                          "maximum": 1000
+                        }
+                      },
+                      "required": [
+                        "tierNumber",
+                        "fromValue",
+                        "toValue"
+                      ],
+                      "additionalProperties": false,
+                      "description": "The seeds or ranks one tier takes."
+                    },
+                    "description": "Each tier's seeds or ranks, by tier number from 1: one per tier, with no gap or overlap, and only the last open-ended."
+                  },
+                  "platformTierProfileId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "The tier profile the layout came from: the sport league's when the set was tiered."
+                  }
+                },
+                "required": [
+                  "type",
+                  "ranges",
+                  "platformTierProfileId"
+                ],
+                "additionalProperties": false
+              }
+            ]
+          }
+        },
+        "required": [
+          "seasonSlotId",
+          "isTierSetSlot",
+          "tiersLocked",
+          "tierCount",
+          "pricing",
+          "tierLayout"
+        ],
+        "additionalProperties": false,
+        "description": "A slot's tier set (#2044)."
+      },
       "SportEventDto": {
         "type": "object",
         "properties": {
@@ -28946,6 +29159,223 @@
           "tiersLocked": {
             "type": "boolean",
             "description": "Whether the tiers and prices of the event's first slot are locked: true once the event is released (#431, #2044). A tier or price write on a locked set is refused with 409 SPORT_EVENT_TIERS_LOCKED."
+          },
+          "tierSets": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "seasonSlotId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "description": "The Season slot the event plays in this slot: the slot tier routes take it."
+                },
+                "isTierSetSlot": {
+                  "type": "boolean",
+                  "description": "Whether this is the event's tier-set slot, the first holding a set: the one the event-level tier routes act on, released with the event."
+                },
+                "tiersLocked": {
+                  "type": "boolean",
+                  "description": "Whether its tiers and prices are locked: the tier-set slot's at release, another slot's once it starts. A write on a locked set is refused with 409 SPORT_EVENT_TIERS_LOCKED."
+                },
+                "tierCount": {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991,
+                  "description": "Tiers in the set."
+                },
+                "pricing": {
+                  "description": "The values the set was last priced with, or null until it is priced.",
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "properties": {
+                    "salaryCap": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 10000000,
+                      "description": "Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event."
+                    },
+                    "unit": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 10000000,
+                      "description": "Whole dollars. Every price is rounded to a multiple of it. At most the worst golfer's price."
+                    },
+                    "topSharePercent": {
+                      "type": "number",
+                      "minimum": 0.1,
+                      "maximum": 100,
+                      "description": "The best seed's price, as a percentage of the salary cap."
+                    },
+                    "floorSharePercent": {
+                      "type": "number",
+                      "minimum": 0.1,
+                      "maximum": 100,
+                      "description": "The worst seed's price, as a percentage of the salary cap. At most `topSharePercent`."
+                    },
+                    "steepness": {
+                      "type": "number",
+                      "minimum": 0.1,
+                      "maximum": 10,
+                      "description": "How fast prices fall from the top: 1 is a straight line; higher keeps the top few expensive and drops the middle of the field towards the floor."
+                    },
+                    "platformPricingProfileId": {
+                      "type": "string",
+                      "format": "uuid",
+                      "description": "The pricing profile the values started from. The admin may have changed any value before assigning."
+                    }
+                  },
+                  "required": [
+                    "salaryCap",
+                    "unit",
+                    "topSharePercent",
+                    "floorSharePercent",
+                    "steepness",
+                    "platformPricingProfileId"
+                  ],
+                  "additionalProperties": false
+                },
+                "tierLayout": {
+                  "description": "The tier layout the set was last auto-tiered with, or null until it first is.",
+                  "anyOf": [
+                    {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "properties": {
+                        "type": {
+                          "type": "string",
+                          "enum": [
+                            "EQUAL_GROUPS"
+                          ]
+                        },
+                        "tierCount": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 20,
+                          "description": "How many tiers a new event starts with."
+                        },
+                        "tierSize": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 500,
+                          "description": "How many participants auto-tiering puts in each tier before the last."
+                        },
+                        "lastTier": {
+                          "type": "string",
+                          "enum": [
+                            "ALL_REMAINING",
+                            "CAPPED"
+                          ],
+                          "description": "What the last tier takes: ALL_REMAINING, everyone left; or CAPPED, at most lastTierMax, with anyone beyond in no tier and not pickable."
+                        },
+                        "lastTierMax": {
+                          "description": "The most the last tier takes when lastTier is CAPPED. Null when it is ALL_REMAINING.",
+                          "type": [
+                            "integer",
+                            "null"
+                          ],
+                          "minimum": 1,
+                          "maximum": 500
+                        },
+                        "platformTierProfileId": {
+                          "type": "string",
+                          "format": "uuid",
+                          "description": "The tier profile the layout came from: the sport league's when the set was tiered."
+                        }
+                      },
+                      "required": [
+                        "type",
+                        "tierCount",
+                        "tierSize",
+                        "lastTier",
+                        "lastTierMax",
+                        "platformTierProfileId"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "properties": {
+                        "type": {
+                          "type": "string",
+                          "enum": [
+                            "RANGES"
+                          ]
+                        },
+                        "ranges": {
+                          "minItems": 1,
+                          "maxItems": 20,
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "tierNumber": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 20,
+                                "description": "The tier, from 1."
+                              },
+                              "fromValue": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 1000,
+                                "description": "The lowest seed or rank the tier takes."
+                              },
+                              "toValue": {
+                                "description": "The highest seed or rank the tier takes. Null: everyone from fromValue on, which only the last tier may be.",
+                                "type": [
+                                  "integer",
+                                  "null"
+                                ],
+                                "minimum": 1,
+                                "maximum": 1000
+                              }
+                            },
+                            "required": [
+                              "tierNumber",
+                              "fromValue",
+                              "toValue"
+                            ],
+                            "additionalProperties": false,
+                            "description": "The seeds or ranks one tier takes."
+                          },
+                          "description": "Each tier's seeds or ranks, by tier number from 1: one per tier, with no gap or overlap, and only the last open-ended."
+                        },
+                        "platformTierProfileId": {
+                          "type": "string",
+                          "format": "uuid",
+                          "description": "The tier profile the layout came from: the sport league's when the set was tiered."
+                        }
+                      },
+                      "required": [
+                        "type",
+                        "ranges",
+                        "platformTierProfileId"
+                      ],
+                      "additionalProperties": false
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "seasonSlotId",
+                "isTierSetSlot",
+                "tiersLocked",
+                "tierCount",
+                "pricing",
+                "tierLayout"
+              ],
+              "additionalProperties": false,
+              "description": "A slot's tier set (#2044)."
+            },
+            "description": "Every slot of the event holding a tier set (#2044), in play order, its tier-set slot first: each slot a contest of a tiered or budget template of its league may start at (every slot a one-slot or from-slot template lists, the first a whole-event template lists), or its first slot alone when no such template lists any. A slot's tiers and prices are read and written through the slot tier routes (listEventSlotTiers). Empty for an event covering no slot."
           },
           "slotDefinitionIds": {
             "type": "array",
@@ -29504,6 +29934,18 @@
             },
             "description": "Statuses the event may move to next, from the declared transition map. (Admin-only: operational detail no member surface reads.)"
           },
+          "syncKinds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "FIELD",
+                "SCORES"
+              ],
+              "description": "What an event sync syncs: the event's FIELD or its SCORES. A sport league's EVENTS are synced by league, not by event."
+            },
+            "description": "The sync kinds a root admin can run on the event now (#2234): its FIELD while it is scheduled, in play or completed, and its SCORES while it is in play. Empty for an event its league's provider has no id for, such as a test event. (Admin-only: operational detail no member surface reads.)"
+          },
           "createdAt": {
             "type": "string",
             "format": "date-time",
@@ -29539,6 +29981,7 @@
           "contestEligible",
           "contestOpenings",
           "tiersLocked",
+          "tierSets",
           "slotDefinitionIds",
           "sportLeagueSeasonId",
           "championshipYear",
@@ -29554,6 +29997,7 @@
           "lastAutoReleaseCheck",
           "adminCounts",
           "allowedTransitions",
+          "syncKinds",
           "createdAt",
           "updatedAt"
         ],
@@ -30009,6 +30453,223 @@
                 "tiersLocked": {
                   "type": "boolean",
                   "description": "Whether the tiers and prices of the event's first slot are locked: true once the event is released (#431, #2044). A tier or price write on a locked set is refused with 409 SPORT_EVENT_TIERS_LOCKED."
+                },
+                "tierSets": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "seasonSlotId": {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "The Season slot the event plays in this slot: the slot tier routes take it."
+                      },
+                      "isTierSetSlot": {
+                        "type": "boolean",
+                        "description": "Whether this is the event's tier-set slot, the first holding a set: the one the event-level tier routes act on, released with the event."
+                      },
+                      "tiersLocked": {
+                        "type": "boolean",
+                        "description": "Whether its tiers and prices are locked: the tier-set slot's at release, another slot's once it starts. A write on a locked set is refused with 409 SPORT_EVENT_TIERS_LOCKED."
+                      },
+                      "tierCount": {
+                        "type": "integer",
+                        "minimum": -9007199254740991,
+                        "maximum": 9007199254740991,
+                        "description": "Tiers in the set."
+                      },
+                      "pricing": {
+                        "description": "The values the set was last priced with, or null until it is priced.",
+                        "type": [
+                          "object",
+                          "null"
+                        ],
+                        "properties": {
+                          "salaryCap": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 10000000,
+                            "description": "Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event."
+                          },
+                          "unit": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 10000000,
+                            "description": "Whole dollars. Every price is rounded to a multiple of it. At most the worst golfer's price."
+                          },
+                          "topSharePercent": {
+                            "type": "number",
+                            "minimum": 0.1,
+                            "maximum": 100,
+                            "description": "The best seed's price, as a percentage of the salary cap."
+                          },
+                          "floorSharePercent": {
+                            "type": "number",
+                            "minimum": 0.1,
+                            "maximum": 100,
+                            "description": "The worst seed's price, as a percentage of the salary cap. At most `topSharePercent`."
+                          },
+                          "steepness": {
+                            "type": "number",
+                            "minimum": 0.1,
+                            "maximum": 10,
+                            "description": "How fast prices fall from the top: 1 is a straight line; higher keeps the top few expensive and drops the middle of the field towards the floor."
+                          },
+                          "platformPricingProfileId": {
+                            "type": "string",
+                            "format": "uuid",
+                            "description": "The pricing profile the values started from. The admin may have changed any value before assigning."
+                          }
+                        },
+                        "required": [
+                          "salaryCap",
+                          "unit",
+                          "topSharePercent",
+                          "floorSharePercent",
+                          "steepness",
+                          "platformPricingProfileId"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "tierLayout": {
+                        "description": "The tier layout the set was last auto-tiered with, or null until it first is.",
+                        "anyOf": [
+                          {
+                            "type": [
+                              "object",
+                              "null"
+                            ],
+                            "properties": {
+                              "type": {
+                                "type": "string",
+                                "enum": [
+                                  "EQUAL_GROUPS"
+                                ]
+                              },
+                              "tierCount": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 20,
+                                "description": "How many tiers a new event starts with."
+                              },
+                              "tierSize": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 500,
+                                "description": "How many participants auto-tiering puts in each tier before the last."
+                              },
+                              "lastTier": {
+                                "type": "string",
+                                "enum": [
+                                  "ALL_REMAINING",
+                                  "CAPPED"
+                                ],
+                                "description": "What the last tier takes: ALL_REMAINING, everyone left; or CAPPED, at most lastTierMax, with anyone beyond in no tier and not pickable."
+                              },
+                              "lastTierMax": {
+                                "description": "The most the last tier takes when lastTier is CAPPED. Null when it is ALL_REMAINING.",
+                                "type": [
+                                  "integer",
+                                  "null"
+                                ],
+                                "minimum": 1,
+                                "maximum": 500
+                              },
+                              "platformTierProfileId": {
+                                "type": "string",
+                                "format": "uuid",
+                                "description": "The tier profile the layout came from: the sport league's when the set was tiered."
+                              }
+                            },
+                            "required": [
+                              "type",
+                              "tierCount",
+                              "tierSize",
+                              "lastTier",
+                              "lastTierMax",
+                              "platformTierProfileId"
+                            ],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": [
+                              "object",
+                              "null"
+                            ],
+                            "properties": {
+                              "type": {
+                                "type": "string",
+                                "enum": [
+                                  "RANGES"
+                                ]
+                              },
+                              "ranges": {
+                                "minItems": 1,
+                                "maxItems": 20,
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "tierNumber": {
+                                      "type": "integer",
+                                      "minimum": 1,
+                                      "maximum": 20,
+                                      "description": "The tier, from 1."
+                                    },
+                                    "fromValue": {
+                                      "type": "integer",
+                                      "minimum": 1,
+                                      "maximum": 1000,
+                                      "description": "The lowest seed or rank the tier takes."
+                                    },
+                                    "toValue": {
+                                      "description": "The highest seed or rank the tier takes. Null: everyone from fromValue on, which only the last tier may be.",
+                                      "type": [
+                                        "integer",
+                                        "null"
+                                      ],
+                                      "minimum": 1,
+                                      "maximum": 1000
+                                    }
+                                  },
+                                  "required": [
+                                    "tierNumber",
+                                    "fromValue",
+                                    "toValue"
+                                  ],
+                                  "additionalProperties": false,
+                                  "description": "The seeds or ranks one tier takes."
+                                },
+                                "description": "Each tier's seeds or ranks, by tier number from 1: one per tier, with no gap or overlap, and only the last open-ended."
+                              },
+                              "platformTierProfileId": {
+                                "type": "string",
+                                "format": "uuid",
+                                "description": "The tier profile the layout came from: the sport league's when the set was tiered."
+                              }
+                            },
+                            "required": [
+                              "type",
+                              "ranges",
+                              "platformTierProfileId"
+                            ],
+                            "additionalProperties": false
+                          }
+                        ]
+                      }
+                    },
+                    "required": [
+                      "seasonSlotId",
+                      "isTierSetSlot",
+                      "tiersLocked",
+                      "tierCount",
+                      "pricing",
+                      "tierLayout"
+                    ],
+                    "additionalProperties": false,
+                    "description": "A slot's tier set (#2044)."
+                  },
+                  "description": "Every slot of the event holding a tier set (#2044), in play order, its tier-set slot first: each slot a contest of a tiered or budget template of its league may start at (every slot a one-slot or from-slot template lists, the first a whole-event template lists), or its first slot alone when no such template lists any. A slot's tiers and prices are read and written through the slot tier routes (listEventSlotTiers). Empty for an event covering no slot."
                 },
                 "slotDefinitionIds": {
                   "type": "array",
@@ -30567,6 +31228,18 @@
                   },
                   "description": "Statuses the event may move to next, from the declared transition map. (Admin-only: operational detail no member surface reads.)"
                 },
+                "syncKinds": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "enum": [
+                      "FIELD",
+                      "SCORES"
+                    ],
+                    "description": "What an event sync syncs: the event's FIELD or its SCORES. A sport league's EVENTS are synced by league, not by event."
+                  },
+                  "description": "The sync kinds a root admin can run on the event now (#2234): its FIELD while it is scheduled, in play or completed, and its SCORES while it is in play. Empty for an event its league's provider has no id for, such as a test event. (Admin-only: operational detail no member surface reads.)"
+                },
                 "createdAt": {
                   "type": "string",
                   "format": "date-time",
@@ -30602,6 +31275,7 @@
                 "contestEligible",
                 "contestOpenings",
                 "tiersLocked",
+                "tierSets",
                 "slotDefinitionIds",
                 "sportLeagueSeasonId",
                 "championshipYear",
@@ -30617,6 +31291,7 @@
                 "lastAutoReleaseCheck",
                 "adminCounts",
                 "allowedTransitions",
+                "syncKinds",
                 "createdAt",
                 "updatedAt"
               ],
@@ -31026,6 +31701,223 @@
               "tiersLocked": {
                 "type": "boolean",
                 "description": "Whether the tiers and prices of the event's first slot are locked: true once the event is released (#431, #2044). A tier or price write on a locked set is refused with 409 SPORT_EVENT_TIERS_LOCKED."
+              },
+              "tierSets": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "seasonSlotId": {
+                      "type": "string",
+                      "format": "uuid",
+                      "description": "The Season slot the event plays in this slot: the slot tier routes take it."
+                    },
+                    "isTierSetSlot": {
+                      "type": "boolean",
+                      "description": "Whether this is the event's tier-set slot, the first holding a set: the one the event-level tier routes act on, released with the event."
+                    },
+                    "tiersLocked": {
+                      "type": "boolean",
+                      "description": "Whether its tiers and prices are locked: the tier-set slot's at release, another slot's once it starts. A write on a locked set is refused with 409 SPORT_EVENT_TIERS_LOCKED."
+                    },
+                    "tierCount": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991,
+                      "description": "Tiers in the set."
+                    },
+                    "pricing": {
+                      "description": "The values the set was last priced with, or null until it is priced.",
+                      "type": [
+                        "object",
+                        "null"
+                      ],
+                      "properties": {
+                        "salaryCap": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 10000000,
+                          "description": "Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event."
+                        },
+                        "unit": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 10000000,
+                          "description": "Whole dollars. Every price is rounded to a multiple of it. At most the worst golfer's price."
+                        },
+                        "topSharePercent": {
+                          "type": "number",
+                          "minimum": 0.1,
+                          "maximum": 100,
+                          "description": "The best seed's price, as a percentage of the salary cap."
+                        },
+                        "floorSharePercent": {
+                          "type": "number",
+                          "minimum": 0.1,
+                          "maximum": 100,
+                          "description": "The worst seed's price, as a percentage of the salary cap. At most `topSharePercent`."
+                        },
+                        "steepness": {
+                          "type": "number",
+                          "minimum": 0.1,
+                          "maximum": 10,
+                          "description": "How fast prices fall from the top: 1 is a straight line; higher keeps the top few expensive and drops the middle of the field towards the floor."
+                        },
+                        "platformPricingProfileId": {
+                          "type": "string",
+                          "format": "uuid",
+                          "description": "The pricing profile the values started from. The admin may have changed any value before assigning."
+                        }
+                      },
+                      "required": [
+                        "salaryCap",
+                        "unit",
+                        "topSharePercent",
+                        "floorSharePercent",
+                        "steepness",
+                        "platformPricingProfileId"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "tierLayout": {
+                      "description": "The tier layout the set was last auto-tiered with, or null until it first is.",
+                      "anyOf": [
+                        {
+                          "type": [
+                            "object",
+                            "null"
+                          ],
+                          "properties": {
+                            "type": {
+                              "type": "string",
+                              "enum": [
+                                "EQUAL_GROUPS"
+                              ]
+                            },
+                            "tierCount": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "maximum": 20,
+                              "description": "How many tiers a new event starts with."
+                            },
+                            "tierSize": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "maximum": 500,
+                              "description": "How many participants auto-tiering puts in each tier before the last."
+                            },
+                            "lastTier": {
+                              "type": "string",
+                              "enum": [
+                                "ALL_REMAINING",
+                                "CAPPED"
+                              ],
+                              "description": "What the last tier takes: ALL_REMAINING, everyone left; or CAPPED, at most lastTierMax, with anyone beyond in no tier and not pickable."
+                            },
+                            "lastTierMax": {
+                              "description": "The most the last tier takes when lastTier is CAPPED. Null when it is ALL_REMAINING.",
+                              "type": [
+                                "integer",
+                                "null"
+                              ],
+                              "minimum": 1,
+                              "maximum": 500
+                            },
+                            "platformTierProfileId": {
+                              "type": "string",
+                              "format": "uuid",
+                              "description": "The tier profile the layout came from: the sport league's when the set was tiered."
+                            }
+                          },
+                          "required": [
+                            "type",
+                            "tierCount",
+                            "tierSize",
+                            "lastTier",
+                            "lastTierMax",
+                            "platformTierProfileId"
+                          ],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": [
+                            "object",
+                            "null"
+                          ],
+                          "properties": {
+                            "type": {
+                              "type": "string",
+                              "enum": [
+                                "RANGES"
+                              ]
+                            },
+                            "ranges": {
+                              "minItems": 1,
+                              "maxItems": 20,
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "tierNumber": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "maximum": 20,
+                                    "description": "The tier, from 1."
+                                  },
+                                  "fromValue": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "maximum": 1000,
+                                    "description": "The lowest seed or rank the tier takes."
+                                  },
+                                  "toValue": {
+                                    "description": "The highest seed or rank the tier takes. Null: everyone from fromValue on, which only the last tier may be.",
+                                    "type": [
+                                      "integer",
+                                      "null"
+                                    ],
+                                    "minimum": 1,
+                                    "maximum": 1000
+                                  }
+                                },
+                                "required": [
+                                  "tierNumber",
+                                  "fromValue",
+                                  "toValue"
+                                ],
+                                "additionalProperties": false,
+                                "description": "The seeds or ranks one tier takes."
+                              },
+                              "description": "Each tier's seeds or ranks, by tier number from 1: one per tier, with no gap or overlap, and only the last open-ended."
+                            },
+                            "platformTierProfileId": {
+                              "type": "string",
+                              "format": "uuid",
+                              "description": "The tier profile the layout came from: the sport league's when the set was tiered."
+                            }
+                          },
+                          "required": [
+                            "type",
+                            "ranges",
+                            "platformTierProfileId"
+                          ],
+                          "additionalProperties": false
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "seasonSlotId",
+                    "isTierSetSlot",
+                    "tiersLocked",
+                    "tierCount",
+                    "pricing",
+                    "tierLayout"
+                  ],
+                  "additionalProperties": false,
+                  "description": "A slot's tier set (#2044)."
+                },
+                "description": "Every slot of the event holding a tier set (#2044), in play order, its tier-set slot first: each slot a contest of a tiered or budget template of its league may start at (every slot a one-slot or from-slot template lists, the first a whole-event template lists), or its first slot alone when no such template lists any. A slot's tiers and prices are read and written through the slot tier routes (listEventSlotTiers). Empty for an event covering no slot."
               },
               "slotDefinitionIds": {
                 "type": "array",
@@ -31584,6 +32476,18 @@
                 },
                 "description": "Statuses the event may move to next, from the declared transition map. (Admin-only: operational detail no member surface reads.)"
               },
+              "syncKinds": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "FIELD",
+                    "SCORES"
+                  ],
+                  "description": "What an event sync syncs: the event's FIELD or its SCORES. A sport league's EVENTS are synced by league, not by event."
+                },
+                "description": "The sync kinds a root admin can run on the event now (#2234): its FIELD while it is scheduled, in play or completed, and its SCORES while it is in play. Empty for an event its league's provider has no id for, such as a test event. (Admin-only: operational detail no member surface reads.)"
+              },
               "createdAt": {
                 "type": "string",
                 "format": "date-time",
@@ -31619,6 +32523,7 @@
               "contestEligible",
               "contestOpenings",
               "tiersLocked",
+              "tierSets",
               "slotDefinitionIds",
               "sportLeagueSeasonId",
               "championshipYear",
@@ -31634,6 +32539,7 @@
               "lastAutoReleaseCheck",
               "adminCounts",
               "allowedTransitions",
+              "syncKinds",
               "createdAt",
               "updatedAt"
             ],
@@ -71864,25 +72770,25 @@
       "EventSyncRequest": {
         "type": "object",
         "properties": {
-          "feeds": {
+          "kinds": {
             "minItems": 1,
             "type": "array",
             "items": {
               "type": "string",
               "enum": [
-                "EVENTPARTICIPANTS",
-                "EVENTLIVESCORES"
+                "FIELD",
+                "SCORES"
               ],
-              "description": "Explicit ingestion feed type requested by the caller. Every feed is event-scoped."
+              "description": "What an event sync syncs: the event's FIELD or its SCORES. A sport league's EVENTS are synced by league, not by event."
             },
-            "description": "Feed types to run for a specific event sync request."
+            "description": "The sync kinds to run for the event, each once."
           }
         },
         "required": [
-          "feeds"
+          "kinds"
         ],
         "additionalProperties": false,
-        "description": "Feed-aware event sync request."
+        "description": "A manual event sync request."
       },
       "ProviderLeagueDto": {
         "type": "object",
@@ -73392,14 +74298,6 @@
                 "description": "Raw/debug provider payload captured for this run.",
                 "type": "object",
                 "properties": {
-                  "operation": {
-                    "type": "string",
-                    "enum": [
-                      "EVENTPARTICIPANTS",
-                      "EVENTLIVESCORES"
-                    ],
-                    "description": "Provider feed operation represented by this payload."
-                  },
                   "rawCaptured": {
                     "type": "boolean",
                     "description": "Whether raw provider response JSON was captured for this run."
@@ -73413,7 +74311,6 @@
                   }
                 },
                 "required": [
-                  "operation",
                   "rawCaptured",
                   "rawTruncated"
                 ],
@@ -73940,16 +74837,17 @@
             "type": "string",
             "description": "Provider event identifier the submitted runs sync."
           },
-          "requestedFeeds": {
+          "requestedKinds": {
             "type": "array",
             "items": {
               "type": "string",
               "enum": [
-                "EVENTPARTICIPANTS",
-                "EVENTLIVESCORES"
+                "FIELD",
+                "SCORES"
               ],
-              "description": "Explicit ingestion feed type requested by the caller. Every feed is event-scoped."
-            }
+              "description": "What an event sync syncs: the event's FIELD or its SCORES. A sport league's EVENTS are synced by league, not by event."
+            },
+            "description": "The sync kinds the submission runs, each once."
           },
           "submittedAt": {
             "type": "string",
@@ -74131,7 +75029,7 @@
         "required": [
           "sport",
           "eventId",
-          "requestedFeeds",
+          "requestedKinds",
           "submittedAt",
           "syncRuns"
         ],
@@ -87415,6 +88313,536 @@
             },
             "in": "path",
             "name": "eventId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "An event's field.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SportEventParticipantListResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/events/{eventId}/slots/{seasonSlotId}/participants": {
+      "get": {
+        "operationId": "listEventSlotParticipants",
+        "summary": "List a sport event's field with a slot's valuations",
+        "tags": [
+          "Events"
+        ],
+        "description": "The field as listEventParticipants reads it, each row's valuation in the slot's set. The set of the slot the event plays in this Season slot (#2044): a slot holds one when a contest of a tiered or budget template may start there (each slot a one-slot or from-slot template lists, the first a whole-event template lists), or it is the event's first slot and no such template lists any.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "path",
+            "name": "eventId",
+            "required": true
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "path",
+            "name": "seasonSlotId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "An event's field.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SportEventParticipantListResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/events/{eventId}/slots/{seasonSlotId}/tiers": {
+      "get": {
+        "operationId": "listEventSlotTiers",
+        "summary": "List a sport event slot's tiers",
+        "tags": [
+          "Events"
+        ],
+        "description": "The set of the slot the event plays in this Season slot (#2044): a slot holds one when a contest of a tiered or budget template may start there (each slot a one-slot or from-slot template lists, the first a whole-event template lists), or it is the event's first slot and no such template lists any. Who is in each tier is on each field row's valuation (listEventSlotParticipants).",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "path",
+            "name": "eventId",
+            "required": true
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "path",
+            "name": "seasonSlotId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "An event's tiers.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SportEventTierListResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "operationId": "replaceEventSlotTiers",
+        "summary": "Replace a sport event slot's tiers",
+        "tags": [
+          "Events"
+        ],
+        "description": "replaceEventTiers on the slot's set. The set of the slot the event plays in this Season slot (#2044): a slot holds one when a contest of a tiered or budget template may start there (each slot a one-slot or from-slot template lists, the first a whole-event template lists), or it is the event's first slot and no such template lists any. 409 SPORT_EVENT_TIERS_LOCKED once the set is locked: the event's tier-set slot (its first slot holding a set) at release, any other slot once it starts. 409 SLOT_HOLDS_NO_TIER_SET for a slot holding no set. Root admin only.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReplaceSportEventTiersRequest"
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "path",
+            "name": "eventId",
+            "required": true
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "path",
+            "name": "seasonSlotId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "An event's tiers.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SportEventTierListResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/events/{eventId}/slots/{seasonSlotId}/tiers/auto-assign": {
+      "post": {
+        "operationId": "autoAssignEventSlotTiers",
+        "summary": "Fill a sport event slot's tiers from its active field",
+        "tags": [
+          "Events"
+        ],
+        "description": "autoAssignEventTiers on the slot's set, from the field still active: a later slot's set covers who is still in when it starts. Returns the field with the slot's valuations. 409 SPORT_EVENT_TIERS_LOCKED once the set is locked: the event's tier-set slot (its first slot holding a set) at release, any other slot once it starts. 409 SLOT_HOLDS_NO_TIER_SET for a slot holding no set. Root admin only.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AutoAssignSportEventTiersRequest"
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "path",
+            "name": "eventId",
+            "required": true
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "path",
+            "name": "seasonSlotId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "An event's field.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SportEventParticipantListResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/events/{eventId}/slots/{seasonSlotId}/tiers/assignments": {
+      "put": {
+        "operationId": "replaceEventSlotTierAssignments",
+        "summary": "Replace a sport event slot's tier assignments",
+        "tags": [
+          "Events"
+        ],
+        "description": "replaceEventTierAssignments on the slot's set. Returns the field with the slot's valuations. 409 SPORT_EVENT_TIERS_LOCKED once the set is locked: the event's tier-set slot (its first slot holding a set) at release, any other slot once it starts. 409 SLOT_HOLDS_NO_TIER_SET for a slot holding no set. Root admin only.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReplaceSportEventTierAssignmentsRequest"
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "path",
+            "name": "eventId",
+            "required": true
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "path",
+            "name": "seasonSlotId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "An event's field.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SportEventParticipantListResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/events/{eventId}/slots/{seasonSlotId}/prices/auto-assign": {
+      "post": {
+        "operationId": "autoAssignEventSlotPrices",
+        "summary": "Price a sport event slot's seeded field",
+        "tags": [
+          "Events"
+        ],
+        "description": "autoAssignEventPrices on the slot's set, recording the values on the slot. Returns the field with the slot's valuations. 409 SPORT_EVENT_TIERS_LOCKED once the set is locked: the event's tier-set slot (its first slot holding a set) at release, any other slot once it starts. 409 SLOT_HOLDS_NO_TIER_SET for a slot holding no set. Root admin only.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AutoAssignSportEventPricesRequest"
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "path",
+            "name": "eventId",
+            "required": true
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "path",
+            "name": "seasonSlotId",
             "required": true
           }
         ],

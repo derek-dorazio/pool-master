@@ -175,9 +175,8 @@ describe('ScheduledEventReader — field hydration', () => {
     await createEvent('past-window-event', { synced: true, status: 'SCHEDULED', startDate: new Date('2026-05-04T12:00:00.000Z') });
     await createEvent('unlinked-event', { synced: true, status: 'SCHEDULED', linked: false, startDate: new Date('2026-04-29T12:00:00.000Z') });
 
-    const events = await reader().listEventsForFeed({
+    const events = await reader().listFieldSyncEvents({
       sport: Sport.GOLF,
-      feed: 'EVENTPARTICIPANTS',
       now,
       from: now,
       to: weekLater,
@@ -190,9 +189,8 @@ describe('ScheduledEventReader — field hydration', () => {
     await createEvent('in-window', { synced: true, startDate: new Date('2026-05-01T12:00:00.000Z') });
     await createEvent('after-window', { synced: true, startDate: new Date('2026-05-04T12:00:00.000Z') });
 
-    const events = await reader().listEventsForFeed({
+    const events = await reader().listFieldSyncEvents({
       sport: Sport.GOLF,
-      feed: 'EVENTPARTICIPANTS',
       now,
       from: now,
       to: weekLater,
@@ -206,9 +204,8 @@ describe('ScheduledEventReader — field hydration', () => {
     await createEvent('first', { synced: true, startDate: new Date('2026-04-28T12:00:00.000Z') });
     await createEvent('second', { synced: true, startDate: new Date('2026-04-29T12:00:00.000Z') });
 
-    const events = await reader().listEventsForFeed({
+    const events = await reader().listFieldSyncEvents({
       sport: Sport.GOLF,
-      feed: 'EVENTPARTICIPANTS',
       now,
       from: now,
       to: weekLater,
@@ -221,7 +218,7 @@ describe('ScheduledEventReader — field hydration', () => {
     await createEvent('started', { synced: true, startDate: new Date('2026-04-20T12:00:00.000Z') });
     await createEvent('next-year', { synced: true, startDate: new Date('2027-04-20T12:00:00.000Z') });
 
-    const events = await reader().listEventsForFeed({ sport: Sport.GOLF, feed: 'EVENTPARTICIPANTS', now });
+    const events = await reader().listFieldSyncEvents({ sport: Sport.GOLF, now });
 
     expect(externalIds(events)).toEqual(['next-year']);
   });
@@ -235,7 +232,7 @@ describe('ScheduledEventReader — field hydration for synced sport leagues only
     await createEvent('sync-off', { ...(await seriesInLeague('Off', false)), startDate: new Date('2026-04-28T06:00:00.000Z') });
     await createEvent('inactive-league', { ...(await seriesInLeague('Inactive', true, false)), startDate: new Date('2026-04-28T03:00:00.000Z') });
 
-    const offered = await reader().listEventsForFeed({ sport: Sport.GOLF, feed: 'EVENTPARTICIPANTS', now, to: weekLater });
+    const offered = await reader().listFieldSyncEvents({ sport: Sport.GOLF, now, to: weekLater });
 
     expect(externalIds(offered)).toEqual(['synced']);
   });
@@ -246,7 +243,7 @@ describe('ScheduledEventReader — field hydration for synced sport leagues only
     await createEvent('rowless', { ...(await seriesInLeague('Synced', true)), startDate: new Date('2026-04-29T12:00:00.000Z') });
 
     const events = await createScheduledEventReader({ prisma: getAppPrisma(), registry })
-      .listEventsForFeed({ sport: Sport.GOLF, feed: 'EVENTPARTICIPANTS', now, to: weekLater });
+      .listFieldSyncEvents({ sport: Sport.GOLF, now, to: weekLater });
 
     expect(events).toEqual([]);
   });
@@ -260,7 +257,7 @@ describe('ScheduledEventReader — field hydration for synced sport leagues only
     await createEvent('synced-second', { ...later, startDate: new Date('2026-04-29T12:00:00.000Z') });
     await createEvent('synced-third', { ...latest, startDate: new Date('2026-04-30T12:00:00.000Z') });
 
-    const events = await reader().listEventsForFeed({ sport: Sport.GOLF, feed: 'EVENTPARTICIPANTS', now, to: weekLater });
+    const events = await reader().listFieldSyncEvents({ sport: Sport.GOLF, now, to: weekLater });
 
     expect(externalIds(events)).toEqual(['synced-first', 'synced-second']);
   });
@@ -282,7 +279,7 @@ describe('ScheduledEventReader — a second provider running', () => {
     await createEvent('ours-second', { synced: true, startDate: new Date('2026-04-28T12:00:00.000Z') });
     await createEvent('ours-third', { synced: true, startDate: new Date('2026-04-29T12:00:00.000Z') });
 
-    const events = await twoProviders().listEventsForFeed({ sport: Sport.GOLF, feed: 'EVENTPARTICIPANTS', now, from: now, to: weekLater });
+    const events = await twoProviders().listFieldSyncEvents({ sport: Sport.GOLF, now, from: now, to: weekLater });
 
     expect(events).toEqual([
       { providerId: PROVIDER, externalId: 'ours-first' },

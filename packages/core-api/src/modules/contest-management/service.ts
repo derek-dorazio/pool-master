@@ -355,9 +355,10 @@ export class ContestManagementService {
    * Only a tiered contest picks by tier, so only its tiers are read, every event's in one read
    * (#1201); any other format's events carry an empty list.
    */
-  private async resolveContestSportEvents(contest: Contest): Promise<ContestManagementSportEventDto[]> {
+  private async resolveContestSportEvents(contest: Contest, configuration: Pick<ContestConfiguration, 'coveredSlotDefinitionIds'>): Promise<ContestManagementSportEventDto[]> {
+    // The set the contest picks from: the first slot it covers holding one (#2044).
     const tiersByEvent = contest.selectionType === SelectionType.TIERED
-      ? await this.sportEventTierService.getEffectiveTiersForSportEvents(contest.sportEventIds)
+      ? await this.sportEventTierService.getEffectiveTiersForSportEvents(contest.sportEventIds, { coveredSlotDefinitionIds: contestRoundCoverage(configuration).slotDefinitionIds })
       : new Map<string, SportEventTierGroup[]>();
     return contest.sportEventIds.map((sportEventId) => ({
       sportEventId,
@@ -389,7 +390,7 @@ export class ContestManagementService {
     return buildContestManagementDetail(
       contest,
       configuration,
-      await this.resolveContestSportEvents(contest),
+      await this.resolveContestSportEvents(contest, configuration),
     );
   }
 
@@ -467,7 +468,7 @@ export class ContestManagementService {
     return buildContestManagementDetail(
       contest,
       refreshedConfiguration,
-      await this.resolveContestSportEvents(contest),
+      await this.resolveContestSportEvents(contest, refreshedConfiguration),
     );
   }
 
@@ -986,7 +987,7 @@ export class ContestManagementService {
     }
     switch (rules.selectionType) {
       case SelectionType.TIERED:
-        await this.assertTieredRulesFitTierCount(sportEvents.map((each) => each.id), rules);
+        await this.assertTieredRulesFitTierCount(sportEvents.map((each) => each.id), rules, coverage);
         return {
           configJson: {
             selectionType: rules.selectionType,
@@ -1227,10 +1228,12 @@ export class ContestManagementService {
   private async assertTieredRulesFitTierCount(
     sportEventIds: readonly string[],
     rules: TieredContestRules,
+    coverage: ContestRoundCoverage,
   ): Promise<void> {
-    // Only the tier count matters here, so the tiers alone are read, not who is placed in them.
+    // Only the tier count matters here, so the tiers alone are read, not who is placed in them:
+    // those of the set the contest will pick from (#2044).
     const tierCounts = new Map<string, number>();
-    for (const tier of await this.sportEventTierService.listTiersOfEvents(sportEventIds)) {
+    for (const tier of await this.sportEventTierService.listTiersOfEvents(sportEventIds, { coveredSlotDefinitionIds: coverage.slotDefinitionIds })) {
       tierCounts.set(tier.sportEventId, (tierCounts.get(tier.sportEventId) ?? 0) + 1);
     }
     for (const tierCount of tierCounts.values()) {

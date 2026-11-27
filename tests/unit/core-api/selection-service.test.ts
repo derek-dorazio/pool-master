@@ -1520,7 +1520,7 @@ describe('SelectionService — what one pick reads (#1196)', () => {
 
     expect(deps.field.findBySportEvent).toHaveBeenCalledTimes(1);
     expect(deps.tiers.getEffectiveTiersAndValuations).toHaveBeenCalledTimes(1);
-    expect(deps.tiers.getEffectiveTiersAndValuations).toHaveBeenCalledWith(EVENT_ID, FIELD);
+    expect(deps.tiers.getEffectiveTiersAndValuations).toHaveBeenCalledWith(EVENT_ID, FIELD, { coveredSlotDefinitionIds: null });
   });
 
   it('asks for only the event\'s picks on every pick read, so other events\' picks are filtered in the query', async () => {

@@ -42,7 +42,7 @@ import type {
 } from '@poolmaster/shared/db';
 import { TEST_PROVIDER_ROWS } from './balldontlie-provider-rows';
 import type { SportEventBracketServiceDeps } from '../../packages/core-api/src/modules/events/sport-event-bracket-service';
-import { chooseTierSetSlot, compareMatchPlaces, compareSeasonSlots, slotTierLayoutOf, MatchEnding, SeasonSlotStatus, SeriesFormat, SlotKind, SlotPairing, SlotWindowStatus, type SlotWindow, findSportRow, providerSourceIdOf, requireProviderCodeOfSourceId, type ProviderEventRef, type SportEventProviderMapping, HomeAway, isMatchUnplayed, MatchSideOutcome, MatchStatus, PeriodKind, PeriodKindOrder, Sport, FieldOrderBasis, TierProfileType, SportEventParticipantStatus } from '@poolmaster/shared/domain';
+import { chooseTierSetSlots, compareMatchPlaces, compareSeasonSlots, slotTierLayoutOf, MatchEnding, SeasonSlotStatus, SeriesFormat, SlotKind, SlotPairing, SlotWindowStatus, type SlotWindow, findSportRow, providerSourceIdOf, requireProviderCodeOfSourceId, type ProviderEventRef, type SportEventProviderMapping, HomeAway, isMatchUnplayed, MatchSideOutcome, MatchStatus, PeriodKind, PeriodKindOrder, Sport, FieldOrderBasis, TierProfileType, SportEventParticipantStatus, type TierSetTemplateListing } from '@poolmaster/shared/domain';
 import { sportEventSlots, sportPlay } from './sport-play';
 import type {
   AutoReleaseCheck,
@@ -501,17 +501,22 @@ export class InMemorySportEvents {
     return this.tierRepo().createMany(tiers.map((tier) => ({ sportEventSlotId: slot.id, ...tier })));
   }
 
-  /** The slot definitions an active tiered or budget template lists, which the tier-set rule reads (#2044). */
-  tierSetTemplateDefinitionIds = new Set<string>();
+  /** The active tiered or budget templates, with their coverage and the slot definitions each lists, which the tier-set rule reads (#2044). */
+  tierSetTemplates: Array<TierSetTemplateListing & { slotDefinitionIds: readonly string[] }> = [];
 
   /**
-   * The event's slots as their tier sets read them (#2044), in play order, its tier-set slot
-   * (`chooseTierSetSlot`) marked; none for an event covering no slot.
+   * The event's slots as their tier sets read them (#2044), in play order, those holding a set
+   * (`chooseTierSetSlots`) and its tier-set slot marked; none for an event covering no slot.
    */
   tierSlotsOf(sportEventId: string): SportEventTierSlot[] {
     const ordered = [...(this.slotsByEvent.get(sportEventId) ?? [])].sort(compareSeasonSlots)
-      .map((slot) => ({ slot, listedByTierSetTemplate: this.tierSetTemplateDefinitionIds.has(slot.slotDefinitionId) }));
-    const tierSetSlot = chooseTierSetSlot(ordered);
+      .map((slot) => ({
+        slot,
+        tierSetTemplates: this.tierSetTemplates
+          .filter((template) => template.slotDefinitionIds.includes(slot.slotDefinitionId))
+          .map(({ templateId, coverageMode }) => ({ templateId, coverageMode })),
+      }));
+    const holding = chooseTierSetSlots(ordered);
     return ordered.map((entry) => {
       const { slot } = entry;
       const tierSettings = this.slotTierSettings.get(slot.id);
@@ -521,8 +526,10 @@ export class InMemorySportEvents {
         id: slot.id,
         sportEventId,
         seasonSlotId: slot.id,
+        slotDefinitionId: slot.slotDefinitionId,
         seasonSlotStatus: slot.status,
-        isTierSetSlot: entry === tierSetSlot,
+        holdsTierSet: holding.includes(entry),
+        isTierSetSlot: entry === holding.at(0),
         tierLayout: tierProfile ? slotTierLayoutOf(tierProfile, tierSettings.tierSize) : null,
         pricing: pricing ?? null,
       };
@@ -856,7 +863,7 @@ export class InMemorySportEvents {
       findByIds: async (ids) => this.field.filter((row) => ids.includes(row.id)),
       findBySportEvent: async (sportEventId) => bySeed(sportEventId),
       findBySportEvents: async (sportEventIds) => [...sportEventIds].sort().flatMap((sportEventId) => bySeed(sportEventId)),
-      findFieldForEvent: async (sportEventId, sportLeagueId) => bySeed(sportEventId).map((entry) => this.fieldRow(entry, sportLeagueId)),
+      findFieldForEvent: async (sportEventId, sportLeagueId, seasonSlotId) => bySeed(sportEventId).map((entry) => this.fieldRow(entry, sportLeagueId, seasonSlotId)),
       findFieldsForEvents: async (events) => events.flatMap(({ sportEventId, sportLeagueId }) => bySeed(sportEventId).map((entry) => this.fieldRow(entry, sportLeagueId))),
       findFieldRow: async (sportEventId, sportEventParticipantId, sportLeagueId) => {
         const entry = this.field.find((row) => row.id === sportEventParticipantId && row.sportEventId === sportEventId);
@@ -1024,10 +1031,10 @@ export class InMemorySportEvents {
   }
 
   /** One field row with everything the field read carries, as copies. */
-  private fieldRow(entry: SportEventParticipant, sportLeagueId: string): SportEventParticipantView {
+  private fieldRow(entry: SportEventParticipant, sportLeagueId: string, seasonSlotId?: string): SportEventParticipantView {
     const standing = this.standingRows.find((row) => row.sportEventParticipantId === entry.id);
-    // The tier-set slot's set's (#2044), as a field read shows it.
-    const tierSetSlotId = this.tierSlotsOf(entry.sportEventId).find((slot) => slot.isTierSetSlot)?.id;
+    // The tier-set slot's set's (#2044), or the named slot's, as a field read shows it.
+    const tierSetSlotId = this.tierSlotsOf(entry.sportEventId).find((slot) => (seasonSlotId === undefined ? slot.isTierSetSlot : slot.seasonSlotId === seasonSlotId))?.id;
     const valuation = this.valuationRows.find((row) => row.sportEventSlotId === tierSetSlotId && row.sportEventParticipantId === entry.id);
     return {
       entry: { ...entry },

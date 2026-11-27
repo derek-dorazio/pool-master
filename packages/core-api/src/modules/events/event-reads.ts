@@ -11,6 +11,7 @@
 
 import type { SportEventRoundMatchRepository, SportEventRepository } from '@poolmaster/shared/db';
 import type { SportEvent, SportEventRoundMatch } from '@poolmaster/shared/domain';
+import type { SportEventTierGroup, SportEventTierService } from './sport-event-tier-service';
 
 /** `load`, read once per key: later calls for the key share the first call's answer. */
 export function readOncePerKey<T>(load: (key: string) => Promise<T>): (key: string) => Promise<T> {
@@ -80,4 +81,23 @@ function readTogether<T>(
   const missing = [...new Set(keys)].filter((key) => !answers.has(key));
   let read: Promise<(key: string) => T> | undefined;
   return keys.map((key) => remember(answers, key, async () => (await (read ??= load(missing)))(key)));
+}
+
+/**
+ * A set's tiers (#2044), read once per event and set a contest picks from: the contests on an event
+ * covering the same slots share one read. The memo key lists the slot definitions covered; it is
+ * only ever compared, never read back.
+ */
+export function readTiersOnce(tiers: Pick<SportEventTierService, 'getEffectiveTiersForSportEvent'>): Pick<SportEventTierService, 'getEffectiveTiersForSportEvent'> {
+  const answers = new Map<string, Promise<SportEventTierGroup[]>>();
+  return {
+    getEffectiveTiersForSportEvent: (sportEventId, choice) => {
+      let set = 'tier-set slot';
+      if (choice !== undefined && 'seasonSlotId' in choice) set = `slot ${choice.seasonSlotId}`;
+      if (choice !== undefined && 'coveredSlotDefinitionIds' in choice) {
+        set = choice.coveredSlotDefinitionIds === null ? 'covering all' : `covering ${[...choice.coveredSlotDefinitionIds].sort().join(',')}`;
+      }
+      return remember(answers, `${sportEventId} ${set}`, () => tiers.getEffectiveTiersForSportEvent(sportEventId, choice));
+    },
+  };
 }

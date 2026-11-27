@@ -171,7 +171,7 @@ is the first group finishing. A weather delay or other long stoppage sets off th
 `PROVIDER_WEBHOOK_POLL_SECONDS` and `PROVIDER_WEBHOOK_ROUND_POLL_SECONDS` override the two poll
 paces (`notified-provider-cadence.ts`).
 
-**Routes:** root-admin sync is event-scoped: `POST /api/v1/ingestion/events/:eventId/sync` runs the event field (`EVENTPARTICIPANTS`) and live-score (`EVENTLIVESCORES`) feeds. Scheduled ingestion uses the internal scheduler directly for the same two feeds. There is no sport-level sync and no scheduled schedule or results pull (#126); events are created and linked by the root admin, and `getUpcomingEvents` is read only on demand.
+**Routes:** root-admin sync is event-scoped: `POST /api/v1/ingestion/events/:eventId/sync` takes `kinds`, the event's `FIELD` and `SCORES` sync kinds (`ProviderSyncKind`, #2093). Scheduled ingestion uses the internal scheduler directly for the same two kinds. There is no sport-level sync and no scheduled schedule or results pull (#126); events are created and linked by the root admin, and `getUpcomingEvents` is read only on demand.
 
 ---
 

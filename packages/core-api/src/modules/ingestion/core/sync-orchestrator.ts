@@ -1,6 +1,5 @@
-import type { Sport } from '@poolmaster/shared/domain';
-import type { IngestionFeedType, SyncRequestSource } from '@poolmaster/shared/dto';
-import { JobErrorType } from '@poolmaster/shared/domain';
+import { EVENT_SYNC_KINDS, JobErrorType, type EventSyncKind, type ProviderSyncKind, type Sport } from '@poolmaster/shared/domain';
+import type { SyncRequestSource } from '@poolmaster/shared/dto';
 
 /**
  * Internal sync-intent boundary for pool-master-rop.68.2.
@@ -10,16 +9,14 @@ import { JobErrorType } from '@poolmaster/shared/domain';
  * by pool-master-rop.68.2.3.
  */
 
-export type { IngestionFeedType } from '@poolmaster/shared/dto';
+export type { EventSyncKind } from '@poolmaster/shared/domain';
 
-/** Every feed is event-scoped: there is no sport-level sync (#126). */
-export const EVENT_SYNC_FEEDS = [
-  'EVENTPARTICIPANTS',
-  'EVENTLIVESCORES',
-] as const satisfies readonly IngestionFeedType[];
+/** Whether a run of this kind syncs one event (FIELD, SCORES), rather than a league's EVENTS. */
+export function isEventSyncKind(kind: ProviderSyncKind): kind is EventSyncKind {
+  return EVENT_SYNC_KINDS.some((eventKind) => eventKind === kind);
+}
 
 export type { SyncRequestSource } from '@poolmaster/shared/dto';
-export type EventSyncFeed = typeof EVENT_SYNC_FEEDS[number];
 
 export interface SystemSyncActor {
   type: 'SYSTEM';
@@ -41,7 +38,7 @@ export interface EventSyncScopeInput {
   /** The provider the event is linked to; its sync reads that provider and no other (#1495). */
   providerId: string;
   eventId: string;
-  feeds: readonly IngestionFeedType[];
+  kinds: readonly EventSyncKind[];
 }
 
 export type SyncScopeInput = EventSyncScopeInput;
@@ -57,7 +54,7 @@ export interface NormalizedEventSyncScope {
   sport: Sport;
   providerId: string;
   eventId: string;
-  feeds: EventSyncFeed[];
+  kinds: EventSyncKind[];
 }
 
 export type NormalizedSyncScope = NormalizedEventSyncScope;
@@ -73,8 +70,7 @@ export type SyncRequestValidationCode =
   | 'MANUAL_REQUIRES_ROOT_ADMIN_ACTOR'
   | 'SCHEDULED_REQUIRES_SYSTEM_ACTOR'
   | 'WEBHOOK_REQUIRES_WEBHOOK_ACTOR'
-  | 'EMPTY_FEED_LIST'
-  | 'INVALID_EVENT_FEED'
+  | 'EMPTY_KIND_LIST'
   | 'INVALID_EVENT_ID';
 
 export class SyncRequestValidationError extends Error {
@@ -131,7 +127,7 @@ function normalizeScope(request: SyncOrchestratorRequest): NormalizedSyncScope {
     sport: request.scope.sport,
     providerId: request.scope.providerId,
     eventId,
-    feeds: normalizeEventFeeds(request.scope.feeds),
+    kinds: normalizeEventKinds(request.scope.kinds),
   };
 }
 
@@ -158,30 +154,13 @@ function assertActorMatchesSource(source: SyncRequestSource, actor: SyncActorCon
   }
 }
 
-function normalizeEventFeeds(feeds: readonly IngestionFeedType[]): EventSyncFeed[] {
-  if (feeds.length === 0) {
-    throw new SyncRequestValidationError('EMPTY_FEED_LIST', 'Sync requests require at least one feed.');
+function normalizeEventKinds(kinds: readonly EventSyncKind[]): EventSyncKind[] {
+  if (kinds.length === 0) {
+    throw new SyncRequestValidationError('EMPTY_KIND_LIST', 'Sync requests require at least one sync kind.');
   }
-
-  const normalized: EventSyncFeed[] = [];
-  for (const feed of feeds) {
-    if (!isEventSyncFeed(feed)) {
-      throw new SyncRequestValidationError(
-        'INVALID_EVENT_FEED',
-        `Feed ${String(feed)} is not valid for this sync scope.`,
-      );
-    }
-    if (!normalized.includes(feed)) {
-      normalized.push(feed);
-    }
-  }
-  return normalized;
+  return [...new Set(kinds)];
 }
 
 function cloneDate(value: Date): Date {
   return new Date(value.getTime());
-}
-
-function isEventSyncFeed(feed: IngestionFeedType): feed is EventSyncFeed {
-  return (EVENT_SYNC_FEEDS as readonly IngestionFeedType[]).includes(feed);
 }

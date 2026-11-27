@@ -457,9 +457,10 @@ export interface SportEventParticipantRepository {
    * The event's field as every reader sees it, in one read (#1163): each row with its
    * participant, valuation, standing, rounds, race result and matches, in seed order, unseeded
    * last. Every scoring family's rows come along; a family's empty ones cost nothing.
-   * `sportLeagueId` is the event's, against which each participant's league is flagged.
+   * `sportLeagueId` is the event's, against which each participant's league is flagged. Each
+   * row's valuation is its event's tier-set slot's (#2044), or the one played in `seasonSlotId`'s.
    */
-  findFieldForEvent(sportEventId: string, sportLeagueId: string): Promise<SportEventParticipantView[]>;
+  findFieldForEvent(sportEventId: string, sportLeagueId: string, seasonSlotId?: string): Promise<SportEventParticipantView[]>;
   /**
    * `findFieldForEvent` for several events in the same few statements (#1315), each event's
    * participants flagged against its own sport league: in the order of `events`, then in seed order.

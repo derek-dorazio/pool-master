@@ -11,7 +11,7 @@ import {
   type ProviderSyncRun,
   requireProviderCodeOfSourceId,
 } from '@poolmaster/shared/domain';
-import type { IngestionFeedType, IngestionJobRecord } from '../core/ingestion-scheduler';
+import type { IngestionJobRecord } from '../core/ingestion-scheduler';
 import type { NormalizedSyncRequest } from '../core/sync-orchestrator';
 import { syncChangedRows, type SyncWriteDiagnostics } from '../core/sync-write-diagnostics';
 import type { ProviderSyncFindingService } from '../findings/provider-sync-finding-service';
@@ -89,7 +89,7 @@ export class ProviderSyncRunLedger {
   ): Promise<IngestionJobRecord> {
     const startedAt = new Date();
     const label = syncLabel(syncRun.kind);
-    const startedDetails = { providerPayload: uncapturedProviderPayload(feedOfSyncKind(syncRun.kind)) };
+    const startedDetails = { providerPayload: uncapturedProviderPayload(syncRun.kind) };
 
     await this.syncRuns.update(syncRun.id, {
       status: ProviderSyncRunStatus.IN_PROGRESS,
@@ -192,7 +192,7 @@ export class ProviderSyncRunLedger {
       changedCount: null,
       errorCount: 1,
       details: {
-        providerPayload: details.providerPayload ?? uncapturedProviderPayload(feedOfSyncKind(syncRun.kind)),
+        providerPayload: details.providerPayload ?? uncapturedProviderPayload(syncRun.kind),
         failurePayload: {
           error: toJsonSafeErrorPayload(error),
         },
@@ -229,10 +229,10 @@ function completedOutcome(job: IngestionJobRecord, syncRun: ProviderSyncRun): Pr
 }
 
 /** The provider payload a run records until the provider call captures the raw one. */
-function uncapturedProviderPayload(feed: IngestionFeedType | null): Record<string, unknown> | undefined {
-  if (feed === null) return undefined;
+function uncapturedProviderPayload(kind: ProviderSyncKind): Record<string, unknown> | undefined {
+  // A league's EVENTS sync calls no event feed, so it has no payload to capture.
+  if (kind === ProviderSyncKind.EVENTS) return undefined;
   return {
-    operation: feed,
     rawCaptured: false,
     rawTruncated: false,
   };
@@ -288,23 +288,6 @@ function errorMessageOf(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
 
-const FEED_KINDS: Readonly<Record<IngestionFeedType, ProviderSyncKind>> = {
-  EVENTPARTICIPANTS: ProviderSyncKind.FIELD,
-  EVENTLIVESCORES: ProviderSyncKind.SCORES,
-};
-
-/** The provider feed an event sync run of this kind reads; null for a kind no event feed runs (EVENTS). */
-export function feedOfSyncKind(kind: ProviderSyncKind): IngestionFeedType | null {
-  switch (kind) {
-    case ProviderSyncKind.FIELD:
-      return 'EVENTPARTICIPANTS';
-    case ProviderSyncKind.SCORES:
-      return 'EVENTLIVESCORES';
-    case ProviderSyncKind.EVENTS:
-      return null;
-  }
-}
-
 /** The finding each event sync's run checks its event for (#1999). */
 const EVENT_CHECK_OF_SYNC_KIND: Readonly<Partial<Record<ProviderSyncKind, ProviderSyncFindingKind>>> = {
   [ProviderSyncKind.FIELD]: ProviderSyncFindingKind.NO_PROVIDER_PARTICIPANTS,
@@ -324,11 +307,10 @@ interface SubmissionInput {
   sportLeagueId?: string;
 }
 
-/** One SUBMITTED run per requested feed, as the sync history shows it before it starts. */
+/** One SUBMITTED run per requested sync kind, as the sync history shows it before it starts. */
 function submissionRuns(input: SubmissionInput): ProviderSyncRunCreate[] {
-  const { sport, eventId, feeds } = input.normalizedRequest.scope;
-  return feeds.map((feed) => {
-    const kind = FEED_KINDS[feed];
+  const { sport, eventId, kinds } = input.normalizedRequest.scope;
+  return kinds.map((kind) => {
     return {
       providerCode: requireProviderCodeOfSourceId(input.providerId),
       sport,

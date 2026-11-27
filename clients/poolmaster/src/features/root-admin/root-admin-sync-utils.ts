@@ -13,25 +13,6 @@ export type ProviderSyncRunDetail = ProviderSyncRunDetailDto;
 export type ProviderSummary = ProviderSummaryDto;
 export type EventSyncSubmission = ProviderManualSyncSubmissionResponse;
 
-export const EVENT_SYNC_PRESETS = [
-  {
-    id: 'EVENTPARTICIPANTS',
-    label: 'Refresh event participants',
-    feeds: ['EVENTPARTICIPANTS'] as const,
-  },
-  {
-    id: 'EVENTLIVESCORES',
-    label: 'Refresh live scores',
-    feeds: ['EVENTLIVESCORES'] as const,
-  },
-] as const;
-export type EventSyncPresetId = (typeof EVENT_SYNC_PRESETS)[number]['id'];
-
-export const FEED_LABELS = {
-  EVENTPARTICIPANTS: 'Participants',
-  EVENTLIVESCORES: 'Live scores',
-} as const;
-
 /** A run's counts as labelled facts: `liveScoreUpdatesReturned` reads "Live Score Updates Returned". */
 export function buildStatsSummary(run: Pick<ProviderSyncRun, 'stats'>) {
   return Object.entries(run.stats).map(([key, value]) => ({
@@ -50,10 +31,6 @@ export function getDetailsSection<K extends 'providerPayload' | 'jobPayload'>(
   key: K,
 ): NonNullable<ProviderSyncRunDetails[K]> | null {
   return details?.[key] ?? null;
-}
-
-export function getEventSyncPreset(presetId: EventSyncPresetId) {
-  return EVENT_SYNC_PRESETS.find((preset) => preset.id === presetId) ?? EVENT_SYNC_PRESETS[0];
 }
 
 export function formatJsonPayload(payload: unknown) {

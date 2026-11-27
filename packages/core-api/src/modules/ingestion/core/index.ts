@@ -20,14 +20,12 @@ export {
 } from './score-publisher';
 export type { LiveScorePublisherDeps } from './score-publisher';
 export {
-  EVENT_SYNC_FEEDS,
   SyncOrchestrator,
   SyncRequestValidationError,
   normalizeSyncRequest,
 } from './sync-orchestrator';
 export type {
-  EventSyncFeed,
-  IngestionFeedType,
+  EventSyncKind,
   NormalizedEventSyncScope,
   NormalizedSyncRequest,
   NormalizedSyncScope,
