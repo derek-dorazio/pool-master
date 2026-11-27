@@ -1282,6 +1282,10 @@ test('act 7: a contest over two tournaments — the commissioner adds the second
         `/api/v1/events/${tournament.eventId}/transition`,
       );
       expect(moved.event.status).toBe('IN_PROGRESS');
+      // The settings dialog stays open after the move: leave it for the event's Rounds tab, so
+      // nothing covers the next step's clicks.
+      await page.goto(`/manage/sports/golf/events/${tournament.eventId}/rounds`);
+      await expect(page.getByTestId('root-admin-event-round-1')).toBeVisible();
       await uploadRoundScores(
         page,
         tournament.eventId,
