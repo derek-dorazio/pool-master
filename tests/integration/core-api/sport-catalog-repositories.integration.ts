@@ -624,7 +624,7 @@ describe('SportEvent core repositories', () => {
 
     expect((await new PrismaSportEventRoundRepository(getAppPrisma()).findBySportEvent(event.id)).map((row) => row.roundNumber)).toEqual([1, 2]);
     const { sportLeagueId } = event;
-    const field = await new PrismaSportEventParticipantRepository(getAppPrisma()).findFieldForEvent(event.id, sportLeagueId);
+    const field = await new PrismaSportEventParticipantRepository(getAppPrisma()).findFieldForEvent({ sportEventId: event.id, sportLeagueId, playsField: true });
     expect(field.map((row) => [
       row.participant.name,
       row.standing?.position,
@@ -652,8 +652,8 @@ describe('SportEvent core repositories', () => {
     ] });
 
     const fields = await new PrismaSportEventParticipantRepository(getAppPrisma()).findFieldsForEvents([
-      { sportEventId: event.id, sportLeagueId: event.sportLeagueId },
-      { sportEventId: oneSlot.id, sportLeagueId: oneSlot.sportLeagueId },
+      { sportEventId: event.id, sportLeagueId: event.sportLeagueId, playsField: true },
+      { sportEventId: oneSlot.id, sportLeagueId: oneSlot.sportLeagueId, playsField: true },
     ]);
 
     expect(fields.map((field) => [field.entry.sportEventId, field.valuation?.price])).toEqual([[event.id, 9000], [oneSlot.id, 5000]]);
@@ -688,11 +688,11 @@ describe('SportEvent core repositories', () => {
 
     const [tierSlots, field] = await Promise.all([
       new PrismaSportEventSlotTierRepository(getAppPrisma()).findTierSlots([event.id]).then((slots) => slots.get(event.id) ?? []),
-      new PrismaSportEventParticipantRepository(getAppPrisma()).findFieldForEvent(event.id, event.sportLeagueId),
+      new PrismaSportEventParticipantRepository(getAppPrisma()).findFieldForEvent({ sportEventId: event.id, sportLeagueId: event.sportLeagueId, playsField: true }),
     ]).finally(dropTemplates);
 
     const playInSeasonSlotId = tierSlots.find((slot) => slot.id === playInSlotId)?.seasonSlotId;
-    const playInField = await new PrismaSportEventParticipantRepository(getAppPrisma()).findFieldForEvent(event.id, event.sportLeagueId, playInSeasonSlotId);
+    const playInField = await new PrismaSportEventParticipantRepository(getAppPrisma()).findFieldForEvent({ sportEventId: event.id, sportLeagueId: event.sportLeagueId, playsField: true }, playInSeasonSlotId);
 
     expect(tierSlots.map((slot) => [slot.id, slot.slotDefinitionId, slot.holdsTierSet, slot.isTierSetSlot])).toEqual([
       [playInSlotId, playInDefinition, false, false], [roundOf64SlotId, roundOf64Definition, true, true],
@@ -716,8 +716,8 @@ describe('SportEvent core repositories', () => {
     }
 
     const fields = await new PrismaSportEventParticipantRepository(getPrisma()).findFieldsForEvents([
-      { sportEventId: lpgaEvent.id, sportLeagueId: lpga.id },
-      { sportEventId: pgaEvent.id, sportLeagueId: pga.id },
+      { sportEventId: lpgaEvent.id, sportLeagueId: lpga.id, playsField: true },
+      { sportEventId: pgaEvent.id, sportLeagueId: pga.id, playsField: true },
     ]);
 
     expect(fields.map((row) => [row.entry.sportEventId, row.participant.name, row.affiliatedWithSportLeague])).toEqual([

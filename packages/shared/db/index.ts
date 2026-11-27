@@ -130,6 +130,7 @@ export type {
   SportEventSlotParticipantValuationRepository,
   ValuedSlot,
   SportEventParticipantView,
+  FieldReadEvent,
   SportEventLink,
   SportEventProviderSummary,
   SportEventAutoReleaseCandidate,

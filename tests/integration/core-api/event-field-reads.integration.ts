@@ -319,6 +319,20 @@ describe('An event\'s field, for every scoring family', () => {
       expect(row.fieldResults.map(({ result: side }) => side.position)).toEqual(result ? [result.position] : []);
     }
   });
+  it('reads a head-to-head event\'s field without looking up FIELD matches: the matches are read once, as the ones naming its rows (#2227)', async () => {
+    const prisma = getPrisma();
+    const { event, field: [duke, unc] } = await eventWithField(Sport.BASKETBALL, ['Duke', 'UNC']);
+    const sportEventSlotId = await oneEventSlotId(prisma, event.id);
+    const round = await prisma.sportEventRound.create({ data: { sportEventId: event.id, sportEventSlotId, roundNumber: 1, scheduledDate: new Date('2026-03-20') } });
+    await createMatchRow(prisma, { sportEventId: event.id, sportEventRoundId: round.id, sportEventSlotId, matchNumber: 1, teams: [duke.id, unc.id], isNeutralSite: true });
+
+    const { result: rows, statements } = await recordStatements(() => createSportEventParticipantService(getAppPrisma(), testDomainEvents()).listEventParticipants(event.id));
+
+    // The event's slot definitions say none of its slots plays FIELD, so the field read reads no
+    // FIELD match ids first: its one read of the matches is the include of the match sides naming its rows.
+    expect(statementsOn(statements, StatementVerb.SELECT, 'sport_event_round_matches')).toHaveLength(1);
+    expect(rows.map((row) => row.matches.length)).toEqual([1, 1]);
+  });
 });
 
 describe('A write to one field row', () => {
