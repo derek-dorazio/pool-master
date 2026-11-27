@@ -762,6 +762,12 @@ describe('SportEventTierService — a set on each slot a tiered or budget templa
     return { store, event, service, playIn, roundOf64, roundOf32, startSlot };
   }
 
+  /** The Standard profile's five values, as a price preview takes them: without the profile they came from. */
+  const previewValues = () => {
+    const { salaryCap, unit, topSharePercent, floorSharePercent, steepness } = inMemoryStandardPricing();
+    return { salaryCap, unit, topSharePercent, floorSharePercent, steepness };
+  };
+
   const placed = (groups: ReadonlyArray<{ participants: readonly unknown[] }>) => groups.reduce((sum, group) => sum + group.participants.length, 0);
 
   it('gives every listed slot the default tiers and the play-in none, answering the round of 64 as the event\'s tier-set slot', async () => {
@@ -795,6 +801,44 @@ describe('SportEventTierService — a set on each slot a tiered or budget templa
     expect([tiered, placed(await service.getEffectiveTiersForSportEvent(event.id, { seasonSlotId: roundOf64 }))]).toEqual([
       ['p-01', 'p-03', 'p-04', 'p-06', 'p-07', 'p-08', 'p-09', 'p-10', 'p-11', 'p-12'], 12,
     ]);
+  });
+
+  it('previews a later slot\'s prices over the teams still in going into it, writing nothing', async () => {
+    const { store, event, service, roundOf64, roundOf32 } = await knockout();
+    const rowOf = (participantId: string) => expectDefined(store.field.find((row) => row.participantId === participantId), participantId).id;
+    store.matchRows.push(legacyMatch({
+      id: 'r64-1', sportEventId: event.id, roundNumber: 2, matchNumber: 1, slot: roundSlot(SlotKind.ROUND_OF_64, { seasonSlotId: roundOf64 }),
+      homeSportEventParticipantId: rowOf('p-11'), awaySportEventParticipantId: rowOf('p-02'), status: MatchStatus.COMPLETED, winnerSide: MatchSide.HOME,
+    }));
+    const values = previewValues();
+
+    const [first, later] = await Promise.all([
+      service.previewPrices({ sportEventId: event.id, seasonSlotId: roundOf64, pricing: values }),
+      service.previewPrices({ sportEventId: event.id, seasonSlotId: roundOf32, pricing: values }),
+    ]);
+
+    expect([first.activeParticipantCount, later.activeParticipantCount]).toEqual([12, 11]);
+    // The Standard curve: 24% of a $50,000 cap for the first, 12% for the last.
+    expect(later).toMatchObject({ bestPrice: 12000, worstPrice: 6000 });
+    expect(store.valuationRows.some((row) => row.price !== null)).toBe(false);
+  });
+
+  it('previews a locked set\'s prices too, since a preview writes nothing, but refuses values the assignment would refuse with 422 PRICING_CONFIG_INVALID', async () => {
+    const { event, service, roundOf64 } = await knockout(SportEventStatus.SCHEDULED);
+    const values = previewValues();
+
+    await expect(service.previewPrices({ sportEventId: event.id, seasonSlotId: roundOf64, pricing: values })).resolves.toMatchObject({ activeParticipantCount: 12 });
+    await expect(service.previewPrices({ sportEventId: event.id, seasonSlotId: roundOf64, pricing: { ...values, floorSharePercent: 30 } }))
+      .rejects.toMatchObject({ code: 'PRICING_CONFIG_INVALID', statusCode: 422 });
+  });
+
+  it('previews no prices for a slot with no active field, and refuses the play-in with 409 SLOT_HOLDS_NO_TIER_SET', async () => {
+    const { store, event, service, playIn, roundOf64 } = await knockout();
+    for (const row of store.field) Object.assign(row, { status: SportEventParticipantStatus.WITHDRAWN });
+    const values = previewValues();
+
+    await expect(service.previewPrices({ sportEventId: event.id, seasonSlotId: roundOf64, pricing: values })).resolves.toEqual({ activeParticipantCount: 0, bestPrice: null, worstPrice: null });
+    await expect(service.previewPrices({ sportEventId: event.id, seasonSlotId: playIn, pricing: values })).rejects.toMatchObject({ code: 'SLOT_HOLDS_NO_TIER_SET', statusCode: 409 });
   });
 
   it('keeps a later slot\'s set open once the event is released, until that slot starts', async () => {

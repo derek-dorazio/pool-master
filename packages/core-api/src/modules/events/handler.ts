@@ -4,6 +4,8 @@ import type {
   AddSportEventParticipantsRequest,
   AddSportEventParticipantsResponse,
   AutoAssignSportEventPricesRequest,
+  SportEventPricePreviewQuery,
+  SportEventPricePreviewResponse,
   AutoAssignSportEventTiersRequest,
   CreateSportEventRequest,
   ReplaceSportEventTierAssignmentsRequest,
@@ -331,6 +333,13 @@ export function createEventHandlers({ services, eventLifecycle, ingestion, leade
       await requireEvent(eventId);
       await tiers.autoAssignPrices({ sportEventId: eventId, seasonSlotId, pricing: request.body });
       return fieldResponse(eventId, seasonSlotId);
+    },
+
+    previewEventSlotPrices: async (
+      request: FastifyRequest<SlotParams & { Querystring: SportEventPricePreviewQuery }>,
+    ): Promise<SportEventPricePreviewResponse> => {
+      const { eventId, seasonSlotId } = request.params;
+      return tiers.previewPrices({ sportEventId: eventId, seasonSlotId, pricing: request.query });
     },
 
     previewGolfRoundScores: async (

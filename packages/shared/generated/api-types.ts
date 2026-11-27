@@ -2359,6 +2359,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/events/{eventId}/slots/{seasonSlotId}/prices/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Preview a sport event slot's prices
+         * @description What pricing the slot's active field with the values sent would charge its best and worst participant, on the curve autoAssignEventSlotPrices uses (#2107). A read: nothing is written, so a locked set may be previewed. 422 PRICING_CONFIG_INVALID for values the assignment would refuse. 404 EVENT_NOT_FOUND or SPORT_EVENT_SLOT_NOT_FOUND. The set of the slot the event plays in this Season slot (#2044): a slot holds one when a contest of a tiered or budget template may start there (each slot a one-slot or from-slot template lists, the first a whole-event template lists), or it is the event's first slot and no such template lists any. 409 SLOT_HOLDS_NO_TIER_SET for a slot holding no set. Root admin only.
+         */
+        get: operations["previewEventSlotPrices"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/events/{eventId}/rounds/{roundNumber}/golf-scores/preview": {
         parameters: {
             query?: never;
@@ -15034,7 +15054,7 @@ export interface components {
              */
             platformTierProfileId: string;
         };
-        /** @description Prices the active field on the budget curve with these values, best seed first and golfers with no seed last, and records them on the event's first slot as its pricing (#2044). The values usually come from a Budget pricing profile, possibly changed; platformPricingProfileId names that profile (404 PLATFORM_PRICING_PROFILE_NOT_FOUND for none). */
+        /** @description Prices the active field on the budget curve with these values, best seed first and golfers with no seed last, and records them on the slot as its pricing (#2044). The values usually come from a Budget pricing profile, possibly changed; platformPricingProfileId names that profile (404 PLATFORM_PRICING_PROFILE_NOT_FOUND for none). */
         AutoAssignSportEventPricesRequest: {
             /** @description Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event. */
             salaryCap: number;
@@ -15051,6 +15071,28 @@ export interface components {
              * @description The pricing profile the values started from. The admin may have changed any value before assigning.
              */
             platformPricingProfileId: string;
+        };
+        /** @description Pricing values to preview on a slot's active field before assigning them (#2107): the same five values autoAssignEventSlotPrices takes, without the profile they started from. */
+        SportEventPricePreviewQuery: {
+            /** @description Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event. */
+            salaryCap: number;
+            /** @description Whole dollars. Every price is rounded to a multiple of it. At most the worst golfer's price. */
+            unit: number;
+            /** @description The best seed's price, as a percentage of the salary cap. */
+            topSharePercent: number;
+            /** @description The worst seed's price, as a percentage of the salary cap. At most `topSharePercent`. */
+            floorSharePercent: number;
+            /** @description How fast prices fall from the top: 1 is a straight line; higher keeps the top few expensive and drops the middle of the field towards the floor. */
+            steepness: number;
+        };
+        /** @description What pricing a slot's active field with the values sent would charge its best and worst participant (#2107). Nothing is written. */
+        SportEventPricePreviewResponse: {
+            /** @description The participants the slot's prices would go to: its active field, less anyone knocked out in an earlier slot. */
+            activeParticipantCount: number;
+            /** @description Whole dollars: the first participant's price on the curve; null with no active participant. */
+            bestPrice: number | null;
+            /** @description Whole dollars: the last participant's price on the curve; null with no active participant. */
+            worstPrice: number | null;
         };
         /** @description A field row's tier placement and price, each set independently. */
         SportEventParticipantValuationDto: {
@@ -35439,6 +35481,85 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SportEventParticipantListResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    previewEventSlotPrices: {
+        parameters: {
+            query: {
+                /** @description Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event. */
+                salaryCap: number;
+                /** @description Whole dollars. Every price is rounded to a multiple of it. At most the worst golfer's price. */
+                unit: number;
+                /** @description The best seed's price, as a percentage of the salary cap. */
+                topSharePercent: number;
+                /** @description The worst seed's price, as a percentage of the salary cap. At most `topSharePercent`. */
+                floorSharePercent: number;
+                /** @description How fast prices fall from the top: 1 is a straight line; higher keeps the top few expensive and drops the middle of the field towards the floor. */
+                steepness: number;
+            };
+            header?: never;
+            path: {
+                eventId: string;
+                seasonSlotId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description What pricing a slot's active field with the values sent would charge its best and worst participant (#2107). Nothing is written. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SportEventPricePreviewResponse"];
                 };
             };
             /** @description Standard API error envelope. */

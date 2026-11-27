@@ -1,4 +1,4 @@
-import type { GamePickPreviewRequest, RosterPickPreviewRequest } from '@poolmaster/shared/dto';
+import type { GamePickPreviewRequest, RosterPickPreviewRequest, SportEventPricePreviewQuery } from '@poolmaster/shared/dto';
 
 type QueryKeyId = string | null | undefined;
 
@@ -274,6 +274,9 @@ export const QueryKeys = {
       // One slot's field, with that slot's tiers and prices (#2044), under the event's field.
       slotField: (eventId: QueryKeyId, seasonSlotId: QueryKeyId) =>
         ['poolmaster', 'root-admin', 'manage-sport', 'event', eventId, 'field', seasonSlotId] as const,
+      // What pricing the slot's field with these values would charge (#2107), under the slot's field.
+      slotPricePreview: (eventId: QueryKeyId, seasonSlotId: QueryKeyId, values: SportEventPricePreviewQuery) =>
+        ['poolmaster', 'root-admin', 'manage-sport', 'event', eventId, 'field', seasonSlotId, 'price-preview', values] as const,
       bracket: (eventId: QueryKeyId) =>
         ['poolmaster', 'root-admin', 'manage-sport', 'event', eventId, 'bracket'] as const,
       // Under the bracket, so a result that changes who is left refreshes the suggestion too.

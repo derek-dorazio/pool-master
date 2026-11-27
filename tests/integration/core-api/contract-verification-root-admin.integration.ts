@@ -64,6 +64,7 @@ import type {
   SportLeagueSeasonSlotResponse,
   SportEventRoundListResponse,
   SportEventTierListResponse,
+  SportEventPricePreviewResponse,
   SportLeagueListResponse,
   SuccessResponse,
   UserResetPasswordResponse,
@@ -1537,6 +1538,29 @@ describe('Contract verification (root admin)', () => {
         payload: {},
       });
       expect(autoTierRes.statusCode).toBe(200);
+
+      // --- previewEventSlotPrices (200, 422): the price dialog's preview, priced by the API (#2107) ---
+      const { salaryCap, unit, topSharePercent, floorSharePercent, steepness } = await standardPricingIn(getPrisma());
+      const previewValues = { salaryCap, unit, topSharePercent, floorSharePercent, steepness };
+      const previewRes = await getApp().inject({
+        method: 'GET',
+        url: `${slotRoute('prices/preview')}?${new URLSearchParams(Object.entries(previewValues).map(([key, value]) => [key, String(value)])).toString()}`,
+        headers: withoutJsonBodyHeaders(rootAdmin.headers),
+      });
+      expect(previewRes.statusCode).toBe(200);
+      // The response schema answers whole-dollar prices for a field that has someone in it.
+      expect(previewRes.json<SportEventPricePreviewResponse>()).toEqual({
+        activeParticipantCount: expect.any(Number) as unknown, bestPrice: expect.any(Number) as unknown, worstPrice: expect.any(Number) as unknown,
+      });
+      expect(previewRes.json<SportEventPricePreviewResponse>().activeParticipantCount).toBeGreaterThan(0);
+      const refusedPreviewRes = await getApp().inject({
+        method: 'GET',
+        url: `${slotRoute('prices/preview')}?${new URLSearchParams(Object.entries({ ...previewValues, floorSharePercent: 90 }).map(([key, value]) => [key, String(value)])).toString()}`,
+        headers: withoutJsonBodyHeaders(rootAdmin.headers),
+      });
+      expect(refusedPreviewRes.statusCode).toBe(422);
+      expect(ErrorEnvelopeSchema.safeParse(refusedPreviewRes.json()).success).toBe(true);
+      expect(refusedPreviewRes.json<ErrorEnvelope>().error.code).toBe('PRICING_CONFIG_INVALID');
 
       // --- autoAssignEventSlotPrices: release also needs every active golfer priced (#93) ---
       const autoPriceRes = await getApp().inject({

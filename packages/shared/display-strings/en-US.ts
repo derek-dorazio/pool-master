@@ -1070,7 +1070,7 @@ export const enUS = {
     PREDICTION_TIE_NOT_OFFERED: 'This pool takes no tie picks: pick a winner.',
     PREDICTION_WEEK_INCOMPLETE: 'Pick every game before you submit.',
     PRICE_MISSING: 'This pick has no price yet, so it can’t be chosen.',
-    PRICING_CONFIG_INVALID: 'These prices are not valid.',
+    PRICING_CONFIG_INVALID: 'These prices don’t fit together: the worst participant’s share can’t be above the best’s, and the rounding unit can’t be above the worst participant’s price.',
     PLATFORM_PRICING_PROFILE_CODE_TAKEN: 'A pricing profile already uses that code.',
     PLATFORM_PRICING_PROFILE_INVALID: 'This pricing profile is not valid.',
     PLATFORM_PRICING_PROFILE_IN_USE: 'This pricing profile is in use, so it cannot be deleted.',

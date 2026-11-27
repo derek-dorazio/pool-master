@@ -14526,7 +14526,7 @@ export type SlotTierLayout = {
 };
 
 /**
- * Prices the active field on the budget curve with these values, best seed first and golfers with no seed last, and records them on the event's first slot as its pricing (#2044). The values usually come from a Budget pricing profile, possibly changed; platformPricingProfileId names that profile (404 PLATFORM_PRICING_PROFILE_NOT_FOUND for none).
+ * Prices the active field on the budget curve with these values, best seed first and golfers with no seed last, and records them on the slot as its pricing (#2044). The values usually come from a Budget pricing profile, possibly changed; platformPricingProfileId names that profile (404 PLATFORM_PRICING_PROFILE_NOT_FOUND for none).
  */
 export type AutoAssignSportEventPricesRequest = {
     /**
@@ -14553,6 +14553,50 @@ export type AutoAssignSportEventPricesRequest = {
      * The pricing profile the values started from. The admin may have changed any value before assigning.
      */
     platformPricingProfileId: string;
+};
+
+/**
+ * Pricing values to preview on a slot's active field before assigning them (#2107): the same five values autoAssignEventSlotPrices takes, without the profile they started from.
+ */
+export type SportEventPricePreviewQuery = {
+    /**
+     * Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event.
+     */
+    salaryCap: number;
+    /**
+     * Whole dollars. Every price is rounded to a multiple of it. At most the worst golfer's price.
+     */
+    unit: number;
+    /**
+     * The best seed's price, as a percentage of the salary cap.
+     */
+    topSharePercent: number;
+    /**
+     * The worst seed's price, as a percentage of the salary cap. At most `topSharePercent`.
+     */
+    floorSharePercent: number;
+    /**
+     * How fast prices fall from the top: 1 is a straight line; higher keeps the top few expensive and drops the middle of the field towards the floor.
+     */
+    steepness: number;
+};
+
+/**
+ * What pricing a slot's active field with the values sent would charge its best and worst participant (#2107). Nothing is written.
+ */
+export type SportEventPricePreviewResponse = {
+    /**
+     * The participants the slot's prices would go to: its active field, less anyone knocked out in an earlier slot.
+     */
+    activeParticipantCount: number;
+    /**
+     * Whole dollars: the first participant's price on the curve; null with no active participant.
+     */
+    bestPrice: number | null;
+    /**
+     * Whole dollars: the last participant's price on the curve; null with no active participant.
+     */
+    worstPrice: number | null;
 };
 
 /**
@@ -37640,6 +37684,71 @@ export type AutoAssignEventSlotPricesResponses = {
 };
 
 export type AutoAssignEventSlotPricesResponse = AutoAssignEventSlotPricesResponses[keyof AutoAssignEventSlotPricesResponses];
+
+export type PreviewEventSlotPricesData = {
+    body?: never;
+    path: {
+        eventId: string;
+        seasonSlotId: string;
+    };
+    query: {
+        /**
+         * Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event.
+         */
+        salaryCap: number;
+        /**
+         * Whole dollars. Every price is rounded to a multiple of it. At most the worst golfer's price.
+         */
+        unit: number;
+        /**
+         * The best seed's price, as a percentage of the salary cap.
+         */
+        topSharePercent: number;
+        /**
+         * The worst seed's price, as a percentage of the salary cap. At most `topSharePercent`.
+         */
+        floorSharePercent: number;
+        /**
+         * How fast prices fall from the top: 1 is a straight line; higher keeps the top few expensive and drops the middle of the field towards the floor.
+         */
+        steepness: number;
+    };
+    url: '/api/v1/events/{eventId}/slots/{seasonSlotId}/prices/preview';
+};
+
+export type PreviewEventSlotPricesErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    401: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    403: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    404: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    409: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    422: ErrorEnvelope;
+};
+
+export type PreviewEventSlotPricesError = PreviewEventSlotPricesErrors[keyof PreviewEventSlotPricesErrors];
+
+export type PreviewEventSlotPricesResponses = {
+    /**
+     * What pricing a slot's active field with the values sent would charge its best and worst participant (#2107). Nothing is written.
+     */
+    200: SportEventPricePreviewResponse;
+};
+
+export type PreviewEventSlotPricesResponse = PreviewEventSlotPricesResponses[keyof PreviewEventSlotPricesResponses];
 
 export type PreviewEventGolfRoundScoresData = {
     body: GolfRoundScoreUploadRequest;

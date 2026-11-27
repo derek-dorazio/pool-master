@@ -25,6 +25,7 @@ const {
   listEventSlotParticipantsMock,
   autoAssignEventSlotTiersMock,
   autoAssignEventSlotPricesMock,
+  previewEventSlotPricesMock,
   updateEventParticipantsMock,
   listPlatformPricingProfilesMock,
   getSportLeagueMock,
@@ -45,6 +46,7 @@ const {
     listEventSlotParticipantsMock: vi.fn(),
     autoAssignEventSlotTiersMock: vi.fn(),
     autoAssignEventSlotPricesMock: vi.fn(),
+    previewEventSlotPricesMock: vi.fn(),
     updateEventParticipantsMock: vi.fn(),
     listPlatformPricingProfilesMock: vi.fn(),
     getSportLeagueMock: vi.fn(),
@@ -58,6 +60,7 @@ bindApiMocks({
   listEventSlotParticipants: listEventSlotParticipantsMock,
   autoAssignEventSlotTiers: autoAssignEventSlotTiersMock,
   autoAssignEventSlotPrices: autoAssignEventSlotPricesMock,
+  previewEventSlotPrices: previewEventSlotPricesMock,
   updateEventParticipants: updateEventParticipantsMock,
   listPlatformPricingProfiles: listPlatformPricingProfilesMock,
   getSportLeague: getSportLeagueMock,
@@ -132,6 +135,13 @@ function seed(overrides: { tournament?: Parameters<typeof tournament>[0] } = {})
   listEventSlotTiersMock.mockResolvedValue({
     data: { tiers: [tier(1), tier(2), tier(3)] },
   });
+  // The API's preview (#2107): what it answers for the Standard values on a field of three, and
+  // its refusal of a floor above the top, as the assignment would refuse it.
+  previewEventSlotPricesMock.mockImplementation(({ query }: { query: { topSharePercent: number; floorSharePercent: number } }) => Promise.resolve(
+    query.floorSharePercent > query.topSharePercent
+      ? { error: { error: { code: 'PRICING_CONFIG_INVALID', message: 'The worst seed\'s share can\'t be above the best seed\'s.' } } }
+      : { data: { activeParticipantCount: 3, bestPrice: 12000, worstPrice: 6000 } },
+  ));
   listPlatformPricingProfilesMock.mockResolvedValue({ data: { platformPricingProfiles: platformPricingProfilesFixture() } });
   getSportLeagueMock.mockResolvedValue({ data: { sportLeague: sportLeagueFixture() } });
 }
@@ -188,9 +198,14 @@ describe('the Field section\'s automatic tiers and prices', () => {
     await userEvent.click(screen.getByTestId('root-admin-tier-auto-prices'));
     expect(screen.getByTestId('root-admin-tier-auto-prices-profile')).toHaveDisplayValue('Standard');
     expect(screen.getByTestId('root-admin-tier-auto-prices-salaryCap')).toHaveValue('50000');
-    expect(screen.getByTestId('root-admin-tier-auto-prices-preview')).toHaveTextContent(
+    expect(await screen.findByTestId('root-admin-tier-auto-prices-preview')).toHaveTextContent(
       'Best participant $12,000, worst $6,000, across 3 active participants.',
     );
+    // The prices are the API's, for the slot and the five values (#2107).
+    expect(previewEventSlotPricesMock).toHaveBeenCalledWith(expect.objectContaining({
+      path: { eventId: 'evt-1', seasonSlotId: 'slot-1' },
+      query: { salaryCap: 50000, unit: 100, topSharePercent: 24, floorSharePercent: 12, steepness: 4 },
+    }));
 
     await userEvent.selectOptions(screen.getByTestId('root-admin-tier-auto-prices-profile'), 'Small');
     expect(screen.getByTestId('root-admin-tier-auto-prices-salaryCap')).toHaveValue('5000');
@@ -243,7 +258,7 @@ describe('the Field section\'s automatic tiers and prices', () => {
     expect(await within(modal).findByText('This event has been released, so its tiers and prices are locked.')).toBeInTheDocument();
   });
 
-  it('refuses pricing values that contradict each other or are not numbers, naming the problem', async () => {
+  it('shows the API\'s refusal of pricing values that contradict each other, and refuses values that are not numbers, naming the problem', async () => {
     seed();
     renderPage();
 
@@ -254,7 +269,8 @@ describe('the Field section\'s automatic tiers and prices', () => {
 
     await userEvent.clear(floor);
     await userEvent.type(floor, '30');
-    expect(screen.getByText('The worst seed\'s share can\'t be above the best seed\'s.')).toBeInTheDocument();
+    expect(await screen.findByText(/the worst participant’s share can’t be above the best’s/)).toBeInTheDocument();
+    expect(screen.queryByTestId('root-admin-tier-auto-prices-preview')).not.toBeInTheDocument();
     expect(confirm).toBeDisabled();
 
     await userEvent.clear(screen.getByTestId('root-admin-tier-auto-prices-salaryCap'));

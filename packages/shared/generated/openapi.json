@@ -33575,7 +33575,87 @@
           "platformPricingProfileId"
         ],
         "additionalProperties": false,
-        "description": "Prices the active field on the budget curve with these values, best seed first and golfers with no seed last, and records them on the event's first slot as its pricing (#2044). The values usually come from a Budget pricing profile, possibly changed; platformPricingProfileId names that profile (404 PLATFORM_PRICING_PROFILE_NOT_FOUND for none)."
+        "description": "Prices the active field on the budget curve with these values, best seed first and golfers with no seed last, and records them on the slot as its pricing (#2044). The values usually come from a Budget pricing profile, possibly changed; platformPricingProfileId names that profile (404 PLATFORM_PRICING_PROFILE_NOT_FOUND for none)."
+      },
+      "SportEventPricePreviewQuery": {
+        "type": "object",
+        "properties": {
+          "salaryCap": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 10000000,
+            "description": "Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event."
+          },
+          "unit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 10000000,
+            "description": "Whole dollars. Every price is rounded to a multiple of it. At most the worst golfer's price."
+          },
+          "topSharePercent": {
+            "type": "number",
+            "minimum": 0.1,
+            "maximum": 100,
+            "description": "The best seed's price, as a percentage of the salary cap."
+          },
+          "floorSharePercent": {
+            "type": "number",
+            "minimum": 0.1,
+            "maximum": 100,
+            "description": "The worst seed's price, as a percentage of the salary cap. At most `topSharePercent`."
+          },
+          "steepness": {
+            "type": "number",
+            "minimum": 0.1,
+            "maximum": 10,
+            "description": "How fast prices fall from the top: 1 is a straight line; higher keeps the top few expensive and drops the middle of the field towards the floor."
+          }
+        },
+        "required": [
+          "salaryCap",
+          "unit",
+          "topSharePercent",
+          "floorSharePercent",
+          "steepness"
+        ],
+        "additionalProperties": false,
+        "description": "Pricing values to preview on a slot's active field before assigning them (#2107): the same five values autoAssignEventSlotPrices takes, without the profile they started from."
+      },
+      "SportEventPricePreviewResponse": {
+        "type": "object",
+        "properties": {
+          "activeParticipantCount": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991,
+            "description": "The participants the slot's prices would go to: its active field, less anyone knocked out in an earlier slot."
+          },
+          "bestPrice": {
+            "description": "Whole dollars: the first participant's price on the curve; null with no active participant.",
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "worstPrice": {
+            "description": "Whole dollars: the last participant's price on the curve; null with no active participant.",
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": [
+          "activeParticipantCount",
+          "bestPrice",
+          "worstPrice"
+        ],
+        "additionalProperties": false,
+        "description": "What pricing a slot's active field with the values sent would charge its best and worst participant (#2107). Nothing is written."
       },
       "SportEventParticipantValuationDto": {
         "type": "object",
@@ -88462,6 +88542,153 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/SportEventParticipantListResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/events/{eventId}/slots/{seasonSlotId}/prices/preview": {
+      "get": {
+        "operationId": "previewEventSlotPrices",
+        "summary": "Preview a sport event slot's prices",
+        "tags": [
+          "Events"
+        ],
+        "description": "What pricing the slot's active field with the values sent would charge its best and worst participant, on the curve autoAssignEventSlotPrices uses (#2107). A read: nothing is written, so a locked set may be previewed. 422 PRICING_CONFIG_INVALID for values the assignment would refuse. 404 EVENT_NOT_FOUND or SPORT_EVENT_SLOT_NOT_FOUND. The set of the slot the event plays in this Season slot (#2044): a slot holds one when a contest of a tiered or budget template may start there (each slot a one-slot or from-slot template lists, the first a whole-event template lists), or it is the event's first slot and no such template lists any. 409 SLOT_HOLDS_NO_TIER_SET for a slot holding no set. Root admin only.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 10000000
+            },
+            "in": "query",
+            "name": "salaryCap",
+            "required": true,
+            "description": "Whole dollars. The salary cap the prices are a share of, and the cap of every budget contest on the event."
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 10000000
+            },
+            "in": "query",
+            "name": "unit",
+            "required": true,
+            "description": "Whole dollars. Every price is rounded to a multiple of it. At most the worst golfer's price."
+          },
+          {
+            "schema": {
+              "type": "number",
+              "minimum": 0.1,
+              "maximum": 100
+            },
+            "in": "query",
+            "name": "topSharePercent",
+            "required": true,
+            "description": "The best seed's price, as a percentage of the salary cap."
+          },
+          {
+            "schema": {
+              "type": "number",
+              "minimum": 0.1,
+              "maximum": 100
+            },
+            "in": "query",
+            "name": "floorSharePercent",
+            "required": true,
+            "description": "The worst seed's price, as a percentage of the salary cap. At most `topSharePercent`."
+          },
+          {
+            "schema": {
+              "type": "number",
+              "minimum": 0.1,
+              "maximum": 10
+            },
+            "in": "query",
+            "name": "steepness",
+            "required": true,
+            "description": "How fast prices fall from the top: 1 is a straight line; higher keeps the top few expensive and drops the middle of the field towards the floor."
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "path",
+            "name": "eventId",
+            "required": true
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "path",
+            "name": "seasonSlotId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "What pricing a slot's active field with the values sent would charge its best and worst participant (#2107). Nothing is written.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SportEventPricePreviewResponse"
                 }
               }
             }

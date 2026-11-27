@@ -308,9 +308,21 @@ export const ReplaceSportEventTierAssignmentsRequestSchema = z.object({
 export type ReplaceSportEventTierAssignmentsRequest = z.infer<typeof ReplaceSportEventTierAssignmentsRequestSchema>;
 
 export const AutoAssignSportEventPricesRequestSchema = SlotPricingSchema.describe(
-  'Prices the active field on the budget curve with these values, best seed first and golfers with no seed last, and records them on the event\'s first slot as its pricing (#2044). The values usually come from a Budget pricing profile, possibly changed; platformPricingProfileId names that profile (404 PLATFORM_PRICING_PROFILE_NOT_FOUND for none).',
+  'Prices the active field on the budget curve with these values, best seed first and golfers with no seed last, and records them on the slot as its pricing (#2044). The values usually come from a Budget pricing profile, possibly changed; platformPricingProfileId names that profile (404 PLATFORM_PRICING_PROFILE_NOT_FOUND for none).',
 );
 export type AutoAssignSportEventPricesRequest = z.infer<typeof AutoAssignSportEventPricesRequestSchema>;
+
+const SportEventPricePreviewQuerySchema = SlotPricingSchema.omit({ platformPricingProfileId: true }).describe(
+  'Pricing values to preview on a slot\'s active field before assigning them (#2107): the same five values autoAssignEventSlotPrices takes, without the profile they started from.',
+);
+export type SportEventPricePreviewQuery = z.infer<typeof SportEventPricePreviewQuerySchema>;
+
+const SportEventPricePreviewResponseSchema = z.object({
+  activeParticipantCount: z.number().int().describe('The participants the slot\'s prices would go to: its active field, less anyone knocked out in an earlier slot.'),
+  bestPrice: z.number().int().nullable().describe('Whole dollars: the first participant\'s price on the curve; null with no active participant.'),
+  worstPrice: z.number().int().nullable().describe('Whole dollars: the last participant\'s price on the curve; null with no active participant.'),
+}).describe('What pricing a slot\'s active field with the values sent would charge its best and worst participant (#2107). Nothing is written.');
+export type SportEventPricePreviewResponse = z.infer<typeof SportEventPricePreviewResponseSchema>;
 
 // --- SportEventParticipant — the Participant↔SportEvent edge ----------------------
 
@@ -462,6 +474,8 @@ registerSchema('ReplaceSportEventTierAssignmentsRequest', ReplaceSportEventTierA
 registerSchema('SlotPricing', SlotPricingSchema);
 registerSchema('SlotTierLayout', SlotTierLayoutSchema);
 registerSchema('AutoAssignSportEventPricesRequest', AutoAssignSportEventPricesRequestSchema);
+registerSchema('SportEventPricePreviewQuery', SportEventPricePreviewQuerySchema);
+registerSchema('SportEventPricePreviewResponse', SportEventPricePreviewResponseSchema);
 registerSchema('SportEventParticipantValuationDto', SportEventParticipantValuationDtoSchema);
 registerSchema('SportEventParticipantStandingDto', SportEventParticipantStandingDtoSchema);
 registerSchema('SportEventParticipantRoundDto', SportEventParticipantRoundDtoSchema);

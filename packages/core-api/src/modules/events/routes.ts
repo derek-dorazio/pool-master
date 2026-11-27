@@ -486,6 +486,20 @@ export async function eventsModule(fastify: FastifyInstance, opts: EventsModuleO
     handler: handler.autoAssignEventSlotPrices,
   });
 
+  fastify.get('/:eventId/slots/:seasonSlotId/prices/preview', {
+    ...write,
+    schema: {
+      tags: TAGS,
+      summary: 'Preview a sport event slot\'s prices',
+      description: `What pricing the slot's active field with the values sent would charge its best and worst participant, on the curve autoAssignEventSlotPrices uses (#2107). A read: nothing is written, so a locked set may be previewed. 422 PRICING_CONFIG_INVALID for values the assignment would refuse. 404 EVENT_NOT_FOUND or SPORT_EVENT_SLOT_NOT_FOUND. ${SLOT_SET} 409 SLOT_HOLDS_NO_TIER_SET for a slot holding no set. Root admin only.`,
+      operationId: 'previewEventSlotPrices',
+      params: SLOT_PARAMS,
+      querystring: schemaRef('SportEventPricePreviewQuery'),
+      response: { 200: schemaRef('SportEventPricePreviewResponse'), ...errors(401, 403, 404, 409, 422) },
+    },
+    handler: handler.previewEventSlotPrices,
+  });
+
   // --- Golf score corrections: the operations that write golf extension rows ---------------
 
   fastify.post('/:eventId/rounds/:roundNumber/golf-scores/preview', {
