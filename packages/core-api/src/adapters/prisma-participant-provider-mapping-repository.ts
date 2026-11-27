@@ -34,9 +34,11 @@ export class PrismaParticipantProviderMappingRepository implements ParticipantPr
     if (externalIds.length === 0) return [];
     const rows = await this.prisma.participantProviderMapping.findMany({
       where: { provider: { code: providerCode }, externalId: { in: [...externalIds] }, ...scopeWhere(scope) },
-      include: WITH_PROVIDER_NAME,
+      include: { ...WITH_PROVIDER_NAME, sportLeague: { select: { participantType: true } } },
     });
-    return rows.map(mapToMapping);
+    // A league's own competitors only: a team league's rostered players (#2025) carry feed ids
+    // too, and the provider may number a player as it numbers a team.
+    return rows.filter((row) => row.participantType === row.sportLeague.participantType).map(mapToMapping);
   }
 
   async findByProviderAndSportLeague(providerId: string, sportLeagueId: string): Promise<ParticipantProviderMapping[]> {

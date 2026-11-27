@@ -1,0 +1,152 @@
+{
+  "data": [
+    {
+      "id": 33,
+      "first_name": "Patrick",
+      "last_name": "Mahomes",
+      "position": "Quarterback",
+      "position_abbreviation": "QB",
+      "height": "6' 2\"",
+      "weight": "225 lbs",
+      "jersey_number": "15",
+      "college": "Texas Tech",
+      "experience": "9th Season",
+      "age": 31,
+      "team": {
+        "id": 17,
+        "conference": "AFC",
+        "division": "WEST",
+        "location": "Kansas City",
+        "name": "Chiefs",
+        "full_name": "Kansas City Chiefs",
+        "abbreviation": "KC"
+      }
+    },
+    {
+      "id": 34,
+      "first_name": "Travis",
+      "last_name": "Kelce",
+      "position": "Tight End",
+      "position_abbreviation": "TE",
+      "height": "6' 2\"",
+      "weight": "225 lbs",
+      "jersey_number": "87",
+      "college": "Texas Tech",
+      "experience": "9th Season",
+      "age": 31,
+      "team": {
+        "id": 17,
+        "conference": "AFC",
+        "division": "WEST",
+        "location": "Kansas City",
+        "name": "Chiefs",
+        "full_name": "Kansas City Chiefs",
+        "abbreviation": "KC"
+      }
+    },
+    {
+      "id": 35,
+      "first_name": "Harrison",
+      "last_name": "Butker",
+      "position": "Place Kicker",
+      "position_abbreviation": "K",
+      "height": "6' 2\"",
+      "weight": "225 lbs",
+      "jersey_number": "7",
+      "college": "Texas Tech",
+      "experience": "9th Season",
+      "age": 31,
+      "team": {
+        "id": 17,
+        "conference": "AFC",
+        "division": "WEST",
+        "location": "Kansas City",
+        "name": "Chiefs",
+        "full_name": "Kansas City Chiefs",
+        "abbreviation": "KC"
+      }
+    },
+    {
+      "id": 36,
+      "first_name": "Nick",
+      "last_name": "Bolton",
+      "position": "Linebacker",
+      "position_abbreviation": "LB",
+      "height": "6' 2\"",
+      "weight": "225 lbs",
+      "jersey_number": "32",
+      "college": "Texas Tech",
+      "experience": "9th Season",
+      "age": 31,
+      "team": {
+        "id": 17,
+        "conference": "AFC",
+        "division": "WEST",
+        "location": "Kansas City",
+        "name": "Chiefs",
+        "full_name": "Kansas City Chiefs",
+        "abbreviation": "KC"
+      }
+    },
+    {
+      "id": 37,
+      "first_name": "Josh",
+      "last_name": "Allen",
+      "position": "Quarterback",
+      "position_abbreviation": "QB",
+      "height": "6' 2\"",
+      "weight": "225 lbs",
+      "jersey_number": "17",
+      "college": "Texas Tech",
+      "experience": "9th Season",
+      "age": 31,
+      "team": {
+        "id": 3,
+        "conference": "AFC",
+        "division": "EAST",
+        "location": "Buffalo",
+        "name": "Bills",
+        "full_name": "Buffalo Bills",
+        "abbreviation": "BUF"
+      }
+    },
+    {
+      "id": 38,
+      "first_name": "James",
+      "last_name": "Cook",
+      "position": "Running Back",
+      "position_abbreviation": "RB",
+      "height": "6' 2\"",
+      "weight": "225 lbs",
+      "jersey_number": "4",
+      "college": "Texas Tech",
+      "experience": "9th Season",
+      "age": 31,
+      "team": {
+        "id": 3,
+        "conference": "AFC",
+        "division": "EAST",
+        "location": "Buffalo",
+        "name": "Bills",
+        "full_name": "Buffalo Bills",
+        "abbreviation": "BUF"
+      }
+    },
+    {
+      "id": 39,
+      "first_name": "Free",
+      "last_name": "Agent",
+      "position": "Wide Receiver",
+      "position_abbreviation": "WR",
+      "height": "6' 2\"",
+      "weight": "225 lbs",
+      "jersey_number": "11",
+      "college": "Texas Tech",
+      "experience": "9th Season",
+      "age": 31
+    }
+  ],
+  "meta": {
+    "per_page": 100
+  }
+}

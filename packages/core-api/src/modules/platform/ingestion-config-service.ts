@@ -45,6 +45,13 @@ export const INGESTION_SCHEDULE_SETTINGS = defineSettingsGroup<IngestionSchedule
         [SyncSeasonState.OFFSEASON]: { intervalSeconds: 300 },
       },
     },
+    // Rosters have no switch, as the field has none: daily, whatever the state (#2025).
+    [ProviderSyncKind.ROSTER]: {
+      intervals: {
+        [SyncSeasonState.IN_SEASON]: { intervalMinutes: 1440 },
+        [SyncSeasonState.OFFSEASON]: { intervalMinutes: 1440 },
+      },
+    },
   }),
 });
 
@@ -128,6 +135,7 @@ function applyPatch(
     [ProviderSyncKind.EVENTS]: mergePolicy(config.EVENTS, patch.EVENTS),
     [ProviderSyncKind.FIELD]: mergePolicy(config.FIELD, patch.FIELD),
     [ProviderSyncKind.SCORES]: mergePolicy(config.SCORES, patch.SCORES),
+    [ProviderSyncKind.ROSTER]: mergePolicy(config.ROSTER, patch.ROSTER),
   };
 }
 

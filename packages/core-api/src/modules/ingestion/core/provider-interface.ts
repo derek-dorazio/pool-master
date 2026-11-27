@@ -50,6 +50,16 @@ export interface SportDataProvider {
   getParticipants(sport: Sport): Promise<ProviderParticipant[]>;
 
   /**
+   * One provider league's roster for one of its seasons (#2025): each player with their team and
+   * position code as the feed sends them. The league is the `providerLeagueCode` asked for and the
+   * season the provider's own id for the league's current Season. A league whose reader reads no
+   * roster answers none, as a provider with no `getRoster` does; a code the provider does not read
+   * throws `ProviderLeagueUnknownError`, and a refusal by the provider's plan
+   * `ProviderLeagueRefusedError`, as the events read does.
+   */
+  getRoster?(sport: Sport, options: ProviderEventListOptions): Promise<ProviderRosterPlayer[]>;
+
+  /**
    * Fetch live/current scores for an event. Returns a typed
    * `LiveScoreResult` discriminated by sport category.
    */
@@ -234,6 +244,17 @@ export interface ProviderScheduledGameId {
   providerGameId: string;
   /** 1 for a single game and a series' first; a series' games in the order they are played. */
   gameNumber: number;
+}
+
+/** One player of a provider league's roster (#2025), as the feed sends them. */
+export interface ProviderRosterPlayer {
+  /** The provider's own id for the player. */
+  externalId: string;
+  name: string;
+  /** The provider's id for the player's team; null when the feed lists them on no team. */
+  teamExternalId: string | null;
+  /** The provider's code for the player's position, mapped to a league position by its provider code rows; null when the feed sends none. */
+  positionCode: string | null;
 }
 
 export interface ProviderParticipant {

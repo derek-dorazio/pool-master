@@ -76,6 +76,8 @@ export interface SportLeagueParticipantOverview {
   lastInFeedAt: Date | null;
   addedBy: ParticipantAddedBy;
   createdAt: Date;
+  /** A player's team and position in the league's current Season, from their roster row (#2025); null for a team and a player on none. */
+  roster: { teamParticipantId: string; teamName: string; positionCode: string; lastSeenAt: Date } | null;
 }
 
 /** One field row's place in its provider's feed (#1889): the Event page's Last in feed column. */

@@ -189,6 +189,7 @@ export function mapSportLeagueParticipantOverviewToDto(participant: SportLeagueP
     lastInFeedAt: participant.lastInFeedAt?.toISOString() ?? null,
     addedBy: participant.addedBy,
     createdAt: participant.createdAt.toISOString(),
+    roster: participant.roster === null ? null : { ...participant.roster, lastSeenAt: participant.roster.lastSeenAt.toISOString() },
   };
 }
 

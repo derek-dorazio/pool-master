@@ -26,7 +26,7 @@ import { asPrismaClient } from '../../support/prisma-double';
 const NOW = new Date('2027-04-15T12:00:00.000Z');
 const at = (iso: string) => new Date(iso);
 
-const SYNCED_TO_BALLDONTLIE = { providerLeague: { provider: { code: 'BALLDONTLIE' } } };
+const SYNCED_TO_BALLDONTLIE = { providerLeague: { provider: { code: 'BALLDONTLIE' } }, positionCodes: [] };
 const LEAGUE_ROW = {
   id: 'tour', isActive: true, selectedProviderMapping: SYNCED_TO_BALLDONTLIE, autoReleaseDaysBeforeStart: 7, sport: { sport: Sport.GOLF },
   platformTierProfile: { sources: [{ basis: 'ODDS' }, { basis: 'SEED' }] },
@@ -46,6 +46,7 @@ function prismaDouble(options: { league?: unknown } = {}) {
     sportEventParticipant: { groupBy: jest.fn().mockResolvedValue([]) },
     participant: { findMany: jest.fn().mockResolvedValue([]) },
     participantProviderMapping: { findMany: jest.fn().mockResolvedValue([]) },
+    sportLeagueSeasonParticipantTeam: { findMany: jest.fn().mockResolvedValue([]) },
     providerLeague: { findMany: jest.fn().mockResolvedValue([]) },
     sportLeaguePhase: { findMany: jest.fn().mockResolvedValue([]) },
     sportLeagueCompetition: { findMany: jest.fn().mockResolvedValue([]) },
@@ -66,7 +67,7 @@ describe('PrismaSportLeaguePageReader.readSyncFacts', () => {
 
     const facts = await new PrismaSportLeaguePageReader(asPrismaClient(prisma)).readSyncFacts('tour');
 
-    expect(facts).toEqual({ league: { id: 'tour', sport: Sport.GOLF, isActive: true, syncProviderId: 'balldontlie', autoReleaseDaysBeforeStart: 7, tierSources: ['ODDS', 'SEED'] }, latestRuns: [] });
+    expect(facts).toEqual({ league: { id: 'tour', sport: Sport.GOLF, isActive: true, syncProviderId: 'balldontlie', syncsRoster: false, autoReleaseDaysBeforeStart: 7, tierSources: ['ODDS', 'SEED'] }, latestRuns: [] });
     expect(prisma.providerSyncRun.findMany).not.toHaveBeenCalled();
   });
 
@@ -156,6 +157,21 @@ describe('PrismaSportLeaguePageReader.readParticipants', () => {
     const prisma = prismaDouble({ league: null });
 
     await expect(new PrismaSportLeaguePageReader(asPrismaClient(prisma)).readParticipants('missing')).resolves.toBeNull();
+  });
+
+  it('names a player\'s team and position on the current Season\'s roster, and none for one not on it', async () => {
+    const prisma = prismaDouble();
+    prisma.participant.findMany.mockResolvedValue([{ id: 'p1', name: 'Alpha' }, { id: 'p2', name: 'Beta' }]);
+    prisma.sportLeagueSeasonParticipantTeam.findMany.mockResolvedValue([
+      { participantId: 'p1', teamParticipantId: 't1', lastSeenAt: NOW, team: { name: 'Kansas City Chiefs' }, position: { code: 'QB' } },
+    ]);
+
+    const rows = await new PrismaSportLeaguePageReader(asPrismaClient(prisma)).readParticipants('tour');
+
+    expect(rows?.map((row) => [row.participant.id, row.roster])).toEqual([
+      ['p1', { teamParticipantId: 't1', teamName: 'Kansas City Chiefs', positionCode: 'QB', lastSeenAt: NOW }],
+      ['p2', null],
+    ]);
   });
 
   it('names each participant\'s latest made mapping, and none for one with no mapping', async () => {

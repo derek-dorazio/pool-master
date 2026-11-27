@@ -69,8 +69,9 @@ export class SportLeaguePageService {
   async listParticipants(sportLeagueId: string): Promise<SportLeagueParticipantOverview[] | null> {
     const rows = await this.deps.reader.readParticipants(sportLeagueId);
     if (rows === null) return null;
-    return rows.map(({ participant, mapping }) => ({
+    return rows.map(({ participant, mapping, roster }) => ({
       ...participant,
+      roster,
       feedId: mapping?.externalId ?? null,
       lastInFeedAt: mapping?.lastSeenAt ?? null,
       addedBy: mapping === null ? ParticipantAddedBy.ADMIN : ParticipantAddedBy.FEED,
@@ -114,7 +115,8 @@ export class SportLeaguePageService {
 
 
 /**
- * One row per sync kind, in kind order: its health by the overview's rule from its latest run,
+ * One row per sync kind the league runs, in kind order (the roster sync only where its provider
+ * mapping names position codes, #2025): its health by the overview's rule from its latest run,
  * that run, and whether a webhook or the schedule drives it. The live scores of a provider whose
  * webhooks are on follow the webhook; every other sync runs on the one schedule (#1997: the page
  * no longer works out the schedule's next run itself).
@@ -126,6 +128,7 @@ export function buildSportLeagueSyncs(
 ): SportLeagueSync[] {
   const providerId = league.syncProviderId;
   return Object.values(ProviderSyncKind)
+    .filter((kind) => kind !== ProviderSyncKind.ROSTER || league.syncsRoster)
     .sort(compareByEnumOrder(ProviderSyncKindOrder))
     .map((kind): SportLeagueSync => {
       const run = latestRuns.find((candidate) => candidate.kind === kind) ?? null;

@@ -1,14 +1,15 @@
 /**
  * The BALLDONTLIE NFL reads behind the adapter (#1496): the season's games grouped into events
  * (a regular season week, or the postseason), a scope's teams, every NFL team, and a scope's
- * game scores, and a season's standings for the postseason's seeds. The games, teams and standings
- * endpoints name no paid tier in the vendor's document.
+ * game scores, a season's standings for the postseason's seeds, and the active players' roster
+ * (#2025). The games, teams, standings and active players endpoints name no paid tier in the
+ * vendor's document.
  */
 
 import type { LiveScoreResult } from '@poolmaster/shared/dto';
-import type { DateRange, ProviderParticipant, SportEvent, SportEventDetail } from '../../core/provider-interface';
+import type { DateRange, ProviderParticipant, ProviderRosterPlayer, SportEvent, SportEventDetail } from '../../core/provider-interface';
 import type { BalldontlieClient } from './balldontlie-client';
-import { NflSeasonType, nflGameListSchema, nflStandingListSchema, nflTeamListSchema, type NflGame } from './nfl-contract';
+import { NflSeasonType, nflGameListSchema, nflPlayerListSchema, nflStandingListSchema, nflTeamListSchema, type NflGame } from './nfl-contract';
 import {
   nflScopeId,
   NflScopeKind,
@@ -18,6 +19,7 @@ import {
   toNflPlayoffBracket,
   toNflPlayoffField,
   toNflPostseasonGames,
+  toNflRosterPlayer,
   toNflScheduledGames,
   toNflSportEvent,
   toNflSportEvents,
@@ -29,6 +31,7 @@ import { participantFeedId } from './participant-feed-id';
 const GAMES_PATH = '/nfl/v1/games';
 const TEAMS_PATH = '/nfl/v1/teams';
 const STANDINGS_PATH = '/nfl/v1/standings';
+const ACTIVE_PLAYERS_PATH = '/nfl/v1/players/active';
 
 /** A range spanning more seasons than this reads none: every NFL game ever played is no catalog. */
 const MAX_SEASONS_READ = 3;
@@ -103,6 +106,16 @@ export class NflReader {
   async teams(): Promise<ProviderParticipant[]> {
     const page = await this.client.get(TEAMS_PATH, {}, nflTeamListSchema);
     return page.data.map((team) => toNflTeamParticipant(team, TEAMS_PATH));
+  }
+
+  /**
+   * The league's roster (#2025): every active player, each with their team and position code. The
+   * endpoint lists the vendor's current players and takes no season, so it answers for the
+   * league's current Season, the only one the roster sync reads.
+   */
+  async roster(): Promise<ProviderRosterPlayer[]> {
+    const players = await this.client.getAllPages(ACTIVE_PLAYERS_PATH, {}, nflPlayerListSchema);
+    return players.map((player) => toNflRosterPlayer(player, ACTIVE_PLAYERS_PATH));
   }
 
   /** Every game of the scope, with its teams, state and score. */

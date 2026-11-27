@@ -255,7 +255,7 @@ describe('sport league handlers', () => {
     now: () => AT,
   });
   const pageLeague = {
-    id: 'sl1', sport: Sport.GOLF, isActive: true, syncProviderId: 'balldontlie', autoReleaseDaysBeforeStart: null, tierSources: [FieldOrderBasis.ODDS],
+    id: 'sl1', sport: Sport.GOLF, isActive: true, syncProviderId: 'balldontlie', syncsRoster: false, autoReleaseDaysBeforeStart: null, tierSources: [FieldOrderBasis.ODDS],
   };
   const known = <T>(sportLeagueId: string, facts: T) => Promise.resolve(sportLeagueId === 'sl1' ? facts : null);
   const page = new SportLeaguePageService({
@@ -283,6 +283,7 @@ describe('sport league handlers', () => {
       readParticipants: (sportLeagueId) => known(sportLeagueId, [{
         participant: { id: 'p1', name: 'One', participantType: 'INDIVIDUAL' as const, shortName: null, nationality: null, abbreviation: null, ranking: 1, createdAt: AT },
         mapping: null,
+        roster: null,
       }]),
     },
     webhookProviderIds: () => [],

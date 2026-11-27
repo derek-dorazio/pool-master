@@ -49,7 +49,7 @@ const at = (iso: string) => new Date(iso);
 function league(overrides: Partial<SportLeaguePageLeague> = {}): SportLeaguePageLeague {
   return {
     id: 'mlb', sport: Sport.BASEBALL, isActive: true,
-    syncProviderId: 'balldontlie', autoReleaseDaysBeforeStart: 7,
+    syncProviderId: 'balldontlie', syncsRoster: false, autoReleaseDaysBeforeStart: 7,
     tierSources: [FieldOrderBasis.ODDS, FieldOrderBasis.SEED, FieldOrderBasis.RANKING], ...overrides,
   };
 }
@@ -97,6 +97,13 @@ describe('buildSportLeagueSyncs', () => {
     ]);
     expect(syncs[0]).toMatchObject({ mode: SportLeagueSyncMode.SCHEDULE, lastRun: { id: 'events-run', summary: 'Rate limited.', changedCount: null } });
     expect(syncs[1]).toMatchObject({ lastRun: null });
+  });
+
+  it('lists the roster sync after the others for a league whose provider mapping names position codes, and not for one whose mapping names none', () => {
+    expect(buildSportLeagueSyncs(league({ syncsRoster: true }), [], context).map((sync) => sync.kind)).toEqual([
+      ProviderSyncKind.EVENTS, ProviderSyncKind.FIELD, ProviderSyncKind.SCORES, ProviderSyncKind.ROSTER,
+    ]);
+    expect(buildSportLeagueSyncs(league(), [], context).map((sync) => sync.kind)).not.toContain(ProviderSyncKind.ROSTER);
   });
 
   it('leaves the live scores of a provider whose webhook is on to the webhook, and every other sync to the schedule', () => {
@@ -307,8 +314,8 @@ describe('SportLeaguePageService', () => {
   it('marks a participant with a provider mapping added by the feed, with its feed id and when the feed last listed it, and one without added by an admin', async () => {
     const seen = at('2027-04-15T09:00:00.000Z');
     const rows = await service([
-      { participant, mapping: { externalId: 'mlb-player-592450', lastSeenAt: seen } },
-      { participant: { ...participant, id: 'admin-added' }, mapping: null },
+      { participant, mapping: { externalId: 'mlb-player-592450', lastSeenAt: seen }, roster: null },
+      { participant: { ...participant, id: 'admin-added' }, mapping: null, roster: null },
     ]).listParticipants('mlb');
 
     expect(rows?.map((row) => [row.addedBy, row.feedId, row.lastInFeedAt])).toEqual([

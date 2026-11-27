@@ -9,7 +9,8 @@
  * NFL (#1496, `nfl-reader.ts`): regular season weeks and the postseason as events, their teams
  * (the postseason's seeded from the standings), their games, the postseason's bracket (#1728),
  * and their games' scores in the GAME category. An event id that names an NFL scope
- * (`nfl-2026-week-12`) is read as one.
+ * (`nfl-2026-week-12`) is read as one. Its roster is the active players, each with their team and
+ * position code (#2025).
  *
  * College Football Playoff (#1496, `ncaaf-reader.ts`): each season's playoff as an event
  * (`ncaaf-2025-cfp`) carrying the season's games, and the scores of the games around now in the
@@ -61,6 +62,7 @@ import {
   type DateRange,
   type ProviderEventListOptions,
   type ProviderParticipant,
+  type ProviderRosterPlayer,
   type ProviderPayloadCapture,
   type ProviderPayloadCaptureSession,
   type ProviderPayloadDiagnostics,
@@ -151,6 +153,8 @@ interface LeagueEventReads {
 interface LeagueReader {
   events(dateRange?: DateRange, season?: number): Promise<SportEvent[]>;
   participants(): Promise<ProviderParticipant[]>;
+  /** The league's roster for a season (#2025); absent for a league whose roster is not read. */
+  roster?(season: number | undefined): Promise<ProviderRosterPlayer[]>;
   event(eventId: string): LeagueEventReads | null;
 }
 
@@ -236,7 +240,10 @@ export class BalldontlieAdapter implements SportDataProvider, ProviderPayloadDia
           ? { details: () => this.tournamentDetails(eventId), liveScores: () => this.tournamentScores(eventId) }
           : null),
       }),
-      nfl: () => scopedReader(parseNflScope, new NflReader(this.client)),
+      nfl: () => {
+        const reader = new NflReader(this.client);
+        return { ...scopedReader(parseNflScope, reader), roster: () => reader.roster() };
+      },
       ncaaf: () => scopedReader(parseCfpScope, new NcaafReader(this.client, now)),
       ncaab: () => ncaaReader(new NcaaTournamentReader(this.client, NCAA_MEN), NCAA_MEN),
       ncaaw: () => ncaaReader(new NcaaTournamentReader(this.client, NCAA_WOMEN), NCAA_WOMEN),
@@ -244,7 +251,7 @@ export class BalldontlieAdapter implements SportDataProvider, ProviderPayloadDia
       wnba: () => playoffsReader(WNBA_PLAYOFFS, new PlayoffsReader(wnbaPlayoffsSource(this.client), options.logger)),
       nhl: () => playoffsReader(NHL_PLAYOFFS, new PlayoffsReader(nhlPlayoffsSource(this.client), options.logger)),
       mlb: () => playoffsReader(MLB_POSTSEASON, new PlayoffsReader(mlbPostseasonSource(this.client), options.logger)),
-      epl: () => scopedReader(parseEplScope, new EplReader(this.client, now)),
+      epl: () => scopedReader(parseEplScope, new EplReader(this.client)),
       worldcup: () => scopedReader(parseWorldCupScope, new WorldCupReader(this.client)),
     };
     const leagues: EnabledLeague[] = [];
@@ -316,6 +323,25 @@ export class BalldontlieAdapter implements SportDataProvider, ProviderPayloadDia
   /** Every active PGA TOUR golfer, or every team of each of the sport's enabled leagues; none for a sport the adapter does not cover. */
   async getParticipants(sport: Sport): Promise<ProviderParticipant[]> {
     return this.eachLeague(sport, this.leagues.filter((league) => league.sport === sport), (league) => league.reader.participants());
+  }
+
+  /**
+   * One league's roster for a season (#2025): the league the code names, of the sport; none for a
+   * league whose roster the adapter does not read. A code that names no enabled league of the sport
+   * throws `ProviderLeagueUnknownError` and reads nothing; a refusal by the plan throws
+   * `ProviderLeagueRefusedError`.
+   */
+  async getRoster(sport: Sport, options: ProviderEventListOptions): Promise<ProviderRosterPlayer[]> {
+    const code = options.providerLeagueCode;
+    const league = this.leagues.find((each) => each.code === code && each.sport === sport);
+    if (league === undefined) throw new ProviderLeagueUnknownError(this.providerName, code);
+    if (league.reader.roster === undefined) return [];
+    try {
+      return await league.reader.roster(seasonOf(options.providerSeasonId));
+    } catch (error) {
+      if (isPlanRefusal(error)) throw new ProviderLeagueRefusedError(this.providerName, league.name, error.status, { cause: error });
+      throw error;
+    }
   }
 
   /**

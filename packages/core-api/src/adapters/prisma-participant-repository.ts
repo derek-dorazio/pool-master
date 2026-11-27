@@ -34,6 +34,21 @@ export class PrismaParticipantRepository implements ParticipantRepository {
         { lastName: { contains: query, mode: 'insensitive' } },
         { shortName: { contains: query, mode: 'insensitive' } },
         { abbreviation: { contains: query, mode: 'insensitive' } },
+        // A player is found by their team's name, short name or abbreviation on their league's current Season's roster (#2025).
+        {
+          rosterRows: {
+            some: {
+              season: { currentOf: { isNot: null } },
+              team: {
+                OR: [
+                  { name: { contains: query, mode: 'insensitive' } },
+                  { shortName: { contains: query, mode: 'insensitive' } },
+                  { abbreviation: { contains: query, mode: 'insensitive' } },
+                ],
+              },
+            },
+          },
+        },
       ];
     }
 
