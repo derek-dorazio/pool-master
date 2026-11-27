@@ -99,10 +99,7 @@ CREATE TABLE "sport_league_division_provider_mappings" (
 -- CreateIndex
 CREATE INDEX "sport_league_season_team_conferences_team_idx" ON "sport_league_season_team_conferences"("sport_league_id", "participant_id");
 
--- CreateIndex
-CREATE INDEX "sport_league_season_team_conferences_conference_idx" ON "sport_league_season_team_conferences"("sport_league_id", "conference_id");
-
--- CreateIndex
+-- CreateIndex: it also serves the conference key, which its first two columns are.
 CREATE INDEX "sport_league_season_team_conferences_division_idx" ON "sport_league_season_team_conferences"("sport_league_id", "conference_id", "division_id");
 
 -- CreateIndex

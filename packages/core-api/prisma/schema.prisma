@@ -1463,7 +1463,6 @@ model SportLeagueSeasonTeamConference {
   /// One row per Season and team.
   @@unique([sportLeagueSeasonId, participantId], map: "sport_league_season_team_conferences_season_team_key")
   @@index([sportLeagueId, participantId], map: "sport_league_season_team_conferences_team_idx")
-  @@index([sportLeagueId, conferenceId], map: "sport_league_season_team_conferences_conference_idx")
   @@index([sportLeagueId, conferenceId, divisionId], map: "sport_league_season_team_conferences_division_idx")
   @@map("sport_league_season_team_conferences")
 }
