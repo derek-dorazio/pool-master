@@ -1,8 +1,8 @@
 import { deleteTestSportLeagues } from '../support/test-slots';
 import {
   addEventParticipants,
-  autoAssignEventPrices,
-  autoAssignEventTiers,
+  autoAssignEventSlotPrices,
+  autoAssignEventSlotTiers,
   createParticipant,
   getEventBracket,
   listEventParticipants,
@@ -31,6 +31,7 @@ import { expectMatchesSchema } from '../support/expect-matches-schema';
 import { sportRowKeys } from '../support/sport-rows';
 import { insertTestSportLeague } from '../support/test-sport-league';
 import { setFieldRows } from './field-rows';
+import { tierSetSlotPath } from './tier-set-slot';
 
 // A basketball bracket end to end over HTTP (#698): an admin builds a four-team tournament in the
 // run's own league, loads its bracket, and releases it only once the bracket holds the whole
@@ -118,8 +119,8 @@ describe('SDK Functional: Basketball bracket', () => {
       body: { rows: FIELD.map((team) => ({ playerName: `${team.name} ${RUN}`, seedNumber: team.seed })) },
     });
     expect(upload.response?.status).toBe(200);
-    expect((await autoAssignEventTiers({ client: a, path: { eventId }, body: { tierSize: 1 } })).response?.status).toBe(200);
-    expect((await autoAssignEventPrices({ client: a, path: { eventId }, body: await standardPricingFor(a) })).response?.status).toBe(200);
+    expect((await autoAssignEventSlotTiers({ client: a, path: await tierSetSlotPath(a, eventId), body: { tierSize: 1 } })).response?.status).toBe(200);
+    expect((await autoAssignEventSlotPrices({ client: a, path: await tierSetSlotPath(a, eventId), body: await standardPricingFor(a) })).response?.status).toBe(200);
 
     const field = expectDefined((await listEventParticipants({ client: a, path: { eventId } })).data).participants;
     const rowOf = (name: string) => expectDefined(field.find((row) => row.participant.name === `${name} ${RUN}`)).id;

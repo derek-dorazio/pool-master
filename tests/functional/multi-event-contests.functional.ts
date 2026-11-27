@@ -3,8 +3,8 @@ import {
   acceptInvitation,
   addEventParticipants,
   applyEventGolfRoundScores,
-  autoAssignEventPrices,
-  autoAssignEventTiers,
+  autoAssignEventSlotPrices,
+  autoAssignEventSlotTiers,
   createContest,
   createParticipant,
   enterContest,
@@ -39,6 +39,7 @@ import { unlinkContestsFromSportEvents } from '../support/contest-event-links';
 import { expectMatchesSchema } from '../support/expect-matches-schema';
 import { insertTestSportLeague } from '../support/test-sport-league';
 import { byParticipantId, setFieldRows } from './field-rows';
+import { tierSetSlotPath } from './tier-set-slot';
 
 // A golf contest over two tournaments end to end over HTTP (#713). An admin builds two one-round
 // tournaments on a tour of their own, each with the same seven golfers, ranked so the default
@@ -143,8 +144,8 @@ async function buildTwoTournamentContest(
       body: { rows: GOLFERS.map((golfer, index) => ({ playerName: `${golfer} ${RUN}${tag}`, ranking: index + 1, seedNumber: index + 1 })) },
     });
     expect(upload.response?.status).toBe(200);
-    expect((await autoAssignEventTiers({ client: a, path: { eventId }, body: { tierSize: 1 } })).response?.status).toBe(200);
-    expect((await autoAssignEventPrices({ client: a, path: { eventId }, body: await standardPricingFor(a) })).response?.status).toBe(200);
+    expect((await autoAssignEventSlotTiers({ client: a, path: await tierSetSlotPath(a, eventId), body: { tierSize: 1 } })).response?.status).toBe(200);
+    expect((await autoAssignEventSlotPrices({ client: a, path: await tierSetSlotPath(a, eventId), body: await standardPricingFor(a) })).response?.status).toBe(200);
     expect((await releaseEvent({ client: a, path: { eventId } })).data?.event.status).toBe('SCHEDULED');
     const field = expectDefined((await listEventParticipants({ client: a, path: { eventId } })).data).participants;
     const fieldRowOf = (golfer: string) => expectDefined(field.find((row) => row.participant.name === `${golfer} ${RUN}${tag}`)).id;

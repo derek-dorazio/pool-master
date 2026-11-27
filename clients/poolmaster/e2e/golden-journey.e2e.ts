@@ -12,6 +12,7 @@ import { removeJourneyRun, type JourneyRun } from './helpers/journey-teardown';
 import { createTestEvent, findSeededSportLeague } from './helpers/test-event';
 import { generatePassword, registerFreshUser } from './helpers/user-session';
 import { newRunId, e2eName, e2eEmail, e2eUsername, e2eLeagueCode } from './helpers/test-marker';
+import { tierSetSlotUrl } from './helpers/tier-set-slot';
 
 /**
  * #84, #280 — the golden journey (plans/130 §"Phase 2 — the journey suite", deleted:
@@ -298,7 +299,7 @@ test.describe('the member journey, acts 1-3', { tag: '@smoke' }, () => {
         page,
         'root-admin-tier-auto-prices-confirm',
         'POST',
-        `/api/v1/events/${eventId}/prices/auto-assign`,
+        `${await tierSetSlotUrl(page.request, eventId)}/prices/auto-assign`,
       );
       await page.getByTestId('root-admin-event-settings').click();
       await expect(page.getByTestId('root-admin-event-settings-dialog-priced-with')).not.toHaveText(/Not priced yet/);
@@ -1386,7 +1387,7 @@ async function buildReleasedTournament(
   }
   await page.getByTestId('root-admin-tier-auto-prices').click();
   await expect(page.getByTestId('root-admin-tier-auto-prices-preview')).toBeVisible();
-  await submitAndRead(page, 'root-admin-tier-auto-prices-confirm', 'POST', `/api/v1/events/${eventId}/prices/auto-assign`);
+  await submitAndRead(page, 'root-admin-tier-auto-prices-confirm', 'POST', `${await tierSetSlotUrl(page.request, eventId)}/prices/auto-assign`);
 
   await page.goto(`/manage/sports/golf/events/${eventId}`);
   await page.getByTestId('root-admin-event-release-chip').click();

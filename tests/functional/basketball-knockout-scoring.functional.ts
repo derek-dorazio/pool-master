@@ -2,8 +2,8 @@ import { deleteTestSportLeagues } from '../support/test-slots';
 import {
   acceptInvitation,
   addEventParticipants,
-  autoAssignEventPrices,
-  autoAssignEventTiers,
+  autoAssignEventSlotPrices,
+  autoAssignEventSlotTiers,
   createContest,
   createParticipant,
   enterContest,
@@ -46,6 +46,7 @@ import { sportRowKeys } from '../support/sport-rows';
 import { insertTestSportLeague } from '../support/test-sport-league';
 import { bracketMatch, resultBody, withHomeAwayRead } from '../support/match-requests';
 import { setFieldRows } from './field-rows';
+import { tierSetSlotPath } from './tier-set-slot';
 
 // Knockout scoring end to end over HTTP (#699): an admin releases a four-team, two-round bracket, a
 // commissioner runs a contest scored by knockout round points (1 for a first-round win, 2 for the
@@ -136,8 +137,8 @@ describe('SDK Functional: Basketball knockout scoring', () => {
       path: { eventId },
       body: { rows: FIELD.map((team) => ({ playerName: `${team.name} ${RUN}`, seedNumber: team.seed })) },
     });
-    expect((await autoAssignEventTiers({ client: a, path: { eventId }, body: { tierSize: 1 } })).response?.status).toBe(200);
-    expect((await autoAssignEventPrices({ client: a, path: { eventId }, body: await standardPricingFor(a) })).response?.status).toBe(200);
+    expect((await autoAssignEventSlotTiers({ client: a, path: await tierSetSlotPath(a, eventId), body: { tierSize: 1 } })).response?.status).toBe(200);
+    expect((await autoAssignEventSlotPrices({ client: a, path: await tierSetSlotPath(a, eventId), body: await standardPricingFor(a) })).response?.status).toBe(200);
 
     const field = expectDefined((await listEventParticipants({ client: a, path: { eventId } })).data).participants;
     const rowOf = (name: string) => expectDefined(field.find((row) => row.participant.name === `${name} ${RUN}`)).id;

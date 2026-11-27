@@ -12,12 +12,14 @@ import {
 } from '../helpers';
 import { eventRoundSlots, fixtureSeasonId, freshEventEdition } from '../../support/event-edition';
 import { standardPricingIn } from '../../support/budget-pricing';
-import { inTierSet, tierSetSlot } from '../../support/event-tier-sets';
+import { inTierSet, tierSetSlot, tierSetSlotRoute } from '../../support/event-tier-sets';
 import { sportLeagueRowDefaults } from '../../support/league-profiles';
 import { participantLeagueIdForSport } from '../../support/participant-league';
 import { sportRowKeys } from '../../support/sport-rows';
 import { sportPlay } from '../../support/sport-play';
 import { linkTestSlot, oneEventSlotId } from '../../support/test-slots';
+import { createMatchRow } from '../../support/match-rows';
+import { expectSameStatementCount } from '../query-scaling';
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
@@ -284,7 +286,7 @@ describe('events routes', () => {
 
       const draftTierRes = await getApp().inject({
         method: 'PUT',
-        url: `/api/v1/events/${eventId}/tiers`,
+        url: await tierSetSlotRoute(getPrisma(), eventId, 'tiers'),
         headers: admin.headers,
         payload: tierPayload,
       });
@@ -302,7 +304,7 @@ describe('events routes', () => {
 
       const pricesRes = await getApp().inject({
         method: 'POST',
-        url: `/api/v1/events/${eventId}/prices/auto-assign`,
+        url: await tierSetSlotRoute(getPrisma(), eventId, 'prices/auto-assign'),
         headers: admin.headers,
         payload: await standardPricingIn(getPrisma()),
       });
@@ -322,7 +324,7 @@ describe('events routes', () => {
 
       const lockedTierRes = await getApp().inject({
         method: 'PUT',
-        url: `/api/v1/events/${eventId}/tiers`,
+        url: await tierSetSlotRoute(getPrisma(), eventId, 'tiers'),
         headers: admin.headers,
         payload: tierPayload,
       });
@@ -332,7 +334,7 @@ describe('events routes', () => {
 
       const lockedPricesRes = await getApp().inject({
         method: 'POST',
-        url: `/api/v1/events/${eventId}/prices/auto-assign`,
+        url: await tierSetSlotRoute(getPrisma(), eventId, 'prices/auto-assign'),
         headers: admin.headers,
         payload: { ...(await standardPricingIn(getPrisma())), salaryCap: 5000, unit: 10 },
       });
@@ -355,7 +357,7 @@ describe('events routes', () => {
 
       const res = await getApp().inject({
         method: 'POST',
-        url: `/api/v1/events/${eventId}/prices/auto-assign`,
+        url: await tierSetSlotRoute(getPrisma(), eventId, 'prices/auto-assign'),
         headers: admin.headers,
         payload: { ...standard, profileName: 'Standard' },
       });
@@ -365,13 +367,34 @@ describe('events routes', () => {
       expect(stored).toEqual({ platformPricingProfileId: standard.platformPricingProfileId, salaryCap: standard.salaryCap });
     });
 
+    it('keeps a priced slot naming its pricing profile by id when the profile is renamed, so the event read still answers that profile (#2044, #2205)', async () => {
+      const admin = await createTestUser({ displayName: 'Price Rename Admin', isRootAdmin: true });
+      const eventId = await seedDraftGolfEvent({ tiered: true });
+      const standard = await standardPricingIn(getPrisma());
+      const priced = await getApp().inject({ method: 'POST', url: await tierSetSlotRoute(getPrisma(), eventId, 'prices/auto-assign'), headers: admin.headers, payload: standard });
+      expect(priced.statusCode).toBe(200);
+      const { name } = await getPrisma().platformPricingProfile.findUniqueOrThrow({ where: { id: standard.platformPricingProfileId }, select: { name: true } });
+
+      await getPrisma().platformPricingProfile.update({ where: { id: standard.platformPricingProfileId }, data: { name: `Renamed ${randomUUID()}` } });
+      try {
+        const read = await getApp().inject({ method: 'GET', url: `/api/v1/events/${eventId}`, headers: withoutJsonBodyHeaders(admin.headers) });
+        const { event } = read.json<{ event: { tierSets: Array<{ isTierSetSlot: boolean; pricing: { platformPricingProfileId: string } | null }> } }>();
+        expect(event.tierSets.find((set) => set.isTierSetSlot)?.pricing?.platformPricingProfileId).toBe(standard.platformPricingProfileId);
+        const stored = await getPrisma().sportEventSlot.findFirstOrThrow({ where: { sportEventId: eventId }, select: { platformPricingProfileId: true, salaryCap: true } });
+        expect(stored).toEqual({ platformPricingProfileId: standard.platformPricingProfileId, salaryCap: standard.salaryCap });
+      } finally {
+        // The Standard profile is shared seed data: it gets its name back.
+        await getPrisma().platformPricingProfile.update({ where: { id: standard.platformPricingProfileId }, data: { name } });
+      }
+    });
+
     it('refuses to price with a pricing profile id there is no profile for with 404 PLATFORM_PRICING_PROFILE_NOT_FOUND and records no pricing (#2205)', async () => {
       const admin = await createTestUser({ displayName: 'Price Unknown Profile Admin', isRootAdmin: true });
       const eventId = await seedDraftGolfEvent({ tiered: true });
 
       const res = await getApp().inject({
         method: 'POST',
-        url: `/api/v1/events/${eventId}/prices/auto-assign`,
+        url: await tierSetSlotRoute(getPrisma(), eventId, 'prices/auto-assign'),
         headers: admin.headers,
         payload: { ...(await standardPricingIn(getPrisma())), platformPricingProfileId: randomUUID() },
       });
@@ -406,7 +429,7 @@ describe('events routes', () => {
       });
       const pricesRes = await getApp().inject({
         method: 'POST',
-        url: `/api/v1/events/${eventId}/prices/auto-assign`,
+        url: await tierSetSlotRoute(getPrisma(), eventId, 'prices/auto-assign'),
         headers: admin.headers,
         payload: await standardPricingIn(getPrisma()),
       });
@@ -541,7 +564,7 @@ describe('each slot a tiered or budget template lists holds its own tier set (#2
     const prisma = getPrisma();
     const admin = await createTestUser({ displayName: 'Slot Tier Admin', isRootAdmin: true });
     const event = await prisma.sportEvent.create({
-      data: { ...(await freshEventEdition(prisma, { onPgaTour: true })), id: randomUUID(), name: 'Slot Tier Open', startDate: new Date('2099-04-20T15:00:00.000Z'), endDate: null, status: 'DRAFT' },
+      data: { ...(await freshEventEdition(prisma)), id: randomUUID(), name: 'Slot Tier Open', startDate: new Date('2099-04-20T15:00:00.000Z'), endDate: null, status: 'DRAFT' },
     });
     const slotIds = await eventRoundSlots(prisma, event.id, [{ slotKind: 'PLAY_IN' }, { slotKind: 'ROUND_OF_64' }, { slotKind: 'ROUND_OF_32' }]);
     const slots = await prisma.sportEventSlot.findMany({
@@ -584,7 +607,7 @@ describe('each slot a tiered or budget template lists holds its own tier set (#2
 
       const [laterTiers, tierSetTiers, laterField, tierSetField] = await Promise.all([
         inject('GET', slotUrl(later, 'tiers')),
-        inject('GET', `/api/v1/events/${event.id}/tiers`),
+        inject('GET', slotUrl(roundOf64.sportLeagueSeasonCompetitionSlotId, 'tiers')),
         inject('GET', slotUrl(later, 'participants')),
         inject('GET', `/api/v1/events/${event.id}/participants`),
       ]);
@@ -609,11 +632,120 @@ describe('each slot a tiered or budget template lists holds its own tier set (#2
     }
   });
 
+  it('tiers a later slot from the teams that lost no decided game in an earlier slot, in Postgres: a loser is left out, a team on a bye and both teams of an unplayed game are in', async () => {
+    const prisma = getPrisma();
+    const admin = await createTestUser({ displayName: 'Still In Admin', isRootAdmin: true });
+    const event = await prisma.sportEvent.create({
+      data: { ...(await freshEventEdition(prisma, { sport: Sport.BASKETBALL })), id: randomUUID(), name: 'Still In Open', startDate: new Date('2099-04-20T15:00:00.000Z'), endDate: null, status: 'DRAFT' },
+    });
+    const [roundOf64SlotId, roundOf32SlotId] = await eventRoundSlots(prisma, event.id, [{ slotKind: 'ROUND_OF_64' }, { slotKind: 'ROUND_OF_32' }]);
+    const slots = await prisma.sportEventSlot.findMany({
+      where: { sportEventId: event.id },
+      select: { id: true, sportLeagueSeasonCompetitionSlotId: true, seasonSlot: { select: { sportLeagueCompetitionSlotId: true } } },
+    });
+    const later = slots.find((slot) => slot.id === roundOf32SlotId);
+    if (!later) throw new Error('The round of 32 slot was not made');
+    // A knockout's games are head to head. A tiered contest may start at either round, so each holds a set.
+    const template = await prisma.contestConfigTemplate.create({
+      data: {
+        sportLeagueId: event.sportLeagueId, coverageMode: 'ONE_SLOT', contestFormat: 'ROSTER', name: 'Setup', description: 'Setup', sortOrder: 1, configJson: {},
+        selectionType: 'TIERED', active: true, templateKey: `still-in-${randomUUID()}`,
+        slots: { create: slots.map((slot) => ({ sportLeagueCompetitionSlotId: slot.seasonSlot.sportLeagueCompetitionSlotId })) },
+      },
+      select: { id: true },
+    });
+    const participantLeagueId = await participantLeagueIdForSport(prisma, Sport.BASKETBALL);
+    const names = ['Loser', 'Winner', 'Unplayed One', 'Unplayed Two', 'Bye'];
+    const rows = new Map<string, string>();
+    const row = (name: string) => {
+      const id = rows.get(name);
+      if (id === undefined) throw new Error(`No field row for ${name}`);
+      return id;
+    };
+    for (const [index, name] of names.entries()) {
+      // poolmaster-allow-query-in-loop: five teams, each with its field row
+      const participant = await prisma.participant.create({ data: { sportLeagueId: participantLeagueId, participantType: 'TEAM', name: `Still In ${name}` } });
+      rows.set(name, (await prisma.sportEventParticipant.create({ data: { sportEventId: event.id, participantId: participant.id, ranking: index + 1 } })).id);
+    }
+    const round = await prisma.sportEventRound.create({ data: { sportEventId: event.id, sportEventSlotId: roundOf64SlotId, roundNumber: 1, scheduledDate: new Date('2099-04-20T15:00:00.000Z') } });
+    const game = (matchNumber: number, teams: readonly [string, string], result?: { winnerSideNumber: number; scores: readonly [number, number] }) => createMatchRow(prisma, {
+      sportEventId: event.id, sportEventRoundId: round.id, sportEventSlotId: round.sportEventSlotId, matchNumber, teams, isNeutralSite: true, ...(result ? { result } : {}),
+    });
+    await game(1, [row('Loser'), row('Winner')], { winnerSideNumber: 2, scores: [1, 3] });
+    await game(2, [row('Unplayed One'), row('Unplayed Two')]);
+    const slotRoute = (path: string) => `/api/v1/events/${event.id}/slots/${later.sportLeagueSeasonCompetitionSlotId}/${path}`;
+
+    try {
+      expect((await getApp().inject({ method: 'PUT', url: slotRoute('tiers'), headers: admin.headers, payload: { tiers: [{ tierKey: 'A', tierNumber: 1 }] } })).statusCode).toBe(200);
+      expect((await getApp().inject({ method: 'POST', url: slotRoute('tiers/auto-assign'), headers: admin.headers, payload: {} })).statusCode).toBe(200);
+
+      const tiered = await prisma.sportEventSlotParticipantValuation.findMany({
+        where: { sportEventSlotId: later.id, sportEventSlotTierId: { not: null } },
+        select: { sportEventParticipantId: true },
+      });
+      const nameOf = new Map([...rows].map(([name, id]) => [id, name]));
+      expect(tiered.map((row) => nameOf.get(row.sportEventParticipantId) ?? '').sort((left, right) => left.localeCompare(right))).toEqual(['Bye', 'Unplayed One', 'Unplayed Two', 'Winner']);
+    } finally {
+      await prisma.contestConfigTemplate.deleteMany({ where: { id: template.id } });
+    }
+  });
+
+  it("auto-assigns a later slot's tiers in the same statements for 2 teams knocked out before it as for 20", async () => {
+    const prisma = getPrisma();
+    const admin = await createTestUser({ displayName: 'Still In Scaling Admin', isRootAdmin: true });
+    const templateIds: string[] = [];
+    try {
+      await expectSameStatementCount({
+        seed: async (losers) => {
+          const event = await prisma.sportEvent.create({
+            data: { ...(await freshEventEdition(prisma, { sport: Sport.BASKETBALL })), id: randomUUID(), name: `Still In Scaling ${String(losers)}`, startDate: new Date('2099-04-20T15:00:00.000Z'), endDate: null, status: 'DRAFT' },
+          });
+          const [roundOf64SlotId, roundOf32SlotId] = await eventRoundSlots(prisma, event.id, [{ slotKind: 'ROUND_OF_64' }, { slotKind: 'ROUND_OF_32' }]);
+          const slots = await prisma.sportEventSlot.findMany({
+            where: { sportEventId: event.id },
+            select: { id: true, sportLeagueSeasonCompetitionSlotId: true, seasonSlot: { select: { sportLeagueCompetitionSlotId: true } } },
+          });
+          const later = slots.find((slot) => slot.id === roundOf32SlotId);
+          if (!later) throw new Error('The round of 32 slot was not made');
+          templateIds.push((await prisma.contestConfigTemplate.create({
+            data: {
+              sportLeagueId: event.sportLeagueId, coverageMode: 'ONE_SLOT', contestFormat: 'ROSTER', name: 'Setup', description: 'Setup', sortOrder: 1, configJson: {},
+              selectionType: 'TIERED', active: true, templateKey: `still-in-scaling-${randomUUID()}`,
+              slots: { create: slots.map((slot) => ({ sportLeagueCompetitionSlotId: slot.seasonSlot.sportLeagueCompetitionSlotId })) },
+            },
+            select: { id: true },
+          })).id);
+          const participantLeagueId = await participantLeagueIdForSport(prisma, Sport.BASKETBALL);
+          const round = await prisma.sportEventRound.create({ data: { sportEventId: event.id, sportEventSlotId: roundOf64SlotId, roundNumber: 1, scheduledDate: new Date('2099-04-20T15:00:00.000Z') } });
+          for (let game = 0; game < losers; game += 1) {
+            const [loser, winner] = await Promise.all([2 * game + 1, 2 * game + 2].map(async (ranking) => {
+              const participant = await prisma.participant.create({ data: { sportLeagueId: participantLeagueId, participantType: 'TEAM', name: `Still In Scaling ${String(ranking)}` } });
+              return (await prisma.sportEventParticipant.create({ data: { sportEventId: event.id, participantId: participant.id, ranking } })).id;
+            })) as [string, string];
+            await createMatchRow(prisma, {
+              sportEventId: event.id, sportEventRoundId: round.id, sportEventSlotId: round.sportEventSlotId, matchNumber: game + 1, teams: [loser, winner], isNeutralSite: true,
+              result: { winnerSideNumber: 2, scores: [1, 3] },
+            });
+          }
+          const slotRoute = (path: string) => `/api/v1/events/${event.id}/slots/${later.sportLeagueSeasonCompetitionSlotId}/${path}`;
+          expect((await getApp().inject({ method: 'PUT', url: slotRoute('tiers'), headers: admin.headers, payload: { tiers: [{ tierKey: 'A', tierNumber: 1 }] } })).statusCode).toBe(200);
+          return slotRoute('tiers/auto-assign');
+        },
+        call: (url) => getApp().inject({ method: 'POST', url, headers: admin.headers, payload: {} }),
+        // Only the winners are tiered, so the write read every decided game.
+        rowsShown: (response) => SportEventParticipantListResponseSchema.parse(response.json()).participants
+          .filter((participant) => participant.valuation?.sportEventTierId != null).length,
+      });
+    } finally {
+      await prisma.contestConfigTemplate.deleteMany({ where: { id: { in: templateIds } } });
+    }
+  });
+
   it('keeps a later listed slot editable on its slot route once the event is released, while the tier-set slot locks', async () => {
     const prisma = getPrisma();
     const admin = await createTestUser({ displayName: 'Released Slot Tier Admin', isRootAdmin: true });
     const event = await prisma.sportEvent.create({
-      data: { ...(await freshEventEdition(prisma, { onPgaTour: true })), id: randomUUID(), name: 'Released Slot Tier Open', startDate: new Date('2099-04-20T15:00:00.000Z'), endDate: null, status: 'SCHEDULED' },
+      data: { ...(await freshEventEdition(prisma)), id: randomUUID(), name: 'Released Slot Tier Open', startDate: new Date('2099-04-20T15:00:00.000Z'), endDate: null, status: 'SCHEDULED' },
     });
     const slotIds = await eventRoundSlots(prisma, event.id, [{ slotKind: 'ROUND_OF_64' }, { slotKind: 'ROUND_OF_32' }]);
     const slots = await prisma.sportEventSlot.findMany({

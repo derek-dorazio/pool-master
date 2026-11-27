@@ -59,13 +59,14 @@ import {
   applyEventGolfRoundScores,
   applyEventRaceResults,
   bindParticipantProviderMapping,
-  autoAssignEventPrices,
-  autoAssignEventTiers,
+  autoAssignEventSlotPrices,
+  autoAssignEventSlotTiers,
   cancelEventMatch,
   createEvent,
   createParticipant,
   createTestSlot,
   getSportLeagueStructure,
+  getEvent,
   getEventBracket,
   listEventParticipants,
   listEvents,
@@ -919,9 +920,14 @@ class Loader {
     const release = async (): Promise<void> => {
       if (this.releaseTestEvents) await must(releaseEvent({ client, path }), `Release ${event.name}`);
     };
-    // Tiers and prices follow the field's one order (#1807).
-    await must(autoAssignEventTiers({ client, path, body: {} }), `Assign tiers for ${event.name}`);
-    await must(autoAssignEventPrices({ client, path, body: await this.defaultPricing(client) }), `Assign prices for ${event.name}`);
+    // Tiers and prices follow the field's one order (#1807), on the event's tier-set slot (#2044).
+    const { event: read } = await must(getEvent({ client, path }), `Read ${event.name}`);
+    // poolmaster-allow-list-lookup: the event's own sets, one of which is its tier-set slot
+    const tierSet = read.tierSets.find((set) => set.isTierSetSlot);
+    if (tierSet === undefined) throw new Error(`${event.name} has no tier-set slot to tier and price.`);
+    const slotPath = { eventId, seasonSlotId: tierSet.seasonSlotId };
+    await must(autoAssignEventSlotTiers({ client, path: slotPath, body: {} }), `Assign tiers for ${event.name}`);
+    await must(autoAssignEventSlotPrices({ client, path: slotPath, body: await this.defaultPricing(client) }), `Assign prices for ${event.name}`);
     if (stored.playsMatches) {
       if (!this.releaseTestEvents) return;
       await release();

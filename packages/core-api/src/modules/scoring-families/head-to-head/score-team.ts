@@ -26,9 +26,7 @@
  */
 import {
   matchParticipantIds,
-  opposingSideOf,
-  winningSide,
-  MatchStatus,
+  decidedResult,
   SportEventParticipantStatus,
   UpsetBonusRule,
   assertNever,
@@ -174,9 +172,9 @@ export function scoreKnockoutField(
   const decided = new Map<string, DecidedMatch>();
   for (const row of field) {
     for (const match of knockoutMatches(row)) {
-      const winner = winningSide(match);
-      if (match.status === MatchStatus.COMPLETED && winner !== null) {
-        decided.set(match.id, { match, winner: winner.sportEventParticipantId, loser: opposingSideOf(match, winner.sideNumber).sportEventParticipantId });
+      const result = decidedResult(match);
+      if (result !== null) {
+        decided.set(match.id, { match, ...result });
       }
     }
   }

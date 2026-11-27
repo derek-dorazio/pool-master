@@ -1,6 +1,6 @@
 import { SportEventParticipantStatus } from '@poolmaster/shared/domain';
 import { useState } from 'react';
-import { autoAssignEventTiers, type SportEventOverviewDto } from '@/lib/api';
+import { autoAssignEventSlotTiers, type SportEventOverviewDto } from '@/lib/api';
 import {
   Button,
   ConfirmDialog,
@@ -22,12 +22,15 @@ export function TierAutoAssignActions({
   disabled,
   field,
   overview,
+  seasonSlotId,
 }: {
   eventId: string;
   disabled: boolean;
   field: readonly EventFieldEntry[];
   /** The event's overview: the order the server decided for its field, which the dialog names. */
   overview: SportEventOverviewDto | undefined;
+  /** The Season slot whose set is tiered (#2044). */
+  seasonSlotId: string;
 }) {
   const logger = getLogger().child({
     feature: 'root-admin-event-field',
@@ -36,8 +39,8 @@ export function TierAutoAssignActions({
 
   const autoTiersMutation = useInvalidatingMutation({
     mutationFn: async () => {
-      const response = await autoAssignEventTiers({
-        path: { eventId },
+      const response = await autoAssignEventSlotTiers({
+        path: { eventId, seasonSlotId },
         body: {},
       });
       if (response.error) {
@@ -47,7 +50,7 @@ export function TierAutoAssignActions({
     },
     // The assignments land on the field's valuations (#236).
     invalidates: [
-      QueryKeys.rootAdmin.manageSport.tiers(eventId),
+      QueryKeys.rootAdmin.manageSport.tierSets(eventId),
       QueryKeys.rootAdmin.manageSport.field(eventId),
       QueryKeys.rootAdmin.manageSport.event(eventId),
       QueryKeys.rootAdmin.manageSport.eventOverview(eventId),

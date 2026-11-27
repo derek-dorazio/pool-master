@@ -642,6 +642,36 @@
       "key": "own:packages/core-api/src/modules/scoring-families/stroke-play/stroke-play-result-service.ts",
       "now": 1,
       "reason": "#2008: golf-score-service.ts moved here as the stroke-play result service; its error class keeps the one own-file export it had"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "listEventTiers",
+      "now": 0,
+      "reason": "retired by #2044"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "replaceEventTiers",
+      "now": 0,
+      "reason": "retired by #2044"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "autoAssignEventTiers",
+      "now": 0,
+      "reason": "retired by #2044"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "replaceEventTierAssignments",
+      "now": 0,
+      "reason": "retired by #2044"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "autoAssignEventPrices",
+      "now": 0,
+      "reason": "retired by #2044"
     }
   ]
 }

@@ -1,14 +1,12 @@
-import { useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { displayString, profileWords } from '@poolmaster/shared/display-strings';
 import {
-  findBudgetPricingProblem,
   formatDollars,
-  priceOnBudgetCurve,
   type BudgetPricingProfile,
   type SlotPricing, SportEventParticipantStatus } from '@poolmaster/shared/domain';
 import { AutoAssignSportEventPricesRequestSchema, type AutoAssignSportEventPricesRequest } from '@poolmaster/shared/dto';
-import { autoAssignEventPrices, type SportEventOverviewDto } from '@/lib/api';
+import { autoAssignEventSlotPrices, previewEventSlotPrices, type SportEventOverviewDto } from '@/lib/api';
 import {
   Button,
   ConfirmDialog,
@@ -47,7 +45,10 @@ function toDraft(values: BudgetPricingProfile | SlotPricing): PricingDraft {
   };
 }
 
-/** The request the dialog would send, with the profile the values started from, or the first thing wrong with it. */
+/**
+ * The request the dialog would send, with the profile the values started from, or what is wrong
+ * with its shape. Whether the values agree with each other is the API's to say, on the preview.
+ */
 function parseDraft(platformPricingProfileId: string, draft: PricingDraft): { pricing: AutoAssignSportEventPricesRequest; error: null } | { pricing: null; error: string } {
   if (platformPricingProfileId === '') {
     return { pricing: null, error: displayString('word.choosePricingProfile') };
@@ -63,8 +64,35 @@ function parseDraft(platformPricingProfileId: string, draft: PricingDraft): { pr
   if (!parsed.success) {
     return { pricing: null, error: 'Enter whole dollars for the cap and rounding, and shares and steepness above 0.' };
   }
-  const problem = findBudgetPricingProblem(parsed.data);
-  return problem ? { pricing: null, error: problem } : { pricing: parsed.data, error: null };
+  return { pricing: parsed.data, error: null };
+}
+
+/**
+ * What the values would charge the slot's best and worst participant (#2107), as the API prices
+ * them; the API refuses values that contradict each other, and the dialog shows its reason.
+ */
+function usePricePreview(eventId: string, seasonSlotId: string, pricing: AutoAssignSportEventPricesRequest | null, enabled: boolean) {
+  // The profile the values started from changes no price, so the preview takes the five values alone.
+  const values = {
+    salaryCap: pricing?.salaryCap ?? 0,
+    unit: pricing?.unit ?? 0,
+    topSharePercent: pricing?.topSharePercent ?? 0,
+    floorSharePercent: pricing?.floorSharePercent ?? 0,
+    steepness: pricing?.steepness ?? 0,
+  };
+  return useQuery({
+    queryKey: QueryKeys.rootAdmin.manageSport.slotPricePreview(eventId, seasonSlotId, values),
+    queryFn: async () => {
+      const response = await previewEventSlotPrices({ path: { eventId, seasonSlotId }, query: values });
+      if (!response.data) {
+        throwApiError(response.error, 'Price preview response is missing data.');
+      }
+      return response.data;
+    },
+    enabled: enabled && pricing !== null,
+    placeholderData: keepPreviousData,
+    retry: false,
+  });
 }
 
 /**
@@ -79,6 +107,7 @@ export function PriceAssignAction({
   eventId,
   field,
   overview,
+  seasonSlotId,
   sportLeagueId,
 }: {
   /** The values the tournament was last priced with, and their profile, if any: the dialog starts from them. */
@@ -89,6 +118,8 @@ export function PriceAssignAction({
   field: readonly EventFieldEntry[];
   /** The event's overview: the order the server decided for its field, which the dialog names. */
   overview: SportEventOverviewDto | undefined;
+  /** The Season slot whose set is priced (#2044). */
+  seasonSlotId: string;
   /** The event's sport league, whose pricing profile the dialog starts on when the event was never priced. */
   sportLeagueId: string;
 }) {
@@ -103,7 +134,7 @@ export function PriceAssignAction({
 
   const mutation = useInvalidatingMutation({
     mutationFn: async (pricing: AutoAssignSportEventPricesRequest) => {
-      const response = await autoAssignEventPrices({ path: { eventId }, body: pricing });
+      const response = await autoAssignEventSlotPrices({ path: { eventId, seasonSlotId }, body: pricing });
       if (response.error) {
         throwApiError(response.error);
       }
@@ -111,7 +142,7 @@ export function PriceAssignAction({
     },
     // Prices land on the field's valuations; the tournament carries its pricing and readiness.
     invalidates: [
-      QueryKeys.rootAdmin.manageSport.tiers(eventId),
+      QueryKeys.rootAdmin.manageSport.tierSets(eventId),
       QueryKeys.rootAdmin.manageSport.field(eventId),
       QueryKeys.rootAdmin.manageSport.event(eventId),
       QueryKeys.rootAdmin.manageSport.eventOverview(eventId),
@@ -147,12 +178,12 @@ export function PriceAssignAction({
   }
 
   const parsed = draft ? parseDraft(profileId, draft) : null;
-  const preview = parsed?.pricing && activeParticipantCount > 0
-    ? {
-      best: priceOnBudgetCurve(parsed.pricing, 0, activeParticipantCount),
-      worst: priceOnBudgetCurve(parsed.pricing, activeParticipantCount - 1, activeParticipantCount),
-    }
-    : null;
+  const previewQuery = usePricePreview(eventId, seasonSlotId, parsed?.pricing ?? null, open);
+  // A preview of earlier values stands in while the new ones are read, but never once they are refused.
+  const preview = parsed?.pricing && !previewQuery.isError ? previewQuery.data : undefined;
+  const refusal = parsed?.pricing && previewQuery.isError
+    ? extractErrorMessage(previewQuery.error, { fallback: 'We could not preview these prices.' })
+    : undefined;
 
   return (
     <>
@@ -172,9 +203,9 @@ export function PriceAssignAction({
         error={
           mutation.isError
             ? extractErrorMessage(mutation.error, { fallback: 'We could not assign prices.' })
-            : parsed?.error ?? undefined
+            : parsed?.error ?? refusal
         }
-        isConfirmDisabled={!parsed?.pricing}
+        isConfirmDisabled={!parsed?.pricing || refusal !== undefined}
         isPending={mutation.isPending}
         onCancel={() => setOpen(false)}
         onConfirm={() => parsed?.pricing && mutation.mutate(parsed.pricing)}
@@ -209,9 +240,9 @@ export function PriceAssignAction({
               ))}
             </div>
           ) : null}
-          {preview ? (
+          {preview?.bestPrice != null && preview.worstPrice != null ? (
             <p className="text-sm text-muted-foreground" data-testid="root-admin-tier-auto-prices-preview">
-              {`Best participant ${formatDollars(preview.best)}, worst ${formatDollars(preview.worst)}, across ${activeParticipantCount} active participants.`}
+              {`Best participant ${formatDollars(preview.bestPrice)}, worst ${formatDollars(preview.worstPrice)}, across ${preview.activeParticipantCount} active participants.`}
             </p>
           ) : null}
         </div>

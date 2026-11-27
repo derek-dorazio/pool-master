@@ -1,7 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { ArrowDown, ArrowUp, X } from 'lucide-react';
 import { useFieldArray, useForm, useWatch } from 'react-hook-form';
-import { replaceEventTiers, type SportEventDto, type SportEventTierDto } from '@/lib/api';
+import { replaceEventSlotTiers, type SportEventDto, type SportEventTierDto } from '@/lib/api';
 import { tierLabel } from '@poolmaster/shared/display-strings';
 import { Button, FormField, FormModal, FormSection, Select, showToast, Text } from '@/features/shared/ui';
 import { throwApiError } from '@/lib/errors';
@@ -35,11 +35,14 @@ export function EventTiersDialog({
   event,
   field,
   onClose,
+  seasonSlotId,
   tiers,
 }: {
   event: SportEventDto;
   field: readonly EventFieldEntry[];
   onClose: () => void;
+  /** The Season slot whose set's tiers these are (#2044). */
+  seasonSlotId: string;
   tiers: readonly SportEventTierDto[];
 }) {
   const testId = 'root-admin-event-tiers-dialog';
@@ -50,7 +53,7 @@ export function EventTiersDialog({
 
   const saveMutation = useInvalidatingMutation({
     mutationFn: async (submitted: EventTiersValues) => {
-      const response = await replaceEventTiers({ path: { eventId: event.id }, body: eventTiersRequestBody(submitted, stranded) });
+      const response = await replaceEventSlotTiers({ path: { eventId: event.id, seasonSlotId }, body: eventTiersRequestBody(submitted, stranded) });
       if (!response.data?.tiers) throwApiError(response.error, 'The tiers response is missing data.');
     },
     invalidates: [...fieldWriteKeys(event.id), QueryKeys.rootAdmin.manageSport.eventOverview(event.id)],
