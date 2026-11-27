@@ -389,13 +389,16 @@ export class SportEventService {
       }
       // One event per competition its games reach (#2154): a season's slate of college football games
       // reaches its bowls, its conference title games and its CFP, and no event crosses competitions.
-      const playable = competitionsOf(matched).flatMap((competitionId) => {
+      const judged = (matched.length === 0 ? [null] : competitionsOf(matched)).map((competitionId) => {
         const inCompetition = matched.filter(({ slot }) => slot.seasonCompetitionId === competitionId);
         const freeInCompetition = free.filter(({ slot }) => slot.seasonCompetitionId === competitionId);
-        return unplayableReason(providerEvent, inCompetition, freeInCompetition.map(({ slot }) => slot), now) === null ? [freeInCompetition] : [];
+        return { plays: freeInCompetition, reason: unplayableReason(providerEvent, inCompetition, freeInCompetition.map(({ slot }) => slot), now) };
       });
+      const playable = judged.flatMap(({ plays, reason }) => (reason === null ? [plays] : []));
+      // Nothing to make: the first competition's own reason (a slate that matched nothing has NO_SLOT or ALREADY_STARTED).
+      const [first] = judged;
       if (playable.length === 0) {
-        skipped.push({ externalId, name, reason: unplayableReason(providerEvent, matched, free.map(({ slot }) => slot), now) ?? 'SLOT_TAKEN' });
+        skipped.push({ externalId, name, reason: first.reason ?? 'SLOT_TAKEN' });
         continue;
       }
       for (const plays of playable) {
@@ -1008,6 +1011,11 @@ function providerEdition(
   };
 }
 
+/** The Season competitions matched slots are in, each once, in the order first matched. */
+function competitionsOf(matched: ReadonlyArray<{ slot: SyncSeasonSlot }>): string[] {
+  return [...new Set(matched.map(({ slot }) => slot.seasonCompetitionId))];
+}
+
 /**
  * Why a provider event not yet linked makes no event (#1821, #2005), or null when it makes one:
  * its start has passed; its games matched no slot; no template lists a slot they matched; or every
@@ -1015,11 +1023,6 @@ function providerEdition(
  * once its games match a slot its start is theirs, not the provider event's: a slate whose games
  * are placed by date window starts long before its first windowed game (#2012).
  */
-/** The Season competitions matched slots are in, each once, in the order first matched. */
-function competitionsOf(matched: ReadonlyArray<{ slot: SyncSeasonSlot }>): string[] {
-  return [...new Set(matched.map(({ slot }) => slot.seasonCompetitionId))];
-}
-
 function unplayableReason(
   providerEvent: Pick<ProviderEventDetail, 'startDate'>,
   matched: ReadonlyArray<{ slot: SyncSeasonSlot; play: Pick<ProviderSlotPlay, 'startsAt'> }>,
