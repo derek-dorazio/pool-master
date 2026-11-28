@@ -222,7 +222,7 @@ function publishResult(result: LiveScoreResult) {
       prisma: getAppPrisma(),
       providerId: PROVIDER,
       domainEvents,
-      contestActivation: createEventLifecycleService(getAppPrisma(), { domainEvents, ...NO_SETTLE_JOBS }),
+      contestActivation: createEventLifecycleService(getAppPrisma(), { domainEvents, ...NO_SETTLE_JOBS, findings: integrationSyncFindings() }),
       scoringFamilyForEvent: () => headToHeadScoringFamily,
       findings: integrationSyncFindings(),
     },

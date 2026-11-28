@@ -3,10 +3,14 @@ import type { ContestRepository, ContestStatusTransition } from '@poolmaster/sha
 import {
   BackgroundJobType,
   ContestStatus,
+  MatchFormat,
   MatchStatus,
+  ProviderSyncFindingKind,
+  ProviderSyncFindingSeverity,
   SPORT_EVENT_STATUS_TRANSITIONS,
   SeasonSlotStatus,
   SelectionType,
+  SlotKind,
   SportEventStatus,
   type Contest,
   type SportEvent,
@@ -67,6 +71,7 @@ function contestDeps(options: { startedContest?: boolean; transitioned?: boolean
     }),
     configurations: fakeContestConfigurationRepo(),
     matches: { findBySportEvent: jest.fn().mockResolvedValue([]) },
+    findings: { raise: jest.fn() },
   };
 }
 
@@ -573,7 +578,7 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
     expect(await service.activateEventContests({ sportEventId: 'sport-event-1' })).toEqual({ changedCount: 1 });
 
     expect(contests.contests.findBySportEvent).toHaveBeenCalledWith('sport-event-1', {
-      statuses: [ContestStatus.OPEN],
+      statuses: [ContestStatus.OPEN, ContestStatus.DRAFT],
     });
     expect(contests.contests.transitionStatuses).toHaveBeenCalledWith(['contest-1'], expect.objectContaining({
       from: [ContestStatus.OPEN],
@@ -1148,11 +1153,105 @@ describe('EventLifecycleService — a moved event\'s contests follow its start (
 
     await follow(deps, postponedEvents(passed));
 
-    expect(deps.contests.findBySportEvent).toHaveBeenCalledWith('sport-event-1', { statuses: [ContestStatus.OPEN] });
+    expect(deps.contests.findBySportEvent).toHaveBeenCalledWith('sport-event-1', { statuses: [ContestStatus.OPEN, ContestStatus.DRAFT] });
     expect(deps.contests.transitionStatuses).toHaveBeenCalledWith(['contest-1'], expect.objectContaining({
       from: [ContestStatus.OPEN],
       to: ContestStatus.ACTIVE,
       startsAt: passed,
     }));
+  });
+});
+
+describe('EventLifecycleService field contests that can never open (#2015)', () => {
+  const SECOND_ROUND = slotOfRound(2);
+  const roundStarted = new Date(STARTED_EVENT_START.getTime() + 60 * 60_000);
+  const after = new Date(roundStarted.getTime() + 60_000);
+
+  /** A draft contest of `selectionType` that starts at the event's second round, under way since `roundStarted` unless `status` says otherwise. */
+  function draftAtSecondRound(selectionType: SelectionType, status: SeasonSlotStatus = SeasonSlotStatus.IN_PROGRESS) {
+    return buildContest({
+      id: `draft-${selectionType}`,
+      leagueId: 'league-1',
+      sportEventIds: ['sport-event-1'],
+      status: ContestStatus.DRAFT,
+      selectionType,
+      coveredSlots: [buildCoveredSlot({ seasonSlotId: SECOND_ROUND.seasonSlotId, slotDefinitionId: SECOND_ROUND.slotDefinitionId, sportEventId: 'sport-event-1', status, startsAt: roundStarted })],
+    });
+  }
+
+  /** The second round's games: one under way, and one still waiting for a team when `undecided`. */
+  function secondRoundGames(undecided: boolean) {
+    return [
+      legacyMatch({ id: 'game-1', sportEventId: 'sport-event-1', roundNumber: 2, slot: SECOND_ROUND, status: MatchStatus.IN_PROGRESS, scheduledDate: roundStarted, homeSportEventParticipantId: 'p1', awaySportEventParticipantId: 'p2' }),
+      legacyMatch({ id: 'game-2', sportEventId: 'sport-event-1', roundNumber: 2, slot: SECOND_ROUND, matchNumber: 2, status: MatchStatus.SCHEDULED, scheduledDate: after, homeSportEventParticipantId: 'p3', awaySportEventParticipantId: undecided ? null : 'p4' }),
+    ];
+  }
+
+  function serviceOver(drafts: Contest[], games: SportEventRoundMatch[]) {
+    // Two rounds of games, in play order: the first round's games decide the second's teams.
+    const slotDefinitions = [slotOfRound(1), SECOND_ROUND].map((slot) => ({ id: slot.slotDefinitionId, slotKind: SlotKind.QUARTERFINAL, canEndTied: false, periods: null, matchFormat: MatchFormat.HEAD_TO_HEAD }));
+    const { sportEvents } = seededEvents({ status: SportEventStatus.IN_PROGRESS, sportLeagueId: 'sport-league-1', slotDefinitions });
+    const contests = contestDeps();
+    contests.contests.findBySportEvent = jest.fn().mockResolvedValue(drafts);
+    contests.matches = { findBySportEvent: jest.fn().mockResolvedValue(games) };
+    const raise = mockFn<EventLifecycleContestDeps['findings']['raise']>(async () => undefined);
+    contests.findings = { raise };
+    return { service: lifecycleService(contests, sportEvents, fakeLogger()), sportEvents, contests, raise };
+  }
+
+  it('raises one FIELD_CONTEST_CANNOT_OPEN warning for the event when a draft tiered contest\'s first round starts with a team still undecided, and takes no draft live', async () => {
+    const { service, sportEvents, contests, raise } = serviceOver([draftAtSecondRound(SelectionType.TIERED), draftAtSecondRound(SelectionType.BUDGET_PICK)], secondRoundGames(true));
+
+    expect(await service.activateContestsPastCutoff(expectDefined(await sportEvents.findById('sport-event-1')), after)).toBe(0);
+
+    expect(raise).toHaveBeenCalledWith([{
+      kind: ProviderSyncFindingKind.FIELD_CONTEST_CANNOT_OPEN,
+      severity: ProviderSyncFindingSeverity.WARNING,
+      sportLeagueId: 'sport-league-1',
+      sportEventId: 'sport-event-1',
+      providerId: null,
+      providerValue: null,
+      providerValueName: null,
+    }]);
+    expect(contests.contests.findBySportEvent).toHaveBeenCalledWith('sport-event-1', { statuses: [ContestStatus.OPEN, ContestStatus.DRAFT] });
+    expect(contests.contests.transitionStatuses).not.toHaveBeenCalled();
+  });
+
+  it('raises nothing for a draft tiered contest covering the first round too, listed after the second: it starts at the round the event plays first, which no game feeds', async () => {
+    const draft = draftAtSecondRound(SelectionType.TIERED);
+    const firstRound = slotOfRound(1);
+    draft.coveredSlots.push(buildCoveredSlot({ seasonSlotId: firstRound.seasonSlotId, slotDefinitionId: firstRound.slotDefinitionId, sportEventId: 'sport-event-1', status: SeasonSlotStatus.COMPLETED, startsAt: STARTED_EVENT_START }));
+    const { service, sportEvents, contests, raise } = serviceOver([draft], secondRoundGames(true));
+
+    await service.activateContestsPastCutoff(expectDefined(await sportEvents.findById('sport-event-1')), after);
+
+    expect(raise).not.toHaveBeenCalled();
+    expect(contests.matches.findBySportEvent).not.toHaveBeenCalled();
+  });
+
+  it('raises nothing when every team of the draft\'s first round is known, since the commissioner simply did not open it', async () => {
+    const { service, sportEvents, raise } = serviceOver([draftAtSecondRound(SelectionType.TIERED)], secondRoundGames(false));
+
+    await service.activateContestsPastCutoff(expectDefined(await sportEvents.findById('sport-event-1')), after);
+
+    expect(raise).not.toHaveBeenCalled();
+  });
+
+  it('raises nothing for a draft pick\'em contest, which picks sides and need not wait for the teams', async () => {
+    const { service, sportEvents, contests, raise } = serviceOver([draftAtSecondRound(SelectionType.PICK_EM)], secondRoundGames(true));
+
+    await service.activateContestsPastCutoff(expectDefined(await sportEvents.findById('sport-event-1')), after);
+
+    expect(raise).not.toHaveBeenCalled();
+    expect(contests.matches.findBySportEvent).not.toHaveBeenCalled();
+  });
+
+  it('reads no games and raises nothing for a draft field contest whose first round has not started yet', async () => {
+    const { service, sportEvents, contests, raise } = serviceOver([draftAtSecondRound(SelectionType.TIERED, SeasonSlotStatus.SCHEDULED)], secondRoundGames(true));
+
+    await service.activateContestsPastCutoff(expectDefined(await sportEvents.findById('sport-event-1')), new Date(roundStarted.getTime() - 60_000));
+
+    expect(raise).not.toHaveBeenCalled();
+    expect(contests.matches.findBySportEvent).not.toHaveBeenCalled();
   });
 });

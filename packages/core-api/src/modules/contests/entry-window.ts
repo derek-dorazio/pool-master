@@ -19,7 +19,7 @@
  * change an entry, or the deal would no longer be the one every entry was given.
  */
 import type { Contest, ContestCoveredSlot, ContestRules, ContestSquaresGame, SportEventRoundMatch, SportEventRoundMatchGame } from '@poolmaster/shared/domain';
-import { ContestStatus, isMatchUnplayed, SeasonSlotStatus, SelectionType, SportEventStatus, hasSportEventStarted, isSportEventStatusFinished, hasPeriodScores } from '@poolmaster/shared/domain';
+import { ContestStatus, isMatchUnplayed, MatchStatus, SeasonSlotStatus, SelectionType, SportEventStatus, hasSportEventStarted, isSportEventStatusFinished, hasPeriodScores } from '@poolmaster/shared/domain';
 
 /**
  * The timing a check runs on: an event's, or a contest's window on it. A window has no start yet
@@ -128,6 +128,50 @@ export function cutoffTiming(
 /** The status of a window still to start on an event: scheduled while the event is under way with its other games, else the event's own (postponed, say). */
 function stillToStart(status: SportEventStatus): SportEventStatus {
   return status === SportEventStatus.IN_PROGRESS ? SportEventStatus.SCHEDULED : status;
+}
+
+/**
+ * The covered slot a contest starts at on the event (#2015): of the slots it covers there, the one
+ * the event plays first. The event's slot definitions are in play order; a contest's covered slots
+ * are ordered by their dates, and a slot whose games are not scheduled yet has none, so their
+ * order is not the order of play.
+ */
+export function contestStartSlot<Slot extends { sportEventId: string | null; slotDefinitionId: string }>(
+  coveredSlots: readonly Slot[],
+  event: { id: string; slotDefinitionIds: readonly string[] },
+): Slot | undefined {
+  const playOrder = (slot: Slot) => event.slotDefinitionIds.indexOf(slot.slotDefinitionId);
+  return coveredSlots
+    .filter((slot) => slot.sportEventId === event.id && playOrder(slot) >= 0)
+    .reduce<Slot | undefined>((first, slot) => (first === undefined || playOrder(slot) < playOrder(first) ? slot : first), undefined);
+}
+
+/**
+ * Whether a field contest starting at the slot waits for the games before it (#2015): the event
+ * plays matches and the slot is not its first, so earlier slots' games feed its teams. A contest
+ * starting at the event's first slot, or on an event played as one field, has no game to wait for,
+ * so nothing is read for it.
+ */
+export function slotWaitsForFeedingGames(
+  event: { playsMatches: boolean; slotDefinitionIds: readonly string[] },
+  slotDefinitionId: string,
+): boolean {
+  return event.playsMatches && event.slotDefinitionIds.indexOf(slotDefinitionId) > 0;
+}
+
+/**
+ * Whether every team of a Season slot is known (#2015): no side of the slot's games, cancelled ones
+ * left out, still waits for the game feeding it. A contest picking from the field (tiered, budget,
+ * sweepstakes) waits for it before it opens, since its field is the slot's teams; brackets and
+ * pick'em pick sides, which can be "winner of". A slot with no game yet has nothing to decide.
+ */
+export function isSlotFieldDecided(
+  matches: readonly (Pick<SportEventRoundMatch, 'status' | 'sides'> & { slot: Pick<SportEventRoundMatch['slot'], 'seasonSlotId'> })[],
+  seasonSlotId: string,
+): boolean {
+  return matches.every((match) => match.slot.seasonSlotId !== seasonSlotId
+    || match.status === MatchStatus.CANCELLED
+    || match.sides.every((side) => side.sportEventParticipantId !== null));
 }
 
 /**

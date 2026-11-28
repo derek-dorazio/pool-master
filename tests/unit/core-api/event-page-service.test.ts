@@ -168,15 +168,15 @@ describe('EventPageService', () => {
     expect(eventPagesChangeAt([{ page: PAGE, offers: [] }])).toBeNull();
   });
 
-  it('asks about each offer by its template\'s selection type alone', async () => {
+  it('asks about each offer by its template\'s selection type and the Season slot it would start at (#2015)', async () => {
     const { service, asked } = build({ slots: { 'conference-championships': [nextSlot('cw-2027', '2027-01-24T20:00:00.000Z')] } });
 
     await service.getPage('football', 'championship-weekend');
 
     expect(asked.map((each) => each.setup)).toEqual([
-      { selectionType: SelectionType.TIERED },
-      { selectionType: SelectionType.BRACKET },
-      { selectionType: SelectionType.SQUARES },
+      { selectionType: SelectionType.TIERED, startSlot: { seasonSlotId: 'slot-cw-2027', slotDefinitionId: 'conference-championships' } },
+      { selectionType: SelectionType.BRACKET, startSlot: { seasonSlotId: 'slot-cw-2027', slotDefinitionId: 'conference-championships' } },
+      { selectionType: SelectionType.SQUARES, startSlot: { seasonSlotId: 'slot-cw-2027', slotDefinitionId: 'conference-championships' } },
     ]);
   });
 

@@ -25,13 +25,18 @@ import type { BackgroundJobOutcome, Contest, SportEvent, SportEventRoundMatch } 
 import {
   ContestStatus,
   eventFeedRef,
+  eventPlaysMatches,
+  isRosterSelectionType,
+  ProviderSyncFindingKind,
+  ProviderSyncFindingSeverity,
   SelectionType,
   SportEventStatus,
   isDeclaredSportEventTransition,
   hasSportEventStarted,
   isSportEventStatusFinished,
 } from '@poolmaster/shared/domain';
-import { ContestCutoffKind, contestCutoff, cutoffTiming, hasGameMovedOn, type EventTiming } from '../contests/entry-window';
+import { ContestCutoffKind, contestCutoff, contestStartSlot, cutoffTiming, hasGameMovedOn, isSlotFieldDecided, slotWaitsForFeedingGames, type EventTiming } from '../contests/entry-window';
+import type { ProviderSyncFindingService } from '../ingestion/findings/provider-sync-finding-service';
 import { ContestLifecycle } from '../contests/contest-lifecycle';
 import type { SettleSportEventContestsJobPayload } from '../contests/settle-sport-event-job-requests';
 import type { SettleGameContestsJobPayload } from '../contests/settle-game-job-requests';
@@ -111,10 +116,14 @@ export interface EventLifecycleContestDeps {
   /** A squares contest's rules and games: it goes live at its game's kickoff, not the event's start (#711). */
   configurations: Pick<ContestConfigurationRepository, 'findByContests'>;
   matches: Pick<SportEventRoundMatchRepository, 'findBySportEvent'>;
+  /** Where a draft field contest that can never open is raised (#2015). */
+  findings: Pick<ProviderSyncFindingService, 'raise'>;
 }
 
 /** A contest starts from OPEN; any other status is left where it is. */
 const STARTABLE: readonly ContestStatus[] = [ContestStatus.OPEN];
+/** The contests read at a cutoff: those that go live, and drafts that may never open (#2015). */
+const AT_CUTOFF: readonly ContestStatus[] = [...STARTABLE, ContestStatus.DRAFT];
 /** A live contest is the only kind a postponement takes back to OPEN (#1792). */
 const REOPENABLE: readonly ContestStatus[] = [ContestStatus.ACTIVE];
 
@@ -400,7 +409,8 @@ export class EventLifecycleService {
     now: Date = new Date(),
     knownGames?: readonly SportEventRoundMatch[],
   ): Promise<number> {
-    const candidates = await this.contestDeps.contests.findBySportEvent(sportEvent.id, { statuses: STARTABLE });
+    const atCutoff = await this.contestDeps.contests.findBySportEvent(sportEvent.id, { statuses: AT_CUTOFF });
+    const candidates = atCutoff.filter((contest) => STARTABLE.includes(contest.status));
     let games: readonly SportEventRoundMatch[] | undefined = knownGames;
     // A squares contest's cutoff is in its configuration: all of them read at once (#1183).
     const cutoffConfigured = candidates.filter((contest) => contest.selectionType === SelectionType.SQUARES);
@@ -451,6 +461,46 @@ export class EventLifecycleService {
         activatedCount++;
       }
     }
+    await this.raiseFieldContestsThatCannotOpen(sportEvent, atCutoff.filter((contest) => contest.status === ContestStatus.DRAFT), now, games);
     return activatedCount;
+  }
+
+  /**
+   * A draft field contest opens only once every team of its first slot is known (#2015). One whose
+   * first slot, on this event, is fed by earlier slots' games (`slotWaitsForFeedingGames`) and has
+   * started with a team still undecided can never open: the league's rounds overlap. One FIELD_CONTEST_CANNOT_OPEN warning per event tells a root admin. The games
+   * are read only when such a draft is past its cutoff.
+   */
+  private async raiseFieldContestsThatCannotOpen(
+    sportEvent: SportEvent,
+    drafts: readonly Contest[],
+    now: Date,
+    knownGames: readonly SportEventRoundMatch[] | undefined,
+  ): Promise<void> {
+    const played = { id: sportEvent.id, playsMatches: eventPlaysMatches(sportEvent), slotDefinitionIds: sportEvent.slotDefinitions.map((definition) => definition.id) };
+    const pastCutoff = drafts.flatMap((contest) => {
+      // Only a contest whose first event is this one (covered slots are ordered by event start).
+      const firstSlot = contest.coveredSlots.at(0)?.sportEventId === sportEvent.id ? contestStartSlot(contest.coveredSlots, played) : undefined;
+      if (!isRosterSelectionType(contest.selectionType) || firstSlot === undefined
+        || !slotWaitsForFeedingGames(played, firstSlot.slotDefinitionId)) return [];
+      return hasSportEventStarted(cutoffTiming(contestCutoff(undefined, contest), sportEvent, []), now) ? [firstSlot.seasonSlotId] : [];
+    });
+    if (pastCutoff.length === 0) return;
+    const games = knownGames ?? await this.contestDeps.matches.findBySportEvent(sportEvent.id);
+    const undecided = [...new Set(pastCutoff)].filter((seasonSlotId) => !isSlotFieldDecided(games, seasonSlotId));
+    if (undecided.length === 0) return;
+    this.logger?.warn(
+      { sportEventId: sportEvent.id, seasonSlotIds: undecided },
+      'Draft field contests reached their cutoff with their first slot\'s teams undecided, so they can never open',
+    );
+    await this.contestDeps.findings.raise([{
+      kind: ProviderSyncFindingKind.FIELD_CONTEST_CANNOT_OPEN,
+      severity: ProviderSyncFindingSeverity.WARNING,
+      sportLeagueId: sportEvent.sportLeagueId,
+      sportEventId: sportEvent.id,
+      providerId: null,
+      providerValue: null,
+      providerValueName: null,
+    }]);
   }
 }

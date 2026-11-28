@@ -10,7 +10,7 @@ import {
   EventLifecycleService,
   type FinishedSportEventSettlement,
 } from '../../../packages/core-api/src/modules/events/event-lifecycle-service';
-import { cleanupTestData, getAppPrisma, getPrisma, integrationBackgroundJobs, setupIntegrationTests, teardownIntegrationTests } from '../helpers';
+import { cleanupTestData, getAppPrisma, getPrisma, integrationBackgroundJobs, setupIntegrationTests, teardownIntegrationTests, integrationSyncFindings } from '../helpers';
 import { createSportEventRow } from '../../support/sport-event-rows';
 import { freshEventEdition } from '../../support/event-edition';
 import { fakeLogger } from '../../support/fake-logger';
@@ -42,6 +42,7 @@ function lifecycleCountingSettlements() {
       contests: new PrismaContestRepository(getAppPrisma()),
       configurations: new PrismaContestConfigurationRepository(getAppPrisma()),
       matches: new PrismaSportEventRoundMatchRepository(getAppPrisma()),
+      findings: integrationSyncFindings(),
     },
     new PrismaSportEventRepository(getAppPrisma()),
     testDomainEvents({ queue }),

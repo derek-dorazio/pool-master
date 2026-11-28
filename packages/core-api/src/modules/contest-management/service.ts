@@ -80,6 +80,7 @@ import {
   contestRoundCoverage,
   ContestCoverageProblem,
   ContestOpeningReason,
+  isRosterSelectionType,
   resolveCoveredSeasonSlots,
   ContestStatus,
   SelectionType,
@@ -98,7 +99,7 @@ import {
 } from '@poolmaster/shared/domain';
 import { toEffectiveTierDtoList } from '../../mappers/contest-management.mapper';
 import { eventOpening, type EventOpeningReason } from './contest-opening';
-import { ContestCutoffKind, contestCutoff, type ContestCutoff, type EventTiming } from '../contests/entry-window';
+import { ContestCutoffKind, contestCutoff, contestStartSlot, slotWaitsForFeedingGames, type ContestCutoff, type EventTiming } from '../contests/entry-window';
 import { errorMessage } from '../../core/error-message';
 
 interface CreateContestManagementContext {
@@ -155,6 +156,11 @@ export interface ContestCreateSportEventReader {
   countGamesWithoutSpread(sportEventId: string): Promise<number>;
   /** Why the event's games cannot be filled in as a bracket, or null when they can (#721). */
   findBracketProblem(sportEventId: string): Promise<string | null>;
+  /**
+   * Whether every team of a Season slot's games on the event is known (`isSlotFieldDecided`,
+   * #2015): no side of a game of it, cancelled ones left out, still waits for the game feeding it.
+   */
+  isSlotFieldDecided(sportEventId: string, seasonSlotId: string): Promise<boolean>;
   /** Why knockout round points cannot score the event (no knockout round, or knockout games forming no bracket nor a slate of one-off games), or null when they can (#2225, #2241). */
   findKnockoutProblem(sportEventId: string): Promise<string | null>;
   /** How many of the event's knockout rounds, by its rounds' slots, a contest of this coverage covers (#2014, #2241): known before any game is placed. */
@@ -629,6 +635,7 @@ export class ContestManagementService {
 
     const sportEvents = await this.findContestSportEvents(contest);
     await this.assertCutoffAhead(contestId, sportEvents, contestCutoff(configuration.configJson, contest));
+    await this.assertFieldDecided(contest, sportEvents);
     // The events may have changed since the rules were saved: their tiers, or which golfers are
     // still in the field. Rules nobody could enter are refused here too.
     await this.resolveContestRules(sportEvents, ensureTypedConfiguration(configuration), {
@@ -857,6 +864,30 @@ export class ContestManagementService {
         409,
       );
     }
+  }
+
+  /**
+   * A contest picking from the field opens once every team of the slot it starts at is known
+   * (#2015): its field is that slot's teams, so it waits for the games feeding it. Its covered
+   * slots are in play order, so the first is where it starts.
+   */
+  private async assertFieldDecided(
+    contest: Pick<Contest, 'id' | 'selectionType' | 'coveredSlots'>,
+    sportEvents: readonly ContestCreateSportEventState[],
+  ): Promise<void> {
+    // The contest's first event is its first covered slot's (they are ordered by event start); its
+    // start slot on that event is the one the event plays first.
+    const sportEvent = sportEvents.find((each) => each.id === contest.coveredSlots.at(0)?.sportEventId);
+    const firstSlot = sportEvent === undefined ? undefined : contestStartSlot(contest.coveredSlots, sportEvent);
+    if (!isRosterSelectionType(contest.selectionType) || firstSlot === undefined || sportEvent === undefined
+      || !slotWaitsForFeedingGames(sportEvent, firstSlot.slotDefinitionId)) return;
+    if (await this.sportEventReader.isSlotFieldDecided(sportEvent.id, firstSlot.seasonSlotId)) return;
+    this.logger.warn({ contestId: contest.id, seasonSlotId: firstSlot.seasonSlotId }, 'contest management open contest refused: its first slot\'s teams are not all decided');
+    throw new ContestManagementError(
+      'This contest picks from its first round\'s teams, and the games deciding some of them have not finished.',
+      'CONTEST_FIELD_NOT_DECIDED',
+      409,
+    );
   }
 
   /**

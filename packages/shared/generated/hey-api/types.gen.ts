@@ -13327,7 +13327,7 @@ export type SportEventContestOpeningDto = {
     /**
      * Why the row is NOT_YET or CLOSED, null when OPEN. NOT_YET: EVENT_NOT_RELEASED (a draft) or FIELD_NOT_LOADED (no field yet). CLOSED: EVENT_STARTED (the event is under way or over). The event list never reads further, so it never answers BRACKET_NOT_SET or NO_GAME_LEFT, which an event page's offer reads.
      */
-    reason: 'EVENT_NOT_RELEASED' | 'FIELD_NOT_LOADED' | 'BRACKET_NOT_SET' | 'EVENT_STARTED' | 'NO_GAME_LEFT' | null;
+    reason: 'EVENT_NOT_RELEASED' | 'FIELD_NOT_LOADED' | 'FIELD_NOT_DECIDED' | 'BRACKET_NOT_SET' | 'EVENT_STARTED' | 'NO_GAME_LEFT' | null;
 };
 
 /**
@@ -13640,7 +13640,7 @@ export type SportEventDto = {
         /**
          * Why the row is NOT_YET or CLOSED, null when OPEN. NOT_YET: EVENT_NOT_RELEASED (a draft) or FIELD_NOT_LOADED (no field yet). CLOSED: EVENT_STARTED (the event is under way or over). The event list never reads further, so it never answers BRACKET_NOT_SET or NO_GAME_LEFT, which an event page's offer reads.
          */
-        reason: 'EVENT_NOT_RELEASED' | 'FIELD_NOT_LOADED' | 'BRACKET_NOT_SET' | 'EVENT_STARTED' | 'NO_GAME_LEFT' | null;
+        reason: 'EVENT_NOT_RELEASED' | 'FIELD_NOT_LOADED' | 'FIELD_NOT_DECIDED' | 'BRACKET_NOT_SET' | 'EVENT_STARTED' | 'NO_GAME_LEFT' | null;
     }>;
     /**
      * Whether the tiers and prices of the event's first slot are locked: true once the event is released (#431, #2044). A tier or price write on a locked set is refused with 409 SPORT_EVENT_TIERS_LOCKED.
@@ -14189,7 +14189,7 @@ export type SportEventListResponse = {
             /**
              * Why the row is NOT_YET or CLOSED, null when OPEN. NOT_YET: EVENT_NOT_RELEASED (a draft) or FIELD_NOT_LOADED (no field yet). CLOSED: EVENT_STARTED (the event is under way or over). The event list never reads further, so it never answers BRACKET_NOT_SET or NO_GAME_LEFT, which an event page's offer reads.
              */
-            reason: 'EVENT_NOT_RELEASED' | 'FIELD_NOT_LOADED' | 'BRACKET_NOT_SET' | 'EVENT_STARTED' | 'NO_GAME_LEFT' | null;
+            reason: 'EVENT_NOT_RELEASED' | 'FIELD_NOT_LOADED' | 'FIELD_NOT_DECIDED' | 'BRACKET_NOT_SET' | 'EVENT_STARTED' | 'NO_GAME_LEFT' | null;
         }>;
         /**
          * Whether the tiers and prices of the event's first slot are locked: true once the event is released (#431, #2044). A tier or price write on a locked set is refused with 409 SPORT_EVENT_TIERS_LOCKED.
@@ -14713,7 +14713,7 @@ export type SportEventResponse = {
             /**
              * Why the row is NOT_YET or CLOSED, null when OPEN. NOT_YET: EVENT_NOT_RELEASED (a draft) or FIELD_NOT_LOADED (no field yet). CLOSED: EVENT_STARTED (the event is under way or over). The event list never reads further, so it never answers BRACKET_NOT_SET or NO_GAME_LEFT, which an event page's offer reads.
              */
-            reason: 'EVENT_NOT_RELEASED' | 'FIELD_NOT_LOADED' | 'BRACKET_NOT_SET' | 'EVENT_STARTED' | 'NO_GAME_LEFT' | null;
+            reason: 'EVENT_NOT_RELEASED' | 'FIELD_NOT_LOADED' | 'FIELD_NOT_DECIDED' | 'BRACKET_NOT_SET' | 'EVENT_STARTED' | 'NO_GAME_LEFT' | null;
         }>;
         /**
          * Whether the tiers and prices of the event's first slot are locked: true once the event is released (#431, #2044). A tier or price write on a locked set is refused with 409 SPORT_EVENT_TIERS_LOCKED.
@@ -28232,7 +28232,7 @@ export type EventPageOfferDto = {
     /**
      * What a NOT_YET offer waits for: EVENT_NOT_RELEASED, FIELD_NOT_LOADED or BRACKET_NOT_SET. Null when OPEN.
      */
-    waitingFor: 'EVENT_NOT_RELEASED' | 'FIELD_NOT_LOADED' | 'BRACKET_NOT_SET' | 'EVENT_STARTED' | 'NO_GAME_LEFT' | null;
+    waitingFor: 'EVENT_NOT_RELEASED' | 'FIELD_NOT_LOADED' | 'FIELD_NOT_DECIDED' | 'BRACKET_NOT_SET' | 'EVENT_STARTED' | 'NO_GAME_LEFT' | null;
     /**
      * The Season slot an offer is shown with (#2010): of its slot definition's Season slots, the one under way, or else the soonest upcoming that can still take the contest.
      */
@@ -28913,7 +28913,7 @@ export type EventPageDto = {
         /**
          * What a NOT_YET offer waits for: EVENT_NOT_RELEASED, FIELD_NOT_LOADED or BRACKET_NOT_SET. Null when OPEN.
          */
-        waitingFor: 'EVENT_NOT_RELEASED' | 'FIELD_NOT_LOADED' | 'BRACKET_NOT_SET' | 'EVENT_STARTED' | 'NO_GAME_LEFT' | null;
+        waitingFor: 'EVENT_NOT_RELEASED' | 'FIELD_NOT_LOADED' | 'FIELD_NOT_DECIDED' | 'BRACKET_NOT_SET' | 'EVENT_STARTED' | 'NO_GAME_LEFT' | null;
         /**
          * The Season slot an offer is shown with (#2010): of its slot definition's Season slots, the one under way, or else the soonest upcoming that can still take the contest.
          */
@@ -29599,7 +29599,7 @@ export type EventPageResponse = {
             /**
              * What a NOT_YET offer waits for: EVENT_NOT_RELEASED, FIELD_NOT_LOADED or BRACKET_NOT_SET. Null when OPEN.
              */
-            waitingFor: 'EVENT_NOT_RELEASED' | 'FIELD_NOT_LOADED' | 'BRACKET_NOT_SET' | 'EVENT_STARTED' | 'NO_GAME_LEFT' | null;
+            waitingFor: 'EVENT_NOT_RELEASED' | 'FIELD_NOT_LOADED' | 'FIELD_NOT_DECIDED' | 'BRACKET_NOT_SET' | 'EVENT_STARTED' | 'NO_GAME_LEFT' | null;
             /**
              * The Season slot an offer is shown with (#2010): of its slot definition's Season slots, the one under way, or else the soonest upcoming that can still take the contest.
              */
@@ -30300,7 +30300,7 @@ export type EventPageListResponse = {
             /**
              * What a NOT_YET offer waits for: EVENT_NOT_RELEASED, FIELD_NOT_LOADED or BRACKET_NOT_SET. Null when OPEN.
              */
-            waitingFor: 'EVENT_NOT_RELEASED' | 'FIELD_NOT_LOADED' | 'BRACKET_NOT_SET' | 'EVENT_STARTED' | 'NO_GAME_LEFT' | null;
+            waitingFor: 'EVENT_NOT_RELEASED' | 'FIELD_NOT_LOADED' | 'FIELD_NOT_DECIDED' | 'BRACKET_NOT_SET' | 'EVENT_STARTED' | 'NO_GAME_LEFT' | null;
             /**
              * The Season slot an offer is shown with (#2010): of its slot definition's Season slots, the one under way, or else the soonest upcoming that can still take the contest.
              */
@@ -33747,7 +33747,7 @@ export type ProviderSyncFindingDto = {
     /**
      * What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here. PROVIDER_RATE_LIMITED: the Provider has rate limited every call for a while (WARNING after 15 minutes, ERROR after the league's quiet threshold); it resolves on the Provider's next answer. SLOT_NAME_UNMATCHED: a tournament whose normalized name (providerValue) no NAME_PATTERN mapping of the league matches, so it has no Season slot (INFO; LINK_SLOT adds the name as a pattern). SLOT_NAME_AMBIGUOUS: a tournament whose normalized name matches more than one slot, or one another tournament already has (ERROR). SLOT_SEASON_COMPETITION_MISSING: a tournament whose name matched a slot whose phase the Season does not have, so no Season slot could be made (ERROR). SYNC_FAILED: a sync run of the league (of the event, when it names one) ended FAILED, and no run of the same sync has completed since (ERROR, syncKind says which sync).
      */
-    kind: 'PROVIDER_RATE_LIMITED' | 'UNMAPPED_PARTICIPANT' | 'WEBHOOK_SECRET_MISSING' | 'SEASON_MISSING' | 'NO_PROVIDER_PARTICIPANTS' | 'NO_PROVIDER_LIVE_SCORES' | 'GAMES_NOT_SYNCED' | 'SLOT_VALUE_UNMAPPED' | 'PROVIDER_LEAGUE_UNKNOWN' | 'SLOT_NAME_UNMATCHED' | 'SLOT_NAME_AMBIGUOUS' | 'SLOT_SEASON_COMPETITION_MISSING' | 'SLOT_OUTSIDE_SEASON' | 'GAMES_UNPLACED' | 'SLOT_DATES_NEEDED' | 'FIELD_HAS_NO_ORDER' | 'GAME_UNKNOWN' | 'GAME_ID_REISSUED' | 'GAME_MOVED' | 'TIEBREAKER_GAME_REPLACED' | 'FIELD_TEAM_WITHOUT_GAME' | 'SYNC_FAILED' | 'CONFERENCE_UNMAPPED' | 'DIVISION_UNMAPPED' | 'CONFERENCE_TEAMS_MISSING' | 'PROVIDER_PLAN_HAS_NO_STATS' | 'BOX_SCORE_PLAYER_NOT_IN_GAME' | 'GAME_OVERDUE' | 'GAME_POSTPONED_NO_DATE' | 'SLOT_CHANGED_AFTER_COMPLETED';
+    kind: 'PROVIDER_RATE_LIMITED' | 'UNMAPPED_PARTICIPANT' | 'WEBHOOK_SECRET_MISSING' | 'SEASON_MISSING' | 'NO_PROVIDER_PARTICIPANTS' | 'NO_PROVIDER_LIVE_SCORES' | 'GAMES_NOT_SYNCED' | 'SLOT_VALUE_UNMAPPED' | 'PROVIDER_LEAGUE_UNKNOWN' | 'SLOT_NAME_UNMATCHED' | 'SLOT_NAME_AMBIGUOUS' | 'SLOT_SEASON_COMPETITION_MISSING' | 'SLOT_OUTSIDE_SEASON' | 'GAMES_UNPLACED' | 'SLOT_DATES_NEEDED' | 'FIELD_HAS_NO_ORDER' | 'GAME_UNKNOWN' | 'GAME_ID_REISSUED' | 'GAME_MOVED' | 'TIEBREAKER_GAME_REPLACED' | 'FIELD_TEAM_WITHOUT_GAME' | 'SYNC_FAILED' | 'CONFERENCE_UNMAPPED' | 'DIVISION_UNMAPPED' | 'CONFERENCE_TEAMS_MISSING' | 'PROVIDER_PLAN_HAS_NO_STATS' | 'BOX_SCORE_PLAYER_NOT_IN_GAME' | 'GAME_OVERDUE' | 'FIELD_CONTEST_CANNOT_OPEN' | 'GAME_POSTPONED_NO_DATE' | 'SLOT_CHANGED_AFTER_COMPLETED';
     /**
      * ERROR: synced data is wrong or missing until someone acts (it also raises the alarm when it opens). WARNING: something the sync skipped or guessed at. INFO: something it noticed and left alone on purpose.
      */
@@ -33904,7 +33904,7 @@ export type ProviderSyncFindingListResponse = {
         /**
          * What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here. PROVIDER_RATE_LIMITED: the Provider has rate limited every call for a while (WARNING after 15 minutes, ERROR after the league's quiet threshold); it resolves on the Provider's next answer. SLOT_NAME_UNMATCHED: a tournament whose normalized name (providerValue) no NAME_PATTERN mapping of the league matches, so it has no Season slot (INFO; LINK_SLOT adds the name as a pattern). SLOT_NAME_AMBIGUOUS: a tournament whose normalized name matches more than one slot, or one another tournament already has (ERROR). SLOT_SEASON_COMPETITION_MISSING: a tournament whose name matched a slot whose phase the Season does not have, so no Season slot could be made (ERROR). SYNC_FAILED: a sync run of the league (of the event, when it names one) ended FAILED, and no run of the same sync has completed since (ERROR, syncKind says which sync).
          */
-        kind: 'PROVIDER_RATE_LIMITED' | 'UNMAPPED_PARTICIPANT' | 'WEBHOOK_SECRET_MISSING' | 'SEASON_MISSING' | 'NO_PROVIDER_PARTICIPANTS' | 'NO_PROVIDER_LIVE_SCORES' | 'GAMES_NOT_SYNCED' | 'SLOT_VALUE_UNMAPPED' | 'PROVIDER_LEAGUE_UNKNOWN' | 'SLOT_NAME_UNMATCHED' | 'SLOT_NAME_AMBIGUOUS' | 'SLOT_SEASON_COMPETITION_MISSING' | 'SLOT_OUTSIDE_SEASON' | 'GAMES_UNPLACED' | 'SLOT_DATES_NEEDED' | 'FIELD_HAS_NO_ORDER' | 'GAME_UNKNOWN' | 'GAME_ID_REISSUED' | 'GAME_MOVED' | 'TIEBREAKER_GAME_REPLACED' | 'FIELD_TEAM_WITHOUT_GAME' | 'SYNC_FAILED' | 'CONFERENCE_UNMAPPED' | 'DIVISION_UNMAPPED' | 'CONFERENCE_TEAMS_MISSING' | 'PROVIDER_PLAN_HAS_NO_STATS' | 'BOX_SCORE_PLAYER_NOT_IN_GAME' | 'GAME_OVERDUE' | 'GAME_POSTPONED_NO_DATE' | 'SLOT_CHANGED_AFTER_COMPLETED';
+        kind: 'PROVIDER_RATE_LIMITED' | 'UNMAPPED_PARTICIPANT' | 'WEBHOOK_SECRET_MISSING' | 'SEASON_MISSING' | 'NO_PROVIDER_PARTICIPANTS' | 'NO_PROVIDER_LIVE_SCORES' | 'GAMES_NOT_SYNCED' | 'SLOT_VALUE_UNMAPPED' | 'PROVIDER_LEAGUE_UNKNOWN' | 'SLOT_NAME_UNMATCHED' | 'SLOT_NAME_AMBIGUOUS' | 'SLOT_SEASON_COMPETITION_MISSING' | 'SLOT_OUTSIDE_SEASON' | 'GAMES_UNPLACED' | 'SLOT_DATES_NEEDED' | 'FIELD_HAS_NO_ORDER' | 'GAME_UNKNOWN' | 'GAME_ID_REISSUED' | 'GAME_MOVED' | 'TIEBREAKER_GAME_REPLACED' | 'FIELD_TEAM_WITHOUT_GAME' | 'SYNC_FAILED' | 'CONFERENCE_UNMAPPED' | 'DIVISION_UNMAPPED' | 'CONFERENCE_TEAMS_MISSING' | 'PROVIDER_PLAN_HAS_NO_STATS' | 'BOX_SCORE_PLAYER_NOT_IN_GAME' | 'GAME_OVERDUE' | 'FIELD_CONTEST_CANNOT_OPEN' | 'GAME_POSTPONED_NO_DATE' | 'SLOT_CHANGED_AFTER_COMPLETED';
         /**
          * ERROR: synced data is wrong or missing until someone acts (it also raises the alarm when it opens). WARNING: something the sync skipped or guessed at. INFO: something it noticed and left alone on purpose.
          */
@@ -33996,7 +33996,7 @@ export type ProviderSyncFindingResponse = {
         /**
          * What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here. PROVIDER_RATE_LIMITED: the Provider has rate limited every call for a while (WARNING after 15 minutes, ERROR after the league's quiet threshold); it resolves on the Provider's next answer. SLOT_NAME_UNMATCHED: a tournament whose normalized name (providerValue) no NAME_PATTERN mapping of the league matches, so it has no Season slot (INFO; LINK_SLOT adds the name as a pattern). SLOT_NAME_AMBIGUOUS: a tournament whose normalized name matches more than one slot, or one another tournament already has (ERROR). SLOT_SEASON_COMPETITION_MISSING: a tournament whose name matched a slot whose phase the Season does not have, so no Season slot could be made (ERROR). SYNC_FAILED: a sync run of the league (of the event, when it names one) ended FAILED, and no run of the same sync has completed since (ERROR, syncKind says which sync).
          */
-        kind: 'PROVIDER_RATE_LIMITED' | 'UNMAPPED_PARTICIPANT' | 'WEBHOOK_SECRET_MISSING' | 'SEASON_MISSING' | 'NO_PROVIDER_PARTICIPANTS' | 'NO_PROVIDER_LIVE_SCORES' | 'GAMES_NOT_SYNCED' | 'SLOT_VALUE_UNMAPPED' | 'PROVIDER_LEAGUE_UNKNOWN' | 'SLOT_NAME_UNMATCHED' | 'SLOT_NAME_AMBIGUOUS' | 'SLOT_SEASON_COMPETITION_MISSING' | 'SLOT_OUTSIDE_SEASON' | 'GAMES_UNPLACED' | 'SLOT_DATES_NEEDED' | 'FIELD_HAS_NO_ORDER' | 'GAME_UNKNOWN' | 'GAME_ID_REISSUED' | 'GAME_MOVED' | 'TIEBREAKER_GAME_REPLACED' | 'FIELD_TEAM_WITHOUT_GAME' | 'SYNC_FAILED' | 'CONFERENCE_UNMAPPED' | 'DIVISION_UNMAPPED' | 'CONFERENCE_TEAMS_MISSING' | 'PROVIDER_PLAN_HAS_NO_STATS' | 'BOX_SCORE_PLAYER_NOT_IN_GAME' | 'GAME_OVERDUE' | 'GAME_POSTPONED_NO_DATE' | 'SLOT_CHANGED_AFTER_COMPLETED';
+        kind: 'PROVIDER_RATE_LIMITED' | 'UNMAPPED_PARTICIPANT' | 'WEBHOOK_SECRET_MISSING' | 'SEASON_MISSING' | 'NO_PROVIDER_PARTICIPANTS' | 'NO_PROVIDER_LIVE_SCORES' | 'GAMES_NOT_SYNCED' | 'SLOT_VALUE_UNMAPPED' | 'PROVIDER_LEAGUE_UNKNOWN' | 'SLOT_NAME_UNMATCHED' | 'SLOT_NAME_AMBIGUOUS' | 'SLOT_SEASON_COMPETITION_MISSING' | 'SLOT_OUTSIDE_SEASON' | 'GAMES_UNPLACED' | 'SLOT_DATES_NEEDED' | 'FIELD_HAS_NO_ORDER' | 'GAME_UNKNOWN' | 'GAME_ID_REISSUED' | 'GAME_MOVED' | 'TIEBREAKER_GAME_REPLACED' | 'FIELD_TEAM_WITHOUT_GAME' | 'SYNC_FAILED' | 'CONFERENCE_UNMAPPED' | 'DIVISION_UNMAPPED' | 'CONFERENCE_TEAMS_MISSING' | 'PROVIDER_PLAN_HAS_NO_STATS' | 'BOX_SCORE_PLAYER_NOT_IN_GAME' | 'GAME_OVERDUE' | 'FIELD_CONTEST_CANNOT_OPEN' | 'GAME_POSTPONED_NO_DATE' | 'SLOT_CHANGED_AFTER_COMPLETED';
         /**
          * ERROR: synced data is wrong or missing until someone acts (it also raises the alarm when it opens). WARNING: something the sync skipped or guessed at. INFO: something it noticed and left alone on purpose.
          */

@@ -228,7 +228,7 @@ export function integrationBackgroundJobs(prisma: PrismaClient = getAppPrisma())
  * (`NO_SETTLE_JOBS`), so a settlement test builds a lifecycle with the settlement it watches.
  */
 export function integrationEventLifecycle(prisma: PrismaClient = getAppPrisma()): EventLifecycleService {
-  return createEventLifecycleService(prisma, { domainEvents: testDomainEvents({ queue: integrationBackgroundJobs(prisma).queue }), ...NO_SETTLE_JOBS });
+  return createEventLifecycleService(prisma, { domainEvents: testDomainEvents({ queue: integrationBackgroundJobs(prisma).queue }), ...NO_SETTLE_JOBS, findings: integrationSyncFindings(prisma) });
 }
 
 /** The event services over `integrationEventLifecycle`, for a test of the services themselves. */
@@ -388,6 +388,7 @@ async function buildTestApp(prisma: PrismaClient): Promise<FastifyInstance> {
     domainEvents,
     logger: testApp.log,
     contestSettlement: createContestSettlementService(prisma, testApp.log, { domainEvents }),
+    findings: integrationSyncFindings(prisma, providerSettings),
   });
   const ingestionConfigService = new IngestionConfigService(settings);
   const platformSettingsService = new PlatformSettingsService({

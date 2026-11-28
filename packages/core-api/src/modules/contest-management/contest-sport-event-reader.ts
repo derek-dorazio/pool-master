@@ -13,7 +13,7 @@ import type {
 } from '@poolmaster/shared/db';
 import { tierSetSlotOf, MatchStatus, SportEventParticipantStatus, coveredRoundNumbers, eventPlaysMatches, playsKnockoutRounds, squaresGameChoices, hasSportEventStarted, matchSpread } from '@poolmaster/shared/domain';
 import { findBracketProblem, findKnockoutProblem, knockoutGames } from '../scoring-families/head-to-head/bracket-picks';
-import { ContestCutoffKind, cutoffTiming } from '../contests/entry-window';
+import { ContestCutoffKind, cutoffTiming, isSlotFieldDecided } from '../contests/entry-window';
 import { knockoutSeeds } from '../scoring-families/head-to-head/score-team';
 import { BatchedRead, batchedByIds, batchedByKey, withReads } from '../../core/batched-read';
 import type { ContestOpeningReader } from './contest-opening';
@@ -92,6 +92,7 @@ export function createContestSportEventReader({ sportEvents, field, tiers, valua
       // play-off are no round of it (#2241).
       return findBracketProblem(knockoutGames(games.filter((match) => match.status !== MatchStatus.CANCELLED)), knockoutSeeds(entries));
     },
+    isSlotFieldDecided: async (sportEventId, seasonSlotId) => isSlotFieldDecided(await matches.findBySportEvent(sportEventId), seasonSlotId),
     findKnockoutProblem: async (sportEventId) => {
       const [games, entries] = await Promise.all([matches.findBySportEvent(sportEventId), field.findBySportEvent(sportEventId)]);
       const played = games.filter((match) => match.status !== MatchStatus.CANCELLED);

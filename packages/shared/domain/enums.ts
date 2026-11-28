@@ -803,13 +803,15 @@ export const ContestOpeningOrder = explicitOrder<ContestOpening>({
 /**
  * Why a contest of one setup does not open on an event now (#2015, #1932): the wait or the close
  * behind a NOT_YET or CLOSED `ContestOpening`. NOT_YET: EVENT_NOT_RELEASED (the event is a draft),
- * FIELD_NOT_LOADED (no field yet), BRACKET_NOT_SET (the teams of the bracket's games are not all
- * known). CLOSED: EVENT_STARTED (the setup's cutoff on the event has passed), NO_GAME_LEFT (every
+ * FIELD_NOT_LOADED (no field yet), FIELD_NOT_DECIDED (a contest picking from the field starts at a
+ * slot with a team still to be decided by the matches feeding it, #2015), BRACKET_NOT_SET (the
+ * teams of the bracket's games are not all known). CLOSED: EVENT_STARTED (the setup's cutoff on the event has passed), NO_GAME_LEFT (every
  * game a squares contest could be played on has kicked off).
  */
 export const ContestOpeningReason = {
   EVENT_NOT_RELEASED: 'EVENT_NOT_RELEASED',
   FIELD_NOT_LOADED: 'FIELD_NOT_LOADED',
+  FIELD_NOT_DECIDED: 'FIELD_NOT_DECIDED',
   BRACKET_NOT_SET: 'BRACKET_NOT_SET',
   EVENT_STARTED: 'EVENT_STARTED',
   NO_GAME_LEFT: 'NO_GAME_LEFT',
@@ -819,9 +821,10 @@ export type ContestOpeningReason = (typeof ContestOpeningReason)[keyof typeof Co
 export const ContestOpeningReasonOrder = explicitOrder<ContestOpeningReason>({
   [ContestOpeningReason.EVENT_NOT_RELEASED]: 0,
   [ContestOpeningReason.FIELD_NOT_LOADED]: 1,
-  [ContestOpeningReason.BRACKET_NOT_SET]: 2,
-  [ContestOpeningReason.EVENT_STARTED]: 3,
-  [ContestOpeningReason.NO_GAME_LEFT]: 4,
+  [ContestOpeningReason.FIELD_NOT_DECIDED]: 2,
+  [ContestOpeningReason.BRACKET_NOT_SET]: 3,
+  [ContestOpeningReason.EVENT_STARTED]: 4,
+  [ContestOpeningReason.NO_GAME_LEFT]: 5,
 });
 
 /** Where one provider sync run is in its lifecycle. */
@@ -1202,6 +1205,14 @@ export const ProviderSyncFindingKind = {
    * postponed or moved to another start. Subject: league, event, Provider and the provider's game id.
    */
   GAME_OVERDUE: 'GAME_OVERDUE',
+  /**
+   * A draft contest picking from the field (tiered, budget, sweepstakes) reached its cutoff while
+   * a game of its first slot still waited for a team (#2015): it opens only once every team of that
+   * slot is known, so it can never open. The league's schedule overlaps its rounds. WARNING.
+   * Subject: league and event; no Provider or value, since the rule is the app's own. The lifecycle
+   * raises it while such a draft's slot is undecided; a root admin resolves it.
+   */
+  FIELD_CONTEST_CANNOT_OPEN: 'FIELD_CONTEST_CANNOT_OPEN',
   /**
    * The feed postponed a Game and has given it no new date: it is still POSTPONED more than the
    * postponed wait after its scheduled start (#2013, `gamePostponedWaitStart`). WARNING: the slot

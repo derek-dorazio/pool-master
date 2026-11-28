@@ -129,15 +129,24 @@ export class EventPageService {
     const slots = await this.pages.findSlotsNotOver(pages.map((page) => page.sportLeagueCompetitionSlotId));
     const slotsByPage = new Map(pages.map((page, index) => [page.id, slots[index] ?? []]));
     const askOpening = this.openings();
-    const shown = await Promise.all(offers.map((offer) => showOffer(offer, slotsByPage.get(offer.eventPageId) ?? [], askOpening)));
+    const definitionByPage = new Map(pages.map((page) => [page.id, page.sportLeagueCompetitionSlotId]));
+    const shown = await Promise.all(offers.map((offer) => showOffer(offer, definitionByPage.get(offer.eventPageId), slotsByPage.get(offer.eventPageId) ?? [], askOpening)));
     return shown.filter((view): view is EventPageOfferView => view !== null);
   }
 }
 
 /** The offer with its slot definition's first Season slot not past the contest's cutoff, or null when none is left. */
-async function showOffer(offer: EventPageOffer, slots: readonly EventPageNextSlot[], askOpening: ContestOpeningAsk): Promise<EventPageOfferView | null> {
-  const setup: ContestOpeningSetup = { selectionType: offer.template.selectionType };
+async function showOffer(
+  offer: EventPageOffer,
+  slotDefinitionId: string | undefined,
+  slots: readonly EventPageNextSlot[],
+  askOpening: ContestOpeningAsk,
+): Promise<EventPageOfferView | null> {
   for (const nextSlot of slots) {
+    const setup: ContestOpeningSetup = {
+      selectionType: offer.template.selectionType,
+      ...(slotDefinitionId !== undefined && { startSlot: { seasonSlotId: nextSlot.seasonSlotId, slotDefinitionId } }),
+    };
     const { opening, reason, closesAt } = await askOpening(nextSlot.sportEventId, setup);
     if (opening !== ContestOpening.CLOSED && closesAt !== null) {
       const state = opening === ContestOpening.OPEN ? EventPageOfferState.OPEN : EventPageOfferState.NOT_YET;
