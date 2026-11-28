@@ -536,17 +536,20 @@ export interface ContestRepository {
    * does a bracket starting after round 1 or a squares draft with its game, which close later.
    */
   findCurrentByLeague(leagueId: string, now: Date): Promise<Contest[]>;
-  /** The league's COMPLETED contests that ended in [`endedFrom`, `endedBefore`), newest first (#1161). */
-  findFinishedByLeague(leagueId: string, endedFrom: Date, endedBefore: Date): Promise<Contest[]>;
-  /** Each championship year, US Eastern, a COMPLETED contest of the league ended in, newest first (#1161). */
+  /** The league's COMPLETED contests of one championship year, however late they went final, latest finish first (#1161, #2021). */
+  findFinishedByLeague(leagueId: string, championshipYear: number): Promise<Contest[]>;
+  /** Each championship year the league has a COMPLETED contest in, newest first (#1161, #2021). */
   findFinishedYearsByLeague(leagueId: string): Promise<number[]>;
   /** The league's contests open for entries, oldest first, by id and name only: the welcome email lists them (#903). */
   findOpenByLeague(leagueId: string): Promise<Array<Pick<Contest, 'id' | 'name'>>>;
   /**
-   * The different sports leagues of the league's contests of one season (#947), drafts included
-   * (a deleted contest is gone, so it no longer counts): what the plan's sports leagues a year counts.
+   * The different sports leagues of the league's contests of one championship year (#947), drafts
+   * included (a deleted contest is gone, so it no longer counts): what the plan's sports leagues a
+   * year counts.
    */
-  findSportLeagueIdsBySeason(leagueId: string, seasonYear: number): Promise<string[]>;
+  findSportLeagueIdsByYear(leagueId: string, championshipYear: number): Promise<string[]>;
+  /** The same for every championship year the league has a contest in, by year. */
+  findSportLeagueIdsOfEveryYear(leagueId: string): Promise<ReadonlyMap<number, string[]>>;
   /** The event's contests, oldest first, optionally narrowed to or away from some statuses. */
   findBySportEvent(sportEventId: string, filter?: ContestStatusFilter): Promise<Contest[]>;
   /** The contests on any of the events, each once, oldest first (#1255). */
@@ -583,7 +586,7 @@ export interface ContestRepository {
   /**
    * Creates the contest unless the league's plan has no room for its sports league in its season
    * (#947): under the league's row lock, the season's sports leagues are counted as
-   * `findSportLeagueIdsBySeason` does, so two contests racing for the last one cannot both get it.
+   * `findSportLeagueIdsByYear` does, so two contests racing for the last one cannot both get it.
    */
   create(contest: ContestCreate, limits: ContestSeasonLimits): Promise<ContestCreateResult>;
   update(id: string, updates: ContestUpdate): Promise<Contest>;

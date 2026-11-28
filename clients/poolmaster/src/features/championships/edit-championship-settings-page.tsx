@@ -3,7 +3,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { Navigate, useNavigate, useParams } from 'react-router';
 import { z } from 'zod';
-import { CupPointsScale, PlanFeature, championshipYear } from '@poolmaster/shared/domain';
+import { CupPointsScale, PlanFeature, easternCalendarYear } from '@poolmaster/shared/domain';
 import { enumLabel } from '@poolmaster/shared/display-strings';
 import { updateLeagueCupSettings, type LeagueDto } from '@/lib/api';
 import { throwApiError } from '@/lib/errors';
@@ -147,7 +147,7 @@ function ChampionshipSettingsForm({ league }: { league: LeagueDto }) {
       title="Edit championships"
     >
       <FormSection
-        help={`The championship every contest counts toward. Members see it with the year in front${cupName ? `: ${championshipYear(new Date())} ${cupName}` : ''}.`}
+        help={`The championship every contest counts toward. Members see it with the year in front${cupName ? `: ${easternCalendarYear(new Date())} ${cupName}` : ''}.`}
         testId="edit-championships-name-section"
         title="Name"
       >

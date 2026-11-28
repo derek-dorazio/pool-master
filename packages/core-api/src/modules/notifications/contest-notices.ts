@@ -4,7 +4,7 @@
  * "Final results" (F1, with F3 for its winners) when it settles. All three go to every active
  * member of the contest's league, and to no other league. A contest that ends with no scores
  * (F2) tells only its commissioners and the members with an entry, and so does an event on it
- * being postponed, moved or cancelled (C6, C7). "Event postponed, picks are open again" (#1808,
+ * being moved or cancelled (C6, C7). "Event postponed, picks are open again" (#1808,
  * #1910), when a postponement takes a live contest back to open, goes to every active member, as D1
  * does, in place of C6 for that contest.
  *
@@ -87,7 +87,6 @@ function toEmailEvent(sportEvent: SportEvent): ContestEmailEvent {
 
 /** What happened to an event, as EventLifecycleService and SportEventService report it. */
 export type SportEventChange =
-  | { kind: typeof ContestEventChangeKind.POSTPONED }
   | { kind: typeof ContestEventChangeKind.RESCHEDULED; previousStart: Date }
   | { kind: typeof ContestEventChangeKind.CANCELLED };
 
@@ -267,7 +266,7 @@ export class ContestNotices implements ContestOpenedNotice, SportEventChangedNot
   }
 
   /**
-   * C6 and C7: which contests hear that their event was postponed, moved or cancelled, each told
+   * C6 and C7: which contests hear that their event was moved or cancelled, each told
    * by a job of its own (#1458), all written in one insert. An event can be on hundreds of
    * contests across as many leagues, so no email is built here: the request that changed the
    * event pays for one read of its contests and one write, however many there are.
@@ -317,12 +316,9 @@ export class ContestNotices implements ContestOpenedNotice, SportEventChangedNot
       return 0;
     }
     const now = this.deps.now?.() ?? new Date();
-    const picksOpen = areEventPicksOpen(contest, sportEvent, now);
     const contestChange: ContestEventChange = change.kind === ContestEventChangeKind.CANCELLED
       ? { kind: change.kind }
-      : change.kind === ContestEventChangeKind.RESCHEDULED
-        ? { kind: change.kind, previousStart: new Date(change.previousStart), newStart: sportEvent.startDate, picksOpen }
-        : { kind: change.kind, picksOpen };
+      : { kind: change.kind, previousStart: new Date(change.previousStart), newStart: sportEvent.startDate, picksOpen: areEventPicksOpen(contest, sportEvent, now) };
     const event = buildEmailEventHeader(this.deps.appBaseUrl, sportEvent, sportLeague?.name ?? '');
     const about = sportEventChangeAbout(sportEvent.id, change);
     const contestUrl = buildContestUrl(this.deps.appBaseUrl, league.leagueCode, contest.id);

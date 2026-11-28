@@ -426,7 +426,6 @@ async function buildTestApp(prisma: PrismaClient): Promise<FastifyInstance> {
     CONTEST_REOPENED_EMAILS: (payload) => contestEmailJobs.contestReopened(payload),
     SETTLE_SPORT_EVENT_CONTESTS: (payload) => eventLifecycleService.settleFinishedEventContests(payload),
     ACTIVATE_EVENT_CONTESTS: (payload) => eventLifecycleService.activateEventContests(payload),
-    FOLLOW_POSTPONED_EVENT_CONTESTS: (payload) => eventLifecycleService.followPostponedEventContests(payload),
     SETTLE_GAME_CONTESTS: (payload) => eventLifecycleService.settleFinishedGameContests(payload),
     REBUILD_LEADERBOARDS: async (payload) => ({ changedCount: await leaderboardRebuilder.rebuildLeaderboardSnapshots(leaderboardChangesOf(payload)) }),
     RESOLVE_MAPPED_PARTICIPANT_FINDINGS: resolveMappedParticipantFindingsJobHandler(integrationSyncFindings(prisma)),
@@ -462,9 +461,10 @@ async function buildTestApp(prisma: PrismaClient): Promise<FastifyInstance> {
   });
   testApp.register(contestsByIdModule, { prefix: '/api/v1/contests', email, planEntitlements });
   // The trophy room's routes, for the query-scaling tests of its reads (#1242).
-  testApp.register(cupsModule, { prefix: '/api/v1/leagues/:id/cups', planEntitlements });
-  testApp.register(championshipModule, { prefix: '/api/v1/leagues/:id/championship', planEntitlements });
-  testApp.register(historyModule, { prefix: '/api/v1/leagues/:id/history', email, planEntitlements });
+  const closedYears = new PrismaLeagueChampionshipYearRepository(prisma);
+  testApp.register(cupsModule, { prefix: '/api/v1/leagues/:id/cups', planEntitlements, closedYears });
+  testApp.register(championshipModule, { prefix: '/api/v1/leagues/:id/championship', planEntitlements, closedYears });
+  testApp.register(historyModule, { prefix: '/api/v1/leagues/:id/history', email, planEntitlements, closedYears });
   testApp.register(participantsModule, { prefix: '/api/v1/participants', domainEvents });
   testApp.register(usersModule, { prefix: '/api/v1/users', email, emailPreferences: outbox.preferences });
   testApp.register(eventsModule, {

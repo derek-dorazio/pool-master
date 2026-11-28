@@ -4,15 +4,15 @@ import {
   getYearReview,
   sendYearReview,
 } from '@poolmaster/shared/generated/hey-api';
-import { YearReviewStatus, championshipYear } from '@poolmaster/shared/domain';
+import { YearReviewStatus } from '@poolmaster/shared/domain';
 import { YearReviewResponseSchema } from '@poolmaster/shared/dto';
 import { buildLeagueWithCommissioner, buildRegisteredUser } from './builders';
-import { cleanupFunctionalData, disconnectFunctionalPrisma } from './setup';
+import { cleanupFunctionalData, disconnectFunctionalPrisma, getFunctionalPrisma } from './setup';
 import { expectDefined } from '../support/expect-defined';
 
-// The year in review (#872 slice 4) through the real routes. Last year's finishes can't be made
-// through the API (a contest counts in the year it settles), so a new league has nothing to send:
-// the routes answer that, refuse this year, and keep members out. Sending is unit tested.
+// The year in review (#872 slice 4) through the real routes: the league's latest closed
+// championship year (#2021). A new league has none, so nothing to send; a closed year with
+// nothing counted has nothing to send either, and members are kept out. Sending is unit tested.
 
 afterAll(async () => {
   await cleanupFunctionalData();
@@ -20,24 +20,26 @@ afterAll(async () => {
 });
 
 describe('SDK Functional: the year in review (#872)', () => {
-  it('has nothing to send for last year in a new league, refuses to send this year or a year with nothing counted, and is for commissioners only', async () => {
+  it('has nothing to send before a new league closes a year, refuses a year that is not its latest closed one or one with nothing counted, and is for commissioners only', async () => {
     const { commissioner, league } = await buildLeagueWithCommissioner({ displayName: 'Review Keeper', leagueName: `Review League ${Date.now()}` });
     const member = await buildRegisteredUser({ displayName: 'Review Reader' });
     const invite = await generateInviteLink({ client: commissioner.client, path: { id: league.id }, body: { maxUses: 1 } });
     await acceptInvitation({ client: member.client, body: { inviteCode: expectDefined(invite.data).invitation.inviteCode } });
-    const lastYear = championshipYear(new Date()) - 1;
+    const review = async () => YearReviewResponseSchema.parse(expectDefined((await getYearReview({ client: commissioner.client, path: { id: league.id } })).data)).yearReview;
 
-    const review = YearReviewResponseSchema.parse(expectDefined((await getYearReview({ client: commissioner.client, path: { id: league.id } })).data)).yearReview;
-    expect(review).toEqual({ year: lastYear, status: YearReviewStatus.NOTHING_TO_SEND, sentAt: null, sentByName: null });
+    expect(await review()).toEqual({ year: null, status: YearReviewStatus.NOTHING_TO_SEND, sentAt: null, sentByName: null });
+    const notClosed = await sendYearReview({ client: commissioner.client, path: { id: league.id, year: 2098 } });
+    expect(notClosed.response?.status).toBe(409);
+    expect(notClosed.error?.error.code).toBe('YEAR_REVIEW_NOT_OPEN');
 
-    const thisYear = await sendYearReview({ client: commissioner.client, path: { id: league.id, year: lastYear + 1 } });
-    expect(thisYear.response?.status).toBe(409);
-    expect(thisYear.error?.error.code).toBe('YEAR_REVIEW_NOT_OPEN');
-    const nothing = await sendYearReview({ client: commissioner.client, path: { id: league.id, year: lastYear } });
+    // The league's 2098 year closed, as the year close job leaves it (#2021), with nothing counted in it.
+    await getFunctionalPrisma().leagueChampionshipYear.create({ data: { leagueId: league.id, championshipYear: 2098, closedAt: new Date() } });
+    expect(await review()).toEqual({ year: 2098, status: YearReviewStatus.NOTHING_TO_SEND, sentAt: null, sentByName: null });
+    const nothing = await sendYearReview({ client: commissioner.client, path: { id: league.id, year: 2098 } });
     expect(nothing.response?.status).toBe(409);
     expect(nothing.error?.error.code).toBe('YEAR_REVIEW_NOTHING_TO_SEND');
 
     expect((await getYearReview({ client: member.client, path: { id: league.id } })).response?.status).toBe(403);
-    expect((await sendYearReview({ client: member.client, path: { id: league.id, year: lastYear } })).response?.status).toBe(403);
+    expect((await sendYearReview({ client: member.client, path: { id: league.id, year: 2098 } })).response?.status).toBe(403);
   });
 });

@@ -92,14 +92,19 @@ describe('YearReviewService', () => {
   let reviews: InMemoryYearReviews;
   let squadYears: SquadYearView[];
   let league: League;
+  /** Each league's closed championship years (#2021). */
+  let closed: Map<string, number[]>;
 
   beforeEach(() => {
+    closed = new Map();
     world = new InMemoryContestWorld();
     outbox = inMemoryEmailMessages();
     finishes = new InMemoryChampionship();
     reviews = new InMemoryYearReviews();
     squadYears = [];
     league = world.addLeague({ name: 'Office League', leagueCode: 'OFFICE24' });
+    // 2025 has closed, its last contest final and its last Season slot played.
+    closed.set(league.id, [2024, 2025]);
   });
 
   function service(email?: Pick<EmailService, 'sendMany'>): YearReviewService {
@@ -124,8 +129,8 @@ describe('YearReviewService', () => {
         logger,
       }),
       appBaseUrl: 'https://app.example.test/',
+      closedYears: { findClosedYears: async (leagueId) => (closed.get(leagueId) ?? []).map((championshipYear) => ({ championshipYear, closedAt: NOW })) },
       logger,
-      now: () => NOW,
     });
   }
 
@@ -159,13 +164,26 @@ describe('YearReviewService', () => {
     return row === undefined ? undefined : { subject: row.subject ?? '', text: row.textBody ?? '' };
   }
 
-  it('is ready to send last year once its championship has a counted contest, and has nothing to send for a year of only uncounted contests', async () => {
+  it('is ready to send the latest closed year once its championship has a counted contest, and has nothing to send for a year of only uncounted contests', async () => {
     countedFinish(2024);
     countedFinish(2025, CupWeight.NOT_COUNTED);
-    expect(await service().getLastYear(league.id)).toEqual({ year: 2025, status: YearReviewStatus.NOTHING_TO_SEND, sentAt: null, sentBy: null });
+    expect(await service().getReviewYear(league.id)).toEqual({ year: 2025, status: YearReviewStatus.NOTHING_TO_SEND, sentAt: null, sentBy: null });
 
     countedFinish(2025);
-    expect(await service().getLastYear(league.id)).toEqual({ year: 2025, status: YearReviewStatus.READY, sentAt: null, sentBy: null });
+    expect(await service().getReviewYear(league.id)).toEqual({ year: 2025, status: YearReviewStatus.READY, sentAt: null, sentBy: null });
+  });
+
+  it('names the latest closed year, not the calendar\'s last year: a 2025 year still open in February 2026 keeps the 2024 review, and nothing is to send before any year closes (#2021)', async () => {
+    countedFinish(2024);
+    countedFinish(2025);
+    closed.set(league.id, [2024]);
+    expect(await service().getReviewYear(league.id)).toEqual({ year: 2024, status: YearReviewStatus.READY, sentAt: null, sentBy: null });
+    await expect(service().send(league.id, 2025, 'anyone')).rejects.toBeInstanceOf(YearReviewNotOpenError);
+
+    closed.set(league.id, []);
+    expect(await service().getReviewYear(league.id)).toEqual({ year: null, status: YearReviewStatus.NOTHING_TO_SEND, sentAt: null, sentBy: null });
+    await expect(service().send(league.id, 2024, 'anyone')).rejects.toBeInstanceOf(YearReviewNotOpenError);
+    expect(outbox.rows).toEqual([]);
   });
 
   it('emails each active owner of a squad that placed its own year, with its championship place and trophy, medals and the cups it placed in, then is SENT by the commissioner', async () => {
@@ -211,7 +229,7 @@ describe('YearReviewService', () => {
     expect(sentTo(commissioner.id)).toBeUndefined();
   });
 
-  it('refuses this year, a year already sent and a year with nothing counted, sending no email', async () => {
+  it('refuses a year still open, a year already sent and a year with nothing counted, sending no email', async () => {
     countedFinish(2025);
     const sender = world.addUser({ firstName: 'Casey' });
     await expect(service().send(league.id, 2026, sender.id)).rejects.toBeInstanceOf(YearReviewNotOpenError);
@@ -219,6 +237,7 @@ describe('YearReviewService', () => {
     await expect(service().send(league.id, 2025, sender.id)).rejects.toBeInstanceOf(YearReviewAlreadySentError);
 
     const quiet = world.addLeague({ name: 'Quiet League' });
+    closed.set(quiet.id, [2025]);
     await expect(service().send(quiet.id, 2025, sender.id)).rejects.toBeInstanceOf(YearReviewNothingToSendError);
     expect(outbox.rows).toEqual([]);
   });
@@ -246,7 +265,7 @@ describe('YearReviewService', () => {
     await expect(service(failing).send(league.id, 2025, sender.id)).rejects.toThrow('outbox down');
 
     expect(reviews.rows).toEqual([]);
-    expect((await service().getLastYear(league.id)).status).toBe(YearReviewStatus.READY);
+    expect((await service().getReviewYear(league.id)).status).toBe(YearReviewStatus.READY);
   });
 
   it('emails a squad that placed only in a cup with no championship line and every medal count at 0', async () => {
@@ -268,7 +287,7 @@ describe('YearReviewService', () => {
   it('reads a review sent with no sender recorded as SENT by nobody', async () => {
     reviews.rows.push({ leagueId: league.id, championshipYear: 2025, sentByUserId: null, sentAt: NOW });
 
-    expect(await service().getLastYear(league.id)).toEqual({ year: 2025, status: YearReviewStatus.SENT, sentAt: NOW, sentBy: null });
+    expect(await service().getReviewYear(league.id)).toEqual({ year: 2025, status: YearReviewStatus.SENT, sentAt: NOW, sentBy: null });
   });
 });
 

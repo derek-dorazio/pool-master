@@ -121,21 +121,21 @@ export function useCreateContestForm(league: Pick<LeagueDto, 'id' | 'planEntitle
     () => contestEventsFor(eventsQuery.data ?? [], selectionType),
     [eventsQuery.data, selectionType],
   );
-  // The plan's sports leagues a year (#947): once a year's contests use them all, an event in
-  // another sports league that year is locked. A contest's year is its first event's.
+  // The plan's sports leagues a year (#947): the API says which offered sports leagues a new
+  // contest in each championship year would put over the cap, and those events are locked.
   const sportLeagueCap = league?.planEntitlements.caps[PlanCap.SPORTS_LEAGUES_PER_YEAR] ?? null;
-  const championshipYears = useMemo(
-    () => [...new Set(contestEvents.map((event) => event.championshipYear))].sort((left, right) => left - right),
-    [contestEvents],
-  );
-  const sportLeaguesUsed = useSportLeaguesUsed(league?.id, championshipYears, sportLeagueCap !== null);
-  const lockedEventIds = useMemo(() => contestEvents.flatMap((event) => {
-    const used = sportLeaguesUsed.get(event.championshipYear);
-    return sportLeagueCap !== null && used !== undefined
-      && used.length >= sportLeagueCap && !used.includes(event.sportLeagueId)
-      ? [event.id]
-      : [];
-  }), [contestEvents, sportLeagueCap, sportLeaguesUsed]);
+  const offerings = useMemo(() => {
+    const byYear = new Map<number, Set<string>>();
+    for (const event of contestEvents) {
+      byYear.set(event.championshipYear, (byYear.get(event.championshipYear) ?? new Set()).add(event.sportLeagueId));
+    }
+    return [...byYear.entries()].sort(([left], [right]) => left - right)
+      .map(([championshipYear, sportLeagueIds]) => ({ championshipYear, sportLeagueIds: [...sportLeagueIds].sort() }));
+  }, [contestEvents]);
+  const sportLeaguesUsed = useSportLeaguesUsed(league?.id, offerings, sportLeagueCap !== null);
+  const lockedEventIds = useMemo(() => contestEvents.flatMap((event) => (
+    sportLeaguesUsed.get(event.championshipYear)?.overCapSportLeagueIds.includes(event.sportLeagueId) ? [event.id] : []
+  )), [contestEvents, sportLeaguesUsed]);
   const selectableEvents = useMemo(
     () => contestEvents.filter((event) => !lockedEventIds.includes(event.id)),
     [contestEvents, lockedEventIds],

@@ -22,9 +22,9 @@ type PickEmWeek = PickEmLeaderboardResponse['weeks'][number];
 /** The prefix of the board's test ids. */
 const TEST_ID = 'pick-em-leaderboard';
 
-/** A week's column name, with the shared Postponed or Cancelled chip (#1768) when it is not going ahead as scheduled. */
+/** A week's column name, with the shared Cancelled chip (#1768) when it is called off. */
 function weekHeading(week: PickEmWeek): ReactNode {
-  if (week.status !== SportEventStatus.CANCELLED && week.status !== SportEventStatus.POSTPONED) {
+  if (week.status !== SportEventStatus.CANCELLED) {
     return week.name;
   }
   return (

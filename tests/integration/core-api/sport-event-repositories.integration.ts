@@ -225,24 +225,22 @@ describe('SportEventRepository — writes', () => {
     expect(await events.findEmptyTierNumbers([slot.id, bareSlot.id])).toEqual(new Map([[slot.id, [2, 3]], [bareSlot.id, []]]));
   });
 
-  it('finds the lifecycle scheduler\'s candidates: auto lifecycle on and scheduled, in progress or postponed, linked to a provider or not', async () => {
+  it('finds the lifecycle scheduler\'s candidates: auto lifecycle on and scheduled or in progress, linked to a provider or not', async () => {
     const { events } = repos();
     const scheduled = await createEvent('Scheduled');
     const inProgress = await createEvent('In Progress');
     await events.update(inProgress.id, { status: 'IN_PROGRESS' });
     const completed = await createEvent('Completed');
     await events.update(completed.id, { status: 'COMPLETED' });
-    const postponed = await createEvent('Postponed');
-    await events.update(postponed.id, { status: 'POSTPONED' });
     const manualOverride = await createEvent('Manual Override');
     await events.update(manualOverride.id, { autoLifecycleEnabled: false });
     const linked = await createEvent('Linked');
     await mapEventToProvider(getPrisma(), linked.id, { providerId: 'balldontlie', externalId: `repo-${randomUUID()}` });
 
-    const created = new Set([scheduled.id, inProgress.id, completed.id, postponed.id, manualOverride.id, linked.id]);
+    const created = new Set([scheduled.id, inProgress.id, completed.id, manualOverride.id, linked.id]);
     const candidates = (await events.findAutoLifecycleCandidates()).filter((event) => created.has(event.id));
 
-    expect(candidates.map((event) => event.name).sort()).toEqual(['In Progress', 'Linked', 'Postponed', 'Scheduled']);
+    expect(candidates.map((event) => event.name).sort()).toEqual(['In Progress', 'Linked', 'Scheduled']);
   });
 });
 

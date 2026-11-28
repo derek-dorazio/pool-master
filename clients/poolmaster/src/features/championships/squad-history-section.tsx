@@ -1,4 +1,4 @@
-import { PlanFeature, championshipYear } from '@poolmaster/shared/domain';
+import { PlanFeature, easternCalendarYear } from '@poolmaster/shared/domain';
 import { Trophy } from 'lucide-react';
 import { useLocation, useSearchParams } from 'react-router';
 import type { SquadDto } from '@/lib/api';
@@ -38,7 +38,7 @@ export function SquadHistorySection({
   const { league, viewer } = useLeagueContext(leagueCode);
   const hasShelf = hasPlanFeature(league, PlanFeature.TROPHY_SHELF);
   const hasPastYears = hasPlanFeature(league, PlanFeature.PAST_YEARS);
-  const currentYear = championshipYear(new Date());
+  const currentYear = easternCalendarYear(new Date());
   const year = hasPastYears ? parseChampionshipYearParam(searchParams.get('year') ?? undefined) ?? currentYear : currentYear;
   const historyQuery = useSquadHistoryQuery(hasShelf ? leagueId : '', squad.id);
   // The year's own read (the section below shares it) says whether it is over; until it answers, the year alone.

@@ -1,11 +1,8 @@
 /**
- * The jobs that move an event's contests when the event's status moves (#1952): going live when
- * the event starts, and a postponed event's contests following its start (reopened while it is
- * ahead, live once it has passed, #1792). Each is written with the event's status change, so a
- * task that stops after the change still moves them; until #1952 both ran inline after the write.
- * The lifecycle sweep still asks the same questions of every event in progress or postponed, as the
- * backstop. Their handlers are `EventLifecycleService.activateEventContests` and
- * `EventLifecycleService.followPostponedEventContests`, which read the event again.
+ * The job that takes an event's contests live (#1952): when the event starts, and when a slot of it
+ * starts (#2013). It is written with the status change, so a task that stops after the change still
+ * moves them. The lifecycle sweep still asks the same question of every event in progress, as the
+ * backstop. Its handler is `EventLifecycleService.activateEventContests`, which reads the event again.
  */
 
 import { z } from 'zod';
@@ -25,7 +22,7 @@ export type EventContestsJobPayload = z.infer<typeof EventContestsJobPayloadSche
  */
 function eventContestsJob(
   jobs: Pick<BackgroundJobQueue, 'request'>,
-  type: typeof BackgroundJobType.ACTIVATE_EVENT_CONTESTS | typeof BackgroundJobType.FOLLOW_POSTPONED_EVENT_CONTESTS,
+  type: typeof BackgroundJobType.ACTIVATE_EVENT_CONTESTS,
   sportEventId: string,
 ): BackgroundJobRequest {
   return jobs.request(type, { sportEventId }, { dedupeKey: `${type}:${sportEventId}` });
@@ -49,15 +46,4 @@ export const activateSlotContestsHandler: DomainEventHandler<typeof DomainEventT
   queues: [BackgroundJobType.ACTIVATE_EVENT_CONTESTS],
   when: (event) => event.from === SeasonSlotStatus.SCHEDULED,
   jobs: (event, { queue }) => [eventContestsJob(queue, BackgroundJobType.ACTIVATE_EVENT_CONTESTS, event.sportEventId)],
-};
-
-/**
- * A postponed event's contests follow its start (#1792): reopened while it is ahead, live once it
- * has passed. A repeated postponement asks again, as the lifecycle sweep does.
- */
-export const followPostponedEventContestsHandler: DomainEventHandler<typeof DomainEventType.SPORT_EVENT_STATUS_CHANGED> = {
-  key: 'follow-postponed-event-contests',
-  queues: [BackgroundJobType.FOLLOW_POSTPONED_EVENT_CONTESTS],
-  when: (event) => event.to === SportEventStatus.POSTPONED,
-  jobs: (event, { queue }) => [eventContestsJob(queue, BackgroundJobType.FOLLOW_POSTPONED_EVENT_CONTESTS, event.sportEvent.id)],
 };

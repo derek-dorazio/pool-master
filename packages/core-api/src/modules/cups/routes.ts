@@ -13,13 +13,13 @@ import { getAppPrisma } from '../../core/prisma-context';
 import { PrismaLeagueMembershipRepository } from '../../adapters';
 import { leagueFromPath, requireCommissioner, requireMemberOfLeague } from '../leagues/permissions';
 import { describePlanFeatureGate, requirePlanFeatures } from '../plans/plan-feature-gate';
-import type { PlanModuleOptions } from '../plans/routes';
+import type { YearGatedModuleOptions } from '../plans/routes';
 import { createCupHandlers } from './handler';
 import { createCupService } from './wiring';
 
 const MEMBERS_ONLY = 'Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.';
 
-export function cupsModule(fastify: FastifyInstance, opts: PlanModuleOptions): void {
+export function cupsModule(fastify: FastifyInstance, opts: YearGatedModuleOptions): void {
   void fastify.register(schemaComponentsPlugin);
 
   const prisma = getAppPrisma(fastify);
@@ -44,7 +44,7 @@ export function cupsModule(fastify: FastifyInstance, opts: PlanModuleOptions): v
       },
     },
     preHandler: [membersOnly, requirePlanFeatures(opts.planEntitlements, [PlanFeature.CUP_STANDINGS], {
-      yearOf: (request) => (request.query as ListCupsQuery).seasonYear,
+      year: { yearOf: (request) => (request.query as ListCupsQuery).seasonYear, closedYears: opts.closedYears },
     })],
     handler: handlers.listCups,
   });
@@ -81,7 +81,7 @@ export function cupsModule(fastify: FastifyInstance, opts: PlanModuleOptions): v
       },
     },
     preHandler: [membersOnly, requirePlanFeatures(opts.planEntitlements, [PlanFeature.CUP_STANDINGS], {
-      yearOf: (request) => (request.query as CupSquadPointsQuery).seasonYear,
+      year: { yearOf: (request) => (request.query as CupSquadPointsQuery).seasonYear, closedYears: opts.closedYears },
     })],
     handler: handlers.getCupSquadPoints,
   });

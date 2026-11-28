@@ -7,7 +7,7 @@ describe('EventScheduleChip', () => {
   it('says Postponed in gold and Cancelled in grey', () => {
     render(
       <>
-        <EventScheduleChip status={SportEventStatus.POSTPONED} testId="postponed" />
+        <EventScheduleChip status={MatchStatus.POSTPONED} testId="postponed" />
         <EventScheduleChip status={SportEventStatus.CANCELLED} testId="cancelled" />
       </>,
     );
@@ -18,16 +18,9 @@ describe('EventScheduleChip', () => {
     expect(screen.getByTestId('cancelled')).toHaveClass('bg-[var(--status-neutral-surface)]');
   });
 
-  it('gives a postponed game the same gold chip as a postponed week, and nothing to a game on schedule', () => {
-    render(
-      <>
-        <EventScheduleChip status={MatchStatus.POSTPONED} testId="postponed-game" />
-        <EventScheduleChip status={MatchStatus.SCHEDULED} testId="scheduled-game" />
-      </>,
-    );
+  it('gives nothing to a game on schedule', () => {
+    render(<EventScheduleChip status={MatchStatus.SCHEDULED} testId="scheduled-game" />);
 
-    expect(screen.getByTestId('postponed-game')).toHaveTextContent('Postponed');
-    expect(screen.getByTestId('postponed-game')).toHaveClass('bg-[var(--status-warning-surface)]');
     expect(screen.queryByTestId('scheduled-game')).not.toBeInTheDocument();
   });
 

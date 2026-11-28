@@ -1916,7 +1916,7 @@ describe('Commissioner tools › Contests › Create contest › the plan\'s spo
   const LPGA = '94700000-0000-4000-8000-000000000002';
 
   /** The Masters (PGA) first and the RBC Heritage (LPGA here) a week later, both in 2099. */
-  function primeCapMocks(sportLeagueIds: string[]) {
+  function primeCapMocks(sportLeagueIds: string[], overCapSportLeagueIds: string[] = []) {
     primeCommonMocks({ sportLeaguesPerYear: 1 });
     listEventsMock.mockResolvedValue({
       data: {
@@ -1926,7 +1926,7 @@ describe('Commissioner tools › Contests › Create contest › the plan\'s spo
         ],
       },
     });
-    listSportLeaguesUsedMock.mockResolvedValue({ data: { seasonYear: 2099, sportLeagueIds } });
+    listSportLeaguesUsedMock.mockResolvedValue({ data: { championshipYear: 2099, sportLeagueIds, overCapSportLeagueIds } });
   }
 
   afterEach(() => {
@@ -1936,8 +1936,8 @@ describe('Commissioner tools › Contests › Create contest › the plan\'s spo
     listSportLeaguesUsedMock.mockReset();
   });
 
-  it('locks the events of another sports league once the year\'s contests use the plan\'s one, and starts on the soonest event still open', async () => {
-    primeCapMocks([LPGA]);
+  it('locks the events of the sports leagues the API says are over the plan\'s cap for their year, and starts on the soonest event still open', async () => {
+    primeCapMocks([LPGA], [PGA]);
 
     renderCreateContestPage();
 
@@ -1948,7 +1948,7 @@ describe('Commissioner tools › Contests › Create contest › the plan\'s spo
     expect(screen.getByTestId('create-contest-sport-leagues-used')).toHaveTextContent('Sports leagues in 2099: 1 of 1.');
     expect(screen.getByTestId('create-contest-sport-leagues-locked')).toHaveTextContent('Your plan allows 1 sports league a year');
     expect(screen.getByTestId('create-contest-plan-link')).toHaveAttribute('href', '/league/BIGDAWGS/admin/plan');
-    expect(listSportLeaguesUsedMock).toHaveBeenCalledWith(expect.objectContaining({ path: { id: 'league-1' }, query: { seasonYear: 2099 } }));
+    expect(listSportLeaguesUsedMock).toHaveBeenCalledWith(expect.objectContaining({ path: { id: 'league-1' }, query: { championshipYear: 2099, sportLeagueIds: [PGA, LPGA].sort() } }));
   });
 
   it('locks nothing while the year still has room, and counts what it uses', async () => {

@@ -224,7 +224,7 @@ describe('SportEvent next statuses on the wire', () => {
   it('carries the declared transitions from the event\'s current status, and its counts', () => {
     const adminCounts = { untieredParticipantCount: 0, unpricedParticipantCount: 0, emptyTierNumbers: [6], contestCount: 2 };
     expect(mapSportEventToDto({ event: event({ status: 'SCHEDULED' }), participantCount: 0, tierCount: 6, tierSizes: [], tierSetSlot: null, tierSets: [], adminCounts, slots: [] })).toMatchObject({
-      allowedTransitions: ['IN_PROGRESS', 'POSTPONED', 'CANCELLED'],
+      allowedTransitions: ['IN_PROGRESS', 'CANCELLED'],
       tierCount: 6,
       adminCounts,
     });

@@ -214,24 +214,6 @@ describe('event lifecycle sweep through the app client (#1303)', () => {
     await expect(getPrisma().league.findUniqueOrThrow({ where: { id: digest.league.id } })).resolves.toMatchObject({ plan: 'FREE' });
   });
 
-  it('takes a live contest on a postponed week back to open until the week\'s new start, then starts it again at that start', async () => {
-    const { league } = await seedLeagueWithTeams(1);
-    const newStart = new Date(Date.now() + 3 * DAY);
-    const week = await seedFootballWeek({ games: 2, startDate: newStart, status: SportEventStatus.POSTPONED });
-    const contest = await contestOn(league.id, [week.event.id], ContestStatus.ACTIVE);
-    await getPrisma().contest.update({ where: { id: contest.id }, data: { startsAt: new Date(Date.now() - DAY) } });
-
-    const before = lifecycleSweep(new Date());
-    await before.sweep();
-
-    expect(before.logger.error).not.toHaveBeenCalled();
-    await expect(getPrisma().contest.findUniqueOrThrow({ where: { id: contest.id } })).resolves.toMatchObject({ status: ContestStatus.OPEN, startsAt: newStart });
-
-    await lifecycleSweep(new Date(newStart.getTime() + HOUR)).sweep();
-
-    await expect(getPrisma().contest.findUniqueOrThrow({ where: { id: contest.id } })).resolves.toMatchObject({ status: ContestStatus.ACTIVE, startsAt: newStart });
-  });
-
   it('completes an in-progress event covering no slot once its end date has passed, and leaves one covering a slot, one not yet ended and one with no end date in progress', async () => {
     const yesterday = new Date(Date.now() - DAY);
     const covering = await seedFootballWeek({ games: 1, startDate: new Date(Date.now() - 3 * DAY), status: SportEventStatus.IN_PROGRESS });

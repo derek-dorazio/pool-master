@@ -486,7 +486,7 @@ describe('ContestRepository', () => {
     expect(found.map((contest) => contest.id)).toEqual([open.id]);
   });
 
-  it("lists a league's contests that finished in a time range, latest finish first, and the US Eastern years they finished in (#1161)", async () => {
+  it("lists a league's completed contests of a championship year however late they went final, latest finish first, and the championship years it has them in (#1161, #2021)", async () => {
     const { league, event } = await createLeagueAndEvent();
     const other = await createLeagueAndEvent();
     const finishAt = async (name: string, endsAt: Date, status: ContestStatus = ContestStatus.COMPLETED) => {
@@ -495,18 +495,18 @@ describe('ContestRepository', () => {
       return contest;
     };
     const spring = await finishAt('Spring', new Date('2025-04-14T00:00:00.000Z'));
-    // 10 p.m. New Year's Eve in New York: still 2025 there.
-    const newYearsEve = await finishAt('New Years Eve', new Date('2026-01-01T03:00:00.000Z'));
-    await finishAt('Summer', new Date('2026-07-01T00:00:00.000Z'));
+    const year = (await getPrisma().contest.findUniqueOrThrow({ where: { id: spring.id }, select: { championshipYear: true } })).championshipYear;
+    // Went final well into the next calendar year, as a Super Bowl pool does: still its Season's year.
+    const nextFebruary = await finishAt('Next February', new Date(`${String(year + 1)}-02-09T04:00:00.000Z`));
     await finishAt('Live, ends later', new Date('2025-06-01T00:00:00.000Z'), ContestStatus.ACTIVE);
     const elsewhere = await createContest(other.league.id, other.event.id, 'Elsewhere', ContestStatus.COMPLETED);
     await getPrisma().contest.update({ where: { id: elsewhere.id }, data: { endsAt: new Date('2024-05-01T00:00:00.000Z') } });
 
-    const in2025 = await repos().contests.findFinishedByLeague(
-      league.id, new Date('2025-01-01T05:00:00.000Z'), new Date('2026-01-01T05:00:00.000Z'));
+    const finished = await repos().contests.findFinishedByLeague(league.id, year);
 
-    expect(in2025.map((contest) => contest.id)).toEqual([newYearsEve.id, spring.id]);
-    await expect(repos().contests.findFinishedYearsByLeague(league.id)).resolves.toEqual([2026, 2025]);
+    expect(finished.map((contest) => contest.id)).toEqual([nextFebruary.id, spring.id]);
+    await expect(repos().contests.findFinishedByLeague(league.id, year + 1)).resolves.toEqual([]);
+    await expect(repos().contests.findFinishedYearsByLeague(league.id)).resolves.toEqual([year]);
   });
 
   it('transitions a contest only from the given statuses: the second run changes nothing and says so', async () => {
@@ -766,8 +766,8 @@ async function draftOn(leagueId: string, sportEventId: string, name: string): Pr
   };
 }
 
-describe('ContestRepository.findSportLeagueIdsBySeason (#947)', () => {
-  it('lists the different sports leagues of the league\'s contests of one season, drafts included, and nothing from other seasons or leagues', async () => {
+describe('ContestRepository.findSportLeagueIdsByYear (#947)', () => {
+  it('lists the different sports leagues of the league\'s contests of one championship year, and of every year at once by year, drafts included, and nothing from other years or leagues', async () => {
     const { league, event, suffix } = await createLeagueAndEvent();
     const other = await createLeagueAndEvent();
     const second = await createSecondTourEvent(event.sportLeagueId, suffix);
@@ -784,10 +784,15 @@ describe('ContestRepository.findSportLeagueIdsBySeason (#947)', () => {
       });
       await createContest(other.league.id, second.event.id, 'Another League');
 
-      expect((await repos().contests.findSportLeagueIdsBySeason(league.id, 2026)).sort())
+      expect((await repos().contests.findSportLeagueIdsByYear(league.id, 2026)).sort())
         .toEqual([second.fixtureTourId, second.secondTourId].sort());
-      expect(await repos().contests.findSportLeagueIdsBySeason(league.id, 2025)).toEqual([second.fixtureTourId]);
-      expect(await repos().contests.findSportLeagueIdsBySeason(other.league.id, 2025)).toEqual([]);
+      expect(await repos().contests.findSportLeagueIdsByYear(league.id, 2025)).toEqual([second.fixtureTourId]);
+      expect(await repos().contests.findSportLeagueIdsByYear(other.league.id, 2025)).toEqual([]);
+      // Every year at once, by year, as the Plan page counts each open year (#2021).
+      const everyYear = await repos().contests.findSportLeagueIdsOfEveryYear(league.id);
+      expect([...everyYear.keys()]).toEqual([2025, 2026]);
+      expect([...(everyYear.get(2026) ?? [])].sort()).toEqual([second.fixtureTourId, second.secondTourId].sort());
+      expect(everyYear.get(2025)).toEqual([second.fixtureTourId]);
     } finally {
       await second.remove();
     }
@@ -828,7 +833,7 @@ describe('ContestRepository sports leagues a year (#947)', () => {
       ]);
 
       expect(results.map((result) => result.status).sort()).toEqual(['created', 'sportsLeagueLimitReached']);
-      expect(await repos().contests.findSportLeagueIdsBySeason(league.id, 2026)).toHaveLength(1);
+      expect(await repos().contests.findSportLeagueIdsByYear(league.id, 2026)).toHaveLength(1);
     } finally {
       await second.remove();
     }

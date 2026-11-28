@@ -5,13 +5,12 @@
  * shifts a past year. A year freezes itself: once it is over, no contest can go final in it.
  */
 import type { FastifyBaseLogger } from 'fastify';
-import type { ChampionshipRepository, LeagueRepository, SquadRepository } from '@poolmaster/shared/db';
+import type { ChampionshipRepository, LeagueChampionshipYearRepository, LeagueRepository, SquadRepository } from '@poolmaster/shared/db';
 import {
   type ChampionshipTile,
   CupWeight,
   championshipTiles,
   leaguePointsTable,
-  championshipYear,
   cupFinishPoints,
   rankChampionshipTallies,
   squadContestFinishes,
@@ -59,11 +58,14 @@ export interface ChampionshipYearView {
   leagueId: string;
   year: number;
   cupName: string;
-  /** True once the year has ended in US Eastern: the championship is decided. */
+  /**
+   * True once the league's year is closed (#2021): every contest in it final and every Season slot
+   * of it finished, whatever the calendar says. The championship is then decided.
+   */
   isOver: boolean;
-  /** Counted contests that went final in the year. */
+  /** Counted contests of the year that went final. */
   contestsCounted: number;
-  /** The league's open and live counted contests, for the current year only; 0 for any other. */
+  /** The year's open and live counted contests; 0 once it is over. */
   contestsToGo: number;
   standings: ChampionshipStandingView[];
   tiles: ChampionshipTileView[];
@@ -81,16 +83,13 @@ export interface ChampionshipServiceDeps {
   /** The league's points table and championship name come from its row, read once per request (#1176). */
   leagues: Pick<LeagueRepository, 'findById'>;
   squads: SquadRepository;
+  /** The league's closed years (#2021), which decide whether a year is over. */
+  closedYears: Pick<LeagueChampionshipYearRepository, 'findClosedYears'>;
   logger?: ChampionshipLogger;
-  now?: () => Date;
 }
 
 export class ChampionshipService {
-  private readonly now: () => Date;
-
-  constructor(private readonly deps: ChampionshipServiceDeps) {
-    this.now = deps.now ?? (() => new Date());
-  }
+  constructor(private readonly deps: ChampionshipServiceDeps) {}
 
   /**
    * Writes a contest's finishes as it goes final: each squad once, from its best entry's frozen
@@ -131,14 +130,14 @@ export class ChampionshipService {
   /** One year of the league championship: its standings, medal tiles and progress. */
   async getYear(leagueId: string, year: number): Promise<ChampionshipYearView> {
     const cupName = await this.requireCupName(leagueId, year);
-    const currentYear = championshipYear(this.now());
-    const [finishes, leagueSquads, unfinished] = await Promise.all([
+    const [finishes, leagueSquads, unfinished, closed] = await Promise.all([
       this.deps.finishes.findByLeagueYear(leagueId, year),
       this.deps.squads.findByLeague(leagueId, true),
-      year === currentYear ? this.deps.finishes.countUnfinishedContests(leagueId) : Promise.resolve(0),
+      this.deps.finishes.countUnfinishedContestsByYear(leagueId),
+      this.closedYearsOf(leagueId),
     ]);
     this.deps.logger?.debug({ action: 'championship.year', data: { leagueId, year, finishCount: finishes.length } }, 'Read a championship year');
-    return yearView({ leagueId, year, cupName, currentYear, unfinished }, finishes, leagueSquads);
+    return yearView({ leagueId, year, cupName, isOver: closed.has(year), unfinished: unfinished.get(year) ?? 0 }, finishes, leagueSquads);
   }
 
   /**
@@ -148,11 +147,11 @@ export class ChampionshipService {
    */
   async getAllYears(leagueId: string, alsoYears: readonly number[] = []): Promise<ChampionshipYearView[]> {
     const cupName = await this.requireCupName(leagueId, null);
-    const currentYear = championshipYear(this.now());
-    const [finishes, leagueSquads, unfinished] = await Promise.all([
+    const [finishes, leagueSquads, unfinished, closed] = await Promise.all([
       this.deps.finishes.findByLeague(leagueId),
       this.deps.squads.findByLeague(leagueId, true),
-      this.deps.finishes.countUnfinishedContests(leagueId),
+      this.deps.finishes.countUnfinishedContestsByYear(leagueId),
+      this.closedYearsOf(leagueId),
     ]);
     const byYear = new Map<number, LeagueYearFinish[]>();
     for (const finish of finishes) {
@@ -165,7 +164,12 @@ export class ChampionshipService {
       ...alsoYears,
     ])].sort((left, right) => right - left);
     this.deps.logger?.debug({ action: 'championship.allYears', data: { leagueId, yearCount: years.length, finishCount: finishes.length } }, 'Read every championship year');
-    return years.map((year) => yearView({ leagueId, year, cupName, currentYear, unfinished: year === currentYear ? unfinished : 0 }, byYear.get(year) ?? [], leagueSquads));
+    return years.map((year) => yearView({ leagueId, year, cupName, isOver: closed.has(year), unfinished: unfinished.get(year) ?? 0 }, byYear.get(year) ?? [], leagueSquads));
+  }
+
+  /** The league's closed championship years (#2021). */
+  private async closedYearsOf(leagueId: string): Promise<ReadonlySet<number>> {
+    return new Set((await this.deps.closedYears.findClosedYears(leagueId)).map((row) => row.championshipYear));
   }
 
   private async requireCupName(leagueId: string, year: number | null): Promise<string> {
@@ -179,11 +183,11 @@ export class ChampionshipService {
 
   /** Every year the league has a counted finish in, newest first, with who leads or won it. */
   async listYears(leagueId: string): Promise<ChampionshipYearSummaryView[]> {
-    const [finishes, leagueSquads] = await Promise.all([
+    const [finishes, leagueSquads, closed] = await Promise.all([
       this.deps.finishes.findByLeague(leagueId),
       this.deps.squads.findByLeague(leagueId, true),
+      this.closedYearsOf(leagueId),
     ]);
-    const currentYear = championshipYear(this.now());
     const squadById = new Map(leagueSquads.map((squad) => [squad.id, squad]));
     const byYear = new Map<number, LeagueYearFinish[]>();
     for (const finish of finishes) {
@@ -196,7 +200,7 @@ export class ChampionshipService {
       const leaders = rankChampionshipTallies(tallyChampionship(squadIds, rows))
         .filter((row) => row.position === 1 && row.points > 0)
         .flatMap((row) => squadById.get(row.squadId) ?? []);
-      return { year, isOver: year < currentYear, leaders };
+      return { year, isOver: closed.has(year), leaders };
     });
     this.deps.logger?.debug({ action: 'championship.years', data: { leagueId, yearCount: years.length } }, 'Listed championship years');
     return years;
@@ -205,7 +209,7 @@ export class ChampionshipService {
 
 /** A championship year from its finishes (in the order they were settled) and the league's squads. */
 function yearView(
-  year: { leagueId: string; year: number; cupName: string; currentYear: number; unfinished: number },
+  year: { leagueId: string; year: number; cupName: string; isOver: boolean; unfinished: number },
   finishes: readonly LeagueYearFinish[],
   leagueSquads: readonly Squad[],
 ): ChampionshipYearView {
@@ -218,7 +222,7 @@ function yearView(
   const squadById = new Map(squads.map((squad) => [squad.id, squad]));
   const tallies = tallyChampionship(squads.map((squad) => squad.id), counted);
   const ranked = rankChampionshipTallies(tallies);
-  const isOver = year.year < year.currentYear;
+  const { isOver } = year;
   // A year that is over is final, as a crowned cup is: no movement.
   const before = isOver ? null : positionsBeforeLatest(squads.map((squad) => squad.id), counted);
   return {
@@ -227,7 +231,7 @@ function yearView(
     cupName: year.cupName,
     isOver,
     contestsCounted: new Set(counted.map((finish) => finish.contestId)).size,
-    contestsToGo: year.unfinished,
+    contestsToGo: isOver ? 0 : year.unfinished,
     standings: ranked.flatMap((row) => {
       const squad = squadById.get(row.squadId);
       return squad === undefined ? [] : [{

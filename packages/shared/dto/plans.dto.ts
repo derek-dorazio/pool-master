@@ -67,14 +67,16 @@ export const UpdateLeaguePlanRequestSchema = z.object({
 export type UpdateLeaguePlanRequest = z.infer<typeof UpdateLeaguePlanRequestSchema>;
 
 export const ListSportLeaguesUsedQuerySchema = z.object({
-  seasonYear: z.number().int().min(2000).max(9999).describe('The season to count, such as 2026: a contest counts in the season of its first event\'s year.'),
-}).describe('Which season\'s sports leagues to list.');
+  championshipYear: z.number().int().min(2000).max(9999).describe('The championship year to count, such as 2026: a contest counts in its Season\'s championship year.'),
+  sportLeagueIds: z.array(z.uuid()).max(100).optional().describe('Sports leagues a page offers contests in that year: the answer says which of them a new contest would put over the plan\'s cap.'),
+}).describe('Which championship year\'s sports leagues to list, and the offered sports leagues to check against the cap.');
 export type ListSportLeaguesUsedQuery = z.infer<typeof ListSportLeaguesUsedQuerySchema>;
 
 export const SportLeaguesUsedResponseSchema = z.object({
-  seasonYear: z.number().int().describe('The season counted.'),
-  sportLeagueIds: z.array(z.uuid()).describe('The different sports leagues of the league\'s contests that season, drafts included. Against the plan\'s `SPORTS_LEAGUES_PER_YEAR` cap, a new contest may always be in one of these, and in another only while there are fewer than the cap.'),
-}).describe('The sports leagues a league\'s contests use in one season (#947): what its plan\'s sports leagues a year counts.');
+  championshipYear: z.number().int().describe('The championship year counted.'),
+  sportLeagueIds: z.array(z.uuid()).describe('The different sports leagues of the league\'s contests that championship year, drafts included: what the plan\'s `SPORTS_LEAGUES_PER_YEAR` cap counts.'),
+  overCapSportLeagueIds: z.array(z.uuid()).describe('Of the asked `sportLeagueIds`, those a new contest that year would put over the plan\'s cap: the year uses the cap and none of its contests is in that sports league. Empty when the plan has no cap or none was asked.'),
+}).describe('The sports leagues a league\'s contests use in one championship year (#947), and which offered ones are locked by the plan\'s sports leagues a year.');
 export type SportLeaguesUsedResponse = z.infer<typeof SportLeaguesUsedResponseSchema>;
 
 export const OpenContestUsageDtoSchema = z.object({
@@ -84,14 +86,19 @@ export const OpenContestUsageDtoSchema = z.object({
 }).describe('One contest still taking entries, with its entries as the entry cap counts them.');
 export type OpenContestUsageDto = z.infer<typeof OpenContestUsageDtoSchema>;
 
+const YearSportLeagueUsageDtoSchema = z.object({
+  championshipYear: z.number().int().describe('The championship year, such as 2026.'),
+  sportLeagueIds: z.array(z.uuid()).describe('The different sports leagues of the league\'s contests that year, drafts included: what the plan\'s `SPORTS_LEAGUES_PER_YEAR` cap counts.'),
+}).describe('One open championship year\'s sports leagues used.');
+
 export const LeaguePlanUsageResponseSchema = z.object({
-  seasonYear: z.number().int().describe('This year, in UTC: the season whose sports leagues are listed.'),
-  sportLeagueIds: z.array(z.uuid()).describe('The different sports leagues of the league\'s contests this season, drafts included: what the plan\'s `SPORTS_LEAGUES_PER_YEAR` cap counts.'),
+  years: z.array(YearSportLeagueUsageDtoSchema).describe('Each championship year not yet closed that the league has a contest in, oldest first: a closed year takes no new contest, so it no longer counts.'),
   openContests: z.array(OpenContestUsageDtoSchema).describe('Every contest still taking entries, newest first.'),
 }).describe('What a league uses of its plan\'s caps now (#972), for the commissioner Plan page.');
 export type LeaguePlanUsageResponse = z.infer<typeof LeaguePlanUsageResponseSchema>;
 
 registerSchema('PlanCapsDto', PlanCapsDtoSchema);
+registerSchema('YearSportLeagueUsageDto', YearSportLeagueUsageDtoSchema);
 registerSchema('PlanEntitlementsDto', PlanEntitlementsDtoSchema);
 registerSchema('PlanFeatureGroupDto', PlanFeatureGroupDtoSchema);
 registerSchema('LeaguePlanListResponse', LeaguePlanListResponseSchema);

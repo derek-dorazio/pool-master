@@ -160,7 +160,9 @@ export const QueryKeys = {
   plans: {
     list: ['poolmaster', 'plans'] as const,
     sportLeaguesUsedAll: (leagueId: QueryKeyId) => ['poolmaster', 'plans', 'sport-leagues-used', leagueId] as const,
-    sportLeaguesUsed: (leagueId: QueryKeyId, seasonYear: number) => ['poolmaster', 'plans', 'sport-leagues-used', leagueId, seasonYear] as const,
+    /** One championship year's sports leagues used, and which of the offered sports leagues are over the cap (#2021). */
+    sportLeaguesUsed: (leagueId: QueryKeyId, championshipYear: number, offeredSportLeagueIds: readonly string[]) =>
+      ['poolmaster', 'plans', 'sport-leagues-used', leagueId, championshipYear, [...offeredSportLeagueIds].sort().join(',')] as const,
     /** What a league uses of its plan's caps now (#972): the commissioner Plan page. */
     usage: (leagueId: QueryKeyId) => ['poolmaster', 'plans', 'usage', leagueId] as const,
   },

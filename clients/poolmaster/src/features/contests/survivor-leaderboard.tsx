@@ -37,12 +37,12 @@ const TEST_ID = 'survivor-leaderboard';
 const SURVIVOR_CELL_TONES = { survived: 'done', lost: 'danger', pending: 'default' } as const;
 
 /**
- * A week's column heading: its name, or with the shared Postponed or Cancelled chip (#1768) when
- * it is not going ahead as scheduled.
+ * A week's column heading: its name, or with the shared Cancelled chip (#1768) when it is called
+ * off.
  */
 function WeekHeading({ week, weekName }: { week: SurvivorWeek; weekName: SurvivorWeekName }) {
   const name = weekName(week);
-  if (week.status === SportEventStatus.CANCELLED || week.status === SportEventStatus.POSTPONED) {
+  if (week.status === SportEventStatus.CANCELLED) {
     return (
       <span className="inline-flex items-center gap-1.5">
         {name}

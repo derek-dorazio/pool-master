@@ -929,7 +929,7 @@ export const registerWithTeamOwnerInvitation = <ThrowOnError extends boolean = f
 /**
  * List contests for a league
  *
- * Returns the league's current contests: DRAFT, OPEN and ACTIVE, less any DRAFT that can never open: one with an event COMPLETED or CANCELLED, and one closing at its event's start once an event has started. A DRAFT with no events yet is listed, and so is a bracket starting after round 1 or a squares DRAFT with its game until its event finishes, since those close at their round or game. DRAFT contests are listed for the league's commissioners only. With `finishedYear`, returns instead the COMPLETED contests that went final in that championship year (US Eastern), newest first; `listContestFinishedYears` names the years. A single contest is `getContest`. Each contest carries its count of entries that submitted at least one event and its sport events' names and starts, so a list needs no per-event reads. Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.
+ * Returns the league's current contests: DRAFT, OPEN and ACTIVE, less any DRAFT that can never open: one with an event COMPLETED or CANCELLED, and one closing at its event's start once an event has started. A DRAFT with no events yet is listed, and so is a bracket starting after round 1 or a squares DRAFT with its game until its event finishes, since those close at their round or game. DRAFT contests are listed for the league's commissioners only. With `finishedYear`, returns instead the COMPLETED contests of that championship year (its Season's year, however late it went final), newest first; `listContestFinishedYears` names the years. A single contest is `getContest`. Each contest carries its count of entries that submitted at least one event and its sport events' names and starts, so a list needs no per-event reads. Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.
  */
 export const listContests = <ThrowOnError extends boolean = false>(options: Options<ListContestsData, ThrowOnError>): RequestResult<ListContestsResponses, ListContestsErrors, ThrowOnError> => (options.client ?? client).get<ListContestsResponses, ListContestsErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -955,7 +955,7 @@ export const createContest = <ThrowOnError extends boolean = false>(options: Opt
 /**
  * List the years a league has finished contests in
  *
- * Each championship year (US Eastern) a COMPLETED contest of the league went final in, newest first: the years `listContests` takes as `finishedYear`. Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.
+ * Each championship year the league has a COMPLETED contest in (its Season's year), newest first: the years `listContests` takes as `finishedYear`. Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.
  */
 export const listContestFinishedYears = <ThrowOnError extends boolean = false>(options: Options<ListContestFinishedYearsData, ThrowOnError>): RequestResult<ListContestFinishedYearsResponses, ListContestFinishedYearsErrors, ThrowOnError> => (options.client ?? client).get<ListContestFinishedYearsResponses, ListContestFinishedYearsErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -975,9 +975,9 @@ export const listMyContestEntries = <ThrowOnError extends boolean = false>(optio
 });
 
 /**
- * List the sports leagues a league's contests use in a season
+ * List the sports leagues a league's contests use in a championship year
  *
- * The different sports leagues of the league's contests of one season, drafts included (#947): what the plan's sports leagues a year counts. Create contest shows the counter and, at the cap, locks the events of other sports leagues. Commissioners of the league only.
+ * The different sports leagues of the league's contests of one championship year, drafts included (#947): what the plan's sports leagues a year counts. Given the sports leagues a page offers, it also says which a new contest that year would put over the cap, so Create contest and Start lock those offerings on this answer. Commissioners of the league only.
  */
 export const listSportLeaguesUsed = <ThrowOnError extends boolean = false>(options: Options<ListSportLeaguesUsedData, ThrowOnError>): RequestResult<ListSportLeaguesUsedResponses, ListSportLeaguesUsedErrors, ThrowOnError> => (options.client ?? client).get<ListSportLeaguesUsedResponses, ListSportLeaguesUsedErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -988,7 +988,7 @@ export const listSportLeaguesUsed = <ThrowOnError extends boolean = false>(optio
 /**
  * Show what a league uses of its plan's caps
  *
- * What the league uses of its plan's caps now (#972), for the commissioner Plan page: the different sports leagues of this year's contests (UTC), drafts included, and every contest still taking entries with its entries, drafts included, as the entry cap counts them. The page warns before a lower plan whose caps these are over. Commissioners of the league only.
+ * What the league uses of its plan's caps now (#972), for the commissioner Plan page: the different sports leagues of each championship year not yet closed, drafts included, and every contest still taking entries with its entries, drafts included, as the entry cap counts them. The page warns before a lower plan whose caps these are over. Commissioners of the league only.
  */
 export const getLeaguePlanUsage = <ThrowOnError extends boolean = false>(options: Options<GetLeaguePlanUsageData, ThrowOnError>): RequestResult<GetLeaguePlanUsageResponses, GetLeaguePlanUsageErrors, ThrowOnError> => (options.client ?? client).get<GetLeaguePlanUsageResponses, GetLeaguePlanUsageErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -1206,7 +1206,7 @@ export const enterContest = <ThrowOnError extends boolean = false>(options: Opti
 /**
  * List a season's cups
  *
- * The league's sports league cups of one season, oldest first: one per sports league the league has a contest of that season in, each with its standings and its contests. Standings are worked out from the contests' frozen places: a squad scores from its best entry on the league's points table, times each contest's weight. Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise. 403 PLAN_FEATURE_NOT_INCLUDED, its `details.feature` naming what is missing, unless the league's plan has CUP_STANDINGS, PAST_YEARS for a year before the current one (root admins too).
+ * The league's sports league cups of one season, oldest first: one per sports league the league has a contest of that season in, each with its standings and its contests. Standings are worked out from the contests' frozen places: a squad scores from its best entry on the league's points table, times each contest's weight. Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise. 403 PLAN_FEATURE_NOT_INCLUDED, its `details.feature` naming what is missing, unless the league's plan has CUP_STANDINGS, PAST_YEARS for a championship year the league has closed (root admins too).
  */
 export const listCups = <ThrowOnError extends boolean = false>(options: Options<ListCupsData, ThrowOnError>): RequestResult<ListCupsResponses, ListCupsErrors, ThrowOnError> => (options.client ?? client).get<ListCupsResponses, ListCupsErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -1228,7 +1228,7 @@ export const listCupSeasons = <ThrowOnError extends boolean = false>(options: Op
 /**
  * Get a squad's cup points
  *
- * One squad's points in the league's cup for a season and sports league, counted contest by counted contest, in the order they went final, with the cup's id and name. 404 CUP_NOT_FOUND when the league has no cup for that season and sports league, SQUAD_NOT_FOUND for a squad that is not the league's. Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise. 403 PLAN_FEATURE_NOT_INCLUDED, its `details.feature` naming what is missing, unless the league's plan has CUP_STANDINGS, PAST_YEARS for a year before the current one (root admins too).
+ * One squad's points in the league's cup for a season and sports league, counted contest by counted contest, in the order they went final, with the cup's id and name. 404 CUP_NOT_FOUND when the league has no cup for that season and sports league, SQUAD_NOT_FOUND for a squad that is not the league's. Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise. 403 PLAN_FEATURE_NOT_INCLUDED, its `details.feature` naming what is missing, unless the league's plan has CUP_STANDINGS, PAST_YEARS for a championship year the league has closed (root admins too).
  */
 export const getCupSquadPoints = <ThrowOnError extends boolean = false>(options: Options<GetCupSquadPointsData, ThrowOnError>): RequestResult<GetCupSquadPointsResponses, GetCupSquadPointsErrors, ThrowOnError> => (options.client ?? client).get<GetCupSquadPointsResponses, GetCupSquadPointsErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -1283,7 +1283,7 @@ export const listChampionshipYears = <ThrowOnError extends boolean = false>(opti
 /**
  * Get a championship year
  *
- * One year of the league championship: every counted contest of every sport that went final in the calendar year (US Eastern), each squad scoring from its best entry with the points it earned at settlement. Standings with the finish matrix, and the medal tiles. A year with no counted contest answers every active squad at 0. Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise. 403 PLAN_FEATURE_NOT_INCLUDED, its `details.feature` naming what is missing, unless the league's plan has CHAMPIONSHIP, PAST_YEARS for a year before the current one (root admins too).
+ * One year of the league championship: every counted contest of every sport in the championship year (its Season's year, however late it went final), each squad scoring from its best entry with the points it earned at settlement. Standings with the finish matrix, and the medal tiles. A year with no counted contest answers every active squad at 0. Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise. 403 PLAN_FEATURE_NOT_INCLUDED, its `details.feature` naming what is missing, unless the league's plan has CHAMPIONSHIP, PAST_YEARS for a championship year the league has closed (root admins too).
  */
 export const getChampionship = <ThrowOnError extends boolean = false>(options: Options<GetChampionshipData, ThrowOnError>): RequestResult<GetChampionshipResponses, GetChampionshipErrors, ThrowOnError> => (options.client ?? client).get<GetChampionshipResponses, GetChampionshipErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -1292,9 +1292,9 @@ export const getChampionship = <ThrowOnError extends boolean = false>(options: O
 });
 
 /**
- * Get last year's year in review
+ * Get the latest closed year's year in review
  *
- * Where the league's year in review for last year (US Eastern) stands: NOTHING_TO_SEND when no championship contest counted that year, READY from 1 January until the commissioner sends it, then SENT with when and by whom. The "ready to send" banner and the Send button read it. Active commissioners only (root admins bypass). 403 PLAN_FEATURE_NOT_INCLUDED, its `details.feature` naming what is missing, unless the league's plan has EMAIL_YEAR_IN_REVIEW (root admins too).
+ * Where the year in review of the league's latest closed championship year (#2021: every contest in it final and every Season slot of it finished) stands: NOTHING_TO_SEND, with a null year, before any year has closed, or when no championship contest counted in it; READY from when it closes until the commissioner sends it; then SENT with when and by whom. The "ready to send" banner and the Send button read it. Active commissioners only (root admins bypass). 403 PLAN_FEATURE_NOT_INCLUDED, its `details.feature` naming what is missing, unless the league's plan has EMAIL_YEAR_IN_REVIEW (root admins too).
  */
 export const getYearReview = <ThrowOnError extends boolean = false>(options: Options<GetYearReviewData, ThrowOnError>): RequestResult<GetYearReviewResponses, GetYearReviewErrors, ThrowOnError> => (options.client ?? client).get<GetYearReviewResponses, GetYearReviewErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -1305,7 +1305,7 @@ export const getYearReview = <ThrowOnError extends boolean = false>(options: Opt
 /**
  * Send the year in review
  *
- * Allows a commissioner to send last year's year in review: each active owner of an active squad that placed that year gets an email with their squad's year (championship place and points, contest 1sts, 2nds and 3rds, the cups it placed in, its trophies) and a link to its squad page for that year. Owners who turned off Results email are skipped. Sent once per league and year. 409 YEAR_REVIEW_NOT_OPEN for any year but last year; 409 YEAR_REVIEW_NOTHING_TO_SEND when no championship contest counted that year; 409 YEAR_REVIEW_ALREADY_SENT once it is sent. Active commissioners only (root admins bypass). 403 PLAN_FEATURE_NOT_INCLUDED, its `details.feature` naming what is missing, unless the league's plan has EMAIL_YEAR_IN_REVIEW (root admins too).
+ * Allows a commissioner to send the year in review of the league's latest closed championship year: each active owner of an active squad that placed that year gets an email with their squad's year (championship place and points, contest 1sts, 2nds and 3rds, the cups it placed in, its trophies) and a link to its squad page for that year. Owners who turned off Results email are skipped. Sent once per league and year. 409 YEAR_REVIEW_NOT_OPEN for any year but the latest closed one; 409 YEAR_REVIEW_NOTHING_TO_SEND when no championship contest counted that year; 409 YEAR_REVIEW_ALREADY_SENT once it is sent. Active commissioners only (root admins bypass). 403 PLAN_FEATURE_NOT_INCLUDED, its `details.feature` naming what is missing, unless the league's plan has EMAIL_YEAR_IN_REVIEW (root admins too).
  */
 export const sendYearReview = <ThrowOnError extends boolean = false>(options: Options<SendYearReviewData, ThrowOnError>): RequestResult<SendYearReviewResponses, SendYearReviewErrors, ThrowOnError> => (options.client ?? client).post<SendYearReviewResponses, SendYearReviewErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -1360,7 +1360,7 @@ export const getSquadHistory = <ThrowOnError extends boolean = false>(options: O
 /**
  * Get a squad's year
  *
- * One squad's year for its squad page: its row of the league championship (place, points, gap to 1st, movement, finish matrix row) and its row of each cup of the season with that year, read through the same services as the Championship and Points race tabs. Its contests are `listContestResults` with its squadId. The championship row is null while the league's plan lacks CHAMPIONSHIP, and the cup rows empty while it lacks CUP_STANDINGS. A squad of another league is 404 SQUAD_NOT_FOUND. Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise. 403 PLAN_FEATURE_NOT_INCLUDED, its `details.feature` naming what is missing, unless the league's plan has PAST_YEARS for a year before the current one (root admins too).
+ * One squad's year for its squad page: its row of the league championship (place, points, gap to 1st, movement, finish matrix row) and its row of each cup of the season with that year, read through the same services as the Championship and Points race tabs. Its contests are `listContestResults` with its squadId. The championship row is null while the league's plan lacks CHAMPIONSHIP, and the cup rows empty while it lacks CUP_STANDINGS. A squad of another league is 404 SQUAD_NOT_FOUND. Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise. 403 PLAN_FEATURE_NOT_INCLUDED, its `details.feature` naming what is missing, unless the league's plan has PAST_YEARS for a championship year the league has closed (root admins too).
  */
 export const getSquadYear = <ThrowOnError extends boolean = false>(options: Options<GetSquadYearData, ThrowOnError>): RequestResult<GetSquadYearResponses, GetSquadYearErrors, ThrowOnError> => (options.client ?? client).get<GetSquadYearResponses, GetSquadYearErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -1371,7 +1371,7 @@ export const getSquadYear = <ThrowOnError extends boolean = false>(options: Opti
 /**
  * List a year's final contests
  *
- * Every contest of the league that went final in the championship year (US Eastern), newest first, with its winners and whether it counted. With squadId, only the counted contests that squad placed in; with squadId and place, only those it finished in that place, so each list matches the finish matrix. With finishOf, each contest carries that squad's finish (its place, from its best entry) without the list narrowing: Contests > Past shows the viewer's team's place this way (#1570). With finishedSince, only the contests that went final at or after it: League Home's last few days of finals (#1782). No paging: a league finishes a few hundred contests a year at most. Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.
+ * Every completed contest of the league in the championship year (its Season's year, however late it went final), newest first, with its winners and whether it counted. With squadId, only the counted contests that squad placed in; with squadId and place, only those it finished in that place, so each list matches the finish matrix. With finishOf, each contest carries that squad's finish (its place, from its best entry) without the list narrowing: Contests > Past shows the viewer's team's place this way (#1570). With finishedSince, only the contests that went final at or after it: League Home's last few days of finals (#1782). No paging: a league finishes a few hundred contests a year at most. Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.
  */
 export const listContestResults = <ThrowOnError extends boolean = false>(options: Options<ListContestResultsData, ThrowOnError>): RequestResult<ListContestResultsResponses, ListContestResultsErrors, ThrowOnError> => (options.client ?? client).get<ListContestResultsResponses, ListContestResultsErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -1408,7 +1408,7 @@ export const updateContestConfigTemplate = <ThrowOnError extends boolean = false
 /**
  * List sport events
  *
- * The sport-event catalog, narrowed by sport, statuses, sport league, Season and name and never paged. At least one of `sport`, `sportLeagueId` and `sportLeagueSeasonId` is required, so the list never reads every event: 400 SPORT_EVENT_FILTER_REQUIRED otherwise. A root admin browses the whole catalog. Any other signed-in user, for contest setup, may list only events in the statuses that can still take a contest (SCHEDULED, POSTPONED, IN_PROGRESS) or one Season's (`sportLeagueSeasonId`): 403 ROOT_ADMIN_ACCESS_REQUIRED otherwise (#1348). Each event carries its loaded field size, contest-setup readiness and tier count; a root admin's list also carries each event's adminCounts. DRAFT events (not yet released for contests) are listed for a root admin only.
+ * The sport-event catalog, narrowed by sport, statuses, sport league, Season and name and never paged. At least one of `sport`, `sportLeagueId` and `sportLeagueSeasonId` is required, so the list never reads every event: 400 SPORT_EVENT_FILTER_REQUIRED otherwise. A root admin browses the whole catalog. Any other signed-in user, for contest setup, may list only events in the statuses that can still take a contest (SCHEDULED, IN_PROGRESS) or one Season's (`sportLeagueSeasonId`): 403 ROOT_ADMIN_ACCESS_REQUIRED otherwise (#1348). Each event carries its loaded field size, contest-setup readiness and tier count; a root admin's list also carries each event's adminCounts. DRAFT events (not yet released for contests) are listed for a root admin only.
  */
 export const listEvents = <ThrowOnError extends boolean = false>(options?: Options<ListEventsData, ThrowOnError>): RequestResult<ListEventsResponses, ListEventsErrors, ThrowOnError> => (options?.client ?? client).get<ListEventsResponses, ListEventsErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],

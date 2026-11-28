@@ -93,6 +93,7 @@ import {
   contestFormatForSelectionType,
   isContestFormatValidForEvent,
   UpsetBonusRule,
+  isOverSportLeagueCap,
   PlanCap,
   survivorLivesOf,
   hasSportEventStarted,
@@ -177,6 +178,12 @@ function createNoopLogger(): LifecycleLogger {
   };
 }
 
+/** A championship year's sports leagues used, and which offered ones a new contest would put over the cap. */
+export interface SportLeaguesUsed {
+  sportLeagueIds: string[];
+  overCapSportLeagueIds: string[];
+}
+
 export interface ContestManagementServiceDeps {
   contests: ContestRepository;
   configTemplates: ContestConfigTemplateRepository;
@@ -191,7 +198,7 @@ export interface ContestManagementServiceDeps {
   /** The league's plan caps (#947): how many sports leagues a year its contests may use. */
   planEntitlements: Pick<PlanEntitlementsService, 'forLeague'>;
   /** The league's closed championship years (#2021): no contest is created into one. */
-  championshipYears: Pick<LeagueChampionshipYearRepository, 'isClosed'>;
+  championshipYears: Pick<LeagueChampionshipYearRepository, 'isClosed' | 'findClosedYears'>;
   logger?: LifecycleLogger;
   /** Tells the league a contest has opened (#845, the "New contest open" email). */
   contestOpened?: ContestOpenedNotice;
@@ -273,7 +280,7 @@ export class ContestManagementService {
   private readonly seasons: Pick<SportLeagueSeasonRepository, 'findCoverableSlots'>;
   private readonly cups: Pick<CupService, 'ensureCup'>;
   private readonly planEntitlements: Pick<PlanEntitlementsService, 'forLeague'>;
-  private readonly championshipYears: Pick<LeagueChampionshipYearRepository, 'isClosed'>;
+  private readonly championshipYears: Pick<LeagueChampionshipYearRepository, 'isClosed' | 'findClosedYears'>;
   private readonly logger: LifecycleLogger;
   private readonly contestOpened?: ContestOpenedNotice;
   /** The one writer of a contest's status (#1949). */
@@ -920,10 +927,39 @@ export class ContestManagementService {
   }
 
 
-  /** The sports leagues the league's contests use in one season (#947), for Create contest's counter. */
-  async listSportLeaguesUsed(leagueId: string, seasonYear: number): Promise<string[]> {
-    this.logger.debug({ leagueId, seasonYear }, 'contest management list sports leagues used start');
-    return this.contestRepo.findSportLeagueIdsBySeason(leagueId, seasonYear);
+  /**
+   * The sports leagues the league's contests use in one championship year (#947), for Create
+   * contest's counter, and which of the `offered` sports leagues a new contest that year would put
+   * over the plan's cap, so a page locks an offering on the API's answer.
+   */
+  async listSportLeaguesUsed(leagueId: string, championshipYear: number, offered: readonly string[] = []): Promise<SportLeaguesUsed> {
+    this.logger.debug({ leagueId, championshipYear, offeredCount: offered.length }, 'contest management list sports leagues used start');
+    const [sportLeagueIds, { caps }] = await Promise.all([
+      this.contestRepo.findSportLeagueIdsByYear(leagueId, championshipYear),
+      offered.length === 0 ? Promise.resolve({ caps: null }) : this.planEntitlements.forLeague(leagueId),
+    ]);
+    const cap = caps?.[PlanCap.SPORTS_LEAGUES_PER_YEAR] ?? null;
+    return {
+      sportLeagueIds,
+      overCapSportLeagueIds: [...new Set(offered)].filter((sportLeagueId) => isOverSportLeagueCap(sportLeagueIds, cap, sportLeagueId)),
+    };
+  }
+
+  /**
+   * The sports leagues the league's contests use in each championship year not yet closed (#947,
+   * #2021), oldest first: what the commissioner Plan page counts against the cap. A year that has
+   * closed takes no new contest, so it no longer counts.
+   */
+  async listOpenYearSportLeagues(leagueId: string): Promise<{ championshipYear: number; sportLeagueIds: string[] }[]> {
+    const [byYear, closed] = await Promise.all([
+      this.contestRepo.findSportLeagueIdsOfEveryYear(leagueId),
+      this.championshipYears.findClosedYears(leagueId),
+    ]);
+    const closedYears = new Set(closed.map((year) => year.championshipYear));
+    return [...byYear.entries()]
+      .filter(([championshipYear]) => !closedYears.has(championshipYear))
+      .sort(([left], [right]) => left - right)
+      .map(([championshipYear, sportLeagueIds]) => ({ championshipYear, sportLeagueIds }));
   }
 
   /**

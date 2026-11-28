@@ -16,7 +16,6 @@ describe('pool-master-3dg sport-admin-utils: status formatting', () => {
     expect(sportEventStatusTone('IN_PROGRESS')).toBe('live');
     expect(sportEventStatusTone('COMPLETED')).toBe('completed');
     expect(sportEventStatusTone('CANCELLED')).toBe('warning');
-    expect(sportEventStatusTone('POSTPONED')).toBe('warning');
     expect(sportEventStatusTone('SCHEDULED')).toBe('neutral');
   });
 });

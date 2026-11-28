@@ -208,7 +208,6 @@ export interface ProviderEventDetailsChange {
 const PROVIDER_DETAILS_BY_STATUS: Readonly<Record<SportEventStatus, ReadonlyArray<ProviderEventDetailsChange['changed'][number]>>> = {
   [SportEventStatus.DRAFT]: ['name', 'venue', 'startDate', 'endDate'],
   [SportEventStatus.SCHEDULED]: ['name', 'venue', 'startDate', 'endDate'],
-  [SportEventStatus.POSTPONED]: ['name', 'venue', 'startDate', 'endDate'],
   [SportEventStatus.IN_PROGRESS]: ['name', 'venue', 'endDate'],
   [SportEventStatus.COMPLETED]: [],
   [SportEventStatus.CANCELLED]: [],

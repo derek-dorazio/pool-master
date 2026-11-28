@@ -1,6 +1,6 @@
 import { enumLabel } from '@poolmaster/shared/display-strings';
 import type { ParticipantDto, SportEventDto } from '@/lib/api';
-import { type AssertTrue } from '@poolmaster/shared/domain';
+import { SportEventStatus, type AssertTrue } from '@poolmaster/shared/domain';
 
 /**
  * plans/124 §6.3 / §6.4 — shared, pure helpers for the golf admin hub, tournament
@@ -32,9 +32,9 @@ export function formatSportEventStatus(status: SportEventDtoStatus): string {
 }
 
 export function sportEventStatusTone(status: SportEventDtoStatus): BadgeTone {
-  if (status === 'IN_PROGRESS') return 'live';
-  if (status === 'COMPLETED') return 'completed';
-  if (status === 'CANCELLED' || status === 'POSTPONED') return 'warning';
+  if (status === SportEventStatus.IN_PROGRESS) return 'live';
+  if (status === SportEventStatus.COMPLETED) return 'completed';
+  if (status === SportEventStatus.CANCELLED) return 'warning';
   return 'neutral';
 }
 

@@ -15,7 +15,7 @@ import type { DomainEventOf, DomainEventType } from './domain-event';
  */
 export interface DomainEventHandlerContext {
   queue: Pick<BackgroundJobQueue, 'request'>;
-  /** The contests told an event was postponed or moved (#1458, #1464). */
+  /** The contests told an event was moved or cancelled (#1458, #1464). */
   sportEventChanged: Pick<SportEventChangedNotice, 'sportEventChangedJobs'>;
 }
 

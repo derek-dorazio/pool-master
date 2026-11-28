@@ -1,13 +1,12 @@
 /**
- * The league championship's pure rules (#863): which year a settlement falls in, how a year's
+ * The league championship's pure rules (#863): which calendar year an instant falls in, how a year's
  * finishes tally and rank, and who holds each medal tile.
  */
 import {
   ChampionshipTile,
   CupWeight,
   championshipTiles,
-  championshipYear,
-  championshipYearStart,
+  easternCalendarYear,
   rankChampionshipTallies,
   tallyChampionship,
 } from '@poolmaster/shared/domain';
@@ -15,17 +14,9 @@ import {
 const finish = (squadId: string, place: number, points: number, weight: CupWeight = CupWeight.NORMAL) => ({ squadId, place, points, weight });
 
 describe('championship rules (#863)', () => {
-  it('puts a contest final at 11pm New York on 31 December, 04:00Z on 1 January, in the old year, and one an hour later in the new', () => {
-    expect(championshipYear(new Date('2027-01-01T04:00:00.000Z'))).toBe(2026);
-    expect(championshipYear(new Date('2027-01-01T05:00:00.000Z'))).toBe(2027);
-  });
-
-  it('starts a championship year at midnight New York on 1 January, 05:00Z, the first instant championshipYear puts in it', () => {
-    const start = championshipYearStart(2027);
-
-    expect(start.toISOString()).toBe('2027-01-01T05:00:00.000Z');
-    expect(championshipYear(start)).toBe(2027);
-    expect(championshipYear(new Date(start.getTime() - 1))).toBe(2026);
+  it('puts 11pm New York on 31 December, 04:00Z on 1 January, in the old calendar year, and an hour later in the new', () => {
+    expect(easternCalendarYear(new Date('2027-01-01T04:00:00.000Z'))).toBe(2026);
+    expect(easternCalendarYear(new Date('2027-01-01T05:00:00.000Z'))).toBe(2027);
   });
 
   it('tallies points, the finish matrix, podiums, top tens and contests played, leaving out NOT_COUNTED finishes and giving an unplaced squad a row at 0', () => {

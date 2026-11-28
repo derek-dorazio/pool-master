@@ -83,7 +83,7 @@ describe('SDK Functional: plan caps (#947)', () => {
     expect(error.details).toEqual([expect.objectContaining({ path: ['caps', 'ENTRIES_PER_CONTEST', LeaguePlan.PRO] })]);
   });
 
-  it('lets a league on a plan with one sports league a year make contests in it, refusing a second with 409 and listing the one used, and refuses any contest once its championship year is closed', async () => {
+  it('lets a league on a plan with one sports league a year make contests in it, refusing a second with 409 and listing the one used, answering which offered sports leagues are over the cap, and refuses any contest once its championship year is closed, which the Plan page then stops counting', async () => {
     const admin = await buildRegisteredUser({ displayName: 'Caps Director' });
     await promoteToRootAdmin(admin);
     const a = admin.client;
@@ -143,16 +143,18 @@ describe('SDK Functional: plan caps (#947)', () => {
         path: { id: league.id },
         body: { name: `${name} ${RUN}`, sportEventIds: [eventId], contestFormat: ContestFormat.ROSTER, selectionType: SelectionType.TIERED, templateId },
       });
+      // Create contest offers both sports leagues; the API says which a new contest would put over the cap.
       const used = async () => SportLeaguesUsedResponseSchema.parse(expectDefined((await listSportLeaguesUsed({
         client: commissioner.client,
         path: { id: league.id },
-        query: { seasonYear: SEASON },
+        query: { championshipYear: SEASON, sportLeagueIds: [majorsMen.id, majorsWomen.id] },
       })).data));
 
-      expect(await used()).toEqual({ seasonYear: SEASON, sportLeagueIds: [] });
+      expect(await used()).toEqual({ championshipYear: SEASON, sportLeagueIds: [], overCapSportLeagueIds: [] });
       const harbour = await releaseRace(majorsMen.id, 'Harbour Marathon', `${SEASON}-04-19T13:30:00.000Z`);
       expect((await create('Harbour Picks', harbour, menTemplate)).response?.status).toBe(201);
-      expect(await used()).toEqual({ seasonYear: SEASON, sportLeagueIds: [majorsMen.id] });
+      // The year now uses Free's one: the women's majors would go over it, the men's never.
+      expect(await used()).toEqual({ championshipYear: SEASON, sportLeagueIds: [majorsMen.id], overCapSportLeagueIds: [majorsWomen.id] });
 
       const ridge = await releaseRace(majorsWomen.id, 'Ridge Marathon', `${SEASON}-05-03T13:30:00.000Z`);
       const refused = await create('Ridge Picks', ridge, womenTemplate);
@@ -161,11 +163,14 @@ describe('SDK Functional: plan caps (#947)', () => {
 
       const valley = await releaseRace(majorsMen.id, 'Valley Marathon', `${SEASON}-10-11T13:30:00.000Z`);
       expect((await create('Valley Picks', valley, menTemplate)).response?.status).toBe(201);
-      expect(await used()).toEqual({ seasonYear: SEASON, sportLeagueIds: [majorsMen.id] });
+      expect(await used()).toEqual({ championshipYear: SEASON, sportLeagueIds: [majorsMen.id], overCapSportLeagueIds: [majorsWomen.id] });
+      // The Plan page counts each open championship year, read from the contests, never the clock.
+      expect(LeaguePlanUsageResponseSchema.parse(expectDefined((await getLeaguePlanUsage({ client: commissioner.client, path: { id: league.id } })).data)).years)
+        .toEqual([{ championshipYear: SEASON, sportLeagueIds: [majorsMen.id] }]);
 
       // A member may not read the usage; it is the commissioner's Create contest counter.
       const member = await buildRegisteredUser({ displayName: 'Cap Bystander' });
-      expect((await listSportLeaguesUsed({ client: member.client, path: { id: league.id }, query: { seasonYear: SEASON } })).response?.status).toBe(403);
+      expect((await listSportLeaguesUsed({ client: member.client, path: { id: league.id }, query: { championshipYear: SEASON } })).response?.status).toBe(403);
 
       // Once the league's 2099 championship year is closed, as the year close job leaves it (#2021),
       // no contest can be added to it, even in the sports league it already uses.
@@ -174,6 +179,8 @@ describe('SDK Functional: plan caps (#947)', () => {
       const closed = await create('Late Picks', late, menTemplate);
       expect(closed.response?.status).toBe(409);
       expect(closed.error?.error.code).toBe('CHAMPIONSHIP_YEAR_CLOSED');
+      // A closed year takes no new contest, so the Plan page no longer counts it.
+      expect(LeaguePlanUsageResponseSchema.parse(expectDefined((await getLeaguePlanUsage({ client: commissioner.client, path: { id: league.id } })).data)).years).toEqual([]);
     } finally {
       await resetSettingsGroup({ client: a, path: { key: 'PLAN_CONFIG' } });
     }
@@ -217,10 +224,13 @@ describe('SDK Functional: plan caps (#947)', () => {
       path: { id: league.id },
     })).data));
     // Two draft entries, never submitted, count against the cap the same as submitted ones. The
-    // contests, on no event yet, sit in a Season (#2014), so its league is used.
+    // contests, on no event yet, sit in a Season (#2014), so its league is used in its year.
+    const { championshipYear, sportLeagueSeason } = await getFunctionalPrisma().contest.findUniqueOrThrow({
+      where: { id: contestId },
+      select: { championshipYear: true, sportLeagueSeason: { select: { sportLeagueId: true } } },
+    });
     expect(usage).toEqual({
-      seasonYear: new Date().getUTCFullYear(),
-      sportLeagueIds: [(await getFunctionalPrisma().contest.findUniqueOrThrow({ where: { id: contestId }, select: { sportLeagueSeason: { select: { sportLeagueId: true } } } })).sportLeagueSeason.sportLeagueId],
+      years: [{ championshipYear, sportLeagueIds: [sportLeagueSeason.sportLeagueId] }],
       openContests: [{ contestId, name: `Usage Picks ${RUN}`, entryCount: 2 }],
     });
 
