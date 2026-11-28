@@ -78,6 +78,7 @@ export class PrismaLeagueChampionshipYearRepository implements LeagueChampionshi
       select: { sportLeagueSeasonId: true },
     });
     if (slot === null) return [];
+    // One key per league: a Season has one championship year, so its contests all share it.
     const rows = await this.prisma.contest.findMany({
       where: { sportLeagueSeasonId: slot.sportLeagueSeasonId },
       select: { leagueId: true, championshipYear: true },
