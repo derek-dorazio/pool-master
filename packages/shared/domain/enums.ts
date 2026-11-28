@@ -1215,6 +1215,7 @@ export const ProviderSyncFindingKind = {
    * Match moved back from final, or the feed took back a tournament's final. COMPLETED is final, so
    * the slot stays COMPLETED and this tells a root admin, who corrects it through Re-settle (ADR
    * 0013). WARNING. Raised by the slot status refresh. Subject: league and event; no Provider.
+   * Nothing resolves it on its own, Re-settle included: the root admin resolves it once corrected.
    */
   SLOT_CHANGED_AFTER_COMPLETED: 'SLOT_CHANGED_AFTER_COMPLETED',
 } as const;
