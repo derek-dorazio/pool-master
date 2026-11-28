@@ -182,12 +182,15 @@ export function slotNeedsDates(slot: { placedByWindow: boolean; window: SlotWind
 
 const byPhase = compareByEnumOrder(LeaguePhaseOrder);
 
+/** What the play order of a Season's slots reads. */
+type SeasonSlotOrderFields = Pick<SportLeagueSeasonSlot, 'startsAt' | 'slotKind' | 'weekNumber' | 'key' | 'isTestData' | 'label'>;
+
 /**
  * Slots in play order within a competition: by kind and week number as their definitions are, a
  * TOURNAMENT slot by its start (the PGA's order changes every year; an undated one comes last, by
  * key), and a test slot after its definition's synced slot, by label.
  */
-export function compareSeasonSlots(left: SportLeagueSeasonSlot, right: SportLeagueSeasonSlot): number {
+export function compareSeasonSlots(left: SeasonSlotOrderFields, right: SeasonSlotOrderFields): number {
   const byDate = (left.startsAt?.getTime() ?? Number.MAX_SAFE_INTEGER) - (right.startsAt?.getTime() ?? Number.MAX_SAFE_INTEGER);
   const tournaments = left.slotKind === right.slotKind && left.slotKind === SlotKind.TOURNAMENT ? byDate : 0;
   return tournaments

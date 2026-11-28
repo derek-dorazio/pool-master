@@ -1,4 +1,4 @@
-import type { CupWeight, LeagueYearFinish, LeagueYearReview, SelectionType } from '../domain';
+import type { ChampionshipCalendarInput, CupWeight, LeagueYearFinish, LeagueYearReview, SelectionType } from '../domain';
 
 /** A contest that went final, as a year's contest list names it (#837). */
 export interface FinalContest {
@@ -99,6 +99,13 @@ export interface LeagueChampionshipYearRepository {
   findClosedYears(leagueId: string): Promise<ClosedChampionshipYear[]>;
   isClosed(key: LeagueChampionshipYearKey): Promise<boolean>;
   readYearState(key: LeagueChampionshipYearKey, now: Date): Promise<ChampionshipYearState>;
+  /**
+   * What the league's championship calendar is read from: its counted contests by year (drafts
+   * that can never open aside), its closed years, the slots still to finish in its open years (as
+   * `readYearState` counts them) and the current Season year of every active sport league, not
+   * only the league's own: a league with no contests has none of its own.
+   */
+  readCalendarInput(leagueId: string, now: Date): Promise<ChampionshipCalendarInput>;
   /** Closes the year; false when it was already closed, which a close never undoes. */
   close(key: LeagueChampionshipYearKey, closedAt: Date): Promise<boolean>;
   /** The league and championship year of a contest; null when it is gone. */

@@ -14,7 +14,7 @@ import { leagueFromPath, requireMemberOfLeague } from '../leagues/permissions';
 import { describePlanFeatureGate, requirePlanFeatures } from '../plans/plan-feature-gate';
 import type { YearGatedModuleOptions } from '../plans/routes';
 import { createChampionshipHandlers } from './handler';
-import { createChampionshipService } from './wiring';
+import { createChampionshipCalendarService, createChampionshipService } from './wiring';
 
 const MEMBERS_ONLY = 'Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.';
 
@@ -32,7 +32,7 @@ export function championshipModule(fastify: FastifyInstance, opts: YearGatedModu
 
   const prisma = getAppPrisma(fastify);
   const membersOnly = requireMemberOfLeague(new PrismaLeagueMembershipRepository(prisma), leagueFromPath);
-  const handlers = createChampionshipHandlers(createChampionshipService(prisma, fastify.log));
+  const handlers = createChampionshipHandlers(createChampionshipService(prisma, fastify.log), createChampionshipCalendarService(prisma, fastify.log));
 
   fastify.get('/', {
     schema: {
@@ -48,6 +48,27 @@ export function championshipModule(fastify: FastifyInstance, opts: YearGatedModu
     },
     preHandler: [membersOnly, requirePlanFeatures(opts.planEntitlements, [PlanFeature.CHAMPIONSHIP, PlanFeature.PAST_YEARS])],
     handler: handlers.listChampionshipYears,
+  });
+
+  fastify.get('/calendar', {
+    schema: {
+      tags: ['Championship'],
+      summary: 'Get the championship calendar',
+      description: `The league's championship years, open and closed, the year it is in now and what still holds each open year open: each sport league's last Season slot of the year still to finish ("closes after the Super Bowl") and its contests not yet final. Every screen that names a championship year reads it from here, never from the calendar (#2021). Names only years, slots and contest names, so it is not gated by plan. ${MEMBERS_ONLY}`,
+      operationId: 'getChampionshipCalendar',
+      params: {
+        type: 'object',
+        required: ['id'],
+        properties: { id: { type: 'string', format: 'uuid' } },
+      },
+      response: {
+        200: schemaRef('ChampionshipCalendarResponse'),
+        401: schemaRef('ErrorEnvelope'),
+        403: schemaRef('ErrorEnvelope'),
+      },
+    },
+    preHandler: [membersOnly],
+    handler: handlers.getChampionshipCalendar,
   });
 
   fastify.get('/:year', {

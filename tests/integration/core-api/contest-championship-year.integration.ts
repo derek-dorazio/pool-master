@@ -18,6 +18,7 @@ import { sportPlay } from '../../support/sport-play';
 import { sportRowKeys } from '../../support/sport-rows';
 import { linkTestSlot, testSlotIdIn } from '../../support/test-slots';
 import { anySeasonId } from '../../support/contest-rows';
+import { StatementVerb, recordStatements, statementsOn } from '../statement-log';
 
 beforeAll(async () => {
   await setupIntegrationTests();
@@ -202,5 +203,51 @@ describe('the championship year close against Postgres (#2021)', () => {
     await expect(closer(AFTER_SUPER_BOWL).closeYear(year.key)).resolves.toBe(true);
     await expect(repo.close(year.key, new Date('2026-03-01T12:00:00.000Z'))).resolves.toBe(false);
     expect(await repo.findClosedYears(year.league.id)).toEqual([{ championshipYear: 2025, closedAt: AFTER_SUPER_BOWL }]);
+  });
+});
+
+describe('the championship calendar\'s reads against Postgres (#2021)', () => {
+  const BEFORE_SUPER_BOWL = new Date('2026-01-20T12:00:00.000Z');
+
+  it('reads the league\'s contest years with the live one marked and its unfinished contests named, its closed years, and only the open year\'s slots still to play', async () => {
+    const year = await footballYear();
+    await year.finish(year.divisional.seasonSlotId);
+    const live = await year.contest('Super Bowl pool', 'ACTIVE', year.superBowl.seasonSlotId);
+    const done = await year.contest('Divisional pool', 'COMPLETED', year.divisional.seasonSlotId);
+    await getPrisma().leagueChampionshipYear.create({ data: { leagueId: year.league.id, championshipYear: 2023, closedAt: new Date('2024-02-12T12:00:00.000Z') } });
+
+    const input = await new PrismaLeagueChampionshipYearRepository(getAppPrisma()).readCalendarInput(year.league.id, BEFORE_SUPER_BOWL);
+
+    expect(input.contestYears).toEqual([2025]);
+    expect(input.unfinishedContests).toEqual([{ id: live.id, name: live.name, championshipYear: 2025, status: 'ACTIVE' }]);
+    expect(input.unfinishedContests.map((contest) => contest.id)).not.toContain(done.id);
+    expect(input.closedYears).toEqual([2023]);
+    expect(input.unfinishedSlots).toEqual([expect.objectContaining({ championshipYear: 2025, sportLeagueId: year.sportLeague.id, startsAt: expect.any(Date) })]);
+    expect(input.currentSeasonYears.every((value) => Number.isInteger(value))).toBe(true);
+  });
+
+  it('reads the league\'s finished contests only grouped by year, never row by row, however many years of them it has', async () => {
+    const year = await footballYear();
+    await year.contest('Divisional pool', 'COMPLETED', year.divisional.seasonSlotId);
+    await year.contest('Super Bowl pool', 'ACTIVE', year.superBowl.seasonSlotId);
+
+    const { result, statements } = await recordStatements(() => new PrismaLeagueChampionshipYearRepository(getAppPrisma()).readCalendarInput(year.league.id, BEFORE_SUPER_BOWL));
+
+    expect(result.contestYears).toEqual([2025]);
+    const contestReads = statementsOn(statements, StatementVerb.SELECT, 'contests').map((statement) => statement.sql);
+    expect(contestReads).toHaveLength(2);
+    expect(contestReads.filter((sql) => sql.includes('GROUP BY'))).toHaveLength(1);
+    expect(contestReads.filter((sql) => !sql.includes('GROUP BY')).every((sql) => sql.includes('"status" <> '))).toBe(true);
+  });
+
+  it('reads no slots for a year the league has closed, and none for a league with no contests', async () => {
+    const year = await footballYear();
+    await year.contest('Divisional pool', 'COMPLETED', year.divisional.seasonSlotId);
+    await getPrisma().leagueChampionshipYear.create({ data: { leagueId: year.league.id, championshipYear: 2025, closedAt: BEFORE_SUPER_BOWL } });
+    const repo = new PrismaLeagueChampionshipYearRepository(getAppPrisma());
+
+    expect((await repo.readCalendarInput(year.league.id, BEFORE_SUPER_BOWL)).unfinishedSlots).toEqual([]);
+    const empty = await getPrisma().league.create({ data: { cupName: 'Empty Cup', leagueCode: `EMP${randomUUID().slice(0, 8).toUpperCase()}`, name: 'Empty League' } });
+    await expect(repo.readCalendarInput(empty.id, BEFORE_SUPER_BOWL)).resolves.toEqual(expect.objectContaining({ contestYears: [], unfinishedContests: [], closedYears: [], unfinishedSlots: [] }));
   });
 });

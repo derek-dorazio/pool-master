@@ -62734,6 +62734,380 @@
         "additionalProperties": false,
         "description": "The league championship's years."
       },
+      "ChampionshipClosingSlotDto": {
+        "type": "object",
+        "properties": {
+          "sportLeagueId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sportLeagueName": {
+            "type": "string",
+            "description": "What screens call the sport league, such as \"NFL\"."
+          },
+          "key": {
+            "type": "string",
+            "description": "The slot definition's code in its league, such as FINAL; an identifier nothing parses."
+          },
+          "name": {
+            "description": "The league's proper name for the slot, such as \"Super Bowl\", or a test slot's label; null: screens use the word for its kind.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "slotKind": {
+            "type": "string",
+            "enum": [
+              "WEEK",
+              "PLAY_IN",
+              "ROUND_OF_64",
+              "ROUND_OF_32",
+              "ROUND_OF_16",
+              "QUARTERFINAL",
+              "SEMIFINAL",
+              "THIRD_PLACE",
+              "FINAL",
+              "TOURNAMENT"
+            ],
+            "description": "What kind of slot it is, for the word a screen shows when it has no name."
+          },
+          "weekNumber": {
+            "description": "For a WEEK slot, its week; null otherwise.",
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "startsAt": {
+            "description": "The earliest start of its games; null until the sync has placed one.",
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "endsAt": {
+            "description": "The latest end of its games; null until the sync has placed one.",
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "sportLeagueId",
+          "sportLeagueName",
+          "key",
+          "name",
+          "slotKind",
+          "weekNumber",
+          "startsAt",
+          "endsAt"
+        ],
+        "additionalProperties": false,
+        "description": "A sport league's last Season slot of the year still to finish: the year closes after it, once its contests are final."
+      },
+      "ChampionshipCalendarContestDto": {
+        "type": "object",
+        "properties": {
+          "contestId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "description": "The contest's name."
+          }
+        },
+        "required": [
+          "contestId",
+          "name"
+        ],
+        "additionalProperties": false,
+        "description": "A contest of the year not yet final."
+      },
+      "ChampionshipCalendarYearDto": {
+        "type": "object",
+        "properties": {
+          "championshipYear": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991,
+            "description": "The championship year, such as 2026."
+          },
+          "isClosed": {
+            "type": "boolean",
+            "description": "True once the year is closed for good (#2021): every contest in it final and every Season slot of it finished. A closed year never reopens."
+          },
+          "closesAfter": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "sportLeagueId": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "sportLeagueName": {
+                  "type": "string",
+                  "description": "What screens call the sport league, such as \"NFL\"."
+                },
+                "key": {
+                  "type": "string",
+                  "description": "The slot definition's code in its league, such as FINAL; an identifier nothing parses."
+                },
+                "name": {
+                  "description": "The league's proper name for the slot, such as \"Super Bowl\", or a test slot's label; null: screens use the word for its kind.",
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "slotKind": {
+                  "type": "string",
+                  "enum": [
+                    "WEEK",
+                    "PLAY_IN",
+                    "ROUND_OF_64",
+                    "ROUND_OF_32",
+                    "ROUND_OF_16",
+                    "QUARTERFINAL",
+                    "SEMIFINAL",
+                    "THIRD_PLACE",
+                    "FINAL",
+                    "TOURNAMENT"
+                  ],
+                  "description": "What kind of slot it is, for the word a screen shows when it has no name."
+                },
+                "weekNumber": {
+                  "description": "For a WEEK slot, its week; null otherwise.",
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991
+                },
+                "startsAt": {
+                  "description": "The earliest start of its games; null until the sync has placed one.",
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "date-time"
+                },
+                "endsAt": {
+                  "description": "The latest end of its games; null until the sync has placed one.",
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "date-time"
+                }
+              },
+              "required": [
+                "sportLeagueId",
+                "sportLeagueName",
+                "key",
+                "name",
+                "slotKind",
+                "weekNumber",
+                "startsAt",
+                "endsAt"
+              ],
+              "additionalProperties": false,
+              "description": "A sport league's last Season slot of the year still to finish: the year closes after it, once its contests are final."
+            },
+            "description": "What holds an open year open: each sport league's last slot of the year still to finish, earliest first and an undated one last. Empty once closed, and when only contests hold it."
+          },
+          "unfinishedContests": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "contestId": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "name": {
+                  "type": "string",
+                  "description": "The contest's name."
+                }
+              },
+              "required": [
+                "contestId",
+                "name"
+              ],
+              "additionalProperties": false,
+              "description": "A contest of the year not yet final."
+            },
+            "description": "The year's counted contests not yet final, oldest first; empty once closed."
+          }
+        },
+        "required": [
+          "championshipYear",
+          "isClosed",
+          "closesAfter",
+          "unfinishedContests"
+        ],
+        "additionalProperties": false,
+        "description": "One championship year of the league, open or closed."
+      },
+      "ChampionshipCalendarResponse": {
+        "type": "object",
+        "properties": {
+          "currentYear": {
+            "description": "The year the league is in now, which Championships opens on: the earliest open year with a live contest, else its earliest open year, else the earliest current Season year of an active sport league that it has not closed. Never the calendar year. Null only when there is none.",
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
+          "years": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "championshipYear": {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991,
+                  "description": "The championship year, such as 2026."
+                },
+                "isClosed": {
+                  "type": "boolean",
+                  "description": "True once the year is closed for good (#2021): every contest in it final and every Season slot of it finished. A closed year never reopens."
+                },
+                "closesAfter": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "sportLeagueId": {
+                        "type": "string",
+                        "format": "uuid"
+                      },
+                      "sportLeagueName": {
+                        "type": "string",
+                        "description": "What screens call the sport league, such as \"NFL\"."
+                      },
+                      "key": {
+                        "type": "string",
+                        "description": "The slot definition's code in its league, such as FINAL; an identifier nothing parses."
+                      },
+                      "name": {
+                        "description": "The league's proper name for the slot, such as \"Super Bowl\", or a test slot's label; null: screens use the word for its kind.",
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
+                      "slotKind": {
+                        "type": "string",
+                        "enum": [
+                          "WEEK",
+                          "PLAY_IN",
+                          "ROUND_OF_64",
+                          "ROUND_OF_32",
+                          "ROUND_OF_16",
+                          "QUARTERFINAL",
+                          "SEMIFINAL",
+                          "THIRD_PLACE",
+                          "FINAL",
+                          "TOURNAMENT"
+                        ],
+                        "description": "What kind of slot it is, for the word a screen shows when it has no name."
+                      },
+                      "weekNumber": {
+                        "description": "For a WEEK slot, its week; null otherwise.",
+                        "type": [
+                          "integer",
+                          "null"
+                        ],
+                        "minimum": -9007199254740991,
+                        "maximum": 9007199254740991
+                      },
+                      "startsAt": {
+                        "description": "The earliest start of its games; null until the sync has placed one.",
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "format": "date-time"
+                      },
+                      "endsAt": {
+                        "description": "The latest end of its games; null until the sync has placed one.",
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "format": "date-time"
+                      }
+                    },
+                    "required": [
+                      "sportLeagueId",
+                      "sportLeagueName",
+                      "key",
+                      "name",
+                      "slotKind",
+                      "weekNumber",
+                      "startsAt",
+                      "endsAt"
+                    ],
+                    "additionalProperties": false,
+                    "description": "A sport league's last Season slot of the year still to finish: the year closes after it, once its contests are final."
+                  },
+                  "description": "What holds an open year open: each sport league's last slot of the year still to finish, earliest first and an undated one last. Empty once closed, and when only contests hold it."
+                },
+                "unfinishedContests": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "contestId": {
+                        "type": "string",
+                        "format": "uuid"
+                      },
+                      "name": {
+                        "type": "string",
+                        "description": "The contest's name."
+                      }
+                    },
+                    "required": [
+                      "contestId",
+                      "name"
+                    ],
+                    "additionalProperties": false,
+                    "description": "A contest of the year not yet final."
+                  },
+                  "description": "The year's counted contests not yet final, oldest first; empty once closed."
+                }
+              },
+              "required": [
+                "championshipYear",
+                "isClosed",
+                "closesAfter",
+                "unfinishedContests"
+              ],
+              "additionalProperties": false,
+              "description": "One championship year of the league, open or closed."
+            },
+            "description": "Every year the league has a counted contest in, every closed year and the current year, newest first."
+          }
+        },
+        "required": [
+          "currentYear",
+          "years"
+        ],
+        "additionalProperties": false,
+        "description": "The league's championship years, open and closed, and the one it is in now (#2021)."
+      },
       "EventPageNextSlotDto": {
         "type": "object",
         "properties": {
@@ -90096,6 +90470,59 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ChampionshipYearListResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/leagues/{id}/championship/calendar": {
+      "get": {
+        "operationId": "getChampionshipCalendar",
+        "summary": "Get the championship calendar",
+        "tags": [
+          "Championship"
+        ],
+        "description": "The league's championship years, open and closed, the year it is in now and what still holds each open year open: each sport league's last Season slot of the year still to finish (\"closes after the Super Bowl\") and its contests not yet final. Every screen that names a championship year reads it from here, never from the calendar (#2021). Names only years, slots and contest names, so it is not gated by plan. Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "path",
+            "name": "id",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The league's championship years, open and closed, and the one it is in now (#2021).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChampionshipCalendarResponse"
                 }
               }
             }

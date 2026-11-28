@@ -8,6 +8,7 @@ import { expect } from '@jest/globals';
 import { ContestStatus, PeriodUnit, Sport } from '@poolmaster/shared/domain';
 import type { ContestConfigTemplateDto } from '@poolmaster/shared/dto';
 import { ReadCache } from '../../../packages/core-api/src/core/read-cache';
+import { ChampionshipCalendarService } from '../../../packages/core-api/src/modules/championship/calendar-service';
 import { createChampionshipHandlers } from '../../../packages/core-api/src/modules/championship/handler';
 import { ChampionshipLeagueNotFoundError, type ChampionshipService } from '../../../packages/core-api/src/modules/championship/service';
 import { createContestConfigTemplateHandlers } from '../../../packages/core-api/src/modules/contest-config-templates/handler';
@@ -40,9 +41,20 @@ describe('championship handlers', () => {
     listYears: jest.fn((..._args: unknown[]) => Promise.resolve([])),
     getYear,
   }) as unknown as ChampionshipService;
+  const calendar = new ChampionshipCalendarService({
+    years: { readCalendarInput: () => Promise.resolve({ contestYears: [], unfinishedContests: [], closedYears: [2025], unfinishedSlots: [], currentSeasonYears: [2026] }) },
+  });
+
+  it('answers a league\'s championship calendar with its current year and each year open or closed', async () => {
+    const handlers = createChampionshipHandlers(service(jest.fn()), calendar);
+
+    const reply = await callHandler(handlers.getChampionshipCalendar, stubRequest({ params: { id: 'league-1' } }));
+
+    expect(reply).toMatchObject({ statusCode: 200, body: { currentYear: 2026, years: [{ championshipYear: 2026, isClosed: false }, { championshipYear: 2025, isClosed: true }] } });
+  });
 
   it('lists a league\'s championship years', async () => {
-    const handlers = createChampionshipHandlers(service(jest.fn()));
+    const handlers = createChampionshipHandlers(service(jest.fn()), calendar);
 
     const reply = await callHandler(handlers.listChampionshipYears, stubRequest({ params: { id: 'league-1' } }));
 
@@ -51,7 +63,7 @@ describe('championship handlers', () => {
 
   it('answers a league\'s championship year with it', async () => {
     const year = { leagueId: 'league-1', year: 2026, cupName: 'Cup', isOver: false, contestsCounted: 2, contestsToGo: 1, standings: [], tiles: [] };
-    const handlers = createChampionshipHandlers(service(() => Promise.resolve(year)));
+    const handlers = createChampionshipHandlers(service(() => Promise.resolve(year)), calendar);
 
     const reply = await callHandler(handlers.getChampionship, stubRequest({ params: { id: 'league-1', year: 2026 } }));
 
@@ -59,7 +71,7 @@ describe('championship handlers', () => {
   });
 
   it('answers a championship year of a league that does not exist with 404 LEAGUE_NOT_FOUND', async () => {
-    const handlers = createChampionshipHandlers(service(() => Promise.reject(new ChampionshipLeagueNotFoundError('League not found'))));
+    const handlers = createChampionshipHandlers(service(() => Promise.reject(new ChampionshipLeagueNotFoundError('League not found'))), calendar);
 
     const reply = await callHandler(handlers.getChampionship, stubRequest({ params: { id: 'league-1', year: 2026 } }));
 
@@ -67,7 +79,7 @@ describe('championship handlers', () => {
   });
 
   it('passes any other failure reading a championship year on to the global error handler', async () => {
-    const handlers = createChampionshipHandlers(service(() => Promise.reject(boom)));
+    const handlers = createChampionshipHandlers(service(() => Promise.reject(boom)), calendar);
 
     await expect(callHandler(handlers.getChampionship, stubRequest({ params: { id: 'league-1', year: 2026 } }))).rejects.toBe(boom);
   });
