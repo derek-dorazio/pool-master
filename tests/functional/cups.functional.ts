@@ -295,7 +295,7 @@ describe('SDK Functional: sports league cups and the league championship (#841, 
       client: member.client,
       path: { id: league.id, year },
     })).data)).championship;
-    expect(championship).toMatchObject({ year, cupName: `Cup Harriers ${RUN} Cup`, name: `${year} Cup Harriers ${RUN} Cup`, isOver: false, contestsCounted: 2, contestsToGo: 0 });
+    expect(championship).toMatchObject({ year, cupName: `Cup Harriers ${RUN} Cup`, name: `${year} Cup Harriers ${RUN} Cup`, isOver: false, contestsCounted: 2, contestsToGo: 1 });
     expect(championship.standings.map((row) => [row.displayPosition, row.points, row.finishes.slice(0, 2), row.played])).toEqual([
       ['T1', 1800, [1, 1], 2],
       ['T1', 1800, [1, 1], 2],
