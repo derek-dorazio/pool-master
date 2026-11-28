@@ -253,6 +253,24 @@ describe('event lifecycle sweep through the app client (#1303)', () => {
     for (const id of [covering.event.id, notYet.id, noEnd.id]) expect(await statusOf(id)).toBe(SportEventStatus.IN_PROGRESS);
   });
 
+  it('starts a scheduled event covering no slot once its start has passed, and leaves one covering a slot, and one not yet due, scheduled (#2013)', async () => {
+    const covering = await seedFootballWeek({ games: 1, startDate: new Date(Date.now() - HOUR), status: SportEventStatus.SCHEDULED });
+    const { sportLeagueId, sportLeagueSeasonId } = await getPrisma().sportEvent.findUniqueOrThrow({ where: { id: covering.event.id }, select: { sportLeagueId: true, sportLeagueSeasonId: true } });
+    const slotless = (name: string, startDate: Date) => getPrisma().sportEvent.create({
+      data: { sportLeagueId, sportLeagueSeasonId, name, startDate, status: SportEventStatus.SCHEDULED, autoLifecycleEnabled: true },
+    });
+    const due = await slotless('Due, no slot', new Date(Date.now() - HOUR));
+    const ahead = await slotless('Ahead, no slot', new Date(Date.now() + DAY));
+
+    const { sweep, logger } = lifecycleSweep(new Date());
+    await sweep();
+
+    expect(logger.error).not.toHaveBeenCalled();
+    const statusOf = async (id: string) => (await getPrisma().sportEvent.findUniqueOrThrow({ where: { id }, select: { status: true } })).status;
+    expect(await statusOf(due.id)).toBe(SportEventStatus.IN_PROGRESS);
+    for (const id of [covering.event.id, ahead.id]) expect(await statusOf(id)).toBe(SportEventStatus.SCHEDULED);
+  });
+
   it('keeps a contest open on an event under way until the slot it covers starts, then takes it live at that slot\'s first game, or once the slot is under way (#2013)', async () => {
     const { league } = await seedLeagueWithTeams(1);
     const slotStart = new Date(Date.now() + 3 * HOUR);
