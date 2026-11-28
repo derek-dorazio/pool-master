@@ -6,7 +6,7 @@
 import { expect } from '@jest/globals';
 import { randomUUID } from 'node:crypto';
 import { ContestStatus, PickEmMode, SelectionType, SportEventStatus } from '@poolmaster/shared/domain';
-import { PrismaSportEventRepository, PrismaSportEventRoundRepository } from '../../../packages/core-api/src/adapters';
+import { PrismaSportEventRepository } from '../../../packages/core-api/src/adapters';
 import { PostgresJobLock } from '../../../packages/core-api/src/core/job-lock';
 import { createContestSettlementService } from '../../../packages/core-api/src/modules/contests/wiring';
 import { createEmailOutbox, EMAIL_SETTINGS } from '../../../packages/core-api/src/modules/email';
@@ -82,7 +82,6 @@ function lifecycleSweep(now: Date) {
   });
   const scheduler = new EventLifecycleScheduler({
     sportEvents: new PrismaSportEventRepository(prisma),
-    rounds: new PrismaSportEventRoundRepository(prisma),
     eventLifecycleService,
     jobLock,
     logger,
@@ -125,7 +124,7 @@ async function contestOn(leagueId: string, sportEventIds: readonly string[], sta
 }
 
 describe('event lifecycle sweep through the app client (#1303)', () => {
-  it('starts an event whose start has passed, queues each of the six kinds of clock-driven email that is due, moves an ended preview to Free, and logs no failure from any step', async () => {
+  it('takes the contests live on an event covering a slot whose start has passed, leaving the event to its slots (#2013), queues each of the six kinds of clock-driven email that is due, moves an ended preview to Free, and logs no failure from any step', async () => {
     const monday = nextMonday();
     const { commissioner, league, squads } = await seedLeagueWithTeams(2);
     const digest = await seedLeagueWithTeams(0);
@@ -190,7 +189,9 @@ describe('event lifecycle sweep through the app client (#1303)', () => {
     await sweep();
 
     expect(logger.error).not.toHaveBeenCalled();
-    await expect(getPrisma().sportEvent.findUniqueOrThrow({ where: { id: started.event.id } })).resolves.toMatchObject({ status: SportEventStatus.IN_PROGRESS });
+    // The event starts when its slot does, on the feed's first score; its contest goes live on the clock.
+    await expect(getPrisma().sportEvent.findUniqueOrThrow({ where: { id: started.event.id } })).resolves.toMatchObject({ status: SportEventStatus.SCHEDULED });
+    await expect(getPrisma().contest.findUniqueOrThrow({ where: { id: open.id } })).resolves.toMatchObject({ status: ContestStatus.ACTIVE });
     const told = async (leagueId: string | null, userId: string) => (await getPrisma().emailMessage.findMany({ where: { leagueId, recipientUserId: userId } }))
       .map((message) => message.idempotencyKey.split(':').slice(0, 2).join(':'))
       .sort();
@@ -250,6 +251,24 @@ describe('event lifecycle sweep through the app client (#1303)', () => {
     const statusOf = async (id: string) => (await getPrisma().sportEvent.findUniqueOrThrow({ where: { id }, select: { status: true } })).status;
     expect(await statusOf(ended.id)).toBe(SportEventStatus.COMPLETED);
     for (const id of [covering.event.id, notYet.id, noEnd.id]) expect(await statusOf(id)).toBe(SportEventStatus.IN_PROGRESS);
+  });
+
+  it('starts a scheduled event covering no slot once its start has passed, and leaves one covering a slot, and one not yet due, scheduled (#2013)', async () => {
+    const covering = await seedFootballWeek({ games: 1, startDate: new Date(Date.now() - HOUR), status: SportEventStatus.SCHEDULED });
+    const { sportLeagueId, sportLeagueSeasonId } = await getPrisma().sportEvent.findUniqueOrThrow({ where: { id: covering.event.id }, select: { sportLeagueId: true, sportLeagueSeasonId: true } });
+    const slotless = (name: string, startDate: Date) => getPrisma().sportEvent.create({
+      data: { sportLeagueId, sportLeagueSeasonId, name, startDate, status: SportEventStatus.SCHEDULED, autoLifecycleEnabled: true },
+    });
+    const due = await slotless('Due, no slot', new Date(Date.now() - HOUR));
+    const ahead = await slotless('Ahead, no slot', new Date(Date.now() + DAY));
+
+    const { sweep, logger } = lifecycleSweep(new Date());
+    await sweep();
+
+    expect(logger.error).not.toHaveBeenCalled();
+    const statusOf = async (id: string) => (await getPrisma().sportEvent.findUniqueOrThrow({ where: { id }, select: { status: true } })).status;
+    expect(await statusOf(due.id)).toBe(SportEventStatus.IN_PROGRESS);
+    for (const id of [covering.event.id, ahead.id]) expect(await statusOf(id)).toBe(SportEventStatus.SCHEDULED);
   });
 
   it('keeps a contest open on an event under way until the slot it covers starts, then takes it live at that slot\'s first game, or once the slot is under way (#2013)', async () => {

@@ -82,7 +82,6 @@ import {
   PrismaProviderSyncRunRepository,
   PrismaUserRepository,
   PrismaSportEventRepository,
-  PrismaSportEventRoundRepository,
   PrismaBackgroundJobRepository,
   PrismaSportEventRoundMatchGameRepository,
   PrismaSportLeagueRepository,
@@ -282,7 +281,6 @@ export function buildApp(options: BuildAppOptions = {}) {
   const jobLock = new PostgresJobLock(process.env.DATABASE_URL, app.log);
   const eventLifecycleScheduler = new EventLifecycleScheduler({
     sportEvents: new PrismaSportEventRepository(prisma),
-    rounds: new PrismaSportEventRoundRepository(prisma),
     eventLifecycleService,
     jobLock,
     logger: app.log,

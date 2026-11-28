@@ -12,12 +12,13 @@
  * override for a rain delay, a dispute, or any other reason the recorded
  * schedule no longer reflects reality.
  *
- * A DRAFT event is never touched: only an admin's release moves it (#431). This
- * scheduler's job is starting an event at its first round's date, and, while an event is in
- * progress, starting the contests whose cutoff comes after the event's start (a squares game,
- * #711). An event completes when its slots do (#2013, `SlotStatusService`), never on the clock; one covering no slot completes at its end date.
- * The clock's start stays while a live score is accepted only for an event in progress, so the
- * feed's first score has an event to land on. A
+ * A DRAFT event is never touched: only an admin's release moves it (#431). An event covering a
+ * slot starts and completes when its slots do (#2013, `SlotStatusService`), never on the clock:
+ * the feed's first score starts a Match, its slot and then the event. This scheduler's job is
+ * taking contests live at their cutoffs on the clock, while the event is scheduled or in progress
+ * (a contest's first covered Game, a squares game, #711), so a late feed leaves no window open.
+ * An event covering no slot has no slot to move it: it starts at its start date and completes at
+ * its end date. A
  * POSTPONED event's status is left alone, but its contests follow its start (#1792): open while
  * it is ahead, wherever the start has moved to, and live once it has passed.
  *
@@ -30,8 +31,8 @@
  */
 
 import type { FastifyBaseLogger } from 'fastify';
-import type { AutoLifecycleCandidate, SportEventRepository, SportEventRoundRepository } from '@poolmaster/shared/db';
-import { SportEventStatus, type SportEventRound } from '@poolmaster/shared/domain';
+import type { AutoLifecycleCandidate, SportEventRepository } from '@poolmaster/shared/db';
+import { SportEventStatus } from '@poolmaster/shared/domain';
 import type { JobLock } from '../../core/job-lock';
 import { LockedSweep } from '../../core/locked-sweep';
 import type { EventLifecycleService } from './event-lifecycle-service';
@@ -42,7 +43,6 @@ const SWEEP_LOCK_KEY = 'event-lifecycle-sweep';
 
 export interface EventLifecycleSchedulerOptions {
   sportEvents: Pick<SportEventRepository, 'findAutoLifecycleCandidates'>;
-  rounds: Pick<SportEventRoundRepository, 'findBySportEvents'>;
   eventLifecycleService: Pick<EventLifecycleService, 'applySportEventStatusTransition' | 'activateContestsPastCutoff' | 'followPostponedStart'>;
   /** Keeps the sweep to one server task. */
   jobLock: JobLock;
@@ -53,14 +53,12 @@ export interface EventLifecycleSchedulerOptions {
 export class EventLifecycleScheduler {
   private readonly lockedSweep: LockedSweep;
   private readonly sportEvents: EventLifecycleSchedulerOptions['sportEvents'];
-  private readonly rounds: EventLifecycleSchedulerOptions['rounds'];
   private readonly eventLifecycleService: EventLifecycleSchedulerOptions['eventLifecycleService'];
   private readonly logger?: FastifyBaseLogger;
   private readonly now: () => Date;
 
   constructor(options: EventLifecycleSchedulerOptions) {
     this.sportEvents = options.sportEvents;
-    this.rounds = options.rounds;
     this.eventLifecycleService = options.eventLifecycleService;
     this.logger = options.logger;
     this.now = options.now ?? (() => new Date());
@@ -95,12 +93,10 @@ export class EventLifecycleScheduler {
   private async sweep(): Promise<void> {
     const now = this.now();
     const candidates = await this.sportEvents.findAutoLifecycleCandidates();
-    const roundsByEvent = await this.rounds.findBySportEvents(candidates.map((candidate) => candidate.id));
-    const schedules = candidates.map((candidate) => ({ candidate, roundSchedule: roundsByEvent.get(candidate.id) ?? [] }));
 
-    for (const { candidate, roundSchedule } of schedules) {
+    for (const candidate of candidates) {
       try {
-        await this.applyDueTransition(candidate, roundSchedule, now);
+        await this.applyDueTransition(candidate, now);
       } catch (error) {
         this.logger?.error({
           sportEventId: candidate.id,
@@ -110,7 +106,7 @@ export class EventLifecycleScheduler {
     }
   }
 
-  private async applyDueTransition(candidate: AutoLifecycleCandidate, roundSchedule: SportEventRound[], now: Date): Promise<void> {
+  private async applyDueTransition(candidate: AutoLifecycleCandidate, now: Date): Promise<void> {
     // Each status the candidate read answers has its case, and lint holds the switch whole.
     switch (candidate.status) {
       case SportEventStatus.POSTPONED:
@@ -118,8 +114,18 @@ export class EventLifecycleScheduler {
         await this.eventLifecycleService.followPostponedStart(candidate, now);
         return;
       case SportEventStatus.SCHEDULED: {
-        const dueAt = minDate(roundSchedule.map((round) => round.scheduledDate)) ?? candidate.startDate;
-        if (now < dueAt) return;
+        // Nothing on an event is due before its start: the sync sets it to its earliest slot's, and
+        // no contest's window opens earlier, so a future week reads nothing.
+        if (now < candidate.startDate) return;
+        // An event covering a slot starts when its slots do (#2013, `SlotStatusService`), on the
+        // feed's first score; the clock only takes its contests live at their first covered Game,
+        // so a late feed leaves no window open past its start.
+        if (candidate.slotDefinitions.length > 0) {
+          await this.eventLifecycleService.activateContestsPastCutoff(candidate, now);
+          return;
+        }
+        // One covering none has no slot to start it, and no round (every round is in a slot), so it
+        // starts at its start date.
         await this.eventLifecycleService.applySportEventStatusTransition({
           sportEventId: candidate.id,
           toStatus: SportEventStatus.IN_PROGRESS,
@@ -144,9 +150,5 @@ export class EventLifecycleScheduler {
       }
     }
   }
-}
-
-function minDate(dates: Date[]): Date | undefined {
-  return dates.reduce<Date | undefined>((min, date) => (!min || date < min ? date : min), undefined);
 }
 

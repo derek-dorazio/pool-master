@@ -160,6 +160,9 @@ function withSideScores(game: SportEventRoundMatchGame, scores: readonly GameSid
 /** Whether a loaded game sends its winner on to a later match. */
 const linksOn = (match: SportEventRoundMatch): boolean => match.advancesToMatchId !== null;
 
+/** The event statuses a saved result takes contests live in: scheduled, with a slot under way before the event follows it (#2013), and in progress. */
+const TAKES_RESULTS: readonly SportEventStatus[] = [SportEventStatus.SCHEDULED, SportEventStatus.IN_PROGRESS];
+
 /**
  * Every team's standing in a week of games that forms no bracket: no place, since a week has no
  * winner of its own, and COMPLETE once the team's game is played or cancelled, ACTIVE until then.
@@ -286,8 +289,9 @@ export class MatchResultService {
     const after = await this.write(sportEventId, bracket, result, sideFill, jobs.jobs);
     jobs.queued();
     this.deps.logger?.info({ sportEventId, ...place, winnerSideNumber: input.winnerSideNumber, ending, winnerChanges }, 'Saved a match result');
-    // The bracket as written stands in for a read of it (#1355).
-    if (sportEvent.status === SportEventStatus.IN_PROGRESS) {
+    // The bracket as written stands in for a read of it (#1355). A scheduled event's slot can be
+    // under way before the event follows it (#2013), so its contests are asked too.
+    if (TAKES_RESULTS.includes(sportEvent.status)) {
       await this.deps.contestActivation.activateContestsPastCutoff(sportEvent, now, after);
     }
     return after;
@@ -371,7 +375,7 @@ export class MatchResultService {
     jobs.queued();
     this.deps.logger?.info({ sportEventId, ...place, periodNumber }, 'Saved a period score');
     // A scored period means the game is under way: a squares contest on it goes live (#711).
-    if (sportEvent.status === SportEventStatus.IN_PROGRESS) {
+    if (TAKES_RESULTS.includes(sportEvent.status)) {
       await this.deps.contestActivation.activateContestsPastCutoff(sportEvent, now);
     }
     return this.deps.matches.findBySportEvent(sportEventId);
