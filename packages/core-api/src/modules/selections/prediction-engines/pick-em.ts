@@ -4,19 +4,19 @@
  * pick locks, and is revealed, at its own game's kickoff; game-picks.ts holds the scoring.
  */
 
-import { PickEmMode, SelectionType, isTeamChoice, type ContestSelectionConfig } from '@poolmaster/shared/domain';
+import { PickEmMode, SelectionType, isTeamChoice, type ContestRules } from '@poolmaster/shared/domain';
 import { predictedSideOf, realSides } from '../../scoring-families/head-to-head/bracket-picks';
 import { PickWindow } from '../../contests/entry-window';
 import { scoreGamePicks, slotTiebreakerGame, type GamePickScoring } from '../../scoring-families/head-to-head/game-picks';
 import { PredictionIssueKind, type PredictionEngine, type PredictionIssue } from './prediction-engine';
 
 /** The contest's pick'em mode, or undefined when its stored rules are not pick'em rules. */
-function pickEmMode(configuration: ContestSelectionConfig | undefined): PickEmMode | undefined {
+function pickEmMode(configuration: ContestRules | undefined): PickEmMode | undefined {
   return configuration?.selectionType === SelectionType.PICK_EM ? configuration.mode : undefined;
 }
 
 /** How the contest scores its picks: its mode, and whether against the spread (#720). */
-function pickEmScoring(configuration: ContestSelectionConfig | undefined): GamePickScoring | undefined {
+function pickEmScoring(configuration: ContestRules | undefined): GamePickScoring | undefined {
   return configuration?.selectionType === SelectionType.PICK_EM
     ? { mode: configuration.mode, againstTheSpread: configuration.againstTheSpread }
     : undefined;

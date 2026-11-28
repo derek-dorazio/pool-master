@@ -219,6 +219,8 @@ interface SetupOptions {
   actorMembership?: LeagueMembership | null;
   tierGroups?: unknown[];
   valuations?: unknown[];
+  /** The cap of the slot whose set the room reads (#2050); unpriced unless a test prices it. */
+  salaryCap?: number | null;
   field?: SportEventParticipant[];
 }
 
@@ -321,9 +323,7 @@ function setup(options: SetupOptions = {}) {
     tiers: {
       getEffectiveTiersAndValuations: jest
         .fn()
-        .mockResolvedValue({ tiers: options.tierGroups ?? TIER_GROUPS, valuations: options.valuations ?? VALUATIONS }),
-      // The event's first slot, never priced unless a test prices it.
-      tierSetSlot: jest.fn().mockResolvedValue({ pricing: null }),
+        .mockResolvedValue({ tiers: options.tierGroups ?? TIER_GROUPS, valuations: options.valuations ?? VALUATIONS, salaryCap: options.salaryCap ?? null }),
     } as unknown as SportEventTierService,
     // An event that starts long after every test's clock, so only contest status gates picks.
     sportEvents: {
@@ -502,7 +502,8 @@ describe('#324 SelectionService.getSelectionState', () => {
   it('builds a budget-pick room from the configuration\'s roster size', async () => {
     const { service } = setup({
       contest: { selectionType: SelectionType.BUDGET_PICK },
-      configuration: { selectionType: SelectionType.BUDGET_PICK, configJson: { selectionType: SelectionType.BUDGET_PICK, rosterSize: 2, salaryCap: 500, countedScores: 2 } },
+      configuration: { selectionType: SelectionType.BUDGET_PICK, configJson: { selectionType: SelectionType.BUDGET_PICK, rosterSize: 2, countedScores: 2 } },
+      salaryCap: 500,
     });
 
     const view = await service.getSelectionState({ contestId: CONTEST_ID, actorUserId: OWNER_USER_ID });
@@ -644,7 +645,8 @@ describe('#324 SelectionService.selectPick and unselectPick — the guards, in o
   it('unselects a golfer a budget-pick entry already holds, deleting the pick and inserting nothing', async () => {
     const { service, addPick, removePick } = setup({
       contest: { selectionType: SelectionType.BUDGET_PICK },
-      configuration: { selectionType: SelectionType.BUDGET_PICK, configJson: { selectionType: SelectionType.BUDGET_PICK, rosterSize: 3, salaryCap: 500, countedScores: 3 } },
+      configuration: { selectionType: SelectionType.BUDGET_PICK, configJson: { selectionType: SelectionType.BUDGET_PICK, rosterSize: 3, countedScores: 3 } },
+      salaryCap: 500,
       picks: [pick('pick-a', 'p-a', 'sep-a', { lineupSlot: 1 })],
     });
 
@@ -677,7 +679,8 @@ describe('#324 SelectionService.selectPick and unselectPick — the guards, in o
   it('answers 400 ENTRY_COMPLETE when a full budget-pick entry submits again', async () => {
     const { service, addPick } = setup({
       contest: { selectionType: SelectionType.BUDGET_PICK },
-      configuration: { selectionType: SelectionType.BUDGET_PICK, configJson: { selectionType: SelectionType.BUDGET_PICK, rosterSize: 2, salaryCap: 500, countedScores: 2 } },
+      configuration: { selectionType: SelectionType.BUDGET_PICK, configJson: { selectionType: SelectionType.BUDGET_PICK, rosterSize: 2, countedScores: 2 } },
+      salaryCap: 500,
       picks: [pick('pick-b', 'p-b', 'sep-b'), pick('pick-c', 'p-c', 'sep-c')],
     });
 
@@ -837,7 +840,8 @@ describe('SelectionService — rooms with missing or partial data', () => {
   it('places a budget pick in the next free place when the entry still has room', async () => {
     const { service, addPick } = setup({
       contest: { selectionType: SelectionType.BUDGET_PICK },
-      configuration: { selectionType: SelectionType.BUDGET_PICK, configJson: { selectionType: SelectionType.BUDGET_PICK, rosterSize: 3, salaryCap: 500, countedScores: 3 } },
+      configuration: { selectionType: SelectionType.BUDGET_PICK, configJson: { selectionType: SelectionType.BUDGET_PICK, rosterSize: 3, countedScores: 3 } },
+      salaryCap: 500,
       picks: [pick('pick-a', 'p-a', 'sep-a', { lineupSlot: 1 })],
     });
 
@@ -925,7 +929,8 @@ describe('SelectionService — rooms with missing or partial data', () => {
   it('numbers a budget-pick history by each entry\'s own pick order, not by tier', async () => {
     const { service } = setup({
       contest: { selectionType: SelectionType.BUDGET_PICK, status: ContestStatus.ACTIVE },
-      configuration: { selectionType: SelectionType.BUDGET_PICK, configJson: { selectionType: SelectionType.BUDGET_PICK, rosterSize: 3, salaryCap: 500, countedScores: 3 } },
+      configuration: { selectionType: SelectionType.BUDGET_PICK, configJson: { selectionType: SelectionType.BUDGET_PICK, rosterSize: 3, countedScores: 3 } },
+      salaryCap: 500,
       picks: [pick('pick-d', 'p-d', 'sep-d'), pick('pick-a', 'p-a', 'sep-a')],
     });
 
@@ -1156,8 +1161,9 @@ describe('SelectionService budget rooms (#93): the cap blocks submitting, never 
     contest: { selectionType: SelectionType.BUDGET_PICK },
     configuration: {
       selectionType: SelectionType.BUDGET_PICK,
-      configJson: { selectionType: SelectionType.BUDGET_PICK, rosterSize: 2, salaryCap: 150, countedScores: 2 },
+      configJson: { selectionType: SelectionType.BUDGET_PICK, rosterSize: 2, countedScores: 2 },
     },
+    salaryCap: 150,
   } satisfies SetupOptions;
   const UNDER = [pick('pick-a', 'p-a', 'sep-a', { lineupSlot: 1 }), pick('pick-d', 'p-d', 'sep-d', { lineupSlot: 2 })];
   const OVER = [pick('pick-a', 'p-a', 'sep-a', { lineupSlot: 1 }), pick('pick-b', 'p-b', 'sep-b', { lineupSlot: 2 })];
@@ -1185,7 +1191,7 @@ describe('SelectionService budget rooms (#93): the cap blocks submitting, never 
   it('reports a short lineup as incomplete ahead of the budget, even when it is already over the cap', async () => {
     const { service } = setup({
       ...BUDGET,
-      configuration: { ...BUDGET.configuration, configJson: { ...BUDGET.configuration.configJson, salaryCap: 50 } },
+      salaryCap: 50,
       picks: [pick('pick-a', 'p-a', 'sep-a', { lineupSlot: 1 })],
     });
 
@@ -1271,17 +1277,19 @@ describe('SelectionService budget rooms (#93): the cap blocks submitting, never 
 
 // A golfer one entry holds stays in every room's available ids, whichever engine serves it.
 describe.each([
-  { selectionType: SelectionType.TIERED, configuration: {} },
+  { selectionType: SelectionType.TIERED, configuration: {}, salaryCap: null },
   {
     selectionType: SelectionType.BUDGET_PICK,
-    configuration: { configJson: { selectionType: SelectionType.BUDGET_PICK, rosterSize: 2, salaryCap: 500, countedScores: 2 } },
+    configuration: { configJson: { selectionType: SelectionType.BUDGET_PICK, rosterSize: 2, countedScores: 2 } },
+    salaryCap: 500,
   },
-])('SelectionService in a $selectionType room', ({ selectionType, configuration: typeConfiguration }) => {
+])('SelectionService in a $selectionType room', ({ selectionType, configuration: typeConfiguration, salaryCap }) => {
   const takenByOtherEntry = [pick('pick-other', 'p-a', 'sep-a', { entryId: OTHER_ENTRY_ID })];
   const room = () =>
     setup({
       contest: { selectionType },
       configuration: { selectionType, ...typeConfiguration },
+      salaryCap,
       picks: takenByOtherEntry,
     });
 
@@ -1557,10 +1565,7 @@ describe('SelectionService.previewLineup: a roster setup\'s pick screen before i
 
   /** The service, with the event priced against `salaryCap` (unpriced when null). */
   function previewSetup(salaryCap: number | null = 250) {
-    const built = setup();
-    const pricing = salaryCap === null ? null : { platformPricingProfileId: 'pricing-profile-1', salaryCap, unit: 10, topSharePercent: 24, floorSharePercent: 12, steepness: 4 };
-    (built.deps.tiers as unknown as { tierSetSlot: jest.Mock }).tierSetSlot.mockResolvedValue({ pricing });
-    return built;
+    return setup({ salaryCap });
   }
 
   it('groups the field by the unsaved tiered rules and marks the trial picks, a full lineup when each tier holds its pick', async () => {

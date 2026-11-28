@@ -49,6 +49,8 @@ const PUT_BACK = [
   // No side rows, no side results, and the keys they hang on.
   'DROP TABLE "sport_event_round_match_game_side_result_period_scores"',
   'DROP TABLE "sport_event_round_match_game_side_results"',
+  // A Game's box score stores the side each line was played for (#2026), a later migration's.
+  'DROP TABLE "sport_event_round_match_game_player_stats"',
   'DROP TABLE "sport_event_round_match_sides"',
   // A slot's valuations name their field row by this key (#2044), a later migration's.
   'ALTER TABLE "sport_event_slot_participant_valuations" DROP CONSTRAINT "sport_event_slot_valuations_field_row_fkey"',

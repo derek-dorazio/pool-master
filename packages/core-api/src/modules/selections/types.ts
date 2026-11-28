@@ -66,6 +66,12 @@ export interface SelectionContext {
    */
   sportEvent: SportEvent;
   configuration: ContestConfiguration | null;
+  /**
+   * The contest's salary cap (#2050): the pricing of the slot whose set it picks from, its first
+   * covered slot holding one, read with that set. Null when the slot is not priced; only a budget
+   * contest reads it.
+   */
+  salaryCap: number | null;
   entries: ContestEntry[];
   squadMemberships: SquadMembership[];
   /** The event's effective tiers and prices per field row, as the entry receipt lists them. */

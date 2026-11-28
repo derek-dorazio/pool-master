@@ -5,7 +5,7 @@ import { fixtureSeasonId, keyedSlotDefinitionId, withCurrentSeason, type TestRou
 import { seasonCompetitionFor } from '../support/competitions';
 import { contestOnEvents, fixtureTemplateId, placeEventForTemplate } from '../support/contest-rows';
 import { testSlotDefinitionId, uniqueTestSlotLabel } from '../support/test-slots';
-import { TemplateCoverageMode, type ContestSelectionConfig, type SelectionType, type Sport } from '@poolmaster/shared/domain';
+import { TemplateCoverageMode, type ContestRules, type SelectionType, type Sport } from '@poolmaster/shared/domain';
 import {
   createAuthenticatedClient,
   createFunctionalEmail,
@@ -290,7 +290,7 @@ export async function seedContestFixture(leagueId: string, options: {
      * The contest's typed rules (#479, #93). The selection room reads the roster from here:
      * without them a room has a roster of 0 and refuses every pick as unconfigured.
      */
-    configJson?: ContestSelectionConfig;
+    configJson?: ContestRules;
   };
 }): Promise<{ contestId: string }> {
   const prisma = getFunctionalPrisma();

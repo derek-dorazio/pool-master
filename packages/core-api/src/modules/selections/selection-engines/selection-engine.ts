@@ -100,6 +100,11 @@ export type EngineRules = Pick<ContestConfiguration, 'configJson'> | null;
 /** What an engine needs to judge a lineup: the contest's rules, its tiers and the entry's picks. */
 export interface LineupInput {
   configuration: EngineRules;
+  /**
+   * The contest's salary cap (#2050): its first covered slot's pricing, read there, never from
+   * the rules. Only a budget contest's engine reads it; null when that slot is not priced.
+   */
+  salaryCap: number | null;
   rosterSize: number;
   tiers: readonly SelectionTierConfig[];
   /** The entry's picks. */

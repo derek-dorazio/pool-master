@@ -836,7 +836,7 @@ describe('ContestRepository sports leagues a year (#947)', () => {
 });
 
 describe('ContestConfigurationRepository', () => {
-  it('reads stored rules back typed by selection type, dropping keys the rules do not define', async () => {
+  it('reads stored rules back typed by selection type, dropping keys the rules do not define, a copied salary cap among them', async () => {
     const { league, event } = await createLeagueAndEvent();
     const contest = await createContest(league.id, event.id, 'Budget rules', ContestStatus.DRAFT);
     await getPrisma().contestConfiguration.create({
@@ -861,7 +861,6 @@ describe('ContestConfigurationRepository', () => {
       selectionType: SelectionType.BUDGET_PICK,
       rosterSize: 6,
       countedScores: 4,
-      salaryCap: 50_000,
     });
   });
 

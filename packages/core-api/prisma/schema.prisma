@@ -595,6 +595,30 @@ enum PrismaProviderSyncFindingKind {
   CONFERENCE_UNMAPPED
   DIVISION_UNMAPPED
   CONFERENCE_TEAMS_MISSING
+  PROVIDER_PLAN_HAS_NO_STATS
+  BOX_SCORE_PLAYER_NOT_IN_GAME
+}
+
+/// A player's stat in a Game's box score (#2026): SportStat.
+enum PrismaSportStat {
+  PASSING_TOUCHDOWNS
+  RUSHING_TOUCHDOWNS
+  RECEIVING_TOUCHDOWNS
+  RECEPTIONS
+  PASSING_YARDS
+  RUSHING_YARDS
+  RECEIVING_YARDS
+  POINTS
+  REBOUNDS
+  ASSISTS
+  GOALS
+  SHOTS_ON_GOAL
+  SHOTS_ON_TARGET
+  TOTAL_BASES
+  RUNS
+  RUNS_BATTED_IN
+  WALKS
+  STOLEN_BASES
 }
 
 /// How a sport event's latest automatic release check ended (#1847).
@@ -1380,16 +1404,18 @@ model Participant {
   /// slot's field, never gets a provider mapping, and no roster or sync reads it.
   isTestData       Boolean                 @default(false) @map("is_test_data")
 
-  sportLeague            SportLeague                        @relation(fields: [sportLeagueId], references: [id])
+  sportLeague            SportLeague                          @relation(fields: [sportLeagueId], references: [id])
   providerMappings       ParticipantProviderMapping[]
   sportEventParticipants SportEventParticipant[]
   championOf             SportLeagueSeasonCompetition[]
   /// A player's roster rows, one per Season (#2025).
-  rosterRows             SportLeagueSeasonParticipantTeam[] @relation("RosterPlayer")
+  rosterRows             SportLeagueSeasonParticipantTeam[]   @relation("RosterPlayer")
   /// A team's players' roster rows.
-  rosterPlayers          SportLeagueSeasonParticipantTeam[] @relation("RosterTeam")
+  rosterPlayers          SportLeagueSeasonParticipantTeam[]   @relation("RosterTeam")
   /// A team's conference and division in each Season (#2052).
   seasonConferences      SportLeagueSeasonTeamConference[]
+  /// A player's stats, one row per Game and stat (#2026).
+  gameStats              SportEventRoundMatchGamePlayerStat[]
 
   /// The target of the composite keys that keep a participant's rows in its own league.
   @@unique([sportLeagueId, id])
@@ -2463,6 +2489,8 @@ model SportEventRoundMatchSide {
   sportEventParticipant SportEventParticipant?               @relation(fields: [sportEventId, sportEventParticipantId], references: [sportEventId, id], onDelete: Restrict, map: "sport_event_round_match_sides_participant_fkey")
   gameResults           SportEventRoundMatchGameSideResult[]
   predictions           ContestEntryMatchPrediction[]
+  /// The stats of the side's players (#2026).
+  playerStats           SportEventRoundMatchGamePlayerStat[]
 
   @@unique([sportEventRoundMatchId, sideNumber])
   /// A team plays one side of a match.
@@ -2516,6 +2544,8 @@ model SportEventRoundMatchGame {
   tiebreakerOfSlot SportEventSlot?                           @relation("SportEventSlotTiebreakerGame")
   sideResults      SportEventRoundMatchGameSideResult[]
   squaresGames     ContestSquaresGame[]
+  /// The Game's box score (#2026).
+  playerStats      SportEventRoundMatchGamePlayerStat[]
 
   @@unique([sportEventRoundMatchId, gameNumber])
   /// The target of a side result's composite key, which keeps the result in its Game's match.
@@ -2543,6 +2573,40 @@ model SportEventRoundMatchGameProviderMapping {
   /// A game has one id per provider.
   @@unique([sportEventRoundMatchGameId, providerId])
   @@map("sport_event_round_match_game_provider_mappings")
+}
+
+/// A player's stat in one Game (#2026, plans/league-model-redesign.md §5): the raw box score, one
+/// row per Game, player and `SportStat` code, written only by the box score writer. The side is the
+/// player's team's side of the Game's Match (their Season roster row's team), or the player's own
+/// side where the player is a side (a golfer, a driver): the composite key keeps it one of the
+/// Game's own Match's sides, and the writer refuses a player whose team plays neither. The player is
+/// a participant of the league. A stat the feed does not send for a player has no row.
+model SportEventRoundMatchGamePlayerStat {
+  id                         String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sportLeagueId              String          @map("sport_league_id") @db.Uuid
+  sportEventRoundMatchId     String          @map("sport_event_round_match_id") @db.Uuid
+  sportEventRoundMatchGameId String          @map("sport_event_round_match_game_id") @db.Uuid
+  /// The side the player played for: their team's, or their own.
+  sportEventRoundMatchSideId String          @map("sport_event_round_match_side_id") @db.Uuid
+  /// The player, an individual participant of the league.
+  participantId              String          @map("participant_id") @db.Uuid
+  stat                       PrismaSportStat
+  value                      Int
+  createdAt                  DateTime        @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt                  DateTime        @updatedAt @map("updated_at") @db.Timestamptz
+
+  /// Both composite keys run through the Match, so the side is always one of the Game's own Match's.
+  game   SportEventRoundMatchGame @relation(fields: [sportEventRoundMatchId, sportEventRoundMatchGameId], references: [sportEventRoundMatchId, id], onDelete: Cascade, map: "sport_event_round_match_game_player_stats_game_fkey")
+  side   SportEventRoundMatchSide @relation(fields: [sportEventRoundMatchId, sportEventRoundMatchSideId], references: [sportEventRoundMatchId, id], onDelete: Cascade, map: "sport_event_round_match_game_player_stats_side_fkey")
+  player Participant              @relation(fields: [sportLeagueId, participantId], references: [sportLeagueId, id], onDelete: Cascade, map: "sport_event_round_match_game_player_stats_player_fkey")
+
+  /// One row per Game, player and stat.
+  @@unique([sportEventRoundMatchGameId, participantId, stat], map: "sport_event_round_match_game_player_stats_game_player_stat_key")
+  /// A player's stats across Games: the rating window's read (#2028).
+  @@index([sportLeagueId, participantId], map: "sport_event_round_match_game_player_stats_player_idx")
+  @@index([sportEventRoundMatchId, sportEventRoundMatchGameId], map: "sport_event_round_match_game_player_stats_game_idx")
+  @@index([sportEventRoundMatchId, sportEventRoundMatchSideId], map: "sport_event_round_match_game_player_stats_side_idx")
+  @@map("sport_event_round_match_game_player_stats")
 }
 
 /// One side's result in one Game (#2046): its score (null until the game starts; the final score,
@@ -3108,14 +3172,14 @@ model SportLeagueCompetition {
   conferenceId       String?           @map("conference_id") @db.Uuid
   /// A readable key unique in the league (REGULAR, CFP), typed into migrations; nothing builds or
   /// parses it.
-  code               String   @db.VarChar(64)
+  code               String            @db.VarChar(64)
   /// Its place among its phase's competitions, from 1.
-  orderIndex         Int      @map("order_index")
+  orderIndex         Int               @map("order_index")
   /// The league's own proper name for it (College Football Playoff, Bowl Games), which names the
   /// event the sync makes for it (#2154). Null: the event takes the provider event's name.
-  name               String?  @db.VarChar(100)
-  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz
-  updatedAt          DateTime @updatedAt @map("updated_at") @db.Timestamptz
+  name               String?           @db.VarChar(100)
+  createdAt          DateTime          @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt          DateTime          @updatedAt @map("updated_at") @db.Timestamptz
 
   sportLeague        SportLeague                    @relation(fields: [sportLeagueId], references: [id], onDelete: Cascade)
   /// The composite key keeps the competition in a phase of its own league, with the phase's value.
