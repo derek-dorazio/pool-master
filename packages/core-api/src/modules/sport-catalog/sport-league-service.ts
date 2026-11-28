@@ -345,7 +345,7 @@ export function describeSportLeagueUses(uses: SportLeagueUses): string[] {
   return [
     ...counted(uses.sportEventCount, 'event', 'events'),
     ...counted(uses.contestTemplateCount, 'contest setup', 'contest setups'),
-    ...counted(uses.eventPageOfferCount, 'event page offer', 'event page offers'),
+    ...counted(uses.eventPageCount, 'event page', 'event pages'),
     ...counted(uses.cupCount, 'league cup', 'league cups'),
     ...counted(uses.participantCount, 'participant', 'participants'),
   ];

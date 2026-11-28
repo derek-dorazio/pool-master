@@ -4,9 +4,6 @@ import type { EventPageDto, EventPageOfferDto } from '@/lib/api';
 export function offerFixture(templateKey: string, overrides: Partial<EventPageOfferDto> = {}): EventPageOfferDto {
   return {
     id: `offer-${templateKey}`,
-    sportLeagueId: 'nfl',
-    sportLeagueName: 'NFL',
-    sportLeagueCompetitionSlotId: 'slot-conference',
     template: {
       id: `template-${templateKey}`,
       sportLeagueId: 'nfl',
@@ -43,9 +40,11 @@ export function championshipWeekendFixture(overrides: Partial<EventPageDto> = {}
     displayOrder: 20,
     isActive: true,
     redirectTo: null,
+    sportLeagueId: 'nfl',
+    sportLeagueName: 'NFL',
+    sportLeagueCompetitionSlotId: 'slot-conference',
     offers: [
       offerFixture('nfl-bracket-doubling', {
-        sportLeagueName: 'NFL',
         isPrimary: true,
         state: 'NOT_YET',
         sortOrder: 2,

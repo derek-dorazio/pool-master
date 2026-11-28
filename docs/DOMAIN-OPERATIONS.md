@@ -925,8 +925,9 @@ and by the seeded-template test. A slot definition a template covers cannot be d
 
 A public page for one event a fan would name, Championship Weekend at
 `/play/football/championship-weekend` (#1007, `plans/event-landing-pages.md`). A
-curated grouping: its `EventPageOffer` rows each name a contest template on one slot definition
-of its sport league (#2010), with a sort order and one
+curated grouping: the page names one slot definition of one sport league (#2010, #2050), and its
+`EventPageOffer` rows carry only the page and a contest template of that league (the template
+holds the coverage), with a sort order and one
 primary offer, whose edition heads the page (at most one per page, by a partial unique index). Unique on `(sport, urlSegment)`; the URL segment is
 stored and checked by the table against `isUrlSegment` (#2042). Its address is
 `/play/<the sport's urlSegment>/<its urlSegment>`: the sport's segment is the `sports` row's,
@@ -937,7 +938,7 @@ templates: there is no write operation. A retired page has `isActive` false and 
 | Operation | Role | Notes |
 |---|---|---|
 | List | `public` | `listEventPages`, optionally by `sport`: the active pages with their offers; with `upcoming=true` only the pages whose primary offer shows an edition coming, soonest first (#1202), for the Coming up rows and an event page's Next up |
-| Read one | `public` | `getEventPage` by the sport's URL segment and the page's, as the web address spells them, active or retired; 404 `EVENT_PAGE_NOT_FOUND` for an address no page has. Each offer carries the event playing its slot definition's soonest Season slot not yet over (#2010) still able to take the contest and `OPEN` or `NOT_YET`, from the same checks Create contest makes (`contestOpening`, on a reader whose reads are batched across the page's offers, so a page or the list costs the same statements for 2 offers as for 20, #1316); an offer with no such edition, or whose template is inactive (Create contest refuses one), is left out. A retired page has no offers. An exception to #431: an edition still `DRAFT` shows its name and dates on the public page, as `NOT_YET`, so a fan learns when the event opens before a root admin releases it; nothing else of a draft event is shown |
+| Read one | `public` | `getEventPage` by the sport's URL segment and the page's, as the web address spells them, active or retired; 404 `EVENT_PAGE_NOT_FOUND` for an address no page has. The page carries its sport league and slot definition, and each offer the event playing the page's slot definition's soonest Season slot not yet over (#2010, #2050) still able to take the contest and `OPEN` or `NOT_YET`, from the same checks Create contest makes (`contestOpening`, on a reader whose reads are batched across the page's offers, so a page or the list costs the same statements for 2 offers as for 20, #1316); an offer with no such edition, or whose template is inactive (Create contest refuses one), is left out. A retired page has no offers. An exception to #431: an edition still `DRAFT` shows its name and dates on the public page, as `NOT_YET`, so a fan learns when the event opens before a root admin releases it; nothing else of a draft event is shown |
 
 ### Contest
 

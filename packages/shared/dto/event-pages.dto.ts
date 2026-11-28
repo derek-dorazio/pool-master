@@ -30,15 +30,12 @@ export type EventPageNextSlotDto = z.infer<typeof EventPageNextSlotDtoSchema>;
 
 export const EventPageOfferDtoSchema = z.object({
   id: z.uuid(),
-  sportLeagueId: z.uuid().describe('The sport league whose slot the offer runs on.'),
-  sportLeagueName: z.string().describe('The sport league as screens away from its sport\'s own pages name it, such as "NFL".'),
-  sportLeagueCompetitionSlotId: z.uuid().describe('The slot definition the offer runs on (#2010), such as the NFL\'s conference championships: each Season has a slot of it.'),
   template: ContestConfigTemplateDtoSchema.describe('The contest setup the offer starts as: Create contest\'s ?template=.'),
   sortOrder: z.number().int().describe('Where the offer sits on its page, first first.'),
   isPrimary: z.boolean().describe('The offer whose next slot heads the page: its dates are the page\'s. A page has one.'),
   state: z.enum(EventPageOfferState).describe('OPEN: Create contest would take the contest on the next slot\'s event now. NOT_YET: the event is still to open (not released, field not loaded, or a bracket\'s teams not set); show when it is expected from its start date.'),
   nextSlot: EventPageNextSlotDtoSchema,
-}).describe('One way to play on an event page: a contest setup on one sport league\'s slot definition, with its next Season slot. An offer with no Season slot left that can still take the contest is left out.');
+}).describe('One way to play on an event page: a contest setup on the page\'s slot definition, with its next Season slot. An offer with no Season slot left that can still take the contest is left out.');
 export type EventPageOfferDto = z.infer<typeof EventPageOfferDtoSchema>;
 
 export const EventPageDtoSchema = z.object({
@@ -47,6 +44,9 @@ export const EventPageDtoSchema = z.object({
   displayOrder: z.number().int().describe('Where the page sits among its sport\'s pages, lower first.'),
   isActive: z.boolean().describe('False for a retired page: it has no offers, and its URL goes to redirectTo, or says the page has moved.'),
   redirectTo: z.object(EventPageAddressShape).nullable().describe('For a retired page with a successor, the page its URL now goes to; null otherwise.'),
+  sportLeagueId: z.uuid().describe('The sport league whose slot the page shows (#2050).'),
+  sportLeagueName: z.string().describe('The sport league as screens away from its sport\'s own pages name it, such as "NFL".'),
+  sportLeagueCompetitionSlotId: z.uuid().describe('The slot definition the page shows (#2010, #2050), such as the NFL\'s conference championships: each Season has a slot of it, and every offer is shown with the next one not yet over.'),
   offers: z.array(EventPageOfferDtoSchema).describe('The page\'s ways to play in order, each with its next slot. Offers with no slot left to take the contest are left out, so an active page can have none: it is between seasons.'),
 }).describe('A public event page, such as Championship Weekend: a curated grouping of contest setups on the slots a fan would call one event.');
 export type EventPageDto = z.infer<typeof EventPageDtoSchema>;

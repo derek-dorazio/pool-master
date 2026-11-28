@@ -27546,22 +27546,10 @@ export type EventPageNextSlotDto = {
 };
 
 /**
- * One way to play on an event page: a contest setup on one sport league's slot definition, with its next Season slot. An offer with no Season slot left that can still take the contest is left out.
+ * One way to play on an event page: a contest setup on the page's slot definition, with its next Season slot. An offer with no Season slot left that can still take the contest is left out.
  */
 export type EventPageOfferDto = {
     id: string;
-    /**
-     * The sport league whose slot the offer runs on.
-     */
-    sportLeagueId: string;
-    /**
-     * The sport league as screens away from its sport's own pages name it, such as "NFL".
-     */
-    sportLeagueName: string;
-    /**
-     * The slot definition the offer runs on (#2010), such as the NFL's conference championships: each Season has a slot of it.
-     */
-    sportLeagueCompetitionSlotId: string;
     /**
      * The contest setup the offer starts as: Create contest's ?template=.
      */
@@ -28223,22 +28211,22 @@ export type EventPageDto = {
         path: string;
     } | null;
     /**
+     * The sport league whose slot the page shows (#2050).
+     */
+    sportLeagueId: string;
+    /**
+     * The sport league as screens away from its sport's own pages name it, such as "NFL".
+     */
+    sportLeagueName: string;
+    /**
+     * The slot definition the page shows (#2010, #2050), such as the NFL's conference championships: each Season has a slot of it, and every offer is shown with the next one not yet over.
+     */
+    sportLeagueCompetitionSlotId: string;
+    /**
      * The page's ways to play in order, each with its next slot. Offers with no slot left to take the contest are left out, so an active page can have none: it is between seasons.
      */
     offers: Array<{
         id: string;
-        /**
-         * The sport league whose slot the offer runs on.
-         */
-        sportLeagueId: string;
-        /**
-         * The sport league as screens away from its sport's own pages name it, such as "NFL".
-         */
-        sportLeagueName: string;
-        /**
-         * The slot definition the offer runs on (#2010), such as the NFL's conference championships: each Season has a slot of it.
-         */
-        sportLeagueCompetitionSlotId: string;
         /**
          * The contest setup the offer starts as: Create contest's ?template=.
          */
@@ -28905,22 +28893,22 @@ export type EventPageResponse = {
             path: string;
         } | null;
         /**
+         * The sport league whose slot the page shows (#2050).
+         */
+        sportLeagueId: string;
+        /**
+         * The sport league as screens away from its sport's own pages name it, such as "NFL".
+         */
+        sportLeagueName: string;
+        /**
+         * The slot definition the page shows (#2010, #2050), such as the NFL's conference championships: each Season has a slot of it, and every offer is shown with the next one not yet over.
+         */
+        sportLeagueCompetitionSlotId: string;
+        /**
          * The page's ways to play in order, each with its next slot. Offers with no slot left to take the contest are left out, so an active page can have none: it is between seasons.
          */
         offers: Array<{
             id: string;
-            /**
-             * The sport league whose slot the offer runs on.
-             */
-            sportLeagueId: string;
-            /**
-             * The sport league as screens away from its sport's own pages name it, such as "NFL".
-             */
-            sportLeagueName: string;
-            /**
-             * The slot definition the offer runs on (#2010), such as the NFL's conference championships: each Season has a slot of it.
-             */
-            sportLeagueCompetitionSlotId: string;
             /**
              * The contest setup the offer starts as: Create contest's ?template=.
              */
@@ -29602,22 +29590,22 @@ export type EventPageListResponse = {
             path: string;
         } | null;
         /**
+         * The sport league whose slot the page shows (#2050).
+         */
+        sportLeagueId: string;
+        /**
+         * The sport league as screens away from its sport's own pages name it, such as "NFL".
+         */
+        sportLeagueName: string;
+        /**
+         * The slot definition the page shows (#2010, #2050), such as the NFL's conference championships: each Season has a slot of it, and every offer is shown with the next one not yet over.
+         */
+        sportLeagueCompetitionSlotId: string;
+        /**
          * The page's ways to play in order, each with its next slot. Offers with no slot left to take the contest are left out, so an active page can have none: it is between seasons.
          */
         offers: Array<{
             id: string;
-            /**
-             * The sport league whose slot the offer runs on.
-             */
-            sportLeagueId: string;
-            /**
-             * The sport league as screens away from its sport's own pages name it, such as "NFL".
-             */
-            sportLeagueName: string;
-            /**
-             * The slot definition the offer runs on (#2010), such as the NFL's conference championships: each Season has a slot of it.
-             */
-            sportLeagueCompetitionSlotId: string;
             /**
              * The contest setup the offer starts as: Create contest's ?template=.
              */
@@ -33635,7 +33623,7 @@ export type ProviderSyncFindingDto = {
     /**
      * What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here. PROVIDER_RATE_LIMITED: the Provider has rate limited every call for a while (WARNING after 15 minutes, ERROR after the league's quiet threshold); it resolves on the Provider's next answer. SLOT_NAME_UNMATCHED: a tournament whose normalized name (providerValue) no NAME_PATTERN mapping of the league matches, so it has no Season slot (INFO; LINK_SLOT adds the name as a pattern). SLOT_NAME_AMBIGUOUS: a tournament whose normalized name matches more than one slot, or one another tournament already has (ERROR). SLOT_SEASON_COMPETITION_MISSING: a tournament whose name matched a slot whose phase the Season does not have, so no Season slot could be made (ERROR). SYNC_FAILED: a sync run of the league (of the event, when it names one) ended FAILED, and no run of the same sync has completed since (ERROR, syncKind says which sync).
      */
-    kind: 'PROVIDER_RATE_LIMITED' | 'UNMAPPED_PARTICIPANT' | 'WEBHOOK_SECRET_MISSING' | 'SEASON_MISSING' | 'NO_PROVIDER_PARTICIPANTS' | 'NO_PROVIDER_LIVE_SCORES' | 'GAMES_NOT_SYNCED' | 'SLOT_VALUE_UNMAPPED' | 'PROVIDER_LEAGUE_UNKNOWN' | 'SLOT_NAME_UNMATCHED' | 'SLOT_NAME_AMBIGUOUS' | 'SLOT_SEASON_COMPETITION_MISSING' | 'SLOT_OUTSIDE_SEASON' | 'GAMES_UNPLACED' | 'SLOT_DATES_NEEDED' | 'FIELD_HAS_NO_ORDER' | 'GAME_UNKNOWN' | 'GAME_ID_REISSUED' | 'GAME_MOVED' | 'TIEBREAKER_GAME_REPLACED' | 'FIELD_TEAM_WITHOUT_GAME' | 'SYNC_FAILED' | 'CONFERENCE_UNMAPPED' | 'DIVISION_UNMAPPED';
+    kind: 'PROVIDER_RATE_LIMITED' | 'UNMAPPED_PARTICIPANT' | 'WEBHOOK_SECRET_MISSING' | 'SEASON_MISSING' | 'NO_PROVIDER_PARTICIPANTS' | 'NO_PROVIDER_LIVE_SCORES' | 'GAMES_NOT_SYNCED' | 'SLOT_VALUE_UNMAPPED' | 'PROVIDER_LEAGUE_UNKNOWN' | 'SLOT_NAME_UNMATCHED' | 'SLOT_NAME_AMBIGUOUS' | 'SLOT_SEASON_COMPETITION_MISSING' | 'SLOT_OUTSIDE_SEASON' | 'GAMES_UNPLACED' | 'SLOT_DATES_NEEDED' | 'FIELD_HAS_NO_ORDER' | 'GAME_UNKNOWN' | 'GAME_ID_REISSUED' | 'GAME_MOVED' | 'TIEBREAKER_GAME_REPLACED' | 'FIELD_TEAM_WITHOUT_GAME' | 'SYNC_FAILED' | 'CONFERENCE_UNMAPPED' | 'DIVISION_UNMAPPED' | 'CONFERENCE_TEAMS_MISSING';
     /**
      * ERROR: synced data is wrong or missing until someone acts (it also raises the alarm when it opens). WARNING: something the sync skipped or guessed at. INFO: something it noticed and left alone on purpose.
      */
@@ -33792,7 +33780,7 @@ export type ProviderSyncFindingListResponse = {
         /**
          * What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here. PROVIDER_RATE_LIMITED: the Provider has rate limited every call for a while (WARNING after 15 minutes, ERROR after the league's quiet threshold); it resolves on the Provider's next answer. SLOT_NAME_UNMATCHED: a tournament whose normalized name (providerValue) no NAME_PATTERN mapping of the league matches, so it has no Season slot (INFO; LINK_SLOT adds the name as a pattern). SLOT_NAME_AMBIGUOUS: a tournament whose normalized name matches more than one slot, or one another tournament already has (ERROR). SLOT_SEASON_COMPETITION_MISSING: a tournament whose name matched a slot whose phase the Season does not have, so no Season slot could be made (ERROR). SYNC_FAILED: a sync run of the league (of the event, when it names one) ended FAILED, and no run of the same sync has completed since (ERROR, syncKind says which sync).
          */
-        kind: 'PROVIDER_RATE_LIMITED' | 'UNMAPPED_PARTICIPANT' | 'WEBHOOK_SECRET_MISSING' | 'SEASON_MISSING' | 'NO_PROVIDER_PARTICIPANTS' | 'NO_PROVIDER_LIVE_SCORES' | 'GAMES_NOT_SYNCED' | 'SLOT_VALUE_UNMAPPED' | 'PROVIDER_LEAGUE_UNKNOWN' | 'SLOT_NAME_UNMATCHED' | 'SLOT_NAME_AMBIGUOUS' | 'SLOT_SEASON_COMPETITION_MISSING' | 'SLOT_OUTSIDE_SEASON' | 'GAMES_UNPLACED' | 'SLOT_DATES_NEEDED' | 'FIELD_HAS_NO_ORDER' | 'GAME_UNKNOWN' | 'GAME_ID_REISSUED' | 'GAME_MOVED' | 'TIEBREAKER_GAME_REPLACED' | 'FIELD_TEAM_WITHOUT_GAME' | 'SYNC_FAILED' | 'CONFERENCE_UNMAPPED' | 'DIVISION_UNMAPPED';
+        kind: 'PROVIDER_RATE_LIMITED' | 'UNMAPPED_PARTICIPANT' | 'WEBHOOK_SECRET_MISSING' | 'SEASON_MISSING' | 'NO_PROVIDER_PARTICIPANTS' | 'NO_PROVIDER_LIVE_SCORES' | 'GAMES_NOT_SYNCED' | 'SLOT_VALUE_UNMAPPED' | 'PROVIDER_LEAGUE_UNKNOWN' | 'SLOT_NAME_UNMATCHED' | 'SLOT_NAME_AMBIGUOUS' | 'SLOT_SEASON_COMPETITION_MISSING' | 'SLOT_OUTSIDE_SEASON' | 'GAMES_UNPLACED' | 'SLOT_DATES_NEEDED' | 'FIELD_HAS_NO_ORDER' | 'GAME_UNKNOWN' | 'GAME_ID_REISSUED' | 'GAME_MOVED' | 'TIEBREAKER_GAME_REPLACED' | 'FIELD_TEAM_WITHOUT_GAME' | 'SYNC_FAILED' | 'CONFERENCE_UNMAPPED' | 'DIVISION_UNMAPPED' | 'CONFERENCE_TEAMS_MISSING';
         /**
          * ERROR: synced data is wrong or missing until someone acts (it also raises the alarm when it opens). WARNING: something the sync skipped or guessed at. INFO: something it noticed and left alone on purpose.
          */
@@ -33884,7 +33872,7 @@ export type ProviderSyncFindingResponse = {
         /**
          * What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here. PROVIDER_RATE_LIMITED: the Provider has rate limited every call for a while (WARNING after 15 minutes, ERROR after the league's quiet threshold); it resolves on the Provider's next answer. SLOT_NAME_UNMATCHED: a tournament whose normalized name (providerValue) no NAME_PATTERN mapping of the league matches, so it has no Season slot (INFO; LINK_SLOT adds the name as a pattern). SLOT_NAME_AMBIGUOUS: a tournament whose normalized name matches more than one slot, or one another tournament already has (ERROR). SLOT_SEASON_COMPETITION_MISSING: a tournament whose name matched a slot whose phase the Season does not have, so no Season slot could be made (ERROR). SYNC_FAILED: a sync run of the league (of the event, when it names one) ended FAILED, and no run of the same sync has completed since (ERROR, syncKind says which sync).
          */
-        kind: 'PROVIDER_RATE_LIMITED' | 'UNMAPPED_PARTICIPANT' | 'WEBHOOK_SECRET_MISSING' | 'SEASON_MISSING' | 'NO_PROVIDER_PARTICIPANTS' | 'NO_PROVIDER_LIVE_SCORES' | 'GAMES_NOT_SYNCED' | 'SLOT_VALUE_UNMAPPED' | 'PROVIDER_LEAGUE_UNKNOWN' | 'SLOT_NAME_UNMATCHED' | 'SLOT_NAME_AMBIGUOUS' | 'SLOT_SEASON_COMPETITION_MISSING' | 'SLOT_OUTSIDE_SEASON' | 'GAMES_UNPLACED' | 'SLOT_DATES_NEEDED' | 'FIELD_HAS_NO_ORDER' | 'GAME_UNKNOWN' | 'GAME_ID_REISSUED' | 'GAME_MOVED' | 'TIEBREAKER_GAME_REPLACED' | 'FIELD_TEAM_WITHOUT_GAME' | 'SYNC_FAILED' | 'CONFERENCE_UNMAPPED' | 'DIVISION_UNMAPPED';
+        kind: 'PROVIDER_RATE_LIMITED' | 'UNMAPPED_PARTICIPANT' | 'WEBHOOK_SECRET_MISSING' | 'SEASON_MISSING' | 'NO_PROVIDER_PARTICIPANTS' | 'NO_PROVIDER_LIVE_SCORES' | 'GAMES_NOT_SYNCED' | 'SLOT_VALUE_UNMAPPED' | 'PROVIDER_LEAGUE_UNKNOWN' | 'SLOT_NAME_UNMATCHED' | 'SLOT_NAME_AMBIGUOUS' | 'SLOT_SEASON_COMPETITION_MISSING' | 'SLOT_OUTSIDE_SEASON' | 'GAMES_UNPLACED' | 'SLOT_DATES_NEEDED' | 'FIELD_HAS_NO_ORDER' | 'GAME_UNKNOWN' | 'GAME_ID_REISSUED' | 'GAME_MOVED' | 'TIEBREAKER_GAME_REPLACED' | 'FIELD_TEAM_WITHOUT_GAME' | 'SYNC_FAILED' | 'CONFERENCE_UNMAPPED' | 'DIVISION_UNMAPPED' | 'CONFERENCE_TEAMS_MISSING';
         /**
          * ERROR: synced data is wrong or missing until someone acts (it also raises the alarm when it opens). WARNING: something the sync skipped or guessed at. INFO: something it noticed and left alone on purpose.
          */

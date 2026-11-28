@@ -87,6 +87,7 @@ function build(options: {
         placed: [],
         unplaced: [],
         slotsNeedingDates: null,
+        slotsWithoutConferenceTeams: null,
         unplacedNames: [],
         competitionNames: new Map(),
       })),
@@ -376,6 +377,7 @@ describe('LeagueEventsSync', () => {
         placed: [],
         unplaced: [],
         slotsNeedingDates: null,
+        slotsWithoutConferenceTeams: null,
         unplacedNames: [],
         competitionNames: new Map(),
       }));
@@ -416,6 +418,7 @@ describe('LeagueEventsSync', () => {
           { code: null, startsAt: at('2025-12-20T17:00:00Z'), endsAt: at('2025-12-20T17:00:00Z'), eventName: 'Old bowls' },
         ],
         slotsNeedingDates: null,
+        slotsWithoutConferenceTeams: null,
         unplacedNames: [],
         competitionNames: new Map(),
       }));
@@ -453,6 +456,7 @@ describe('LeagueEventsSync', () => {
         placed: [],
         unplaced: [],
         slotsNeedingDates: null,
+        slotsWithoutConferenceTeams: null,
         unplacedNames: [
           { normalizedName: 'the new open', name: 'The 2027 New Open', reason: 'UNMATCHED' },
           { normalizedName: 'twin championship', name: 'Twin Championship', reason: 'AMBIGUOUS' },
@@ -477,7 +481,7 @@ describe('LeagueEventsSync', () => {
       const pga = syncedLeague(seasons, {}, own);
       const needing = jest.fn<Promise<string[] | null>, []>();
       const importProviderSeason = jest.fn(async (): Promise<ProviderSeasonImport> => ({
-        created: [], skipped: [], unmatched: [], placed: [], unplaced: [], slotsNeedingDates: await needing(), unplacedNames: [], competitionNames: new Map(),
+        created: [], skipped: [], unmatched: [], placed: [], unplaced: [], slotsNeedingDates: await needing(), slotsWithoutConferenceTeams: null, unplacedNames: [], competitionNames: new Map(),
       }));
       const { sync, findings } = build({ leagues: [pga], seasons, importProviderSeason });
       const runOnce = () => sync.run({ sportLeagueId: pga.id, sportLeagueSeasonId: own.current.id }, { jobId: randomUUID(), attempt: 1, renewLease: stillHeld, trigger: JobTrigger.SCHEDULE });
@@ -504,6 +508,41 @@ describe('LeagueEventsSync', () => {
       await runOnce();
       expect(findings.raiseOfSource).not.toHaveBeenCalled();
       expect(findings.resolveOfSource).not.toHaveBeenCalledWith('balldontlie', expect.objectContaining({ kind: ProviderSyncFindingKind.SLOT_DATES_NEEDED }));
+    });
+
+    it('raises one WARNING CONFERENCE_TEAMS_MISSING for a Season whose conference slots have no team in their conference, naming them, resolves it once all have teams, and checks nothing for a Season with no conference slot', async () => {
+      const seasons = new Map<string, SyncableSportLeagueSeason[]>();
+      const own = seasonsOf();
+      const pga = syncedLeague(seasons, {}, own);
+      const empty = jest.fn<Promise<string[] | null>, []>();
+      const importProviderSeason = jest.fn(async (): Promise<ProviderSeasonImport> => ({
+        created: [], skipped: [], unmatched: [], placed: [], unplaced: [], slotsNeedingDates: null, slotsWithoutConferenceTeams: await empty(), unplacedNames: [], competitionNames: new Map(),
+      }));
+      const { sync, findings } = build({ leagues: [pga], seasons, importProviderSeason });
+      const runOnce = () => sync.run({ sportLeagueId: pga.id, sportLeagueSeasonId: own.current.id }, { jobId: randomUUID(), attempt: 1, renewLease: stillHeld, trigger: JobTrigger.SCHEDULE });
+      const providerSeasonId = '2026';
+
+      empty.mockResolvedValueOnce(['EAST_FIRST_ROUND', 'EAST_FINAL']);
+      await runOnce();
+      expect(findings.raiseOfSource).toHaveBeenCalledWith('balldontlie', [{
+        kind: ProviderSyncFindingKind.CONFERENCE_TEAMS_MISSING,
+        severity: ProviderSyncFindingSeverity.WARNING,
+        sportLeagueId: pga.id,
+        sportEventId: null,
+        providerValue: providerSeasonId,
+        providerValueName: 'EAST_FIRST_ROUND, EAST_FINAL',
+      }]);
+
+      empty.mockResolvedValueOnce([]);
+      await runOnce();
+      expect(findings.resolveOfSource).toHaveBeenCalledWith('balldontlie', { kind: ProviderSyncFindingKind.CONFERENCE_TEAMS_MISSING, sportLeagueId: pga.id, providerValues: [providerSeasonId] });
+
+      findings.raiseOfSource.mockClear();
+      findings.resolveOfSource.mockClear();
+      empty.mockResolvedValueOnce(null);
+      await runOnce();
+      expect(findings.raiseOfSource).not.toHaveBeenCalled();
+      expect(findings.resolveOfSource).not.toHaveBeenCalledWith('balldontlie', expect.objectContaining({ kind: ProviderSyncFindingKind.CONFERENCE_TEAMS_MISSING }));
     });
 
     it('raises no SEASON_MISSING finding while a Season the provider has an id for has not ended', async () => {
@@ -574,6 +613,7 @@ describe('LeagueEventsSync', () => {
         placed: [],
         unplaced: [],
         slotsNeedingDates: null,
+        slotsWithoutConferenceTeams: null,
         unplacedNames: [],
         competitionNames: new Map(),
       }));

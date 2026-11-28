@@ -3,7 +3,7 @@ import { matchProviderSlots, placeSlotsByName, playsOutsideSeason, slotDatesChan
 // The one matcher of a provider's codes and dates to Season slots (league model slices 8 and 13, #2005, #2012).
 
 const slot = (seasonSlotId: string, providerCode: string | null, dates: Partial<Pick<SyncSeasonSlot, 'startsAt' | 'endsAt' | 'window'>> = {}): SyncSeasonSlot => ({
-  seasonSlotId, slotDefinitionId: `definition-${seasonSlotId}`, key: seasonSlotId, providerCode, linkedCode: null, coveredByTemplate: true, placedByWindow: dates.window !== undefined && dates.window !== null, sportEventId: null, seasonCompetitionId: 'competition', competitionName: null, restOfPhase: false, startsAt: dates.startsAt ?? null, endsAt: dates.endsAt ?? null, window: dates.window ?? null,
+  seasonSlotId, slotDefinitionId: `definition-${seasonSlotId}`, key: seasonSlotId, providerCode, linkedCode: null, coveredByTemplate: true, placedByWindow: dates.window !== undefined && dates.window !== null, sportEventId: null, seasonCompetitionId: 'competition', competitionName: null, restOfPhase: false, startsAt: dates.startsAt ?? null, endsAt: dates.endsAt ?? null, window: dates.window ?? null, conferenceTeams: null,
 });
 const windowed = (seasonSlotId: string, from: string, to: string, status: SlotWindowStatus = SlotWindowStatus.CONFIRMED) =>
   slot(seasonSlotId, null, { window: { startsAt: new Date(from), endsAt: new Date(to), status } });
@@ -222,5 +222,43 @@ describe('matchProviderSlots by a linked tournament code', () => {
     const linked = { ...slot('masters-2027', null), slotDefinitionId: 'masters', linkedCode: '17' };
 
     expect(matchProviderSlots([play('17')], [linked]).matched.map(({ slot: each }) => each.seasonSlotId)).toEqual(['masters-2027']);
+  });
+});
+
+describe('matchProviderSlots in a conference\'s competition (#2052)', () => {
+  const window = ['2027-03-10T10:00:00Z', '2027-03-16T12:00:00Z'] as const;
+  const inConference = (seasonSlotId: string, teams: readonly string[]) => ({ ...restOf(seasonSlotId, ...window), conferenceTeams: new Set(teams) });
+  const acc = inConference('acc-tournament', ['duke', 'unc', 'virginia']);
+  const sec = inConference('sec-tournament', ['auburn', 'florida']);
+
+  it('places a game only in the tournament of the conference both its teams hold, and leaves a game between two conferences unplaced', () => {
+    const accGame = game('2027-03-12T23:00:00Z', ['duke', 'unc']);
+    const secGame = game('2027-03-13T01:00:00Z', ['auburn', 'florida']);
+    const crossConference = game('2027-03-13T17:00:00Z', ['duke', 'florida']);
+
+    const matches = matchProviderSlots([accGame, secGame, crossConference], [acc, sec]);
+
+    expect(matches.matched.map(({ slot: each, games }) => [each.seasonSlotId, games.length])).toEqual([['acc-tournament', 1], ['sec-tournament', 1]]);
+    expect(matches.unplaced).toEqual([crossConference]);
+  });
+
+  it('leaves a game whose teams the feed does not name out of a conference\'s competition', () => {
+    const unnamed = { code: null, startsAt: new Date('2027-03-12T23:00:00Z'), endsAt: new Date('2027-03-12T23:00:00Z') };
+
+    expect(matchProviderSlots([unnamed], [acc]).unplaced).toEqual([unnamed]);
+  });
+
+  it('refuses a coded game with another conference\'s team, and takes a coded play that names no teams on its code', () => {
+    const accFinal = { ...slot('acc-final', 'CONF:ACC'), conferenceTeams: new Set(['duke', 'unc']) };
+    const visitor = { ...play('CONF:ACC'), teams: ['duke', 'auburn'] };
+
+    expect(matchProviderSlots([visitor], [accFinal]).unplaced).toEqual([visitor]);
+    expect(matchProviderSlots([play('CONF:ACC')], [accFinal]).matched.map(({ slot: each }) => each.seasonSlotId)).toEqual(['acc-final']);
+  });
+
+  it('places any game in a competition that names no conference, as before', () => {
+    const titleGames = restOf('conference-championships', ...window);
+
+    expect(matchProviderSlots([game('2027-03-12T23:00:00Z', ['duke', 'auburn'])], [titleGames]).matched).toHaveLength(1);
   });
 });

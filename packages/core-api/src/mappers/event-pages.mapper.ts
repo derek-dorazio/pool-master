@@ -6,9 +6,6 @@ import { mapContestConfigTemplateDto } from './contest-management.mapper';
 export function toEventPageOfferDto(view: EventPageOfferView): EventPageOfferDto {
   return {
     id: view.offer.id,
-    sportLeagueId: view.offer.sportLeagueId,
-    sportLeagueName: view.offer.sportLeagueName,
-    sportLeagueCompetitionSlotId: view.offer.sportLeagueCompetitionSlotId,
     template: mapContestConfigTemplateDto(view.offer.template),
     sortOrder: view.offer.sortOrder,
     isPrimary: view.offer.isPrimary,
@@ -41,6 +38,9 @@ export function toEventPageDto(view: EventPageView): EventPageDto {
     displayOrder: view.page.displayOrder,
     isActive: view.page.isActive,
     redirectTo: view.page.redirectTo === null ? null : toAddressDto(view.page.redirectTo),
+    sportLeagueId: view.page.sportLeagueId,
+    sportLeagueName: view.page.sportLeagueName,
+    sportLeagueCompetitionSlotId: view.page.sportLeagueCompetitionSlotId,
     offers: view.offers.map(toEventPageOfferDto),
   };
 }

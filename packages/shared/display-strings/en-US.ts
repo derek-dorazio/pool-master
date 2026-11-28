@@ -326,6 +326,7 @@ export const enUS = {
       SYNC_FAILED: 'Sync failed',
       CONFERENCE_UNMAPPED: 'Unknown conference',
       DIVISION_UNMAPPED: 'Unknown division',
+      CONFERENCE_TEAMS_MISSING: 'Conference has no teams',
     },
     ProviderSyncFindingAction: {
       MAP_PARTICIPANT: 'Map participant',
