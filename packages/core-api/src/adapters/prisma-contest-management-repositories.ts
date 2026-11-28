@@ -23,7 +23,7 @@ import type {
 import {
   compareCoveredSlots,
   ContestRulesWithEntryLimitSchema,
-  ContestSelectionConfigSchema,
+  ContestRulesSchema,
   parseContestScoringSettings,
 } from '@poolmaster/shared/domain';
 
@@ -245,7 +245,7 @@ function mapContestConfiguration(row: {
     selectionType: row.selectionType,
     // Parsed, not cast: the rules decide what an entry may pick, so a row that breaks them
     // fails loudly here rather than downstream (#93).
-    configJson: row.configJson === null ? undefined : ContestSelectionConfigSchema.parse(row.configJson),
+    configJson: row.configJson === null ? undefined : ContestRulesSchema.parse(row.configJson),
     minimumEntries: row.minimumEntries ?? undefined,
     maxEntriesPerSquad: row.maxEntriesPerSquad ?? undefined,
     totalPrizePoolAmount: row.totalPrizePoolAmount ?? undefined,

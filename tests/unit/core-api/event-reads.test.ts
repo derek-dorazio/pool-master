@@ -105,7 +105,7 @@ describe('fan-out event reads', () => {
 describe('readTiersOnce', () => {
   it('reads each event\'s set once per choice of slot and gives later callers that answer, while a different slot or coverage reads again', async () => {
     const load = jest.fn(async (sportEventId: string) => [{ sportEventId } as unknown as SportEventTierGroup]);
-    const tiers = readTiersOnce({ getEffectiveTiersForSportEvent: load });
+    const tiers = readTiersOnce({ getEffectiveTiersForSportEvent: load, salaryCaps: jest.fn() });
 
     await Promise.all([
       tiers.getEffectiveTiersForSportEvent('event-1'),
@@ -124,6 +124,25 @@ describe('readTiersOnce', () => {
       ['event-1', { coveredSlotDefinitionIds: ['def-b', 'def-a'] }],
       ['event-1', { coveredSlotDefinitionIds: ['def-c'] }],
       ['event-2', undefined],
+    ]);
+  });
+
+  it('reads the events\' salary caps once per choice of slot, whatever order the events are asked in, while different events or coverage read again', async () => {
+    const load = jest.fn(async (sportEventIds: readonly string[]) => new Map(sportEventIds.map((sportEventId): [string, number] => [sportEventId, 50_000])));
+    const tiers = readTiersOnce({ getEffectiveTiersForSportEvent: jest.fn(), salaryCaps: load });
+
+    const [first] = await Promise.all([
+      tiers.salaryCaps(['event-1', 'event-2'], { coveredSlotDefinitionIds: ['def-a'] }),
+      tiers.salaryCaps(['event-2', 'event-1'], { coveredSlotDefinitionIds: ['def-a'] }),
+      tiers.salaryCaps(['event-1'], { coveredSlotDefinitionIds: ['def-a'] }),
+      tiers.salaryCaps(['event-1', 'event-2'], { coveredSlotDefinitionIds: ['def-b'] }),
+    ]);
+
+    expect(first.get('event-1')).toBe(50_000);
+    expect(load.mock.calls).toEqual([
+      [['event-1', 'event-2'], { coveredSlotDefinitionIds: ['def-a'] }],
+      [['event-1'], { coveredSlotDefinitionIds: ['def-a'] }],
+      [['event-1', 'event-2'], { coveredSlotDefinitionIds: ['def-b'] }],
     ]);
   });
 });

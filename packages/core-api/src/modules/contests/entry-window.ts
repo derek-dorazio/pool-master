@@ -18,7 +18,7 @@
  * A random draw closes entries early (#601): once it has dealt, nobody may enter, leave or
  * change an entry, or the deal would no longer be the one every entry was given.
  */
-import type { Contest, ContestCoveredSlot, ContestRules, ContestSelectionConfig, ContestSquaresGame, SportEventRoundMatch, SportEventRoundMatchGame } from '@poolmaster/shared/domain';
+import type { Contest, ContestCoveredSlot, ContestRules, ContestSquaresGame, SportEventRoundMatch, SportEventRoundMatchGame } from '@poolmaster/shared/domain';
 import { ContestStatus, isMatchUnplayed, SeasonSlotStatus, SelectionType, SportEventStatus, hasSportEventStarted, isSportEventStatusFinished, hasPeriodScores } from '@poolmaster/shared/domain';
 
 /**
@@ -66,7 +66,7 @@ export function hasGameMovedOn(game: MatchTiming): boolean {
  * covers. A contest not made yet covers no slot so far, so its window is its events' own.
  */
 export function contestCutoff(
-  rules: ContestRules | ContestSelectionConfig | undefined,
+  rules: ContestRules | undefined,
   contest: { squaresGame?: Pick<ContestSquaresGame, 'sportEventRoundMatchGameId'>; coveredSlots?: readonly CoveredSlotTiming[] } = {},
 ): ContestCutoff {
   if (rules?.selectionType === SelectionType.SQUARES && contest.squaresGame !== undefined) {
