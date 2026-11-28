@@ -56,15 +56,13 @@ import {
   CONTEST_SQUARES_SINGLE_EVENT,
 } from '@poolmaster/shared/dto';
 import type {
-  BudgetContestConfig,
   BudgetContestRules,
   Contest,
   ContestConfigTemplate,
   ContestConfiguration,
-  ContestRules,
   ContestRoundCoverage,
   ContestScoringSettings,
-  ContestSelectionConfig,
+  ContestRules,
   ParticipantContestScoringRule,
   ParticipantType,
   ParticipantScoringDefinitionId,
@@ -130,8 +128,6 @@ export interface ContestCreateSportEventState {
    * points do not score.
    */
   playsOnlyKnockoutRounds: boolean;
-  /** The salary cap the event's field was priced against, or null when it never was (#93). */
-  salaryCap: number | null;
   /** Its sport league's participant type and scoring family (#2001). Read through `eventSportDefinition`. */
   participantType: ParticipantType;
   scoringFamily: ScoringFamily;
@@ -408,6 +404,17 @@ export class ContestManagementService {
     }));
   }
 
+  /**
+   * A budget contest's salary cap (#2050): its first event's first covered slot's pricing, read
+   * there and never stored on the rules. Null for any other contest, and until that slot is priced.
+   */
+  private async contestSalaryCap(contest: Contest): Promise<number | null> {
+    const first = contest.sportEventIds.at(0);
+    if (contest.selectionType !== SelectionType.BUDGET_PICK || first === undefined) return null;
+    const caps = await this.sportEventTierService.salaryCaps([first], { coveredSlotDefinitionIds: contestRoundCoverage(contest).slotDefinitionIds });
+    return caps.get(first) ?? null;
+  }
+
   async getContest(contestId: string): Promise<ContestManagementDetailDto> {
     this.logger.debug({ contestId }, 'contest management get contest start');
     const contest = await this.contestRepo.findById(contestId);
@@ -433,6 +440,7 @@ export class ContestManagementService {
       contest,
       configuration,
       await this.resolveContestSportEvents(contest),
+      await this.contestSalaryCap(contest),
     );
   }
 
@@ -511,6 +519,7 @@ export class ContestManagementService {
       contest,
       refreshedConfiguration,
       await this.resolveContestSportEvents(contest),
+      await this.contestSalaryCap(contest),
     );
   }
 
@@ -672,10 +681,9 @@ export class ContestManagementService {
       requestedIds,
       input.startingSlotId,
     );
-    // The rules are checked against the new events as at create. Only a budget contest's rules
-    // depend on its events, through their salary cap, which a contest in Set up takes from them.
-    const storedRules = ensureTypedConfiguration(configuration);
-    const { configJson } = await this.resolveContestRules(sportEvents, storedRules, {
+    // The rules are checked against the new events as at create: a budget contest's roster must
+    // fit under the new event's cap, which it reads from that event's slot and never stores (#2050).
+    await this.resolveContestRules(sportEvents, ensureTypedConfiguration(configuration), {
       kept: currentScoring(await this.participantContestScoringRuleRepo.findByContestConfiguration(configuration.id)),
     }, { slotDefinitionIds: template.slots.map((slot) => slot.id) });
 
@@ -685,11 +693,6 @@ export class ContestManagementService {
     if (!await this.contestRepo.replaceCoveredSlots(contestId, seasonSlotIds, [ContestStatus.DRAFT])) {
       this.logger.warn({ contestId }, 'contest management set coverage refused: the contest opened meanwhile');
       throw coverageLockedError();
-    }
-    if (configJson.selectionType === SelectionType.BUDGET_PICK
-      && storedRules.selectionType === SelectionType.BUDGET_PICK
-      && configJson.salaryCap !== storedRules.salaryCap) {
-      await this.contestConfigurationRepo.update(configuration.id, { configJson });
     }
     this.logger.info({
       contestId,
@@ -999,7 +1002,7 @@ export class ContestManagementService {
     rules: ContestRules,
     scoringInput: ContestScoringInput,
     coverage: ContestRoundCoverage,
-  ): Promise<{ configJson: ContestSelectionConfig; scoring: ContestScoringSettings }> {
+  ): Promise<{ configJson: ContestRules; scoring: ContestScoringSettings }> {
     // One sport league, so one sport: the first event answers the sport's questions, and every
     // event is checked where the events can differ (tiers, prices, rounds).
     const sportEvent = this.assertOneSportLeague(sportEvents);
@@ -1086,7 +1089,7 @@ export class ContestManagementService {
         };
       case SelectionType.BUDGET_PICK:
         return {
-          configJson: await this.resolveBudgetRulesForEvents(sportEvents, rules),
+          configJson: await this.resolveBudgetRulesForEvents(sportEvents, rules, coverage),
           scoring,
         };
       case SelectionType.RANDOM_DRAW:
@@ -1279,28 +1282,28 @@ export class ContestManagementService {
 
   /**
    * Budget rules against every event of the contest (#713): each must fill the roster under its
-   * cap, and they must share one cap, since the rules carry one.
+   * cap, its first covered slot's pricing (#2050), and they must share one cap, since every
+   * reader takes the cap from the contest's first event.
    */
   private async resolveBudgetRulesForEvents(
     sportEvents: readonly ContestCreateSportEventState[],
     rules: BudgetContestRules,
-  ): Promise<BudgetContestConfig> {
-    const configs: BudgetContestConfig[] = [];
+    coverage: ContestRoundCoverage,
+  ): Promise<BudgetContestRules> {
+    const caps = await this.sportEventTierService.salaryCaps(sportEvents.map(({ id }) => id), { coveredSlotDefinitionIds: coverage.slotDefinitionIds });
+    const salaryCaps: number[] = [];
     for (const sportEvent of sportEvents) {
-      configs.push(await this.resolveBudgetRules(sportEvent, rules));
+      salaryCaps.push(await this.assertBudgetRulesFit(sportEvent, rules, caps.get(sportEvent.id) ?? null));
     }
-    const first = configs.at(0);
-    if (!first || configs.some((config) => config.salaryCap !== first.salaryCap)) {
-      this.logger.warn({
-        salaryCaps: configs.map((config) => config.salaryCap),
-      }, 'contest management budget rules refused for events priced against different caps');
+    if (salaryCaps.some((salaryCap) => salaryCap !== salaryCaps[0])) {
+      this.logger.warn({ salaryCaps }, 'contest management budget rules refused for events priced against different caps');
       throw new ContestManagementError(
         'Every event in a budget contest must be priced against the same salary cap.',
         CONTEST_BUDGET_SALARY_CAP_MISMATCH,
         409,
       );
     }
-    return first;
+    return { selectionType: rules.selectionType, rosterSize: rules.rosterSize, countedScores: rules.countedScores };
   }
 
   /**
@@ -1327,14 +1330,15 @@ export class ContestManagementService {
   }
 
   /**
-   * Budget rules take the event's salary cap, so the event must have been priced, and the
-   * cheapest roster of `rosterSize` active golfers must fit under it: a contest nobody could
-   * submit an entry to is refused here, not discovered by its members.
+   * Budget rules need the event's salary cap, so the event's covered slot must have been priced,
+   * and the cheapest roster of `rosterSize` active golfers must fit under it: a contest nobody could
+   * submit an entry to is refused here, not discovered by its members. Returns the cap.
    */
-  private async resolveBudgetRules(
+  private async assertBudgetRulesFit(
     sportEvent: ContestCreateSportEventState,
     rules: BudgetContestRules,
-  ): Promise<BudgetContestConfig> {
+    salaryCap: number | null,
+  ): Promise<number> {
     const sportEventId = sportEvent.id;
     if (rules.countedScores > rules.rosterSize) {
       throw new ContestManagementError(
@@ -1342,15 +1346,14 @@ export class ContestManagementService {
         CONTEST_BUDGET_FIELD_OUT_OF_RANGE,
       );
     }
-    if (sportEvent.salaryCap === null) {
+    if (salaryCap === null) {
       this.logger.warn({ sportEventId }, 'contest management budget rules refused for an unpriced event');
       throw new ContestManagementError(
-        'This event\'s golfers have no prices, so it can\'t run a budget contest.',
+        "This event's golfers have no prices, so it can't run a budget contest.",
         CONTEST_EVENT_NOT_PRICED,
         409,
       );
     }
-    const { salaryCap } = sportEvent;
     const prices = await this.sportEventReader.findActiveFieldPrices(sportEventId);
     if (!canFillBudgetRoster(prices, rules.rosterSize, salaryCap)) {
       this.logger.warn({
@@ -1365,12 +1368,7 @@ export class ContestManagementService {
         409,
       );
     }
-    return {
-      selectionType: rules.selectionType,
-      rosterSize: rules.rosterSize,
-      salaryCap,
-      countedScores: rules.countedScores,
-    };
+    return salaryCap;
   }
 }
 
@@ -1488,16 +1486,18 @@ function buildContestManagementDetail(
     contestId: string;
     templateId?: string | null;
     templateVersion?: number | null;
-    configJson?: ContestSelectionConfig;
+    configJson?: ContestRules;
     maxEntriesPerSquad?: number | null;
   },
   sportEvents: ContestManagementSportEventDto[],
+  salaryCap: number | null,
 ): ContestManagementDetailDto {
   const configJson = ensureTypedConfiguration(configuration);
   return {
     id: contest.id,
     leagueId: contest.leagueId,
     sportEvents,
+    salaryCap,
     name: contest.name,
     status: contest.status,
     cupWeight: contest.cupWeight,
@@ -1518,9 +1518,9 @@ function buildContestManagementDetail(
  * create writes them, and #479's and #93's migrations wrote them for older rows.
  */
 function ensureTypedConfiguration(configuration: {
-  configJson?: ContestSelectionConfig;
+  configJson?: ContestRules;
   maxEntriesPerSquad?: number | null;
-}): ContestSelectionConfig & {
+}): ContestRules & {
   maxEntriesPerSquad: number | null;
 } {
   if (configuration.configJson) {

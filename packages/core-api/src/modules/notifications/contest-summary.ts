@@ -12,7 +12,7 @@ import type {
 } from '@poolmaster/shared/db';
 import {
   type Contest,
-  type ContestSelectionConfig,
+  type ContestRules,
   contestRoundCoverage,
   eventSportDefinition,
   formatContestRules,
@@ -33,7 +33,7 @@ export interface ContestSummaryDeps {
   /** The first event's sport league, for its name. */
   sportLeagues: Pick<SportLeagueRepository, 'findById'>;
   matches: Pick<SportEventRoundMatchRepository, 'findBySportEvent' | 'findBySportEvents'>;
-  tiers: Pick<SportEventTierService, 'getEffectiveTiersForSportEvent'>;
+  tiers: Pick<SportEventTierService, 'getEffectiveTiersForSportEvent' | 'salaryCaps'>;
 }
 
 export interface ContestSummary {
@@ -97,7 +97,10 @@ export async function summarizeContest(deps: ContestSummaryDeps, contest: Contes
         ? (await deps.tiers.getEffectiveTiersForSportEvent(first.id, { coveredSlotDefinitionIds: contestRoundCoverage(contest).slotDefinitionIds })).length
         : 0,
       sportVocabulary(eventSportDefinition(first)).participant,
-      rules.selectionType === SelectionType.BUDGET_PICK ? rules.salaryCap : null,
+      // A budget contest's cap is its first covered slot's pricing (#2050), never its rules'.
+      rules.selectionType === SelectionType.BUDGET_PICK
+        ? (await deps.tiers.salaryCaps([first.id], { coveredSlotDefinitionIds: contestRoundCoverage(contest).slotDefinitionIds })).get(first.id) ?? null
+        : null,
     ),
     entriesPerMember: formatEntriesPerTeamSentence(configuration.maxEntriesPerSquad),
     closesAt,
@@ -111,21 +114,21 @@ export async function summarizeContest(deps: ContestSummaryDeps, contest: Contes
 export async function contestClosesAt(
   deps: { matches: Pick<SportEventRoundMatchRepository, 'findBySportEvent'> },
   contest: Contest,
-  rules: ContestSelectionConfig,
+  rules: ContestRules,
   first: SportEvent,
 ): Promise<Date> {
   return contestClosesAtGiven(contest, rules, first, closesOnAGame(contest, rules) ? await deps.matches.findBySportEvent(first.id) : []);
 }
 
 /** Whether the contest's picks close at one of its first event's games, so its close needs the event's games. */
-export function closesOnAGame(contest: Contest, rules: ContestSelectionConfig): boolean {
+export function closesOnAGame(contest: Contest, rules: ContestRules): boolean {
   return contestCutoff(rules, contest.squaresGame).kind !== ContestCutoffKind.EVENT_START;
 }
 
 /** `contestClosesAt` with the first event's games already read, for a sweep that reads every contest's at once. */
 export function contestClosesAtGiven(
   contest: Contest,
-  rules: ContestSelectionConfig,
+  rules: ContestRules,
   first: SportEvent,
   games: readonly SportEventRoundMatch[],
 ): Date {

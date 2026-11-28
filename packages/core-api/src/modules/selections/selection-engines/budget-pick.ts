@@ -21,11 +21,9 @@ import {
   type SelectionEngine,
 } from './selection-engine';
 
-/** The budget rules' salary cap, or null when the contest carries no budget rules. */
-function salaryCapOf(configuration: EngineRules): number | null {
-  return configuration?.configJson?.selectionType === SelectionType.BUDGET_PICK
-    ? configuration.configJson.salaryCap
-    : null;
+/** The contest's salary cap when it carries budget rules (#2050), else null. */
+function salaryCapOf(configuration: EngineRules, salaryCap: number | null): number | null {
+  return configuration?.configJson?.selectionType === SelectionType.BUDGET_PICK ? salaryCap : null;
 }
 
 /**
@@ -73,9 +71,9 @@ export const budgetPickSelectionEngine: SelectionEngine = {
   refuseUnselect: () => null,
 
   /** A full roster, judged by count alone (there are no tiers), that costs no more than the cap. */
-  findLineupIssues: ({ configuration, rosterSize, picks }) => {
+  findLineupIssues: ({ configuration, salaryCap: contestCap, rosterSize, picks }) => {
     const issues: LineupIssue[] = completenessIssues({ rosterSize, pickCount: picks.length, shortTierNames: [] });
-    const salaryCap = salaryCapOf(configuration);
+    const salaryCap = salaryCapOf(configuration, contestCap);
     const spent = spentCents(picks);
     if (salaryCap !== null && spent > toCents(salaryCap)) {
       issues.push({ kind: LineupIssueKind.OVER_BUDGET, spent: spent / 100, salaryCap });
@@ -92,8 +90,8 @@ export const budgetPickSelectionEngine: SelectionEngine = {
     participants: [...participants].sort(byPriceDescending),
   }],
 
-  summarizeLineup: ({ configuration, rosterSize, picks, openField }) => {
-    const salaryCap = salaryCapOf(configuration);
+  summarizeLineup: ({ configuration, salaryCap: contestCap, rosterSize, picks, openField }) => {
+    const salaryCap = salaryCapOf(configuration, contestCap);
     if (salaryCap === null) return null;
 
     const capCents = toCents(salaryCap);

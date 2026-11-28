@@ -11,7 +11,7 @@
 
 import type {
   ContestScoringSettings,
-  ContestSelectionConfig,
+  ContestRules,
   PredictedChoice,
   PredictionSelectionType,
   SportEventRoundMatch,
@@ -130,7 +130,7 @@ export interface PredictionEngine {
    * submit, so values can be swapped one pick at a time.
    */
   acceptsConfidence(input: {
-    configuration: ContestSelectionConfig | undefined;
+    configuration: ContestRules | undefined;
     confidence: number | null;
     gameCount: number;
   }): boolean;
@@ -140,7 +140,7 @@ export interface PredictionEngine {
    * rules and scoring; null where they cannot score it.
    */
   scorePicks(input: {
-    configuration: ContestSelectionConfig | undefined;
+    configuration: ContestRules | undefined;
     games: readonly SportEventRoundMatch[];
     predictions: readonly WeekPrediction[];
     seedOf: ReadonlyMap<string, number | null>;
@@ -150,7 +150,7 @@ export interface PredictionEngine {
 
   /** Everything that stops the week being submitted, empty when it may be. */
   findWeekIssues(input: {
-    configuration: ContestSelectionConfig | undefined;
+    configuration: ContestRules | undefined;
     gameMatchIds: readonly string[];
     predictions: readonly WeekPrediction[];
     tiebreakerValue: number | null;

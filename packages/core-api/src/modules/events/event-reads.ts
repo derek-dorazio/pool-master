@@ -11,7 +11,7 @@
 
 import type { SportEventRoundMatchRepository, SportEventRepository } from '@poolmaster/shared/db';
 import type { SportEvent, SportEventRoundMatch } from '@poolmaster/shared/domain';
-import type { SportEventTierGroup, SportEventTierService } from './sport-event-tier-service';
+import type { SportEventTierGroup, SportEventTierService, TierSetChoice } from './sport-event-tier-service';
 
 /** `load`, read once per key: later calls for the key share the first call's answer. */
 export function readOncePerKey<T>(load: (key: string) => Promise<T>): (key: string) => Promise<T> {
@@ -88,16 +88,22 @@ function readTogether<T>(
  * covering the same slots share one read. The memo key lists the slot definitions covered; it is
  * only ever compared, never read back.
  */
-export function readTiersOnce(tiers: Pick<SportEventTierService, 'getEffectiveTiersForSportEvent'>): Pick<SportEventTierService, 'getEffectiveTiersForSportEvent'> {
+export function readTiersOnce(
+  tiers: Pick<SportEventTierService, 'getEffectiveTiersForSportEvent' | 'salaryCaps'>,
+): Pick<SportEventTierService, 'getEffectiveTiersForSportEvent' | 'salaryCaps'> {
   const answers = new Map<string, Promise<SportEventTierGroup[]>>();
+  const caps = new Map<string, Promise<Map<string, number | null>>>();
   return {
-    getEffectiveTiersForSportEvent: (sportEventId, choice) => {
-      let set = 'tier-set slot';
-      if (choice !== undefined && 'seasonSlotId' in choice) set = `slot ${choice.seasonSlotId}`;
-      if (choice !== undefined && 'coveredSlotDefinitionIds' in choice) {
-        set = `covering ${[...choice.coveredSlotDefinitionIds].sort().join(',')}`;
-      }
-      return remember(answers, `${sportEventId} ${set}`, () => tiers.getEffectiveTiersForSportEvent(sportEventId, choice));
-    },
+    getEffectiveTiersForSportEvent: (sportEventId, choice) =>
+      remember(answers, `${sportEventId} ${tierSetKey(choice)}`, () => tiers.getEffectiveTiersForSportEvent(sportEventId, choice)),
+    salaryCaps: (sportEventIds, choice) =>
+      remember(caps, `${[...sportEventIds].sort().join(',')} ${tierSetKey(choice)}`, () => tiers.salaryCaps(sportEventIds, choice)),
   };
+}
+
+/** Which set a tier read asks for, as a memo key. */
+function tierSetKey(choice: TierSetChoice | undefined): string {
+  if (choice !== undefined && 'seasonSlotId' in choice) return `slot ${choice.seasonSlotId}`;
+  if (choice !== undefined && 'coveredSlotDefinitionIds' in choice) return `covering ${[...choice.coveredSlotDefinitionIds].sort().join(',')}`;
+  return 'tier-set slot';
 }

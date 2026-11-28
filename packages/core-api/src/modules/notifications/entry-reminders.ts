@@ -55,7 +55,7 @@ import {
   survivorLivesOf,
   type ContestRoundCoverage,
   contestRoundCoverage,
-  type ContestSelectionConfig,
+  type ContestRules,
   type League,
   type SportEvent,
   type SportEventRoundMatch,
@@ -131,7 +131,7 @@ export interface EntryReminderDeps extends LeagueMemberDeps {
   /** A pick'em or bracket draft's picks, for its progress, and a survivor season's, for who is out. */
   predictions: Pick<ContestEntryMatchPredictionRepository, 'findByEntriesAndEvent' | 'findByEntriesAndEvents'>;
   /** A tiered draft's roster size, and the tier count in the contest's rules. */
-  tiers: Pick<SportEventTierService, 'getEffectiveTiersForSportEvent'>;
+  tiers: Pick<SportEventTierService, 'getEffectiveTiersForSportEvent' | 'salaryCaps'>;
   /** The event's sport league, named on the email. */
   sportLeagues: Pick<SportLeagueRepository, 'findById'>;
   /** Who holds a box on a squares grid. */
@@ -147,7 +147,7 @@ export interface EntryReminderDeps extends LeagueMemberDeps {
 /** One contest event whose reminder is due. */
 interface DueReminder {
   contest: Contest;
-  rules: ContestSelectionConfig | undefined;
+  rules: ContestRules | undefined;
   /** The rounds the contest covers (#2014): a bracket draft's games are theirs. */
   coverage: ContestRoundCoverage;
   sportEvent: SportEvent;

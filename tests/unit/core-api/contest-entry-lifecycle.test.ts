@@ -374,6 +374,7 @@ describe('ContestService entries — confirmation email', () => {
       contest,
       sportEvent: expectDefined(world.sportEvents.get(contest.sportEventIds[0] ?? ''), 'sport event'),
       configuration: [...world.configurations.values()].find((configuration) => configuration.contestId === contest.id) ?? null,
+      salaryCap: null,
       valuations: [],
       squadMemberships: await world.squadMembershipRepo().findBySquads([squadId]),
       entryIds: [entryId],

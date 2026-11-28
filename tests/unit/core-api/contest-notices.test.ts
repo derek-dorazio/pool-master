@@ -101,6 +101,10 @@ describe('ContestNotices', () => {
           eventReads.push(`tiers:${sportEventId}`);
           return world.addEventTiers(sportEventId, tierCount).map((tier) => ({ ...tier, participants: [] }));
         },
+        salaryCaps: async (sportEventIds) => {
+          eventReads.push(...sportEventIds.map((sportEventId) => `salaryCap:${sportEventId}`));
+          return new Map(sportEventIds.map((sportEventId) => [sportEventId, null]));
+        },
       },
       entries: world.entryRepo(),
       leagues: world.leagueRepo(),

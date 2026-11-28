@@ -41,7 +41,6 @@ import {
   type ContestEntry,
   type Participant,
   type SportEvent,
-  type SportEventTierSlot,
   type SportEventParticipant,
   type TieredContestRules,
   currentCoveredSlot,
@@ -203,10 +202,11 @@ export class SelectionService {
     const sportEvent = (await this.deps.sportEvents.findByIds([input.sportEventId])).at(0);
     if (!sportEvent) throw selectionErrors.sportEventNotFound(input.sportEventId);
     const { rules } = input;
-    const configuration = previewConfiguration(rules, sportEvent.id, await this.deps.tiers.tierSetSlot(sportEvent.id));
-
     const field = await this.deps.field.findBySportEvent(sportEvent.id);
-    const { selectionParticipants, tierGroups } = await this.readEventField(sportEvent, field);
+    const { selectionParticipants, tierGroups, salaryCap } = await this.readEventField(sportEvent, field);
+    // A budget setup picks under the cap of the set it reads, so an event never priced has none to preview under.
+    if (rules.selectionType === SelectionType.BUDGET_PICK && salaryCap === null) throw selectionErrors.eventNotPriced(sportEvent.id);
+    const configuration: EngineRules = { configJson: rules };
     const participantByRowId = new Map(selectionParticipants.map((row) => [row.sportEventParticipantId, row]));
     const picked = input.sportEventParticipantIds.map((rowId) => {
       const row = participantByRowId.get(rowId);
@@ -220,6 +220,7 @@ export class SelectionService {
     const pickedIds = new Set(picked.map((row) => row.sportEventParticipantId));
     const lineup = {
       configuration,
+      salaryCap,
       rosterSize,
       tiers,
       picks: picked.map((row) => ({ participantId: row.participantId, price: row.price })),
@@ -471,6 +472,7 @@ export class SelectionService {
       }),
       lineupSummary: engine.summarizeLineup({
         configuration: context.configuration,
+        salaryCap: context.salaryCap,
         rosterSize,
         tiers: context.tiers,
         picks: picks.map((pick) => ({
@@ -734,7 +736,7 @@ export class SelectionService {
     ]);
 
     const squadIds = Array.from(new Set(entries.map((entry) => entry.squadId)));
-    const [squadMemberships, { selectionParticipants, tierGroups, valuations }] = await Promise.all([
+    const [squadMemberships, { selectionParticipants, tierGroups, valuations, salaryCap }] = await Promise.all([
       this.deps.squadMemberships.findBySquads(squadIds),
       // The set the contest picks from: the first slot it covers holding one (#2044).
       this.readEventField(sportEvent, field, { coveredSlotDefinitionIds: contestRoundCoverage(contest).slotDefinitionIds }),
@@ -745,6 +747,7 @@ export class SelectionService {
       selectionType,
       sportEvent,
       configuration,
+      salaryCap,
       entries,
       squadMemberships,
       valuations,
@@ -763,13 +766,14 @@ export class SelectionService {
    * two parallel batches whatever the field's size; the field is read once and handed in (#1196).
    */
   private async readEventField(sportEvent: SportEvent, field: readonly SportEventParticipant[], choice?: TierSetChoice) {
-    const [participants, { tiers: tierGroups, valuations }] = await Promise.all([
+    const [participants, { tiers: tierGroups, valuations, salaryCap }] = await Promise.all([
       this.deps.participants.findByIds(field.map((entry) => entry.participantId)),
       this.deps.tiers.getEffectiveTiersAndValuations(sportEvent.id, field, choice),
     ]);
     return {
       tierGroups,
       valuations,
+      salaryCap,
       selectionParticipants: buildSelectionParticipants({
         field,
         participantsById: new Map(participants.map((participant: Participant) => [participant.id, participant])),
@@ -893,6 +897,7 @@ export class SelectionService {
       lineupSummary: resolvedSelectedEntryId
         ? engine.summarizeLineup({
           configuration,
+          salaryCap: context.salaryCap,
           rosterSize,
           tiers,
           picks: selectedEntryPicks.map((pick) => ({
@@ -976,23 +981,6 @@ function buildSelectionGroups(
         isSelected: selectedSportEventParticipantIds.has(participant.sportEventParticipantId),
       })),
     }));
-}
-
-/**
- * A preview's unsaved rules as the engines read a contest's (#1612). A budget contest is built
- * under its event's salary cap, its tier-set slot's set's (#2044), which creating one copies onto
- * its rules, so a budget preview does the same, and an event never priced has none to preview
- * under.
- */
-function previewConfiguration(
-  rules: TieredContestRules | BudgetContestRules,
-  sportEventId: string,
-  tierSetSlot: Pick<SportEventTierSlot, 'pricing'> | undefined,
-): EngineRules {
-  if (rules.selectionType === SelectionType.TIERED) return { configJson: rules };
-  const salaryCap = tierSetSlot?.pricing?.salaryCap;
-  if (salaryCap === undefined) throw selectionErrors.eventNotPriced(sportEventId);
-  return { configJson: { ...rules, salaryCap } };
 }
 
 /**
@@ -1082,6 +1070,7 @@ function lineupIssues(
     pickCount: picks.length,
     issues: engine.findLineupIssues({
       configuration: context.configuration,
+      salaryCap: context.salaryCap,
       rosterSize,
       tiers: context.tiers,
       picks: picks.map((pick) => ({
@@ -1103,6 +1092,7 @@ function receiptInput(
     contest: context.contest,
     sportEvent: context.sportEvent,
     configuration: context.configuration,
+    salaryCap: context.salaryCap,
     valuations: context.valuations,
     squadMemberships: context.squadMemberships,
     entryIds,

@@ -665,8 +665,9 @@ describe('Commissioner tools › Contests › one contest › what it covers', (
     ['budget', SelectionType.BUDGET_PICK, buildManagedContest({
       configuration: {
         id: 'config-1', contestId: 'contest-1', maxEntriesPerSquad: 1,
-        selectionType: SelectionType.BUDGET_PICK, rosterSize: 6, countedScores: 4, salaryCap: 50_000,
+        selectionType: SelectionType.BUDGET_PICK, rosterSize: 6, countedScores: 4,
       },
+      salaryCap: 50_000,
     })],
     ['bracket', SelectionType.BRACKET, buildManagedContest({
       configuration: { id: 'config-1', contestId: 'contest-1', maxEntriesPerSquad: 1, selectionType: SelectionType.BRACKET },
@@ -991,8 +992,9 @@ describe('Commissioner tools › Contests › one contest › Edit', () => {
       managedContest: buildManagedContest({
         configuration: {
           id: 'config-1', contestId: 'contest-1', maxEntriesPerSquad: 1,
-          selectionType: 'BUDGET_PICK', rosterSize: 6, countedScores: 4, salaryCap: 50_000,
+          selectionType: 'BUDGET_PICK', rosterSize: 6, countedScores: 4,
         },
+        salaryCap: 50_000,
       }),
     });
     updateContestMock.mockResolvedValue(apiSuccess({ contest: buildContest() }));

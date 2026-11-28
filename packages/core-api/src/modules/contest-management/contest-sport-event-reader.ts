@@ -43,10 +43,7 @@ export function createContestSportEventReader({ sportEvents, field, tiers, valua
     if (events.length === 0) {
       return [];
     }
-    const [loaded, tierSlots] = await Promise.all([
-      sportEvents.countParticipants(events.map((event) => event.id)),
-      tiers.findTierSlots(events.map((event) => event.id)),
-    ]);
+    const loaded = await sportEvents.countParticipants(events.map((event) => event.id));
     return events.map((event) => ({
       id: event.id,
       status: event.status,
@@ -60,7 +57,6 @@ export function createContestSportEventReader({ sportEvents, field, tiers, valua
       rounds: event.roundCount > 0 ? event.roundCount : null,
       slotDefinitionIds: event.slotDefinitions.map((definition) => definition.id),
       playsOnlyKnockoutRounds: event.slotDefinitions.every((definition) => playsKnockoutRounds(definition.slotKind)),
-      salaryCap: tierSetSlotOf(tierSlots.get(event.id) ?? [])?.pricing?.salaryCap ?? null,
       participantType: event.participantType,
       scoringFamily: event.scoringFamily,
     }));

@@ -11249,12 +11249,6 @@
                     "maximum": 9007199254740991,
                     "description": "How many golfer scores count toward the entry total, best first. At most the roster size."
                   },
-                  "salaryCap": {
-                    "type": "integer",
-                    "minimum": 1,
-                    "maximum": 10000000,
-                    "description": "Whole dollars. The event's salary cap when the rules were saved; an entry's picks must cost no more."
-                  },
                   "id": {
                     "type": "string",
                     "description": "Contest-configuration identifier."
@@ -11277,7 +11271,6 @@
                   "selectionType",
                   "rosterSize",
                   "countedScores",
-                  "salaryCap",
                   "id",
                   "contestId"
                 ],
@@ -11506,6 +11499,15 @@
               }
             ]
           },
+          "salaryCap": {
+            "description": "A budget contest's salary cap in whole dollars: the pricing of the first slot it covers holding a set (#2050), read there and never copied into the rules. Null for any other contest type, and for a budget contest whose slot is not priced yet.",
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
           "cupWeight": {
             "type": "string",
             "enum": [
@@ -11551,6 +11553,7 @@
           "name",
           "status",
           "configuration",
+          "salaryCap",
           "cupWeight",
           "createdAt",
           "updatedAt"
@@ -13411,12 +13414,6 @@
                         "maximum": 9007199254740991,
                         "description": "How many golfer scores count toward the entry total, best first. At most the roster size."
                       },
-                      "salaryCap": {
-                        "type": "integer",
-                        "minimum": 1,
-                        "maximum": 10000000,
-                        "description": "Whole dollars. The event's salary cap when the rules were saved; an entry's picks must cost no more."
-                      },
                       "id": {
                         "type": "string",
                         "description": "Contest-configuration identifier."
@@ -13439,7 +13436,6 @@
                       "selectionType",
                       "rosterSize",
                       "countedScores",
-                      "salaryCap",
                       "id",
                       "contestId"
                     ],
@@ -13668,6 +13664,15 @@
                   }
                 ]
               },
+              "salaryCap": {
+                "description": "A budget contest's salary cap in whole dollars: the pricing of the first slot it covers holding a set (#2050), read there and never copied into the rules. Null for any other contest type, and for a budget contest whose slot is not priced yet.",
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              },
               "cupWeight": {
                 "type": "string",
                 "enum": [
@@ -13713,6 +13718,7 @@
               "name",
               "status",
               "configuration",
+              "salaryCap",
               "cupWeight",
               "createdAt",
               "updatedAt"
