@@ -74,6 +74,17 @@ describe('pool-master-k6q — EventLifecycleScheduler.runSweep', () => {
     expect(eventLifecycleService.activateContestsPastCutoff).toHaveBeenCalledWith(expect.objectContaining({ id: 'evt-1' }), sweptAt);
   });
 
+  it('reads nothing for a scheduled event covering a slot before its start, since no contest window on it opens earlier, so a future week costs a sweep nothing', async () => {
+    const { sportEvents } = storeWith([{ event: { id: 'evt-1', status: 'SCHEDULED', startDate: new Date('2026-06-09T00:00:00.000Z') } }]);
+    const eventLifecycleService = { activateContestsPastCutoff: jest.fn().mockResolvedValue(0), followPostponedStart: jest.fn().mockResolvedValue(0), applySportEventStatusTransition: jest.fn() };
+    const scheduler = new EventLifecycleScheduler({ sportEvents, eventLifecycleService, jobLock: heldHere(), logger: fakeLogger(), now: () => new Date('2026-06-02T13:00:00.000Z') });
+
+    await scheduler.runSweep();
+
+    expect(eventLifecycleService.activateContestsPastCutoff).not.toHaveBeenCalled();
+    expect(eventLifecycleService.applySportEventStatusTransition).not.toHaveBeenCalled();
+  });
+
   it('never completes an IN_PROGRESS event that covers a slot, however far past its own end date: it completes when its slots do', async () => {
     const { sportEvents } = storeWith([
       {
@@ -179,9 +190,10 @@ describe('pool-master-k6q — EventLifecycleScheduler.runSweep', () => {
 });
 
 describe('EventLifecycleScheduler and a contest whose cutoff comes mid-event (#721)', () => {
-  it('asks the lifecycle to start the contests past their cutoff on every sweep of a scheduled or in-progress event covering a slot, with the sweep\'s clock, and moves neither event', async () => {
+  it('asks the lifecycle to start the contests past their cutoff on every sweep of an event covering a slot that is in progress or past its start, with the sweep\'s clock, and moves no event', async () => {
     const { sportEvents } = storeWith([
       { event: { id: 'evt-live', status: 'IN_PROGRESS', startDate: new Date('2026-06-01T00:00:00.000Z') } },
+      { event: { id: 'evt-due', status: 'SCHEDULED', startDate: new Date('2026-06-02T00:00:00.000Z') } },
       { event: { id: 'evt-ahead', status: 'SCHEDULED', startDate: new Date('2026-06-09T00:00:00.000Z') } },
     ]);
     const eventLifecycleService = {
@@ -197,7 +209,8 @@ describe('EventLifecycleScheduler and a contest whose cutoff comes mid-event (#7
     // Each contest's window decides: one on a scheduled event's slot can be past its first game (#2013).
     expect(eventLifecycleService.activateContestsPastCutoff).toHaveBeenCalledTimes(4);
     expect(eventLifecycleService.activateContestsPastCutoff).toHaveBeenCalledWith(expect.objectContaining({ id: 'evt-live' }), sweptAt);
-    expect(eventLifecycleService.activateContestsPastCutoff).toHaveBeenCalledWith(expect.objectContaining({ id: 'evt-ahead' }), sweptAt);
+    expect(eventLifecycleService.activateContestsPastCutoff).toHaveBeenCalledWith(expect.objectContaining({ id: 'evt-due' }), sweptAt);
+    expect(eventLifecycleService.activateContestsPastCutoff).not.toHaveBeenCalledWith(expect.objectContaining({ id: 'evt-ahead' }), expect.any(Date));
     expect(eventLifecycleService.applySportEventStatusTransition).not.toHaveBeenCalled();
   });
 

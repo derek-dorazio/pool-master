@@ -114,6 +114,9 @@ export class EventLifecycleScheduler {
         await this.eventLifecycleService.followPostponedStart(candidate, now);
         return;
       case SportEventStatus.SCHEDULED: {
+        // Nothing on an event is due before its start: the sync sets it to its earliest slot's, and
+        // no contest's window opens earlier, so a future week reads nothing.
+        if (now < candidate.startDate) return;
         // An event covering a slot starts when its slots do (#2013, `SlotStatusService`), on the
         // feed's first score; the clock only takes its contests live at their first covered Game,
         // so a late feed leaves no window open past its start.
@@ -123,7 +126,6 @@ export class EventLifecycleScheduler {
         }
         // One covering none has no slot to start it, and no round (every round is in a slot), so it
         // starts at its start date.
-        if (now < candidate.startDate) return;
         await this.eventLifecycleService.applySportEventStatusTransition({
           sportEventId: candidate.id,
           toStatus: SportEventStatus.IN_PROGRESS,
