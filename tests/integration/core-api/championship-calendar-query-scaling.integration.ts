@@ -18,7 +18,10 @@ afterAll(async () => {
 });
 beforeEach(() => cleanupTestData());
 
-/** A league with a contest in each of `years` championship years, every other one live and the rest open. */
+/**
+ * A league with a contest in each of `years` championship years, every other one live and the
+ * rest open, and a finished contest beside each, which the calendar reads only grouped by year.
+ */
 async function seedContestYears(years: number) {
   const prisma = getPrisma();
   const seeded = await seedLeagueWithTeams(0);
@@ -29,6 +32,8 @@ async function seedContestYears(years: number) {
     await prisma.contest.create({
       data: { leagueId: seeded.league.id, ...season, name: `Year ${String(index)} pool`, status: index % 2 === 0 ? 'ACTIVE' : 'OPEN', selectionType: 'TIERED' },
     });
+    // poolmaster-allow-query-in-loop: a fixture's few Seasons and contests
+    await prisma.contest.create({ data: { leagueId: seeded.league.id, ...season, name: `Year ${String(index)} final`, status: 'COMPLETED', selectionType: 'TIERED' } });
   }
   return seeded;
 }

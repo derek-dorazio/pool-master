@@ -11,7 +11,8 @@ describe('championship calendar service', () => {
   it('reads the league\'s calendar input at its now and answers the earliest open contest year as the current one', async () => {
     const now = new Date('2027-01-01T05:00:00.000Z');
     const readCalendarInput = jest.fn().mockResolvedValue({
-      contestYears: [{ championshipYear: 2026, hasLiveContest: false, unfinishedContests: [{ id: 'nba', name: 'NBA pool' }] }],
+      contestYears: [2026],
+      unfinishedContests: [{ id: 'nba', name: 'NBA pool', championshipYear: 2026, status: 'OPEN' }],
       closedYears: [2025],
       unfinishedSlots: [],
       currentSeasonYears: [2027],
@@ -63,7 +64,7 @@ describe('championship calendar response', () => {
 describe('championship calendar service defaults', () => {
   it('reads at the current instant and logs the calendar it answers when given no clock', async () => {
     const before = Date.now();
-    const readCalendarInput = jest.fn().mockResolvedValue({ contestYears: [], closedYears: [], unfinishedSlots: [], currentSeasonYears: [] });
+    const readCalendarInput = jest.fn().mockResolvedValue({ contestYears: [], unfinishedContests: [], closedYears: [], unfinishedSlots: [], currentSeasonYears: [] });
     const debug = jest.fn();
 
     await expect(new ChampionshipCalendarService({ years: { readCalendarInput }, logger: { debug } }).getCalendar('league-1')).resolves.toEqual({ currentYear: null, years: [] });

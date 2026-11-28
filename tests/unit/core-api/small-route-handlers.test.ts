@@ -42,7 +42,7 @@ describe('championship handlers', () => {
     getYear,
   }) as unknown as ChampionshipService;
   const calendar = new ChampionshipCalendarService({
-    years: { readCalendarInput: () => Promise.resolve({ contestYears: [], closedYears: [2025], unfinishedSlots: [], currentSeasonYears: [2026] }) },
+    years: { readCalendarInput: () => Promise.resolve({ contestYears: [], unfinishedContests: [], closedYears: [2025], unfinishedSlots: [], currentSeasonYears: [2026] }) },
   });
 
   it('answers a league\'s championship calendar with its current year and each year open or closed', async () => {

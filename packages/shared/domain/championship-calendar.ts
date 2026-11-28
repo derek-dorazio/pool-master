@@ -3,7 +3,7 @@
  * in now and what still holds each open year open. Read from its contests, its closed years and
  * the sport leagues' Seasons, never from the clock, so every screen names the same year.
  */
-import type { LeaguePhase } from './enums';
+import { ContestStatus, type LeaguePhase } from './enums';
 import { compareSeasonSlots, type SportLeagueSeasonSlot } from './sport-league-seasons';
 import { compareSlotPlaces } from './sport-league-structure';
 
@@ -24,12 +24,10 @@ export interface UnfinishedYearContest {
   name: string;
 }
 
-/** One championship year the league has a counted contest in. */
-export interface ChampionshipYearContests {
+/** A counted contest of the league not yet final, with its year and status. */
+export interface UnfinishedContest extends UnfinishedYearContest {
   championshipYear: number;
-  /** Whether one of its contests is live. */
-  hasLiveContest: boolean;
-  unfinishedContests: UnfinishedYearContest[];
+  status: ContestStatus;
 }
 
 /** One year of the calendar. */
@@ -58,7 +56,10 @@ export interface ChampionshipCalendar {
 }
 
 export interface ChampionshipCalendarInput {
-  contestYears: readonly ChampionshipYearContests[];
+  /** The years the league has a counted contest in. */
+  contestYears: readonly number[];
+  /** Its counted contests not yet final, oldest first. */
+  unfinishedContests: readonly UnfinishedContest[];
   closedYears: readonly number[];
   /** The unfinished slots of the league's open years, in the sport leagues of their contests. */
   unfinishedSlots: readonly UnfinishedYearSlot[];
@@ -91,13 +92,13 @@ function lastSlots(slots: readonly UnfinishedYearSlot[]): UnfinishedYearSlot[] {
 
 export function championshipCalendar(input: ChampionshipCalendarInput): ChampionshipCalendar {
   const closed = new Set(input.closedYears);
-  const openContestYears = input.contestYears.filter((year) => !closed.has(year.championshipYear));
-  const currentYear = earliest(openContestYears.filter((year) => year.hasLiveContest).map((year) => year.championshipYear))
-    ?? earliest(openContestYears.map((year) => year.championshipYear))
+  const openContestYears = input.contestYears.filter((year) => !closed.has(year));
+  const liveYears = new Set(input.unfinishedContests.filter((contest) => contest.status === ContestStatus.ACTIVE).map((contest) => contest.championshipYear));
+  const currentYear = earliest(openContestYears.filter((year) => liveYears.has(year)))
+    ?? earliest(openContestYears)
     ?? earliest(input.currentSeasonYears.filter((year) => !closed.has(year)));
-  const contestsByYear = new Map(input.contestYears.map((year) => [year.championshipYear, year.unfinishedContests]));
   const yearNumbers = [...new Set([
-    ...input.contestYears.map((year) => year.championshipYear),
+    ...input.contestYears,
     ...input.closedYears,
     ...(currentYear === null ? [] : [currentYear]),
   ])].sort((left, right) => right - left);
@@ -109,7 +110,9 @@ export function championshipCalendar(input: ChampionshipCalendarInput): Champion
         championshipYear,
         isClosed,
         closesAfter: isClosed ? [] : lastSlots(input.unfinishedSlots.filter((slot) => slot.championshipYear === championshipYear)),
-        unfinishedContests: isClosed ? [] : contestsByYear.get(championshipYear) ?? [],
+        unfinishedContests: isClosed ? [] : input.unfinishedContests
+          .filter((contest) => contest.championshipYear === championshipYear)
+          .map((contest) => ({ id: contest.id, name: contest.name })),
       };
     }),
   };

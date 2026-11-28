@@ -2,7 +2,7 @@
  * A league's championship calendar (#2021): which year the league is in now, read from its contests
  * and Seasons and never from the clock, and what still holds each open year open.
  */
-import { LeaguePhase, SlotKind, championshipCalendar, type UnfinishedYearSlot } from '@poolmaster/shared/domain';
+import { ContestStatus, LeaguePhase, SlotKind, championshipCalendar, type UnfinishedYearSlot } from '@poolmaster/shared/domain';
 
 const slot = (overrides: Partial<UnfinishedYearSlot>): UnfinishedYearSlot => ({
   championshipYear: 2025,
@@ -33,10 +33,11 @@ const superBowl = slot({
 describe('championship calendar', () => {
   it('opens on the earliest open year with a live contest, passing over an earlier open year whose contests have not started', () => {
     const calendar = championshipCalendar({
-      contestYears: [
-        { championshipYear: 2024, hasLiveContest: false, unfinishedContests: [{ id: 'draft', name: 'Old draft' }] },
-        { championshipYear: 2025, hasLiveContest: true, unfinishedContests: [{ id: 'playoffs', name: 'Playoff pool' }] },
-        { championshipYear: 2026, hasLiveContest: true, unfinishedContests: [{ id: 'nba', name: 'NBA survivor' }] },
+      contestYears: [2024, 2025, 2026],
+      unfinishedContests: [
+        { id: 'draft', name: 'Old draft', championshipYear: 2024, status: ContestStatus.OPEN },
+        { id: 'playoffs', name: 'Playoff pool', championshipYear: 2025, status: ContestStatus.ACTIVE },
+        { id: 'nba', name: 'NBA survivor', championshipYear: 2026, status: ContestStatus.ACTIVE },
       ],
       closedYears: [],
       unfinishedSlots: [],
@@ -44,15 +45,18 @@ describe('championship calendar', () => {
     });
 
     expect(calendar.currentYear).toBe(2025);
+    expect(calendar.years.map((year) => [year.championshipYear, year.unfinishedContests])).toEqual([
+      [2026, [{ id: 'nba', name: 'NBA survivor' }]],
+      [2025, [{ id: 'playoffs', name: 'Playoff pool' }]],
+      [2024, [{ id: 'draft', name: 'Old draft' }]],
+    ]);
   });
 
   it('opens on the earliest open year when no contest is live, and leaves a closed year out of the choice', () => {
     const calendar = championshipCalendar({
-      contestYears: [
-        { championshipYear: 2024, hasLiveContest: false, unfinishedContests: [] },
-        { championshipYear: 2026, hasLiveContest: false, unfinishedContests: [] },
-        { championshipYear: 2027, hasLiveContest: false, unfinishedContests: [] },
-      ],
+      contestYears: [2024, 2026, 2027],
+      // A live contest in a closed year never makes it the current one.
+      unfinishedContests: [{ id: 'late', name: 'Late pool', championshipYear: 2024, status: ContestStatus.ACTIVE }],
       closedYears: [2024],
       unfinishedSlots: [],
       currentSeasonYears: [2025],
@@ -62,13 +66,14 @@ describe('championship calendar', () => {
   });
 
   it('opens a league with no contests on the earliest current Season year it has not closed, and on no year when there is none', () => {
-    expect(championshipCalendar({ contestYears: [], closedYears: [2025], unfinishedSlots: [], currentSeasonYears: [2027, 2025, 2026] }).currentYear).toBe(2026);
-    expect(championshipCalendar({ contestYears: [], closedYears: [2025], unfinishedSlots: [], currentSeasonYears: [2025] })).toEqual({ currentYear: null, years: [{ championshipYear: 2025, isClosed: true, closesAfter: [], unfinishedContests: [] }] });
+    expect(championshipCalendar({ contestYears: [], unfinishedContests: [], closedYears: [2025], unfinishedSlots: [], currentSeasonYears: [2027, 2025, 2026] }).currentYear).toBe(2026);
+    expect(championshipCalendar({ contestYears: [], unfinishedContests: [], closedYears: [2025], unfinishedSlots: [], currentSeasonYears: [2025] })).toEqual({ currentYear: null, years: [{ championshipYear: 2025, isClosed: true, closesAfter: [], unfinishedContests: [] }] });
   });
 
   it('lists every contest year, closed year and the current year once, newest first, each marked closed or open', () => {
     const calendar = championshipCalendar({
-      contestYears: [{ championshipYear: 2025, hasLiveContest: false, unfinishedContests: [] }],
+      contestYears: [2025],
+      unfinishedContests: [],
       closedYears: [2023, 2025],
       unfinishedSlots: [],
       currentSeasonYears: [2026],
@@ -83,7 +88,8 @@ describe('championship calendar', () => {
       sportLeagueId: 'nba', sportLeagueName: 'NBA', phase: LeaguePhase.POSTSEASON, key: 'FINAL', slotKind: SlotKind.FINAL, weekNumber: null, name: 'NBA Finals',
     });
     const calendar = championshipCalendar({
-      contestYears: [{ championshipYear: 2025, hasLiveContest: true, unfinishedContests: [] }],
+      contestYears: [2025],
+      unfinishedContests: [],
       closedYears: [],
       unfinishedSlots: [
         nbaFinals,
@@ -101,7 +107,8 @@ describe('championship calendar', () => {
 
   it('holds a closed year open by nothing, whatever slots are passed for it', () => {
     const calendar = championshipCalendar({
-      contestYears: [{ championshipYear: 2025, hasLiveContest: false, unfinishedContests: [{ id: 'late', name: 'Late pool' }] }],
+      contestYears: [2025],
+      unfinishedContests: [{ id: 'late', name: 'Late pool', championshipYear: 2025, status: ContestStatus.OPEN }],
       closedYears: [2025],
       unfinishedSlots: [superBowl],
       currentSeasonYears: [],

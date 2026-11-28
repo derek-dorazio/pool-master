@@ -102,7 +102,8 @@ export interface LeagueChampionshipYearRepository {
   /**
    * What the league's championship calendar is read from: its counted contests by year (drafts
    * that can never open aside), its closed years, the slots still to finish in its open years (as
-   * `readYearState` counts them) and each active sport league's current Season year.
+   * `readYearState` counts them) and the current Season year of every active sport league, not
+   * only the league's own: a league with no contests has none of its own.
    */
   readCalendarInput(leagueId: string, now: Date): Promise<ChampionshipCalendarInput>;
   /** Closes the year; false when it was already closed, which a close never undoes. */

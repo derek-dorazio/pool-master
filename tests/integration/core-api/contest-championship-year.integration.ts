@@ -18,6 +18,7 @@ import { sportPlay } from '../../support/sport-play';
 import { sportRowKeys } from '../../support/sport-rows';
 import { linkTestSlot, testSlotIdIn } from '../../support/test-slots';
 import { anySeasonId } from '../../support/contest-rows';
+import { StatementVerb, recordStatements, statementsOn } from '../statement-log';
 
 beforeAll(async () => {
   await setupIntegrationTests();
@@ -217,11 +218,26 @@ describe('the championship calendar\'s reads against Postgres (#2021)', () => {
 
     const input = await new PrismaLeagueChampionshipYearRepository(getAppPrisma()).readCalendarInput(year.league.id, BEFORE_SUPER_BOWL);
 
-    expect(input.contestYears).toEqual([{ championshipYear: 2025, hasLiveContest: true, unfinishedContests: [{ id: live.id, name: live.name }] }]);
-    expect(input.contestYears.flatMap((row) => row.unfinishedContests).map((contest) => contest.id)).not.toContain(done.id);
+    expect(input.contestYears).toEqual([2025]);
+    expect(input.unfinishedContests).toEqual([{ id: live.id, name: live.name, championshipYear: 2025, status: 'ACTIVE' }]);
+    expect(input.unfinishedContests.map((contest) => contest.id)).not.toContain(done.id);
     expect(input.closedYears).toEqual([2023]);
     expect(input.unfinishedSlots).toEqual([expect.objectContaining({ championshipYear: 2025, sportLeagueId: year.sportLeague.id, startsAt: expect.any(Date) })]);
     expect(input.currentSeasonYears.every((value) => Number.isInteger(value))).toBe(true);
+  });
+
+  it('reads the league\'s finished contests only grouped by year, never row by row, however many years of them it has', async () => {
+    const year = await footballYear();
+    await year.contest('Divisional pool', 'COMPLETED', year.divisional.seasonSlotId);
+    await year.contest('Super Bowl pool', 'ACTIVE', year.superBowl.seasonSlotId);
+
+    const { result, statements } = await recordStatements(() => new PrismaLeagueChampionshipYearRepository(getAppPrisma()).readCalendarInput(year.league.id, BEFORE_SUPER_BOWL));
+
+    expect(result.contestYears).toEqual([2025]);
+    const contestReads = statementsOn(statements, StatementVerb.SELECT, 'contests').map((statement) => statement.sql);
+    expect(contestReads).toHaveLength(2);
+    expect(contestReads.filter((sql) => sql.includes('GROUP BY'))).toHaveLength(1);
+    expect(contestReads.filter((sql) => !sql.includes('GROUP BY')).every((sql) => sql.includes('"status" <> '))).toBe(true);
   });
 
   it('reads no slots for a year the league has closed, and none for a league with no contests', async () => {
@@ -232,6 +248,6 @@ describe('the championship calendar\'s reads against Postgres (#2021)', () => {
 
     expect((await repo.readCalendarInput(year.league.id, BEFORE_SUPER_BOWL)).unfinishedSlots).toEqual([]);
     const empty = await getPrisma().league.create({ data: { cupName: 'Empty Cup', leagueCode: `EMP${randomUUID().slice(0, 8).toUpperCase()}`, name: 'Empty League' } });
-    await expect(repo.readCalendarInput(empty.id, BEFORE_SUPER_BOWL)).resolves.toEqual(expect.objectContaining({ contestYears: [], closedYears: [], unfinishedSlots: [] }));
+    await expect(repo.readCalendarInput(empty.id, BEFORE_SUPER_BOWL)).resolves.toEqual(expect.objectContaining({ contestYears: [], unfinishedContests: [], closedYears: [], unfinishedSlots: [] }));
   });
 });
