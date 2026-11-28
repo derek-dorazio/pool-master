@@ -214,6 +214,7 @@ describe('Formula 1 race results from the feed (#2045)', () => {
       sportEvents: new PrismaSportEventRepository(getAppPrisma()),
       eventLifecycle: integrationEventLifecycle(),
       domainEvents: testDomainEvents(),
+      findings: integrationSyncFindings(),
     }).refreshSlots(event.id);
     const slot = await prisma.sportEventSlot.findFirstOrThrow({ where: { sportEventId: event.id }, select: { seasonSlot: { select: { status: true } } } });
     expect(slot.seasonSlot.status).toBe(SeasonSlotStatus.COMPLETED);

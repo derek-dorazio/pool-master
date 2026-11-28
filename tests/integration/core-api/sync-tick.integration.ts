@@ -9,7 +9,7 @@ import { randomUUID } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { SyncedLeagueRef } from '@poolmaster/shared/db';
-import { BackgroundJobType, fieldWindowEventIds, JobTrigger, MatchStatus, OVERDUE_AFTER_MS, ProviderCode, ProviderSyncFindingKind, ProviderSyncFindingStatus, Sport, SyncSeasonState, syncSeasonStateOf } from '@poolmaster/shared/domain';
+import { BackgroundJobType, fieldWindowEventIds, JobTrigger, MatchStatus, OVERDUE_AFTER_MS, POSTPONED_NO_DATE_AFTER_MS, ProviderCode, ProviderSyncFindingKind, ProviderSyncFindingStatus, Sport, SyncSeasonState, syncSeasonStateOf } from '@poolmaster/shared/domain';
 import { PrismaBackgroundJobRepository, PrismaSportLeagueRepository } from '../../../packages/core-api/src/adapters';
 import { PrismaSyncDueWorkReader } from '../../../packages/core-api/src/adapters/prisma-sync-due-work-reader';
 import { PrismaProviderSyncFindingRepository } from '../../../packages/core-api/src/adapters/prisma-provider-sync-finding-repository';
@@ -249,7 +249,7 @@ describe('one sync tick', () => {
       quietAfterMs: () => 0,
       leagueSendsNotifications: () => true,
       typicalGameMinutes: () => TYPICAL_GAME_MINUTES,
-      findings: { raiseOfSource: () => Promise.resolve(), resolveGamesNoLongerOverdue: () => Promise.resolve(0) },
+      findings: { raiseOfSource: () => Promise.resolve(), resolveGameFindingsNoLongerHeld: () => Promise.resolve(0) },
       jobLock: heldHere(),
       now: () => NOW,
     });
@@ -302,13 +302,14 @@ async function mapGame(gameId: string, externalId: string): Promise<void> {
 }
 
 describe('the Games that may be overdue (#2013)', () => {
-  it('reads a linked Game still scheduled or in progress that started before the overdue wait, with its provider id, and none finished, moved, recent or of an unlinked event', async () => {
+  it('reads a linked Game still scheduled, in progress or postponed that started before the overdue wait, with its provider id, and none finished, moved, recent or of an unlinked event', async () => {
     const league = await syncedLeague();
     const prisma = getPrisma();
     const event = await linkedEventStarting(league, at(-30 * HOUR));
     const late = await gameOf(event, { status: MatchStatus.SCHEDULED, scheduledDate: startEnding(OVERDUE_AFTER_MS + HOUR) });
     await mapGame(late.id, 'bdl-late');
     const playing = await gameOf(event, { status: MatchStatus.IN_PROGRESS, scheduledDate: startEnding(OVERDUE_AFTER_MS + HOUR) });
+    const postponed = await gameOf(event, { status: MatchStatus.POSTPONED, scheduledDate: at(-POSTPONED_NO_DATE_AFTER_MS - HOUR) });
     await gameOf(event, { status: MatchStatus.COMPLETED, scheduledDate: startEnding(OVERDUE_AFTER_MS + HOUR) });
     await gameOf(event, { status: MatchStatus.SCHEDULED, scheduledDate: at(-HOUR) });
     const moved = await gameOf(event, { status: MatchStatus.SCHEDULED, scheduledDate: startEnding(OVERDUE_AFTER_MS + HOUR) });
@@ -322,8 +323,9 @@ describe('the Games that may be overdue (#2013)', () => {
     expect(games).toEqual(expect.arrayContaining([
       { sportEventId: event.id, sportLeagueId: league.sportLeagueId, status: MatchStatus.SCHEDULED, scheduledDate: late.scheduledDate, providerGameIds: [{ providerCode: ProviderCode.BALLDONTLIE, externalId: 'bdl-late' }] },
       { sportEventId: event.id, sportLeagueId: league.sportLeagueId, status: MatchStatus.IN_PROGRESS, scheduledDate: playing.scheduledDate, providerGameIds: [] },
+      { sportEventId: event.id, sportLeagueId: league.sportLeagueId, status: MatchStatus.POSTPONED, scheduledDate: postponed.scheduledDate, providerGameIds: [] },
     ]));
-    expect(games).toHaveLength(2);
+    expect(games).toHaveLength(3);
     await expect(findUnindexedScans(getPrisma(), statements.map(({ sql }) => ({ sql, test: 'PrismaSyncDueWorkReader.findOverdueGames' })))).resolves.toEqual([]);
   });
 
@@ -334,13 +336,9 @@ describe('the Games that may be overdue (#2013)', () => {
     expect(statements).toHaveLength(0);
   });
 
-  it('raises GAME_OVERDUE on the Game under its provider id on the tick its wait runs out, and resolves it on a tick after the Game completes', async () => {
-    const league = await syncedLeague();
-    const prisma = getPrisma();
-    const provider = await prisma.provider.findUniqueOrThrow({ where: { code: ProviderCode.BALLDONTLIE } });
-    const event = await linkedEventStarting(league, at(-30 * HOUR));
-    const game = await gameOf(event, { status: MatchStatus.IN_PROGRESS, scheduledDate: startEnding(OVERDUE_AFTER_MS + 30_000) });
-    await mapGame(game.id, 'bdl-overdue');
+  /** A sync tick over the real reader and findings, its clock moved by `advance`. */
+  async function realTick() {
+    const provider = await getPrisma().provider.findUniqueOrThrow({ where: { code: ProviderCode.BALLDONTLIE } });
     let now = NOW;
     const findings = new ProviderSyncFindingService({
       repository: new PrismaProviderSyncFindingRepository(getAppPrisma()),
@@ -365,18 +363,48 @@ describe('the Games that may be overdue (#2013)', () => {
       jobLock: heldHere(),
       now: () => now,
     });
-    const overdueFindings = () => prisma.providerSyncFinding.findMany({
-      where: { kind: ProviderSyncFindingKind.GAME_OVERDUE, sportLeagueId: league.sportLeagueId },
-      select: { status: true, severity: true, sportEventId: true, providerId: true, providerValue: true },
-    });
+    return { provider, syncTick, advance: (ms: number) => { now = new Date(now.getTime() + ms); } };
+  }
+
+  const findingsOf = (kind: ProviderSyncFindingKind, sportLeagueId: string) => getPrisma().providerSyncFinding.findMany({
+    where: { kind, sportLeagueId },
+    select: { status: true, severity: true, sportEventId: true, providerId: true, providerValue: true },
+  });
+
+  it('raises GAME_OVERDUE on the Game under its provider id on the tick its wait runs out, and resolves it on a tick after the Game completes', async () => {
+    const league = await syncedLeague();
+    const prisma = getPrisma();
+    const event = await linkedEventStarting(league, at(-30 * HOUR));
+    const game = await gameOf(event, { status: MatchStatus.IN_PROGRESS, scheduledDate: startEnding(OVERDUE_AFTER_MS + 30_000) });
+    await mapGame(game.id, 'bdl-overdue');
+    const { provider, syncTick, advance } = await realTick();
 
     await syncTick.tick();
-    expect(await overdueFindings()).toEqual([{ status: ProviderSyncFindingStatus.OPEN, severity: 'WARNING', sportEventId: event.id, providerId: provider.id, providerValue: 'bdl-overdue' }]);
+    expect(await findingsOf(ProviderSyncFindingKind.GAME_OVERDUE, league.sportLeagueId)).toEqual([{ status: ProviderSyncFindingStatus.OPEN, severity: 'WARNING', sportEventId: event.id, providerId: provider.id, providerValue: 'bdl-overdue' }]);
 
     await prisma.sportEventRoundMatchGame.update({ where: { id: game.id }, data: { status: MatchStatus.COMPLETED, completedAt: NOW } });
-    now = new Date(NOW.getTime() + 60_000);
+    advance(60_000);
     await syncTick.tick();
-    expect(await overdueFindings()).toEqual([expect.objectContaining({ status: ProviderSyncFindingStatus.RESOLVED, providerValue: 'bdl-overdue' })]);
+    expect(await findingsOf(ProviderSyncFindingKind.GAME_OVERDUE, league.sportLeagueId)).toEqual([expect.objectContaining({ status: ProviderSyncFindingStatus.RESOLVED, providerValue: 'bdl-overdue' })]);
+  });
+
+  it('raises GAME_POSTPONED_NO_DATE, and no GAME_OVERDUE, on a Game the feed postponed a whole postponed wait ago, and resolves it once the feed moves the Game to a new date', async () => {
+    const league = await syncedLeague();
+    const prisma = getPrisma();
+    const event = await linkedEventStarting(league, at(-30 * HOUR));
+    const game = await gameOf(event, { status: MatchStatus.POSTPONED, scheduledDate: at(-POSTPONED_NO_DATE_AFTER_MS - 30_000) });
+    await mapGame(game.id, 'bdl-postponed');
+    const { provider, syncTick, advance } = await realTick();
+
+    await syncTick.tick();
+    expect(await findingsOf(ProviderSyncFindingKind.GAME_POSTPONED_NO_DATE, league.sportLeagueId)).toEqual([{ status: ProviderSyncFindingStatus.OPEN, severity: 'WARNING', sportEventId: event.id, providerId: provider.id, providerValue: 'bdl-postponed' }]);
+    expect(await findingsOf(ProviderSyncFindingKind.GAME_OVERDUE, league.sportLeagueId)).toEqual([]);
+
+    const newDate = await gameOf(event, { status: MatchStatus.SCHEDULED, scheduledDate: at(2 * 24 * HOUR) });
+    await prisma.sportEventRoundMatchGame.update({ where: { id: game.id }, data: { movedToGameId: newDate.id } });
+    advance(60_000);
+    await syncTick.tick();
+    expect(await findingsOf(ProviderSyncFindingKind.GAME_POSTPONED_NO_DATE, league.sportLeagueId)).toEqual([expect.objectContaining({ status: ProviderSyncFindingStatus.RESOLVED, providerValue: 'bdl-postponed' })]);
   });
 });
 

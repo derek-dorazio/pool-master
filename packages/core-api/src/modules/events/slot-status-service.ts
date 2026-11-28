@@ -6,13 +6,17 @@
  * through `EventLifecycleService`, the one writer of an event's status.
  *
  * Every write is guarded by the status it was read in, so two jobs on one event cannot both move
- * it. A COMPLETED slot is final: nothing here moves it again.
+ * it. A COMPLETED slot is final: nothing here moves it again. A Match change that would take it out
+ * of COMPLETED raises SLOT_CHANGED_AFTER_COMPLETED for a root admin instead.
  */
 
 import type { FastifyBaseLogger } from 'fastify';
 import type { SlotStatusRepository, SportEventRepository } from '@poolmaster/shared/db';
 import {
   isDeclaredSportEventTransition,
+  isSlotChangedAfterCompleted,
+  ProviderSyncFindingKind,
+  ProviderSyncFindingSeverity,
   seasonSlotStatusOf,
   sportEventStatusOfSlots,
   SportEventStatus,
@@ -20,12 +24,15 @@ import {
 import type { DomainEvents } from '../domain-events';
 import { DomainEventType } from '../domain-events/domain-event';
 import type { EventLifecycleService } from './event-lifecycle-service';
+import type { ProviderSyncFindingService } from '../ingestion/findings/provider-sync-finding-service';
 
 export interface SlotStatusServiceDeps {
   slots: SlotStatusRepository;
   sportEvents: Pick<SportEventRepository, 'findById'>;
   eventLifecycle: Pick<EventLifecycleService, 'applySportEventStatusTransition'>;
   domainEvents: Pick<DomainEvents, 'collect'>;
+  /** A completed slot changed after it completed (#2013): the finding a root admin sees. */
+  findings: Pick<ProviderSyncFindingService, 'raise'>;
   logger?: FastifyBaseLogger;
 }
 
@@ -37,11 +44,31 @@ export interface StatusRefreshResult {
 export class SlotStatusService {
   constructor(private readonly deps: SlotStatusServiceDeps) {}
 
-  /** Recomputes each Season slot of the event from its Matches, and writes each one that moved. */
+  /**
+   * Recomputes each Season slot of the event from its Matches, and writes each one that moved. A
+   * COMPLETED slot whose Matches no longer complete it stays COMPLETED and raises the event's
+   * SLOT_CHANGED_AFTER_COMPLETED finding, one per event however many of its slots changed.
+   */
   async refreshSlots(sportEventId: string): Promise<StatusRefreshResult> {
     const event = await this.deps.sportEvents.findById(sportEventId);
     if (!event) return { changedCount: 0 };
     const slots = await this.deps.slots.findBySportEvent(sportEventId);
+    const changedAfterCompleted = slots.filter((slot) => isSlotChangedAfterCompleted(event.scoringFamily, { current: slot.status, matchStatuses: slot.matchStatuses, feedFinal: slot.feedFinal }));
+    if (changedAfterCompleted.length > 0) {
+      this.deps.logger?.warn(
+        { sportEventId, seasonSlotIds: changedAfterCompleted.map((slot) => slot.seasonSlotId) },
+        'Kept completed slots COMPLETED although their Matches changed; raised a finding for a root admin',
+      );
+      await this.deps.findings.raise([{
+        kind: ProviderSyncFindingKind.SLOT_CHANGED_AFTER_COMPLETED,
+        severity: ProviderSyncFindingSeverity.WARNING,
+        sportLeagueId: event.sportLeagueId,
+        sportEventId,
+        providerId: null,
+        providerValue: null,
+        providerValueName: null,
+      }]);
+    }
     let changedCount = 0;
     for (const slot of slots) {
       const to = seasonSlotStatusOf(event.scoringFamily, { current: slot.status, matchStatuses: slot.matchStatuses, feedFinal: slot.feedFinal });

@@ -2,8 +2,12 @@ import { BALLDONTLIE_TEST_PROVIDER_ID } from '../../support/balldontlie-provider
 import { expect } from '@jest/globals';
 import { testDomainEvents } from '../../support/domain-events';
 import { randomUUID } from 'node:crypto';
-import { BackgroundJobType, ContestStatus, HomeAway, MatchSide, MatchStatus, ProviderGameState, SelectionType, Sport } from '@poolmaster/shared/domain';
-import type { GameScoreUpdate } from '@poolmaster/shared/dto';
+import { BackgroundJobType, ContestStatus, HomeAway, JobTrigger, MatchSide, MatchStatus, ProviderGameState, ProviderSyncKind, SelectionType, Sport } from '@poolmaster/shared/domain';
+import type { SportDataProvider } from '../../../packages/core-api/src/modules/ingestion/core/provider-interface';
+import { ProviderRateLimitedError } from '../../../packages/core-api/src/modules/ingestion/core/provider-call-policy';
+import { INGESTION_SCHEDULE_SETTINGS } from '../../../packages/core-api/src/modules/platform/ingestion-config-service';
+import { fakeSportDataProvider, registryWith } from '../../support/fake-sport-data-provider';
+import type { GameScoreUpdate, LiveScoreResult } from '@poolmaster/shared/dto';
 import {
   PrismaSportEventRoundMatchRepository,
   PrismaSportEventParticipantRepository,
@@ -14,7 +18,7 @@ import { publishLiveScoreUpdate } from '../../../packages/core-api/src/modules/i
 import { headToHeadScoringFamily } from '../../../packages/core-api/src/modules/scoring-families/head-to-head';
 import { expectDefined } from '../../support/expect-defined';
 import { createRoundRows, createSportEventRow } from '../../support/sport-event-rows';
-import { cleanupTestData, getAppPrisma, getPrisma, integrationBackgroundJobs, integrationSyncFindings, setupIntegrationTests, teardownIntegrationTests } from '../helpers';
+import { cleanupTestData, getAppPrisma, getPrisma, integrationBackgroundJobs, integrationEventSyncJobs, integrationSyncFindings, setupIntegrationTests, teardownIntegrationTests } from '../helpers';
 import { createEventLifecycleService } from '../../../packages/core-api/src/modules/events/wiring';
 import { recordStatements, statementCounts } from '../statement-log';
 import { sportLeagueRowDefaults } from '../../support/league-profiles';
@@ -205,10 +209,15 @@ async function squaresContestOn(sportEventId: string, sportEventRoundMatchId: st
  * and the app's event lifecycle, which queues a contest's "Contest is live" job as it goes live.
  */
 function publish(externalEventId: string, games: GameScoreUpdate[]) {
+  return publishResult({ category: 'GAME', externalEventId, games });
+}
+
+/** A provider's live scores written as the app writes them. */
+function publishResult(result: LiveScoreResult) {
   const { queue } = integrationBackgroundJobs();
   const domainEvents = testDomainEvents({ queue });
   return publishLiveScoreUpdate(
-    { category: 'GAME', externalEventId, games },
+    result,
     {
       prisma: getAppPrisma(),
       providerId: PROVIDER,
@@ -493,6 +502,40 @@ describe('game scores from a provider', () => {
     const [first, second] = await viewsOf(matches, event.id);
     expect(first).toMatchObject({ status: MatchStatus.POSTPONED, homeScore: null, awayScore: null });
     expect(second).toMatchObject({ status: MatchStatus.IN_PROGRESS, homeScore: 11, awayScore: 9 });
+  });
+
+  it('postpones a Game only on the provider\'s POSTPONED: a scores job whose feed leaves the Game out, or that the provider turns away rate limited or with its circuit open, writes nothing and leaves it scheduled', async () => {
+    // A league of its own, synced from the provider its event is mapped to, so its scores jobs run.
+    const { event, externalId, teamId, matches } = await linkedBracket(Sport.BASKETBALL, `Postponement League ${randomUUID().slice(0, 8)}`);
+    const mapping = await getPrisma().sportLeagueProviderMapping.findFirstOrThrow({ where: { sportLeagueId: event.sportLeagueId }, select: { id: true } });
+    await getPrisma().sportLeague.update({ where: { id: event.sportLeagueId }, data: { selectedProviderMappingId: mapping.id } });
+    const scheduledGame = { providerGameId: 'g1', homeTeamExternalId: teamId('Duke'), awayTeamExternalId: teamId('Houston'), homeScore: null, awayScore: null };
+    const scoresJob = async (getLiveScores: SportDataProvider['getLiveScores']) => {
+      const provider = fakeSportDataProvider({ providerId: PROVIDER, getLiveScores: jest.fn(getLiveScores) });
+      const eventSyncJobs = integrationEventSyncJobs(registryWith(provider), {
+        onEventDetail: () => Promise.reject(new Error('a scores job loads no event detail')),
+        onLiveScores: (result) => publishResult(result),
+      }, { schedule: { getConfig: () => Promise.resolve(INGESTION_SCHEDULE_SETTINGS.defaults({})) } });
+      const job = await getPrisma().backgroundJob.create({
+        data: { type: BackgroundJobType.SYNC_EVENT_SCORES, trigger: JobTrigger.SYSTEM, payload: { sportEventId: event.id }, sportEventId: event.id },
+      });
+      return eventSyncJobs.run(ProviderSyncKind.SCORES, { sportEventId: event.id }, { jobId: job.id, attempt: 1, trigger: JobTrigger.SYSTEM });
+    };
+    const statuses = async () => (await viewsOf(matches, event.id)).map((view) => view.status);
+    const before = await statuses();
+
+    // The feed is silent on the Game: it answers, but without it.
+    await scoresJob(async () => ({ category: 'GAME', externalEventId: externalId, games: [] }));
+    expect(await statuses()).toEqual(before);
+    for (const reason of ['still 429 after every retry', 'its circuit is open']) {
+      // poolmaster-allow-query-in-loop: one scores job per way the provider turns it away
+      await expect(scoresJob(() => Promise.reject(new ProviderRateLimitedError(PROVIDER, new Date(Date.now() + 60_000), reason)))).rejects.toBeInstanceOf(ProviderRateLimitedError);
+      expect(await statuses()).toEqual(before);
+    }
+    expect(before[0]).toBe(MatchStatus.SCHEDULED);
+
+    await scoresJob(async () => ({ category: 'GAME', externalEventId: externalId, games: [{ ...scheduledGame, state: ProviderGameState.POSTPONED }] }));
+    expect((await statuses())[0]).toBe(MatchStatus.POSTPONED);
   });
 
   it('reads the event\'s matches, sides and team mappings once for a batch of finals, and pays only the result path for each', async () => {

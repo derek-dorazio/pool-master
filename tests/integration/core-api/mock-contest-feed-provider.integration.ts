@@ -740,7 +740,7 @@ describe('mock contest feed provider event-first verification', () => {
       quietAfterMs: () => 0,
       leagueSendsNotifications: () => true,
       typicalGameMinutes: () => undefined,
-      findings: { raiseOfSource: () => Promise.resolve(), resolveGamesNoLongerOverdue: () => Promise.resolve(0) },
+      findings: { raiseOfSource: () => Promise.resolve(), resolveGameFindingsNoLongerHeld: () => Promise.resolve(0) },
       jobLock: heldHere(),
       now: () => syncVerificationNow,
     });

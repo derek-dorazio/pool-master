@@ -22,6 +22,11 @@
  *   after its start plus its provider league's typical game length (`gameOverdueExpectedEnd`)
  *   raises the finding, once per overdue wait it stays so. Each tick resolves the Provider's
  *   others, whose Games are no longer overdue.
+ * - GAME_POSTPONED_NO_DATE (#2013): a linked Game the feed postponed, still POSTPONED more than
+ *   the postponed wait after its start (`gamePostponedWaitStart`), raises the finding, once per
+ *   postponed wait it stays so. Each tick resolves the Provider's others, whose Games have a new
+ *   date or are no longer postponed. Only the feed's POSTPONED postpones a Game: a silent feed, an
+ *   open breaker or a rate-limited scores job writes nothing, so the Game is overdue instead.
  *
  * Each kind's interval is the one for its league's Season state (`syncSeasonStateOf`): in season
  * while one of the league's Seasons' spans holds now, off season otherwise.
@@ -35,7 +40,9 @@ import {
   BackgroundJobType,
   fieldWindowEventIds,
   gameOverdueExpectedEnd,
+  gamePostponedWaitStart,
   OVERDUE_AFTER_MS,
+  POSTPONED_NO_DATE_AFTER_MS,
   isQuietWarningDue,
   isSyncDue,
   playUnderwaySince,
@@ -51,7 +58,7 @@ import {
 } from '@poolmaster/shared/domain';
 import type { IngestionAlwaysOnSchedulePolicy, IngestionFeedSchedulePolicy, IngestionScheduleConfig } from '@poolmaster/shared/dto/config.dto';
 import type { JobLock } from '../../core/job-lock';
-import type { ProviderSyncFindingService } from './findings/provider-sync-finding-service';
+import type { GameFindingKind, ProviderSyncFindingService } from './findings/provider-sync-finding-service';
 import { SCHEDULE_START } from '../../core/job-start';
 import { LockedSweep } from '../../core/locked-sweep';
 import { schedulePolicyDelayMs } from '../../core/schedule-policy-delay';
@@ -105,8 +112,8 @@ export interface SyncTickOptions {
    * has, whose Games are never judged overdue.
    */
   typicalGameMinutes: (providerLeagueId: string) => number | undefined;
-  /** The quiet live scores finding (#2094) and the overdue Game finding (#2013) are raised and resolved here. */
-  findings: Pick<ProviderSyncFindingService, 'raiseOfSource' | 'resolveGamesNoLongerOverdue'>;
+  /** The quiet live scores finding (#2094) and the two Game findings (#2013) are raised and resolved here. */
+  findings: Pick<ProviderSyncFindingService, 'raiseOfSource' | 'resolveGameFindingsNoLongerHeld'>;
   jobLock: JobLock;
   now?: () => Date;
   logger?: FastifyBaseLogger;
@@ -300,20 +307,20 @@ export class SyncTick {
   }
 
   /**
-   * The Games overdue at `now` (#2013), from one read: each raises GAME_OVERDUE on the tick that
-   * crosses each whole overdue wait since it should have ended, so a Game long overdue counts its
-   * sightings without a raise every tick; and each Provider's other GAME_OVERDUE findings resolve,
-   * since their Games are no longer overdue. A Game is judged by its own league's typical length
-   * and named by its id at that league's Provider; one that Provider does not map is skipped. A
-   * findings write that fails is logged and never stops the tick.
+   * The Games overdue, or postponed with no new date, at `now` (#2013), from one read: each raises
+   * its finding on the tick that crosses each whole wait, so a Game long overdue counts its
+   * sightings without a raise every tick; and each Provider's other findings of each kind resolve,
+   * since their Games no longer hold them. A Game is judged by its own league's typical length (or
+   * the postponed wait) and named by its id at that league's Provider; one that Provider does not
+   * map is skipped. A findings write that fails is logged and never stops the tick.
    */
   private async checkOverdueGames(leagues: readonly TickLeague[], now: Date): Promise<void> {
     try {
       const games = await this.options.dueWork.findOverdueGames({ leagues, now });
-      for (const provider of overdueByProvider(leagues, games, now)) {
+      for (const provider of gameFindingsByProvider(leagues, games, now)) {
         if (provider.raises.length > 0) {
           await this.options.findings.raiseOfSource(provider.providerSourceId, provider.raises.map((raise) => ({
-            kind: ProviderSyncFindingKind.GAME_OVERDUE,
+            kind: raise.kind,
             severity: ProviderSyncFindingSeverity.WARNING,
             sportLeagueId: raise.sportLeagueId,
             sportEventId: raise.sportEventId,
@@ -321,10 +328,12 @@ export class SyncTick {
             providerValueName: null,
           })));
         }
-        await this.options.findings.resolveGamesNoLongerOverdue(provider.providerSourceId, provider.overdueGameIds);
+        for (const kind of GAME_FINDING_KINDS) {
+          await this.options.findings.resolveGameFindingsNoLongerHeld(kind, provider.providerSourceId, provider.heldGameIds[kind]);
+        }
       }
     } catch (error) {
-      this.options.logger?.error({ action: 'ingestion.syncFinding.overdueGamesFailed', err: error }, 'Could not raise or resolve Game result overdue');
+      this.options.logger?.error({ action: 'ingestion.syncFinding.overdueGamesFailed', err: error }, 'Could not raise or resolve the overdue and postponed Game findings');
     }
   }
 
@@ -367,35 +376,56 @@ export class SyncTick {
   }
 }
 
-/** The Games found overdue at a tick against one Provider, with those this tick raises. */
-interface ProviderOverdueGames {
+/** The two findings the tick raises on a Game, in the order it resolves them. */
+const GAME_FINDING_KINDS: readonly GameFindingKind[] = [ProviderSyncFindingKind.GAME_OVERDUE, ProviderSyncFindingKind.GAME_POSTPONED_NO_DATE];
+
+/** The Games found holding a Game finding at a tick against one Provider, with those this tick raises. */
+interface ProviderGameFindings {
   providerSourceId: string;
-  /** Every overdue Game's id at this Provider: the findings to keep open. */
-  overdueGameIds: string[];
-  raises: Array<{ sportLeagueId: string; sportEventId: string; providerValue: string }>;
+  /** Each kind's Games, by their id at this Provider: the findings to keep open. */
+  heldGameIds: Record<GameFindingKind, string[]>;
+  raises: Array<{ kind: GameFindingKind; sportLeagueId: string; sportEventId: string; providerValue: string }>;
 }
 
 /**
- * The overdue Games grouped by the Provider their league syncs from: every synced league's Provider
- * appears, even with none overdue, so its stale findings resolve. A Game raises on the tick that
- * crosses a whole overdue wait past its expected end.
+ * Whether a Game holds a Game finding at `now`, and since when its wait runs: overdue from its
+ * expected end, judged by its league's typical length (none, never overdue); postponed with no new
+ * date from its scheduled start.
  */
-function overdueByProvider(leagues: readonly TickLeague[], games: readonly OverdueGameView[], now: Date): ProviderOverdueGames[] {
-  const byProvider = new Map<string, ProviderOverdueGames>();
+function gameFindingOf(game: OverdueGameView, typicalGameMinutes: number | undefined, now: Date): { kind: GameFindingKind; since: Date; waitMs: number } | null {
+  const postponedSince = gamePostponedWaitStart(game, now);
+  if (postponedSince !== null) return { kind: ProviderSyncFindingKind.GAME_POSTPONED_NO_DATE, since: postponedSince, waitMs: POSTPONED_NO_DATE_AFTER_MS };
+  const expectedEnd = typicalGameMinutes === undefined ? null : gameOverdueExpectedEnd(game, typicalGameMinutes, now);
+  return expectedEnd === null ? null : { kind: ProviderSyncFindingKind.GAME_OVERDUE, since: expectedEnd, waitMs: OVERDUE_AFTER_MS };
+}
+
+/**
+ * The Games holding a Game finding, grouped by the Provider their league syncs from: every synced
+ * league's Provider appears, even with none, so its stale findings resolve. A Game raises on the
+ * tick that crosses a whole wait of its kind.
+ */
+function gameFindingsByProvider(leagues: readonly TickLeague[], games: readonly OverdueGameView[], now: Date): ProviderGameFindings[] {
+  const byProvider = new Map<string, ProviderGameFindings>();
   for (const league of leagues) {
-    if (!byProvider.has(league.providerId)) byProvider.set(league.providerId, { providerSourceId: league.providerId, overdueGameIds: [], raises: [] });
+    if (!byProvider.has(league.providerId)) {
+      byProvider.set(league.providerId, {
+        providerSourceId: league.providerId,
+        heldGameIds: { [ProviderSyncFindingKind.GAME_OVERDUE]: [], [ProviderSyncFindingKind.GAME_POSTPONED_NO_DATE]: [] },
+        raises: [],
+      });
+    }
   }
   const leaguesById = new Map(leagues.map((league) => [league.sportLeagueId, league]));
   for (const game of games) {
     const league = leaguesById.get(game.sportLeagueId);
     const provider = league === undefined ? undefined : byProvider.get(league.providerId);
     const externalId = game.providerGameIds.find((id) => id.providerCode === league?.providerCode)?.externalId;
-    if (league?.typicalGameMinutes === undefined || provider === undefined || externalId === undefined) continue;
-    const expectedEnd = gameOverdueExpectedEnd(game, league.typicalGameMinutes, now);
-    if (expectedEnd === null) continue;
-    provider.overdueGameIds.push(externalId);
-    const crossesWait = isQuietWarningDue({ playUnderwaySince: expectedEnd, lastHeardAt: null, quietAfterMs: OVERDUE_AFTER_MS, now, tickMs: SYNC_TICK_MS });
-    if (crossesWait) provider.raises.push({ sportLeagueId: game.sportLeagueId, sportEventId: game.sportEventId, providerValue: externalId });
+    if (league === undefined || provider === undefined || externalId === undefined) continue;
+    const finding = gameFindingOf(game, league.typicalGameMinutes, now);
+    if (finding === null) continue;
+    provider.heldGameIds[finding.kind].push(externalId);
+    const crossesWait = isQuietWarningDue({ playUnderwaySince: finding.since, lastHeardAt: null, quietAfterMs: finding.waitMs, now, tickMs: SYNC_TICK_MS });
+    if (crossesWait) provider.raises.push({ kind: finding.kind, sportLeagueId: game.sportLeagueId, sportEventId: game.sportEventId, providerValue: externalId });
   }
   return [...byProvider.values()];
 }

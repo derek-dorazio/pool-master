@@ -58,9 +58,10 @@ export interface SyncDueWorkReader {
    * provider's code for at least one of the league's positions. In one read.
    */
   /**
-   * The leagues' Games that may be overdue at `now` (#2013): of their linked events, still
-   * scheduled or in progress, not moved to another Game, and scheduled to start before
-   * `overdueStartCutoff(now)`. In one read; the tick judges each by its league's typical length.
+   * The leagues' Games that may be overdue, or postponed with no new date, at `now` (#2013): of
+   * their linked events, still scheduled, in progress or postponed, not moved to another Game, and
+   * scheduled to start before `overdueStartCutoff(now)`. In one read; the tick judges each by its
+   * league's typical length, or by the postponed wait.
    */
   findOverdueGames(input: { leagues: readonly SyncedLeagueRef[]; now: Date }): Promise<OverdueGameView[]>;
   findRosteredLeagueIds(input: { leagues: readonly SyncedLeagueRef[] }): Promise<Set<string>>;

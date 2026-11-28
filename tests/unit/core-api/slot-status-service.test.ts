@@ -3,9 +3,12 @@ import {
   BackgroundJobType,
   MatchStatus,
   ScoringFamily,
+  ProviderSyncFindingKind,
+  ProviderSyncFindingSeverity,
   SeasonSlotStatus,
   SportEventStatus,
   type BackgroundJobRequest,
+  type ProviderSyncFindingRaise,
   type SportEvent,
 } from '@poolmaster/shared/domain';
 import { SlotStatusService } from '../../../packages/core-api/src/modules/events/slot-status-service';
@@ -47,13 +50,15 @@ function service(slots: SlotStatusState[], event: SportEvent | null = eventOf())
       return { sportEvent: current as SportEvent, fromStatus: input.fromStatus ?? SportEventStatus.SCHEDULED, toStatus: input.toStatus };
     }),
   };
+  const findings = { raise: jest.fn(async (_raises: readonly ProviderSyncFindingRaise[]) => undefined) };
   const slotStatuses = new SlotStatusService({
     slots: store.repo,
     sportEvents: { findById: async () => current },
     eventLifecycle,
     domainEvents: testDomainEvents(),
+    findings,
   });
-  return { slotStatuses, store, transitions, eventLifecycle };
+  return { slotStatuses, store, transitions, eventLifecycle, findings };
 }
 
 describe('SlotStatusService.refreshSlots', () => {
@@ -85,11 +90,45 @@ describe('SlotStatusService.refreshSlots', () => {
     expect(called.store.written.map((write) => write.to)).toEqual([SeasonSlotStatus.COMPLETED]);
   });
 
-  it('never moves a completed slot again, though a late result moves one of its Matches back in progress', async () => {
-    const { slotStatuses, store } = service([slot('slot-done', SeasonSlotStatus.COMPLETED, [MatchStatus.IN_PROGRESS])]);
+  it('never moves a completed slot again, though a late result moves one of its Matches back in progress, and raises one late-change finding for the event however many of its slots changed', async () => {
+    const { slotStatuses, store, findings } = service(
+      [
+        slot('slot-done', SeasonSlotStatus.COMPLETED, [MatchStatus.IN_PROGRESS]),
+        slot('slot-also-done', SeasonSlotStatus.COMPLETED, [MatchStatus.SCHEDULED]),
+      ],
+      eventOf({ sportLeagueId: 'league-1' }),
+    );
 
     await expect(slotStatuses.refreshSlots(EVENT_ID)).resolves.toEqual({ changedCount: 0 });
     expect(store.written).toEqual([]);
+    expect(findings.raise).toHaveBeenCalledTimes(1);
+    expect(findings.raise).toHaveBeenCalledWith([{
+      kind: ProviderSyncFindingKind.SLOT_CHANGED_AFTER_COMPLETED,
+      severity: ProviderSyncFindingSeverity.WARNING,
+      sportLeagueId: 'league-1',
+      sportEventId: EVENT_ID,
+      providerId: null,
+      providerValue: null,
+      providerValueName: null,
+    }]);
+  });
+
+  it('raises no late-change finding for a completed slot whose Matches still complete it, or for a golf slot the feed still calls final', async () => {
+    const teams = service([slot('slot-done', SeasonSlotStatus.COMPLETED, [MatchStatus.COMPLETED, MatchStatus.CANCELLED])]);
+    await teams.slotStatuses.refreshSlots(EVENT_ID);
+    expect(teams.findings.raise).not.toHaveBeenCalled();
+
+    const golf = service([slot('slot-golf', SeasonSlotStatus.COMPLETED, [MatchStatus.COMPLETED], true)], eventOf({ scoringFamily: ScoringFamily.STROKE_PLAY }));
+    await golf.slotStatuses.refreshSlots(EVENT_ID);
+    expect(golf.findings.raise).not.toHaveBeenCalled();
+  });
+
+  it('raises the late-change finding when the feed takes back a golf tournament\'s final call after its slot completed', async () => {
+    const { slotStatuses, findings } = service([slot('slot-golf', SeasonSlotStatus.COMPLETED, [MatchStatus.COMPLETED], false)], eventOf({ scoringFamily: ScoringFamily.STROKE_PLAY }));
+
+    await slotStatuses.refreshSlots(EVENT_ID);
+
+    expect(findings.raise).toHaveBeenCalledTimes(1);
   });
 
   it('counts no move a concurrent refresh already made, and refreshes nothing for an event that is gone', async () => {
