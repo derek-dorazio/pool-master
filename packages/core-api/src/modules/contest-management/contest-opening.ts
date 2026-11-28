@@ -17,13 +17,14 @@ import {
   type SportEvent,
 } from '@poolmaster/shared/domain';
 import { evaluateEventOperationalState } from '../events/operational-timing';
+import { slotWaitsForFeedingGames } from '../contests/entry-window';
 import type { ContestCreateSportEventReader, ContestCreateSportEventState } from './service';
 
 /** The setup asked about: how its entries pick, and the Season slot it would start at, when known. */
 export interface ContestOpeningSetup {
   selectionType: SelectionType;
-  /** The Season slot a contest of the setup would start at (an event page's next slot); omitted, its event's own. */
-  seasonSlotId?: string;
+  /** The Season slot a contest of the setup would start at (an event page's next slot), with its definition; omitted, its event's own. */
+  startSlot?: { seasonSlotId: string; slotDefinitionId: string };
 }
 
 export interface ContestOpeningReader extends Pick<ContestCreateSportEventReader, 'findById' | 'findBracketProblem' | 'isSlotFieldDecided'> {
@@ -133,8 +134,9 @@ export async function contestOpening(
   }
   // A contest picking from the field waits for every team of the slot it starts at (#2015);
   // brackets and pick'em pick sides, which can be "winner of", so they open earlier.
-  if (isRosterSelectionType(setup.selectionType) && setup.seasonSlotId !== undefined
-    && !await reader.isSlotFieldDecided(sportEvent.id, setup.seasonSlotId)) {
+  if (isRosterSelectionType(setup.selectionType) && setup.startSlot !== undefined
+    && slotWaitsForFeedingGames(sportEvent, setup.startSlot.slotDefinitionId)
+    && !await reader.isSlotFieldDecided(sportEvent.id, setup.startSlot.seasonSlotId)) {
     return { opening: ContestOpening.NOT_YET, reason: ContestOpeningReason.FIELD_NOT_DECIDED, closesAt };
   }
   if (setup.selectionType === SelectionType.BRACKET && await reader.findBracketProblem(sportEvent.id) !== null) {

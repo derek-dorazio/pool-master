@@ -128,27 +128,39 @@ describe('contestOpening\'s reason for each wait and close (#2015)', () => {
 });
 
 describe('contestOpening holds a field contest for the teams of the slot it starts at (#2015)', () => {
-  const AT_DIVISIONAL = { seasonSlotId: 'divisional-2027' };
+  const AT_DIVISIONAL = { startSlot: { seasonSlotId: 'divisional-2027', slotDefinitionId: 'divisional' } };
+  /** A playoff whose Divisional round follows the Wild Card round, so its teams come from those games. */
+  const playoffs = (overrides: Partial<ContestCreateSportEventState> = {}) => event({ slotDefinitionIds: ['wild-card', 'divisional', 'conference'], ...overrides });
 
   it('is NOT_YET for a tiered, budget or sweepstakes contest on a slot whose teams wait on earlier games', async () => {
     for (const selectionType of [SelectionType.TIERED, SelectionType.BUDGET_PICK, SelectionType.RANDOM_DRAW]) {
-      const window = await contestOpening(reader(event(), { slotFieldDecided: false }), 'event-1', { selectionType, ...AT_DIVISIONAL }, NOW);
+      const window = await contestOpening(reader(playoffs(), { slotFieldDecided: false }), 'event-1', { selectionType, ...AT_DIVISIONAL }, NOW);
       expect([selectionType, window.opening, window.reason, window.closesAt]).toEqual([selectionType, ContestOpening.NOT_YET, ContestOpeningReason.FIELD_NOT_DECIDED, LATER]);
     }
   });
 
   it('opens a bracket or pick\'em on that slot, whose picks can be "winner of", and asks nothing of its teams', async () => {
     for (const selectionType of [SelectionType.BRACKET, SelectionType.PICK_EM]) {
-      const ask = reader(event(), { slotFieldDecided: false });
+      const ask = reader(playoffs(), { slotFieldDecided: false });
       expect((await contestOpening(ask, 'event-1', { selectionType, ...AT_DIVISIONAL }, NOW)).opening).toBe(ContestOpening.OPEN);
       expect(ask.isSlotFieldDecided).not.toHaveBeenCalled();
     }
   });
 
   it('opens a field contest once the slot\'s teams are decided, and asks about the slot it starts at', async () => {
-    const ask = reader(event(), { slotFieldDecided: true });
+    const ask = reader(playoffs(), { slotFieldDecided: true });
     expect((await contestOpening(ask, 'event-1', { selectionType: SelectionType.TIERED, ...AT_DIVISIONAL }, NOW)).opening).toBe(ContestOpening.OPEN);
     expect(ask.isSlotFieldDecided).toHaveBeenCalledWith('event-1', 'divisional-2027');
+  });
+
+  it('opens a field contest at the event\'s first slot, or on an event played as one field, reading no games, since no game feeds it', async () => {
+    const atFirst = reader(playoffs(), { slotFieldDecided: false });
+    const atWildCard = { startSlot: { seasonSlotId: 'wild-card-2027', slotDefinitionId: 'wild-card' } };
+    const asOneField = reader(playoffs({ playsMatches: false }), { slotFieldDecided: false });
+
+    expect((await contestOpening(atFirst, 'event-1', { selectionType: SelectionType.TIERED, ...atWildCard }, NOW)).opening).toBe(ContestOpening.OPEN);
+    expect((await contestOpening(asOneField, 'event-1', { selectionType: SelectionType.TIERED, ...AT_DIVISIONAL }, NOW)).opening).toBe(ContestOpening.OPEN);
+    expect([atFirst.isSlotFieldDecided, asOneField.isSlotFieldDecided].map((ask) => jest.mocked(ask).mock.calls.length)).toEqual([0, 0]);
   });
 });
 

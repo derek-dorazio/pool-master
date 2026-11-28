@@ -25,6 +25,7 @@ import type { BackgroundJobOutcome, Contest, SportEvent, SportEventRoundMatch } 
 import {
   ContestStatus,
   eventFeedRef,
+  eventPlaysMatches,
   isRosterSelectionType,
   ProviderSyncFindingKind,
   ProviderSyncFindingSeverity,
@@ -34,7 +35,7 @@ import {
   hasSportEventStarted,
   isSportEventStatusFinished,
 } from '@poolmaster/shared/domain';
-import { ContestCutoffKind, contestCutoff, cutoffTiming, hasGameMovedOn, isSlotFieldDecided, type EventTiming } from '../contests/entry-window';
+import { ContestCutoffKind, contestCutoff, cutoffTiming, hasGameMovedOn, isSlotFieldDecided, slotWaitsForFeedingGames, type EventTiming } from '../contests/entry-window';
 import type { ProviderSyncFindingService } from '../ingestion/findings/provider-sync-finding-service';
 import { ContestLifecycle } from '../contests/contest-lifecycle';
 import type { SettleSportEventContestsJobPayload } from '../contests/settle-sport-event-job-requests';
@@ -501,8 +502,8 @@ export class EventLifecycleService {
 
   /**
    * A draft field contest opens only once every team of its first slot is known (#2015). One whose
-   * first slot, on this event, has started with a team still undecided can never open: the league's
-   * rounds overlap. One FIELD_CONTEST_CANNOT_OPEN warning per event tells a root admin. The games
+   * first slot, on this event, is fed by earlier slots' games (`slotWaitsForFeedingGames`) and has
+   * started with a team still undecided can never open: the league's rounds overlap. One FIELD_CONTEST_CANNOT_OPEN warning per event tells a root admin. The games
    * are read only when such a draft is past its cutoff.
    */
   private async raiseFieldContestsThatCannotOpen(
@@ -511,9 +512,11 @@ export class EventLifecycleService {
     now: Date,
     knownGames: readonly SportEventRoundMatch[] | undefined,
   ): Promise<void> {
+    const played = { playsMatches: eventPlaysMatches(sportEvent), slotDefinitionIds: sportEvent.slotDefinitions.map((definition) => definition.id) };
     const pastCutoff = drafts.flatMap((contest) => {
       const firstSlot = contest.coveredSlots.at(0);
-      if (!isRosterSelectionType(contest.selectionType) || firstSlot?.sportEventId !== sportEvent.id) return [];
+      if (!isRosterSelectionType(contest.selectionType) || firstSlot?.sportEventId !== sportEvent.id
+        || !slotWaitsForFeedingGames(played, firstSlot.slotDefinitionId)) return [];
       return hasSportEventStarted(cutoffTiming(contestCutoff(undefined, contest), sportEvent, []), now) ? [firstSlot.seasonSlotId] : [];
     });
     if (pastCutoff.length === 0) return;

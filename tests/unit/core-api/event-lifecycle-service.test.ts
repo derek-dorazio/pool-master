@@ -3,12 +3,14 @@ import type { ContestRepository, ContestStatusTransition } from '@poolmaster/sha
 import {
   BackgroundJobType,
   ContestStatus,
+  MatchFormat,
   MatchStatus,
   ProviderSyncFindingKind,
   ProviderSyncFindingSeverity,
   SPORT_EVENT_STATUS_TRANSITIONS,
   SeasonSlotStatus,
   SelectionType,
+  SlotKind,
   SportEventStatus,
   type Contest,
   type SportEvent,
@@ -1271,7 +1273,7 @@ describe('EventLifecycleService field contests that can never open (#2015)', () 
       sportEventIds: ['sport-event-1'],
       status: ContestStatus.DRAFT,
       selectionType,
-      coveredSlots: [buildCoveredSlot({ seasonSlotId: SECOND_ROUND.seasonSlotId, sportEventId: 'sport-event-1', status, startsAt: roundStarted })],
+      coveredSlots: [buildCoveredSlot({ seasonSlotId: SECOND_ROUND.seasonSlotId, slotDefinitionId: SECOND_ROUND.slotDefinitionId, sportEventId: 'sport-event-1', status, startsAt: roundStarted })],
     });
   }
 
@@ -1284,7 +1286,9 @@ describe('EventLifecycleService field contests that can never open (#2015)', () 
   }
 
   function serviceOver(drafts: Contest[], games: SportEventRoundMatch[]) {
-    const { sportEvents } = seededEvents({ status: SportEventStatus.IN_PROGRESS, sportLeagueId: 'sport-league-1' });
+    // Two rounds of games, in play order: the first round's games decide the second's teams.
+    const slotDefinitions = [slotOfRound(1), SECOND_ROUND].map((slot) => ({ id: slot.slotDefinitionId, slotKind: SlotKind.QUARTERFINAL, canEndTied: false, periods: null, matchFormat: MatchFormat.HEAD_TO_HEAD }));
+    const { sportEvents } = seededEvents({ status: SportEventStatus.IN_PROGRESS, sportLeagueId: 'sport-league-1', slotDefinitions });
     const contests = contestDeps();
     contests.contests.findBySportEvent = jest.fn().mockResolvedValue(drafts);
     contests.matches = { findBySportEvent: jest.fn().mockResolvedValue(games) };

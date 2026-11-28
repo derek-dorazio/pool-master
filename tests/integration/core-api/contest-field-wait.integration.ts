@@ -56,7 +56,13 @@ async function knockout() {
     data: { ...(await freshEventEdition(prisma, { sport: Sport.FOOTBALL, sportLeagueId: sportLeague.id })), name: `Field Wait Playoffs ${suffix}`, startDate, status: SportEventStatus.SCHEDULED },
   });
   const slotIds = await eventRoundSlots(prisma, event.id, [{ slotKind: 'SEMIFINAL' }, { slotKind: 'FINAL' }], { isTestData: false });
-  const [semifinalSlot, finalSlot] = await Promise.all(slotIds.map(async (id) => (await prisma.sportEventSlot.findUniqueOrThrow({ where: { id }, select: { sportLeagueSeasonCompetitionSlotId: true } })).sportLeagueSeasonCompetitionSlotId));
+  const slots = await Promise.all(slotIds.map(async (id) => {
+    const { seasonSlot } = await prisma.sportEventSlot.findUniqueOrThrow({ where: { id }, select: { seasonSlot: { select: { id: true, sportLeagueCompetitionSlotId: true } } } });
+    return { seasonSlotId: seasonSlot.id, slotDefinitionId: seasonSlot.sportLeagueCompetitionSlotId };
+  }));
+  const [semifinalStart, finalStart] = slots as [typeof slots[number], typeof slots[number]];
+  const semifinalSlot = semifinalStart.seasonSlotId;
+  const finalSlot = finalStart.seasonSlotId;
   const teams = await Promise.all([1, 2, 3, 4].map(async (seedNumber) => {
     const participant = await prisma.participant.create({ data: { sportLeagueId: event.sportLeagueId, name: `Seed ${String(seedNumber)} ${suffix}`, participantType: 'TEAM' } });
     return prisma.sportEventParticipant.create({ data: { sportEventId: event.id, participantId: participant.id, seedNumber } });
@@ -70,7 +76,7 @@ async function knockout() {
   await createMatchRow(prisma, { sportEventId: event.id, sportEventRoundId: semis.id, sportEventSlotId: semis.sportEventSlotId, matchNumber: 2, teams: [three, two], isNeutralSite: false, scheduledDate: startDate });
   const finalGame = await createMatchRow(prisma, { sportEventId: event.id, sportEventRoundId: final.id, sportEventSlotId: final.sportEventSlotId, matchNumber: 3, teams: [one, null], isNeutralSite: true, scheduledDate: final.scheduledDate });
   const decideFinal = () => prisma.sportEventRoundMatchSide.updateMany({ where: { sportEventRoundMatchId: finalGame.id, sportEventParticipantId: null }, data: { sportEventParticipantId: two } });
-  return { event, semifinalSlot, finalSlot, decideFinal };
+  return { event, semifinalSlot, finalSlot, semifinalStart, finalStart, decideFinal };
 }
 
 describe('createContestOpeningReader.isSlotFieldDecided against Postgres (#2015)', () => {
@@ -85,15 +91,15 @@ describe('createContestOpeningReader.isSlotFieldDecided against Postgres (#2015)
   });
 
   it('keeps a tiered contest starting at the final waiting for its teams while a bracket and pick\'em open, and opens a tiered contest starting at the semifinals', async () => {
-    const { event, semifinalSlot, finalSlot } = await knockout();
+    const { event, semifinalStart, finalStart } = await knockout();
     const reader = createContestOpeningReader(getAppPrisma());
     const now = new Date();
-    const open = (selectionType: SelectionType, seasonSlotId: string) => contestOpening(reader, event.id, { selectionType, seasonSlotId }, now);
+    const open = (selectionType: SelectionType, startSlot: typeof finalStart) => contestOpening(reader, event.id, { selectionType, startSlot }, now);
 
-    expect(await open(SelectionType.TIERED, finalSlot)).toMatchObject({ opening: ContestOpening.NOT_YET, reason: ContestOpeningReason.FIELD_NOT_DECIDED });
-    expect(await open(SelectionType.PICK_EM, finalSlot)).toMatchObject({ opening: ContestOpening.OPEN, reason: null });
-    expect(await open(SelectionType.BRACKET, finalSlot)).not.toMatchObject({ reason: ContestOpeningReason.FIELD_NOT_DECIDED });
-    expect(await open(SelectionType.TIERED, semifinalSlot)).toMatchObject({ opening: ContestOpening.OPEN, reason: null });
+    expect(await open(SelectionType.TIERED, finalStart)).toMatchObject({ opening: ContestOpening.NOT_YET, reason: ContestOpeningReason.FIELD_NOT_DECIDED });
+    expect(await open(SelectionType.PICK_EM, finalStart)).toMatchObject({ opening: ContestOpening.OPEN, reason: null });
+    expect(await open(SelectionType.BRACKET, finalStart)).not.toMatchObject({ reason: ContestOpeningReason.FIELD_NOT_DECIDED });
+    expect(await open(SelectionType.TIERED, semifinalStart)).toMatchObject({ opening: ContestOpening.OPEN, reason: null });
   });
 });
 

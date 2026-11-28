@@ -743,7 +743,7 @@ describe('ContestManagementService', () => {
       contestOpened?: ContestOpenedNotice;
       sportEventIds?: string[];
       selectionType?: SelectionType;
-      coveredSlots?: Array<Pick<ContestCoveredSlot, 'seasonSlotId' | 'sportEventId' | 'status' | 'startsAt' | 'isTestData'>>;
+      coveredSlots?: Array<Pick<ContestCoveredSlot, 'seasonSlotId' | 'slotDefinitionId' | 'sportEventId' | 'status' | 'startsAt' | 'isTestData'>>;
     }) {
       const contestCoreRepo = createContestRepo();
       const draft = {
@@ -786,13 +786,16 @@ describe('ContestManagementService', () => {
       return { service, contestCoreRepo, tiers };
     }
 
+    /** The playoffs' slots in play order: the wild-card round's games decide the divisional round's teams. */
+    const PLAYOFF_SLOT_DEFINITIONS = ['wild-card', 'divisional', 'conference'];
+
     it('refuses to open a field contest while a team of the slot it starts at waits for the game feeding it, with 409 CONTEST_FIELD_NOT_DECIDED (#2015)', async () => {
-      const reader = createSportEventReader({ slotFieldDecided: false });
+      const reader = createSportEventReader({ slotFieldDecided: false, playsMatches: true, slotDefinitionIds: PLAYOFF_SLOT_DEFINITIONS });
       const { service, contestCoreRepo } = buildService({
         reader,
         coveredSlots: [
-          { seasonSlotId: 'divisional-2027', sportEventId: '11111111-1111-1111-1111-111111111111', status: SeasonSlotStatus.SCHEDULED, startsAt: new Date('2027-01-17T18:00:00.000Z'), isTestData: false },
-          { seasonSlotId: 'conference-2027', sportEventId: '11111111-1111-1111-1111-111111111111', status: SeasonSlotStatus.SCHEDULED, startsAt: new Date('2027-01-24T18:00:00.000Z'), isTestData: false },
+          { seasonSlotId: 'divisional-2027', slotDefinitionId: 'divisional', sportEventId: '11111111-1111-1111-1111-111111111111', status: SeasonSlotStatus.SCHEDULED, startsAt: new Date('2027-01-17T18:00:00.000Z'), isTestData: false },
+          { seasonSlotId: 'conference-2027', slotDefinitionId: 'conference', sportEventId: '11111111-1111-1111-1111-111111111111', status: SeasonSlotStatus.SCHEDULED, startsAt: new Date('2027-01-24T18:00:00.000Z'), isTestData: false },
         ],
       });
 
@@ -802,11 +805,26 @@ describe('ContestManagementService', () => {
     });
 
     it('never holds a contest picking sides, not from the field, on its first slot\'s teams: a pick can be "winner of"', async () => {
-      const reader = createSportEventReader({ slotFieldDecided: false });
+      const reader = createSportEventReader({ slotFieldDecided: false, playsMatches: true, slotDefinitionIds: PLAYOFF_SLOT_DEFINITIONS });
       const { service } = buildService({
         reader,
         selectionType: SelectionType.PICK_EM,
-        coveredSlots: [{ seasonSlotId: 'divisional-2027', sportEventId: '11111111-1111-1111-1111-111111111111', status: SeasonSlotStatus.SCHEDULED, startsAt: new Date('2027-01-17T18:00:00.000Z'), isTestData: false }],
+        coveredSlots: [{ seasonSlotId: 'divisional-2027', slotDefinitionId: 'divisional', sportEventId: '11111111-1111-1111-1111-111111111111', status: SeasonSlotStatus.SCHEDULED, startsAt: new Date('2027-01-17T18:00:00.000Z'), isTestData: false }],
+      });
+
+      await service.openContest('league-1', 'contest-1').catch(() => undefined);
+
+      expect(reader.isSlotFieldDecided).not.toHaveBeenCalled();
+    });
+
+    it.each([
+      ['starts at the event\'s first slot', true, 'wild-card'],
+      ['is played as a field, not as games', false, 'divisional'],
+    ])('reads no games to open a field contest that %s, since no game feeds its teams', async (_case, playsMatches, slotDefinitionId) => {
+      const reader = createSportEventReader({ slotFieldDecided: false, playsMatches, slotDefinitionIds: PLAYOFF_SLOT_DEFINITIONS });
+      const { service } = buildService({
+        reader,
+        coveredSlots: [{ seasonSlotId: `${slotDefinitionId}-2027`, slotDefinitionId, sportEventId: '11111111-1111-1111-1111-111111111111', status: SeasonSlotStatus.SCHEDULED, startsAt: new Date('2027-01-10T18:00:00.000Z'), isTestData: false }],
       });
 
       await service.openContest('league-1', 'contest-1').catch(() => undefined);

@@ -98,7 +98,7 @@ import {
 } from '@poolmaster/shared/domain';
 import { toEffectiveTierDtoList } from '../../mappers/contest-management.mapper';
 import { eventOpening, type EventOpeningReason } from './contest-opening';
-import { ContestCutoffKind, contestCutoff, type ContestCutoff, type EventTiming } from '../contests/entry-window';
+import { ContestCutoffKind, contestCutoff, slotWaitsForFeedingGames, type ContestCutoff, type EventTiming } from '../contests/entry-window';
 import { errorMessage } from '../../core/error-message';
 
 interface CreateContestManagementContext {
@@ -628,7 +628,7 @@ export class ContestManagementService {
 
     const sportEvents = await this.findContestSportEvents(contest);
     await this.assertCutoffAhead(contestId, sportEvents, contestCutoff(configuration.configJson, contest));
-    await this.assertFieldDecided(contest);
+    await this.assertFieldDecided(contest, sportEvents);
     // The events may have changed since the rules were saved: their tiers, or which golfers are
     // still in the field. Rules nobody could enter are refused here too.
     await this.resolveContestRules(sportEvents, ensureTypedConfiguration(configuration), {
@@ -864,10 +864,15 @@ export class ContestManagementService {
    * (#2015): its field is that slot's teams, so it waits for the games feeding it. Its covered
    * slots are in play order, so the first is where it starts.
    */
-  private async assertFieldDecided(contest: Pick<Contest, 'id' | 'selectionType' | 'coveredSlots'>): Promise<void> {
+  private async assertFieldDecided(
+    contest: Pick<Contest, 'id' | 'selectionType' | 'coveredSlots'>,
+    sportEvents: readonly ContestCreateSportEventState[],
+  ): Promise<void> {
     const firstSlot = contest.coveredSlots.at(0);
-    if (!isRosterSelectionType(contest.selectionType) || firstSlot?.sportEventId == null) return;
-    if (await this.sportEventReader.isSlotFieldDecided(firstSlot.sportEventId, firstSlot.seasonSlotId)) return;
+    const sportEvent = sportEvents.find((each) => each.id === firstSlot?.sportEventId);
+    if (!isRosterSelectionType(contest.selectionType) || firstSlot === undefined || sportEvent === undefined
+      || !slotWaitsForFeedingGames(sportEvent, firstSlot.slotDefinitionId)) return;
+    if (await this.sportEventReader.isSlotFieldDecided(sportEvent.id, firstSlot.seasonSlotId)) return;
     this.logger.warn({ contestId: contest.id, seasonSlotId: firstSlot.seasonSlotId }, 'contest management open contest refused: its first slot\'s teams are not all decided');
     throw new ContestManagementError(
       'This contest picks from its first round\'s teams, and the games deciding some of them have not finished.',

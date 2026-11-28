@@ -174,9 +174,9 @@ describe('EventPageService', () => {
     await service.getPage('football', 'championship-weekend');
 
     expect(asked.map((each) => each.setup)).toEqual([
-      { selectionType: SelectionType.TIERED, seasonSlotId: 'slot-cw-2027' },
-      { selectionType: SelectionType.BRACKET, seasonSlotId: 'slot-cw-2027' },
-      { selectionType: SelectionType.SQUARES, seasonSlotId: 'slot-cw-2027' },
+      { selectionType: SelectionType.TIERED, startSlot: { seasonSlotId: 'slot-cw-2027', slotDefinitionId: 'conference-championships' } },
+      { selectionType: SelectionType.BRACKET, startSlot: { seasonSlotId: 'slot-cw-2027', slotDefinitionId: 'conference-championships' } },
+      { selectionType: SelectionType.SQUARES, startSlot: { seasonSlotId: 'slot-cw-2027', slotDefinitionId: 'conference-championships' } },
     ]);
   });
 

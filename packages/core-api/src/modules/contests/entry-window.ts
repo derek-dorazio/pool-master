@@ -131,6 +131,19 @@ function stillToStart(status: SportEventStatus): SportEventStatus {
 }
 
 /**
+ * Whether a field contest starting at the slot waits for the games before it (#2015): the event
+ * plays matches and the slot is not its first, so earlier slots' games feed its teams. A contest
+ * starting at the event's first slot, or on an event played as one field, has no game to wait for,
+ * so nothing is read for it.
+ */
+export function slotWaitsForFeedingGames(
+  event: { playsMatches: boolean; slotDefinitionIds: readonly string[] },
+  slotDefinitionId: string,
+): boolean {
+  return event.playsMatches && event.slotDefinitionIds.indexOf(slotDefinitionId) > 0;
+}
+
+/**
  * Whether every team of a Season slot is known (#2015): no side of the slot's games, cancelled ones
  * left out, still waits for the game feeding it. A contest picking from the field (tiered, budget,
  * sweepstakes) waits for it before it opens, since its field is the slot's teams; brackets and
