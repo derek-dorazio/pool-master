@@ -1,0 +1,24 @@
+{
+  "data": [
+    {
+      "player": {
+        "id": 5001,
+        "first_name": "Paige",
+        "last_name": "Bueckers"
+      },
+      "team": {
+        "id": 160
+      },
+      "game": {
+        "id": 3401,
+        "status_state": "final"
+      },
+      "pts": 28,
+      "reb": 6,
+      "ast": 5
+    }
+  ],
+  "meta": {
+    "per_page": 100
+  }
+}

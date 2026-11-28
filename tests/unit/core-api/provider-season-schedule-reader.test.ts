@@ -206,3 +206,35 @@ describe('ProviderSeasonScheduleReader.listSeasonRoster', () => {
       .rejects.toMatchObject({ code: 'SPORT_LEAGUE_NOT_FOUND', statusCode: 404 });
   });
 });
+
+describe('ProviderSeasonScheduleReader.listBoxScores', () => {
+  const nflLeague = leagueRow('nfl', { name: 'NFL', sport: { sport: 'FOOTBALL' } });
+  const prisma = () => ({ sportLeague: { findUnique: jest.fn().mockResolvedValue(nflLeague) } });
+  const LINE = { providerGameId: '7001', playerExternalId: '33', playerName: 'Patrick Mahomes', stats: [{ stat: 'PASSING_YARDS', value: 291 }] };
+
+  it('asks the league\'s provider for the box scores of its provider league\'s games by the provider\'s own game ids', async () => {
+    const getBoxScores = jest.fn().mockResolvedValue([LINE]);
+    const provider = buildProvider({ providerId: SYNCED_PROVIDER, getBoxScores });
+
+    const lines = await new ProviderSeasonScheduleReader(asPrismaClient(prisma()), registryWith(provider)).listBoxScores('nfl', ['7001']);
+
+    expect(lines).toEqual([LINE]);
+    expect(getBoxScores).toHaveBeenCalledWith('FOOTBALL', { providerLeagueCode: 'nfl', providerGameIds: ['7001'] });
+  });
+
+  it('reads no box scores from a provider that has no box score read', async () => {
+    const provider = buildProvider({ providerId: SYNCED_PROVIDER, getBoxScores: undefined });
+
+    await expect(new ProviderSeasonScheduleReader(asPrismaClient(prisma()), registryWith(provider)).listBoxScores('nfl', ['7001'])).resolves.toEqual([]);
+  });
+
+  it('refuses with 422 PROVIDER_LEAGUE_REFUSED when the provider\'s plan refuses the stats, and 404 SPORT_LEAGUE_NOT_FOUND for an unknown league', async () => {
+    const refused = buildProvider({ providerId: SYNCED_PROVIDER, getBoxScores: jest.fn().mockRejectedValue(new ProviderLeagueRefusedError('BALLDONTLIE', 'NFL', 401)) });
+    const missing = { sportLeague: { findUnique: jest.fn().mockResolvedValue(null) } };
+
+    await expect(new ProviderSeasonScheduleReader(asPrismaClient(prisma()), registryWith(refused)).listBoxScores('nfl', ['7001']))
+      .rejects.toMatchObject({ code: 'PROVIDER_LEAGUE_REFUSED', statusCode: 422 });
+    await expect(new ProviderSeasonScheduleReader(asPrismaClient(missing), registryWith(refused)).listBoxScores('nope', ['7001']))
+      .rejects.toMatchObject({ code: 'SPORT_LEAGUE_NOT_FOUND', statusCode: 404 });
+  });
+});

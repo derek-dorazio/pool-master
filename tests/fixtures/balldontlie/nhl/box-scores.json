@@ -1,0 +1,44 @@
+{
+  "data": [
+    {
+      "player": {
+        "id": 8478402,
+        "first_name": "Connor",
+        "last_name": "McDavid"
+      },
+      "team": {
+        "id": 22
+      },
+      "game": {
+        "id": 2025030411,
+        "status_state": "final"
+      },
+      "position": "C",
+      "goals": 1,
+      "assists": 2,
+      "shots_on_goal": 5
+    },
+    {
+      "player": {
+        "id": 8471679,
+        "first_name": "Some",
+        "last_name": "Goalie"
+      },
+      "team": {
+        "id": 22
+      },
+      "game": {
+        "id": 2025030411,
+        "status_state": "final"
+      },
+      "position": "G",
+      "goals": null,
+      "assists": null,
+      "shots_on_goal": null,
+      "saves": 30
+    }
+  ],
+  "meta": {
+    "per_page": 100
+  }
+}

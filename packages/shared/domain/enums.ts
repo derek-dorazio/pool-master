@@ -1161,6 +1161,20 @@ export const ProviderSyncFindingKind = {
    * Season, naming the slots.
    */
   CONFERENCE_TEAMS_MISSING: 'CONFERENCE_TEAMS_MISSING',
+  /**
+   * A league's box scores were asked of a Provider whose plan includes no player stats (#2026):
+   * the Provider row's `hasPlayerStats` is off, or the provider refused the league's stats reads.
+   * Nothing is read or written. ERROR, since a league that offers stat contests cannot score them.
+   * Subject: league and Provider; a box score read that succeeds resolves it.
+   */
+  PROVIDER_PLAN_HAS_NO_STATS: 'PROVIDER_PLAN_HAS_NO_STATS',
+  /**
+   * A box score named a player who plays no side of the Game (#2026): neither the player's own
+   * field row nor their Season roster row's team is a side of the Game's Match, or the player has
+   * no roster row in the Season. Their stat rows are refused; the rest of the box score is written.
+   * WARNING. Subject: league, event, Provider and the player's feed id, with their name.
+   */
+  BOX_SCORE_PLAYER_NOT_IN_GAME: 'BOX_SCORE_PLAYER_NOT_IN_GAME',
 } as const;
 export type ProviderSyncFindingKind = (typeof ProviderSyncFindingKind)[keyof typeof ProviderSyncFindingKind];
 export const ProviderSyncFindingKindOrder = alphabeticalOrder('ProviderSyncFindingKind');
@@ -2589,3 +2603,57 @@ export const PlatformTierProfileLastTierOrder = explicitOrder<PlatformTierProfil
   [PlatformTierProfileLastTier.CAPPED]: 1,
 });
 
+/**
+ * A player's stat in one Game's box score (#2026, plans/league-model-redesign.md §5): one shared
+ * enum across every sport, so a stat row's code is one Postgres enum. Each sport has the codes its
+ * composites count (#2027); a provider's adapter names which of its box score fields is which.
+ */
+export const SportStat = {
+  // American football.
+  PASSING_TOUCHDOWNS: 'PASSING_TOUCHDOWNS',
+  RUSHING_TOUCHDOWNS: 'RUSHING_TOUCHDOWNS',
+  RECEIVING_TOUCHDOWNS: 'RECEIVING_TOUCHDOWNS',
+  RECEPTIONS: 'RECEPTIONS',
+  PASSING_YARDS: 'PASSING_YARDS',
+  RUSHING_YARDS: 'RUSHING_YARDS',
+  RECEIVING_YARDS: 'RECEIVING_YARDS',
+  // Basketball.
+  POINTS: 'POINTS',
+  REBOUNDS: 'REBOUNDS',
+  /** Basketball's, hockey's and soccer's: a pass that set up a score. */
+  ASSISTS: 'ASSISTS',
+  // Hockey and soccer.
+  GOALS: 'GOALS',
+  /** Hockey's. */
+  SHOTS_ON_GOAL: 'SHOTS_ON_GOAL',
+  /** Soccer's. */
+  SHOTS_ON_TARGET: 'SHOTS_ON_TARGET',
+  // Baseball.
+  TOTAL_BASES: 'TOTAL_BASES',
+  RUNS: 'RUNS',
+  RUNS_BATTED_IN: 'RUNS_BATTED_IN',
+  WALKS: 'WALKS',
+  STOLEN_BASES: 'STOLEN_BASES',
+} as const;
+export type SportStat = (typeof SportStat)[keyof typeof SportStat];
+/** Grouped by sport, each sport's stats in the order a box score lists them. */
+export const SportStatOrder = explicitOrder<SportStat>({
+  [SportStat.PASSING_TOUCHDOWNS]: 0,
+  [SportStat.RUSHING_TOUCHDOWNS]: 1,
+  [SportStat.RECEIVING_TOUCHDOWNS]: 2,
+  [SportStat.RECEPTIONS]: 3,
+  [SportStat.PASSING_YARDS]: 4,
+  [SportStat.RUSHING_YARDS]: 5,
+  [SportStat.RECEIVING_YARDS]: 6,
+  [SportStat.POINTS]: 7,
+  [SportStat.REBOUNDS]: 8,
+  [SportStat.ASSISTS]: 9,
+  [SportStat.GOALS]: 10,
+  [SportStat.SHOTS_ON_GOAL]: 11,
+  [SportStat.SHOTS_ON_TARGET]: 12,
+  [SportStat.TOTAL_BASES]: 13,
+  [SportStat.RUNS]: 14,
+  [SportStat.RUNS_BATTED_IN]: 15,
+  [SportStat.WALKS]: 16,
+  [SportStat.STOLEN_BASES]: 17,
+});
