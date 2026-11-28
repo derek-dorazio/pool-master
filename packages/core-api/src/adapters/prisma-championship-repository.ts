@@ -3,7 +3,7 @@
  */
 
 import type { PrismaClient } from '@prisma/client';
-import type { ChampionshipRepository, FinalContest, SeriesContest } from '@poolmaster/shared/db';
+import type { ChampionshipRepository, FinalContest, FinalContestFilter, SeriesContest } from '@poolmaster/shared/db';
 import { compareCoveredSlots, ContestStatus, CupWeight, type LeagueYearFinish } from '@poolmaster/shared/domain';
 import { SLOT_PLACE_SELECT, slotPlaceOf } from './slot-place-select';
 
@@ -59,28 +59,33 @@ export class PrismaChampionshipRepository implements ChampionshipRepository {
     return row !== null;
   }
 
-  async countUnfinishedContests(leagueId: string): Promise<number> {
-    return this.prisma.contest.count({
+  async countUnfinishedContestsByYear(leagueId: string): Promise<ReadonlyMap<number, number>> {
+    const rows = await this.prisma.contest.groupBy({
+      by: ['championshipYear'],
       where: {
         leagueId,
         status: { in: [ContestStatus.OPEN, ContestStatus.ACTIVE] },
         cupWeight: { not: CupWeight.NOT_COUNTED },
       },
+      _count: { _all: true },
+      orderBy: { championshipYear: 'asc' },
     });
+    return new Map(rows.map((row) => [row.championshipYear, row._count._all]));
   }
 
-  async findFinalContests(leagueId: string, from: Date, to: Date, contestIds: readonly string[]): Promise<FinalContest[]> {
+  async findFinalContests(leagueId: string, filter: FinalContestFilter): Promise<FinalContest[]> {
     const rows = await this.prisma.contest.findMany({
       where: {
         leagueId,
         status: ContestStatus.COMPLETED,
-        OR: [{ endsAt: { gte: from, lt: to } }, { id: { in: [...contestIds] } }],
+        ...('championshipYear' in filter ? { championshipYear: filter.championshipYear, ...finishedSinceWhere(filter.finishedSince) } : { id: { in: [...filter.contestIds] } }),
       },
       select: {
         id: true,
         name: true,
         selectionType: true,
         endsAt: true,
+        championshipYear: true,
         // A contest's Season names its sports league (#2014).
         sportLeagueSeason: { select: { sportLeague: { select: { name: true } } } },
       },
@@ -91,6 +96,7 @@ export class PrismaChampionshipRepository implements ChampionshipRepository {
       selectionType: row.selectionType,
       sportLeagueName: row.sportLeagueSeason.sportLeague.name,
       completedAt: row.endsAt,
+      championshipYear: row.championshipYear,
     }));
   }
 
@@ -164,4 +170,14 @@ export class PrismaChampionshipRepository implements ChampionshipRepository {
 function coveredDefinitions(definitions: (Parameters<typeof compareCoveredSlots>[0] & { id: string; name: string | null })[]): Pick<SeriesContest, 'slotDefinitionIds' | 'slotName'> {
   const inPlayOrder = [...definitions].sort(compareCoveredSlots);
   return { slotDefinitionIds: inPlayOrder.map((definition) => definition.id), slotName: inPlayOrder[0]?.name ?? null };
+}
+
+/**
+ * Went final at or after `since`: its end, or for a contest with no end its first settled finish,
+ * as the history list dates a contest.
+ */
+function finishedSinceWhere(since: Date | undefined) {
+  return since === undefined ? {} : {
+    OR: [{ endsAt: { gte: since } }, { endsAt: null, yearFinishes: { some: { settledAt: { gte: since } } } }],
+  };
 }

@@ -43,7 +43,7 @@ function build(squads: Squad[] = [EAGLES, BIRDIES, BOGEYS]) {
     finishes,
     leagues: cups.leagues,
     squads: fakeSquadRepo({ findByLeague: jest.fn().mockResolvedValue(squads) }),
-    now: () => NOW,
+    closedYears: finishes,
   });
   /** Settles a contest with its ranked entries, as settlement hands it over. */
   const settle = async (
@@ -106,7 +106,7 @@ describe('ChampionshipService (#863)', () => {
 
   it('ranks a year on points, then 1sts, then 2nds, with the finish matrix and medal tiles, leaving out a NOT_COUNTED contest', async () => {
     const { finishes, service, settle } = build();
-    finishes.unfinishedContests = 3;
+    finishes.unfinishedContests.set(2026, 3);
     await settle('masters', [['eagles', 1], ['birdies', 2], ['bogeys', 3]], new Date('2026-04-13T22:00:00.000Z'));
     await settle('pga', [['birdies', 1], ['eagles', 2], ['bogeys', 3]], new Date('2026-05-17T22:00:00.000Z'));
     await settle('fun', [['bogeys', 1]], new Date('2026-06-01T22:00:00.000Z'), { cupWeight: CupWeight.NOT_COUNTED });
@@ -139,8 +139,26 @@ describe('ChampionshipService (#863)', () => {
     ]);
   });
 
+  it('keeps a year open past New Year until it closes: a 2025 year read with its Super Bowl to go is not over, gives movement and counts its own contests to go, and is over once closed', async () => {
+    const { finishes, service, settle } = build();
+    finishes.unfinishedContests.set(2025, 1).set(2026, 4);
+    await settle('wild-card', [['eagles', 1], ['birdies', 2], ['bogeys', 3]], new Date('2026-01-12T04:00:00.000Z'), { championshipYear: 2025 });
+    await settle('divisional', [['bogeys', 1], ['birdies', 2], ['eagles', 3]], new Date('2026-01-19T04:00:00.000Z'), { championshipYear: 2025 });
+
+    const open = await service.getYear(LEAGUE, 2025);
+    expect(open).toMatchObject({ year: 2025, isOver: false, contestsCounted: 2, contestsToGo: 1 });
+    expect(open.standings.some((row) => row.movement !== null)).toBe(true);
+    expect((await service.listYears(LEAGUE)).map((row) => [row.year, row.isOver])).toEqual([[2025, false]]);
+
+    finishes.closedYears.add(2025);
+    finishes.unfinishedContests.delete(2025);
+    expect(await service.getYear(LEAGUE, 2025)).toMatchObject({ isOver: true, contestsToGo: 0 });
+    expect((await service.listYears(LEAGUE)).map((row) => [row.year, row.isOver])).toEqual([[2025, true]]);
+  });
+
   it('gives no movement in a year that is over, its standings final as a crowned cup\'s are', async () => {
-    const { service, settle } = build();
+    const { finishes, service, settle } = build();
+    finishes.closedYears.add(2025);
     await settle('masters', [['eagles', 1], ['birdies', 2]], new Date('2025-04-13T22:00:00.000Z'));
     await settle('pga', [['birdies', 1], ['eagles', 3]], new Date('2025-05-17T22:00:00.000Z'));
 
@@ -153,7 +171,8 @@ describe('ChampionshipService (#863)', () => {
   it('shows every active squad at 0 in a year with nothing counted, an inactive squad only once it placed, and nothing to go in a past year', async () => {
     const retired = squad('retired', 'Albatross', { isActive: false });
     const { finishes, service, settle } = build([EAGLES, retired]);
-    finishes.unfinishedContests = 3;
+    finishes.unfinishedContests.set(2026, 3);
+    finishes.closedYears.add(2025);
     await settle('masters', [['retired', 1]], new Date('2025-04-13T22:00:00.000Z'));
 
     const past = await service.getYear(LEAGUE, 2025);
@@ -165,7 +184,8 @@ describe('ChampionshipService (#863)', () => {
   });
 
   it('lists the years with a counted contest newest first, with their champions or leaders, ties naming each, and skips a year of only NOT_COUNTED contests', async () => {
-    const { service, settle } = build();
+    const { finishes, service, settle } = build();
+    finishes.closedYears.add(2024).add(2025);
     await settle('2024-open', [['bogeys', 1]], new Date('2024-06-01T22:00:00.000Z'), { cupWeight: CupWeight.NOT_COUNTED });
     await settle('2025-masters', [['eagles', 1], ['birdies', 1]], new Date('2025-04-13T22:00:00.000Z'));
     await settle('2026-masters', [['bogeys', 1]], new Date('2026-04-13T22:00:00.000Z'));
@@ -180,7 +200,8 @@ describe('ChampionshipService (#863)', () => {
 
   it('reads every year with a counted contest and each year asked for, newest first, each exactly as that year reads alone (#1166)', async () => {
     const { finishes, service, settle } = build();
-    finishes.unfinishedContests = 2;
+    finishes.unfinishedContests.set(2026, 2);
+    finishes.closedYears.add(2022).add(2023).add(2024).add(2025);
     await settle('2023-open', [['bogeys', 1]], new Date('2023-06-01T22:00:00.000Z'), { cupWeight: CupWeight.NOT_COUNTED });
     await settle('2024-open', [['bogeys', 1]], new Date('2024-06-01T22:00:00.000Z'), { cupWeight: CupWeight.NOT_COUNTED });
     await settle('2025-masters', [['eagles', 1], ['birdies', 2]], new Date('2025-04-13T22:00:00.000Z'));

@@ -221,7 +221,7 @@ export function CreateContestPage() {
         sportEventId={sportEventId}
         sportEventRoundMatchGameId={values.sportEventRoundMatchGameId}
         sportLeagueCap={draft.sportLeagueCap}
-        sportLeaguesUsedThisYear={selectedEvent ? draft.sportLeaguesUsed.get(selectedEvent.championshipYear)?.length ?? 0 : 0}
+        sportLeaguesUsedThisYear={selectedEvent ? draft.sportLeaguesUsed.get(selectedEvent.championshipYear)?.sportLeagueIds.length ?? 0 : 0}
         squaresGames={draft.squaresGames}
       />
       <CreateContestFormatSection

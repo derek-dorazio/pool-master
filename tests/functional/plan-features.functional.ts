@@ -17,10 +17,10 @@ import {
   updateLeagueCupSettings,
   updateLeaguePlan,
 } from '@poolmaster/shared/generated/hey-api';
-import { CupPointsScale, LeaguePlan, PlanFeature, championshipYear } from '@poolmaster/shared/domain';
+import { CupPointsScale, LeaguePlan, PlanFeature, easternCalendarYear } from '@poolmaster/shared/domain';
 import { ErrorEnvelopeSchema, SquadYearResponseSchema } from '@poolmaster/shared/dto';
 import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin } from './builders';
-import { cleanupFunctionalData, disconnectFunctionalPrisma } from './setup';
+import { cleanupFunctionalData, disconnectFunctionalPrisma, getFunctionalPrisma } from './setup';
 import { expectDefined } from '../support/expect-defined';
 
 // Hiding features by plan end to end (#948): on Free, every championship, cup and history route
@@ -34,7 +34,7 @@ afterAll(async () => {
   await disconnectFunctionalPrisma();
 });
 
-const YEAR = championshipYear(new Date());
+const YEAR = easternCalendarYear(new Date());
 const UNKNOWN_CUP = '00000000-0000-4000-8000-000000000948';
 const UNKNOWN_SPORT_LEAGUE = '00000000-0000-4000-8000-000000001202';
 
@@ -57,6 +57,8 @@ describe('SDK Functional: features hidden by plan (#948)', () => {
     const client = commissioner.client;
     const path = { id: league.id };
     const squadId = expectDefined(expectDefined((await listLeagueSquads({ client, path })).data).squads[0]).id;
+    // Last year is closed, as the year close job leaves it (#2021): reading it needs PAST_YEARS.
+    await getFunctionalPrisma().leagueChampionshipYear.create({ data: { leagueId: league.id, championshipYear: YEAR - 1, closedAt: new Date() } });
     const moveTo = async (plan: LeaguePlan) => {
       expect((await updateLeaguePlan({ client, path, body: { plan } })).response?.status).toBe(200);
     };

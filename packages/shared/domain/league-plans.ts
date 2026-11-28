@@ -24,3 +24,13 @@ export function findFallingPlanLimit(limits: PlanCapLimits): LeaguePlan | null {
   }
   return null;
 }
+
+/**
+ * Whether a new contest in `sportLeagueId` would put a championship year over the plan's sports
+ * leagues a year (#947): never without a cap, never in a sports league the year already uses,
+ * and otherwise once the year uses the cap. The one rule the contest write and the offerings'
+ * answer read.
+ */
+export function isOverSportLeagueCap(used: readonly string[], cap: number | null, sportLeagueId: string): boolean {
+  return cap !== null && !used.includes(sportLeagueId) && used.length >= cap;
+}

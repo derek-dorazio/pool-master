@@ -91,7 +91,7 @@ import { PLAN_SETTINGS } from '../../../packages/core-api/src/modules/plans/plan
 import { testDomainEvents } from '../../support/domain-events';
 
 /** No championship year of the league is closed (#2021): creation's closed-year check passes. */
-const noClosedYears = { isClosed: jest.fn().mockResolvedValue(false) };
+const noClosedYears = { isClosed: jest.fn().mockResolvedValue(false) , findClosedYears: jest.fn().mockResolvedValue([]) };
 
 const CONTEST_MANAGEMENT_TEST_NOW = new Date('2026-04-23T12:00:00.000Z');
 /** What a Platinum league's contests are made and moved under: its 50 sports leagues a year (#947, #986). */
@@ -1620,6 +1620,7 @@ describe('ContestManagementService', () => {
       contestRepo?: ContestRepository;
       configurationRepo?: ContestConfigurationRepository;
       templateRepo?: ContestConfigTemplateRepository;
+      championshipYears?: ContestManagementServiceDeps['championshipYears'];
     } = {}) {
       const contestRepo = options.contestRepo ?? createContestRepo();
       const configurationRepo = options.configurationRepo ?? createContestConfigurationRepo();
@@ -1635,7 +1636,7 @@ describe('ContestManagementService', () => {
         now: () => CONTEST_MANAGEMENT_TEST_NOW,
         cups: createCupKeeper(),
         planEntitlements: platinumEntitlements(),
-        championshipYears: noClosedYears,
+        championshipYears: options.championshipYears ?? noClosedYears,
       });
       return { service, contestRepo, configurationRepo };
     }
@@ -1729,12 +1730,42 @@ describe('ContestManagementService', () => {
         .rejects.toMatchObject({ code: 'CONTEST_NOT_FOUND', statusCode: 404 });
     });
 
-    it('lists the sports leagues the league\'s contests use in a season as the repository counts them', async () => {
+    it('lists the sports leagues the league\'s contests use in a championship year as the repository counts them, with no offering locked when none is asked', async () => {
       const contestRepo = createContestRepo();
-      (contestRepo.findSportLeagueIdsBySeason as jest.Mock).mockResolvedValue([PGA_TOUR_LEAGUE_ID, LPGA_TOUR_LEAGUE_ID]);
+      (contestRepo.findSportLeagueIdsByYear as jest.Mock).mockResolvedValue([PGA_TOUR_LEAGUE_ID, LPGA_TOUR_LEAGUE_ID]);
 
-      await expect(build({ contestRepo }).service.listSportLeaguesUsed('league-1', 2026)).resolves.toEqual([PGA_TOUR_LEAGUE_ID, LPGA_TOUR_LEAGUE_ID]);
-      expect(contestRepo.findSportLeagueIdsBySeason).toHaveBeenCalledWith('league-1', 2026);
+      await expect(build({ contestRepo }).service.listSportLeaguesUsed('league-1', 2026))
+        .resolves.toEqual({ sportLeagueIds: [PGA_TOUR_LEAGUE_ID, LPGA_TOUR_LEAGUE_ID], overCapSportLeagueIds: [] });
+      expect(contestRepo.findSportLeagueIdsByYear).toHaveBeenCalledWith('league-1', 2026);
+    });
+
+    it('answers which offered sports leagues a new contest would put over the plan\'s cap: a year at the cap locks a new sports league and never one it already uses', async () => {
+      const contestRepo = createContestRepo();
+      // Platinum allows 50 sports leagues a year: the year uses all 50, the PGA Tour among them.
+      const used = [PGA_TOUR_LEAGUE_ID, ...Array.from({ length: 49 }, (_, index) => `sport-league-${String(index)}`)];
+      (contestRepo.findSportLeagueIdsByYear as jest.Mock).mockResolvedValue(used);
+
+      await expect(build({ contestRepo }).service.listSportLeaguesUsed('league-1', 2026, [PGA_TOUR_LEAGUE_ID, LPGA_TOUR_LEAGUE_ID, LPGA_TOUR_LEAGUE_ID]))
+        .resolves.toMatchObject({ overCapSportLeagueIds: [LPGA_TOUR_LEAGUE_ID] });
+      (contestRepo.findSportLeagueIdsByYear as jest.Mock).mockResolvedValue(used.slice(1));
+      await expect(build({ contestRepo }).service.listSportLeaguesUsed('league-1', 2026, [LPGA_TOUR_LEAGUE_ID]))
+        .resolves.toMatchObject({ overCapSportLeagueIds: [] });
+    });
+
+    it('lists each championship year not yet closed with its sports leagues, oldest first, leaving a closed year out, so the Plan page never reads the clock (#2021)', async () => {
+      const contestRepo = createContestRepo();
+      (contestRepo.findSportLeagueIdsOfEveryYear as jest.Mock).mockResolvedValue(new Map([
+        [2026, [PGA_TOUR_LEAGUE_ID]],
+        [2024, [LPGA_TOUR_LEAGUE_ID]],
+        [2025, [PGA_TOUR_LEAGUE_ID, LPGA_TOUR_LEAGUE_ID]],
+      ]));
+      const championshipYears = { isClosed: jest.fn(), findClosedYears: jest.fn().mockResolvedValue([{ championshipYear: 2024, closedAt: new Date('2025-01-05T00:00:00.000Z') }]) };
+
+      await expect(build({ contestRepo, championshipYears }).service.listOpenYearSportLeagues('league-1')).resolves.toEqual([
+        { championshipYear: 2025, sportLeagueIds: [PGA_TOUR_LEAGUE_ID, LPGA_TOUR_LEAGUE_ID] },
+        { championshipYear: 2026, sportLeagueIds: [PGA_TOUR_LEAGUE_ID] },
+      ]);
+      expect(championshipYears.findClosedYears).toHaveBeenCalledWith('league-1');
     });
 
     it('refuses a settings change on a contest with no sport event, with 404 SPORT_EVENT_NOT_FOUND and nothing stored', async () => {
@@ -3481,7 +3512,7 @@ describe('ContestManagementService sports leagues a year (#947)', () => {
   });
 
   it('refuses with 409 CHAMPIONSHIP_YEAR_CLOSED a contest in a championship year the league has closed, writing no contest, rules or cup', async () => {
-    const closedYear = { isClosed: jest.fn().mockResolvedValue(true) };
+    const closedYear = { isClosed: jest.fn().mockResolvedValue(true) , findClosedYears: jest.fn().mockResolvedValue([]) };
     const { service, contests, configurations, cupsAsked } = serviceForFullFreeLeague(closedYear);
 
     await expect(service.createContest({ leagueId: 'league-1' }, MASTERS_CONTEST))

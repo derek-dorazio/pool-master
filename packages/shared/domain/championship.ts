@@ -1,6 +1,6 @@
 /**
- * The league championship (#863): every counted contest of every sport, in the calendar year it
- * went final. Pure, so the championship service, its backfill check and the pages read alike.
+ * The league championship (#863): every counted contest of every sport, in its Season's
+ * championship year (#2021). Pure, so the championship service and the pages read alike.
  */
 import { ChampionshipTile, CupWeight } from './enums';
 import { rankTallies, type Ranked } from './cup-points';
@@ -14,17 +14,13 @@ export const CHAMPIONSHIP_MATRIX_PLACES = 10;
 
 const yearFormat = new Intl.DateTimeFormat('en-US', { timeZone: CHAMPIONSHIP_TIME_ZONE, year: 'numeric' });
 
-/** The championship year an instant falls in: 04:00Z on 1 January is still the old year in New York. */
-export function championshipYear(at: Date): number {
-  return Number(yearFormat.format(at));
-}
-
 /**
- * The instant a championship year starts: midnight on 1 January in New York, which is always on
- * standard time (UTC-5) then. A year runs from its start to the next year's.
+ * The calendar year an instant falls in, in US Eastern: 04:00Z on 1 January is still the old year
+ * in New York. Never a contest's championship year, which is its Season's (`Contest.championshipYear`);
+ * the web's last clock readers move to the API's years (#2021 part 3).
  */
-export function championshipYearStart(year: number): Date {
-  return new Date(Date.UTC(year, 0, 1, 5));
+export function easternCalendarYear(at: Date): number {
+  return Number(yearFormat.format(at));
 }
 
 /** A squad's championship year: its points and how often it finished in each place. */

@@ -39,7 +39,7 @@ function PickerRow({ league, offer, page, request }: { league: LeagueDto; offer:
   const cap = league.planEntitlements.caps[PlanCap.SPORTS_LEAGUES_PER_YEAR];
   const year = offer?.nextSlot.championshipYear ?? 0;
   const isCapCounted = offer !== null && cap !== null;
-  const usedQuery = useQuery({ ...sportLeaguesUsedQuery(league.id, year), enabled: isCapCounted });
+  const usedQuery = useQuery({ ...sportLeaguesUsedQuery(league.id, year, offer ? [offer.template.sportLeagueId] : []), enabled: isCapCounted });
   const isChecking = (offer !== null && contestsQuery.isPending) || (isCapCounted && usedQuery.isPending);
   const checkError = offer !== null ? contestsQuery.error ?? (isCapCounted ? usedQuery.error : null) : null;
   const testId = `start-league-${league.leagueCode}`;
@@ -55,8 +55,8 @@ function PickerRow({ league, offer, page, request }: { league: LeagueDto; offer:
     ? (contestsQuery.data ?? []).find((contest) => contest.selectionType === offer.template.selectionType
       && contest.sportEvents.some((event) => event.sportEventId === offer.nextSlot.sportEventId))
     : undefined;
-  const used = usedQuery.data?.sportLeagueIds;
-  const isCapped = offer !== null && cap !== null && used !== undefined && used.length >= cap && !used.includes(offer.template.sportLeagueId);
+  // The API answers whether the offer's sports league would put the year over the plan's cap.
+  const isCapped = offer !== null && (usedQuery.data?.overCapSportLeagueIds.includes(offer.template.sportLeagueId) ?? false);
 
   const [description, action] = checkError
     ? ['We couldn\'t check this league. Try again in a moment.', null]

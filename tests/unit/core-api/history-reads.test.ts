@@ -80,14 +80,14 @@ async function leagueWithSeasons(seasonCount: number) {
     sportLeagues: counted(sportLeagues, reads),
     now: () => NOW,
   });
-  const championship = new ChampionshipService({ finishes: counted(finishes, reads), leagues: counted(cups.leagues, reads), squads: counted(squads, reads), now: () => NOW });
+  const championship = new ChampionshipService({ finishes: counted(finishes, reads), leagues: counted(cups.leagues, reads), squads: counted(squads, reads), closedYears: counted(finishes, reads) });
   const history = new HistoryService({
     finishes: counted(finishes, reads),
     squads: counted(squads, reads),
     leagues: counted(fakeLeagueRepo(), reads),
     championship,
     cups: cupService,
-    now: () => NOW,
+    closedYears: counted(finishes, reads),
   });
 
   for (let index = 0; index < seasonCount; index += 1) {

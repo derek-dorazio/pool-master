@@ -876,8 +876,11 @@ const PRO_PLAN = buildPlanEntitlements({
 
 function primeUsage(overrides: { openContests?: Array<{ contestId: string; name: string; entryCount: number }> } = {}) {
   getLeaguePlanUsageMock.mockResolvedValue(apiSuccess({
-    seasonYear: 2026,
-    sportLeagueIds: [PGA.id, NBA.id],
+    // 2025 is still open beside 2026: each open championship year is its own row.
+    years: [
+      { championshipYear: 2025, sportLeagueIds: [NBA.id] },
+      { championshipYear: 2026, sportLeagueIds: [PGA.id, NBA.id] },
+    ],
     openContests: overrides.openContests ?? [
       { contestId: 'c-1', name: 'NBA Finals Picks', entryCount: 12 },
       { contestId: 'c-2', name: 'Masters Tiers Pool', entryCount: 34 },
@@ -1040,7 +1043,7 @@ describe('League plan', () => {
     expect(await screen.findByTestId('league-plan-now-entries')).toHaveTextContent('34 of 50 entries');
   });
 
-  it('shows what the league uses now: its plan, this year\'s sports leagues by name, and its fullest open contest against the plan\'s limits', async () => {
+  it('shows what the league uses now: its plan, each open championship year\'s sports leagues by name, and its fullest open contest against the plan\'s limits', async () => {
     primeMocks({ league: { planEntitlements: PRO_PLAN } });
     primePlanList();
     primeUsage();
@@ -1049,7 +1052,9 @@ describe('League plan', () => {
 
     const now = within(await screen.findByTestId('league-plan-now'));
     expect(now.getByTestId('league-plan-now-plan')).toHaveTextContent('Pro');
-    expect(await now.findByTestId('league-plan-now-sport-leagues')).toHaveTextContent('2 of 3PGA Tour, NBA');
+    expect(await now.findByTestId('league-plan-now-sport-leagues-2025')).toHaveTextContent('1 of 3NBA');
+    expect(now.getByTestId('league-plan-now-sport-leagues-2026')).toHaveTextContent('2 of 3PGA Tour, NBA');
+    expect(now.getByText('Sports leagues in 2025')).toBeInTheDocument();
     expect(now.getByTestId('league-plan-now-entries')).toHaveTextContent('34 of 50 entriesMasters Tiers Pool');
     expect(screen.getByTestId('league-plan-card-PRO-current')).toHaveTextContent('Your plan');
     expect(screen.getByTestId('league-plan-card-PREMIUM-move')).toHaveTextContent('Move up to Premium');
@@ -1099,7 +1104,7 @@ describe('League plan', () => {
     // Why they are hidden, not lost, sits behind the label's (?), not on the page.
     expect(confirm.queryByText('They come back as they were when you move up again.')).not.toBeInTheDocument();
     expect(confirm.getByTestId('league-plan-confirm-hidden-help')).toBeInTheDocument();
-    expect(confirm.getByTestId('league-plan-confirm-sport-leagues')).toHaveTextContent('This year\'s contests use 2 sports leagues: PGA Tour, NBA. Free allows 1 a year');
+    expect(confirm.getByTestId('league-plan-confirm-sport-leagues')).toHaveTextContent('2026\'s contests use 2 sports leagues: PGA Tour, NBA. Free allows 1 a year, so new contests in 2026 can use only these.');
     expect(within(confirm.getByTestId('league-plan-confirm-hidden')).getAllByRole('listitem').map((item) => item.textContent)).toEqual(['League championship']);
     expect(updateLeaguePlanMock).not.toHaveBeenCalled();
   });

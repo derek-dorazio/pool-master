@@ -1,4 +1,4 @@
-import { championshipYear } from '@poolmaster/shared/domain';
+import { easternCalendarYear } from '@poolmaster/shared/domain';
 import { buildLeagueChampionshipsPath, buildLeagueTrophyCasePath } from '@/features/leagues/league-routing';
 
 /** A year from the route, such as "2026"; null for anything else. */
@@ -16,7 +16,7 @@ export function championshipYearsOffered(championshipYears: readonly number[], c
 
 /** The year's title: the race while it is on, its championships once it is over. */
 export function championshipsTitle(year: number, now: Date) {
-  return year >= championshipYear(now) ? `${year} Championship Race` : `${year} Championships`;
+  return year >= easternCalendarYear(now) ? `${year} Championship Race` : `${year} Championships`;
 }
 
 /** The Championships tabs that read one year, which the season picker moves between years; All years is the fourth. */
