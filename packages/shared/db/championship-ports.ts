@@ -58,7 +58,45 @@ export interface ChampionshipRepository {
 
 /** Whether a league's year in review was sent (#872 slice 4). */
 export interface LeagueYearReviewRepository {
-  findByLeagueYear(leagueId: string, year: number): Promise<LeagueYearReview | null>;
+  findByLeagueYear(leagueId: string, championshipYear: number): Promise<LeagueYearReview | null>;
   /** Records the send; null when one is already recorded for the league and year. */
   create(review: Omit<LeagueYearReview, 'sentAt'>): Promise<LeagueYearReview | null>;
+}
+
+/** A league's closed championship year (#2021): closed once, never reopened. */
+export interface ClosedChampionshipYear {
+  championshipYear: number;
+  closedAt: Date;
+}
+
+/** What still holds a league's championship year open (#2021), as the year close reads it. */
+export interface ChampionshipYearState {
+  /** The league's contests in the year, drafts that can never open aside. */
+  contestCount: number;
+  /** Of those, the ones not yet final. */
+  unfinishedContestCount: number;
+  /**
+   * The year's Season slots still to finish, in the sport leagues of those contests: a test slot
+   * only when one of those contests covers it, since a Season's real slots are what end it.
+   */
+  unfinishedSeasonSlotCount: number;
+}
+
+/** A league and one of its championship years. */
+export interface LeagueChampionshipYearKey {
+  leagueId: string;
+  championshipYear: number;
+}
+
+/** A league's closed championship years (#2021): read by the year close, history and Create contest. */
+export interface LeagueChampionshipYearRepository {
+  findClosedYears(leagueId: string): Promise<ClosedChampionshipYear[]>;
+  isClosed(key: LeagueChampionshipYearKey): Promise<boolean>;
+  readYearState(key: LeagueChampionshipYearKey, now: Date): Promise<ChampionshipYearState>;
+  /** Closes the year; false when it was already closed, which a close never undoes. */
+  close(key: LeagueChampionshipYearKey, closedAt: Date): Promise<boolean>;
+  /** The league and championship year of a contest; null when it is gone. */
+  findContestYear(contestId: string): Promise<LeagueChampionshipYearKey | null>;
+  /** Each league with a contest in the Season slot's Season, with that Season's year. */
+  findLeagueYearsOfSeasonSlot(seasonSlotId: string): Promise<LeagueChampionshipYearKey[]>;
 }

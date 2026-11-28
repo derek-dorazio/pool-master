@@ -16,7 +16,8 @@ import type {
   PendingDrawReceipts,
   ReminderCheck,
 } from '@poolmaster/shared/db';
-import { championshipYear, ContestStatus, SelectionType, SportEventStatus, type Contest, type ContestCoveredSlot, type ContestFormat, type CupWeight, FINISHED_SPORT_EVENT_STATUSES, SeasonSlotStatus, type SlotKind } from '@poolmaster/shared/domain';
+import { championshipYear, ContestStatus, type Contest, type ContestCoveredSlot, type ContestFormat, type CupWeight, type SelectionType, type SeasonSlotStatus, type SlotKind, type SportEventStatus } from '@poolmaster/shared/domain';
+import { neverOpeningDraft } from './never-opening-draft';
 import { forgettingReads, memoizedRead, memoizedReadMany, ReadMemoKey } from '../core/request-read-memo';
 import { lockContestRow, lockContestRowsAtOnce } from './contest-row-lock';
 import { insertBackgroundJobs } from './prisma-background-job-repository';
@@ -55,7 +56,7 @@ const COVERED_SEASON_SLOT_SELECT = {
  * game and digits draw (#711).
  */
 const CONTEST_INCLUDE = {
-  sportLeagueSeason: { select: { championshipYear: true, sportLeague: { select: SPORT_LEAGUE_SPORT_SELECT } } },
+  sportLeagueSeason: { select: { sportLeague: { select: SPORT_LEAGUE_SPORT_SELECT } } },
   seasonSlots: {
     select: {
       sportLeagueSeasonCompetitionSlotId: true,
@@ -103,27 +104,8 @@ export class PrismaContestRepository implements ContestRepository {
       where: {
         leagueId,
         status: { in: [ContestStatus.DRAFT, ContestStatus.OPEN, ContestStatus.ACTIVE] },
-        // A draft that can never open is left out (#1161, #1217): one with an event finished or
-        // cancelled, which is past every cutoff, and one closing at its first covered Game once a
-        // slot it covers has started (#2013), since a started slot cannot be removed. Only a
-        // squares contest with its game closes later, as `contestCutoff` says.
-        NOT: {
-          status: ContestStatus.DRAFT,
-          OR: [
-            { seasonSlots: { some: { seasonSlot: { eventSlot: { sportEvent: { status: { in: [...FINISHED_SPORT_EVENT_STATUSES] } } } } } } },
-            // Started as `cutoffTiming` has it: a synced slot in progress or complete, or not
-            // cancelled and past its first game's start (one with no start yet is not scheduled, so
-            // it has not started); a test slot goes by its event, past its start or under way.
-            ...[
-              { isTestData: false, status: { in: [SeasonSlotStatus.IN_PROGRESS, SeasonSlotStatus.COMPLETED] } },
-              { isTestData: false, status: { not: SeasonSlotStatus.CANCELLED }, startsAt: { lte: now } },
-              { isTestData: true, eventSlot: { sportEvent: { OR: [{ startDate: { lte: now } }, { status: SportEventStatus.IN_PROGRESS }] } } },
-            ].map((started) => ({
-              seasonSlots: { some: { seasonSlot: started } },
-              NOT: { selectionType: SelectionType.SQUARES, squaresGame: { isNot: null } },
-            })),
-          ],
-        },
+        // A draft that can never open is left out (`neverOpeningDraft`).
+        NOT: neverOpeningDraft(now),
       },
       orderBy: { createdAt: 'desc' },
       include: CONTEST_INCLUDE,
@@ -163,7 +145,7 @@ export class PrismaContestRepository implements ContestRepository {
 
   async create(contest: ContestCreate, limits: ContestSeasonLimits): Promise<ContestCreateResult> {
     return this.prisma.$transaction(async (tx) => {
-      const full = await seasonWithoutRoom(tx, contest.leagueId, contest.seasonYear, limits);
+      const full = await seasonWithoutRoom(tx, contest.leagueId, contest.championshipYear, limits);
       if (full) return full;
       const row = await tx.contest.create({
         data: {
@@ -173,6 +155,7 @@ export class PrismaContestRepository implements ContestRepository {
           contestFormat: contest.contestFormat,
           selectionType: contest.selectionType,
           sportLeagueSeasonId: contest.sportLeagueSeasonId,
+          championshipYear: contest.championshipYear,
           // The covered slots are written once, here (#2014): no later write adds one.
           seasonSlots: { create: contest.seasonSlotIds.map((sportLeagueSeasonCompetitionSlotId) => ({ sportLeagueSeasonCompetitionSlotId })) },
           ...(contest.squaresGameId !== undefined && {
@@ -491,7 +474,8 @@ function mapToContest(row: {
   id: string;
   leagueId: string;
   sportLeagueSeasonId: string;
-  sportLeagueSeason: { championshipYear: number; sportLeague: SportLeagueSportRow };
+  championshipYear: number;
+  sportLeagueSeason: { sportLeague: SportLeagueSportRow };
   seasonSlots: { sportLeagueSeasonCompetitionSlotId: string; seasonSlot: CoveredSeasonSlotRow }[];
   name: string;
   status: ContestStatus;
@@ -531,7 +515,7 @@ function mapToContest(row: {
       ? { sportEventRoundMatchGameId: row.squaresGame.sportEventRoundMatchGameId, sportEventRoundMatchId: row.squaresGame.game.sportEventRoundMatchId }
       : undefined,
     sportLeagueSeasonId: row.sportLeagueSeasonId,
-    seasonYear: row.sportLeagueSeason.championshipYear,
+    championshipYear: row.championshipYear,
     cupWeight: row.cupWeight,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,

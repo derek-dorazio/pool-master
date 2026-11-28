@@ -63,11 +63,13 @@ so on purpose.
 | `CONTEST_STATUS_CHANGED` | `tell-league-contest-reopened` | `CONTEST_REOPENED_EMAILS` |
 | `CONTEST_STATUS_CHANGED` | `tell-league-contest-settled` | `CONTEST_SETTLED_EMAILS` |
 | `CONTEST_STATUS_CHANGED` | `rebuild-moved-contest-leaderboards` | `REBUILD_LEADERBOARDS` |
+| `CONTEST_STATUS_CHANGED` | `close-league-championship-year` | `CLOSE_LEAGUE_CHAMPIONSHIP_YEAR` |
 | `SPORT_EVENT_FIELD_SYNCED` | `sync-games-then-tier-field` | `SYNC_EVENT_GAMES_AND_TIERS` |
 | `PARTICIPANT_PROVIDER_MAPPED` | `resolve-mapped-participant-findings` | `RESOLVE_MAPPED_PARTICIPANT_FINDINGS` |
 | `MATCH_STATUS_CHANGED` | `refresh-slot-status` | `REFRESH_SLOT_STATUS` |
 | `SEASON_SLOT_STATUS_CHANGED` | `refresh-event-status` | `REFRESH_EVENT_STATUS` |
 | `SEASON_SLOT_STATUS_CHANGED` | `activate-slot-contests` | `ACTIVATE_EVENT_CONTESTS` |
+| `SEASON_SLOT_STATUS_CHANGED` | `close-season-championship-years` | `CLOSE_SEASON_CHAMPIONSHIP_YEARS` |
 <!-- domain-event-handlers:end -->
 
 Adding a follow-up to a change: a handler beside its job's builder in the module that owns the

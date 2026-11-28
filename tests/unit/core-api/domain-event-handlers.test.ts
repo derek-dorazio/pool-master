@@ -1,4 +1,4 @@
-import { BackgroundJobType, ContestEntryStatus, ContestStatus, SPORT_EVENT_STATUS_TRANSITIONS, SportEventStatus, type BackgroundJobRequest, SeasonSlotStatus } from '@poolmaster/shared/domain';
+import { BackgroundJobType, ContestEntryStatus, ContestStatus, SeasonSlotStatus, SPORT_EVENT_STATUS_TRANSITIONS, SportEventStatus, type BackgroundJobRequest } from '@poolmaster/shared/domain';
 import { BackgroundJobQueue } from '../../../packages/core-api/src/modules/background-jobs';
 import {
   DOMAIN_EVENT_HANDLERS,
@@ -25,6 +25,7 @@ import { inMemoryBackgroundJobs, TEST_JOB_START, testCurrentJobStart } from '../
 import { slotTiebreakersRefreshJob } from '../../support/slot-tiebreaker-jobs';
 import { NOBODY_TOLD } from '../../support/domain-events';
 import { eventChangedJob, recordingSportEventChangedNotice } from '../../support/sport-event-changed-notice';
+import { expectDefined } from '../../support/expect-defined';
 
 const START = new Date('2026-05-02T20:00:00.000Z');
 const SETTLE_AT = new Date('2026-05-04T23:00:00.000Z');
@@ -120,11 +121,12 @@ describe('DOMAIN_EVENT_HANDLERS, the one map of what follows each change', () =>
         'tell-league-contest-reopened',
         'tell-league-contest-settled',
         'rebuild-moved-contest-leaderboards',
+        'close-league-championship-year',
       ],
       SPORT_EVENT_FIELD_SYNCED: ['sync-games-then-tier-field'],
       PARTICIPANT_PROVIDER_MAPPED: ['resolve-mapped-participant-findings'],
       MATCH_STATUS_CHANGED: ['refresh-slot-status'],
-      SEASON_SLOT_STATUS_CHANGED: ['refresh-event-status', 'activate-slot-contests'],
+      SEASON_SLOT_STATUS_CHANGED: ['refresh-event-status', 'activate-slot-contests', 'close-season-championship-years'],
     });
   });
 
@@ -356,6 +358,40 @@ describe('Status bubbling handlers (#2013)', () => {
   });
 });
 
+describe('Championship year close handlers (#2021)', () => {
+  const closeLeagueYear = expectDefined(DOMAIN_EVENT_HANDLERS.CONTEST_STATUS_CHANGED.find((handler) => handler.key === 'close-league-championship-year'), 'handler');
+  const closeSeasonYears = expectDefined(DOMAIN_EVENT_HANDLERS.SEASON_SLOT_STATUS_CHANGED.find((handler) => handler.key === 'close-season-championship-years'), 'handler');
+  const context = () => ({ queue: watchedQueue(), sportEventChanged: NOBODY_TOLD });
+
+  it('a contest gone final queues one close of its league\'s championship year, held to one waiting per contest, and any other move queues none', async () => {
+    const settled = { type: DomainEventType.CONTEST_STATUS_CHANGED, contest: { id: 'contest-1' }, from: [ContestStatus.ACTIVE], to: ContestStatus.COMPLETED } as const;
+    const started = { type: DomainEventType.CONTEST_STATUS_CHANGED, contest: { id: 'contest-1' }, from: [ContestStatus.OPEN], to: ContestStatus.ACTIVE } as const;
+
+    expect(closeLeagueYear.when?.(settled)).toBe(true);
+    expect(await closeLeagueYear.jobs(settled, context())).toEqual([expect.objectContaining({
+      type: BackgroundJobType.CLOSE_LEAGUE_CHAMPIONSHIP_YEAR,
+      payload: { contestId: 'contest-1' },
+      dedupeKey: 'CLOSE_LEAGUE_CHAMPIONSHIP_YEAR:contest-1',
+    })]);
+    expect(closeLeagueYear.when?.(started)).toBe(false);
+  });
+
+  it('a Season slot finished or cancelled queues one close of the championship years its Season reaches, held to one waiting per slot, and a slot starting queues none', async () => {
+    const moved = { type: DomainEventType.SEASON_SLOT_STATUS_CHANGED, sportEventId: 'event-1', seasonSlotId: 'slot-1', from: 'IN_PROGRESS', to: 'COMPLETED' } as const;
+    const event = (from: SeasonSlotStatus, to: SeasonSlotStatus) => ({ ...moved, from, to });
+    expect(closeSeasonYears.when?.(event(SeasonSlotStatus.IN_PROGRESS, SeasonSlotStatus.COMPLETED))).toBe(true);
+    expect(closeSeasonYears.when?.(event(SeasonSlotStatus.SCHEDULED, SeasonSlotStatus.CANCELLED))).toBe(true);
+    expect(closeSeasonYears.when?.(event(SeasonSlotStatus.SCHEDULED, SeasonSlotStatus.IN_PROGRESS))).toBe(false);
+
+    expect(await closeSeasonYears.jobs(moved, context())).toEqual([expect.objectContaining({
+      type: BackgroundJobType.CLOSE_SEASON_CHAMPIONSHIP_YEARS,
+      payload: { sportEventId: 'event-1', seasonSlotId: 'slot-1' },
+      dedupeKey: 'CLOSE_SEASON_CHAMPIONSHIP_YEARS:slot-1',
+      sportEventId: 'event-1',
+    })]);
+  });
+});
+
 describe('SPORT_EVENT_RESCHEDULED handlers', () => {
   const [tell] = DOMAIN_EVENT_HANDLERS.SPORT_EVENT_RESCHEDULED;
 
@@ -517,7 +553,7 @@ describe('CONTEST_STATUS_CHANGED handlers', () => {
     const rebuild = 'rebuild-moved-contest-leaderboards';
     expect(told(contestChanged([ContestStatus.OPEN], ContestStatus.ACTIVE))).toEqual(['tell-league-contest-started', rebuild]);
     expect(told(contestChanged([ContestStatus.ACTIVE], ContestStatus.OPEN, { startsAt: START }))).toEqual(['tell-league-contest-reopened', rebuild]);
-    expect(told(contestChanged([ContestStatus.ACTIVE], ContestStatus.COMPLETED))).toEqual(['tell-league-contest-settled', rebuild]);
+    expect(told(contestChanged([ContestStatus.ACTIVE], ContestStatus.COMPLETED))).toEqual(['tell-league-contest-settled', rebuild, 'close-league-championship-year']);
     expect(told(contestChanged([ContestStatus.DRAFT], ContestStatus.ACTIVE))).toEqual([rebuild]);
   });
 
@@ -645,11 +681,13 @@ describe('The generated domain event table in docs/BACKGROUND-JOBS.md', () => {
       '| `CONTEST_STATUS_CHANGED` | `tell-league-contest-reopened` | `CONTEST_REOPENED_EMAILS` |',
       '| `CONTEST_STATUS_CHANGED` | `tell-league-contest-settled` | `CONTEST_SETTLED_EMAILS` |',
       '| `CONTEST_STATUS_CHANGED` | `rebuild-moved-contest-leaderboards` | `REBUILD_LEADERBOARDS` |',
+      '| `CONTEST_STATUS_CHANGED` | `close-league-championship-year` | `CLOSE_LEAGUE_CHAMPIONSHIP_YEAR` |',
       '| `SPORT_EVENT_FIELD_SYNCED` | `sync-games-then-tier-field` | `SYNC_EVENT_GAMES_AND_TIERS` |',
       '| `PARTICIPANT_PROVIDER_MAPPED` | `resolve-mapped-participant-findings` | `RESOLVE_MAPPED_PARTICIPANT_FINDINGS` |',
       '| `MATCH_STATUS_CHANGED` | `refresh-slot-status` | `REFRESH_SLOT_STATUS` |',
       '| `SEASON_SLOT_STATUS_CHANGED` | `refresh-event-status` | `REFRESH_EVENT_STATUS` |',
       '| `SEASON_SLOT_STATUS_CHANGED` | `activate-slot-contests` | `ACTIVATE_EVENT_CONTESTS` |',
+      '| `SEASON_SLOT_STATUS_CHANGED` | `close-season-championship-years` | `CLOSE_SEASON_CHAMPIONSHIP_YEARS` |',
       DOMAIN_EVENT_TABLE_END,
     ].join('\n'));
   });

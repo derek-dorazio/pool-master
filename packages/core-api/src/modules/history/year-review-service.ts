@@ -100,7 +100,7 @@ export class YearReviewService {
     }
     const queued = await this.queueEmails(leagueId, year);
     // A second press racing this one finds the record already made; both sent the same emails once.
-    await this.deps.reviews.create({ leagueId, year, sentByUserId });
+    await this.deps.reviews.create({ leagueId, championshipYear: year, sentByUserId });
     this.deps.logger?.info({ action: 'history.yearReview.sent', data: { leagueId, year, emailCount: queued } }, 'Sent the year in review');
     return this.getLastYear(leagueId);
   }

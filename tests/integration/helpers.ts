@@ -115,6 +115,7 @@ import {
   PrismaLeagueRepository,
   PrismaParticipantProviderMappingRepository,
   PrismaParticipantRepository,
+  PrismaLeagueChampionshipYearRepository,
   PrismaPlatformRuntimeConfigRepository,
   PrismaProviderSyncRunRepository,
   PrismaSportEventRepository,
@@ -122,6 +123,7 @@ import {
   PrismaSportLeagueRepository,
   PrismaUserRepository,
 } from '../../packages/core-api/src/adapters';
+import { ChampionshipYearCloseService } from '../../packages/core-api/src/modules/championship/year-close-service';
 import { LeagueEventsSync } from '../../packages/core-api/src/modules/events/league-events-sync';
 import { ProviderSeasonScheduleReader } from '../../packages/core-api/src/modules/events/provider-season-schedule-reader';
 import { createSportEventServices } from '../../packages/core-api/src/modules/events/wiring';
@@ -414,6 +416,8 @@ async function buildTestApp(prisma: PrismaClient): Promise<FastifyInstance> {
     syncRuns: providerSyncRuns,
     jobs: backgroundJobs.queue,
   });
+  // The championship year close (#2021), as index.ts wires it.
+  const championshipYears = new ChampionshipYearCloseService({ years: new PrismaLeagueChampionshipYearRepository(prisma), logger: testApp.log });
   const runner = backgroundJobs.runWith({
     SYNC_LEAGUE_EVENTS: (payload, context) => leagueEventsSync.run(payload, context),
     CONTEST_STARTED_EMAILS: (payload) => contestEmailJobs.contestStarted(payload),
@@ -426,6 +430,8 @@ async function buildTestApp(prisma: PrismaClient): Promise<FastifyInstance> {
     SETTLE_GAME_CONTESTS: (payload) => eventLifecycleService.settleFinishedGameContests(payload),
     REBUILD_LEADERBOARDS: async (payload) => ({ changedCount: await leaderboardRebuilder.rebuildLeaderboardSnapshots(leaderboardChangesOf(payload)) }),
     RESOLVE_MAPPED_PARTICIPANT_FINDINGS: resolveMappedParticipantFindingsJobHandler(integrationSyncFindings(prisma)),
+    CLOSE_LEAGUE_CHAMPIONSHIP_YEAR: (payload) => championshipYears.closeContestYear(payload.contestId),
+    CLOSE_SEASON_CHAMPIONSHIP_YEARS: (payload) => championshipYears.closeSeasonYears(payload.seasonSlotId),
   });
   backgroundJobRunner = runner;
   backgroundJobs.queue.wakes({ wake: () => { if (!backgroundJobsHeld) runner.wake(); } });

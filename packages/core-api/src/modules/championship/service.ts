@@ -99,7 +99,7 @@ export class ChampionshipService {
    * failure leaves the contest to be settled again. A second call for the contest writes nothing.
    * Answers how many it wrote.
    */
-  async recordContest(contest: Pick<Contest, 'id' | 'leagueId' | 'cupWeight'>, settledAt: Date, ranked: readonly RankedContestEntry[]): Promise<number> {
+  async recordContest(contest: Pick<Contest, 'id' | 'leagueId' | 'cupWeight' | 'championshipYear'>, settledAt: Date, ranked: readonly RankedContestEntry[]): Promise<number> {
     const league = await this.deps.leagues.findById(contest.leagueId);
     if (league === null) {
       this.deps.logger?.warn({ action: 'championship.record.leagueMissing', data: { contestId: contest.id, leagueId: contest.leagueId } }, 'Championship finishes not written: the contest\'s league is gone');
@@ -110,7 +110,8 @@ export class ChampionshipService {
       this.deps.logger?.debug({ action: 'championship.record.noResult', data: { contestId: contest.id } }, 'Championship finishes not written: nobody placed');
       return 0;
     }
-    const year = championshipYear(settledAt);
+    // The contest's own championship year (#2021), never the year it happened to settle in.
+    const year = contest.championshipYear;
     const written = await this.deps.finishes.recordFinishes(finishes.map((finish) => ({
       leagueId: contest.leagueId,
       year,

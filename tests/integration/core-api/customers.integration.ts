@@ -56,7 +56,7 @@ async function seedLeague(name: string, planRenewsAt: Date) {
   const sportLeagueSeasonId = await anySeasonId(prisma, 2026);
   await prisma.contest.createMany({
     data: [ContestStatus.DRAFT, ContestStatus.OPEN, ContestStatus.ACTIVE, ContestStatus.COMPLETED].map((status) => ({
-      leagueId: league.id, sportLeagueSeasonId, name: `Contest ${status}`, status, selectionType: 'TIERED' as const,
+      leagueId: league.id, sportLeagueSeasonId, championshipYear: 2026, name: `Contest ${status}`, status, selectionType: 'TIERED' as const,
     })),
   });
   return { league, owner, later, member, former };

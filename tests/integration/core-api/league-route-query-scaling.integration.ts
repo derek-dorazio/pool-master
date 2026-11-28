@@ -28,7 +28,7 @@ import {
 import { DAY, get, okBody, seedLeagueWithTeams } from '../list-route-seeds';
 import { expectDefined } from '../../support/expect-defined';
 import { expectConstantQueries, expectFixedQueries } from '../query-scaling';
-import { anySeasonId } from '../../support/contest-rows';
+import { anySeason } from '../../support/contest-rows';
 
 // No mocks.
 
@@ -116,7 +116,7 @@ async function seedOwnerInvitations(invitations: number) {
 async function seedExpansionPayment(leagueId: string, payerId: string, name: string) {
   const prisma = getPrisma();
   const contest = await prisma.contest.create({
-    data: { leagueId, sportLeagueSeasonId: await anySeasonId(prisma, new Date().getUTCFullYear()), name, status: ContestStatus.OPEN, contestFormat: 'ROSTER', selectionType: SelectionType.TIERED },
+    data: { leagueId, ...await anySeason(prisma, new Date().getUTCFullYear()), name, status: ContestStatus.OPEN, contestFormat: 'ROSTER', selectionType: SelectionType.TIERED },
   });
   const payment = await prisma.leaguePayment.create({
     data: { leagueId, contestId: contest.id, payerId, kind: 'CONTEST_EXPANSION_PAYMENTS_OFF', amountCents: 0, description: `Expanded ${name}` },
