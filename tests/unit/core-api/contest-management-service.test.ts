@@ -4,6 +4,7 @@ import {
   ContestFormat,
   ContestOpening,
   ContestOpeningReason,
+  type ContestCoveredSlot,
   CupWeight,
   BackgroundJobType,
   ContestStatus,
@@ -347,6 +348,8 @@ function createSportEventReader(overrides?: Partial<{
   undecidedGameCount: number;
   gamesWithoutSpreadCount: number;
   bracketProblem: string | null;
+  /** Whether every team of the slot a field contest starts at is known; true by default. */
+  slotFieldDecided: boolean;
   /** Why knockout round points can't score the event; the bracket's problem unless the event is a slate of one-off games. */
   knockoutProblem: string | null;
   /** How many rounds a template's coverage covers; by default every round of the event. */
@@ -364,6 +367,7 @@ function createSportEventReader(overrides?: Partial<{
   countUndecidedGames: jest.Mock;
   countGamesWithoutSpread: jest.Mock;
   findBracketProblem: jest.Mock;
+  isSlotFieldDecided: jest.Mock;
   findKnockoutProblem: jest.Mock;
   countCoveredRounds: jest.Mock;
   findCutoffTiming: jest.Mock;
@@ -375,6 +379,7 @@ function createSportEventReader(overrides?: Partial<{
     countUndecidedGames: jest.fn().mockResolvedValue(overrides?.undecidedGameCount ?? 0),
     countGamesWithoutSpread: jest.fn().mockResolvedValue(overrides?.gamesWithoutSpreadCount ?? 0),
     findBracketProblem: jest.fn().mockResolvedValue(overrides?.bracketProblem ?? null),
+    isSlotFieldDecided: jest.fn().mockResolvedValue(overrides?.slotFieldDecided ?? true),
     findKnockoutProblem: jest.fn().mockResolvedValue(overrides?.knockoutProblem !== undefined ? overrides.knockoutProblem : overrides?.bracketProblem ?? null),
     countCoveredRounds: jest.fn().mockResolvedValue(overrides?.coveredRoundCount ?? (overrides?.rounds === undefined ? 4 : overrides.rounds)),
     // The event's own timing for an ordinary contest; a later round's start would read its games, of which this event has none.
@@ -728,6 +733,8 @@ describe('ContestManagementService', () => {
       transitioned?: boolean;
       contestOpened?: ContestOpenedNotice;
       sportEventIds?: string[];
+      selectionType?: SelectionType;
+      coveredSlots?: Array<Pick<ContestCoveredSlot, 'seasonSlotId' | 'sportEventId' | 'status' | 'startsAt' | 'isTestData'>>;
     }) {
       const contestCoreRepo = createContestRepo();
       const draft = {
@@ -738,7 +745,8 @@ describe('ContestManagementService', () => {
         name: 'Contest 1',
         status: options?.status ?? ContestStatus.DRAFT,
         contestFormat: ContestFormat.ROSTER,
-        selectionType: 'TIERED',
+        selectionType: options?.selectionType ?? 'TIERED',
+        coveredSlots: options?.coveredSlots ?? [],
         createdAt: new Date('2026-04-07T12:00:00.000Z'),
         updatedAt: new Date('2026-04-07T12:00:00.000Z'),
       };
@@ -767,6 +775,34 @@ describe('ContestManagementService', () => {
       });
       return { service, contestCoreRepo, tiers };
     }
+
+    it('refuses to open a field contest while a team of the slot it starts at waits for the game feeding it, with 409 CONTEST_FIELD_NOT_DECIDED (#2015)', async () => {
+      const reader = createSportEventReader({ slotFieldDecided: false });
+      const { service, contestCoreRepo } = buildService({
+        reader,
+        coveredSlots: [
+          { seasonSlotId: 'divisional-2027', sportEventId: '11111111-1111-1111-1111-111111111111', status: SeasonSlotStatus.SCHEDULED, startsAt: new Date('2027-01-17T18:00:00.000Z'), isTestData: false },
+          { seasonSlotId: 'conference-2027', sportEventId: '11111111-1111-1111-1111-111111111111', status: SeasonSlotStatus.SCHEDULED, startsAt: new Date('2027-01-24T18:00:00.000Z'), isTestData: false },
+        ],
+      });
+
+      await expect(service.openContest('league-1', 'contest-1')).rejects.toMatchObject({ code: 'CONTEST_FIELD_NOT_DECIDED', statusCode: 409 });
+      expect(reader.isSlotFieldDecided).toHaveBeenCalledWith('11111111-1111-1111-1111-111111111111', 'divisional-2027');
+      expect(contestCoreRepo.transitionStatus).not.toHaveBeenCalled();
+    });
+
+    it('never holds a contest picking sides, not from the field, on its first slot\'s teams: a pick can be "winner of"', async () => {
+      const reader = createSportEventReader({ slotFieldDecided: false });
+      const { service } = buildService({
+        reader,
+        selectionType: SelectionType.PICK_EM,
+        coveredSlots: [{ seasonSlotId: 'divisional-2027', sportEventId: '11111111-1111-1111-1111-111111111111', status: SeasonSlotStatus.SCHEDULED, startsAt: new Date('2027-01-17T18:00:00.000Z'), isTestData: false }],
+      });
+
+      await service.openContest('league-1', 'contest-1').catch(() => undefined);
+
+      expect(reader.isSlotFieldDecided).not.toHaveBeenCalled();
+    });
 
     it('reads a two-event contest\'s events together and their tiers in one read when opening it, not once per event (#1355)', async () => {
       const masters = '11111111-1111-1111-1111-111111111111';
@@ -1853,6 +1889,7 @@ describe('ContestManagementService budget rules (#93)', () => {
       status: ContestStatus.DRAFT,
       contestFormat: ContestFormat.ROSTER,
       selectionType: SelectionType.BUDGET_PICK,
+      coveredSlots: [],
       createdAt: new Date('2026-04-07T12:00:00.000Z'),
       updatedAt: new Date('2026-04-07T12:00:00.000Z'),
     });
@@ -2316,6 +2353,7 @@ describe('ContestManagementService — a contest of several events', () => {
       countUndecidedGames: jest.fn().mockResolvedValue(0),
       countGamesWithoutSpread: jest.fn().mockResolvedValue(0),
       findBracketProblem: jest.fn().mockResolvedValue(null),
+      isSlotFieldDecided: jest.fn().mockResolvedValue(true),
       findKnockoutProblem: jest.fn().mockResolvedValue(null),
       countCoveredRounds: jest.fn().mockResolvedValue(4),
       findCutoffTiming: mockFn<ContestCreateSportEventReader['findCutoffTiming']>(async (sportEvent, cutoff) => cutoffTiming(cutoff, sportEvent, [])),

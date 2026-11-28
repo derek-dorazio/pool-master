@@ -41,10 +41,13 @@ function event(overrides: Partial<ContestCreateSportEventState> = {}): ContestCr
 function reader(sportEvent: ContestCreateSportEventState | null, options: {
   bracketProblem?: string | null;
   squaresKickoff?: Date | null;
+  /** Whether every team of the asked Season slot is known; true by default. */
+  slotFieldDecided?: boolean;
 } = {}): ContestOpeningReader {
   return {
     findById: jest.fn().mockResolvedValue(sportEvent),
     findBracketProblem: jest.fn().mockResolvedValue(options.bracketProblem ?? null),
+    isSlotFieldDecided: jest.fn().mockResolvedValue(options.slotFieldDecided ?? true),
     nextSquaresKickoff: jest.fn().mockResolvedValue(options.squaresKickoff === undefined ? LATER : options.squaresKickoff),
   };
 }
@@ -121,6 +124,31 @@ describe('contestOpening\'s reason for each wait and close (#2015)', () => {
 
   it('gives no reason for an open setup', async () => {
     expect(await reasonOf(event(), TIERED)).toBeNull();
+  });
+});
+
+describe('contestOpening holds a field contest for the teams of the slot it starts at (#2015)', () => {
+  const AT_DIVISIONAL = { seasonSlotId: 'divisional-2027' };
+
+  it('is NOT_YET for a tiered, budget or sweepstakes contest on a slot whose teams wait on earlier games', async () => {
+    for (const selectionType of [SelectionType.TIERED, SelectionType.BUDGET_PICK, SelectionType.RANDOM_DRAW]) {
+      const window = await contestOpening(reader(event(), { slotFieldDecided: false }), 'event-1', { selectionType, ...AT_DIVISIONAL }, NOW);
+      expect([selectionType, window.opening, window.reason, window.closesAt]).toEqual([selectionType, ContestOpening.NOT_YET, ContestOpeningReason.FIELD_NOT_DECIDED, LATER]);
+    }
+  });
+
+  it('opens a bracket or pick\'em on that slot, whose picks can be "winner of", and asks nothing of its teams', async () => {
+    for (const selectionType of [SelectionType.BRACKET, SelectionType.PICK_EM]) {
+      const ask = reader(event(), { slotFieldDecided: false });
+      expect((await contestOpening(ask, 'event-1', { selectionType, ...AT_DIVISIONAL }, NOW)).opening).toBe(ContestOpening.OPEN);
+      expect(ask.isSlotFieldDecided).not.toHaveBeenCalled();
+    }
+  });
+
+  it('opens a field contest once the slot\'s teams are decided, and asks about the slot it starts at', async () => {
+    const ask = reader(event(), { slotFieldDecided: true });
+    expect((await contestOpening(ask, 'event-1', { selectionType: SelectionType.TIERED, ...AT_DIVISIONAL }, NOW)).opening).toBe(ContestOpening.OPEN);
+    expect(ask.isSlotFieldDecided).toHaveBeenCalledWith('event-1', 'divisional-2027');
   });
 });
 

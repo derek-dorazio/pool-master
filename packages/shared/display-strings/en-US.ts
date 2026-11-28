@@ -251,6 +251,7 @@ export const enUS = {
     ContestOpeningReason: {
       EVENT_NOT_RELEASED: 'Waiting for the event to be released',
       FIELD_NOT_LOADED: 'Waiting for the field',
+      FIELD_NOT_DECIDED: 'Waiting for the games before it to decide its teams',
       BRACKET_NOT_SET: 'Waiting for every team of the bracket',
       EVENT_STARTED: 'Already started',
       NO_GAME_LEFT: 'Every game has kicked off',
@@ -983,6 +984,7 @@ export const enUS = {
     CONTEST_EXPANSION_BAND_UNAVAILABLE: 'That size is no longer offered for this contest. Pick another.',
     CONTEST_EXPANSION_CLOSED: 'This contest has stopped taking entries, so it can no longer be expanded.',
     CONTEST_EXPANSION_NOT_ABOVE_CAP: 'The contest already takes that many entries. Give a larger size.',
+    CONTEST_FIELD_NOT_DECIDED: 'This contest opens once the games before its first round have decided every team in it.',
     CONTEST_FINAL: 'This contest is final, so how much it counts is fixed.',
     CONTEST_FIRST_GAME_STARTED: 'This event has already started, so a contest can no longer be made on it.',
     CONTEST_FORMAT_MISMATCH: 'This contest is not played that way.',

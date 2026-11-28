@@ -19,7 +19,7 @@
  * change an entry, or the deal would no longer be the one every entry was given.
  */
 import type { Contest, ContestCoveredSlot, ContestRules, ContestSquaresGame, SportEventRoundMatch, SportEventRoundMatchGame } from '@poolmaster/shared/domain';
-import { ContestStatus, isMatchUnplayed, SeasonSlotStatus, SelectionType, SportEventStatus, hasSportEventStarted, isSportEventStatusFinished, hasPeriodScores } from '@poolmaster/shared/domain';
+import { ContestStatus, isMatchUnplayed, MatchStatus, SeasonSlotStatus, SelectionType, SportEventStatus, hasSportEventStarted, isSportEventStatusFinished, hasPeriodScores } from '@poolmaster/shared/domain';
 
 /**
  * The timing a check runs on: an event's, or a contest's window on it. A window has no start yet
@@ -128,6 +128,21 @@ export function cutoffTiming(
 /** The status of a window still to start on an event: scheduled while the event is under way with its other games, else the event's own (postponed, say). */
 function stillToStart(status: SportEventStatus): SportEventStatus {
   return status === SportEventStatus.IN_PROGRESS ? SportEventStatus.SCHEDULED : status;
+}
+
+/**
+ * Whether every team of a Season slot is known (#2015): no side of the slot's games, cancelled ones
+ * left out, still waits for the game feeding it. A contest picking from the field (tiered, budget,
+ * sweepstakes) waits for it before it opens, since its field is the slot's teams; brackets and
+ * pick'em pick sides, which can be "winner of". A slot with no game yet has nothing to decide.
+ */
+export function isSlotFieldDecided(
+  matches: readonly (Pick<SportEventRoundMatch, 'status' | 'sides'> & { slot: Pick<SportEventRoundMatch['slot'], 'seasonSlotId'> })[],
+  seasonSlotId: string,
+): boolean {
+  return matches.every((match) => match.slot.seasonSlotId !== seasonSlotId
+    || match.status === MatchStatus.CANCELLED
+    || match.sides.every((side) => side.sportEventParticipantId !== null));
 }
 
 /**

@@ -10,6 +10,7 @@ import {
   ContestOpeningReason,
   eventPlaysMatches,
   eventSportDefinition,
+  isRosterSelectionType,
   SelectionType,
   SportEventStatus,
   type SportLeagueEvent,
@@ -18,12 +19,14 @@ import {
 import { evaluateEventOperationalState } from '../events/operational-timing';
 import type { ContestCreateSportEventReader, ContestCreateSportEventState } from './service';
 
-/** The setup asked about: how its entries pick. */
+/** The setup asked about: how its entries pick, and the Season slot it would start at, when known. */
 export interface ContestOpeningSetup {
   selectionType: SelectionType;
+  /** The Season slot a contest of the setup would start at (an event page's next slot); omitted, its event's own. */
+  seasonSlotId?: string;
 }
 
-export interface ContestOpeningReader extends Pick<ContestCreateSportEventReader, 'findById' | 'findBracketProblem'> {
+export interface ContestOpeningReader extends Pick<ContestCreateSportEventReader, 'findById' | 'findBracketProblem' | 'isSlotFieldDecided'> {
   /**
    * The soonest kickoff of the event's games that could still take a squares contest (not
    * cancelled, in a round of single games, not kicked off), or null when none is left.
@@ -96,7 +99,7 @@ const CLOSED_UNKNOWN: ContestOpeningWindow = { opening: ContestOpening.CLOSED, r
 /**
  * Whether Create contest would take a setup on the event now. It starts from the event-level rule
  * (`eventOpening`) and only narrows it: a setup's own cutoff (the event's start, or for squares the
- * next game's kickoff) and a bracket's teams. A CLOSED or NOT_YET event row stays so.
+ * next game's kickoff), the teams of the slot a field contest starts at, and a bracket's teams. A CLOSED or NOT_YET event row stays so.
  */
 export async function contestOpening(
   reader: ContestOpeningReader,
@@ -127,6 +130,12 @@ export async function contestOpening(
   }
   if (eventRow.opening === ContestOpening.NOT_YET) {
     return { opening: ContestOpening.NOT_YET, reason: eventRow.reason, closesAt };
+  }
+  // A contest picking from the field waits for every team of the slot it starts at (#2015);
+  // brackets and pick'em pick sides, which can be "winner of", so they open earlier.
+  if (isRosterSelectionType(setup.selectionType) && setup.seasonSlotId !== undefined
+    && !await reader.isSlotFieldDecided(sportEvent.id, setup.seasonSlotId)) {
+    return { opening: ContestOpening.NOT_YET, reason: ContestOpeningReason.FIELD_NOT_DECIDED, closesAt };
   }
   if (setup.selectionType === SelectionType.BRACKET && await reader.findBracketProblem(sportEvent.id) !== null) {
     return { opening: ContestOpening.NOT_YET, reason: ContestOpeningReason.BRACKET_NOT_SET, closesAt };

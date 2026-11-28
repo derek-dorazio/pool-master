@@ -136,8 +136,8 @@ export class EventPageService {
 
 /** The offer with its slot definition's first Season slot not past the contest's cutoff, or null when none is left. */
 async function showOffer(offer: EventPageOffer, slots: readonly EventPageNextSlot[], askOpening: ContestOpeningAsk): Promise<EventPageOfferView | null> {
-  const setup: ContestOpeningSetup = { selectionType: offer.template.selectionType };
   for (const nextSlot of slots) {
+    const setup: ContestOpeningSetup = { selectionType: offer.template.selectionType, seasonSlotId: nextSlot.seasonSlotId };
     const { opening, reason, closesAt } = await askOpening(nextSlot.sportEventId, setup);
     if (opening !== ContestOpening.CLOSED && closesAt !== null) {
       const state = opening === ContestOpening.OPEN ? EventPageOfferState.OPEN : EventPageOfferState.NOT_YET;

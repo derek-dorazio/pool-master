@@ -30727,6 +30727,7 @@
             "enum": [
               "EVENT_NOT_RELEASED",
               "FIELD_NOT_LOADED",
+              "FIELD_NOT_DECIDED",
               "BRACKET_NOT_SET",
               "EVENT_STARTED",
               "NO_GAME_LEFT",
@@ -31387,6 +31388,7 @@
                   "enum": [
                     "EVENT_NOT_RELEASED",
                     "FIELD_NOT_LOADED",
+                    "FIELD_NOT_DECIDED",
                     "BRACKET_NOT_SET",
                     "EVENT_STARTED",
                     "NO_GAME_LEFT",
@@ -32670,6 +32672,7 @@
                         "enum": [
                           "EVENT_NOT_RELEASED",
                           "FIELD_NOT_LOADED",
+                          "FIELD_NOT_DECIDED",
                           "BRACKET_NOT_SET",
                           "EVENT_STARTED",
                           "NO_GAME_LEFT",
@@ -33907,6 +33910,7 @@
                       "enum": [
                         "EVENT_NOT_RELEASED",
                         "FIELD_NOT_LOADED",
+                        "FIELD_NOT_DECIDED",
                         "BRACKET_NOT_SET",
                         "EVENT_STARTED",
                         "NO_GAME_LEFT",
@@ -64787,6 +64791,7 @@
             "enum": [
               "EVENT_NOT_RELEASED",
               "FIELD_NOT_LOADED",
+              "FIELD_NOT_DECIDED",
               "BRACKET_NOT_SET",
               "EVENT_STARTED",
               "NO_GAME_LEFT",
@@ -66581,6 +66586,7 @@
                   "enum": [
                     "EVENT_NOT_RELEASED",
                     "FIELD_NOT_LOADED",
+                    "FIELD_NOT_DECIDED",
                     "BRACKET_NOT_SET",
                     "EVENT_STARTED",
                     "NO_GAME_LEFT",
@@ -68399,6 +68405,7 @@
                       "enum": [
                         "EVENT_NOT_RELEASED",
                         "FIELD_NOT_LOADED",
+                        "FIELD_NOT_DECIDED",
                         "BRACKET_NOT_SET",
                         "EVENT_STARTED",
                         "NO_GAME_LEFT",
@@ -70254,6 +70261,7 @@
                         "enum": [
                           "EVENT_NOT_RELEASED",
                           "FIELD_NOT_LOADED",
+                          "FIELD_NOT_DECIDED",
                           "BRACKET_NOT_SET",
                           "EVENT_STARTED",
                           "NO_GAME_LEFT",

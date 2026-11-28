@@ -13492,7 +13492,7 @@ export type SportEventContestOpeningDto = {
     /**
      * Why the row is NOT_YET or CLOSED, null when OPEN. NOT_YET: EVENT_NOT_RELEASED (a draft) or FIELD_NOT_LOADED (no field yet). CLOSED: EVENT_STARTED (the event is under way or over). The event list never reads further, so it never answers BRACKET_NOT_SET or NO_GAME_LEFT, which an event page's offer reads.
      */
-    reason: 'EVENT_NOT_RELEASED' | 'FIELD_NOT_LOADED' | 'BRACKET_NOT_SET' | 'EVENT_STARTED' | 'NO_GAME_LEFT' | null;
+    reason: 'EVENT_NOT_RELEASED' | 'FIELD_NOT_LOADED' | 'FIELD_NOT_DECIDED' | 'BRACKET_NOT_SET' | 'EVENT_STARTED' | 'NO_GAME_LEFT' | null;
 };
 
 /**
@@ -13805,7 +13805,7 @@ export type SportEventDto = {
         /**
          * Why the row is NOT_YET or CLOSED, null when OPEN. NOT_YET: EVENT_NOT_RELEASED (a draft) or FIELD_NOT_LOADED (no field yet). CLOSED: EVENT_STARTED (the event is under way or over). The event list never reads further, so it never answers BRACKET_NOT_SET or NO_GAME_LEFT, which an event page's offer reads.
          */
-        reason: 'EVENT_NOT_RELEASED' | 'FIELD_NOT_LOADED' | 'BRACKET_NOT_SET' | 'EVENT_STARTED' | 'NO_GAME_LEFT' | null;
+        reason: 'EVENT_NOT_RELEASED' | 'FIELD_NOT_LOADED' | 'FIELD_NOT_DECIDED' | 'BRACKET_NOT_SET' | 'EVENT_STARTED' | 'NO_GAME_LEFT' | null;
     }>;
     /**
      * Whether the tiers and prices of the event's first slot are locked: true once the event is released (#431, #2044). A tier or price write on a locked set is refused with 409 SPORT_EVENT_TIERS_LOCKED.
@@ -14354,7 +14354,7 @@ export type SportEventListResponse = {
             /**
              * Why the row is NOT_YET or CLOSED, null when OPEN. NOT_YET: EVENT_NOT_RELEASED (a draft) or FIELD_NOT_LOADED (no field yet). CLOSED: EVENT_STARTED (the event is under way or over). The event list never reads further, so it never answers BRACKET_NOT_SET or NO_GAME_LEFT, which an event page's offer reads.
              */
-            reason: 'EVENT_NOT_RELEASED' | 'FIELD_NOT_LOADED' | 'BRACKET_NOT_SET' | 'EVENT_STARTED' | 'NO_GAME_LEFT' | null;
+            reason: 'EVENT_NOT_RELEASED' | 'FIELD_NOT_LOADED' | 'FIELD_NOT_DECIDED' | 'BRACKET_NOT_SET' | 'EVENT_STARTED' | 'NO_GAME_LEFT' | null;
         }>;
         /**
          * Whether the tiers and prices of the event's first slot are locked: true once the event is released (#431, #2044). A tier or price write on a locked set is refused with 409 SPORT_EVENT_TIERS_LOCKED.
@@ -14878,7 +14878,7 @@ export type SportEventResponse = {
             /**
              * Why the row is NOT_YET or CLOSED, null when OPEN. NOT_YET: EVENT_NOT_RELEASED (a draft) or FIELD_NOT_LOADED (no field yet). CLOSED: EVENT_STARTED (the event is under way or over). The event list never reads further, so it never answers BRACKET_NOT_SET or NO_GAME_LEFT, which an event page's offer reads.
              */
-            reason: 'EVENT_NOT_RELEASED' | 'FIELD_NOT_LOADED' | 'BRACKET_NOT_SET' | 'EVENT_STARTED' | 'NO_GAME_LEFT' | null;
+            reason: 'EVENT_NOT_RELEASED' | 'FIELD_NOT_LOADED' | 'FIELD_NOT_DECIDED' | 'BRACKET_NOT_SET' | 'EVENT_STARTED' | 'NO_GAME_LEFT' | null;
         }>;
         /**
          * Whether the tiers and prices of the event's first slot are locked: true once the event is released (#431, #2044). A tier or price write on a locked set is refused with 409 SPORT_EVENT_TIERS_LOCKED.
@@ -28397,7 +28397,7 @@ export type EventPageOfferDto = {
     /**
      * What a NOT_YET offer waits for: EVENT_NOT_RELEASED, FIELD_NOT_LOADED or BRACKET_NOT_SET. Null when OPEN.
      */
-    waitingFor: 'EVENT_NOT_RELEASED' | 'FIELD_NOT_LOADED' | 'BRACKET_NOT_SET' | 'EVENT_STARTED' | 'NO_GAME_LEFT' | null;
+    waitingFor: 'EVENT_NOT_RELEASED' | 'FIELD_NOT_LOADED' | 'FIELD_NOT_DECIDED' | 'BRACKET_NOT_SET' | 'EVENT_STARTED' | 'NO_GAME_LEFT' | null;
     /**
      * The Season slot an offer is shown with (#2010): of its slot definition's Season slots, the one under way, or else the soonest upcoming that can still take the contest.
      */
@@ -29078,7 +29078,7 @@ export type EventPageDto = {
         /**
          * What a NOT_YET offer waits for: EVENT_NOT_RELEASED, FIELD_NOT_LOADED or BRACKET_NOT_SET. Null when OPEN.
          */
-        waitingFor: 'EVENT_NOT_RELEASED' | 'FIELD_NOT_LOADED' | 'BRACKET_NOT_SET' | 'EVENT_STARTED' | 'NO_GAME_LEFT' | null;
+        waitingFor: 'EVENT_NOT_RELEASED' | 'FIELD_NOT_LOADED' | 'FIELD_NOT_DECIDED' | 'BRACKET_NOT_SET' | 'EVENT_STARTED' | 'NO_GAME_LEFT' | null;
         /**
          * The Season slot an offer is shown with (#2010): of its slot definition's Season slots, the one under way, or else the soonest upcoming that can still take the contest.
          */
@@ -29764,7 +29764,7 @@ export type EventPageResponse = {
             /**
              * What a NOT_YET offer waits for: EVENT_NOT_RELEASED, FIELD_NOT_LOADED or BRACKET_NOT_SET. Null when OPEN.
              */
-            waitingFor: 'EVENT_NOT_RELEASED' | 'FIELD_NOT_LOADED' | 'BRACKET_NOT_SET' | 'EVENT_STARTED' | 'NO_GAME_LEFT' | null;
+            waitingFor: 'EVENT_NOT_RELEASED' | 'FIELD_NOT_LOADED' | 'FIELD_NOT_DECIDED' | 'BRACKET_NOT_SET' | 'EVENT_STARTED' | 'NO_GAME_LEFT' | null;
             /**
              * The Season slot an offer is shown with (#2010): of its slot definition's Season slots, the one under way, or else the soonest upcoming that can still take the contest.
              */
@@ -30465,7 +30465,7 @@ export type EventPageListResponse = {
             /**
              * What a NOT_YET offer waits for: EVENT_NOT_RELEASED, FIELD_NOT_LOADED or BRACKET_NOT_SET. Null when OPEN.
              */
-            waitingFor: 'EVENT_NOT_RELEASED' | 'FIELD_NOT_LOADED' | 'BRACKET_NOT_SET' | 'EVENT_STARTED' | 'NO_GAME_LEFT' | null;
+            waitingFor: 'EVENT_NOT_RELEASED' | 'FIELD_NOT_LOADED' | 'FIELD_NOT_DECIDED' | 'BRACKET_NOT_SET' | 'EVENT_STARTED' | 'NO_GAME_LEFT' | null;
             /**
              * The Season slot an offer is shown with (#2010): of its slot definition's Season slots, the one under way, or else the soonest upcoming that can still take the contest.
              */
