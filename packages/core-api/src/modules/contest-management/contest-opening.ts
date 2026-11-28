@@ -98,9 +98,14 @@ export function eventOpening(event: EventOpeningState, selectionType: SelectionT
 const CLOSED_UNKNOWN: ContestOpeningWindow = { opening: ContestOpening.CLOSED, reason: null, closesAt: null };
 
 /**
- * Whether Create contest would take a setup on the event now. It starts from the event-level rule
+ * Whether a setup on the event can open now. It starts from the event-level rule
  * (`eventOpening`) and only narrows it: a setup's own cutoff (the event's start, or for squares the
  * next game's kickoff), the teams of the slot a field contest starts at, and a bracket's teams. A CLOSED or NOT_YET event row stays so.
+ *
+ * Create contest refuses exactly when this is not OPEN, with one exception: FIELD_NOT_DECIDED. A
+ * commissioner may set up a field contest as a draft before its first slot's teams are known, and
+ * Open contest is what refuses it until they are. So FIELD_NOT_DECIDED means "you can set this up
+ * now; it opens once the teams are known".
  */
 export async function contestOpening(
   reader: ContestOpeningReader,
