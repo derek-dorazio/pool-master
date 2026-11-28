@@ -16,6 +16,7 @@ import type {
   SportLeagueSyncDto,
 } from '@/lib/api';
 import { bindApiMocks } from '@/test/msw-api';
+import { RULES_LIMITS } from '@/test/rules-bounds';
 import { LeagueActivityTab } from './league-activity-tab';
 import { LeagueContestTemplatesTab } from './league-contest-templates-tab';
 import { LeagueEventsTab } from './league-events-tab';
@@ -200,6 +201,7 @@ function template(overrides: Partial<ContestConfigTemplateDto> = {}): ContestCon
     active: true,
     schemaVersion: 1,
     configuration: {} as ContestConfigTemplateDto['configuration'],
+    rulesLimits: RULES_LIMITS,
     ...overrides,
   };
 }

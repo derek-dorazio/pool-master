@@ -109,6 +109,13 @@ export const SportEventProviderMappingDtoSchema = z.object({
 export type SportEventProviderMappingDto = z.infer<typeof SportEventProviderMappingDtoSchema>;
 
 
+export const TieredRosterChoiceDtoSchema = registerSchema('TieredRosterChoiceDto', z.object({
+  picksPerTier: z.number().int().min(1).describe('Picks an entry takes from each tier.'),
+  rosterSize: z.number().int().min(1).describe('The entry\'s roster at this picks per tier: the tier count times it.'),
+  countedScoresDefault: z.number().int().min(1).describe('The scores that count a tiered contest starts with at this picks per tier.'),
+}).describe('One picks-per-tier value a tiered contest may take on an event\'s tiers, with the roster it makes (#2107).'));
+export type TieredRosterChoiceDto = z.infer<typeof TieredRosterChoiceDtoSchema>;
+
 /** One slot's tier set as the event read lists it (#2044). */
 const SportEventTierSetDtoSchema = z.object({
   seasonSlotId: z.uuid().describe('The Season slot the event plays in this slot: the slot tier routes take it.'),
@@ -152,6 +159,7 @@ export const SportEventDtoSchema = z.object({
   slots: z.array(SportLeagueSeasonSlotDtoSchema).describe('The Season slots the event covers, in play order: one for most events, one per round for a bracket. An event with slots takes its dates from them. Empty while the sync has not matched its slots yet.'),
   autoLifecycleEnabled: z.boolean().describe(`Whether the lifecycle scheduler may move this event's status. ${ADMIN_ONLY}`),
   tierCount: z.number().int().describe('Pick tiers defined for the event. A tiered contest\'s entry picks this many tiers times the contest\'s picksPerTier.'),
+  tieredRosterChoices: z.array(TieredRosterChoiceDtoSchema).describe('The picks per tier a tiered contest on the event\'s tier-set slot may take (#2107): 1 up to its smallest tier\'s size, in order, each with its roster and default scores that count. Empty while the event has no tiers or a tier is empty; the API then checks no picks-per-tier bound.'),
   releaseChecks: z.array(ReleaseCheckDtoSchema).nullable().describe('A DRAFT event\'s ready checks, every one judged now, in a fixed order; a check that does not apply to the event is left out. The automatic release passes only when every check passes; a root admin\'s release is refused only by the checks other than ROUNDS_SCHEDULED and CONTEST_SETUPS_ON. Filled on a root admin\'s read of the one event; null on lists, on an admin action\'s answer, for anyone but a root admin, and once the event is released.'),
   lastAutoReleaseCheck: SportEventAutoReleaseCheckDtoSchema.nullable().describe(`The latest automatic release try, as the sweep stored it, so a page shows the last try without judging the checks again. Null until the first try, and once a root admin releases the event by hand. The checks as they stand now are releaseChecks. ${ADMIN_ONLY}`),
   adminCounts: SportEventAdminCountsDtoSchema.nullable().describe('The root admin\'s counts: release readiness and the contest count across every league. Null for anyone but a root admin, whose reads alone count them.'),

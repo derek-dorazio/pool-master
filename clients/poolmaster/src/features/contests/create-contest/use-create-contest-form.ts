@@ -27,6 +27,7 @@ import {
   defaultCountedScoresFor,
   parseContestRules,
   toContestRulesValues,
+  type ContestRulesBounds,
 } from '../contest-rules-form';
 import {
   EMPTY_SCORING_SETTINGS_VALUES,
@@ -197,7 +198,15 @@ export function useCreateContestForm(league: Pick<LeagueDto, 'id' | 'planEntitle
     [templatesQuery.data],
   );
   const presets = useMemo(() => presetsFor(selectionType), [presetsFor, selectionType]);
-  const parsedRules = parseContestRules(values, selectionType, tierCount, participant);
+  // poolmaster-allow-list-lookup: the chosen one of the active contest templates the picker lists anyway
+  const selectedTemplate = templatesQuery.data?.find((template) => template.id === selectedTemplateId) ?? null;
+  // The API's bounds on the rules (#2107): the chosen setup's limits and the event's tiers' choices.
+  const tieredRosterChoices = selectedEvent?.tieredRosterChoices;
+  const rulesBounds: ContestRulesBounds = useMemo(
+    () => ({ limits: selectedTemplate?.rulesLimits ?? null, tieredRosterChoices: tieredRosterChoices ?? [] }),
+    [selectedTemplate, tieredRosterChoices],
+  );
+  const parsedRules = parseContestRules(values, selectionType, rulesBounds, participant);
   const rulesError = parsedRules.error;
   const parsedScoring = scoringSettingsUi.parse(values);
 
@@ -395,11 +404,11 @@ export function useCreateContestForm(league: Pick<LeagueDto, 'id' | 'planEntitle
       && String(preset.configuration.picksPerTier) === picksPerTier) {
       return;
     }
-    const countedScores = defaultCountedScoresFor(picksPerTier, tierCount);
+    const countedScores = defaultCountedScoresFor(picksPerTier, rulesBounds.tieredRosterChoices);
     if (countedScores !== null) {
       setFormValues({ countedScores });
     }
-  }, [form, presets, setFormValues, tierCount]);
+  }, [form, presets, rulesBounds, setFormValues]);
 
   // The name follows the event and the rules until the commissioner types their own.
   const suggestedName = selectedEvent
@@ -428,6 +437,7 @@ export function useCreateContestForm(league: Pick<LeagueDto, 'id' | 'planEntitle
     offeredSports,
     parsedScoring,
     presets,
+    rulesBounds,
     rulesError,
     /** The rules as they stand, or null while they don't read: what the picks preview draws. */
     rulesConfiguration: rulesError === null ? parsedRules.configuration : null,

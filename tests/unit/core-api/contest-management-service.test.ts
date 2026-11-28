@@ -321,8 +321,8 @@ function createSportEventTierServiceStub(
       : [],
   }));
   return {
-    listTiersOfEvents: jest.fn(async (sportEventIds: readonly string[]) => sportEventIds.flatMap((sportEventId) =>
-      tiers.map(({ participants: _participants, ...tier }) => ({ ...tier, sportEventId })))),
+    tierSizes: jest.fn(async (sportEventIds: readonly string[]) =>
+      new Map(sportEventIds.map((sportEventId) => [sportEventId, tiers.map((tier) => tier.participants.length)]))),
     getEffectiveTiersForSportEvents: jest.fn(async (sportEventIds: readonly string[]) =>
       new Map(sportEventIds.map((sportEventId) => [sportEventId, tiers]))),
     salaryCaps: jest.fn(async (sportEventIds: readonly string[]) => new Map(sportEventIds.flatMap((sportEventId) => {
@@ -522,6 +522,48 @@ describe('ContestManagementService', () => {
     ).rejects.toMatchObject({
       code: 'CONTEST_TIER_FIELD_OUT_OF_RANGE',
       message: 'countedScores (5) cannot exceed the roster of 4 (2 tier(s) × 2 pick(s) per tier).',
+    });
+    expect(contestCoreRepo.create).not.toHaveBeenCalled();
+  });
+
+  it('refuses to create a tiered contest whose picksPerTier exceeds the event\'s smallest tier with 422 CONTEST_TIER_FIELD_OUT_OF_RANGE, writing nothing, since no entry could fill that tier', async () => {
+    const contestCoreRepo = createContestRepo();
+    const service = new ContestManagementService({
+      domainEvents: testDomainEvents(),
+      contests: contestCoreRepo,
+      configTemplates: createContestConfigTemplateRepo(),
+      configurations: createContestConfigurationRepo(),
+      scoringRules: createParticipantScoringRuleRepo(),
+      // Two tiers of one participant each: one pick per tier is the most an entry can make.
+      tiers: createSportEventTierServiceStub(2, true),
+      seasons: coverableSeasons(),
+      sportEventReader: createSportEventReader({ participantCount: 80 }),
+      cups: createCupKeeper(),
+      planEntitlements: platinumEntitlements(),
+      championshipYears: noClosedYears,
+    });
+
+    await expect(
+      service.createContest(
+        { leagueId: 'league-1' },
+        {
+          templateId: templateIdFor('TIERED'),
+          name: 'Too many picks per tier',
+          sportEventIds: ['11111111-1111-1111-1111-111111111111'],
+          contestFormat: 'ROSTER',
+          selectionType: 'TIERED',
+          configuration: {
+            maxEntriesPerSquad: 3,
+            selectionType: SelectionType.TIERED,
+            picksPerTier: 2,
+            countedScores: 2,
+          },
+        },
+      ),
+    ).rejects.toMatchObject({
+      code: 'CONTEST_TIER_FIELD_OUT_OF_RANGE',
+      statusCode: 422,
+      message: 'picksPerTier (2) cannot exceed 1, the size of the event\'s smallest tier.',
     });
     expect(contestCoreRepo.create).not.toHaveBeenCalled();
   });
@@ -791,8 +833,8 @@ describe('ContestManagementService', () => {
       expect(opened.status).toBe(ContestStatus.OPEN);
       expect(reader.findByIds).toHaveBeenCalledTimes(1);
       expect(reader.findByIds).toHaveBeenCalledWith([masters, pga]);
-      expect(tiers.listTiersOfEvents).toHaveBeenCalledTimes(1);
-      expect(jest.mocked(tiers.listTiersOfEvents).mock.calls[0]?.[0]).toEqual([masters, pga]);
+      expect(tiers.tierSizes).toHaveBeenCalledTimes(1);
+      expect(jest.mocked(tiers.tierSizes).mock.calls[0]?.[0]).toEqual([masters, pga]);
     });
 
     it('moves a DRAFT contest to OPEN with a compare-and-set from DRAFT, records when it opened, has the reminder sweep look at it next (#1170), and returns it open', async () => {
@@ -1114,9 +1156,9 @@ describe('ContestManagementService', () => {
 
     expect(tiers.getEffectiveTiersForSportEvents).not.toHaveBeenCalled();
     expect(result.sportEvents).toEqual([
-      { sportEventId: 'week-1', effectiveTiers: [] },
-      { sportEventId: 'week-2', effectiveTiers: [] },
-      { sportEventId: 'week-3', effectiveTiers: [] },
+      { sportEventId: 'week-1', effectiveTiers: [], tieredRosterChoices: [] },
+      { sportEventId: 'week-2', effectiveTiers: [], tieredRosterChoices: [] },
+      { sportEventId: 'week-3', effectiveTiers: [], tieredRosterChoices: [] },
     ]);
   });
 

@@ -44,6 +44,7 @@ function summary(sportEvent: SportEvent, participantCount: number, untieredParti
     event: sportEvent,
     participantCount,
     tierCount: 0,
+    tierSizes: [],
     tierSetSlot,
     tierSets: tierSetSlot === null ? [] : [{ slot: tierSetSlot, tierCount: 0 }],
     adminCounts: { untieredParticipantCount, unpricedParticipantCount: 0, emptyTierNumbers: [], contestCount: 0 },
@@ -193,9 +194,24 @@ describe('the contests on an event on the wire (#1889)', () => {
   });
 });
 
+describe('SportEvent tiered roster choices on the wire (#2107)', () => {
+  it('offers picks per tier from 1 to the smallest tier\'s size, each with its roster and default scores that count', () => {
+    const dto = mapSportEventToDto({ ...summary(event(), 18), tierCount: 3, tierSizes: [6, 2, 4] });
+    expect(dto.tieredRosterChoices).toEqual([
+      { picksPerTier: 1, rosterSize: 3, countedScoresDefault: 1 },
+      { picksPerTier: 2, rosterSize: 6, countedScoresDefault: 2 },
+    ]);
+  });
+
+  it('offers none while a tier is empty or the event has no tiers, so no picks-per-tier bound is checked yet', () => {
+    expect(mapSportEventToDto({ ...summary(event(), 18), tierCount: 3, tierSizes: [6, 0, 4] }).tieredRosterChoices).toEqual([]);
+    expect(mapSportEventToDto(summary(event(), 18)).tieredRosterChoices).toEqual([]);
+  });
+});
+
 describe('SportEvent admin counts on the wire (#1198)', () => {
   it('carries null admin counts for a read that did not count them, keeping the field size and tier count', () => {
-    expect(mapSportEventToDto({ event: event(), participantCount: 72, tierCount: 6, tierSetSlot: null, tierSets: [], adminCounts: null, slots: [] })).toMatchObject({
+    expect(mapSportEventToDto({ event: event(), participantCount: 72, tierCount: 6, tierSizes: [], tierSetSlot: null, tierSets: [], adminCounts: null, slots: [] })).toMatchObject({
       participantCount: 72,
       tierCount: 6,
       adminCounts: null,
@@ -207,7 +223,7 @@ describe('SportEvent admin counts on the wire (#1198)', () => {
 describe('SportEvent next statuses on the wire', () => {
   it('carries the declared transitions from the event\'s current status, and its counts', () => {
     const adminCounts = { untieredParticipantCount: 0, unpricedParticipantCount: 0, emptyTierNumbers: [6], contestCount: 2 };
-    expect(mapSportEventToDto({ event: event({ status: 'SCHEDULED' }), participantCount: 0, tierCount: 6, tierSetSlot: null, tierSets: [], adminCounts, slots: [] })).toMatchObject({
+    expect(mapSportEventToDto({ event: event({ status: 'SCHEDULED' }), participantCount: 0, tierCount: 6, tierSizes: [], tierSetSlot: null, tierSets: [], adminCounts, slots: [] })).toMatchObject({
       allowedTransitions: ['IN_PROGRESS', 'POSTPONED', 'CANCELLED'],
       tierCount: 6,
       adminCounts,

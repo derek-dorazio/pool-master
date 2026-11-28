@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useController, useForm } from 'react-hook-form';
-import { explicitOrderValues, FieldOrderBasisOrder, findBudgetPricingProblem, formatDollars } from '@poolmaster/shared/domain';
+import { explicitOrderValues, FieldOrderBasisOrder, formatDollars } from '@poolmaster/shared/domain';
 import { PlatformPricingProfileWriteRequestSchema } from '@poolmaster/shared/dto';
 import { createPlatformPricingProfile, updatePlatformPricingProfile, type PlatformPricingProfileDto, type PlatformPricingProfileWriteRequest } from '@/lib/api';
 import { FormField, Input, useMutationActionWorkflow } from '@/features/shared/ui';
@@ -21,12 +21,6 @@ const pricingErrors = numberFieldErrors({
   topSharePercent: { schema: shape.topSharePercent, range: shareRange, blank: 'Enter a share of the cap.' },
   floorSharePercent: { schema: shape.floorSharePercent, range: shareRange, blank: 'Enter a share of the cap.' },
   steepness: { schema: shape.steepness, range: (min, max) => `From ${min} to ${max}.`, blank: 'Enter a steepness.' },
-});
-
-/** The server's own checks: values that agree with each other. */
-const PlatformPricingProfileFormSchema = PlatformPricingProfileWriteRequestSchema.superRefine((values, context) => {
-  const problem = findBudgetPricingProblem(values);
-  if (problem) context.addIssue({ code: 'custom', path: ['floorSharePercent'], message: problem });
 });
 
 const NUMBER_FIELDS = [
@@ -63,7 +57,7 @@ function formValuesOf(profile: PlatformPricingProfileDto | null): PlatformPricin
 export function PlatformPricingProfileEditor(dialog: ProfileEditorProps<PlatformPricingProfileDto>) {
   const { onSaved, profile } = dialog;
   const form = useForm<PlatformPricingProfileWriteRequest>({
-    resolver: zodResolver(PlatformPricingProfileFormSchema, { error: pricingErrors }),
+    resolver: zodResolver(PlatformPricingProfileWriteRequestSchema, { error: pricingErrors }),
     defaultValues: formValuesOf(profile),
   });
   const save = useMutationActionWorkflow({

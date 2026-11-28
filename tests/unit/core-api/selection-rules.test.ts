@@ -1,5 +1,5 @@
 import { sportEventSlots } from '../../support/sport-play';
-import { SelectionStatus, SelectionType, Sport, isPredictionSelectionType, isRosterSelectionType, SportEventParticipantStatus } from '@poolmaster/shared/domain';
+import { SelectionStatus, SelectionType, Sport, isPredictionSelectionType, SportEventParticipantStatus } from '@poolmaster/shared/domain';
 import type {
   Contest,
   ContestConfiguration,
@@ -420,12 +420,8 @@ describe('#324 draft rules — tier lookups', () => {
 describe('#324 draft rules — contest shape', () => {
   it('narrows a roster contest\'s selection type to its roster engine, and reads OPEN as LIVE', () => {
     const contest = { selectionType: SelectionType.TIERED, status: 'OPEN' } as Contest;
-    const { selectionType } = contest;
-    if (!isRosterSelectionType(selectionType)) {
-      throw new Error('a TIERED contest must be a roster contest');
-    }
-
-    expect(getSelectionEngine(selectionType).selectionType).toBe(SelectionType.TIERED);
+    expect(isPredictionSelectionType(contest.selectionType)).toBe(false);
+    expect(getSelectionEngine(SelectionType.TIERED).selectionType).toBe(SelectionType.TIERED);
     expect(mapContestStatusToSelectionStatus(contest.status, false)).toBe(SelectionStatus.LIVE);
   });
 

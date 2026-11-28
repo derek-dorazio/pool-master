@@ -7350,2301 +7350,6 @@ export interface components {
                 roleAfterAccept: "MEMBER";
             };
         };
-        /** @description Contest rules and entries-per-team limit, one shape per selection type. `selectionType` must match the contest's. */
-        ContestConfigurationRequest: {
-            /** @enum {string} */
-            selectionType: "TIERED";
-            /** @description How many golfers an entry picks from each of the event's tiers. The entry's total picks is the event's tier count times this. */
-            picksPerTier: number;
-            /** @description How many golfer scores count toward the entry total, best first. At most the roster size. */
-            countedScores: number;
-            /** @description Maximum entries a Squad may create. Null means unlimited. */
-            maxEntriesPerSquad?: number | null;
-            /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring. */
-            scoring?: {
-                /** @enum {string} */
-                participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
-                /** @description Golf to-par total settings: what an unplayed round scores against par. */
-                config: {
-                    /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
-                    unplayedRoundToPar: number;
-                };
-            } | {
-                /** @enum {string} */
-                participantScoringDefinitionId: "FINISH_POSITION_POINTS";
-                /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
-                config: {
-                    /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
-                    pointsTable: number[];
-                    /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
-                    didNotFinishPoints: number;
-                };
-            } | {
-                /** @enum {string} */
-                participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
-                /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
-                config: {
-                    /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
-                    roundValues: number[];
-                    /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
-                    upsetBonus: {
-                        /** @enum {string} */
-                        rule: "SEED_DIFFERENCE";
-                        /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
-                        multiplier: number;
-                    } | {
-                        /** @enum {string} */
-                        rule: "NONE";
-                    };
-                };
-            };
-        } | {
-            /** @enum {string} */
-            selectionType: "BUDGET_PICK";
-            /** @description How many golfers an entry picks, from anywhere in the field. */
-            rosterSize: number;
-            /** @description How many golfer scores count toward the entry total, best first. At most the roster size. */
-            countedScores: number;
-            /** @description Maximum entries a Squad may create. Null means unlimited. */
-            maxEntriesPerSquad?: number | null;
-            /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring. */
-            scoring?: {
-                /** @enum {string} */
-                participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
-                /** @description Golf to-par total settings: what an unplayed round scores against par. */
-                config: {
-                    /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
-                    unplayedRoundToPar: number;
-                };
-            } | {
-                /** @enum {string} */
-                participantScoringDefinitionId: "FINISH_POSITION_POINTS";
-                /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
-                config: {
-                    /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
-                    pointsTable: number[];
-                    /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
-                    didNotFinishPoints: number;
-                };
-            } | {
-                /** @enum {string} */
-                participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
-                /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
-                config: {
-                    /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
-                    roundValues: number[];
-                    /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
-                    upsetBonus: {
-                        /** @enum {string} */
-                        rule: "SEED_DIFFERENCE";
-                        /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
-                        multiplier: number;
-                    } | {
-                        /** @enum {string} */
-                        rule: "NONE";
-                    };
-                };
-            };
-        } | {
-            /** @enum {string} */
-            selectionType: "RANDOM_DRAW";
-            /** @description How many members of the field the draw deals each entry. */
-            picksPerEntry: number;
-            /** @description How many golfer scores count toward the entry total, best first. At most the roster size. */
-            countedScores: number;
-            /** @description Maximum entries a Squad may create. Null means unlimited. */
-            maxEntriesPerSquad?: number | null;
-            /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring. */
-            scoring?: {
-                /** @enum {string} */
-                participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
-                /** @description Golf to-par total settings: what an unplayed round scores against par. */
-                config: {
-                    /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
-                    unplayedRoundToPar: number;
-                };
-            } | {
-                /** @enum {string} */
-                participantScoringDefinitionId: "FINISH_POSITION_POINTS";
-                /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
-                config: {
-                    /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
-                    pointsTable: number[];
-                    /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
-                    didNotFinishPoints: number;
-                };
-            } | {
-                /** @enum {string} */
-                participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
-                /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
-                config: {
-                    /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
-                    roundValues: number[];
-                    /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
-                    upsetBonus: {
-                        /** @enum {string} */
-                        rule: "SEED_DIFFERENCE";
-                        /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
-                        multiplier: number;
-                    } | {
-                        /** @enum {string} */
-                        rule: "NONE";
-                    };
-                };
-            };
-        } | {
-            /** @enum {string} */
-            selectionType: "PICK_EM";
-            /**
-             * @description STRAIGHT_UP: pick the winner of every game. CONFIDENCE: also give each game of a week a value from 1 to its number of games, each used once.
-             * @enum {string}
-             */
-            mode: "STRAIGHT_UP" | "CONFIDENCE";
-            /** @description Picks are scored against each game's spread (#720): a pick is right when its team covers, and a game that lands exactly on the spread (a push) scores nothing. Every game needs its spread before the week is released. */
-            againstTheSpread: boolean;
-            /** @description Maximum entries a Squad may create. Null means unlimited. */
-            maxEntriesPerSquad?: number | null;
-            /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring. */
-            scoring?: {
-                /** @enum {string} */
-                participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
-                /** @description Golf to-par total settings: what an unplayed round scores against par. */
-                config: {
-                    /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
-                    unplayedRoundToPar: number;
-                };
-            } | {
-                /** @enum {string} */
-                participantScoringDefinitionId: "FINISH_POSITION_POINTS";
-                /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
-                config: {
-                    /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
-                    pointsTable: number[];
-                    /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
-                    didNotFinishPoints: number;
-                };
-            } | {
-                /** @enum {string} */
-                participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
-                /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
-                config: {
-                    /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
-                    roundValues: number[];
-                    /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
-                    upsetBonus: {
-                        /** @enum {string} */
-                        rule: "SEED_DIFFERENCE";
-                        /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
-                        multiplier: number;
-                    } | {
-                        /** @enum {string} */
-                        rule: "NONE";
-                    };
-                };
-            };
-        } | {
-            /** @enum {string} */
-            selectionType: "SQUARES";
-            /** @description How many boxes one entry may claim. A squares contest takes one entry per squad, so this is the cap per squad. It can change until the digits are drawn; lowering it takes no box away. */
-            maxSquaresPerEntry: number;
-            /** @description Maximum entries a Squad may create. Null means unlimited. */
-            maxEntriesPerSquad?: number | null;
-            /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring. */
-            scoring?: {
-                /** @enum {string} */
-                participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
-                /** @description Golf to-par total settings: what an unplayed round scores against par. */
-                config: {
-                    /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
-                    unplayedRoundToPar: number;
-                };
-            } | {
-                /** @enum {string} */
-                participantScoringDefinitionId: "FINISH_POSITION_POINTS";
-                /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
-                config: {
-                    /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
-                    pointsTable: number[];
-                    /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
-                    didNotFinishPoints: number;
-                };
-            } | {
-                /** @enum {string} */
-                participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
-                /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
-                config: {
-                    /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
-                    roundValues: number[];
-                    /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
-                    upsetBonus: {
-                        /** @enum {string} */
-                        rule: "SEED_DIFFERENCE";
-                        /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
-                        multiplier: number;
-                    } | {
-                        /** @enum {string} */
-                        rule: "NONE";
-                    };
-                };
-            };
-        } | {
-            /** @enum {string} */
-            selectionType: "SURVIVOR";
-            /** @description How many weeks an entry can lose before it is out (#1754): 1 or 2. A loss, a tie or a week left unsubmitted each cost a life; with 2 the entry stays in after the first and is out at the second. Left out, 1. */
-            lives?: number;
-            /** @description Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the contest's weeks, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes. */
-            reuseTeamsOnceAllUsed?: boolean;
-            /** @description Maximum entries a Squad may create. Null means unlimited. */
-            maxEntriesPerSquad?: number | null;
-            /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring. */
-            scoring?: {
-                /** @enum {string} */
-                participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
-                /** @description Golf to-par total settings: what an unplayed round scores against par. */
-                config: {
-                    /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
-                    unplayedRoundToPar: number;
-                };
-            } | {
-                /** @enum {string} */
-                participantScoringDefinitionId: "FINISH_POSITION_POINTS";
-                /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
-                config: {
-                    /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
-                    pointsTable: number[];
-                    /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
-                    didNotFinishPoints: number;
-                };
-            } | {
-                /** @enum {string} */
-                participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
-                /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
-                config: {
-                    /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
-                    roundValues: number[];
-                    /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
-                    upsetBonus: {
-                        /** @enum {string} */
-                        rule: "SEED_DIFFERENCE";
-                        /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
-                        multiplier: number;
-                    } | {
-                        /** @enum {string} */
-                        rule: "NONE";
-                    };
-                };
-            };
-        } | {
-            /** @enum {string} */
-            selectionType: "BRACKET";
-            /** @description Maximum entries a Squad may create. Null means unlimited. */
-            maxEntriesPerSquad?: number | null;
-            /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring. */
-            scoring?: {
-                /** @enum {string} */
-                participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
-                /** @description Golf to-par total settings: what an unplayed round scores against par. */
-                config: {
-                    /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
-                    unplayedRoundToPar: number;
-                };
-            } | {
-                /** @enum {string} */
-                participantScoringDefinitionId: "FINISH_POSITION_POINTS";
-                /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
-                config: {
-                    /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
-                    pointsTable: number[];
-                    /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
-                    didNotFinishPoints: number;
-                };
-            } | {
-                /** @enum {string} */
-                participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
-                /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
-                config: {
-                    /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
-                    roundValues: number[];
-                    /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
-                    upsetBonus: {
-                        /** @enum {string} */
-                        rule: "SEED_DIFFERENCE";
-                        /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
-                        multiplier: number;
-                    } | {
-                        /** @enum {string} */
-                        rule: "NONE";
-                    };
-                };
-            };
-        };
-        /** @description One inherited event tier and its participant assignments. */
-        EffectiveTierDto: {
-            /** @description Stable per-event tier key. */
-            tierKey: string;
-            /** @description 1-based tier ordering. */
-            tierNumber: number;
-            /** @description Participants assigned to this tier, ordered by tierOrderIndex ascending. */
-            assignments: {
-                /** @description Field entry the assignment belongs to. */
-                sportEventParticipantId: string;
-                /** @description Global participant identity. */
-                participantId: string;
-                /** @description Within-tier ordering position; null when the participant has no explicit order. */
-                tierOrderIndex: number | null;
-                /** @description Per-participant budget price when the event defines one; null otherwise. */
-                price: number | null;
-            }[];
-        };
-        /** @description One event of a managed contest, with the tiers it inherits from it (#713). */
-        ContestManagementSportEventDto: {
-            /** @description One event the contest covers. */
-            sportEventId: string;
-            /** @description Read-only tier structure a tiered contest inherits from this event (plans/124 §4.6/§5.3). Empty when the event has no tiers defined yet, and always empty for any other format, which does not pick by tier. Never contest-configured. */
-            effectiveTiers: {
-                /** @description Stable per-event tier key. */
-                tierKey: string;
-                /** @description 1-based tier ordering. */
-                tierNumber: number;
-                /** @description Participants assigned to this tier, ordered by tierOrderIndex ascending. */
-                assignments: {
-                    /** @description Field entry the assignment belongs to. */
-                    sportEventParticipantId: string;
-                    /** @description Global participant identity. */
-                    participantId: string;
-                    /** @description Within-tier ordering position; null when the participant has no explicit order. */
-                    tierOrderIndex: number | null;
-                    /** @description Per-participant budget price when the event defines one; null otherwise. */
-                    price: number | null;
-                }[];
-            }[];
-        };
-        /** @description Golf-first contest-management detail returned to commissioner tooling. */
-        ContestManagementDetailDto: {
-            /** @description Contest identifier. */
-            id: string;
-            /** @description League that owns the contest. */
-            leagueId: string;
-            /** @description The events the contest covers, in sequence order (#713), each with its inherited tiers. */
-            sportEvents: {
-                /** @description One event the contest covers. */
-                sportEventId: string;
-                /** @description Read-only tier structure a tiered contest inherits from this event (plans/124 §4.6/§5.3). Empty when the event has no tiers defined yet, and always empty for any other format, which does not pick by tier. Never contest-configured. */
-                effectiveTiers: {
-                    /** @description Stable per-event tier key. */
-                    tierKey: string;
-                    /** @description 1-based tier ordering. */
-                    tierNumber: number;
-                    /** @description Participants assigned to this tier, ordered by tierOrderIndex ascending. */
-                    assignments: {
-                        /** @description Field entry the assignment belongs to. */
-                        sportEventParticipantId: string;
-                        /** @description Global participant identity. */
-                        participantId: string;
-                        /** @description Within-tier ordering position; null when the participant has no explicit order. */
-                        tierOrderIndex: number | null;
-                        /** @description Per-participant budget price when the event defines one; null otherwise. */
-                        price: number | null;
-                    }[];
-                }[];
-            }[];
-            /** @description Contest display name. */
-            name: string;
-            /** @enum {string} */
-            status: "DRAFT" | "OPEN" | "ACTIVE" | "COMPLETED";
-            /** @description Current commissioner-managed contest configuration. */
-            configuration: {
-                /** @enum {string} */
-                selectionType: "TIERED";
-                /** @description How many golfers an entry picks from each of the event's tiers. The entry's total picks is the event's tier count times this. */
-                picksPerTier: number;
-                /** @description How many golfer scores count toward the entry total, best first. At most the roster size. */
-                countedScores: number;
-                /** @description Contest-configuration identifier. */
-                id: string;
-                /** @description Contest that owns the configuration. */
-                contestId: string;
-                /** @description Maximum entries a Squad may create. Null means unlimited. */
-                maxEntriesPerSquad?: number | null;
-            } | {
-                /** @enum {string} */
-                selectionType: "BUDGET_PICK";
-                /** @description How many golfers an entry picks, from anywhere in the field. */
-                rosterSize: number;
-                /** @description How many golfer scores count toward the entry total, best first. At most the roster size. */
-                countedScores: number;
-                /** @description Contest-configuration identifier. */
-                id: string;
-                /** @description Contest that owns the configuration. */
-                contestId: string;
-                /** @description Maximum entries a Squad may create. Null means unlimited. */
-                maxEntriesPerSquad?: number | null;
-            } | {
-                /** @enum {string} */
-                selectionType: "RANDOM_DRAW";
-                /** @description How many members of the field the draw deals each entry. */
-                picksPerEntry: number;
-                /** @description How many golfer scores count toward the entry total, best first. At most the roster size. */
-                countedScores: number;
-                /** @description Contest-configuration identifier. */
-                id: string;
-                /** @description Contest that owns the configuration. */
-                contestId: string;
-                /** @description Maximum entries a Squad may create. Null means unlimited. */
-                maxEntriesPerSquad?: number | null;
-            } | {
-                /** @enum {string} */
-                selectionType: "PICK_EM";
-                /**
-                 * @description STRAIGHT_UP: pick the winner of every game. CONFIDENCE: also give each game of a week a value from 1 to its number of games, each used once.
-                 * @enum {string}
-                 */
-                mode: "STRAIGHT_UP" | "CONFIDENCE";
-                /** @description Picks are scored against each game's spread (#720): a pick is right when its team covers, and a game that lands exactly on the spread (a push) scores nothing. Every game needs its spread before the week is released. */
-                againstTheSpread: boolean;
-                /** @description Contest-configuration identifier. */
-                id: string;
-                /** @description Contest that owns the configuration. */
-                contestId: string;
-                /** @description Maximum entries a Squad may create. Null means unlimited. */
-                maxEntriesPerSquad?: number | null;
-            } | {
-                /** @enum {string} */
-                selectionType: "SQUARES";
-                /** @description How many boxes one entry may claim. A squares contest takes one entry per squad, so this is the cap per squad. It can change until the digits are drawn; lowering it takes no box away. */
-                maxSquaresPerEntry: number;
-                /** @description Contest-configuration identifier. */
-                id: string;
-                /** @description Contest that owns the configuration. */
-                contestId: string;
-                /** @description Maximum entries a Squad may create. Null means unlimited. */
-                maxEntriesPerSquad?: number | null;
-            } | {
-                /** @enum {string} */
-                selectionType: "SURVIVOR";
-                /** @description How many weeks an entry can lose before it is out (#1754): 1 or 2. A loss, a tie or a week left unsubmitted each cost a life; with 2 the entry stays in after the first and is out at the second. Left out, 1. */
-                lives?: number;
-                /** @description Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the contest's weeks, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes. */
-                reuseTeamsOnceAllUsed?: boolean;
-                /** @description Contest-configuration identifier. */
-                id: string;
-                /** @description Contest that owns the configuration. */
-                contestId: string;
-                /** @description Maximum entries a Squad may create. Null means unlimited. */
-                maxEntriesPerSquad?: number | null;
-            } | {
-                /** @enum {string} */
-                selectionType: "BRACKET";
-                /** @description Contest-configuration identifier. */
-                id: string;
-                /** @description Contest that owns the configuration. */
-                contestId: string;
-                /** @description Maximum entries a Squad may create. Null means unlimited. */
-                maxEntriesPerSquad?: number | null;
-            };
-            /** @description A budget contest's salary cap in whole dollars: the pricing of the first slot it covers holding a set (#2050), read there and never copied into the rules. Null for any other contest type, and for a budget contest whose slot is not priced yet. */
-            salaryCap: number | null;
-            /**
-             * @description How much the contest counts toward its cup and the league championship (#841): NORMAL x1, BONUS x1.5, DOUBLE x2, NOT_COUNTED not at all. Fixed once the contest is COMPLETED.
-             * @enum {string}
-             */
-            cupWeight: "NORMAL" | "BONUS" | "DOUBLE" | "NOT_COUNTED";
-            /**
-             * Format: date-time
-             * @description When the contest was created.
-             */
-            createdAt: string;
-            /**
-             * Format: date-time
-             * @description When the contest was last updated.
-             */
-            updatedAt: string;
-            /**
-             * Format: uuid
-             * @description Seeded template chosen when the contest was created, if any.
-             */
-            templateId?: string | null;
-            /** @description Schema/template version captured when the contest was created, if any. */
-            templateVersion?: number | null;
-        };
-        /** @description One slot definition a contest template covers (#2010), with the facts screens show. */
-        ContestTemplateSlotDto: {
-            /**
-             * Format: uuid
-             * @description The slot definition's id (SportLeagueCompetitionSlot).
-             */
-            id: string;
-            /** @description Its code in its league, such as WEEK_14, FINAL or MASTERS. An identifier; nothing parses it. */
-            key: string;
-            /** @description The league's proper name for the slot, such as "Super Bowl"; null: screens use the word for its kind. */
-            name: string | null;
-            /**
-             * @description What kind of slot it is: a WEEK of games, a postseason ROUND, a TOURNAMENT of its own, a PLAY_IN.
-             * @enum {string}
-             */
-            slotKind: "WEEK" | "PLAY_IN" | "ROUND_OF_64" | "ROUND_OF_32" | "ROUND_OF_16" | "QUARTERFINAL" | "SEMIFINAL" | "THIRD_PLACE" | "FINAL" | "TOURNAMENT";
-            /** @description For a WEEK slot, its week; null otherwise. */
-            weekNumber: number | null;
-            /**
-             * Format: uuid
-             * @description The competition the slot is in (#2153); a template's slots all sit in one.
-             */
-            sportLeagueCompetitionId: string;
-            /** @description That competition's code, such as REGULAR or CFP; nothing parses it. */
-            competitionCode: string;
-            /** @description That competition's place in its phase. */
-            competitionOrderIndex: number;
-            /**
-             * @description Its phase's kind: PRESEASON, REGULAR, POSTSEASON_CONFERENCE or POSTSEASON.
-             * @enum {string}
-             */
-            phase: "PRESEASON" | "REGULAR" | "POSTSEASON_CONFERENCE" | "POSTSEASON";
-            /**
-             * @description How the slot's games are contested: HEAD_TO_HEAD or FIELD.
-             * @enum {string}
-             */
-            matchFormat: "HEAD_TO_HEAD" | "FIELD";
-        };
-        /** @description Seeded commissioner-facing contest configuration template. */
-        ContestConfigTemplateDto: {
-            /**
-             * Format: uuid
-             * @description Seeded contest template identifier.
-             */
-            id: string;
-            /**
-             * Format: uuid
-             * @description Sport league this template is offered for. Every template belongs to one sport league; two leagues offering the same setup each have their own copy, with the same templateKey.
-             */
-            sportLeagueId: string;
-            /**
-             * @description How a contest from the template covers its slots (#2010): ONE_SLOT, the one slot chosen; ALL_LISTED, every listed slot of the chosen event; FROM_SLOT, the chosen slot and every later listed slot of its Season.
-             * @enum {string}
-             */
-            coverageMode: "ONE_SLOT" | "ALL_LISTED" | "FROM_SLOT";
-            /** @description The slot definitions the template covers, in play order. It is offered on an event that has a Season slot of one of them. */
-            slots: {
-                /**
-                 * Format: uuid
-                 * @description The slot definition's id (SportLeagueCompetitionSlot).
-                 */
-                id: string;
-                /** @description Its code in its league, such as WEEK_14, FINAL or MASTERS. An identifier; nothing parses it. */
-                key: string;
-                /** @description The league's proper name for the slot, such as "Super Bowl"; null: screens use the word for its kind. */
-                name: string | null;
-                /**
-                 * @description What kind of slot it is: a WEEK of games, a postseason ROUND, a TOURNAMENT of its own, a PLAY_IN.
-                 * @enum {string}
-                 */
-                slotKind: "WEEK" | "PLAY_IN" | "ROUND_OF_64" | "ROUND_OF_32" | "ROUND_OF_16" | "QUARTERFINAL" | "SEMIFINAL" | "THIRD_PLACE" | "FINAL" | "TOURNAMENT";
-                /** @description For a WEEK slot, its week; null otherwise. */
-                weekNumber: number | null;
-                /**
-                 * Format: uuid
-                 * @description The competition the slot is in (#2153); a template's slots all sit in one.
-                 */
-                sportLeagueCompetitionId: string;
-                /** @description That competition's code, such as REGULAR or CFP; nothing parses it. */
-                competitionCode: string;
-                /** @description That competition's place in its phase. */
-                competitionOrderIndex: number;
-                /**
-                 * @description Its phase's kind: PRESEASON, REGULAR, POSTSEASON_CONFERENCE or POSTSEASON.
-                 * @enum {string}
-                 */
-                phase: "PRESEASON" | "REGULAR" | "POSTSEASON_CONFERENCE" | "POSTSEASON";
-                /**
-                 * @description How the slot's games are contested: HEAD_TO_HEAD or FIELD.
-                 * @enum {string}
-                 */
-                matchFormat: "HEAD_TO_HEAD" | "FIELD";
-            }[];
-            /**
-             * @description Contest type that may use the template.
-             * @enum {string}
-             */
-            contestFormat: "ROSTER" | "PREDICTION" | "SQUARES";
-            /**
-             * @description How an entry picks in a contest created from this template.
-             * @enum {string}
-             */
-            selectionType: "TIERED" | "BUDGET_PICK" | "RANDOM_DRAW" | "PICK_EM" | "BRACKET" | "SURVIVOR" | "SQUARES";
-            /** @description Stable machine key for the template. */
-            templateKey: string;
-            /** @description Commissioner-facing template label. */
-            name: string;
-            /** @description Commissioner-facing template description. */
-            description: string;
-            /** @description Display order for template selection. */
-            sortOrder: number;
-            /** @description Whether the template should be preselected in the create flow. */
-            isDefault: boolean;
-            /** @description Whether the template is currently selectable. */
-            active: boolean;
-            /** @description Version of the configuration schema metadata expected by the template. */
-            schemaVersion: number;
-            /** @description Seeded configuration payload copied into a contest instance when the template is chosen. */
-            configuration: {
-                /** @enum {string} */
-                selectionType: "TIERED";
-                /** @description How many golfers an entry picks from each of the event's tiers. The entry's total picks is the event's tier count times this. */
-                picksPerTier: number;
-                /** @description How many golfer scores count toward the entry total, best first. At most the roster size. */
-                countedScores: number;
-                /** @description Maximum entries a Squad may create. Null means unlimited. */
-                maxEntriesPerSquad?: number | null;
-                /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring. */
-                scoring?: {
-                    /** @enum {string} */
-                    participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
-                    /** @description Golf to-par total settings: what an unplayed round scores against par. */
-                    config: {
-                        /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
-                        unplayedRoundToPar: number;
-                    };
-                } | {
-                    /** @enum {string} */
-                    participantScoringDefinitionId: "FINISH_POSITION_POINTS";
-                    /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
-                    config: {
-                        /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
-                        pointsTable: number[];
-                        /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
-                        didNotFinishPoints: number;
-                    };
-                } | {
-                    /** @enum {string} */
-                    participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
-                    /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
-                    config: {
-                        /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
-                        roundValues: number[];
-                        /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
-                        upsetBonus: {
-                            /** @enum {string} */
-                            rule: "SEED_DIFFERENCE";
-                            /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
-                            multiplier: number;
-                        } | {
-                            /** @enum {string} */
-                            rule: "NONE";
-                        };
-                    };
-                };
-            } | {
-                /** @enum {string} */
-                selectionType: "BUDGET_PICK";
-                /** @description How many golfers an entry picks, from anywhere in the field. */
-                rosterSize: number;
-                /** @description How many golfer scores count toward the entry total, best first. At most the roster size. */
-                countedScores: number;
-                /** @description Maximum entries a Squad may create. Null means unlimited. */
-                maxEntriesPerSquad?: number | null;
-                /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring. */
-                scoring?: {
-                    /** @enum {string} */
-                    participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
-                    /** @description Golf to-par total settings: what an unplayed round scores against par. */
-                    config: {
-                        /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
-                        unplayedRoundToPar: number;
-                    };
-                } | {
-                    /** @enum {string} */
-                    participantScoringDefinitionId: "FINISH_POSITION_POINTS";
-                    /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
-                    config: {
-                        /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
-                        pointsTable: number[];
-                        /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
-                        didNotFinishPoints: number;
-                    };
-                } | {
-                    /** @enum {string} */
-                    participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
-                    /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
-                    config: {
-                        /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
-                        roundValues: number[];
-                        /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
-                        upsetBonus: {
-                            /** @enum {string} */
-                            rule: "SEED_DIFFERENCE";
-                            /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
-                            multiplier: number;
-                        } | {
-                            /** @enum {string} */
-                            rule: "NONE";
-                        };
-                    };
-                };
-            } | {
-                /** @enum {string} */
-                selectionType: "RANDOM_DRAW";
-                /** @description How many members of the field the draw deals each entry. */
-                picksPerEntry: number;
-                /** @description How many golfer scores count toward the entry total, best first. At most the roster size. */
-                countedScores: number;
-                /** @description Maximum entries a Squad may create. Null means unlimited. */
-                maxEntriesPerSquad?: number | null;
-                /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring. */
-                scoring?: {
-                    /** @enum {string} */
-                    participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
-                    /** @description Golf to-par total settings: what an unplayed round scores against par. */
-                    config: {
-                        /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
-                        unplayedRoundToPar: number;
-                    };
-                } | {
-                    /** @enum {string} */
-                    participantScoringDefinitionId: "FINISH_POSITION_POINTS";
-                    /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
-                    config: {
-                        /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
-                        pointsTable: number[];
-                        /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
-                        didNotFinishPoints: number;
-                    };
-                } | {
-                    /** @enum {string} */
-                    participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
-                    /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
-                    config: {
-                        /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
-                        roundValues: number[];
-                        /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
-                        upsetBonus: {
-                            /** @enum {string} */
-                            rule: "SEED_DIFFERENCE";
-                            /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
-                            multiplier: number;
-                        } | {
-                            /** @enum {string} */
-                            rule: "NONE";
-                        };
-                    };
-                };
-            } | {
-                /** @enum {string} */
-                selectionType: "PICK_EM";
-                /**
-                 * @description STRAIGHT_UP: pick the winner of every game. CONFIDENCE: also give each game of a week a value from 1 to its number of games, each used once.
-                 * @enum {string}
-                 */
-                mode: "STRAIGHT_UP" | "CONFIDENCE";
-                /** @description Picks are scored against each game's spread (#720): a pick is right when its team covers, and a game that lands exactly on the spread (a push) scores nothing. Every game needs its spread before the week is released. */
-                againstTheSpread: boolean;
-                /** @description Maximum entries a Squad may create. Null means unlimited. */
-                maxEntriesPerSquad?: number | null;
-                /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring. */
-                scoring?: {
-                    /** @enum {string} */
-                    participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
-                    /** @description Golf to-par total settings: what an unplayed round scores against par. */
-                    config: {
-                        /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
-                        unplayedRoundToPar: number;
-                    };
-                } | {
-                    /** @enum {string} */
-                    participantScoringDefinitionId: "FINISH_POSITION_POINTS";
-                    /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
-                    config: {
-                        /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
-                        pointsTable: number[];
-                        /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
-                        didNotFinishPoints: number;
-                    };
-                } | {
-                    /** @enum {string} */
-                    participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
-                    /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
-                    config: {
-                        /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
-                        roundValues: number[];
-                        /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
-                        upsetBonus: {
-                            /** @enum {string} */
-                            rule: "SEED_DIFFERENCE";
-                            /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
-                            multiplier: number;
-                        } | {
-                            /** @enum {string} */
-                            rule: "NONE";
-                        };
-                    };
-                };
-            } | {
-                /** @enum {string} */
-                selectionType: "SQUARES";
-                /** @description How many boxes one entry may claim. A squares contest takes one entry per squad, so this is the cap per squad. It can change until the digits are drawn; lowering it takes no box away. */
-                maxSquaresPerEntry: number;
-                /** @description Maximum entries a Squad may create. Null means unlimited. */
-                maxEntriesPerSquad?: number | null;
-                /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring. */
-                scoring?: {
-                    /** @enum {string} */
-                    participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
-                    /** @description Golf to-par total settings: what an unplayed round scores against par. */
-                    config: {
-                        /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
-                        unplayedRoundToPar: number;
-                    };
-                } | {
-                    /** @enum {string} */
-                    participantScoringDefinitionId: "FINISH_POSITION_POINTS";
-                    /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
-                    config: {
-                        /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
-                        pointsTable: number[];
-                        /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
-                        didNotFinishPoints: number;
-                    };
-                } | {
-                    /** @enum {string} */
-                    participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
-                    /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
-                    config: {
-                        /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
-                        roundValues: number[];
-                        /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
-                        upsetBonus: {
-                            /** @enum {string} */
-                            rule: "SEED_DIFFERENCE";
-                            /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
-                            multiplier: number;
-                        } | {
-                            /** @enum {string} */
-                            rule: "NONE";
-                        };
-                    };
-                };
-            } | {
-                /** @enum {string} */
-                selectionType: "SURVIVOR";
-                /** @description How many weeks an entry can lose before it is out (#1754): 1 or 2. A loss, a tie or a week left unsubmitted each cost a life; with 2 the entry stays in after the first and is out at the second. Left out, 1. */
-                lives?: number;
-                /** @description Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the contest's weeks, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes. */
-                reuseTeamsOnceAllUsed?: boolean;
-                /** @description Maximum entries a Squad may create. Null means unlimited. */
-                maxEntriesPerSquad?: number | null;
-                /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring. */
-                scoring?: {
-                    /** @enum {string} */
-                    participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
-                    /** @description Golf to-par total settings: what an unplayed round scores against par. */
-                    config: {
-                        /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
-                        unplayedRoundToPar: number;
-                    };
-                } | {
-                    /** @enum {string} */
-                    participantScoringDefinitionId: "FINISH_POSITION_POINTS";
-                    /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
-                    config: {
-                        /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
-                        pointsTable: number[];
-                        /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
-                        didNotFinishPoints: number;
-                    };
-                } | {
-                    /** @enum {string} */
-                    participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
-                    /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
-                    config: {
-                        /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
-                        roundValues: number[];
-                        /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
-                        upsetBonus: {
-                            /** @enum {string} */
-                            rule: "SEED_DIFFERENCE";
-                            /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
-                            multiplier: number;
-                        } | {
-                            /** @enum {string} */
-                            rule: "NONE";
-                        };
-                    };
-                };
-            } | {
-                /** @enum {string} */
-                selectionType: "BRACKET";
-                /** @description Maximum entries a Squad may create. Null means unlimited. */
-                maxEntriesPerSquad?: number | null;
-                /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring. */
-                scoring?: {
-                    /** @enum {string} */
-                    participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
-                    /** @description Golf to-par total settings: what an unplayed round scores against par. */
-                    config: {
-                        /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
-                        unplayedRoundToPar: number;
-                    };
-                } | {
-                    /** @enum {string} */
-                    participantScoringDefinitionId: "FINISH_POSITION_POINTS";
-                    /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
-                    config: {
-                        /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
-                        pointsTable: number[];
-                        /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
-                        didNotFinishPoints: number;
-                    };
-                } | {
-                    /** @enum {string} */
-                    participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
-                    /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
-                    config: {
-                        /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
-                        roundValues: number[];
-                        /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
-                        upsetBonus: {
-                            /** @enum {string} */
-                            rule: "SEED_DIFFERENCE";
-                            /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
-                            multiplier: number;
-                        } | {
-                            /** @enum {string} */
-                            rule: "NONE";
-                        };
-                    };
-                };
-            };
-        };
-        /** @description Managed-contest detail response. */
-        ContestManagementResponse: {
-            /** @description Golf-first contest-management detail returned to commissioner tooling. */
-            contest: {
-                /** @description Contest identifier. */
-                id: string;
-                /** @description League that owns the contest. */
-                leagueId: string;
-                /** @description The events the contest covers, in sequence order (#713), each with its inherited tiers. */
-                sportEvents: {
-                    /** @description One event the contest covers. */
-                    sportEventId: string;
-                    /** @description Read-only tier structure a tiered contest inherits from this event (plans/124 §4.6/§5.3). Empty when the event has no tiers defined yet, and always empty for any other format, which does not pick by tier. Never contest-configured. */
-                    effectiveTiers: {
-                        /** @description Stable per-event tier key. */
-                        tierKey: string;
-                        /** @description 1-based tier ordering. */
-                        tierNumber: number;
-                        /** @description Participants assigned to this tier, ordered by tierOrderIndex ascending. */
-                        assignments: {
-                            /** @description Field entry the assignment belongs to. */
-                            sportEventParticipantId: string;
-                            /** @description Global participant identity. */
-                            participantId: string;
-                            /** @description Within-tier ordering position; null when the participant has no explicit order. */
-                            tierOrderIndex: number | null;
-                            /** @description Per-participant budget price when the event defines one; null otherwise. */
-                            price: number | null;
-                        }[];
-                    }[];
-                }[];
-                /** @description Contest display name. */
-                name: string;
-                /** @enum {string} */
-                status: "DRAFT" | "OPEN" | "ACTIVE" | "COMPLETED";
-                /** @description Current commissioner-managed contest configuration. */
-                configuration: {
-                    /** @enum {string} */
-                    selectionType: "TIERED";
-                    /** @description How many golfers an entry picks from each of the event's tiers. The entry's total picks is the event's tier count times this. */
-                    picksPerTier: number;
-                    /** @description How many golfer scores count toward the entry total, best first. At most the roster size. */
-                    countedScores: number;
-                    /** @description Contest-configuration identifier. */
-                    id: string;
-                    /** @description Contest that owns the configuration. */
-                    contestId: string;
-                    /** @description Maximum entries a Squad may create. Null means unlimited. */
-                    maxEntriesPerSquad?: number | null;
-                } | {
-                    /** @enum {string} */
-                    selectionType: "BUDGET_PICK";
-                    /** @description How many golfers an entry picks, from anywhere in the field. */
-                    rosterSize: number;
-                    /** @description How many golfer scores count toward the entry total, best first. At most the roster size. */
-                    countedScores: number;
-                    /** @description Contest-configuration identifier. */
-                    id: string;
-                    /** @description Contest that owns the configuration. */
-                    contestId: string;
-                    /** @description Maximum entries a Squad may create. Null means unlimited. */
-                    maxEntriesPerSquad?: number | null;
-                } | {
-                    /** @enum {string} */
-                    selectionType: "RANDOM_DRAW";
-                    /** @description How many members of the field the draw deals each entry. */
-                    picksPerEntry: number;
-                    /** @description How many golfer scores count toward the entry total, best first. At most the roster size. */
-                    countedScores: number;
-                    /** @description Contest-configuration identifier. */
-                    id: string;
-                    /** @description Contest that owns the configuration. */
-                    contestId: string;
-                    /** @description Maximum entries a Squad may create. Null means unlimited. */
-                    maxEntriesPerSquad?: number | null;
-                } | {
-                    /** @enum {string} */
-                    selectionType: "PICK_EM";
-                    /**
-                     * @description STRAIGHT_UP: pick the winner of every game. CONFIDENCE: also give each game of a week a value from 1 to its number of games, each used once.
-                     * @enum {string}
-                     */
-                    mode: "STRAIGHT_UP" | "CONFIDENCE";
-                    /** @description Picks are scored against each game's spread (#720): a pick is right when its team covers, and a game that lands exactly on the spread (a push) scores nothing. Every game needs its spread before the week is released. */
-                    againstTheSpread: boolean;
-                    /** @description Contest-configuration identifier. */
-                    id: string;
-                    /** @description Contest that owns the configuration. */
-                    contestId: string;
-                    /** @description Maximum entries a Squad may create. Null means unlimited. */
-                    maxEntriesPerSquad?: number | null;
-                } | {
-                    /** @enum {string} */
-                    selectionType: "SQUARES";
-                    /** @description How many boxes one entry may claim. A squares contest takes one entry per squad, so this is the cap per squad. It can change until the digits are drawn; lowering it takes no box away. */
-                    maxSquaresPerEntry: number;
-                    /** @description Contest-configuration identifier. */
-                    id: string;
-                    /** @description Contest that owns the configuration. */
-                    contestId: string;
-                    /** @description Maximum entries a Squad may create. Null means unlimited. */
-                    maxEntriesPerSquad?: number | null;
-                } | {
-                    /** @enum {string} */
-                    selectionType: "SURVIVOR";
-                    /** @description How many weeks an entry can lose before it is out (#1754): 1 or 2. A loss, a tie or a week left unsubmitted each cost a life; with 2 the entry stays in after the first and is out at the second. Left out, 1. */
-                    lives?: number;
-                    /** @description Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the contest's weeks, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes. */
-                    reuseTeamsOnceAllUsed?: boolean;
-                    /** @description Contest-configuration identifier. */
-                    id: string;
-                    /** @description Contest that owns the configuration. */
-                    contestId: string;
-                    /** @description Maximum entries a Squad may create. Null means unlimited. */
-                    maxEntriesPerSquad?: number | null;
-                } | {
-                    /** @enum {string} */
-                    selectionType: "BRACKET";
-                    /** @description Contest-configuration identifier. */
-                    id: string;
-                    /** @description Contest that owns the configuration. */
-                    contestId: string;
-                    /** @description Maximum entries a Squad may create. Null means unlimited. */
-                    maxEntriesPerSquad?: number | null;
-                };
-                /** @description A budget contest's salary cap in whole dollars: the pricing of the first slot it covers holding a set (#2050), read there and never copied into the rules. Null for any other contest type, and for a budget contest whose slot is not priced yet. */
-                salaryCap: number | null;
-                /**
-                 * @description How much the contest counts toward its cup and the league championship (#841): NORMAL x1, BONUS x1.5, DOUBLE x2, NOT_COUNTED not at all. Fixed once the contest is COMPLETED.
-                 * @enum {string}
-                 */
-                cupWeight: "NORMAL" | "BONUS" | "DOUBLE" | "NOT_COUNTED";
-                /**
-                 * Format: date-time
-                 * @description When the contest was created.
-                 */
-                createdAt: string;
-                /**
-                 * Format: date-time
-                 * @description When the contest was last updated.
-                 */
-                updatedAt: string;
-                /**
-                 * Format: uuid
-                 * @description Seeded template chosen when the contest was created, if any.
-                 */
-                templateId?: string | null;
-                /** @description Schema/template version captured when the contest was created, if any. */
-                templateVersion?: number | null;
-            };
-        };
-        /** @description Filters for listing contest configuration templates. Every filter is optional. */
-        ListContestConfigTemplatesQuery: {
-            /**
-             * Format: uuid
-             * @description Only this sport league's templates; never another league's. Omitted: every template regardless of league. The create flow passes the chosen event's sport league.
-             */
-            sportLeagueId?: string;
-            /** @description Only templates covering one of these slot definitions (#2010): repeat the parameter for several. The create flow passes the chosen event's (SportEventDto.slotDefinitionIds). */
-            slotDefinitionIds?: string[];
-            /** @description Only active (true) or inactive (false) templates. Omitted: both. The create flow asks for active ones. */
-            active?: boolean;
-        };
-        /** @description Available seeded contest templates for commissioner create flow. */
-        ContestConfigTemplateListResponse: {
-            templates: {
-                /**
-                 * Format: uuid
-                 * @description Seeded contest template identifier.
-                 */
-                id: string;
-                /**
-                 * Format: uuid
-                 * @description Sport league this template is offered for. Every template belongs to one sport league; two leagues offering the same setup each have their own copy, with the same templateKey.
-                 */
-                sportLeagueId: string;
-                /**
-                 * @description How a contest from the template covers its slots (#2010): ONE_SLOT, the one slot chosen; ALL_LISTED, every listed slot of the chosen event; FROM_SLOT, the chosen slot and every later listed slot of its Season.
-                 * @enum {string}
-                 */
-                coverageMode: "ONE_SLOT" | "ALL_LISTED" | "FROM_SLOT";
-                /** @description The slot definitions the template covers, in play order. It is offered on an event that has a Season slot of one of them. */
-                slots: {
-                    /**
-                     * Format: uuid
-                     * @description The slot definition's id (SportLeagueCompetitionSlot).
-                     */
-                    id: string;
-                    /** @description Its code in its league, such as WEEK_14, FINAL or MASTERS. An identifier; nothing parses it. */
-                    key: string;
-                    /** @description The league's proper name for the slot, such as "Super Bowl"; null: screens use the word for its kind. */
-                    name: string | null;
-                    /**
-                     * @description What kind of slot it is: a WEEK of games, a postseason ROUND, a TOURNAMENT of its own, a PLAY_IN.
-                     * @enum {string}
-                     */
-                    slotKind: "WEEK" | "PLAY_IN" | "ROUND_OF_64" | "ROUND_OF_32" | "ROUND_OF_16" | "QUARTERFINAL" | "SEMIFINAL" | "THIRD_PLACE" | "FINAL" | "TOURNAMENT";
-                    /** @description For a WEEK slot, its week; null otherwise. */
-                    weekNumber: number | null;
-                    /**
-                     * Format: uuid
-                     * @description The competition the slot is in (#2153); a template's slots all sit in one.
-                     */
-                    sportLeagueCompetitionId: string;
-                    /** @description That competition's code, such as REGULAR or CFP; nothing parses it. */
-                    competitionCode: string;
-                    /** @description That competition's place in its phase. */
-                    competitionOrderIndex: number;
-                    /**
-                     * @description Its phase's kind: PRESEASON, REGULAR, POSTSEASON_CONFERENCE or POSTSEASON.
-                     * @enum {string}
-                     */
-                    phase: "PRESEASON" | "REGULAR" | "POSTSEASON_CONFERENCE" | "POSTSEASON";
-                    /**
-                     * @description How the slot's games are contested: HEAD_TO_HEAD or FIELD.
-                     * @enum {string}
-                     */
-                    matchFormat: "HEAD_TO_HEAD" | "FIELD";
-                }[];
-                /**
-                 * @description Contest type that may use the template.
-                 * @enum {string}
-                 */
-                contestFormat: "ROSTER" | "PREDICTION" | "SQUARES";
-                /**
-                 * @description How an entry picks in a contest created from this template.
-                 * @enum {string}
-                 */
-                selectionType: "TIERED" | "BUDGET_PICK" | "RANDOM_DRAW" | "PICK_EM" | "BRACKET" | "SURVIVOR" | "SQUARES";
-                /** @description Stable machine key for the template. */
-                templateKey: string;
-                /** @description Commissioner-facing template label. */
-                name: string;
-                /** @description Commissioner-facing template description. */
-                description: string;
-                /** @description Display order for template selection. */
-                sortOrder: number;
-                /** @description Whether the template should be preselected in the create flow. */
-                isDefault: boolean;
-                /** @description Whether the template is currently selectable. */
-                active: boolean;
-                /** @description Version of the configuration schema metadata expected by the template. */
-                schemaVersion: number;
-                /** @description Seeded configuration payload copied into a contest instance when the template is chosen. */
-                configuration: {
-                    /** @enum {string} */
-                    selectionType: "TIERED";
-                    /** @description How many golfers an entry picks from each of the event's tiers. The entry's total picks is the event's tier count times this. */
-                    picksPerTier: number;
-                    /** @description How many golfer scores count toward the entry total, best first. At most the roster size. */
-                    countedScores: number;
-                    /** @description Maximum entries a Squad may create. Null means unlimited. */
-                    maxEntriesPerSquad?: number | null;
-                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring. */
-                    scoring?: {
-                        /** @enum {string} */
-                        participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
-                        /** @description Golf to-par total settings: what an unplayed round scores against par. */
-                        config: {
-                            /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
-                            unplayedRoundToPar: number;
-                        };
-                    } | {
-                        /** @enum {string} */
-                        participantScoringDefinitionId: "FINISH_POSITION_POINTS";
-                        /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
-                        config: {
-                            /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
-                            pointsTable: number[];
-                            /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
-                            didNotFinishPoints: number;
-                        };
-                    } | {
-                        /** @enum {string} */
-                        participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
-                        /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
-                        config: {
-                            /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
-                            roundValues: number[];
-                            /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
-                            upsetBonus: {
-                                /** @enum {string} */
-                                rule: "SEED_DIFFERENCE";
-                                /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
-                                multiplier: number;
-                            } | {
-                                /** @enum {string} */
-                                rule: "NONE";
-                            };
-                        };
-                    };
-                } | {
-                    /** @enum {string} */
-                    selectionType: "BUDGET_PICK";
-                    /** @description How many golfers an entry picks, from anywhere in the field. */
-                    rosterSize: number;
-                    /** @description How many golfer scores count toward the entry total, best first. At most the roster size. */
-                    countedScores: number;
-                    /** @description Maximum entries a Squad may create. Null means unlimited. */
-                    maxEntriesPerSquad?: number | null;
-                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring. */
-                    scoring?: {
-                        /** @enum {string} */
-                        participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
-                        /** @description Golf to-par total settings: what an unplayed round scores against par. */
-                        config: {
-                            /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
-                            unplayedRoundToPar: number;
-                        };
-                    } | {
-                        /** @enum {string} */
-                        participantScoringDefinitionId: "FINISH_POSITION_POINTS";
-                        /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
-                        config: {
-                            /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
-                            pointsTable: number[];
-                            /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
-                            didNotFinishPoints: number;
-                        };
-                    } | {
-                        /** @enum {string} */
-                        participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
-                        /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
-                        config: {
-                            /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
-                            roundValues: number[];
-                            /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
-                            upsetBonus: {
-                                /** @enum {string} */
-                                rule: "SEED_DIFFERENCE";
-                                /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
-                                multiplier: number;
-                            } | {
-                                /** @enum {string} */
-                                rule: "NONE";
-                            };
-                        };
-                    };
-                } | {
-                    /** @enum {string} */
-                    selectionType: "RANDOM_DRAW";
-                    /** @description How many members of the field the draw deals each entry. */
-                    picksPerEntry: number;
-                    /** @description How many golfer scores count toward the entry total, best first. At most the roster size. */
-                    countedScores: number;
-                    /** @description Maximum entries a Squad may create. Null means unlimited. */
-                    maxEntriesPerSquad?: number | null;
-                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring. */
-                    scoring?: {
-                        /** @enum {string} */
-                        participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
-                        /** @description Golf to-par total settings: what an unplayed round scores against par. */
-                        config: {
-                            /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
-                            unplayedRoundToPar: number;
-                        };
-                    } | {
-                        /** @enum {string} */
-                        participantScoringDefinitionId: "FINISH_POSITION_POINTS";
-                        /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
-                        config: {
-                            /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
-                            pointsTable: number[];
-                            /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
-                            didNotFinishPoints: number;
-                        };
-                    } | {
-                        /** @enum {string} */
-                        participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
-                        /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
-                        config: {
-                            /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
-                            roundValues: number[];
-                            /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
-                            upsetBonus: {
-                                /** @enum {string} */
-                                rule: "SEED_DIFFERENCE";
-                                /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
-                                multiplier: number;
-                            } | {
-                                /** @enum {string} */
-                                rule: "NONE";
-                            };
-                        };
-                    };
-                } | {
-                    /** @enum {string} */
-                    selectionType: "PICK_EM";
-                    /**
-                     * @description STRAIGHT_UP: pick the winner of every game. CONFIDENCE: also give each game of a week a value from 1 to its number of games, each used once.
-                     * @enum {string}
-                     */
-                    mode: "STRAIGHT_UP" | "CONFIDENCE";
-                    /** @description Picks are scored against each game's spread (#720): a pick is right when its team covers, and a game that lands exactly on the spread (a push) scores nothing. Every game needs its spread before the week is released. */
-                    againstTheSpread: boolean;
-                    /** @description Maximum entries a Squad may create. Null means unlimited. */
-                    maxEntriesPerSquad?: number | null;
-                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring. */
-                    scoring?: {
-                        /** @enum {string} */
-                        participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
-                        /** @description Golf to-par total settings: what an unplayed round scores against par. */
-                        config: {
-                            /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
-                            unplayedRoundToPar: number;
-                        };
-                    } | {
-                        /** @enum {string} */
-                        participantScoringDefinitionId: "FINISH_POSITION_POINTS";
-                        /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
-                        config: {
-                            /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
-                            pointsTable: number[];
-                            /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
-                            didNotFinishPoints: number;
-                        };
-                    } | {
-                        /** @enum {string} */
-                        participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
-                        /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
-                        config: {
-                            /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
-                            roundValues: number[];
-                            /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
-                            upsetBonus: {
-                                /** @enum {string} */
-                                rule: "SEED_DIFFERENCE";
-                                /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
-                                multiplier: number;
-                            } | {
-                                /** @enum {string} */
-                                rule: "NONE";
-                            };
-                        };
-                    };
-                } | {
-                    /** @enum {string} */
-                    selectionType: "SQUARES";
-                    /** @description How many boxes one entry may claim. A squares contest takes one entry per squad, so this is the cap per squad. It can change until the digits are drawn; lowering it takes no box away. */
-                    maxSquaresPerEntry: number;
-                    /** @description Maximum entries a Squad may create. Null means unlimited. */
-                    maxEntriesPerSquad?: number | null;
-                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring. */
-                    scoring?: {
-                        /** @enum {string} */
-                        participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
-                        /** @description Golf to-par total settings: what an unplayed round scores against par. */
-                        config: {
-                            /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
-                            unplayedRoundToPar: number;
-                        };
-                    } | {
-                        /** @enum {string} */
-                        participantScoringDefinitionId: "FINISH_POSITION_POINTS";
-                        /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
-                        config: {
-                            /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
-                            pointsTable: number[];
-                            /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
-                            didNotFinishPoints: number;
-                        };
-                    } | {
-                        /** @enum {string} */
-                        participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
-                        /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
-                        config: {
-                            /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
-                            roundValues: number[];
-                            /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
-                            upsetBonus: {
-                                /** @enum {string} */
-                                rule: "SEED_DIFFERENCE";
-                                /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
-                                multiplier: number;
-                            } | {
-                                /** @enum {string} */
-                                rule: "NONE";
-                            };
-                        };
-                    };
-                } | {
-                    /** @enum {string} */
-                    selectionType: "SURVIVOR";
-                    /** @description How many weeks an entry can lose before it is out (#1754): 1 or 2. A loss, a tie or a week left unsubmitted each cost a life; with 2 the entry stays in after the first and is out at the second. Left out, 1. */
-                    lives?: number;
-                    /** @description Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the contest's weeks, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes. */
-                    reuseTeamsOnceAllUsed?: boolean;
-                    /** @description Maximum entries a Squad may create. Null means unlimited. */
-                    maxEntriesPerSquad?: number | null;
-                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring. */
-                    scoring?: {
-                        /** @enum {string} */
-                        participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
-                        /** @description Golf to-par total settings: what an unplayed round scores against par. */
-                        config: {
-                            /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
-                            unplayedRoundToPar: number;
-                        };
-                    } | {
-                        /** @enum {string} */
-                        participantScoringDefinitionId: "FINISH_POSITION_POINTS";
-                        /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
-                        config: {
-                            /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
-                            pointsTable: number[];
-                            /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
-                            didNotFinishPoints: number;
-                        };
-                    } | {
-                        /** @enum {string} */
-                        participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
-                        /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
-                        config: {
-                            /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
-                            roundValues: number[];
-                            /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
-                            upsetBonus: {
-                                /** @enum {string} */
-                                rule: "SEED_DIFFERENCE";
-                                /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
-                                multiplier: number;
-                            } | {
-                                /** @enum {string} */
-                                rule: "NONE";
-                            };
-                        };
-                    };
-                } | {
-                    /** @enum {string} */
-                    selectionType: "BRACKET";
-                    /** @description Maximum entries a Squad may create. Null means unlimited. */
-                    maxEntriesPerSquad?: number | null;
-                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring. */
-                    scoring?: {
-                        /** @enum {string} */
-                        participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
-                        /** @description Golf to-par total settings: what an unplayed round scores against par. */
-                        config: {
-                            /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
-                            unplayedRoundToPar: number;
-                        };
-                    } | {
-                        /** @enum {string} */
-                        participantScoringDefinitionId: "FINISH_POSITION_POINTS";
-                        /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
-                        config: {
-                            /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
-                            pointsTable: number[];
-                            /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
-                            didNotFinishPoints: number;
-                        };
-                    } | {
-                        /** @enum {string} */
-                        participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
-                        /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
-                        config: {
-                            /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
-                            roundValues: number[];
-                            /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
-                            upsetBonus: {
-                                /** @enum {string} */
-                                rule: "SEED_DIFFERENCE";
-                                /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
-                                multiplier: number;
-                            } | {
-                                /** @enum {string} */
-                                rule: "NONE";
-                            };
-                        };
-                    };
-                };
-            }[];
-        };
-        /** @description Contest template update payload. Every field optional; at least one is required. */
-        UpdateContestConfigTemplateRequest: {
-            /** @description Updated template display name. */
-            name?: string;
-            /** @description Updated template description. */
-            description?: string;
-            /** @description Updated sort order for the template within its create-flow group. */
-            sortOrder?: number;
-            /** @description Whether this template should be the default choice for future create flows of its sport league and selection type. Setting it unsets the one that was the default. */
-            isDefault?: boolean;
-            /** @description Whether commissioners can select this template in future create flows. */
-            active?: boolean;
-            /** @description Updated persisted configuration payload copied into future contests when this template is selected. */
-            configuration?: {
-                /** @enum {string} */
-                selectionType: "TIERED";
-                /** @description How many golfers an entry picks from each of the event's tiers. The entry's total picks is the event's tier count times this. */
-                picksPerTier: number;
-                /** @description How many golfer scores count toward the entry total, best first. At most the roster size. */
-                countedScores: number;
-                /** @description Maximum entries a Squad may create. Null means unlimited. */
-                maxEntriesPerSquad?: number | null;
-                /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring. */
-                scoring?: {
-                    /** @enum {string} */
-                    participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
-                    /** @description Golf to-par total settings: what an unplayed round scores against par. */
-                    config: {
-                        /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
-                        unplayedRoundToPar: number;
-                    };
-                } | {
-                    /** @enum {string} */
-                    participantScoringDefinitionId: "FINISH_POSITION_POINTS";
-                    /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
-                    config: {
-                        /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
-                        pointsTable: number[];
-                        /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
-                        didNotFinishPoints: number;
-                    };
-                } | {
-                    /** @enum {string} */
-                    participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
-                    /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
-                    config: {
-                        /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
-                        roundValues: number[];
-                        /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
-                        upsetBonus: {
-                            /** @enum {string} */
-                            rule: "SEED_DIFFERENCE";
-                            /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
-                            multiplier: number;
-                        } | {
-                            /** @enum {string} */
-                            rule: "NONE";
-                        };
-                    };
-                };
-            } | {
-                /** @enum {string} */
-                selectionType: "BUDGET_PICK";
-                /** @description How many golfers an entry picks, from anywhere in the field. */
-                rosterSize: number;
-                /** @description How many golfer scores count toward the entry total, best first. At most the roster size. */
-                countedScores: number;
-                /** @description Maximum entries a Squad may create. Null means unlimited. */
-                maxEntriesPerSquad?: number | null;
-                /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring. */
-                scoring?: {
-                    /** @enum {string} */
-                    participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
-                    /** @description Golf to-par total settings: what an unplayed round scores against par. */
-                    config: {
-                        /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
-                        unplayedRoundToPar: number;
-                    };
-                } | {
-                    /** @enum {string} */
-                    participantScoringDefinitionId: "FINISH_POSITION_POINTS";
-                    /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
-                    config: {
-                        /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
-                        pointsTable: number[];
-                        /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
-                        didNotFinishPoints: number;
-                    };
-                } | {
-                    /** @enum {string} */
-                    participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
-                    /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
-                    config: {
-                        /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
-                        roundValues: number[];
-                        /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
-                        upsetBonus: {
-                            /** @enum {string} */
-                            rule: "SEED_DIFFERENCE";
-                            /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
-                            multiplier: number;
-                        } | {
-                            /** @enum {string} */
-                            rule: "NONE";
-                        };
-                    };
-                };
-            } | {
-                /** @enum {string} */
-                selectionType: "RANDOM_DRAW";
-                /** @description How many members of the field the draw deals each entry. */
-                picksPerEntry: number;
-                /** @description How many golfer scores count toward the entry total, best first. At most the roster size. */
-                countedScores: number;
-                /** @description Maximum entries a Squad may create. Null means unlimited. */
-                maxEntriesPerSquad?: number | null;
-                /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring. */
-                scoring?: {
-                    /** @enum {string} */
-                    participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
-                    /** @description Golf to-par total settings: what an unplayed round scores against par. */
-                    config: {
-                        /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
-                        unplayedRoundToPar: number;
-                    };
-                } | {
-                    /** @enum {string} */
-                    participantScoringDefinitionId: "FINISH_POSITION_POINTS";
-                    /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
-                    config: {
-                        /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
-                        pointsTable: number[];
-                        /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
-                        didNotFinishPoints: number;
-                    };
-                } | {
-                    /** @enum {string} */
-                    participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
-                    /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
-                    config: {
-                        /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
-                        roundValues: number[];
-                        /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
-                        upsetBonus: {
-                            /** @enum {string} */
-                            rule: "SEED_DIFFERENCE";
-                            /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
-                            multiplier: number;
-                        } | {
-                            /** @enum {string} */
-                            rule: "NONE";
-                        };
-                    };
-                };
-            } | {
-                /** @enum {string} */
-                selectionType: "PICK_EM";
-                /**
-                 * @description STRAIGHT_UP: pick the winner of every game. CONFIDENCE: also give each game of a week a value from 1 to its number of games, each used once.
-                 * @enum {string}
-                 */
-                mode: "STRAIGHT_UP" | "CONFIDENCE";
-                /** @description Picks are scored against each game's spread (#720): a pick is right when its team covers, and a game that lands exactly on the spread (a push) scores nothing. Every game needs its spread before the week is released. */
-                againstTheSpread: boolean;
-                /** @description Maximum entries a Squad may create. Null means unlimited. */
-                maxEntriesPerSquad?: number | null;
-                /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring. */
-                scoring?: {
-                    /** @enum {string} */
-                    participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
-                    /** @description Golf to-par total settings: what an unplayed round scores against par. */
-                    config: {
-                        /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
-                        unplayedRoundToPar: number;
-                    };
-                } | {
-                    /** @enum {string} */
-                    participantScoringDefinitionId: "FINISH_POSITION_POINTS";
-                    /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
-                    config: {
-                        /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
-                        pointsTable: number[];
-                        /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
-                        didNotFinishPoints: number;
-                    };
-                } | {
-                    /** @enum {string} */
-                    participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
-                    /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
-                    config: {
-                        /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
-                        roundValues: number[];
-                        /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
-                        upsetBonus: {
-                            /** @enum {string} */
-                            rule: "SEED_DIFFERENCE";
-                            /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
-                            multiplier: number;
-                        } | {
-                            /** @enum {string} */
-                            rule: "NONE";
-                        };
-                    };
-                };
-            } | {
-                /** @enum {string} */
-                selectionType: "SQUARES";
-                /** @description How many boxes one entry may claim. A squares contest takes one entry per squad, so this is the cap per squad. It can change until the digits are drawn; lowering it takes no box away. */
-                maxSquaresPerEntry: number;
-                /** @description Maximum entries a Squad may create. Null means unlimited. */
-                maxEntriesPerSquad?: number | null;
-                /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring. */
-                scoring?: {
-                    /** @enum {string} */
-                    participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
-                    /** @description Golf to-par total settings: what an unplayed round scores against par. */
-                    config: {
-                        /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
-                        unplayedRoundToPar: number;
-                    };
-                } | {
-                    /** @enum {string} */
-                    participantScoringDefinitionId: "FINISH_POSITION_POINTS";
-                    /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
-                    config: {
-                        /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
-                        pointsTable: number[];
-                        /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
-                        didNotFinishPoints: number;
-                    };
-                } | {
-                    /** @enum {string} */
-                    participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
-                    /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
-                    config: {
-                        /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
-                        roundValues: number[];
-                        /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
-                        upsetBonus: {
-                            /** @enum {string} */
-                            rule: "SEED_DIFFERENCE";
-                            /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
-                            multiplier: number;
-                        } | {
-                            /** @enum {string} */
-                            rule: "NONE";
-                        };
-                    };
-                };
-            } | {
-                /** @enum {string} */
-                selectionType: "SURVIVOR";
-                /** @description How many weeks an entry can lose before it is out (#1754): 1 or 2. A loss, a tie or a week left unsubmitted each cost a life; with 2 the entry stays in after the first and is out at the second. Left out, 1. */
-                lives?: number;
-                /** @description Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the contest's weeks, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes. */
-                reuseTeamsOnceAllUsed?: boolean;
-                /** @description Maximum entries a Squad may create. Null means unlimited. */
-                maxEntriesPerSquad?: number | null;
-                /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring. */
-                scoring?: {
-                    /** @enum {string} */
-                    participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
-                    /** @description Golf to-par total settings: what an unplayed round scores against par. */
-                    config: {
-                        /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
-                        unplayedRoundToPar: number;
-                    };
-                } | {
-                    /** @enum {string} */
-                    participantScoringDefinitionId: "FINISH_POSITION_POINTS";
-                    /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
-                    config: {
-                        /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
-                        pointsTable: number[];
-                        /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
-                        didNotFinishPoints: number;
-                    };
-                } | {
-                    /** @enum {string} */
-                    participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
-                    /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
-                    config: {
-                        /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
-                        roundValues: number[];
-                        /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
-                        upsetBonus: {
-                            /** @enum {string} */
-                            rule: "SEED_DIFFERENCE";
-                            /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
-                            multiplier: number;
-                        } | {
-                            /** @enum {string} */
-                            rule: "NONE";
-                        };
-                    };
-                };
-            } | {
-                /** @enum {string} */
-                selectionType: "BRACKET";
-                /** @description Maximum entries a Squad may create. Null means unlimited. */
-                maxEntriesPerSquad?: number | null;
-                /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring. */
-                scoring?: {
-                    /** @enum {string} */
-                    participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
-                    /** @description Golf to-par total settings: what an unplayed round scores against par. */
-                    config: {
-                        /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
-                        unplayedRoundToPar: number;
-                    };
-                } | {
-                    /** @enum {string} */
-                    participantScoringDefinitionId: "FINISH_POSITION_POINTS";
-                    /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
-                    config: {
-                        /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
-                        pointsTable: number[];
-                        /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
-                        didNotFinishPoints: number;
-                    };
-                } | {
-                    /** @enum {string} */
-                    participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
-                    /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
-                    config: {
-                        /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
-                        roundValues: number[];
-                        /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
-                        upsetBonus: {
-                            /** @enum {string} */
-                            rule: "SEED_DIFFERENCE";
-                            /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
-                            multiplier: number;
-                        } | {
-                            /** @enum {string} */
-                            rule: "NONE";
-                        };
-                    };
-                };
-            };
-            /**
-             * @description How future contests from the template cover its slots (#2010). Refused when the listed slots do not fit it: ALL_LISTED needs one event's slots.
-             * @enum {string}
-             */
-            coverageMode?: "ONE_SLOT" | "ALL_LISTED" | "FROM_SLOT";
-            /** @description The slot definitions the template covers from now on, each of its own sport league (#2010). Contests already made keep the slots they copied. A bracket lists only knockout slots. */
-            slotDefinitionIds?: string[];
-        };
-        /** @description A single contest configuration template. */
-        ContestConfigTemplateResponse: {
-            /** @description Seeded commissioner-facing contest configuration template. */
-            template: {
-                /**
-                 * Format: uuid
-                 * @description Seeded contest template identifier.
-                 */
-                id: string;
-                /**
-                 * Format: uuid
-                 * @description Sport league this template is offered for. Every template belongs to one sport league; two leagues offering the same setup each have their own copy, with the same templateKey.
-                 */
-                sportLeagueId: string;
-                /**
-                 * @description How a contest from the template covers its slots (#2010): ONE_SLOT, the one slot chosen; ALL_LISTED, every listed slot of the chosen event; FROM_SLOT, the chosen slot and every later listed slot of its Season.
-                 * @enum {string}
-                 */
-                coverageMode: "ONE_SLOT" | "ALL_LISTED" | "FROM_SLOT";
-                /** @description The slot definitions the template covers, in play order. It is offered on an event that has a Season slot of one of them. */
-                slots: {
-                    /**
-                     * Format: uuid
-                     * @description The slot definition's id (SportLeagueCompetitionSlot).
-                     */
-                    id: string;
-                    /** @description Its code in its league, such as WEEK_14, FINAL or MASTERS. An identifier; nothing parses it. */
-                    key: string;
-                    /** @description The league's proper name for the slot, such as "Super Bowl"; null: screens use the word for its kind. */
-                    name: string | null;
-                    /**
-                     * @description What kind of slot it is: a WEEK of games, a postseason ROUND, a TOURNAMENT of its own, a PLAY_IN.
-                     * @enum {string}
-                     */
-                    slotKind: "WEEK" | "PLAY_IN" | "ROUND_OF_64" | "ROUND_OF_32" | "ROUND_OF_16" | "QUARTERFINAL" | "SEMIFINAL" | "THIRD_PLACE" | "FINAL" | "TOURNAMENT";
-                    /** @description For a WEEK slot, its week; null otherwise. */
-                    weekNumber: number | null;
-                    /**
-                     * Format: uuid
-                     * @description The competition the slot is in (#2153); a template's slots all sit in one.
-                     */
-                    sportLeagueCompetitionId: string;
-                    /** @description That competition's code, such as REGULAR or CFP; nothing parses it. */
-                    competitionCode: string;
-                    /** @description That competition's place in its phase. */
-                    competitionOrderIndex: number;
-                    /**
-                     * @description Its phase's kind: PRESEASON, REGULAR, POSTSEASON_CONFERENCE or POSTSEASON.
-                     * @enum {string}
-                     */
-                    phase: "PRESEASON" | "REGULAR" | "POSTSEASON_CONFERENCE" | "POSTSEASON";
-                    /**
-                     * @description How the slot's games are contested: HEAD_TO_HEAD or FIELD.
-                     * @enum {string}
-                     */
-                    matchFormat: "HEAD_TO_HEAD" | "FIELD";
-                }[];
-                /**
-                 * @description Contest type that may use the template.
-                 * @enum {string}
-                 */
-                contestFormat: "ROSTER" | "PREDICTION" | "SQUARES";
-                /**
-                 * @description How an entry picks in a contest created from this template.
-                 * @enum {string}
-                 */
-                selectionType: "TIERED" | "BUDGET_PICK" | "RANDOM_DRAW" | "PICK_EM" | "BRACKET" | "SURVIVOR" | "SQUARES";
-                /** @description Stable machine key for the template. */
-                templateKey: string;
-                /** @description Commissioner-facing template label. */
-                name: string;
-                /** @description Commissioner-facing template description. */
-                description: string;
-                /** @description Display order for template selection. */
-                sortOrder: number;
-                /** @description Whether the template should be preselected in the create flow. */
-                isDefault: boolean;
-                /** @description Whether the template is currently selectable. */
-                active: boolean;
-                /** @description Version of the configuration schema metadata expected by the template. */
-                schemaVersion: number;
-                /** @description Seeded configuration payload copied into a contest instance when the template is chosen. */
-                configuration: {
-                    /** @enum {string} */
-                    selectionType: "TIERED";
-                    /** @description How many golfers an entry picks from each of the event's tiers. The entry's total picks is the event's tier count times this. */
-                    picksPerTier: number;
-                    /** @description How many golfer scores count toward the entry total, best first. At most the roster size. */
-                    countedScores: number;
-                    /** @description Maximum entries a Squad may create. Null means unlimited. */
-                    maxEntriesPerSquad?: number | null;
-                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring. */
-                    scoring?: {
-                        /** @enum {string} */
-                        participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
-                        /** @description Golf to-par total settings: what an unplayed round scores against par. */
-                        config: {
-                            /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
-                            unplayedRoundToPar: number;
-                        };
-                    } | {
-                        /** @enum {string} */
-                        participantScoringDefinitionId: "FINISH_POSITION_POINTS";
-                        /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
-                        config: {
-                            /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
-                            pointsTable: number[];
-                            /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
-                            didNotFinishPoints: number;
-                        };
-                    } | {
-                        /** @enum {string} */
-                        participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
-                        /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
-                        config: {
-                            /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
-                            roundValues: number[];
-                            /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
-                            upsetBonus: {
-                                /** @enum {string} */
-                                rule: "SEED_DIFFERENCE";
-                                /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
-                                multiplier: number;
-                            } | {
-                                /** @enum {string} */
-                                rule: "NONE";
-                            };
-                        };
-                    };
-                } | {
-                    /** @enum {string} */
-                    selectionType: "BUDGET_PICK";
-                    /** @description How many golfers an entry picks, from anywhere in the field. */
-                    rosterSize: number;
-                    /** @description How many golfer scores count toward the entry total, best first. At most the roster size. */
-                    countedScores: number;
-                    /** @description Maximum entries a Squad may create. Null means unlimited. */
-                    maxEntriesPerSquad?: number | null;
-                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring. */
-                    scoring?: {
-                        /** @enum {string} */
-                        participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
-                        /** @description Golf to-par total settings: what an unplayed round scores against par. */
-                        config: {
-                            /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
-                            unplayedRoundToPar: number;
-                        };
-                    } | {
-                        /** @enum {string} */
-                        participantScoringDefinitionId: "FINISH_POSITION_POINTS";
-                        /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
-                        config: {
-                            /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
-                            pointsTable: number[];
-                            /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
-                            didNotFinishPoints: number;
-                        };
-                    } | {
-                        /** @enum {string} */
-                        participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
-                        /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
-                        config: {
-                            /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
-                            roundValues: number[];
-                            /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
-                            upsetBonus: {
-                                /** @enum {string} */
-                                rule: "SEED_DIFFERENCE";
-                                /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
-                                multiplier: number;
-                            } | {
-                                /** @enum {string} */
-                                rule: "NONE";
-                            };
-                        };
-                    };
-                } | {
-                    /** @enum {string} */
-                    selectionType: "RANDOM_DRAW";
-                    /** @description How many members of the field the draw deals each entry. */
-                    picksPerEntry: number;
-                    /** @description How many golfer scores count toward the entry total, best first. At most the roster size. */
-                    countedScores: number;
-                    /** @description Maximum entries a Squad may create. Null means unlimited. */
-                    maxEntriesPerSquad?: number | null;
-                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring. */
-                    scoring?: {
-                        /** @enum {string} */
-                        participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
-                        /** @description Golf to-par total settings: what an unplayed round scores against par. */
-                        config: {
-                            /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
-                            unplayedRoundToPar: number;
-                        };
-                    } | {
-                        /** @enum {string} */
-                        participantScoringDefinitionId: "FINISH_POSITION_POINTS";
-                        /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
-                        config: {
-                            /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
-                            pointsTable: number[];
-                            /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
-                            didNotFinishPoints: number;
-                        };
-                    } | {
-                        /** @enum {string} */
-                        participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
-                        /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
-                        config: {
-                            /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
-                            roundValues: number[];
-                            /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
-                            upsetBonus: {
-                                /** @enum {string} */
-                                rule: "SEED_DIFFERENCE";
-                                /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
-                                multiplier: number;
-                            } | {
-                                /** @enum {string} */
-                                rule: "NONE";
-                            };
-                        };
-                    };
-                } | {
-                    /** @enum {string} */
-                    selectionType: "PICK_EM";
-                    /**
-                     * @description STRAIGHT_UP: pick the winner of every game. CONFIDENCE: also give each game of a week a value from 1 to its number of games, each used once.
-                     * @enum {string}
-                     */
-                    mode: "STRAIGHT_UP" | "CONFIDENCE";
-                    /** @description Picks are scored against each game's spread (#720): a pick is right when its team covers, and a game that lands exactly on the spread (a push) scores nothing. Every game needs its spread before the week is released. */
-                    againstTheSpread: boolean;
-                    /** @description Maximum entries a Squad may create. Null means unlimited. */
-                    maxEntriesPerSquad?: number | null;
-                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring. */
-                    scoring?: {
-                        /** @enum {string} */
-                        participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
-                        /** @description Golf to-par total settings: what an unplayed round scores against par. */
-                        config: {
-                            /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
-                            unplayedRoundToPar: number;
-                        };
-                    } | {
-                        /** @enum {string} */
-                        participantScoringDefinitionId: "FINISH_POSITION_POINTS";
-                        /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
-                        config: {
-                            /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
-                            pointsTable: number[];
-                            /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
-                            didNotFinishPoints: number;
-                        };
-                    } | {
-                        /** @enum {string} */
-                        participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
-                        /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
-                        config: {
-                            /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
-                            roundValues: number[];
-                            /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
-                            upsetBonus: {
-                                /** @enum {string} */
-                                rule: "SEED_DIFFERENCE";
-                                /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
-                                multiplier: number;
-                            } | {
-                                /** @enum {string} */
-                                rule: "NONE";
-                            };
-                        };
-                    };
-                } | {
-                    /** @enum {string} */
-                    selectionType: "SQUARES";
-                    /** @description How many boxes one entry may claim. A squares contest takes one entry per squad, so this is the cap per squad. It can change until the digits are drawn; lowering it takes no box away. */
-                    maxSquaresPerEntry: number;
-                    /** @description Maximum entries a Squad may create. Null means unlimited. */
-                    maxEntriesPerSquad?: number | null;
-                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring. */
-                    scoring?: {
-                        /** @enum {string} */
-                        participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
-                        /** @description Golf to-par total settings: what an unplayed round scores against par. */
-                        config: {
-                            /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
-                            unplayedRoundToPar: number;
-                        };
-                    } | {
-                        /** @enum {string} */
-                        participantScoringDefinitionId: "FINISH_POSITION_POINTS";
-                        /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
-                        config: {
-                            /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
-                            pointsTable: number[];
-                            /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
-                            didNotFinishPoints: number;
-                        };
-                    } | {
-                        /** @enum {string} */
-                        participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
-                        /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
-                        config: {
-                            /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
-                            roundValues: number[];
-                            /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
-                            upsetBonus: {
-                                /** @enum {string} */
-                                rule: "SEED_DIFFERENCE";
-                                /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
-                                multiplier: number;
-                            } | {
-                                /** @enum {string} */
-                                rule: "NONE";
-                            };
-                        };
-                    };
-                } | {
-                    /** @enum {string} */
-                    selectionType: "SURVIVOR";
-                    /** @description How many weeks an entry can lose before it is out (#1754): 1 or 2. A loss, a tie or a week left unsubmitted each cost a life; with 2 the entry stays in after the first and is out at the second. Left out, 1. */
-                    lives?: number;
-                    /** @description Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the contest's weeks, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes. */
-                    reuseTeamsOnceAllUsed?: boolean;
-                    /** @description Maximum entries a Squad may create. Null means unlimited. */
-                    maxEntriesPerSquad?: number | null;
-                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring. */
-                    scoring?: {
-                        /** @enum {string} */
-                        participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
-                        /** @description Golf to-par total settings: what an unplayed round scores against par. */
-                        config: {
-                            /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
-                            unplayedRoundToPar: number;
-                        };
-                    } | {
-                        /** @enum {string} */
-                        participantScoringDefinitionId: "FINISH_POSITION_POINTS";
-                        /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
-                        config: {
-                            /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
-                            pointsTable: number[];
-                            /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
-                            didNotFinishPoints: number;
-                        };
-                    } | {
-                        /** @enum {string} */
-                        participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
-                        /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
-                        config: {
-                            /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
-                            roundValues: number[];
-                            /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
-                            upsetBonus: {
-                                /** @enum {string} */
-                                rule: "SEED_DIFFERENCE";
-                                /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
-                                multiplier: number;
-                            } | {
-                                /** @enum {string} */
-                                rule: "NONE";
-                            };
-                        };
-                    };
-                } | {
-                    /** @enum {string} */
-                    selectionType: "BRACKET";
-                    /** @description Maximum entries a Squad may create. Null means unlimited. */
-                    maxEntriesPerSquad?: number | null;
-                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring. */
-                    scoring?: {
-                        /** @enum {string} */
-                        participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
-                        /** @description Golf to-par total settings: what an unplayed round scores against par. */
-                        config: {
-                            /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
-                            unplayedRoundToPar: number;
-                        };
-                    } | {
-                        /** @enum {string} */
-                        participantScoringDefinitionId: "FINISH_POSITION_POINTS";
-                        /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
-                        config: {
-                            /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
-                            pointsTable: number[];
-                            /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
-                            didNotFinishPoints: number;
-                        };
-                    } | {
-                        /** @enum {string} */
-                        participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
-                        /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
-                        config: {
-                            /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
-                            roundValues: number[];
-                            /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
-                            upsetBonus: {
-                                /** @enum {string} */
-                                rule: "SEED_DIFFERENCE";
-                                /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
-                                multiplier: number;
-                            } | {
-                                /** @enum {string} */
-                                rule: "NONE";
-                            };
-                        };
-                    };
-                };
-            };
-        };
         /**
          * @description Where a match stands. COMPLETED once its result is in; CANCELLED when it was never played; POSTPONED when it was put off before it began and is still to be played, at its scheduledDate once a new time is set.
          * @enum {string}
@@ -13957,6 +11662,15 @@ export interface components {
          * @enum {string}
          */
         UploadRowResolutionDto: "MATCHED" | "UNRESOLVED" | "AMBIGUOUS";
+        /** @description One picks-per-tier value a tiered contest may take on an event's tiers, with the roster it makes (#2107). */
+        TieredRosterChoiceDto: {
+            /** @description Picks an entry takes from each tier. */
+            picksPerTier: number;
+            /** @description The entry's roster at this picks per tier: the tier count times it. */
+            rosterSize: number;
+            /** @description The scores that count a tiered contest starts with at this picks per tier. */
+            countedScoresDefault: number;
+        };
         /** @enum {string} */
         EventStatusDto: "DRAFT" | "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
         /** @enum {string} */
@@ -14449,6 +12163,15 @@ export interface components {
             autoLifecycleEnabled: boolean;
             /** @description Pick tiers defined for the event. A tiered contest's entry picks this many tiers times the contest's picksPerTier. */
             tierCount: number;
+            /** @description The picks per tier a tiered contest on the event's tier-set slot may take (#2107): 1 up to its smallest tier's size, in order, each with its roster and default scores that count. Empty while the event has no tiers or a tier is empty; the API then checks no picks-per-tier bound. */
+            tieredRosterChoices: {
+                /** @description Picks an entry takes from each tier. */
+                picksPerTier: number;
+                /** @description The entry's roster at this picks per tier: the tier count times it. */
+                rosterSize: number;
+                /** @description The scores that count a tiered contest starts with at this picks per tier. */
+                countedScoresDefault: number;
+            }[];
             /** @description A DRAFT event's ready checks, every one judged now, in a fixed order; a check that does not apply to the event is left out. The automatic release passes only when every check passes; a root admin's release is refused only by the checks other than ROUNDS_SCHEDULED and CONTEST_SETUPS_ON. Filled on a root admin's read of the one event; null on lists, on an admin action's answer, for anyone but a root admin, and once the event is released. */
             releaseChecks: ({
                 /** @enum {string} */
@@ -14874,6 +12597,15 @@ export interface components {
                 autoLifecycleEnabled: boolean;
                 /** @description Pick tiers defined for the event. A tiered contest's entry picks this many tiers times the contest's picksPerTier. */
                 tierCount: number;
+                /** @description The picks per tier a tiered contest on the event's tier-set slot may take (#2107): 1 up to its smallest tier's size, in order, each with its roster and default scores that count. Empty while the event has no tiers or a tier is empty; the API then checks no picks-per-tier bound. */
+                tieredRosterChoices: {
+                    /** @description Picks an entry takes from each tier. */
+                    picksPerTier: number;
+                    /** @description The entry's roster at this picks per tier: the tier count times it. */
+                    rosterSize: number;
+                    /** @description The scores that count a tiered contest starts with at this picks per tier. */
+                    countedScoresDefault: number;
+                }[];
                 /** @description A DRAFT event's ready checks, every one judged now, in a fixed order; a check that does not apply to the event is left out. The automatic release passes only when every check passes; a root admin's release is refused only by the checks other than ROUNDS_SCHEDULED and CONTEST_SETUPS_ON. Filled on a root admin's read of the one event; null on lists, on an admin action's answer, for anyone but a root admin, and once the event is released. */
                 releaseChecks: ({
                     /** @enum {string} */
@@ -15278,6 +13010,15 @@ export interface components {
                 autoLifecycleEnabled: boolean;
                 /** @description Pick tiers defined for the event. A tiered contest's entry picks this many tiers times the contest's picksPerTier. */
                 tierCount: number;
+                /** @description The picks per tier a tiered contest on the event's tier-set slot may take (#2107): 1 up to its smallest tier's size, in order, each with its roster and default scores that count. Empty while the event has no tiers or a tier is empty; the API then checks no picks-per-tier bound. */
+                tieredRosterChoices: {
+                    /** @description Picks an entry takes from each tier. */
+                    picksPerTier: number;
+                    /** @description The entry's roster at this picks per tier: the tier count times it. */
+                    rosterSize: number;
+                    /** @description The scores that count a tiered contest starts with at this picks per tier. */
+                    countedScoresDefault: number;
+                }[];
                 /** @description A DRAFT event's ready checks, every one judged now, in a fixed order; a check that does not apply to the event is left out. The automatic release passes only when every check passes; a root admin's release is refused only by the checks other than ROUNDS_SCHEDULED and CONTEST_SETUPS_ON. Filled on a root admin's read of the one event; null on lists, on an admin action's answer, for anyone but a root admin, and once the event is released. */
                 releaseChecks: ({
                     /** @enum {string} */
@@ -16472,6 +14213,2406 @@ export interface components {
                  * @description ISO 8601 datetime string.
                  */
                 updatedAt: string;
+            };
+        };
+        /** @description The bounds and defaults of the rules a commissioner sets (#2107), the same ones the API checks the rules against. */
+        ContestRulesLimitsDto: {
+            /** @description The most members of the field a budget entry may pick (BudgetContestRules.rosterSize). */
+            rosterSizeMax: number;
+            /** @description The most members of the field a random draw may deal one entry (RandomDrawContestRules.picksPerEntry). */
+            picksPerEntryMax: number;
+            /** @description The most boxes one squares entry may claim: the whole grid (SquaresContestRules.maxSquaresPerEntry). */
+            maxSquaresPerEntryMax: number;
+            /** @description The most lives a survivor entry may have (SurvivorContestRules.lives); the form offers 1 up to this. */
+            livesMax: number;
+            /** @description The lives a survivor entry has when the rules leave them out. */
+            livesDefault: number;
+        };
+        /** @description Contest rules and entries-per-team limit, one shape per selection type. `selectionType` must match the contest's. */
+        ContestConfigurationRequest: {
+            /** @enum {string} */
+            selectionType: "TIERED";
+            /** @description How many golfers an entry picks from each of the event's tiers. The entry's total picks is the event's tier count times this. */
+            picksPerTier: number;
+            /** @description How many golfer scores count toward the entry total, best first. At most the roster size. */
+            countedScores: number;
+            /** @description Maximum entries a Squad may create. Null means unlimited. */
+            maxEntriesPerSquad?: number | null;
+            /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring. */
+            scoring?: {
+                /** @enum {string} */
+                participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
+                /** @description Golf to-par total settings: what an unplayed round scores against par. */
+                config: {
+                    /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
+                    unplayedRoundToPar: number;
+                };
+            } | {
+                /** @enum {string} */
+                participantScoringDefinitionId: "FINISH_POSITION_POINTS";
+                /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
+                config: {
+                    /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
+                    pointsTable: number[];
+                    /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
+                    didNotFinishPoints: number;
+                };
+            } | {
+                /** @enum {string} */
+                participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
+                /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
+                config: {
+                    /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
+                    roundValues: number[];
+                    /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
+                    upsetBonus: {
+                        /** @enum {string} */
+                        rule: "SEED_DIFFERENCE";
+                        /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
+                        multiplier: number;
+                    } | {
+                        /** @enum {string} */
+                        rule: "NONE";
+                    };
+                };
+            };
+        } | {
+            /** @enum {string} */
+            selectionType: "BUDGET_PICK";
+            /** @description How many golfers an entry picks, from anywhere in the field. */
+            rosterSize: number;
+            /** @description How many golfer scores count toward the entry total, best first. At most the roster size. */
+            countedScores: number;
+            /** @description Maximum entries a Squad may create. Null means unlimited. */
+            maxEntriesPerSquad?: number | null;
+            /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring. */
+            scoring?: {
+                /** @enum {string} */
+                participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
+                /** @description Golf to-par total settings: what an unplayed round scores against par. */
+                config: {
+                    /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
+                    unplayedRoundToPar: number;
+                };
+            } | {
+                /** @enum {string} */
+                participantScoringDefinitionId: "FINISH_POSITION_POINTS";
+                /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
+                config: {
+                    /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
+                    pointsTable: number[];
+                    /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
+                    didNotFinishPoints: number;
+                };
+            } | {
+                /** @enum {string} */
+                participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
+                /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
+                config: {
+                    /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
+                    roundValues: number[];
+                    /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
+                    upsetBonus: {
+                        /** @enum {string} */
+                        rule: "SEED_DIFFERENCE";
+                        /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
+                        multiplier: number;
+                    } | {
+                        /** @enum {string} */
+                        rule: "NONE";
+                    };
+                };
+            };
+        } | {
+            /** @enum {string} */
+            selectionType: "RANDOM_DRAW";
+            /** @description How many members of the field the draw deals each entry. */
+            picksPerEntry: number;
+            /** @description How many golfer scores count toward the entry total, best first. At most the roster size. */
+            countedScores: number;
+            /** @description Maximum entries a Squad may create. Null means unlimited. */
+            maxEntriesPerSquad?: number | null;
+            /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring. */
+            scoring?: {
+                /** @enum {string} */
+                participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
+                /** @description Golf to-par total settings: what an unplayed round scores against par. */
+                config: {
+                    /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
+                    unplayedRoundToPar: number;
+                };
+            } | {
+                /** @enum {string} */
+                participantScoringDefinitionId: "FINISH_POSITION_POINTS";
+                /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
+                config: {
+                    /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
+                    pointsTable: number[];
+                    /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
+                    didNotFinishPoints: number;
+                };
+            } | {
+                /** @enum {string} */
+                participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
+                /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
+                config: {
+                    /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
+                    roundValues: number[];
+                    /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
+                    upsetBonus: {
+                        /** @enum {string} */
+                        rule: "SEED_DIFFERENCE";
+                        /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
+                        multiplier: number;
+                    } | {
+                        /** @enum {string} */
+                        rule: "NONE";
+                    };
+                };
+            };
+        } | {
+            /** @enum {string} */
+            selectionType: "PICK_EM";
+            /**
+             * @description STRAIGHT_UP: pick the winner of every game. CONFIDENCE: also give each game of a week a value from 1 to its number of games, each used once.
+             * @enum {string}
+             */
+            mode: "STRAIGHT_UP" | "CONFIDENCE";
+            /** @description Picks are scored against each game's spread (#720): a pick is right when its team covers, and a game that lands exactly on the spread (a push) scores nothing. Every game needs its spread before the week is released. */
+            againstTheSpread: boolean;
+            /** @description Maximum entries a Squad may create. Null means unlimited. */
+            maxEntriesPerSquad?: number | null;
+            /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring. */
+            scoring?: {
+                /** @enum {string} */
+                participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
+                /** @description Golf to-par total settings: what an unplayed round scores against par. */
+                config: {
+                    /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
+                    unplayedRoundToPar: number;
+                };
+            } | {
+                /** @enum {string} */
+                participantScoringDefinitionId: "FINISH_POSITION_POINTS";
+                /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
+                config: {
+                    /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
+                    pointsTable: number[];
+                    /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
+                    didNotFinishPoints: number;
+                };
+            } | {
+                /** @enum {string} */
+                participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
+                /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
+                config: {
+                    /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
+                    roundValues: number[];
+                    /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
+                    upsetBonus: {
+                        /** @enum {string} */
+                        rule: "SEED_DIFFERENCE";
+                        /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
+                        multiplier: number;
+                    } | {
+                        /** @enum {string} */
+                        rule: "NONE";
+                    };
+                };
+            };
+        } | {
+            /** @enum {string} */
+            selectionType: "SQUARES";
+            /** @description How many boxes one entry may claim. A squares contest takes one entry per squad, so this is the cap per squad. It can change until the digits are drawn; lowering it takes no box away. */
+            maxSquaresPerEntry: number;
+            /** @description Maximum entries a Squad may create. Null means unlimited. */
+            maxEntriesPerSquad?: number | null;
+            /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring. */
+            scoring?: {
+                /** @enum {string} */
+                participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
+                /** @description Golf to-par total settings: what an unplayed round scores against par. */
+                config: {
+                    /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
+                    unplayedRoundToPar: number;
+                };
+            } | {
+                /** @enum {string} */
+                participantScoringDefinitionId: "FINISH_POSITION_POINTS";
+                /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
+                config: {
+                    /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
+                    pointsTable: number[];
+                    /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
+                    didNotFinishPoints: number;
+                };
+            } | {
+                /** @enum {string} */
+                participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
+                /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
+                config: {
+                    /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
+                    roundValues: number[];
+                    /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
+                    upsetBonus: {
+                        /** @enum {string} */
+                        rule: "SEED_DIFFERENCE";
+                        /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
+                        multiplier: number;
+                    } | {
+                        /** @enum {string} */
+                        rule: "NONE";
+                    };
+                };
+            };
+        } | {
+            /** @enum {string} */
+            selectionType: "SURVIVOR";
+            /** @description How many weeks an entry can lose before it is out (#1754): 1 or 2. A loss, a tie or a week left unsubmitted each cost a life; with 2 the entry stays in after the first and is out at the second. Left out, 1. */
+            lives?: number;
+            /** @description Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the contest's weeks, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes. */
+            reuseTeamsOnceAllUsed?: boolean;
+            /** @description Maximum entries a Squad may create. Null means unlimited. */
+            maxEntriesPerSquad?: number | null;
+            /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring. */
+            scoring?: {
+                /** @enum {string} */
+                participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
+                /** @description Golf to-par total settings: what an unplayed round scores against par. */
+                config: {
+                    /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
+                    unplayedRoundToPar: number;
+                };
+            } | {
+                /** @enum {string} */
+                participantScoringDefinitionId: "FINISH_POSITION_POINTS";
+                /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
+                config: {
+                    /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
+                    pointsTable: number[];
+                    /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
+                    didNotFinishPoints: number;
+                };
+            } | {
+                /** @enum {string} */
+                participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
+                /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
+                config: {
+                    /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
+                    roundValues: number[];
+                    /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
+                    upsetBonus: {
+                        /** @enum {string} */
+                        rule: "SEED_DIFFERENCE";
+                        /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
+                        multiplier: number;
+                    } | {
+                        /** @enum {string} */
+                        rule: "NONE";
+                    };
+                };
+            };
+        } | {
+            /** @enum {string} */
+            selectionType: "BRACKET";
+            /** @description Maximum entries a Squad may create. Null means unlimited. */
+            maxEntriesPerSquad?: number | null;
+            /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring. */
+            scoring?: {
+                /** @enum {string} */
+                participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
+                /** @description Golf to-par total settings: what an unplayed round scores against par. */
+                config: {
+                    /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
+                    unplayedRoundToPar: number;
+                };
+            } | {
+                /** @enum {string} */
+                participantScoringDefinitionId: "FINISH_POSITION_POINTS";
+                /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
+                config: {
+                    /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
+                    pointsTable: number[];
+                    /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
+                    didNotFinishPoints: number;
+                };
+            } | {
+                /** @enum {string} */
+                participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
+                /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
+                config: {
+                    /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
+                    roundValues: number[];
+                    /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
+                    upsetBonus: {
+                        /** @enum {string} */
+                        rule: "SEED_DIFFERENCE";
+                        /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
+                        multiplier: number;
+                    } | {
+                        /** @enum {string} */
+                        rule: "NONE";
+                    };
+                };
+            };
+        };
+        /** @description One inherited event tier and its participant assignments. */
+        EffectiveTierDto: {
+            /** @description Stable per-event tier key. */
+            tierKey: string;
+            /** @description 1-based tier ordering. */
+            tierNumber: number;
+            /** @description Participants assigned to this tier, ordered by tierOrderIndex ascending. */
+            assignments: {
+                /** @description Field entry the assignment belongs to. */
+                sportEventParticipantId: string;
+                /** @description Global participant identity. */
+                participantId: string;
+                /** @description Within-tier ordering position; null when the participant has no explicit order. */
+                tierOrderIndex: number | null;
+                /** @description Per-participant budget price when the event defines one; null otherwise. */
+                price: number | null;
+            }[];
+        };
+        /** @description One event of a managed contest, with the tiers it inherits from it (#713). */
+        ContestManagementSportEventDto: {
+            /** @description One event the contest covers. */
+            sportEventId: string;
+            /** @description Read-only tier structure a tiered contest inherits from this event (plans/124 §4.6/§5.3). Empty when the event has no tiers defined yet, and always empty for any other format, which does not pick by tier. Never contest-configured. */
+            effectiveTiers: {
+                /** @description Stable per-event tier key. */
+                tierKey: string;
+                /** @description 1-based tier ordering. */
+                tierNumber: number;
+                /** @description Participants assigned to this tier, ordered by tierOrderIndex ascending. */
+                assignments: {
+                    /** @description Field entry the assignment belongs to. */
+                    sportEventParticipantId: string;
+                    /** @description Global participant identity. */
+                    participantId: string;
+                    /** @description Within-tier ordering position; null when the participant has no explicit order. */
+                    tierOrderIndex: number | null;
+                    /** @description Per-participant budget price when the event defines one; null otherwise. */
+                    price: number | null;
+                }[];
+            }[];
+            /** @description The picks per tier the tiered contest may take on these tiers (#2107), as on SportEventDto.tieredRosterChoices. Empty for any other format, and while the tiers are not all filled. */
+            tieredRosterChoices: {
+                /** @description Picks an entry takes from each tier. */
+                picksPerTier: number;
+                /** @description The entry's roster at this picks per tier: the tier count times it. */
+                rosterSize: number;
+                /** @description The scores that count a tiered contest starts with at this picks per tier. */
+                countedScoresDefault: number;
+            }[];
+        };
+        /** @description Golf-first contest-management detail returned to commissioner tooling. */
+        ContestManagementDetailDto: {
+            /** @description Contest identifier. */
+            id: string;
+            /** @description League that owns the contest. */
+            leagueId: string;
+            /** @description The events the contest covers, in sequence order (#713), each with its inherited tiers. */
+            sportEvents: {
+                /** @description One event the contest covers. */
+                sportEventId: string;
+                /** @description Read-only tier structure a tiered contest inherits from this event (plans/124 §4.6/§5.3). Empty when the event has no tiers defined yet, and always empty for any other format, which does not pick by tier. Never contest-configured. */
+                effectiveTiers: {
+                    /** @description Stable per-event tier key. */
+                    tierKey: string;
+                    /** @description 1-based tier ordering. */
+                    tierNumber: number;
+                    /** @description Participants assigned to this tier, ordered by tierOrderIndex ascending. */
+                    assignments: {
+                        /** @description Field entry the assignment belongs to. */
+                        sportEventParticipantId: string;
+                        /** @description Global participant identity. */
+                        participantId: string;
+                        /** @description Within-tier ordering position; null when the participant has no explicit order. */
+                        tierOrderIndex: number | null;
+                        /** @description Per-participant budget price when the event defines one; null otherwise. */
+                        price: number | null;
+                    }[];
+                }[];
+                /** @description The picks per tier the tiered contest may take on these tiers (#2107), as on SportEventDto.tieredRosterChoices. Empty for any other format, and while the tiers are not all filled. */
+                tieredRosterChoices: {
+                    /** @description Picks an entry takes from each tier. */
+                    picksPerTier: number;
+                    /** @description The entry's roster at this picks per tier: the tier count times it. */
+                    rosterSize: number;
+                    /** @description The scores that count a tiered contest starts with at this picks per tier. */
+                    countedScoresDefault: number;
+                }[];
+            }[];
+            /** @description Contest display name. */
+            name: string;
+            /** @enum {string} */
+            status: "DRAFT" | "OPEN" | "ACTIVE" | "COMPLETED";
+            /** @description Current commissioner-managed contest configuration. */
+            configuration: {
+                /** @enum {string} */
+                selectionType: "TIERED";
+                /** @description How many golfers an entry picks from each of the event's tiers. The entry's total picks is the event's tier count times this. */
+                picksPerTier: number;
+                /** @description How many golfer scores count toward the entry total, best first. At most the roster size. */
+                countedScores: number;
+                /** @description Contest-configuration identifier. */
+                id: string;
+                /** @description Contest that owns the configuration. */
+                contestId: string;
+                /** @description Maximum entries a Squad may create. Null means unlimited. */
+                maxEntriesPerSquad?: number | null;
+            } | {
+                /** @enum {string} */
+                selectionType: "BUDGET_PICK";
+                /** @description How many golfers an entry picks, from anywhere in the field. */
+                rosterSize: number;
+                /** @description How many golfer scores count toward the entry total, best first. At most the roster size. */
+                countedScores: number;
+                /** @description Contest-configuration identifier. */
+                id: string;
+                /** @description Contest that owns the configuration. */
+                contestId: string;
+                /** @description Maximum entries a Squad may create. Null means unlimited. */
+                maxEntriesPerSquad?: number | null;
+            } | {
+                /** @enum {string} */
+                selectionType: "RANDOM_DRAW";
+                /** @description How many members of the field the draw deals each entry. */
+                picksPerEntry: number;
+                /** @description How many golfer scores count toward the entry total, best first. At most the roster size. */
+                countedScores: number;
+                /** @description Contest-configuration identifier. */
+                id: string;
+                /** @description Contest that owns the configuration. */
+                contestId: string;
+                /** @description Maximum entries a Squad may create. Null means unlimited. */
+                maxEntriesPerSquad?: number | null;
+            } | {
+                /** @enum {string} */
+                selectionType: "PICK_EM";
+                /**
+                 * @description STRAIGHT_UP: pick the winner of every game. CONFIDENCE: also give each game of a week a value from 1 to its number of games, each used once.
+                 * @enum {string}
+                 */
+                mode: "STRAIGHT_UP" | "CONFIDENCE";
+                /** @description Picks are scored against each game's spread (#720): a pick is right when its team covers, and a game that lands exactly on the spread (a push) scores nothing. Every game needs its spread before the week is released. */
+                againstTheSpread: boolean;
+                /** @description Contest-configuration identifier. */
+                id: string;
+                /** @description Contest that owns the configuration. */
+                contestId: string;
+                /** @description Maximum entries a Squad may create. Null means unlimited. */
+                maxEntriesPerSquad?: number | null;
+            } | {
+                /** @enum {string} */
+                selectionType: "SQUARES";
+                /** @description How many boxes one entry may claim. A squares contest takes one entry per squad, so this is the cap per squad. It can change until the digits are drawn; lowering it takes no box away. */
+                maxSquaresPerEntry: number;
+                /** @description Contest-configuration identifier. */
+                id: string;
+                /** @description Contest that owns the configuration. */
+                contestId: string;
+                /** @description Maximum entries a Squad may create. Null means unlimited. */
+                maxEntriesPerSquad?: number | null;
+            } | {
+                /** @enum {string} */
+                selectionType: "SURVIVOR";
+                /** @description How many weeks an entry can lose before it is out (#1754): 1 or 2. A loss, a tie or a week left unsubmitted each cost a life; with 2 the entry stays in after the first and is out at the second. Left out, 1. */
+                lives?: number;
+                /** @description Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the contest's weeks, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes. */
+                reuseTeamsOnceAllUsed?: boolean;
+                /** @description Contest-configuration identifier. */
+                id: string;
+                /** @description Contest that owns the configuration. */
+                contestId: string;
+                /** @description Maximum entries a Squad may create. Null means unlimited. */
+                maxEntriesPerSquad?: number | null;
+            } | {
+                /** @enum {string} */
+                selectionType: "BRACKET";
+                /** @description Contest-configuration identifier. */
+                id: string;
+                /** @description Contest that owns the configuration. */
+                contestId: string;
+                /** @description Maximum entries a Squad may create. Null means unlimited. */
+                maxEntriesPerSquad?: number | null;
+            };
+            /** @description The bounds and defaults of the rules the commissioner may set on the contest (#2107). */
+            rulesLimits: {
+                /** @description The most members of the field a budget entry may pick (BudgetContestRules.rosterSize). */
+                rosterSizeMax: number;
+                /** @description The most members of the field a random draw may deal one entry (RandomDrawContestRules.picksPerEntry). */
+                picksPerEntryMax: number;
+                /** @description The most boxes one squares entry may claim: the whole grid (SquaresContestRules.maxSquaresPerEntry). */
+                maxSquaresPerEntryMax: number;
+                /** @description The most lives a survivor entry may have (SurvivorContestRules.lives); the form offers 1 up to this. */
+                livesMax: number;
+                /** @description The lives a survivor entry has when the rules leave them out. */
+                livesDefault: number;
+            };
+            /** @description A budget contest's salary cap in whole dollars: the pricing of the first slot it covers holding a set (#2050), read there and never copied into the rules. Null for any other contest type, and for a budget contest whose slot is not priced yet. */
+            salaryCap: number | null;
+            /**
+             * @description How much the contest counts toward its cup and the league championship (#841): NORMAL x1, BONUS x1.5, DOUBLE x2, NOT_COUNTED not at all. Fixed once the contest is COMPLETED.
+             * @enum {string}
+             */
+            cupWeight: "NORMAL" | "BONUS" | "DOUBLE" | "NOT_COUNTED";
+            /**
+             * Format: date-time
+             * @description When the contest was created.
+             */
+            createdAt: string;
+            /**
+             * Format: date-time
+             * @description When the contest was last updated.
+             */
+            updatedAt: string;
+            /**
+             * Format: uuid
+             * @description Seeded template chosen when the contest was created, if any.
+             */
+            templateId?: string | null;
+            /** @description Schema/template version captured when the contest was created, if any. */
+            templateVersion?: number | null;
+        };
+        /** @description One slot definition a contest template covers (#2010), with the facts screens show. */
+        ContestTemplateSlotDto: {
+            /**
+             * Format: uuid
+             * @description The slot definition's id (SportLeagueCompetitionSlot).
+             */
+            id: string;
+            /** @description Its code in its league, such as WEEK_14, FINAL or MASTERS. An identifier; nothing parses it. */
+            key: string;
+            /** @description The league's proper name for the slot, such as "Super Bowl"; null: screens use the word for its kind. */
+            name: string | null;
+            /**
+             * @description What kind of slot it is: a WEEK of games, a postseason ROUND, a TOURNAMENT of its own, a PLAY_IN.
+             * @enum {string}
+             */
+            slotKind: "WEEK" | "PLAY_IN" | "ROUND_OF_64" | "ROUND_OF_32" | "ROUND_OF_16" | "QUARTERFINAL" | "SEMIFINAL" | "THIRD_PLACE" | "FINAL" | "TOURNAMENT";
+            /** @description For a WEEK slot, its week; null otherwise. */
+            weekNumber: number | null;
+            /**
+             * Format: uuid
+             * @description The competition the slot is in (#2153); a template's slots all sit in one.
+             */
+            sportLeagueCompetitionId: string;
+            /** @description That competition's code, such as REGULAR or CFP; nothing parses it. */
+            competitionCode: string;
+            /** @description That competition's place in its phase. */
+            competitionOrderIndex: number;
+            /**
+             * @description Its phase's kind: PRESEASON, REGULAR, POSTSEASON_CONFERENCE or POSTSEASON.
+             * @enum {string}
+             */
+            phase: "PRESEASON" | "REGULAR" | "POSTSEASON_CONFERENCE" | "POSTSEASON";
+            /**
+             * @description How the slot's games are contested: HEAD_TO_HEAD or FIELD.
+             * @enum {string}
+             */
+            matchFormat: "HEAD_TO_HEAD" | "FIELD";
+        };
+        /** @description Seeded commissioner-facing contest configuration template. */
+        ContestConfigTemplateDto: {
+            /**
+             * Format: uuid
+             * @description Seeded contest template identifier.
+             */
+            id: string;
+            /**
+             * Format: uuid
+             * @description Sport league this template is offered for. Every template belongs to one sport league; two leagues offering the same setup each have their own copy, with the same templateKey.
+             */
+            sportLeagueId: string;
+            /**
+             * @description How a contest from the template covers its slots (#2010): ONE_SLOT, the one slot chosen; ALL_LISTED, every listed slot of the chosen event; FROM_SLOT, the chosen slot and every later listed slot of its Season.
+             * @enum {string}
+             */
+            coverageMode: "ONE_SLOT" | "ALL_LISTED" | "FROM_SLOT";
+            /** @description The slot definitions the template covers, in play order. It is offered on an event that has a Season slot of one of them. */
+            slots: {
+                /**
+                 * Format: uuid
+                 * @description The slot definition's id (SportLeagueCompetitionSlot).
+                 */
+                id: string;
+                /** @description Its code in its league, such as WEEK_14, FINAL or MASTERS. An identifier; nothing parses it. */
+                key: string;
+                /** @description The league's proper name for the slot, such as "Super Bowl"; null: screens use the word for its kind. */
+                name: string | null;
+                /**
+                 * @description What kind of slot it is: a WEEK of games, a postseason ROUND, a TOURNAMENT of its own, a PLAY_IN.
+                 * @enum {string}
+                 */
+                slotKind: "WEEK" | "PLAY_IN" | "ROUND_OF_64" | "ROUND_OF_32" | "ROUND_OF_16" | "QUARTERFINAL" | "SEMIFINAL" | "THIRD_PLACE" | "FINAL" | "TOURNAMENT";
+                /** @description For a WEEK slot, its week; null otherwise. */
+                weekNumber: number | null;
+                /**
+                 * Format: uuid
+                 * @description The competition the slot is in (#2153); a template's slots all sit in one.
+                 */
+                sportLeagueCompetitionId: string;
+                /** @description That competition's code, such as REGULAR or CFP; nothing parses it. */
+                competitionCode: string;
+                /** @description That competition's place in its phase. */
+                competitionOrderIndex: number;
+                /**
+                 * @description Its phase's kind: PRESEASON, REGULAR, POSTSEASON_CONFERENCE or POSTSEASON.
+                 * @enum {string}
+                 */
+                phase: "PRESEASON" | "REGULAR" | "POSTSEASON_CONFERENCE" | "POSTSEASON";
+                /**
+                 * @description How the slot's games are contested: HEAD_TO_HEAD or FIELD.
+                 * @enum {string}
+                 */
+                matchFormat: "HEAD_TO_HEAD" | "FIELD";
+            }[];
+            /**
+             * @description Contest type that may use the template.
+             * @enum {string}
+             */
+            contestFormat: "ROSTER" | "PREDICTION" | "SQUARES";
+            /**
+             * @description How an entry picks in a contest created from this template.
+             * @enum {string}
+             */
+            selectionType: "TIERED" | "BUDGET_PICK" | "RANDOM_DRAW" | "PICK_EM" | "BRACKET" | "SURVIVOR" | "SQUARES";
+            /** @description Stable machine key for the template. */
+            templateKey: string;
+            /** @description Commissioner-facing template label. */
+            name: string;
+            /** @description Commissioner-facing template description. */
+            description: string;
+            /** @description Display order for template selection. */
+            sortOrder: number;
+            /** @description Whether the template should be preselected in the create flow. */
+            isDefault: boolean;
+            /** @description Whether the template is currently selectable. */
+            active: boolean;
+            /** @description Version of the configuration schema metadata expected by the template. */
+            schemaVersion: number;
+            /** @description Seeded configuration payload copied into a contest instance when the template is chosen. */
+            configuration: {
+                /** @enum {string} */
+                selectionType: "TIERED";
+                /** @description How many golfers an entry picks from each of the event's tiers. The entry's total picks is the event's tier count times this. */
+                picksPerTier: number;
+                /** @description How many golfer scores count toward the entry total, best first. At most the roster size. */
+                countedScores: number;
+                /** @description Maximum entries a Squad may create. Null means unlimited. */
+                maxEntriesPerSquad?: number | null;
+                /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring. */
+                scoring?: {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
+                    /** @description Golf to-par total settings: what an unplayed round scores against par. */
+                    config: {
+                        /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
+                        unplayedRoundToPar: number;
+                    };
+                } | {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "FINISH_POSITION_POINTS";
+                    /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
+                    config: {
+                        /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
+                        pointsTable: number[];
+                        /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
+                        didNotFinishPoints: number;
+                    };
+                } | {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
+                    /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
+                    config: {
+                        /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
+                        roundValues: number[];
+                        /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
+                        upsetBonus: {
+                            /** @enum {string} */
+                            rule: "SEED_DIFFERENCE";
+                            /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
+                            multiplier: number;
+                        } | {
+                            /** @enum {string} */
+                            rule: "NONE";
+                        };
+                    };
+                };
+            } | {
+                /** @enum {string} */
+                selectionType: "BUDGET_PICK";
+                /** @description How many golfers an entry picks, from anywhere in the field. */
+                rosterSize: number;
+                /** @description How many golfer scores count toward the entry total, best first. At most the roster size. */
+                countedScores: number;
+                /** @description Maximum entries a Squad may create. Null means unlimited. */
+                maxEntriesPerSquad?: number | null;
+                /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring. */
+                scoring?: {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
+                    /** @description Golf to-par total settings: what an unplayed round scores against par. */
+                    config: {
+                        /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
+                        unplayedRoundToPar: number;
+                    };
+                } | {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "FINISH_POSITION_POINTS";
+                    /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
+                    config: {
+                        /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
+                        pointsTable: number[];
+                        /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
+                        didNotFinishPoints: number;
+                    };
+                } | {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
+                    /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
+                    config: {
+                        /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
+                        roundValues: number[];
+                        /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
+                        upsetBonus: {
+                            /** @enum {string} */
+                            rule: "SEED_DIFFERENCE";
+                            /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
+                            multiplier: number;
+                        } | {
+                            /** @enum {string} */
+                            rule: "NONE";
+                        };
+                    };
+                };
+            } | {
+                /** @enum {string} */
+                selectionType: "RANDOM_DRAW";
+                /** @description How many members of the field the draw deals each entry. */
+                picksPerEntry: number;
+                /** @description How many golfer scores count toward the entry total, best first. At most the roster size. */
+                countedScores: number;
+                /** @description Maximum entries a Squad may create. Null means unlimited. */
+                maxEntriesPerSquad?: number | null;
+                /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring. */
+                scoring?: {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
+                    /** @description Golf to-par total settings: what an unplayed round scores against par. */
+                    config: {
+                        /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
+                        unplayedRoundToPar: number;
+                    };
+                } | {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "FINISH_POSITION_POINTS";
+                    /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
+                    config: {
+                        /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
+                        pointsTable: number[];
+                        /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
+                        didNotFinishPoints: number;
+                    };
+                } | {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
+                    /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
+                    config: {
+                        /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
+                        roundValues: number[];
+                        /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
+                        upsetBonus: {
+                            /** @enum {string} */
+                            rule: "SEED_DIFFERENCE";
+                            /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
+                            multiplier: number;
+                        } | {
+                            /** @enum {string} */
+                            rule: "NONE";
+                        };
+                    };
+                };
+            } | {
+                /** @enum {string} */
+                selectionType: "PICK_EM";
+                /**
+                 * @description STRAIGHT_UP: pick the winner of every game. CONFIDENCE: also give each game of a week a value from 1 to its number of games, each used once.
+                 * @enum {string}
+                 */
+                mode: "STRAIGHT_UP" | "CONFIDENCE";
+                /** @description Picks are scored against each game's spread (#720): a pick is right when its team covers, and a game that lands exactly on the spread (a push) scores nothing. Every game needs its spread before the week is released. */
+                againstTheSpread: boolean;
+                /** @description Maximum entries a Squad may create. Null means unlimited. */
+                maxEntriesPerSquad?: number | null;
+                /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring. */
+                scoring?: {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
+                    /** @description Golf to-par total settings: what an unplayed round scores against par. */
+                    config: {
+                        /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
+                        unplayedRoundToPar: number;
+                    };
+                } | {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "FINISH_POSITION_POINTS";
+                    /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
+                    config: {
+                        /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
+                        pointsTable: number[];
+                        /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
+                        didNotFinishPoints: number;
+                    };
+                } | {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
+                    /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
+                    config: {
+                        /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
+                        roundValues: number[];
+                        /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
+                        upsetBonus: {
+                            /** @enum {string} */
+                            rule: "SEED_DIFFERENCE";
+                            /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
+                            multiplier: number;
+                        } | {
+                            /** @enum {string} */
+                            rule: "NONE";
+                        };
+                    };
+                };
+            } | {
+                /** @enum {string} */
+                selectionType: "SQUARES";
+                /** @description How many boxes one entry may claim. A squares contest takes one entry per squad, so this is the cap per squad. It can change until the digits are drawn; lowering it takes no box away. */
+                maxSquaresPerEntry: number;
+                /** @description Maximum entries a Squad may create. Null means unlimited. */
+                maxEntriesPerSquad?: number | null;
+                /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring. */
+                scoring?: {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
+                    /** @description Golf to-par total settings: what an unplayed round scores against par. */
+                    config: {
+                        /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
+                        unplayedRoundToPar: number;
+                    };
+                } | {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "FINISH_POSITION_POINTS";
+                    /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
+                    config: {
+                        /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
+                        pointsTable: number[];
+                        /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
+                        didNotFinishPoints: number;
+                    };
+                } | {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
+                    /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
+                    config: {
+                        /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
+                        roundValues: number[];
+                        /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
+                        upsetBonus: {
+                            /** @enum {string} */
+                            rule: "SEED_DIFFERENCE";
+                            /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
+                            multiplier: number;
+                        } | {
+                            /** @enum {string} */
+                            rule: "NONE";
+                        };
+                    };
+                };
+            } | {
+                /** @enum {string} */
+                selectionType: "SURVIVOR";
+                /** @description How many weeks an entry can lose before it is out (#1754): 1 or 2. A loss, a tie or a week left unsubmitted each cost a life; with 2 the entry stays in after the first and is out at the second. Left out, 1. */
+                lives?: number;
+                /** @description Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the contest's weeks, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes. */
+                reuseTeamsOnceAllUsed?: boolean;
+                /** @description Maximum entries a Squad may create. Null means unlimited. */
+                maxEntriesPerSquad?: number | null;
+                /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring. */
+                scoring?: {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
+                    /** @description Golf to-par total settings: what an unplayed round scores against par. */
+                    config: {
+                        /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
+                        unplayedRoundToPar: number;
+                    };
+                } | {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "FINISH_POSITION_POINTS";
+                    /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
+                    config: {
+                        /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
+                        pointsTable: number[];
+                        /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
+                        didNotFinishPoints: number;
+                    };
+                } | {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
+                    /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
+                    config: {
+                        /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
+                        roundValues: number[];
+                        /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
+                        upsetBonus: {
+                            /** @enum {string} */
+                            rule: "SEED_DIFFERENCE";
+                            /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
+                            multiplier: number;
+                        } | {
+                            /** @enum {string} */
+                            rule: "NONE";
+                        };
+                    };
+                };
+            } | {
+                /** @enum {string} */
+                selectionType: "BRACKET";
+                /** @description Maximum entries a Squad may create. Null means unlimited. */
+                maxEntriesPerSquad?: number | null;
+                /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring. */
+                scoring?: {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
+                    /** @description Golf to-par total settings: what an unplayed round scores against par. */
+                    config: {
+                        /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
+                        unplayedRoundToPar: number;
+                    };
+                } | {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "FINISH_POSITION_POINTS";
+                    /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
+                    config: {
+                        /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
+                        pointsTable: number[];
+                        /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
+                        didNotFinishPoints: number;
+                    };
+                } | {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
+                    /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
+                    config: {
+                        /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
+                        roundValues: number[];
+                        /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
+                        upsetBonus: {
+                            /** @enum {string} */
+                            rule: "SEED_DIFFERENCE";
+                            /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
+                            multiplier: number;
+                        } | {
+                            /** @enum {string} */
+                            rule: "NONE";
+                        };
+                    };
+                };
+            };
+            /** @description The bounds and defaults of the rules a contest from the template may set (#2107). */
+            rulesLimits: {
+                /** @description The most members of the field a budget entry may pick (BudgetContestRules.rosterSize). */
+                rosterSizeMax: number;
+                /** @description The most members of the field a random draw may deal one entry (RandomDrawContestRules.picksPerEntry). */
+                picksPerEntryMax: number;
+                /** @description The most boxes one squares entry may claim: the whole grid (SquaresContestRules.maxSquaresPerEntry). */
+                maxSquaresPerEntryMax: number;
+                /** @description The most lives a survivor entry may have (SurvivorContestRules.lives); the form offers 1 up to this. */
+                livesMax: number;
+                /** @description The lives a survivor entry has when the rules leave them out. */
+                livesDefault: number;
+            };
+        };
+        /** @description Managed-contest detail response. */
+        ContestManagementResponse: {
+            /** @description Golf-first contest-management detail returned to commissioner tooling. */
+            contest: {
+                /** @description Contest identifier. */
+                id: string;
+                /** @description League that owns the contest. */
+                leagueId: string;
+                /** @description The events the contest covers, in sequence order (#713), each with its inherited tiers. */
+                sportEvents: {
+                    /** @description One event the contest covers. */
+                    sportEventId: string;
+                    /** @description Read-only tier structure a tiered contest inherits from this event (plans/124 §4.6/§5.3). Empty when the event has no tiers defined yet, and always empty for any other format, which does not pick by tier. Never contest-configured. */
+                    effectiveTiers: {
+                        /** @description Stable per-event tier key. */
+                        tierKey: string;
+                        /** @description 1-based tier ordering. */
+                        tierNumber: number;
+                        /** @description Participants assigned to this tier, ordered by tierOrderIndex ascending. */
+                        assignments: {
+                            /** @description Field entry the assignment belongs to. */
+                            sportEventParticipantId: string;
+                            /** @description Global participant identity. */
+                            participantId: string;
+                            /** @description Within-tier ordering position; null when the participant has no explicit order. */
+                            tierOrderIndex: number | null;
+                            /** @description Per-participant budget price when the event defines one; null otherwise. */
+                            price: number | null;
+                        }[];
+                    }[];
+                    /** @description The picks per tier the tiered contest may take on these tiers (#2107), as on SportEventDto.tieredRosterChoices. Empty for any other format, and while the tiers are not all filled. */
+                    tieredRosterChoices: {
+                        /** @description Picks an entry takes from each tier. */
+                        picksPerTier: number;
+                        /** @description The entry's roster at this picks per tier: the tier count times it. */
+                        rosterSize: number;
+                        /** @description The scores that count a tiered contest starts with at this picks per tier. */
+                        countedScoresDefault: number;
+                    }[];
+                }[];
+                /** @description Contest display name. */
+                name: string;
+                /** @enum {string} */
+                status: "DRAFT" | "OPEN" | "ACTIVE" | "COMPLETED";
+                /** @description Current commissioner-managed contest configuration. */
+                configuration: {
+                    /** @enum {string} */
+                    selectionType: "TIERED";
+                    /** @description How many golfers an entry picks from each of the event's tiers. The entry's total picks is the event's tier count times this. */
+                    picksPerTier: number;
+                    /** @description How many golfer scores count toward the entry total, best first. At most the roster size. */
+                    countedScores: number;
+                    /** @description Contest-configuration identifier. */
+                    id: string;
+                    /** @description Contest that owns the configuration. */
+                    contestId: string;
+                    /** @description Maximum entries a Squad may create. Null means unlimited. */
+                    maxEntriesPerSquad?: number | null;
+                } | {
+                    /** @enum {string} */
+                    selectionType: "BUDGET_PICK";
+                    /** @description How many golfers an entry picks, from anywhere in the field. */
+                    rosterSize: number;
+                    /** @description How many golfer scores count toward the entry total, best first. At most the roster size. */
+                    countedScores: number;
+                    /** @description Contest-configuration identifier. */
+                    id: string;
+                    /** @description Contest that owns the configuration. */
+                    contestId: string;
+                    /** @description Maximum entries a Squad may create. Null means unlimited. */
+                    maxEntriesPerSquad?: number | null;
+                } | {
+                    /** @enum {string} */
+                    selectionType: "RANDOM_DRAW";
+                    /** @description How many members of the field the draw deals each entry. */
+                    picksPerEntry: number;
+                    /** @description How many golfer scores count toward the entry total, best first. At most the roster size. */
+                    countedScores: number;
+                    /** @description Contest-configuration identifier. */
+                    id: string;
+                    /** @description Contest that owns the configuration. */
+                    contestId: string;
+                    /** @description Maximum entries a Squad may create. Null means unlimited. */
+                    maxEntriesPerSquad?: number | null;
+                } | {
+                    /** @enum {string} */
+                    selectionType: "PICK_EM";
+                    /**
+                     * @description STRAIGHT_UP: pick the winner of every game. CONFIDENCE: also give each game of a week a value from 1 to its number of games, each used once.
+                     * @enum {string}
+                     */
+                    mode: "STRAIGHT_UP" | "CONFIDENCE";
+                    /** @description Picks are scored against each game's spread (#720): a pick is right when its team covers, and a game that lands exactly on the spread (a push) scores nothing. Every game needs its spread before the week is released. */
+                    againstTheSpread: boolean;
+                    /** @description Contest-configuration identifier. */
+                    id: string;
+                    /** @description Contest that owns the configuration. */
+                    contestId: string;
+                    /** @description Maximum entries a Squad may create. Null means unlimited. */
+                    maxEntriesPerSquad?: number | null;
+                } | {
+                    /** @enum {string} */
+                    selectionType: "SQUARES";
+                    /** @description How many boxes one entry may claim. A squares contest takes one entry per squad, so this is the cap per squad. It can change until the digits are drawn; lowering it takes no box away. */
+                    maxSquaresPerEntry: number;
+                    /** @description Contest-configuration identifier. */
+                    id: string;
+                    /** @description Contest that owns the configuration. */
+                    contestId: string;
+                    /** @description Maximum entries a Squad may create. Null means unlimited. */
+                    maxEntriesPerSquad?: number | null;
+                } | {
+                    /** @enum {string} */
+                    selectionType: "SURVIVOR";
+                    /** @description How many weeks an entry can lose before it is out (#1754): 1 or 2. A loss, a tie or a week left unsubmitted each cost a life; with 2 the entry stays in after the first and is out at the second. Left out, 1. */
+                    lives?: number;
+                    /** @description Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the contest's weeks, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes. */
+                    reuseTeamsOnceAllUsed?: boolean;
+                    /** @description Contest-configuration identifier. */
+                    id: string;
+                    /** @description Contest that owns the configuration. */
+                    contestId: string;
+                    /** @description Maximum entries a Squad may create. Null means unlimited. */
+                    maxEntriesPerSquad?: number | null;
+                } | {
+                    /** @enum {string} */
+                    selectionType: "BRACKET";
+                    /** @description Contest-configuration identifier. */
+                    id: string;
+                    /** @description Contest that owns the configuration. */
+                    contestId: string;
+                    /** @description Maximum entries a Squad may create. Null means unlimited. */
+                    maxEntriesPerSquad?: number | null;
+                };
+                /** @description The bounds and defaults of the rules the commissioner may set on the contest (#2107). */
+                rulesLimits: {
+                    /** @description The most members of the field a budget entry may pick (BudgetContestRules.rosterSize). */
+                    rosterSizeMax: number;
+                    /** @description The most members of the field a random draw may deal one entry (RandomDrawContestRules.picksPerEntry). */
+                    picksPerEntryMax: number;
+                    /** @description The most boxes one squares entry may claim: the whole grid (SquaresContestRules.maxSquaresPerEntry). */
+                    maxSquaresPerEntryMax: number;
+                    /** @description The most lives a survivor entry may have (SurvivorContestRules.lives); the form offers 1 up to this. */
+                    livesMax: number;
+                    /** @description The lives a survivor entry has when the rules leave them out. */
+                    livesDefault: number;
+                };
+                /** @description A budget contest's salary cap in whole dollars: the pricing of the first slot it covers holding a set (#2050), read there and never copied into the rules. Null for any other contest type, and for a budget contest whose slot is not priced yet. */
+                salaryCap: number | null;
+                /**
+                 * @description How much the contest counts toward its cup and the league championship (#841): NORMAL x1, BONUS x1.5, DOUBLE x2, NOT_COUNTED not at all. Fixed once the contest is COMPLETED.
+                 * @enum {string}
+                 */
+                cupWeight: "NORMAL" | "BONUS" | "DOUBLE" | "NOT_COUNTED";
+                /**
+                 * Format: date-time
+                 * @description When the contest was created.
+                 */
+                createdAt: string;
+                /**
+                 * Format: date-time
+                 * @description When the contest was last updated.
+                 */
+                updatedAt: string;
+                /**
+                 * Format: uuid
+                 * @description Seeded template chosen when the contest was created, if any.
+                 */
+                templateId?: string | null;
+                /** @description Schema/template version captured when the contest was created, if any. */
+                templateVersion?: number | null;
+            };
+        };
+        /** @description Filters for listing contest configuration templates. Every filter is optional. */
+        ListContestConfigTemplatesQuery: {
+            /**
+             * Format: uuid
+             * @description Only this sport league's templates; never another league's. Omitted: every template regardless of league. The create flow passes the chosen event's sport league.
+             */
+            sportLeagueId?: string;
+            /** @description Only templates covering one of these slot definitions (#2010): repeat the parameter for several. The create flow passes the chosen event's (SportEventDto.slotDefinitionIds). */
+            slotDefinitionIds?: string[];
+            /** @description Only active (true) or inactive (false) templates. Omitted: both. The create flow asks for active ones. */
+            active?: boolean;
+        };
+        /** @description Available seeded contest templates for commissioner create flow. */
+        ContestConfigTemplateListResponse: {
+            templates: {
+                /**
+                 * Format: uuid
+                 * @description Seeded contest template identifier.
+                 */
+                id: string;
+                /**
+                 * Format: uuid
+                 * @description Sport league this template is offered for. Every template belongs to one sport league; two leagues offering the same setup each have their own copy, with the same templateKey.
+                 */
+                sportLeagueId: string;
+                /**
+                 * @description How a contest from the template covers its slots (#2010): ONE_SLOT, the one slot chosen; ALL_LISTED, every listed slot of the chosen event; FROM_SLOT, the chosen slot and every later listed slot of its Season.
+                 * @enum {string}
+                 */
+                coverageMode: "ONE_SLOT" | "ALL_LISTED" | "FROM_SLOT";
+                /** @description The slot definitions the template covers, in play order. It is offered on an event that has a Season slot of one of them. */
+                slots: {
+                    /**
+                     * Format: uuid
+                     * @description The slot definition's id (SportLeagueCompetitionSlot).
+                     */
+                    id: string;
+                    /** @description Its code in its league, such as WEEK_14, FINAL or MASTERS. An identifier; nothing parses it. */
+                    key: string;
+                    /** @description The league's proper name for the slot, such as "Super Bowl"; null: screens use the word for its kind. */
+                    name: string | null;
+                    /**
+                     * @description What kind of slot it is: a WEEK of games, a postseason ROUND, a TOURNAMENT of its own, a PLAY_IN.
+                     * @enum {string}
+                     */
+                    slotKind: "WEEK" | "PLAY_IN" | "ROUND_OF_64" | "ROUND_OF_32" | "ROUND_OF_16" | "QUARTERFINAL" | "SEMIFINAL" | "THIRD_PLACE" | "FINAL" | "TOURNAMENT";
+                    /** @description For a WEEK slot, its week; null otherwise. */
+                    weekNumber: number | null;
+                    /**
+                     * Format: uuid
+                     * @description The competition the slot is in (#2153); a template's slots all sit in one.
+                     */
+                    sportLeagueCompetitionId: string;
+                    /** @description That competition's code, such as REGULAR or CFP; nothing parses it. */
+                    competitionCode: string;
+                    /** @description That competition's place in its phase. */
+                    competitionOrderIndex: number;
+                    /**
+                     * @description Its phase's kind: PRESEASON, REGULAR, POSTSEASON_CONFERENCE or POSTSEASON.
+                     * @enum {string}
+                     */
+                    phase: "PRESEASON" | "REGULAR" | "POSTSEASON_CONFERENCE" | "POSTSEASON";
+                    /**
+                     * @description How the slot's games are contested: HEAD_TO_HEAD or FIELD.
+                     * @enum {string}
+                     */
+                    matchFormat: "HEAD_TO_HEAD" | "FIELD";
+                }[];
+                /**
+                 * @description Contest type that may use the template.
+                 * @enum {string}
+                 */
+                contestFormat: "ROSTER" | "PREDICTION" | "SQUARES";
+                /**
+                 * @description How an entry picks in a contest created from this template.
+                 * @enum {string}
+                 */
+                selectionType: "TIERED" | "BUDGET_PICK" | "RANDOM_DRAW" | "PICK_EM" | "BRACKET" | "SURVIVOR" | "SQUARES";
+                /** @description Stable machine key for the template. */
+                templateKey: string;
+                /** @description Commissioner-facing template label. */
+                name: string;
+                /** @description Commissioner-facing template description. */
+                description: string;
+                /** @description Display order for template selection. */
+                sortOrder: number;
+                /** @description Whether the template should be preselected in the create flow. */
+                isDefault: boolean;
+                /** @description Whether the template is currently selectable. */
+                active: boolean;
+                /** @description Version of the configuration schema metadata expected by the template. */
+                schemaVersion: number;
+                /** @description Seeded configuration payload copied into a contest instance when the template is chosen. */
+                configuration: {
+                    /** @enum {string} */
+                    selectionType: "TIERED";
+                    /** @description How many golfers an entry picks from each of the event's tiers. The entry's total picks is the event's tier count times this. */
+                    picksPerTier: number;
+                    /** @description How many golfer scores count toward the entry total, best first. At most the roster size. */
+                    countedScores: number;
+                    /** @description Maximum entries a Squad may create. Null means unlimited. */
+                    maxEntriesPerSquad?: number | null;
+                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring. */
+                    scoring?: {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
+                        /** @description Golf to-par total settings: what an unplayed round scores against par. */
+                        config: {
+                            /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
+                            unplayedRoundToPar: number;
+                        };
+                    } | {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "FINISH_POSITION_POINTS";
+                        /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
+                        config: {
+                            /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
+                            pointsTable: number[];
+                            /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
+                            didNotFinishPoints: number;
+                        };
+                    } | {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
+                        /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
+                        config: {
+                            /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
+                            roundValues: number[];
+                            /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
+                            upsetBonus: {
+                                /** @enum {string} */
+                                rule: "SEED_DIFFERENCE";
+                                /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
+                                multiplier: number;
+                            } | {
+                                /** @enum {string} */
+                                rule: "NONE";
+                            };
+                        };
+                    };
+                } | {
+                    /** @enum {string} */
+                    selectionType: "BUDGET_PICK";
+                    /** @description How many golfers an entry picks, from anywhere in the field. */
+                    rosterSize: number;
+                    /** @description How many golfer scores count toward the entry total, best first. At most the roster size. */
+                    countedScores: number;
+                    /** @description Maximum entries a Squad may create. Null means unlimited. */
+                    maxEntriesPerSquad?: number | null;
+                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring. */
+                    scoring?: {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
+                        /** @description Golf to-par total settings: what an unplayed round scores against par. */
+                        config: {
+                            /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
+                            unplayedRoundToPar: number;
+                        };
+                    } | {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "FINISH_POSITION_POINTS";
+                        /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
+                        config: {
+                            /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
+                            pointsTable: number[];
+                            /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
+                            didNotFinishPoints: number;
+                        };
+                    } | {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
+                        /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
+                        config: {
+                            /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
+                            roundValues: number[];
+                            /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
+                            upsetBonus: {
+                                /** @enum {string} */
+                                rule: "SEED_DIFFERENCE";
+                                /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
+                                multiplier: number;
+                            } | {
+                                /** @enum {string} */
+                                rule: "NONE";
+                            };
+                        };
+                    };
+                } | {
+                    /** @enum {string} */
+                    selectionType: "RANDOM_DRAW";
+                    /** @description How many members of the field the draw deals each entry. */
+                    picksPerEntry: number;
+                    /** @description How many golfer scores count toward the entry total, best first. At most the roster size. */
+                    countedScores: number;
+                    /** @description Maximum entries a Squad may create. Null means unlimited. */
+                    maxEntriesPerSquad?: number | null;
+                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring. */
+                    scoring?: {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
+                        /** @description Golf to-par total settings: what an unplayed round scores against par. */
+                        config: {
+                            /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
+                            unplayedRoundToPar: number;
+                        };
+                    } | {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "FINISH_POSITION_POINTS";
+                        /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
+                        config: {
+                            /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
+                            pointsTable: number[];
+                            /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
+                            didNotFinishPoints: number;
+                        };
+                    } | {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
+                        /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
+                        config: {
+                            /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
+                            roundValues: number[];
+                            /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
+                            upsetBonus: {
+                                /** @enum {string} */
+                                rule: "SEED_DIFFERENCE";
+                                /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
+                                multiplier: number;
+                            } | {
+                                /** @enum {string} */
+                                rule: "NONE";
+                            };
+                        };
+                    };
+                } | {
+                    /** @enum {string} */
+                    selectionType: "PICK_EM";
+                    /**
+                     * @description STRAIGHT_UP: pick the winner of every game. CONFIDENCE: also give each game of a week a value from 1 to its number of games, each used once.
+                     * @enum {string}
+                     */
+                    mode: "STRAIGHT_UP" | "CONFIDENCE";
+                    /** @description Picks are scored against each game's spread (#720): a pick is right when its team covers, and a game that lands exactly on the spread (a push) scores nothing. Every game needs its spread before the week is released. */
+                    againstTheSpread: boolean;
+                    /** @description Maximum entries a Squad may create. Null means unlimited. */
+                    maxEntriesPerSquad?: number | null;
+                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring. */
+                    scoring?: {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
+                        /** @description Golf to-par total settings: what an unplayed round scores against par. */
+                        config: {
+                            /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
+                            unplayedRoundToPar: number;
+                        };
+                    } | {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "FINISH_POSITION_POINTS";
+                        /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
+                        config: {
+                            /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
+                            pointsTable: number[];
+                            /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
+                            didNotFinishPoints: number;
+                        };
+                    } | {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
+                        /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
+                        config: {
+                            /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
+                            roundValues: number[];
+                            /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
+                            upsetBonus: {
+                                /** @enum {string} */
+                                rule: "SEED_DIFFERENCE";
+                                /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
+                                multiplier: number;
+                            } | {
+                                /** @enum {string} */
+                                rule: "NONE";
+                            };
+                        };
+                    };
+                } | {
+                    /** @enum {string} */
+                    selectionType: "SQUARES";
+                    /** @description How many boxes one entry may claim. A squares contest takes one entry per squad, so this is the cap per squad. It can change until the digits are drawn; lowering it takes no box away. */
+                    maxSquaresPerEntry: number;
+                    /** @description Maximum entries a Squad may create. Null means unlimited. */
+                    maxEntriesPerSquad?: number | null;
+                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring. */
+                    scoring?: {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
+                        /** @description Golf to-par total settings: what an unplayed round scores against par. */
+                        config: {
+                            /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
+                            unplayedRoundToPar: number;
+                        };
+                    } | {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "FINISH_POSITION_POINTS";
+                        /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
+                        config: {
+                            /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
+                            pointsTable: number[];
+                            /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
+                            didNotFinishPoints: number;
+                        };
+                    } | {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
+                        /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
+                        config: {
+                            /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
+                            roundValues: number[];
+                            /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
+                            upsetBonus: {
+                                /** @enum {string} */
+                                rule: "SEED_DIFFERENCE";
+                                /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
+                                multiplier: number;
+                            } | {
+                                /** @enum {string} */
+                                rule: "NONE";
+                            };
+                        };
+                    };
+                } | {
+                    /** @enum {string} */
+                    selectionType: "SURVIVOR";
+                    /** @description How many weeks an entry can lose before it is out (#1754): 1 or 2. A loss, a tie or a week left unsubmitted each cost a life; with 2 the entry stays in after the first and is out at the second. Left out, 1. */
+                    lives?: number;
+                    /** @description Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the contest's weeks, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes. */
+                    reuseTeamsOnceAllUsed?: boolean;
+                    /** @description Maximum entries a Squad may create. Null means unlimited. */
+                    maxEntriesPerSquad?: number | null;
+                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring. */
+                    scoring?: {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
+                        /** @description Golf to-par total settings: what an unplayed round scores against par. */
+                        config: {
+                            /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
+                            unplayedRoundToPar: number;
+                        };
+                    } | {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "FINISH_POSITION_POINTS";
+                        /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
+                        config: {
+                            /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
+                            pointsTable: number[];
+                            /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
+                            didNotFinishPoints: number;
+                        };
+                    } | {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
+                        /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
+                        config: {
+                            /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
+                            roundValues: number[];
+                            /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
+                            upsetBonus: {
+                                /** @enum {string} */
+                                rule: "SEED_DIFFERENCE";
+                                /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
+                                multiplier: number;
+                            } | {
+                                /** @enum {string} */
+                                rule: "NONE";
+                            };
+                        };
+                    };
+                } | {
+                    /** @enum {string} */
+                    selectionType: "BRACKET";
+                    /** @description Maximum entries a Squad may create. Null means unlimited. */
+                    maxEntriesPerSquad?: number | null;
+                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring. */
+                    scoring?: {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
+                        /** @description Golf to-par total settings: what an unplayed round scores against par. */
+                        config: {
+                            /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
+                            unplayedRoundToPar: number;
+                        };
+                    } | {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "FINISH_POSITION_POINTS";
+                        /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
+                        config: {
+                            /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
+                            pointsTable: number[];
+                            /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
+                            didNotFinishPoints: number;
+                        };
+                    } | {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
+                        /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
+                        config: {
+                            /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
+                            roundValues: number[];
+                            /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
+                            upsetBonus: {
+                                /** @enum {string} */
+                                rule: "SEED_DIFFERENCE";
+                                /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
+                                multiplier: number;
+                            } | {
+                                /** @enum {string} */
+                                rule: "NONE";
+                            };
+                        };
+                    };
+                };
+                /** @description The bounds and defaults of the rules a contest from the template may set (#2107). */
+                rulesLimits: {
+                    /** @description The most members of the field a budget entry may pick (BudgetContestRules.rosterSize). */
+                    rosterSizeMax: number;
+                    /** @description The most members of the field a random draw may deal one entry (RandomDrawContestRules.picksPerEntry). */
+                    picksPerEntryMax: number;
+                    /** @description The most boxes one squares entry may claim: the whole grid (SquaresContestRules.maxSquaresPerEntry). */
+                    maxSquaresPerEntryMax: number;
+                    /** @description The most lives a survivor entry may have (SurvivorContestRules.lives); the form offers 1 up to this. */
+                    livesMax: number;
+                    /** @description The lives a survivor entry has when the rules leave them out. */
+                    livesDefault: number;
+                };
+            }[];
+        };
+        /** @description Contest template update payload. Every field optional; at least one is required. */
+        UpdateContestConfigTemplateRequest: {
+            /** @description Updated template display name. */
+            name?: string;
+            /** @description Updated template description. */
+            description?: string;
+            /** @description Updated sort order for the template within its create-flow group. */
+            sortOrder?: number;
+            /** @description Whether this template should be the default choice for future create flows of its sport league and selection type. Setting it unsets the one that was the default. */
+            isDefault?: boolean;
+            /** @description Whether commissioners can select this template in future create flows. */
+            active?: boolean;
+            /** @description Updated persisted configuration payload copied into future contests when this template is selected. */
+            configuration?: {
+                /** @enum {string} */
+                selectionType: "TIERED";
+                /** @description How many golfers an entry picks from each of the event's tiers. The entry's total picks is the event's tier count times this. */
+                picksPerTier: number;
+                /** @description How many golfer scores count toward the entry total, best first. At most the roster size. */
+                countedScores: number;
+                /** @description Maximum entries a Squad may create. Null means unlimited. */
+                maxEntriesPerSquad?: number | null;
+                /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring. */
+                scoring?: {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
+                    /** @description Golf to-par total settings: what an unplayed round scores against par. */
+                    config: {
+                        /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
+                        unplayedRoundToPar: number;
+                    };
+                } | {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "FINISH_POSITION_POINTS";
+                    /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
+                    config: {
+                        /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
+                        pointsTable: number[];
+                        /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
+                        didNotFinishPoints: number;
+                    };
+                } | {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
+                    /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
+                    config: {
+                        /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
+                        roundValues: number[];
+                        /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
+                        upsetBonus: {
+                            /** @enum {string} */
+                            rule: "SEED_DIFFERENCE";
+                            /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
+                            multiplier: number;
+                        } | {
+                            /** @enum {string} */
+                            rule: "NONE";
+                        };
+                    };
+                };
+            } | {
+                /** @enum {string} */
+                selectionType: "BUDGET_PICK";
+                /** @description How many golfers an entry picks, from anywhere in the field. */
+                rosterSize: number;
+                /** @description How many golfer scores count toward the entry total, best first. At most the roster size. */
+                countedScores: number;
+                /** @description Maximum entries a Squad may create. Null means unlimited. */
+                maxEntriesPerSquad?: number | null;
+                /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring. */
+                scoring?: {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
+                    /** @description Golf to-par total settings: what an unplayed round scores against par. */
+                    config: {
+                        /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
+                        unplayedRoundToPar: number;
+                    };
+                } | {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "FINISH_POSITION_POINTS";
+                    /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
+                    config: {
+                        /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
+                        pointsTable: number[];
+                        /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
+                        didNotFinishPoints: number;
+                    };
+                } | {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
+                    /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
+                    config: {
+                        /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
+                        roundValues: number[];
+                        /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
+                        upsetBonus: {
+                            /** @enum {string} */
+                            rule: "SEED_DIFFERENCE";
+                            /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
+                            multiplier: number;
+                        } | {
+                            /** @enum {string} */
+                            rule: "NONE";
+                        };
+                    };
+                };
+            } | {
+                /** @enum {string} */
+                selectionType: "RANDOM_DRAW";
+                /** @description How many members of the field the draw deals each entry. */
+                picksPerEntry: number;
+                /** @description How many golfer scores count toward the entry total, best first. At most the roster size. */
+                countedScores: number;
+                /** @description Maximum entries a Squad may create. Null means unlimited. */
+                maxEntriesPerSquad?: number | null;
+                /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring. */
+                scoring?: {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
+                    /** @description Golf to-par total settings: what an unplayed round scores against par. */
+                    config: {
+                        /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
+                        unplayedRoundToPar: number;
+                    };
+                } | {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "FINISH_POSITION_POINTS";
+                    /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
+                    config: {
+                        /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
+                        pointsTable: number[];
+                        /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
+                        didNotFinishPoints: number;
+                    };
+                } | {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
+                    /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
+                    config: {
+                        /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
+                        roundValues: number[];
+                        /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
+                        upsetBonus: {
+                            /** @enum {string} */
+                            rule: "SEED_DIFFERENCE";
+                            /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
+                            multiplier: number;
+                        } | {
+                            /** @enum {string} */
+                            rule: "NONE";
+                        };
+                    };
+                };
+            } | {
+                /** @enum {string} */
+                selectionType: "PICK_EM";
+                /**
+                 * @description STRAIGHT_UP: pick the winner of every game. CONFIDENCE: also give each game of a week a value from 1 to its number of games, each used once.
+                 * @enum {string}
+                 */
+                mode: "STRAIGHT_UP" | "CONFIDENCE";
+                /** @description Picks are scored against each game's spread (#720): a pick is right when its team covers, and a game that lands exactly on the spread (a push) scores nothing. Every game needs its spread before the week is released. */
+                againstTheSpread: boolean;
+                /** @description Maximum entries a Squad may create. Null means unlimited. */
+                maxEntriesPerSquad?: number | null;
+                /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring. */
+                scoring?: {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
+                    /** @description Golf to-par total settings: what an unplayed round scores against par. */
+                    config: {
+                        /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
+                        unplayedRoundToPar: number;
+                    };
+                } | {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "FINISH_POSITION_POINTS";
+                    /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
+                    config: {
+                        /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
+                        pointsTable: number[];
+                        /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
+                        didNotFinishPoints: number;
+                    };
+                } | {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
+                    /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
+                    config: {
+                        /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
+                        roundValues: number[];
+                        /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
+                        upsetBonus: {
+                            /** @enum {string} */
+                            rule: "SEED_DIFFERENCE";
+                            /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
+                            multiplier: number;
+                        } | {
+                            /** @enum {string} */
+                            rule: "NONE";
+                        };
+                    };
+                };
+            } | {
+                /** @enum {string} */
+                selectionType: "SQUARES";
+                /** @description How many boxes one entry may claim. A squares contest takes one entry per squad, so this is the cap per squad. It can change until the digits are drawn; lowering it takes no box away. */
+                maxSquaresPerEntry: number;
+                /** @description Maximum entries a Squad may create. Null means unlimited. */
+                maxEntriesPerSquad?: number | null;
+                /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring. */
+                scoring?: {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
+                    /** @description Golf to-par total settings: what an unplayed round scores against par. */
+                    config: {
+                        /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
+                        unplayedRoundToPar: number;
+                    };
+                } | {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "FINISH_POSITION_POINTS";
+                    /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
+                    config: {
+                        /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
+                        pointsTable: number[];
+                        /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
+                        didNotFinishPoints: number;
+                    };
+                } | {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
+                    /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
+                    config: {
+                        /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
+                        roundValues: number[];
+                        /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
+                        upsetBonus: {
+                            /** @enum {string} */
+                            rule: "SEED_DIFFERENCE";
+                            /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
+                            multiplier: number;
+                        } | {
+                            /** @enum {string} */
+                            rule: "NONE";
+                        };
+                    };
+                };
+            } | {
+                /** @enum {string} */
+                selectionType: "SURVIVOR";
+                /** @description How many weeks an entry can lose before it is out (#1754): 1 or 2. A loss, a tie or a week left unsubmitted each cost a life; with 2 the entry stays in after the first and is out at the second. Left out, 1. */
+                lives?: number;
+                /** @description Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the contest's weeks, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes. */
+                reuseTeamsOnceAllUsed?: boolean;
+                /** @description Maximum entries a Squad may create. Null means unlimited. */
+                maxEntriesPerSquad?: number | null;
+                /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring. */
+                scoring?: {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
+                    /** @description Golf to-par total settings: what an unplayed round scores against par. */
+                    config: {
+                        /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
+                        unplayedRoundToPar: number;
+                    };
+                } | {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "FINISH_POSITION_POINTS";
+                    /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
+                    config: {
+                        /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
+                        pointsTable: number[];
+                        /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
+                        didNotFinishPoints: number;
+                    };
+                } | {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
+                    /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
+                    config: {
+                        /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
+                        roundValues: number[];
+                        /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
+                        upsetBonus: {
+                            /** @enum {string} */
+                            rule: "SEED_DIFFERENCE";
+                            /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
+                            multiplier: number;
+                        } | {
+                            /** @enum {string} */
+                            rule: "NONE";
+                        };
+                    };
+                };
+            } | {
+                /** @enum {string} */
+                selectionType: "BRACKET";
+                /** @description Maximum entries a Squad may create. Null means unlimited. */
+                maxEntriesPerSquad?: number | null;
+                /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring. */
+                scoring?: {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
+                    /** @description Golf to-par total settings: what an unplayed round scores against par. */
+                    config: {
+                        /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
+                        unplayedRoundToPar: number;
+                    };
+                } | {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "FINISH_POSITION_POINTS";
+                    /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
+                    config: {
+                        /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
+                        pointsTable: number[];
+                        /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
+                        didNotFinishPoints: number;
+                    };
+                } | {
+                    /** @enum {string} */
+                    participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
+                    /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
+                    config: {
+                        /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
+                        roundValues: number[];
+                        /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
+                        upsetBonus: {
+                            /** @enum {string} */
+                            rule: "SEED_DIFFERENCE";
+                            /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
+                            multiplier: number;
+                        } | {
+                            /** @enum {string} */
+                            rule: "NONE";
+                        };
+                    };
+                };
+            };
+            /**
+             * @description How future contests from the template cover its slots (#2010). Refused when the listed slots do not fit it: ALL_LISTED needs one event's slots.
+             * @enum {string}
+             */
+            coverageMode?: "ONE_SLOT" | "ALL_LISTED" | "FROM_SLOT";
+            /** @description The slot definitions the template covers from now on, each of its own sport league (#2010). Contests already made keep the slots they copied. A bracket lists only knockout slots. */
+            slotDefinitionIds?: string[];
+        };
+        /** @description A single contest configuration template. */
+        ContestConfigTemplateResponse: {
+            /** @description Seeded commissioner-facing contest configuration template. */
+            template: {
+                /**
+                 * Format: uuid
+                 * @description Seeded contest template identifier.
+                 */
+                id: string;
+                /**
+                 * Format: uuid
+                 * @description Sport league this template is offered for. Every template belongs to one sport league; two leagues offering the same setup each have their own copy, with the same templateKey.
+                 */
+                sportLeagueId: string;
+                /**
+                 * @description How a contest from the template covers its slots (#2010): ONE_SLOT, the one slot chosen; ALL_LISTED, every listed slot of the chosen event; FROM_SLOT, the chosen slot and every later listed slot of its Season.
+                 * @enum {string}
+                 */
+                coverageMode: "ONE_SLOT" | "ALL_LISTED" | "FROM_SLOT";
+                /** @description The slot definitions the template covers, in play order. It is offered on an event that has a Season slot of one of them. */
+                slots: {
+                    /**
+                     * Format: uuid
+                     * @description The slot definition's id (SportLeagueCompetitionSlot).
+                     */
+                    id: string;
+                    /** @description Its code in its league, such as WEEK_14, FINAL or MASTERS. An identifier; nothing parses it. */
+                    key: string;
+                    /** @description The league's proper name for the slot, such as "Super Bowl"; null: screens use the word for its kind. */
+                    name: string | null;
+                    /**
+                     * @description What kind of slot it is: a WEEK of games, a postseason ROUND, a TOURNAMENT of its own, a PLAY_IN.
+                     * @enum {string}
+                     */
+                    slotKind: "WEEK" | "PLAY_IN" | "ROUND_OF_64" | "ROUND_OF_32" | "ROUND_OF_16" | "QUARTERFINAL" | "SEMIFINAL" | "THIRD_PLACE" | "FINAL" | "TOURNAMENT";
+                    /** @description For a WEEK slot, its week; null otherwise. */
+                    weekNumber: number | null;
+                    /**
+                     * Format: uuid
+                     * @description The competition the slot is in (#2153); a template's slots all sit in one.
+                     */
+                    sportLeagueCompetitionId: string;
+                    /** @description That competition's code, such as REGULAR or CFP; nothing parses it. */
+                    competitionCode: string;
+                    /** @description That competition's place in its phase. */
+                    competitionOrderIndex: number;
+                    /**
+                     * @description Its phase's kind: PRESEASON, REGULAR, POSTSEASON_CONFERENCE or POSTSEASON.
+                     * @enum {string}
+                     */
+                    phase: "PRESEASON" | "REGULAR" | "POSTSEASON_CONFERENCE" | "POSTSEASON";
+                    /**
+                     * @description How the slot's games are contested: HEAD_TO_HEAD or FIELD.
+                     * @enum {string}
+                     */
+                    matchFormat: "HEAD_TO_HEAD" | "FIELD";
+                }[];
+                /**
+                 * @description Contest type that may use the template.
+                 * @enum {string}
+                 */
+                contestFormat: "ROSTER" | "PREDICTION" | "SQUARES";
+                /**
+                 * @description How an entry picks in a contest created from this template.
+                 * @enum {string}
+                 */
+                selectionType: "TIERED" | "BUDGET_PICK" | "RANDOM_DRAW" | "PICK_EM" | "BRACKET" | "SURVIVOR" | "SQUARES";
+                /** @description Stable machine key for the template. */
+                templateKey: string;
+                /** @description Commissioner-facing template label. */
+                name: string;
+                /** @description Commissioner-facing template description. */
+                description: string;
+                /** @description Display order for template selection. */
+                sortOrder: number;
+                /** @description Whether the template should be preselected in the create flow. */
+                isDefault: boolean;
+                /** @description Whether the template is currently selectable. */
+                active: boolean;
+                /** @description Version of the configuration schema metadata expected by the template. */
+                schemaVersion: number;
+                /** @description Seeded configuration payload copied into a contest instance when the template is chosen. */
+                configuration: {
+                    /** @enum {string} */
+                    selectionType: "TIERED";
+                    /** @description How many golfers an entry picks from each of the event's tiers. The entry's total picks is the event's tier count times this. */
+                    picksPerTier: number;
+                    /** @description How many golfer scores count toward the entry total, best first. At most the roster size. */
+                    countedScores: number;
+                    /** @description Maximum entries a Squad may create. Null means unlimited. */
+                    maxEntriesPerSquad?: number | null;
+                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring. */
+                    scoring?: {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
+                        /** @description Golf to-par total settings: what an unplayed round scores against par. */
+                        config: {
+                            /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
+                            unplayedRoundToPar: number;
+                        };
+                    } | {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "FINISH_POSITION_POINTS";
+                        /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
+                        config: {
+                            /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
+                            pointsTable: number[];
+                            /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
+                            didNotFinishPoints: number;
+                        };
+                    } | {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
+                        /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
+                        config: {
+                            /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
+                            roundValues: number[];
+                            /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
+                            upsetBonus: {
+                                /** @enum {string} */
+                                rule: "SEED_DIFFERENCE";
+                                /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
+                                multiplier: number;
+                            } | {
+                                /** @enum {string} */
+                                rule: "NONE";
+                            };
+                        };
+                    };
+                } | {
+                    /** @enum {string} */
+                    selectionType: "BUDGET_PICK";
+                    /** @description How many golfers an entry picks, from anywhere in the field. */
+                    rosterSize: number;
+                    /** @description How many golfer scores count toward the entry total, best first. At most the roster size. */
+                    countedScores: number;
+                    /** @description Maximum entries a Squad may create. Null means unlimited. */
+                    maxEntriesPerSquad?: number | null;
+                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring. */
+                    scoring?: {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
+                        /** @description Golf to-par total settings: what an unplayed round scores against par. */
+                        config: {
+                            /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
+                            unplayedRoundToPar: number;
+                        };
+                    } | {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "FINISH_POSITION_POINTS";
+                        /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
+                        config: {
+                            /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
+                            pointsTable: number[];
+                            /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
+                            didNotFinishPoints: number;
+                        };
+                    } | {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
+                        /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
+                        config: {
+                            /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
+                            roundValues: number[];
+                            /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
+                            upsetBonus: {
+                                /** @enum {string} */
+                                rule: "SEED_DIFFERENCE";
+                                /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
+                                multiplier: number;
+                            } | {
+                                /** @enum {string} */
+                                rule: "NONE";
+                            };
+                        };
+                    };
+                } | {
+                    /** @enum {string} */
+                    selectionType: "RANDOM_DRAW";
+                    /** @description How many members of the field the draw deals each entry. */
+                    picksPerEntry: number;
+                    /** @description How many golfer scores count toward the entry total, best first. At most the roster size. */
+                    countedScores: number;
+                    /** @description Maximum entries a Squad may create. Null means unlimited. */
+                    maxEntriesPerSquad?: number | null;
+                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring. */
+                    scoring?: {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
+                        /** @description Golf to-par total settings: what an unplayed round scores against par. */
+                        config: {
+                            /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
+                            unplayedRoundToPar: number;
+                        };
+                    } | {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "FINISH_POSITION_POINTS";
+                        /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
+                        config: {
+                            /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
+                            pointsTable: number[];
+                            /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
+                            didNotFinishPoints: number;
+                        };
+                    } | {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
+                        /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
+                        config: {
+                            /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
+                            roundValues: number[];
+                            /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
+                            upsetBonus: {
+                                /** @enum {string} */
+                                rule: "SEED_DIFFERENCE";
+                                /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
+                                multiplier: number;
+                            } | {
+                                /** @enum {string} */
+                                rule: "NONE";
+                            };
+                        };
+                    };
+                } | {
+                    /** @enum {string} */
+                    selectionType: "PICK_EM";
+                    /**
+                     * @description STRAIGHT_UP: pick the winner of every game. CONFIDENCE: also give each game of a week a value from 1 to its number of games, each used once.
+                     * @enum {string}
+                     */
+                    mode: "STRAIGHT_UP" | "CONFIDENCE";
+                    /** @description Picks are scored against each game's spread (#720): a pick is right when its team covers, and a game that lands exactly on the spread (a push) scores nothing. Every game needs its spread before the week is released. */
+                    againstTheSpread: boolean;
+                    /** @description Maximum entries a Squad may create. Null means unlimited. */
+                    maxEntriesPerSquad?: number | null;
+                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring. */
+                    scoring?: {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
+                        /** @description Golf to-par total settings: what an unplayed round scores against par. */
+                        config: {
+                            /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
+                            unplayedRoundToPar: number;
+                        };
+                    } | {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "FINISH_POSITION_POINTS";
+                        /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
+                        config: {
+                            /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
+                            pointsTable: number[];
+                            /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
+                            didNotFinishPoints: number;
+                        };
+                    } | {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
+                        /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
+                        config: {
+                            /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
+                            roundValues: number[];
+                            /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
+                            upsetBonus: {
+                                /** @enum {string} */
+                                rule: "SEED_DIFFERENCE";
+                                /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
+                                multiplier: number;
+                            } | {
+                                /** @enum {string} */
+                                rule: "NONE";
+                            };
+                        };
+                    };
+                } | {
+                    /** @enum {string} */
+                    selectionType: "SQUARES";
+                    /** @description How many boxes one entry may claim. A squares contest takes one entry per squad, so this is the cap per squad. It can change until the digits are drawn; lowering it takes no box away. */
+                    maxSquaresPerEntry: number;
+                    /** @description Maximum entries a Squad may create. Null means unlimited. */
+                    maxEntriesPerSquad?: number | null;
+                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring. */
+                    scoring?: {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
+                        /** @description Golf to-par total settings: what an unplayed round scores against par. */
+                        config: {
+                            /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
+                            unplayedRoundToPar: number;
+                        };
+                    } | {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "FINISH_POSITION_POINTS";
+                        /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
+                        config: {
+                            /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
+                            pointsTable: number[];
+                            /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
+                            didNotFinishPoints: number;
+                        };
+                    } | {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
+                        /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
+                        config: {
+                            /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
+                            roundValues: number[];
+                            /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
+                            upsetBonus: {
+                                /** @enum {string} */
+                                rule: "SEED_DIFFERENCE";
+                                /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
+                                multiplier: number;
+                            } | {
+                                /** @enum {string} */
+                                rule: "NONE";
+                            };
+                        };
+                    };
+                } | {
+                    /** @enum {string} */
+                    selectionType: "SURVIVOR";
+                    /** @description How many weeks an entry can lose before it is out (#1754): 1 or 2. A loss, a tie or a week left unsubmitted each cost a life; with 2 the entry stays in after the first and is out at the second. Left out, 1. */
+                    lives?: number;
+                    /** @description Whether teams can be picked again once every team is used (#787). Each entry has its own cycle: once it has picked every team in the contest's weeks, each is usable once more. It matters only in a contest with more weeks than the league has teams. Left out, yes. */
+                    reuseTeamsOnceAllUsed?: boolean;
+                    /** @description Maximum entries a Squad may create. Null means unlimited. */
+                    maxEntriesPerSquad?: number | null;
+                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring. */
+                    scoring?: {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
+                        /** @description Golf to-par total settings: what an unplayed round scores against par. */
+                        config: {
+                            /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
+                            unplayedRoundToPar: number;
+                        };
+                    } | {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "FINISH_POSITION_POINTS";
+                        /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
+                        config: {
+                            /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
+                            pointsTable: number[];
+                            /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
+                            didNotFinishPoints: number;
+                        };
+                    } | {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
+                        /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
+                        config: {
+                            /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
+                            roundValues: number[];
+                            /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
+                            upsetBonus: {
+                                /** @enum {string} */
+                                rule: "SEED_DIFFERENCE";
+                                /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
+                                multiplier: number;
+                            } | {
+                                /** @enum {string} */
+                                rule: "NONE";
+                            };
+                        };
+                    };
+                } | {
+                    /** @enum {string} */
+                    selectionType: "BRACKET";
+                    /** @description Maximum entries a Squad may create. Null means unlimited. */
+                    maxEntriesPerSquad?: number | null;
+                    /** @description The contest's scoring definition and its settings (a finish-position contest's points table, a golf contest's unplayed-round score). Omitted on create, the template's preset applies; with no template preset either, the create is refused with CONTEST_SCORING_SETTINGS_REQUIRED, since the server picks no settings. Omitted on a rules change, the contest keeps its scoring. */
+                    scoring?: {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "GOLF_RELATIVE_TO_PAR_TOTAL";
+                        /** @description Golf to-par total settings: what an unplayed round scores against par. */
+                        config: {
+                            /** @description What each round a golfer did not play (missed cut, withdrawal, or no score once the field moved past it) adds to their contest score, in strokes over par, 0 to 20. 8 is the usual rule. */
+                            unplayedRoundToPar: number;
+                        };
+                    } | {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "FINISH_POSITION_POINTS";
+                        /** @description Finish-position points settings: the contest's points table and its "did not finish" value. */
+                        config: {
+                            /** @description Points by finishing place: the first value is what the winner scores, the second second place, and so on, at most 50 places. Never increasing. A place beyond the table scores 0. Win / Place / Show is [5, 3, 1]. */
+                            pointsTable: number[];
+                            /** @description What a runner scores when it did not finish, was disqualified or did not start (including one scratched after picks closed). Usually 0. */
+                            didNotFinishPoints: number;
+                        };
+                    } | {
+                        /** @enum {string} */
+                        participantScoringDefinitionId: "KNOCKOUT_ROUND_POINTS";
+                        /** @description Knockout round-points settings: the value of a win in each round and the upset bonus. */
+                        config: {
+                            /** @description Points for a win in each round, round 1 first, one value per round of the event (at most 8). Doubling for a six-round bracket is [1, 2, 4, 8, 16, 32]. A bye counts as a win: a team placed straight into a later round scores each skipped round's value once that round is decided, with no upset bonus. */
+                            roundValues: number[];
+                            /** @description The upset bonus: none, or the seed difference times a multiplier when a worse seed (a higher number) beats a better one. No bonus for equal seeds or when the better seed wins. An unseeded team counts as the field's worst seed. */
+                            upsetBonus: {
+                                /** @enum {string} */
+                                rule: "SEED_DIFFERENCE";
+                                /** @description What each seed of difference is worth. 1 is the usual rule; 2 doubles the bonus. */
+                                multiplier: number;
+                            } | {
+                                /** @enum {string} */
+                                rule: "NONE";
+                            };
+                        };
+                    };
+                };
+                /** @description The bounds and defaults of the rules a contest from the template may set (#2107). */
+                rulesLimits: {
+                    /** @description The most members of the field a budget entry may pick (BudgetContestRules.rosterSize). */
+                    rosterSizeMax: number;
+                    /** @description The most members of the field a random draw may deal one entry (RandomDrawContestRules.picksPerEntry). */
+                    picksPerEntryMax: number;
+                    /** @description The most boxes one squares entry may claim: the whole grid (SquaresContestRules.maxSquaresPerEntry). */
+                    maxSquaresPerEntryMax: number;
+                    /** @description The most lives a survivor entry may have (SurvivorContestRules.lives); the form offers 1 up to this. */
+                    livesMax: number;
+                    /** @description The lives a survivor entry has when the rules leave them out. */
+                    livesDefault: number;
+                };
             };
         };
         /** @description Request payload for creating a contest. */
@@ -24860,6 +25001,19 @@ export interface components {
                         };
                     };
                 };
+                /** @description The bounds and defaults of the rules a contest from the template may set (#2107). */
+                rulesLimits: {
+                    /** @description The most members of the field a budget entry may pick (BudgetContestRules.rosterSize). */
+                    rosterSizeMax: number;
+                    /** @description The most members of the field a random draw may deal one entry (RandomDrawContestRules.picksPerEntry). */
+                    picksPerEntryMax: number;
+                    /** @description The most boxes one squares entry may claim: the whole grid (SquaresContestRules.maxSquaresPerEntry). */
+                    maxSquaresPerEntryMax: number;
+                    /** @description The most lives a survivor entry may have (SurvivorContestRules.lives); the form offers 1 up to this. */
+                    livesMax: number;
+                    /** @description The lives a survivor entry has when the rules leave them out. */
+                    livesDefault: number;
+                };
             };
             /** @description Where the offer sits on its page, first first. */
             sortOrder: number;
@@ -25362,6 +25516,19 @@ export interface components {
                                 };
                             };
                         };
+                    };
+                    /** @description The bounds and defaults of the rules a contest from the template may set (#2107). */
+                    rulesLimits: {
+                        /** @description The most members of the field a budget entry may pick (BudgetContestRules.rosterSize). */
+                        rosterSizeMax: number;
+                        /** @description The most members of the field a random draw may deal one entry (RandomDrawContestRules.picksPerEntry). */
+                        picksPerEntryMax: number;
+                        /** @description The most boxes one squares entry may claim: the whole grid (SquaresContestRules.maxSquaresPerEntry). */
+                        maxSquaresPerEntryMax: number;
+                        /** @description The most lives a survivor entry may have (SurvivorContestRules.lives); the form offers 1 up to this. */
+                        livesMax: number;
+                        /** @description The lives a survivor entry has when the rules leave them out. */
+                        livesDefault: number;
                     };
                 };
                 /** @description Where the offer sits on its page, first first. */
@@ -25868,6 +26035,19 @@ export interface components {
                                     };
                                 };
                             };
+                        };
+                        /** @description The bounds and defaults of the rules a contest from the template may set (#2107). */
+                        rulesLimits: {
+                            /** @description The most members of the field a budget entry may pick (BudgetContestRules.rosterSize). */
+                            rosterSizeMax: number;
+                            /** @description The most members of the field a random draw may deal one entry (RandomDrawContestRules.picksPerEntry). */
+                            picksPerEntryMax: number;
+                            /** @description The most boxes one squares entry may claim: the whole grid (SquaresContestRules.maxSquaresPerEntry). */
+                            maxSquaresPerEntryMax: number;
+                            /** @description The most lives a survivor entry may have (SurvivorContestRules.lives); the form offers 1 up to this. */
+                            livesMax: number;
+                            /** @description The lives a survivor entry has when the rules leave them out. */
+                            livesDefault: number;
                         };
                     };
                     /** @description Where the offer sits on its page, first first. */
@@ -26385,6 +26565,19 @@ export interface components {
                                     };
                                 };
                             };
+                        };
+                        /** @description The bounds and defaults of the rules a contest from the template may set (#2107). */
+                        rulesLimits: {
+                            /** @description The most members of the field a budget entry may pick (BudgetContestRules.rosterSize). */
+                            rosterSizeMax: number;
+                            /** @description The most members of the field a random draw may deal one entry (RandomDrawContestRules.picksPerEntry). */
+                            picksPerEntryMax: number;
+                            /** @description The most boxes one squares entry may claim: the whole grid (SquaresContestRules.maxSquaresPerEntry). */
+                            maxSquaresPerEntryMax: number;
+                            /** @description The most lives a survivor entry may have (SurvivorContestRules.lives); the form offers 1 up to this. */
+                            livesMax: number;
+                            /** @description The lives a survivor entry has when the rules leave them out. */
+                            livesDefault: number;
                         };
                     };
                     /** @description Where the offer sits on its page, first first. */

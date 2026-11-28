@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { registerSchema } from './schema-registry';
+import { TieredRosterChoiceDtoSchema } from './events.dto';
 import {
   BracketContestRulesSchema,
   BudgetContestRulesSchema,
@@ -235,6 +236,15 @@ export const ContestConfigurationDtoSchema = z.discriminatedUnion('selectionType
 ]).describe('Persisted commissioner-managed contest rules, one shape per selection type.');
 export type ContestConfigurationDto = z.infer<typeof ContestConfigurationDtoSchema>;
 
+const ContestRulesLimitsDtoSchema = registerSchema('ContestRulesLimitsDto', z.object({
+  rosterSizeMax: z.number().int().min(1).describe('The most members of the field a budget entry may pick (BudgetContestRules.rosterSize).'),
+  picksPerEntryMax: z.number().int().min(1).describe('The most members of the field a random draw may deal one entry (RandomDrawContestRules.picksPerEntry).'),
+  maxSquaresPerEntryMax: z.number().int().min(1).describe('The most boxes one squares entry may claim: the whole grid (SquaresContestRules.maxSquaresPerEntry).'),
+  livesMax: z.number().int().min(1).describe('The most lives a survivor entry may have (SurvivorContestRules.lives); the form offers 1 up to this.'),
+  livesDefault: z.number().int().min(1).describe('The lives a survivor entry has when the rules leave them out.'),
+}).describe('The bounds and defaults of the rules a commissioner sets (#2107), the same ones the API checks the rules against.'));
+export type ContestRulesLimitsDto = z.infer<typeof ContestRulesLimitsDtoSchema>;
+
 const ContestTemplateSlotDtoSchema = z.object({
   id: z.uuid().describe('The slot definition\'s id (SportLeagueCompetitionSlot).'),
   key: z.string().describe('Its code in its league, such as WEEK_14, FINAL or MASTERS. An identifier; nothing parses it.'),
@@ -265,6 +275,7 @@ export const ContestConfigTemplateDtoSchema = z.object({
   active: z.boolean().describe('Whether the template is currently selectable.'),
   schemaVersion: z.number().int().describe('Version of the configuration schema metadata expected by the template.'),
   configuration: ContestConfigurationRequestSchema.describe('Seeded configuration payload copied into a contest instance when the template is chosen.'),
+  rulesLimits: ContestRulesLimitsDtoSchema.describe('The bounds and defaults of the rules a contest from the template may set (#2107).'),
 }).describe('Seeded commissioner-facing contest configuration template.');
 export type ContestConfigTemplateDto = z.infer<typeof ContestConfigTemplateDtoSchema>;
 
@@ -337,6 +348,7 @@ export const ContestManagementSportEventDtoSchema = z.object({
   effectiveTiers: z.array(EffectiveTierDtoSchema).describe(
     "Read-only tier structure a tiered contest inherits from this event (plans/124 §4.6/§5.3). Empty when the event has no tiers defined yet, and always empty for any other format, which does not pick by tier. Never contest-configured.",
   ),
+  tieredRosterChoices: z.array(TieredRosterChoiceDtoSchema).describe('The picks per tier the tiered contest may take on these tiers (#2107), as on SportEventDto.tieredRosterChoices. Empty for any other format, and while the tiers are not all filled.'),
 }).describe('One event of a managed contest, with the tiers it inherits from it (#713).');
 export type ContestManagementSportEventDto = z.infer<typeof ContestManagementSportEventDtoSchema>;
 
@@ -352,6 +364,7 @@ export const ContestManagementDetailDtoSchema = z.object({
     ContestStatus.COMPLETED,
   ]),
   configuration: ContestConfigurationDtoSchema.describe('Current commissioner-managed contest configuration.'),
+  rulesLimits: ContestRulesLimitsDtoSchema.describe('The bounds and defaults of the rules the commissioner may set on the contest (#2107).'),
   salaryCap: z.number().int().nullable().describe("A budget contest's salary cap in whole dollars: the pricing of the first slot it covers holding a set (#2050), read there and never copied into the rules. Null for any other contest type, and for a budget contest whose slot is not priced yet."),
   cupWeight: z.enum(CupWeight).describe('How much the contest counts toward its cup and the league championship (#841): NORMAL x1, BONUS x1.5, DOUBLE x2, NOT_COUNTED not at all. Fixed once the contest is COMPLETED.'),
   createdAt: z.iso.datetime().describe('When the contest was created.'),

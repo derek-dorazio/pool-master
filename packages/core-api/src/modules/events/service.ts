@@ -93,6 +93,8 @@ export interface SportEventSummary {
   participantCount: number;
   /** Tiers in its tier-set slot's set (#2044). */
   tierCount: number;
+  /** How many of the field each of those tiers holds, in tier order (#2107); empty with no tiers. */
+  tierSizes: number[];
   /**
    * Its tier-set slot (#2044), whose set its tiers, prices and lock are today; null for
    * an event covering no slot.
@@ -990,6 +992,8 @@ export class SportEventService {
         event: { ...event, roundCount: schedules[index]?.rounds.length ?? 0 },
         participantCount: 0,
         tierCount: tiers.length,
+        // A new event has no field yet, so its tiers are all empty.
+        tierSizes: tiers.map(() => 0),
         tierSetSlot: made?.slot ?? null,
         tierSets: (made?.holding ?? []).map((slot) => ({ slot, tierCount: tiers.length })),
         slots: slots.filter((slot) => editions[index]?.event.seasonSlotIds?.includes(slot.id)),
@@ -1031,14 +1035,22 @@ export class SportEventService {
       this.deps.sportEvents.findSlots(ids),
       this.deps.tiers.holdingSlots(ids),
     ]);
-    const tiers = await this.deps.sportEvents.countTiers([...holdingSlots.values()].flat().map((slot) => slot.id));
+    const tierSetSlots = new Map(events.flatMap((event): Array<[string, SportEventTierSlot]> => {
+      const tierSetSlot = tierSetSlotOf(holdingSlots.get(event.id) ?? []);
+      return tierSetSlot === undefined ? [] : [[event.id, tierSetSlot]];
+    }));
+    const [tiers, tierSizes] = await Promise.all([
+      this.deps.sportEvents.countTiers([...holdingSlots.values()].flat().map((slot) => slot.id)),
+      this.deps.tiers.tierSizesOfSlots([...tierSetSlots.values()]),
+    ]);
     return events.map((event) => {
       const holding = holdingSlots.get(event.id) ?? [];
-      const tierSetSlot = tierSetSlotOf(holding) ?? null;
+      const tierSetSlot = tierSetSlots.get(event.id) ?? null;
       return {
         event,
         participantCount: participants.get(event.id) ?? 0,
         tierCount: tierSetSlot === null ? 0 : tiers.get(tierSetSlot.id) ?? 0,
+        tierSizes: tierSetSlot === null ? [] : tierSizes.get(tierSetSlot.id) ?? [],
         tierSetSlot,
         tierSets: holding.map((slot) => ({ slot, tierCount: tiers.get(slot.id) ?? 0 })),
         slots: slots.get(event.id) ?? [],

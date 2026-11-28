@@ -159,6 +159,7 @@ describe('contest-management dto schemas', () => {
       isDefault: true,
       active: true,
       schemaVersion: 1,
+      rulesLimits: { rosterSizeMax: 10, picksPerEntryMax: 5, maxSquaresPerEntryMax: 10, livesMax: 2, livesDefault: 1 },
       configuration: {
         maxEntriesPerSquad: 1,
         selectionType: 'TIERED',
@@ -203,6 +204,7 @@ describe('contest-management dto schemas', () => {
         name: 'Masters Pick 6',
         status: 'OPEN',
         salaryCap: null,
+        rulesLimits: { rosterSizeMax: 10, picksPerEntryMax: 5, maxSquaresPerEntryMax: 10, livesMax: 2, livesDefault: 1 },
         cupWeight: 'NORMAL',
         configuration: {
           id: 'config-1',
@@ -228,6 +230,7 @@ describe('contest-management dto schemas', () => {
             ],
           },
         ],
+          tieredRosterChoices: [{ picksPerTier: 1, rosterSize: 1, countedScoresDefault: 1 }],
         }],
         createdAt: '2026-04-07T12:00:00.000Z',
         updatedAt: '2026-04-07T12:00:00.000Z',

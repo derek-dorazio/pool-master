@@ -1294,10 +1294,11 @@ export class PrismaSportEventSlotTierRepository implements SportEventSlotTierRep
     });
   }
 
-  async countValuations(sportEventSlotId: string): Promise<Map<string, number>> {
+  async countValuations(sportEventSlotIds: readonly string[]): Promise<Map<string, number>> {
+    if (sportEventSlotIds.length === 0) return new Map();
     const groups = await this.prisma.sportEventSlotParticipantValuation.groupBy({
       by: ['sportEventSlotTierId'],
-      where: { sportEventSlotId, sportEventSlotTierId: { not: null } },
+      where: { sportEventSlotId: { in: [...sportEventSlotIds] }, sportEventSlotTierId: { not: null } },
       _count: { _all: true },
     });
     return new Map(groups.flatMap((group) => (group.sportEventSlotTierId === null ? [] : [[group.sportEventSlotTierId, group._count._all]])));

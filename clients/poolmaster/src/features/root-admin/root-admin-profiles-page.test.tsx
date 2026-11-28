@@ -277,10 +277,34 @@ describe('RootAdminProfilesPage', () => {
     expect(mocks.listPlatformPricingProfiles).toHaveBeenCalledTimes(2);
   });
 
-  it('creates a pricing profile, refusing a floor share above the top share before it asks the server', async () => {
+  it('shows the server\'s refusal to delete a pricing profile a sport league names, keeping the dialog open', async () => {
+    seed();
+    mocks.deletePlatformPricingProfile.mockResolvedValue({
+      error: { error: { code: 'PLATFORM_PRICING_PROFILE_IN_USE', message: 'Pricing profile is named by 3 sport leagues, so it cannot be deleted.' } },
+      response: { status: 409 },
+    });
+    renderPage();
+
+    await userEvent.click(await screen.findByTestId(`root-admin-pricing-profile-${STANDARD_PLATFORM_PRICING_PROFILE_ID}-actions`));
+    await userEvent.click(await screen.findByTestId(`root-admin-pricing-profile-${STANDARD_PLATFORM_PRICING_PROFILE_ID}-delete`));
+    await userEvent.click(await screen.findByTestId('root-admin-pricing-profile-delete-confirm'));
+
+    expect(await screen.findByText('This pricing profile is in use, so it cannot be deleted.')).toBeInTheDocument();
+    expect(mocks.deletePlatformPricingProfile).toHaveBeenCalledWith(expect.objectContaining({ path: { profileId: STANDARD_PLATFORM_PRICING_PROFILE_ID } }));
+    expect(screen.getByTestId('root-admin-pricing-profile-delete')).toBeInTheDocument();
+    expect(mocks.listPlatformPricingProfiles).toHaveBeenCalledTimes(1);
+  });
+
+  it('creates a pricing profile, showing the server\'s refusal of a floor share above the top share in the form and saving once it is corrected', async () => {
     seed();
     const saved = { ...platformPricingProfilesFixture()[1], id: 'new', code: 'BIG', name: 'Big', salaryCap: 100000, sportLeagueCount: 0 };
-    mocks.createPlatformPricingProfile.mockResolvedValue({ data: { platformPricingProfile: saved } });
+    // The server decides whether the values agree with each other; the form only sends them.
+    mocks.createPlatformPricingProfile
+      .mockResolvedValueOnce({
+        error: { error: { code: 'PLATFORM_PRICING_PROFILE_INVALID', message: 'The worst seed\'s share can\'t be above the best seed\'s.' } },
+        response: { status: 422 },
+      })
+      .mockResolvedValue({ data: { platformPricingProfile: saved } });
     renderPage();
 
     await userEvent.click(await screen.findByTestId('root-admin-pricing-profiles-new'));
@@ -294,15 +318,16 @@ describe('RootAdminProfilesPage', () => {
     await userEvent.clear(floor);
     await userEvent.type(floor, '30');
     await userEvent.click(screen.getByTestId('root-admin-pricing-profile-editor-save'));
-    expect(mocks.createPlatformPricingProfile).not.toHaveBeenCalled();
+    expect(await screen.findByText('The floor share can\'t be above the top share, and the rounding unit can\'t be larger than the cheapest price.')).toBeInTheDocument();
 
     await userEvent.clear(floor);
     await userEvent.type(floor, '12');
     await userEvent.click(screen.getByTestId('root-admin-pricing-profile-editor-save'));
 
-    await waitFor(() => expect(mocks.createPlatformPricingProfile).toHaveBeenCalledWith(expect.objectContaining({
+    await waitFor(() => expect(mocks.createPlatformPricingProfile).toHaveBeenLastCalledWith(expect.objectContaining({
       body: { code: 'BIG', name: 'Big', description: 'Budget prices under a large cap.', sources: ['ODDS', 'SEED', 'RANKING'], salaryCap: 100000, unit: 100, topSharePercent: 24, floorSharePercent: 12, steepness: 4 },
     })));
+    expect(mocks.createPlatformPricingProfile).toHaveBeenCalledTimes(2);
     expect(await screen.findByTestId('root-admin-pricing-profile-dialog-edit')).toBeInTheDocument();
   });
 

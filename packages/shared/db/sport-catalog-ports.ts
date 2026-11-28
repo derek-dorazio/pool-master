@@ -496,8 +496,8 @@ export interface SportEventSlotTierRepository {
    * is given.
    */
   replace(sportEventSlotId: string, tiers: readonly SportEventSlotTierDefinition[], reassignTo?: string): Promise<void>;
-  /** Valuations placed in each of the slot's tiers; a tier with none is left out. */
-  countValuations(sportEventSlotId: string): Promise<Map<string, number>>;
+  /** Valuations placed in each tier of these slots, by tier id, in one grouped read; a tier with none is left out. */
+  countValuations(sportEventSlotIds: readonly string[]): Promise<Map<string, number>>;
 }
 
 export type SportEventSlotTierDefinition = Pick<SportEventSlotTier, 'tierKey' | 'tierNumber'>;

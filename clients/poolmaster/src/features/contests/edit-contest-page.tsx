@@ -35,6 +35,7 @@ import {
   CONTEST_RULES_FORM_SHAPE,
   parseContestRules,
   toContestRulesValues,
+  type ContestRulesBounds,
   type ContestRulesValues,
 } from './contest-rules-form';
 import { sportEventQueryOptions } from './use-contest-schedule';
@@ -91,7 +92,10 @@ function EditContestForm({
   const navigate = useNavigate();
   const contestPath = buildLeagueAdminContestPath(leagueCode, contest.id);
   // Every event of a tiered contest has the same number of tiers; the server checks it.
-  const tierCount = managedContest.sportEvents.at(0)?.effectiveTiers.length ?? 0;
+  const firstEvent = managedContest.sportEvents.at(0);
+  const tierCount = firstEvent?.effectiveTiers.length ?? 0;
+  // The API's bounds on the rules (#2107): the contest's limits and its first event's tiers' choices.
+  const bounds: ContestRulesBounds = { limits: managedContest.rulesLimits, tieredRosterChoices: firstEvent?.tieredRosterChoices ?? [] };
   const { participant } = sportVocabulary(eventSportDefinition(event));
   const { selectionType } = configuration;
   // The cap the API reads from the contest's first covered slot (#2050); null for any other contest.
@@ -102,7 +106,7 @@ function EditContestForm({
     defaultValues: { contestName: contest.name, ...toContestRulesValues(configuration) },
   });
   const values = form.watch();
-  const parseRules = (submitted: EditContestFormValues) => parseContestRules(submitted, selectionType, tierCount, participant);
+  const parseRules = (submitted: EditContestFormValues) => parseContestRules(submitted, selectionType, bounds, participant);
 
   const saveMutation = useInvalidatingMutation({
     mutationFn: async (submitted: EditContestFormValues) => {
@@ -219,6 +223,7 @@ function EditContestForm({
       </FormSection>
       <FormSection testId="edit-contest-rules" title="Rules">
         <ContestRulesFields
+          bounds={bounds}
           onChange={(next: Partial<ContestRulesValues>) => {
             for (const [field, value] of Object.entries(next) as Array<[keyof ContestRulesValues, string | boolean]>) {
               form.setValue(field, value, { shouldDirty: true });

@@ -29,7 +29,7 @@ import { ContestScoringSettingsSchema } from './contest-scoring';
  */
 
 /** The most golfers a budget roster may hold. */
-export const BUDGET_ROSTER_SIZE_MAX = 12;
+const BUDGET_ROSTER_SIZE_MAX = 12;
 
 const countedScoresSchema = z.number().int().min(1)
   .describe('How many golfer scores count toward the entry total, best first. At most the roster size.');
@@ -51,7 +51,7 @@ export const BudgetContestRulesSchema = z.object({
 export type BudgetContestRules = z.infer<typeof BudgetContestRulesSchema>;
 
 /** The most field members a draw deals one entry: the budget roster's ceiling. */
-export const RANDOM_DRAW_PICKS_PER_ENTRY_MAX = BUDGET_ROSTER_SIZE_MAX;
+const RANDOM_DRAW_PICKS_PER_ENTRY_MAX = BUDGET_ROSTER_SIZE_MAX;
 
 export const RandomDrawContestRulesSchema = z.object({
   selectionType: z.literal(SelectionType.RANDOM_DRAW),
@@ -99,6 +99,18 @@ export const SquaresContestRulesSchema = z.object({
     .describe('How many boxes one entry may claim. A squares contest takes one entry per squad, so this is the cap per squad. It can change until the digits are drawn; lowering it takes no box away.'),
 }).describe('Squares rules: claim boxes of a 10x10 grid on one game; the digits are drawn along each side, and the box at each scoring moment\'s last digits wins it.');
 export type SquaresContestRules = z.infer<typeof SquaresContestRulesSchema>;
+
+/**
+ * The bounds and defaults of the rules a commissioner sets (#2107), as the API hands them to the
+ * rules form so it holds none of its own. Read from the same constants the rules schemas check.
+ */
+export const CONTEST_RULES_LIMITS = {
+  rosterSizeMax: BUDGET_ROSTER_SIZE_MAX,
+  picksPerEntryMax: RANDOM_DRAW_PICKS_PER_ENTRY_MAX,
+  maxSquaresPerEntryMax: SQUARES_PER_ENTRY_MAX,
+  livesMax: SURVIVOR_LIVES_MAX,
+  livesDefault: SURVIVOR_LIVES_DEFAULT,
+} as const;
 
 /**
  * A selection type's rules with more fields, keeping the rules' own description. Zod's

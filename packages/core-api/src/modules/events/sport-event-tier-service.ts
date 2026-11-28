@@ -219,15 +219,28 @@ export class SportEventTierService {
     return slot === undefined ? [] : setTiers(slot, await this.deps.tiers.findBySlot(slot.id));
   }
 
-  /** Every event's tiers of the set `choice` names from one read (#1355), each in tier order. */
-  async listTiersOfEvents(sportEventIds: readonly string[], choice?: TierSetChoice): Promise<SetTier[]> {
+
+  /**
+   * How many of the field each tier of these slots' sets holds, in tier order, by slot (#2107):
+   * one read of the tiers and one grouped count of who is placed in them, however many slots. A
+   * slot with no tiers has an empty list; an empty tier counts 0.
+   */
+  async tierSizesOfSlots(slots: readonly SportEventTierSlot[]): Promise<Map<string, number[]>> {
+    const slotIds = slots.map((slot) => slot.id);
+    const [tiers, placed] = await Promise.all([this.deps.tiers.findBySlots(slotIds), this.deps.tiers.countValuations(slotIds)]);
+    return new Map(slotIds.map((slotId) => [
+      slotId,
+      tiers.filter((tier) => tier.sportEventSlotId === slotId)
+        .sort((left, right) => left.tierNumber - right.tierNumber)
+        .map((tier) => placed.get(tier.id) ?? 0),
+    ]));
+  }
+
+  /** Each event's tier sizes (`tierSizesOfSlots`) in the set `choice` names; an event covering no slot is left out. */
+  async tierSizes(sportEventIds: readonly string[], choice?: TierSetChoice): Promise<Map<string, number[]>> {
     const slots = await this.tierSetSlots(sportEventIds, choice);
-    const slotById = new Map([...slots.values()].map((slot) => [slot.id, slot]));
-    const tiers = await this.deps.tiers.findBySlots([...slotById.keys()]);
-    return tiers.flatMap((tier) => {
-      const slot = slotById.get(tier.sportEventSlotId);
-      return slot === undefined ? [] : setTiers(slot, [tier]);
-    });
+    const sizes = await this.tierSizesOfSlots([...slots.values()]);
+    return new Map([...slots].map(([sportEventId, slot]) => [sportEventId, sizes.get(slot.id) ?? []]));
   }
 
   /**
@@ -415,7 +428,7 @@ export class SportEventTierService {
     }
     const [existing, counts, valuations] = await Promise.all([
       this.deps.tiers.findBySlot(slot.id),
-      this.deps.tiers.countValuations(slot.id),
+      this.deps.tiers.countValuations([slot.id]),
       this.deps.valuations.findBySlot(slot.id),
     ]);
     const placedByHand = valuations.some((valuation) => valuation.tierAssignedSource === ValuationSource.MANUAL);

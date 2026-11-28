@@ -69,8 +69,3 @@ export function contestFormatForSelectionType(selectionType: SelectionType): Con
 export function isPredictionSelectionType(selectionType: SelectionType): selectionType is PredictionSelectionType {
   return contestFormatForSelectionType(selectionType) === ContestFormat.PREDICTION;
 }
-
-/** Whether the selection type picks a lineup from the field: neither a prediction type nor squares. */
-export function isRosterSelectionType(selectionType: SelectionType): selectionType is RosterSelectionType {
-  return contestFormatForSelectionType(selectionType) === ContestFormat.ROSTER;
-}

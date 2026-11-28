@@ -77,6 +77,7 @@ import type {
   SquaresGameChoice,
 } from '@poolmaster/shared/domain';
 import {
+  CONTEST_RULES_LIMITS,
   contestRoundCoverage,
   ContestCoverageProblem,
   ContestOpeningReason,
@@ -88,6 +89,7 @@ import {
   eventSportDefinition,
   sportAllowsSelectionType,
   getTieredRosterSize,
+  tieredRosterChoices,
   contestFormatForSelectionType,
   isContestFormatValidForEvent,
   UpsetBonusRule,
@@ -448,6 +450,7 @@ export class ContestManagementService {
     return contest.sportEventIds.map((sportEventId) => ({
       sportEventId,
       effectiveTiers: toEffectiveTierDtoList(tiersByEvent.get(sportEventId) ?? []),
+      tieredRosterChoices: tieredRosterChoices((tiersByEvent.get(sportEventId) ?? []).map((tier) => tier.participants.length)),
     }));
   }
 
@@ -1341,22 +1344,22 @@ export class ContestManagementService {
    * Tiers are event-owned data now (plans/124 §4.6) — there's no per-contest
    * custom list to validate against, only the event's own tier count. Skips validation when the event has no tiers yet (e.g. a legacy
    * event never run through admin tier setup) — same "nothing to validate
-   * against" behavior the old participantCount-based check had. Every event of the contest is
-   * checked from one read of their tiers (#1355).
+   * against" behavior the old participantCount-based check had. Picks per tier stop at the
+   * smallest tier's size (#2107, `tieredRosterChoices`), once every tier holds someone. Every event
+   * of the contest is checked from one read of their tiers and one count of who is in them (#1355).
    */
   private async assertTieredRulesFitTierCount(
     sportEventIds: readonly string[],
     rules: TieredContestRules,
     coverage: ContestRoundCoverage,
   ): Promise<void> {
-    // Only the tier count matters here, so the tiers alone are read, not who is placed in them:
-    // those of the set the contest will pick from (#2044).
-    const tierCounts = new Map<string, number>();
-    for (const tier of await this.sportEventTierService.listTiersOfEvents(sportEventIds, { coveredSlotDefinitionIds: coverage.slotDefinitionIds })) {
-      tierCounts.set(tier.sportEventId, (tierCounts.get(tier.sportEventId) ?? 0) + 1);
-    }
-    for (const tierCount of tierCounts.values()) {
-      assertCountedScoresFitRoster(rules, tierCount);
+    // The tiers of the set the contest will pick from (#2044), and how many each holds.
+    const tierSizes = await this.sportEventTierService.tierSizes(sportEventIds, { coveredSlotDefinitionIds: coverage.slotDefinitionIds });
+    for (const sizes of tierSizes.values()) {
+      if (sizes.length > 0) {
+        assertPicksPerTierFitTiers(rules, sizes);
+        assertCountedScoresFitRoster(rules, sizes.length);
+      }
     }
   }
 
@@ -1436,6 +1439,22 @@ export class ContestManagementError extends Error {
   ) {
     super(message);
     this.name = 'ContestManagementError';
+  }
+}
+
+/**
+ * A tier cannot give an entry more of it than it holds (#2107): picks per tier stop at the
+ * smallest tier's size, the last of `tieredRosterChoices`. Tiers some of which are still empty
+ * offer no choices, and are not checked until the field is placed.
+ */
+function assertPicksPerTierFitTiers(configuration: TieredContestRules, tierSizes: readonly number[]): void {
+  const choices = tieredRosterChoices(tierSizes);
+  const picksPerTierMax = choices.at(-1)?.picksPerTier;
+  if (picksPerTierMax !== undefined && configuration.picksPerTier > picksPerTierMax) {
+    throw new ContestManagementError(
+      `picksPerTier (${configuration.picksPerTier}) cannot exceed ${picksPerTierMax}, the size of the event's smallest tier.`,
+      'CONTEST_TIER_FIELD_OUT_OF_RANGE',
+    );
   }
 }
 
@@ -1528,6 +1547,7 @@ function buildContestManagementDetail(
     id: contest.id,
     leagueId: contest.leagueId,
     sportEvents,
+    rulesLimits: { ...CONTEST_RULES_LIMITS },
     salaryCap,
     name: contest.name,
     status: contest.status,

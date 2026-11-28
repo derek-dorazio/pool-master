@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { ContestConfigTemplateDto } from '@/lib/api';
+import { RULES_LIMITS } from '@/test/rules-bounds';
 import { sportLeagueFixture } from '@/features/root-admin/sport-test-fixtures';
 import { buildLeagueContestCatalog, buildPublicContestCatalog, contestTypeCount } from './contest-catalog';
 
@@ -25,6 +26,7 @@ function template(templateKey: string, overrides: Partial<ContestConfigTemplateD
     active: true,
     schemaVersion: 1,
     configuration: { selectionType: 'TIERED', picksPerTier: 1, countedScores: 4, maxEntriesPerSquad: 1 },
+    rulesLimits: RULES_LIMITS,
     ...overrides,
   };
 }

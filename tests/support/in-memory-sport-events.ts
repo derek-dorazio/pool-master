@@ -929,8 +929,8 @@ export class InMemorySportEvents {
         }
         this.tierRows = this.tierRows.filter((row) => !removed.has(row.id));
       },
-      countValuations: async (sportEventSlotId) => new Map(this.tierRows
-        .filter((row) => row.sportEventSlotId === sportEventSlotId)
+      countValuations: async (sportEventSlotIds) => new Map(this.tierRows
+        .filter((row) => sportEventSlotIds.includes(row.sportEventSlotId))
         .map((tier): [string, number] => [tier.id, this.valuationRows.filter((valuation) => valuation.sportEventSlotTierId === tier.id).length])
         .filter(([, count]) => count > 0)),
     };

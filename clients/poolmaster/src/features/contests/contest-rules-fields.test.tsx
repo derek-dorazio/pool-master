@@ -2,7 +2,12 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { PickEmMode, SelectionType, Sport, sportVocabulary } from '@poolmaster/shared/domain';
 import { describe, expect, it, vi } from 'vitest';
 import { ContestRulesFields } from './contest-rules-fields';
-import { DEFAULT_CONTEST_RULES } from './contest-rules-form';
+import { RULES_LIMITS, tieredChoices } from '@/test/rules-bounds';
+import { DEFAULT_CONTEST_RULES, type ContestRulesBounds } from './contest-rules-form';
+
+/** The API's bounds for an event with no tiers yet, and for six tiers of five. */
+const NO_TIERS: ContestRulesBounds = { limits: RULES_LIMITS, tieredRosterChoices: [] };
+const SIX_TIERS: ContestRulesBounds = { limits: RULES_LIMITS, tieredRosterChoices: tieredChoices([5, 5, 5, 5, 5, 5]) };
 
 const TEAM = sportVocabulary(Sport.FOOTBALL).participant;
 
@@ -11,6 +16,7 @@ describe('contest rules fields for a pick\'em contest', () => {
     const onChange = vi.fn();
     render(
       <ContestRulesFields
+        bounds={NO_TIERS}
         onChange={onChange}
         participant={TEAM}
         salaryCap={null}
@@ -33,6 +39,7 @@ describe('contest rules fields for a pick\'em contest', () => {
     const onChange = vi.fn();
     render(
       <ContestRulesFields
+        bounds={NO_TIERS}
         onChange={onChange}
         participant={TEAM}
         salaryCap={null}
@@ -54,6 +61,7 @@ describe('contest rules fields for a survivor contest', () => {
     const onChange = vi.fn();
     render(
       <ContestRulesFields
+        bounds={NO_TIERS}
         onChange={onChange}
         participant={TEAM}
         salaryCap={null}
@@ -72,7 +80,7 @@ describe('contest rules fields for a survivor contest', () => {
 
   it('offers Lives of 1 or 2, starting at 1, reports the choice, and names the second life in the rules only with 2', () => {
     const onChange = vi.fn();
-    const props = { onChange, participant: TEAM, salaryCap: null, selectionType: SelectionType.SURVIVOR, tierCount: 0 } as const;
+    const props = { bounds: NO_TIERS, onChange, participant: TEAM, salaryCap: null, selectionType: SelectionType.SURVIVOR, tierCount: 0 } as const;
     const { rerender } = render(<ContestRulesFields {...props} values={DEFAULT_CONTEST_RULES} />);
 
     expect(screen.getByTestId('contest-survivor-lives-1')).toBeChecked();
@@ -89,6 +97,7 @@ describe('contest rules fields for a tiered contest', () => {
   it('picks from every tier of the event, so the roster reads the event\'s tier count times the picks per tier and there is no tier count to choose', () => {
     render(
       <ContestRulesFields
+        bounds={SIX_TIERS}
         onChange={vi.fn()}
         participant={sportVocabulary(Sport.GOLF).participant}
         salaryCap={null}
@@ -107,6 +116,7 @@ describe('contest rules fields for a budget contest', () => {
   it('says the salary cap is not set and the field has no prices yet when the event has no cap, and marks unset counts with a question mark', () => {
     render(
       <ContestRulesFields
+        bounds={NO_TIERS}
         onChange={vi.fn()}
         participant={TEAM}
         salaryCap={null}
@@ -124,6 +134,7 @@ describe('contest rules fields for a budget contest', () => {
   it('shows the event\'s salary cap, which the commissioner cannot edit, and the counted scores of the roster', () => {
     render(
       <ContestRulesFields
+        bounds={NO_TIERS}
         onChange={vi.fn()}
         participant={TEAM}
         salaryCap={50000}
