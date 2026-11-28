@@ -48,6 +48,8 @@ const SHAPE_HASH_BY_FORMAT: Readonly<Record<number, string>> = {
   17: '578c8c801dffca805e3aab7759d57f97db817c785cf72d42dd1a6afdbbd7dfc5',
   // #2025: a participant carries a team's abbreviation in place of role and teamAffiliation; a player's team and position are their roster row's.
   18: 'f79911bcbdb67b8527ae175cdbe3919a4fe904e44d9cbcb3ca00dc7a30f14048',
+  // #2013: a week's event status no longer takes POSTPONED, so a stored board carrying it is rebuilt.
+  19: '11a6c0a22e4a9e0b6cd7c4fc6bbe48c41fb427aa83f85491b37498b6987901b8',
 };
 
 const LEADERBOARD_RESPONSES = ['ContestLeaderboardResponse', 'BracketLeaderboardResponse', 'PickEmLeaderboardResponse', 'SurvivorLeaderboardResponse'];

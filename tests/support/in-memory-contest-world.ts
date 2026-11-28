@@ -86,7 +86,6 @@ import { sportRowKeys } from './sport-rows';
 const SEASON_SLOT_STATUS_OF_EVENT: Record<SportEventStatus, SeasonSlotStatus> = {
   [SportEventStatus.DRAFT]: SeasonSlotStatus.SCHEDULED,
   [SportEventStatus.SCHEDULED]: SeasonSlotStatus.SCHEDULED,
-  [SportEventStatus.POSTPONED]: SeasonSlotStatus.SCHEDULED,
   [SportEventStatus.IN_PROGRESS]: SeasonSlotStatus.IN_PROGRESS,
   [SportEventStatus.COMPLETED]: SeasonSlotStatus.COMPLETED,
   [SportEventStatus.CANCELLED]: SeasonSlotStatus.CANCELLED,

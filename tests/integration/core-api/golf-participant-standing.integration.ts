@@ -295,7 +295,7 @@ describe('Golf live-score persistence', () => {
     expect(await getPrisma().backgroundJob.count({ where: { type: 'REFRESH_SLOT_STATUS', dedupeKey: { contains: event.id } } })).toBe(1);
   });
 
-  it.each(['DRAFT', 'POSTPONED', 'COMPLETED', 'CANCELLED'] as const)(
+  it.each(['DRAFT', 'COMPLETED', 'CANCELLED'] as const)(
     'writes no round or standing to a %s event, since live scores are accepted only while an event is scheduled or in progress',
     async (status) => {
       const { event, sepByKey } = await createLiveField(`closed-${status.toLowerCase()}`, ['rory']);

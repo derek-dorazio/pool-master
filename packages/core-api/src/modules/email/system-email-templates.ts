@@ -430,8 +430,6 @@ export interface ContestResultsEmailData {
 
 /** What happened to an event a contest is on (#845 C6, C7). */
 export const ContestEventChangeKind = {
-  /** It goes `POSTPONED`, with no new date yet. */
-  POSTPONED: 'POSTPONED',
   /** A released event's start moved. */
   RESCHEDULED: 'RESCHEDULED',
   /** It goes `CANCELLED`: it counts for nothing. */
@@ -440,11 +438,6 @@ export const ContestEventChangeKind = {
 export type ContestEventChangeKind = (typeof ContestEventChangeKind)[keyof typeof ContestEventChangeKind];
 
 export type ContestEventChange =
-  | {
-    kind: typeof ContestEventChangeKind.POSTPONED;
-    /** The contest still takes picks, which stay open until the event starts. */
-    picksOpen: boolean;
-  }
   | {
     kind: typeof ContestEventChangeKind.RESCHEDULED;
     previousStart: Date;
@@ -2021,17 +2014,7 @@ function renderContestResultsEmail(
 /** The subject, title and sentences an event change email says, by what happened. */
 function contestEventChangeWording(data: ContestEventChangedEmailData, dates: EmailDateStyle): { subject: string; title: string; sentences: string[] } {
   const { change } = data;
-  const picksLine = `Picks for ${data.contestName} stay open until it starts.`;
   switch (change.kind) {
-    case ContestEventChangeKind.POSTPONED:
-      return {
-        subject: `Postponed: ${data.event.eventName}`,
-        title: 'Event postponed',
-        sentences: [
-          `${data.event.eventName} has been postponed, with no new date yet.`,
-          change.picksOpen ? picksLine : `${data.contestName} carries on when it resumes.`,
-        ],
-      };
     case ContestEventChangeKind.RESCHEDULED:
       return {
         subject: `New date: ${data.event.eventName}`,
@@ -2061,7 +2044,7 @@ function renderContestEventChangedEmail(
     preheader: sentences[0] ?? subject,
     title,
     leagueName: data.leagueName,
-    // Only a move has a start worth showing: a postponed event has none yet, a cancelled one never will.
+    // Only a move has a start worth showing: a cancelled event never will.
     eventStrip: {
       event: data.event,
       line: data.change.kind === ContestEventChangeKind.RESCHEDULED ? formatDay(data.change.newStart, context) : null,

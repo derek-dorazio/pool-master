@@ -21,17 +21,10 @@ export const SPORT_EVENT_STATUS_TRANSITIONS = {
   ],
   [SportEventStatus.SCHEDULED]: [
     SportEventStatus.IN_PROGRESS,
-    SportEventStatus.POSTPONED,
     SportEventStatus.CANCELLED,
   ],
   [SportEventStatus.IN_PROGRESS]: [
     SportEventStatus.COMPLETED,
-    SportEventStatus.POSTPONED,
-    SportEventStatus.CANCELLED,
-  ],
-  [SportEventStatus.POSTPONED]: [
-    SportEventStatus.SCHEDULED,
-    SportEventStatus.IN_PROGRESS,
     SportEventStatus.CANCELLED,
   ],
   // Terminal — nothing transitions out of COMPLETED or CANCELLED.

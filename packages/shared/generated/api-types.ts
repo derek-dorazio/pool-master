@@ -2040,7 +2040,7 @@ export interface paths {
         };
         /**
          * List sport events
-         * @description The sport-event catalog, narrowed by sport, statuses, sport league, Season and name and never paged. At least one of `sport`, `sportLeagueId` and `sportLeagueSeasonId` is required, so the list never reads every event: 400 SPORT_EVENT_FILTER_REQUIRED otherwise. A root admin browses the whole catalog. Any other signed-in user, for contest setup, may list only events in the statuses that can still take a contest (SCHEDULED, POSTPONED, IN_PROGRESS) or one Season's (`sportLeagueSeasonId`): 403 ROOT_ADMIN_ACCESS_REQUIRED otherwise (#1348). Each event carries its loaded field size, contest-setup readiness and tier count; a root admin's list also carries each event's adminCounts. DRAFT events (not yet released for contests) are listed for a root admin only.
+         * @description The sport-event catalog, narrowed by sport, statuses, sport league, Season and name and never paged. At least one of `sport`, `sportLeagueId` and `sportLeagueSeasonId` is required, so the list never reads every event: 400 SPORT_EVENT_FILTER_REQUIRED otherwise. A root admin browses the whole catalog. Any other signed-in user, for contest setup, may list only events in the statuses that can still take a contest (SCHEDULED, IN_PROGRESS) or one Season's (`sportLeagueSeasonId`): 403 ROOT_ADMIN_ACCESS_REQUIRED otherwise (#1348). Each event carries its loaded field size, contest-setup readiness and tier count; a root admin's list also carries each event's adminCounts. DRAFT events (not yet released for contests) are listed for a root admin only.
          */
         get: operations["listEvents"];
         put?: never;
@@ -11997,7 +11997,7 @@ export interface components {
              */
             endDate: string | null;
             /** @enum {string} */
-            status: "DRAFT" | "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
+            status: "DRAFT" | "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED";
             /**
              * @description AUTO when its league releases synced drafts on its own and the event is synced; MANUAL otherwise.
              * @enum {string}
@@ -12136,7 +12136,7 @@ export interface components {
                  */
                 endDate: string | null;
                 /** @enum {string} */
-                status: "DRAFT" | "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
+                status: "DRAFT" | "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED";
                 /**
                  * @description AUTO when its league releases synced drafts on its own and the event is synced; MANUAL otherwise.
                  * @enum {string}
@@ -13992,7 +13992,7 @@ export interface components {
          */
         UploadRowResolutionDto: "MATCHED" | "UNRESOLVED" | "AMBIGUOUS";
         /** @enum {string} */
-        EventStatusDto: "DRAFT" | "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
+        EventStatusDto: "DRAFT" | "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED";
         /** @enum {string} */
         EventReadinessStatusDto: "NOT_RELEASED" | "PENDING_FIELD" | "CONTEST_ELIGIBLE" | "EVENT_STARTED";
         /** @enum {string} */
@@ -14222,7 +14222,7 @@ export interface components {
              * @description Event lifecycle status.
              * @enum {string}
              */
-            status: "DRAFT" | "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
+            status: "DRAFT" | "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED";
             /**
              * Format: date-time
              * @description Scheduled or actual start time.
@@ -14571,7 +14571,7 @@ export interface components {
                 contestCount: number;
             } | null;
             /** @description Statuses the event may move to next, from the declared transition map. (Admin-only: operational detail no member surface reads.) */
-            allowedTransitions: ("DRAFT" | "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED")[];
+            allowedTransitions: ("DRAFT" | "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED")[];
             /** @description The sync kinds a root admin can run on the event now (#2234): its FIELD while it is a draft, scheduled, in play or completed, and its SCORES while it is in play. Empty for an event its league's provider has no id for, such as a test event. (Admin-only: operational detail no member surface reads.) */
             syncKinds: ("FIELD" | "SCORES")[];
             /**
@@ -14593,7 +14593,7 @@ export interface components {
              */
             sport?: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
             /** @description Only events in one of these lifecycle statuses: repeat the parameter for several. Contest setup asks for the statuses an event can still take a contest in. */
-            status?: ("DRAFT" | "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED")[];
+            status?: ("DRAFT" | "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED")[];
             /**
              * Format: uuid
              * @description Only events of this sport league.
@@ -14647,7 +14647,7 @@ export interface components {
                  * @description Event lifecycle status.
                  * @enum {string}
                  */
-                status: "DRAFT" | "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
+                status: "DRAFT" | "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED";
                 /**
                  * Format: date-time
                  * @description Scheduled or actual start time.
@@ -14996,7 +14996,7 @@ export interface components {
                     contestCount: number;
                 } | null;
                 /** @description Statuses the event may move to next, from the declared transition map. (Admin-only: operational detail no member surface reads.) */
-                allowedTransitions: ("DRAFT" | "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED")[];
+                allowedTransitions: ("DRAFT" | "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED")[];
                 /** @description The sync kinds a root admin can run on the event now (#2234): its FIELD while it is a draft, scheduled, in play or completed, and its SCORES while it is in play. Empty for an event its league's provider has no id for, such as a test event. (Admin-only: operational detail no member surface reads.) */
                 syncKinds: ("FIELD" | "SCORES")[];
                 /**
@@ -15051,7 +15051,7 @@ export interface components {
                  * @description Event lifecycle status.
                  * @enum {string}
                  */
-                status: "DRAFT" | "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
+                status: "DRAFT" | "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED";
                 /**
                  * Format: date-time
                  * @description Scheduled or actual start time.
@@ -15400,7 +15400,7 @@ export interface components {
                     contestCount: number;
                 } | null;
                 /** @description Statuses the event may move to next, from the declared transition map. (Admin-only: operational detail no member surface reads.) */
-                allowedTransitions: ("DRAFT" | "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED")[];
+                allowedTransitions: ("DRAFT" | "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED")[];
                 /** @description The sync kinds a root admin can run on the event now (#2234): its FIELD while it is a draft, scheduled, in play or completed, and its SCORES while it is in play. Empty for an event its league's provider has no id for, such as a test event. (Admin-only: operational detail no member surface reads.) */
                 syncKinds: ("FIELD" | "SCORES")[];
                 /**
@@ -15453,7 +15453,7 @@ export interface components {
              * @description One of the event's allowedTransitions. SCHEDULED from DRAFT is the release, which has its own action (releaseEvent).
              * @enum {string}
              */
-            toStatus: "DRAFT" | "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
+            toStatus: "DRAFT" | "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED";
         };
         /** @description A scheduled round of an event: its own date, and where its results stand. */
         SportEventRoundDto: {
@@ -16903,7 +16903,7 @@ export interface components {
              * @description The event's own status. Each event of a contest is picked, submitted, played and settled on its own (#713).
              * @enum {string}
              */
-            status: "DRAFT" | "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
+            status: "DRAFT" | "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED";
             /**
              * @description Who competes: teams or individuals, from the event's sport league. The same on every event of a contest, which covers one sport league.
              * @enum {string}
@@ -17051,7 +17051,7 @@ export interface components {
                  * @description The event's own status. Each event of a contest is picked, submitted, played and settled on its own (#713).
                  * @enum {string}
                  */
-                status: "DRAFT" | "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
+                status: "DRAFT" | "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED";
                 /**
                  * @description Who competes: teams or individuals, from the event's sport league. The same on every event of a contest, which covers one sport league.
                  * @enum {string}
@@ -17735,7 +17735,7 @@ export interface components {
                      * @description The event's own status. Each event of a contest is picked, submitted, played and settled on its own (#713).
                      * @enum {string}
                      */
-                    status: "DRAFT" | "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
+                    status: "DRAFT" | "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED";
                     /**
                      * @description Who competes: teams or individuals, from the event's sport league. The same on every event of a contest, which covers one sport league.
                      * @enum {string}
@@ -17878,7 +17878,7 @@ export interface components {
                      * @description The event's own status. Each event of a contest is picked, submitted, played and settled on its own (#713).
                      * @enum {string}
                      */
-                    status: "DRAFT" | "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
+                    status: "DRAFT" | "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED";
                     /**
                      * @description Who competes: teams or individuals, from the event's sport league. The same on every event of a contest, which covers one sport league.
                      * @enum {string}
@@ -18481,7 +18481,7 @@ export interface components {
                  */
                 startDate: string;
                 /** @enum {string} */
-                status: "DRAFT" | "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
+                status: "DRAFT" | "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED";
                 /** @description Whether the week's first game has kicked off: an entry not submitted by then is out. */
                 started: boolean;
                 /** @description How many entries are still in after the week: those that survived it and those whose game is still to finish. 0 until it starts, and for a cancelled week. */
@@ -18580,7 +18580,7 @@ export interface components {
                  */
                 startDate: string;
                 /** @enum {string} */
-                status: "DRAFT" | "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED";
+                status: "DRAFT" | "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED";
                 /** @description Whether the week's first game has kicked off: until then no entry has points for it. */
                 started: boolean;
                 /** @description Whether the week has settled: its points and places are frozen, and a later result correction changes nothing. A cancelled week, or a completed week no entry submitted, is settled with nothing frozen. */
@@ -28777,7 +28777,7 @@ export interface components {
              * @description The job's handler. Its kind follows from it.
              * @enum {string}
              */
-            type: "SYNC_EVENT_FIELD" | "SYNC_EVENT_SCORES" | "CONTEST_STARTED_EMAILS" | "CONTEST_SETTLED_EMAILS" | "CONTEST_EVENT_CHANGED_EMAILS" | "CONTEST_REOPENED_EMAILS" | "SETTLE_SPORT_EVENT_CONTESTS" | "SETTLE_GAME_CONTESTS" | "REBUILD_LEADERBOARDS" | "SYNC_LEAGUE_EVENTS" | "RELEASE_SPORT_EVENT" | "SYNC_EVENT_GAMES_AND_TIERS" | "ACTIVATE_EVENT_CONTESTS" | "FOLLOW_POSTPONED_EVENT_CONTESTS" | "RESOLVE_MAPPED_PARTICIPANT_FINDINGS" | "REFRESH_SLOT_TIEBREAKERS" | "SYNC_LEAGUE_ROSTER" | "REFRESH_SLOT_STATUS" | "REFRESH_EVENT_STATUS" | "CLOSE_LEAGUE_CHAMPIONSHIP_YEAR" | "CLOSE_SEASON_CHAMPIONSHIP_YEARS";
+            type: "SYNC_EVENT_FIELD" | "SYNC_EVENT_SCORES" | "CONTEST_STARTED_EMAILS" | "CONTEST_SETTLED_EMAILS" | "CONTEST_EVENT_CHANGED_EMAILS" | "CONTEST_REOPENED_EMAILS" | "SETTLE_SPORT_EVENT_CONTESTS" | "SETTLE_GAME_CONTESTS" | "REBUILD_LEADERBOARDS" | "SYNC_LEAGUE_EVENTS" | "RELEASE_SPORT_EVENT" | "SYNC_EVENT_GAMES_AND_TIERS" | "ACTIVATE_EVENT_CONTESTS" | "RESOLVE_MAPPED_PARTICIPANT_FINDINGS" | "REFRESH_SLOT_TIEBREAKERS" | "SYNC_LEAGUE_ROSTER" | "REFRESH_SLOT_STATUS" | "REFRESH_EVENT_STATUS" | "CLOSE_LEAGUE_CHAMPIONSHIP_YEAR" | "CLOSE_SEASON_CHAMPIONSHIP_YEARS";
             /**
              * @description What a job is about: a provider SYNC, EMAIL to a league, contest SETTLEMENT, an event's RELEASE, or OTHER.
              * @enum {string}
@@ -28901,7 +28901,7 @@ export interface components {
                  * @description The job's handler. Its kind follows from it.
                  * @enum {string}
                  */
-                type: "SYNC_EVENT_FIELD" | "SYNC_EVENT_SCORES" | "CONTEST_STARTED_EMAILS" | "CONTEST_SETTLED_EMAILS" | "CONTEST_EVENT_CHANGED_EMAILS" | "CONTEST_REOPENED_EMAILS" | "SETTLE_SPORT_EVENT_CONTESTS" | "SETTLE_GAME_CONTESTS" | "REBUILD_LEADERBOARDS" | "SYNC_LEAGUE_EVENTS" | "RELEASE_SPORT_EVENT" | "SYNC_EVENT_GAMES_AND_TIERS" | "ACTIVATE_EVENT_CONTESTS" | "FOLLOW_POSTPONED_EVENT_CONTESTS" | "RESOLVE_MAPPED_PARTICIPANT_FINDINGS" | "REFRESH_SLOT_TIEBREAKERS" | "SYNC_LEAGUE_ROSTER" | "REFRESH_SLOT_STATUS" | "REFRESH_EVENT_STATUS" | "CLOSE_LEAGUE_CHAMPIONSHIP_YEAR" | "CLOSE_SEASON_CHAMPIONSHIP_YEARS";
+                type: "SYNC_EVENT_FIELD" | "SYNC_EVENT_SCORES" | "CONTEST_STARTED_EMAILS" | "CONTEST_SETTLED_EMAILS" | "CONTEST_EVENT_CHANGED_EMAILS" | "CONTEST_REOPENED_EMAILS" | "SETTLE_SPORT_EVENT_CONTESTS" | "SETTLE_GAME_CONTESTS" | "REBUILD_LEADERBOARDS" | "SYNC_LEAGUE_EVENTS" | "RELEASE_SPORT_EVENT" | "SYNC_EVENT_GAMES_AND_TIERS" | "ACTIVATE_EVENT_CONTESTS" | "RESOLVE_MAPPED_PARTICIPANT_FINDINGS" | "REFRESH_SLOT_TIEBREAKERS" | "SYNC_LEAGUE_ROSTER" | "REFRESH_SLOT_STATUS" | "REFRESH_EVENT_STATUS" | "CLOSE_LEAGUE_CHAMPIONSHIP_YEAR" | "CLOSE_SEASON_CHAMPIONSHIP_YEARS";
                 /**
                  * @description What a job is about: a provider SYNC, EMAIL to a league, contest SETTLEMENT, an event's RELEASE, or OTHER.
                  * @enum {string}
@@ -28997,7 +28997,7 @@ export interface components {
                  * @description The job's handler. Its kind follows from it.
                  * @enum {string}
                  */
-                type: "SYNC_EVENT_FIELD" | "SYNC_EVENT_SCORES" | "CONTEST_STARTED_EMAILS" | "CONTEST_SETTLED_EMAILS" | "CONTEST_EVENT_CHANGED_EMAILS" | "CONTEST_REOPENED_EMAILS" | "SETTLE_SPORT_EVENT_CONTESTS" | "SETTLE_GAME_CONTESTS" | "REBUILD_LEADERBOARDS" | "SYNC_LEAGUE_EVENTS" | "RELEASE_SPORT_EVENT" | "SYNC_EVENT_GAMES_AND_TIERS" | "ACTIVATE_EVENT_CONTESTS" | "FOLLOW_POSTPONED_EVENT_CONTESTS" | "RESOLVE_MAPPED_PARTICIPANT_FINDINGS" | "REFRESH_SLOT_TIEBREAKERS" | "SYNC_LEAGUE_ROSTER" | "REFRESH_SLOT_STATUS" | "REFRESH_EVENT_STATUS" | "CLOSE_LEAGUE_CHAMPIONSHIP_YEAR" | "CLOSE_SEASON_CHAMPIONSHIP_YEARS";
+                type: "SYNC_EVENT_FIELD" | "SYNC_EVENT_SCORES" | "CONTEST_STARTED_EMAILS" | "CONTEST_SETTLED_EMAILS" | "CONTEST_EVENT_CHANGED_EMAILS" | "CONTEST_REOPENED_EMAILS" | "SETTLE_SPORT_EVENT_CONTESTS" | "SETTLE_GAME_CONTESTS" | "REBUILD_LEADERBOARDS" | "SYNC_LEAGUE_EVENTS" | "RELEASE_SPORT_EVENT" | "SYNC_EVENT_GAMES_AND_TIERS" | "ACTIVATE_EVENT_CONTESTS" | "RESOLVE_MAPPED_PARTICIPANT_FINDINGS" | "REFRESH_SLOT_TIEBREAKERS" | "SYNC_LEAGUE_ROSTER" | "REFRESH_SLOT_STATUS" | "REFRESH_EVENT_STATUS" | "CLOSE_LEAGUE_CHAMPIONSHIP_YEAR" | "CLOSE_SEASON_CHAMPIONSHIP_YEARS";
                 /**
                  * @description What a job is about: a provider SYNC, EMAIL to a league, contest SETTLEMENT, an event's RELEASE, or OTHER.
                  * @enum {string}
@@ -35917,7 +35917,7 @@ export interface operations {
                 /** @description Only events of this sport. */
                 sport?: "GOLF" | "HORSE_RACING" | "AUTO_RACING" | "CYCLING" | "RUNNING" | "BASKETBALL" | "FOOTBALL" | "HOCKEY" | "BASEBALL" | "SOCCER" | "TENNIS";
                 /** @description Only events in one of these lifecycle statuses: repeat the parameter for several. Contest setup asks for the statuses an event can still take a contest in. */
-                status?: ("DRAFT" | "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | "POSTPONED")[];
+                status?: ("DRAFT" | "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED")[];
                 /** @description Only events of this sport league. */
                 sportLeagueId?: string;
                 /** @description Only events of this Season (SportLeagueSeasonDto). */

@@ -22,10 +22,9 @@ import {
   tellLeagueContestSettledHandler,
   tellLeagueContestStartedHandler,
   tellLeaguesEventCancelledHandler,
-  tellLeaguesEventPostponedHandler,
   tellLeaguesEventRescheduledHandler,
 } from '../notifications/contest-email-job-requests';
-import { activateEventContestsHandler, activateSlotContestsHandler, followPostponedEventContestsHandler } from '../events/event-contests-job-requests';
+import { activateEventContestsHandler, activateSlotContestsHandler } from '../events/event-contests-job-requests';
 import { syncGamesThenTierFieldHandler } from '../events/synced-field-follow-up-job';
 import { resolveMappedParticipantFindingsHandler } from '../ingestion/findings/mapped-participant-findings-job';
 import { refreshDecidedGameSlotTiebreakersHandler, refreshSlotTiebreakersHandler } from '../events/slot-tiebreaker-job';
@@ -37,9 +36,7 @@ import type { DomainEventHandlerMap } from './domain-event-handler';
 export const DOMAIN_EVENT_HANDLERS = {
   [DomainEventType.SPORT_EVENT_STATUS_CHANGED]: [
     activateEventContestsHandler,
-    followPostponedEventContestsHandler,
     settleFinishedEventContestsHandler,
-    tellLeaguesEventPostponedHandler,
     tellLeaguesEventCancelledHandler,
     rebuildEventLeaderboardsHandler,
   ],

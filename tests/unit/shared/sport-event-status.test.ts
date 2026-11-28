@@ -27,7 +27,7 @@ describe('sport event status sets', () => {
   });
 
   it('counts every status but completed and cancelled as not over, so the two sets split every status between them', () => {
-    expect([...NOT_OVER_SPORT_EVENT_STATUSES].sort()).toEqual(['DRAFT', 'IN_PROGRESS', 'POSTPONED', 'SCHEDULED']);
+    expect([...NOT_OVER_SPORT_EVENT_STATUSES].sort()).toEqual(['DRAFT', 'IN_PROGRESS', 'SCHEDULED']);
     expect([...NOT_OVER_SPORT_EVENT_STATUSES, ...FINISHED_SPORT_EVENT_STATUSES].sort()).toEqual([...ALL].sort());
   });
 });
@@ -36,9 +36,9 @@ describe('hasSportEventStarted', () => {
   const now = new Date('2026-04-01T12:00:00.000Z');
   const beforeStart = new Date('2026-04-10T12:00:00.000Z');
 
-  it('is false for a scheduled or postponed event whose start is still ahead', () => {
+  it('is false for a draft or scheduled event whose start is still ahead', () => {
     expect(hasSportEventStarted({ status: 'SCHEDULED', startDate: beforeStart }, now)).toBe(false);
-    expect(hasSportEventStarted({ status: 'POSTPONED', startDate: beforeStart }, now)).toBe(false);
+    expect(hasSportEventStarted({ status: 'DRAFT', startDate: beforeStart }, now)).toBe(false);
   });
 
   it('is true at the start time, and for an event in progress, completed or cancelled whatever its start', () => {

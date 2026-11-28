@@ -175,7 +175,7 @@ describe('pool-master-rop.78.3 / plans/117 §10.3 — publishLiveScoreUpdate', (
   });
 
   describe('event status', () => {
-    it.each(['DRAFT', 'POSTPONED', 'COMPLETED', 'CANCELLED'])(
+    it.each(['DRAFT', 'COMPLETED', 'CANCELLED'])(
       'writes no score to a %s event, since live scores are accepted only while an event is scheduled or in progress',
       async (status) => {
         const prisma = {
