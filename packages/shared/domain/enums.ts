@@ -1206,6 +1206,14 @@ export const ProviderSyncFindingKind = {
    * WARNING. Subject: league, event, Provider and the player's feed id, with their name.
    */
   BOX_SCORE_PLAYER_NOT_IN_GAME: 'BOX_SCORE_PLAYER_NOT_IN_GAME',
+  /**
+   * A draft contest picking from the field (tiered, budget, sweepstakes) reached its cutoff while
+   * a game of its first slot still waited for a team (#2015): it opens only once every team of that
+   * slot is known, so it can never open. The league's schedule overlaps its rounds. WARNING.
+   * Subject: league and event; no Provider or value, since the rule is the app's own. The lifecycle
+   * raises it while such a draft's slot is undecided; a root admin resolves it.
+   */
+  FIELD_CONTEST_CANNOT_OPEN: 'FIELD_CONTEST_CANNOT_OPEN',
 } as const;
 export type ProviderSyncFindingKind = (typeof ProviderSyncFindingKind)[keyof typeof ProviderSyncFindingKind];
 export const ProviderSyncFindingKindOrder = alphabeticalOrder('ProviderSyncFindingKind');

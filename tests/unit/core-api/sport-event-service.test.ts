@@ -58,6 +58,7 @@ function setup(sportName: Sport = Sport.GOLF, sportEventChanged?: SportEventChan
       contests: fakeContestRepo(),
       configurations: fakeContestConfigurationRepo(),
       matches: store.matchRepo(),
+      findings: { raise: jest.fn(async () => undefined) },
     },
     sportEvents,
     // What follows a release or a moved start, collected by the app's handler map.

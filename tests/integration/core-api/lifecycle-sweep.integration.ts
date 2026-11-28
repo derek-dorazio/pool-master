@@ -23,7 +23,7 @@ import {
 } from '../../../packages/core-api/src/modules/notifications';
 import { createDrawReceipts } from '../../../packages/core-api/src/modules/selections/wiring';
 import { fakeLogger } from '../../support/fake-logger';
-import { cleanupTestData, createTestUser, getAppPrisma, getPrisma, integrationBackgroundJobs, setupIntegrationTests, teardownIntegrationTests } from '../helpers';
+import { cleanupTestData, createTestUser, getAppPrisma, getPrisma, integrationBackgroundJobs, setupIntegrationTests, teardownIntegrationTests, integrationSyncFindings } from '../helpers';
 import { DAY, HOUR, seedEventWithField, seedFootballWeek, seedLeagueWithTeams } from '../list-route-seeds';
 import { integrationPlanEntitlements } from '../plan-entitlements';
 import { contestOnEvents, contestTemplateId } from '../../support/contest-rows';
@@ -79,6 +79,7 @@ function lifecycleSweep(now: Date) {
     domainEvents,
     logger,
     contestSettlement: createContestSettlementService(prisma, logger, { domainEvents }),
+    findings: integrationSyncFindings(prisma),
   });
   const scheduler = new EventLifecycleScheduler({
     sportEvents: new PrismaSportEventRepository(prisma),

@@ -17,6 +17,7 @@ import {
   integrationBackgroundJobs,
   setupIntegrationTests,
   teardownIntegrationTests,
+  integrationSyncFindings,
 } from '../helpers';
 import { seedEventWithField, seedLeagueWithTeams } from '../list-route-seeds';
 import { expectSameStatementCount } from '../query-scaling';
@@ -61,7 +62,7 @@ function jobsOf(type: BackgroundJobType, contestIds: readonly string[]) {
 
 function lifecycle() {
   const { queue } = integrationBackgroundJobs();
-  return createEventLifecycleService(getAppPrisma(), { domainEvents: testDomainEvents({ queue }), ...NO_SETTLE_JOBS });
+  return createEventLifecycleService(getAppPrisma(), { domainEvents: testDomainEvents({ queue }), ...NO_SETTLE_JOBS, findings: integrationSyncFindings() });
 }
 
 describe('ContestLifecycle through the event lifecycle', () => {

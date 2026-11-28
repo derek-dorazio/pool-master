@@ -595,6 +595,7 @@ enum PrismaProviderSyncFindingKind {
   CONFERENCE_TEAMS_MISSING
   PROVIDER_PLAN_HAS_NO_STATS
   BOX_SCORE_PLAYER_NOT_IN_GAME
+  FIELD_CONTEST_CANNOT_OPEN
 }
 
 /// A player's stat in a Game's box score (#2026): SportStat.

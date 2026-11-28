@@ -259,6 +259,7 @@ export function buildApp(options: BuildAppOptions = {}) {
     domainEvents,
     logger: app.log,
     contestSettlement,
+    findings: syncFindings,
   });
   // Status bubbles up from Matches to slots to the event (#2013), on the refresh jobs' handlers.
   const slotStatuses = new SlotStatusService({

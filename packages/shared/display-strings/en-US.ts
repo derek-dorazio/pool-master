@@ -337,6 +337,7 @@ export const enUS = {
       CONFERENCE_TEAMS_MISSING: 'Conference has no teams',
       PROVIDER_PLAN_HAS_NO_STATS: 'Plan has no player stats',
       BOX_SCORE_PLAYER_NOT_IN_GAME: 'Box score player not in game',
+      FIELD_CONTEST_CANNOT_OPEN: 'Field contest can never open',
     },
     ProviderSyncFindingAction: {
       MAP_PARTICIPANT: 'Map participant',

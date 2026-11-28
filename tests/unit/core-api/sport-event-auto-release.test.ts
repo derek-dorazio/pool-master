@@ -39,7 +39,7 @@ function setup() {
   sportLeague.selectedProviderMapping = buildProviderMapping({ providerId: PROVIDER });
   const sportEvents = store.sportEventRepo();
   const lifecycle = new EventLifecycleService(
-    { contests: fakeContestRepo(), configurations: fakeContestConfigurationRepo(), matches: store.matchRepo() },
+    { contests: fakeContestRepo(), configurations: fakeContestConfigurationRepo(), matches: store.matchRepo(), findings: { raise: jest.fn(async () => undefined) } },
     sportEvents,
     testDomainEvents(),
     NO_SETTLE_JOBS,

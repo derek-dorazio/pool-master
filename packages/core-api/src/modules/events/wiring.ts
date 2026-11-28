@@ -5,6 +5,7 @@
  */
 
 import type { PrismaClient } from '@prisma/client';
+import type { ProviderSyncFindingService } from '../ingestion/findings/provider-sync-finding-service';
 import type { FastifyBaseLogger } from 'fastify';
 import {
   PrismaContestConfigurationRepository,
@@ -303,6 +304,8 @@ export function createEventLifecycleService(
     domainEvents: Pick<DomainEvents, 'collect' | 'collectEach'>;
     logger?: FastifyBaseLogger;
     contestSettlement: FinishedSportEventSettlement;
+    /** Where a draft field contest that can never open is raised (#2015). */
+    findings: Pick<ProviderSyncFindingService, 'raise'>;
   },
 ): EventLifecycleService {
   return new EventLifecycleService(
@@ -310,6 +313,7 @@ export function createEventLifecycleService(
       contests: new PrismaContestRepository(prisma),
       configurations: new PrismaContestConfigurationRepository(prisma),
       matches: new PrismaSportEventRoundMatchRepository(prisma),
+      findings: options.findings,
     },
     new PrismaSportEventRepository(prisma),
     options.domainEvents,

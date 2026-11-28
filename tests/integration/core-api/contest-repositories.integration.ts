@@ -27,6 +27,7 @@ import {
   integrationBackgroundJobs,
   setupIntegrationTests,
   teardownIntegrationTests,
+  integrationSyncFindings,
 } from '../helpers';
 import { fixtureSeasonId, freshEventEdition, keyedSlotDefinitionId } from '../../support/event-edition';
 import { mockFn } from '../../support/mock-fn';
@@ -1857,7 +1858,7 @@ describe('EventLifecycleService — starting an event\'s contests on the ports (
     await submitEntryEvent(alphaEntry.id, event.id, new Date());
     const send = mockFn<MailDeliveryProvider['send']>(async () => ({ provider: 'smtp', messageId: 'mail' }));
     const jobs = integrationBackgroundJobs();
-    const lifecycle = createEventLifecycleService(getAppPrisma(), { domainEvents: testDomainEvents({ queue: jobs.queue }), ...NO_SETTLE_JOBS });
+    const lifecycle = createEventLifecycleService(getAppPrisma(), { domainEvents: testDomainEvents({ queue: jobs.queue }), ...NO_SETTLE_JOBS, findings: integrationSyncFindings() });
     const emailJobs = createContestEmailJobs(getAppPrisma(), {
       notices: createContestNotices(getAppPrisma(), {
         email: emailServiceOver({ providerName: 'smtp', send }),
@@ -1959,6 +1960,7 @@ describe('EventLifecycleService — an event cancelled under a contest (#845 C7)
     const lifecycle = createEventLifecycleService(getAppPrisma(), {
       domainEvents: testDomainEvents({ queue: jobs.queue, sportEventChanged: notices }),
       contestSettlement: createContestSettlementService(getAppPrisma(), fakeLogger(), { domainEvents: testDomainEvents({ queue: jobs.queue, sportEventChanged: notices }) }),
+      findings: integrationSyncFindings(),
     });
     // Held until the transition has returned, so the email is seen to come from its jobs (#1448, #1458).
     const runner = integrationBackgroundJobs().runWith({

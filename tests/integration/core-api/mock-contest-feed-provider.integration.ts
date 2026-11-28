@@ -836,6 +836,7 @@ describe('mock contest feed provider event-first verification', () => {
     const eventLifecycleService = createEventLifecycleService(getAppPrisma(), {
       domainEvents: testDomainEvents({ queue: backgroundJobs.queue }),
       contestSettlement: settlement,
+      findings: integrationSyncFindings(),
     });
     const persistence = new IngestionPersistence(getAppPrisma(), testDomainEvents());
     const syncRunLedger = new ProviderSyncRunLedger(new PrismaProviderSyncRunRepository(getAppPrisma()));
