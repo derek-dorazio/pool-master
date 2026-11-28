@@ -3,7 +3,7 @@
  * and its own, and the path built from both, for the page and for the page a retired one sends
  * readers on to.
  */
-import { ContestFormat, EventPageOfferState, SelectionType, Sport, type EventPage, type EventPageOffer, TemplateCoverageMode } from '@poolmaster/shared/domain';
+import { ContestFormat, ContestOpeningReason, EventPageOfferState, SelectionType, Sport, type EventPage, type EventPageOffer, TemplateCoverageMode } from '@poolmaster/shared/domain';
 import { toEventPageDto } from '../../../packages/core-api/src/mappers/event-pages.mapper';
 
 const STAMP = new Date('2026-10-01T00:00:00.000Z');
@@ -43,16 +43,16 @@ describe('toEventPageDto (#2042)', () => {
     const dto = toEventPageDto({
       page: CURRENT,
       offers: [{
-        offer: OFFER, state: EventPageOfferState.OPEN, closesAt: STAMP,
+        offer: OFFER, state: EventPageOfferState.OPEN, waitingFor: null, closesAt: STAMP,
         nextSlot: { seasonSlotId: 'cw-slot-2027', sportEventId: 'cw-2027', name: 'Conference Championships', championshipYear: 2027, startDate: STAMP, endDate: new Date('2026-10-02T00:00:00.000Z') },
       }, {
-        offer: { ...OFFER, id: 'tiered-open-ended' }, state: EventPageOfferState.NOT_YET, closesAt: STAMP,
+        offer: { ...OFFER, id: 'tiered-open-ended' }, state: EventPageOfferState.NOT_YET, waitingFor: ContestOpeningReason.FIELD_NOT_LOADED, closesAt: STAMP,
         nextSlot: { seasonSlotId: 'cw-slot-2028', sportEventId: 'cw-2028', name: 'Conference Championships', championshipYear: 2028, startDate: STAMP, endDate: null },
       }],
     });
 
-    expect([dto.sportName, dto.sportUrlSegment, dto.urlSegment, dto.path, dto.redirectTo, dto.sportLeagueName, dto.sportLeagueCompetitionSlotId, dto.offers.map((offer) => [offer.nextSlot.seasonSlotId, offer.nextSlot.endDate])])
-      .toEqual(['Football', 'football', 'championship-weekend', '/play/football/championship-weekend', null, 'Championship Weekend', 'conference-championships', [['cw-slot-2027', '2026-10-02T00:00:00.000Z'], ['cw-slot-2028', null]]]);
+    expect([dto.sportName, dto.sportUrlSegment, dto.urlSegment, dto.path, dto.redirectTo, dto.sportLeagueName, dto.sportLeagueCompetitionSlotId, dto.offers.map((offer) => [offer.nextSlot.seasonSlotId, offer.nextSlot.endDate, offer.waitingFor])])
+      .toEqual(['Football', 'football', 'championship-weekend', '/play/football/championship-weekend', null, 'Championship Weekend', 'conference-championships', [['cw-slot-2027', '2026-10-02T00:00:00.000Z', null], ['cw-slot-2028', null, 'FIELD_NOT_LOADED']]]);
   });
 
   it('answers a retired page with the address of the page it sends readers on to, its sport\'s name and path included', () => {

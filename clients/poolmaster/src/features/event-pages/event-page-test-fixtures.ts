@@ -23,6 +23,7 @@ export function offerFixture(templateKey: string, overrides: Partial<EventPageOf
     sortOrder: 1,
     isPrimary: false,
     state: 'OPEN',
+    waitingFor: null,
     nextSlot: { seasonSlotId: `season-slot-${templateKey}`, sportEventId: `event-${templateKey}`, name: 'NFL Playoffs', championshipYear: 2027, startDate: '2027-01-09T18:00:00.000Z', endDate: null },
     ...overrides,
   };

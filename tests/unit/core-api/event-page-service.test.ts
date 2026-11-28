@@ -6,6 +6,7 @@ import type { EventPageRepository } from '@poolmaster/shared/db';
 import {
   ContestFormat,
   ContestOpening,
+  ContestOpeningReason,
   EventPageOfferState,
   SelectionType,
   Sport,
@@ -100,7 +101,9 @@ function build(options: {
         const key = `${sportEventId}:${setup.selectionType}`;
         const opening = options.openings?.[key] ?? options.openings?.[sportEventId] ?? ContestOpening.OPEN;
         const closesAt = opening === ContestOpening.CLOSED ? null : options.closesAt?.[key] ?? options.closesAt?.[sportEventId] ?? DEFAULT_CLOSES_AT;
-        return Promise.resolve({ opening, closesAt });
+        // A NOT_YET offer waits for release here; the reason is passed through as the API gives it.
+        const reason = opening === ContestOpening.OPEN ? null : opening === ContestOpening.NOT_YET ? ContestOpeningReason.EVENT_NOT_RELEASED : ContestOpeningReason.EVENT_STARTED;
+        return Promise.resolve({ opening, reason, closesAt });
       };
     },
   });
@@ -129,7 +132,7 @@ describe('EventPageService', () => {
     expect(asked).toHaveLength(3);
   });
 
-  it('shows each offer with its page\'s slot definition\'s next slot and whether it opens now, in order (#2050)', async () => {
+  it('shows each offer with its page\'s slot definition\'s next slot, whether it opens now and what a NOT_YET one waits for, in order (#2050, #2015)', async () => {
     const { service } = build({
       slots: {
         'conference-championships': [nextSlot('cw-2027', '2027-01-24T20:00:00.000Z')],
@@ -140,10 +143,10 @@ describe('EventPageService', () => {
 
     const view = await service.getPage('football', 'championship-weekend');
 
-    expect(view.offers.map((each) => [each.offer.id, each.nextSlot.sportEventId, each.state])).toEqual([
-      ['tiered', 'cw-2027', EventPageOfferState.NOT_YET],
-      ['bracket', 'cw-2027', EventPageOfferState.OPEN],
-      ['squares', 'cw-2027', EventPageOfferState.OPEN],
+    expect(view.offers.map((each) => [each.offer.id, each.nextSlot.sportEventId, each.state, each.waitingFor])).toEqual([
+      ['tiered', 'cw-2027', EventPageOfferState.NOT_YET, ContestOpeningReason.EVENT_NOT_RELEASED],
+      ['bracket', 'cw-2027', EventPageOfferState.OPEN, null],
+      ['squares', 'cw-2027', EventPageOfferState.OPEN, null],
     ]);
   });
 

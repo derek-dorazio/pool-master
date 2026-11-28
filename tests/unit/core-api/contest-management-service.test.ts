@@ -1401,15 +1401,15 @@ describe('ContestManagementService', () => {
       message: 'Selected sporting event is not released for contest creation yet.',
     },
     {
-      name: 'refuses with SPORT_EVENT_ALREADY_STARTED once the event\'s start time has passed',
+      name: 'refuses with CONTEST_FIRST_GAME_STARTED once the event\'s start time has passed',
       event: { startDate: new Date('2026-04-23T12:00:00.000Z') },
-      code: 'SPORT_EVENT_ALREADY_STARTED',
+      code: 'CONTEST_FIRST_GAME_STARTED',
       message: 'Selected sporting event has already started, so contests can no longer be created on it.',
     },
     {
-      name: 'refuses with SPORT_EVENT_ALREADY_STARTED for an event in progress, whatever its start time',
+      name: 'refuses with CONTEST_FIRST_GAME_STARTED for an event in progress, whatever its start time',
       event: { status: SportEventStatus.IN_PROGRESS },
-      code: 'SPORT_EVENT_ALREADY_STARTED',
+      code: 'CONTEST_FIRST_GAME_STARTED',
       message: 'Selected sporting event has already started, so contests can no longer be created on it.',
     },
   ])('createContest $name, creating nothing', async ({ event, code, message }) => {
@@ -1489,13 +1489,13 @@ describe('ContestManagementService', () => {
       expect(contestRepo.create).not.toHaveBeenCalled();
     });
 
-    it('refuses creating on an event that has already started, with SPORT_EVENT_ALREADY_STARTED', async () => {
+    it('refuses creating on an event that has already started, with CONTEST_FIRST_GAME_STARTED', async () => {
       const { service, contestRepo } = build({
         reader: createSportEventReader({ startDate: new Date('2026-04-23T08:00:00.000Z') }),
       });
 
       await expect(service.createContest({ leagueId: 'league-1' }, CREATE))
-        .rejects.toMatchObject({ code: 'SPORT_EVENT_ALREADY_STARTED' });
+        .rejects.toMatchObject({ code: 'CONTEST_FIRST_GAME_STARTED' });
       expect(contestRepo.create).not.toHaveBeenCalled();
     });
 
@@ -2951,10 +2951,10 @@ describe('ContestManagementService — a bracket on a knockout already under way
     return promise.then(() => undefined, (caught: unknown) => caught);
   }
 
-  it('refuses a bracket on the event under way with 422 SPORT_EVENT_ALREADY_STARTED, creating nothing', async () => {
+  it('refuses a bracket on the event under way with 422 CONTEST_FIRST_GAME_STARTED, creating nothing', async () => {
     const context = underWay();
 
-    expect(await refusal(context.create())).toMatchObject({ code: 'SPORT_EVENT_ALREADY_STARTED', statusCode: 422 });
+    expect(await refusal(context.create())).toMatchObject({ code: 'CONTEST_FIRST_GAME_STARTED', statusCode: 422 });
     expect(context.world.contests.size).toBe(0);
   });
 
@@ -3183,7 +3183,7 @@ describe('ContestManagementService squares rules (#711)', () => {
     expect(contestCoreRepo.create).not.toHaveBeenCalled();
   });
 
-  it('refuses a squares contest whose game has kicked off with SPORT_EVENT_ALREADY_STARTED, though its event started long before', async () => {
+  it('refuses a squares contest whose game has kicked off with CONTEST_SQUARES_GAME_STARTED, though its event started long before', async () => {
     const { contestCoreRepo, reader, service } = squaresService(MatchStatus.SCHEDULED);
     const live = legacyMatch({ id: 'match-1', roundNumber: 4, status: MatchStatus.IN_PROGRESS });
     const liveMatch = { ...live, games: live.games.map((game) => ({ ...game, id: GAME_ID })) };
@@ -3191,7 +3191,7 @@ describe('ContestManagementService squares rules (#711)', () => {
       cutoffTiming(cutoff, sportEvent, [liveMatch]));
 
     await expect(service.createContest({ leagueId: 'league-1' }, squaresRequest()))
-      .rejects.toMatchObject({ code: 'SPORT_EVENT_ALREADY_STARTED' });
+      .rejects.toMatchObject({ code: 'CONTEST_SQUARES_GAME_STARTED' });
     expect(contestCoreRepo.create).not.toHaveBeenCalled();
   });
 });

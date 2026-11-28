@@ -55,7 +55,7 @@ async function appClosingAt(cutoffs: Array<() => Date>): Promise<{ app: FastifyI
     openings: () => (): Promise<ContestOpeningWindow> => {
       const closesAt = (cutoffs[Math.min(computed, cutoffs.length - 1)] ?? (() => STAMP))();
       computed += 1;
-      return Promise.resolve({ opening: ContestOpening.OPEN, closesAt });
+      return Promise.resolve({ opening: ContestOpening.OPEN, reason: null, closesAt });
     },
   });
   const handlers = createEventPageHandlers(service, {

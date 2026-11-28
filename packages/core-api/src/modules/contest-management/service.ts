@@ -214,6 +214,22 @@ const COVERAGE_REFUSALS: Readonly<Record<ContestCoverageProblem, { message: stri
   },
 };
 
+/**
+ * What the server says when a new contest's cutoff on an event has passed (#1990): one code per
+ * cutoff kind, so each is worded once. Its first covered Game, which for a contest not made yet is
+ * the event's start; or a squares contest's own Game's kickoff.
+ */
+const CUTOFF_PASSED: Readonly<Record<ContestCutoffKind, { message: string; code: ApiErrorCode }>> = {
+  [ContestCutoffKind.FIRST_COVERED_GAME]: {
+    message: 'Selected sporting event has already started, so contests can no longer be created on it.',
+    code: 'CONTEST_FIRST_GAME_STARTED',
+  },
+  [ContestCutoffKind.GAME_START]: {
+    message: 'That game has already kicked off, so a squares contest can no longer be played on it.',
+    code: 'CONTEST_SQUARES_GAME_STARTED',
+  },
+};
+
 /** What the server says when a one-event contest is given more events, one line per such type. */
 const ONE_EVENT_REFUSALS: Readonly<Record<OneEventSelectionType, { message: string; code: ApiErrorCode }>> = {
   [SelectionType.RANDOM_DRAW]: {
@@ -977,12 +993,7 @@ export class ContestManagementService {
         cutoff: cutoff.kind,
         cutoffAt: timing.startDate?.toISOString() ?? null,
       }, 'contest management create contest rejected for a sport event past the contest cutoff');
-      throw new ContestManagementError(
-        cutoff.kind === ContestCutoffKind.GAME_START
-          ? 'That game has already kicked off, so a squares contest can no longer be played on it.'
-          : 'Selected sporting event has already started, so contests can no longer be created on it.',
-        'SPORT_EVENT_ALREADY_STARTED',
-      );
+      throw new ContestManagementError(CUTOFF_PASSED[cutoff.kind].message, CUTOFF_PASSED[cutoff.kind].code);
     }
 
     return sportEvent;

@@ -14203,7 +14203,7 @@ export interface components {
             /** @description CONTEST_SETUPS_ON: how many active contest setups the event's sport league offers; at least one passes. */
             value: number;
         };
-        /** @description Whether one selection type can start a contest on the event now. */
+        /** @description Whether one selection type can start a contest on the event now, and why not. */
         SportEventContestOpeningDto: {
             /**
              * @description A way to pick that the event's sport league offers.
@@ -14215,6 +14215,11 @@ export interface components {
              * @enum {string}
              */
             opening: "OPEN" | "NOT_YET" | "CLOSED";
+            /**
+             * @description Why the row is NOT_YET or CLOSED, null when OPEN. NOT_YET: EVENT_NOT_RELEASED (a draft) or FIELD_NOT_LOADED (no field yet). CLOSED: EVENT_STARTED (the event is under way or over). The event list never reads further, so it never answers BRACKET_NOT_SET or NO_GAME_LEFT, which an event page's offer reads.
+             * @enum {string|null}
+             */
+            reason: "EVENT_NOT_RELEASED" | "FIELD_NOT_LOADED" | "BRACKET_NOT_SET" | "EVENT_STARTED" | "NO_GAME_LEFT" | null;
         };
         /** @description The last automatic release try of an event: when, its result, and the checks that held it. */
         SportEventAutoReleaseCheckDto: {
@@ -14443,6 +14448,11 @@ export interface components {
                  * @enum {string}
                  */
                 opening: "OPEN" | "NOT_YET" | "CLOSED";
+                /**
+                 * @description Why the row is NOT_YET or CLOSED, null when OPEN. NOT_YET: EVENT_NOT_RELEASED (a draft) or FIELD_NOT_LOADED (no field yet). CLOSED: EVENT_STARTED (the event is under way or over). The event list never reads further, so it never answers BRACKET_NOT_SET or NO_GAME_LEFT, which an event page's offer reads.
+                 * @enum {string|null}
+                 */
+                reason: "EVENT_NOT_RELEASED" | "FIELD_NOT_LOADED" | "BRACKET_NOT_SET" | "EVENT_STARTED" | "NO_GAME_LEFT" | null;
             }[];
             /** @description Whether the tiers and prices of the event's first slot are locked: true once the event is released (#431, #2044). A tier or price write on a locked set is refused with 409 SPORT_EVENT_TIERS_LOCKED. */
             tiersLocked: boolean;
@@ -14863,6 +14873,11 @@ export interface components {
                      * @enum {string}
                      */
                     opening: "OPEN" | "NOT_YET" | "CLOSED";
+                    /**
+                     * @description Why the row is NOT_YET or CLOSED, null when OPEN. NOT_YET: EVENT_NOT_RELEASED (a draft) or FIELD_NOT_LOADED (no field yet). CLOSED: EVENT_STARTED (the event is under way or over). The event list never reads further, so it never answers BRACKET_NOT_SET or NO_GAME_LEFT, which an event page's offer reads.
+                     * @enum {string|null}
+                     */
+                    reason: "EVENT_NOT_RELEASED" | "FIELD_NOT_LOADED" | "BRACKET_NOT_SET" | "EVENT_STARTED" | "NO_GAME_LEFT" | null;
                 }[];
                 /** @description Whether the tiers and prices of the event's first slot are locked: true once the event is released (#431, #2044). A tier or price write on a locked set is refused with 409 SPORT_EVENT_TIERS_LOCKED. */
                 tiersLocked: boolean;
@@ -15262,6 +15277,11 @@ export interface components {
                      * @enum {string}
                      */
                     opening: "OPEN" | "NOT_YET" | "CLOSED";
+                    /**
+                     * @description Why the row is NOT_YET or CLOSED, null when OPEN. NOT_YET: EVENT_NOT_RELEASED (a draft) or FIELD_NOT_LOADED (no field yet). CLOSED: EVENT_STARTED (the event is under way or over). The event list never reads further, so it never answers BRACKET_NOT_SET or NO_GAME_LEFT, which an event page's offer reads.
+                     * @enum {string|null}
+                     */
+                    reason: "EVENT_NOT_RELEASED" | "FIELD_NOT_LOADED" | "BRACKET_NOT_SET" | "EVENT_STARTED" | "NO_GAME_LEFT" | null;
                 }[];
                 /** @description Whether the tiers and prices of the event's first slot are locked: true once the event is released (#431, #2044). A tier or price write on a locked set is refused with 409 SPORT_EVENT_TIERS_LOCKED. */
                 tiersLocked: boolean;
@@ -25018,6 +25038,11 @@ export interface components {
              * @enum {string}
              */
             state: "OPEN" | "NOT_YET";
+            /**
+             * @description What a NOT_YET offer waits for: EVENT_NOT_RELEASED, FIELD_NOT_LOADED or BRACKET_NOT_SET. Null when OPEN.
+             * @enum {string|null}
+             */
+            waitingFor: "EVENT_NOT_RELEASED" | "FIELD_NOT_LOADED" | "BRACKET_NOT_SET" | "EVENT_STARTED" | "NO_GAME_LEFT" | null;
             /** @description The Season slot an offer is shown with (#2010): of its slot definition's Season slots, the one under way, or else the soonest upcoming that can still take the contest. */
             nextSlot: {
                 /**
@@ -25516,6 +25541,11 @@ export interface components {
                  * @enum {string}
                  */
                 state: "OPEN" | "NOT_YET";
+                /**
+                 * @description What a NOT_YET offer waits for: EVENT_NOT_RELEASED, FIELD_NOT_LOADED or BRACKET_NOT_SET. Null when OPEN.
+                 * @enum {string|null}
+                 */
+                waitingFor: "EVENT_NOT_RELEASED" | "FIELD_NOT_LOADED" | "BRACKET_NOT_SET" | "EVENT_STARTED" | "NO_GAME_LEFT" | null;
                 /** @description The Season slot an offer is shown with (#2010): of its slot definition's Season slots, the one under way, or else the soonest upcoming that can still take the contest. */
                 nextSlot: {
                     /**
@@ -26017,6 +26047,11 @@ export interface components {
                      * @enum {string}
                      */
                     state: "OPEN" | "NOT_YET";
+                    /**
+                     * @description What a NOT_YET offer waits for: EVENT_NOT_RELEASED, FIELD_NOT_LOADED or BRACKET_NOT_SET. Null when OPEN.
+                     * @enum {string|null}
+                     */
+                    waitingFor: "EVENT_NOT_RELEASED" | "FIELD_NOT_LOADED" | "BRACKET_NOT_SET" | "EVENT_STARTED" | "NO_GAME_LEFT" | null;
                     /** @description The Season slot an offer is shown with (#2010): of its slot definition's Season slots, the one under way, or else the soonest upcoming that can still take the contest. */
                     nextSlot: {
                         /**
@@ -26529,6 +26564,11 @@ export interface components {
                      * @enum {string}
                      */
                     state: "OPEN" | "NOT_YET";
+                    /**
+                     * @description What a NOT_YET offer waits for: EVENT_NOT_RELEASED, FIELD_NOT_LOADED or BRACKET_NOT_SET. Null when OPEN.
+                     * @enum {string|null}
+                     */
+                    waitingFor: "EVENT_NOT_RELEASED" | "FIELD_NOT_LOADED" | "BRACKET_NOT_SET" | "EVENT_STARTED" | "NO_GAME_LEFT" | null;
                     /** @description The Season slot an offer is shown with (#2010): of its slot definition's Season slots, the one under way, or else the soonest upcoming that can still take the contest. */
                     nextSlot: {
                         /**
@@ -33663,7 +33703,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
-            /** @description The event, format or template cannot make this contest. The event: SPORT_EVENT_NOT_FOUND, SPORT_EVENT_NOT_RELEASED, SPORT_EVENT_FIELD_NOT_LOADED, SPORT_EVENT_ALREADY_STARTED. The format: CONTEST_FORMAT_NOT_ALLOWED. The games of a pick'em or survivor contest: CONTEST_EVENT_HAS_NO_GAMES, CONTEST_EVENT_GAME_UNDECIDED, or CONTEST_EVENT_SPREAD_MISSING (a pick'em pool against the spread on a week with a game lacking its spread). CONTEST_SPREAD_NOT_OFFERED: a pick'em pool against the spread in a sport whose pools have no spread (#792). The selection type: CONTEST_SELECTION_TYPE_NOT_ALLOWED (the event's sport does not offer it). The coverage: CONTEST_COVERAGE_NO_LISTED_SLOT (the events hold none of the slots the template lists), CONTEST_COVERAGE_SLOT_NOT_CHOSEN (a one-slot template lists several of them and no `startingSlotId` chooses one), CONTEST_COVERAGE_SLOT_NOT_COVERABLE (`startingSlotId` is not a listed slot of the events). The configuration: CONTEST_RULES_SELECTION_TYPE_MISMATCH (rules of another selection type than the contest's), CONTEST_TIER_FIELD_OUT_OF_RANGE, CONTEST_BUDGET_FIELD_OUT_OF_RANGE (counted scores above the roster size), CONTEST_CONFIGURATION_INVALID (template missing, inactive, or for another format or selection type), or CONTEST_CONFIG_TEMPLATE_LEAGUE_MISMATCH (the template is one sport league's own preset and the event belongs to another league; a template with no sport league is offered for every league of its sport). */
+            /** @description The event, format or template cannot make this contest. The event: SPORT_EVENT_NOT_FOUND, SPORT_EVENT_NOT_RELEASED, SPORT_EVENT_FIELD_NOT_LOADED. The cutoff, one code per kind: CONTEST_FIRST_GAME_STARTED (the event has started) or CONTEST_SQUARES_GAME_STARTED (the squares game has kicked off). The format: CONTEST_FORMAT_NOT_ALLOWED. The games of a pick'em or survivor contest: CONTEST_EVENT_HAS_NO_GAMES, CONTEST_EVENT_GAME_UNDECIDED, or CONTEST_EVENT_SPREAD_MISSING (a pick'em pool against the spread on a week with a game lacking its spread). CONTEST_SPREAD_NOT_OFFERED: a pick'em pool against the spread in a sport whose pools have no spread (#792). The selection type: CONTEST_SELECTION_TYPE_NOT_ALLOWED (the event's sport does not offer it). The coverage: CONTEST_COVERAGE_NO_LISTED_SLOT (the events hold none of the slots the template lists), CONTEST_COVERAGE_SLOT_NOT_CHOSEN (a one-slot template lists several of them and no `startingSlotId` chooses one), CONTEST_COVERAGE_SLOT_NOT_COVERABLE (`startingSlotId` is not a listed slot of the events). The configuration: CONTEST_RULES_SELECTION_TYPE_MISMATCH (rules of another selection type than the contest's), CONTEST_TIER_FIELD_OUT_OF_RANGE, CONTEST_BUDGET_FIELD_OUT_OF_RANGE (counted scores above the roster size), CONTEST_CONFIGURATION_INVALID (template missing, inactive, or for another format or selection type), or CONTEST_CONFIG_TEMPLATE_LEAGUE_MISMATCH (the template is one sport league's own preset and the event belongs to another league; a template with no sport league is offered for every league of its sport). */
             422: {
                 headers: {
                     [name: string]: unknown;
@@ -34133,7 +34173,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
-            /** @description SPORT_EVENT_NOT_RELEASED, SPORT_EVENT_FIELD_NOT_LOADED or SPORT_EVENT_ALREADY_STARTED — an event contests cannot be built on. CONTEST_EVENTS_LEAGUE_MISMATCH — an event from another sport league. CONTEST_EVENTS_SEASON_MISMATCH — an event of another Season than the contest's, fixed at creation. CONTEST_COVERAGE_NO_LISTED_SLOT, CONTEST_COVERAGE_SLOT_NOT_CHOSEN or CONTEST_COVERAGE_SLOT_NOT_COVERABLE — the events and starting slot do not give the template a slot to cover, as at create. CONTEST_DRAW_SINGLE_EVENT, CONTEST_BRACKET_SINGLE_EVENT or CONTEST_SQUARES_SINGLE_EVENT — a one-event contest given more. CONTEST_TIER_FIELD_OUT_OF_RANGE or CONTEST_SCORING_ROUNDS_MISMATCH — the rules do not fit the new event. CONTEST_EVENT_HAS_NO_GAMES, CONTEST_EVENT_GAME_UNDECIDED or CONTEST_EVENT_SPREAD_MISSING — a week that cannot be picked under the pick'em rules. */
+            /** @description SPORT_EVENT_NOT_RELEASED or SPORT_EVENT_FIELD_NOT_LOADED — an event contests cannot be built on yet. CONTEST_FIRST_GAME_STARTED or CONTEST_SQUARES_GAME_STARTED — its cutoff has passed: the event has started, or the squares game has kicked off. CONTEST_EVENTS_LEAGUE_MISMATCH — an event from another sport league. CONTEST_EVENTS_SEASON_MISMATCH — an event of another Season than the contest's, fixed at creation. CONTEST_COVERAGE_NO_LISTED_SLOT, CONTEST_COVERAGE_SLOT_NOT_CHOSEN or CONTEST_COVERAGE_SLOT_NOT_COVERABLE — the events and starting slot do not give the template a slot to cover, as at create. CONTEST_DRAW_SINGLE_EVENT, CONTEST_BRACKET_SINGLE_EVENT or CONTEST_SQUARES_SINGLE_EVENT — a one-event contest given more. CONTEST_TIER_FIELD_OUT_OF_RANGE or CONTEST_SCORING_ROUNDS_MISMATCH — the rules do not fit the new event. CONTEST_EVENT_HAS_NO_GAMES, CONTEST_EVENT_GAME_UNDECIDED or CONTEST_EVENT_SPREAD_MISSING — a week that cannot be picked under the pick'em rules. */
             422: {
                 headers: {
                     [name: string]: unknown;
