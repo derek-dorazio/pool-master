@@ -1290,7 +1290,9 @@ describe('SDK Functional: Contests and Entries', () => {
 
     // 3) Start the event and move the contest past OPEN, as going live does; non-owners now
     //    see picks (an event's picks are revealed when it starts, #713).
+    // A contest's window starts with the slot it covers (#2013): the slot is under way with its event.
     await prisma.sportEvent.update({ where: { id: sportEvent.id }, data: { status: 'IN_PROGRESS' } });
+    await prisma.sportLeagueSeasonCompetitionSlot.updateMany({ where: { eventSlot: { sportEventId: sportEvent.id } }, data: { status: 'IN_PROGRESS' } });
     await prisma.contest.update({
       where: { id: contestId },
       data: { status: ContestStatus.ACTIVE },
@@ -1436,7 +1438,9 @@ describe('SDK Functional: Contests and Entries', () => {
 
     // Start the event and move the contest past OPEN, as going live does. Now member's
     // perspective sees both squads' picks.
+    // A contest's window starts with the slot it covers (#2013): the slot is under way with its event.
     await prisma.sportEvent.update({ where: { id: sportEvent.id }, data: { status: 'IN_PROGRESS' } });
+    await prisma.sportLeagueSeasonCompetitionSlot.updateMany({ where: { eventSlot: { sportEventId: sportEvent.id } }, data: { status: 'IN_PROGRESS' } });
     await prisma.contest.update({
       where: { id: contestId },
       data: { status: ContestStatus.ACTIVE },

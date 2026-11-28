@@ -760,13 +760,17 @@ export function isSportEventStatusFinished(status: SportEventStatus): boolean {
 /**
  * Whether the event is past its contest cutoff: its start time has passed, or its status says it
  * has started or been called off. The server and the web both ask this one question (#117, #431).
+ * A contest's window with no start yet (a later playoff round not yet scheduled, #2013) has started
+ * only once its status says so.
  */
 export function hasSportEventStarted(
-  event: { status: SportEventStatus; startDate: Date | string },
+  event: { status: SportEventStatus; startDate: Date | string | null },
   now: Date,
 ): boolean {
+  if (isSportEventStatusStarted(event.status)) return true;
+  if (event.startDate === null) return false;
   const startsAt = typeof event.startDate === 'string' ? Date.parse(event.startDate) : event.startDate.getTime();
-  return startsAt <= now.getTime() || isSportEventStatusStarted(event.status);
+  return startsAt <= now.getTime();
 }
 
 /**

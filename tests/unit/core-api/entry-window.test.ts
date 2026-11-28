@@ -4,7 +4,7 @@
  * contest's pages open on.
  */
 import { withHomeAway, legacyMatch, squaresGameOf } from '../../support/match-sides';
-import { ContestStatus, MatchStatus, PickEmMode, SelectionType, SportEventStatus } from '@poolmaster/shared/domain';
+import { ContestStatus, MatchStatus, PickEmMode, SeasonSlotStatus, SelectionType, SportEventStatus } from '@poolmaster/shared/domain';
 import {
   ContestCutoffKind,
   PickWindow,
@@ -263,18 +263,67 @@ describe('areMatchPicksRevealed — who may see one game\'s pick', () => {
 });
 
 describe('contestCutoff — where a contest\'s window closes', () => {
-  it('closes every contest but squares at its event\'s start, a bracket included', () => {
-    expect(contestCutoff(undefined)).toEqual({ kind: ContestCutoffKind.EVENT_START });
-    expect(contestCutoff({ selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 4 })).toEqual({ kind: ContestCutoffKind.EVENT_START });
-    expect(contestCutoff({ selectionType: SelectionType.PICK_EM, mode: PickEmMode.CONFIDENCE, againstTheSpread: false })).toEqual({ kind: ContestCutoffKind.EVENT_START });
-    expect(contestCutoff({ selectionType: SelectionType.BRACKET })).toEqual({ kind: ContestCutoffKind.EVENT_START });
+  it('closes every contest but squares at the first Game of the slots it covers, a bracket included', () => {
+    const coveredSlots = [{ sportEventId: 'playoffs', status: SeasonSlotStatus.SCHEDULED, startsAt: NOW, isTestData: false }];
+    expect(contestCutoff(undefined)).toEqual({ kind: ContestCutoffKind.FIRST_COVERED_GAME, coveredSlots: [] });
+    expect(contestCutoff({ selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 4 }, { coveredSlots })).toEqual({ kind: ContestCutoffKind.FIRST_COVERED_GAME, coveredSlots });
+    expect(contestCutoff({ selectionType: SelectionType.PICK_EM, mode: PickEmMode.CONFIDENCE, againstTheSpread: false })).toEqual({ kind: ContestCutoffKind.FIRST_COVERED_GAME, coveredSlots: [] });
+    expect(contestCutoff({ selectionType: SelectionType.BRACKET })).toEqual({ kind: ContestCutoffKind.FIRST_COVERED_GAME, coveredSlots: [] });
   });
 });
 
-describe('cutoffTiming — the timing a contest\'s window runs on', () => {
-  it('is the event\'s own timing for a contest that closes at the event\'s start', () => {
-    const underWay = event('regional', -48, SportEventStatus.IN_PROGRESS);
-    expect(cutoffTiming({ kind: ContestCutoffKind.EVENT_START }, underWay, [legacyMatch({ id: 'game-2', roundNumber: 2, status: MatchStatus.SCHEDULED, scheduledDate: new Date(NOW.getTime() + 5 * HOUR) })])).toBe(underWay);
+describe('cutoffTiming — a contest\'s window opens and closes at its first covered Game (#2013)', () => {
+  const playoffs = event('playoffs', -48, SportEventStatus.IN_PROGRESS);
+  const slot = (sportEventId: string, status: SeasonSlotStatus, startOffsetHours: number | null, isTestData = false) => ({
+    sportEventId, status, isTestData, startsAt: startOffsetHours === null ? null : new Date(NOW.getTime() + startOffsetHours * HOUR),
+  });
+  const covering = (...coveredSlots: ReturnType<typeof slot>[]) => ({ kind: ContestCutoffKind.FIRST_COVERED_GAME, coveredSlots }) as const;
+
+  it('is still to start for a contest on a later slot of an event already under way, until that slot\'s first game', () => {
+    const timing = cutoffTiming(covering(slot('playoffs', SeasonSlotStatus.SCHEDULED, 30)), playoffs, []);
+
+    expect(timing).toEqual({ status: SportEventStatus.SCHEDULED, startDate: new Date(NOW.getTime() + 30 * HOUR) });
+    expect(areContestEntriesOpen({ status: ContestStatus.OPEN }, [timing], NOW)).toBe(true);
+    expect(areContestEntriesOpen({ status: ContestStatus.OPEN }, [timing], new Date(NOW.getTime() + 30 * HOUR))).toBe(false);
+  });
+
+  it('starts at the earliest of the slots it covers on the event, and once any of them is under way, though its first game\'s time has not come', () => {
+    expect(cutoffTiming(covering(slot('playoffs', SeasonSlotStatus.SCHEDULED, 50), slot('playoffs', SeasonSlotStatus.SCHEDULED, 30)), playoffs, []).startDate)
+      .toEqual(new Date(NOW.getTime() + 30 * HOUR));
+    expect(cutoffTiming(covering(slot('playoffs', SeasonSlotStatus.IN_PROGRESS, 30)), playoffs, []).status).toBe(SportEventStatus.IN_PROGRESS);
+  });
+
+  it('reads only the slots it covers on this event, and is the event\'s own timing where it covers none', () => {
+    expect(cutoffTiming(covering(slot('another-event', SeasonSlotStatus.IN_PROGRESS, -5)), playoffs, [])).toBe(playoffs);
+    expect(cutoffTiming(covering(), playoffs, [])).toBe(playoffs);
+  });
+
+  it('keeps taking entries and picks for a later round not scheduled yet on an event under way, until that round starts, rather than closing at the event\'s start', () => {
+    const conferenceFinals = cutoffTiming(covering(slot('playoffs', SeasonSlotStatus.SCHEDULED, null)), playoffs, []);
+
+    expect(conferenceFinals).toEqual({ status: SportEventStatus.SCHEDULED, startDate: null });
+    expect(areContestEntriesOpen({ status: ContestStatus.OPEN }, [conferenceFinals], NOW)).toBe(true);
+    expect(areEventPicksOpen({ status: ContestStatus.ACTIVE }, conferenceFinals, NOW)).toBe(true);
+    expect(cutoffTiming(covering(slot('playoffs', SeasonSlotStatus.IN_PROGRESS, null)), playoffs, [])).toEqual({ status: SportEventStatus.IN_PROGRESS, startDate: null });
+  });
+
+  it('stands a test slot, which the sync never schedules, on its event\'s own timing, which a root admin moves by hand', () => {
+    const scheduled = event('playoffs', 48, SportEventStatus.SCHEDULED);
+    expect(cutoffTiming(covering(slot('playoffs', SeasonSlotStatus.SCHEDULED, null, true)), scheduled, [])).toBe(scheduled);
+    expect(cutoffTiming(covering(slot('playoffs', SeasonSlotStatus.COMPLETED, -5, true)), scheduled, [])).toBe(scheduled);
+    expect(cutoffTiming(covering(slot('playoffs', SeasonSlotStatus.SCHEDULED, 30, true)), playoffs, [])).toBe(playoffs);
+    expect(cutoffTiming(covering(slot('playoffs', SeasonSlotStatus.SCHEDULED, 30)), playoffs, []).status).toBe(SportEventStatus.SCHEDULED);
+  });
+
+  it('leaves a cancelled slot out: it neither starts the window nor gives it its start', () => {
+    expect(cutoffTiming(covering(slot('playoffs', SeasonSlotStatus.CANCELLED, -5), slot('playoffs', SeasonSlotStatus.SCHEDULED, 30)), playoffs, []))
+      .toEqual({ status: SportEventStatus.SCHEDULED, startDate: new Date(NOW.getTime() + 30 * HOUR) });
+    expect(cutoffTiming(covering(slot('playoffs', SeasonSlotStatus.COMPLETED, -5)), playoffs, []).status).toBe(SportEventStatus.IN_PROGRESS);
+  });
+
+  it('keeps a finished event finished, whatever its slots say', () => {
+    const finished = event('playoffs', -48, SportEventStatus.COMPLETED);
+    expect(cutoffTiming(covering(slot('playoffs', SeasonSlotStatus.SCHEDULED, 30)), finished, [])).toBe(finished);
   });
 });
 
@@ -289,8 +338,8 @@ describe('cutoffTiming — a squares contest closes at its one game\'s kickoff (
   const SUPER_BOWL = { kind: ContestCutoffKind.GAME_START, sportEventRoundMatchGameId: 'super-bowl-g1' } as const;
 
   it('closes a squares contest at its game\'s kickoff, and every other contest as before', () => {
-    expect(contestCutoff({ selectionType: SelectionType.SQUARES, maxSquaresPerEntry: 10 }, squaresGameOf('super-bowl'))).toEqual(SUPER_BOWL);
-    expect(contestCutoff({ selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 4 }, squaresGameOf('super-bowl'))).toEqual({ kind: ContestCutoffKind.EVENT_START });
+    expect(contestCutoff({ selectionType: SelectionType.SQUARES, maxSquaresPerEntry: 10 }, { squaresGame: squaresGameOf('super-bowl') })).toEqual(SUPER_BOWL);
+    expect(contestCutoff({ selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 4 }, { squaresGame: squaresGameOf('super-bowl') })).toEqual({ kind: ContestCutoffKind.FIRST_COVERED_GAME, coveredSlots: [] });
   });
 
   it('is not yet started, at the game\'s kickoff, while the playoffs are under way and the game is still to play', () => {

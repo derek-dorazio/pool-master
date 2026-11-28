@@ -287,7 +287,7 @@ export class ContestManagementService {
       input.sportEventIds,
       contestCutoff(
         resolvedConfiguration.configuration,
-        input.sportEventRoundMatchGameId === undefined ? undefined : { sportEventRoundMatchGameId: input.sportEventRoundMatchGameId },
+        input.sportEventRoundMatchGameId === undefined ? {} : { squaresGame: { sportEventRoundMatchGameId: input.sportEventRoundMatchGameId } },
       ),
     );
     const squaresGameSlotId = await this.assertSquaresGame(input, sportEvents);
@@ -565,7 +565,7 @@ export class ContestManagementService {
     }
 
     const sportEvents = await this.findContestSportEvents(contest);
-    await this.assertCutoffAhead(contestId, sportEvents, contestCutoff(configuration.configJson, contest.squaresGame));
+    await this.assertCutoffAhead(contestId, sportEvents, contestCutoff(configuration.configJson, contest));
     // The events may have changed since the rules were saved: their tiers, or which golfers are
     // still in the field. Rules nobody could enter are refused here too.
     await this.resolveContestRules(sportEvents, ensureTypedConfiguration(configuration), {
@@ -647,7 +647,7 @@ export class ContestManagementService {
     const requestedIds = [...new Set(input.sportEventIds)];
     const sportEvents = await this.assertSportEventsContestEligible(
       requestedIds,
-      contestCutoff(configuration.configJson, contest.squaresGame),
+      contestCutoff(configuration.configJson, contest),
     );
     // Every template is one sport league's (#1825), so the contest's league is its template's:
     // the new events keep to it.
@@ -975,7 +975,7 @@ export class ContestManagementService {
         sportEventId,
         status: sportEvent.status,
         cutoff: cutoff.kind,
-        cutoffAt: timing.startDate.toISOString(),
+        cutoffAt: timing.startDate?.toISOString() ?? null,
       }, 'contest management create contest rejected for a sport event past the contest cutoff');
       throw new ContestManagementError(
         cutoff.kind === ContestCutoffKind.GAME_START
