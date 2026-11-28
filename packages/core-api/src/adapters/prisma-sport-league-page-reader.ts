@@ -25,7 +25,6 @@ import type {
   SportLeagueSlotDefinition,
 } from '@poolmaster/shared/domain';
 import { buildEventPagePath, ProviderSyncRunStatus, seasonsToSync } from '@poolmaster/shared/domain';
-import { readOverdueCandidates } from './prisma-overdue-event-reads';
 import { SYNC_PROVIDER_SELECT, syncProviderIdOf } from './prisma-sync-provider';
 import { COVERS_TEST_SLOT, SEASON_SLOT_SELECT, toSeasonSlot } from './season-slot-select';
 
@@ -78,17 +77,14 @@ export class PrismaSportLeaguePageReader implements SportLeaguePageReader {
     return { league, latestRuns: oneRunPerKind(rows.map(toRun)), syncsRoster: positionCode !== null };
   }
 
-  async readEventFacts(sportLeagueId: string, now: Date): Promise<SportLeagueEventFacts | null> {
+  async readEventFacts(sportLeagueId: string): Promise<SportLeagueEventFacts | null> {
     const league = await this.league(sportLeagueId);
     if (league === null) return null;
-    const [events, overdueCandidates] = await Promise.all([
-      this.prisma.sportEvent.findMany({
-        where: { sportLeagueSeason: { sportLeagueId } },
-        select: EVENT_SELECT,
-        orderBy: [{ startDate: 'asc' }, { id: 'asc' }],
-      }),
-      readOverdueCandidates(this.prisma, now, sportLeagueId),
-    ]);
+    const events = await this.prisma.sportEvent.findMany({
+      where: { sportLeagueSeason: { sportLeagueId } },
+      select: EVENT_SELECT,
+      orderBy: [{ startDate: 'asc' }, { id: 'asc' }],
+    });
     const eventIds = events.map((event) => event.id);
     const [fieldGroups, latestRunGroups] = eventIds.length === 0 ? [[], []] : await Promise.all([
       this.prisma.sportEventParticipant.groupBy({ by: ['sportEventId'], where: { sportEventId: { in: eventIds } }, _count: { _all: true } }),
@@ -114,7 +110,6 @@ export class PrismaSportLeaguePageReader implements SportLeaguePageReader {
       events: events.map(toPageEvent),
       fieldSizes: new Map(fieldGroups.map((group) => [group.sportEventId, group._count._all])),
       latestRunsByEvent: new Map([...runsByEvent].map(([sportEventId, runs]) => [sportEventId, oneRunPerKind(runs)])),
-      overdueCandidates,
     };
   }
 
@@ -337,17 +332,16 @@ export class PrismaSportLeaguePageReader implements SportLeaguePageReader {
     }));
   }
 
-  async readEventPageFacts(sportEventId: string, now: Date): Promise<SportEventPageFacts | null> {
+  async readEventPageFacts(sportEventId: string): Promise<SportEventPageFacts | null> {
     const event = await this.prisma.sportEvent.findUnique({
       where: { id: sportEventId },
       select: { ...EVENT_SELECT, sportLeagueId: true },
     });
     if (event === null) return null;
     const { sportLeagueId, ...eventRow } = event;
-    const [league, latestRunGroups, overdueCandidates, field, page] = await Promise.all([
+    const [league, latestRunGroups, field, page] = await Promise.all([
       this.league(sportLeagueId),
       this.prisma.providerSyncRun.groupBy({ by: ['kind'], where: { sportEventId }, _max: { createdAt: true } }),
-      readOverdueCandidates(this.prisma, now, undefined, [sportEventId]),
       this.prisma.sportEventParticipant.findMany({
         where: { sportEventId },
         select: { id: true, participantId: true, status: true, oddsToWin: true, seedNumber: true, ranking: true, participant: { select: { name: true } } },
@@ -383,7 +377,6 @@ export class PrismaSportLeaguePageReader implements SportLeaguePageReader {
       league,
       event: toPageEvent(eventRow),
       latestRuns: oneRunPerKind(runRows.map(toRun)),
-      overdueCandidates,
       field: field.map((row) => ({
         id: row.id,
         status: row.status,

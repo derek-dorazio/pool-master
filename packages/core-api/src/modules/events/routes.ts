@@ -299,7 +299,7 @@ export async function eventsModule(fastify: FastifyInstance, opts: EventsModuleO
       tags: TAGS,
       summary: 'Get an event\'s syncs, health, issues, release and tier order',
       description: 'The root admin\'s Event page header and sync rows (#1889), by the League page\'s rules applied to one event: its field and scores syncs from its own latest runs, '
-        + 'its sync health, its issues (SYNC, RELEASE, OVERDUE), its release mode and date, the value its active field is ordered by for tiers and prices, '
+        + 'its sync health, its issues (SYNC, RELEASE), its release mode and date, the value its active field is ordered by for tiers and prices, '
         + 'and each field row\'s feed id and when a sync last saw it. A fixed number of reads however large the field. Root admin only: 403 ROOT_ADMIN_ACCESS_REQUIRED otherwise. '
         + `404 EVENT_NOT_FOUND for an unknown event. More than ${EVENT_ADMIN_READS_PER_MINUTE} reads a minute from one address answer 429 EVENT_ADMIN_RATE_LIMITED.`,
       operationId: 'getEventOverview',

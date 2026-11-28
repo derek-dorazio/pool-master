@@ -99,7 +99,7 @@ export function leagueEventColumns({
       id: 'issues',
       header: 'Issues',
       meta: {
-        info: 'What on this event needs you: Sync (its latest field or scores sync failed), Release (held by a failed ready check), Overdue (results missing well after it should have ended). Hover a chip for the items.',
+        info: 'What on this event needs you: Sync (its latest field or scores sync failed), Release (held by a failed ready check). Hover a chip for the items.',
         type: {
           kind: 'enum',
           manyPerCell: true,

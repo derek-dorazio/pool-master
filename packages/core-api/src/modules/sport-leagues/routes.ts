@@ -260,7 +260,7 @@ export function sportLeaguesModule(fastify: FastifyInstance, opts: SportLeaguesM
       tags: TAGS,
       summary: 'List every event of a sport league with its release, field, issues and last sync',
       description: 'The League page\'s Events grid (#1865): every event of the sport league, every year, never paged, by start. '
-        + 'Each carries its release mode and date, its latest automatic release check, its field size, its own issues (SYNC, RELEASE, OVERDUE) and when a sync last ran on it. '
+        + 'Each carries its release mode and date, its latest automatic release check, its field size, its own issues (SYNC, RELEASE) and when a sync last ran on it. '
         + 'Read from a fixed number of grouped queries, however many events. Root admin only.',
       operationId: 'listSportLeagueEventOverviews',
       params: SPORT_LEAGUE_PARAMS,

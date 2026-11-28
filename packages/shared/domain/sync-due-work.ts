@@ -6,7 +6,7 @@
  */
 
 import { MatchStatus } from './enums';
-import { overdueStartCutoff } from './event-overdue';
+import { overdueStartCutoff } from './game-overdue';
 
 /** How often the sync tick runs: every due sync waits at most this long to be queued. */
 export const SYNC_TICK_MS = 60_000;
@@ -57,9 +57,9 @@ export interface ScoresGame {
 }
 
 /**
- * The earliest scheduled start a due Game may have (#2009): a Game left SCHEDULED past this is
- * overdue (`overdueStartCutoff`), and polling it again changes nothing, so it waits for its event's
- * next Game or a root admin's Sync now.
+ * The earliest scheduled start a due Game may have (#2009): a Game left SCHEDULED past this may be
+ * overdue (`overdueStartCutoff`), which the tick raises as a GAME_OVERDUE finding, and polling it
+ * again changes nothing, so it waits for its event's next Game or a root admin's Sync now.
  */
 export function scoresDueSince(now: Date): Date {
   return overdueStartCutoff(now);
@@ -67,7 +67,7 @@ export function scoresDueSince(now: Date): Date {
 
 /**
  * Whether a Game's scores are synced at `now` (#2009): one in progress, and one scheduled whose
- * start has come but not more than an overdue event's time ago. A finished, cancelled or
+ * start has come but not more than the overdue wait ago. A finished, cancelled or
  * postponed Game is not.
  */
 function isGameScoresDue(game: ScoresGame, now: Date): boolean {

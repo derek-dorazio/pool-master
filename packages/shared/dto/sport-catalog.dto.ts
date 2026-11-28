@@ -163,7 +163,7 @@ const SportLeagueIssueTargetDtoSchema = z.object({
 
 const issueItemFields = {
   label: z.string().describe('The item\'s name as data, never a sentence: a failed run\'s outcome summary as the sync history shows it (its sync kind when it has none), or an event\'s name.'),
-  occurredAt: DateTimeSchema.describe('When the run was written, the event was last checked, or an overdue event should have ended (how late it is runs from here).'),
+  occurredAt: DateTimeSchema.describe('When the run was written, or the event was last checked.'),
   target: SportLeagueIssueTargetDtoSchema,
 };
 
@@ -194,19 +194,10 @@ export const SportLeagueReleaseIssueDtoSchema = z.object({
   }).describe('A draft event its latest automatic release check held; its target is the event.')).describe('By event name.'),
 }).describe('Draft events held by a failed ready check.');
 
-export const SportLeagueOverdueIssueDtoSchema = z.object({
-  type: z.literal(SportLeagueIssueType.OVERDUE),
-  count: z.number().int().min(1).describe('How many released events are neither completed nor cancelled more than 4 hours after their last round or match should have ended. A never-released draft is never counted.'),
-  items: z.array(z.object(issueItemFields).describe(
-    'An event whose results are overdue; occurredAt is when it should have ended: its last round\'s scheduled end, or the last scheduled start plus the sport\'s typical play. Its target is the event.',
-  )).describe('Most overdue first.'),
-}).describe('Events whose results are still missing well after they should have ended.');
-
 export const SportLeagueIssueDtoSchema = z.discriminatedUnion('type', [
   SportLeagueFindingsIssueDtoSchema,
   SportLeagueSyncIssueDtoSchema,
   SportLeagueReleaseIssueDtoSchema,
-  SportLeagueOverdueIssueDtoSchema,
 ]).describe('One kind of thing on a sport league that needs a root admin, with a count and every item, each linking to its fix.');
 export type SportLeagueIssueDto = z.infer<typeof SportLeagueIssueDtoSchema>;
 
@@ -220,7 +211,7 @@ export const SportLeagueOverviewDtoSchema = z.object({
   providerName: z.string().nullable().describe('That provider\'s name, so no reader looks it up by id (#1999). Null when none syncs it.'),
   isActive: z.boolean().describe('On: offered to customers and synced. Off: hidden and not synced.'),
   syncHealth: z.enum(SportLeagueSyncHealth).describe('From the latest run of each of its syncs (event list, field, live scores and results): OFF while it is off or no provider syncs it; ERROR when any of those runs failed (the SYNC issue names which); NOT_RUN_YET when no sync has run; OK otherwise. A run still under way counts as not failed.'),
-  issues: z.array(SportLeagueIssueDtoSchema).describe('Only the types with something to do, always in the order FINDINGS, SYNC, RELEASE, OVERDUE. Empty when nothing needs attention.'),
+  issues: z.array(SportLeagueIssueDtoSchema).describe('Only the types with something to do, always in the order FINDINGS, SYNC, RELEASE. A Game whose result is overdue is a GAME_OVERDUE finding, counted under FINDINGS. Empty when nothing needs attention.'),
   season: z.object({
     start: DateTimeSchema.describe('The start of its first event.'),
     end: DateTimeSchema.describe('The end of its last event, or its start when it has no end.'),
@@ -273,7 +264,7 @@ export const SportLeagueEventOverviewDtoSchema = z.object({
     failedChecks: z.array(z.enum(ReleaseCheckKey)).describe('The ready checks that held it, in check order; empty when released.'),
   }).nullable().describe('Its latest automatic release check; null before the first, and after a release by hand.'),
   fieldSize: z.number().int().min(1).nullable().describe('How many participants its field holds; null until a field loads.'),
-  issues: z.array(SportLeagueIssueDtoSchema).describe('The event\'s own issues, as the Sports page counts them, in the order SYNC (its latest field or scores run failed), RELEASE (its latest automatic check held it), OVERDUE (its results are missing). Empty when none.'),
+  issues: z.array(SportLeagueIssueDtoSchema).describe('The event\'s own issues, as the Sports page counts them, in the order SYNC (its latest field or scores run failed), RELEASE (its latest automatic check held it). Empty when none.'),
   lastSyncedAt: DateTimeSchema.nullable().describe('When a sync last ran on it; null before any.'),
 }).describe('One event on the League page\'s Events grid.');
 export type SportLeagueEventOverviewDto = z.infer<typeof SportLeagueEventOverviewDtoSchema>;
@@ -525,7 +516,7 @@ export type SportEventFieldFeedRowDto = z.infer<typeof SportEventFieldFeedRowDto
 export const SportEventOverviewDtoSchema = z.object({
   syncHealth: z.enum(SportLeagueSyncHealth).describe('By the Sports page\'s rule, from the event\'s own latest field and scores runs: OFF while its league is off or no provider syncs the event, ERROR when either run failed, NOT_RUN_YET before any, OK otherwise.'),
   syncs: z.array(SportLeagueSyncDtoSchema).describe('Its FIELD then SCORES sync, each from the event\'s own latest run of that kind; the event list sync is the league\'s. Every row OFF for an event no provider syncs.'),
-  issues: z.array(SportLeagueIssueDtoSchema).describe('The event\'s own issues as its League page row has them, in the order SYNC, RELEASE, OVERDUE. Empty when none.'),
+  issues: z.array(SportLeagueIssueDtoSchema).describe('The event\'s own issues as its League page row has them, in the order SYNC, RELEASE. Empty when none.'),
   releaseMode: z.enum(SportEventReleaseMode).describe('AUTO when its league releases synced drafts on its own and the event is synced; MANUAL otherwise.'),
   releaseAt: DateTimeSchema.nullable().describe('With releaseAtKind: when it was released (ACTUAL), or for an AUTO draft when automatic release starts trying, its start less the league\'s window (PLANNED). Null otherwise.'),
   releaseAtKind: z.enum(SportEventReleaseAtKind).nullable().describe('What releaseAt is; null with it.'),

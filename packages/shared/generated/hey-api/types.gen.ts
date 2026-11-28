@@ -10418,7 +10418,7 @@ export type SportLeagueOverviewDto = {
              */
             label: string;
             /**
-             * When the run was written, the event was last checked, or an overdue event should have ended (how late it is runs from here).
+             * When the run was written, or the event was last checked.
              */
             occurredAt: string;
             /**
@@ -10454,7 +10454,7 @@ export type SportLeagueOverviewDto = {
              */
             label: string;
             /**
-             * When the run was written, the event was last checked, or an overdue event should have ended (how late it is runs from here).
+             * When the run was written, or the event was last checked.
              */
             occurredAt: string;
             /**
@@ -10474,38 +10474,6 @@ export type SportLeagueOverviewDto = {
              * The ready checks that held it, in check order.
              */
             failedChecks: Array<'NOT_STARTED' | 'ROUNDS_SCHEDULED' | 'FIELD_LOADED' | 'TIERS_ASSIGNED' | 'TIERS_FILLED' | 'PRICES_ASSIGNED' | 'BRACKET_COMPLETE' | 'CONTEST_SETUPS_ON'>;
-        }>;
-    } | {
-        type: 'OVERDUE';
-        /**
-         * How many released events are neither completed nor cancelled more than 4 hours after their last round or match should have ended. A never-released draft is never counted.
-         */
-        count: number;
-        /**
-         * Most overdue first.
-         */
-        items: Array<{
-            /**
-             * The item's name as data, never a sentence: a failed run's outcome summary as the sync history shows it (its sync kind when it has none), or an event's name.
-             */
-            label: string;
-            /**
-             * When the run was written, the event was last checked, or an overdue event should have ended (how late it is runs from here).
-             */
-            occurredAt: string;
-            /**
-             * What an issue item links to.
-             */
-            target: {
-                /**
-                 * What the item opens: SYNC_RUN a provider sync run on the run log, SPORT_EVENT an event's page.
-                 */
-                type: 'SYNC_RUN' | 'SPORT_EVENT';
-                /**
-                 * The sync run's or event's id.
-                 */
-                id: string;
-            };
         }>;
     }>;
     /**
@@ -10603,7 +10571,7 @@ export type SportLeagueOverviewListResponse = {
                  */
                 label: string;
                 /**
-                 * When the run was written, the event was last checked, or an overdue event should have ended (how late it is runs from here).
+                 * When the run was written, or the event was last checked.
                  */
                 occurredAt: string;
                 /**
@@ -10639,7 +10607,7 @@ export type SportLeagueOverviewListResponse = {
                  */
                 label: string;
                 /**
-                 * When the run was written, the event was last checked, or an overdue event should have ended (how late it is runs from here).
+                 * When the run was written, or the event was last checked.
                  */
                 occurredAt: string;
                 /**
@@ -10659,38 +10627,6 @@ export type SportLeagueOverviewListResponse = {
                  * The ready checks that held it, in check order.
                  */
                 failedChecks: Array<'NOT_STARTED' | 'ROUNDS_SCHEDULED' | 'FIELD_LOADED' | 'TIERS_ASSIGNED' | 'TIERS_FILLED' | 'PRICES_ASSIGNED' | 'BRACKET_COMPLETE' | 'CONTEST_SETUPS_ON'>;
-            }>;
-        } | {
-            type: 'OVERDUE';
-            /**
-             * How many released events are neither completed nor cancelled more than 4 hours after their last round or match should have ended. A never-released draft is never counted.
-             */
-            count: number;
-            /**
-             * Most overdue first.
-             */
-            items: Array<{
-                /**
-                 * The item's name as data, never a sentence: a failed run's outcome summary as the sync history shows it (its sync kind when it has none), or an event's name.
-                 */
-                label: string;
-                /**
-                 * When the run was written, the event was last checked, or an overdue event should have ended (how late it is runs from here).
-                 */
-                occurredAt: string;
-                /**
-                 * What an issue item links to.
-                 */
-                target: {
-                    /**
-                     * What the item opens: SYNC_RUN a provider sync run on the run log, SPORT_EVENT an event's page.
-                     */
-                    type: 'SYNC_RUN' | 'SPORT_EVENT';
-                    /**
-                     * The sync run's or event's id.
-                     */
-                    id: string;
-                };
             }>;
         }>;
         /**
@@ -10896,7 +10832,7 @@ export type SportLeagueEventOverviewDto = {
              */
             label: string;
             /**
-             * When the run was written, the event was last checked, or an overdue event should have ended (how late it is runs from here).
+             * When the run was written, or the event was last checked.
              */
             occurredAt: string;
             /**
@@ -10932,7 +10868,7 @@ export type SportLeagueEventOverviewDto = {
              */
             label: string;
             /**
-             * When the run was written, the event was last checked, or an overdue event should have ended (how late it is runs from here).
+             * When the run was written, or the event was last checked.
              */
             occurredAt: string;
             /**
@@ -10952,38 +10888,6 @@ export type SportLeagueEventOverviewDto = {
              * The ready checks that held it, in check order.
              */
             failedChecks: Array<'NOT_STARTED' | 'ROUNDS_SCHEDULED' | 'FIELD_LOADED' | 'TIERS_ASSIGNED' | 'TIERS_FILLED' | 'PRICES_ASSIGNED' | 'BRACKET_COMPLETE' | 'CONTEST_SETUPS_ON'>;
-        }>;
-    } | {
-        type: 'OVERDUE';
-        /**
-         * How many released events are neither completed nor cancelled more than 4 hours after their last round or match should have ended. A never-released draft is never counted.
-         */
-        count: number;
-        /**
-         * Most overdue first.
-         */
-        items: Array<{
-            /**
-             * The item's name as data, never a sentence: a failed run's outcome summary as the sync history shows it (its sync kind when it has none), or an event's name.
-             */
-            label: string;
-            /**
-             * When the run was written, the event was last checked, or an overdue event should have ended (how late it is runs from here).
-             */
-            occurredAt: string;
-            /**
-             * What an issue item links to.
-             */
-            target: {
-                /**
-                 * What the item opens: SYNC_RUN a provider sync run on the run log, SPORT_EVENT an event's page.
-                 */
-                type: 'SYNC_RUN' | 'SPORT_EVENT';
-                /**
-                 * The sync run's or event's id.
-                 */
-                id: string;
-            };
         }>;
     }>;
     /**
@@ -11082,7 +10986,7 @@ export type SportLeagueEventOverviewListResponse = {
                  */
                 label: string;
                 /**
-                 * When the run was written, the event was last checked, or an overdue event should have ended (how late it is runs from here).
+                 * When the run was written, or the event was last checked.
                  */
                 occurredAt: string;
                 /**
@@ -11118,7 +11022,7 @@ export type SportLeagueEventOverviewListResponse = {
                  */
                 label: string;
                 /**
-                 * When the run was written, the event was last checked, or an overdue event should have ended (how late it is runs from here).
+                 * When the run was written, or the event was last checked.
                  */
                 occurredAt: string;
                 /**
@@ -11138,38 +11042,6 @@ export type SportLeagueEventOverviewListResponse = {
                  * The ready checks that held it, in check order.
                  */
                 failedChecks: Array<'NOT_STARTED' | 'ROUNDS_SCHEDULED' | 'FIELD_LOADED' | 'TIERS_ASSIGNED' | 'TIERS_FILLED' | 'PRICES_ASSIGNED' | 'BRACKET_COMPLETE' | 'CONTEST_SETUPS_ON'>;
-            }>;
-        } | {
-            type: 'OVERDUE';
-            /**
-             * How many released events are neither completed nor cancelled more than 4 hours after their last round or match should have ended. A never-released draft is never counted.
-             */
-            count: number;
-            /**
-             * Most overdue first.
-             */
-            items: Array<{
-                /**
-                 * The item's name as data, never a sentence: a failed run's outcome summary as the sync history shows it (its sync kind when it has none), or an event's name.
-                 */
-                label: string;
-                /**
-                 * When the run was written, the event was last checked, or an overdue event should have ended (how late it is runs from here).
-                 */
-                occurredAt: string;
-                /**
-                 * What an issue item links to.
-                 */
-                target: {
-                    /**
-                     * What the item opens: SYNC_RUN a provider sync run on the run log, SPORT_EVENT an event's page.
-                     */
-                    type: 'SYNC_RUN' | 'SPORT_EVENT';
-                    /**
-                     * The sync run's or event's id.
-                     */
-                    id: string;
-                };
             }>;
         }>;
         /**
@@ -11285,7 +11157,7 @@ export type SportEventOverviewDto = {
              */
             label: string;
             /**
-             * When the run was written, the event was last checked, or an overdue event should have ended (how late it is runs from here).
+             * When the run was written, or the event was last checked.
              */
             occurredAt: string;
             /**
@@ -11321,7 +11193,7 @@ export type SportEventOverviewDto = {
              */
             label: string;
             /**
-             * When the run was written, the event was last checked, or an overdue event should have ended (how late it is runs from here).
+             * When the run was written, or the event was last checked.
              */
             occurredAt: string;
             /**
@@ -11341,38 +11213,6 @@ export type SportEventOverviewDto = {
              * The ready checks that held it, in check order.
              */
             failedChecks: Array<'NOT_STARTED' | 'ROUNDS_SCHEDULED' | 'FIELD_LOADED' | 'TIERS_ASSIGNED' | 'TIERS_FILLED' | 'PRICES_ASSIGNED' | 'BRACKET_COMPLETE' | 'CONTEST_SETUPS_ON'>;
-        }>;
-    } | {
-        type: 'OVERDUE';
-        /**
-         * How many released events are neither completed nor cancelled more than 4 hours after their last round or match should have ended. A never-released draft is never counted.
-         */
-        count: number;
-        /**
-         * Most overdue first.
-         */
-        items: Array<{
-            /**
-             * The item's name as data, never a sentence: a failed run's outcome summary as the sync history shows it (its sync kind when it has none), or an event's name.
-             */
-            label: string;
-            /**
-             * When the run was written, the event was last checked, or an overdue event should have ended (how late it is runs from here).
-             */
-            occurredAt: string;
-            /**
-             * What an issue item links to.
-             */
-            target: {
-                /**
-                 * What the item opens: SYNC_RUN a provider sync run on the run log, SPORT_EVENT an event's page.
-                 */
-                type: 'SYNC_RUN' | 'SPORT_EVENT';
-                /**
-                 * The sync run's or event's id.
-                 */
-                id: string;
-            };
         }>;
     }>;
     /**
@@ -11514,7 +11354,7 @@ export type SportEventOverviewResponse = {
                  */
                 label: string;
                 /**
-                 * When the run was written, the event was last checked, or an overdue event should have ended (how late it is runs from here).
+                 * When the run was written, or the event was last checked.
                  */
                 occurredAt: string;
                 /**
@@ -11550,7 +11390,7 @@ export type SportEventOverviewResponse = {
                  */
                 label: string;
                 /**
-                 * When the run was written, the event was last checked, or an overdue event should have ended (how late it is runs from here).
+                 * When the run was written, or the event was last checked.
                  */
                 occurredAt: string;
                 /**
@@ -11570,38 +11410,6 @@ export type SportEventOverviewResponse = {
                  * The ready checks that held it, in check order.
                  */
                 failedChecks: Array<'NOT_STARTED' | 'ROUNDS_SCHEDULED' | 'FIELD_LOADED' | 'TIERS_ASSIGNED' | 'TIERS_FILLED' | 'PRICES_ASSIGNED' | 'BRACKET_COMPLETE' | 'CONTEST_SETUPS_ON'>;
-            }>;
-        } | {
-            type: 'OVERDUE';
-            /**
-             * How many released events are neither completed nor cancelled more than 4 hours after their last round or match should have ended. A never-released draft is never counted.
-             */
-            count: number;
-            /**
-             * Most overdue first.
-             */
-            items: Array<{
-                /**
-                 * The item's name as data, never a sentence: a failed run's outcome summary as the sync history shows it (its sync kind when it has none), or an event's name.
-                 */
-                label: string;
-                /**
-                 * When the run was written, the event was last checked, or an overdue event should have ended (how late it is runs from here).
-                 */
-                occurredAt: string;
-                /**
-                 * What an issue item links to.
-                 */
-                target: {
-                    /**
-                     * What the item opens: SYNC_RUN a provider sync run on the run log, SPORT_EVENT an event's page.
-                     */
-                    type: 'SYNC_RUN' | 'SPORT_EVENT';
-                    /**
-                     * The sync run's or event's id.
-                     */
-                    id: string;
-                };
             }>;
         }>;
         /**
@@ -32424,7 +32232,7 @@ export type ProviderLeagueDto = {
      */
     quietAfterMinutes: number;
     /**
-     * How long one of its games usually takes from its scheduled start, in minutes: a start plus this is when a game with no scheduled end should have ended, for the overdue results check.
+     * How long one of its games usually takes from its scheduled start, in minutes: a Game's start plus this is when it should have ended, for the Game result overdue finding (GAME_OVERDUE).
      */
     typicalGameMinutes: number;
     /**
@@ -32510,7 +32318,7 @@ export type ProviderSettingsDto = {
          */
         quietAfterMinutes: number;
         /**
-         * How long one of its games usually takes from its scheduled start, in minutes: a start plus this is when a game with no scheduled end should have ended, for the overdue results check.
+         * How long one of its games usually takes from its scheduled start, in minutes: a Game's start plus this is when it should have ended, for the Game result overdue finding (GAME_OVERDUE).
          */
         typicalGameMinutes: number;
         /**
@@ -32641,7 +32449,7 @@ export type ProviderSummaryDto = {
              */
             quietAfterMinutes: number;
             /**
-             * How long one of its games usually takes from its scheduled start, in minutes: a start plus this is when a game with no scheduled end should have ended, for the overdue results check.
+             * How long one of its games usually takes from its scheduled start, in minutes: a Game's start plus this is when it should have ended, for the Game result overdue finding (GAME_OVERDUE).
              */
             typicalGameMinutes: number;
             /**
@@ -32752,7 +32560,7 @@ export type ProviderSettingsResponse = {
              */
             quietAfterMinutes: number;
             /**
-             * How long one of its games usually takes from its scheduled start, in minutes: a start plus this is when a game with no scheduled end should have ended, for the overdue results check.
+             * How long one of its games usually takes from its scheduled start, in minutes: a Game's start plus this is when it should have ended, for the Game result overdue finding (GAME_OVERDUE).
              */
             typicalGameMinutes: number;
             /**
@@ -32805,7 +32613,7 @@ export type ProviderLeagueResponse = {
          */
         quietAfterMinutes: number;
         /**
-         * How long one of its games usually takes from its scheduled start, in minutes: a start plus this is when a game with no scheduled end should have ended, for the overdue results check.
+         * How long one of its games usually takes from its scheduled start, in minutes: a Game's start plus this is when it should have ended, for the Game result overdue finding (GAME_OVERDUE).
          */
         typicalGameMinutes: number;
         /**
@@ -32982,7 +32790,7 @@ export type ProviderListResponse = {
                  */
                 quietAfterMinutes: number;
                 /**
-                 * How long one of its games usually takes from its scheduled start, in minutes: a start plus this is when a game with no scheduled end should have ended, for the overdue results check.
+                 * How long one of its games usually takes from its scheduled start, in minutes: a Game's start plus this is when it should have ended, for the Game result overdue finding (GAME_OVERDUE).
                  */
                 typicalGameMinutes: number;
                 /**
@@ -33880,7 +33688,7 @@ export type ProviderSyncFindingDto = {
     /**
      * What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here. PROVIDER_RATE_LIMITED: the Provider has rate limited every call for a while (WARNING after 15 minutes, ERROR after the league's quiet threshold); it resolves on the Provider's next answer. SLOT_NAME_UNMATCHED: a tournament whose normalized name (providerValue) no NAME_PATTERN mapping of the league matches, so it has no Season slot (INFO; LINK_SLOT adds the name as a pattern). SLOT_NAME_AMBIGUOUS: a tournament whose normalized name matches more than one slot, or one another tournament already has (ERROR). SLOT_SEASON_COMPETITION_MISSING: a tournament whose name matched a slot whose phase the Season does not have, so no Season slot could be made (ERROR). SYNC_FAILED: a sync run of the league (of the event, when it names one) ended FAILED, and no run of the same sync has completed since (ERROR, syncKind says which sync).
      */
-    kind: 'PROVIDER_RATE_LIMITED' | 'UNMAPPED_PARTICIPANT' | 'WEBHOOK_SECRET_MISSING' | 'SEASON_MISSING' | 'NO_PROVIDER_PARTICIPANTS' | 'NO_PROVIDER_LIVE_SCORES' | 'GAMES_NOT_SYNCED' | 'SLOT_VALUE_UNMAPPED' | 'PROVIDER_LEAGUE_UNKNOWN' | 'SLOT_NAME_UNMATCHED' | 'SLOT_NAME_AMBIGUOUS' | 'SLOT_SEASON_COMPETITION_MISSING' | 'SLOT_OUTSIDE_SEASON' | 'GAMES_UNPLACED' | 'SLOT_DATES_NEEDED' | 'FIELD_HAS_NO_ORDER' | 'GAME_UNKNOWN' | 'GAME_ID_REISSUED' | 'GAME_MOVED' | 'TIEBREAKER_GAME_REPLACED' | 'FIELD_TEAM_WITHOUT_GAME' | 'SYNC_FAILED' | 'CONFERENCE_UNMAPPED' | 'DIVISION_UNMAPPED' | 'CONFERENCE_TEAMS_MISSING' | 'PROVIDER_PLAN_HAS_NO_STATS' | 'BOX_SCORE_PLAYER_NOT_IN_GAME';
+    kind: 'PROVIDER_RATE_LIMITED' | 'UNMAPPED_PARTICIPANT' | 'WEBHOOK_SECRET_MISSING' | 'SEASON_MISSING' | 'NO_PROVIDER_PARTICIPANTS' | 'NO_PROVIDER_LIVE_SCORES' | 'GAMES_NOT_SYNCED' | 'SLOT_VALUE_UNMAPPED' | 'PROVIDER_LEAGUE_UNKNOWN' | 'SLOT_NAME_UNMATCHED' | 'SLOT_NAME_AMBIGUOUS' | 'SLOT_SEASON_COMPETITION_MISSING' | 'SLOT_OUTSIDE_SEASON' | 'GAMES_UNPLACED' | 'SLOT_DATES_NEEDED' | 'FIELD_HAS_NO_ORDER' | 'GAME_UNKNOWN' | 'GAME_ID_REISSUED' | 'GAME_MOVED' | 'TIEBREAKER_GAME_REPLACED' | 'FIELD_TEAM_WITHOUT_GAME' | 'SYNC_FAILED' | 'CONFERENCE_UNMAPPED' | 'DIVISION_UNMAPPED' | 'CONFERENCE_TEAMS_MISSING' | 'PROVIDER_PLAN_HAS_NO_STATS' | 'BOX_SCORE_PLAYER_NOT_IN_GAME' | 'GAME_OVERDUE';
     /**
      * ERROR: synced data is wrong or missing until someone acts (it also raises the alarm when it opens). WARNING: something the sync skipped or guessed at. INFO: something it noticed and left alone on purpose.
      */
@@ -34037,7 +33845,7 @@ export type ProviderSyncFindingListResponse = {
         /**
          * What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here. PROVIDER_RATE_LIMITED: the Provider has rate limited every call for a while (WARNING after 15 minutes, ERROR after the league's quiet threshold); it resolves on the Provider's next answer. SLOT_NAME_UNMATCHED: a tournament whose normalized name (providerValue) no NAME_PATTERN mapping of the league matches, so it has no Season slot (INFO; LINK_SLOT adds the name as a pattern). SLOT_NAME_AMBIGUOUS: a tournament whose normalized name matches more than one slot, or one another tournament already has (ERROR). SLOT_SEASON_COMPETITION_MISSING: a tournament whose name matched a slot whose phase the Season does not have, so no Season slot could be made (ERROR). SYNC_FAILED: a sync run of the league (of the event, when it names one) ended FAILED, and no run of the same sync has completed since (ERROR, syncKind says which sync).
          */
-        kind: 'PROVIDER_RATE_LIMITED' | 'UNMAPPED_PARTICIPANT' | 'WEBHOOK_SECRET_MISSING' | 'SEASON_MISSING' | 'NO_PROVIDER_PARTICIPANTS' | 'NO_PROVIDER_LIVE_SCORES' | 'GAMES_NOT_SYNCED' | 'SLOT_VALUE_UNMAPPED' | 'PROVIDER_LEAGUE_UNKNOWN' | 'SLOT_NAME_UNMATCHED' | 'SLOT_NAME_AMBIGUOUS' | 'SLOT_SEASON_COMPETITION_MISSING' | 'SLOT_OUTSIDE_SEASON' | 'GAMES_UNPLACED' | 'SLOT_DATES_NEEDED' | 'FIELD_HAS_NO_ORDER' | 'GAME_UNKNOWN' | 'GAME_ID_REISSUED' | 'GAME_MOVED' | 'TIEBREAKER_GAME_REPLACED' | 'FIELD_TEAM_WITHOUT_GAME' | 'SYNC_FAILED' | 'CONFERENCE_UNMAPPED' | 'DIVISION_UNMAPPED' | 'CONFERENCE_TEAMS_MISSING' | 'PROVIDER_PLAN_HAS_NO_STATS' | 'BOX_SCORE_PLAYER_NOT_IN_GAME';
+        kind: 'PROVIDER_RATE_LIMITED' | 'UNMAPPED_PARTICIPANT' | 'WEBHOOK_SECRET_MISSING' | 'SEASON_MISSING' | 'NO_PROVIDER_PARTICIPANTS' | 'NO_PROVIDER_LIVE_SCORES' | 'GAMES_NOT_SYNCED' | 'SLOT_VALUE_UNMAPPED' | 'PROVIDER_LEAGUE_UNKNOWN' | 'SLOT_NAME_UNMATCHED' | 'SLOT_NAME_AMBIGUOUS' | 'SLOT_SEASON_COMPETITION_MISSING' | 'SLOT_OUTSIDE_SEASON' | 'GAMES_UNPLACED' | 'SLOT_DATES_NEEDED' | 'FIELD_HAS_NO_ORDER' | 'GAME_UNKNOWN' | 'GAME_ID_REISSUED' | 'GAME_MOVED' | 'TIEBREAKER_GAME_REPLACED' | 'FIELD_TEAM_WITHOUT_GAME' | 'SYNC_FAILED' | 'CONFERENCE_UNMAPPED' | 'DIVISION_UNMAPPED' | 'CONFERENCE_TEAMS_MISSING' | 'PROVIDER_PLAN_HAS_NO_STATS' | 'BOX_SCORE_PLAYER_NOT_IN_GAME' | 'GAME_OVERDUE';
         /**
          * ERROR: synced data is wrong or missing until someone acts (it also raises the alarm when it opens). WARNING: something the sync skipped or guessed at. INFO: something it noticed and left alone on purpose.
          */
@@ -34129,7 +33937,7 @@ export type ProviderSyncFindingResponse = {
         /**
          * What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here. PROVIDER_RATE_LIMITED: the Provider has rate limited every call for a while (WARNING after 15 minutes, ERROR after the league's quiet threshold); it resolves on the Provider's next answer. SLOT_NAME_UNMATCHED: a tournament whose normalized name (providerValue) no NAME_PATTERN mapping of the league matches, so it has no Season slot (INFO; LINK_SLOT adds the name as a pattern). SLOT_NAME_AMBIGUOUS: a tournament whose normalized name matches more than one slot, or one another tournament already has (ERROR). SLOT_SEASON_COMPETITION_MISSING: a tournament whose name matched a slot whose phase the Season does not have, so no Season slot could be made (ERROR). SYNC_FAILED: a sync run of the league (of the event, when it names one) ended FAILED, and no run of the same sync has completed since (ERROR, syncKind says which sync).
          */
-        kind: 'PROVIDER_RATE_LIMITED' | 'UNMAPPED_PARTICIPANT' | 'WEBHOOK_SECRET_MISSING' | 'SEASON_MISSING' | 'NO_PROVIDER_PARTICIPANTS' | 'NO_PROVIDER_LIVE_SCORES' | 'GAMES_NOT_SYNCED' | 'SLOT_VALUE_UNMAPPED' | 'PROVIDER_LEAGUE_UNKNOWN' | 'SLOT_NAME_UNMATCHED' | 'SLOT_NAME_AMBIGUOUS' | 'SLOT_SEASON_COMPETITION_MISSING' | 'SLOT_OUTSIDE_SEASON' | 'GAMES_UNPLACED' | 'SLOT_DATES_NEEDED' | 'FIELD_HAS_NO_ORDER' | 'GAME_UNKNOWN' | 'GAME_ID_REISSUED' | 'GAME_MOVED' | 'TIEBREAKER_GAME_REPLACED' | 'FIELD_TEAM_WITHOUT_GAME' | 'SYNC_FAILED' | 'CONFERENCE_UNMAPPED' | 'DIVISION_UNMAPPED' | 'CONFERENCE_TEAMS_MISSING' | 'PROVIDER_PLAN_HAS_NO_STATS' | 'BOX_SCORE_PLAYER_NOT_IN_GAME';
+        kind: 'PROVIDER_RATE_LIMITED' | 'UNMAPPED_PARTICIPANT' | 'WEBHOOK_SECRET_MISSING' | 'SEASON_MISSING' | 'NO_PROVIDER_PARTICIPANTS' | 'NO_PROVIDER_LIVE_SCORES' | 'GAMES_NOT_SYNCED' | 'SLOT_VALUE_UNMAPPED' | 'PROVIDER_LEAGUE_UNKNOWN' | 'SLOT_NAME_UNMATCHED' | 'SLOT_NAME_AMBIGUOUS' | 'SLOT_SEASON_COMPETITION_MISSING' | 'SLOT_OUTSIDE_SEASON' | 'GAMES_UNPLACED' | 'SLOT_DATES_NEEDED' | 'FIELD_HAS_NO_ORDER' | 'GAME_UNKNOWN' | 'GAME_ID_REISSUED' | 'GAME_MOVED' | 'TIEBREAKER_GAME_REPLACED' | 'FIELD_TEAM_WITHOUT_GAME' | 'SYNC_FAILED' | 'CONFERENCE_UNMAPPED' | 'DIVISION_UNMAPPED' | 'CONFERENCE_TEAMS_MISSING' | 'PROVIDER_PLAN_HAS_NO_STATS' | 'BOX_SCORE_PLAYER_NOT_IN_GAME' | 'GAME_OVERDUE';
         /**
          * ERROR: synced data is wrong or missing until someone acts (it also raises the alarm when it opens). WARNING: something the sync skipped or guessed at. INFO: something it noticed and left alone on purpose.
          */

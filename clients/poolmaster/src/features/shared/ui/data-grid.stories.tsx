@@ -75,14 +75,14 @@ export const ViewsAndSearch: StoryObj = { render: () => <MembersWithViews /> };
 type SportEvent = { id: string; name: string; stage: string; issues: string[]; field?: number };
 
 const EVENT_STATUS = { DRAFT: "Draft", SCHEDULED: "Scheduled", IN_PROGRESS: "In progress", COMPLETED: "Completed", CANCELLED: "Cancelled" };
-const ISSUES = { SYNC: "Sync", RELEASE: "Release", LINKING: "Linking", OVERDUE: "Overdue" };
+const ISSUES = { SYNC: "Sync", RELEASE: "Release", LINKING: "Linking", FINDINGS: "Findings" };
 
 const EVENTS: SportEvent[] = [
   { id: "1", name: "Arnold Palmer Invitational", stage: "DRAFT", issues: ["LINKING"], field: 72 },
   { id: "2", name: "Genesis Invitational", stage: "SCHEDULED", issues: [], field: 70 },
   { id: "3", name: "Phoenix Open", stage: "SCHEDULED", issues: ["SYNC", "RELEASE"], field: 132 },
   { id: "4", name: "Pebble Beach Pro-Am", stage: "DRAFT", issues: [] },
-  { id: "5", name: "The American Express", stage: "COMPLETED", issues: ["OVERDUE"], field: 156 },
+  { id: "5", name: "The American Express", stage: "COMPLETED", issues: ["FINDINGS"], field: 156 },
   { id: "6", name: "The Sentry", stage: "CANCELLED", issues: [], field: 59 },
 ];
 

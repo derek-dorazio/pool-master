@@ -4,12 +4,10 @@
  */
 import { expect } from '@jest/globals';
 import {
-  OVERDUE_AFTER_MS,
   ProviderSyncFindingSeverity,
   ProviderSyncKind,
   ReleaseCheckKey,
   Sport,
-  SportEventStatus,
   SportLeagueIssueTargetType,
   SportLeagueIssueType,
   SportLeagueSyncHealth,
@@ -43,7 +41,6 @@ function facts(overrides: Partial<SportLeagueOverviewFacts> = {}): SportLeagueOv
     eventCounts: new Map(),
     currentSeasonSpans: new Map(),
     nextEventStarts: new Map(),
-    overdueCandidates: [],
     openFindings: [],
     ...overrides,
   };
@@ -57,7 +54,7 @@ function failedSync(syncKind: ProviderSyncKind, overrides: Partial<SportLeagueFa
 const SYNCED = { leaguesWithSyncRuns: new Set(['mlb']) };
 
 function only(input: SportLeagueOverviewFacts) {
-  const row = buildSportLeagueOverviews(input, NOW).at(0);
+  const row = buildSportLeagueOverviews(input).at(0);
   if (row === undefined) throw new Error('no overview row');
   return row;
 }
@@ -139,30 +136,6 @@ describe('sport league issues', () => {
       { label: 'World Series', occurredAt: at('2027-04-15T09:00:00.000Z'), target: { type: SportLeagueIssueTargetType.SPORT_EVENT, id: 'e2' }, failedChecks: [ReleaseCheckKey.TIERS_ASSIGNED] },
     ]);
   });
-
-  it('counts the league\'s overdue events as an OVERDUE issue after RELEASE, most overdue first, leaving out one not yet overdue and another league\'s', () => {
-    const endedAgo = (ms: number) => new Date(NOW.getTime() - ms);
-    const overdue = (id: string, sportLeagueId: string, name: string, endDate: Date) => ({
-      id, sportLeagueId, name, sport: Sport.BASEBALL, status: SportEventStatus.IN_PROGRESS, startDate: at('2027-04-01T00:00:00.000Z'), endDate, rounds: [], typicalGameMinutes: 180,
-    });
-    const row = only(facts({
-      heldEvents: [{ id: 'e9', sportLeagueId: 'mlb', name: 'Held', checkedAt: NOW, failedChecks: [ReleaseCheckKey.FIELD_LOADED] }],
-      overdueCandidates: [
-        overdue('late', 'mlb', 'Game 2', endedAgo(OVERDUE_AFTER_MS + 60_000)),
-        overdue('later', 'mlb', 'Game 1', endedAgo(2 * OVERDUE_AFTER_MS)),
-        overdue('almost', 'mlb', 'Game 3', endedAgo(OVERDUE_AFTER_MS - 60_000)),
-        overdue('elsewhere', 'other', 'Not this league', endedAgo(2 * OVERDUE_AFTER_MS)),
-      ],
-    }));
-
-    expect(row.issues.map((issue) => [issue.type, issue.count])).toEqual([[SportLeagueIssueType.RELEASE, 1], [SportLeagueIssueType.OVERDUE, 2]]);
-    const overdueIssue = row.issues[1];
-    if (overdueIssue.type !== SportLeagueIssueType.OVERDUE) throw new Error('expected the OVERDUE issue second');
-    expect(overdueIssue.items.map((item) => [item.target.id, item.occurredAt])).toEqual([
-      ['later', endedAgo(2 * OVERDUE_AFTER_MS)],
-      ['late', endedAgo(OVERDUE_AFTER_MS + 60_000)],
-    ]);
-  });
 });
 
 describe('sport league findings issue', () => {
@@ -220,7 +193,7 @@ describe('sport league overview order', () => {
         league(),
         league({ id: 'nfl', sport: Sport.FOOTBALL, sportUrlSegment: 'football', sportDisplayOrder: 0, name: 'NFL' }),
       ],
-    }), NOW);
+    }));
 
     expect(rows.map((row) => row.id)).toEqual(['nfl', 'mlb', 'ncaa', 'pga']);
   });

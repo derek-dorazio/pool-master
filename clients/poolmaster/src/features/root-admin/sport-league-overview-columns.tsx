@@ -121,7 +121,7 @@ export function sportLeagueOverviewColumns({
       id: 'issues',
       header: 'Issues',
       meta: {
-        info: 'What on this sport league needs you, one chip per type with a count: Sync (failed syncs), Release (held by a failed ready check), Overdue (results missing well after it should have ended). Hover a chip for the items.',
+        info: 'What on this sport league needs you, one chip per type with a count: Findings (open sync findings, a Game whose result is overdue among them), Sync (failed syncs), Release (held by a failed ready check). Hover a chip for the items.',
         type: {
           kind: 'enum',
           manyPerCell: true,

@@ -26,7 +26,7 @@ beforeEach(() => cleanupTestData());
 
 const NOW = new Date('2027-04-15T12:00:00.000Z');
 /** The overview's reads with every relation it reads present, however many leagues, events, runs and findings there are. */
-const STATEMENTS = 15;
+const STATEMENTS = 14;
 const DAY_MS = 24 * 60 * 60 * 1000;
 const days = (count: number) => new Date(NOW.getTime() + count * DAY_MS);
 
