@@ -230,12 +230,11 @@ describe('CommissionerNotices', () => {
         .toContain('Pick 6 Champs won Masters Pick 6.\nSalary Cap Champs won Masters Salary Cap.\nPick 4 Champs won Masters Pick 4.');
     });
 
-    it('sends nothing for an event more than 10 days out, within 7 days, postponed or cancelled', async () => {
+    it('sends nothing for an event more than 10 days out, within 7 days, or cancelled', async () => {
       const league = world.addLeague();
       person(league.id, 'Casey');
       event({ name: 'Far Off', startDate: inDays(10.5) });
       event({ name: 'Next Week', status: SportEventStatus.DRAFT, startDate: inDays(6) });
-      event({ name: 'On Hold', status: SportEventStatus.POSTPONED, startDate: inDays(9) });
       event({ name: 'Called Off', status: SportEventStatus.CANCELLED, startDate: inDays(9) });
 
       await notices().queueDue(NOW);

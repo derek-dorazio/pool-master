@@ -167,15 +167,15 @@ describe('contest email job requests', () => {
     it('builds a job keyed by the contest and the change, and refuses a change with no start', () => {
       const queue = new BackgroundJobQueue({ jobs: inMemoryBackgroundJobs(), currentStart: testCurrentJobStart });
 
-      expect(contestEventChangedEmailsJob(queue, 'contest-1', { id: 'sport-event-1', startDate: new Date('2026-04-16T11:40:00.000Z') }, { kind: 'POSTPONED' })).toEqual({
+      expect(contestEventChangedEmailsJob(queue, 'contest-1', { id: 'sport-event-1', startDate: new Date('2026-04-16T11:40:00.000Z') }, { kind: 'CANCELLED' })).toEqual({
         type: BackgroundJobType.CONTEST_EVENT_CHANGED_EMAILS,
-        payload: { contestId: 'contest-1', sportEventId: 'sport-event-1', change: { kind: 'POSTPONED', startsAt: '2026-04-16T11:40:00.000Z' } },
+        payload: { contestId: 'contest-1', sportEventId: 'sport-event-1', change: { kind: 'CANCELLED', startsAt: '2026-04-16T11:40:00.000Z' } },
         sportEventId: 'sport-event-1',
         runAt: undefined,
         start: TEST_JOB_START,
-        dedupeKey: 'CONTEST_EVENT_CHANGED_EMAILS:contest-1:sport-event-1:postponed-2026-04-16T11:40:00.000Z',
+        dedupeKey: 'CONTEST_EVENT_CHANGED_EMAILS:contest-1:sport-event-1:cancelled-2026-04-16T11:40:00.000Z',
       });
-      expect(() => queue.request(BackgroundJobType.CONTEST_EVENT_CHANGED_EMAILS, { contestId: 'contest-1', sportEventId: 'sport-event-1', change: { kind: 'POSTPONED' } } as never))
+      expect(() => queue.request(BackgroundJobType.CONTEST_EVENT_CHANGED_EMAILS, { contestId: 'contest-1', sportEventId: 'sport-event-1', change: { kind: 'CANCELLED' } } as never))
         .toThrow(InvalidBackgroundJobPayloadError);
     });
   });

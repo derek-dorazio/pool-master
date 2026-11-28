@@ -29,9 +29,10 @@ import { TEST_UNSUBSCRIBE, TEST_PLAN_ENTITLEMENTS } from '../../support/email-se
 import { InMemoryContestWorld } from '../../support/in-memory-contest-world';
 
 const STARTS_AT = new Date('2026-04-09T11:40:00.000Z');
+/** A start an event moved from, before `STARTS_AT`. */
+const EARLIER = new Date('2026-04-02T11:40:00.000Z');
 /** The tests' clock: a week before STARTS_AT. */
 const NOW = new Date('2026-04-02T11:40:00.000Z');
-const HOUR = 60 * 60 * 1000;
 
 describe('ContestNotices', () => {
   let world: InMemoryContestWorld;
@@ -613,7 +614,7 @@ describe('ContestNotices', () => {
     });
 
     it('queues one event changed job per open or live contest on the event, across leagues, in one write, and builds no email in the request (#1458)', async () => {
-      const masters = world.addSportEvent({ name: 'The Masters', startDate: STARTS_AT, status: SportEventStatus.POSTPONED });
+      const masters = world.addSportEvent({ name: 'The Masters', startDate: STARTS_AT });
       const office = world.addLeague();
       const club = world.addLeague();
       const first = world.addContest(office.id, { sportEventIds: [masters.id] });
@@ -628,13 +629,13 @@ describe('ContestNotices', () => {
       const memberReads = [jest.spyOn(leagues, 'findById'), jest.spyOn(memberships, 'findByLeagues'), jest.spyOn(entries, 'findByContest')];
       const writes = jest.spyOn(jobRows, 'enqueueAll');
 
-      await writeChangedJobs(masters, { kind: ContestEventChangeKind.POSTPONED }, { leagues, memberships, entries });
+      await writeChangedJobs(masters, { kind: ContestEventChangeKind.RESCHEDULED, previousStart: EARLIER }, { leagues, memberships, entries });
 
       expect(writes).toHaveBeenCalledTimes(1);
       expect(jobRows.rows.map((row) => row.payload)).toEqual([first, second, third].map((contest) => ({
         contestId: contest.id,
         sportEventId: masters.id,
-        change: { kind: 'POSTPONED', startsAt: STARTS_AT.toISOString() },
+        change: { kind: 'RESCHEDULED', startsAt: STARTS_AT.toISOString(), previousStart: EARLIER.toISOString() },
       })));
       expect(memberReads.map((read) => read.mock.calls.length)).toEqual([0, 0, 0]);
       expect(outbox.rows).toEqual([]);
@@ -674,7 +675,7 @@ describe('ContestNotices', () => {
       const open = world.addContest(league.id, { sportEventIds: [masters.id] });
       world.addContest(league.id, { sportEventIds: [masters.id], status: ContestStatus.DRAFT });
 
-      const jobs = await notices().sportEventChangedJobs({ id: masters.id, startDate: STARTS_AT }, { kind: ContestEventChangeKind.POSTPONED });
+      const jobs = await notices().sportEventChangedJobs({ id: masters.id, startDate: STARTS_AT }, { kind: ContestEventChangeKind.RESCHEDULED, previousStart: EARLIER });
 
       expect(jobs.map((job) => (job.payload as ContestEventChangedEmailsJobPayload).contestId)).toEqual([open.id]);
       expect(jobRows.rows).toEqual([]);
@@ -688,7 +689,7 @@ describe('ContestNotices', () => {
 
       const jobs = await notices().sportEventChangedJobs(
         { id: masters.id, startDate: STARTS_AT },
-        { kind: ContestEventChangeKind.POSTPONED },
+        { kind: ContestEventChangeKind.RESCHEDULED, previousStart: EARLIER },
         { reopening: new Set([reopening.id]) },
       );
 
@@ -696,7 +697,7 @@ describe('ContestNotices', () => {
     });
 
     it('tells, from each contest\'s job, its commissioners and its members with a submitted entry, and only them, league by league', async () => {
-      const masters = world.addSportEvent({ name: 'The Masters', startDate: STARTS_AT, status: SportEventStatus.POSTPONED });
+      const masters = world.addSportEvent({ name: 'The Masters', startDate: STARTS_AT });
       const office = world.addLeague();
       const club = world.addLeague();
       const first = world.addContest(office.id, { sportEventIds: [masters.id] });
@@ -710,7 +711,7 @@ describe('ContestNotices', () => {
       await enter(second.id, entrant, masters.id, true);
       await enter(third.id, clubEntrant, masters.id, true);
 
-      await tellChanged(masters, { kind: ContestEventChangeKind.POSTPONED });
+      await tellChanged(masters, { kind: ContestEventChangeKind.RESCHEDULED, previousStart: EARLIER });
 
       expect(new Set(outbox.rows.map((row) => `${row.recipientUserId ?? ''}:${row.contestId ?? ''}`))).toEqual(new Set([
         `${officeCommissioner.user.id}:${first.id}`,
@@ -738,11 +739,11 @@ describe('ContestNotices', () => {
     });
 
     it('lets an outbox failure throw from the job, so the runner retries it, and the retry tells each person once', async () => {
-      const masters = world.addSportEvent({ name: 'The Masters', startDate: STARTS_AT, status: SportEventStatus.POSTPONED });
+      const masters = world.addSportEvent({ name: 'The Masters', startDate: STARTS_AT });
       const league = world.addLeague();
       world.addContest(league.id, { sportEventIds: [masters.id] });
       const commissioner = member(league.id, 'Casey', { role: LeagueRole.COMMISSIONER });
-      await writeChangedJobs(masters, { kind: ContestEventChangeKind.POSTPONED });
+      await writeChangedJobs(masters, { kind: ContestEventChangeKind.RESCHEDULED, previousStart: EARLIER });
       const [job] = jobRows.rows;
       const payload = job.payload as ContestEventChangedEmailsJobPayload;
       const jobs = new ContestEmailJobs({ contests: world.contestRepo(), sportEvents: world.sportEventRepo(), finalStandings: {} as never, notices: notices(), logger });
@@ -755,13 +756,13 @@ describe('ContestNotices', () => {
       expect(recipientIds()).toEqual([commissioner.user.id]);
     });
 
-    it('tells no commissioner of a draft contest that its event was postponed', async () => {
-      const masters = world.addSportEvent({ name: 'The Masters', startDate: STARTS_AT, status: SportEventStatus.POSTPONED });
+    it('tells no commissioner of a draft contest that its event moved', async () => {
+      const masters = world.addSportEvent({ name: 'The Masters', startDate: STARTS_AT });
       const drafting = world.addLeague();
       world.addContest(drafting.id, { status: ContestStatus.DRAFT, sportEventIds: [masters.id] });
       member(drafting.id, 'Draft', { role: LeagueRole.COMMISSIONER });
 
-      await tellChanged(masters, { kind: ContestEventChangeKind.POSTPONED });
+      await tellChanged(masters, { kind: ContestEventChangeKind.RESCHEDULED, previousStart: EARLIER });
 
       expect(outbox.rows).toEqual([]);
     });
@@ -802,63 +803,19 @@ describe('ContestNotices', () => {
       expect(textTo(commissioner.user.id)).not.toContain('goes on');
     });
 
-    it('tells an open contest a postponed event that has not started yet keeps its picks open', async () => {
-      const masters = world.addSportEvent({ name: 'The Masters', startDate: STARTS_AT, status: SportEventStatus.POSTPONED });
-      const league = world.addLeague();
-      world.addContest(league.id, { name: 'Masters Pick 6', sportEventIds: [masters.id] });
-      const commissioner = member(league.id, 'Casey', { role: LeagueRole.COMMISSIONER });
-
-      await tellChanged(masters, { kind: ContestEventChangeKind.POSTPONED });
-
-      expect(outbox.rows.find((row) => row.recipientUserId === commissioner.user.id)?.subject).toBe('Postponed: The Masters');
-      expect(textTo(commissioner.user.id)).toContain('The Masters has been postponed, with no new date yet.');
-      expect(textTo(commissioner.user.id)).toContain('Picks for Masters Pick 6 stay open until it starts.');
-    });
-
-    it('tells an open contest its picks are closed when its event is postponed after its start, a drawn sweepstakes too, and a live season contest whose postponed event is still ahead that its picks are open', async () => {
-      const kickedOff = world.addSportEvent({ name: 'Game Day', startDate: new Date(NOW.getTime() - HOUR), status: SportEventStatus.POSTPONED });
-      const rainedOut = world.addLeague();
-      world.addContest(rainedOut.id, { name: 'Rain Out Pool', sportEventIds: [kickedOff.id] });
-      const rainedOutCommissioner = member(rainedOut.id, 'Casey', { role: LeagueRole.COMMISSIONER });
-      const ahead = world.addSportEvent({ name: 'Later Event', startDate: new Date(NOW.getTime() + 24 * HOUR), status: SportEventStatus.POSTPONED });
-      const drawnLeague = world.addLeague();
-      world.addContest(drawnLeague.id, { name: 'Sweepstakes Pool', sportEventIds: [ahead.id], drawnAt: NOW });
-      const drawnCommissioner = member(drawnLeague.id, 'Dana', { role: LeagueRole.COMMISSIONER });
-      const seasonLeague = world.addLeague();
-      world.addContest(seasonLeague.id, { name: 'Season Pool', status: ContestStatus.ACTIVE, sportEventIds: [kickedOff.id, ahead.id] });
-      const seasonCommissioner = member(seasonLeague.id, 'Lee', { role: LeagueRole.COMMISSIONER });
-
-      await tellChanged(kickedOff, { kind: ContestEventChangeKind.POSTPONED });
-      await tellChanged(ahead, { kind: ContestEventChangeKind.POSTPONED });
-
-      expect(textTo(rainedOutCommissioner.user.id)).not.toContain('stay open');
-      expect(textTo(rainedOutCommissioner.user.id)).toContain('Rain Out Pool carries on when it resumes.');
-      expect(textTo(drawnCommissioner.user.id)).not.toContain('stay open');
-      const toSeason = outbox.rows.filter((row) => row.recipientUserId === seasonCommissioner.user.id).map((row) => row.textBody ?? '');
-      expect(toSeason.find((text) => text.includes('Later Event'))).toContain('Picks for Season Pool stay open until it starts.');
-    });
-
-    it('tells a second postponement of the same event, and a move back to an earlier new date, again', async () => {
+    it('tells a move back to an earlier new date again', async () => {
       const league = world.addLeague();
       const first = new Date('2026-04-16T11:40:00.000Z');
       const second = new Date('2026-04-23T11:40:00.000Z');
-      const masters = world.addSportEvent({ name: 'The Masters', startDate: STARTS_AT, status: SportEventStatus.POSTPONED });
+      const masters = world.addSportEvent({ name: 'The Masters', startDate: first });
       world.addContest(league.id, { name: 'Masters Pick 6', sportEventIds: [masters.id] });
       member(league.id, 'Casey', { role: LeagueRole.COMMISSIONER });
 
-      await tellChanged(masters, { kind: ContestEventChangeKind.POSTPONED });
-      await tellChanged({ ...masters, startDate: first }, { kind: ContestEventChangeKind.POSTPONED });
       await tellChanged({ ...masters, startDate: first }, { kind: ContestEventChangeKind.RESCHEDULED, previousStart: STARTS_AT });
       await tellChanged({ ...masters, startDate: second }, { kind: ContestEventChangeKind.RESCHEDULED, previousStart: first });
       await tellChanged({ ...masters, startDate: first }, { kind: ContestEventChangeKind.RESCHEDULED, previousStart: second });
 
-      expect(outbox.rows.map((row) => row.subject)).toEqual([
-        'Postponed: The Masters',
-        'Postponed: The Masters',
-        'New date: The Masters',
-        'New date: The Masters',
-        'New date: The Masters',
-      ]);
+      expect(outbox.rows.map((row) => row.subject)).toEqual(['New date: The Masters', 'New date: The Masters', 'New date: The Masters']);
     });
 
     it('gives the old and new start of a moved event, keeps the picks open, and tells a second move again', async () => {

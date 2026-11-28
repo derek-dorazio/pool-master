@@ -131,19 +131,19 @@ describe('Pick\'em contest leaderboard', () => {
     }
   });
 
-  it('marks a cancelled week with the grey Cancelled chip and a postponed one with the gold Postponed chip, in place of words in the heading', async () => {
+  it('marks a cancelled week with the grey Cancelled chip in place of words in the heading, and a week on schedule with none', async () => {
     const board = pickEmLeaderboardFixture();
     primeMocks({
       ...board,
       weeks: [
         { ...board.weeks[0], status: 'CANCELLED', settled: true },
-        { ...board.weeks[1], status: 'POSTPONED', started: false },
+        { ...board.weeks[1], status: 'SCHEDULED', started: false },
       ],
     });
     renderLeaderboard();
 
     expect(await screen.findByTestId('pick-em-leaderboard-week-week-1-schedule')).toHaveTextContent('Cancelled');
-    expect(screen.getByTestId('pick-em-leaderboard-week-week-2-schedule')).toHaveTextContent('Postponed');
+    expect(screen.queryByTestId('pick-em-leaderboard-week-week-2-schedule')).not.toBeInTheDocument();
     expect(screen.queryByText(/\(cancelled\)/)).not.toBeInTheDocument();
   });
 

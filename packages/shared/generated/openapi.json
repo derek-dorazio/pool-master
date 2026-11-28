@@ -24439,8 +24439,7 @@
               "SCHEDULED",
               "IN_PROGRESS",
               "COMPLETED",
-              "CANCELLED",
-              "POSTPONED"
+              "CANCELLED"
             ]
           },
           "releaseMode": {
@@ -24830,8 +24829,7 @@
                     "SCHEDULED",
                     "IN_PROGRESS",
                     "COMPLETED",
-                    "CANCELLED",
-                    "POSTPONED"
+                    "CANCELLED"
                   ]
                 },
                 "releaseMode": {
@@ -30024,8 +30022,7 @@
           "SCHEDULED",
           "IN_PROGRESS",
           "COMPLETED",
-          "CANCELLED",
-          "POSTPONED"
+          "CANCELLED"
         ]
       },
       "EventReadinessStatusDto": {
@@ -30735,8 +30732,7 @@
               "SCHEDULED",
               "IN_PROGRESS",
               "COMPLETED",
-              "CANCELLED",
-              "POSTPONED"
+              "CANCELLED"
             ],
             "description": "Event lifecycle status."
           },
@@ -31795,8 +31791,7 @@
                 "SCHEDULED",
                 "IN_PROGRESS",
                 "COMPLETED",
-                "CANCELLED",
-                "POSTPONED"
+                "CANCELLED"
               ]
             },
             "description": "Statuses the event may move to next, from the declared transition map. (Admin-only: operational detail no member surface reads.)"
@@ -31898,8 +31893,7 @@
                 "SCHEDULED",
                 "IN_PROGRESS",
                 "COMPLETED",
-                "CANCELLED",
-                "POSTPONED"
+                "CANCELLED"
               ]
             }
           },
@@ -32018,8 +32012,7 @@
                     "SCHEDULED",
                     "IN_PROGRESS",
                     "COMPLETED",
-                    "CANCELLED",
-                    "POSTPONED"
+                    "CANCELLED"
                   ],
                   "description": "Event lifecycle status."
                 },
@@ -33078,8 +33071,7 @@
                       "SCHEDULED",
                       "IN_PROGRESS",
                       "COMPLETED",
-                      "CANCELLED",
-                      "POSTPONED"
+                      "CANCELLED"
                     ]
                   },
                   "description": "Statuses the event may move to next, from the declared transition map. (Admin-only: operational detail no member surface reads.)"
@@ -33255,8 +33247,7 @@
                   "SCHEDULED",
                   "IN_PROGRESS",
                   "COMPLETED",
-                  "CANCELLED",
-                  "POSTPONED"
+                  "CANCELLED"
                 ],
                 "description": "Event lifecycle status."
               },
@@ -34315,8 +34306,7 @@
                     "SCHEDULED",
                     "IN_PROGRESS",
                     "COMPLETED",
-                    "CANCELLED",
-                    "POSTPONED"
+                    "CANCELLED"
                   ]
                 },
                 "description": "Statuses the event may move to next, from the declared transition map. (Admin-only: operational detail no member surface reads.)"
@@ -34489,8 +34479,7 @@
               "SCHEDULED",
               "IN_PROGRESS",
               "COMPLETED",
-              "CANCELLED",
-              "POSTPONED"
+              "CANCELLED"
             ],
             "description": "One of the event's allowedTransitions. SCHEDULED from DRAFT is the release, which has its own action (releaseEvent)."
           }
@@ -39013,8 +39002,7 @@
               "SCHEDULED",
               "IN_PROGRESS",
               "COMPLETED",
-              "CANCELLED",
-              "POSTPONED"
+              "CANCELLED"
             ],
             "description": "The event's own status. Each event of a contest is picked, submitted, played and settled on its own (#713)."
           },
@@ -39372,8 +39360,7 @@
                     "SCHEDULED",
                     "IN_PROGRESS",
                     "COMPLETED",
-                    "CANCELLED",
-                    "POSTPONED"
+                    "CANCELLED"
                   ],
                   "description": "The event's own status. Each event of a contest is picked, submitted, played and settled on its own (#713)."
                 },
@@ -41438,8 +41425,7 @@
                         "SCHEDULED",
                         "IN_PROGRESS",
                         "COMPLETED",
-                        "CANCELLED",
-                        "POSTPONED"
+                        "CANCELLED"
                       ],
                       "description": "The event's own status. Each event of a contest is picked, submitted, played and settled on its own (#713)."
                     },
@@ -41834,8 +41820,7 @@
                           "SCHEDULED",
                           "IN_PROGRESS",
                           "COMPLETED",
-                          "CANCELLED",
-                          "POSTPONED"
+                          "CANCELLED"
                         ],
                         "description": "The event's own status. Each event of a contest is picked, submitted, played and settled on its own (#713)."
                       },
@@ -43626,8 +43611,7 @@
                     "SCHEDULED",
                     "IN_PROGRESS",
                     "COMPLETED",
-                    "CANCELLED",
-                    "POSTPONED"
+                    "CANCELLED"
                   ]
                 },
                 "started": {
@@ -43942,8 +43926,7 @@
                     "SCHEDULED",
                     "IN_PROGRESS",
                     "COMPLETED",
-                    "CANCELLED",
-                    "POSTPONED"
+                    "CANCELLED"
                   ]
                 },
                 "started": {
@@ -79253,7 +79236,6 @@
               "RELEASE_SPORT_EVENT",
               "SYNC_EVENT_GAMES_AND_TIERS",
               "ACTIVATE_EVENT_CONTESTS",
-              "FOLLOW_POSTPONED_EVENT_CONTESTS",
               "RESOLVE_MAPPED_PARTICIPANT_FINDINGS",
               "REFRESH_SLOT_TIEBREAKERS",
               "SYNC_LEAGUE_ROSTER",
@@ -79567,7 +79549,6 @@
                     "RELEASE_SPORT_EVENT",
                     "SYNC_EVENT_GAMES_AND_TIERS",
                     "ACTIVATE_EVENT_CONTESTS",
-                    "FOLLOW_POSTPONED_EVENT_CONTESTS",
                     "RESOLVE_MAPPED_PARTICIPANT_FINDINGS",
                     "REFRESH_SLOT_TIEBREAKERS",
                     "SYNC_LEAGUE_ROSTER",
@@ -79840,7 +79821,6 @@
                   "RELEASE_SPORT_EVENT",
                   "SYNC_EVENT_GAMES_AND_TIERS",
                   "ACTIVATE_EVENT_CONTESTS",
-                  "FOLLOW_POSTPONED_EVENT_CONTESTS",
                   "RESOLVE_MAPPED_PARTICIPANT_FINDINGS",
                   "REFRESH_SLOT_TIEBREAKERS",
                   "SYNC_LEAGUE_ROSTER",
@@ -90953,7 +90933,7 @@
         "tags": [
           "Events"
         ],
-        "description": "The sport-event catalog, narrowed by sport, statuses, sport league, Season and name and never paged. At least one of `sport`, `sportLeagueId` and `sportLeagueSeasonId` is required, so the list never reads every event: 400 SPORT_EVENT_FILTER_REQUIRED otherwise. A root admin browses the whole catalog. Any other signed-in user, for contest setup, may list only events in the statuses that can still take a contest (SCHEDULED, POSTPONED, IN_PROGRESS) or one Season's (`sportLeagueSeasonId`): 403 ROOT_ADMIN_ACCESS_REQUIRED otherwise (#1348). Each event carries its loaded field size, contest-setup readiness and tier count; a root admin's list also carries each event's adminCounts. DRAFT events (not yet released for contests) are listed for a root admin only.",
+        "description": "The sport-event catalog, narrowed by sport, statuses, sport league, Season and name and never paged. At least one of `sport`, `sportLeagueId` and `sportLeagueSeasonId` is required, so the list never reads every event: 400 SPORT_EVENT_FILTER_REQUIRED otherwise. A root admin browses the whole catalog. Any other signed-in user, for contest setup, may list only events in the statuses that can still take a contest (SCHEDULED, IN_PROGRESS) or one Season's (`sportLeagueSeasonId`): 403 ROOT_ADMIN_ACCESS_REQUIRED otherwise (#1348). Each event carries its loaded field size, contest-setup readiness and tier count; a root admin's list also carries each event's adminCounts. DRAFT events (not yet released for contests) are listed for a root admin only.",
         "parameters": [
           {
             "schema": {
@@ -90987,8 +90967,7 @@
                   "SCHEDULED",
                   "IN_PROGRESS",
                   "COMPLETED",
-                  "CANCELLED",
-                  "POSTPONED"
+                  "CANCELLED"
                 ]
               }
             },

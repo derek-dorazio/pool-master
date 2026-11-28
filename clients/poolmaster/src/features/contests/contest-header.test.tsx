@@ -218,15 +218,15 @@ describe('ContestEntryFrame', () => {
 });
 
 describe('ContestPageFrame schedule notice', () => {
-  it('says under the header, in one line, when an event is postponed and that a cancelled one scores nothing', async () => {
+  it('says under the header, in one line, that a cancelled event scores nothing', async () => {
     renderFrame({ contestOverrides: {
       sportEvents: [
-        { endDate: null, name: 'BUF @ KC', participantType: 'TEAM', scoringFamily: 'HEAD_TO_HEAD', sportEventId: 'e1', startDate: '2026-11-25T01:15:00.000Z', status: 'POSTPONED' },
+        { endDate: null, name: 'BUF @ KC', participantType: 'TEAM', scoringFamily: 'HEAD_TO_HEAD', sportEventId: 'e1', startDate: '2026-11-25T01:15:00.000Z', status: 'SCHEDULED' },
         { endDate: null, name: 'SEA @ SF', participantType: 'TEAM', scoringFamily: 'HEAD_TO_HEAD', sportEventId: 'e2', startDate: '2026-11-25T21:00:00.000Z', status: 'CANCELLED' },
       ],
     } });
 
-    expect(await screen.findByTestId('contest-schedule-notice')).toHaveTextContent(/^BUF @ KC postponed to .+\. SEA @ SF cancelled: no points\.$/);
+    expect(await screen.findByTestId('contest-schedule-notice')).toHaveTextContent(/^SEA @ SF cancelled: no points\.$/);
   });
 
   it('shows no notice while every event is on schedule', async () => {

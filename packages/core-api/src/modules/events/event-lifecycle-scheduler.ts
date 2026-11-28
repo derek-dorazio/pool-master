@@ -18,9 +18,7 @@
  * taking contests live at their cutoffs on the clock, while the event is scheduled or in progress
  * (a contest's first covered Game, a squares game, #711), so a late feed leaves no window open.
  * An event covering no slot has no slot to move it: it starts at its start date and completes at
- * its end date. A
- * POSTPONED event's status is left alone, but its contests follow its start (#1792): open while
- * it is ahead, wherever the start has moved to, and live once it has passed.
+ * its end date. Postponement belongs to a Game, which the feed marks POSTPONED (#2013).
  *
  * The emails that fire on the clock rather than on an action, such as entry reminders and live
  * standings, sweep on timers of their own (`DueNotificationsScheduler`), so a slow one never
@@ -43,7 +41,7 @@ const SWEEP_LOCK_KEY = 'event-lifecycle-sweep';
 
 export interface EventLifecycleSchedulerOptions {
   sportEvents: Pick<SportEventRepository, 'findAutoLifecycleCandidates'>;
-  eventLifecycleService: Pick<EventLifecycleService, 'applySportEventStatusTransition' | 'activateContestsPastCutoff' | 'followPostponedStart'>;
+  eventLifecycleService: Pick<EventLifecycleService, 'applySportEventStatusTransition' | 'activateContestsPastCutoff'>;
   /** Keeps the sweep to one server task. */
   jobLock: JobLock;
   logger?: FastifyBaseLogger;
@@ -109,10 +107,6 @@ export class EventLifecycleScheduler {
   private async applyDueTransition(candidate: AutoLifecycleCandidate, now: Date): Promise<void> {
     // Each status the candidate read answers has its case, and lint holds the switch whole.
     switch (candidate.status) {
-      case SportEventStatus.POSTPONED:
-        // Its contests take entries until its start, wherever that has moved to (#1792).
-        await this.eventLifecycleService.followPostponedStart(candidate, now);
-        return;
       case SportEventStatus.SCHEDULED: {
         // Nothing on an event is due before its start: the sync sets it to its earliest slot's, and
         // no contest's window opens earlier, so a future week reads nothing.
