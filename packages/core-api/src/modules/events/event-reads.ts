@@ -92,7 +92,7 @@ export function readTiersOnce(
   tiers: Pick<SportEventTierService, 'getEffectiveTiersForSportEvent' | 'salaryCaps'>,
 ): Pick<SportEventTierService, 'getEffectiveTiersForSportEvent' | 'salaryCaps'> {
   const answers = new Map<string, Promise<SportEventTierGroup[]>>();
-  const caps = new Map<string, Promise<Map<string, number | null>>>();
+  const caps = new Map<string, Promise<Map<string, number>>>();
   return {
     getEffectiveTiersForSportEvent: (sportEventId, choice) =>
       remember(answers, `${sportEventId} ${tierSetKey(choice)}`, () => tiers.getEffectiveTiersForSportEvent(sportEventId, choice)),

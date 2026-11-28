@@ -319,8 +319,10 @@ function createSportEventTierServiceStub(
       tiers.map(({ participants: _participants, ...tier }) => ({ ...tier, sportEventId })))),
     getEffectiveTiersForSportEvents: jest.fn(async (sportEventIds: readonly string[]) =>
       new Map(sportEventIds.map((sportEventId) => [sportEventId, tiers]))),
-    salaryCaps: jest.fn(async (sportEventIds: readonly string[]) =>
-      new Map(sportEventIds.map((sportEventId) => [sportEventId, salaryCaps[sportEventId] ?? null]))),
+    salaryCaps: jest.fn(async (sportEventIds: readonly string[]) => new Map(sportEventIds.flatMap((sportEventId) => {
+      const cap = salaryCaps[sportEventId] ?? null;
+      return cap === null ? [] : [[sportEventId, cap] as const];
+    }))),
   } as unknown as SportEventTierService;
 }
 

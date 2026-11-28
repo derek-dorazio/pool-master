@@ -198,12 +198,14 @@ export class SportEventTierService {
   /**
    * Each event's salary cap (#2050): the pricing of the slot `choice` names (`tierSetSlots`), the
    * one place a budget contest's cap is read. It is never copied into a contest's rules, so a
-   * cap set again before the set locks is the one every reader sees. Null for an event whose slot
-   * is not priced, or that covers none. A fixed number of reads however many events.
+   * cap set again before the set locks is the one every reader sees. An event whose slot is not
+   * priced, or that covers none, is left out, as `tierSetSlots` leaves out an event covering no
+   * slot. A fixed number of reads however many events.
    */
-  async salaryCaps(sportEventIds: readonly string[], choice?: TierSetChoice): Promise<Map<string, number | null>> {
+  async salaryCaps(sportEventIds: readonly string[], choice?: TierSetChoice): Promise<Map<string, number>> {
     const slots = await this.tierSetSlots(sportEventIds, choice);
-    return new Map(sportEventIds.map((sportEventId) => [sportEventId, slots.get(sportEventId)?.pricing?.salaryCap ?? null]));
+    return new Map([...slots].flatMap(([sportEventId, slot]): Array<[string, number]> =>
+      slot.pricing === null ? [] : [[sportEventId, slot.pricing.salaryCap]]));
   }
 
   /** The event's tier-set slot (`tierSetSlots`), or undefined when it covers none. */

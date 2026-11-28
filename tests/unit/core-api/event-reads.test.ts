@@ -128,7 +128,7 @@ describe('readTiersOnce', () => {
   });
 
   it('reads the events\' salary caps once per choice of slot, whatever order the events are asked in, while different events or coverage read again', async () => {
-    const load = jest.fn(async (sportEventIds: readonly string[]) => new Map(sportEventIds.map((sportEventId): [string, number | null] => [sportEventId, 50_000])));
+    const load = jest.fn(async (sportEventIds: readonly string[]) => new Map(sportEventIds.map((sportEventId): [string, number] => [sportEventId, 50_000])));
     const tiers = readTiersOnce({ getEffectiveTiersForSportEvent: jest.fn(), salaryCaps: load });
 
     const [first] = await Promise.all([
