@@ -25,7 +25,7 @@ const YEAR_PARAMS = {
   required: ['id', 'year'],
   properties: {
     id: { type: 'string', format: 'uuid' },
-    year: { type: 'integer', minimum: 2000, maximum: 9999, description: 'The year whose review to send, such as 2026: only last year can be sent.' },
+    year: { type: 'integer', minimum: 2000, maximum: 9999, description: 'The year whose review to send, such as 2026: only the league\'s latest closed championship year can be sent.' },
   },
 } as const;
 
@@ -49,8 +49,8 @@ export function historyModule(fastify: FastifyInstance, opts: MailModuleOptions 
   fastify.get('/year-review', {
     schema: {
       tags: ['History'],
-      summary: 'Get last year\'s year in review',
-      description: `Where the league's year in review for last year (US Eastern) stands: NOTHING_TO_SEND when no championship contest counted that year, READY from 1 January until the commissioner sends it, then SENT with when and by whom. The "ready to send" banner and the Send button read it. ${COMMISSIONERS_ONLY} ${describePlanFeatureGate([PlanFeature.EMAIL_YEAR_IN_REVIEW])}`,
+      summary: 'Get the latest closed year\'s year in review',
+      description: `Where the year in review of the league's latest closed championship year (#2021: every contest in it final and every Season slot of it finished) stands: NOTHING_TO_SEND, with a null year, before any year has closed, or when no championship contest counted in it; READY from when it closes until the commissioner sends it; then SENT with when and by whom. The "ready to send" banner and the Send button read it. ${COMMISSIONERS_ONLY} ${describePlanFeatureGate([PlanFeature.EMAIL_YEAR_IN_REVIEW])}`,
       operationId: 'getYearReview',
       response: {
         200: schemaRef('YearReviewResponse'),
@@ -66,7 +66,7 @@ export function historyModule(fastify: FastifyInstance, opts: MailModuleOptions 
     schema: {
       tags: ['History'],
       summary: 'Send the year in review',
-      description: `Allows a commissioner to send last year's year in review: each active owner of an active squad that placed that year gets an email with their squad's year (championship place and points, contest 1sts, 2nds and 3rds, the cups it placed in, its trophies) and a link to its squad page for that year. Owners who turned off Results email are skipped. Sent once per league and year. 409 YEAR_REVIEW_NOT_OPEN for any year but last year; 409 YEAR_REVIEW_NOTHING_TO_SEND when no championship contest counted that year; 409 YEAR_REVIEW_ALREADY_SENT once it is sent. ${COMMISSIONERS_ONLY} ${describePlanFeatureGate([PlanFeature.EMAIL_YEAR_IN_REVIEW])}`,
+      description: `Allows a commissioner to send the year in review of the league's latest closed championship year: each active owner of an active squad that placed that year gets an email with their squad's year (championship place and points, contest 1sts, 2nds and 3rds, the cups it placed in, its trophies) and a link to its squad page for that year. Owners who turned off Results email are skipped. Sent once per league and year. 409 YEAR_REVIEW_NOT_OPEN for any year but the latest closed one; 409 YEAR_REVIEW_NOTHING_TO_SEND when no championship contest counted that year; 409 YEAR_REVIEW_ALREADY_SENT once it is sent. ${COMMISSIONERS_ONLY} ${describePlanFeatureGate([PlanFeature.EMAIL_YEAR_IN_REVIEW])}`,
       operationId: 'sendYearReview',
       params: YEAR_PARAMS,
       response: {

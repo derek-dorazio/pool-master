@@ -23,7 +23,7 @@ export function createHistoryHandlers(
     request: FastifyRequest<{ Params: { id: string } }>,
     reply: FastifyReply,
   ): Promise<void> {
-    return reply.send({ yearReview: toYearReviewDto(await yearReviews.getLastYear(request.params.id)) });
+    return reply.send({ yearReview: toYearReviewDto(await yearReviews.getReviewYear(request.params.id)) });
   }
 
   async function sendYearReview(

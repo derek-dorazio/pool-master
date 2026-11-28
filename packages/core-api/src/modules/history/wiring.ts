@@ -44,6 +44,7 @@ export function createYearReviewService(prisma: PrismaClient, options: {
   return new YearReviewService({
     reviews: new PrismaLeagueYearReviewRepository(prisma),
     finishes: new PrismaChampionshipRepository(prisma),
+    closedYears: new PrismaLeagueChampionshipYearRepository(prisma),
     leagues: new PrismaLeagueRepository(prisma),
     memberships: new PrismaLeagueMembershipRepository(prisma),
     squadMemberships: new PrismaSquadMembershipRepository(prisma),

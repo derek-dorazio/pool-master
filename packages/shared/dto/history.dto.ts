@@ -153,16 +153,16 @@ export const SquadHistoryResponseSchema = z.object({
 export type SquadHistoryResponse = z.infer<typeof SquadHistoryResponseSchema>;
 
 export const YearReviewDtoSchema = z.object({
-  year: z.number().int().describe('Last year, US Eastern: the only year whose review can be sent.'),
-  status: z.enum(YearReviewStatus).describe('NOTHING_TO_SEND: no championship contest counted that year. READY: the commissioner can send it. SENT: it was sent.'),
+  year: z.number().int().nullable().describe('The league\'s latest closed championship year: the only year whose review can be sent. Null while the league has closed none.'),
+  status: z.enum(YearReviewStatus).describe('NOTHING_TO_SEND: no year closed yet, or no championship contest counted in it. READY: the commissioner can send it. SENT: it was sent.'),
   sentAt: DateTimeSchema.nullable().describe('When it was sent; null until then.'),
   sentByName: z.string().nullable().describe('Who sent it; null until then, or once their account is gone.'),
-}).describe('Where the league\'s year in review for last year stands.');
+}).describe('Where the year in review of the league\'s latest closed championship year stands.');
 export type YearReviewDto = z.infer<typeof YearReviewDtoSchema>;
 
 export const YearReviewResponseSchema = z.object({
   yearReview: YearReviewDtoSchema,
-}).describe('Where the league\'s year in review for last year stands.');
+}).describe('Where the year in review of the league\'s latest closed championship year stands.');
 export type YearReviewResponse = z.infer<typeof YearReviewResponseSchema>;
 
 export const RecordHolderDtoSchema = z.object({
