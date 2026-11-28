@@ -356,8 +356,11 @@ export interface ContestCoveredSlot {
   /** For a WEEK slot, its week. */
   weekNumber: number | null;
   status: SeasonSlotStatus;
+  /** The earliest start of the slot's Games; null until the sync places one (a playoff round before the one ahead of it is played). */
   startsAt: Date | null;
   endsAt: Date | null;
+  /** A test slot (QA only): the sync never schedules it, so its event's start stands for its own. */
+  isTestData: boolean;
   sportEventId: string | null;
   /** The competition the slot is in, such as REGULAR or CFP, and its name when it has one. */
   competitionCode: string;

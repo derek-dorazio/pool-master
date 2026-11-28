@@ -4,9 +4,10 @@
  * both ask them).
  *
  * A contest covers one or more events (#713), and each event is its own small workflow: its picks
- * open while the contest takes them and close at that event's scheduled start. The event moves on
- * when it is marked In Progress, but that update can be late, and a lineup must not change after
- * tee-off while it is.
+ * open while the contest takes them and close at the first Game of the slots the contest covers on
+ * that event (#2013), which is the event's start unless the contest covers a later slot. A slot
+ * moves on when one of its Matches starts, but that update can be late, and a lineup must not
+ * change after tee-off while it is, so the first game's scheduled start closes it too.
  *
  * Joining, leaving and renaming are the contest's: only while it is OPEN (#117) and before its
  * first event starts, so nobody joins a contest already being played (design Q5.6).
@@ -17,10 +18,15 @@
  * A random draw closes entries early (#601): once it has dealt, nobody may enter, leave or
  * change an entry, or the deal would no longer be the one every entry was given.
  */
-import type { Contest, ContestRules, ContestSelectionConfig, ContestSquaresGame, SportEventRoundMatch, SportEventRoundMatchGame } from '@poolmaster/shared/domain';
-import { ContestStatus, isMatchUnplayed, SelectionType, SportEventStatus, hasSportEventStarted, isSportEventStatusFinished, hasPeriodScores } from '@poolmaster/shared/domain';
+import type { Contest, ContestCoveredSlot, ContestRules, ContestSelectionConfig, ContestSquaresGame, SportEventRoundMatch, SportEventRoundMatchGame } from '@poolmaster/shared/domain';
+import { ContestStatus, isMatchUnplayed, SeasonSlotStatus, SelectionType, SportEventStatus, hasSportEventStarted, isSportEventStatusFinished, hasPeriodScores } from '@poolmaster/shared/domain';
 
-export type EventTiming = { status: SportEventStatus; startDate: Date };
+/**
+ * The timing a check runs on: an event's, or a contest's window on it. A window has no start yet
+ * (null) on a later slot the sync has not scheduled, such as a playoff round waiting on the one
+ * before it (#2013): it is still to start until its status moves.
+ */
+export type EventTiming = { status: SportEventStatus; startDate: Date | null };
 /** A game's timing: its status, its kickoff, and any period scores, which only a game under way has (#772). */
 type MatchTiming = Pick<SportEventRoundMatch, 'status' | 'scheduledDate' | 'games'>;
 type RoundMatchTiming = MatchTiming & { id: string; roundNumber: number };
@@ -28,21 +34,26 @@ type RoundMatchTiming = MatchTiming & { id: string; roundNumber: number };
 type GameTiming = Pick<SportEventRoundMatchGame, 'id' | 'status' | 'scheduledDate' | 'sideResults'>;
 
 /**
- * Where a contest's window on an event closes (#721): at the event's start, as for every contest,
- * or at one game's kickoff, for a squares contest on that game (#711). Entries, picks and the tiebreaker
- * close, picks are revealed and the contest goes live at this point.
+ * Where a contest's window on an event closes (#721): at the first Game of the slots it covers on
+ * that event (#2013), as for every contest, or at one Game's kickoff, for a squares contest on that
+ * Game (#711). Entries, picks and the tiebreaker close, picks are revealed and the contest goes live
+ * at this point.
  */
 export const ContestCutoffKind = {
-  EVENT_START: 'EVENT_START',
+  FIRST_COVERED_GAME: 'FIRST_COVERED_GAME',
   GAME_START: 'GAME_START',
 } as const;
 export type ContestCutoffKind = (typeof ContestCutoffKind)[keyof typeof ContestCutoffKind];
 
-export type ContestCutoff =
-  | { kind: typeof ContestCutoffKind.EVENT_START }
-  | { kind: typeof ContestCutoffKind.GAME_START; sportEventRoundMatchGameId: string };
+/** A Season slot a contest covers, as its window reads it: its event, its status, and its first game's start. */
+export type CoveredSlotTiming = Pick<ContestCoveredSlot, 'sportEventId' | 'status' | 'startsAt' | 'isTestData'>;
 
-const AT_EVENT_START: ContestCutoff = { kind: ContestCutoffKind.EVENT_START };
+/** The covered slot statuses that start a contest's window: in progress or complete, never cancelled. */
+const STARTED_SLOT_STATUSES: readonly SeasonSlotStatus[] = [SeasonSlotStatus.IN_PROGRESS, SeasonSlotStatus.COMPLETED];
+
+export type ContestCutoff =
+  | { kind: typeof ContestCutoffKind.FIRST_COVERED_GAME; coveredSlots: readonly CoveredSlotTiming[] }
+  | { kind: typeof ContestCutoffKind.GAME_START; sportEventRoundMatchGameId: string };
 
 /** Whether a game has moved on from being still to play (scheduled, or postponed before it began), by its status or by a period score entered for it. */
 export function hasGameMovedOn(game: MatchTiming): boolean {
@@ -50,43 +61,73 @@ export function hasGameMovedOn(game: MatchTiming): boolean {
 }
 
 /**
- * A contest's cutoff, from its rules and, for squares, its game: a squares contest closes at its
- * game's kickoff, every other contest at its event's start.
+ * A contest's cutoff, from its rules, its covered slots and, for squares, its Game: a squares
+ * contest closes at its Game's kickoff, every other contest at the first Game of the slots it
+ * covers. A contest not made yet covers no slot so far, so its window is its events' own.
  */
 export function contestCutoff(
   rules: ContestRules | ContestSelectionConfig | undefined,
-  squaresGame?: Pick<ContestSquaresGame, 'sportEventRoundMatchGameId'>,
+  contest: { squaresGame?: Pick<ContestSquaresGame, 'sportEventRoundMatchGameId'>; coveredSlots?: readonly CoveredSlotTiming[] } = {},
 ): ContestCutoff {
-  if (rules?.selectionType === SelectionType.SQUARES && squaresGame !== undefined) {
-    return { kind: ContestCutoffKind.GAME_START, sportEventRoundMatchGameId: squaresGame.sportEventRoundMatchGameId };
+  if (rules?.selectionType === SelectionType.SQUARES && contest.squaresGame !== undefined) {
+    return { kind: ContestCutoffKind.GAME_START, sportEventRoundMatchGameId: contest.squaresGame.sportEventRoundMatchGameId };
   }
-  return AT_EVENT_START;
+  return { kind: ContestCutoffKind.FIRST_COVERED_GAME, coveredSlots: contest.coveredSlots ?? [] };
 }
 
 /**
- * The timing a contest's window runs on for one event, in the shape every check below reads: the
- * event's own, or at a Game's kickoff, that Game's time and whether it has moved on (a cancelled
- * Game has, so its contest closes, and so has a Game with a period score). The Game is looked up
- * among the event's matches' Games. A finished event is finished for every cutoff.
+ * The timing a contest's window runs on for one event, in the shape every check below reads.
+ * - At its first covered Game: the earliest start of the slots it covers on the event (a slot's
+ *   start is its first game's), and started once any of them is in progress or complete (a slot is
+ *   in progress once any of its Matches has started). A later slot of an event under way is still
+ *   to start, so a contest on it still takes entries and picks. A cancelled slot is left out: it
+ *   neither starts the window nor gives it a start. A synced slot with no start yet is not
+ *   scheduled, so it gives the window none. With no covered slot on the event, or a test slot
+ *   (which the sync never schedules), the event's own timing.
+ * - At a Game's kickoff: that Game's time and whether it has moved on (a cancelled Game has, so its
+ *   contest closes, and so has a Game with a period score). The Game is looked up among the event's
+ *   matches' Games.
+ * A finished event is finished for every cutoff.
  */
-export function cutoffTiming(cutoff: ContestCutoff, sportEvent: EventTiming, matches: readonly { games: readonly GameTiming[] }[]): EventTiming {
+export function cutoffTiming(
+  cutoff: ContestCutoff,
+  sportEvent: EventTiming & { id: string },
+  matches: readonly { games: readonly GameTiming[] }[],
+): EventTiming {
+  if (isSportEventStatusFinished(sportEvent.status)) {
+    return sportEvent;
+  }
   switch (cutoff.kind) {
-    case ContestCutoffKind.EVENT_START:
-      return sportEvent;
-    case ContestCutoffKind.GAME_START: {
-      if (isSportEventStatusFinished(sportEvent.status)) {
+    case ContestCutoffKind.FIRST_COVERED_GAME: {
+      const covered = cutoff.coveredSlots.filter((slot) => slot.sportEventId === sportEvent.id);
+      // A test slot is never scheduled by the sync, and a root admin moves its event by hand: it
+      // stands on its event's own timing. Test and synced events never share a slot.
+      if (covered.length === 0 || covered.some((slot) => slot.isTestData)) {
         return sportEvent;
       }
+      const started = covered.some((slot) => STARTED_SLOT_STATUSES.includes(slot.status));
+      const starts = covered.flatMap((slot) => (
+        slot.status === SeasonSlotStatus.CANCELLED || slot.startsAt === null ? [] : [slot.startsAt.getTime()]
+      ));
+      return {
+        status: started ? SportEventStatus.IN_PROGRESS : stillToStart(sportEvent.status),
+        startDate: starts.length === 0 ? null : new Date(Math.min(...starts)),
+      };
+    }
+    case ContestCutoffKind.GAME_START: {
       const game = matches.flatMap((match) => match.games).find((candidate) => candidate.id === cutoff.sportEventRoundMatchGameId);
       if (!game) {
         return sportEvent;
       }
-      const status = !isMatchUnplayed(game.status) || hasPeriodScores({ games: [game] })
-        ? SportEventStatus.IN_PROGRESS
-        : sportEvent.status === SportEventStatus.IN_PROGRESS ? SportEventStatus.SCHEDULED : sportEvent.status;
+      const status = !isMatchUnplayed(game.status) || hasPeriodScores({ games: [game] }) ? SportEventStatus.IN_PROGRESS : stillToStart(sportEvent.status);
       return { status, startDate: game.scheduledDate ?? sportEvent.startDate };
     }
   }
+}
+
+/** The status of a window still to start on an event: scheduled while the event is under way with its other games, else the event's own (postponed, say). */
+function stillToStart(status: SportEventStatus): SportEventStatus {
+  return status === SportEventStatus.IN_PROGRESS ? SportEventStatus.SCHEDULED : status;
 }
 
 /**
@@ -153,7 +194,8 @@ export function areEventPicksRevealed(
  * has moved on from SCHEDULED (a period score counts). As with an event, the status update can be late.
  */
 export function hasMatchStarted(match: MatchTiming, sportEvent: EventTiming, now: Date): boolean {
-  return hasGameMovedOn(match) || (match.scheduledDate ?? sportEvent.startDate) <= now;
+  const kickoff = match.scheduledDate ?? sportEvent.startDate;
+  return hasGameMovedOn(match) || (kickoff !== null && kickoff <= now);
 }
 
 /**

@@ -15,7 +15,8 @@ import { testDomainEvents } from '../../support/domain-events';
 import { linkedProviderEvent } from '../../support/event-edition';
 import { syncLeagueTo } from '../../support/league-sync';
 import { insertTestSportLeague } from '../../support/test-sport-league';
-import { cleanupTestData, getAppPrisma, getPrisma, setupIntegrationTests, teardownIntegrationTests } from '../helpers';
+import { SportLeagueConferenceListResponseSchema } from '@poolmaster/shared/dto';
+import { cleanupTestData, createTestUser, getApp, getAppPrisma, getPrisma, setupIntegrationTests, teardownIntegrationTests } from '../helpers';
 import { expectSameStatementCount } from '../query-scaling';
 
 beforeAll(() => setupIntegrationTests());
@@ -27,6 +28,9 @@ beforeEach(() => cleanupTestData());
 
 const NFL_LEAGUE_ID = 'f91f2566-1978-4171-a706-ae417c4d601a';
 const NBA_LEAGUE_ID = '09f45f12-11be-43ac-bfa6-70a53f6e0169';
+const NCAAB_LEAGUE_ID = '4d18eb42-0049-425e-a8f2-2122324123fc';
+const NCAAW_LEAGUE_ID = 'ec248e1f-4468-4ecf-a9cf-51e02eebbf46';
+const NCAAF_LEAGUE_ID = '37b259d2-b681-4ca5-94d4-894d5e9bcc10';
 
 /**
  * A synced football league of the test's own with its BALLDONTLIE mapping: the AFC (East, North)
@@ -100,6 +104,21 @@ describe('the migration\'s conferences and divisions', () => {
       { code: 'NFC', providerCodes: [{ providerCode: 'NFC' }], divisions },
     ]);
     expect(nba).toEqual([{ code: 'EAST', providerCodes: [{ providerCode: 'East' }] }, { code: 'WEST', providerCodes: [{ providerCode: 'West' }] }]);
+  });
+
+  it('gives each college league its conferences with no divisions, coded as its own feed codes them: basketball by its list\'s ids, which differ between the men\'s and women\'s for the Pac-12, and football by name', async () => {
+    const prisma = getPrisma();
+    const codesOf = async (sportLeagueId: string) => new Map((await prisma.sportLeagueConference.findMany({
+      where: { sportLeagueId },
+      select: { code: true, providerCodes: { select: { providerCode: true } }, _count: { select: { divisions: true } } },
+    })).map((conference) => [conference.code, { codes: conference.providerCodes.map((code) => code.providerCode), divisions: conference._count.divisions }]));
+    const [men, women, football] = await Promise.all([codesOf(NCAAB_LEAGUE_ID), codesOf(NCAAW_LEAGUE_ID), codesOf(NCAAF_LEAGUE_ID)]);
+
+    expect([men.size, women.size, football.size]).toEqual([35, 34, 25]);
+    expect([men.get('BIG_TEN'), women.get('BIG_TEN'), football.get('BIG_TEN')]).toEqual([{ codes: ['10'], divisions: 0 }, { codes: ['10'], divisions: 0 }, { codes: ['Big Ten'], divisions: 0 }]);
+    expect([men.get('PAC_12')?.codes, women.get('PAC_12')?.codes]).toEqual([['33'], ['34']]);
+    expect([men.has('MID_CON'), women.has('MID_CON')]).toEqual([true, false]);
+    expect(football.get('MID_AMERICAN')?.codes).toEqual(['MAC']);
   });
 
   it('describes every conference and division it adds, for agents and root admins', async () => {
@@ -260,5 +279,56 @@ describe('a field sync writes its teams\' conferences into the event\'s Season',
     const rows = await prisma.sportLeagueSeasonTeamConference.findMany({ where: { sportLeagueId }, select: { sportLeagueSeasonId: true, conferenceId: true, divisionId: true, team: { select: { name: true } } } });
     expect(rows).toEqual([{ sportLeagueSeasonId: event.sportLeagueSeasonId, conferenceId: afc.id, divisionId: afc.divisions['EAST'], team: { name: `Team ${suffix}-1` } }]);
     expect(findings.raiseOfSource).toHaveBeenCalledWith('balldontlie', [expect.objectContaining({ kind: ProviderSyncFindingKind.CONFERENCE_UNMAPPED, providerValue: 'UFL' })]);
+  });
+});
+
+describe('GET /api/v1/sport-leagues/{sportLeagueId}/conferences', () => {
+  async function get(url: string) {
+    const rootAdmin = await createTestUser({ isRootAdmin: true });
+    return getApp().inject({ method: 'GET', url, headers: rootAdmin.headers });
+  }
+
+  it('lists the NFL\'s AFC then NFC, each with its four divisions in display order, its description and BALLDONTLIE\'s NFL codes', async () => {
+    const response = await get(`/api/v1/sport-leagues/${NFL_LEAGUE_ID}/conferences`);
+
+    expect(response.statusCode).toBe(200);
+    const { conferences } = SportLeagueConferenceListResponseSchema.parse(response.json());
+    expect(conferences.map((conference) => conference.code)).toEqual(['AFC', 'NFC']);
+    const [afc] = conferences;
+    expect(afc).toMatchObject({
+      code: 'AFC',
+      name: 'American Football Conference',
+      description: expect.stringMatching(/\S/),
+      providerCodes: [{ providerCode: 'AFC', provider: ProviderCode.BALLDONTLIE, providerLeagueCode: 'nfl', providerLeagueName: expect.any(String) }],
+    });
+    expect(afc.divisions.map((division) => [division.code, division.name, division.providerCodes.map((code) => code.providerCode)])).toEqual([
+      ['EAST', 'AFC East', ['EAST']], ['NORTH', 'AFC North', ['NORTH']], ['SOUTH', 'AFC South', ['SOUTH']], ['WEST', 'AFC West', ['WEST']],
+    ]);
+  });
+
+  it('gives the NBA\'s conferences by the feed\'s own words, East and West', async () => {
+    const response = await get(`/api/v1/sport-leagues/${NBA_LEAGUE_ID}/conferences`);
+
+    const { conferences } = SportLeagueConferenceListResponseSchema.parse(response.json());
+    expect(conferences.map((conference) => [conference.code, conference.providerCodes.map((code) => code.providerCode)])).toEqual([['EAST', ['East']], ['WEST', ['West']]]);
+  });
+
+  it('answers an empty list for a league with no conferences', async () => {
+    const league = await insertTestSportLeague(getPrisma(), { sport: Sport.GOLF, name: `Conferenceless ${randomUUID().slice(0, 8)}` });
+
+    const response = await get(`/api/v1/sport-leagues/${league.id}/conferences`);
+
+    expect(response.statusCode).toBe(200);
+    expect(SportLeagueConferenceListResponseSchema.parse(response.json()).conferences).toEqual([]);
+  });
+
+  it('answers a signed-in member who is not a root admin with 403, and 404 for a sport league that does not exist', async () => {
+    const member = await createTestUser();
+
+    const refused = await getApp().inject({ method: 'GET', url: `/api/v1/sport-leagues/${NFL_LEAGUE_ID}/conferences`, headers: member.headers });
+    const missing = await get(`/api/v1/sport-leagues/${randomUUID()}/conferences`);
+
+    expect(refused.statusCode).toBe(403);
+    expect(missing.statusCode).toBe(404);
   });
 });

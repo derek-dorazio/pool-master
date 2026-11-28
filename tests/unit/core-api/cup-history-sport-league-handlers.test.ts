@@ -268,6 +268,11 @@ describe('sport league handlers', () => {
         providerCodes: [{ providerCode: 'QB', provider: ProviderCode.BALLDONTLIE, providerLeagueCode: 'nfl', providerLeagueName: 'NFL' }],
       }]),
       readStructure: (sportLeagueId) => known(sportLeagueId, []),
+      readConferences: (sportLeagueId) => known(sportLeagueId, [{
+        id: 'conf1', code: 'AFC', name: 'American Football Conference', description: 'One of the NFL\'s two conferences.', displayOrder: 1,
+        providerCodes: [{ providerCode: 'AFC', provider: ProviderCode.BALLDONTLIE, providerLeagueCode: 'nfl', providerLeagueName: 'NFL' }],
+        divisions: [{ id: 'div1', code: 'EAST', name: 'AFC East', description: 'A division of the AFC.', displayOrder: 1, providerCodes: [] }],
+      }]),
       readSeasons: (sportLeagueId) => known(sportLeagueId, [{
         id: 'season-2026', sportLeagueId: 'sl1', name: '2026', championshipYear: 2026, startsAt: AT, endsAt: new Date('2026-12-31T23:59:59.999Z'),
         isCurrent: true, readBySync: true, providerMappings: [], phases: [],
@@ -371,10 +376,11 @@ describe('sport league handlers', () => {
     }
   });
 
-  it('answers the League page\'s syncs, events and participants of a sport league, and each read of one that does not exist with 404 SPORT_LEAGUE_NOT_FOUND', async () => {
+  it('answers the League page\'s syncs, structure, positions, conferences, events and participants of a sport league, and each read of one that does not exist with 404 SPORT_LEAGUE_NOT_FOUND', async () => {
     const syncs = await callHandler(handlers.listSyncs, stubRequest({ params }));
     const structure = await callHandler(handlers.getStructure, stubRequest({ params }));
     const positions = await callHandler(handlers.listPositions, stubRequest({ params }));
+    const conferences = await callHandler(handlers.listConferences, stubRequest({ params }));
     const events = await callHandler(handlers.listEventOverviews, stubRequest({ params }));
     const participants = await callHandler(handlers.listParticipantOverviews, stubRequest({ params }));
     const missing = { params: { sportLeagueId: 'nope' } };
@@ -386,7 +392,14 @@ describe('sport league handlers', () => {
     expect(positions.body).toEqual({
       positions: [{ id: 'pos1', code: 'QB', displayOrder: 1, isFieldEligible: true, providerCodes: [{ providerCode: 'QB', provider: 'BALLDONTLIE', providerLeagueCode: 'nfl', providerLeagueName: 'NFL' }] }],
     });
-    for (const read of [handlers.listSyncs, handlers.listEventOverviews, handlers.listParticipantOverviews, handlers.getStructure, handlers.listPositions]) {
+    expect(conferences.body).toEqual({
+      conferences: [{
+        id: 'conf1', code: 'AFC', name: 'American Football Conference', description: 'One of the NFL\'s two conferences.', displayOrder: 1,
+        providerCodes: [{ providerCode: 'AFC', provider: 'BALLDONTLIE', providerLeagueCode: 'nfl', providerLeagueName: 'NFL' }],
+        divisions: [{ id: 'div1', code: 'EAST', name: 'AFC East', description: 'A division of the AFC.', displayOrder: 1, providerCodes: [] }],
+      }],
+    });
+    for (const read of [handlers.listSyncs, handlers.listEventOverviews, handlers.listParticipantOverviews, handlers.getStructure, handlers.listPositions, handlers.listConferences]) {
       expect(await callHandler(read, stubRequest(missing))).toMatchObject({ statusCode: 404, body: { error: { code: 'SPORT_LEAGUE_NOT_FOUND' } } });
     }
   });

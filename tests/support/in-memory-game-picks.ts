@@ -28,7 +28,7 @@ import {
   type ContestEntryMatchPrediction,
   type Participant,
   type SportEventRoundMatch,
-  type SportEventParticipant, SportEventParticipantStatus } from '@poolmaster/shared/domain';
+  type SportEventParticipant, SportEventParticipantStatus, SeasonSlotStatus } from '@poolmaster/shared/domain';
 import { weekRoundSlot, withSlotTiebreakers } from './round-slots';
 import { legacyMatch } from './match-sides';
 import { expectDefined } from './expect-defined';
@@ -115,7 +115,7 @@ export class InMemoryGamePicks {
     for (const match of matches) {
       this.matches.set(match.id, match);
       // A game's slot is a Season slot of its event, so a contest added on the event covers it.
-      this.world.seasonSlots.set(match.slot.seasonSlotId, { sportEventId: match.sportEventId, slotDefinitionId: match.slot.slotDefinitionId });
+      this.world.seasonSlots.set(match.slot.seasonSlotId, { sportEventId: match.sportEventId, slotDefinitionId: match.slot.slotDefinitionId, status: this.world.seasonSlots.get(match.slot.seasonSlotId)?.status ?? SeasonSlotStatus.SCHEDULED });
     }
   }
 

@@ -312,7 +312,7 @@ export const SportLeagueParticipantOverviewListResponseSchema = z.object({
 }).describe('A sport league\'s participants.');
 export type SportLeagueParticipantOverviewListResponse = z.infer<typeof SportLeagueParticipantOverviewListResponseSchema>;
 
-export const SportLeaguePositionProviderCodeDtoSchema = z.object({
+const SportLeaguePositionProviderCodeDtoSchema = z.object({
   providerCode: z.string().describe('The provider\'s own code for the position, exactly as its feed sends it.'),
   provider: z.enum(ProviderCode).describe('The provider whose code it is.'),
   providerLeagueCode: z.string().describe('The provider\'s own code for the league the code is from.'),
@@ -333,6 +333,39 @@ export const SportLeaguePositionListResponseSchema = z.object({
   positions: z.array(SportLeaguePositionDtoSchema).describe('Every position of the sport league, by display order, never paged. Empty for a league with none.'),
 }).describe('A sport league\'s positions.');
 export type SportLeaguePositionListResponse = z.infer<typeof SportLeaguePositionListResponseSchema>;
+
+const SportLeagueConferenceProviderCodeDtoSchema = z.object({
+  providerCode: z.string().describe('The provider\'s own code for the conference or division, exactly as its feed sends it (a vendor\'s number as text where it numbers them).'),
+  provider: z.enum(ProviderCode).describe('The provider whose code it is.'),
+  providerLeagueCode: z.string().describe('The provider\'s own code for the league the code is from.'),
+  providerLeagueName: z.string().describe('The provider\'s own name for that league.'),
+}).describe('One provider\'s code for a sport league\'s conference or division.');
+export type SportLeagueConferenceProviderCodeDto = z.infer<typeof SportLeagueConferenceProviderCodeDtoSchema>;
+
+const SportLeagueConferenceDivisionDtoSchema = z.object({
+  id: z.uuid(),
+  code: z.string().describe('The division\'s key within its conference (EAST).'),
+  name: z.string().describe('The division\'s proper name (AFC East). Data, never translated.'),
+  description: z.string().describe('Plain English for agents and root admins: what the division is. Not shown to members.'),
+  displayOrder: z.number().int().describe('Where it sits among its conference\'s divisions. Display only.'),
+  providerCodes: z.array(SportLeagueConferenceProviderCodeDtoSchema).describe('Each provider\'s codes for the division, by provider league then code. A division code is read within its team\'s conference.'),
+}).describe('One division of a conference. Set by migration; never edited through the API.');
+
+const SportLeagueConferenceDtoSchema = z.object({
+  id: z.uuid(),
+  code: z.string().describe('The conference\'s key within its league (AFC).'),
+  name: z.string().describe('The conference\'s proper name (American Football Conference). Data, never translated.'),
+  description: z.string().describe('Plain English for agents and root admins: what the conference is. Not shown to members.'),
+  displayOrder: z.number().int().describe('Where it sits among the league\'s conferences. Display only.'),
+  providerCodes: z.array(SportLeagueConferenceProviderCodeDtoSchema).describe('Each provider\'s codes for the conference, by provider league then code. A feed code with no row is not one of the league\'s conferences, and raises CONFERENCE_UNMAPPED.'),
+  divisions: z.array(SportLeagueConferenceDivisionDtoSchema).describe('By display order, never paged. Empty where the conference has none.'),
+}).describe('One of a sport league\'s conferences, with its divisions. Set by migration; never edited through the API.');
+export type SportLeagueConferenceDto = z.infer<typeof SportLeagueConferenceDtoSchema>;
+
+export const SportLeagueConferenceListResponseSchema = z.object({
+  conferences: z.array(SportLeagueConferenceDtoSchema).describe('Every conference of the sport league, by display order, never paged. Empty for a league with none (soccer, golf).'),
+}).describe('A sport league\'s conferences and divisions.');
+export type SportLeagueConferenceListResponse = z.infer<typeof SportLeagueConferenceListResponseSchema>;
 export const SlotProviderMappingDtoSchema = z.object({
   id: z.uuid(),
   providerId: z.uuid(),
@@ -368,6 +401,7 @@ const SportLeagueCompetitionDefinitionDtoSchema = z.object({
   id: z.uuid(),
   code: z.string().describe('A readable key unique in the league, such as REGULAR or CFP. Screens show it until a display key exists; nothing parses it.'),
   orderIndex: z.number().int().min(1).describe('Its place among its phase\'s competitions, from 1.'),
+  conferenceId: z.uuid().nullable().describe('The conference whose teams alone it places, one of the league\'s conferences (`GET /sport-leagues/{sportLeagueId}/conferences`); null for none. Only a POSTSEASON_CONFERENCE competition names one.'),
   slots: z.array(SportLeagueSlotDefinitionDtoSchema).describe('In play order: weeks by number, then the knockout rounds to the final; tournaments by key until a Season dates them.'),
 }).describe('One competition of a phase (#2153): what the phase\'s slots are played as. No contest crosses competitions.');
 
@@ -532,6 +566,10 @@ registerSchema('SportLeagueParticipantOverviewListResponse', SportLeagueParticip
 registerSchema('SportLeaguePositionProviderCodeDto', SportLeaguePositionProviderCodeDtoSchema);
 registerSchema('SportLeaguePositionDto', SportLeaguePositionDtoSchema);
 registerSchema('SportLeaguePositionListResponse', SportLeaguePositionListResponseSchema);
+registerSchema('SportLeagueConferenceProviderCodeDto', SportLeagueConferenceProviderCodeDtoSchema);
+registerSchema('SportLeagueConferenceDivisionDto', SportLeagueConferenceDivisionDtoSchema);
+registerSchema('SportLeagueConferenceDto', SportLeagueConferenceDtoSchema);
+registerSchema('SportLeagueConferenceListResponse', SportLeagueConferenceListResponseSchema);
 registerSchema('SlotProviderMappingDto', SlotProviderMappingDtoSchema);
 registerSchema('SportLeagueSlotDefinitionDto', SportLeagueSlotDefinitionDtoSchema);
 registerSchema('SportLeagueCompetitionDefinitionDto', SportLeagueCompetitionDefinitionDtoSchema);

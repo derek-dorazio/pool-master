@@ -44,7 +44,6 @@ function reader(sportEvent: ContestCreateSportEventState | null, options: {
 } = {}): ContestOpeningReader {
   return {
     findById: jest.fn().mockResolvedValue(sportEvent),
-    findCutoffTiming: jest.fn().mockImplementation((state: ContestCreateSportEventState) => Promise.resolve(state)),
     findBracketProblem: jest.fn().mockResolvedValue(options.bracketProblem ?? null),
     nextSquaresKickoff: jest.fn().mockResolvedValue(options.squaresKickoff === undefined ? LATER : options.squaresKickoff),
   };

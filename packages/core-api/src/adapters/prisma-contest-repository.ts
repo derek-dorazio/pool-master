@@ -45,6 +45,7 @@ const COVERED_SEASON_SLOT_SELECT = {
   startsAt: true,
   endsAt: true,
   label: true,
+  isTestData: true,
   definition: { select: { key: true, name: true, slotKind: true, weekNumber: true, competition: { select: { code: true, name: true } } } },
   eventSlot: { select: { sportEventId: true } },
 } as const;
@@ -446,6 +447,7 @@ type CoveredSeasonSlotRow = {
   startsAt: Date | null;
   endsAt: Date | null;
   label: string | null;
+  isTestData: boolean;
   definition: { key: string; name: string | null; slotKind: SlotKind; weekNumber: number | null; competition: { code: string; name: string | null } };
   eventSlot: { sportEventId: string } | null;
 };
@@ -462,6 +464,7 @@ function toCoveredSlot(seasonSlotId: string, slot: CoveredSeasonSlotRow): Contes
     status: slot.status,
     startsAt: slot.startsAt,
     endsAt: slot.endsAt,
+    isTestData: slot.isTestData,
     sportEventId: slot.eventSlot?.sportEventId ?? null,
     competitionCode: slot.definition.competition.code,
     competitionName: slot.definition.competition.name,

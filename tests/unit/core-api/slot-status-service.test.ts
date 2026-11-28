@@ -57,7 +57,7 @@ function service(slots: SlotStatusState[], event: SportEvent | null = eventOf())
 }
 
 describe('SlotStatusService.refreshSlots', () => {
-  it('moves each slot its Matches have moved, with the refresh of its event\'s status written in the same write, and leaves the rest alone', async () => {
+  it('moves each slot its Matches have moved, with the refresh of its event\'s status and its contests\' activation written in the same write, and leaves the rest alone', async () => {
     const { slotStatuses, store } = service([
       slot('slot-started', SeasonSlotStatus.SCHEDULED, [MatchStatus.IN_PROGRESS, MatchStatus.SCHEDULED]),
       slot('slot-waiting', SeasonSlotStatus.SCHEDULED, [MatchStatus.SCHEDULED]),
@@ -69,7 +69,10 @@ describe('SlotStatusService.refreshSlots', () => {
       seasonSlotId: 'slot-started',
       from: SeasonSlotStatus.SCHEDULED,
       to: SeasonSlotStatus.IN_PROGRESS,
-      jobs: [expect.objectContaining({ type: BackgroundJobType.REFRESH_EVENT_STATUS, payload: { sportEventId: EVENT_ID }, dedupeKey: `REFRESH_EVENT_STATUS:${EVENT_ID}` })],
+      jobs: [
+        expect.objectContaining({ type: BackgroundJobType.REFRESH_EVENT_STATUS, payload: { sportEventId: EVENT_ID }, dedupeKey: `REFRESH_EVENT_STATUS:${EVENT_ID}` }),
+        expect.objectContaining({ type: BackgroundJobType.ACTIVATE_EVENT_CONTESTS, payload: { sportEventId: EVENT_ID }, dedupeKey: `ACTIVATE_EVENT_CONTESTS:${EVENT_ID}` }),
+      ],
     }]);
   });
 

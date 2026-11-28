@@ -2848,6 +2848,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/sport-leagues/{sportLeagueId}/conferences": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List a sport league's conferences and divisions with their provider codes
+         * @description The League page's Structure tab (#2052): every conference of the sport league, by display order, never paged, each with its divisions and each provider's codes for both. Set by migration; read-only. Which conference a team is in is kept per Season by the events sync. Read in a fixed number of queries. Root admin only.
+         */
+        get: operations["listSportLeagueConferences"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/sport-leagues/{sportLeagueId}/structure": {
         parameters: {
             query?: never;
@@ -12893,6 +12913,158 @@ export interface components {
                 }[];
             }[];
         };
+        /** @description One provider's code for a sport league's conference or division. */
+        SportLeagueConferenceProviderCodeDto: {
+            /** @description The provider's own code for the conference or division, exactly as its feed sends it (a vendor's number as text where it numbers them). */
+            providerCode: string;
+            /**
+             * @description The provider whose code it is.
+             * @enum {string}
+             */
+            provider: "BALLDONTLIE";
+            /** @description The provider's own code for the league the code is from. */
+            providerLeagueCode: string;
+            /** @description The provider's own name for that league. */
+            providerLeagueName: string;
+        };
+        /** @description One division of a conference. Set by migration; never edited through the API. */
+        SportLeagueConferenceDivisionDto: {
+            /** Format: uuid */
+            id: string;
+            /** @description The division's key within its conference (EAST). */
+            code: string;
+            /** @description The division's proper name (AFC East). Data, never translated. */
+            name: string;
+            /** @description Plain English for agents and root admins: what the division is. Not shown to members. */
+            description: string;
+            /** @description Where it sits among its conference's divisions. Display only. */
+            displayOrder: number;
+            /** @description Each provider's codes for the division, by provider league then code. A division code is read within its team's conference. */
+            providerCodes: {
+                /** @description The provider's own code for the conference or division, exactly as its feed sends it (a vendor's number as text where it numbers them). */
+                providerCode: string;
+                /**
+                 * @description The provider whose code it is.
+                 * @enum {string}
+                 */
+                provider: "BALLDONTLIE";
+                /** @description The provider's own code for the league the code is from. */
+                providerLeagueCode: string;
+                /** @description The provider's own name for that league. */
+                providerLeagueName: string;
+            }[];
+        };
+        /** @description One of a sport league's conferences, with its divisions. Set by migration; never edited through the API. */
+        SportLeagueConferenceDto: {
+            /** Format: uuid */
+            id: string;
+            /** @description The conference's key within its league (AFC). */
+            code: string;
+            /** @description The conference's proper name (American Football Conference). Data, never translated. */
+            name: string;
+            /** @description Plain English for agents and root admins: what the conference is. Not shown to members. */
+            description: string;
+            /** @description Where it sits among the league's conferences. Display only. */
+            displayOrder: number;
+            /** @description Each provider's codes for the conference, by provider league then code. A feed code with no row is not one of the league's conferences, and raises CONFERENCE_UNMAPPED. */
+            providerCodes: {
+                /** @description The provider's own code for the conference or division, exactly as its feed sends it (a vendor's number as text where it numbers them). */
+                providerCode: string;
+                /**
+                 * @description The provider whose code it is.
+                 * @enum {string}
+                 */
+                provider: "BALLDONTLIE";
+                /** @description The provider's own code for the league the code is from. */
+                providerLeagueCode: string;
+                /** @description The provider's own name for that league. */
+                providerLeagueName: string;
+            }[];
+            /** @description By display order, never paged. Empty where the conference has none. */
+            divisions: {
+                /** Format: uuid */
+                id: string;
+                /** @description The division's key within its conference (EAST). */
+                code: string;
+                /** @description The division's proper name (AFC East). Data, never translated. */
+                name: string;
+                /** @description Plain English for agents and root admins: what the division is. Not shown to members. */
+                description: string;
+                /** @description Where it sits among its conference's divisions. Display only. */
+                displayOrder: number;
+                /** @description Each provider's codes for the division, by provider league then code. A division code is read within its team's conference. */
+                providerCodes: {
+                    /** @description The provider's own code for the conference or division, exactly as its feed sends it (a vendor's number as text where it numbers them). */
+                    providerCode: string;
+                    /**
+                     * @description The provider whose code it is.
+                     * @enum {string}
+                     */
+                    provider: "BALLDONTLIE";
+                    /** @description The provider's own code for the league the code is from. */
+                    providerLeagueCode: string;
+                    /** @description The provider's own name for that league. */
+                    providerLeagueName: string;
+                }[];
+            }[];
+        };
+        /** @description A sport league's conferences and divisions. */
+        SportLeagueConferenceListResponse: {
+            /** @description Every conference of the sport league, by display order, never paged. Empty for a league with none (soccer, golf). */
+            conferences: {
+                /** Format: uuid */
+                id: string;
+                /** @description The conference's key within its league (AFC). */
+                code: string;
+                /** @description The conference's proper name (American Football Conference). Data, never translated. */
+                name: string;
+                /** @description Plain English for agents and root admins: what the conference is. Not shown to members. */
+                description: string;
+                /** @description Where it sits among the league's conferences. Display only. */
+                displayOrder: number;
+                /** @description Each provider's codes for the conference, by provider league then code. A feed code with no row is not one of the league's conferences, and raises CONFERENCE_UNMAPPED. */
+                providerCodes: {
+                    /** @description The provider's own code for the conference or division, exactly as its feed sends it (a vendor's number as text where it numbers them). */
+                    providerCode: string;
+                    /**
+                     * @description The provider whose code it is.
+                     * @enum {string}
+                     */
+                    provider: "BALLDONTLIE";
+                    /** @description The provider's own code for the league the code is from. */
+                    providerLeagueCode: string;
+                    /** @description The provider's own name for that league. */
+                    providerLeagueName: string;
+                }[];
+                /** @description By display order, never paged. Empty where the conference has none. */
+                divisions: {
+                    /** Format: uuid */
+                    id: string;
+                    /** @description The division's key within its conference (EAST). */
+                    code: string;
+                    /** @description The division's proper name (AFC East). Data, never translated. */
+                    name: string;
+                    /** @description Plain English for agents and root admins: what the division is. Not shown to members. */
+                    description: string;
+                    /** @description Where it sits among its conference's divisions. Display only. */
+                    displayOrder: number;
+                    /** @description Each provider's codes for the division, by provider league then code. A division code is read within its team's conference. */
+                    providerCodes: {
+                        /** @description The provider's own code for the conference or division, exactly as its feed sends it (a vendor's number as text where it numbers them). */
+                        providerCode: string;
+                        /**
+                         * @description The provider whose code it is.
+                         * @enum {string}
+                         */
+                        provider: "BALLDONTLIE";
+                        /** @description The provider's own code for the league the code is from. */
+                        providerLeagueCode: string;
+                        /** @description The provider's own name for that league. */
+                        providerLeagueName: string;
+                    }[];
+                }[];
+            }[];
+        };
         /** @description How one provider's games match a slot definition. Inclusion only: a provider value no mapping names is not synced. */
         SlotProviderMappingDto: {
             /** Format: uuid */
@@ -12975,6 +13147,11 @@ export interface components {
             code: string;
             /** @description Its place among its phase's competitions, from 1. */
             orderIndex: number;
+            /**
+             * Format: uuid
+             * @description The conference whose teams alone it places, one of the league's conferences (`GET /sport-leagues/{sportLeagueId}/conferences`); null for none. Only a POSTSEASON_CONFERENCE competition names one.
+             */
+            conferenceId: string | null;
             /** @description In play order: weeks by number, then the knockout rounds to the final; tournaments by key until a Season dates them. */
             slots: {
                 /** Format: uuid */
@@ -13048,6 +13225,11 @@ export interface components {
                 code: string;
                 /** @description Its place among its phase's competitions, from 1. */
                 orderIndex: number;
+                /**
+                 * Format: uuid
+                 * @description The conference whose teams alone it places, one of the league's conferences (`GET /sport-leagues/{sportLeagueId}/conferences`); null for none. Only a POSTSEASON_CONFERENCE competition names one.
+                 */
+                conferenceId: string | null;
                 /** @description In play order: weeks by number, then the knockout rounds to the final; tournaments by key until a Season dates them. */
                 slots: {
                     /** Format: uuid */
@@ -13124,6 +13306,11 @@ export interface components {
                     code: string;
                     /** @description Its place among its phase's competitions, from 1. */
                     orderIndex: number;
+                    /**
+                     * Format: uuid
+                     * @description The conference whose teams alone it places, one of the league's conferences (`GET /sport-leagues/{sportLeagueId}/conferences`); null for none. Only a POSTSEASON_CONFERENCE competition names one.
+                     */
+                    conferenceId: string | null;
                     /** @description In play order: weeks by number, then the knockout rounds to the final; tournaments by key until a Season dates them. */
                     slots: {
                         /** Format: uuid */
@@ -38672,6 +38859,55 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SportLeaguePositionListResponse"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+            /** @description Standard API error envelope. */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorEnvelope"];
+                };
+            };
+        };
+    };
+    listSportLeagueConferences: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                sportLeagueId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A sport league's conferences and divisions. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SportLeagueConferenceListResponse"];
                 };
             };
             /** @description Standard API error envelope. */

@@ -16,7 +16,9 @@ import {
   type SportLeagueParticipantOverview,
   type SportLeagueSeasonDetail,
   type SportLeagueSeasonSlot,
+  type SportLeagueConference,
   type SportLeaguePosition,
+  type SportLeaguePositionProviderCode,
   type SportLeagueStructure,
   type SportLeagueSync,
   slotNeedsDates,
@@ -32,6 +34,8 @@ import type {
   SportLeagueParticipantOverviewDto,
   SportLeagueSeasonDto,
   SportLeagueSeasonSlotDto,
+  SportLeagueConferenceDto,
+  SportLeagueConferenceProviderCodeDto,
   SportLeaguePositionDto,
   SportLeagueStructureResponse,
   SportLeagueSyncDto,
@@ -198,11 +202,36 @@ export function mapSportLeaguePositionToDto(position: SportLeaguePosition): Spor
     code: position.code,
     displayOrder: position.displayOrder,
     isFieldEligible: position.isFieldEligible,
-    providerCodes: position.providerCodes.map((providerCode) => ({
-      providerCode: providerCode.providerCode,
-      provider: providerCode.provider,
-      providerLeagueCode: providerCode.providerLeagueCode,
-      providerLeagueName: providerCode.providerLeagueName,
+    providerCodes: position.providerCodes.map(mapProviderCodeToDto),
+  };
+}
+
+/** One provider's code for a position, conference or division, with its provider league. */
+function mapProviderCodeToDto(providerCode: SportLeaguePositionProviderCode): SportLeagueConferenceProviderCodeDto {
+  return {
+    providerCode: providerCode.providerCode,
+    provider: providerCode.provider,
+    providerLeagueCode: providerCode.providerLeagueCode,
+    providerLeagueName: providerCode.providerLeagueName,
+  };
+}
+
+/** A sport league's conference with its divisions (#2052): every field as it is, in the reader's order. */
+export function mapSportLeagueConferenceToDto(conference: SportLeagueConference): SportLeagueConferenceDto {
+  return {
+    id: conference.id,
+    code: conference.code,
+    name: conference.name,
+    description: conference.description,
+    displayOrder: conference.displayOrder,
+    providerCodes: conference.providerCodes.map(mapProviderCodeToDto),
+    divisions: conference.divisions.map((division) => ({
+      id: division.id,
+      code: division.code,
+      name: division.name,
+      description: division.description,
+      displayOrder: division.displayOrder,
+      providerCodes: division.providerCodes.map(mapProviderCodeToDto),
     })),
   };
 }
@@ -218,6 +247,7 @@ export function mapSportLeagueStructureToDto(structure: SportLeagueStructure): S
         id: competition.id,
         code: competition.code,
         orderIndex: competition.orderIndex,
+        conferenceId: competition.conferenceId,
         slots: competition.slots.map((slot) => ({
           id: slot.id,
           key: slot.key,

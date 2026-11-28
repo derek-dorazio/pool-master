@@ -398,13 +398,13 @@ export class ContestService {
   }
 
   /**
-   * Each event's timing as the contest's window runs on it (#721): the event's own, or for
-   * squares its game's kickoff (#711). Only squares reads its rules for it.
+   * Each event's timing as the contest's window runs on it (#721): its first covered Game's
+   * (#2013), or for squares its Game's kickoff (#711). Only squares reads its rules for it.
    */
   private async findContestWindows<Event extends SportEvent>(contest: Contest, events: readonly Event[]): Promise<Array<{ event: Event; window: EventTiming }>> {
     const cutoff = (await this.findCutoffs([contest])).get(contest.id);
     const games = cutoff === undefined || events.length === 0 ? [] : await this.deps.matches.findBySportEvents(events.map((event) => event.id));
-    return eventWindows(events, cutoff, games);
+    return eventWindows(events, cutoff ?? contestCutoff(undefined, contest), games);
   }
 
   /**
@@ -419,12 +419,12 @@ export class ContestService {
     const cutoffs = await this.findCutoffs(contests);
     const gameEventIds = contests.filter((contest) => cutoffs.has(contest.id)).flatMap((contest) => eventsOf(contest).map((event) => event.id));
     const games = gameEventIds.length === 0 ? [] : await this.deps.matches.findBySportEvents([...new Set(gameEventIds)]);
-    return new Map(contests.map((contest) => [contest.id, eventWindows(eventsOf(contest), cutoffs.get(contest.id), games)]));
+    return new Map(contests.map((contest) => [contest.id, eventWindows(eventsOf(contest), cutoffs.get(contest.id) ?? contestCutoff(undefined, contest), games)]));
   }
 
   /**
-   * The cutoff of each contest whose window does not close at its events' start, by contest id:
-   * a squares grid's (#711). Only squares reads its rules for it, a lone contest through its remembered point read (#1176) and several in one read.
+   * The cutoff of each contest whose window closes at one Game's kickoff, by contest id: a squares
+   * grid's (#711). Every other contest's closes at its first covered Game, which needs no Game read. Only squares reads its rules for it, a lone contest through its remembered point read (#1176) and several in one read.
    */
   private async findCutoffs(contests: readonly Contest[]): Promise<Map<string, ContestCutoff>> {
     const ruled = contests.filter((contest) => contest.selectionType === SelectionType.SQUARES);
@@ -433,8 +433,8 @@ export class ContestService {
       : await this.deps.configurations.findByContests(ruled.map((contest) => contest.id));
     const rulesOf = new Map(configurations.map((configuration) => [configuration.contestId, configuration.configJson]));
     return new Map(ruled.flatMap((contest) => {
-      const cutoff = contestCutoff(rulesOf.get(contest.id), contest.squaresGame);
-      return cutoff.kind === ContestCutoffKind.EVENT_START ? [] : [[contest.id, cutoff] as const];
+      const cutoff = contestCutoff(rulesOf.get(contest.id), contest);
+      return cutoff.kind === ContestCutoffKind.GAME_START ? [[contest.id, cutoff] as const] : [];
     }));
   }
 
@@ -2124,15 +2124,15 @@ const LEADERBOARD_SCORING_REFUSALS: Readonly<Record<ContestScoringResolutionFail
   },
 };
 
-/** Each event's timing as a contest's window runs on it: the event's own, or its cutoff's over the event's games. */
+/** Each event's timing as a contest's window runs on it: its cutoff's over the event's covered slots or Games. */
 function eventWindows<Event extends SportEvent>(
   events: readonly Event[],
-  cutoff: ContestCutoff | undefined,
+  cutoff: ContestCutoff,
   games: readonly SportEventRoundMatch[],
 ): Array<{ event: Event; window: EventTiming }> {
   return events.map((event) => ({
     event,
-    window: cutoff === undefined ? event : cutoffTiming(cutoff, event, games.filter((game) => game.sportEventId === event.id)),
+    window: cutoffTiming(cutoff, event, games.filter((game) => game.sportEventId === event.id)),
   }));
 }
 

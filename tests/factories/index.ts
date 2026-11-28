@@ -167,6 +167,7 @@ export function buildCoveredSlot(overrides: Partial<ContestCoveredSlot> = {}): C
     status: SeasonSlotStatus.SCHEDULED,
     startsAt: null,
     endsAt: null,
+    isTestData: false,
     sportEventId: null,
     competitionCode: 'REGULAR',
     competitionName: null,
