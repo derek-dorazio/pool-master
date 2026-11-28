@@ -8,63 +8,39 @@
  *     (admin-managed, auto-lifecycle-enabled, SCHEDULED/IN_PROGRESS) is the
  *     port's contract, asserted against Postgres in
  *     sport-event-repositories.integration.ts.
- *   - SCHEDULED -> IN_PROGRESS fires once the earliest SportEventRound.
- *     scheduledDate (or SportEvent.startDate when no rounds exist) has
- *     passed, with actor { type: 'SYSTEM' }.
- *   - IN_PROGRESS -> COMPLETED never fires on the clock: an event completes when its slots do
- *     (#2013, slot-status-service.test.ts).
+ *   - An event covering a slot never moves on the clock: it starts and completes when its slots
+ *     do (#2013, slot-status-service.test.ts). The clock takes its contests live at their cutoffs.
+ *   - An event covering no slot starts at its start date and completes at its end date, with
+ *     actor { type: 'SYSTEM' }.
  *   - No transition fires before the due date.
  *   - A POSTPONED event's contests follow its start, each sweep.
  *   - One event's failure does not stop the sweep from processing the rest.
  */
-import { SlotKind, type SportEvent } from '@poolmaster/shared/domain';
+import type { SportEvent } from '@poolmaster/shared/domain';
 import { EventLifecycleScheduler } from '../../../packages/core-api/src/modules/events/event-lifecycle-scheduler';
 import { InMemorySportEvents } from '../../support/in-memory-sport-events';
 import { fakeLogger } from '../../support/fake-logger';
 import { heldElsewhere, heldHere } from '../../support/job-locks';
-import { roundSlot } from '../../support/round-slots';
 
 interface Candidate {
   event: Partial<SportEvent>;
-  rounds?: Array<{ scheduledDate: Date; scheduledEndAt: Date | null }>;
 }
 
-/** An in-memory store holding the given candidates, and the two ports over it. */
+/** An in-memory store holding the given candidates, and the port over it. */
 function storeWith(candidates: Candidate[]) {
   const store = new InMemorySportEvents();
-  for (const candidate of candidates) {
-    const event = store.addEvent(candidate.event);
-    store.roundRows.push(...(candidate.rounds ?? []).map((round, index) => ({
-      id: store.id('round'),
-      sportEventId: event.id,
-      roundNumber: index + 1,
-      slot: roundSlot(SlotKind.TOURNAMENT),
-      ...round,
-      createdAt: event.createdAt,
-      updatedAt: event.updatedAt,
-    })));
-  }
-  return { store, sportEvents: store.sportEventRepo(), rounds: store.roundRepo() };
+  for (const candidate of candidates) store.addEvent(candidate.event);
+  return { store, sportEvents: store.sportEventRepo() };
 }
 
+/** An event covering no slot, which has no slot to move it: it moves on the clock. */
+const NO_SLOT: Pick<SportEvent, 'slotDefinitions'> = { slotDefinitions: [] };
+
 describe('pool-master-k6q — EventLifecycleScheduler.runSweep', () => {
-  it('pool-master-k6q transitions a SCHEDULED event to IN_PROGRESS once the first round\'s scheduledDate has passed', async () => {
-    const { sportEvents, rounds } = storeWith([
-      {
-        event: {
-          id: 'evt-1',
-          status: 'SCHEDULED',
-          startDate: new Date('2026-06-01T00:00:00.000Z'),
-        },
-        rounds: [
-          { scheduledDate: new Date('2026-06-02T00:00:00.000Z'), scheduledEndAt: null },
-          { scheduledDate: new Date('2026-06-01T12:00:00.000Z'), scheduledEndAt: null },
-        ],
-      },
-    ]);
+  it('starts an event covering no slot once its start date has passed, as it has no slot to start it', async () => {
+    const { sportEvents } = storeWith([{ event: { id: 'evt-1', status: 'SCHEDULED', startDate: new Date('2026-06-01T00:00:00.000Z'), ...NO_SLOT } }]);
     const eventLifecycleService = { activateContestsPastCutoff: jest.fn().mockResolvedValue(0), followPostponedStart: jest.fn().mockResolvedValue(0), applySportEventStatusTransition: jest.fn().mockResolvedValue(undefined) };
-    const now = () => new Date('2026-06-01T13:00:00.000Z');
-    const scheduler = new EventLifecycleScheduler({ sportEvents, rounds, eventLifecycleService, jobLock: heldHere(), logger: fakeLogger(), now });
+    const scheduler = new EventLifecycleScheduler({ sportEvents, eventLifecycleService, jobLock: heldHere(), logger: fakeLogger(), now: () => new Date('2026-06-01T00:00:01.000Z') });
 
     await scheduler.runSweep();
 
@@ -76,62 +52,47 @@ describe('pool-master-k6q — EventLifecycleScheduler.runSweep', () => {
     });
   });
 
-  it('pool-master-k6q does not transition a SCHEDULED event before the earliest round date has passed', async () => {
-    const { sportEvents, rounds } = storeWith([
-      {
-        event: {
-          id: 'evt-1',
-          status: 'SCHEDULED',
-          startDate: new Date('2026-06-01T00:00:00.000Z'),
-        },
-        rounds: [
-          { scheduledDate: new Date('2026-06-05T00:00:00.000Z'), scheduledEndAt: null },
-        ],
-      },
-    ]);
+  it('does not start an event covering no slot before its start date', async () => {
+    const { sportEvents } = storeWith([{ event: { id: 'evt-1', status: 'SCHEDULED', startDate: new Date('2026-06-05T00:00:00.000Z'), ...NO_SLOT } }]);
     const eventLifecycleService = { activateContestsPastCutoff: jest.fn().mockResolvedValue(0), followPostponedStart: jest.fn().mockResolvedValue(0), applySportEventStatusTransition: jest.fn() };
-    const now = () => new Date('2026-06-01T13:00:00.000Z');
-    const scheduler = new EventLifecycleScheduler({ sportEvents, rounds, eventLifecycleService, jobLock: heldHere(), logger: fakeLogger(), now });
+    const scheduler = new EventLifecycleScheduler({ sportEvents, eventLifecycleService, jobLock: heldHere(), logger: fakeLogger(), now: () => new Date('2026-06-01T13:00:00.000Z') });
 
     await scheduler.runSweep();
 
     expect(eventLifecycleService.applySportEventStatusTransition).not.toHaveBeenCalled();
   });
 
-  it('pool-master-k6q falls back to SportEvent.startDate when no SportEventRound rows are populated', async () => {
-    const { sportEvents, rounds } = storeWith([
-      {
-        event: {
-          id: 'evt-1',
-          status: 'SCHEDULED',
-          startDate: new Date('2026-06-01T00:00:00.000Z'),
-        },
-        rounds: [],
-      },
-    ]);
-    const eventLifecycleService = { activateContestsPastCutoff: jest.fn().mockResolvedValue(0), followPostponedStart: jest.fn().mockResolvedValue(0), applySportEventStatusTransition: jest.fn().mockResolvedValue(undefined) };
-    const now = () => new Date('2026-06-01T00:00:01.000Z');
-    const scheduler = new EventLifecycleScheduler({ sportEvents, rounds, eventLifecycleService, jobLock: heldHere(), logger: fakeLogger(), now });
+  it('never starts a scheduled event covering a slot on the clock, however far past its start: it starts when its slots do, and the sweep takes its contests past their cutoff live instead (#2013)', async () => {
+    const { sportEvents } = storeWith([{ event: { id: 'evt-1', status: 'SCHEDULED', startDate: new Date('2026-06-01T00:00:00.000Z') } }]);
+    const eventLifecycleService = { activateContestsPastCutoff: jest.fn().mockResolvedValue(1), followPostponedStart: jest.fn().mockResolvedValue(0), applySportEventStatusTransition: jest.fn() };
+    const sweptAt = new Date('2026-06-08T13:00:00.000Z');
+    const scheduler = new EventLifecycleScheduler({ sportEvents, eventLifecycleService, jobLock: heldHere(), logger: fakeLogger(), now: () => sweptAt });
 
     await scheduler.runSweep();
 
-    expect(eventLifecycleService.applySportEventStatusTransition).toHaveBeenCalledWith(
-      expect.objectContaining({ sportEventId: 'evt-1', toStatus: 'IN_PROGRESS' }),
-    );
+    expect(eventLifecycleService.applySportEventStatusTransition).not.toHaveBeenCalled();
+    expect(eventLifecycleService.activateContestsPastCutoff).toHaveBeenCalledWith(expect.objectContaining({ id: 'evt-1' }), sweptAt);
   });
 
-  it('never completes an IN_PROGRESS event that covers a slot, however far past its last round\'s end and its own end date: it completes when its slots do', async () => {
-    const { sportEvents, rounds } = storeWith([
+  it('reads nothing for a scheduled event covering a slot before its start, since no contest window on it opens earlier, so a future week costs a sweep nothing', async () => {
+    const { sportEvents } = storeWith([{ event: { id: 'evt-1', status: 'SCHEDULED', startDate: new Date('2026-06-09T00:00:00.000Z') } }]);
+    const eventLifecycleService = { activateContestsPastCutoff: jest.fn().mockResolvedValue(0), followPostponedStart: jest.fn().mockResolvedValue(0), applySportEventStatusTransition: jest.fn() };
+    const scheduler = new EventLifecycleScheduler({ sportEvents, eventLifecycleService, jobLock: heldHere(), logger: fakeLogger(), now: () => new Date('2026-06-02T13:00:00.000Z') });
+
+    await scheduler.runSweep();
+
+    expect(eventLifecycleService.activateContestsPastCutoff).not.toHaveBeenCalled();
+    expect(eventLifecycleService.applySportEventStatusTransition).not.toHaveBeenCalled();
+  });
+
+  it('never completes an IN_PROGRESS event that covers a slot, however far past its own end date: it completes when its slots do', async () => {
+    const { sportEvents } = storeWith([
       {
         event: { id: 'evt-2', status: 'IN_PROGRESS', startDate: new Date('2026-06-01T00:00:00.000Z'), endDate: new Date('2026-06-02T20:00:00.000Z') },
-        rounds: [
-          { scheduledDate: new Date('2026-06-01T00:00:00.000Z'), scheduledEndAt: new Date('2026-06-01T20:00:00.000Z') },
-          { scheduledDate: new Date('2026-06-02T00:00:00.000Z'), scheduledEndAt: new Date('2026-06-02T20:00:00.000Z') },
-        ],
       },
     ]);
     const eventLifecycleService = { activateContestsPastCutoff: jest.fn().mockResolvedValue(0), followPostponedStart: jest.fn().mockResolvedValue(0), applySportEventStatusTransition: jest.fn().mockResolvedValue(undefined) };
-    const scheduler = new EventLifecycleScheduler({ sportEvents, rounds, eventLifecycleService, jobLock: heldHere(), logger: fakeLogger(), now: () => new Date('2026-07-01T00:00:00.000Z') });
+    const scheduler = new EventLifecycleScheduler({ sportEvents, eventLifecycleService, jobLock: heldHere(), logger: fakeLogger(), now: () => new Date('2026-07-01T00:00:00.000Z') });
 
     await scheduler.runSweep();
 
@@ -139,12 +100,12 @@ describe('pool-master-k6q — EventLifecycleScheduler.runSweep', () => {
   });
 
   it('completes an IN_PROGRESS event that covers no slot once its end date has passed, as it has no slot to complete it', async () => {
-    const { sportEvents, rounds } = storeWith([
-      { event: { id: 'evt-slotless', status: 'IN_PROGRESS', startDate: new Date('2026-06-01T00:00:00.000Z'), endDate: new Date('2026-06-02T20:00:00.000Z'), slotDefinitions: [] }, rounds: [] },
-      { event: { id: 'evt-slotless-later', status: 'IN_PROGRESS', startDate: new Date('2026-06-01T00:00:00.000Z'), endDate: new Date('2026-06-09T20:00:00.000Z'), slotDefinitions: [] }, rounds: [] },
+    const { sportEvents } = storeWith([
+      { event: { id: 'evt-slotless', status: 'IN_PROGRESS', startDate: new Date('2026-06-01T00:00:00.000Z'), endDate: new Date('2026-06-02T20:00:00.000Z'), slotDefinitions: [] } },
+      { event: { id: 'evt-slotless-later', status: 'IN_PROGRESS', startDate: new Date('2026-06-01T00:00:00.000Z'), endDate: new Date('2026-06-09T20:00:00.000Z'), slotDefinitions: [] } },
     ]);
     const eventLifecycleService = { activateContestsPastCutoff: jest.fn().mockResolvedValue(0), followPostponedStart: jest.fn().mockResolvedValue(0), applySportEventStatusTransition: jest.fn().mockResolvedValue(undefined) };
-    const scheduler = new EventLifecycleScheduler({ sportEvents, rounds, eventLifecycleService, jobLock: heldHere(), logger: fakeLogger(), now: () => new Date('2026-06-03T00:00:00.000Z') });
+    const scheduler = new EventLifecycleScheduler({ sportEvents, eventLifecycleService, jobLock: heldHere(), logger: fakeLogger(), now: () => new Date('2026-06-03T00:00:00.000Z') });
 
     await scheduler.runSweep();
 
@@ -154,20 +115,20 @@ describe('pool-master-k6q — EventLifecycleScheduler.runSweep', () => {
     });
   });
 
-  it('pool-master-k6q does not transition an IN_PROGRESS event with no rounds and no end date', async () => {
-    const { sportEvents, rounds } = storeWith([
+  it('does not complete an IN_PROGRESS event covering no slot that has no end date', async () => {
+    const { sportEvents } = storeWith([
       {
         event: {
           id: 'evt-2',
           status: 'IN_PROGRESS',
           startDate: new Date('2026-06-01T00:00:00.000Z'),
+          ...NO_SLOT,
         },
-        rounds: [],
       },
     ]);
     const eventLifecycleService = { activateContestsPastCutoff: jest.fn().mockResolvedValue(0), followPostponedStart: jest.fn().mockResolvedValue(0), applySportEventStatusTransition: jest.fn() };
     const now = () => new Date('2026-06-02T21:00:00.000Z');
-    const scheduler = new EventLifecycleScheduler({ sportEvents, rounds, eventLifecycleService, jobLock: heldHere(), logger: fakeLogger(), now });
+    const scheduler = new EventLifecycleScheduler({ sportEvents, eventLifecycleService, jobLock: heldHere(), logger: fakeLogger(), now });
 
     await scheduler.runSweep();
 
@@ -175,22 +136,22 @@ describe('pool-master-k6q — EventLifecycleScheduler.runSweep', () => {
   });
 
   it('pool-master-k6q logs and continues past one event\'s transition failure so the rest of the sweep still runs', async () => {
-    const { sportEvents, rounds } = storeWith([
+    const { sportEvents } = storeWith([
       {
         event: {
           id: 'evt-fails',
           status: 'SCHEDULED',
           startDate: new Date('2026-06-01T00:00:00.000Z'),
+          ...NO_SLOT,
         },
-        rounds: [],
       },
       {
         event: {
           id: 'evt-succeeds',
           status: 'SCHEDULED',
           startDate: new Date('2026-06-01T00:00:00.000Z'),
+          ...NO_SLOT,
         },
-        rounds: [],
       },
     ]);
     const eventLifecycleService = { activateContestsPastCutoff: jest.fn().mockResolvedValue(0), followPostponedStart: jest.fn().mockResolvedValue(0),
@@ -200,7 +161,7 @@ describe('pool-master-k6q — EventLifecycleScheduler.runSweep', () => {
     };
     const logger = fakeLogger();
     const now = () => new Date('2026-06-01T13:00:00.000Z');
-    const scheduler = new EventLifecycleScheduler({ sportEvents, rounds, eventLifecycleService, jobLock: heldHere(), logger, now });
+    const scheduler = new EventLifecycleScheduler({ sportEvents, eventLifecycleService, jobLock: heldHere(), logger, now });
 
     await scheduler.runSweep();
 
@@ -213,9 +174,9 @@ describe('pool-master-k6q — EventLifecycleScheduler.runSweep', () => {
 
   it('pool-master-k6q start() and stop() are idempotent and clear the interval timer', () => {
     jest.useFakeTimers();
-    const { sportEvents, rounds } = storeWith([]);
+    const { sportEvents } = storeWith([]);
     const eventLifecycleService = { activateContestsPastCutoff: jest.fn().mockResolvedValue(0), followPostponedStart: jest.fn().mockResolvedValue(0), applySportEventStatusTransition: jest.fn() };
-    const scheduler = new EventLifecycleScheduler({ sportEvents, rounds, eventLifecycleService, jobLock: heldHere(), logger: fakeLogger() });
+    const scheduler = new EventLifecycleScheduler({ sportEvents, eventLifecycleService, jobLock: heldHere(), logger: fakeLogger() });
 
     scheduler.start();
     scheduler.start();
@@ -229,30 +190,33 @@ describe('pool-master-k6q — EventLifecycleScheduler.runSweep', () => {
 });
 
 describe('EventLifecycleScheduler and a contest whose cutoff comes mid-event (#721)', () => {
-  it('asks the lifecycle to start the contests past their cutoff on every sweep of an IN_PROGRESS event, with the sweep\'s clock, whether or not the event is due to complete', async () => {
-    const { sportEvents, rounds } = storeWith([
-      { event: { id: 'evt-live', status: 'IN_PROGRESS', startDate: new Date('2026-06-01T00:00:00.000Z') }, rounds: [] },
-      { event: { id: 'evt-ahead', status: 'SCHEDULED', startDate: new Date('2026-06-09T00:00:00.000Z') }, rounds: [] },
+  it('asks the lifecycle to start the contests past their cutoff on every sweep of an event covering a slot that is in progress or past its start, with the sweep\'s clock, and moves no event', async () => {
+    const { sportEvents } = storeWith([
+      { event: { id: 'evt-live', status: 'IN_PROGRESS', startDate: new Date('2026-06-01T00:00:00.000Z') } },
+      { event: { id: 'evt-due', status: 'SCHEDULED', startDate: new Date('2026-06-02T00:00:00.000Z') } },
+      { event: { id: 'evt-ahead', status: 'SCHEDULED', startDate: new Date('2026-06-09T00:00:00.000Z') } },
     ]);
     const eventLifecycleService = {
       activateContestsPastCutoff: jest.fn().mockResolvedValue(0), followPostponedStart: jest.fn().mockResolvedValue(0),
       applySportEventStatusTransition: jest.fn().mockResolvedValue(undefined),
     };
     const sweptAt = new Date('2026-06-02T13:00:00.000Z');
-    const scheduler = new EventLifecycleScheduler({ sportEvents, rounds, eventLifecycleService, jobLock: heldHere(), logger: fakeLogger(), now: () => sweptAt });
+    const scheduler = new EventLifecycleScheduler({ sportEvents, eventLifecycleService, jobLock: heldHere(), logger: fakeLogger(), now: () => sweptAt });
 
     await scheduler.runSweep();
     await scheduler.runSweep();
 
-    // The scheduled event is not under way, so nothing on it can be past a mid-event cutoff.
-    expect(eventLifecycleService.activateContestsPastCutoff).toHaveBeenCalledTimes(2);
-    expect(eventLifecycleService.activateContestsPastCutoff).toHaveBeenNthCalledWith(2, expect.objectContaining({ id: 'evt-live' }), sweptAt);
+    // Each contest's window decides: one on a scheduled event's slot can be past its first game (#2013).
+    expect(eventLifecycleService.activateContestsPastCutoff).toHaveBeenCalledTimes(4);
+    expect(eventLifecycleService.activateContestsPastCutoff).toHaveBeenCalledWith(expect.objectContaining({ id: 'evt-live' }), sweptAt);
+    expect(eventLifecycleService.activateContestsPastCutoff).toHaveBeenCalledWith(expect.objectContaining({ id: 'evt-due' }), sweptAt);
+    expect(eventLifecycleService.activateContestsPastCutoff).not.toHaveBeenCalledWith(expect.objectContaining({ id: 'evt-ahead' }), expect.any(Date));
     expect(eventLifecycleService.applySportEventStatusTransition).not.toHaveBeenCalled();
   });
 
   it('asks a postponed event\'s contests to follow its start on each sweep, and moves the event itself nowhere', async () => {
-    const { sportEvents, rounds } = storeWith([
-      { event: { id: 'evt-postponed', status: 'POSTPONED', startDate: new Date('2026-06-09T00:00:00.000Z') }, rounds: [] },
+    const { sportEvents } = storeWith([
+      { event: { id: 'evt-postponed', status: 'POSTPONED', startDate: new Date('2026-06-09T00:00:00.000Z') } },
     ]);
     const eventLifecycleService = {
       activateContestsPastCutoff: jest.fn(),
@@ -260,7 +224,7 @@ describe('EventLifecycleScheduler and a contest whose cutoff comes mid-event (#7
       applySportEventStatusTransition: jest.fn(),
     };
     const sweptAt = new Date('2026-06-02T13:00:00.000Z');
-    const scheduler = new EventLifecycleScheduler({ sportEvents, rounds, eventLifecycleService, jobLock: heldHere(), logger: fakeLogger(), now: () => sweptAt });
+    const scheduler = new EventLifecycleScheduler({ sportEvents, eventLifecycleService, jobLock: heldHere(), logger: fakeLogger(), now: () => sweptAt });
 
     await scheduler.runSweep();
 
@@ -270,9 +234,9 @@ describe('EventLifecycleScheduler and a contest whose cutoff comes mid-event (#7
   });
 
   it('logs a failed activation and still sweeps the next event', async () => {
-    const { sportEvents, rounds } = storeWith([
-      { event: { id: 'evt-fails', status: 'IN_PROGRESS', startDate: new Date('2026-06-01T00:00:00.000Z') }, rounds: [] },
-      { event: { id: 'evt-next', status: 'IN_PROGRESS', startDate: new Date('2026-06-01T00:00:00.000Z') }, rounds: [] },
+    const { sportEvents } = storeWith([
+      { event: { id: 'evt-fails', status: 'IN_PROGRESS', startDate: new Date('2026-06-01T00:00:00.000Z') } },
+      { event: { id: 'evt-next', status: 'IN_PROGRESS', startDate: new Date('2026-06-01T00:00:00.000Z') } },
     ]);
     const eventLifecycleService = {
       activateContestsPastCutoff: jest.fn().mockRejectedValueOnce(new Error('boom')).mockResolvedValueOnce(undefined),
@@ -280,7 +244,7 @@ describe('EventLifecycleScheduler and a contest whose cutoff comes mid-event (#7
       applySportEventStatusTransition: jest.fn(),
     };
     const logger = fakeLogger();
-    const scheduler = new EventLifecycleScheduler({ sportEvents, rounds, eventLifecycleService, jobLock: heldHere(), logger, now: () => new Date('2026-06-02T13:00:00.000Z') });
+    const scheduler = new EventLifecycleScheduler({ sportEvents, eventLifecycleService, jobLock: heldHere(), logger, now: () => new Date('2026-06-02T13:00:00.000Z') });
 
     await scheduler.runSweep();
 
@@ -289,13 +253,13 @@ describe('EventLifecycleScheduler and a contest whose cutoff comes mid-event (#7
   });
 
   it('queues no email: the clock-driven emails sweep on timers of their own, so a sweep only moves events and contests', async () => {
-    const { sportEvents, rounds } = storeWith([
-      { event: { id: 'evt-1', status: 'SCHEDULED', startDate: new Date('2026-06-01T00:00:00.000Z') }, rounds: [] },
+    const { sportEvents } = storeWith([
+      { event: { id: 'evt-1', status: 'SCHEDULED', startDate: new Date('2026-06-01T00:00:00.000Z'), ...NO_SLOT } },
     ]);
     const eventLifecycleService = { activateContestsPastCutoff: jest.fn(), followPostponedStart: jest.fn().mockResolvedValue(undefined), applySportEventStatusTransition: jest.fn() };
     const keys: string[] = [];
     const jobLock = { runExclusive: async (key: string, work: () => Promise<void>) => { keys.push(key); await work(); return true; } };
-    const scheduler = new EventLifecycleScheduler({ sportEvents, rounds, eventLifecycleService, jobLock, logger: fakeLogger(), now: () => new Date('2026-06-01T13:00:00.000Z') });
+    const scheduler = new EventLifecycleScheduler({ sportEvents, eventLifecycleService, jobLock, logger: fakeLogger(), now: () => new Date('2026-06-01T13:00:00.000Z') });
 
     await scheduler.runSweep();
 
@@ -306,7 +270,7 @@ describe('EventLifecycleScheduler and a contest whose cutoff comes mid-event (#7
 
 describe('EventLifecycleScheduler.runSweep across server tasks (#1159)', () => {
   const due = (): Candidate[] => [{
-    event: { id: 'evt-1', status: 'SCHEDULED', startDate: new Date('2026-06-01T00:00:00.000Z') },
+    event: { id: 'evt-1', status: 'SCHEDULED', startDate: new Date('2026-06-01T00:00:00.000Z'), ...NO_SLOT },
   }];
   const now = () => new Date('2026-06-01T13:00:00.000Z');
   const lifecycle = () => ({
@@ -315,10 +279,10 @@ describe('EventLifecycleScheduler.runSweep across server tasks (#1159)', () => {
   });
 
   it('moves no event when another server task holds the sweep lock', async () => {
-    const { sportEvents, rounds } = storeWith(due());
+    const { sportEvents } = storeWith(due());
     const eventLifecycleService = lifecycle();
     const jobLock = heldElsewhere();
-    const scheduler = new EventLifecycleScheduler({ sportEvents, rounds, eventLifecycleService, jobLock, logger: fakeLogger(), now });
+    const scheduler = new EventLifecycleScheduler({ sportEvents, eventLifecycleService, jobLock, logger: fakeLogger(), now });
 
     await scheduler.runSweep();
 
@@ -327,14 +291,14 @@ describe('EventLifecycleScheduler.runSweep across server tasks (#1159)', () => {
   });
 
   it('skips a sweep that comes due while the previous sweep is still running, and sweeps again after it ends', async () => {
-    const { sportEvents, rounds } = storeWith(due());
+    const { sportEvents } = storeWith(due());
     let finishFirst!: () => void;
     const eventLifecycleService = lifecycle();
     eventLifecycleService.applySportEventStatusTransition.mockImplementationOnce(
       () => new Promise<void>((resolve) => { finishFirst = resolve; }),
     );
     const logger = fakeLogger();
-    const scheduler = new EventLifecycleScheduler({ sportEvents, rounds, eventLifecycleService, jobLock: heldHere(), logger, now });
+    const scheduler = new EventLifecycleScheduler({ sportEvents, eventLifecycleService, jobLock: heldHere(), logger, now });
 
     const first = scheduler.runSweep();
     await new Promise((resolve) => setImmediate(resolve));
@@ -350,70 +314,12 @@ describe('EventLifecycleScheduler.runSweep across server tasks (#1159)', () => {
   });
 
   it('logs a sweep whose candidate read fails rather than leaving the timer an unhandled rejection', async () => {
-    const { rounds } = storeWith([]);
     const sportEvents = { findAutoLifecycleCandidates: jest.fn().mockRejectedValue(new Error('db down')) };
     const logger = fakeLogger();
-    const scheduler = new EventLifecycleScheduler({ sportEvents, rounds, eventLifecycleService: lifecycle(), jobLock: heldHere(), logger, now });
+    const scheduler = new EventLifecycleScheduler({ sportEvents, eventLifecycleService: lifecycle(), jobLock: heldHere(), logger, now });
 
     await expect(scheduler.runSweep()).resolves.toBeUndefined();
 
     expect(logger.error).toHaveBeenCalledWith({ action: 'lockedSweep.failed', data: { lockKey: 'event-lifecycle-sweep', error: 'db down' } }, 'The event lifecycle sweep failed');
-  });
-});
-
-describe('EventLifecycleScheduler and the order and reach of its reads', () => {
-  const lifecycle = () => ({
-    activateContestsPastCutoff: jest.fn().mockResolvedValue(0),
-    followPostponedStart: jest.fn().mockResolvedValue(0),
-    applySportEventStatusTransition: jest.fn().mockResolvedValue(undefined),
-  });
-
-  it('starts an event at its earliest round however the rounds are stored, and completes none on the clock', async () => {
-    // Stored earliest start first, and latest end first: the opposite of what the other tests store.
-    const { sportEvents, rounds } = storeWith([
-      {
-        event: { id: 'evt-start', status: 'SCHEDULED', startDate: new Date('2026-06-05T00:00:00.000Z') },
-        rounds: [
-          { scheduledDate: new Date('2026-06-01T12:00:00.000Z'), scheduledEndAt: null },
-          { scheduledDate: new Date('2026-06-02T12:00:00.000Z'), scheduledEndAt: null },
-        ],
-      },
-      {
-        event: { id: 'evt-end', status: 'IN_PROGRESS', startDate: new Date('2026-06-01T00:00:00.000Z') },
-        rounds: [
-          { scheduledDate: new Date('2026-06-01T00:00:00.000Z'), scheduledEndAt: new Date('2026-06-02T20:00:00.000Z') },
-          { scheduledDate: new Date('2026-06-02T00:00:00.000Z'), scheduledEndAt: new Date('2026-06-01T20:00:00.000Z') },
-        ],
-      },
-    ]);
-    const eventLifecycleService = lifecycle();
-    const scheduler = new EventLifecycleScheduler({
-      sportEvents, rounds, eventLifecycleService, jobLock: heldHere(), logger: fakeLogger(), now: () => new Date('2026-06-02T13:00:00.000Z'),
-    });
-
-    await scheduler.runSweep();
-
-    // Due to start since 06-01 12:00; the event in progress completes only when its slots do.
-    expect(eventLifecycleService.applySportEventStatusTransition).toHaveBeenCalledTimes(1);
-    expect(eventLifecycleService.applySportEventStatusTransition).toHaveBeenCalledWith(expect.objectContaining({ sportEventId: 'evt-start', toStatus: 'IN_PROGRESS' }));
-  });
-
-  it('reads an event the round read leaves out as having no rounds, so it starts on its own start date', async () => {
-    const { sportEvents } = storeWith([
-      { event: { id: 'evt-1', status: 'SCHEDULED', startDate: new Date('2026-06-01T00:00:00.000Z') } },
-    ]);
-    const eventLifecycleService = lifecycle();
-    const scheduler = new EventLifecycleScheduler({
-      sportEvents,
-      rounds: { findBySportEvents: () => Promise.resolve(new Map()) },
-      eventLifecycleService,
-      jobLock: heldHere(),
-      logger: fakeLogger(),
-      now: () => new Date('2026-06-01T00:00:01.000Z'),
-    });
-
-    await scheduler.runSweep();
-
-    expect(eventLifecycleService.applySportEventStatusTransition).toHaveBeenCalledWith(expect.objectContaining({ sportEventId: 'evt-1', toStatus: 'IN_PROGRESS' }));
   });
 });

@@ -6,8 +6,9 @@
  *      payloads fail here, not inside the persistence path).
  *   2. Resolve provider-side `participantExternalId` to internal
  *      `SportEventParticipant.id` UUIDs.
- *   3. Skip the update unless the event is IN_PROGRESS, and unless the
- *      event's scoring family accepts the batch's live-score category.
+ *   3. Skip the update unless the event is scheduled or in progress, and
+ *      unless the event's scoring family accepts the batch's live-score
+ *      category.
  *   4. Persist the batch through the event's scoring family, which writes
  *      its own result rows (stroke play: `StrokePlayResultService`).
  *
@@ -28,6 +29,9 @@ import { emptySyncWriteDiagnostics } from './sync-write-diagnostics';
 import type { DomainEvents } from '../../domain-events';
 import type { LiveScoreTargetEvent, LiveScoreWriteDeps, LiveScoreWriter, ScoringFamilyEvent, ScoringFamilyModule } from '../../scoring-families';
 import { countLiveScoreUpdates } from './live-score-count';
+
+/** The event statuses a live score is written in: scheduled, since the feed's first score starts the event (#2013), and in progress. */
+const LIVE_SCORE_EVENT_STATUSES: readonly SportEventStatus[] = [SportEventStatus.SCHEDULED, SportEventStatus.IN_PROGRESS];
 import type { ProviderSyncFindingService } from '../findings/provider-sync-finding-service';
 import type { EventFieldCache } from '../../events/event-field-cache';
 import type { EventLifecycleService } from '../../events/event-lifecycle-service';
@@ -138,15 +142,16 @@ export async function publishLiveScoreUpdate(
     };
   }
 
-  // A live score is accepted only while its event is in progress: before, there is nothing to
-  // score; after, the admin alone corrects scores (#116) and settlement has already run.
-  if (sportEvent.status !== SportEventStatus.IN_PROGRESS) {
+  // A live score is accepted while its event is scheduled or in progress (#2013): the feed's first
+  // score is what starts a Match, its slot and then the event, so a scheduled event takes it. A
+  // draft is not released, a postponed one waits on its new date, and a finished one is settled.
+  if (!LIVE_SCORE_EVENT_STATUSES.includes(sportEvent.status)) {
     deps.logger?.warn(
       {
         action: 'liveScore.publish.eventNotInProgress',
         data: { providerId: deps.providerId, externalEventId: validated.externalEventId, sportEventId: sportEvent.id, status: sportEvent.status },
       },
-      'Skipping live-score persistence — the event is not in progress',
+      'Skipping live-score persistence — the event is not scheduled or in progress',
     );
     return {
       updatesReturned,
