@@ -28,7 +28,7 @@ afterAll(async () => {
   await teardownIntegrationTests();
 });
 
-const MIGRATION = join(__dirname, '../../../packages/core-api/prisma/migrations/20271218031800_contest_championship_year/migration.sql');
+const MIGRATION = join(__dirname, '../../../packages/core-api/prisma/migrations/20271218032000_contest_championship_year/migration.sql');
 
 /** The migration's statements in order. */
 function migrationStatements(): string[] {
