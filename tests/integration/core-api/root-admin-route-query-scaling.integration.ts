@@ -36,6 +36,7 @@ import {
   SportLeagueEventOverviewListResponseSchema,
   SportLeagueOverviewListResponseSchema,
   SportLeagueParticipantOverviewListResponseSchema,
+  SportLeagueConferenceListResponseSchema,
   SportLeaguePositionListResponseSchema,
   SportLeagueSyncListResponseSchema,
   SystemEmailListResponseSchema,
@@ -511,6 +512,23 @@ async function seedLeaguePositions(positions: number) {
   return { sportLeagueId: sportLeague.id, rootAdmin: await createTestUser({ isRootAdmin: true }) };
 }
 
+/** A sport league of `conferences` conferences, each with two divisions, every row named by one provider code on the league's mapping (#2052). */
+async function seedLeagueConferences(conferences: number) {
+  const prisma = getPrisma();
+  const sport = await golf();
+  const sportLeague = await prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `League Page Conferences ${randomUUID().slice(0, 8)}` } });
+  const mappingId = await syncLeagueTo(prisma, sportLeague.id, 'pga');
+  for (let index = 0; index < conferences; index += 1) {
+    const conference = await prisma.sportLeagueConference.create({ data: { sportLeagueId: sportLeague.id, code: `C${String(index)}`, name: `Conference ${String(index)}`, description: 'A test conference.', displayOrder: index + 1 } });
+    await prisma.sportLeagueConferenceProviderMapping.create({ data: { sportLeagueId: sportLeague.id, conferenceId: conference.id, sportLeagueProviderMappingId: mappingId, providerCode: `C${String(index)}` } });
+    for (const code of ['EAST', 'WEST']) {
+      const division = await prisma.sportLeagueConferenceDivision.create({ data: { sportLeagueId: sportLeague.id, conferenceId: conference.id, code, name: `${code} ${String(index)}`, description: 'A test division.', displayOrder: code === 'EAST' ? 1 : 2 } });
+      await prisma.sportLeagueConferenceDivisionProviderMapping.create({ data: { sportLeagueId: sportLeague.id, conferenceId: conference.id, divisionId: division.id, sportLeagueProviderMappingId: mappingId, providerCode: code } });
+    }
+  }
+  return { sportLeagueId: sportLeague.id, rootAdmin: await createTestUser({ isRootAdmin: true }) };
+}
+
 /**
  * A basketball league of its own with a regular phase's one competition of `slots` weeks, each matched to its
  * provider by calendar week (#2002).
@@ -660,6 +678,23 @@ describe('root admin reads cost the same statements for 2 rows as for 20', () =>
         // Every position shows both its codes, so a read that dropped the codes would show here.
         for (const position of positions) expect(position.providerCodes).toHaveLength(2);
         return positions.length;
+      },
+    });
+  });
+
+  it('GET a sport league\'s conferences with their divisions and provider codes: the same statements for 2 conferences as for 20 (#2052)', async () => {
+    await expectConstantQueries({
+      route: 'GET /api/v1/sport-leagues/{sportLeagueId}/conferences',
+      seed: seedLeagueConferences,
+      call: ({ sportLeagueId, rootAdmin }) => get(`/api/v1/sport-leagues/${sportLeagueId}/conferences`, rootAdmin),
+      rowsShown: (response) => {
+        const { conferences } = okBody(response, SportLeagueConferenceListResponseSchema);
+        // Every conference shows its code and both divisions with theirs, so a read that dropped either would show here.
+        for (const conference of conferences) {
+          expect(conference.providerCodes).toHaveLength(1);
+          expect(conference.divisions.map((division) => division.providerCodes.length)).toEqual([1, 1]);
+        }
+        return conferences.length;
       },
     });
   });
