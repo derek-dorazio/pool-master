@@ -39,11 +39,11 @@ class InMemoryYearReviews implements LeagueYearReviewRepository {
   readonly rows: LeagueYearReview[] = [];
 
   async findByLeagueYear(leagueId: string, year: number): Promise<LeagueYearReview | null> {
-    return this.rows.find((row) => row.leagueId === leagueId && row.year === year) ?? null;
+    return this.rows.find((row) => row.leagueId === leagueId && row.championshipYear === year) ?? null;
   }
 
   async create(review: Omit<LeagueYearReview, 'sentAt'>): Promise<LeagueYearReview | null> {
-    if (await this.findByLeagueYear(review.leagueId, review.year) !== null) return null;
+    if (await this.findByLeagueYear(review.leagueId, review.championshipYear) !== null) return null;
     const row = { ...review, sentAt: NOW };
     this.rows.push(row);
     return row;
@@ -266,7 +266,7 @@ describe('YearReviewService', () => {
   });
 
   it('reads a review sent with no sender recorded as SENT by nobody', async () => {
-    reviews.rows.push({ leagueId: league.id, year: 2025, sentByUserId: null, sentAt: NOW });
+    reviews.rows.push({ leagueId: league.id, championshipYear: 2025, sentByUserId: null, sentAt: NOW });
 
     expect(await service().getLastYear(league.id)).toEqual({ year: 2025, status: YearReviewStatus.SENT, sentAt: NOW, sentBy: null });
   });

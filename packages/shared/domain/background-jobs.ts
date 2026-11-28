@@ -126,6 +126,8 @@ export const BACKGROUND_JOB_KINDS = {
   [BackgroundJobType.REFRESH_SLOT_TIEBREAKERS]: BackgroundJobKind.OTHER,
   [BackgroundJobType.REFRESH_SLOT_STATUS]: BackgroundJobKind.OTHER,
   [BackgroundJobType.REFRESH_EVENT_STATUS]: BackgroundJobKind.OTHER,
+  [BackgroundJobType.CLOSE_LEAGUE_CHAMPIONSHIP_YEAR]: BackgroundJobKind.OTHER,
+  [BackgroundJobType.CLOSE_SEASON_CHAMPIONSHIP_YEARS]: BackgroundJobKind.OTHER,
 } as const satisfies Record<BackgroundJobType, BackgroundJobKind>;
 
 /** The job types of one Activity kind. */

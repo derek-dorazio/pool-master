@@ -6,13 +6,13 @@ import { Prisma, type PrismaClient } from '@prisma/client';
 import type { LeagueYearReviewRepository } from '@poolmaster/shared/db';
 import type { LeagueYearReview } from '@poolmaster/shared/domain';
 
-const REVIEW_SELECT = { leagueId: true, year: true, sentByUserId: true, sentAt: true } as const;
+const REVIEW_SELECT = { leagueId: true, championshipYear: true, sentByUserId: true, sentAt: true } as const;
 
 export class PrismaLeagueYearReviewRepository implements LeagueYearReviewRepository {
   constructor(private readonly prisma: PrismaClient) {}
 
-  async findByLeagueYear(leagueId: string, year: number): Promise<LeagueYearReview | null> {
-    return this.prisma.leagueYearReview.findUnique({ where: { leagueId_year: { leagueId, year } }, select: REVIEW_SELECT });
+  async findByLeagueYear(leagueId: string, championshipYear: number): Promise<LeagueYearReview | null> {
+    return this.prisma.leagueYearReview.findUnique({ where: { leagueId_championshipYear: { leagueId, championshipYear } }, select: REVIEW_SELECT });
   }
 
   async create(review: Omit<LeagueYearReview, 'sentAt'>): Promise<LeagueYearReview | null> {

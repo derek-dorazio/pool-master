@@ -761,9 +761,8 @@ async function createSecondTourEvent(fixtureTourId: string, suffix: string) {
 /** A new draft contest covering `sportEventId`, as Create contest asks the port for one. */
 async function draftOn(leagueId: string, sportEventId: string, name: string): Promise<ContestCreate> {
   const coverage = await coverageOfEvents(getPrisma(), [sportEventId]);
-  const { championshipYear } = await getPrisma().sportLeagueSeason.findUniqueOrThrow({ where: { id: coverage.sportLeagueSeasonId }, select: { championshipYear: true } });
   return {
-    leagueId, ...coverage, seasonYear: championshipYear, name,
+    leagueId, ...coverage, name,
     status: ContestStatus.DRAFT, contestFormat: ContestFormat.ROSTER, selectionType: SelectionType.TIERED,
   };
 }

@@ -604,7 +604,7 @@ describe('Settling a squares contest with its game (#1355, #1460)', () => {
 });
 
 describe('Finishing an event (#1355, #1448)', () => {
-  it('answers an event\'s status change with a fixed set of statements that settles nothing, then settles its contest in the job, reading its final places once for its championship finishes and once for its results email', async () => {
+  it('answers an event\'s status change with a fixed set of statements that settles nothing, then settles its contest in the job, reading its final places once for its championship finishes and once for its results email, and asks once whether its championship year can close', async () => {
     const { admin, eventId, contestId, commissionerId } = await squaresContestUnderWay({ gameFinished: true });
 
     const { response, statements } = await measureRequest({
@@ -630,12 +630,14 @@ describe('Finishing an event (#1355, #1448)', () => {
     // Once by settlement for its championship finishes, and once by the results email job it queued.
     expect(finalPlaceReads(jobStatements, contestId)).toBe(2);
     // The settle job's contest wrote its final results email job, which queued the email, and the
-    // settlement asked for one more rebuild of the event's boards after the status change's own.
+    // settlement asked for one more rebuild of the event's boards after the status change's own,
+    // and the contest going final asked whether its league's championship year can close (#2021).
     await expect(getPrisma().backgroundJob.findMany({ select: { type: true, status: true }, orderBy: { type: 'asc' } })).resolves.toEqual([
       { type: 'CONTEST_SETTLED_EMAILS', status: 'SUCCEEDED' },
       { type: 'SETTLE_SPORT_EVENT_CONTESTS', status: 'SUCCEEDED' },
       { type: 'REBUILD_LEADERBOARDS', status: 'SUCCEEDED' },
       { type: 'REBUILD_LEADERBOARDS', status: 'SUCCEEDED' },
+      { type: 'CLOSE_LEAGUE_CHAMPIONSHIP_YEAR', status: 'SUCCEEDED' },
     ]);
     await expect(contestEmails(contestId)).resolves.toEqual([{ templateKey: 'CONTEST_RESULTS', recipientUserId: commissionerId }]);
   });

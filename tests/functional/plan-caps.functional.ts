@@ -29,7 +29,8 @@ import { tierSetSlotPath } from './tier-set-slot';
 
 // A plan's caps end to end (#947). With Free's sports leagues a year saved as one, a league's 2099
 // contests may be in one sports league: its first men's Majors contest is made, a women's one is
-// refused, and a second men's one is made. The plan settings go back to their defaults after. A Free contest takes 20 entries and refuses the 21st, which goes in once the league moves
+// refused, and a second men's one is made. Once the league's year is closed (#2021), no further contest is
+// made in it. The plan settings go back to their defaults after. A Free contest takes 20 entries and refuses the 21st, which goes in once the league moves
 // up to Pro.
 
 const RUN = `plan-caps-${Date.now()}`;
@@ -82,7 +83,7 @@ describe('SDK Functional: plan caps (#947)', () => {
     expect(error.details).toEqual([expect.objectContaining({ path: ['caps', 'ENTRIES_PER_CONTEST', LeaguePlan.PRO] })]);
   });
 
-  it('lets a league on a plan with one sports league a year make contests in it, refusing a second with 409 and listing the one used', async () => {
+  it('lets a league on a plan with one sports league a year make contests in it, refusing a second with 409 and listing the one used, and refuses any contest once its championship year is closed', async () => {
     const admin = await buildRegisteredUser({ displayName: 'Caps Director' });
     await promoteToRootAdmin(admin);
     const a = admin.client;
@@ -165,6 +166,14 @@ describe('SDK Functional: plan caps (#947)', () => {
       // A member may not read the usage; it is the commissioner's Create contest counter.
       const member = await buildRegisteredUser({ displayName: 'Cap Bystander' });
       expect((await listSportLeaguesUsed({ client: member.client, path: { id: league.id }, query: { seasonYear: SEASON } })).response?.status).toBe(403);
+
+      // Once the league's 2099 championship year is closed, as the year close job leaves it (#2021),
+      // no contest can be added to it, even in the sports league it already uses.
+      await getFunctionalPrisma().leagueChampionshipYear.create({ data: { leagueId: league.id, championshipYear: SEASON, closedAt: new Date() } });
+      const late = await releaseRace(majorsMen.id, 'Late Marathon', `${SEASON}-11-01T13:30:00.000Z`);
+      const closed = await create('Late Picks', late, menTemplate);
+      expect(closed.response?.status).toBe(409);
+      expect(closed.error?.error.code).toBe('CHAMPIONSHIP_YEAR_CLOSED');
     } finally {
       await resetSettingsGroup({ client: a, path: { key: 'PLAN_CONFIG' } });
     }

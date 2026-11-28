@@ -46,7 +46,7 @@ describe('ContestLifecycle.transition, one contest', () => {
     expect(written).toHaveLength(1);
     expect(written[0]?.ids).toEqual(['contest-1']);
     expect(written[0]?.transition).toMatchObject({ from: [ContestStatus.OPEN, ContestStatus.ACTIVE], to: ContestStatus.COMPLETED, endsAt });
-    expect(written[0]?.jobTypes).toEqual([BackgroundJobType.CONTEST_SETTLED_EMAILS, BackgroundJobType.REBUILD_LEADERBOARDS]);
+    expect(written[0]?.jobTypes).toEqual([BackgroundJobType.CONTEST_SETTLED_EMAILS, BackgroundJobType.REBUILD_LEADERBOARDS, BackgroundJobType.CLOSE_LEAGUE_CHAMPIONSHIP_YEAR]);
     expect(queue.queued).toHaveBeenCalledTimes(1);
   });
 

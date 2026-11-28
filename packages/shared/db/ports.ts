@@ -654,11 +654,11 @@ export interface ContestStatusTransition {
 
 /**
  * A new contest in its Season, with the Season slots it covers (#2014), resolved once by
- * `resolveCoveredSeasonSlots`. `seasonYear` is that Season's year, which the plan's cap counts by.
+ * `resolveCoveredSeasonSlots`. `championshipYear` is that Season's year, which the plan's cap counts by.
  */
 export type ContestCreate = Pick<
   Contest,
-  'leagueId' | 'name' | 'status' | 'contestFormat' | 'selectionType' | 'sportLeagueSeasonId' | 'seasonYear'
+  'leagueId' | 'name' | 'status' | 'contestFormat' | 'selectionType' | 'sportLeagueSeasonId' | 'championshipYear'
 > & {
   seasonSlotIds: readonly string[];
   /** A squares contest's Game (#2050), one of a covered slot's. */

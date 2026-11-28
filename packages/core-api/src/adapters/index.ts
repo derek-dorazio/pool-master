@@ -48,5 +48,6 @@ export { PrismaPlatformPricingProfileRepository, PrismaPlatformTierProfileReposi
 export { PrismaChampionshipRepository } from './prisma-championship-repository';
 export { PrismaEventPageRepository } from './prisma-event-page-repository';
 export { PrismaLeagueYearReviewRepository } from './prisma-league-year-review-repository';
+export { PrismaLeagueChampionshipYearRepository } from './prisma-league-championship-year-repository';
 export { PrismaContestExpansionRepository } from './prisma-contest-expansion-repository';
 export { PrismaLeaguePaymentRepository } from './prisma-league-payment-repository';
