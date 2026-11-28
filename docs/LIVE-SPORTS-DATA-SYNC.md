@@ -251,7 +251,10 @@ game, so a season-long slate whose windowed games lie ahead is still created.
 the Season, by their Season conference rows. A windowed game between another conference's teams
 passes it by for the next slot whose window holds it, or is unplaced; a coded game that names its
 teams and holds another conference's team is unplaced. The teams are read in the same query as the
-slots, so the filter adds no statement.
+slots, so the filter adds no statement. A Season whose conference slots have no team in their
+conference yet (the field sync writes a team's Season conference, so a new Season starts empty)
+places nothing in them and raises one `CONFERENCE_TEAMS_MISSING` WARNING naming the slots, which
+resolves once each has teams.
 
 **The rest of a phase (#2154).** A slot whose mapping row is `REST_OF_PHASE` takes every game in
 its window that no other slot places, whoever plays it, and is matched after every other slot. Its

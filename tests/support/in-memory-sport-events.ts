@@ -230,6 +230,8 @@ export class InMemorySportEvents {
 
   /** The synced slots matched REST_OF_PHASE (#2154): their window takes the games no other slot places. */
   restOfPhaseSlotIds = new Set<string>();
+  /** The feed ids of each conference slot's teams for the Season (#2052); a slot not listed names no conference. */
+  slotConferenceTeams = new Map<string, ReadonlySet<string>>();
 
   /** The provider game ids the sync placed in each Season slot (#2154), by slot id. */
   placedGameIds = new Map<string, string[]>();
@@ -268,8 +270,7 @@ export class InMemorySportEvents {
           endsAt: slot.endsAt,
           placedByWindow: this.slotWindows.has(slot.id),
           window: this.slotWindows.get(slot.id) ?? null,
-          // Conferences place games only in the Prisma repository's tests (#2052).
-          conferenceTeams: null,
+          conferenceTeams: this.slotConferenceTeams.get(slot.id) ?? null,
         })),
       findSlotNamePatterns: async () => [...this.slotNamePatterns],
       linkNameMatchedSlots: async ({ sportLeagueId, sportLeagueSeasonId, links, creates }) => {
