@@ -355,6 +355,7 @@ function receiptInput(contest: Contest, overrides: Partial<EntrySubmittedReceipt
     contest,
     sportEvent: STARTED_EVENT,
     configuration: null,
+    salaryCap: null,
     valuations: [],
     squadMemberships: [ACTIVE_SQUAD_MEMBERSHIP],
     entryIds: ['entry-1'],
@@ -1619,8 +1620,10 @@ describe('ContestService', () => {
       await service.sendEntrySubmittedEmails(receiptInput(contest, {
         sportEvent: { ...STARTED_EVENT, sport: Sport.AUTO_RACING, ...sportPlay(Sport.AUTO_RACING) },
         configuration: receiptConfiguration({
-          selectionType: SharedDomainEnums.SelectionType.BUDGET_PICK, rosterSize: 2, salaryCap: 50_000, countedScores: 2,
+          selectionType: SharedDomainEnums.SelectionType.BUDGET_PICK, rosterSize: 2, countedScores: 2,
         }),
+        // The cap the room read with the event's set (#2050), not the rules'.
+        salaryCap: 50_000,
         valuations: [
           receiptValuation('sport-event-participant-1', { price: 26_000 }),
           receiptValuation('sport-event-participant-2', { price: 22_500 }),

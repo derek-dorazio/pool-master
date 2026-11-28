@@ -12,7 +12,7 @@ import type {
 } from './enums';
 import type { SportEventProviderMapping } from './providers';
 import type { AutoReleaseCheck } from './sport-league-overview';
-import type { ContestRulesWithEntryLimit, ContestSelectionConfig } from './contest-rules';
+import type { ContestRulesWithEntryLimit, ContestRules } from './contest-rules';
 import type { ContestScoringSettings, ContestScoringSettingsParse } from './contest-scoring';
 import type { ScoringFamily } from './sports/scoring-family';
 import type { DomainEntity } from './types';
@@ -124,7 +124,7 @@ export interface ContestConfiguration extends DomainEntity {
   templateVersion?: number | null;
   selectionType: SelectionType;
   /** The contest's rules; its `selectionType` matches the contest's (#93). */
-  configJson?: ContestSelectionConfig;
+  configJson?: ContestRules;
   minimumEntries?: number;
   maxEntriesPerSquad?: number | null;
   totalPrizePoolAmount?: number | null;

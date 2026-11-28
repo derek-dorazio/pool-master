@@ -70,6 +70,8 @@ export interface SportLeagueCompetitionDefinition {
   code: string;
   /** Its place among its phase's competitions, from 1. */
   orderIndex: number;
+  /** The conference whose teams alone it places (#2052); null for none. Only a POSTSEASON_CONFERENCE competition names one. */
+  conferenceId: string | null;
   /** In play order. */
   slots: SportLeagueSlotDefinition[];
 }

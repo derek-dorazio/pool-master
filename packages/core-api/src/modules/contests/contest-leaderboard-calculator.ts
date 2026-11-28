@@ -14,7 +14,7 @@ import {
   type ContestRoundCoverage,
   type ContestScoringSettings,
   type ContestScoringSettingsParse,
-  type ContestSelectionConfig,
+  type ContestRules,
   type ParticipantScoringDefinition,
   type ParticipantScoringDefinitionId,
   type ScoreDirection,
@@ -39,7 +39,7 @@ export interface ContestLeaderboardCountingRule extends ContestCountingRule {
 /** What the leaderboard reads off a contest's configuration: its counting inputs and its scoring rules. */
 export interface ContestScoringConfigurationRow {
   /** The contest's typed rules; every selection type's carry `countedScores` (#93). */
-  configJson: ContestSelectionConfig | null;
+  configJson: ContestRules | null;
   /** The rounds the contest covers (#2014), from its template's listed slots. */
   coverage: ContestRoundCoverage;
   participantScoringRules: Array<{
@@ -117,7 +117,7 @@ export interface ParticipantScore {
  * tiers its field is placed in. Null for a contest with no lineup, or a tiered event not yet tiered.
  */
 export function resolveLineupSize(
-  configJson: ContestSelectionConfig | null | undefined,
+  configJson: ContestRules | null | undefined,
   field: readonly Pick<SportEventParticipantView, 'valuation'>[],
 ): number | null {
   switch (configJson?.selectionType) {

@@ -347,7 +347,7 @@ leaves no row.
 | `participants` | One per feed id per sport league. A feed id no participant of the event's league is mapped to creates a new participant in that league, whatever the site already holds by that name. |
 | `participant_provider_mappings` | The only home of a participant's feed ids (#2040). `provider_id` is the `providers` row. Unique on `(provider_id, external_id, sport_league_id, participant_type)`. Written by the sync, bound by hand, or loaded with test data; no confidence. `last_seen_at` is set on every mapping a field sync matches. |
 | `sport_event_participants` | The field row: active, ranking, seed, odds. A released bracket's seeds are kept. |
-| `sport_league_season_team_conferences` | A team's conference, and division where its conference has them, in the event's Season (#2052): one row per Season and team, from the conference and division codes the feed sends with the team, read through the league's `sport_league_conference_provider_mappings` and `sport_league_division_provider_mappings` (a division code is read within its team's conference: the NFL's `EAST`). A moved team's row is updated; nothing is deleted. A league whose mappings name no conference codes (soccer, golf, and the college leagues until their conferences are added) writes none. |
+| `sport_league_season_team_conferences` | A team's conference, and division where its conference has them, in the event's Season (#2052): one row per Season and team, from the conference and division codes the feed sends with the team, read through the league's `sport_league_conference_provider_mappings` and `sport_league_division_provider_mappings` (a division code is read within its team's conference: the NFL's `EAST`). A moved team's row is updated; nothing is deleted. A league whose mappings name no conference codes (soccer, golf, racing) writes none. The college leagues' conferences have no divisions; basketball's feeds code a conference by its list id, which differs between the men's and women's lists, and football's by its name. NCAA basketball's field comes from the bracket, which names no conference, so its field sync writes no rows yet. |
 
 A participant the site holds by name with no mapping stays beside the new one: merge them, or
 bind the feed id on the participant page (`PUT /api/v1/participants/{id}/provider-mappings`).
@@ -611,7 +611,7 @@ sequenceDiagram
   A->>A: route by scope id to the league reader
   A-->>S: LiveScoreResult {GOLF | GAME | RACE}
   S->>P: onLiveScores(result, providerId)
-  P->>P: Zod-validate; find event by the provider's id for it (its mapping); skip unless IN_PROGRESS
+  P->>P: Zod-validate; find event by the provider's id for it (its mapping); skip unless SCHEDULED or IN_PROGRESS
   P->>F: the event's scoring family's writer, if it accepts the category
   F-->>P: rows + REBUILD_LEADERBOARDS job, one transaction
 ```
@@ -652,10 +652,13 @@ provider final overwrites whatever the match holds, a result written by hand bef
 and so the API carries no result source on a match (#2184); nothing stores one. A level knockout game takes its winner from the shoot-out wherever its slot's games
 cannot end level.
 
-**Status** is never set by a sync. `EventLifecycleScheduler` (every 5 minutes) moves
-`SCHEDULED → IN_PROGRESS → COMPLETED` from the round schedule; settlement and emails follow as
-jobs. Scores for an event not yet `IN_PROGRESS` are skipped
-(`liveScore.publish.eventNotInProgress`).
+**Status** is never set by a sync. It bubbles up from the feed's scores (#2013): a Match's
+status moves its Season slot, and the slots move the event, `SCHEDULED → IN_PROGRESS →
+COMPLETED`; settlement and emails follow as jobs. So a score is accepted for an event still
+`SCHEDULED` as well as one `IN_PROGRESS`: the feed's first score is what starts it. Scores for a
+draft, postponed or finished event are skipped (`liveScore.publish.eventNotInProgress`).
+`EventLifecycleScheduler` (every 5 minutes) only takes contests live at their cutoffs on the
+clock, and moves an event covering no slot on its start and end dates.
 
 ## 6. Per league
 

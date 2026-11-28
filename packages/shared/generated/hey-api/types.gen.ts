@@ -5191,10 +5191,6 @@ export type ContestManagementDetailDto = {
          */
         countedScores: number;
         /**
-         * Whole dollars. The event's salary cap when the rules were saved; an entry's picks must cost no more.
-         */
-        salaryCap: number;
-        /**
          * Contest-configuration identifier.
          */
         id: string;
@@ -5305,6 +5301,10 @@ export type ContestManagementDetailDto = {
          */
         maxEntriesPerSquad?: number | null;
     };
+    /**
+     * A budget contest's salary cap in whole dollars: the pricing of the first slot it covers holding a set (#2050), read there and never copied into the rules. Null for any other contest type, and for a budget contest whose slot is not priced yet.
+     */
+    salaryCap: number | null;
     /**
      * How much the contest counts toward its cup and the league championship (#841): NORMAL x1, BONUS x1.5, DOUBLE x2, NOT_COUNTED not at all. Fixed once the contest is COMPLETED.
      */
@@ -6033,10 +6033,6 @@ export type ContestManagementResponse = {
              */
             countedScores: number;
             /**
-             * Whole dollars. The event's salary cap when the rules were saved; an entry's picks must cost no more.
-             */
-            salaryCap: number;
-            /**
              * Contest-configuration identifier.
              */
             id: string;
@@ -6147,6 +6143,10 @@ export type ContestManagementResponse = {
              */
             maxEntriesPerSquad?: number | null;
         };
+        /**
+         * A budget contest's salary cap in whole dollars: the pricing of the first slot it covers holding a set (#2050), read there and never copied into the rules. Null for any other contest type, and for a budget contest whose slot is not priced yet.
+         */
+        salaryCap: number | null;
         /**
          * How much the contest counts toward its cup and the league championship (#841): NORMAL x1, BONUS x1.5, DOUBLE x2, NOT_COUNTED not at all. Fixed once the contest is COMPLETED.
          */
@@ -11877,6 +11877,251 @@ export type SportLeaguePositionListResponse = {
 };
 
 /**
+ * One provider's code for a sport league's conference or division.
+ */
+export type SportLeagueConferenceProviderCodeDto = {
+    /**
+     * The provider's own code for the conference or division, exactly as its feed sends it (a vendor's number as text where it numbers them).
+     */
+    providerCode: string;
+    /**
+     * The provider whose code it is.
+     */
+    provider: 'BALLDONTLIE';
+    /**
+     * The provider's own code for the league the code is from.
+     */
+    providerLeagueCode: string;
+    /**
+     * The provider's own name for that league.
+     */
+    providerLeagueName: string;
+};
+
+/**
+ * One division of a conference. Set by migration; never edited through the API.
+ */
+export type SportLeagueConferenceDivisionDto = {
+    id: string;
+    /**
+     * The division's key within its conference (EAST).
+     */
+    code: string;
+    /**
+     * The division's proper name (AFC East). Data, never translated.
+     */
+    name: string;
+    /**
+     * Plain English for agents and root admins: what the division is. Not shown to members.
+     */
+    description: string;
+    /**
+     * Where it sits among its conference's divisions. Display only.
+     */
+    displayOrder: number;
+    /**
+     * Each provider's codes for the division, by provider league then code. A division code is read within its team's conference.
+     */
+    providerCodes: Array<{
+        /**
+         * The provider's own code for the conference or division, exactly as its feed sends it (a vendor's number as text where it numbers them).
+         */
+        providerCode: string;
+        /**
+         * The provider whose code it is.
+         */
+        provider: 'BALLDONTLIE';
+        /**
+         * The provider's own code for the league the code is from.
+         */
+        providerLeagueCode: string;
+        /**
+         * The provider's own name for that league.
+         */
+        providerLeagueName: string;
+    }>;
+};
+
+/**
+ * One of a sport league's conferences, with its divisions. Set by migration; never edited through the API.
+ */
+export type SportLeagueConferenceDto = {
+    id: string;
+    /**
+     * The conference's key within its league (AFC).
+     */
+    code: string;
+    /**
+     * The conference's proper name (American Football Conference). Data, never translated.
+     */
+    name: string;
+    /**
+     * Plain English for agents and root admins: what the conference is. Not shown to members.
+     */
+    description: string;
+    /**
+     * Where it sits among the league's conferences. Display only.
+     */
+    displayOrder: number;
+    /**
+     * Each provider's codes for the conference, by provider league then code. A feed code with no row is not one of the league's conferences, and raises CONFERENCE_UNMAPPED.
+     */
+    providerCodes: Array<{
+        /**
+         * The provider's own code for the conference or division, exactly as its feed sends it (a vendor's number as text where it numbers them).
+         */
+        providerCode: string;
+        /**
+         * The provider whose code it is.
+         */
+        provider: 'BALLDONTLIE';
+        /**
+         * The provider's own code for the league the code is from.
+         */
+        providerLeagueCode: string;
+        /**
+         * The provider's own name for that league.
+         */
+        providerLeagueName: string;
+    }>;
+    /**
+     * By display order, never paged. Empty where the conference has none.
+     */
+    divisions: Array<{
+        id: string;
+        /**
+         * The division's key within its conference (EAST).
+         */
+        code: string;
+        /**
+         * The division's proper name (AFC East). Data, never translated.
+         */
+        name: string;
+        /**
+         * Plain English for agents and root admins: what the division is. Not shown to members.
+         */
+        description: string;
+        /**
+         * Where it sits among its conference's divisions. Display only.
+         */
+        displayOrder: number;
+        /**
+         * Each provider's codes for the division, by provider league then code. A division code is read within its team's conference.
+         */
+        providerCodes: Array<{
+            /**
+             * The provider's own code for the conference or division, exactly as its feed sends it (a vendor's number as text where it numbers them).
+             */
+            providerCode: string;
+            /**
+             * The provider whose code it is.
+             */
+            provider: 'BALLDONTLIE';
+            /**
+             * The provider's own code for the league the code is from.
+             */
+            providerLeagueCode: string;
+            /**
+             * The provider's own name for that league.
+             */
+            providerLeagueName: string;
+        }>;
+    }>;
+};
+
+/**
+ * A sport league's conferences and divisions.
+ */
+export type SportLeagueConferenceListResponse = {
+    /**
+     * Every conference of the sport league, by display order, never paged. Empty for a league with none (soccer, golf).
+     */
+    conferences: Array<{
+        id: string;
+        /**
+         * The conference's key within its league (AFC).
+         */
+        code: string;
+        /**
+         * The conference's proper name (American Football Conference). Data, never translated.
+         */
+        name: string;
+        /**
+         * Plain English for agents and root admins: what the conference is. Not shown to members.
+         */
+        description: string;
+        /**
+         * Where it sits among the league's conferences. Display only.
+         */
+        displayOrder: number;
+        /**
+         * Each provider's codes for the conference, by provider league then code. A feed code with no row is not one of the league's conferences, and raises CONFERENCE_UNMAPPED.
+         */
+        providerCodes: Array<{
+            /**
+             * The provider's own code for the conference or division, exactly as its feed sends it (a vendor's number as text where it numbers them).
+             */
+            providerCode: string;
+            /**
+             * The provider whose code it is.
+             */
+            provider: 'BALLDONTLIE';
+            /**
+             * The provider's own code for the league the code is from.
+             */
+            providerLeagueCode: string;
+            /**
+             * The provider's own name for that league.
+             */
+            providerLeagueName: string;
+        }>;
+        /**
+         * By display order, never paged. Empty where the conference has none.
+         */
+        divisions: Array<{
+            id: string;
+            /**
+             * The division's key within its conference (EAST).
+             */
+            code: string;
+            /**
+             * The division's proper name (AFC East). Data, never translated.
+             */
+            name: string;
+            /**
+             * Plain English for agents and root admins: what the division is. Not shown to members.
+             */
+            description: string;
+            /**
+             * Where it sits among its conference's divisions. Display only.
+             */
+            displayOrder: number;
+            /**
+             * Each provider's codes for the division, by provider league then code. A division code is read within its team's conference.
+             */
+            providerCodes: Array<{
+                /**
+                 * The provider's own code for the conference or division, exactly as its feed sends it (a vendor's number as text where it numbers them).
+                 */
+                providerCode: string;
+                /**
+                 * The provider whose code it is.
+                 */
+                provider: 'BALLDONTLIE';
+                /**
+                 * The provider's own code for the league the code is from.
+                 */
+                providerLeagueCode: string;
+                /**
+                 * The provider's own name for that league.
+                 */
+                providerLeagueName: string;
+            }>;
+        }>;
+    }>;
+};
+
+/**
  * How one provider's games match a slot definition. Inclusion only: a provider value no mapping names is not synced.
  */
 export type SlotProviderMappingDto = {
@@ -11984,6 +12229,10 @@ export type SportLeagueCompetitionDefinitionDto = {
      */
     orderIndex: number;
     /**
+     * The conference whose teams alone it places, one of the league's conferences (`GET /sport-leagues/{sportLeagueId}/conferences`); null for none. Only a POSTSEASON_CONFERENCE competition names one.
+     */
+    conferenceId: string | null;
+    /**
      * In play order: weeks by number, then the knockout rounds to the final; tournaments by key until a Season dates them.
      */
     slots: Array<{
@@ -12079,6 +12328,10 @@ export type SportLeaguePhaseDefinitionDto = {
          * Its place among its phase's competitions, from 1.
          */
         orderIndex: number;
+        /**
+         * The conference whose teams alone it places, one of the league's conferences (`GET /sport-leagues/{sportLeagueId}/conferences`); null for none. Only a POSTSEASON_CONFERENCE competition names one.
+         */
+        conferenceId: string | null;
         /**
          * In play order: weeks by number, then the knockout rounds to the final; tournaments by key until a Season dates them.
          */
@@ -12180,6 +12433,10 @@ export type SportLeagueStructureResponse = {
              * Its place among its phase's competitions, from 1.
              */
             orderIndex: number;
+            /**
+             * The conference whose teams alone it places, one of the league's conferences (`GET /sport-leagues/{sportLeagueId}/conferences`); null for none. Only a POSTSEASON_CONFERENCE competition names one.
+             */
+            conferenceId: string | null;
             /**
              * In play order: weeks by number, then the knockout rounds to the final; tournaments by key until a Season dates them.
              */
@@ -40942,6 +41199,41 @@ export type ListSportLeaguePositionsResponses = {
 };
 
 export type ListSportLeaguePositionsResponse = ListSportLeaguePositionsResponses[keyof ListSportLeaguePositionsResponses];
+
+export type ListSportLeagueConferencesData = {
+    body?: never;
+    path: {
+        sportLeagueId: string;
+    };
+    query?: never;
+    url: '/api/v1/sport-leagues/{sportLeagueId}/conferences';
+};
+
+export type ListSportLeagueConferencesErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    401: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    403: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    404: ErrorEnvelope;
+};
+
+export type ListSportLeagueConferencesError = ListSportLeagueConferencesErrors[keyof ListSportLeagueConferencesErrors];
+
+export type ListSportLeagueConferencesResponses = {
+    /**
+     * A sport league's conferences and divisions.
+     */
+    200: SportLeagueConferenceListResponse;
+};
+
+export type ListSportLeagueConferencesResponse = ListSportLeagueConferencesResponses[keyof ListSportLeagueConferencesResponses];
 
 export type GetSportLeagueStructureData = {
     body?: never;

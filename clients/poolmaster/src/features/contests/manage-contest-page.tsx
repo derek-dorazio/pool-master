@@ -165,7 +165,7 @@ export function ManageContestPage() {
     configuration,
     tierCount,
     sportVocabulary(event.sport).participant,
-    configuration.selectionType === SelectionType.BUDGET_PICK ? configuration.salaryCap : null,
+    managedContest.salaryCap,
   );
   const eventLabel = event.venue ? `${event.name} · ${event.venue}` : event.name;
   const isMultiEvent = contest.sportEvents.length > 1;

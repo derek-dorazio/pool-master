@@ -4,6 +4,7 @@ import type { ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
 import {
+  useSportLeagueConferencesQuery,
   useSportLeagueContestTemplatesQuery,
   useSportLeagueEventOverviewsQuery,
   useSportLeagueParticipantOverviewsQuery,
@@ -21,6 +22,7 @@ bindApiMocks({
   listContestConfigTemplates: refuse(),
   getSportLeagueStructure: refuse(),
   listSportLeaguePositions: refuse(),
+  listSportLeagueConferences: refuse(),
 });
 
 function wrapper({ children }: { children: ReactNode }) {
@@ -35,6 +37,7 @@ describe('the League page reads', () => {
     ['contest templates', useSportLeagueContestTemplatesQuery],
     ['structure', useSportLeagueStructureQuery],
     ['positions', useSportLeaguePositionsQuery],
+    ['conferences', useSportLeagueConferencesQuery],
   ])('fails the %s read when the API refuses it', async (_name, useRead) => {
     const { result } = renderHook(() => useRead('sport-league-1'), { wrapper });
 
