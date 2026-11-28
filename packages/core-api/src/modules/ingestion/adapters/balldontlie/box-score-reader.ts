@@ -5,13 +5,15 @@
  * the line cannot be placed.
  */
 
-import type { SportStat } from '@poolmaster/shared/domain';
 import type { ProviderPlayerGameStats } from '../../core/provider-interface';
 import { BALLDONTLIE_MAX_PER_PAGE, BalldontlieContractError, type BalldontlieClient } from './balldontlie-client';
 import type { BoxScoreEndpoint } from './box-score-contract';
 import { participantFeedId } from './participant-feed-id';
 
-/** A vendor game id: a positive whole number. Anything else names no game of the vendor's. */
+/**
+ * A vendor game id: a positive whole number. Anything else names no game of the vendor's. It only
+ * refuses an id; nothing is read from what an id says.
+ */
 const GAME_ID_PATTERN = /^[1-9]\d{0,9}$/;
 
 export class BoxScoreReader {
@@ -41,7 +43,7 @@ export class BoxScoreReader {
     if (gameId === undefined || playerId === undefined) {
       throw new BalldontlieContractError(this.endpoint.path, [`a box score row names no ${gameId === undefined ? 'game' : 'player'}`]);
     }
-    const stats = (Object.entries(this.endpoint.columns) as Array<[SportStat, string]>).flatMap(([stat, column]) => {
+    const stats = Object.entries(this.endpoint.columns).flatMap(([column, stat]) => {
       const value = row[column];
       return typeof value === 'number' ? [{ stat, value }] : [];
     });

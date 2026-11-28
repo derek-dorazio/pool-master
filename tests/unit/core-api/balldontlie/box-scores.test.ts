@@ -148,6 +148,11 @@ describe('BALLDONTLIE box score fixtures and contract', () => {
     expect(contractGapsAgainst(spec, new Map())(ours, spec.component(league.component), league.component)).toEqual([]);
   });
 
+  it.each(LEAGUES)('$code: reads each stat from one column only, so no stat line can carry a stat twice', (league) => {
+    const stats = Object.values(BOX_SCORE_ENDPOINTS[league.code].columns);
+    expect(stats).toHaveLength(new Set(stats).size);
+  });
+
   it('flags a stat column the vendor does not document, so a renamed column cannot be read as an empty stat', () => {
     const spec = loadVendorSpec('nba');
     const renamed = z.toJSONSchema(z.object({ points: z.number().int().optional() })) as Record<string, unknown>;

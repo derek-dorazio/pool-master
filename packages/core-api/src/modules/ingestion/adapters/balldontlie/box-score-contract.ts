@@ -37,53 +37,56 @@ const boxScoreGameSchema = z.object({
   id: z.number().int().optional(),
 });
 
-/** Each stat the adapter reads, by the vendor's column name. */
-type StatColumns = Readonly<Partial<Record<SportStat, string>>>;
+/**
+ * Each column the adapter reads, by the vendor's name for it, with the stat it is. A league lists
+ * each stat once (the contract test holds it).
+ */
+type StatColumns = Readonly<Record<string, SportStat>>;
 
 /** American football's columns, the NFL's and college football's alike. */
 const FOOTBALL_COLUMNS = {
-  [SportStat.PASSING_TOUCHDOWNS]: 'passing_touchdowns',
-  [SportStat.RUSHING_TOUCHDOWNS]: 'rushing_touchdowns',
-  [SportStat.RECEIVING_TOUCHDOWNS]: 'receiving_touchdowns',
-  [SportStat.RECEPTIONS]: 'receptions',
-  [SportStat.PASSING_YARDS]: 'passing_yards',
-  [SportStat.RUSHING_YARDS]: 'rushing_yards',
-  [SportStat.RECEIVING_YARDS]: 'receiving_yards',
+  passing_touchdowns: SportStat.PASSING_TOUCHDOWNS,
+  rushing_touchdowns: SportStat.RUSHING_TOUCHDOWNS,
+  receiving_touchdowns: SportStat.RECEIVING_TOUCHDOWNS,
+  receptions: SportStat.RECEPTIONS,
+  passing_yards: SportStat.PASSING_YARDS,
+  rushing_yards: SportStat.RUSHING_YARDS,
+  receiving_yards: SportStat.RECEIVING_YARDS,
 } as const satisfies StatColumns;
 
 /** Basketball's columns, every basketball league's alike. */
 const BASKETBALL_COLUMNS = {
-  [SportStat.POINTS]: 'pts',
-  [SportStat.REBOUNDS]: 'reb',
-  [SportStat.ASSISTS]: 'ast',
+  pts: SportStat.POINTS,
+  reb: SportStat.REBOUNDS,
+  ast: SportStat.ASSISTS,
 } as const satisfies StatColumns;
 
 /** The NHL's box score columns. */
 const HOCKEY_COLUMNS = {
-  [SportStat.GOALS]: 'goals',
-  [SportStat.ASSISTS]: 'assists',
-  [SportStat.SHOTS_ON_GOAL]: 'shots_on_goal',
+  goals: SportStat.GOALS,
+  assists: SportStat.ASSISTS,
+  shots_on_goal: SportStat.SHOTS_ON_GOAL,
 } as const satisfies StatColumns;
 
 /** MLB's batting columns. */
 const BASEBALL_COLUMNS = {
-  [SportStat.TOTAL_BASES]: 'total_bases',
-  [SportStat.RUNS]: 'runs',
-  [SportStat.RUNS_BATTED_IN]: 'rbi',
-  [SportStat.WALKS]: 'bb',
-  [SportStat.STOLEN_BASES]: 'stolen_bases',
+  total_bases: SportStat.TOTAL_BASES,
+  runs: SportStat.RUNS,
+  rbi: SportStat.RUNS_BATTED_IN,
+  bb: SportStat.WALKS,
+  stolen_bases: SportStat.STOLEN_BASES,
 } as const satisfies StatColumns;
 
 /** Soccer's columns, the Premier League's and the World Cup's alike. */
 const SOCCER_COLUMNS = {
-  [SportStat.GOALS]: 'goals',
-  [SportStat.ASSISTS]: 'assists',
-  [SportStat.SHOTS_ON_TARGET]: 'shots_on_target',
+  goals: SportStat.GOALS,
+  assists: SportStat.ASSISTS,
+  shots_on_target: SportStat.SHOTS_ON_TARGET,
 } as const satisfies StatColumns;
 
 /** An object schema of every column, each a whole-number stat. */
-function statShape<C extends StatColumns>(columns: C): { [K in C[keyof C] & string]: typeof statColumn } {
-  return Object.fromEntries(Object.values(columns).map((column) => [column, statColumn])) as { [K in C[keyof C] & string]: typeof statColumn };
+function statShape<C extends StatColumns>(columns: C): { [K in keyof C & string]: typeof statColumn } {
+  return Object.fromEntries(Object.keys(columns).map((column) => [column, statColumn])) as { [K in keyof C & string]: typeof statColumn };
 }
 
 /** A row that nests its player and its game, as most leagues' stats endpoints send them. */
