@@ -80112,7 +80112,9 @@
               "PROVIDER_PLAN_HAS_NO_STATS",
               "BOX_SCORE_PLAYER_NOT_IN_GAME",
               "GAME_OVERDUE",
-              "FIELD_CONTEST_CANNOT_OPEN"
+              "FIELD_CONTEST_CANNOT_OPEN",
+              "GAME_POSTPONED_NO_DATE",
+              "SLOT_CHANGED_AFTER_COMPLETED"
             ],
             "description": "What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here. PROVIDER_RATE_LIMITED: the Provider has rate limited every call for a while (WARNING after 15 minutes, ERROR after the league's quiet threshold); it resolves on the Provider's next answer. SLOT_NAME_UNMATCHED: a tournament whose normalized name (providerValue) no NAME_PATTERN mapping of the league matches, so it has no Season slot (INFO; LINK_SLOT adds the name as a pattern). SLOT_NAME_AMBIGUOUS: a tournament whose normalized name matches more than one slot, or one another tournament already has (ERROR). SLOT_SEASON_COMPETITION_MISSING: a tournament whose name matched a slot whose phase the Season does not have, so no Season slot could be made (ERROR). SYNC_FAILED: a sync run of the league (of the event, when it names one) ended FAILED, and no run of the same sync has completed since (ERROR, syncKind says which sync)."
           },
@@ -80523,7 +80525,9 @@
                     "PROVIDER_PLAN_HAS_NO_STATS",
                     "BOX_SCORE_PLAYER_NOT_IN_GAME",
                     "GAME_OVERDUE",
-                    "FIELD_CONTEST_CANNOT_OPEN"
+                    "FIELD_CONTEST_CANNOT_OPEN",
+                    "GAME_POSTPONED_NO_DATE",
+                    "SLOT_CHANGED_AFTER_COMPLETED"
                   ],
                   "description": "What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here. PROVIDER_RATE_LIMITED: the Provider has rate limited every call for a while (WARNING after 15 minutes, ERROR after the league's quiet threshold); it resolves on the Provider's next answer. SLOT_NAME_UNMATCHED: a tournament whose normalized name (providerValue) no NAME_PATTERN mapping of the league matches, so it has no Season slot (INFO; LINK_SLOT adds the name as a pattern). SLOT_NAME_AMBIGUOUS: a tournament whose normalized name matches more than one slot, or one another tournament already has (ERROR). SLOT_SEASON_COMPETITION_MISSING: a tournament whose name matched a slot whose phase the Season does not have, so no Season slot could be made (ERROR). SYNC_FAILED: a sync run of the league (of the event, when it names one) ended FAILED, and no run of the same sync has completed since (ERROR, syncKind says which sync)."
                 },
@@ -80787,7 +80791,9 @@
                   "PROVIDER_PLAN_HAS_NO_STATS",
                   "BOX_SCORE_PLAYER_NOT_IN_GAME",
                   "GAME_OVERDUE",
-                  "FIELD_CONTEST_CANNOT_OPEN"
+                  "FIELD_CONTEST_CANNOT_OPEN",
+                  "GAME_POSTPONED_NO_DATE",
+                  "SLOT_CHANGED_AFTER_COMPLETED"
                 ],
                 "description": "What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here. PROVIDER_RATE_LIMITED: the Provider has rate limited every call for a while (WARNING after 15 minutes, ERROR after the league's quiet threshold); it resolves on the Provider's next answer. SLOT_NAME_UNMATCHED: a tournament whose normalized name (providerValue) no NAME_PATTERN mapping of the league matches, so it has no Season slot (INFO; LINK_SLOT adds the name as a pattern). SLOT_NAME_AMBIGUOUS: a tournament whose normalized name matches more than one slot, or one another tournament already has (ERROR). SLOT_SEASON_COMPETITION_MISSING: a tournament whose name matched a slot whose phase the Season does not have, so no Season slot could be made (ERROR). SYNC_FAILED: a sync run of the league (of the event, when it names one) ended FAILED, and no run of the same sync has completed since (ERROR, syncKind says which sync)."
               },

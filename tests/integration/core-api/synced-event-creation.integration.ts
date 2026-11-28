@@ -100,7 +100,7 @@ function buildScheduler(feed: { shiftDays: number; name?: string } = { shiftDays
     quietAfterMs: () => 0,
     leagueSendsNotifications: () => true,
     typicalGameMinutes: () => undefined,
-    findings: { raiseOfSource: () => Promise.resolve(), resolveGamesNoLongerOverdue: () => Promise.resolve(0) },
+    findings: { raiseOfSource: () => Promise.resolve(), resolveGameFindingsNoLongerHeld: () => Promise.resolve(0) },
     jobLock: heldHere(),
     // A tick a day after the last, so each league's events sync is due again even off season,
     // whose default interval is the longest (these leagues' Seasons have not started).

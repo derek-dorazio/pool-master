@@ -106,6 +106,8 @@ const KIND_ACTIONS: Readonly<Record<ProviderSyncFindingKind, readonly ProviderSy
   [ProviderSyncFindingKind.BOX_SCORE_PLAYER_NOT_IN_GAME]: [],
   [ProviderSyncFindingKind.GAME_OVERDUE]: [],
   [ProviderSyncFindingKind.FIELD_CONTEST_CANNOT_OPEN]: [],
+  [ProviderSyncFindingKind.GAME_POSTPONED_NO_DATE]: [],
+  [ProviderSyncFindingKind.SLOT_CHANGED_AFTER_COMPLETED]: [],
 };
 
 /**

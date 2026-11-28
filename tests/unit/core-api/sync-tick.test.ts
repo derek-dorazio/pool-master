@@ -6,9 +6,10 @@
 
 import { randomUUID } from 'node:crypto';
 import type { LiveEventView, OverdueGameView, SeasonSpanView, SyncDueWorkReader } from '@poolmaster/shared/db';
-import { BackgroundJobType, JobTrigger, MatchStatus, OVERDUE_AFTER_MS, ProviderCode, ProviderSyncKind, type FieldWindowSlot, type SportLeague } from '@poolmaster/shared/domain';
+import { BackgroundJobType, JobTrigger, MatchStatus, OVERDUE_AFTER_MS, POSTPONED_NO_DATE_AFTER_MS, ProviderCode, ProviderSyncKind, type FieldWindowSlot, type SportLeague } from '@poolmaster/shared/domain';
 import { BackgroundJobQueue } from '../../../packages/core-api/src/modules/background-jobs/background-job-queue';
 import { SyncTick, type NotifiedProviderCadence } from '../../../packages/core-api/src/modules/ingestion/sync-tick';
+import type { GameFindingKind } from '../../../packages/core-api/src/modules/ingestion/findings/provider-sync-finding-service';
 import { eventSyncJob, EventSyncWait } from '../../../packages/core-api/src/modules/ingestion/event-sync-job-requests';
 import { SCHEDULE_START } from '../../../packages/core-api/src/core/job-start';
 import { buildProviderMapping, buildSportLeague } from '../../factories';
@@ -74,7 +75,7 @@ function tickOf(options: {
 }) {
   const findings = {
     raiseOfSource: jest.fn(async (_providerSourceId: string, _raises: unknown) => undefined),
-    resolveGamesNoLongerOverdue: jest.fn(async (_providerSourceId: string, _overdueGameIds: readonly string[]) => 0),
+    resolveGameFindingsNoLongerHeld: jest.fn(async (_kind: GameFindingKind, _providerSourceId: string, _heldGameIds: readonly string[]) => 0),
   };
   let now = NOW;
   const jobs = inMemoryBackgroundJobs(() => now);
@@ -527,7 +528,8 @@ describe('SyncTick', () => {
       await tick.tick();
 
       expect(findings.raiseOfSource).not.toHaveBeenCalled();
-      expect(findings.resolveGamesNoLongerOverdue).toHaveBeenCalledWith(nfl.selectedProviderMapping?.providerId, []);
+      expect(findings.resolveGameFindingsNoLongerHeld).toHaveBeenCalledWith('GAME_OVERDUE', nfl.selectedProviderMapping?.providerId, []);
+      expect(findings.resolveGameFindingsNoLongerHeld).toHaveBeenCalledWith('GAME_POSTPONED_NO_DATE', nfl.selectedProviderMapping?.providerId, []);
     });
 
     it('judges a Game by its own league\'s typical length, and skips one whose league has none or that its league\'s provider has no id for', async () => {
@@ -562,8 +564,53 @@ describe('SyncTick', () => {
       await tick.tick();
 
       expect(findings.raiseOfSource).not.toHaveBeenCalled();
-      expect(findings.resolveGamesNoLongerOverdue).toHaveBeenCalledTimes(1);
-      expect(findings.resolveGamesNoLongerOverdue).toHaveBeenCalledWith(nfl.selectedProviderMapping?.providerId, ['still-late', 'also-late']);
+      expect(findings.resolveGameFindingsNoLongerHeld).toHaveBeenCalledTimes(2);
+      expect(findings.resolveGameFindingsNoLongerHeld).toHaveBeenCalledWith('GAME_OVERDUE', nfl.selectedProviderMapping?.providerId, ['still-late', 'also-late']);
+      expect(findings.resolveGameFindingsNoLongerHeld).toHaveBeenCalledWith('GAME_POSTPONED_NO_DATE', nfl.selectedProviderMapping?.providerId, []);
+    });
+
+    it('raises GAME_POSTPONED_NO_DATE, not GAME_OVERDUE, for a Game the feed postponed that still has no new date a whole postponed wait after its start', async () => {
+      const nfl = league();
+      const game = overdueGame(nfl.id, 'bdl-postponed', 0, { status: MatchStatus.POSTPONED, scheduledDate: at(-POSTPONED_NO_DATE_AFTER_MS - 30_000) });
+      const { tick, findings, advance } = tickOf({ leagues: [nfl], overdue: [game], schedule: offSchedule });
+
+      await tick.tick();
+      advance(minutes(1));
+      await tick.tick();
+
+      expect(findings.raiseOfSource).toHaveBeenCalledTimes(1);
+      expect(findings.raiseOfSource).toHaveBeenCalledWith(nfl.selectedProviderMapping?.providerId, [{
+        kind: 'GAME_POSTPONED_NO_DATE', severity: 'WARNING', sportLeagueId: nfl.id, sportEventId: game.sportEventId, providerValue: 'bdl-postponed', providerValueName: null,
+      }]);
+      expect(findings.resolveGameFindingsNoLongerHeld).toHaveBeenCalledWith('GAME_POSTPONED_NO_DATE', nfl.selectedProviderMapping?.providerId, ['bdl-postponed']);
+      expect(findings.resolveGameFindingsNoLongerHeld).toHaveBeenCalledWith('GAME_OVERDUE', nfl.selectedProviderMapping?.providerId, []);
+    });
+
+    it('raises nothing yet for a Game postponed within the postponed wait, though a scheduled Game that old would be overdue', async () => {
+      const nfl = league();
+      const { tick, findings } = tickOf({
+        leagues: [nfl],
+        schedule: offSchedule,
+        overdue: [overdueGame(nfl.id, 'bdl-postponed', 0, { status: MatchStatus.POSTPONED, scheduledDate: at(-OVERDUE_AFTER_MS - minutes(TYPICAL_GAME_MINUTES) - 30_000) })],
+      });
+
+      await tick.tick();
+
+      expect(findings.raiseOfSource).not.toHaveBeenCalled();
+      expect(findings.resolveGameFindingsNoLongerHeld).toHaveBeenCalledWith('GAME_POSTPONED_NO_DATE', nfl.selectedProviderMapping?.providerId, []);
+    });
+
+    it('raises a postponed Game\'s finding even in a league with no typical game length, since the postponed wait is the same for every league', async () => {
+      const unknown = league({ selectedProviderMapping: buildProviderMapping({ id: randomUUID(), providerLeagueId: UNKNOWN_PROVIDER_LEAGUE }) });
+      const { tick, findings } = tickOf({
+        leagues: [unknown],
+        schedule: offSchedule,
+        overdue: [overdueGame(unknown.id, 'bdl-postponed', 0, { status: MatchStatus.POSTPONED, scheduledDate: at(-POSTPONED_NO_DATE_AFTER_MS - 30_000) })],
+      });
+
+      await tick.tick();
+
+      expect(findings.raiseOfSource).toHaveBeenCalledWith(unknown.selectedProviderMapping?.providerId, [expect.objectContaining({ kind: 'GAME_POSTPONED_NO_DATE' })]);
     });
 
     it('still queues the due syncs and logs the failure when the overdue check fails', async () => {

@@ -1213,6 +1213,22 @@ export const ProviderSyncFindingKind = {
    * raises it while such a draft's slot is undecided; a root admin resolves it.
    */
   FIELD_CONTEST_CANNOT_OPEN: 'FIELD_CONTEST_CANNOT_OPEN',
+  /**
+   * The feed postponed a Game and has given it no new date: it is still POSTPONED more than the
+   * postponed wait after its scheduled start (#2013, `gamePostponedWaitStart`). WARNING: the slot
+   * waits on it, so a root admin may complete the slot without it. The sync tick raises it, once
+   * per postponed wait it stays so, and resolves it once the Game has a new date or is played,
+   * cancelled or moved. Subject: league, event, Provider and the provider's game id.
+   */
+  GAME_POSTPONED_NO_DATE: 'GAME_POSTPONED_NO_DATE',
+  /**
+   * A COMPLETED slot's Matches changed so its family's completion rule no longer holds (#2013): a
+   * Match moved back from final, or the feed took back a tournament's final. COMPLETED is final, so
+   * the slot stays COMPLETED and this tells a root admin, who corrects it through Re-settle (ADR
+   * 0013). WARNING. Raised by the slot status refresh. Subject: league and event; no Provider.
+   * Nothing resolves it on its own, Re-settle included: the root admin resolves it once corrected.
+   */
+  SLOT_CHANGED_AFTER_COMPLETED: 'SLOT_CHANGED_AFTER_COMPLETED',
 } as const;
 export type ProviderSyncFindingKind = (typeof ProviderSyncFindingKind)[keyof typeof ProviderSyncFindingKind];
 export const ProviderSyncFindingKindOrder = alphabeticalOrder('ProviderSyncFindingKind');

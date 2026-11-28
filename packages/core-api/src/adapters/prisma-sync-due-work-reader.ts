@@ -114,7 +114,7 @@ export class PrismaSyncDueWorkReader implements SyncDueWorkReader {
     if (input.leagues.length === 0) return [];
     const games = await this.prisma.sportEventRoundMatchGame.findMany({
       where: {
-        status: { in: [MatchStatus.SCHEDULED, MatchStatus.IN_PROGRESS] },
+        status: { in: [MatchStatus.SCHEDULED, MatchStatus.IN_PROGRESS, MatchStatus.POSTPONED] },
         scheduledDate: { lt: overdueStartCutoff(input.now) },
         movedToGameId: null,
         eventSlot: { sportEvent: linkedEventOf(input.leagues) },

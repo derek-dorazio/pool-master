@@ -597,6 +597,8 @@ enum PrismaProviderSyncFindingKind {
   BOX_SCORE_PLAYER_NOT_IN_GAME
   GAME_OVERDUE
   FIELD_CONTEST_CANNOT_OPEN
+  GAME_POSTPONED_NO_DATE
+  SLOT_CHANGED_AFTER_COMPLETED
 }
 
 /// A player's stat in a Game's box score (#2026): SportStat.

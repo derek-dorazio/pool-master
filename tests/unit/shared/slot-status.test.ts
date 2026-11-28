@@ -1,4 +1,4 @@
-import { MatchStatus, ScoringFamily, SeasonSlotStatus, SportEventStatus, seasonSlotStatusOf, sportEventStatusOfSlots } from '@poolmaster/shared/domain';
+import { isSlotChangedAfterCompleted, MatchStatus, ScoringFamily, SeasonSlotStatus, SportEventStatus, seasonSlotStatusOf, sportEventStatusOfSlots } from '@poolmaster/shared/domain';
 
 const facts = (matchStatuses: MatchStatus[], overrides: { current?: SeasonSlotStatus; feedFinal?: boolean } = {}) => ({
   current: overrides.current ?? SeasonSlotStatus.SCHEDULED,
@@ -31,6 +31,27 @@ describe('seasonSlotStatusOf', () => {
   it('never moves a completed or cancelled slot, whatever its Matches do afterwards', () => {
     expect(seasonSlotStatusOf(ScoringFamily.HEAD_TO_HEAD, facts([MatchStatus.IN_PROGRESS], { current: SeasonSlotStatus.COMPLETED }))).toBe(SeasonSlotStatus.COMPLETED);
     expect(seasonSlotStatusOf(ScoringFamily.HEAD_TO_HEAD, facts([MatchStatus.COMPLETED], { current: SeasonSlotStatus.CANCELLED }))).toBe(SeasonSlotStatus.CANCELLED);
+  });
+});
+
+describe('isSlotChangedAfterCompleted', () => {
+  const completed = { current: SeasonSlotStatus.COMPLETED };
+
+  it('flags a completed slot whose Matches no longer complete it, as when a late result moves one back in progress', () => {
+    expect(isSlotChangedAfterCompleted(ScoringFamily.HEAD_TO_HEAD, facts([MatchStatus.COMPLETED, MatchStatus.IN_PROGRESS], completed))).toBe(true);
+    expect(isSlotChangedAfterCompleted(ScoringFamily.FINISH_POSITION, facts([MatchStatus.SCHEDULED], completed))).toBe(true);
+  });
+
+  it('flags a completed stroke-play slot once the feed takes back its final call', () => {
+    expect(isSlotChangedAfterCompleted(ScoringFamily.STROKE_PLAY, facts([MatchStatus.COMPLETED], completed))).toBe(true);
+    expect(isSlotChangedAfterCompleted(ScoringFamily.STROKE_PLAY, facts([MatchStatus.COMPLETED], { ...completed, feedFinal: true }))).toBe(false);
+  });
+
+  it('never flags a completed slot its Matches still complete, a completed slot with no Matches, or a slot not yet completed', () => {
+    expect(isSlotChangedAfterCompleted(ScoringFamily.HEAD_TO_HEAD, facts([MatchStatus.COMPLETED, MatchStatus.CANCELLED], completed))).toBe(false);
+    expect(isSlotChangedAfterCompleted(ScoringFamily.HEAD_TO_HEAD, facts([], completed))).toBe(false);
+    expect(isSlotChangedAfterCompleted(ScoringFamily.HEAD_TO_HEAD, facts([MatchStatus.IN_PROGRESS], { current: SeasonSlotStatus.IN_PROGRESS }))).toBe(false);
+    expect(isSlotChangedAfterCompleted(ScoringFamily.HEAD_TO_HEAD, facts([MatchStatus.IN_PROGRESS], { current: SeasonSlotStatus.CANCELLED }))).toBe(false);
   });
 });
 

@@ -269,6 +269,7 @@ export function buildApp(options: BuildAppOptions = {}) {
     sportEvents: new PrismaSportEventRepository(prisma),
     eventLifecycle: eventLifecycleService,
     domainEvents,
+    findings: syncFindings,
     logger: app.log,
   });
   // A league's championship year closes once nothing in it is unfinished (#2021), on the close jobs' handlers.
