@@ -20,7 +20,7 @@ afterAll(async () => {
   await teardownIntegrationTests();
 });
 
-const MIGRATION = join(__dirname, '../../../packages/core-api/prisma/migrations/20271218031600_salary_cap_read_from_slot/migration.sql');
+const MIGRATION = join(__dirname, '../../../packages/core-api/prisma/migrations/20271218032200_salary_cap_read_from_slot/migration.sql');
 
 /** The migration's statements in order. */
 function migrationStatements(): string[] {
