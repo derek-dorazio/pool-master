@@ -10,7 +10,7 @@
  * result with Zod and persists it through the event's scoring family.
  */
 
-import type { MatchSide, ProviderCode, SportEventParticipantStatus, ProviderSlotPlay, ProviderSession, Sport } from '@poolmaster/shared/domain';
+import type { MatchSide, ProviderCode, SportEventParticipantStatus, ProviderSlotPlay, ProviderSession, Sport, SportStat } from '@poolmaster/shared/domain';
 import type { LiveScoreResult } from '@poolmaster/shared/dto';
 import { JobErrorType } from '@poolmaster/shared/domain';
 
@@ -58,6 +58,15 @@ export interface SportDataProvider {
    * `ProviderLeagueRefusedError`, as the events read does.
    */
   getRoster?(sport: Sport, options: ProviderEventListOptions): Promise<ProviderRosterPlayer[]>;
+
+  /**
+   * One provider league's box scores for some of its games (#2026): each player's line in each
+   * game, with the stats the feed sent. The games are the provider's own ids for them (a Game's
+   * provider mapping). A league whose reader reads no box scores answers none, as a provider with
+   * no `getBoxScores` does; a code the provider does not read throws `ProviderLeagueUnknownError`,
+   * and a refusal by the provider's plan `ProviderLeagueRefusedError`.
+   */
+  getBoxScores?(sport: Sport, options: ProviderBoxScoreOptions): Promise<ProviderPlayerGameStats[]>;
 
   /**
    * Fetch live/current scores for an event. Returns a typed
@@ -250,6 +259,26 @@ export interface ProviderScheduledGameId {
   providerGameId: string;
   /** 1 for a single game and a series' first; a series' games in the order they are played. */
   gameNumber: number;
+}
+
+/** Which games' box scores a caller of `getBoxScores` wants (#2026). */
+export interface ProviderBoxScoreOptions {
+  /** The provider's own code for the league, as `ProviderEventListOptions` has it. */
+  providerLeagueCode: string;
+  /** The provider's own ids for the games. */
+  providerGameIds: readonly string[];
+}
+
+/** One player's line in one game's box score (#2026), as the feed sends it. */
+export interface ProviderPlayerGameStats {
+  /** The provider's own id for the game. */
+  providerGameId: string;
+  /** The provider's own id for the player. */
+  playerExternalId: string;
+  /** The player's name as the feed sends it with the line, for a finding about them; null where it sends none. */
+  playerName: string | null;
+  /** Each stat the feed sent a value for; a stat it left out or sent empty is not here. */
+  stats: ReadonlyArray<{ stat: SportStat; value: number }>;
 }
 
 /** One player of a provider league's roster (#2025), as the feed sends them. */

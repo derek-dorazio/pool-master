@@ -184,6 +184,8 @@ export interface EntrySubmittedReceiptInput {
   contest: Contest;
   sportEvent: SportEvent;
   configuration: ContestConfiguration | null;
+  /** The contest's salary cap, as the room read it with its set (#2050); null unless priced. */
+  salaryCap: number | null;
   /** The event's effective valuations: each pick's tier label and price. */
   valuations: readonly ParticipantValuationView[];
   /** The active memberships of the entries' squads, in join order: who gets each receipt. */
@@ -1834,7 +1836,7 @@ export class ContestService {
           : {
             kind: EntryReceiptKind.LINEUP,
             tiers: lineup.tiers,
-            ...(rules?.selectionType === SelectionType.BUDGET_PICK && { budget: { spent: lineup.spent, salaryCap: rules.salaryCap } }),
+            ...(rules?.selectionType === SelectionType.BUDGET_PICK && input.salaryCap !== null && { budget: { spent: lineup.spent, salaryCap: input.salaryCap } }),
             // A roster contest's picks close when its event starts.
             changeUntil: sportEvent.startDate,
           },

@@ -1,0 +1,24 @@
+{
+  "data": [
+    {
+      "player": {
+        "id": 301,
+        "first_name": "A'ja",
+        "last_name": "Wilson"
+      },
+      "team": {
+        "id": 14
+      },
+      "game": {
+        "id": 2101,
+        "status_state": "final"
+      },
+      "pts": 27,
+      "reb": 11,
+      "ast": 3
+    }
+  ],
+  "meta": {
+    "per_page": 100
+  }
+}

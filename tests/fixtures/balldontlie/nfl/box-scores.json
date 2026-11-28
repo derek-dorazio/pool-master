@@ -1,0 +1,46 @@
+{
+  "data": [
+    {
+      "player": {
+        "id": 33,
+        "first_name": "Patrick",
+        "last_name": "Mahomes"
+      },
+      "team": {
+        "id": 17
+      },
+      "game": {
+        "id": 7001,
+        "status_state": "final",
+        "updated_at": "2026-11-23T04:15:00Z"
+      },
+      "passing_completions": 24,
+      "passing_attempts": 35,
+      "passing_yards": 291,
+      "passing_touchdowns": 3,
+      "rushing_yards": 22,
+      "rushing_touchdowns": 0
+    },
+    {
+      "player": {
+        "id": 87,
+        "first_name": "Travis",
+        "last_name": "Kelce"
+      },
+      "team": {
+        "id": 17
+      },
+      "game": {
+        "id": 7001,
+        "status_state": "final",
+        "updated_at": "2026-11-23T04:15:00Z"
+      },
+      "receptions": 8,
+      "receiving_yards": 104,
+      "receiving_touchdowns": 1
+    }
+  ],
+  "meta": {
+    "per_page": 100
+  }
+}

@@ -160,7 +160,6 @@
   "own:packages/shared/domain/budget-pricing.ts": 1,
   "own:packages/shared/domain/championship.ts": 1,
   "own:packages/shared/domain/contest-events.ts": 1,
-  "own:packages/shared/domain/contest-rules.ts": 1,
   "own:packages/shared/domain/contest-scoring.ts": 3,
   "own:packages/shared/domain/contest-validity.ts": 1,
   "own:packages/shared/domain/enums.ts": 4,

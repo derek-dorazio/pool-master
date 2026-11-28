@@ -182,7 +182,7 @@ describe('tiered selection engine — resolveTieredPlacement', () => {
 describe('tiered selection engine — findLineupIssues decides whether an entry may be submitted', () => {
   const held = (...ids: string[]) => ids.map((participantId) => ({ participantId }));
   const issues = (rosterSize: number, tiers: SelectionTierConfig[], lineup: { participantId: string }[]) =>
-    tieredSelectionEngine.findLineupIssues({ configuration: null, rosterSize, tiers, picks: lineup });
+    tieredSelectionEngine.findLineupIssues({ configuration: null, salaryCap: null, rosterSize, tiers, picks: lineup });
 
   it('finds no issue when the lineup holds exactly each tier\'s picks', () => {
     expect(issues(3, TIERS, held('a', 'b', 'd'))).toEqual([]);
@@ -227,6 +227,7 @@ describe('tiered selection engine — groupField and summarizeLineup', () => {
   it('has no lineup summary', () => {
     expect(tieredSelectionEngine.summarizeLineup({
       configuration: null,
+      salaryCap: null,
       rosterSize: 3,
       tiers: TIERS,
       picks: [],
@@ -250,15 +251,15 @@ describe('budget-pick selection engine', () => {
   });
   const budgetRequest = (overrides: Partial<SelectionRequest> = {}) =>
     request({ participant: pricedParticipant('a', 9_000), tiers: [], rosterSize: 2, ...overrides });
-  const budgetConfiguration = (salaryCap: number) =>
-    configuration({
-      selectionType: SelectionType.BUDGET_PICK,
-      configJson: { selectionType: SelectionType.BUDGET_PICK, rosterSize: 2, salaryCap, countedScores: 2 },
-    });
+  // The rules carry no cap: it comes beside them, from the contest's first covered slot (#2050).
+  const budgetConfiguration = configuration({
+    selectionType: SelectionType.BUDGET_PICK,
+    configJson: { selectionType: SelectionType.BUDGET_PICK, rosterSize: 2, countedScores: 2 },
+  });
 
   it('reads the roster size off the contest\'s budget rules, and 0 when it carries none', () => {
     expect(budgetPickSelectionEngine.rosterSize({
-      configuration: configuration({ configJson: { selectionType: SelectionType.BUDGET_PICK, rosterSize: 6, salaryCap: 50_000, countedScores: 4 } }),
+      configuration: configuration({ configJson: { selectionType: SelectionType.BUDGET_PICK, rosterSize: 6, countedScores: 4 } }),
       tiers: [],
     })).toBe(6);
     expect(budgetPickSelectionEngine.rosterSize({ configuration: configuration(), tiers: [] })).toBe(0);
@@ -301,7 +302,8 @@ describe('budget-pick selection engine', () => {
   describe('findLineupIssues', () => {
     const issues = (salaryCap: number, ...prices: number[]) =>
       budgetPickSelectionEngine.findLineupIssues({
-        configuration: budgetConfiguration(salaryCap),
+        configuration: budgetConfiguration,
+        salaryCap,
         rosterSize: 2,
         tiers: TIERS,
         picks: prices.map((price, index) => ({ participantId: `p${index}`, price })),
@@ -355,7 +357,8 @@ describe('budget-pick selection engine', () => {
     ];
     const summarize = (salaryCap: number, rosterSize: number, heldPrices: number[]) =>
       budgetPickSelectionEngine.summarizeLineup({
-        configuration: budgetConfiguration(salaryCap),
+        configuration: budgetConfiguration,
+        salaryCap,
         rosterSize,
         tiers: [],
         picks: heldPrices.map((price) => ({ participantId: 'held', price })),
@@ -382,9 +385,21 @@ describe('budget-pick selection engine', () => {
       expect(summarize(1_000, 6, [50])).toMatchObject({ openSlots: 5, cheapestFill: null });
     });
 
-    it('has no summary for a contest without budget rules', () => {
+    it('has no summary for a budget contest whose slot is not priced yet', () => {
+      expect(budgetPickSelectionEngine.summarizeLineup({
+        configuration: budgetConfiguration,
+        salaryCap: null,
+        rosterSize: 2,
+        tiers: [],
+        picks: [],
+        openField,
+      })).toBeNull();
+    });
+
+    it('has no summary for a contest without budget rules, whatever cap it is handed', () => {
       expect(budgetPickSelectionEngine.summarizeLineup({
         configuration: configuration(),
+        salaryCap: 100,
         rosterSize: 2,
         tiers: [],
         picks: [],
@@ -425,6 +440,7 @@ describe('the random-draw engine (#601)', () => {
   it('reports a lineup short until the draw has dealt it every pick, then nothing', () => {
     const lineup = (count: number) => randomDrawSelectionEngine.findLineupIssues({
       configuration: drawConfiguration,
+      salaryCap: null,
       rosterSize: 3,
       tiers: [],
       picks: Array.from({ length: count }, (_, index) => ({ participantId: `p-${index}` })),
@@ -446,6 +462,7 @@ describe('the random-draw engine (#601)', () => {
     }]);
     expect(randomDrawSelectionEngine.summarizeLineup({
       configuration: drawConfiguration,
+      salaryCap: null,
       rosterSize: 3,
       tiers: [],
       picks: [],

@@ -1,14 +1,14 @@
 /**
  * ProviderSeasonScheduleReader: the one place a sync reads a provider for a sport league's Season,
  * through the provider registry: the events sync its schedule (#2003), the roster sync its roster
- * (#2025). The sync alone gives an event its provider
+ * (#2025), the box score sync its games' box scores (#2026). The sync alone gives an event its provider
  * id (#2004): there is no manual linking of an event to a provider event.
  */
 
 import type { PrismaClient } from '@prisma/client';
 import { SELECTED_PROVIDER_MAPPING_INCLUDE, toSelectedProviderMapping } from '../../adapters/prisma-sport-catalog-repositories';
 import { LeagueProviderNotResolvedError, ProviderRegistry, type LeagueProviderSource } from '../ingestion/core/provider-registry';
-import { ProviderLeagueRefusedError, ProviderLeagueUnknownError, type ProviderRosterPlayer, type SportDataProvider } from '../ingestion/core/provider-interface';
+import { ProviderLeagueRefusedError, ProviderLeagueUnknownError, type ProviderPlayerGameStats, type ProviderRosterPlayer, type SportDataProvider } from '../ingestion/core/provider-interface';
 import type { ApiErrorCode } from '@poolmaster/shared/dto';
 import type { ProviderSession, ProviderSlotPlay, SportLeagueProviderMapping } from '@poolmaster/shared/domain';
 
@@ -92,6 +92,23 @@ export class ProviderSeasonScheduleReader {
     const { provider, mapping } = this.providerFor({ name: sportLeague.name, selectedProviderMapping: toSelectedProviderMapping(sportLeague.selectedProviderMapping) });
     if (provider.getRoster === undefined) return [];
     return provider.getRoster(sportLeague.sport.sport, { providerLeagueCode: mapping.providerLeagueCode, providerSeasonId }).catch(asScheduleError);
+  }
+
+  /**
+   * The league's box scores for some of its games (#2026), from the provider league its selected
+   * mapping names, asked for by the provider's own ids for the games. Errors as `listSeasonEvents`.
+   */
+  async listBoxScores(sportLeagueId: string, providerGameIds: readonly string[]): Promise<ProviderPlayerGameStats[]> {
+    const sportLeague = await this.prisma.sportLeague.findUnique({
+      where: { id: sportLeagueId },
+      include: { sport: true, ...SELECTED_PROVIDER_MAPPING_INCLUDE },
+    });
+    if (!sportLeague) {
+      throw new ProviderSeasonScheduleError(`Sport league ${sportLeagueId} was not found.`, 'SPORT_LEAGUE_NOT_FOUND', 404);
+    }
+    const { provider, mapping } = this.providerFor({ name: sportLeague.name, selectedProviderMapping: toSelectedProviderMapping(sportLeague.selectedProviderMapping) });
+    if (provider.getBoxScores === undefined) return [];
+    return provider.getBoxScores(sportLeague.sport.sport, { providerLeagueCode: mapping.providerLeagueCode, providerGameIds }).catch(asScheduleError);
   }
 
   /** The league's provider, through its selected mapping (#2073), as this reader's error. */

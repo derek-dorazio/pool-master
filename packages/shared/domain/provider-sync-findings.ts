@@ -102,6 +102,8 @@ const KIND_ACTIONS: Readonly<Record<ProviderSyncFindingKind, readonly ProviderSy
   [ProviderSyncFindingKind.CONFERENCE_UNMAPPED]: [],
   [ProviderSyncFindingKind.DIVISION_UNMAPPED]: [],
   [ProviderSyncFindingKind.CONFERENCE_TEAMS_MISSING]: [],
+  [ProviderSyncFindingKind.PROVIDER_PLAN_HAS_NO_STATS]: [],
+  [ProviderSyncFindingKind.BOX_SCORE_PLAYER_NOT_IN_GAME]: [],
   [ProviderSyncFindingKind.GAME_OVERDUE]: [],
 };
 

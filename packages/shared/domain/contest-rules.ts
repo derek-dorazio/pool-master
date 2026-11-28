@@ -1,6 +1,5 @@
 import { z } from 'zod';
 import { PickEmMode, SelectionType } from './enums';
-import { BUDGET_SALARY_CAP_MAX } from './budget-pricing';
 import { ContestScoringSettingsSchema } from './contest-scoring';
 
 /**
@@ -135,30 +134,11 @@ export const ContestRulesSchema = z.discriminatedUnion('selectionType', [
 ]);
 export type ContestRules = z.infer<typeof ContestRulesSchema>;
 
-export const BudgetContestConfigSchema = extendRules(BudgetContestRulesSchema, {
-  salaryCap: z.number().int().min(1).max(BUDGET_SALARY_CAP_MAX)
-    .describe("Whole dollars. The event's salary cap when the rules were saved; an entry's picks must cost no more."),
-});
-export type BudgetContestConfig = z.infer<typeof BudgetContestConfigSchema>;
-
-/** The rules a contest stores: what the commissioner chose, plus a budget contest's cap. */
-export const ContestSelectionConfigSchema = z.discriminatedUnion('selectionType', [
-  TieredContestRulesSchema,
-  BudgetContestConfigSchema,
-  RandomDrawContestRulesSchema,
-  PickEmContestRulesSchema,
-  SquaresContestRulesSchema,
-  // Last, with bracket: see the note above `ContestRulesSchema`.
-  SurvivorContestRulesSchema,
-  BracketContestRulesSchema,
-]);
-export type ContestSelectionConfig = z.infer<typeof ContestSelectionConfigSchema>;
-
 /**
  * A contest's survivor lives from its rules (#1754): 1 when they name none, as every contest
  * before lives did, and for rules of any other selection type.
  */
-export function survivorLivesOf(rules: ContestSelectionConfig | null | undefined): number {
+export function survivorLivesOf(rules: ContestRules | null | undefined): number {
   return rules?.selectionType === SelectionType.SURVIVOR ? rules.lives ?? SURVIVOR_LIVES_DEFAULT : SURVIVOR_LIVES_DEFAULT;
 }
 

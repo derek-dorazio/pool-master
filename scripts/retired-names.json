@@ -163,6 +163,8 @@
     "isSquaresRound": "#2050 (15b): the API's Game choices",
     "squaresGameMatchId": "#2050 (15b): squaresGameId, the contest's Game",
     "MATCH_START": "#2050 (15b): GAME_START, the squares Game's kickoff",
+    "BudgetContestConfig": "#2050 (15b): a budget contest stores BudgetContestRules; its cap is its first covered slot's pricing (salaryCaps)",
+    "ContestSelectionConfig": "#2050 (15b): ContestRules, what a contest stores, now the cap is not copied in",
     "teamAffiliation": "#2025 (21 part A): a player's team and position are their roster row's (SportLeagueSeasonParticipantTeam); a team's abbreviation is a Participant column",
     "participantAffiliation": "#2025 (21 part A): a player's team and position are their roster row's (SportLeagueSeasonParticipantTeam); a team's abbreviation is a Participant column",
     "pickAffiliation": "#2025 (21 part A): a player's team and position are their roster row's (SportLeagueSeasonParticipantTeam); a team's abbreviation is a Participant column",
@@ -330,6 +332,8 @@
   "isSquaresRound": 0,
   "squaresGameMatchId": 0,
   "MATCH_START": 0,
+  "BudgetContestConfig": 0,
+  "ContestSelectionConfig": 0,
   "teamAffiliation": 0,
   "participantAffiliation": 0,
   "pickAffiliation": 0

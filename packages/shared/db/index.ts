@@ -238,3 +238,4 @@ export type {
 } from './provider-sync-finding-ports';
 export type { LiveEventView, OverdueGameView, SeasonSpanView, SyncDueWorkReader, SyncedLeagueRef } from './sync-due-work-ports';
 export type { RosterIds, RosterPositionCode, RosterRowWrite, RosterWrite, SportLeagueRosterRepository } from './roster-ports';
+export type { GamePlayerStatRepository, GamePlayerStatRow, StatGame, StatGameSide, StatPlayer } from './game-player-stat-ports';
