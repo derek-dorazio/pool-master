@@ -1,4 +1,4 @@
-import { LeaguePlan, PlanFeature, championshipYear } from '@poolmaster/shared/domain';
+import { LeaguePlan, PlanFeature } from '@poolmaster/shared/domain';
 import { PlanEntitlementsService } from '../../../packages/core-api/src/modules/plans/plan-entitlements-service';
 import { describePlanFeatureGate, featuresNeeded, requirePlanFeatures } from '../../../packages/core-api/src/modules/plans/plan-feature-gate';
 import { PLAN_SETTINGS } from '../../../packages/core-api/src/modules/plans/plan-settings';
@@ -49,14 +49,10 @@ async function run(hook: ReturnType<typeof requirePlanFeatures>, request: { para
   return { reply, logger };
 }
 
-const NOW = new Date('2026-06-01T12:00:00.000Z');
-const THIS_YEAR = championshipYear(NOW);
-
 describe('featuresNeeded', () => {
-  it('adds PAST_YEARS only for a year before the current one', () => {
-    expect(featuresNeeded([PlanFeature.CHAMPIONSHIP], THIS_YEAR - 1, NOW)).toEqual([PlanFeature.CHAMPIONSHIP, PlanFeature.PAST_YEARS]);
-    expect(featuresNeeded([PlanFeature.CHAMPIONSHIP], THIS_YEAR, NOW)).toEqual([PlanFeature.CHAMPIONSHIP]);
-    expect(featuresNeeded([PlanFeature.CHAMPIONSHIP], undefined, NOW)).toEqual([PlanFeature.CHAMPIONSHIP]);
+  it('adds PAST_YEARS only for a championship year the league has closed', () => {
+    expect(featuresNeeded([PlanFeature.CHAMPIONSHIP], true)).toEqual([PlanFeature.CHAMPIONSHIP, PlanFeature.PAST_YEARS]);
+    expect(featuresNeeded([PlanFeature.CHAMPIONSHIP], false)).toEqual([PlanFeature.CHAMPIONSHIP]);
   });
 });
 
@@ -93,25 +89,27 @@ describe('requirePlanFeatures', () => {
     expect(reply.statusCode).toBe(403);
   });
 
-  it('asks for PAST_YEARS when the request reads an earlier year, and not for the current one', async () => {
-    // Premium with PAST_YEARS moved up to Platinum: the championship, but only this year.
+  it('asks for PAST_YEARS when the request reads a closed year, and not for a year still open after the calendar turned (#2021)', async () => {
+    // Premium with PAST_YEARS moved up to Platinum: the championship, but only open years.
     const league = buildLeague({ plan: LeaguePlan.PREMIUM });
     const defaults = PLAN_SETTINGS.defaults({});
     const service = new PlanEntitlementsService({
       leagues: { findById: () => Promise.resolve(league) },
       readConfig: () => ({ ...defaults, features: { ...defaults.features, [PlanFeature.PAST_YEARS]: LeaguePlan.PLATINUM } }),
     });
+    const closedYears = { isClosed: jest.fn(({ championshipYear }: { championshipYear: number }) => Promise.resolve(championshipYear === 2024)) };
     const hook = requirePlanFeatures(service, [PlanFeature.CHAMPIONSHIP], {
-      yearOf: (request) => (request.query as { year: number }).year,
+      year: { yearOf: (request) => (request.query as { year: number }).year, closedYears },
     });
-    const currentYear = championshipYear(new Date());
 
-    const earlier = await run(hook, { params: { id: league.id }, query: { year: currentYear - 1 } });
-    const current = await run(hook, { params: { id: league.id }, query: { year: currentYear } });
+    const closed = await run(hook, { params: { id: league.id }, query: { year: 2024 } });
+    // 2025 is still open in 2026 while its Super Bowl is to play.
+    const open = await run(hook, { params: { id: league.id }, query: { year: 2025 } });
 
-    expect(earlier.reply.statusCode).toBe(403);
-    expect(earlier.reply.payload).toMatchObject({ error: { details: { feature: PlanFeature.PAST_YEARS } } });
-    expect(current.reply.payload).toBeUndefined();
+    expect(closed.reply.statusCode).toBe(403);
+    expect(closed.reply.payload).toMatchObject({ error: { details: { feature: PlanFeature.PAST_YEARS } } });
+    expect(open.reply.payload).toBeUndefined();
+    expect(closedYears.isClosed).toHaveBeenCalledWith({ leagueId: league.id, championshipYear: 2025 });
   });
 
   it('answers 404 LEAGUE_NOT_FOUND for a league that does not exist', async () => {
@@ -142,10 +140,10 @@ describe('requirePlanFeatures', () => {
 });
 
 describe('describePlanFeatureGate', () => {
-  it('names the features a route needs, and PAST_YEARS for an earlier year when the route reads one', () => {
+  it('names the features a route needs, and PAST_YEARS for a closed year when the route reads one', () => {
     expect(describePlanFeatureGate([PlanFeature.CHAMPIONSHIP])).toContain('unless the league\'s plan has CHAMPIONSHIP (root admins too).');
     expect(describePlanFeatureGate([PlanFeature.CHAMPIONSHIP], true))
-      .toContain('has CHAMPIONSHIP, PAST_YEARS for a year before the current one (root admins too).');
+      .toContain('has CHAMPIONSHIP, PAST_YEARS for a championship year the league has closed (root admins too).');
   });
 });
 

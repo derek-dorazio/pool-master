@@ -16,7 +16,7 @@ import type {
   PendingDrawReceipts,
   ReminderCheck,
 } from '@poolmaster/shared/db';
-import { championshipYear, ContestStatus, type Contest, type ContestCoveredSlot, type ContestFormat, type CupWeight, type SelectionType, type SeasonSlotStatus, type SlotKind, type SportEventStatus } from '@poolmaster/shared/domain';
+import { ContestStatus, type Contest, type ContestCoveredSlot, type ContestFormat, type CupWeight, type SelectionType, type SeasonSlotStatus, type SlotKind, type SportEventStatus } from '@poolmaster/shared/domain';
 import { neverOpeningDraft } from './never-opening-draft';
 import { forgettingReads, memoizedRead, memoizedReadMany, ReadMemoKey } from '../core/request-read-memo';
 import { lockContestRow, lockContestRowsAtOnce } from './contest-row-lock';
@@ -113,9 +113,9 @@ export class PrismaContestRepository implements ContestRepository {
     return rows.map(mapToContest);
   }
 
-  async findFinishedByLeague(leagueId: string, endedFrom: Date, endedBefore: Date): Promise<Contest[]> {
+  async findFinishedByLeague(leagueId: string, championshipYear: number): Promise<Contest[]> {
     const rows = await this.prisma.contest.findMany({
-      where: { leagueId, status: ContestStatus.COMPLETED, endsAt: { gte: endedFrom, lt: endedBefore } },
+      where: { leagueId, status: ContestStatus.COMPLETED, championshipYear },
       orderBy: [{ endsAt: 'desc' }, { id: 'asc' }],
       include: CONTEST_INCLUDE,
     });
@@ -124,11 +124,12 @@ export class PrismaContestRepository implements ContestRepository {
 
   async findFinishedYearsByLeague(leagueId: string): Promise<number[]> {
     const rows = await this.prisma.contest.findMany({
-      where: { leagueId, status: ContestStatus.COMPLETED, endsAt: { not: null } },
-      select: { endsAt: true },
+      where: { leagueId, status: ContestStatus.COMPLETED },
+      select: { championshipYear: true },
+      distinct: ['championshipYear'],
+      orderBy: { championshipYear: 'desc' },
     });
-    const years = new Set(rows.flatMap(({ endsAt }) => (endsAt ? [championshipYear(endsAt)] : [])));
-    return [...years].sort((left, right) => right - left);
+    return rows.map((row) => row.championshipYear);
   }
 
   async findOpenByLeague(leagueId: string): Promise<Array<Pick<Contest, 'id' | 'name'>>> {

@@ -4,7 +4,7 @@
  * every list matches the finish matrix it drills from, and the championship's and cups' own reads.
  */
 import type { FastifyBaseLogger } from 'fastify';
-import type { ChampionshipRepository, FinalContest, LeagueRepository, SquadRepository } from '@poolmaster/shared/db';
+import type { ChampionshipRepository, FinalContest, LeagueChampionshipYearRepository, LeagueRepository, SquadRepository } from '@poolmaster/shared/db';
 import {
   ContestResultCount,
   CupContestCount,
@@ -13,8 +13,6 @@ import {
   CupWeight,
   SummaryTile,
   TrophyKind,
-  championshipYear,
-  championshipYearStart,
   trophyForPlace,
   type RecordType,
   type SelectionType,
@@ -26,9 +24,6 @@ import type { ChampionshipService, ChampionshipStandingView, ChampionshipYearVie
 import type { CupService, CupStandingView, CupView } from '../cups/service';
 import { buildPerpetualTrophies, type PerpetualTrophy } from './perpetual-trophies';
 import { rankRecords, type RecordStand } from './records';
-
-/** No date range: the record book names its contests by id alone. */
-const NO_DATE = new Date(0);
 
 type HistoryLogger = Pick<FastifyBaseLogger, 'debug' | 'warn'>;
 
@@ -62,7 +57,7 @@ export interface ContestResultFilter {
   finishOf?: string;
   /**
    * Only the contests that went final at or after this instant (#1782): League Home's last few
-   * days of finals, read without the rest of the year.
+   * days of finals. The contests and finishes are read only for that window, never the whole year.
    */
   finishedSince?: Date;
 }
@@ -134,7 +129,7 @@ export interface SquadCupView {
 export interface SquadYearView {
   squad: Squad;
   year: number;
-  /** True once the year has ended in US Eastern, whether or not the squad has a championship row. */
+  /** True once the league's year is closed (#2021), whether or not the squad has a championship row. */
   isOver: boolean;
   championship: SquadChampionshipView | null;
   cups: SquadCupView[];
@@ -195,16 +190,13 @@ export interface HistoryServiceDeps {
   leagues: Pick<LeagueRepository, 'findById'>;
   championship: Pick<ChampionshipService, 'getAllYears' | 'getYear' | 'listYears'>;
   cups: Pick<CupService, 'listLeagueSeasons' | 'listSeasonCups'>;
+  /** The league's closed years (#2021), which decide whether a year is over. */
+  closedYears: Pick<LeagueChampionshipYearRepository, 'findClosedYears'>;
   logger?: HistoryLogger;
-  now?: () => Date;
 }
 
 export class HistoryService {
-  private readonly now: () => Date;
-
-  constructor(private readonly deps: HistoryServiceDeps) {
-    this.now = deps.now ?? (() => new Date());
-  }
+  constructor(private readonly deps: HistoryServiceDeps) {}
 
   /**
    * All years: every year with a counted championship contest or a cup, newest first, with the
@@ -212,19 +204,20 @@ export class HistoryService {
    * leaders while open); and the tiles for most championships and most cups won.
    */
   async getSummary(leagueId: string): Promise<HistorySummaryView> {
-    const [championshipYears, seasons] = await Promise.all([
+    const [championshipYears, seasons, closedYears] = await Promise.all([
       this.deps.championship.listYears(leagueId),
       this.deps.cups.listLeagueSeasons(leagueId),
+      this.deps.closedYears.findClosedYears(leagueId),
     ]);
     const cupsBySeason = new Map(seasons.map((season) => [season.seasonYear, season.cups]));
     const championsByYear = new Map(championshipYears.map((row) => [row.year, row.leaders]));
-    const currentYear = championshipYear(this.now());
+    const closed = new Set(closedYears.map((row) => row.championshipYear));
 
     const years = [...new Set([...championsByYear.keys(), ...cupsBySeason.keys()])]
       .sort((left, right) => right - left)
       .map((year): HistoryYearView => ({
         year,
-        isOver: year < currentYear,
+        isOver: closed.has(year),
         champions: byName(championsByYear.get(year) ?? []),
         cups: (cupsBySeason.get(year) ?? [])
           .map((view) => ({
@@ -266,7 +259,7 @@ export class HistoryService {
       .map((row) => ({ year: row.year, championSquadIds: row.leaders.map((squad) => squad.id) })), buildPerpetualTrophies(seriesContests, finishes), { hallOfLame });
     const contestIds = [...new Set(ranked.flatMap((record) => [record.best, ...(record.nextBest === null ? [] : [record.nextBest])])
       .flatMap((stand) => stand.holders.flatMap((holder) => holder.contestId ?? [])))];
-    const contests = contestIds.length === 0 ? [] : await this.deps.finishes.findFinalContests(leagueId, NO_DATE, NO_DATE, contestIds);
+    const contests = contestIds.length === 0 ? [] : await this.deps.finishes.findFinalContests(leagueId, { contestIds });
     const squadsById = new Map(squads.map((squad) => [squad.id, squad]));
     const contestsById = new Map(contests.map((contest) => [contest.id, contest]));
     const standView = (stand: RecordStand): RecordStandView => ({
@@ -411,10 +404,8 @@ export class HistoryService {
     const squadRows = new Map(finishes
       .filter((finish) => finish.squadId === squadId && finish.weight !== CupWeight.NOT_COUNTED && (place === undefined || finish.place === place))
       .map((finish) => [finish.contestId, finish]));
-    // Finishes name their contests even where a contest's end time was never kept.
-    const contestIds = squadId === undefined ? [...byContest.keys()] : [...squadRows.keys()];
     const [contests, squads] = await Promise.all([
-      this.deps.finishes.findFinalContests(leagueId, laterOf(championshipYearStart(year), finishedSince), championshipYearStart(year + 1), contestIds),
+      this.deps.finishes.findFinalContests(leagueId, { championshipYear: year, ...(finishedSince === undefined ? {} : { finishedSince }) }),
       this.deps.squads.findByLeague(leagueId, true),
     ]);
     const squadById = new Map(squads.map((squad) => [squad.id, squad]));
@@ -451,11 +442,6 @@ export class HistoryService {
     this.deps.logger?.debug({ action: 'history.contests', data: { leagueId, year, squadId, place, contestCount: views.length } }, 'Listed a year\'s final contests');
     return views;
   }
-}
-
-/** The later of a window's start and an optional lower bound. */
-function laterOf(start: Date, bound: Date | undefined): Date {
-  return bound !== undefined && bound > start ? bound : start;
 }
 
 function resultCount(rows: readonly LeagueYearFinish[]): ContestResultCount {

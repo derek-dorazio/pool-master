@@ -27304,7 +27304,7 @@ export type ChampionshipTileDto = {
 export type ChampionshipDto = {
     leagueId: string;
     /**
-     * The calendar year, US Eastern, its contests went final in.
+     * The championship year its contests count in: their Seasons' year, however late they went final (#2021).
      */
     year: number;
     /**
@@ -27316,7 +27316,7 @@ export type ChampionshipDto = {
      */
     name: string;
     /**
-     * True once the year has ended in US Eastern: the standings are final and 1st is the champion. False while the year runs: 1st is the leader.
+     * True once the league's year is closed (#2021): every contest in it final and every Season slot of it played. The standings are then final and 1st is the champion. False while it is open: 1st is the leader.
      */
     isOver: boolean;
     /**
@@ -27427,7 +27427,7 @@ export type ChampionshipResponse = {
     championship: {
         leagueId: string;
         /**
-         * The calendar year, US Eastern, its contests went final in.
+         * The championship year its contests count in: their Seasons' year, however late they went final (#2021).
          */
         year: number;
         /**
@@ -27439,7 +27439,7 @@ export type ChampionshipResponse = {
          */
         name: string;
         /**
-         * True once the year has ended in US Eastern: the standings are final and 1st is the champion. False while the year runs: 1st is the leader.
+         * True once the league's year is closed (#2021): every contest in it final and every Season slot of it played. The standings are then final and 1st is the champion. False while it is open: 1st is the leader.
          */
         isOver: boolean;
         /**
@@ -27547,7 +27547,7 @@ export type ChampionshipResponse = {
 export type ChampionshipYearDto = {
     year: number;
     /**
-     * True once the year has ended in US Eastern.
+     * True once the league's year is closed (#2021).
      */
     isOver: boolean;
     /**
@@ -27576,7 +27576,7 @@ export type ChampionshipYearListResponse = {
     years: Array<{
         year: number;
         /**
-         * True once the year has ended in US Eastern.
+         * True once the league's year is closed (#2021).
          */
         isOver: boolean;
         /**
@@ -30312,7 +30312,7 @@ export type EventPageListResponse = {
  */
 export type ListContestResultsQuery = {
     /**
-     * The championship year, US Eastern, the contests went final in, such as 2026.
+     * The championship year the contests count in, such as 2026: their Seasons' year, however late they went final (#2021).
      */
     year: number;
     /**
@@ -30533,7 +30533,7 @@ export type HistoryCupDto = {
 export type HistoryYearDto = {
     year: number;
     /**
-     * True once the year has ended in US Eastern; false for the current year, "so far".
+     * True once the league's year is closed (#2021); false while it is open, "so far".
      */
     isOver: boolean;
     /**
@@ -30619,7 +30619,7 @@ export type HistorySummaryDto = {
     years: Array<{
         year: number;
         /**
-         * True once the year has ended in US Eastern; false for the current year, "so far".
+         * True once the league's year is closed (#2021); false while it is open, "so far".
          */
         isOver: boolean;
         /**
@@ -30710,7 +30710,7 @@ export type HistorySummaryResponse = {
         years: Array<{
             year: number;
             /**
-             * True once the year has ended in US Eastern; false for the current year, "so far".
+             * True once the league's year is closed (#2021); false while it is open, "so far".
              */
             isOver: boolean;
             /**
@@ -30766,7 +30766,7 @@ export type HistorySummaryResponse = {
  */
 export type GetSquadYearQuery = {
     /**
-     * The championship year, US Eastern, such as 2026; the cups read are the season with this year.
+     * The championship year, such as 2026; the cups read are the season with this year.
      */
     year: number;
 };
@@ -30780,7 +30780,7 @@ export type SquadChampionshipDto = {
      */
     name: string;
     /**
-     * True once the year has ended in US Eastern: the place is final.
+     * True once the league's year is closed (#2021): the place is final.
      */
     isOver: boolean;
     /**
@@ -30944,7 +30944,7 @@ export type SquadYearDto = {
     squadId: string;
     year: number;
     /**
-     * True once the year has ended in US Eastern: its places are final. False for the current year, "so far".
+     * True once the league's year is closed (#2021): its places are final. False while it is open, "so far".
      */
     isOver: boolean;
     /**
@@ -30956,7 +30956,7 @@ export type SquadYearDto = {
          */
         name: string;
         /**
-         * True once the year has ended in US Eastern: the place is final.
+         * True once the league's year is closed (#2021): the place is final.
          */
         isOver: boolean;
         /**
@@ -31124,7 +31124,7 @@ export type SquadYearResponse = {
         squadId: string;
         year: number;
         /**
-         * True once the year has ended in US Eastern: its places are final. False for the current year, "so far".
+         * True once the league's year is closed (#2021): its places are final. False while it is open, "so far".
          */
         isOver: boolean;
         /**
@@ -31136,7 +31136,7 @@ export type SquadYearResponse = {
              */
             name: string;
             /**
-             * True once the year has ended in US Eastern: the place is final.
+             * True once the league's year is closed (#2021): the place is final.
              */
             isOver: boolean;
             /**
@@ -31394,7 +31394,7 @@ export type SquadHistoryDto = {
         squadId: string;
         year: number;
         /**
-         * True once the year has ended in US Eastern: its places are final. False for the current year, "so far".
+         * True once the league's year is closed (#2021): its places are final. False while it is open, "so far".
          */
         isOver: boolean;
         /**
@@ -31406,7 +31406,7 @@ export type SquadHistoryDto = {
              */
             name: string;
             /**
-             * True once the year has ended in US Eastern: the place is final.
+             * True once the league's year is closed (#2021): the place is final.
              */
             isOver: boolean;
             /**
@@ -31623,7 +31623,7 @@ export type SquadHistoryResponse = {
             squadId: string;
             year: number;
             /**
-             * True once the year has ended in US Eastern: its places are final. False for the current year, "so far".
+             * True once the league's year is closed (#2021): its places are final. False while it is open, "so far".
              */
             isOver: boolean;
             /**
@@ -31635,7 +31635,7 @@ export type SquadHistoryResponse = {
                  */
                 name: string;
                 /**
-                 * True once the year has ended in US Eastern: the place is final.
+                 * True once the league's year is closed (#2021): the place is final.
                  */
                 isOver: boolean;
                 /**
@@ -31795,15 +31795,15 @@ export type SquadHistoryResponse = {
 };
 
 /**
- * Where the league's year in review for last year stands.
+ * Where the year in review of the league's latest closed championship year stands.
  */
 export type YearReviewDto = {
     /**
-     * Last year, US Eastern: the only year whose review can be sent.
+     * The league's latest closed championship year: the only year whose review can be sent. Null while the league has closed none.
      */
-    year: number;
+    year: number | null;
     /**
-     * NOTHING_TO_SEND: no championship contest counted that year. READY: the commissioner can send it. SENT: it was sent.
+     * NOTHING_TO_SEND: no year closed yet, or no championship contest counted in it. READY: the commissioner can send it. SENT: it was sent.
      */
     status: 'NOTHING_TO_SEND' | 'READY' | 'SENT';
     /**
@@ -31817,19 +31817,19 @@ export type YearReviewDto = {
 };
 
 /**
- * Where the league's year in review for last year stands.
+ * Where the year in review of the league's latest closed championship year stands.
  */
 export type YearReviewResponse = {
     /**
-     * Where the league's year in review for last year stands.
+     * Where the year in review of the league's latest closed championship year stands.
      */
     yearReview: {
         /**
-         * Last year, US Eastern: the only year whose review can be sent.
+         * The league's latest closed championship year: the only year whose review can be sent. Null while the league has closed none.
          */
-        year: number;
+        year: number | null;
         /**
-         * NOTHING_TO_SEND: no championship contest counted that year. READY: the commissioner can send it. SENT: it was sent.
+         * NOTHING_TO_SEND: no year closed yet, or no championship contest counted in it. READY: the commissioner can send it. SENT: it was sent.
          */
         status: 'NOTHING_TO_SEND' | 'READY' | 'SENT';
         /**
@@ -38656,7 +38656,7 @@ export type GetYearReviewError = GetYearReviewErrors[keyof GetYearReviewErrors];
 
 export type GetYearReviewResponses = {
     /**
-     * Where the league's year in review for last year stands.
+     * Where the year in review of the league's latest closed championship year stands.
      */
     200: YearReviewResponse;
 };
@@ -38668,7 +38668,7 @@ export type SendYearReviewData = {
     path: {
         id: string;
         /**
-         * The year whose review to send, such as 2026: only last year can be sent.
+         * The year whose review to send, such as 2026: only the league's latest closed championship year can be sent.
          */
         year: number;
     };
@@ -38695,7 +38695,7 @@ export type SendYearReviewError = SendYearReviewErrors[keyof SendYearReviewError
 
 export type SendYearReviewResponses = {
     /**
-     * Where the league's year in review for last year stands.
+     * Where the year in review of the league's latest closed championship year stands.
      */
     200: YearReviewResponse;
 };
@@ -38839,7 +38839,7 @@ export type GetSquadYearData = {
     };
     query: {
         /**
-         * The championship year, US Eastern, such as 2026; the cups read are the season with this year.
+         * The championship year, such as 2026; the cups read are the season with this year.
          */
         year: number;
     };
@@ -38883,7 +38883,7 @@ export type ListContestResultsData = {
     };
     query: {
         /**
-         * The championship year, US Eastern, the contests went final in, such as 2026.
+         * The championship year the contests count in, such as 2026: their Seasons' year, however late they went final (#2021).
          */
         year: number;
         /**

@@ -686,10 +686,12 @@ describe('Contract verification (web)', () => {
       scoringFamily: 'STROKE_PLAY',
     }]);
 
-    // Once it is final, it leaves the current list for its finished year's (#1161).
-    await getPrisma().contest.update({
+    // Once it is final, it leaves the current list for its championship year's (#1161, #2021):
+    // its Season's year, however late it went final.
+    const { championshipYear } = await getPrisma().contest.update({
       where: { id: contestId },
       data: { status: 'COMPLETED', endsAt: new Date('2025-06-08T23:00:00.000Z') },
+      select: { championshipYear: true },
     });
     const yearsRes = await getApp().inject({
       method: 'GET',
@@ -699,7 +701,7 @@ describe('Contract verification (web)', () => {
     expect(yearsRes.statusCode).toBe(200);
     const yearsParsed = ContestFinishedYearsResponseSchema.safeParse(yearsRes.json());
     expect(yearsParsed.success).toBe(true);
-    expect(yearsParsed.data?.years).toEqual([2025]);
+    expect(yearsParsed.data?.years).toEqual([championshipYear]);
     const currentRes = await getApp().inject({
       method: 'GET',
       url: API_ROUTES.leagues.contests(leagueId),
@@ -708,7 +710,7 @@ describe('Contract verification (web)', () => {
     expect(ContestListResponseSchema.parse(currentRes.json()).contests.map((contest) => contest.id)).not.toContain(contestId);
     const finishedRes = await getApp().inject({
       method: 'GET',
-      url: `${API_ROUTES.leagues.contests(leagueId)}?finishedYear=2025`,
+      url: `${API_ROUTES.leagues.contests(leagueId)}?finishedYear=${String(championshipYear)}`,
       headers: withoutJsonBodyHeaders(owner.headers),
     });
     expect(finishedRes.statusCode).toBe(200);

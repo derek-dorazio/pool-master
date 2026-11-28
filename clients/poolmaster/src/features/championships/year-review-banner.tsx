@@ -38,7 +38,9 @@ export function YearReviewBanner({ isCommissioner, league }: { isCommissioner: b
       </Notice>
     );
   }
-  if (review?.status !== YearReviewStatus.READY) {
+  // A ready review always names its closed year; null comes only with nothing to send.
+  const year = review?.year ?? null;
+  if (review?.status !== YearReviewStatus.READY || year === null) {
     return null;
   }
   const close = () => {
@@ -53,25 +55,25 @@ export function YearReviewBanner({ isCommissioner, league }: { isCommissioner: b
       <Notice
         action={(
           <Button data-testid="year-review-send" onClick={() => setIsConfirming(true)} size="sm" type="button">
-            {`Send the ${review.year} year in review`}
+            {`Send the ${year} year in review`}
           </Button>
         )}
         data-testid="year-review-ready"
-        title={`Your ${review.year} year in review is ready to send`}
+        title={`Your ${year} year in review is ready to send`}
       >
-        {`Each team's owners get an email with their team's ${review.year}: its championship place, contest medals, cups and trophies.`}
+        {`Each team's owners get an email with their team's ${year}: its championship place, contest medals, cups and trophies.`}
       </Notice>
       <ConfirmDialog
         confirmLabel="Send"
-        description={`Every team that placed in ${review.year} gets its year by email. It can be sent once.`}
+        description={`Every team that placed in ${year} gets its year by email. It can be sent once.`}
         isPending={sendMutation.isPending}
         onCancel={close}
-        onConfirm={() => sendMutation.mutate(review.year)}
+        onConfirm={() => sendMutation.mutate(year)}
         onOpenChange={(open) => (open ? setIsConfirming(true) : close())}
         open={isConfirming}
         pendingLabel="Sending..."
         testId="year-review-dialog"
-        title={`Send the ${review.year} year in review?`}
+        title={`Send the ${year} year in review?`}
       >
         {sendMutation.isError ? (
           <Notice tone="danger">{extractErrorMessage(sendMutation.error, { fallback: 'We could not send the year in review.' })}</Notice>

@@ -3,6 +3,7 @@
  * page (#971) and the plan comparison commissioners choose from. A league's own plan is changed
  * on its league route (`updateLeaguePlan`); PLAN_CONFIG itself is a root admin settings group.
  */
+import type { LeagueChampionshipYearRepository } from '@poolmaster/shared/db';
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { LEAGUE_PLANS } from '@poolmaster/shared/domain';
 import type { BillingConfig, LeaguePlanListResponse } from '@poolmaster/shared/dto';
@@ -17,6 +18,11 @@ import type { PlanEntitlementsService } from './plan-entitlements-service';
 /** What a route module that reports or checks a league's plan is registered with. */
 export interface PlanModuleOptions {
   planEntitlements: PlanEntitlementsService;
+}
+
+/** A module whose routes read a championship year: a closed one needs PAST_YEARS (#2021). */
+export interface YearGatedModuleOptions extends PlanModuleOptions {
+  closedYears: Pick<LeagueChampionshipYearRepository, 'isClosed'>;
 }
 
 export interface PlansModuleOptions extends PlanModuleOptions {

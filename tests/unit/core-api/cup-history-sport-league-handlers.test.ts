@@ -111,8 +111,9 @@ describe('cup handlers', () => {
 });
 
 describe('history handlers', () => {
-  const thisYear = new Date().getUTCFullYear();
-  const squadYear = (year: number) => ({ squad: { id: 's1' }, year, championship: null, cups: [] });
+  const thisYear = 2026;
+  // A year is over once the league closed it (#2021); 2001 is long closed.
+  const squadYear = (year: number) => ({ squad: { id: 's1' }, year, isOver: year < thisYear, championship: null, cups: [] });
   const service = {
     getPerpetualTrophies: jest.fn((..._args: unknown[]) => Promise.resolve([])),
     getRecords: jest.fn((..._args: unknown[]) => Promise.resolve([])),
@@ -122,7 +123,7 @@ describe('history handlers', () => {
     listYearContests: jest.fn((..._args: unknown[]) => Promise.resolve([])),
   };
   const yearReviews = {
-    getLastYear: jest.fn((..._args: unknown[]) => Promise.resolve({ year: 2025, status: 'OPEN', sentAt: null, sentBy: null })),
+    getReviewYear: jest.fn((..._args: unknown[]) => Promise.resolve({ year: 2025, status: 'OPEN', sentAt: null, sentBy: null })),
     send: jest.fn((..._args: unknown[]) => Promise.resolve({ year: 2025, status: 'SENT', sentAt: new Date('2026-01-05T00:00:00.000Z'), sentBy: null })),
   };
   const plan = (features: PlanFeature[]) => ({ forLeague: () => Promise.resolve({ features: new Set(features) } as unknown as PlanEntitlements) });
@@ -163,7 +164,7 @@ describe('history handlers', () => {
     expect((await callHandler(handlers.getHistorySummary, stubRequest({ params }))).body).toEqual({ summary: { tiles: [], years: [] } });
   });
 
-  it('leaves out a squad\'s earlier years and its cups when the plan has neither', async () => {
+  it('leaves out a squad\'s years that are over and its cups when the plan has neither', async () => {
     const history = await callHandler(handlers.getSquadHistory, stubRequest({ params: { id: 'league-1', squadId: 's1' } }));
     const year = await callHandler(handlers.getSquadYear, stubRequest({ params: { id: 'league-1', squadId: 's1' }, query: { year: thisYear } }));
 

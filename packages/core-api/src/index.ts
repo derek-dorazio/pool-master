@@ -524,9 +524,11 @@ export function buildApp(options: BuildAppOptions = {}) {
     domainEvents,
   });
   app.register(contestsByIdModule, { prefix: '/api/v1/contests', email, planEntitlements });
-  app.register(cupsModule, { prefix: '/api/v1/leagues/:id/cups', planEntitlements });
-  app.register(championshipModule, { prefix: '/api/v1/leagues/:id/championship', planEntitlements });
-  app.register(historyModule, { prefix: '/api/v1/leagues/:id/history', email, planEntitlements });
+  // A closed championship year needs PAST_YEARS on the routes that read one (#2021).
+  const closedYears = new PrismaLeagueChampionshipYearRepository(prisma);
+  app.register(cupsModule, { prefix: '/api/v1/leagues/:id/cups', planEntitlements, closedYears });
+  app.register(championshipModule, { prefix: '/api/v1/leagues/:id/championship', planEntitlements, closedYears });
+  app.register(historyModule, { prefix: '/api/v1/leagues/:id/history', email, planEntitlements, closedYears });
   app.register(contestConfigTemplatesModule, { prefix: '/api/v1/contest-config-templates', cdn });
   app.register(eventsModule, {
     prefix: '/api/v1/events',

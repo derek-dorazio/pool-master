@@ -1,17 +1,17 @@
 /**
  * The year in review (#872 slice 4, plan Q6): once a year is over, the league's commissioner
  * sends each squad's owners that squad's year, from a "Send the 2026 year in review" button on
- * Championships. Nothing runs on a timer: from 1 January the year before is ready to send, worked
- * out on read (its championship has a counted contest and nothing is recorded for it), and the
- * banner and button show until it is sent.
+ * Championships. Nothing runs on a timer: the league's latest closed championship year (#2021) is
+ * the one to send, ready once it closes, worked out on read (its championship has a counted
+ * contest and nothing is recorded for it), and the banner and button show until it is sent.
  *
  * The emails go first and the record after, so a send that fails partway can be pressed again:
  * each email's outbox key is the league, the year and the person, so nobody gets two.
  */
 
 import type { FastifyBaseLogger } from 'fastify';
-import type { ChampionshipRepository, LeagueRepository, LeagueYearReviewRepository, SquadMembershipRepository, UserRepository } from '@poolmaster/shared/db';
-import { YearReviewStatus, championshipYear, trophyForPlace, type User } from '@poolmaster/shared/domain';
+import type { ChampionshipRepository, LeagueChampionshipYearRepository, LeagueRepository, LeagueYearReviewRepository, SquadMembershipRepository, UserRepository } from '@poolmaster/shared/db';
+import { YearReviewStatus, trophyForPlace, type User } from '@poolmaster/shared/domain';
 import { championshipName } from '../../mappers/championship.mapper';
 import { cupName } from '../../mappers/cups.mapper';
 import {
@@ -39,9 +39,10 @@ export class YearReviewAlreadySentError extends Error {
   readonly code = 'YEAR_REVIEW_ALREADY_SENT';
 }
 
-/** Where last year's review stands for the league. */
+/** Where the review of the league's latest closed year stands. */
 export interface YearReviewView {
-  year: number;
+  /** The latest closed championship year; null while the league has closed none. */
+  year: number | null;
   status: YearReviewStatus;
   sentAt: Date | null;
   /** Who sent it; null before it is sent, or once their account is gone. */
@@ -57,20 +58,18 @@ export interface YearReviewServiceDeps extends LeagueMemberDeps {
   users: LeagueMemberDeps['users'] & Pick<UserRepository, 'findById'>;
   email: Pick<EmailService, 'sendMany'>;
   appBaseUrl: string;
+  /** The league's closed years (#2021): the latest is the one whose review is sent. */
+  closedYears: Pick<LeagueChampionshipYearRepository, 'findClosedYears'>;
   logger?: FastifyBaseLogger;
-  now?: () => Date;
 }
 
 export class YearReviewService {
-  private readonly now: () => Date;
+  constructor(private readonly deps: YearReviewServiceDeps) {}
 
-  constructor(private readonly deps: YearReviewServiceDeps) {
-    this.now = deps.now ?? (() => new Date());
-  }
-
-  /** Last year's review: nothing to send, ready, or sent and by whom. */
-  async getLastYear(leagueId: string): Promise<YearReviewView> {
-    const year = championshipYear(this.now()) - 1;
+  /** The latest closed year's review: nothing to send, ready, or sent and by whom. */
+  async getReviewYear(leagueId: string): Promise<YearReviewView> {
+    const year = await this.latestClosedYear(leagueId);
+    if (year === null) return { year, status: YearReviewStatus.NOTHING_TO_SEND, sentAt: null, sentBy: null };
     const review = await this.deps.reviews.findByLeagueYear(leagueId, year);
     if (review !== null) {
       const sentBy = review.sentByUserId === null ? null : await this.deps.users.findById(review.sentByUserId);
@@ -81,14 +80,17 @@ export class YearReviewService {
   }
 
   /**
-   * Sends last year's review: each active owner of an active squad that placed that year gets
-   * their squad's year. 409s for another year, a year with nothing counted, or one already sent.
+   * Sends the latest closed year's review: each active owner of an active squad that placed that
+   * year gets their squad's year. 409s for another year, a year with nothing counted, or one
+   * already sent.
    */
   async send(leagueId: string, year: number, sentByUserId: string): Promise<YearReviewView> {
-    const lastYear = championshipYear(this.now()) - 1;
-    if (year !== lastYear) {
-      this.deps.logger?.warn({ action: 'history.yearReview.notOpen', data: { leagueId, year, lastYear } }, 'Year in review asked for a year that is not last year');
-      throw new YearReviewNotOpenError(`Only the ${String(lastYear)} year in review can be sent now.`);
+    const reviewYear = await this.latestClosedYear(leagueId);
+    if (year !== reviewYear) {
+      this.deps.logger?.warn({ action: 'history.yearReview.notOpen', data: { leagueId, year, reviewYear } }, 'Year in review asked for a year that is not the latest closed one');
+      throw new YearReviewNotOpenError(reviewYear === null
+        ? 'No championship year has closed yet, so no year in review can be sent.'
+        : `Only the ${String(reviewYear)} year in review can be sent now.`);
     }
     if (await this.deps.reviews.findByLeagueYear(leagueId, year) !== null) {
       this.deps.logger?.warn({ action: 'history.yearReview.alreadySent', data: { leagueId, year } }, 'Year in review already sent');
@@ -102,7 +104,13 @@ export class YearReviewService {
     // A second press racing this one finds the record already made; both sent the same emails once.
     await this.deps.reviews.create({ leagueId, championshipYear: year, sentByUserId });
     this.deps.logger?.info({ action: 'history.yearReview.sent', data: { leagueId, year, emailCount: queued } }, 'Sent the year in review');
-    return this.getLastYear(leagueId);
+    return this.getReviewYear(leagueId);
+  }
+
+  /** The league's latest closed championship year, or null before its first closes. */
+  private async latestClosedYear(leagueId: string): Promise<number | null> {
+    const years = (await this.deps.closedYears.findClosedYears(leagueId)).map((row) => row.championshipYear);
+    return years.length === 0 ? null : Math.max(...years);
   }
 
   private async hasCountedContest(leagueId: string, year: number): Promise<boolean> {

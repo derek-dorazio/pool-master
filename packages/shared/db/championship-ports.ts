@@ -9,7 +9,16 @@ export interface FinalContest {
   sportLeagueName: string;
   /** When it went final; null for a contest completed before the time was kept. */
   completedAt: Date | null;
+  /** The championship year it counts in (#2021), whenever it went final. */
+  championshipYear: number;
 }
+
+/** Which final contests to read (#2021): one championship year's, or those named. */
+/**
+ * Which final contests to read: a championship year's, optionally only those that went final at
+ * or after `finishedSince` (League Home's recent finals), or the listed contests.
+ */
+export type FinalContestFilter = { championshipYear: number; finishedSince?: Date } | { contestIds: readonly string[] };
 
 /**
  * A final contest of exactly one event (#874): what a perpetual trophy is built from. Until #2024
@@ -45,13 +54,10 @@ export interface ChampionshipRepository {
   findByLeagueYear(leagueId: string, year: number, settledSince?: Date): Promise<LeagueYearFinish[]>;
   /** Whether the league has a counted finish in the year. */
   hasCountedFinish(leagueId: string, year: number): Promise<boolean>;
-  /** The league's open and live contests that will count once final. */
-  countUnfinishedContests(leagueId: string): Promise<number>;
-  /**
-   * The league's completed contests that went final from `from` until `to`, and those named in
-   * `contestIds` whenever they did (#837).
-   */
-  findFinalContests(leagueId: string, from: Date, to: Date, contestIds: readonly string[]): Promise<FinalContest[]>;
+  /** The league's open and live contests that will count once final, by their championship year (#2021). */
+  countUnfinishedContestsByYear(leagueId: string): Promise<ReadonlyMap<number, number>>;
+  /** The league's completed contests of one championship year, or those named (#837, #2021). */
+  findFinalContests(leagueId: string, filter: FinalContestFilter): Promise<FinalContest[]>;
   /** The league's completed contests of exactly one event, with the slot definitions it covers (#874, #2010). */
   findSeriesContests(leagueId: string): Promise<SeriesContest[]>;
 }
