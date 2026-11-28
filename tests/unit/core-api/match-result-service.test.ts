@@ -222,18 +222,14 @@ describe('MatchResultService.recordResult', () => {
     expect(activateContestsPastCutoff).toHaveBeenCalledWith(expect.objectContaining({ id: event.id, status: SportEventStatus.IN_PROGRESS }), AS_OF, writtenBracketWithResult);
   });
 
-  it('asks a scheduled event\'s contests to go live with a result, since its slot can be under way before the event follows (#2013), and starts none on a postponed event', async () => {
-    for (const [status, asked] of [[SportEventStatus.SCHEDULED, true], [SportEventStatus.POSTPONED, false]] as const) {
-      // poolmaster-allow-query-in-loop: a unit test over two statuses, against in-memory fakes
-      const { store, event } = await setup({ status });
-      const activateContestsPastCutoff = jest.fn<EventLifecycleService['activateContestsPastCutoff']>(async () => 0);
-      const service = new HomeAwayResults({ sportEvents: store.sportEventRepo(), matches: store.matchRepo(), contestActivation: { activateContestsPastCutoff }, domainEvents: testDomainEvents(), now: () => AS_OF });
+  it('asks a scheduled event\'s contests to go live with a result, since its slot can be under way before the event follows (#2013)', async () => {
+    const { store, event } = await setup({ status: SportEventStatus.SCHEDULED });
+    const activateContestsPastCutoff = jest.fn<EventLifecycleService['activateContestsPastCutoff']>(async () => 0);
+    const service = new HomeAwayResults({ sportEvents: store.sportEventRepo(), matches: store.matchRepo(), contestActivation: { activateContestsPastCutoff }, domainEvents: testDomainEvents(), now: () => AS_OF });
 
-      // poolmaster-allow-query-in-loop: a unit test over two statuses, against in-memory fakes
-      await service.recordResult(event.id, { roundNumber: 1, matchNumber: 1 }, homeWins);
+    await service.recordResult(event.id, { roundNumber: 1, matchNumber: 1 }, homeWins);
 
-      expect(activateContestsPastCutoff.mock.calls.length > 0).toBe(asked);
-    }
+    expect(activateContestsPastCutoff).toHaveBeenCalled();
   });
 
   it('writes the job settling the squares contests on the game with its result, whatever the event\'s status, and wakes the runner only once it is written', async () => {

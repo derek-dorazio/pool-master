@@ -485,7 +485,6 @@ export function buildApp(options: BuildAppOptions = {}) {
       RELEASE_SPORT_EVENT: releaseSportEventJobHandler(sportEventServices.sportEvents),
       SYNC_EVENT_GAMES_AND_TIERS: (payload) => syncedFieldFollowUps.run(payload),
       ACTIVATE_EVENT_CONTESTS: (payload) => eventLifecycleService.activateEventContests(payload),
-      FOLLOW_POSTPONED_EVENT_CONTESTS: (payload) => eventLifecycleService.followPostponedEventContests(payload),
       RESOLVE_MAPPED_PARTICIPANT_FINDINGS: resolveMappedParticipantFindingsJobHandler(syncFindings),
       REFRESH_SLOT_TIEBREAKERS: (payload) => slotTiebreakers.refresh(payload.sportEventId),
       SYNC_LEAGUE_ROSTER: (payload, context) => leagueRosterSync.run(payload, context),

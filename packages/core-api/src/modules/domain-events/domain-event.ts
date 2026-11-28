@@ -67,11 +67,6 @@ export interface SportEventStatusChanged {
   to: SportEventStatus;
   /** When the event's contests settle if `to` finishes it: its end, or the moment it was cancelled. */
   settleAt: Date;
-  /**
-   * The live contests the change takes back to OPEN (#1792). Their reopen's own email tells their
-   * members, so the event changed email leaves them out (#1910).
-   */
-  reopeningContestIds: ReadonlySet<string>;
 }
 
 export interface SportEventRescheduled {
@@ -79,7 +74,10 @@ export interface SportEventRescheduled {
   /** The event with its new start. */
   sportEvent: Pick<SportEvent, 'id' | 'startDate' | 'status'>;
   previousStart: Date;
-  /** The live contests the new start reopens, told by their reopen's email instead (#1910). */
+  /**
+   * The live contests the new start reopens, told by their reopen's email instead (#1910). None
+   * yet: the reopen keyed on a contest's cutoff moving back past now is #2015's.
+   */
   reopeningContestIds: ReadonlySet<string>;
 }
 

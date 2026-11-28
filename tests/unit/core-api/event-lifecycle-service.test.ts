@@ -134,8 +134,6 @@ const activateJob = {
   dedupeKey: 'ACTIVATE_EVENT_CONTESTS:sport-event-1',
 };
 
-/** The job a postponement writes with its status, which has the event's contests follow its start (#1952). */
-const followPostponedJob = { ...activateJob, type: BackgroundJobType.FOLLOW_POSTPONED_EVENT_CONTESTS, dedupeKey: 'FOLLOW_POSTPONED_EVENT_CONTESTS:sport-event-1' };
 
 /** The settle job a finished event's move writes (#1448). */
 function settleJob(completedAt: Date) {
@@ -521,6 +519,21 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
     expect(settlement.settleFinishedSportEvent).toHaveBeenCalled();
   });
 
+  it('settles nothing, and logs a null status, when the job finds its event deleted', async () => {
+    const settlement = fakeSettlement();
+    const logger = fakeLogger();
+    const { sportEvents } = seededEvents({ status: SportEventStatus.COMPLETED });
+
+    await lifecycleService(contestDeps(), sportEvents, logger, startedJobs(), settlement)
+      .settleFinishedEventContests({ sportEventId: 'sport-event-gone', completedAt: new Date().toISOString() });
+
+    expect(settlement.settleFinishedSportEvent).not.toHaveBeenCalled();
+    expect(logger.warn).toHaveBeenCalledWith(
+      { action: 'events.settleContests.skipped', data: { sportEventId: 'sport-event-gone', status: null } },
+      expect.any(String),
+    );
+  });
+
   it('settles nothing, and says why, when the job finds the event moved back out of COMPLETED, since its next finish queues a job of its own', async () => {
     const settlement = fakeSettlement();
     const logger = fakeLogger();
@@ -706,15 +719,11 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
 });
 
 describe('EventLifecycleService — the job that takes an event\'s contests live (#1952)', () => {
-  it('takes no contest live once the event is postponed, cancelled or gone, and still does for one already completed', async () => {
-    for (const status of [SportEventStatus.POSTPONED, SportEventStatus.CANCELLED]) {
-      const { sportEvents } = seededEvents({ status });
-      const contests = contestDeps({ startedContest: true });
-
-      // poolmaster-allow-query-in-loop: a unit test over a few statuses, against in-memory fakes
-      expect(await lifecycleService(contests, sportEvents, fakeLogger()).activateEventContests({ sportEventId: 'sport-event-1' })).toEqual({ changedCount: 0 });
-      expect(contests.contests.transitionStatuses).not.toHaveBeenCalled();
-    }
+  it('takes no contest live once the event is cancelled or gone, and still does for one already completed', async () => {
+    const { sportEvents: cancelled } = seededEvents({ status: SportEventStatus.CANCELLED });
+    const contests = contestDeps({ startedContest: true });
+    expect(await lifecycleService(contests, cancelled, fakeLogger()).activateEventContests({ sportEventId: 'sport-event-1' })).toEqual({ changedCount: 0 });
+    expect(contests.contests.transitionStatuses).not.toHaveBeenCalled();
     expect(await lifecycleService(contestDeps({ startedContest: true }), new InMemorySportEvents().sportEventRepo(), fakeLogger())
       .activateEventContests({ sportEventId: 'sport-event-1' })).toEqual({ changedCount: 0 });
 
@@ -759,51 +768,6 @@ describe('EventLifecycleService settling a decided game\'s squares contests in a
 
 describe('EventLifecycleService event change emails (#845 C6, C7)', () => {
   const changedNotice = recordingSportEventChangedNotice;
-
-  it('writes the leagues\' postponed-event jobs with the POSTPONED status when the event first goes POSTPONED, and none on a repeated call', async () => {
-    const store = new InMemorySportEvents();
-    store.addEvent({ id: 'sport-event-1', providerRef: { providerId: 'balldontlie', externalId: 'provider-event-1' }, name: 'Manual Test Golf Tournament', startDate: STARTED_EVENT_START, status: SportEventStatus.SCHEDULED });
-    const notice = changedNotice();
-    const jobs = startedJobs();
-    const service = lifecycleService(contestDeps(), store.sportEventRepo(), fakeLogger(), jobs, undefined, notice);
-
-    await service.applySportEventStatusTransition({ sportEventId: 'sport-event-1', toStatus: SportEventStatus.POSTPONED, actor: { type: 'ROOT_ADMIN' } });
-    await service.applySportEventStatusTransition({ sportEventId: 'sport-event-1', toStatus: SportEventStatus.POSTPONED, actor: { type: 'ROOT_ADMIN' } });
-
-    expect(notice.sportEventChangedJobs).toHaveBeenCalledTimes(1);
-    expect(notice.sportEventChangedJobs).toHaveBeenCalledWith(expect.objectContaining({ id: 'sport-event-1', startDate: STARTED_EVENT_START }), { kind: 'POSTPONED' }, { reopening: new Set() });
-    // Each call still rebuilds the event's boards, and has its contests follow its start.
-    expect(store.backgroundJobs).toEqual([followPostponedJob, eventChangedJob('sport-event-1', 'POSTPONED'), rebuildJob(), followPostponedJob, rebuildJob()]);
-    expect(jobs.queued).toHaveBeenCalledTimes(2);
-  });
-
-  it('writes no postponed-event job when another caller postponed the event first, since that caller\'s move wrote them', async () => {
-    const store = new InMemorySportEvents();
-    store.addEvent({ id: 'sport-event-1', providerRef: { providerId: 'balldontlie', externalId: 'provider-event-1' }, name: 'Manual Test Golf Tournament', startDate: STARTED_EVENT_START, status: SportEventStatus.SCHEDULED });
-    const repo = store.sportEventRepo();
-    const sportEvents = { ...repo, transitionStatus: mockFn<typeof repo.transitionStatus>(async () => null) };
-    const jobs = startedJobs();
-    const service = lifecycleService(contestDeps(), sportEvents, fakeLogger(), jobs, undefined, changedNotice());
-
-    await service.applySportEventStatusTransition({
-      sportEventId: 'sport-event-1', toStatus: SportEventStatus.POSTPONED, fromStatus: SportEventStatus.SCHEDULED, actor: { type: 'SYSTEM' },
-    });
-
-    expect(store.backgroundJobs).toEqual([]);
-    expect(jobs.queued).not.toHaveBeenCalled();
-  });
-
-  it('fails the postponement, leaving the event SCHEDULED, when the contests to tell cannot be read, rather than postponing it with nobody told', async () => {
-    const { sportEvents, storedEvent } = seededEvents({ status: SportEventStatus.SCHEDULED });
-    const notice = changedNotice();
-    notice.sportEventChangedJobs.mockRejectedValueOnce(new Error('database unavailable'));
-    const service = lifecycleService(contestDeps(), sportEvents, fakeLogger(), startedJobs(), undefined, notice);
-
-    await expect(service.applySportEventStatusTransition({ sportEventId: 'sport-event-1', toStatus: SportEventStatus.POSTPONED, actor: { type: 'ROOT_ADMIN' } }))
-      .rejects.toThrow('database unavailable');
-
-    expect(storedEvent().status).toBe(SportEventStatus.SCHEDULED);
-  });
 
   it('writes the leagues\' cancelled-event jobs with the CANCELLED status, while the contests are still open, and none on a repeated call', async () => {
     const store = new InMemorySportEvents();
@@ -968,9 +932,9 @@ describe('EventLifecycleService — leaderboard rebuild (#1466)', () => {
     const jobs = startedJobs();
     const service = lifecycleService(contestDeps(), store.sportEventRepo(), fakeLogger(), jobs);
 
-    await service.applySportEventStatusTransition({ sportEventId: 'sport-event-1', toStatus: SportEventStatus.POSTPONED, actor: { type: 'ROOT_ADMIN' } });
+    await service.applySportEventStatusTransition({ sportEventId: 'sport-event-1', toStatus: SportEventStatus.IN_PROGRESS, actor: { type: 'ROOT_ADMIN' } });
 
-    expect(store.backgroundJobs).toEqual([followPostponedJob, rebuildJob()]);
+    expect(store.backgroundJobs).toEqual([activateJob, rebuildJob()]);
     expect(jobs.queued).toHaveBeenCalledTimes(1);
   });
 
@@ -994,15 +958,15 @@ describe('EventLifecycleService — leaderboard rebuild (#1466)', () => {
   });
 });
 
-describe('EventLifecycleService — a postponed event\'s contests follow its start', () => {
+describe('EventLifecycleService — a moved event\'s contests follow its start (kept for #2015)', () => {
   const NOW = new Date('2026-05-02T21:00:00.000Z');
   const NEW_START = new Date('2026-05-09T20:00:00.000Z');
   const LIVE = buildContest({ ...STARTED_CONTEST, status: ContestStatus.ACTIVE });
 
-  /** The postponed event, its start moved to `startDate`, and any other events the contests score. */
+  /** The event, its start moved to `startDate`, and any other events the contests score. */
   function postponedEvents(startDate: Date, others: Array<Partial<SportEvent> & { id: string }> = []) {
     const store = new InMemorySportEvents();
-    store.addEvent({ id: 'sport-event-1', name: 'Week 6', startDate, status: SportEventStatus.POSTPONED });
+    store.addEvent({ id: 'sport-event-1', name: 'Week 6', startDate, status: SportEventStatus.SCHEDULED });
     for (const other of others) store.addEvent({ name: other.id, startDate: NEW_START, status: SportEventStatus.SCHEDULED, ...other });
     return store.sportEventRepo();
   }
@@ -1026,36 +990,6 @@ describe('EventLifecycleService — a postponed event\'s contests follow its sta
 
     expect(deps.contests.findBySportEvent).toHaveBeenCalledWith('sport-event-1', { statuses: [ContestStatus.ACTIVE] });
     expect(deps.contests.transitionStatuses).toHaveBeenCalledWith(['contest-1'], expect.objectContaining({ from: [ContestStatus.ACTIVE], to: ContestStatus.OPEN, startsAt: NEW_START }));
-  });
-
-  it('writes the job that reopens the live contests with the postponement, and the job reopens them without waiting for the next sweep', async () => {
-    const store = new InMemorySportEvents();
-    // The transition reads the clock, so the moved start is a week from now.
-    store.addEvent({ id: 'sport-event-1', name: 'Week 6', startDate: new Date(Date.now() + 7 * 24 * 60 * 60_000), status: SportEventStatus.IN_PROGRESS });
-    const deps = liveContests([LIVE]);
-    const service = lifecycleService(deps, store.sportEventRepo(), fakeLogger());
-
-    await service.applySportEventStatusTransition({
-      sportEventId: 'sport-event-1',
-      toStatus: SportEventStatus.POSTPONED,
-      actor: { type: 'ROOT_ADMIN' },
-    });
-
-    // The postponement moves no contest itself: its job does, once the change has committed (#1952).
-    expect(deps.contests.transitionStatuses).not.toHaveBeenCalled();
-    expect(store.backgroundJobs).toContainEqual(followPostponedJob);
-    expect(await service.followPostponedEventContests({ sportEventId: 'sport-event-1' })).toEqual({ changedCount: 1 });
-    expect(deps.contests.transitionStatuses).toHaveBeenCalledWith(['contest-1'], expect.objectContaining({ from: [ContestStatus.ACTIVE], to: ContestStatus.OPEN }));
-  });
-
-  it('moves no contest from a postponement\'s job once the event is no longer postponed, since its own change queued what follows it', async () => {
-    const deps = liveContests([LIVE]);
-    const store = new InMemorySportEvents();
-    store.addEvent({ id: 'sport-event-1', name: 'Week 6', startDate: NEW_START, status: SportEventStatus.SCHEDULED });
-
-    expect(await lifecycleService(deps, store.sportEventRepo(), fakeLogger()).followPostponedEventContests({ sportEventId: 'sport-event-1' })).toEqual({ changedCount: 0 });
-    expect(await lifecycleService(deps, new InMemorySportEvents().sportEventRepo(), fakeLogger()).followPostponedEventContests({ sportEventId: 'sport-event-1' })).toEqual({ changedCount: 0 });
-    expect(deps.contests.transitionStatuses).not.toHaveBeenCalled();
   });
 
   it('keeps live a season contest whose earlier event has started, and reopens one whose every event is still ahead, starting at its first event', async () => {
@@ -1164,57 +1098,25 @@ describe('EventLifecycleService — a postponed event\'s contests follow its sta
     expect(jobs.queued).toHaveBeenCalledTimes(1);
   });
 
-  it('leaves out of the postponement\'s event changed jobs the live contests it reopens, so their members get the one picks are open again email', async () => {
-    const store = new InMemorySportEvents();
-    const newStart = new Date(Date.now() + 7 * 24 * 60 * 60_000);
-    store.addEvent({ id: 'sport-event-1', name: 'Week 6', startDate: newStart, status: SportEventStatus.IN_PROGRESS });
-    const squares = buildContest({ ...LIVE, id: 'contest-squares', selectionType: SelectionType.SQUARES, squaresGame: squaresGameOf('game-1') });
-    const deps = liveContests([LIVE, squares]);
-    const notice = recordingSportEventChangedNotice();
-
-    const service = lifecycleService(deps, store.sportEventRepo(), fakeLogger(), startedJobs(), undefined, notice);
-    await service.applySportEventStatusTransition({
-      sportEventId: 'sport-event-1',
-      toStatus: SportEventStatus.POSTPONED,
-      actor: { type: 'ROOT_ADMIN' },
-    });
-    await service.followPostponedEventContests({ sportEventId: 'sport-event-1' });
-
-    expect(notice.sportEventChangedJobs).toHaveBeenCalledWith(expect.objectContaining({ id: 'sport-event-1' }), { kind: 'POSTPONED' }, { reopening: new Set(['contest-1']) });
-    expect(deps.contests.transitionStatuses).toHaveBeenCalledWith(['contest-1'], expect.objectContaining({ to: ContestStatus.OPEN }));
-  });
-
-  it('fails the postponement\'s job when its reopen write fails, and its retry sends the picks are open again email, so a contest left out of the event changed jobs is told', async () => {
-    const store = new InMemorySportEvents();
-    store.addEvent({ id: 'sport-event-1', name: 'Week 6', startDate: new Date(Date.now() + 7 * 24 * 60 * 60_000), status: SportEventStatus.IN_PROGRESS });
-    const sportEvents = store.sportEventRepo();
+  it('lets a failed reopen write throw, and a second try sends the picks are open again email', async () => {
+    const sportEvents = postponedEvents(NEW_START);
     const deps = liveContests([LIVE]);
     const written: unknown[] = [];
     const move = guardedMove(written);
     deps.contests.transitionStatuses = mockFn<ContestRepository['transitionStatuses']>(async () => { throw new Error('database unavailable'); });
-    const service = lifecycleService(deps, sportEvents, fakeLogger(), startedJobs(), undefined, recordingSportEventChangedNotice());
-
-    // The postponement itself lands: the reopen is its job's.
-    await service.applySportEventStatusTransition({ sportEventId: 'sport-event-1', toStatus: SportEventStatus.POSTPONED, actor: { type: 'ROOT_ADMIN' } });
-    await expect(service.followPostponedEventContests({ sportEventId: 'sport-event-1' })).rejects.toThrow('database unavailable');
+    await expect(follow(deps, sportEvents)).rejects.toThrow('database unavailable');
 
     deps.contests.transitionStatuses = move;
-    await service.followPostponedEventContests({ sportEventId: 'sport-event-1' });
+    await follow(deps, sportEvents);
 
     expect((written as Array<{ type: string; payload: { contestId?: string; id?: string } }>).map(({ type, payload }) => [type, payload.contestId ?? payload.id]))
       .toEqual([[BackgroundJobType.CONTEST_REOPENED_EMAILS, 'contest-1'], [BackgroundJobType.REBUILD_LEADERBOARDS, 'contest-1']]);
   });
 
-  it('leaves out of a postponed event\'s moved start the live contests the new start reopens, and tells every contest of a scheduled event\'s move', async () => {
+  it('tells every contest of a scheduled event\'s move, leaving none out as reopened', async () => {
     const newStart = new Date(Date.now() + 7 * 24 * 60 * 60_000);
     const previousStart = new Date('2026-05-02T20:00:00.000Z');
     const notice = recordingSportEventChangedNotice();
-    const postponed = lifecycleService(liveContests([LIVE]), postponedEvents(previousStart), fakeLogger(), startedJobs(), undefined, notice);
-
-    await postponed.sportEventRescheduledJobs({ id: 'sport-event-1', startDate: newStart, status: SportEventStatus.POSTPONED }, previousStart);
-
-    expect(notice.sportEventChangedJobs).toHaveBeenLastCalledWith({ id: 'sport-event-1', startDate: newStart }, { kind: 'RESCHEDULED', previousStart }, { reopening: new Set(['contest-1']) });
-
     const scheduled = seededEvents({ startDate: previousStart });
     await lifecycleService(liveContests([LIVE]), scheduled.sportEvents, fakeLogger(), startedJobs(), undefined, notice)
       .sportEventRescheduledJobs({ id: 'sport-event-1', startDate: newStart, status: SportEventStatus.SCHEDULED }, previousStart);

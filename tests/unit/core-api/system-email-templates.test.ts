@@ -1214,15 +1214,15 @@ describe('the member contest emails\' header, contest card and places', () => {
     expect(message.text).toContain('Green Jackets and Amen Corner tie for first');
   });
 
-  it('shows the new start under a moved event, and no date under a postponed one', () => {
+  it('shows the new start under a moved event, and no date under a cancelled one', () => {
     const moved = renderSystemEmailTemplate('CONTEST_EVENT_CHANGED', EMAIL_TEMPLATE_FIXTURES.CONTEST_EVENT_CHANGED, UTC);
-    const postponed = renderSystemEmailTemplate('CONTEST_EVENT_CHANGED', {
+    const cancelled = renderSystemEmailTemplate('CONTEST_EVENT_CHANGED', {
       ...EMAIL_TEMPLATE_FIXTURES.CONTEST_EVENT_CHANGED,
-      change: { kind: ContestEventChangeKind.POSTPONED, picksOpen: true },
+      change: { kind: ContestEventChangeKind.CANCELLED },
     }, UTC);
 
     expect(moved.text).toContain('Event moved\nThe Masters (PGA Tour), Thu, Apr 15, 2027\n');
-    expect(postponed.text).toContain('Event postponed\nThe Masters (PGA Tour)\n');
+    expect(cancelled.text).toContain('Event cancelled\nThe Masters (PGA Tour)\n');
   });
 
   it('counts down to a reminder\'s close in hours under a day and in days beyond, and shows the contest card with the entries so far', () => {

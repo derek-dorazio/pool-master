@@ -1,7 +1,7 @@
 /**
  * The contest emails built by background jobs rather than in the request that caused them:
  * "Contest is live" (E1) as a contest goes live and "Final results" (F1 to F3) as it completes
- * (#1387), both written with the contest's status move, and an event on the contest postponed,
+ * (#1387), both written with the contest's status move, and an event on the contest
  * moved or cancelled (C6, C7; #1458), written after the event's change, and "Event postponed, picks are open again"
  * as a postponement reopens a contest (#1808), written with its move. Each job reads what it
  * needs again and queues the emails exactly as the request once did.

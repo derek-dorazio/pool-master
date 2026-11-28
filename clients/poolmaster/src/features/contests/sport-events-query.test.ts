@@ -21,7 +21,7 @@ describe('sportEventsQueryOptions', () => {
     const events = await sportEventsQueryOptions('GOLF', true).queryFn();
 
     expect(listEventsMock).toHaveBeenCalledWith(expect.objectContaining({
-      query: { sport: 'GOLF', status: ['SCHEDULED', 'POSTPONED', 'IN_PROGRESS'] },
+      query: { sport: 'GOLF', status: ['SCHEDULED', 'IN_PROGRESS'] },
     }));
     expect(events.map((event) => event.id)).toEqual(['event-1', 'event-2']);
   });

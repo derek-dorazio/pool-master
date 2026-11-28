@@ -717,17 +717,15 @@ export const SportEventStatus = {
   IN_PROGRESS: 'IN_PROGRESS',
   COMPLETED: 'COMPLETED',
   CANCELLED: 'CANCELLED',
-  POSTPONED: 'POSTPONED',
 } as const;
 export type SportEventStatus = (typeof SportEventStatus)[keyof typeof SportEventStatus];
-/** The lifecycle, a postponed event beside the scheduled ones and a cancelled one last. */
+/** The lifecycle, a cancelled event last. */
 export const SportEventStatusOrder = explicitOrder<SportEventStatus>({
   [SportEventStatus.DRAFT]: 0,
   [SportEventStatus.SCHEDULED]: 1,
-  [SportEventStatus.POSTPONED]: 2,
-  [SportEventStatus.IN_PROGRESS]: 3,
-  [SportEventStatus.COMPLETED]: 4,
-  [SportEventStatus.CANCELLED]: 5,
+  [SportEventStatus.IN_PROGRESS]: 2,
+  [SportEventStatus.COMPLETED]: 3,
+  [SportEventStatus.CANCELLED]: 4,
 });
 
 /** Statuses an event reaches only once it has started: under way, or over (finished or called off). */
@@ -743,7 +741,7 @@ export const FINISHED_SPORT_EVENT_STATUSES: readonly SportEventStatus[] = [
   SportEventStatus.CANCELLED,
 ];
 
-/** Statuses of an event that is not over: still to release, to start, put off, or under way. */
+/** Statuses of an event that is not over: still to release, to start, or under way. */
 export const NOT_OVER_SPORT_EVENT_STATUSES: readonly SportEventStatus[] = Object.values(SportEventStatus)
   .filter((status) => !FINISHED_SPORT_EVENT_STATUSES.includes(status));
 
@@ -781,7 +779,6 @@ export function hasSportEventStarted(
  */
 export const OFFERABLE_SPORT_EVENT_STATUSES: readonly SportEventStatus[] = [
   SportEventStatus.SCHEDULED,
-  SportEventStatus.POSTPONED,
   SportEventStatus.IN_PROGRESS,
 ];
 
@@ -2235,7 +2232,7 @@ export const BackgroundJobType = {
   CONTEST_STARTED_EMAILS: 'CONTEST_STARTED_EMAILS',
   /** Queues "Final results" (F1 to F3) to the league of one contest that just completed (#1387). */
   CONTEST_SETTLED_EMAILS: 'CONTEST_SETTLED_EMAILS',
-  /** Queues "Event postponed", "New date" or "Event cancelled" (C6, C7) to the league of one contest on the event (#1458). */
+  /** Queues "New date" or "Event cancelled" (C6, C7) to the league of one contest on the event (#1458). */
   CONTEST_EVENT_CHANGED_EMAILS: 'CONTEST_EVENT_CHANGED_EMAILS',
   /** Queues "Event postponed, picks are open again" to the league of one contest a postponement took back to open (#1808, #1910). */
   CONTEST_REOPENED_EMAILS: 'CONTEST_REOPENED_EMAILS',
@@ -2253,8 +2250,6 @@ export const BackgroundJobType = {
   SYNC_EVENT_GAMES_AND_TIERS: 'SYNC_EVENT_GAMES_AND_TIERS',
   /** Takes one event's contests live at their cutoffs once the event has started (#1952). */
   ACTIVATE_EVENT_CONTESTS: 'ACTIVATE_EVENT_CONTESTS',
-  /** A postponed event's contests follow its start: reopened while it is ahead, live once it has passed (#1792, #1952). */
-  FOLLOW_POSTPONED_EVENT_CONTESTS: 'FOLLOW_POSTPONED_EVENT_CONTESTS',
   /** Resolves the OPEN unmapped participant findings of feed ids a mapping now names, however it was made (#2069). */
   RESOLVE_MAPPED_PARTICIPANT_FINDINGS: 'RESOLVE_MAPPED_PARTICIPANT_FINDINGS',
   /** Runs the tiebreaker game rule for each slot of one event after a write to its games (#2048). */

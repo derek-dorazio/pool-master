@@ -950,15 +950,6 @@ describe('ContestManagementService', () => {
       expect(contestCoreRepo.transitionStatus).not.toHaveBeenCalled();
     });
 
-    it('opens a contest on a POSTPONED event, which has not started', async () => {
-      const { service } = buildService({
-        reader: createSportEventReader({ status: SportEventStatus.POSTPONED }),
-      });
-
-      await expect(service.openContest('league-1', 'contest-1'))
-        .resolves.toMatchObject({ status: ContestStatus.OPEN });
-    });
-
     it('refuses with 422 CONTEST_TIER_FIELD_OUT_OF_RANGE when the event\'s tiers no longer hold the stored countedScores', async () => {
       // The stored configuration counts 4 scores at 1 pick per tier; an event with 3 tiers
       // gives a roster of 3, too few to count 4.

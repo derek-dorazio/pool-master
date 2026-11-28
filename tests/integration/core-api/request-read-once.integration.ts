@@ -699,8 +699,9 @@ describe('Finishing an event (#1355, #1448)', () => {
 });
 
 /**
- * A released event a week out, with OPEN contests on it: one in the first league, and with
- * `contests: 3`, two there and one in a second league.
+ * A released event a week out and the week after it, with OPEN contests on both: one in the first
+ * league, and with `contests: 3`, two there and one in a second league. A cancellation of the first
+ * leaves each contest a week to play, so each is told (C7).
  */
 async function openContestsOnScheduledEvent(options: { contests: 1 | 3 }) {
   const prisma = getPrisma();
@@ -714,6 +715,14 @@ async function openContestsOnScheduledEvent(options: { contests: 1 | 3 }) {
       status: 'SCHEDULED',
     },
   });
+  const nextWeek = await prisma.sportEvent.create({
+    data: {
+      ...(await freshEventEdition(prisma, { sport: Sport.FOOTBALL })),
+      name: `Read Once Next Week ${suffix}`,
+      startDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
+      status: 'SCHEDULED',
+    },
+  });
   const leagues = options.contests === 1 ? [await leagueWithTeam()] : [await leagueWithTeam(), await leagueWithTeam()];
   const contestIds: string[] = [];
   for (let number = 1; number <= options.contests; number++) {
@@ -721,7 +730,7 @@ async function openContestsOnScheduledEvent(options: { contests: 1 | 3 }) {
     const contest = await prisma.contest.create({
       data: {
         leagueId,
-        ...(await contestOnEvents(prisma, [event.id])),
+        ...(await contestOnEvents(prisma, [event.id, nextWeek.id])),
         name: `Read Once Changed ${suffix} ${number}`,
         status: 'OPEN',
         contestFormat: 'PREDICTION',
@@ -735,25 +744,25 @@ async function openContestsOnScheduledEvent(options: { contests: 1 | 3 }) {
 }
 
 /**
- * An admin's postponement of the event. An admin no longer moves the start of an event that holds
+ * An admin's cancellation of the event. An admin no longer moves the start of an event that holds
  * a contest: the contest covers its Season slots, so its dates are its slots' (#2014). The sync's
- * move, which tells its leagues, is pinned in the event service's unit tests.
+ * move, which tells its leagues, is pinned in the event service's unit tests. Postponement is a
+ * Game's, from the feed (#2013), so the change an admin makes that tells leagues is a cancellation.
  */
 type EventChangeRequest = (seeded: Awaited<ReturnType<typeof openContestsOnScheduledEvent>>) => InjectOptions;
-const postpone: EventChangeRequest = ({ admin, eventId }) => ({
+const cancel: EventChangeRequest = ({ admin, eventId }) => ({
   method: 'POST',
   url: `/api/v1/events/${eventId}/transition`,
   headers: admin.headers,
-  payload: { toStatus: 'POSTPONED' },
+  payload: { toStatus: 'CANCELLED' },
 });
 /**
- * What an admin's postponement sends (#1458): the event and its answer, then one read of the
- * contests told and one insert of their email jobs and the event's leaderboard rebuild job, written
- * with the status (#1466). One more read of its live contests, which go back to OPEN while its start
- * is ahead (#1792); these are all open, so nothing more is read. No league, member or entry is read,
- * so the count is the same however many contests, in however many leagues, the event holds.
+ * What an admin's cancellation sends (#1458): the event and its answer, then one read of the
+ * contests told and one insert of their email jobs, the settle job and the event's leaderboard
+ * rebuild job, written with the status (#1466). No league, member or entry is read, so the count is
+ * the same however many contests, in however many leagues, the event holds.
  */
-const PINNED_POSTPONE_COUNTS: Array<[string, number]> = [
+const PINNED_CANCEL_COUNTS: Array<[string, number]> = [
   ['INSERT background_jobs', 1],
   // Whether a tiered or budget template lists the event's slot, which picks its tier-set slot (#2044).
   ['SELECT contest_config_template_slots', 1],
@@ -762,33 +771,35 @@ const PINNED_POSTPONE_COUNTS: Array<[string, number]> = [
   ['SELECT contest_season_slots', 2],
   ['SELECT contest_squares_draws', 1],
   ['SELECT contest_squares_games', 1],
-  ['SELECT contests', 2],
+  ['SELECT contests', 1],
   // The answer's field count, and its tier set's (#2044): the event plays the slot its contests cover.
   ['SELECT sport_event_participants', 3],
-  ['SELECT sport_event_provider_mappings', 2],
-  ['SELECT sport_event_rounds', 2], // each read of the event counts its Round rows (#2008)
+  // Each read of an event takes its provider ids, Round rows, slots and Season: the event twice, and
+  // the contests' other events once, to tell which contests the cancellation leaves a week to play.
+  ['SELECT sport_event_provider_mappings', 3],
+  ['SELECT sport_event_rounds', 3],
   ['SELECT sport_event_slot_tiers', 2],
-  // The slot definitions the event plays, read with it (#2010), its tier slots (#2044), and the
-  // slots its contests are found through and cover (#2014).
-  ['SELECT sport_event_slots', 5],
-  ['SELECT sport_events', 2],
-  // The event's slot takes its definition and its place in play, as its tier slots do (#2006, #2044),
+  // The slot definitions the events play, read with them (#2010), the event's tier slots (#2044), and
+  // the slots its contests are found through and cover (#2014).
+  ['SELECT sport_event_slots', 6],
+  ['SELECT sport_events', 3],
+  // Each event's slot takes its definition and its place in play, as its tier slots do (#2006, #2044),
   // and the contests' covered slots take theirs, read together for every contest (#2014 part B).
-  ['SELECT sport_league_competition_slots', 5],
-  ['SELECT sport_league_competitions', 3],
-  ['SELECT sport_league_phases', 2],
-  ['SELECT sport_league_season_competition_slots', 6], // the answer's, the event reads' and the contests' Season slots
-  ['SELECT sport_league_seasons', 3], // a sport is read through its event's Season and league (#2042, #2004)
-  ['SELECT sport_leagues', 3],
-  ['SELECT sports', 3],
+  ['SELECT sport_league_competition_slots', 6],
+  ['SELECT sport_league_competitions', 4],
+  ['SELECT sport_league_phases', 3],
+  ['SELECT sport_league_season_competition_slots', 7], // the answer's, the event reads' and the contests' Season slots
+  ['SELECT sport_league_seasons', 4], // a sport is read through its event's Season and league (#2042, #2004)
+  ['SELECT sport_leagues', 4],
+  ['SELECT sports', 4],
   ['UPDATE sport_events', 1],
 ];
 
-describe('Postponing an event whose email jobs cannot be written (#1464)', () => {
-  it('leaves the event SCHEDULED, and answers with an error, when its postponement\'s email jobs fail to write, so nobody is left untold', async () => {
+describe('Cancelling an event whose email jobs cannot be written (#1464)', () => {
+  it('leaves the event SCHEDULED, and answers with an error, when its cancellation\'s email jobs fail to write, so nobody is left untold', async () => {
     const seeded = await openContestsOnScheduledEvent({ contests: 1 });
 
-    const response = await withBackgroundJobsFailing('CONTEST_EVENT_CHANGED_EMAILS', () => getApp().inject(postpone(seeded)));
+    const response = await withBackgroundJobsFailing('CONTEST_EVENT_CHANGED_EMAILS', () => getApp().inject(cancel(seeded)));
 
     expect(response.statusCode).toBe(500);
     await expect(getPrisma().sportEvent.findUniqueOrThrow({ where: { id: seeded.eventId }, select: { status: true } }))
@@ -796,14 +807,14 @@ describe('Postponing an event whose email jobs cannot be written (#1464)', () =>
   });
 });
 
-describe('Postponing an event (#1458)', () => {
-  it('answers an admin\'s postpone with a fixed set of statements that builds no email, writing one email job per contest for the job runner', async () => {
+describe('Cancelling an event (#1458)', () => {
+  it('answers an admin\'s cancellation with a fixed set of statements that builds no email, writing one email job per contest for the job runner', async () => {
     const seeded = await openContestsOnScheduledEvent({ contests: 3 });
 
-    const { response, statements } = await measureRequest(postpone(seeded));
+    const { response, statements } = await measureRequest(cancel(seeded));
 
     expect(response.statusCode).toBe(200);
-    expect(requestCounts(statements)).toEqual(PINNED_POSTPONE_COUNTS);
+    expect(requestCounts(statements)).toEqual(PINNED_CANCEL_COUNTS);
     const jobs = await getPrisma().backgroundJob.findMany({ where: { type: 'CONTEST_EVENT_CHANGED_EMAILS' }, select: { payload: true } });
     expect(jobs).toHaveLength(3);
     expect(jobs.map(({ payload }) => (payload as { contestId: string }).contestId).sort()).toEqual([...seeded.contestIds].sort());
@@ -818,12 +829,12 @@ describe('Postponing an event (#1458)', () => {
     }
   });
 
-  it('sends the same statements to postpone an event with three contests across two leagues as with one', async () => {
+  it('sends the same statements to cancel an event with three contests across two leagues as with one', async () => {
     const one = await openContestsOnScheduledEvent({ contests: 1 });
     const three = await openContestsOnScheduledEvent({ contests: 3 });
 
-    const withOne = await measureRequest(postpone(one));
-    const withThree = await measureRequest(postpone(three));
+    const withOne = await measureRequest(cancel(one));
+    const withThree = await measureRequest(cancel(three));
 
     expect([withOne.response.statusCode, withThree.response.statusCode]).toEqual([200, 200]);
     expect(requestCounts(withThree.statements)).toEqual(requestCounts(withOne.statements));

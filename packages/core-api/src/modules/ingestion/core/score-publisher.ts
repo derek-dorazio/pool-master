@@ -144,7 +144,7 @@ export async function publishLiveScoreUpdate(
 
   // A live score is accepted while its event is scheduled or in progress (#2013): the feed's first
   // score is what starts a Match, its slot and then the event, so a scheduled event takes it. A
-  // draft is not released, a postponed one waits on its new date, and a finished one is settled.
+  // draft is not released, and a finished one is settled.
   if (!LIVE_SCORE_EVENT_STATUSES.includes(sportEvent.status)) {
     deps.logger?.warn(
       {

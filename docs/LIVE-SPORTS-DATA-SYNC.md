@@ -306,7 +306,7 @@ For each provider event:
 
 | Status | Provider may change |
 |---|---|
-| `DRAFT`, `SCHEDULED`, `POSTPONED` | name, venue, start, end |
+| `DRAFT`, `SCHEDULED` | name, venue, start, end |
 | `IN_PROGRESS` | name, venue, end |
 | `COMPLETED`, `CANCELLED` | nothing |
 
@@ -661,7 +661,7 @@ cannot end level.
 status moves its Season slot, and the slots move the event, `SCHEDULED → IN_PROGRESS →
 COMPLETED`; settlement and emails follow as jobs. So a score is accepted for an event still
 `SCHEDULED` as well as one `IN_PROGRESS`: the feed's first score is what starts it. Scores for a
-draft, postponed or finished event are skipped (`liveScore.publish.eventNotInProgress`).
+draft or finished event are skipped (`liveScore.publish.eventNotInProgress`).
 `EventLifecycleScheduler` (every 5 minutes) only takes contests live at their cutoffs on the
 clock, and moves an event covering no slot on its start and end dates.
 

@@ -214,7 +214,7 @@ export function createEventHandlers({ services, eventLifecycle, ingestion, leade
 
     /**
      * Queues a provider sync of the event's field. 409 EVENT_NOT_LINKED for an event with no provider
-     * link, 422 EVENT_SYNC_KIND_UNAVAILABLE for a postponed or cancelled event (#2238).
+     * link, 422 EVENT_SYNC_KIND_UNAVAILABLE for a cancelled event (#2238).
      */
     // The Sync now reads the event and refuses one it cannot sync (#2009): unknown, unlinked, or
     // in a status no field sync runs in.

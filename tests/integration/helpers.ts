@@ -427,7 +427,6 @@ async function buildTestApp(prisma: PrismaClient): Promise<FastifyInstance> {
     CONTEST_REOPENED_EMAILS: (payload) => contestEmailJobs.contestReopened(payload),
     SETTLE_SPORT_EVENT_CONTESTS: (payload) => eventLifecycleService.settleFinishedEventContests(payload),
     ACTIVATE_EVENT_CONTESTS: (payload) => eventLifecycleService.activateEventContests(payload),
-    FOLLOW_POSTPONED_EVENT_CONTESTS: (payload) => eventLifecycleService.followPostponedEventContests(payload),
     SETTLE_GAME_CONTESTS: (payload) => eventLifecycleService.settleFinishedGameContests(payload),
     REBUILD_LEADERBOARDS: async (payload) => ({ changedCount: await leaderboardRebuilder.rebuildLeaderboardSnapshots(leaderboardChangesOf(payload)) }),
     RESOLVE_MAPPED_PARTICIPANT_FINDINGS: resolveMappedParticipantFindingsJobHandler(integrationSyncFindings(prisma)),

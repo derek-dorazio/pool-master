@@ -168,7 +168,10 @@
     "teamAffiliation": "#2025 (21 part A): a player's team and position are their roster row's (SportLeagueSeasonParticipantTeam); a team's abbreviation is a Participant column",
     "participantAffiliation": "#2025 (21 part A): a player's team and position are their roster row's (SportLeagueSeasonParticipantTeam); a team's abbreviation is a Participant column",
     "pickAffiliation": "#2025 (21 part A): a player's team and position are their roster row's (SportLeagueSeasonParticipantTeam); a team's abbreviation is a Participant column",
-    "ParticipantRoundStatus": "#2008 (10b part 4e): a round's progress is its Game side's GameSideStatus (null while playing); the cut is the standing's ELIMINATED, sent as missedCut"
+    "SportEventStatus.POSTPONED": "#2013 (14): postponement is the Game's MatchStatus.POSTPONED",
+    "FOLLOW_POSTPONED_EVENT_CONTESTS": "#2013 (14): no event-level postponement to follow",
+    "followPostponedEventContests": "#2013 (14): no event-level postponement to follow",
+    "tellLeaguesEventPostponedHandler": "#2013 (14): no event-level postponement to tell"
   },
   "ROUND_NAMES_FROM_FINAL": 0,
   "roundLabel": 0,
@@ -336,5 +339,9 @@
   "ContestSelectionConfig": 0,
   "teamAffiliation": 0,
   "participantAffiliation": 0,
-  "pickAffiliation": 0
+  "pickAffiliation": 0,
+  "SportEventStatus.POSTPONED": 0,
+  "FOLLOW_POSTPONED_EVENT_CONTESTS": 0,
+  "followPostponedEventContests": 0,
+  "tellLeaguesEventPostponedHandler": 0
 }

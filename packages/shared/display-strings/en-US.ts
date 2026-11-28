@@ -241,7 +241,6 @@ export const enUS = {
       IN_PROGRESS: 'In progress',
       COMPLETED: 'Completed',
       CANCELLED: 'Cancelled',
-      POSTPONED: 'Postponed',
     },
     ContestOpening: {
       OPEN: 'Open',
@@ -772,7 +771,6 @@ export const enUS = {
       RELEASE_SPORT_EVENT: 'Release check',
       SYNC_EVENT_GAMES_AND_TIERS: 'Games, tiers and prices',
       ACTIVATE_EVENT_CONTESTS: 'Contests go live',
-      FOLLOW_POSTPONED_EVENT_CONTESTS: 'Postponed event contests',
       RESOLVE_MAPPED_PARTICIPANT_FINDINGS: 'Mapped participant findings',
       REFRESH_SLOT_TIEBREAKERS: 'Tiebreaker games',
       SYNC_LEAGUE_ROSTER: 'Roster',

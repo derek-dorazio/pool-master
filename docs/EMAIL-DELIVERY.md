@@ -185,7 +185,7 @@ The member contest emails (#1070) use the same pieces:
   strip: a small crop of the sport's picture beside the band. The reminder adds a big countdown
   ("3 hours", "2 days") and the contest card with how many entries are in so far. The standings
   strip names the contest and its entry count; a moved event's strip gives the new start, and a
-  postponed or cancelled one's gives none.
+  cancelled one's gives none.
 - **Final results** open with a trophy band naming the winner ("Green Jackets wins", or every
   winner on a tie) with the winners' squads and the winning score.
 - Standings and final results put the reader's best placed entry in a gold callout ("3rd", or
@@ -605,26 +605,27 @@ event cancelled email, so a member
 who turned off Contest updates still hears it ended.
 
 Event changed emails (`CONTEST_EVENT_CHANGED`, #845 C6 and C7) are queued when an event goes
-`POSTPONED` or `CANCELLED` (a root admin's transition, or the lifecycle scheduler), and when a
-root admin moves the start of a released (`SCHEDULED` or `POSTPONED`) event. Each open or live
+`CANCELLED` (a root admin's transition, or its slots all cancelled), and when the start of a
+released (`SCHEDULED`) event moves. A postponement is a Game's, from the feed (#2013), and sends no
+event changed email. Each open or live
 contest on the event (not a draft one, nor a live one the change reopens, below) tells its league's active commissioners and the
 members owning an entry submitted for any of its events, one email per contest. The change
 only decides which contests are told and writes one `CONTEST_EVENT_CHANGED_EMAILS` background
 job per contest, in one insert (#1458); each job builds its contest's emails seconds later,
 outside the request, so an event on hundreds of contests costs the admin's click two queries. When the
 event's picks are still open (the contest takes picks, isn't drawn, and the event hasn't reached
-its start), a postponed or moved event's email says they stay open until it starts; an event
-postponed after its start says the contest carries on when it resumes. A moved event's email
+its start), a moved event's email says they stay open until the new start. A moved event's email
 gives its old and new start. A cancelled event counts for nothing; a contest it leaves with no
 event to play (its only one, or the last not already cancelled) is not told, since it ends with
 no scores and its final results email says why. Which
 contests a cancellation tells is decided before the event's contests settle. The
-idempotency key names the change and the start it leaves (a move, both starts), so a second
-postponement or a move back to an earlier new date is told again.
+idempotency key names the change and the start it leaves (a move, both starts), so a move back to
+an earlier new date is told again.
 
 Event postponed, picks are open again (`CONTEST_REOPENED`, #1808, #1910) goes when a postponement takes a live contest
-back to `OPEN` because its event's start is ahead again (#1792): on the postponement itself, or
-at the lifecycle sweep after an edit moves the start out. The guarded write that reopens the
+back to `OPEN` because its event's start is ahead again (#1792). Nothing reopens a contest while
+event-level `POSTPONED` is gone (#2013): #2015 reopens one whose cutoff moves back past now, and
+sends this email from the same write. The guarded write that reopens the
 contests writes one `CONTEST_REOPENED_EMAILS` job per contest it moved, as going live writes
 "Contest is live". The job tells every active league member, entered or not, in one email, that the event was
 postponed to its new day and the contest is open again, when picks close and a link to the
@@ -635,8 +636,7 @@ idempotency key is the contest, the event and the start it reopened to, so a sec
 postponement to a later start tells the league again. It is the only email about that change
 for the contests it reopens: the postponement, or the postponed event's moved start, writes no
 event changed job for them (#1910). Which contests reopen is decided once, in
-`EventLifecycleService`, for both. A contest that was still open when the event was postponed
-reopens nothing, so it gets "Event postponed" as before.
+`EventLifecycleService`, for both.
 
 Commissioner event emails (#845 C1, C2 and C4) are the third kind of clock-driven email,
 in the Commissioner updates category:
