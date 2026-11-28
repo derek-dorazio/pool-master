@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { SportLeaguePhaseDefinitionDto } from '@/lib/api';
-import { competitionCodesText, mappingText, periodsText, phaseSlotCount, positionCodeText, seriesText, slotRowsOf } from './league-structure-rows';
+import { competitionCodesText, mappingText, periodsText, phaseSlotCount, providerCodeText, seriesText, slotRowsOf } from './league-structure-rows';
 
 // The Structure tab's words for a slot (#2002): its name, series and provider mappings.
 
@@ -18,7 +18,7 @@ describe('league structure rows', () => {
   });
 
   it('writes a position\'s provider code as its provider and league, then the code the feed sends', () => {
-    expect(positionCodeText({ provider: 'BALLDONTLIE', providerLeagueCode: 'nfl', providerLeagueName: 'NFL', providerCode: 'QB' })).toBe('BALLDONTLIE nfl · QB');
+    expect(providerCodeText({ provider: 'BALLDONTLIE', providerLeagueCode: 'nfl', providerLeagueName: 'NFL', providerCode: 'QB' })).toBe('BALLDONTLIE nfl · QB');
   });
 
   it('says what a game is played in with how many, and that a game kept by no period has none', () => {
@@ -34,11 +34,11 @@ describe('league structure rows', () => {
       matchFormat: 'HEAD_TO_HEAD', canEndTied: false, periodUnit: 'QUARTER', periodCount: 4, providerMappings: [],
     };
     const phases: SportLeaguePhaseDefinitionDto[] = [
-      { id: 'a', phase: 'REGULAR', isSynced: true, competitions: [{ id: 'ca', code: 'REGULAR', orderIndex: 1, slots: [] }] },
+      { id: 'a', phase: 'REGULAR', isSynced: true, competitions: [{ id: 'ca', code: 'REGULAR', orderIndex: 1, conferenceId: null, slots: [] }] },
       {
         id: 'b', phase: 'POSTSEASON', isSynced: true, competitions: [
-          { id: 'cb', code: 'BOWLS', orderIndex: 1, slots: [{ ...final, id: 'bowl', key: 'BOWL' }] },
-          { id: 'cc', code: 'CFP', orderIndex: 2, slots: [final] },
+          { id: 'cb', code: 'BOWLS', orderIndex: 1, conferenceId: null, slots: [{ ...final, id: 'bowl', key: 'BOWL' }] },
+          { id: 'cc', code: 'CFP', orderIndex: 2, conferenceId: null, slots: [final] },
         ],
       },
     ];

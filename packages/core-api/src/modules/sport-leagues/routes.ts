@@ -209,6 +209,21 @@ export function sportLeaguesModule(fastify: FastifyInstance, opts: SportLeaguesM
     handler: handler.listPositions,
   });
 
+  fastify.get('/:sportLeagueId/conferences', {
+    onRequest: requireRootAdmin,
+    schema: {
+      tags: TAGS,
+      summary: 'List a sport league\'s conferences and divisions with their provider codes',
+      description: 'The League page\'s Structure tab (#2052): every conference of the sport league, by display order, never paged, '
+        + 'each with its divisions and each provider\'s codes for both. Set by migration; read-only. Which conference a team is in is '
+        + 'kept per Season by the events sync. Read in a fixed number of queries. Root admin only.',
+      operationId: 'listSportLeagueConferences',
+      params: SPORT_LEAGUE_PARAMS,
+      response: { 200: schemaRef('SportLeagueConferenceListResponse'), ...errors(401, 403, 404) },
+    },
+    handler: handler.listConferences,
+  });
+
   fastify.get('/:sportLeagueId/structure', {
     onRequest: requireRootAdmin,
     schema: {
