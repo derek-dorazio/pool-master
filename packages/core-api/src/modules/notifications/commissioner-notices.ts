@@ -524,6 +524,8 @@ export class CommissionerNotices implements DueNotifications {
     }
     const closing = ruled.flatMap(({ contest, first, rules }) => {
       const closesAt = contestClosesAtGiven(contest, rules, first, gamesByEvent.get(first.id) ?? []);
+      // A draft whose slot is not scheduled yet has no close to warn of.
+      if (closesAt === null) return [];
       const closesIn = closesAt.getTime() - now.getTime();
       return closesIn > 0 && closesIn <= NOT_OPEN_MS ? [{ contest, closesAt }] : [];
     });

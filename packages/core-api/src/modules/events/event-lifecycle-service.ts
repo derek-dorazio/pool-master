@@ -121,6 +121,9 @@ const REOPENABLE: readonly ContestStatus[] = [ContestStatus.ACTIVE];
 /** The live contests a postponed event takes back to OPEN, by the start (epoch ms) each reopens to. */
 type ReopenPlan = ReadonlyMap<number, readonly string[]>;
 
+/** The statuses an event's contests may go live in: under way, done, or scheduled with a slot under way (#2013). */
+const ACTIVATABLE_EVENT_STATUSES: readonly SportEventStatus[] = [SportEventStatus.SCHEDULED, SportEventStatus.IN_PROGRESS, SportEventStatus.COMPLETED];
+
 /** The contests a reopen plan moves (#1910). */
 function reopeningIdsOf(plan: ReopenPlan): Set<string> {
   return new Set([...plan.values()].flat());
@@ -322,15 +325,16 @@ export class EventLifecycleService {
   }
 
   /**
-   * The ACTIVATE_EVENT_CONTESTS job (#1952): an event that started takes its contests live at
-   * their cutoffs. It reads the event again: one gone, or moved back before its start (postponed,
-   * scheduled again, cancelled), starts nothing here; a postponed one's own job and the lifecycle
-   * sweep follow it. One already completed did start, so its contests still go live first, as they
-   * would have inline. A retry finds the contests already live and moves none.
+   * The ACTIVATE_EVENT_CONTESTS job (#1952): an event, or a slot of it (#2013), that started takes
+   * its contests live at their cutoffs. It reads the event again: one gone, postponed or cancelled
+   * starts nothing here; a postponed one's own job and the lifecycle sweep follow it. A scheduled
+   * one may have a slot under way before its own status follows, and each contest's window says
+   * whether it has started. One already completed did start, so its contests still go live first,
+   * as they would have inline. A retry finds the contests already live and moves none.
    */
   async activateEventContests(payload: EventContestsJobPayload): Promise<BackgroundJobOutcome> {
     const sportEvent = await this.sportEvents.findById(payload.sportEventId);
-    if (!sportEvent || (sportEvent.status !== SportEventStatus.IN_PROGRESS && sportEvent.status !== SportEventStatus.COMPLETED)) {
+    if (!sportEvent || !ACTIVATABLE_EVENT_STATUSES.includes(sportEvent.status)) {
       this.logger?.info(
         { action: 'events.activateContests.skipped', data: { sportEventId: payload.sportEventId, status: sportEvent?.status ?? null } },
         'Skipped taking an event\'s contests live because the event is gone or no longer under way',
@@ -444,16 +448,17 @@ export class EventLifecycleService {
     // (#1199), since an NFL Sunday can start hundreds of contests on one event.
     const dueByStart = new Map<number, Array<{ contest: Contest; cutoff: ContestCutoffKind }>>();
     for (const contest of candidates) {
-      const cutoff = contest.selectionType === SelectionType.SQUARES
-        ? contestCutoff(configJsonByContest.get(contest.id), contest.squaresGame)
-        : { kind: ContestCutoffKind.EVENT_START } as const;
-      const window: EventTiming = cutoff.kind === ContestCutoffKind.EVENT_START
-        ? sportEvent
-        : cutoffTiming(cutoff, sportEvent, games ??= await this.contestDeps.matches.findBySportEvent(sportEvent.id));
+      const cutoff = contestCutoff(contest.selectionType === SelectionType.SQUARES ? configJsonByContest.get(contest.id) : undefined, contest);
+      const window: EventTiming = cutoffTiming(
+        cutoff,
+        sportEvent,
+        cutoff.kind === ContestCutoffKind.GAME_START ? games ??= await this.contestDeps.matches.findBySportEvent(sportEvent.id) : [],
+      );
       if (!hasSportEventStarted(window, now)) {
         continue;
       }
-      const startsAt = window.startDate.getTime();
+      // A window that started with no start yet (its slot under way before the sync scheduled it) starts now.
+      const startsAt = (window.startDate ?? now).getTime();
       dueByStart.set(startsAt, [...(dueByStart.get(startsAt) ?? []), { contest, cutoff: cutoff.kind }]);
     }
 

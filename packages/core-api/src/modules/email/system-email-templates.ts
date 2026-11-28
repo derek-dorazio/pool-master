@@ -84,8 +84,8 @@ export interface LineupReceipt {
   tiers: ContestEntryCompletedTierSelection[];
   /** A budget roster's total price against the salary cap. */
   budget?: { spent: number; salaryCap: number };
-  /** When the event's picks close; until then the entry's owners can still change it. */
-  changeUntil: Date;
+  /** When the event's picks close; until then the entry's owners can still change it. Null while the round it covers is not scheduled yet. */
+  changeUntil: Date | null;
 }
 
 /** One game of a pick'em week as a receipt lists it. */
@@ -109,8 +109,8 @@ export interface BracketReceipt {
   eventName: string;
   /** The last rounds, the final first: "Championship: Duke", "Final Four: Duke, Houston". */
   rounds: Array<{ name: string; picks: string[] }>;
-  /** When the bracket's picks lock: its event's start. */
-  changeUntil: Date;
+  /** When the bracket's picks lock: its first game's start; null while that is not scheduled yet. */
+  changeUntil: Date | null;
 }
 
 export interface SurvivorPickLine {
@@ -197,8 +197,8 @@ export interface ContestOpenedEmailData {
   rules: string;
   /** "1 entry per member". */
   entriesPerMember: string;
-  /** When the first event's picks close. */
-  closesAt: Date;
+  /** When the first event's picks close; null while the round it covers is not scheduled yet (#2013). */
+  closesAt: Date | null;
   contestUrl: string;
 }
 
@@ -1426,7 +1426,9 @@ function entryReceiptContent(receipt: EntryReceipt, dates: EmailDateStyle): {
               : [['Salary', `${formatDollars(receipt.budget.spent)} of ${formatDollars(receipt.budget.salaryCap)}`] as [string, string]]),
           ],
         }],
-        changeLine: `You can change your picks until ${formatDay(receipt.changeUntil, dates)}.`,
+        changeLine: receipt.changeUntil === null
+          ? 'You can change your picks until the first game starts.'
+          : `You can change your picks until ${formatDay(receipt.changeUntil, dates)}.`,
       };
     case EntryReceiptKind.GAME_PICKS:
       return {
@@ -1445,7 +1447,9 @@ function entryReceiptContent(receipt: EntryReceipt, dates: EmailDateStyle): {
           title: `${receipt.eventName} bracket`,
           rows: receipt.rounds.map((round): [string, string] => [round.name, round.picks.join(', ')]),
         }],
-        changeLine: `You can change your bracket until ${formatDay(receipt.changeUntil, dates)}.`,
+        changeLine: receipt.changeUntil === null
+          ? 'You can change your bracket until the first game starts.'
+          : `You can change your bracket until ${formatDay(receipt.changeUntil, dates)}.`,
       };
     case EntryReceiptKind.SURVIVOR:
       return {
@@ -1575,8 +1579,9 @@ function renderContestOpenedEmail(
   context: EmailRenderContext,
 ): SystemEmailMessage {
   const subject = `New contest: ${data.contestName}`;
-  // When picks close, to the minute: an entry made the evening before a start is still in time.
-  const closesLine = formatInstant(data.closesAt, context);
+  // When picks close, to the minute: an entry made the evening before a start is still in time. A
+  // round not scheduled yet closes at its first game, whenever that is.
+  const closesLine = data.closesAt === null ? 'When the first game starts' : formatInstant(data.closesAt, context);
   const closesLabel = data.events.length === 1 ? 'Picks close' : 'First picks close';
   const intro = `${data.contestName} is open in ${data.leagueName}.`;
   // A season's events after the first, which the header doesn't name.
@@ -1605,7 +1610,7 @@ function renderContestOpenedEmail(
   return buildMessage(context, {
     templateKey: 'CONTEST_OPENED',
     subject,
-    preheader: `${data.contestName} is open. ${closesLabel} ${closesLine}.`,
+    preheader: `${data.contestName} is open. ${closesLabel} ${data.closesAt === null ? 'when the first game starts' : closesLine}.`,
     title: 'New contest open',
     leagueName: data.leagueName,
     eventHeader: data.event,

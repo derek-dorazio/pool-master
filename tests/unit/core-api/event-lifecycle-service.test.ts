@@ -5,6 +5,7 @@ import {
   ContestStatus,
   MatchStatus,
   SPORT_EVENT_STATUS_TRANSITIONS,
+  SeasonSlotStatus,
   SelectionType,
   SportEventStatus,
   type Contest,
@@ -22,7 +23,7 @@ import type { SportEventChangedNotice } from '../../../packages/core-api/src/mod
 import { eventChangedJob, recordingSportEventChangedNotice } from '../../support/sport-event-changed-notice';
 import { BackgroundJobQueue } from '../../../packages/core-api/src/modules/background-jobs';
 import { inMemoryBackgroundJobs, TEST_JOB_START, testCurrentJobStart } from '../../support/in-memory-background-jobs';
-import { buildContest } from '../../factories';
+import { buildContest, buildCoveredSlot } from '../../factories';
 import { InMemorySportEvents } from '../../support/in-memory-sport-events';
 import { fakeContestConfigurationRepo, fakeContestRepo } from '../../support/repo-fakes';
 import { expectDefined } from '../../support/expect-defined';
@@ -700,8 +701,8 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
 });
 
 describe('EventLifecycleService — the job that takes an event\'s contests live (#1952)', () => {
-  it('takes no contest live once the event has moved back before its start, or is gone, and still does for one already completed', async () => {
-    for (const status of [SportEventStatus.SCHEDULED, SportEventStatus.POSTPONED, SportEventStatus.CANCELLED]) {
+  it('takes no contest live once the event is postponed, cancelled or gone, and still does for one already completed', async () => {
+    for (const status of [SportEventStatus.POSTPONED, SportEventStatus.CANCELLED]) {
       const { sportEvents } = seededEvents({ status });
       const contests = contestDeps({ startedContest: true });
 
@@ -714,6 +715,24 @@ describe('EventLifecycleService — the job that takes an event\'s contests live
 
     const { sportEvents } = seededEvents({ status: SportEventStatus.COMPLETED });
     expect(await lifecycleService(contestDeps({ startedContest: true }), sportEvents, fakeLogger()).activateEventContests({ sportEventId: 'sport-event-1' })).toEqual({ changedCount: 1 });
+  });
+
+  it('takes a scheduled event\'s contest live once the slot it covers is under way, before the event\'s own status follows, and none whose slot is still to start (#2013)', async () => {
+    const later = new Date(Date.now() + 7 * 24 * 60 * 60_000);
+    const { sportEvents } = seededEvents({ status: SportEventStatus.SCHEDULED, startDate: later });
+    const onSlot = (status: SeasonSlotStatus) => buildContest({
+      ...STARTED_CONTEST,
+      coveredSlots: [buildCoveredSlot({ sportEventId: 'sport-event-1', status, startsAt: later })],
+    });
+    const contests = (status: SeasonSlotStatus) => {
+      const deps = contestDeps({ startedContest: true });
+      jest.mocked(deps.contests.findBySportEvent).mockResolvedValue([onSlot(status)]);
+      return deps;
+    };
+
+    const waiting = contests(SeasonSlotStatus.SCHEDULED);
+    expect(await lifecycleService(waiting, sportEvents, fakeLogger()).activateEventContests({ sportEventId: 'sport-event-1' })).toEqual({ changedCount: 0 });
+    expect(await lifecycleService(contests(SeasonSlotStatus.IN_PROGRESS), sportEvents, fakeLogger()).activateEventContests({ sportEventId: 'sport-event-1' })).toEqual({ changedCount: 1 });
   });
 });
 

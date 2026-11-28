@@ -9,7 +9,7 @@
  */
 
 import { z } from 'zod';
-import { BackgroundJobType, SportEventStatus, type BackgroundJobRequest } from '@poolmaster/shared/domain';
+import { BackgroundJobType, SeasonSlotStatus, SportEventStatus, type BackgroundJobRequest } from '@poolmaster/shared/domain';
 import type { BackgroundJobQueue } from '../background-jobs/background-job-queue';
 import type { DomainEventType } from '../domain-events/domain-event';
 import type { DomainEventHandler } from '../domain-events/domain-event-handler';
@@ -37,6 +37,18 @@ export const activateEventContestsHandler: DomainEventHandler<typeof DomainEvent
   queues: [BackgroundJobType.ACTIVATE_EVENT_CONTESTS],
   when: (event) => event.to === SportEventStatus.IN_PROGRESS,
   jobs: (event, { queue }) => [eventContestsJob(queue, BackgroundJobType.ACTIVATE_EVENT_CONTESTS, event.sportEvent.id)],
+};
+
+/**
+ * A slot that starts takes the contests covering it live (#2013): a contest's cutoff is its first
+ * covered Game, so a contest on a later slot of an event already under way goes live when that slot
+ * starts, not when the event did. The same job as the event's start, deduplicated with it.
+ */
+export const activateSlotContestsHandler: DomainEventHandler<typeof DomainEventType.SEASON_SLOT_STATUS_CHANGED> = {
+  key: 'activate-slot-contests',
+  queues: [BackgroundJobType.ACTIVATE_EVENT_CONTESTS],
+  when: (event) => event.from === SeasonSlotStatus.SCHEDULED,
+  jobs: (event, { queue }) => [eventContestsJob(queue, BackgroundJobType.ACTIVATE_EVENT_CONTESTS, event.sportEventId)],
 };
 
 /**

@@ -15,7 +15,6 @@ import {
   type SportLeagueEvent,
   type SportEvent,
 } from '@poolmaster/shared/domain';
-import { ContestCutoffKind, type ContestCutoff } from '../contests/entry-window';
 import { evaluateEventOperationalState } from '../events/operational-timing';
 import type { ContestCreateSportEventReader, ContestCreateSportEventState } from './service';
 
@@ -24,7 +23,7 @@ export interface ContestOpeningSetup {
   selectionType: SelectionType;
 }
 
-export interface ContestOpeningReader extends Pick<ContestCreateSportEventReader, 'findById' | 'findCutoffTiming' | 'findBracketProblem'> {
+export interface ContestOpeningReader extends Pick<ContestCreateSportEventReader, 'findById' | 'findBracketProblem'> {
   /**
    * The soonest kickoff of the event's games that could still take a squares contest (not
    * cancelled, in a round of single games, not kicked off), or null when none is left.
@@ -63,12 +62,11 @@ export async function contestOpening(
     }
     closesAt = kickoff;
   } else {
-    const cutoff: ContestCutoff = { kind: ContestCutoffKind.EVENT_START };
-    const timing = await reader.findCutoffTiming(sportEvent, cutoff);
-    if (hasSportEventStarted(timing, now)) {
+    // A contest not made yet covers no slot so far: its window is the event's own.
+    if (hasSportEventStarted(sportEvent, now)) {
       return CLOSED;
     }
-    closesAt = timing.startDate;
+    closesAt = sportEvent.startDate;
   }
   const { readinessReasons } = evaluateEventOperationalState({
     status: sportEvent.status,
