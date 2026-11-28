@@ -649,6 +649,30 @@ describe('Championships › Year in review', () => {
     expect(screen.queryByTestId('year-review-ready')).not.toBeInTheDocument();
   });
 
+  it('shows no year in review before any year has closed, when the API names no year', async () => {
+    primeViewer(undefined, undefined, 'COMMISSIONER');
+    getYearReviewMock.mockResolvedValue(apiSuccess({ yearReview: { year: null, status: 'NOTHING_TO_SEND', sentAt: null, sentByName: null } }));
+
+    renderChampionships('/league/BIGDAWGS/championships/2026');
+
+    expect(await screen.findByTestId('championship')).toBeInTheDocument();
+    await waitFor(() => expect(getYearReviewMock).toHaveBeenCalled());
+    expect(screen.queryByTestId('year-review-ready')).not.toBeInTheDocument();
+  });
+
+  it('closes the send dialog without sending when the commissioner cancels, leaving the year in review ready', async () => {
+    primeViewer(undefined, undefined, 'COMMISSIONER');
+    getYearReviewMock.mockResolvedValue(apiSuccess({ yearReview: READY }));
+
+    renderChampionships('/league/BIGDAWGS/championships/2026');
+    fireEvent.click(await screen.findByTestId('year-review-send'));
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+
+    await waitFor(() => expect(screen.queryByTestId('year-review-dialog')).not.toBeInTheDocument());
+    expect(sendYearReviewMock).not.toHaveBeenCalled();
+    expect(screen.getByTestId('year-review-ready')).toBeInTheDocument();
+  });
+
   it('sends the year in review once the commissioner confirms, then says it is on its way', async () => {
     primeViewer(undefined, undefined, 'COMMISSIONER');
     getYearReviewMock.mockResolvedValue(apiSuccess({ yearReview: READY }));
