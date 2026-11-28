@@ -78,7 +78,7 @@ export class PrismaChampionshipRepository implements ChampionshipRepository {
       where: {
         leagueId,
         status: ContestStatus.COMPLETED,
-        ...('championshipYear' in filter ? { championshipYear: filter.championshipYear } : { id: { in: [...filter.contestIds] } }),
+        ...('championshipYear' in filter ? { championshipYear: filter.championshipYear, ...finishedSinceWhere(filter.finishedSince) } : { id: { in: [...filter.contestIds] } }),
       },
       select: {
         id: true,
@@ -170,4 +170,14 @@ export class PrismaChampionshipRepository implements ChampionshipRepository {
 function coveredDefinitions(definitions: (Parameters<typeof compareCoveredSlots>[0] & { id: string; name: string | null })[]): Pick<SeriesContest, 'slotDefinitionIds' | 'slotName'> {
   const inPlayOrder = [...definitions].sort(compareCoveredSlots);
   return { slotDefinitionIds: inPlayOrder.map((definition) => definition.id), slotName: inPlayOrder[0]?.name ?? null };
+}
+
+/**
+ * Went final at or after `since`: its end, or for a contest with no end its first settled finish,
+ * as the history list dates a contest.
+ */
+function finishedSinceWhere(since: Date | undefined) {
+  return since === undefined ? {} : {
+    OR: [{ endsAt: { gte: since } }, { endsAt: null, yearFinishes: { some: { settledAt: { gte: since } } } }],
+  };
 }

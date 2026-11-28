@@ -48,7 +48,7 @@ export class InMemoryChampionship implements ChampionshipRepository {
   async findFinalContests(leagueId: string, filter: FinalContestFilter): Promise<FinalContest[]> {
     return this.finalContests
       .filter((row) => row.leagueId === leagueId && ('championshipYear' in filter
-        ? row.contest.championshipYear === filter.championshipYear
+        ? row.contest.championshipYear === filter.championshipYear && wentFinalSince(row.contest, filter.finishedSince)
         : filter.contestIds.includes(row.contest.id)))
       .map((row) => row.contest);
   }
@@ -56,4 +56,9 @@ export class InMemoryChampionship implements ChampionshipRepository {
   async findSeriesContests(leagueId: string): Promise<SeriesContest[]> {
     return this.seriesContests.filter((row) => row.leagueId === leagueId).map((row) => row.contest);
   }
+}
+
+/** Ended at or after `since`; a contest with no end is kept, for the service to date by its settlement. */
+function wentFinalSince(contest: FinalContest, since: Date | undefined): boolean {
+  return since === undefined || contest.completedAt === null || contest.completedAt >= since;
 }

@@ -57,7 +57,7 @@ export interface ContestResultFilter {
   finishOf?: string;
   /**
    * Only the contests that went final at or after this instant (#1782): League Home's last few
-   * days of finals, read without the rest of the year.
+   * days of finals. The contests and finishes are read only for that window, never the whole year.
    */
   finishedSince?: Date;
 }
@@ -405,7 +405,7 @@ export class HistoryService {
       .filter((finish) => finish.squadId === squadId && finish.weight !== CupWeight.NOT_COUNTED && (place === undefined || finish.place === place))
       .map((finish) => [finish.contestId, finish]));
     const [contests, squads] = await Promise.all([
-      this.deps.finishes.findFinalContests(leagueId, { championshipYear: year }),
+      this.deps.finishes.findFinalContests(leagueId, { championshipYear: year, ...(finishedSince === undefined ? {} : { finishedSince }) }),
       this.deps.squads.findByLeague(leagueId, true),
     ]);
     const squadById = new Map(squads.map((squad) => [squad.id, squad]));

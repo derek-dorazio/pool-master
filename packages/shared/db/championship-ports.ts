@@ -14,7 +14,11 @@ export interface FinalContest {
 }
 
 /** Which final contests to read (#2021): one championship year's, or those named. */
-export type FinalContestFilter = { championshipYear: number } | { contestIds: readonly string[] };
+/**
+ * Which final contests to read: a championship year's, optionally only those that went final at
+ * or after `finishedSince` (League Home's recent finals), or the listed contests.
+ */
+export type FinalContestFilter = { championshipYear: number; finishedSince?: Date } | { contestIds: readonly string[] };
 
 /**
  * A final contest of exactly one event (#874): what a perpetual trophy is built from. Until #2024

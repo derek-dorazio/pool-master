@@ -154,6 +154,18 @@ describe('PrismaChampionshipRepository (#863)', () => {
     await expect(repo.findFinalContests(randomUUID(), { championshipYear: 2025 })).resolves.toEqual([]);
   });
 
+  it('reads only the year\'s contests that went final at or after a moment when asked, so League Home\'s recent finals never read the whole year (#2021)', async () => {
+    const repo = new PrismaChampionshipRepository(getAppPrisma());
+    const { league, contest } = await seedLeague();
+    await contest('Masters', { endsAt: new Date('2026-04-13T22:00:00.000Z') });
+    await contest('Week 11', { endsAt: new Date('2026-11-15T05:00:00.000Z') });
+    await contest('Undated');
+
+    const recent = await repo.findFinalContests(league.id, { championshipYear: 2026, finishedSince: new Date('2026-11-14T12:00:00.000Z') });
+
+    expect(recent.map((row) => row.name)).toEqual(['Week 11']);
+  });
+
   it('reads the completed one-event contests with their series, event year and games counted: how many, over how many rounds, and how many send their winner on (#874, #1166)', async () => {
     const prisma = getPrisma();
     const repo = new PrismaChampionshipRepository(getAppPrisma());

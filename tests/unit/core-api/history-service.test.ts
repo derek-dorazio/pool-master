@@ -230,6 +230,17 @@ describe('HistoryService (#837)', () => {
     expect(recent.map((row) => row.contestId)).toEqual(['rained-out', 'week-11']);
   });
 
+  it('asks the store for only the contests gone final since the moment, so League Home\'s recent finals never read the whole year (#2021)', async () => {
+    const { finishes, service } = build();
+    const read = jest.spyOn(finishes, 'findFinalContests');
+    const since = new Date('2026-11-14T12:00:00.000Z');
+
+    await service.listYearContests(LEAGUE, 2026, { finishedSince: since });
+    await service.listYearContests(LEAGUE, 2026);
+
+    expect(read.mock.calls).toEqual([[LEAGUE, { championshipYear: 2026, finishedSince: since }], [LEAGUE, { championshipYear: 2026 }]]);
+  });
+
   it('keeps a contest in the year its finishes were written for when its end time was never kept, dated by its settlement', async () => {
     const { contest, finish, service } = build();
     contest('old-pool', null);
