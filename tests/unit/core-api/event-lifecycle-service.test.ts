@@ -514,6 +514,21 @@ describe('EventLifecycleService.applySportEventStatusTransition', () => {
     expect(settlement.settleFinishedSportEvent).toHaveBeenCalled();
   });
 
+  it('settles nothing, and logs a null status, when the job finds its event deleted', async () => {
+    const settlement = fakeSettlement();
+    const logger = fakeLogger();
+    const { sportEvents } = seededEvents({ status: SportEventStatus.COMPLETED });
+
+    await lifecycleService(contestDeps(), sportEvents, logger, startedJobs(), settlement)
+      .settleFinishedEventContests({ sportEventId: 'sport-event-gone', completedAt: new Date().toISOString() });
+
+    expect(settlement.settleFinishedSportEvent).not.toHaveBeenCalled();
+    expect(logger.warn).toHaveBeenCalledWith(
+      { action: 'events.settleContests.skipped', data: { sportEventId: 'sport-event-gone', status: null } },
+      expect.any(String),
+    );
+  });
+
   it('settles nothing, and says why, when the job finds the event moved back out of COMPLETED, since its next finish queues a job of its own', async () => {
     const settlement = fakeSettlement();
     const logger = fakeLogger();

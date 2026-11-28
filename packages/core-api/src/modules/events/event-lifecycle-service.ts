@@ -297,7 +297,7 @@ export class EventLifecycleService {
    * its contests go live as at any start. Nothing calls it while event-level POSTPONED is gone
    * (#2013): #2015 calls it again when a contest's cutoff moves back past now, and keeps its body.
    */
-  async followPostponedStart(sportEvent: SportEvent, now: Date = new Date()): Promise<number> {
+  async followPostponedStart(sportEvent: SportEvent, now: Date): Promise<number> {
     if (hasSportEventStarted(sportEvent, now)) {
       return this.activateContestsPastCutoff(sportEvent, now);
     }
@@ -327,7 +327,8 @@ export class EventLifecycleService {
   }
 
   /**
-   * The live contests on a postponed event that has not started which go back to OPEN (#1792),
+   * The live contests on a postponed event that has not started (its one caller,
+   * `followPostponedStart`, checks the start first) which go back to OPEN (#1792),
    * by the start each reopens to: those that close at the event's start and none of whose events
    * has started. A season contest whose earlier week was played stays live, and its postponed week
    * takes pick changes as any later week does. A squares contest closes at a game, and a contest
@@ -337,7 +338,6 @@ export class EventLifecycleService {
    */
   private async contestsToReopen(sportEvent: Pick<SportEvent, 'id' | 'startDate' | 'status'>, now: Date): Promise<ReopenPlan> {
     const dueByStart = new Map<number, string[]>();
-    if (hasSportEventStarted(sportEvent, now)) return dueByStart;
     const live = (await this.contestDeps.contests.findBySportEvent(sportEvent.id, { statuses: REOPENABLE }))
       .filter((contest) => contest.drawnAt === undefined && contest.selectionType !== SelectionType.SQUARES);
     if (live.length === 0) return dueByStart;
