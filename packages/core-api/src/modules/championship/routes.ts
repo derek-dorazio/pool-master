@@ -12,7 +12,7 @@ import { getAppPrisma } from '../../core/prisma-context';
 import { PrismaLeagueMembershipRepository } from '../../adapters';
 import { leagueFromPath, requireMemberOfLeague } from '../leagues/permissions';
 import { describePlanFeatureGate, requirePlanFeatures } from '../plans/plan-feature-gate';
-import type { PlanModuleOptions } from '../plans/routes';
+import type { YearGatedModuleOptions } from '../plans/routes';
 import { createChampionshipHandlers } from './handler';
 import { createChampionshipService } from './wiring';
 
@@ -27,7 +27,7 @@ const YEAR_PARAMS = {
   },
 } as const;
 
-export function championshipModule(fastify: FastifyInstance, opts: PlanModuleOptions): void {
+export function championshipModule(fastify: FastifyInstance, opts: YearGatedModuleOptions): void {
   void fastify.register(schemaComponentsPlugin);
 
   const prisma = getAppPrisma(fastify);
@@ -66,7 +66,7 @@ export function championshipModule(fastify: FastifyInstance, opts: PlanModuleOpt
       },
     },
     preHandler: [membersOnly, requirePlanFeatures(opts.planEntitlements, [PlanFeature.CHAMPIONSHIP], {
-      yearOf: (request) => (request.params as { year: number }).year,
+      year: { yearOf: (request) => (request.params as { year: number }).year, closedYears: opts.closedYears },
     })],
     handler: handlers.getChampionship,
   });

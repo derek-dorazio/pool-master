@@ -62,7 +62,7 @@ export function createHistoryHandlers(
     try {
       const view = await service.getSquadHistory(request.params.id, request.params.squadId);
       const { features } = await planEntitlements.forLeague(request.params.id);
-      return reply.send({ squadHistory: toSquadHistoryDto(squadHistoryInPlan(view, features, new Date())) });
+      return reply.send({ squadHistory: toSquadHistoryDto(squadHistoryInPlan(view, features)) });
     } catch (error) {
       if (error instanceof HistorySquadNotFoundError) {
         return sendError(reply, 404, error.code, error.message);

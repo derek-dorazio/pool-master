@@ -4,7 +4,7 @@
  * a higher plan shows them again (plans/monetization-strategy.md, *Moving to a lower plan*).
  */
 
-import { PlanFeature, championshipYear } from '@poolmaster/shared/domain';
+import { PlanFeature } from '@poolmaster/shared/domain';
 import type { SquadHistoryView, SquadYearView } from './service';
 
 /** A squad's year without the rows the plan hides: its championship row without CHAMPIONSHIP, its cup rows without CUP_STANDINGS. */
@@ -17,16 +17,16 @@ export function squadYearInPlan(view: SquadYearView, features: ReadonlySet<PlanF
 }
 
 /**
- * A squad's history without what the plan hides: its earlier years without PAST_YEARS, and each
+ * A squad's history without what the plan hides: its years that are over (closed, #2021) without
+ * PAST_YEARS, and each
  * year as `squadYearInPlan` leaves it. Its medals and trophies are the trophy shelf, which the
  * route itself requires.
  */
-export function squadHistoryInPlan(view: SquadHistoryView, features: ReadonlySet<PlanFeature>, now: Date): SquadHistoryView {
-  const currentYear = championshipYear(now);
+export function squadHistoryInPlan(view: SquadHistoryView, features: ReadonlySet<PlanFeature>): SquadHistoryView {
   return {
     ...view,
     years: view.years
-      .filter((year) => features.has(PlanFeature.PAST_YEARS) || year.year >= currentYear)
+      .filter((year) => features.has(PlanFeature.PAST_YEARS) || !year.isOver)
       .map((year) => squadYearInPlan(year, features)),
   };
 }

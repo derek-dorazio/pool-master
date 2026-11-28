@@ -1232,8 +1232,9 @@ contest can go final in it. Squads rank on points, then 1sts, then 2nds. The pur
 missing feature in `details.feature` and never a plan name, unless the league's plan has it:
 `CUP_STANDINGS` for the cup reads, `CUP_CROWNING` to crown, `CHAMPIONSHIP` for the championship,
 `TROPHY_SHELF` for perpetual trophies and a squad's history, `ALL_TIME_SUMMARY`, `RECORD_BOOK`,
-and `EMAIL_YEAR_IN_REVIEW` for the year in review. A year before the current one (US Eastern)
-also needs `PAST_YEARS`, and listing the years needs it outright. `CUP_SETTINGS` gates the
+and `EMAIL_YEAR_IN_REVIEW` for the year in review. A championship year the league has closed
+(#2021) also needs `PAST_YEARS`, while a year still open after New Year (an NFL year before its
+Super Bowl) does not, and listing the years needs it outright. `CUP_SETTINGS` gates the
 championship settings write and the contest cup weight, and changing `hallOfLameVisible` there
 needs `RECORD_BOOK`. A squad's year stays open, with its championship row null and its cup rows
 empty when the plan lacks them; a year's final contests always stay open. Root admins are held to

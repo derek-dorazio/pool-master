@@ -16,7 +16,7 @@ import { createHistoryHandlers } from './handler';
 import { createHistoryService, createYearReviewService } from './wiring';
 import type { MailModuleOptions } from '../email';
 import { describePlanFeatureGate, requirePlanFeatures } from '../plans/plan-feature-gate';
-import type { PlanModuleOptions } from '../plans/routes';
+import type { YearGatedModuleOptions } from '../plans/routes';
 
 const COMMISSIONERS_ONLY = 'Active commissioners only (root admins bypass).';
 
@@ -31,7 +31,7 @@ const YEAR_PARAMS = {
 
 const MEMBERS_ONLY = 'Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.';
 
-export function historyModule(fastify: FastifyInstance, opts: MailModuleOptions & PlanModuleOptions): void {
+export function historyModule(fastify: FastifyInstance, opts: MailModuleOptions & YearGatedModuleOptions): void {
   void fastify.register(schemaComponentsPlugin);
 
   const prisma = getAppPrisma(fastify);
@@ -161,7 +161,7 @@ export function historyModule(fastify: FastifyInstance, opts: MailModuleOptions 
       },
     },
     preHandler: [membersOnly, requirePlanFeatures(opts.planEntitlements, [], {
-      yearOf: (request) => (request.query as GetSquadYearQuery).year,
+      year: { yearOf: (request) => (request.query as GetSquadYearQuery).year, closedYears: opts.closedYears },
     })],
     handler: handlers.getSquadYear,
   });

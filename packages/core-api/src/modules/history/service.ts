@@ -129,7 +129,7 @@ export interface SquadCupView {
 export interface SquadYearView {
   squad: Squad;
   year: number;
-  /** True once the year has ended in US Eastern, whether or not the squad has a championship row. */
+  /** True once the league's year is closed (#2021), whether or not the squad has a championship row. */
   isOver: boolean;
   championship: SquadChampionshipView | null;
   cups: SquadCupView[];
