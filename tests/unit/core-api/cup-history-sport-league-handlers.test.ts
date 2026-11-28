@@ -292,7 +292,6 @@ describe('sport league handlers', () => {
       }]),
     },
     webhookProviderIds: () => [],
-    now: () => AT,
   });
   const handlers = buildSportLeagueHandlers(service as unknown as SportLeagueService, new ReadCache<SportLeagueListResponse>(60_000), overviews, page);
   const params = { sportLeagueId: 'sl1' };

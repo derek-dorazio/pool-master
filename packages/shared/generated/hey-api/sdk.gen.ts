@@ -1534,7 +1534,7 @@ export const listEventContests = <ThrowOnError extends boolean = false>(options:
 /**
  * Get an event's syncs, health, issues, release and tier order
  *
- * The root admin's Event page header and sync rows (#1889), by the League page's rules applied to one event: its field and scores syncs from its own latest runs, its sync health, its issues (SYNC, RELEASE, OVERDUE), its release mode and date, the value its active field is ordered by for tiers and prices, and each field row's feed id and when a sync last saw it. A fixed number of reads however large the field. Root admin only: 403 ROOT_ADMIN_ACCESS_REQUIRED otherwise. 404 EVENT_NOT_FOUND for an unknown event. More than 120 reads a minute from one address answer 429 EVENT_ADMIN_RATE_LIMITED.
+ * The root admin's Event page header and sync rows (#1889), by the League page's rules applied to one event: its field and scores syncs from its own latest runs, its sync health, its issues (SYNC, RELEASE), its release mode and date, the value its active field is ordered by for tiers and prices, and each field row's feed id and when a sync last saw it. A fixed number of reads however large the field. Root admin only: 403 ROOT_ADMIN_ACCESS_REQUIRED otherwise. 404 EVENT_NOT_FOUND for an unknown event. More than 120 reads a minute from one address answer 429 EVENT_ADMIN_RATE_LIMITED.
  */
 export const getEventOverview = <ThrowOnError extends boolean = false>(options: Options<GetEventOverviewData, ThrowOnError>): RequestResult<GetEventOverviewResponses, GetEventOverviewErrors, ThrowOnError> => (options.client ?? client).get<GetEventOverviewResponses, GetEventOverviewErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -2081,7 +2081,7 @@ export const listSportLeagueSeasons = <ThrowOnError extends boolean = false>(opt
 /**
  * List every event of a sport league with its release, field, issues and last sync
  *
- * The League page's Events grid (#1865): every event of the sport league, every year, never paged, by start. Each carries its release mode and date, its latest automatic release check, its field size, its own issues (SYNC, RELEASE, OVERDUE) and when a sync last ran on it. Read from a fixed number of grouped queries, however many events. Root admin only.
+ * The League page's Events grid (#1865): every event of the sport league, every year, never paged, by start. Each carries its release mode and date, its latest automatic release check, its field size, its own issues (SYNC, RELEASE) and when a sync last ran on it. Read from a fixed number of grouped queries, however many events. Root admin only.
  */
 export const listSportLeagueEventOverviews = <ThrowOnError extends boolean = false>(options: Options<ListSportLeagueEventOverviewsData, ThrowOnError>): RequestResult<ListSportLeagueEventOverviewsResponses, ListSportLeagueEventOverviewsErrors, ThrowOnError> => (options.client ?? client).get<ListSportLeagueEventOverviewsResponses, ListSportLeagueEventOverviewsErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],

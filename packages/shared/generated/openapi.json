@@ -23537,7 +23537,7 @@
                           "occurredAt": {
                             "type": "string",
                             "format": "date-time",
-                            "description": "When the run was written, the event was last checked, or an overdue event should have ended (how late it is runs from here)."
+                            "description": "When the run was written, or the event was last checked."
                           },
                           "target": {
                             "type": "object",
@@ -23621,7 +23621,7 @@
                           "occurredAt": {
                             "type": "string",
                             "format": "date-time",
-                            "description": "When the run was written, the event was last checked, or an overdue event should have ended (how late it is runs from here)."
+                            "description": "When the run was written, or the event was last checked."
                           },
                           "target": {
                             "type": "object",
@@ -23685,83 +23685,10 @@
                   ],
                   "additionalProperties": false,
                   "description": "Draft events held by a failed ready check."
-                },
-                {
-                  "type": "object",
-                  "properties": {
-                    "type": {
-                      "type": "string",
-                      "enum": [
-                        "OVERDUE"
-                      ]
-                    },
-                    "count": {
-                      "type": "integer",
-                      "minimum": 1,
-                      "maximum": 9007199254740991,
-                      "description": "How many released events are neither completed nor cancelled more than 4 hours after their last round or match should have ended. A never-released draft is never counted."
-                    },
-                    "items": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "label": {
-                            "type": "string",
-                            "description": "The item's name as data, never a sentence: a failed run's outcome summary as the sync history shows it (its sync kind when it has none), or an event's name."
-                          },
-                          "occurredAt": {
-                            "type": "string",
-                            "format": "date-time",
-                            "description": "When the run was written, the event was last checked, or an overdue event should have ended (how late it is runs from here)."
-                          },
-                          "target": {
-                            "type": "object",
-                            "properties": {
-                              "type": {
-                                "type": "string",
-                                "enum": [
-                                  "SYNC_RUN",
-                                  "SPORT_EVENT"
-                                ],
-                                "description": "What the item opens: SYNC_RUN a provider sync run on the run log, SPORT_EVENT an event's page."
-                              },
-                              "id": {
-                                "type": "string",
-                                "format": "uuid",
-                                "description": "The sync run's or event's id."
-                              }
-                            },
-                            "required": [
-                              "type",
-                              "id"
-                            ],
-                            "additionalProperties": false,
-                            "description": "What an issue item links to."
-                          }
-                        },
-                        "required": [
-                          "label",
-                          "occurredAt",
-                          "target"
-                        ],
-                        "additionalProperties": false,
-                        "description": "An event whose results are overdue; occurredAt is when it should have ended: its last round's scheduled end, or the last scheduled start plus the sport's typical play. Its target is the event."
-                      },
-                      "description": "Most overdue first."
-                    }
-                  },
-                  "required": [
-                    "type",
-                    "count",
-                    "items"
-                  ],
-                  "additionalProperties": false,
-                  "description": "Events whose results are still missing well after they should have ended."
                 }
               ]
             },
-            "description": "Only the types with something to do, always in the order FINDINGS, SYNC, RELEASE, OVERDUE. Empty when nothing needs attention."
+            "description": "Only the types with something to do, always in the order FINDINGS, SYNC, RELEASE. A Game whose result is overdue is a GAME_OVERDUE finding, counted under FINDINGS. Empty when nothing needs attention."
           },
           "season": {
             "description": "The first to last event of its event year under way now; between seasons, of the next one to start; with no next one known, of the latest one. Cancelled events are left out. Null while it has no events.",
@@ -23975,7 +23902,7 @@
                                 "occurredAt": {
                                   "type": "string",
                                   "format": "date-time",
-                                  "description": "When the run was written, the event was last checked, or an overdue event should have ended (how late it is runs from here)."
+                                  "description": "When the run was written, or the event was last checked."
                                 },
                                 "target": {
                                   "type": "object",
@@ -24059,7 +23986,7 @@
                                 "occurredAt": {
                                   "type": "string",
                                   "format": "date-time",
-                                  "description": "When the run was written, the event was last checked, or an overdue event should have ended (how late it is runs from here)."
+                                  "description": "When the run was written, or the event was last checked."
                                 },
                                 "target": {
                                   "type": "object",
@@ -24123,83 +24050,10 @@
                         ],
                         "additionalProperties": false,
                         "description": "Draft events held by a failed ready check."
-                      },
-                      {
-                        "type": "object",
-                        "properties": {
-                          "type": {
-                            "type": "string",
-                            "enum": [
-                              "OVERDUE"
-                            ]
-                          },
-                          "count": {
-                            "type": "integer",
-                            "minimum": 1,
-                            "maximum": 9007199254740991,
-                            "description": "How many released events are neither completed nor cancelled more than 4 hours after their last round or match should have ended. A never-released draft is never counted."
-                          },
-                          "items": {
-                            "type": "array",
-                            "items": {
-                              "type": "object",
-                              "properties": {
-                                "label": {
-                                  "type": "string",
-                                  "description": "The item's name as data, never a sentence: a failed run's outcome summary as the sync history shows it (its sync kind when it has none), or an event's name."
-                                },
-                                "occurredAt": {
-                                  "type": "string",
-                                  "format": "date-time",
-                                  "description": "When the run was written, the event was last checked, or an overdue event should have ended (how late it is runs from here)."
-                                },
-                                "target": {
-                                  "type": "object",
-                                  "properties": {
-                                    "type": {
-                                      "type": "string",
-                                      "enum": [
-                                        "SYNC_RUN",
-                                        "SPORT_EVENT"
-                                      ],
-                                      "description": "What the item opens: SYNC_RUN a provider sync run on the run log, SPORT_EVENT an event's page."
-                                    },
-                                    "id": {
-                                      "type": "string",
-                                      "format": "uuid",
-                                      "description": "The sync run's or event's id."
-                                    }
-                                  },
-                                  "required": [
-                                    "type",
-                                    "id"
-                                  ],
-                                  "additionalProperties": false,
-                                  "description": "What an issue item links to."
-                                }
-                              },
-                              "required": [
-                                "label",
-                                "occurredAt",
-                                "target"
-                              ],
-                              "additionalProperties": false,
-                              "description": "An event whose results are overdue; occurredAt is when it should have ended: its last round's scheduled end, or the last scheduled start plus the sport's typical play. Its target is the event."
-                            },
-                            "description": "Most overdue first."
-                          }
-                        },
-                        "required": [
-                          "type",
-                          "count",
-                          "items"
-                        ],
-                        "additionalProperties": false,
-                        "description": "Events whose results are still missing well after they should have ended."
                       }
                     ]
                   },
-                  "description": "Only the types with something to do, always in the order FINDINGS, SYNC, RELEASE, OVERDUE. Empty when nothing needs attention."
+                  "description": "Only the types with something to do, always in the order FINDINGS, SYNC, RELEASE. A Game whose result is overdue is a GAME_OVERDUE finding, counted under FINDINGS. Empty when nothing needs attention."
                 },
                 "season": {
                   "description": "The first to last event of its event year under way now; between seasons, of the next one to start; with no next one known, of the latest one. Cancelled events are left out. Null while it has no events.",
@@ -24693,7 +24547,7 @@
                           "occurredAt": {
                             "type": "string",
                             "format": "date-time",
-                            "description": "When the run was written, the event was last checked, or an overdue event should have ended (how late it is runs from here)."
+                            "description": "When the run was written, or the event was last checked."
                           },
                           "target": {
                             "type": "object",
@@ -24777,7 +24631,7 @@
                           "occurredAt": {
                             "type": "string",
                             "format": "date-time",
-                            "description": "When the run was written, the event was last checked, or an overdue event should have ended (how late it is runs from here)."
+                            "description": "When the run was written, or the event was last checked."
                           },
                           "target": {
                             "type": "object",
@@ -24841,83 +24695,10 @@
                   ],
                   "additionalProperties": false,
                   "description": "Draft events held by a failed ready check."
-                },
-                {
-                  "type": "object",
-                  "properties": {
-                    "type": {
-                      "type": "string",
-                      "enum": [
-                        "OVERDUE"
-                      ]
-                    },
-                    "count": {
-                      "type": "integer",
-                      "minimum": 1,
-                      "maximum": 9007199254740991,
-                      "description": "How many released events are neither completed nor cancelled more than 4 hours after their last round or match should have ended. A never-released draft is never counted."
-                    },
-                    "items": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "label": {
-                            "type": "string",
-                            "description": "The item's name as data, never a sentence: a failed run's outcome summary as the sync history shows it (its sync kind when it has none), or an event's name."
-                          },
-                          "occurredAt": {
-                            "type": "string",
-                            "format": "date-time",
-                            "description": "When the run was written, the event was last checked, or an overdue event should have ended (how late it is runs from here)."
-                          },
-                          "target": {
-                            "type": "object",
-                            "properties": {
-                              "type": {
-                                "type": "string",
-                                "enum": [
-                                  "SYNC_RUN",
-                                  "SPORT_EVENT"
-                                ],
-                                "description": "What the item opens: SYNC_RUN a provider sync run on the run log, SPORT_EVENT an event's page."
-                              },
-                              "id": {
-                                "type": "string",
-                                "format": "uuid",
-                                "description": "The sync run's or event's id."
-                              }
-                            },
-                            "required": [
-                              "type",
-                              "id"
-                            ],
-                            "additionalProperties": false,
-                            "description": "What an issue item links to."
-                          }
-                        },
-                        "required": [
-                          "label",
-                          "occurredAt",
-                          "target"
-                        ],
-                        "additionalProperties": false,
-                        "description": "An event whose results are overdue; occurredAt is when it should have ended: its last round's scheduled end, or the last scheduled start plus the sport's typical play. Its target is the event."
-                      },
-                      "description": "Most overdue first."
-                    }
-                  },
-                  "required": [
-                    "type",
-                    "count",
-                    "items"
-                  ],
-                  "additionalProperties": false,
-                  "description": "Events whose results are still missing well after they should have ended."
                 }
               ]
             },
-            "description": "The event's own issues, as the Sports page counts them, in the order SYNC (its latest field or scores run failed), RELEASE (its latest automatic check held it), OVERDUE (its results are missing). Empty when none."
+            "description": "The event's own issues, as the Sports page counts them, in the order SYNC (its latest field or scores run failed), RELEASE (its latest automatic check held it). Empty when none."
           },
           "lastSyncedAt": {
             "description": "When a sync last ran on it; null before any.",
@@ -25157,7 +24938,7 @@
                                 "occurredAt": {
                                   "type": "string",
                                   "format": "date-time",
-                                  "description": "When the run was written, the event was last checked, or an overdue event should have ended (how late it is runs from here)."
+                                  "description": "When the run was written, or the event was last checked."
                                 },
                                 "target": {
                                   "type": "object",
@@ -25241,7 +25022,7 @@
                                 "occurredAt": {
                                   "type": "string",
                                   "format": "date-time",
-                                  "description": "When the run was written, the event was last checked, or an overdue event should have ended (how late it is runs from here)."
+                                  "description": "When the run was written, or the event was last checked."
                                 },
                                 "target": {
                                   "type": "object",
@@ -25305,83 +25086,10 @@
                         ],
                         "additionalProperties": false,
                         "description": "Draft events held by a failed ready check."
-                      },
-                      {
-                        "type": "object",
-                        "properties": {
-                          "type": {
-                            "type": "string",
-                            "enum": [
-                              "OVERDUE"
-                            ]
-                          },
-                          "count": {
-                            "type": "integer",
-                            "minimum": 1,
-                            "maximum": 9007199254740991,
-                            "description": "How many released events are neither completed nor cancelled more than 4 hours after their last round or match should have ended. A never-released draft is never counted."
-                          },
-                          "items": {
-                            "type": "array",
-                            "items": {
-                              "type": "object",
-                              "properties": {
-                                "label": {
-                                  "type": "string",
-                                  "description": "The item's name as data, never a sentence: a failed run's outcome summary as the sync history shows it (its sync kind when it has none), or an event's name."
-                                },
-                                "occurredAt": {
-                                  "type": "string",
-                                  "format": "date-time",
-                                  "description": "When the run was written, the event was last checked, or an overdue event should have ended (how late it is runs from here)."
-                                },
-                                "target": {
-                                  "type": "object",
-                                  "properties": {
-                                    "type": {
-                                      "type": "string",
-                                      "enum": [
-                                        "SYNC_RUN",
-                                        "SPORT_EVENT"
-                                      ],
-                                      "description": "What the item opens: SYNC_RUN a provider sync run on the run log, SPORT_EVENT an event's page."
-                                    },
-                                    "id": {
-                                      "type": "string",
-                                      "format": "uuid",
-                                      "description": "The sync run's or event's id."
-                                    }
-                                  },
-                                  "required": [
-                                    "type",
-                                    "id"
-                                  ],
-                                  "additionalProperties": false,
-                                  "description": "What an issue item links to."
-                                }
-                              },
-                              "required": [
-                                "label",
-                                "occurredAt",
-                                "target"
-                              ],
-                              "additionalProperties": false,
-                              "description": "An event whose results are overdue; occurredAt is when it should have ended: its last round's scheduled end, or the last scheduled start plus the sport's typical play. Its target is the event."
-                            },
-                            "description": "Most overdue first."
-                          }
-                        },
-                        "required": [
-                          "type",
-                          "count",
-                          "items"
-                        ],
-                        "additionalProperties": false,
-                        "description": "Events whose results are still missing well after they should have ended."
                       }
                     ]
                   },
-                  "description": "The event's own issues, as the Sports page counts them, in the order SYNC (its latest field or scores run failed), RELEASE (its latest automatic check held it), OVERDUE (its results are missing). Empty when none."
+                  "description": "The event's own issues, as the Sports page counts them, in the order SYNC (its latest field or scores run failed), RELEASE (its latest automatic check held it). Empty when none."
                 },
                 "lastSyncedAt": {
                   "description": "When a sync last ran on it; null before any.",
@@ -25657,7 +25365,7 @@
                           "occurredAt": {
                             "type": "string",
                             "format": "date-time",
-                            "description": "When the run was written, the event was last checked, or an overdue event should have ended (how late it is runs from here)."
+                            "description": "When the run was written, or the event was last checked."
                           },
                           "target": {
                             "type": "object",
@@ -25741,7 +25449,7 @@
                           "occurredAt": {
                             "type": "string",
                             "format": "date-time",
-                            "description": "When the run was written, the event was last checked, or an overdue event should have ended (how late it is runs from here)."
+                            "description": "When the run was written, or the event was last checked."
                           },
                           "target": {
                             "type": "object",
@@ -25805,83 +25513,10 @@
                   ],
                   "additionalProperties": false,
                   "description": "Draft events held by a failed ready check."
-                },
-                {
-                  "type": "object",
-                  "properties": {
-                    "type": {
-                      "type": "string",
-                      "enum": [
-                        "OVERDUE"
-                      ]
-                    },
-                    "count": {
-                      "type": "integer",
-                      "minimum": 1,
-                      "maximum": 9007199254740991,
-                      "description": "How many released events are neither completed nor cancelled more than 4 hours after their last round or match should have ended. A never-released draft is never counted."
-                    },
-                    "items": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "label": {
-                            "type": "string",
-                            "description": "The item's name as data, never a sentence: a failed run's outcome summary as the sync history shows it (its sync kind when it has none), or an event's name."
-                          },
-                          "occurredAt": {
-                            "type": "string",
-                            "format": "date-time",
-                            "description": "When the run was written, the event was last checked, or an overdue event should have ended (how late it is runs from here)."
-                          },
-                          "target": {
-                            "type": "object",
-                            "properties": {
-                              "type": {
-                                "type": "string",
-                                "enum": [
-                                  "SYNC_RUN",
-                                  "SPORT_EVENT"
-                                ],
-                                "description": "What the item opens: SYNC_RUN a provider sync run on the run log, SPORT_EVENT an event's page."
-                              },
-                              "id": {
-                                "type": "string",
-                                "format": "uuid",
-                                "description": "The sync run's or event's id."
-                              }
-                            },
-                            "required": [
-                              "type",
-                              "id"
-                            ],
-                            "additionalProperties": false,
-                            "description": "What an issue item links to."
-                          }
-                        },
-                        "required": [
-                          "label",
-                          "occurredAt",
-                          "target"
-                        ],
-                        "additionalProperties": false,
-                        "description": "An event whose results are overdue; occurredAt is when it should have ended: its last round's scheduled end, or the last scheduled start plus the sport's typical play. Its target is the event."
-                      },
-                      "description": "Most overdue first."
-                    }
-                  },
-                  "required": [
-                    "type",
-                    "count",
-                    "items"
-                  ],
-                  "additionalProperties": false,
-                  "description": "Events whose results are still missing well after they should have ended."
                 }
               ]
             },
-            "description": "The event's own issues as its League page row has them, in the order SYNC, RELEASE, OVERDUE. Empty when none."
+            "description": "The event's own issues as its League page row has them, in the order SYNC, RELEASE. Empty when none."
           },
           "releaseMode": {
             "type": "string",
@@ -26209,7 +25844,7 @@
                               "occurredAt": {
                                 "type": "string",
                                 "format": "date-time",
-                                "description": "When the run was written, the event was last checked, or an overdue event should have ended (how late it is runs from here)."
+                                "description": "When the run was written, or the event was last checked."
                               },
                               "target": {
                                 "type": "object",
@@ -26293,7 +25928,7 @@
                               "occurredAt": {
                                 "type": "string",
                                 "format": "date-time",
-                                "description": "When the run was written, the event was last checked, or an overdue event should have ended (how late it is runs from here)."
+                                "description": "When the run was written, or the event was last checked."
                               },
                               "target": {
                                 "type": "object",
@@ -26357,83 +25992,10 @@
                       ],
                       "additionalProperties": false,
                       "description": "Draft events held by a failed ready check."
-                    },
-                    {
-                      "type": "object",
-                      "properties": {
-                        "type": {
-                          "type": "string",
-                          "enum": [
-                            "OVERDUE"
-                          ]
-                        },
-                        "count": {
-                          "type": "integer",
-                          "minimum": 1,
-                          "maximum": 9007199254740991,
-                          "description": "How many released events are neither completed nor cancelled more than 4 hours after their last round or match should have ended. A never-released draft is never counted."
-                        },
-                        "items": {
-                          "type": "array",
-                          "items": {
-                            "type": "object",
-                            "properties": {
-                              "label": {
-                                "type": "string",
-                                "description": "The item's name as data, never a sentence: a failed run's outcome summary as the sync history shows it (its sync kind when it has none), or an event's name."
-                              },
-                              "occurredAt": {
-                                "type": "string",
-                                "format": "date-time",
-                                "description": "When the run was written, the event was last checked, or an overdue event should have ended (how late it is runs from here)."
-                              },
-                              "target": {
-                                "type": "object",
-                                "properties": {
-                                  "type": {
-                                    "type": "string",
-                                    "enum": [
-                                      "SYNC_RUN",
-                                      "SPORT_EVENT"
-                                    ],
-                                    "description": "What the item opens: SYNC_RUN a provider sync run on the run log, SPORT_EVENT an event's page."
-                                  },
-                                  "id": {
-                                    "type": "string",
-                                    "format": "uuid",
-                                    "description": "The sync run's or event's id."
-                                  }
-                                },
-                                "required": [
-                                  "type",
-                                  "id"
-                                ],
-                                "additionalProperties": false,
-                                "description": "What an issue item links to."
-                              }
-                            },
-                            "required": [
-                              "label",
-                              "occurredAt",
-                              "target"
-                            ],
-                            "additionalProperties": false,
-                            "description": "An event whose results are overdue; occurredAt is when it should have ended: its last round's scheduled end, or the last scheduled start plus the sport's typical play. Its target is the event."
-                          },
-                          "description": "Most overdue first."
-                        }
-                      },
-                      "required": [
-                        "type",
-                        "count",
-                        "items"
-                      ],
-                      "additionalProperties": false,
-                      "description": "Events whose results are still missing well after they should have ended."
                     }
                   ]
                 },
-                "description": "The event's own issues as its League page row has them, in the order SYNC, RELEASE, OVERDUE. Empty when none."
+                "description": "The event's own issues as its League page row has them, in the order SYNC, RELEASE. Empty when none."
               },
               "releaseMode": {
                 "type": "string",
@@ -77256,7 +76818,7 @@
             "type": "integer",
             "minimum": 1,
             "maximum": 1440,
-            "description": "How long one of its games usually takes from its scheduled start, in minutes: a start plus this is when a game with no scheduled end should have ended, for the overdue results check."
+            "description": "How long one of its games usually takes from its scheduled start, in minutes: a Game's start plus this is when it should have ended, for the Game result overdue finding (GAME_OVERDUE)."
           },
           "isEnabled": {
             "type": "boolean",
@@ -77389,7 +76951,7 @@
                   "type": "integer",
                   "minimum": 1,
                   "maximum": 1440,
-                  "description": "How long one of its games usually takes from its scheduled start, in minutes: a start plus this is when a game with no scheduled end should have ended, for the overdue results check."
+                  "description": "How long one of its games usually takes from its scheduled start, in minutes: a Game's start plus this is when it should have ended, for the Game result overdue finding (GAME_OVERDUE)."
                 },
                 "isEnabled": {
                   "type": "boolean",
@@ -77616,7 +77178,7 @@
                       "type": "integer",
                       "minimum": 1,
                       "maximum": 1440,
-                      "description": "How long one of its games usually takes from its scheduled start, in minutes: a start plus this is when a game with no scheduled end should have ended, for the overdue results check."
+                      "description": "How long one of its games usually takes from its scheduled start, in minutes: a Game's start plus this is when it should have ended, for the Game result overdue finding (GAME_OVERDUE)."
                     },
                     "isEnabled": {
                       "type": "boolean",
@@ -77825,7 +77387,7 @@
                       "type": "integer",
                       "minimum": 1,
                       "maximum": 1440,
-                      "description": "How long one of its games usually takes from its scheduled start, in minutes: a start plus this is when a game with no scheduled end should have ended, for the overdue results check."
+                      "description": "How long one of its games usually takes from its scheduled start, in minutes: a Game's start plus this is when it should have ended, for the Game result overdue finding (GAME_OVERDUE)."
                     },
                     "isEnabled": {
                       "type": "boolean",
@@ -77948,7 +77510,7 @@
                 "type": "integer",
                 "minimum": 1,
                 "maximum": 1440,
-                "description": "How long one of its games usually takes from its scheduled start, in minutes: a start plus this is when a game with no scheduled end should have ended, for the overdue results check."
+                "description": "How long one of its games usually takes from its scheduled start, in minutes: a Game's start plus this is when it should have ended, for the Game result overdue finding (GAME_OVERDUE)."
               },
               "isEnabled": {
                 "type": "boolean",
@@ -78248,7 +77810,7 @@
                             "type": "integer",
                             "minimum": 1,
                             "maximum": 1440,
-                            "description": "How long one of its games usually takes from its scheduled start, in minutes: a start plus this is when a game with no scheduled end should have ended, for the overdue results check."
+                            "description": "How long one of its games usually takes from its scheduled start, in minutes: a Game's start plus this is when it should have ended, for the Game result overdue finding (GAME_OVERDUE)."
                           },
                           "isEnabled": {
                             "type": "boolean",
@@ -80355,7 +79917,8 @@
               "SYNC_FAILED",
               "CONFERENCE_UNMAPPED",
               "DIVISION_UNMAPPED",
-              "CONFERENCE_TEAMS_MISSING"
+              "CONFERENCE_TEAMS_MISSING",
+              "GAME_OVERDUE"
             ],
             "description": "What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here. PROVIDER_RATE_LIMITED: the Provider has rate limited every call for a while (WARNING after 15 minutes, ERROR after the league's quiet threshold); it resolves on the Provider's next answer. SLOT_NAME_UNMATCHED: a tournament whose normalized name (providerValue) no NAME_PATTERN mapping of the league matches, so it has no Season slot (INFO; LINK_SLOT adds the name as a pattern). SLOT_NAME_AMBIGUOUS: a tournament whose normalized name matches more than one slot, or one another tournament already has (ERROR). SLOT_SEASON_COMPETITION_MISSING: a tournament whose name matched a slot whose phase the Season does not have, so no Season slot could be made (ERROR). SYNC_FAILED: a sync run of the league (of the event, when it names one) ended FAILED, and no run of the same sync has completed since (ERROR, syncKind says which sync)."
           },
@@ -80762,7 +80325,8 @@
                     "SYNC_FAILED",
                     "CONFERENCE_UNMAPPED",
                     "DIVISION_UNMAPPED",
-                    "CONFERENCE_TEAMS_MISSING"
+                    "CONFERENCE_TEAMS_MISSING",
+                    "GAME_OVERDUE"
                   ],
                   "description": "What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here. PROVIDER_RATE_LIMITED: the Provider has rate limited every call for a while (WARNING after 15 minutes, ERROR after the league's quiet threshold); it resolves on the Provider's next answer. SLOT_NAME_UNMATCHED: a tournament whose normalized name (providerValue) no NAME_PATTERN mapping of the league matches, so it has no Season slot (INFO; LINK_SLOT adds the name as a pattern). SLOT_NAME_AMBIGUOUS: a tournament whose normalized name matches more than one slot, or one another tournament already has (ERROR). SLOT_SEASON_COMPETITION_MISSING: a tournament whose name matched a slot whose phase the Season does not have, so no Season slot could be made (ERROR). SYNC_FAILED: a sync run of the league (of the event, when it names one) ended FAILED, and no run of the same sync has completed since (ERROR, syncKind says which sync)."
                 },
@@ -81022,7 +80586,8 @@
                   "SYNC_FAILED",
                   "CONFERENCE_UNMAPPED",
                   "DIVISION_UNMAPPED",
-                  "CONFERENCE_TEAMS_MISSING"
+                  "CONFERENCE_TEAMS_MISSING",
+                  "GAME_OVERDUE"
                 ],
                 "description": "What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here. PROVIDER_RATE_LIMITED: the Provider has rate limited every call for a while (WARNING after 15 minutes, ERROR after the league's quiet threshold); it resolves on the Provider's next answer. SLOT_NAME_UNMATCHED: a tournament whose normalized name (providerValue) no NAME_PATTERN mapping of the league matches, so it has no Season slot (INFO; LINK_SLOT adds the name as a pattern). SLOT_NAME_AMBIGUOUS: a tournament whose normalized name matches more than one slot, or one another tournament already has (ERROR). SLOT_SEASON_COMPETITION_MISSING: a tournament whose name matched a slot whose phase the Season does not have, so no Season slot could be made (ERROR). SYNC_FAILED: a sync run of the league (of the event, when it names one) ended FAILED, and no run of the same sync has completed since (ERROR, syncKind says which sync)."
               },
@@ -91941,7 +91506,7 @@
         "tags": [
           "Events"
         ],
-        "description": "The root admin's Event page header and sync rows (#1889), by the League page's rules applied to one event: its field and scores syncs from its own latest runs, its sync health, its issues (SYNC, RELEASE, OVERDUE), its release mode and date, the value its active field is ordered by for tiers and prices, and each field row's feed id and when a sync last saw it. A fixed number of reads however large the field. Root admin only: 403 ROOT_ADMIN_ACCESS_REQUIRED otherwise. 404 EVENT_NOT_FOUND for an unknown event. More than 120 reads a minute from one address answer 429 EVENT_ADMIN_RATE_LIMITED.",
+        "description": "The root admin's Event page header and sync rows (#1889), by the League page's rules applied to one event: its field and scores syncs from its own latest runs, its sync health, its issues (SYNC, RELEASE), its release mode and date, the value its active field is ordered by for tiers and prices, and each field row's feed id and when a sync last saw it. A fixed number of reads however large the field. Root admin only: 403 ROOT_ADMIN_ACCESS_REQUIRED otherwise. 404 EVENT_NOT_FOUND for an unknown event. More than 120 reads a minute from one address answer 429 EVENT_ADMIN_RATE_LIMITED.",
         "parameters": [
           {
             "schema": {
@@ -95529,7 +95094,7 @@
         "tags": [
           "Sport leagues"
         ],
-        "description": "The League page's Events grid (#1865): every event of the sport league, every year, never paged, by start. Each carries its release mode and date, its latest automatic release check, its field size, its own issues (SYNC, RELEASE, OVERDUE) and when a sync last ran on it. Read from a fixed number of grouped queries, however many events. Root admin only.",
+        "description": "The League page's Events grid (#1865): every event of the sport league, every year, never paged, by start. Each carries its release mode and date, its latest automatic release check, its field size, its own issues (SYNC, RELEASE) and when a sync last ran on it. Read from a fixed number of grouped queries, however many events. Root admin only.",
         "parameters": [
           {
             "schema": {

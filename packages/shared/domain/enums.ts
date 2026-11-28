@@ -942,19 +942,13 @@ export const SportLeagueIssueType = {
   SYNC: 'SYNC',
   /** A draft event whose latest automatic release check held it. */
   RELEASE: 'RELEASE',
-  /**
-   * A released event still not completed or cancelled well after its last round or match should
-   * have ended (#1865): its results are missing. A never-released draft never is (#1908).
-   */
-  OVERDUE: 'OVERDUE',
 } as const;
 export type SportLeagueIssueType = (typeof SportLeagueIssueType)[keyof typeof SportLeagueIssueType];
-/** The fixed order the chips show in (#1847, #1865, #1999). */
+/** The fixed order the chips show in (#1847, #1999). A Game whose result is overdue is a GAME_OVERDUE finding (#2013). */
 export const SportLeagueIssueTypeOrder = explicitOrder<SportLeagueIssueType>({
   [SportLeagueIssueType.FINDINGS]: 0,
   [SportLeagueIssueType.SYNC]: 1,
   [SportLeagueIssueType.RELEASE]: 2,
-  [SportLeagueIssueType.OVERDUE]: 3,
 });
 
 /** How serious a sync finding is (#1999): an ERROR also raises the alarm when it opens. */
@@ -1165,6 +1159,14 @@ export const ProviderSyncFindingKind = {
    * Season, naming the slots.
    */
   CONFERENCE_TEAMS_MISSING: 'CONFERENCE_TEAMS_MISSING',
+  /**
+   * A Game is still scheduled or in progress more than the overdue wait after it should have ended
+   * (#2013): its scheduled start plus its provider league's typical game length (`gameOverdueExpectedEnd`).
+   * WARNING, since its result has not come from the feed. The sync tick raises it, once per overdue
+   * wait it stays so, and resolves it once the Game is no longer overdue: finished, cancelled,
+   * postponed or moved to another start. Subject: league, event, Provider and the provider's game id.
+   */
+  GAME_OVERDUE: 'GAME_OVERDUE',
 } as const;
 export type ProviderSyncFindingKind = (typeof ProviderSyncFindingKind)[keyof typeof ProviderSyncFindingKind];
 export const ProviderSyncFindingKindOrder = alphabeticalOrder('ProviderSyncFindingKind');

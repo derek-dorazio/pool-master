@@ -99,7 +99,8 @@ function buildScheduler(feed: { shiftDays: number; name?: string } = { shiftDays
     // No provider league is quiet-checked here: the quiet live scores finding has its own tests.
     quietAfterMs: () => 0,
     leagueSendsNotifications: () => true,
-    findings: { raiseOfSource: () => Promise.resolve() },
+    typicalGameMinutes: () => undefined,
+    findings: { raiseOfSource: () => Promise.resolve(), resolveGamesNoLongerOverdue: () => Promise.resolve(0) },
     jobLock: heldHere(),
     // A tick a day after the last, so each league's events sync is due again even off season,
     // whose default interval is the longest (these leagues' Seasons have not started).

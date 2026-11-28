@@ -46,12 +46,6 @@ export interface SportLeagueReleaseIssueItem extends SportLeagueIssueItemBase {
   failedChecks: ReleaseCheckKey[];
 }
 
-/**
- * An event whose results are overdue (#1865): its name, and when it should have ended, from which
- * a screen says how late it is.
- */
-export type SportLeagueOverdueIssueItem = SportLeagueIssueItemBase;
-
 /** How many OPEN sync findings of one severity the league has (#1999); the Findings list shows them. */
 export interface SportLeagueFindingsIssueItem {
   severity: ProviderSyncFindingSeverity;
@@ -61,8 +55,7 @@ export interface SportLeagueFindingsIssueItem {
 export type SportLeagueIssue =
   | { type: typeof SportLeagueIssueType.FINDINGS; count: number; items: SportLeagueFindingsIssueItem[] }
   | { type: typeof SportLeagueIssueType.SYNC; count: number; items: SportLeagueSyncIssueItem[] }
-  | { type: typeof SportLeagueIssueType.RELEASE; count: number; items: SportLeagueReleaseIssueItem[] }
-  | { type: typeof SportLeagueIssueType.OVERDUE; count: number; items: SportLeagueOverdueIssueItem[] };
+  | { type: typeof SportLeagueIssueType.RELEASE; count: number; items: SportLeagueReleaseIssueItem[] };
 
 /** The first to last day of a season's events. */
 export interface SeasonSpan {

@@ -11,7 +11,6 @@ import type {
   SportLeagueOverviewReader,
 } from '@poolmaster/shared/db';
 import { AutoReleaseCheckOutcome, ProviderSyncFindingKind, ProviderSyncFindingStatus, SportEventStatus } from '@poolmaster/shared/domain';
-import { readOverdueCandidates } from './prisma-overdue-event-reads';
 import { SYNC_PROVIDER_SELECT, syncProviderIdOf, syncProviderNameOf } from './prisma-sync-provider';
 
 export class PrismaSportLeagueOverviewReader implements SportLeagueOverviewReader {
@@ -19,7 +18,7 @@ export class PrismaSportLeagueOverviewReader implements SportLeagueOverviewReade
 
   async readFacts(now: Date): Promise<SportLeagueOverviewFacts> {
     const notCancelled = { not: SportEventStatus.CANCELLED };
-    const [leagues, leaguesWithRuns, failedSyncs, heldEvents, countGroups, nextGroups, overdueCandidates, findingGroups] = await Promise.all([
+    const [leagues, leaguesWithRuns, failedSyncs, heldEvents, countGroups, nextGroups, findingGroups] = await Promise.all([
       this.prisma.sportLeague.findMany({
         select: {
           id: true,
@@ -46,7 +45,6 @@ export class PrismaSportLeagueOverviewReader implements SportLeagueOverviewReade
         where: { status: notCancelled, startDate: { gt: now } },
         _min: { startDate: true },
       }),
-      readOverdueCandidates(this.prisma, now),
       // Each league's OPEN sync findings by severity (#1999), on the (league, status, severity) index.
       // A failed sync whose run is kept is counted by the Sync chip instead (#2092).
       this.prisma.providerSyncFinding.groupBy({
@@ -82,7 +80,6 @@ export class PrismaSportLeagueOverviewReader implements SportLeagueOverviewReade
         ? []
         : [[league.id, { start: league.currentSeason.startsAt, end: league.currentSeason.endsAt }] as const]))),
       nextEventStarts: earliestByLeague(nextGroups, leagueOfSeason),
-      overdueCandidates,
       openFindings: findingGroups.map((group) => ({ sportLeagueId: group.sportLeagueId, severity: group.severity, count: group._count._all })),
     };
   }

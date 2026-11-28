@@ -289,7 +289,6 @@ export const enUS = {
       FINDINGS: 'Findings',
       SYNC: 'Sync',
       RELEASE: 'Release',
-      OVERDUE: 'Overdue',
     },
     ProviderSyncFindingSeverity: {
       ERROR: 'Error',
@@ -327,6 +326,7 @@ export const enUS = {
       CONFERENCE_UNMAPPED: 'Unknown conference',
       DIVISION_UNMAPPED: 'Unknown division',
       CONFERENCE_TEAMS_MISSING: 'Conference has no teams',
+      GAME_OVERDUE: 'Game result overdue',
     },
     ProviderSyncFindingAction: {
       MAP_PARTICIPANT: 'Map participant',

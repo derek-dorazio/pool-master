@@ -180,7 +180,7 @@
   "MATCH_PERIOD_LAYOUTS": 0,
   "FEED_LABELS": 0,
   "IngestionFeedType": 0,
-  "overdueLateness": 3,
+  "overdueLateness": 0,
   "RELEASE_CHECK_LABELS": 0,
   "PROGRESS_UNITS": 2,
   "squaresFromRound": 0,

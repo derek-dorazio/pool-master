@@ -373,14 +373,13 @@ async function seedSportLeagueOverviews(leagues: number) {
     });
     const upcoming = await event('upcoming', 2026);
     await prisma.sportEventRound.create({ data: { sportEventId: upcoming.id, sportEventSlotId: await oneEventSlotId(prisma, upcoming.id), roundNumber: 1, scheduledDate: upcoming.startDate } });
-    // Its results are overdue: in play, with its one round's scheduled end a day gone (#1865).
-    const overdue = await prisma.sportEvent.create({
+    // A Game whose result is overdue, which the Findings chip counts (#2013).
+    await prisma.providerSyncFinding.create({
       data: {
-        sportLeagueId: sportLeague.id, sportLeagueSeasonId: await fixtureSeasonId(prisma, sportLeague.id, 2025), name: `${name} overdue`, status: 'IN_PROGRESS',
-        startDate: new Date(Date.now() - 3 * DAY),
+        kind: 'GAME_OVERDUE', severity: 'WARNING', status: 'OPEN', sportLeagueId: sportLeague.id, sportEventId: upcoming.id, providerId: BALLDONTLIE_TEST_PROVIDER_ID,
+        providerValue: randomUUID(), firstSeenAt: new Date(), lastSeenAt: new Date(), statusChangedAt: new Date(),
       },
     });
-    await prisma.sportEventRound.create({ data: { sportEventId: overdue.id, sportEventSlotId: await oneEventSlotId(prisma, overdue.id), roundNumber: 1, scheduledDate: overdue.startDate, scheduledEndAt: new Date(Date.now() - DAY) } });
     await event('held', 2027, {
       status: 'DRAFT', autoReleaseCheckedAt: new Date(), autoReleaseOutcome: 'HELD', autoReleaseFailedChecks: ['TIERS_ASSIGNED'],
     });
@@ -436,7 +435,7 @@ async function seedCustomerUsers(users: number) {
   return createTestUser({ isRootAdmin: true });
 }
 
-/** A synced sport league of its own with `events` events, each with a field, a round, a field run and, every other one, overdue results (#1865). */
+/** A synced sport league of its own with `events` events, each with a field, a round and a field run, every other one a held draft and the rest in play (#1865). */
 async function seedLeagueEventOverviews(events: number) {
   const prisma = getPrisma();
   const sport = await golf();
@@ -444,13 +443,13 @@ async function seedLeagueEventOverviews(events: number) {
   const sportLeague = await prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(sport.sport), sportId: sport.id, name: `League Page Tour ${suffix}` } });
   await syncLeagueTo(prisma, sportLeague.id, 'pga');
   for (let index = 0; index < events; index += 1) {
-    const overdue = index % 2 === 0;
-    const startDate = new Date(Date.now() + (overdue ? -3 : 3) * DAY);
+    const inPlay = index % 2 === 0;
+    const startDate = new Date(Date.now() + (inPlay ? -3 : 3) * DAY);
     const event = await prisma.sportEvent.create({
       data: {
-        sportLeagueId: sportLeague.id, sportLeagueSeasonId: await fixtureSeasonId(prisma, sportLeague.id, 2026), name: `League Page Open ${suffix} ${String(index)}`, status: overdue ? 'IN_PROGRESS' : 'DRAFT',
+        sportLeagueId: sportLeague.id, sportLeagueSeasonId: await fixtureSeasonId(prisma, sportLeague.id, 2026), name: `League Page Open ${suffix} ${String(index)}`, status: inPlay ? 'IN_PROGRESS' : 'DRAFT',
         startDate,
-        ...(!overdue && { autoReleaseCheckedAt: new Date(), autoReleaseOutcome: 'HELD', autoReleaseFailedChecks: ['TIERS_ASSIGNED'] }),
+        ...(!inPlay && { autoReleaseCheckedAt: new Date(), autoReleaseOutcome: 'HELD', autoReleaseFailedChecks: ['TIERS_ASSIGNED'] }),
       },
     });
     const round = await prisma.sportEventRound.create({ data: { sportEventId: event.id, sportEventSlotId: await oneEventSlotId(prisma, event.id), roundNumber: 1, scheduledDate: startDate } });
@@ -590,7 +589,7 @@ describe('root admin reads cost the same statements for 2 rows as for 20', () =>
     });
   });
 
-  it('GET the sport league overview: the same statements for 2 leagues, each with its runs, held draft and overdue event, as for 20 (#1847, #1865)', async () => {
+  it('GET the sport league overview: the same statements for 2 leagues, each with its runs, held draft and an open finding, as for 20 (#1847, #1999)', async () => {
     await expectConstantQueries({
       route: 'GET /api/v1/sport-leagues/overview',
       seed: seedSportLeagueOverviews,
@@ -599,7 +598,7 @@ describe('root admin reads cost the same statements for 2 rows as for 20', () =>
         const rows = okBody(response, SportLeagueOverviewListResponseSchema).sportLeagues.filter((row) => row.name.startsWith('Overview Tour'));
         // Every seeded league shows what was seeded for it, so a read that skipped one would show here.
         for (const row of rows) {
-          expect(row.issues.map((issue) => [issue.type, issue.count])).toEqual([['SYNC', 1], ['RELEASE', 1], ['OVERDUE', 1]]);
+          expect(row.issues.map((issue) => [issue.type, issue.count])).toEqual([['FINDINGS', 1], ['SYNC', 1], ['RELEASE', 1]]);
           expect(row.season).not.toBeNull();
         }
         return rows.length;
@@ -643,7 +642,7 @@ describe('root admin reads cost the same statements for 2 rows as for 20', () =>
         for (const event of events) {
           expect(event.fieldSize).toBe(1);
           expect(event.lastSyncedAt).not.toBeNull();
-          expect(event.issues.map((issue) => issue.type)).toEqual(event.status === 'DRAFT' ? ['SYNC', 'RELEASE'] : ['SYNC', 'OVERDUE']);
+          expect(event.issues.map((issue) => issue.type)).toEqual(event.status === 'DRAFT' ? ['SYNC', 'RELEASE'] : ['SYNC']);
         }
         return events.length;
       },
