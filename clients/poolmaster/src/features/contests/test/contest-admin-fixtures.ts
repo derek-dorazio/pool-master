@@ -1,5 +1,5 @@
 import { withCoverage } from './covered-slots';
-import { ContestOpening, SelectionType, eventSportDefinition } from '@poolmaster/shared/domain';
+import { ContestOpening, ContestOpeningReason, SelectionType, eventSportDefinition } from '@poolmaster/shared/domain';
 import { sportPlay } from '@/test/sport-play';
 import type {
   ContestConfigTemplateDto,
@@ -24,7 +24,9 @@ export function openingsBeforeStart(
   event: Pick<SportEventDto, 'sport' | 'participantType' | 'scoringFamily'>,
   opening: ContestOpening = ContestOpening.OPEN,
 ): SportEventDto['contestOpenings'] {
-  return eventSportDefinition(event).selectionTypes.map((selectionType) => ({ selectionType, opening }));
+  // The reason the API gives each: none when OPEN, the release wait when NOT_YET.
+  const reason = opening === ContestOpening.OPEN ? null : opening === ContestOpening.NOT_YET ? ContestOpeningReason.EVENT_NOT_RELEASED : ContestOpeningReason.EVENT_STARTED;
+  return eventSportDefinition(event).selectionTypes.map((selectionType) => ({ selectionType, opening, reason }));
 }
 
 /**
@@ -37,6 +39,7 @@ export function openingsUnderWay(
   return eventSportDefinition(event).selectionTypes.map((selectionType) => ({
     selectionType,
     opening: selectionType === SelectionType.SQUARES ? ContestOpening.OPEN : ContestOpening.CLOSED,
+    reason: selectionType === SelectionType.SQUARES ? null : ContestOpeningReason.EVENT_STARTED,
   }));
 }
 

@@ -800,6 +800,30 @@ export const ContestOpeningOrder = explicitOrder<ContestOpening>({
   [ContestOpening.CLOSED]: 2,
 });
 
+/**
+ * Why a contest of one setup does not open on an event now (#2015, #1932): the wait or the close
+ * behind a NOT_YET or CLOSED `ContestOpening`. NOT_YET: EVENT_NOT_RELEASED (the event is a draft),
+ * FIELD_NOT_LOADED (no field yet), BRACKET_NOT_SET (the teams of the bracket's games are not all
+ * known). CLOSED: EVENT_STARTED (the setup's cutoff on the event has passed), NO_GAME_LEFT (every
+ * game a squares contest could be played on has kicked off).
+ */
+export const ContestOpeningReason = {
+  EVENT_NOT_RELEASED: 'EVENT_NOT_RELEASED',
+  FIELD_NOT_LOADED: 'FIELD_NOT_LOADED',
+  BRACKET_NOT_SET: 'BRACKET_NOT_SET',
+  EVENT_STARTED: 'EVENT_STARTED',
+  NO_GAME_LEFT: 'NO_GAME_LEFT',
+} as const;
+export type ContestOpeningReason = (typeof ContestOpeningReason)[keyof typeof ContestOpeningReason];
+/** The waits in the order they clear, then the closes. */
+export const ContestOpeningReasonOrder = explicitOrder<ContestOpeningReason>({
+  [ContestOpeningReason.EVENT_NOT_RELEASED]: 0,
+  [ContestOpeningReason.FIELD_NOT_LOADED]: 1,
+  [ContestOpeningReason.BRACKET_NOT_SET]: 2,
+  [ContestOpeningReason.EVENT_STARTED]: 3,
+  [ContestOpeningReason.NO_GAME_LEFT]: 4,
+});
+
 /** Where one provider sync run is in its lifecycle. */
 export const ProviderSyncRunStatus = {
   SUBMITTED: 'SUBMITTED',

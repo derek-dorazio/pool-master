@@ -79,6 +79,7 @@ import type {
 import {
   contestRoundCoverage,
   ContestCoverageProblem,
+  ContestOpeningReason,
   resolveCoveredSeasonSlots,
   ContestStatus,
   SelectionType,
@@ -95,7 +96,7 @@ import {
   hasSportEventStarted,
 } from '@poolmaster/shared/domain';
 import { toEffectiveTierDtoList } from '../../mappers/contest-management.mapper';
-import { evaluateEventOperationalState } from '../events/operational-timing';
+import { eventOpening, type EventOpeningReason } from './contest-opening';
 import { ContestCutoffKind, contestCutoff, type ContestCutoff, type EventTiming } from '../contests/entry-window';
 import { errorMessage } from '../../core/error-message';
 
@@ -213,6 +214,37 @@ const COVERAGE_REFUSALS: Readonly<Record<ContestCoverageProblem, { message: stri
   },
 };
 
+/**
+ * What the server says when a new contest's cutoff on an event has passed (#1990): one code per
+ * cutoff kind, so each is worded once. Its first covered Game, which for a contest not made yet is
+ * the event's start; or a squares contest's own Game's kickoff.
+ */
+const CUTOFF_PASSED: Readonly<Record<ContestCutoffKind, { message: string; code: ApiErrorCode }>> = {
+  [ContestCutoffKind.FIRST_COVERED_GAME]: {
+    message: 'Selected sporting event has already started, so contests can no longer be created on it.',
+    code: 'CONTEST_FIRST_GAME_STARTED',
+  },
+  [ContestCutoffKind.GAME_START]: {
+    message: 'That game has already kicked off, so a squares contest can no longer be played on it.',
+    code: 'CONTEST_SQUARES_GAME_STARTED',
+  },
+};
+
+/**
+ * What the server says when an event does not open to a new contest yet (#1932): one code per
+ * wait, keyed by the one rule's reason. A passed cutoff is `CUTOFF_PASSED`'s.
+ */
+const NOT_OPEN_REFUSALS: Readonly<Record<Exclude<EventOpeningReason, 'EVENT_STARTED'>, { message: string; code: ApiErrorCode }>> = {
+  [ContestOpeningReason.EVENT_NOT_RELEASED]: {
+    message: 'Selected sporting event is not released for contest creation yet.',
+    code: 'SPORT_EVENT_NOT_RELEASED',
+  },
+  [ContestOpeningReason.FIELD_NOT_LOADED]: {
+    message: 'Selected sporting event field has not loaded yet.',
+    code: 'SPORT_EVENT_FIELD_NOT_LOADED',
+  },
+};
+
 /** What the server says when a one-event contest is given more events, one line per such type. */
 const ONE_EVENT_REFUSALS: Readonly<Record<OneEventSelectionType, { message: string; code: ApiErrorCode }>> = {
   [SelectionType.RANDOM_DRAW]: {
@@ -286,6 +318,7 @@ export class ContestManagementService {
     );
     const sportEvents = await this.assertSportEventsContestEligible(
       input.sportEventIds,
+      input.selectionType,
       contestCutoff(
         resolvedConfiguration.configuration,
         input.sportEventRoundMatchGameId === undefined ? {} : { squaresGame: { sportEventRoundMatchGameId: input.sportEventRoundMatchGameId } },
@@ -670,6 +703,7 @@ export class ContestManagementService {
     const requestedIds = [...new Set(input.sportEventIds)];
     const sportEvents = await this.assertSportEventsContestEligible(
       requestedIds,
+      contest.selectionType,
       contestCutoff(configuration.configJson, contest),
     );
     // Every template is one sport league's (#1825), so the contest's league is its template's:
@@ -929,22 +963,25 @@ export class ContestManagementService {
 
   private async assertSportEventsContestEligible(
     sportEventIds: readonly string[],
+    selectionType: SelectionType,
     cutoff: ContestCutoff,
   ): Promise<ContestCreateSportEventState[]> {
     const eligible: ContestCreateSportEventState[] = [];
     for (const sportEventId of new Set(sportEventIds)) {
-      eligible.push(await this.assertSportEventContestEligible(sportEventId, cutoff));
+      eligible.push(await this.assertSportEventContestEligible(sportEventId, selectionType, cutoff));
     }
     return eligible;
   }
 
   /**
-   * Whether a contest can be built on the event: released, its field loaded, and its cutoff still
-   * ahead. The cutoff is the event's start, so nothing is built on an event under way, except
-   * squares, which closes at its own game's kickoff.
+   * Whether a contest of this selection type can be built on the event, by the one opening rule
+   * (`eventOpening`, #1932) that the event list and event pages read: a reason it does not open is
+   * refused with that reason's code (`NOT_OPEN_REFUSALS`). Then its own cutoff must still be ahead:
+   * the event's start, or a squares contest's game's kickoff, which closes later than the event's.
    */
   private async assertSportEventContestEligible(
     sportEventId: string,
+    selectionType: SelectionType,
     cutoff: ContestCutoff,
   ): Promise<ContestCreateSportEventState> {
     const sportEvent = await this.sportEventReader.findById(sportEventId);
@@ -957,33 +994,18 @@ export class ContestManagementService {
       );
     }
 
-    const operationalState = evaluateEventOperationalState({
-      status: sportEvent.status,
-      startDate: sportEvent.startDate,
-      participantCount: sportEvent.participantCount,
-      now: this.now(),
-    });
-
-    if (operationalState.readinessReasons.includes('EVENT_NOT_RELEASED')) {
+    const { reason } = eventOpening(sportEvent, selectionType, this.now());
+    if (reason !== null) {
       this.logger.warn({
         sportEventId,
         status: sportEvent.status,
-      }, 'contest management create contest rejected for unreleased sport event');
-      throw new ContestManagementError(
-        'Selected sporting event is not released for contest creation yet.',
-        'SPORT_EVENT_NOT_RELEASED',
-      );
-    }
-
-    if (operationalState.readinessReasons.includes('FIELD_NOT_LOADED')) {
-      this.logger.warn({
-        sportEventId,
         participantCount: sportEvent.participantCount,
-      }, 'contest management create contest rejected for missing sport event field');
-      throw new ContestManagementError(
-        'Selected sporting event field has not loaded yet.',
-        'SPORT_EVENT_FIELD_NOT_LOADED',
-      );
+        selectionType,
+        reason,
+      }, 'contest management create contest rejected: the event does not open to it');
+      // The event under way is past every cutoff but squares', which a knockout under way still opens to.
+      const refusal = reason === ContestOpeningReason.EVENT_STARTED ? CUTOFF_PASSED[cutoff.kind] : NOT_OPEN_REFUSALS[reason];
+      throw new ContestManagementError(refusal.message, refusal.code);
     }
 
     const timing = await this.sportEventReader.findCutoffTiming(sportEvent, cutoff);
@@ -994,12 +1016,7 @@ export class ContestManagementService {
         cutoff: cutoff.kind,
         cutoffAt: timing.startDate?.toISOString() ?? null,
       }, 'contest management create contest rejected for a sport event past the contest cutoff');
-      throw new ContestManagementError(
-        cutoff.kind === ContestCutoffKind.GAME_START
-          ? 'That game has already kicked off, so a squares contest can no longer be played on it.'
-          : 'Selected sporting event has already started, so contests can no longer be created on it.',
-        'SPORT_EVENT_ALREADY_STARTED',
-      );
+      throw new ContestManagementError(CUTOFF_PASSED[cutoff.kind].message, CUTOFF_PASSED[cutoff.kind].code);
     }
 
     return sportEvent;

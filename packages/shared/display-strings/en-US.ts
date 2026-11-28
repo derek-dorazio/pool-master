@@ -247,6 +247,13 @@ export const enUS = {
       NOT_YET: 'Not yet',
       CLOSED: 'Closed',
     },
+    ContestOpeningReason: {
+      EVENT_NOT_RELEASED: 'Waiting for the event to be released',
+      FIELD_NOT_LOADED: 'Waiting for the field',
+      BRACKET_NOT_SET: 'Waiting for every team of the bracket',
+      EVENT_STARTED: 'Already started',
+      NO_GAME_LEFT: 'Every game has kicked off',
+    },
     ProviderSyncRunStatus: {
       SUBMITTED: 'waiting',
       IN_PROGRESS: 'running',
@@ -978,6 +985,7 @@ export const enUS = {
     CONTEST_EXPANSION_CLOSED: 'This contest has stopped taking entries, so it can no longer be expanded.',
     CONTEST_EXPANSION_NOT_ABOVE_CAP: 'The contest already takes that many entries. Give a larger size.',
     CONTEST_FINAL: 'This contest is final, so how much it counts is fixed.',
+    CONTEST_FIRST_GAME_STARTED: 'This event has already started, so a contest can no longer be made on it.',
     CONTEST_FORMAT_MISMATCH: 'This contest is not played that way.',
     CONTEST_FORMAT_NOT_ALLOWED: 'This event does not offer that kind of contest.',
     CONTEST_FULL: 'This contest is full.',
@@ -1000,6 +1008,7 @@ export const enUS = {
     CONTEST_SPREAD_NOT_OFFERED: 'This contest cannot be scored against the spread.',
     CONTEST_SQUARES_GAME_INVALID: 'That game cannot be used for squares.',
     CONTEST_SQUARES_GAME_REQUIRED: 'Choose the game for squares.',
+    CONTEST_SQUARES_GAME_STARTED: 'That game has already kicked off, so squares can no longer be played on it.',
     CONTEST_SQUARES_ONE_ENTRY_PER_SQUAD: 'Each team has one entry in a squares contest.',
     CONTEST_SQUARES_SINGLE_EVENT: 'A squares contest covers exactly one event.',
     CONTEST_TIER_FIELD_OUT_OF_RANGE: 'A tier setting is out of range for this event.',
@@ -1320,7 +1329,6 @@ export const enUS = {
       pickEm: 'Every {{match}} needs a pick before this week can be submitted.',
     },
     SPORT_EVENT_ALREADY_STARTED: {
-      contestSetup: 'This event has already started, so a contest can no longer be made on it.',
       createEvent: 'This {{event}} has already started, so it can’t be added.',
     },
   },
