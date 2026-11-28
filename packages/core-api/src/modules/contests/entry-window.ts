@@ -82,8 +82,8 @@ export function contestCutoff(
  *   in progress once any of its Matches has started). A later slot of an event under way is still
  *   to start, so a contest on it still takes entries and picks. A cancelled slot is left out: it
  *   neither starts the window nor gives it a start. A synced slot with no start yet is not
- *   scheduled, so it gives the window none; a test slot, which the sync never schedules, stands on
- *   the event's start. With no covered slot on the event, the event's own timing.
+ *   scheduled, so it gives the window none. With no covered slot on the event, or a test slot
+ *   (which the sync never schedules), the event's own timing.
  * - At a Game's kickoff: that Game's time and whether it has moved on (a cancelled Game has, so its
  *   contest closes, and so has a Game with a period score). The Game is looked up among the event's
  *   matches' Games.
@@ -100,15 +100,15 @@ export function cutoffTiming(
   switch (cutoff.kind) {
     case ContestCutoffKind.FIRST_COVERED_GAME: {
       const covered = cutoff.coveredSlots.filter((slot) => slot.sportEventId === sportEvent.id);
-      if (covered.length === 0) {
+      // A test slot is never scheduled by the sync, and a root admin moves its event by hand: it
+      // stands on its event's own timing. Test and synced events never share a slot.
+      if (covered.length === 0 || covered.some((slot) => slot.isTestData)) {
         return sportEvent;
       }
       const started = covered.some((slot) => STARTED_SLOT_STATUSES.includes(slot.status));
-      const playing = covered.filter((slot) => slot.status !== SeasonSlotStatus.CANCELLED);
-      const starts = playing.flatMap((slot) => {
-        if (slot.startsAt !== null) return [slot.startsAt.getTime()];
-        return slot.isTestData && sportEvent.startDate !== null ? [sportEvent.startDate.getTime()] : [];
-      });
+      const starts = covered.flatMap((slot) => (
+        slot.status === SeasonSlotStatus.CANCELLED || slot.startsAt === null ? [] : [slot.startsAt.getTime()]
+      ));
       return {
         status: started ? SportEventStatus.IN_PROGRESS : stillToStart(sportEvent.status),
         startDate: starts.length === 0 ? null : new Date(Math.min(...starts)),

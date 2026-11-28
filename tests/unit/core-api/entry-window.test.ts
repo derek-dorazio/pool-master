@@ -307,9 +307,12 @@ describe('cutoffTiming — a contest\'s window opens and closes at its first cov
     expect(cutoffTiming(covering(slot('playoffs', SeasonSlotStatus.IN_PROGRESS, null)), playoffs, [])).toEqual({ status: SportEventStatus.IN_PROGRESS, startDate: null });
   });
 
-  it('stands a test slot, which the sync never schedules, on its event\'s start', () => {
-    expect(cutoffTiming(covering(slot('playoffs', SeasonSlotStatus.SCHEDULED, null, true)), playoffs, []))
-      .toEqual({ status: SportEventStatus.SCHEDULED, startDate: playoffs.startDate });
+  it('stands a test slot, which the sync never schedules, on its event\'s own timing, which a root admin moves by hand', () => {
+    const scheduled = event('playoffs', 48, SportEventStatus.SCHEDULED);
+    expect(cutoffTiming(covering(slot('playoffs', SeasonSlotStatus.SCHEDULED, null, true)), scheduled, [])).toBe(scheduled);
+    expect(cutoffTiming(covering(slot('playoffs', SeasonSlotStatus.COMPLETED, -5, true)), scheduled, [])).toBe(scheduled);
+    expect(cutoffTiming(covering(slot('playoffs', SeasonSlotStatus.SCHEDULED, 30, true)), playoffs, [])).toBe(playoffs);
+    expect(cutoffTiming(covering(slot('playoffs', SeasonSlotStatus.SCHEDULED, 30)), playoffs, []).status).toBe(SportEventStatus.SCHEDULED);
   });
 
   it('leaves a cancelled slot out: it neither starts the window nor gives it its start', () => {

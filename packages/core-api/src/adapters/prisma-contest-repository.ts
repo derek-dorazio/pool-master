@@ -16,7 +16,7 @@ import type {
   PendingDrawReceipts,
   ReminderCheck,
 } from '@poolmaster/shared/db';
-import { championshipYear, ContestStatus, SelectionType, type SportEventStatus, type Contest, type ContestCoveredSlot, type ContestFormat, type CupWeight, FINISHED_SPORT_EVENT_STATUSES, SeasonSlotStatus, type SlotKind } from '@poolmaster/shared/domain';
+import { championshipYear, ContestStatus, SelectionType, SportEventStatus, type Contest, type ContestCoveredSlot, type ContestFormat, type CupWeight, FINISHED_SPORT_EVENT_STATUSES, SeasonSlotStatus, type SlotKind } from '@poolmaster/shared/domain';
 import { forgettingReads, memoizedRead, memoizedReadMany, ReadMemoKey } from '../core/request-read-memo';
 import { lockContestRow, lockContestRowsAtOnce } from './contest-row-lock';
 import { insertBackgroundJobs } from './prisma-background-job-repository';
@@ -111,13 +111,13 @@ export class PrismaContestRepository implements ContestRepository {
           status: ContestStatus.DRAFT,
           OR: [
             { seasonSlots: { some: { seasonSlot: { eventSlot: { sportEvent: { status: { in: [...FINISHED_SPORT_EVENT_STATUSES] } } } } } } },
-            // Started as `cutoffTiming` has it: a covered slot in progress or complete, or a slot not
-            // cancelled past its first game's start. A synced slot with no start yet is not
-            // scheduled, so it has not started; a test slot with none goes by its event's start.
+            // Started as `cutoffTiming` has it: a synced slot in progress or complete, or not
+            // cancelled and past its first game's start (one with no start yet is not scheduled, so
+            // it has not started); a test slot goes by its event, past its start or under way.
             ...[
-              { status: { in: [SeasonSlotStatus.IN_PROGRESS, SeasonSlotStatus.COMPLETED] } },
-              { status: { not: SeasonSlotStatus.CANCELLED }, startsAt: { lte: now } },
-              { status: { not: SeasonSlotStatus.CANCELLED }, startsAt: null, isTestData: true, eventSlot: { sportEvent: { startDate: { lte: now } } } },
+              { isTestData: false, status: { in: [SeasonSlotStatus.IN_PROGRESS, SeasonSlotStatus.COMPLETED] } },
+              { isTestData: false, status: { not: SeasonSlotStatus.CANCELLED }, startsAt: { lte: now } },
+              { isTestData: true, eventSlot: { sportEvent: { OR: [{ startDate: { lte: now } }, { status: SportEventStatus.IN_PROGRESS }] } } },
             ].map((started) => ({
               seasonSlots: { some: { seasonSlot: started } },
               NOT: { selectionType: SelectionType.SQUARES, squaresGame: { isNot: null } },
