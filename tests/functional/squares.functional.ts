@@ -210,6 +210,20 @@ describe('SDK Functional: Super Bowl squares', () => {
     for (const { periodNumber, ...score } of quarters) {
       expect((await recordEventMatchPeriodScore({ client: a, path: { eventId: event.id, ...SUPER_BOWL, periodNumber }, body: periodBody(score) })).response?.status).toBe(200);
     }
+    // Past each cutoff, a new contest is refused with that cutoff's own code (#1990): squares on the
+    // kicked-off game, and any other contest on the event under way.
+    expectFunctionalError(await createContest({
+      client: commissioner.client,
+      path: { id: league.id },
+      body: { name: `Late Squares ${RUN}`, sportEventIds: [event.id], sportEventRoundMatchGameId: superBowlGameId, contestFormat: ContestFormat.SQUARES, selectionType: SelectionType.SQUARES, templateId: preset.id },
+    }), { status: 422, code: 'CONTEST_SQUARES_GAME_STARTED' });
+    const otherPreset = expectDefined(expectDefined((await listContestConfigTemplates({ client: commissioner.client, query: { sportLeagueId: nfl.id, active: true } })).data).templates
+      .find((template) => template.contestFormat !== ContestFormat.SQUARES), 'an NFL preset other than squares');
+    expectFunctionalError(await createContest({
+      client: commissioner.client,
+      path: { id: league.id },
+      body: { name: `Late ${otherPreset.templateKey} ${RUN}`, sportEventIds: [event.id], contestFormat: otherPreset.contestFormat, selectionType: otherPreset.selectionType, templateId: otherPreset.id },
+    }), { status: 422, code: 'CONTEST_FIRST_GAME_STARTED' });
     const live = expectMatchesSchema(SquaresBoardResponseSchema, (await getSquaresBoard({ client: bob.client, path: { contestId } })).data);
     expect(live.contestStatus).toBe(ContestStatus.ACTIVE);
     expect(live.winners.map((winner) => [winner.periodNumber, winner.rowIndex, winner.columnIndex, winner.contestEntryId]))

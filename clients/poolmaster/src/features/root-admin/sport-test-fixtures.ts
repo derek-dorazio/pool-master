@@ -70,9 +70,9 @@ export function sportEventFixture(overrides: Partial<SportEventDto> = {}): Sport
     readinessReasons: ['EVENT_NOT_RELEASED', 'FIELD_NOT_LOADED'],
     contestEligible: false,
     contestOpenings: [
-      { selectionType: 'TIERED', opening: 'NOT_YET' },
-      { selectionType: 'BUDGET_PICK', opening: 'NOT_YET' },
-      { selectionType: 'RANDOM_DRAW', opening: 'NOT_YET' },
+      { selectionType: 'TIERED', opening: 'NOT_YET', reason: 'EVENT_NOT_RELEASED' },
+      { selectionType: 'BUDGET_PICK', opening: 'NOT_YET', reason: 'EVENT_NOT_RELEASED' },
+      { selectionType: 'RANDOM_DRAW', opening: 'NOT_YET', reason: 'EVENT_NOT_RELEASED' },
     ],
     tiersLocked: false,
     // The event's one slot holds its tier set, locked with the event's own tiers.

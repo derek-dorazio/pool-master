@@ -10,6 +10,7 @@ export function toEventPageOfferDto(view: EventPageOfferView): EventPageOfferDto
     sortOrder: view.offer.sortOrder,
     isPrimary: view.offer.isPrimary,
     state: view.state,
+    waitingFor: view.waitingFor,
     nextSlot: {
       seasonSlotId: view.nextSlot.seasonSlotId,
       sportEventId: view.nextSlot.sportEventId,
