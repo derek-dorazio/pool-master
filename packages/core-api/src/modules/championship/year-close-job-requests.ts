@@ -8,7 +8,7 @@
  */
 
 import { z } from 'zod';
-import { BackgroundJobType, ContestStatus } from '@poolmaster/shared/domain';
+import { BackgroundJobType, ContestStatus, SeasonSlotStatus } from '@poolmaster/shared/domain';
 import type { DomainEventType } from '../domain-events/domain-event';
 import type { DomainEventHandler } from '../domain-events/domain-event-handler';
 
@@ -31,14 +31,18 @@ export const closeLeagueChampionshipYearHandler: DomainEventHandler<typeof Domai
   })],
 };
 
+/** The Season slot statuses that leave nothing to play in the slot. */
+const FINISHED_SLOT_STATUSES: ReadonlySet<SeasonSlotStatus> = new Set([SeasonSlotStatus.COMPLETED, SeasonSlotStatus.CANCELLED]);
+
 /**
- * A Season slot that moved can close the year of each league with a contest in its Season: its
- * last slot finishing, or its start leaving a draft that can never open. A job, since it reaches
- * every such league.
+ * A Season slot finished or cancelled can close the year of each league with a contest in its
+ * Season. A slot starting never can: it is unfinished itself, so the year closes only once it
+ * ends, which is its own event. A job, since it reaches every such league.
  */
 export const closeSeasonChampionshipYearsHandler: DomainEventHandler<typeof DomainEventType.SEASON_SLOT_STATUS_CHANGED> = {
   key: 'close-season-championship-years',
   queues: [BackgroundJobType.CLOSE_SEASON_CHAMPIONSHIP_YEARS],
+  when: (event) => FINISHED_SLOT_STATUSES.has(event.to),
   jobs: (event, { queue }) => [queue.request(
     BackgroundJobType.CLOSE_SEASON_CHAMPIONSHIP_YEARS,
     { sportEventId: event.sportEventId, seasonSlotId: event.seasonSlotId },

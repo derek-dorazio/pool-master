@@ -734,7 +734,7 @@ describe('ContestSettlementService settling a squares contest with its game', ()
     expect(standings).toEqual(expect.arrayContaining([[context.alice.id, '1', 2], [context.bob.id, '2', 1]]));
   });
 
-  it('reads the event\'s games once, gives the championship the final places read once, and writes the results email and board rebuild jobs with the move (#1355, #1387, #1973)', async () => {
+  it('reads the event\'s games once, gives the championship the final places read once, and writes the results email, board rebuild and championship year close jobs with the move (#1355, #1387, #1973, #2021)', async () => {
     const context = setup({ status: ContestStatus.ACTIVE });
     context.squares.addBox(context.contest.id, context.alice.id, 0, 7);
     context.squares.addBox(context.contest.id, context.bob.id, 3, 4);
@@ -783,6 +783,12 @@ describe('ContestSettlementService settling a squares contest with its game', ()
       runAt: undefined,
       start: TEST_JOB_START,
       dedupeKey: `REBUILD_LEADERBOARDS:CONTEST:${context.contest.id}`,
+    }, {
+      type: BackgroundJobType.CLOSE_LEAGUE_CHAMPIONSHIP_YEAR,
+      payload: { contestId: context.contest.id },
+      runAt: undefined,
+      start: TEST_JOB_START,
+      dedupeKey: `CLOSE_LEAGUE_CHAMPIONSHIP_YEAR:${context.contest.id}`,
     }]);
     expect(queued).toHaveBeenCalledTimes(1);
   });

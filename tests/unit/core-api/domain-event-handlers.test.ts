@@ -1,4 +1,4 @@
-import { BackgroundJobType, ContestEntryStatus, ContestStatus, SPORT_EVENT_STATUS_TRANSITIONS, SportEventStatus, type BackgroundJobRequest } from '@poolmaster/shared/domain';
+import { BackgroundJobType, ContestEntryStatus, ContestStatus, SeasonSlotStatus, SPORT_EVENT_STATUS_TRANSITIONS, SportEventStatus, type BackgroundJobRequest } from '@poolmaster/shared/domain';
 import { BackgroundJobQueue } from '../../../packages/core-api/src/modules/background-jobs';
 import {
   DOMAIN_EVENT_HANDLERS,
@@ -361,8 +361,12 @@ describe('Championship year close handlers (#2021)', () => {
     expect(closeLeagueYear.when?.(started)).toBe(false);
   });
 
-  it('a Season slot that moved queues one close of the championship years its Season reaches, held to one waiting per slot', async () => {
+  it('a Season slot finished or cancelled queues one close of the championship years its Season reaches, held to one waiting per slot, and a slot starting queues none', async () => {
     const moved = { type: DomainEventType.SEASON_SLOT_STATUS_CHANGED, sportEventId: 'event-1', seasonSlotId: 'slot-1', from: 'IN_PROGRESS', to: 'COMPLETED' } as const;
+    const event = (from: SeasonSlotStatus, to: SeasonSlotStatus) => ({ ...moved, from, to });
+    expect(closeSeasonYears.when?.(event(SeasonSlotStatus.IN_PROGRESS, SeasonSlotStatus.COMPLETED))).toBe(true);
+    expect(closeSeasonYears.when?.(event(SeasonSlotStatus.SCHEDULED, SeasonSlotStatus.CANCELLED))).toBe(true);
+    expect(closeSeasonYears.when?.(event(SeasonSlotStatus.SCHEDULED, SeasonSlotStatus.IN_PROGRESS))).toBe(false);
 
     expect(await closeSeasonYears.jobs(moved, context())).toEqual([expect.objectContaining({
       type: BackgroundJobType.CLOSE_SEASON_CHAMPIONSHIP_YEARS,
