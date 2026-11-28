@@ -1,5 +1,5 @@
-import type { ChampionshipDto, ChampionshipSquadDto, ChampionshipStandingRowDto, ChampionshipYearDto } from '@poolmaster/shared/dto';
-import type { Squad } from '@poolmaster/shared/domain';
+import type { ChampionshipCalendarResponse, ChampionshipDto, ChampionshipSquadDto, ChampionshipStandingRowDto, ChampionshipYearDto } from '@poolmaster/shared/dto';
+import type { ChampionshipCalendar, Squad } from '@poolmaster/shared/domain';
 import type { ChampionshipStandingView, ChampionshipYearSummaryView, ChampionshipYearView } from '../modules/championship/service';
 
 /** The championship's name: the year and the league's cup name, "2026 Derek's Pool Cup". */
@@ -48,4 +48,26 @@ export function toChampionshipDto(view: ChampionshipYearView): ChampionshipDto {
 
 export function toChampionshipYearDto(view: ChampionshipYearSummaryView): ChampionshipYearDto {
   return { year: view.year, isOver: view.isOver, leaders: view.leaders.map(toChampionshipSquadDto) };
+}
+
+export function toChampionshipCalendarResponse(calendar: ChampionshipCalendar): ChampionshipCalendarResponse {
+  return {
+    currentYear: calendar.currentYear,
+    years: calendar.years.map((year) => ({
+      championshipYear: year.championshipYear,
+      isClosed: year.isClosed,
+      closesAfter: year.closesAfter.map((slot) => ({
+        sportLeagueId: slot.sportLeagueId,
+        sportLeagueName: slot.sportLeagueName,
+        key: slot.key,
+        // A test slot goes by its label, as every slot DTO names it.
+        name: slot.name ?? slot.label,
+        slotKind: slot.slotKind,
+        weekNumber: slot.weekNumber,
+        startsAt: slot.startsAt?.toISOString() ?? null,
+        endsAt: slot.endsAt?.toISOString() ?? null,
+      })),
+      unfinishedContests: year.unfinishedContests.map((contest) => ({ contestId: contest.id, name: contest.name })),
+    })),
+  };
 }

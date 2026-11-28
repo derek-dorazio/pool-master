@@ -10,7 +10,7 @@ import type { LeagueChampionshipYearKey, LeagueChampionshipYearRepository } from
 import type { FastifyBaseLogger } from 'fastify';
 
 export interface ChampionshipYearCloseServiceDeps {
-  years: LeagueChampionshipYearRepository;
+  years: Pick<LeagueChampionshipYearRepository, 'isClosed' | 'readYearState' | 'close' | 'findContestYear' | 'findLeagueYearsOfSeasonSlot'>;
   now?: () => Date;
   logger?: Pick<FastifyBaseLogger, 'debug' | 'info'>;
 }

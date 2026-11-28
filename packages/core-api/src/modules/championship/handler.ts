@@ -1,10 +1,18 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { sendError } from '../../core/error-handler';
-import { toChampionshipDto, toChampionshipYearDto } from '../../mappers/championship.mapper';
+import { toChampionshipCalendarResponse, toChampionshipDto, toChampionshipYearDto } from '../../mappers/championship.mapper';
+import type { ChampionshipCalendarService } from './calendar-service';
 import { ChampionshipLeagueNotFoundError, type ChampionshipService } from './service';
 
-export function createChampionshipHandlers(service: ChampionshipService) {
-  return { listChampionshipYears, getChampionship };
+export function createChampionshipHandlers(service: ChampionshipService, calendar: ChampionshipCalendarService) {
+  return { listChampionshipYears, getChampionship, getChampionshipCalendar };
+
+  async function getChampionshipCalendar(
+    request: FastifyRequest<{ Params: { id: string } }>,
+    reply: FastifyReply,
+  ): Promise<void> {
+    return reply.send(toChampionshipCalendarResponse(await calendar.getCalendar(request.params.id)));
+  }
 
   async function listChampionshipYears(
     request: FastifyRequest<{ Params: { id: string } }>,

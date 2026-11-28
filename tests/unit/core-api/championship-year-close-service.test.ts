@@ -13,7 +13,7 @@ const NFL_2025: LeagueChampionshipYearKey = { leagueId: 'league-1', championship
 const OPEN_STATE: ChampionshipYearState = { contestCount: 2, unfinishedContestCount: 0, unfinishedSeasonSlotCount: 0 };
 
 /** The port over a few rows: closed years, each year's state, and which contests and slots reach which years. */
-class InMemoryChampionshipYears implements LeagueChampionshipYearRepository {
+class InMemoryChampionshipYears implements Omit<LeagueChampionshipYearRepository, 'readCalendarInput'> {
   closed = new Map<string, ClosedChampionshipYear>();
   states = new Map<string, ChampionshipYearState>();
   contestYears = new Map<string, LeagueChampionshipYearKey>();

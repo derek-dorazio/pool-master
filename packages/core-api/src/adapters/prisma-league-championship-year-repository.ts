@@ -10,8 +10,9 @@ import type {
   LeagueChampionshipYearKey,
   LeagueChampionshipYearRepository,
 } from '@poolmaster/shared/db';
-import { ContestStatus, SeasonSlotStatus } from '@poolmaster/shared/domain';
+import { type ChampionshipCalendarInput, type ChampionshipYearContests, ContestStatus, SeasonSlotStatus } from '@poolmaster/shared/domain';
 import { neverOpeningDraft } from './never-opening-draft';
+import { SLOT_PLACE_SELECT, slotPlaceOf } from './slot-place-select';
 
 /** A Season slot still to play: neither finished nor called off. */
 const UNFINISHED_SLOT_STATUSES = [SeasonSlotStatus.SCHEDULED, SeasonSlotStatus.IN_PROGRESS];
@@ -33,6 +34,73 @@ export class PrismaLeagueChampionshipYearRepository implements LeagueChampionshi
       select: { id: true },
     });
     return row !== null;
+  }
+
+  async readCalendarInput(leagueId: string, now: Date): Promise<ChampionshipCalendarInput> {
+    const counted = { leagueId, NOT: neverOpeningDraft(now) };
+    const [contests, closedRows, currentSeasons] = await Promise.all([
+      this.prisma.contest.findMany({
+        where: counted,
+        select: { id: true, name: true, status: true, championshipYear: true, sportLeagueSeason: { select: { sportLeagueId: true } } },
+        orderBy: [{ createdAt: 'asc' }, { id: 'asc' }],
+      }),
+      this.prisma.leagueChampionshipYear.findMany({ where: { leagueId }, select: { championshipYear: true } }),
+      this.prisma.sportLeague.findMany({
+        where: { isActive: true, currentSeasonId: { not: null } },
+        select: { currentSeason: { select: { championshipYear: true } } },
+      }),
+    ]);
+    const closedYears = closedRows.map((row) => row.championshipYear);
+    const closed = new Set(closedYears);
+    const years = new Map<number, ChampionshipYearContests & { sportLeagueIds: Set<string> }>();
+    for (const contest of contests) {
+      const year = years.get(contest.championshipYear)
+        ?? { championshipYear: contest.championshipYear, hasLiveContest: false, unfinishedContests: [], sportLeagueIds: new Set<string>() };
+      years.set(contest.championshipYear, year);
+      year.sportLeagueIds.add(contest.sportLeagueSeason.sportLeagueId);
+      if (contest.status === ContestStatus.ACTIVE) year.hasLiveContest = true;
+      if (contest.status !== ContestStatus.COMPLETED) year.unfinishedContests.push({ id: contest.id, name: contest.name });
+    }
+    const openYears = [...years.values()].filter((year) => !closed.has(year.championshipYear));
+    // The same slots `readYearState` counts, for every open year at once (none for no open year).
+    const slots = await this.prisma.sportLeagueSeasonCompetitionSlot.findMany({
+      where: {
+        status: { in: UNFINISHED_SLOT_STATUSES },
+        season: { OR: openYears.map((year) => ({ championshipYear: year.championshipYear, sportLeagueId: { in: [...year.sportLeagueIds] } })) },
+        OR: [{ isTestData: false }, { contestSlots: { some: { contest: counted } } }],
+      },
+      select: {
+        startsAt: true,
+        endsAt: true,
+        isTestData: true,
+        label: true,
+        season: { select: { championshipYear: true, sportLeague: { select: { id: true, name: true } } } },
+        definition: { select: { key: true, name: true, slotKind: true, weekNumber: true, ...SLOT_PLACE_SELECT } },
+      },
+    });
+    return {
+      contestYears: [...years.values()].map((year) => ({ championshipYear: year.championshipYear, hasLiveContest: year.hasLiveContest, unfinishedContests: year.unfinishedContests })),
+      closedYears,
+      unfinishedSlots: slots.map((slot) => {
+        const place = slotPlaceOf(slot.definition);
+        return {
+          championshipYear: slot.season.championshipYear,
+          sportLeagueId: slot.season.sportLeague.id,
+          sportLeagueName: slot.season.sportLeague.name,
+          phase: place.phase,
+          competitionOrderIndex: place.competitionOrderIndex,
+          key: slot.definition.key,
+          slotKind: slot.definition.slotKind,
+          weekNumber: slot.definition.weekNumber,
+          name: slot.definition.name,
+          startsAt: slot.startsAt,
+          endsAt: slot.endsAt,
+          isTestData: slot.isTestData,
+          label: slot.label,
+        };
+      }),
+      currentSeasonYears: currentSeasons.flatMap((row) => (row.currentSeason === null ? [] : [row.currentSeason.championshipYear])),
+    };
   }
 
   async readYearState({ leagueId, championshipYear }: LeagueChampionshipYearKey, now: Date): Promise<ChampionshipYearState> {

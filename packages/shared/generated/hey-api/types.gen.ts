@@ -27624,6 +27624,177 @@ export type ChampionshipYearListResponse = {
 };
 
 /**
+ * A sport league's last Season slot of the year still to finish: the year closes after it, once its contests are final.
+ */
+export type ChampionshipClosingSlotDto = {
+    sportLeagueId: string;
+    /**
+     * What screens call the sport league, such as "NFL".
+     */
+    sportLeagueName: string;
+    /**
+     * The slot definition's code in its league, such as FINAL; an identifier nothing parses.
+     */
+    key: string;
+    /**
+     * The league's proper name for the slot, such as "Super Bowl", or a test slot's label; null: screens use the word for its kind.
+     */
+    name: string | null;
+    /**
+     * What kind of slot it is, for the word a screen shows when it has no name.
+     */
+    slotKind: 'WEEK' | 'PLAY_IN' | 'ROUND_OF_64' | 'ROUND_OF_32' | 'ROUND_OF_16' | 'QUARTERFINAL' | 'SEMIFINAL' | 'THIRD_PLACE' | 'FINAL' | 'TOURNAMENT';
+    /**
+     * For a WEEK slot, its week; null otherwise.
+     */
+    weekNumber: number | null;
+    /**
+     * The earliest start of its games; null until the sync has placed one.
+     */
+    startsAt: string | null;
+    /**
+     * The latest end of its games; null until the sync has placed one.
+     */
+    endsAt: string | null;
+};
+
+/**
+ * A contest of the year not yet final.
+ */
+export type ChampionshipCalendarContestDto = {
+    contestId: string;
+    /**
+     * The contest's name.
+     */
+    name: string;
+};
+
+/**
+ * One championship year of the league, open or closed.
+ */
+export type ChampionshipCalendarYearDto = {
+    /**
+     * The championship year, such as 2026.
+     */
+    championshipYear: number;
+    /**
+     * True once the year is closed for good (#2021): every contest in it final and every Season slot of it finished. A closed year never reopens.
+     */
+    isClosed: boolean;
+    /**
+     * What holds an open year open: each sport league's last slot of the year still to finish, earliest first and an undated one last. Empty once closed, and when only contests hold it.
+     */
+    closesAfter: Array<{
+        sportLeagueId: string;
+        /**
+         * What screens call the sport league, such as "NFL".
+         */
+        sportLeagueName: string;
+        /**
+         * The slot definition's code in its league, such as FINAL; an identifier nothing parses.
+         */
+        key: string;
+        /**
+         * The league's proper name for the slot, such as "Super Bowl", or a test slot's label; null: screens use the word for its kind.
+         */
+        name: string | null;
+        /**
+         * What kind of slot it is, for the word a screen shows when it has no name.
+         */
+        slotKind: 'WEEK' | 'PLAY_IN' | 'ROUND_OF_64' | 'ROUND_OF_32' | 'ROUND_OF_16' | 'QUARTERFINAL' | 'SEMIFINAL' | 'THIRD_PLACE' | 'FINAL' | 'TOURNAMENT';
+        /**
+         * For a WEEK slot, its week; null otherwise.
+         */
+        weekNumber: number | null;
+        /**
+         * The earliest start of its games; null until the sync has placed one.
+         */
+        startsAt: string | null;
+        /**
+         * The latest end of its games; null until the sync has placed one.
+         */
+        endsAt: string | null;
+    }>;
+    /**
+     * The year's counted contests not yet final, oldest first; empty once closed.
+     */
+    unfinishedContests: Array<{
+        contestId: string;
+        /**
+         * The contest's name.
+         */
+        name: string;
+    }>;
+};
+
+/**
+ * The league's championship years, open and closed, and the one it is in now (#2021).
+ */
+export type ChampionshipCalendarResponse = {
+    /**
+     * The year the league is in now, which Championships opens on: the earliest open year with a live contest, else its earliest open year, else the earliest current Season year of an active sport league that it has not closed. Never the calendar year. Null only when there is none.
+     */
+    currentYear: number | null;
+    /**
+     * Every year the league has a counted contest in, every closed year and the current year, newest first.
+     */
+    years: Array<{
+        /**
+         * The championship year, such as 2026.
+         */
+        championshipYear: number;
+        /**
+         * True once the year is closed for good (#2021): every contest in it final and every Season slot of it finished. A closed year never reopens.
+         */
+        isClosed: boolean;
+        /**
+         * What holds an open year open: each sport league's last slot of the year still to finish, earliest first and an undated one last. Empty once closed, and when only contests hold it.
+         */
+        closesAfter: Array<{
+            sportLeagueId: string;
+            /**
+             * What screens call the sport league, such as "NFL".
+             */
+            sportLeagueName: string;
+            /**
+             * The slot definition's code in its league, such as FINAL; an identifier nothing parses.
+             */
+            key: string;
+            /**
+             * The league's proper name for the slot, such as "Super Bowl", or a test slot's label; null: screens use the word for its kind.
+             */
+            name: string | null;
+            /**
+             * What kind of slot it is, for the word a screen shows when it has no name.
+             */
+            slotKind: 'WEEK' | 'PLAY_IN' | 'ROUND_OF_64' | 'ROUND_OF_32' | 'ROUND_OF_16' | 'QUARTERFINAL' | 'SEMIFINAL' | 'THIRD_PLACE' | 'FINAL' | 'TOURNAMENT';
+            /**
+             * For a WEEK slot, its week; null otherwise.
+             */
+            weekNumber: number | null;
+            /**
+             * The earliest start of its games; null until the sync has placed one.
+             */
+            startsAt: string | null;
+            /**
+             * The latest end of its games; null until the sync has placed one.
+             */
+            endsAt: string | null;
+        }>;
+        /**
+         * The year's counted contests not yet final, oldest first; empty once closed.
+         */
+        unfinishedContests: Array<{
+            contestId: string;
+            /**
+             * The contest's name.
+             */
+            name: string;
+        }>;
+    }>;
+};
+
+/**
  * The Season slot an offer is shown with (#2010): of its slot definition's Season slots, the one under way, or else the soonest upcoming that can still take the contest.
  */
 export type EventPageNextSlotDto = {
@@ -38619,6 +38790,37 @@ export type ListChampionshipYearsResponses = {
 };
 
 export type ListChampionshipYearsResponse = ListChampionshipYearsResponses[keyof ListChampionshipYearsResponses];
+
+export type GetChampionshipCalendarData = {
+    body?: never;
+    path: {
+        id: string;
+    };
+    query?: never;
+    url: '/api/v1/leagues/{id}/championship/calendar';
+};
+
+export type GetChampionshipCalendarErrors = {
+    /**
+     * Standard API error envelope.
+     */
+    401: ErrorEnvelope;
+    /**
+     * Standard API error envelope.
+     */
+    403: ErrorEnvelope;
+};
+
+export type GetChampionshipCalendarError = GetChampionshipCalendarErrors[keyof GetChampionshipCalendarErrors];
+
+export type GetChampionshipCalendarResponses = {
+    /**
+     * The league's championship years, open and closed, and the one it is in now (#2021).
+     */
+    200: ChampionshipCalendarResponse;
+};
+
+export type GetChampionshipCalendarResponse = GetChampionshipCalendarResponses[keyof GetChampionshipCalendarResponses];
 
 export type GetChampionshipData = {
     body?: never;

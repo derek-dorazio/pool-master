@@ -38,6 +38,7 @@ export * from './squares';
 export * from './predicted-choice';
 export * from './cup-points';
 export * from './championship';
+export * from './championship-calendar';
 export * from './league-plans';
 export * from './event-pages';
 export * from './url-segment';

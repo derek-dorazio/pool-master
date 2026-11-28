@@ -6,6 +6,7 @@
 import { z } from 'zod';
 import {
   ChampionshipTile,
+  SlotKind,
   TeamIconKey,
   type TeamIconKey as TeamIconKeyValue,
 } from '@poolmaster/shared/domain';
@@ -73,6 +74,35 @@ export const ChampionshipYearListResponseSchema = z.object({
 }).describe('The league championship\'s years.');
 export type ChampionshipYearListResponse = z.infer<typeof ChampionshipYearListResponseSchema>;
 
+const ChampionshipClosingSlotDtoSchema = z.object({
+  sportLeagueId: z.uuid(),
+  sportLeagueName: z.string().describe('What screens call the sport league, such as "NFL".'),
+  key: z.string().describe('The slot definition\'s code in its league, such as FINAL; an identifier nothing parses.'),
+  name: z.string().nullable().describe('The league\'s proper name for the slot, such as "Super Bowl", or a test slot\'s label; null: screens use the word for its kind.'),
+  slotKind: z.enum(SlotKind).describe('What kind of slot it is, for the word a screen shows when it has no name.'),
+  weekNumber: z.number().int().nullable().describe('For a WEEK slot, its week; null otherwise.'),
+  startsAt: z.iso.datetime().nullable().describe('The earliest start of its games; null until the sync has placed one.'),
+  endsAt: z.iso.datetime().nullable().describe('The latest end of its games; null until the sync has placed one.'),
+}).describe('A sport league\'s last Season slot of the year still to finish: the year closes after it, once its contests are final.');
+
+const ChampionshipCalendarContestDtoSchema = z.object({
+  contestId: z.uuid(),
+  name: z.string().describe('The contest\'s name.'),
+}).describe('A contest of the year not yet final.');
+
+const ChampionshipCalendarYearDtoSchema = z.object({
+  championshipYear: z.number().int().describe('The championship year, such as 2026.'),
+  isClosed: z.boolean().describe('True once the year is closed for good (#2021): every contest in it final and every Season slot of it finished. A closed year never reopens.'),
+  closesAfter: z.array(ChampionshipClosingSlotDtoSchema).describe('What holds an open year open: each sport league\'s last slot of the year still to finish, earliest first and an undated one last. Empty once closed, and when only contests hold it.'),
+  unfinishedContests: z.array(ChampionshipCalendarContestDtoSchema).describe('The year\'s counted contests not yet final, oldest first; empty once closed.'),
+}).describe('One championship year of the league, open or closed.');
+
+const ChampionshipCalendarResponseSchema = z.object({
+  currentYear: z.number().int().nullable().describe('The year the league is in now, which Championships opens on: the earliest open year with a live contest, else its earliest open year, else the earliest current Season year of an active sport league that it has not closed. Never the calendar year. Null only when there is none.'),
+  years: z.array(ChampionshipCalendarYearDtoSchema).describe('Every year the league has a counted contest in, every closed year and the current year, newest first.'),
+}).describe('The league\'s championship years, open and closed, and the one it is in now (#2021).');
+export type ChampionshipCalendarResponse = z.infer<typeof ChampionshipCalendarResponseSchema>;
+
 registerSchema('ChampionshipSquadDto', ChampionshipSquadDtoSchema);
 registerSchema('ChampionshipStandingRowDto', ChampionshipStandingRowDtoSchema);
 registerSchema('ChampionshipTileDto', ChampionshipTileDtoSchema);
@@ -80,3 +110,7 @@ registerSchema('ChampionshipDto', ChampionshipDtoSchema);
 registerSchema('ChampionshipResponse', ChampionshipResponseSchema);
 registerSchema('ChampionshipYearDto', ChampionshipYearDtoSchema);
 registerSchema('ChampionshipYearListResponse', ChampionshipYearListResponseSchema);
+registerSchema('ChampionshipClosingSlotDto', ChampionshipClosingSlotDtoSchema);
+registerSchema('ChampionshipCalendarContestDto', ChampionshipCalendarContestDtoSchema);
+registerSchema('ChampionshipCalendarYearDto', ChampionshipCalendarYearDtoSchema);
+registerSchema('ChampionshipCalendarResponse', ChampionshipCalendarResponseSchema);
