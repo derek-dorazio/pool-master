@@ -101,7 +101,7 @@ describe('status bubbling from Matches to the Season slot to the event (#2013)',
 
     await expect(service().refreshSlots(event.id)).resolves.toEqual({ changedCount: 1 });
     expect(await seasonSlotStatus(seasonSlotId)).toBe(SeasonSlotStatus.IN_PROGRESS);
-    expect(await queuedTypes(event.id)).toEqual([BackgroundJobType.REFRESH_EVENT_STATUS, BackgroundJobType.REFRESH_SLOT_STATUS]);
+    expect(await queuedTypes(event.id)).toEqual([BackgroundJobType.ACTIVATE_EVENT_CONTESTS, BackgroundJobType.REFRESH_EVENT_STATUS, BackgroundJobType.REFRESH_SLOT_STATUS]);
 
     await expect(service().refreshEvent(event.id)).resolves.toEqual({ changedCount: 1 });
     expect(await eventStatus(event.id)).toBe(SportEventStatus.IN_PROGRESS);

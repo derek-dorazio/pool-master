@@ -8,6 +8,7 @@ import type {
   SportLeagueEventOverviewListResponse,
   SportLeagueOverviewListResponse,
   SportLeagueParticipantOverviewListResponse,
+  SportLeagueConferenceListResponse,
   SportLeaguePositionListResponse,
   SportLeagueResponse,
   SportLeagueSeasonListResponse,
@@ -26,6 +27,7 @@ import {
   mapSportLeagueParticipantOverviewToDto,
   mapSportLeagueSeasonSlotToDto,
   mapSportLeagueSeasonToDto,
+  mapSportLeagueConferenceToDto,
   mapSportLeaguePositionToDto,
   mapSportLeagueStructureToDto,
   mapSportLeagueSyncToDto,
@@ -59,6 +61,12 @@ export function buildSportLeagueHandlers(
       const positions = await page.listPositions(request.params.sportLeagueId);
       if (positions === null) return notFound(reply, request.params.sportLeagueId);
       return { positions: positions.map(mapSportLeaguePositionToDto) } satisfies SportLeaguePositionListResponse;
+    },
+
+    listConferences: async (request: FastifyRequest<SportLeagueParams>, reply: FastifyReply) => {
+      const conferences = await page.listConferences(request.params.sportLeagueId);
+      if (conferences === null) return notFound(reply, request.params.sportLeagueId);
+      return { conferences: conferences.map(mapSportLeagueConferenceToDto) } satisfies SportLeagueConferenceListResponse;
     },
 
     listEventOverviews: async (request: FastifyRequest<SportLeagueParams>, reply: FastifyReply) => {

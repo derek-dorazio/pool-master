@@ -109,9 +109,7 @@ export function createContestSportEventReader({ sportEvents, field, tiers, valua
     countCoveredRounds: async (sportEventId, coverage) =>
       coveredRoundNumbers(coverage, await rounds.findBySportEvent(sportEventId)).length,
     findSquaresGameChoices: async (sportEventId, now) => squaresGameChoices(await matches.findBySportEvent(sportEventId), now),
-    findCutoffTiming: async (sportEvent, cutoff) => cutoff.kind === ContestCutoffKind.EVENT_START
-      ? sportEvent
-      : cutoffTiming(cutoff, sportEvent, await matches.findBySportEvent(sportEvent.id)),
+    findCutoffTiming: async (sportEvent, cutoff) => cutoffTiming(cutoff, sportEvent, cutoff.kind === ContestCutoffKind.GAME_START ? await matches.findBySportEvent(sportEvent.id) : []),
   };
 }
 
@@ -157,7 +155,7 @@ export function createBatchedContestOpeningReader({ sportEvents, field, tiers, v
       const kickoffs = squaresGameChoices(games, now)
         .map(({ game }) => cutoffTiming({ kind: ContestCutoffKind.GAME_START, sportEventRoundMatchGameId: game.id }, sportEvent, games))
         .filter((timing) => !hasSportEventStarted(timing, now))
-        .map((timing) => timing.startDate.getTime());
+        .flatMap((timing) => (timing.startDate === null ? [] : [timing.startDate.getTime()]));
       return kickoffs.length === 0 ? null : new Date(Math.min(...kickoffs));
     },
   };

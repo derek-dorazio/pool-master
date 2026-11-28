@@ -6,12 +6,14 @@ import {
   listSportLeagueSyncs,
   getSportLeagueStructure,
   listSportLeaguePositions,
+  listSportLeagueConferences,
   type ContestConfigTemplateDto,
   type SportLeagueEventOverviewDto,
   type SportLeagueParticipantOverviewDto,
   type SportLeagueSyncDto,
   type SportLeaguePhaseDefinitionDto,
   type SportLeaguePositionDto,
+  type SportLeagueConferenceDto,
 } from '@/lib/api';
 import { throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
@@ -89,6 +91,19 @@ export function useSportLeaguePositionsQuery(sportLeagueId: string) {
       const response = await listSportLeaguePositions({ path: { sportLeagueId } });
       if (!response.data?.positions) throwApiError(response.error, 'Sport league positions response is missing data.');
       return response.data.positions;
+    },
+    retry: false,
+  });
+}
+
+/** The League page's Structure tab (#2052): the league's conferences by display order, each with its divisions and provider codes. */
+export function useSportLeagueConferencesQuery(sportLeagueId: string) {
+  return useQuery({
+    queryKey: QueryKeys.rootAdmin.manageSport.leagueConferences(sportLeagueId),
+    queryFn: async (): Promise<SportLeagueConferenceDto[]> => {
+      const response = await listSportLeagueConferences({ path: { sportLeagueId } });
+      if (!response.data?.conferences) throwApiError(response.error, 'Sport league conferences response is missing data.');
+      return response.data.conferences;
     },
     retry: false,
   });

@@ -58,6 +58,7 @@ import {
   CupWeight,
   LeagueMembershipStatus,
   LeagueRole,
+  SeasonSlotStatus,
   SelectionType,
   Sport,
   SportEventStatus,
@@ -75,11 +76,21 @@ import {
 import type { PlanConfig } from '@poolmaster/shared/dto';
 import type { PlanEntitlementsService } from '../../packages/core-api/src/modules/plans/plan-entitlements-service';
 import { PLAN_SETTINGS } from '../../packages/core-api/src/modules/plans/plan-settings';
-import { contestCutoff, ContestCutoffKind } from '../../packages/core-api/src/modules/contests/entry-window';
+import { contestCutoff, ContestCutoffKind, cutoffTiming } from '../../packages/core-api/src/modules/contests/entry-window';
 import { planEntitlementsOver } from './plan-entitlements';
 import { fieldReads } from './field-reads';
 import { InMemoryLeaderboardSnapshots } from './in-memory-leaderboard-snapshots';
 import { sportRowKeys } from './sport-rows';
+
+/** The status an event's slots stand at when it is seeded at a status: what bubbling would have left them at. */
+const SEASON_SLOT_STATUS_OF_EVENT: Record<SportEventStatus, SeasonSlotStatus> = {
+  [SportEventStatus.DRAFT]: SeasonSlotStatus.SCHEDULED,
+  [SportEventStatus.SCHEDULED]: SeasonSlotStatus.SCHEDULED,
+  [SportEventStatus.POSTPONED]: SeasonSlotStatus.SCHEDULED,
+  [SportEventStatus.IN_PROGRESS]: SeasonSlotStatus.IN_PROGRESS,
+  [SportEventStatus.COMPLETED]: SeasonSlotStatus.COMPLETED,
+  [SportEventStatus.CANCELLED]: SeasonSlotStatus.CANCELLED,
+};
 
 /** Thrown where Postgres would reject the write with a unique-constraint violation (P2002). */
 export class UniqueConstraintViolation extends Error {
@@ -122,7 +133,8 @@ export class InMemoryContestWorld {
   readonly fieldSizes = new Map<string, number>();
   readonly sportEvents = new Map<string, SportEvent>();
   /** Each event's Season slots, one per slot definition it plays (#2014): what a contest covers. */
-  readonly seasonSlots = new Map<string, { sportEventId: string; slotDefinitionId: string }>();
+  /** Each event's Season slots, with the status its games give them: an event seeded under way has its slots under way (#2013). */
+  readonly seasonSlots = new Map<string, { sportEventId: string; slotDefinitionId: string; status: SeasonSlotStatus }>();
   /** The event's tiers, per sport event — what `listTiers` answers. */
   readonly eventTiers = new Map<string, SetTier[]>();
   /** Each contest's expansion bands, in the order they were added (#980); the highest applies. */
@@ -235,7 +247,8 @@ export class InMemoryContestWorld {
       sportEventIds: [...new Set(slots.map((slot) => slot.sportEventId))],
       coveredSeasonSlotIds: [...seasonSlotIds],
       coveredSlotDefinitionIds: slots.map((slot) => slot.slotDefinitionId),
-      coveredSlots: slots.map((slot) => buildCoveredSlot(slot)),
+      // A synced slot's start is its first game's, written by the sync; here every slot of an event starts with it.
+      coveredSlots: slots.map((slot) => buildCoveredSlot({ ...slot, startsAt: this.sportEvents.get(slot.sportEventId)?.startDate ?? null })),
     };
   }
 
@@ -304,7 +317,7 @@ export class InMemoryContestWorld {
     } as SportEvent;
     this.sportEvents.set(event.id, event);
     for (const definition of event.slotDefinitions) {
-      this.seasonSlots.set(this.nextId('season-slot'), { sportEventId: event.id, slotDefinitionId: definition.id });
+      this.seasonSlots.set(this.nextId('season-slot'), { sportEventId: event.id, slotDefinitionId: definition.id, status: SEASON_SLOT_STATUS_OF_EVENT[event.status] });
     }
     this.fieldSizes.set(event.id, 40);
     return event;
@@ -393,8 +406,8 @@ export class InMemoryContestWorld {
       return true;
     }
     const configuration = [...this.configurations.values()].find((row) => row.contestId === contest.id);
-    const closesAtEventStart = contestCutoff(configuration?.configJson, contest.squaresGame).kind === ContestCutoffKind.EVENT_START;
-    return closesAtEventStart && events.some((event) => hasSportEventStarted(event, now));
+    const cutoff = contestCutoff(configuration?.configJson, contest);
+    return cutoff.kind === ContestCutoffKind.FIRST_COVERED_GAME && events.some((event) => hasSportEventStarted(cutoffTiming(cutoff, event, []), now));
   }
 
   contestRepo(): ContestRepository {

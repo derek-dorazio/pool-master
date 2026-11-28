@@ -36,7 +36,7 @@ function mapping(providerName: string, matchType: SlotProviderMatchType, provide
 }
 
 function competition(code: string, orderIndex: number, slots: SportLeagueSlotDefinition[]): SportLeagueCompetitionDefinition {
-  return { id: `00000000-0000-4000-8000-${String(orderIndex).padStart(12, '0')}`, code, orderIndex, slots };
+  return { id: `00000000-0000-4000-8000-${String(orderIndex).padStart(12, '0')}`, code, orderIndex, conferenceId: null, slots };
 }
 
 /** A phase with one competition, coded as the phase, holding `slots`. */

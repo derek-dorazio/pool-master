@@ -68,6 +68,7 @@ so on purpose.
 | `PARTICIPANT_PROVIDER_MAPPED` | `resolve-mapped-participant-findings` | `RESOLVE_MAPPED_PARTICIPANT_FINDINGS` |
 | `MATCH_STATUS_CHANGED` | `refresh-slot-status` | `REFRESH_SLOT_STATUS` |
 | `SEASON_SLOT_STATUS_CHANGED` | `refresh-event-status` | `REFRESH_EVENT_STATUS` |
+| `SEASON_SLOT_STATUS_CHANGED` | `activate-slot-contests` | `ACTIVATE_EVENT_CONTESTS` |
 | `SEASON_SLOT_STATUS_CHANGED` | `close-season-championship-years` | `CLOSE_SEASON_CHAMPIONSHIP_YEARS` |
 <!-- domain-event-handlers:end -->
 

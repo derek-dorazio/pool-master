@@ -302,6 +302,40 @@ describe('pool-master-98i system email templates', () => {
     expect(message.html).toContain('Not affiliated with PGA Tour or any sports league.');
   });
 
+  it('says picks close when the first game starts in the new contest email for a round not scheduled yet, with no date (#2013)', () => {
+    const message = renderSystemEmailTemplate('CONTEST_OPENED', {
+      userName: 'Morgan Member',
+      leagueName: 'Mathworks',
+      contestName: 'Conference Finals Clutch Card',
+      event: MASTERS_EVENT,
+      events: [{ name: 'The Masters', startsAt: new Date('2026-04-09T11:40:00.000Z') }],
+      format: TIERED,
+      rules: 'Pick 1 golfer from each of 6 tiers. The best 4 scores count.',
+      entriesPerMember: '1 entry per member',
+      closesAt: null,
+      contestUrl: 'https://app.primetimecommissioner.com/league/MATHWORKS/contests/contest-1',
+    }, UTC);
+
+    expect(message.text).toContain('Picks close: When the first game starts');
+    expect(message.html).toContain('When the first game starts');
+  });
+
+  it('says a lineup or bracket can change until the first game starts on a receipt for a round not scheduled yet (#2013)', () => {
+    const lineup = renderSystemEmailTemplate('CONTEST_ENTRY_COMPLETED', {
+      ...ENTRY,
+      contestName: 'Conference Finals Clutch Card',
+      receipt: { kind: EntryReceiptKind.LINEUP, tiers: [{ tierName: 'Tier A', participantNames: ['Celtics'] }], changeUntil: null },
+    }, UTC);
+    const bracket = renderSystemEmailTemplate('CONTEST_ENTRY_COMPLETED', {
+      ...ENTRY,
+      contestName: 'March Madness',
+      receipt: { kind: EntryReceiptKind.BRACKET, eventName: 'NCAA Tournament', rounds: [{ name: 'Championship', picks: ['Duke'] }], changeUntil: null },
+    }, UTC);
+
+    expect(lineup.text).toContain('You can change your picks until the first game starts.');
+    expect(bracket.text).toContain('You can change your bracket until the first game starts.');
+  });
+
   it('lists a multi-event contest\'s events after the first in the new contest email, and says when the first picks close', () => {
     const message = renderSystemEmailTemplate('CONTEST_OPENED', {
       userName: 'Morgan Member',
