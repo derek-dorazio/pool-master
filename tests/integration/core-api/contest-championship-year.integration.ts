@@ -179,6 +179,16 @@ describe('the championship year close against Postgres (#2021)', () => {
     await expect(closer(AFTER_SUPER_BOWL).closeYear(year.key)).resolves.toBe(false);
   });
 
+  it('reads a year with no contests as holding nothing, so it never closes, and finds no league years for a slot or contest that is gone', async () => {
+    const year = await footballYear();
+    const repo = new PrismaLeagueChampionshipYearRepository(getAppPrisma());
+
+    await expect(repo.readYearState(year.key, AFTER_SUPER_BOWL)).resolves.toEqual({ contestCount: 0, unfinishedContestCount: 0, unfinishedSeasonSlotCount: 0 });
+    await expect(closer(AFTER_SUPER_BOWL).closeYear(year.key)).resolves.toBe(false);
+    await expect(repo.findLeagueYearsOfSeasonSlot(randomUUID())).resolves.toEqual([]);
+    await expect(closer(AFTER_SUPER_BOWL).closeContestYear(randomUUID())).resolves.toEqual({ changedCount: 0 });
+  });
+
   it('ignores a draft that can never open, its event over, and never reopens a closed year', async () => {
     const year = await footballYear();
     await year.contest('Divisional pool', 'COMPLETED', year.divisional.seasonSlotId);
