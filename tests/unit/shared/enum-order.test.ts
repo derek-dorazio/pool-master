@@ -115,9 +115,9 @@ describe('every shared enum declares its order', () => {
 });
 
 describe('the orders Derek settled (#1841)', () => {
-  it('puts a postponed event beside the scheduled ones and a cancelled one last', () => {
+  it('orders an event through its lifecycle with a cancelled one last', () => {
     expect(explicitOrderValues(SportEventStatusOrder)).toEqual([
-      SportEventStatus.DRAFT, SportEventStatus.SCHEDULED, SportEventStatus.POSTPONED,
+      SportEventStatus.DRAFT, SportEventStatus.SCHEDULED,
       SportEventStatus.IN_PROGRESS, SportEventStatus.COMPLETED, SportEventStatus.CANCELLED,
     ]);
   });
@@ -141,7 +141,6 @@ describe('the orders Derek settled (#1841)', () => {
 const SORTED_IN_CODE: Readonly<Partial<Record<string, string>>> = {
   ParticipantStatus: 'no read orders by participant status',
   MatchStatus: 'no read orders by match status',
-  SportEventStatus: 'no read orders by event status',
   ValuationSource: 'no read orders by valuation source',
   EmailMessageStatus: 'no read orders by email status',
 };

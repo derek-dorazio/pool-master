@@ -489,7 +489,7 @@ describe('Contract verification (root admin)', () => {
     }
 
     const answered = [
-      '/api/v1/events?sport=GOLF&status=SCHEDULED&status=POSTPONED&status=IN_PROGRESS',
+      '/api/v1/events?sport=GOLF&status=SCHEDULED&status=IN_PROGRESS',
       `/api/v1/events?sportLeagueSeasonId=${randomUUID()}`,
     ];
     for (const url of answered) {

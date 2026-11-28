@@ -798,7 +798,7 @@ export class InMemorySportEvents {
       findAutoReleaseCheck: async (sportEventId) => this.autoReleaseChecks.get(sportEventId) ?? null,
       findAutoLifecycleCandidates: async () => this.events.filter((row): row is AutoLifecycleCandidate => (
         row.autoLifecycleEnabled
-        && (row.status === 'SCHEDULED' || row.status === 'IN_PROGRESS' || row.status === 'POSTPONED')
+        && (row.status === 'SCHEDULED' || row.status === 'IN_PROGRESS')
       )),
     };
   }

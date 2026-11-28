@@ -37,7 +37,6 @@ function statusChanged(from: SportEventStatus, to: SportEventStatus, overrides: 
     from,
     to,
     settleAt: SETTLE_AT,
-    reopeningContestIds: new Set(),
     ...overrides,
   };
 }
@@ -105,9 +104,7 @@ describe('DOMAIN_EVENT_HANDLERS, the one map of what follows each change', () =>
     expect(pinned).toEqual({
       SPORT_EVENT_STATUS_CHANGED: [
         'activate-event-contests',
-        'follow-postponed-event-contests',
         'settle-finished-event-contests',
-        'tell-leagues-event-postponed',
         'tell-leagues-event-cancelled',
         'rebuild-event-leaderboards',
       ],
@@ -191,8 +188,7 @@ describe('SPORT_EVENT_STATUS_CHANGED handlers', () => {
     const activate = handler('activate-event-contests');
 
     expect(activate.when?.(statusChanged(SportEventStatus.SCHEDULED, SportEventStatus.IN_PROGRESS))).toBe(true);
-    expect(activate.when?.(statusChanged(SportEventStatus.POSTPONED, SportEventStatus.IN_PROGRESS))).toBe(true);
-    for (const to of [SportEventStatus.SCHEDULED, SportEventStatus.POSTPONED, SportEventStatus.COMPLETED, SportEventStatus.CANCELLED]) {
+    for (const to of [SportEventStatus.COMPLETED, SportEventStatus.CANCELLED]) {
       expect(activate.when?.(statusChanged(SportEventStatus.IN_PROGRESS, to))).toBe(false);
     }
     expect(await activate.jobs(statusChanged(SportEventStatus.SCHEDULED, SportEventStatus.IN_PROGRESS), context())).toEqual([{
@@ -202,22 +198,6 @@ describe('SPORT_EVENT_STATUS_CHANGED handlers', () => {
       runAt: undefined,
       start: TEST_JOB_START,
       dedupeKey: 'ACTIVATE_EVENT_CONTESTS:sport-event-1',
-    }]);
-  });
-
-  it('has a postponed event\'s contests follow its start by a job on every postponement, a repeated one too, as the lifecycle sweep asks', async () => {
-    const follow = handler('follow-postponed-event-contests');
-
-    expect(follow.when?.(statusChanged(SportEventStatus.SCHEDULED, SportEventStatus.POSTPONED))).toBe(true);
-    expect(follow.when?.(statusChanged(SportEventStatus.POSTPONED, SportEventStatus.POSTPONED))).toBe(true);
-    expect(follow.when?.(statusChanged(SportEventStatus.POSTPONED, SportEventStatus.SCHEDULED))).toBe(false);
-    expect(await follow.jobs(statusChanged(SportEventStatus.IN_PROGRESS, SportEventStatus.POSTPONED), context())).toEqual([{
-      type: BackgroundJobType.FOLLOW_POSTPONED_EVENT_CONTESTS,
-      payload: { sportEventId: 'sport-event-1' },
-      sportEventId: 'sport-event-1',
-      runAt: undefined,
-      start: TEST_JOB_START,
-      dedupeKey: 'FOLLOW_POSTPONED_EVENT_CONTESTS:sport-event-1',
     }]);
   });
 
@@ -237,7 +217,6 @@ describe('SPORT_EVENT_STATUS_CHANGED handlers', () => {
       }]);
     }
     expect(settle.when?.(statusChanged(SportEventStatus.SCHEDULED, SportEventStatus.IN_PROGRESS))).toBe(false);
-    expect(settle.when?.(statusChanged(SportEventStatus.SCHEDULED, SportEventStatus.POSTPONED))).toBe(false);
   });
 });
 
@@ -288,7 +267,7 @@ describe('SPORT_EVENT_FIELD_SYNCED handlers', () => {
   });
 
   it('follows a sync of every event still to be played, and of no finished or cancelled one', () => {
-    for (const status of [SportEventStatus.DRAFT, SportEventStatus.SCHEDULED, SportEventStatus.IN_PROGRESS, SportEventStatus.POSTPONED]) {
+    for (const status of [SportEventStatus.DRAFT, SportEventStatus.SCHEDULED, SportEventStatus.IN_PROGRESS]) {
       expect(follow.when?.(fieldSynced(status))).toBe(true);
     }
     for (const status of [SportEventStatus.COMPLETED, SportEventStatus.CANCELLED]) {
@@ -397,7 +376,7 @@ describe('SPORT_EVENT_RESCHEDULED handlers', () => {
 
   it('tells the leagues on a released event whose start moved, with the previous start, leaving out the contests the new start reopens', async () => {
     const notice = recordingSportEventChangedNotice();
-    const event = rescheduled(SportEventStatus.POSTPONED, new Set(['contest-live']));
+    const event = rescheduled(SportEventStatus.SCHEDULED, new Set(['contest-live']));
 
     expect(await tell.jobs(event, { queue: watchedQueue(), sportEventChanged: notice }))
       .toEqual([eventChangedJob('sport-event-1', 'RESCHEDULED')]);
@@ -408,10 +387,10 @@ describe('SPORT_EVENT_RESCHEDULED handlers', () => {
     );
   });
 
-  it('tells the leagues of a scheduled or postponed event only: a draft\'s commissioners cannot see it, and a started event\'s picks are closed', () => {
+  it('tells the leagues of a scheduled event only: a draft\'s commissioners cannot see it, and a started event\'s picks are closed', () => {
     const told = Object.values(SportEventStatus).filter((status) => tell.when?.(rescheduled(status)));
 
-    expect(told.sort()).toEqual([SportEventStatus.POSTPONED, SportEventStatus.SCHEDULED].sort());
+    expect(told).toEqual([SportEventStatus.SCHEDULED]);
   });
 });
 
@@ -610,7 +589,7 @@ describe('DomainEvents.collect', () => {
     notice.sportEventChangedJobs.mockRejectedValueOnce(new Error('database unavailable'));
     const { events } = domainEvents({ sportEventChanged: notice });
 
-    await expect(events.collect(statusChanged(SportEventStatus.SCHEDULED, SportEventStatus.POSTPONED))).rejects.toThrow('database unavailable');
+    await expect(events.collect(statusChanged(SportEventStatus.SCHEDULED, SportEventStatus.CANCELLED))).rejects.toThrow('database unavailable');
   });
 });
 
@@ -665,9 +644,7 @@ describe('The generated domain event table in docs/BACKGROUND-JOBS.md', () => {
       '| Domain event | Handler | Queues |',
       '|---|---|---|',
       '| `SPORT_EVENT_STATUS_CHANGED` | `activate-event-contests` | `ACTIVATE_EVENT_CONTESTS` |',
-      '| `SPORT_EVENT_STATUS_CHANGED` | `follow-postponed-event-contests` | `FOLLOW_POSTPONED_EVENT_CONTESTS` |',
       '| `SPORT_EVENT_STATUS_CHANGED` | `settle-finished-event-contests` | `SETTLE_SPORT_EVENT_CONTESTS` |',
-      '| `SPORT_EVENT_STATUS_CHANGED` | `tell-leagues-event-postponed` | `CONTEST_EVENT_CHANGED_EMAILS` |',
       '| `SPORT_EVENT_STATUS_CHANGED` | `tell-leagues-event-cancelled` | `CONTEST_EVENT_CHANGED_EMAILS` |',
       '| `SPORT_EVENT_STATUS_CHANGED` | `rebuild-event-leaderboards` | `REBUILD_LEADERBOARDS` |',
       '| `SPORT_EVENT_RESCHEDULED` | `tell-leagues-event-rescheduled` | `CONTEST_EVENT_CHANGED_EMAILS` |',

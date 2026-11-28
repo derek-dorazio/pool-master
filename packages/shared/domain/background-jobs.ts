@@ -121,7 +121,6 @@ export const BACKGROUND_JOB_KINDS = {
   [BackgroundJobType.REBUILD_LEADERBOARDS]: BackgroundJobKind.OTHER,
   [BackgroundJobType.SYNC_EVENT_GAMES_AND_TIERS]: BackgroundJobKind.SYNC,
   [BackgroundJobType.ACTIVATE_EVENT_CONTESTS]: BackgroundJobKind.OTHER,
-  [BackgroundJobType.FOLLOW_POSTPONED_EVENT_CONTESTS]: BackgroundJobKind.OTHER,
   [BackgroundJobType.RESOLVE_MAPPED_PARTICIPANT_FINDINGS]: BackgroundJobKind.SYNC,
   [BackgroundJobType.REFRESH_SLOT_TIEBREAKERS]: BackgroundJobKind.OTHER,
   [BackgroundJobType.REFRESH_SLOT_STATUS]: BackgroundJobKind.OTHER,

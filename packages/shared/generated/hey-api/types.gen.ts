@@ -10764,7 +10764,7 @@ export type SportLeagueEventOverviewDto = {
      * ISO 8601 datetime string.
      */
     endDate: string | null;
-    status: 'DRAFT' | 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
+    status: 'DRAFT' | 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
     /**
      * AUTO when its league releases synced drafts on its own and the event is synced; MANUAL otherwise.
      */
@@ -10918,7 +10918,7 @@ export type SportLeagueEventOverviewListResponse = {
          * ISO 8601 datetime string.
          */
         endDate: string | null;
-        status: 'DRAFT' | 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
+        status: 'DRAFT' | 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
         /**
          * AUTO when its league releases synced drafts on its own and the event is synced; MANUAL otherwise.
          */
@@ -13172,7 +13172,7 @@ export type SportLeagueParticipantRankingsRequest = {
  */
 export type UploadRowResolutionDto = 'MATCHED' | 'UNRESOLVED' | 'AMBIGUOUS';
 
-export type EventStatusDto = 'DRAFT' | 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
+export type EventStatusDto = 'DRAFT' | 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
 
 export type EventReadinessStatusDto = 'NOT_RELEASED' | 'PENDING_FIELD' | 'CONTEST_ELIGIBLE' | 'EVENT_STARTED';
 
@@ -13487,7 +13487,7 @@ export type SportEventDto = {
     /**
      * Event lifecycle status.
      */
-    status: 'DRAFT' | 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
+    status: 'DRAFT' | 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
     /**
      * Scheduled or actual start time.
      */
@@ -13935,7 +13935,7 @@ export type SportEventDto = {
     /**
      * Statuses the event may move to next, from the declared transition map. (Admin-only: operational detail no member surface reads.)
      */
-    allowedTransitions: Array<'DRAFT' | 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED'>;
+    allowedTransitions: Array<'DRAFT' | 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED'>;
     /**
      * The sync kinds a root admin can run on the event now (#2234): its FIELD while it is a draft, scheduled, in play or completed, and its SCORES while it is in play. Empty for an event its league's provider has no id for, such as a test event. (Admin-only: operational detail no member surface reads.)
      */
@@ -13961,7 +13961,7 @@ export type SportEventListQuery = {
     /**
      * Only events in one of these lifecycle statuses: repeat the parameter for several. Contest setup asks for the statuses an event can still take a contest in.
      */
-    status?: Array<'DRAFT' | 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED'>;
+    status?: Array<'DRAFT' | 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED'>;
     /**
      * Only events of this sport league.
      */
@@ -14032,7 +14032,7 @@ export type SportEventListResponse = {
         /**
          * Event lifecycle status.
          */
-        status: 'DRAFT' | 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
+        status: 'DRAFT' | 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
         /**
          * Scheduled or actual start time.
          */
@@ -14480,7 +14480,7 @@ export type SportEventListResponse = {
         /**
          * Statuses the event may move to next, from the declared transition map. (Admin-only: operational detail no member surface reads.)
          */
-        allowedTransitions: Array<'DRAFT' | 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED'>;
+        allowedTransitions: Array<'DRAFT' | 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED'>;
         /**
          * The sync kinds a root admin can run on the event now (#2234): its FIELD while it is a draft, scheduled, in play or completed, and its SCORES while it is in play. Empty for an event its league's provider has no id for, such as a test event. (Admin-only: operational detail no member surface reads.)
          */
@@ -14552,7 +14552,7 @@ export type SportEventResponse = {
         /**
          * Event lifecycle status.
          */
-        status: 'DRAFT' | 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
+        status: 'DRAFT' | 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
         /**
          * Scheduled or actual start time.
          */
@@ -15000,7 +15000,7 @@ export type SportEventResponse = {
         /**
          * Statuses the event may move to next, from the declared transition map. (Admin-only: operational detail no member surface reads.)
          */
-        allowedTransitions: Array<'DRAFT' | 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED'>;
+        allowedTransitions: Array<'DRAFT' | 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED'>;
         /**
          * The sync kinds a root admin can run on the event now (#2234): its FIELD while it is a draft, scheduled, in play or completed, and its SCORES while it is in play. Empty for an event its league's provider has no id for, such as a test event. (Admin-only: operational detail no member surface reads.)
          */
@@ -15069,7 +15069,7 @@ export type TransitionSportEventRequest = {
     /**
      * One of the event's allowedTransitions. SCHEDULED from DRAFT is the release, which has its own action (releaseEvent).
      */
-    toStatus: 'DRAFT' | 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
+    toStatus: 'DRAFT' | 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
 };
 
 /**
@@ -16946,7 +16946,7 @@ export type ContestSportEventDto = {
     /**
      * The event's own status. Each event of a contest is picked, submitted, played and settled on its own (#713).
      */
-    status: 'DRAFT' | 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
+    status: 'DRAFT' | 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
     /**
      * Who competes: teams or individuals, from the event's sport league. The same on every event of a contest, which covers one sport league.
      */
@@ -17122,7 +17122,7 @@ export type ContestDto = {
         /**
          * The event's own status. Each event of a contest is picked, submitted, played and settled on its own (#713).
          */
-        status: 'DRAFT' | 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
+        status: 'DRAFT' | 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
         /**
          * Who competes: teams or individuals, from the event's sport league. The same on every event of a contest, which covers one sport league.
          */
@@ -18069,7 +18069,7 @@ export type ContestResponse = {
             /**
              * The event's own status. Each event of a contest is picked, submitted, played and settled on its own (#713).
              */
-            status: 'DRAFT' | 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
+            status: 'DRAFT' | 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
             /**
              * Who competes: teams or individuals, from the event's sport league. The same on every event of a contest, which covers one sport league.
              */
@@ -18227,7 +18227,7 @@ export type ContestListResponse = {
             /**
              * The event's own status. Each event of a contest is picked, submitted, played and settled on its own (#713).
              */
-            status: 'DRAFT' | 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
+            status: 'DRAFT' | 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
             /**
              * Who competes: teams or individuals, from the event's sport league. The same on every event of a contest, which covers one sport league.
              */
@@ -19007,7 +19007,7 @@ export type SurvivorLeaderboardResponse = {
          * The week's first kickoff.
          */
         startDate: string;
-        status: 'DRAFT' | 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
+        status: 'DRAFT' | 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
         /**
          * Whether the week's first game has kicked off: an entry not submitted by then is out.
          */
@@ -19140,7 +19140,7 @@ export type PickEmLeaderboardResponse = {
          * The week's first kickoff.
          */
         startDate: string;
-        status: 'DRAFT' | 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED';
+        status: 'DRAFT' | 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
         /**
          * Whether the week's first game has kicked off: until then no entry has points for it.
          */
@@ -33351,7 +33351,7 @@ export type ActivityJobDto = {
     /**
      * The job's handler. Its kind follows from it.
      */
-    type: 'SYNC_EVENT_FIELD' | 'SYNC_EVENT_SCORES' | 'CONTEST_STARTED_EMAILS' | 'CONTEST_SETTLED_EMAILS' | 'CONTEST_EVENT_CHANGED_EMAILS' | 'CONTEST_REOPENED_EMAILS' | 'SETTLE_SPORT_EVENT_CONTESTS' | 'SETTLE_GAME_CONTESTS' | 'REBUILD_LEADERBOARDS' | 'SYNC_LEAGUE_EVENTS' | 'RELEASE_SPORT_EVENT' | 'SYNC_EVENT_GAMES_AND_TIERS' | 'ACTIVATE_EVENT_CONTESTS' | 'FOLLOW_POSTPONED_EVENT_CONTESTS' | 'RESOLVE_MAPPED_PARTICIPANT_FINDINGS' | 'REFRESH_SLOT_TIEBREAKERS' | 'SYNC_LEAGUE_ROSTER' | 'REFRESH_SLOT_STATUS' | 'REFRESH_EVENT_STATUS' | 'CLOSE_LEAGUE_CHAMPIONSHIP_YEAR' | 'CLOSE_SEASON_CHAMPIONSHIP_YEARS';
+    type: 'SYNC_EVENT_FIELD' | 'SYNC_EVENT_SCORES' | 'CONTEST_STARTED_EMAILS' | 'CONTEST_SETTLED_EMAILS' | 'CONTEST_EVENT_CHANGED_EMAILS' | 'CONTEST_REOPENED_EMAILS' | 'SETTLE_SPORT_EVENT_CONTESTS' | 'SETTLE_GAME_CONTESTS' | 'REBUILD_LEADERBOARDS' | 'SYNC_LEAGUE_EVENTS' | 'RELEASE_SPORT_EVENT' | 'SYNC_EVENT_GAMES_AND_TIERS' | 'ACTIVATE_EVENT_CONTESTS' | 'RESOLVE_MAPPED_PARTICIPANT_FINDINGS' | 'REFRESH_SLOT_TIEBREAKERS' | 'SYNC_LEAGUE_ROSTER' | 'REFRESH_SLOT_STATUS' | 'REFRESH_EVENT_STATUS' | 'CLOSE_LEAGUE_CHAMPIONSHIP_YEAR' | 'CLOSE_SEASON_CHAMPIONSHIP_YEARS';
     /**
      * What a job is about: a provider SYNC, EMAIL to a league, contest SETTLEMENT, an event's RELEASE, or OTHER.
      */
@@ -33480,7 +33480,7 @@ export type ActivityListResponse = {
         /**
          * The job's handler. Its kind follows from it.
          */
-        type: 'SYNC_EVENT_FIELD' | 'SYNC_EVENT_SCORES' | 'CONTEST_STARTED_EMAILS' | 'CONTEST_SETTLED_EMAILS' | 'CONTEST_EVENT_CHANGED_EMAILS' | 'CONTEST_REOPENED_EMAILS' | 'SETTLE_SPORT_EVENT_CONTESTS' | 'SETTLE_GAME_CONTESTS' | 'REBUILD_LEADERBOARDS' | 'SYNC_LEAGUE_EVENTS' | 'RELEASE_SPORT_EVENT' | 'SYNC_EVENT_GAMES_AND_TIERS' | 'ACTIVATE_EVENT_CONTESTS' | 'FOLLOW_POSTPONED_EVENT_CONTESTS' | 'RESOLVE_MAPPED_PARTICIPANT_FINDINGS' | 'REFRESH_SLOT_TIEBREAKERS' | 'SYNC_LEAGUE_ROSTER' | 'REFRESH_SLOT_STATUS' | 'REFRESH_EVENT_STATUS' | 'CLOSE_LEAGUE_CHAMPIONSHIP_YEAR' | 'CLOSE_SEASON_CHAMPIONSHIP_YEARS';
+        type: 'SYNC_EVENT_FIELD' | 'SYNC_EVENT_SCORES' | 'CONTEST_STARTED_EMAILS' | 'CONTEST_SETTLED_EMAILS' | 'CONTEST_EVENT_CHANGED_EMAILS' | 'CONTEST_REOPENED_EMAILS' | 'SETTLE_SPORT_EVENT_CONTESTS' | 'SETTLE_GAME_CONTESTS' | 'REBUILD_LEADERBOARDS' | 'SYNC_LEAGUE_EVENTS' | 'RELEASE_SPORT_EVENT' | 'SYNC_EVENT_GAMES_AND_TIERS' | 'ACTIVATE_EVENT_CONTESTS' | 'RESOLVE_MAPPED_PARTICIPANT_FINDINGS' | 'REFRESH_SLOT_TIEBREAKERS' | 'SYNC_LEAGUE_ROSTER' | 'REFRESH_SLOT_STATUS' | 'REFRESH_EVENT_STATUS' | 'CLOSE_LEAGUE_CHAMPIONSHIP_YEAR' | 'CLOSE_SEASON_CHAMPIONSHIP_YEARS';
         /**
          * What a job is about: a provider SYNC, EMAIL to a league, contest SETTLEMENT, an event's RELEASE, or OTHER.
          */
@@ -33586,7 +33586,7 @@ export type ActivityJobResponse = {
         /**
          * The job's handler. Its kind follows from it.
          */
-        type: 'SYNC_EVENT_FIELD' | 'SYNC_EVENT_SCORES' | 'CONTEST_STARTED_EMAILS' | 'CONTEST_SETTLED_EMAILS' | 'CONTEST_EVENT_CHANGED_EMAILS' | 'CONTEST_REOPENED_EMAILS' | 'SETTLE_SPORT_EVENT_CONTESTS' | 'SETTLE_GAME_CONTESTS' | 'REBUILD_LEADERBOARDS' | 'SYNC_LEAGUE_EVENTS' | 'RELEASE_SPORT_EVENT' | 'SYNC_EVENT_GAMES_AND_TIERS' | 'ACTIVATE_EVENT_CONTESTS' | 'FOLLOW_POSTPONED_EVENT_CONTESTS' | 'RESOLVE_MAPPED_PARTICIPANT_FINDINGS' | 'REFRESH_SLOT_TIEBREAKERS' | 'SYNC_LEAGUE_ROSTER' | 'REFRESH_SLOT_STATUS' | 'REFRESH_EVENT_STATUS' | 'CLOSE_LEAGUE_CHAMPIONSHIP_YEAR' | 'CLOSE_SEASON_CHAMPIONSHIP_YEARS';
+        type: 'SYNC_EVENT_FIELD' | 'SYNC_EVENT_SCORES' | 'CONTEST_STARTED_EMAILS' | 'CONTEST_SETTLED_EMAILS' | 'CONTEST_EVENT_CHANGED_EMAILS' | 'CONTEST_REOPENED_EMAILS' | 'SETTLE_SPORT_EVENT_CONTESTS' | 'SETTLE_GAME_CONTESTS' | 'REBUILD_LEADERBOARDS' | 'SYNC_LEAGUE_EVENTS' | 'RELEASE_SPORT_EVENT' | 'SYNC_EVENT_GAMES_AND_TIERS' | 'ACTIVATE_EVENT_CONTESTS' | 'RESOLVE_MAPPED_PARTICIPANT_FINDINGS' | 'REFRESH_SLOT_TIEBREAKERS' | 'SYNC_LEAGUE_ROSTER' | 'REFRESH_SLOT_STATUS' | 'REFRESH_EVENT_STATUS' | 'CLOSE_LEAGUE_CHAMPIONSHIP_YEAR' | 'CLOSE_SEASON_CHAMPIONSHIP_YEARS';
         /**
          * What a job is about: a provider SYNC, EMAIL to a league, contest SETTLEMENT, an event's RELEASE, or OTHER.
          */
@@ -38996,7 +38996,7 @@ export type ListEventsData = {
         /**
          * Only events in one of these lifecycle statuses: repeat the parameter for several. Contest setup asks for the statuses an event can still take a contest in.
          */
-        status?: Array<'DRAFT' | 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED' | 'POSTPONED'>;
+        status?: Array<'DRAFT' | 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED'>;
         /**
          * Only events of this sport league.
          */

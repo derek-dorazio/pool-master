@@ -82,7 +82,7 @@ import { COVERS_TEST_SLOT, ROUND_EVENT_SLOT_SELECT, SEASON_SLOT_SELECT, toRoundS
 import { SLOT_PLACE_SELECT, slotPlaceOf } from './slot-place-select';
 
 /** The statuses the lifecycle scheduler moves an event on from. */
-const AUTO_LIFECYCLE_STATUSES: readonly AutoLifecycleStatus[] = [SportEventStatus.SCHEDULED, SportEventStatus.IN_PROGRESS, SportEventStatus.POSTPONED];
+const AUTO_LIFECYCLE_STATUSES: readonly AutoLifecycleStatus[] = [SportEventStatus.SCHEDULED, SportEventStatus.IN_PROGRESS];
 
 function isAutoLifecycleCandidate(event: SportEvent): event is AutoLifecycleCandidate {
   return (AUTO_LIFECYCLE_STATUSES as readonly SportEventStatus[]).includes(event.status);

@@ -63,7 +63,6 @@ describe('the sync kinds a root admin can run on an event now (#2234)', () => {
     [SportEventStatus.SCHEDULED, ['FIELD']],
     [SportEventStatus.IN_PROGRESS, ['FIELD', 'SCORES']],
     [SportEventStatus.COMPLETED, ['FIELD']],
-    [SportEventStatus.POSTPONED, []],
     [SportEventStatus.CANCELLED, []],
   ])('a linked %s event runs %j: its field from draft to completed, its scores only while in play', (status, kinds) => {
     expect(eventSyncKindsOf({ ...linked, status })).toEqual(kinds);

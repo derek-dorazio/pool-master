@@ -942,6 +942,30 @@
       "key": "own:packages/shared/dto/bracket.dto.ts",
       "now": 15,
       "reason": "#2050: SquaresGameChoicesResponseSchema, a registered response schema the contract checks parse, as the other bracket responses are"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "SportEventStatus.POSTPONED",
+      "now": 0,
+      "reason": "retired by #2013"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "FOLLOW_POSTPONED_EVENT_CONTESTS",
+      "now": 0,
+      "reason": "retired by #2013"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "followPostponedEventContests",
+      "now": 0,
+      "reason": "retired by #2013"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "tellLeaguesEventPostponedHandler",
+      "now": 0,
+      "reason": "retired by #2013"
     }
   ]
 }

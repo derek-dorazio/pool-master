@@ -145,12 +145,12 @@ describe('CurrentContestList', () => {
     expect(screen.getByTestId('list-live-not-in-status')).toHaveTextContent('Live·9 entries');
   });
 
-  it('carries the gold Postponed chip after Live when one of the contest\'s events is postponed', () => {
-    const postponed = buildContest({ id: 'postponed', name: 'Week 13 Pick\'em', status: ContestStatus.ACTIVE, entryCount: 6, sportEvents: [buildContestSportEvent({ status: SportEventStatus.POSTPONED })] });
-    drawList({ contests: [postponed, live] });
+  it('carries the grey Cancelled chip after Live once every one of the contest\'s events is cancelled', () => {
+    const cancelled = buildContest({ id: 'cancelled', name: 'Week 13 Pick\'em', status: ContestStatus.ACTIVE, entryCount: 6, sportEvents: [buildContestSportEvent({ status: SportEventStatus.CANCELLED })] });
+    drawList({ contests: [cancelled, live] });
 
-    expect(screen.getByTestId('list-postponed-status-schedule')).toHaveTextContent('Postponed');
-    expect(screen.getByTestId('list-postponed-status')).toHaveTextContent(/^Live·Postponed·6 entries$/);
+    expect(screen.getByTestId('list-cancelled-status-schedule')).toHaveTextContent('Cancelled');
+    expect(screen.getByTestId('list-cancelled-status')).toHaveTextContent(/^Live·Cancelled·6 entries$/);
     expect(screen.queryByTestId('list-live-status-schedule')).not.toBeInTheDocument();
   });
 

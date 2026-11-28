@@ -36,7 +36,7 @@ describe('hasContestEventStarted', () => {
     },
   );
 
-  it.each(['DRAFT', 'POSTPONED'] as const)(
+  it.each(['DRAFT', 'SCHEDULED'] as const)(
     'counts a %s event whose start time is still ahead as not started',
     (status) => {
       expect(hasContestEventStarted({ startDate: '2099-01-01T00:00:00.000Z', status }, NOW)).toBe(false);

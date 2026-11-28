@@ -1,6 +1,6 @@
 /**
  * The contest email jobs: "Contest is live" and "Final results" as a contest's move writes them
- * (#1387), and the event postponed, moved and cancelled emails one job per contest on the event
+ * (#1387), and the event moved and cancelled emails one job per contest on the event
  * (#1458), and "Event postponed, picks are open again" as a postponement reopens a contest (#1808). Their payloads
  * and the requests that build them; the handlers are in contest-email-jobs.
  */
@@ -33,7 +33,6 @@ const isoInstant = z.iso.datetime();
  * event moves again before the job runs (that move queues a job of its own).
  */
 export const ContestEventChangedEmailsChangeSchema = z.discriminatedUnion('kind', [
-  z.object({ kind: z.literal(ContestEventChangeKind.POSTPONED), startsAt: isoInstant }),
   z.object({ kind: z.literal(ContestEventChangeKind.RESCHEDULED), startsAt: isoInstant, previousStart: isoInstant }),
   z.object({ kind: z.literal(ContestEventChangeKind.CANCELLED), startsAt: isoInstant }),
 ]);
@@ -76,7 +75,7 @@ export function contestSettledEmailsJob(jobs: ContestEmailJobRequests, contestId
 
 /**
  * The outbox `about` of an event change: the change and the start it leaves, and a move both
- * starts, so a second postponement or a move back to an earlier new date is told again.
+ * starts, so a move back to an earlier new date is told again.
  */
 export function sportEventChangeAbout(sportEventId: string, change: ContestEventChangedEmailsJobPayload['change']): string {
   return change.kind === ContestEventChangeKind.RESCHEDULED
@@ -128,22 +127,6 @@ export function contestReopenedEmailsJob(
 }
 
 /**
- * A first postponement tells the leagues on the event by one job per contest written with the
- * status (#1464). Its start does not move, so the jobs read it from the event as it was. A live
- * contest the postponement reopens is told by its reopen's email instead (#1910).
- */
-export const tellLeaguesEventPostponedHandler: DomainEventHandler<typeof DomainEventType.SPORT_EVENT_STATUS_CHANGED> = {
-  key: 'tell-leagues-event-postponed',
-  queues: [BackgroundJobType.CONTEST_EVENT_CHANGED_EMAILS],
-  when: (event) => event.to === SportEventStatus.POSTPONED && event.from !== SportEventStatus.POSTPONED,
-  jobs: (event, { sportEventChanged }) => sportEventChanged.sportEventChangedJobs(
-    event.sportEvent,
-    { kind: ContestEventChangeKind.POSTPONED },
-    { reopening: event.reopeningContestIds },
-  ),
-};
-
-/**
  * A cancellation tells the leagues on the event (C7) by one job per contest written with the
  * status, while the contests are still open: its settle job finishes them after. A contest the
  * cancellation leaves no event to play gets its no-scores result (F2) instead, so no job.
@@ -159,7 +142,7 @@ export const tellLeaguesEventCancelledHandler: DomainEventHandler<typeof DomainE
  * The statuses whose moved start is told to the leagues on the event: a draft's commissioners
  * can't see it yet, and a started event's picks are closed.
  */
-const RESCHEDULE_TOLD: readonly SportEventStatus[] = [SportEventStatus.SCHEDULED, SportEventStatus.POSTPONED];
+const RESCHEDULE_TOLD: readonly SportEventStatus[] = [SportEventStatus.SCHEDULED];
 
 /** C6 for a released event whose start moved: one job per contest on it, written with the new start (#1464). */
 export const tellLeaguesEventRescheduledHandler: DomainEventHandler<typeof DomainEventType.SPORT_EVENT_RESCHEDULED> = {

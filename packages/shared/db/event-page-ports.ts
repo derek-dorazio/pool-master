@@ -10,7 +10,7 @@ export interface EventPageRepository {
   findOffers(eventPageIds: readonly string[]): Promise<EventPageOffer[]>;
   /**
    * Each slot definition's Season slots whose event is not over, in one read however many
-   * definitions (#1316, #2010): the owning event DRAFT, SCHEDULED, POSTPONED or IN_PROGRESS, the
+   * definitions (#1316, #2010): the owning event DRAFT, SCHEDULED or IN_PROGRESS, the
    * one under way first, then the soonest to start. One list per definition asked for, in the
    * order asked; a Season slot no event owns yet is left out.
    */
