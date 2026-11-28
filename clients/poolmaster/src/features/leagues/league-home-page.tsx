@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router';
-import { championshipYear, PlanFeature } from '@poolmaster/shared/domain';
+import { easternCalendarYear, PlanFeature } from '@poolmaster/shared/domain';
 import { useMyContestEntries } from '@/features/contests/use-contest-entries';
 import { useLeagueContestsQuery } from '@/features/contests/use-league-contests-query';
 import {
@@ -147,7 +147,7 @@ export function LeagueHomePage() {
                 leagueCode={leagueCode}
                 leagueId={leagueId}
                 mySquadId={viewer.mySquadId}
-                year={championshipYear(now)}
+                year={easternCalendarYear(now)}
               />
             ) : null}
           </div>

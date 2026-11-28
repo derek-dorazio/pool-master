@@ -1,4 +1,4 @@
-import { championshipYear } from '@poolmaster/shared/domain';
+import { easternCalendarYear } from '@poolmaster/shared/domain';
 import { buildLeagueHistoryPath } from '@/features/leagues/league-routing';
 import { PageHeader, PageTabs, YearPicker } from '@/features/shared/ui';
 import { type ChampionshipsYearTab, championshipsYearTabPaths } from './championship-year';
@@ -26,7 +26,7 @@ type ChampionshipsHeaderProps = {
  */
 export function ChampionshipsHeader(props: ChampionshipsHeaderProps) {
   const { leagueCode, tab, title } = props;
-  const paths = championshipsYearTabPaths(leagueCode, props.year ?? championshipYear(new Date()));
+  const paths = championshipsYearTabPaths(leagueCode, props.year ?? easternCalendarYear(new Date()));
   const items = [
     { label: 'Championship', testId: 'championships-tab-championship', to: paths.championship, isActive: tab === 'championship' },
     { label: 'Trophy case', testId: 'championships-tab-trophies', to: paths.trophies, isActive: tab === 'trophies' },

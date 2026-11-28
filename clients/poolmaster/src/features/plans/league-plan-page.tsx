@@ -231,15 +231,22 @@ function YourLeagueNow({
           { id: 'plan', label: 'Plan', testId: 'league-plan-now-plan', value: enumLabel('LeaguePlan', current.plan) },
           ...(usage
             ? [
-                {
-                  id: 'sport-leagues',
-                  label: `Sports leagues in ${usage.seasonYear}`,
-                  testId: 'league-plan-now-sport-leagues',
-                  value: formatUse(usage.sportLeagueIds.length, current.caps[PlanCap.SPORTS_LEAGUES_PER_YEAR], locale),
-                  detail: usage.sportLeagueIds.length
-                    ? usage.sportLeagueIds.map((id) => sportLeagueNames.get(id) ?? 'A sports league').join(', ')
-                    : undefined,
-                },
+                // One row per open championship year, as the API lists them (#2021).
+                ...(usage.years.length
+                  ? usage.years.map((year) => ({
+                    id: `sport-leagues-${String(year.championshipYear)}`,
+                    label: `Sports leagues in ${String(year.championshipYear)}`,
+                    testId: `league-plan-now-sport-leagues-${String(year.championshipYear)}`,
+                    value: formatUse(year.sportLeagueIds.length, current.caps[PlanCap.SPORTS_LEAGUES_PER_YEAR], locale),
+                    detail: year.sportLeagueIds.map((id) => sportLeagueNames.get(id) ?? 'A sports league').join(', '),
+                  }))
+                  : [{
+                    id: 'sport-leagues',
+                    label: 'Sports leagues a year',
+                    testId: 'league-plan-now-sport-leagues',
+                    value: formatUse(0, current.caps[PlanCap.SPORTS_LEAGUES_PER_YEAR], locale),
+                    detail: undefined,
+                  }]),
                 {
                   id: 'entries',
                   label: 'Biggest open contest',
@@ -313,7 +320,7 @@ function PlanChangeWarnings({
       ) : null}
       {effects.sportLeaguesOver ? (
         <Notice data-testid="league-plan-confirm-sport-leagues" tone="warning">
-          {`This year's contests use ${formatCount(effects.sportLeaguesOver.used, 'sports league', locale)}: ${usage.sportLeagueIds.map((id) => sportLeagueNames.get(id) ?? 'a sports league').join(', ')}. ${label} allows ${formatNumber(effects.sportLeaguesOver.limit, locale)} a year, so new contests this year can use only these.`}
+          {`${String(effects.sportLeaguesOver.championshipYear)}'s contests use ${formatCount(effects.sportLeaguesOver.sportLeagueIds.length, 'sports league', locale)}: ${effects.sportLeaguesOver.sportLeagueIds.map((id) => sportLeagueNames.get(id) ?? 'a sports league').join(', ')}. ${label} allows ${formatNumber(effects.sportLeaguesOver.limit, locale)} a year, so new contests in ${String(effects.sportLeaguesOver.championshipYear)} can use only these.`}
         </Notice>
       ) : null}
       {effects.hiddenFeatures.length ? (

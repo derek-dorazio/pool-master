@@ -1,4 +1,4 @@
-import { PlanFeature, championshipYear } from '@poolmaster/shared/domain';
+import { PlanFeature, easternCalendarYear } from '@poolmaster/shared/domain';
 import { useEffect, useMemo } from 'react';
 import { Navigate, Outlet, useLocation, useNavigate, useParams } from 'react-router';
 import { useLeagueContextGuard } from '@/features/leagues/league-context-guard';
@@ -22,7 +22,7 @@ import { YearReviewBanner } from './year-review-banner';
 /** Championships with no year opens the current one. */
 export function ChampionshipsRedirect() {
   const { leagueCode = '' } = useParams<{ leagueCode: string }>();
-  return <Navigate replace to={buildLeagueChampionshipsPath(leagueCode, championshipYear(new Date()))} />;
+  return <Navigate replace to={buildLeagueChampionshipsPath(leagueCode, easternCalendarYear(new Date()))} />;
 }
 
 /**
@@ -41,7 +41,7 @@ export function ChampionshipsLayout() {
   const logger = useMemo(() => getLogger().child({ feature: 'championships-layout' }), []);
   const { league, query: leagueQuery, viewer } = useLeagueContext(leagueCode);
   const year = parseChampionshipYearParam(yearParam);
-  const currentYear = championshipYear(new Date());
+  const currentYear = easternCalendarYear(new Date());
   const hasPastYears = hasPlanFeature(league, PlanFeature.PAST_YEARS);
   // The year lists name earlier years, so they are asked for only on a plan that shows them.
   const championshipYearsQuery = useChampionshipYearsQuery(

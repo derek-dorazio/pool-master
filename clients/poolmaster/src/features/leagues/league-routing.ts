@@ -1,4 +1,4 @@
-import { ContestStatus, LeagueMembershipStatus, LeagueRole, championshipYear } from '@poolmaster/shared/domain';
+import { ContestStatus, LeagueMembershipStatus, LeagueRole, easternCalendarYear } from '@poolmaster/shared/domain';
 import type { ContestDto, LeagueDto, LeagueMembershipDto } from '@/lib/api';
 import { readCookie } from '@/lib/cookies';
 
@@ -113,7 +113,7 @@ export function buildContestBreadcrumb(
   if (contest.status !== ContestStatus.COMPLETED) {
     return { href: `${buildLeaguePath(leagueCode)}?focus=${encodeURIComponent(contest.id)}`, label: 'Home' };
   }
-  const year = contest.endsAt ? championshipYear(new Date(contest.endsAt)) : null;
+  const year = contest.endsAt ? easternCalendarYear(new Date(contest.endsAt)) : null;
   return { href: buildLeagueTeamPastContestsPath(leagueCode, { focusContestId: contest.id, year }), label: 'My team' };
 }
 

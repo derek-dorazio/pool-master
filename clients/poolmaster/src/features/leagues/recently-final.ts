@@ -1,4 +1,4 @@
-import { championshipYear } from '@poolmaster/shared/domain';
+import { easternCalendarYear } from '@poolmaster/shared/domain';
 import type { ContestResultSummaryDto } from '@/lib/api';
 import { formatCount, formatNumber, formatPlace } from '@/features/shared/ui';
 
@@ -9,8 +9,8 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 
 /** The championship years a recently final contest can have gone final in: this one, and last year early in January. */
 export function recentlyFinalYears(now: Date): number[] {
-  const year = championshipYear(now);
-  const windowStartYear = championshipYear(new Date(now.getTime() - RECENTLY_FINAL_DAYS * DAY_MS));
+  const year = easternCalendarYear(now);
+  const windowStartYear = easternCalendarYear(new Date(now.getTime() - RECENTLY_FINAL_DAYS * DAY_MS));
   return windowStartYear === year ? [year] : [year, windowStartYear];
 }
 

@@ -1553,6 +1553,20 @@ export type PlanCapsDto = {
 };
 
 /**
+ * One open championship year's sports leagues used.
+ */
+export type YearSportLeagueUsageDto = {
+    /**
+     * The championship year, such as 2026.
+     */
+    championshipYear: number;
+    /**
+     * The different sports leagues of the league's contests that year, drafts included: what the plan's `SPORTS_LEAGUES_PER_YEAR` cap counts.
+     */
+    sportLeagueIds: Array<string>;
+};
+
+/**
  * What a league on one plan may do, from the current plan settings.
  */
 export type PlanEntitlementsDto = {
@@ -1744,27 +1758,35 @@ export type ExtendRunningPlanRenewalsResponse = {
 };
 
 /**
- * Which season's sports leagues to list.
+ * Which championship year's sports leagues to list, and the offered sports leagues to check against the cap.
  */
 export type ListSportLeaguesUsedQuery = {
     /**
-     * The season to count, such as 2026: a contest counts in the season of its first event's year.
+     * The championship year to count, such as 2026: a contest counts in its Season's championship year.
      */
-    seasonYear: number;
+    championshipYear: number;
+    /**
+     * Sports leagues a page offers contests in that year: the answer says which of them a new contest would put over the plan's cap.
+     */
+    sportLeagueIds?: Array<string>;
 };
 
 /**
- * The sports leagues a league's contests use in one season (#947): what its plan's sports leagues a year counts.
+ * The sports leagues a league's contests use in one championship year (#947), and which offered ones are locked by the plan's sports leagues a year.
  */
 export type SportLeaguesUsedResponse = {
     /**
-     * The season counted.
+     * The championship year counted.
      */
-    seasonYear: number;
+    championshipYear: number;
     /**
-     * The different sports leagues of the league's contests that season, drafts included. Against the plan's `SPORTS_LEAGUES_PER_YEAR` cap, a new contest may always be in one of these, and in another only while there are fewer than the cap.
+     * The different sports leagues of the league's contests that championship year, drafts included: what the plan's `SPORTS_LEAGUES_PER_YEAR` cap counts.
      */
     sportLeagueIds: Array<string>;
+    /**
+     * Of the asked `sportLeagueIds`, those a new contest that year would put over the plan's cap: the year uses the cap and none of its contests is in that sports league. Empty when the plan has no cap or none was asked.
+     */
+    overCapSportLeagueIds: Array<string>;
 };
 
 /**
@@ -1787,13 +1809,18 @@ export type OpenContestUsageDto = {
  */
 export type LeaguePlanUsageResponse = {
     /**
-     * This year, in UTC: the season whose sports leagues are listed.
+     * Each championship year not yet closed that the league has a contest in, oldest first: a closed year takes no new contest, so it no longer counts.
      */
-    seasonYear: number;
-    /**
-     * The different sports leagues of the league's contests this season, drafts included: what the plan's `SPORTS_LEAGUES_PER_YEAR` cap counts.
-     */
-    sportLeagueIds: Array<string>;
+    years: Array<{
+        /**
+         * The championship year, such as 2026.
+         */
+        championshipYear: number;
+        /**
+         * The different sports leagues of the league's contests that year, drafts included: what the plan's `SPORTS_LEAGUES_PER_YEAR` cap counts.
+         */
+        sportLeagueIds: Array<string>;
+    }>;
     /**
      * Every contest still taking entries, newest first.
      */
@@ -37559,9 +37586,13 @@ export type ListSportLeaguesUsedData = {
     };
     query: {
         /**
-         * The season to count, such as 2026: a contest counts in the season of its first event's year.
+         * The championship year to count, such as 2026: a contest counts in its Season's championship year.
          */
-        seasonYear: number;
+        championshipYear: number;
+        /**
+         * Sports leagues a page offers contests in that year: the answer says which of them a new contest would put over the plan's cap.
+         */
+        sportLeagueIds?: Array<string>;
     };
     url: '/api/v1/leagues/{id}/contests/sports-leagues-used';
 };
@@ -37585,7 +37616,7 @@ export type ListSportLeaguesUsedError = ListSportLeaguesUsedErrors[keyof ListSpo
 
 export type ListSportLeaguesUsedResponses = {
     /**
-     * The sports leagues a league's contests use in one season (#947): what its plan's sports leagues a year counts.
+     * The sports leagues a league's contests use in one championship year (#947), and which offered ones are locked by the plan's sports leagues a year.
      */
     200: SportLeaguesUsedResponse;
 };

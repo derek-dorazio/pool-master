@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { ContestStatus, PlanFeature, TeamIconKey, championshipYear } from '@poolmaster/shared/domain';
+import { ContestStatus, PlanFeature, TeamIconKey, easternCalendarYear } from '@poolmaster/shared/domain';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { Toaster } from '@/features/shared/ui';
 import { MemoryRouter, Route, Routes } from 'react-router';
@@ -401,7 +401,7 @@ describe('My team › Past contests', () => {
 });
 
 describe('My team › This year', () => {
-  const YEAR = championshipYear(new Date());
+  const YEAR = easternCalendarYear(new Date());
 
   it('shows the squad\'s championship place of N, its gap and movement, its own medal counts and matrix row, its cups on show and its counted contests', async () => {
     primeTeam();
@@ -531,7 +531,7 @@ describe('My team › This year › Yours marker', () => {
 });
 
 describe('My team › Trophies and past years', () => {
-  const YEAR = championshipYear(new Date());
+  const YEAR = easternCalendarYear(new Date());
 
   it('shows the squad\'s contest medals and every trophy it won, each opening where it was won', async () => {
     primeTeam();
@@ -994,7 +994,7 @@ describe('Another team\'s page', () => {
 });
 
 describe('My team › on a plan without trophies or past years', () => {
-  const YEAR = championshipYear(new Date());
+  const YEAR = easternCalendarYear(new Date());
   const without = (...locked: PlanFeature[]) => ({
     planEntitlements: buildPlanEntitlements({ features: Object.values(PlanFeature).filter((feature) => !locked.includes(feature)) }),
   });

@@ -122,7 +122,10 @@ describe('Start from an event page', () => {
           : [],
       },
     }));
-    listSportLeaguesUsedMock.mockResolvedValue({ data: { seasonYear: 2027, sportLeagueIds: ['a', 'b', 'c', 'd', 'e'] } });
+    // The year uses the plan's five, so the API answers that the offer's sports league is over the cap.
+    listSportLeaguesUsedMock.mockImplementation(({ query }: { query: { championshipYear: number; sportLeagueIds: string[] } }) => Promise.resolve({
+      data: { championshipYear: query.championshipYear, sportLeagueIds: ['a', 'b', 'c', 'd', 'e'], overCapSportLeagueIds: query.sportLeagueIds },
+    }));
 
     renderStart(SQUARES);
 

@@ -266,9 +266,10 @@ async function seedContestsInSportLeagues(
         data: { contestId: contest.id, templateId: await contestTemplateId(prisma, contest.id), selectionType: SelectionType.BRACKET, configJson: { selectionType: SelectionType.BRACKET } },
       });
     }
-    events.push(event);
+    events.push({ ...event, championshipYear: contest.championshipYear });
   }
-  return { ...seeded, seasonYear: expectDefined(events[0]).startDate.getUTCFullYear() };
+  // The contests' championship year (#2021), and their sports leagues as a page would offer them.
+  return { ...seeded, championshipYear: expectDefined(events[0]).championshipYear, sportLeagueIds: events.map((event) => event.sportLeagueId) };
 }
 
 /** A league whose commissioner ran a contest that went final in each of `years` years, the last of them last year. */
@@ -615,11 +616,11 @@ describe('contest reads cost the same statements for 2 rows as for 20', () => {
     });
   });
 
-  it("GET the sports leagues a season's contests use: the same statements for 2 sports leagues as for 20", async () => {
+  it("GET the sports leagues a championship year's contests use, checking each offered one against the cap: the same statements for 2 sports leagues as for 20", async () => {
     await expectConstantQueries({
       route: 'GET /api/v1/leagues/{id}/contests/sports-leagues-used',
       seed: (contests) => seedContestsInSportLeagues(contests, { status: ContestStatus.OPEN, startsInDays: 30 }),
-      call: ({ league, seasonYear, viewer }) => get(`/api/v1/leagues/${league.id}/contests/sports-leagues-used?seasonYear=${String(seasonYear)}`, viewer),
+      call: ({ league, championshipYear, sportLeagueIds, viewer }) => get(`/api/v1/leagues/${league.id}/contests/sports-leagues-used?championshipYear=${String(championshipYear)}${sportLeagueIds.map((id) => `&sportLeagueIds=${id}`).join('')}`, viewer),
       rowsShown: (response) => okBody(response, SportLeaguesUsedResponseSchema).sportLeagueIds.length,
     });
   });
@@ -627,12 +628,11 @@ describe('contest reads cost the same statements for 2 rows as for 20', () => {
   it("GET a league's plan usage: the same statements for 2 open contests in 2 sports leagues as for 20 in 20", async () => {
     await expectConstantQueries({
       route: 'GET /api/v1/leagues/{id}/contests/plan-usage',
-      // Within the hour, so the events start this year however late in it the test runs.
       seed: (contests) => seedContestsInSportLeagues(contests, { status: ContestStatus.OPEN, startsInDays: 1 / 24 }),
       call: ({ league, viewer }) => get(`/api/v1/leagues/${league.id}/contests/plan-usage`, viewer),
       rowsShown: (response) => {
         const usage = okBody(response, LeaguePlanUsageResponseSchema);
-        return Math.min(usage.openContests.length, usage.sportLeagueIds.length);
+        return Math.min(usage.openContests.length, usage.years.flatMap((year) => year.sportLeagueIds).length);
       },
     });
   });
@@ -640,12 +640,11 @@ describe('contest reads cost the same statements for 2 rows as for 20', () => {
   it("GET a league's plan usage: the same statements for 2 open contests in 2 sports leagues as for 20 in 20, half of them brackets", async () => {
     await expectConstantQueries({
       route: 'GET /api/v1/leagues/{id}/contests/plan-usage',
-      // Within the hour, so the events start this year however late in it the test runs.
       seed: (contests) => seedContestsInSportLeagues(contests, { status: ContestStatus.OPEN, startsInDays: 1 / 24, brackets: true }),
       call: ({ league, viewer }) => get(`/api/v1/leagues/${league.id}/contests/plan-usage`, viewer),
       rowsShown: (response) => {
         const usage = okBody(response, LeaguePlanUsageResponseSchema);
-        return Math.min(usage.openContests.length, usage.sportLeagueIds.length);
+        return Math.min(usage.openContests.length, usage.years.flatMap((year) => year.sportLeagueIds).length);
       },
     });
   });

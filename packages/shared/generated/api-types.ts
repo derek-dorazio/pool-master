@@ -1343,8 +1343,8 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * List the sports leagues a league's contests use in a season
-         * @description The different sports leagues of the league's contests of one season, drafts included (#947): what the plan's sports leagues a year counts. Create contest shows the counter and, at the cap, locks the events of other sports leagues. Commissioners of the league only.
+         * List the sports leagues a league's contests use in a championship year
+         * @description The different sports leagues of the league's contests of one championship year, drafts included (#947): what the plan's sports leagues a year counts. Given the sports leagues a page offers, it also says which a new contest that year would put over the cap, so Create contest and Start lock those offerings on this answer. Commissioners of the league only.
          */
         get: operations["listSportLeaguesUsed"];
         put?: never;
@@ -1364,7 +1364,7 @@ export interface paths {
         };
         /**
          * Show what a league uses of its plan's caps
-         * @description What the league uses of its plan's caps now (#972), for the commissioner Plan page: the different sports leagues of this year's contests (UTC), drafts included, and every contest still taking entries with its entries, drafts included, as the entry cap counts them. The page warns before a lower plan whose caps these are over. Commissioners of the league only.
+         * @description What the league uses of its plan's caps now (#972), for the commissioner Plan page: the different sports leagues of each championship year not yet closed, drafts included, and every contest still taking entries with its entries, drafts included, as the entry cap counts them. The page warns before a lower plan whose caps these are over. Commissioners of the league only.
          */
         get: operations["getLeaguePlanUsage"];
         put?: never;
@@ -5028,6 +5028,13 @@ export interface components {
             /** @description Different sports leagues among the league's contests in a calendar year, or null for unlimited. */
             SPORTS_LEAGUES_PER_YEAR: number | null;
         };
+        /** @description One open championship year's sports leagues used. */
+        YearSportLeagueUsageDto: {
+            /** @description The championship year, such as 2026. */
+            championshipYear: number;
+            /** @description The different sports leagues of the league's contests that year, drafts included: what the plan's `SPORTS_LEAGUES_PER_YEAR` cap counts. */
+            sportLeagueIds: string[];
+        };
         /** @description What a league on one plan may do, from the current plan settings. */
         PlanEntitlementsDto: {
             /**
@@ -5146,17 +5153,21 @@ export interface components {
              */
             renewsAt: string;
         };
-        /** @description Which season's sports leagues to list. */
+        /** @description Which championship year's sports leagues to list, and the offered sports leagues to check against the cap. */
         ListSportLeaguesUsedQuery: {
-            /** @description The season to count, such as 2026: a contest counts in the season of its first event's year. */
-            seasonYear: number;
+            /** @description The championship year to count, such as 2026: a contest counts in its Season's championship year. */
+            championshipYear: number;
+            /** @description Sports leagues a page offers contests in that year: the answer says which of them a new contest would put over the plan's cap. */
+            sportLeagueIds?: string[];
         };
-        /** @description The sports leagues a league's contests use in one season (#947): what its plan's sports leagues a year counts. */
+        /** @description The sports leagues a league's contests use in one championship year (#947), and which offered ones are locked by the plan's sports leagues a year. */
         SportLeaguesUsedResponse: {
-            /** @description The season counted. */
-            seasonYear: number;
-            /** @description The different sports leagues of the league's contests that season, drafts included. Against the plan's `SPORTS_LEAGUES_PER_YEAR` cap, a new contest may always be in one of these, and in another only while there are fewer than the cap. */
+            /** @description The championship year counted. */
+            championshipYear: number;
+            /** @description The different sports leagues of the league's contests that championship year, drafts included: what the plan's `SPORTS_LEAGUES_PER_YEAR` cap counts. */
             sportLeagueIds: string[];
+            /** @description Of the asked `sportLeagueIds`, those a new contest that year would put over the plan's cap: the year uses the cap and none of its contests is in that sports league. Empty when the plan has no cap or none was asked. */
+            overCapSportLeagueIds: string[];
         };
         /** @description One contest still taking entries, with its entries as the entry cap counts them. */
         OpenContestUsageDto: {
@@ -5169,10 +5180,13 @@ export interface components {
         };
         /** @description What a league uses of its plan's caps now (#972), for the commissioner Plan page. */
         LeaguePlanUsageResponse: {
-            /** @description This year, in UTC: the season whose sports leagues are listed. */
-            seasonYear: number;
-            /** @description The different sports leagues of the league's contests this season, drafts included: what the plan's `SPORTS_LEAGUES_PER_YEAR` cap counts. */
-            sportLeagueIds: string[];
+            /** @description Each championship year not yet closed that the league has a contest in, oldest first: a closed year takes no new contest, so it no longer counts. */
+            years: {
+                /** @description The championship year, such as 2026. */
+                championshipYear: number;
+                /** @description The different sports leagues of the league's contests that year, drafts included: what the plan's `SPORTS_LEAGUES_PER_YEAR` cap counts. */
+                sportLeagueIds: string[];
+            }[];
             /** @description Every contest still taking entries, newest first. */
             openContests: {
                 /** Format: uuid */
@@ -33629,8 +33643,10 @@ export interface operations {
     listSportLeaguesUsed: {
         parameters: {
             query: {
-                /** @description The season to count, such as 2026: a contest counts in the season of its first event's year. */
-                seasonYear: number;
+                /** @description The championship year to count, such as 2026: a contest counts in its Season's championship year. */
+                championshipYear: number;
+                /** @description Sports leagues a page offers contests in that year: the answer says which of them a new contest would put over the plan's cap. */
+                sportLeagueIds?: string[];
             };
             header?: never;
             path: {
@@ -33640,7 +33656,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description The sports leagues a league's contests use in one season (#947): what its plan's sports leagues a year counts. */
+            /** @description The sports leagues a league's contests use in one championship year (#947), and which offered ones are locked by the plan's sports leagues a year. */
             200: {
                 headers: {
                     [name: string]: unknown;

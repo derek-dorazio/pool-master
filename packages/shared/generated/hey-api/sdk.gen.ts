@@ -975,9 +975,9 @@ export const listMyContestEntries = <ThrowOnError extends boolean = false>(optio
 });
 
 /**
- * List the sports leagues a league's contests use in a season
+ * List the sports leagues a league's contests use in a championship year
  *
- * The different sports leagues of the league's contests of one season, drafts included (#947): what the plan's sports leagues a year counts. Create contest shows the counter and, at the cap, locks the events of other sports leagues. Commissioners of the league only.
+ * The different sports leagues of the league's contests of one championship year, drafts included (#947): what the plan's sports leagues a year counts. Given the sports leagues a page offers, it also says which a new contest that year would put over the cap, so Create contest and Start lock those offerings on this answer. Commissioners of the league only.
  */
 export const listSportLeaguesUsed = <ThrowOnError extends boolean = false>(options: Options<ListSportLeaguesUsedData, ThrowOnError>): RequestResult<ListSportLeaguesUsedResponses, ListSportLeaguesUsedErrors, ThrowOnError> => (options.client ?? client).get<ListSportLeaguesUsedResponses, ListSportLeaguesUsedErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],
@@ -988,7 +988,7 @@ export const listSportLeaguesUsed = <ThrowOnError extends boolean = false>(optio
 /**
  * Show what a league uses of its plan's caps
  *
- * What the league uses of its plan's caps now (#972), for the commissioner Plan page: the different sports leagues of this year's contests (UTC), drafts included, and every contest still taking entries with its entries, drafts included, as the entry cap counts them. The page warns before a lower plan whose caps these are over. Commissioners of the league only.
+ * What the league uses of its plan's caps now (#972), for the commissioner Plan page: the different sports leagues of each championship year not yet closed, drafts included, and every contest still taking entries with its entries, drafts included, as the entry cap counts them. The page warns before a lower plan whose caps these are over. Commissioners of the league only.
  */
 export const getLeaguePlanUsage = <ThrowOnError extends boolean = false>(options: Options<GetLeaguePlanUsageData, ThrowOnError>): RequestResult<GetLeaguePlanUsageResponses, GetLeaguePlanUsageErrors, ThrowOnError> => (options.client ?? client).get<GetLeaguePlanUsageResponses, GetLeaguePlanUsageErrors, ThrowOnError>({
     security: [{ scheme: 'bearer', type: 'http' }],

@@ -17,7 +17,7 @@ import {
   updateLeagueCupSettings,
   updateLeaguePlan,
 } from '@poolmaster/shared/generated/hey-api';
-import { CupPointsScale, LeaguePlan, PlanFeature, championshipYear } from '@poolmaster/shared/domain';
+import { CupPointsScale, LeaguePlan, PlanFeature, easternCalendarYear } from '@poolmaster/shared/domain';
 import { ErrorEnvelopeSchema, SquadYearResponseSchema } from '@poolmaster/shared/dto';
 import { buildLeagueWithCommissioner, buildRegisteredUser, promoteToRootAdmin } from './builders';
 import { cleanupFunctionalData, disconnectFunctionalPrisma, getFunctionalPrisma } from './setup';
@@ -34,7 +34,7 @@ afterAll(async () => {
   await disconnectFunctionalPrisma();
 });
 
-const YEAR = championshipYear(new Date());
+const YEAR = easternCalendarYear(new Date());
 const UNKNOWN_CUP = '00000000-0000-4000-8000-000000000948';
 const UNKNOWN_SPORT_LEAGUE = '00000000-0000-4000-8000-000000001202';
 

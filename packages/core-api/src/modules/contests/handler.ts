@@ -568,22 +568,22 @@ export function createCreateContestHandler(
   };
 }
 
-/** `listSportLeaguesUsed` (#947): the sports leagues a league's contests use in one season. */
+/** `listSportLeaguesUsed` (#947): the sports leagues a league's contests use in one championship year. */
 export function createListSportLeaguesUsedHandler(contestManagementService: ContestManagementService) {
   return async function listSportLeaguesUsed(
     request: FastifyRequest<{ Params: { id: string }; Querystring: ListSportLeaguesUsedQuery }>,
   ): Promise<SportLeaguesUsedResponse> {
     const logger = createRequestContextLogger(request);
-    const { seasonYear } = request.query;
-    const sportLeagueIds = await contestManagementService.listSportLeaguesUsed(request.params.id, seasonYear);
-    logger.debug({ leagueId: request.params.id, seasonYear, count: sportLeagueIds.length }, 'list sports leagues used route completed');
-    return { seasonYear, sportLeagueIds };
+    const { championshipYear, sportLeagueIds: offered } = request.query;
+    const used = await contestManagementService.listSportLeaguesUsed(request.params.id, championshipYear, offered);
+    logger.debug({ leagueId: request.params.id, championshipYear, count: used.sportLeagueIds.length, overCap: used.overCapSportLeagueIds.length }, 'list sports leagues used route completed');
+    return { championshipYear, ...used };
   };
 }
 
 /**
  * `getLeaguePlanUsage` (#972): what the league uses of its plan's caps now, for the commissioner
- * Plan page: this year's sports leagues, and every contest still taking entries with its entries.
+ * Plan page: each open championship year's sports leagues, and every contest still taking entries with its entries.
  */
 export function createGetLeaguePlanUsageHandler(
   contestService: ContestService,
@@ -594,12 +594,11 @@ export function createGetLeaguePlanUsageHandler(
   ): Promise<LeaguePlanUsageResponse> {
     const logger = createRequestContextLogger(request);
     const leagueId = request.params.id;
-    const seasonYear = new Date().getUTCFullYear();
-    const [sportLeagueIds, openContests] = await Promise.all([
-      contestManagementService.listSportLeaguesUsed(leagueId, seasonYear),
+    const [years, openContests] = await Promise.all([
+      contestManagementService.listOpenYearSportLeagues(leagueId),
       contestService.listOpenContestUsage(leagueId),
     ]);
-    logger.debug({ leagueId, seasonYear, sportLeagues: sportLeagueIds.length, openContests: openContests.length }, 'league plan usage route completed');
-    return { seasonYear, sportLeagueIds, openContests };
+    logger.debug({ leagueId, years: years.length, openContests: openContests.length }, 'league plan usage route completed');
+    return { years, openContests };
   };
 }
