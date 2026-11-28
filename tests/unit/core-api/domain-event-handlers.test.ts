@@ -1,4 +1,4 @@
-import { BackgroundJobType, ContestEntryStatus, ContestStatus, SPORT_EVENT_STATUS_TRANSITIONS, SportEventStatus, type BackgroundJobRequest } from '@poolmaster/shared/domain';
+import { BackgroundJobType, ContestEntryStatus, ContestStatus, SPORT_EVENT_STATUS_TRANSITIONS, SportEventStatus, type BackgroundJobRequest, SeasonSlotStatus } from '@poolmaster/shared/domain';
 import { BackgroundJobQueue } from '../../../packages/core-api/src/modules/background-jobs';
 import {
   DOMAIN_EVENT_HANDLERS,
@@ -124,7 +124,7 @@ describe('DOMAIN_EVENT_HANDLERS, the one map of what follows each change', () =>
       SPORT_EVENT_FIELD_SYNCED: ['sync-games-then-tier-field'],
       PARTICIPANT_PROVIDER_MAPPED: ['resolve-mapped-participant-findings'],
       MATCH_STATUS_CHANGED: ['refresh-slot-status'],
-      SEASON_SLOT_STATUS_CHANGED: ['refresh-event-status'],
+      SEASON_SLOT_STATUS_CHANGED: ['refresh-event-status', 'activate-slot-contests'],
     });
   });
 
@@ -316,7 +316,7 @@ describe('PARTICIPANT_PROVIDER_MAPPED handlers', () => {
 
 describe('Status bubbling handlers (#2013)', () => {
   const [refreshSlots] = DOMAIN_EVENT_HANDLERS.MATCH_STATUS_CHANGED;
-  const [refreshEvent] = DOMAIN_EVENT_HANDLERS.SEASON_SLOT_STATUS_CHANGED;
+  const [refreshEvent, activateSlotContests] = DOMAIN_EVENT_HANDLERS.SEASON_SLOT_STATUS_CHANGED;
 
   it('a Match that moved queues one refresh of its event\'s slot statuses, held to one waiting per event', async () => {
     const jobs = await refreshSlots.jobs({ type: DomainEventType.MATCH_STATUS_CHANGED, sportEventId: 'event-1' }, { queue: watchedQueue(), sportEventChanged: NOBODY_TOLD });
@@ -338,6 +338,21 @@ describe('Status bubbling handlers (#2013)', () => {
       dedupeKey: 'REFRESH_EVENT_STATUS:event-1',
       sportEventId: 'event-1',
     })]);
+  });
+
+  it('a slot that starts, or finishes before it was seen to start, queues its event\'s contest activation, held to one waiting per event; a slot moving on from in progress queues none', async () => {
+    const context = { queue: watchedQueue(), sportEventChanged: NOBODY_TOLD };
+    const moved = (from: SeasonSlotStatus, to: SeasonSlotStatus) => ({ type: DomainEventType.SEASON_SLOT_STATUS_CHANGED, sportEventId: 'event-1', seasonSlotId: 'slot-1', from, to } as const);
+
+    for (const to of [SeasonSlotStatus.IN_PROGRESS, SeasonSlotStatus.COMPLETED]) {
+      expect(activateSlotContests.when?.(moved(SeasonSlotStatus.SCHEDULED, to))).toBe(true);
+      expect(await activateSlotContests.jobs(moved(SeasonSlotStatus.SCHEDULED, to), context)).toEqual([expect.objectContaining({
+        type: BackgroundJobType.ACTIVATE_EVENT_CONTESTS,
+        payload: { sportEventId: 'event-1' },
+        dedupeKey: 'ACTIVATE_EVENT_CONTESTS:event-1',
+      })]);
+    }
+    expect(activateSlotContests.when?.(moved(SeasonSlotStatus.IN_PROGRESS, SeasonSlotStatus.COMPLETED))).toBe(false);
   });
 });
 
@@ -634,6 +649,7 @@ describe('The generated domain event table in docs/BACKGROUND-JOBS.md', () => {
       '| `PARTICIPANT_PROVIDER_MAPPED` | `resolve-mapped-participant-findings` | `RESOLVE_MAPPED_PARTICIPANT_FINDINGS` |',
       '| `MATCH_STATUS_CHANGED` | `refresh-slot-status` | `REFRESH_SLOT_STATUS` |',
       '| `SEASON_SLOT_STATUS_CHANGED` | `refresh-event-status` | `REFRESH_EVENT_STATUS` |',
+      '| `SEASON_SLOT_STATUS_CHANGED` | `activate-slot-contests` | `ACTIVATE_EVENT_CONTESTS` |',
       DOMAIN_EVENT_TABLE_END,
     ].join('\n'));
   });

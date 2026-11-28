@@ -760,13 +760,17 @@ export function isSportEventStatusFinished(status: SportEventStatus): boolean {
 /**
  * Whether the event is past its contest cutoff: its start time has passed, or its status says it
  * has started or been called off. The server and the web both ask this one question (#117, #431).
+ * A contest's window with no start yet (a later playoff round not yet scheduled, #2013) has started
+ * only once its status says so.
  */
 export function hasSportEventStarted(
-  event: { status: SportEventStatus; startDate: Date | string },
+  event: { status: SportEventStatus; startDate: Date | string | null },
   now: Date,
 ): boolean {
+  if (isSportEventStatusStarted(event.status)) return true;
+  if (event.startDate === null) return false;
   const startsAt = typeof event.startDate === 'string' ? Date.parse(event.startDate) : event.startDate.getTime();
-  return startsAt <= now.getTime() || isSportEventStatusStarted(event.status);
+  return startsAt <= now.getTime();
 }
 
 /**
@@ -1153,6 +1157,14 @@ export const ProviderSyncFindingKind = {
    * code, with the conference's name.
    */
   DIVISION_UNMAPPED: 'DIVISION_UNMAPPED',
+  /**
+   * A Season still open or to come has slots whose competition names a conference that no team
+   * holds in the Season yet (#2052): the slots place no game, since a conference's slot takes only
+   * its teams' games and the field sync writes a team's Season conference. WARNING; it resolves once
+   * every such slot's conference has teams. Subject: league, Provider and the provider's id for the
+   * Season, naming the slots.
+   */
+  CONFERENCE_TEAMS_MISSING: 'CONFERENCE_TEAMS_MISSING',
 } as const;
 export type ProviderSyncFindingKind = (typeof ProviderSyncFindingKind)[keyof typeof ProviderSyncFindingKind];
 export const ProviderSyncFindingKindOrder = alphabeticalOrder('ProviderSyncFindingKind');

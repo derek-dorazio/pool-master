@@ -302,6 +302,7 @@ export class LeagueEventsSync {
     await this.raiseSlotsOutsideSeason(sportLeagueId, providerId, season, imported.placed);
     await this.raiseGamesUnplaced(sportLeagueId, providerId, season, imported.unplaced);
     await this.checkSlotDates(sportLeagueId, providerId, season, imported.slotsNeedingDates);
+    await this.checkConferenceTeams(sportLeagueId, providerId, season, imported.slotsWithoutConferenceTeams);
     const updated = await this.options.sportEvents.keepProviderEventsCurrent({ sportLeagueId, providerId, providerEvents, competitionNames: imported.competitionNames });
     return { sportLeagueSeasonId: season.id, seasonName: season.name, created: imported.created, skipped: imported.skipped, updated };
   }
@@ -378,6 +379,33 @@ export class LeagueEventsSync {
     }
     await this.options.findings.raiseOfSource(providerId, [{
       kind: ProviderSyncFindingKind.SLOT_DATES_NEEDED,
+      severity: ProviderSyncFindingSeverity.WARNING,
+      sportLeagueId,
+      sportEventId: null,
+      providerValue: season.providerSeasonId,
+      providerValueName: slotKeys.join(', '),
+    }]);
+  }
+
+  /**
+   * One WARNING CONFERENCE_TEAMS_MISSING per league, Provider and Season while slots whose
+   * competition names a conference have no team in it for the Season (#2052), naming their keys:
+   * such a slot places no game. The Season's finding resolves once every one has teams. A Season
+   * with no conference slot has nothing to check.
+   */
+  private async checkConferenceTeams(
+    sportLeagueId: string,
+    providerId: string,
+    season: { providerSeasonId: string },
+    slotKeys: readonly string[] | null,
+  ): Promise<void> {
+    if (slotKeys === null) return;
+    if (slotKeys.length === 0) {
+      await this.options.findings.resolveOfSource(providerId, { kind: ProviderSyncFindingKind.CONFERENCE_TEAMS_MISSING, sportLeagueId, providerValues: [season.providerSeasonId] });
+      return;
+    }
+    await this.options.findings.raiseOfSource(providerId, [{
+      kind: ProviderSyncFindingKind.CONFERENCE_TEAMS_MISSING,
       severity: ProviderSyncFindingSeverity.WARNING,
       sportLeagueId,
       sportEventId: null,

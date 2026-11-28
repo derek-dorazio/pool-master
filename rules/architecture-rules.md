@@ -280,6 +280,12 @@ domain event queues the next step's refresh job:
   the event to `sportEventStatusOfSlots` through `EventLifecycleService`, the one writer of an
   event's status, which raises `SPORT_EVENT_STATUS_CHANGED`. A draft stays a draft, and an event
   with `autoLifecycleEnabled` off keeps the status its admin set.
+- **Season slot → contests**: a contest's window is its first covered Game, not its event's
+  start (`cutoffTiming`'s `FIRST_COVERED_GAME`: the earliest start of the slots it covers on the
+  event, and started once any of them is under way). So a slot that starts also queues
+  `ACTIVATE_EVENT_CONTESTS`, and a contest on a later slot of an event already under way still
+  takes entries until that slot starts. A contest not made yet has no covered slot, so contest
+  setup still goes by the event's start.
 
 An event covering a slot completes when its slots do, never on the clock; one covering none, which has no slot to complete it, completes at its end date. The lifecycle sweep still starts a
 scheduled event at its first round's date, because a live score is accepted only for an event

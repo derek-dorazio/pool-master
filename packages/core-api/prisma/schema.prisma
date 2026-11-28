@@ -592,6 +592,7 @@ enum PrismaProviderSyncFindingKind {
   SYNC_FAILED
   CONFERENCE_UNMAPPED
   DIVISION_UNMAPPED
+  CONFERENCE_TEAMS_MISSING
 }
 
 /// How a sport event's latest automatic release check ended (#1847).

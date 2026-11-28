@@ -16,7 +16,7 @@ import type {
   PendingDrawReceipts,
   ReminderCheck,
 } from '@poolmaster/shared/db';
-import { championshipYear, ContestStatus, SelectionType, SportEventStatus, type Contest, type ContestCoveredSlot, type ContestFormat, type CupWeight, FINISHED_SPORT_EVENT_STATUSES, type SeasonSlotStatus, type SlotKind } from '@poolmaster/shared/domain';
+import { championshipYear, ContestStatus, SelectionType, SportEventStatus, type Contest, type ContestCoveredSlot, type ContestFormat, type CupWeight, FINISHED_SPORT_EVENT_STATUSES, SeasonSlotStatus, type SlotKind } from '@poolmaster/shared/domain';
 import { forgettingReads, memoizedRead, memoizedReadMany, ReadMemoKey } from '../core/request-read-memo';
 import { lockContestRow, lockContestRowsAtOnce } from './contest-row-lock';
 import { insertBackgroundJobs } from './prisma-background-job-repository';
@@ -44,6 +44,7 @@ const COVERED_SEASON_SLOT_SELECT = {
   startsAt: true,
   endsAt: true,
   label: true,
+  isTestData: true,
   definition: { select: { key: true, name: true, slotKind: true, weekNumber: true, competition: { select: { code: true, name: true } } } },
   eventSlot: { select: { sportEventId: true } },
 } as const;
@@ -103,18 +104,24 @@ export class PrismaContestRepository implements ContestRepository {
         leagueId,
         status: { in: [ContestStatus.DRAFT, ContestStatus.OPEN, ContestStatus.ACTIVE] },
         // A draft that can never open is left out (#1161, #1217): one with an event finished or
-        // cancelled, which is past every cutoff, and one closing at its event's start once an
-        // event has started, since a started event cannot be removed. Only a squares contest with
-        // its game closes later, as `contestCutoff` says.
+        // cancelled, which is past every cutoff, and one closing at its first covered Game once a
+        // slot it covers has started (#2013), since a started slot cannot be removed. Only a
+        // squares contest with its game closes later, as `contestCutoff` says.
         NOT: {
           status: ContestStatus.DRAFT,
           OR: [
             { seasonSlots: { some: { seasonSlot: { eventSlot: { sportEvent: { status: { in: [...FINISHED_SPORT_EVENT_STATUSES] } } } } } } },
-            {
-              // Started as `hasSportEventStarted` has it: by its start date, or under way early.
-              seasonSlots: { some: { seasonSlot: { eventSlot: { sportEvent: { OR: [{ startDate: { lte: now } }, { status: SportEventStatus.IN_PROGRESS }] } } } } },
+            // Started as `cutoffTiming` has it: a synced slot in progress or complete, or not
+            // cancelled and past its first game's start (one with no start yet is not scheduled, so
+            // it has not started); a test slot goes by its event, past its start or under way.
+            ...[
+              { isTestData: false, status: { in: [SeasonSlotStatus.IN_PROGRESS, SeasonSlotStatus.COMPLETED] } },
+              { isTestData: false, status: { not: SeasonSlotStatus.CANCELLED }, startsAt: { lte: now } },
+              { isTestData: true, eventSlot: { sportEvent: { OR: [{ startDate: { lte: now } }, { status: SportEventStatus.IN_PROGRESS }] } } },
+            ].map((started) => ({
+              seasonSlots: { some: { seasonSlot: started } },
               NOT: { selectionType: SelectionType.SQUARES, squaresGame: { isNot: null } },
-            },
+            })),
           ],
         },
       },
@@ -456,6 +463,7 @@ type CoveredSeasonSlotRow = {
   startsAt: Date | null;
   endsAt: Date | null;
   label: string | null;
+  isTestData: boolean;
   definition: { key: string; name: string | null; slotKind: SlotKind; weekNumber: number | null; competition: { code: string; name: string | null } };
   eventSlot: { sportEventId: string } | null;
 };
@@ -472,6 +480,7 @@ function toCoveredSlot(seasonSlotId: string, slot: CoveredSeasonSlotRow): Contes
     status: slot.status,
     startsAt: slot.startsAt,
     endsAt: slot.endsAt,
+    isTestData: slot.isTestData,
     sportEventId: slot.eventSlot?.sportEventId ?? null,
     competitionCode: slot.definition.competition.code,
     competitionName: slot.definition.competition.name,
