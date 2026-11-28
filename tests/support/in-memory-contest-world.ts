@@ -51,6 +51,7 @@ import type {
 } from '@poolmaster/shared/domain';
 import {
   hasSportEventStarted,
+  isOverSportLeagueCap,
   ContestEntryStatus,
   ContestFormat,
   ContestStatus,
@@ -387,9 +388,9 @@ export class InMemoryContestWorld {
   private seasonFull(leagueId: string, seasonYear: number, limits: ContestSeasonLimits): ContestSeasonFull | null {
     if (limits.sportLeaguesPerYear === null) return null;
     const used = this.sportLeagueIdsBySeason(leagueId, seasonYear);
-    return used.includes(limits.sportLeagueId) || used.length < limits.sportLeaguesPerYear
-      ? null
-      : { status: 'sportsLeagueLimitReached', sportLeaguesPerYear: limits.sportLeaguesPerYear, sportLeagueCount: used.length };
+    return isOverSportLeagueCap(used, limits.sportLeaguesPerYear, limits.sportLeagueId)
+      ? { status: 'sportsLeagueLimitReached', sportLeaguesPerYear: limits.sportLeaguesPerYear, sportLeagueCount: used.length }
+      : null;
   }
 
   private sportLeagueIdsBySeason(leagueId: string, seasonYear: number): string[] {
@@ -431,7 +432,10 @@ export class InMemoryContestWorld {
         [...this.contests.values()]
           .filter((contest) => contest.leagueId === leagueId && contest.status === ContestStatus.OPEN)
           .map(({ id, name }) => ({ id, name })),
-      findSportLeagueIdsBySeason: async (leagueId, seasonYear) => this.sportLeagueIdsBySeason(leagueId, seasonYear),
+      findSportLeagueIdsByYear: async (leagueId, championshipYear) => this.sportLeagueIdsBySeason(leagueId, championshipYear),
+      findSportLeagueIdsOfEveryYear: async (leagueId) => new Map([...new Set([...this.contests.values()]
+        .filter((contest) => contest.leagueId === leagueId).map((contest) => contest.championshipYear))]
+        .map((year) => [year, this.sportLeagueIdsBySeason(leagueId, year)])),
       findBySportEvent: async (sportEventId, filter) =>
         [...this.contests.values()].filter((contest) =>
           contest.sportEventIds.includes(sportEventId)

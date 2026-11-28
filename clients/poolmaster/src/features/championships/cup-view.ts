@@ -1,4 +1,4 @@
-import { ContestStatus, CupContestCount, CupStatus, type CupWeight, championshipYear, cupWeightRaisesPoints } from '@poolmaster/shared/domain';
+import { ContestStatus, CupContestCount, CupStatus, type CupWeight, easternCalendarYear, cupWeightRaisesPoints } from '@poolmaster/shared/domain';
 import { enumLabel } from '@poolmaster/shared/display-strings';
 import type { CupContestRowDto, CupDto, CupProjectedStandingDto, CupProjectionDto, CupStandingRowDto } from '@/lib/api';
 import { formatCupPoints, formatPlace } from '@/features/shared/ui';
@@ -91,7 +91,7 @@ export function isReadyToCrown(cup: CupDto): boolean {
  * past its year, as an NFL season into February, so the year alone does not end it.
  */
 export function isCupSeasonOver(cup: CupDto, now: Date): boolean {
-  return cup.seasonYear < championshipYear(now)
+  return cup.seasonYear < easternCalendarYear(now)
     && !cup.contests.some((contest) => contest.count === CupContestCount.NOT_FINAL);
 }
 

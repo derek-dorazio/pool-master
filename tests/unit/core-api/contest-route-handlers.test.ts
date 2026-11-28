@@ -67,7 +67,8 @@ function contestService(overrides: Record<string, unknown> = {}) {
 function managementService(overrides: Record<string, unknown> = {}) {
   return {
     createContest: jest.fn((..._args: unknown[]) => Promise.resolve('contest-1')),
-    listSportLeaguesUsed: jest.fn((..._args: unknown[]) => Promise.resolve(['sl-1'])),
+    listSportLeaguesUsed: jest.fn((..._args: unknown[]) => Promise.resolve({ sportLeagueIds: ['sl-1'], overCapSportLeagueIds: ['sl-2'] })),
+    listOpenYearSportLeagues: jest.fn((..._args: unknown[]) => Promise.resolve([{ championshipYear: 2025, sportLeagueIds: ['sl-1'] }])),
     ...overrides,
   };
 }
@@ -355,22 +356,21 @@ describe('contest create handler', () => {
 });
 
 describe('league plan usage handlers', () => {
-  it('lists the sports leagues a league\'s contests use in the season the query names', async () => {
+  it('lists the sports leagues a league\'s contests use in the championship year the query names, and which offered ones are over the cap', async () => {
     const management = managementService();
 
-    const reply = await callHandler(createListSportLeaguesUsedHandler(asManagement(management)), stubRequest({ params: { id: 'league-1' }, query: { seasonYear: 2026 } }));
+    const reply = await callHandler(createListSportLeaguesUsedHandler(asManagement(management)), stubRequest({ params: { id: 'league-1' }, query: { championshipYear: 2026, sportLeagueIds: ['sl-1', 'sl-2'] } }));
 
-    expect(management.listSportLeaguesUsed).toHaveBeenCalledWith('league-1', 2026);
-    expect(reply.body).toEqual({ seasonYear: 2026, sportLeagueIds: ['sl-1'] });
+    expect(management.listSportLeaguesUsed).toHaveBeenCalledWith('league-1', 2026, ['sl-1', 'sl-2']);
+    expect(reply.body).toEqual({ championshipYear: 2026, sportLeagueIds: ['sl-1'], overCapSportLeagueIds: ['sl-2'] });
   });
 
-  it('answers a league\'s plan usage with this year\'s sports leagues and its open contests', async () => {
+  it('answers a league\'s plan usage with each open championship year\'s sports leagues and its open contests, never the clock\'s year', async () => {
     const management = managementService();
-    const year = new Date().getUTCFullYear();
 
     const reply = await callHandler(createGetLeaguePlanUsageHandler(asContests(contestService()), asManagement(management)), stubRequest({ params: { id: 'league-1' } }));
 
-    expect(management.listSportLeaguesUsed).toHaveBeenCalledWith('league-1', year);
-    expect(reply.body).toEqual({ seasonYear: year, sportLeagueIds: ['sl-1'], openContests: [{ contestId: 'contest-1', entryCount: 3 }] });
+    expect(management.listOpenYearSportLeagues).toHaveBeenCalledWith('league-1');
+    expect(reply.body).toEqual({ years: [{ championshipYear: 2025, sportLeagueIds: ['sl-1'] }], openContests: [{ contestId: 'contest-1', entryCount: 3 }] });
   });
 });

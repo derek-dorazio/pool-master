@@ -1,23 +1,27 @@
 import { useQueries } from '@tanstack/react-query';
-import { listSportLeaguesUsed } from '@/lib/api';
+import { listSportLeaguesUsed, type SportLeaguesUsedResponse } from '@/lib/api';
 import { throwApiError } from '@/lib/errors';
 import { QueryKeys } from '@/lib/query-keys';
 
-type SportLeaguesUsedResult = { data?: { seasonYear: number; sportLeagueIds: string[] } };
+type SportLeaguesUsedResult = { data?: SportLeaguesUsedResponse };
 
 /** Module-level, so the map stays the same object until a year's answer changes. */
-function bySeasonYear(results: SportLeaguesUsedResult[]): ReadonlyMap<number, readonly string[]> {
+function byChampionshipYear(results: SportLeaguesUsedResult[]): ReadonlyMap<number, SportLeaguesUsedResponse> {
   return new Map(results.flatMap((result) => (
-    result.data ? [[result.data.seasonYear, result.data.sportLeagueIds] as const] : []
+    result.data ? [[result.data.championshipYear, result.data] as const] : []
   )));
 }
 
-/** One season year's sports leagues used, as a query: for a caller that needs its loading and error. */
-export function sportLeaguesUsedQuery(leagueId: string | undefined, seasonYear: number) {
+/**
+ * One championship year's sports leagues used, and which of the `offered` sports leagues the API
+ * says a new contest that year would put over the plan's cap, as a query: for a caller that needs
+ * its loading and error.
+ */
+export function sportLeaguesUsedQuery(leagueId: string | undefined, championshipYear: number, offered: readonly string[]) {
   return {
-    queryKey: QueryKeys.plans.sportLeaguesUsed(leagueId, seasonYear),
+    queryKey: QueryKeys.plans.sportLeaguesUsed(leagueId, championshipYear, offered),
     queryFn: async () => {
-      const response = await listSportLeaguesUsed({ path: { id: leagueId ?? '' }, query: { seasonYear } });
+      const response = await listSportLeaguesUsed({ path: { id: leagueId ?? '' }, query: { championshipYear, sportLeagueIds: [...offered] } });
       if (!response.data) {
         throwApiError(response.error, 'Sports leagues used response is missing data.');
       }
@@ -28,19 +32,25 @@ export function sportLeaguesUsedQuery(leagueId: string | undefined, seasonYear: 
   };
 }
 
+/** A championship year and the sports leagues a page offers contests in that year. */
+export interface YearOfferings {
+  championshipYear: number;
+  sportLeagueIds: readonly string[];
+}
+
 /**
- * The sports leagues a league's contests already use in each of `seasonYears` (#947), by year:
- * what a plan's sports-leagues-a-year cap counts. A year still loading is missing from the map.
- * Read only while `enabled`, which is when the plan has that cap.
+ * Each offered championship year's answer (#947, #2021), by year: the sports leagues the league's
+ * contests already use, and which offered ones are over the plan's cap. A year still loading is
+ * missing from the map. Read only while `enabled`, which is when the plan has that cap.
  */
 export function useSportLeaguesUsed(
   leagueId: string | undefined,
-  seasonYears: readonly number[],
+  offerings: readonly YearOfferings[],
   enabled: boolean,
-): ReadonlyMap<number, readonly string[]> {
+): ReadonlyMap<number, SportLeaguesUsedResponse> {
   return useQueries({
     // Without the cap there is nothing to count, so no year is asked about.
-    queries: (enabled ? seasonYears : []).map((seasonYear) => sportLeaguesUsedQuery(leagueId, seasonYear)),
-    combine: bySeasonYear,
+    queries: (enabled ? offerings : []).map((year) => sportLeaguesUsedQuery(leagueId, year.championshipYear, year.sportLeagueIds)),
+    combine: byChampionshipYear,
   });
 }

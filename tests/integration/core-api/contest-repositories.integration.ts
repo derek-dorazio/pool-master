@@ -766,8 +766,8 @@ async function draftOn(leagueId: string, sportEventId: string, name: string): Pr
   };
 }
 
-describe('ContestRepository.findSportLeagueIdsBySeason (#947)', () => {
-  it('lists the different sports leagues of the league\'s contests of one season, drafts included, and nothing from other seasons or leagues', async () => {
+describe('ContestRepository.findSportLeagueIdsByYear (#947)', () => {
+  it('lists the different sports leagues of the league\'s contests of one championship year, and of every year at once by year, drafts included, and nothing from other years or leagues', async () => {
     const { league, event, suffix } = await createLeagueAndEvent();
     const other = await createLeagueAndEvent();
     const second = await createSecondTourEvent(event.sportLeagueId, suffix);
@@ -784,10 +784,15 @@ describe('ContestRepository.findSportLeagueIdsBySeason (#947)', () => {
       });
       await createContest(other.league.id, second.event.id, 'Another League');
 
-      expect((await repos().contests.findSportLeagueIdsBySeason(league.id, 2026)).sort())
+      expect((await repos().contests.findSportLeagueIdsByYear(league.id, 2026)).sort())
         .toEqual([second.fixtureTourId, second.secondTourId].sort());
-      expect(await repos().contests.findSportLeagueIdsBySeason(league.id, 2025)).toEqual([second.fixtureTourId]);
-      expect(await repos().contests.findSportLeagueIdsBySeason(other.league.id, 2025)).toEqual([]);
+      expect(await repos().contests.findSportLeagueIdsByYear(league.id, 2025)).toEqual([second.fixtureTourId]);
+      expect(await repos().contests.findSportLeagueIdsByYear(other.league.id, 2025)).toEqual([]);
+      // Every year at once, by year, as the Plan page counts each open year (#2021).
+      const everyYear = await repos().contests.findSportLeagueIdsOfEveryYear(league.id);
+      expect([...everyYear.keys()]).toEqual([2025, 2026]);
+      expect([...(everyYear.get(2026) ?? [])].sort()).toEqual([second.fixtureTourId, second.secondTourId].sort());
+      expect(everyYear.get(2025)).toEqual([second.fixtureTourId]);
     } finally {
       await second.remove();
     }
@@ -828,7 +833,7 @@ describe('ContestRepository sports leagues a year (#947)', () => {
       ]);
 
       expect(results.map((result) => result.status).sort()).toEqual(['created', 'sportsLeagueLimitReached']);
-      expect(await repos().contests.findSportLeagueIdsBySeason(league.id, 2026)).toHaveLength(1);
+      expect(await repos().contests.findSportLeagueIdsByYear(league.id, 2026)).toHaveLength(1);
     } finally {
       await second.remove();
     }

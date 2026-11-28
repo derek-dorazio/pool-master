@@ -16,7 +16,7 @@ import type {
   PendingDrawReceipts,
   ReminderCheck,
 } from '@poolmaster/shared/db';
-import { ContestStatus, type Contest, type ContestCoveredSlot, type ContestFormat, type CupWeight, type SelectionType, type SeasonSlotStatus, type SlotKind, type SportEventStatus } from '@poolmaster/shared/domain';
+import { ContestStatus, isOverSportLeagueCap, type Contest, type ContestCoveredSlot, type ContestFormat, type CupWeight, type SelectionType, type SeasonSlotStatus, type SlotKind, type SportEventStatus } from '@poolmaster/shared/domain';
 import { neverOpeningDraft } from './never-opening-draft';
 import { forgettingReads, memoizedRead, memoizedReadMany, ReadMemoKey } from '../core/request-read-memo';
 import { lockContestRow, lockContestRowsAtOnce } from './contest-row-lock';
@@ -140,8 +140,23 @@ export class PrismaContestRepository implements ContestRepository {
     });
   }
 
-  async findSportLeagueIdsBySeason(leagueId: string, seasonYear: number): Promise<string[]> {
-    return sportLeagueIdsBySeason(this.prisma, leagueId, seasonYear);
+  async findSportLeagueIdsByYear(leagueId: string, championshipYear: number): Promise<string[]> {
+    return sportLeagueIdsByYear(this.prisma, leagueId, championshipYear);
+  }
+
+  async findSportLeagueIdsOfEveryYear(leagueId: string): Promise<ReadonlyMap<number, string[]>> {
+    // A contest's Season names its sport league and year (#2014): the league's Seasons with a contest.
+    const rows = await this.prisma.sportLeagueSeason.findMany({
+      where: { contests: { some: { leagueId } } },
+      select: { championshipYear: true, sportLeagueId: true },
+      distinct: ['championshipYear', 'sportLeagueId'],
+      orderBy: [{ championshipYear: 'asc' }, { sportLeagueId: 'asc' }],
+    });
+    const byYear = new Map<number, string[]>();
+    for (const row of rows) {
+      byYear.set(row.championshipYear, [...(byYear.get(row.championshipYear) ?? []), row.sportLeagueId]);
+    }
+    return byYear;
   }
 
   async create(contest: ContestCreate, limits: ContestSeasonLimits): Promise<ContestCreateResult> {
@@ -524,14 +539,14 @@ function mapToContest(row: {
 }
 
 /** The different sports leagues of the league's contests in one season (#947), drafts included. */
-async function sportLeagueIdsBySeason(
+async function sportLeagueIdsByYear(
   db: PrismaClient | Prisma.TransactionClient,
   leagueId: string,
-  seasonYear: number,
+  championshipYear: number,
 ): Promise<string[]> {
   // A contest's Season names its sport league (#2014): the league's Seasons of that year with a contest.
   const rows = await db.sportLeagueSeason.findMany({
-    where: { championshipYear: seasonYear, contests: { some: { leagueId } } },
+    where: { championshipYear, contests: { some: { leagueId } } },
     select: { sportLeagueId: true },
     distinct: ['sportLeagueId'],
   });
@@ -552,10 +567,10 @@ async function seasonWithoutRoom(
   if (limits.sportLeaguesPerYear === null) return null;
   // poolmaster-allow-raw-sql: a row lock (SELECT … FOR UPDATE): Prisma has no row locks
   await tx.$queryRaw`SELECT id FROM "leagues" WHERE id = ${leagueId}::uuid FOR UPDATE`;
-  const used = await sportLeagueIdsBySeason(tx, leagueId, seasonYear);
-  return used.includes(limits.sportLeagueId) || used.length < limits.sportLeaguesPerYear
-    ? null
-    : { status: 'sportsLeagueLimitReached', sportLeaguesPerYear: limits.sportLeaguesPerYear, sportLeagueCount: used.length };
+  const used = await sportLeagueIdsByYear(tx, leagueId, seasonYear);
+  return isOverSportLeagueCap(used, limits.sportLeaguesPerYear, limits.sportLeagueId)
+    ? { status: 'sportsLeagueLimitReached', sportLeaguesPerYear: limits.sportLeaguesPerYear, sportLeagueCount: used.length }
+    : null;
 }
 
 /** The columns a status move writes: the status, and each moment it sets. */
