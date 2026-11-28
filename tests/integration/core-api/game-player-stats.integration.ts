@@ -142,6 +142,40 @@ describe('a Game\'s box score', () => {
     })).rejects.toThrow(/sport_event_round_match_game_player_stats_side_fkey/);
   });
 
+  it('reads nothing and writes nothing for no Games or no feed ids, and refuses a stat row of a Game it was not asked to rewrite', async () => {
+    const { league, games, roster } = await footballWeek(1);
+    const repo = new PrismaGamePlayerStatRepository(getPrisma());
+    const season = await getPrisma().sportLeagueSeason.findFirstOrThrow({ where: { sportLeagueId: league.id }, select: { id: true } });
+    const ask = { sportLeagueId: league.id, providerCode: ProviderCode.BALLDONTLIE };
+
+    expect(await repo.findStatGames({ ...ask, sportEventRoundMatchGameIds: [] })).toEqual([]);
+    expect(await repo.findStatPlayers({ ...ask, sportLeagueSeasonId: season.id, playerExternalIds: [] })).toEqual(new Map());
+    expect(await repo.findGameStats([])).toEqual([]);
+    await repo.replaceGameStats({ sportLeagueId: league.id, sportEventRoundMatchGameIds: [], rows: [] });
+    await expect(repo.replaceGameStats({
+      sportLeagueId: league.id,
+      sportEventRoundMatchGameIds: [games[0].id],
+      rows: [{ sportEventRoundMatchId: games[1].sportEventRoundMatchId, sportEventRoundMatchGameId: games[1].id, sportEventRoundMatchSideId: randomUUID(), participantId: roster[0].id, stat: SportStat.PASSING_YARDS, value: 1 }],
+    })).rejects.toThrow(/not one of the Games named/);
+    expect(await statRows(league.id)).toEqual([]);
+  });
+
+  it('reads a feed id no player is mapped from as no player, a mapped player with no roster row as teamless, and a Game the provider has no id for as unmapped', async () => {
+    const { league, games, roster } = await footballWeek(1);
+    const prisma = getPrisma();
+    const repo = new PrismaGamePlayerStatRepository(prisma);
+    const season = await prisma.sportLeagueSeason.findFirstOrThrow({ where: { sportLeagueId: league.id }, select: { id: true } });
+    const ask = { sportLeagueId: league.id, providerCode: ProviderCode.BALLDONTLIE };
+    await prisma.sportLeagueSeasonParticipantTeam.deleteMany({ where: { participantId: roster[0].id } });
+    await prisma.sportEventRoundMatchGameProviderMapping.deleteMany({ where: { sportEventRoundMatchGameId: games[1].id } });
+
+    expect(await repo.findStatPlayers({ ...ask, sportLeagueSeasonId: season.id, playerExternalIds: ['999'] })).toEqual(new Map());
+    expect(await repo.findStatPlayers({ ...ask, sportLeagueSeasonId: season.id, playerExternalIds: ['100'] }))
+      .toEqual(new Map([['100', { participantId: roster[0].id, teamParticipantId: null }]]));
+    const read = await repo.findStatGames({ ...ask, sportEventRoundMatchGameIds: [games[1].id] });
+    expect(read.map((game) => [game.sportEventRoundMatchGameId, game.providerGameId])).toEqual([[games[1].id, null]]);
+  });
+
   it('writes a week\'s box scores in the same statements for 2 players as for 20', async () => {
     await expectSameStatementCount({
       seed: async (players) => {
