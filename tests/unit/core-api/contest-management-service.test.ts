@@ -2,6 +2,8 @@ import { withHomeAway, legacyMatch, squaresGameOf } from '../../support/match-si
 import { expect } from '@jest/globals';
 import {
   ContestFormat,
+  ContestOpening,
+  ContestOpeningReason,
   CupWeight,
   BackgroundJobType,
   ContestStatus,
@@ -65,6 +67,7 @@ import {
   type ContestCreateSportEventReader,
   type ContestManagementServiceDeps,
 } from '../../../packages/core-api/src/modules/contest-management/service';
+import { contestOpening } from '../../../packages/core-api/src/modules/contest-management/contest-opening';
 import type { ContestOpenedNotice } from '../../../packages/core-api/src/modules/notifications';
 import type { CupService } from '../../../packages/core-api/src/modules/cups/service';
 import { cutoffTiming } from '../../../packages/core-api/src/modules/contests/entry-window';
@@ -1448,6 +1451,61 @@ describe('ContestManagementService', () => {
       },
     )).rejects.toMatchObject({ code, message });
     expect(contestCoreRepo.create).not.toHaveBeenCalled();
+  });
+
+  describe('createContest follows the one opening rule (#1932)', () => {
+    const PAST = new Date('2026-04-20T12:00:00.000Z');
+    const AHEAD = new Date('2026-05-20T12:00:00.000Z');
+    /** The code Create contest refuses with for each reason the opening rule gives. */
+    const CODE_FOR_REASON: Readonly<Record<string, string>> = {
+      [ContestOpeningReason.EVENT_NOT_RELEASED]: 'SPORT_EVENT_NOT_RELEASED',
+      [ContestOpeningReason.FIELD_NOT_LOADED]: 'SPORT_EVENT_FIELD_NOT_LOADED',
+      [ContestOpeningReason.EVENT_STARTED]: 'CONTEST_FIRST_GAME_STARTED',
+    };
+    const EVENTS: Array<[string, Parameters<typeof createSportEventReader>[0]]> = [
+      ['ready', { startDate: AHEAD, participantCount: 72 }],
+      ['a draft', { status: SportEventStatus.DRAFT, startDate: AHEAD, participantCount: 72 }],
+      ['without its field', { startDate: AHEAD, participantCount: 0 }],
+      ['past its start', { startDate: PAST, participantCount: 72 }],
+      ['in progress', { status: SportEventStatus.IN_PROGRESS, startDate: PAST, participantCount: 72 }],
+      ['a draft past its start', { status: SportEventStatus.DRAFT, startDate: PAST, participantCount: 0 }],
+      ['over', { status: SportEventStatus.COMPLETED, startDate: PAST, participantCount: 72 }],
+    ];
+
+    it.each(EVENTS)('for an event %s, refuses exactly when contestOpening is not OPEN, with the code of its reason', async (_name, event) => {
+      const reader = createSportEventReader(event);
+      const window = await contestOpening(
+        { ...reader, nextSquaresKickoff: jest.fn().mockResolvedValue(null) },
+        '11111111-1111-1111-1111-111111111111',
+        { selectionType: SelectionType.TIERED },
+        CONTEST_MANAGEMENT_TEST_NOW,
+      );
+      const contestCoreRepo = createContestRepo();
+      const service = new ContestManagementService({
+        domainEvents: testDomainEvents(),
+        contests: contestCoreRepo,
+        configTemplates: createContestConfigTemplateRepo(),
+        configurations: createContestConfigurationRepo(),
+        scoringRules: createParticipantScoringRuleRepo(),
+        tiers: createSportEventTierServiceStub(),
+        seasons: coverableSeasons(),
+        sportEventReader: reader,
+        cups: createCupKeeper(),
+        planEntitlements: platinumEntitlements(),
+        now: () => CONTEST_MANAGEMENT_TEST_NOW,
+      });
+
+      const refusal = await service.createContest({ leagueId: 'league-1' }, {
+        templateId: templateIdFor('TIERED'),
+        name: 'One Rule Contest',
+        sportEventIds: ['11111111-1111-1111-1111-111111111111'],
+        contestFormat: 'ROSTER',
+        selectionType: 'TIERED',
+        configuration: { maxEntriesPerSquad: 3, selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 4 },
+      }).then(() => null, (error: unknown) => (error as { code?: string }).code ?? 'no code');
+
+      expect(refusal).toBe(window.opening === ContestOpening.OPEN ? null : CODE_FOR_REASON[window.reason ?? 'none']);
+    });
   });
 
   describe('refusals and legacy rows', () => {

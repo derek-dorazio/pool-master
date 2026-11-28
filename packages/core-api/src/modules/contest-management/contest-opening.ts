@@ -34,7 +34,7 @@ export interface ContestOpeningReader extends Pick<ContestCreateSportEventReader
 /** Whether the setup opens on the event now, why not, and when the cutoff that would close it falls. */
 export interface ContestOpeningWindow {
   opening: ContestOpening;
-  /** Why it is NOT_YET or CLOSED; null when OPEN. */
+  /** Why it is NOT_YET or CLOSED; null when OPEN, or CLOSED because the event no longer exists. */
   reason: ContestOpeningReason | null;
   /**
    * The setup's cutoff on the event, ahead of now: the event's start, or for squares the next
@@ -52,12 +52,15 @@ export interface EventOpeningState {
   playsMatches: boolean;
 }
 
+/** The reasons the event-level rule gives, from the event row alone. */
+export type EventOpeningReason = typeof ContestOpeningReason.EVENT_NOT_RELEASED | typeof ContestOpeningReason.FIELD_NOT_LOADED | typeof ContestOpeningReason.EVENT_STARTED;
+
 /** Whether a contest of one selection type can be created on an event, and why not. */
 export interface EventContestOpening {
   selectionType: SelectionType;
   opening: ContestOpening;
   /** Why it is NOT_YET or CLOSED; null when OPEN. */
-  reason: ContestOpeningReason | null;
+  reason: EventOpeningReason | null;
 }
 
 /**
@@ -87,7 +90,8 @@ export function eventOpening(event: EventOpeningState, selectionType: SelectionT
   return { selectionType, opening: ContestOpening.NOT_YET, reason };
 }
 
-const CLOSED_UNKNOWN: ContestOpeningWindow = { opening: ContestOpening.CLOSED, reason: ContestOpeningReason.EVENT_STARTED, closesAt: null };
+/** An event that no longer exists: nothing opens on it, and it has no wait or start to name. */
+const CLOSED_UNKNOWN: ContestOpeningWindow = { opening: ContestOpening.CLOSED, reason: null, closesAt: null };
 
 /**
  * Whether Create contest would take a setup on the event now. It starts from the event-level rule

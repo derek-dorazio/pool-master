@@ -115,7 +115,8 @@ describe('contestOpening\'s reason for each wait and close (#2015)', () => {
     const underWay = event({ status: SportEventStatus.IN_PROGRESS, startDate: EARLIER });
     expect(await reasonOf(underWay, TIERED)).toBe(ContestOpeningReason.EVENT_STARTED);
     expect(await reasonOf(underWay, SQUARES, { squaresKickoff: null })).toBe(ContestOpeningReason.NO_GAME_LEFT);
-    expect(await reasonOf(null, TIERED)).toBe(ContestOpeningReason.EVENT_STARTED);
+    // An event that no longer exists is closed with no wait or start to name.
+    expect(await reasonOf(null, TIERED)).toBeNull();
   });
 
   it('gives no reason for an open setup', async () => {
