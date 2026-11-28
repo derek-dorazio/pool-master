@@ -1280,7 +1280,7 @@ export interface paths {
         };
         /**
          * List contests for a league
-         * @description Returns the league's current contests: DRAFT, OPEN and ACTIVE, less any DRAFT that can never open: one with an event COMPLETED or CANCELLED, and one closing at its event's start once an event has started. A DRAFT with no events yet is listed, and so is a bracket starting after round 1 or a squares DRAFT with its game until its event finishes, since those close at their round or game. DRAFT contests are listed for the league's commissioners only. With `finishedYear`, returns instead the COMPLETED contests that went final in that championship year (US Eastern), newest first; `listContestFinishedYears` names the years. A single contest is `getContest`. Each contest carries its count of entries that submitted at least one event and its sport events' names and starts, so a list needs no per-event reads. Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.
+         * @description Returns the league's current contests: DRAFT, OPEN and ACTIVE, less any DRAFT that can never open: one with an event COMPLETED or CANCELLED, and one closing at its event's start once an event has started. A DRAFT with no events yet is listed, and so is a bracket starting after round 1 or a squares DRAFT with its game until its event finishes, since those close at their round or game. DRAFT contests are listed for the league's commissioners only. With `finishedYear`, returns instead the COMPLETED contests of that championship year (its Season's year, however late it went final), newest first; `listContestFinishedYears` names the years. A single contest is `getContest`. Each contest carries its count of entries that submitted at least one event and its sport events' names and starts, so a list needs no per-event reads. Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.
          */
         get: operations["listContests"];
         put?: never;
@@ -1304,7 +1304,7 @@ export interface paths {
         };
         /**
          * List the years a league has finished contests in
-         * @description Each championship year (US Eastern) a COMPLETED contest of the league went final in, newest first: the years `listContests` takes as `finishedYear`. Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.
+         * @description Each championship year the league has a COMPLETED contest in (its Season's year), newest first: the years `listContests` takes as `finishedYear`. Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.
          */
         get: operations["listContestFinishedYears"];
         put?: never;
@@ -1660,7 +1660,7 @@ export interface paths {
         };
         /**
          * List a season's cups
-         * @description The league's sports league cups of one season, oldest first: one per sports league the league has a contest of that season in, each with its standings and its contests. Standings are worked out from the contests' frozen places: a squad scores from its best entry on the league's points table, times each contest's weight. Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise. 403 PLAN_FEATURE_NOT_INCLUDED, its `details.feature` naming what is missing, unless the league's plan has CUP_STANDINGS, PAST_YEARS for a year before the current one (root admins too).
+         * @description The league's sports league cups of one season, oldest first: one per sports league the league has a contest of that season in, each with its standings and its contests. Standings are worked out from the contests' frozen places: a squad scores from its best entry on the league's points table, times each contest's weight. Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise. 403 PLAN_FEATURE_NOT_INCLUDED, its `details.feature` naming what is missing, unless the league's plan has CUP_STANDINGS, PAST_YEARS for a championship year the league has closed (root admins too).
          */
         get: operations["listCups"];
         put?: never;
@@ -1700,7 +1700,7 @@ export interface paths {
         };
         /**
          * Get a squad's cup points
-         * @description One squad's points in the league's cup for a season and sports league, counted contest by counted contest, in the order they went final, with the cup's id and name. 404 CUP_NOT_FOUND when the league has no cup for that season and sports league, SQUAD_NOT_FOUND for a squad that is not the league's. Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise. 403 PLAN_FEATURE_NOT_INCLUDED, its `details.feature` naming what is missing, unless the league's plan has CUP_STANDINGS, PAST_YEARS for a year before the current one (root admins too).
+         * @description One squad's points in the league's cup for a season and sports league, counted contest by counted contest, in the order they went final, with the cup's id and name. 404 CUP_NOT_FOUND when the league has no cup for that season and sports league, SQUAD_NOT_FOUND for a squad that is not the league's. Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise. 403 PLAN_FEATURE_NOT_INCLUDED, its `details.feature` naming what is missing, unless the league's plan has CUP_STANDINGS, PAST_YEARS for a championship year the league has closed (root admins too).
          */
         get: operations["getCupSquadPoints"];
         put?: never;
@@ -1800,7 +1800,7 @@ export interface paths {
         };
         /**
          * Get a championship year
-         * @description One year of the league championship: every counted contest of every sport that went final in the calendar year (US Eastern), each squad scoring from its best entry with the points it earned at settlement. Standings with the finish matrix, and the medal tiles. A year with no counted contest answers every active squad at 0. Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise. 403 PLAN_FEATURE_NOT_INCLUDED, its `details.feature` naming what is missing, unless the league's plan has CHAMPIONSHIP, PAST_YEARS for a year before the current one (root admins too).
+         * @description One year of the league championship: every counted contest of every sport in the championship year (its Season's year, however late it went final), each squad scoring from its best entry with the points it earned at settlement. Standings with the finish matrix, and the medal tiles. A year with no counted contest answers every active squad at 0. Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise. 403 PLAN_FEATURE_NOT_INCLUDED, its `details.feature` naming what is missing, unless the league's plan has CHAMPIONSHIP, PAST_YEARS for a championship year the league has closed (root admins too).
          */
         get: operations["getChampionship"];
         put?: never;
@@ -1819,8 +1819,8 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Get last year's year in review
-         * @description Where the league's year in review for last year (US Eastern) stands: NOTHING_TO_SEND when no championship contest counted that year, READY from 1 January until the commissioner sends it, then SENT with when and by whom. The "ready to send" banner and the Send button read it. Active commissioners only (root admins bypass). 403 PLAN_FEATURE_NOT_INCLUDED, its `details.feature` naming what is missing, unless the league's plan has EMAIL_YEAR_IN_REVIEW (root admins too).
+         * Get the latest closed year's year in review
+         * @description Where the year in review of the league's latest closed championship year (#2021: every contest in it final and every Season slot of it finished) stands: NOTHING_TO_SEND, with a null year, before any year has closed, or when no championship contest counted in it; READY from when it closes until the commissioner sends it; then SENT with when and by whom. The "ready to send" banner and the Send button read it. Active commissioners only (root admins bypass). 403 PLAN_FEATURE_NOT_INCLUDED, its `details.feature` naming what is missing, unless the league's plan has EMAIL_YEAR_IN_REVIEW (root admins too).
          */
         get: operations["getYearReview"];
         put?: never;
@@ -1842,7 +1842,7 @@ export interface paths {
         put?: never;
         /**
          * Send the year in review
-         * @description Allows a commissioner to send last year's year in review: each active owner of an active squad that placed that year gets an email with their squad's year (championship place and points, contest 1sts, 2nds and 3rds, the cups it placed in, its trophies) and a link to its squad page for that year. Owners who turned off Results email are skipped. Sent once per league and year. 409 YEAR_REVIEW_NOT_OPEN for any year but last year; 409 YEAR_REVIEW_NOTHING_TO_SEND when no championship contest counted that year; 409 YEAR_REVIEW_ALREADY_SENT once it is sent. Active commissioners only (root admins bypass). 403 PLAN_FEATURE_NOT_INCLUDED, its `details.feature` naming what is missing, unless the league's plan has EMAIL_YEAR_IN_REVIEW (root admins too).
+         * @description Allows a commissioner to send the year in review of the league's latest closed championship year: each active owner of an active squad that placed that year gets an email with their squad's year (championship place and points, contest 1sts, 2nds and 3rds, the cups it placed in, its trophies) and a link to its squad page for that year. Owners who turned off Results email are skipped. Sent once per league and year. 409 YEAR_REVIEW_NOT_OPEN for any year but the latest closed one; 409 YEAR_REVIEW_NOTHING_TO_SEND when no championship contest counted that year; 409 YEAR_REVIEW_ALREADY_SENT once it is sent. Active commissioners only (root admins bypass). 403 PLAN_FEATURE_NOT_INCLUDED, its `details.feature` naming what is missing, unless the league's plan has EMAIL_YEAR_IN_REVIEW (root admins too).
          */
         post: operations["sendYearReview"];
         delete?: never;
@@ -1940,7 +1940,7 @@ export interface paths {
         };
         /**
          * Get a squad's year
-         * @description One squad's year for its squad page: its row of the league championship (place, points, gap to 1st, movement, finish matrix row) and its row of each cup of the season with that year, read through the same services as the Championship and Points race tabs. Its contests are `listContestResults` with its squadId. The championship row is null while the league's plan lacks CHAMPIONSHIP, and the cup rows empty while it lacks CUP_STANDINGS. A squad of another league is 404 SQUAD_NOT_FOUND. Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise. 403 PLAN_FEATURE_NOT_INCLUDED, its `details.feature` naming what is missing, unless the league's plan has PAST_YEARS for a year before the current one (root admins too).
+         * @description One squad's year for its squad page: its row of the league championship (place, points, gap to 1st, movement, finish matrix row) and its row of each cup of the season with that year, read through the same services as the Championship and Points race tabs. Its contests are `listContestResults` with its squadId. The championship row is null while the league's plan lacks CHAMPIONSHIP, and the cup rows empty while it lacks CUP_STANDINGS. A squad of another league is 404 SQUAD_NOT_FOUND. Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise. 403 PLAN_FEATURE_NOT_INCLUDED, its `details.feature` naming what is missing, unless the league's plan has PAST_YEARS for a championship year the league has closed (root admins too).
          */
         get: operations["getSquadYear"];
         put?: never;
@@ -1960,7 +1960,7 @@ export interface paths {
         };
         /**
          * List a year's final contests
-         * @description Every contest of the league that went final in the championship year (US Eastern), newest first, with its winners and whether it counted. With squadId, only the counted contests that squad placed in; with squadId and place, only those it finished in that place, so each list matches the finish matrix. With finishOf, each contest carries that squad's finish (its place, from its best entry) without the list narrowing: Contests > Past shows the viewer's team's place this way (#1570). With finishedSince, only the contests that went final at or after it: League Home's last few days of finals (#1782). No paging: a league finishes a few hundred contests a year at most. Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.
+         * @description Every completed contest of the league in the championship year (its Season's year, however late it went final), newest first, with its winners and whether it counted. With squadId, only the counted contests that squad placed in; with squadId and place, only those it finished in that place, so each list matches the finish matrix. With finishOf, each contest carries that squad's finish (its place, from its best entry) without the list narrowing: Contests > Past shows the viewer's team's place this way (#1570). With finishedSince, only the contests that went final at or after it: League Home's last few days of finals (#1782). No paging: a league finishes a few hundred contests a year at most. Active members of the league only (root admins bypass): 403 LEAGUE_MEMBERSHIP_REQUIRED or LEAGUE_MEMBERSHIP_INACTIVE otherwise.
          */
         get: operations["listContestResults"];
         put?: never;
@@ -24207,13 +24207,13 @@ export interface components {
         ChampionshipDto: {
             /** Format: uuid */
             leagueId: string;
-            /** @description The calendar year, US Eastern, its contests went final in. */
+            /** @description The championship year its contests count in: their Seasons' year, however late they went final (#2021). */
             year: number;
             /** @description The league's cup name, such as "Derek's Pool Cup". */
             cupName: string;
             /** @description The championship's name: the year and the cup name, "2026 Derek's Pool Cup". */
             name: string;
-            /** @description True once the year has ended in US Eastern: the standings are final and 1st is the champion. False while the year runs: 1st is the leader. */
+            /** @description True once the league's year is closed (#2021): every contest in it final and every Season slot of it played. The standings are then final and 1st is the champion. False while it is open: 1st is the leader. */
             isOver: boolean;
             /** @description Counted contests that went final in the year. */
             contestsCounted: number;
@@ -24278,13 +24278,13 @@ export interface components {
             championship: {
                 /** Format: uuid */
                 leagueId: string;
-                /** @description The calendar year, US Eastern, its contests went final in. */
+                /** @description The championship year its contests count in: their Seasons' year, however late they went final (#2021). */
                 year: number;
                 /** @description The league's cup name, such as "Derek's Pool Cup". */
                 cupName: string;
                 /** @description The championship's name: the year and the cup name, "2026 Derek's Pool Cup". */
                 name: string;
-                /** @description True once the year has ended in US Eastern: the standings are final and 1st is the champion. False while the year runs: 1st is the leader. */
+                /** @description True once the league's year is closed (#2021): every contest in it final and every Season slot of it played. The standings are then final and 1st is the champion. False while it is open: 1st is the leader. */
                 isOver: boolean;
                 /** @description Counted contests that went final in the year. */
                 contestsCounted: number;
@@ -24347,7 +24347,7 @@ export interface components {
         /** @description One year of the league championship, with who won or leads it. */
         ChampionshipYearDto: {
             year: number;
-            /** @description True once the year has ended in US Eastern. */
+            /** @description True once the league's year is closed (#2021). */
             isOver: boolean;
             /** @description The squads in 1st, several on a tie: the champions once the year is over, the leaders before. */
             leaders: {
@@ -24367,7 +24367,7 @@ export interface components {
             /** @description Every year with a counted contest, newest first; years with none are left out. */
             years: {
                 year: number;
-                /** @description True once the year has ended in US Eastern. */
+                /** @description True once the league's year is closed (#2021). */
                 isOver: boolean;
                 /** @description The squads in 1st, several on a tie: the champions once the year is over, the leaders before. */
                 leaders: {
@@ -26374,7 +26374,7 @@ export interface components {
         };
         /** @description Which year's contests to list, for which squad or matrix cell, and whose finish each carries. */
         ListContestResultsQuery: {
-            /** @description The championship year, US Eastern, the contests went final in, such as 2026. */
+            /** @description The championship year the contests count in, such as 2026: their Seasons' year, however late they went final (#2021). */
             year: number;
             /**
              * Format: uuid
@@ -26542,7 +26542,7 @@ export interface components {
         /** @description One year of the league, with its champions. */
         HistoryYearDto: {
             year: number;
-            /** @description True once the year has ended in US Eastern; false for the current year, "so far". */
+            /** @description True once the league's year is closed (#2021); false while it is open, "so far". */
             isOver: boolean;
             /** @description The league championship's 1st: its champions once the year is over, its leaders before. Empty when nothing counted. */
             champions: {
@@ -26609,7 +26609,7 @@ export interface components {
             /** @description Every year with a counted championship contest or a cup, newest first. */
             years: {
                 year: number;
-                /** @description True once the year has ended in US Eastern; false for the current year, "so far". */
+                /** @description True once the league's year is closed (#2021); false while it is open, "so far". */
                 isOver: boolean;
                 /** @description The league championship's 1st: its champions once the year is over, its leaders before. Empty when nothing counted. */
                 champions: {
@@ -26679,7 +26679,7 @@ export interface components {
                 /** @description Every year with a counted championship contest or a cup, newest first. */
                 years: {
                     year: number;
-                    /** @description True once the year has ended in US Eastern; false for the current year, "so far". */
+                    /** @description True once the league's year is closed (#2021); false while it is open, "so far". */
                     isOver: boolean;
                     /** @description The league championship's 1st: its champions once the year is over, its leaders before. Empty when nothing counted. */
                     champions: {
@@ -26723,14 +26723,14 @@ export interface components {
         };
         /** @description Which year of the squad to read. */
         GetSquadYearQuery: {
-            /** @description The championship year, US Eastern, such as 2026; the cups read are the season with this year. */
+            /** @description The championship year, such as 2026; the cups read are the season with this year. */
             year: number;
         };
         /** @description One squad's place in a championship year. */
         SquadChampionshipDto: {
             /** @description The championship's name: "2026 Derek's Pool Cup". */
             name: string;
-            /** @description True once the year has ended in US Eastern: the place is final. */
+            /** @description True once the league's year is closed (#2021): the place is final. */
             isOver: boolean;
             /** @description Squads in the standings, for "3rd of 12". */
             squadCount: number;
@@ -26826,13 +26826,13 @@ export interface components {
             /** Format: uuid */
             squadId: string;
             year: number;
-            /** @description True once the year has ended in US Eastern: its places are final. False for the current year, "so far". */
+            /** @description True once the league's year is closed (#2021): its places are final. False while it is open, "so far". */
             isOver: boolean;
             /** @description Its championship row; null for an inactive squad that placed in nothing that year. */
             championship: {
                 /** @description The championship's name: "2026 Derek's Pool Cup". */
                 name: string;
-                /** @description True once the year has ended in US Eastern: the place is final. */
+                /** @description True once the league's year is closed (#2021): the place is final. */
                 isOver: boolean;
                 /** @description Squads in the standings, for "3rd of 12". */
                 squadCount: number;
@@ -26931,13 +26931,13 @@ export interface components {
                 /** Format: uuid */
                 squadId: string;
                 year: number;
-                /** @description True once the year has ended in US Eastern: its places are final. False for the current year, "so far". */
+                /** @description True once the league's year is closed (#2021): its places are final. False while it is open, "so far". */
                 isOver: boolean;
                 /** @description Its championship row; null for an inactive squad that placed in nothing that year. */
                 championship: {
                     /** @description The championship's name: "2026 Derek's Pool Cup". */
                     name: string;
-                    /** @description True once the year has ended in US Eastern: the place is final. */
+                    /** @description True once the league's year is closed (#2021): the place is final. */
                     isOver: boolean;
                     /** @description Squads in the standings, for "3rd of 12". */
                     squadCount: number;
@@ -27109,13 +27109,13 @@ export interface components {
                 /** Format: uuid */
                 squadId: string;
                 year: number;
-                /** @description True once the year has ended in US Eastern: its places are final. False for the current year, "so far". */
+                /** @description True once the league's year is closed (#2021): its places are final. False while it is open, "so far". */
                 isOver: boolean;
                 /** @description Its championship row; null for an inactive squad that placed in nothing that year. */
                 championship: {
                     /** @description The championship's name: "2026 Derek's Pool Cup". */
                     name: string;
-                    /** @description True once the year has ended in US Eastern: the place is final. */
+                    /** @description True once the league's year is closed (#2021): the place is final. */
                     isOver: boolean;
                     /** @description Squads in the standings, for "3rd of 12". */
                     squadCount: number;
@@ -27254,13 +27254,13 @@ export interface components {
                     /** Format: uuid */
                     squadId: string;
                     year: number;
-                    /** @description True once the year has ended in US Eastern: its places are final. False for the current year, "so far". */
+                    /** @description True once the league's year is closed (#2021): its places are final. False while it is open, "so far". */
                     isOver: boolean;
                     /** @description Its championship row; null for an inactive squad that placed in nothing that year. */
                     championship: {
                         /** @description The championship's name: "2026 Derek's Pool Cup". */
                         name: string;
-                        /** @description True once the year has ended in US Eastern: the place is final. */
+                        /** @description True once the league's year is closed (#2021): the place is final. */
                         isOver: boolean;
                         /** @description Squads in the standings, for "3rd of 12". */
                         squadCount: number;
@@ -27354,12 +27354,12 @@ export interface components {
                 }[];
             };
         };
-        /** @description Where the league's year in review for last year stands. */
+        /** @description Where the year in review of the league's latest closed championship year stands. */
         YearReviewDto: {
-            /** @description Last year, US Eastern: the only year whose review can be sent. */
-            year: number;
+            /** @description The league's latest closed championship year: the only year whose review can be sent. Null while the league has closed none. */
+            year: number | null;
             /**
-             * @description NOTHING_TO_SEND: no championship contest counted that year. READY: the commissioner can send it. SENT: it was sent.
+             * @description NOTHING_TO_SEND: no year closed yet, or no championship contest counted in it. READY: the commissioner can send it. SENT: it was sent.
              * @enum {string}
              */
             status: "NOTHING_TO_SEND" | "READY" | "SENT";
@@ -27371,14 +27371,14 @@ export interface components {
             /** @description Who sent it; null until then, or once their account is gone. */
             sentByName: string | null;
         };
-        /** @description Where the league's year in review for last year stands. */
+        /** @description Where the year in review of the league's latest closed championship year stands. */
         YearReviewResponse: {
-            /** @description Where the league's year in review for last year stands. */
+            /** @description Where the year in review of the league's latest closed championship year stands. */
             yearReview: {
-                /** @description Last year, US Eastern: the only year whose review can be sent. */
-                year: number;
+                /** @description The league's latest closed championship year: the only year whose review can be sent. Null while the league has closed none. */
+                year: number | null;
                 /**
-                 * @description NOTHING_TO_SEND: no championship contest counted that year. READY: the commissioner can send it. SENT: it was sent.
+                 * @description NOTHING_TO_SEND: no year closed yet, or no championship contest counted in it. READY: the commissioner can send it. SENT: it was sent.
                  * @enum {string}
                  */
                 status: "NOTHING_TO_SEND" | "READY" | "SENT";
@@ -35164,7 +35164,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Where the league's year in review for last year stands. */
+            /** @description Where the year in review of the league's latest closed championship year stands. */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -35199,14 +35199,14 @@ export interface operations {
             header?: never;
             path: {
                 id: string;
-                /** @description The year whose review to send, such as 2026: only last year can be sent. */
+                /** @description The year whose review to send, such as 2026: only the league's latest closed championship year can be sent. */
                 year: number;
             };
             cookie?: never;
         };
         requestBody?: never;
         responses: {
-            /** @description Where the league's year in review for last year stands. */
+            /** @description Where the year in review of the league's latest closed championship year stands. */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -35417,7 +35417,7 @@ export interface operations {
     getSquadYear: {
         parameters: {
             query: {
-                /** @description The championship year, US Eastern, such as 2026; the cups read are the season with this year. */
+                /** @description The championship year, such as 2026; the cups read are the season with this year. */
                 year: number;
             };
             header?: never;
@@ -35479,7 +35479,7 @@ export interface operations {
     listContestResults: {
         parameters: {
             query: {
-                /** @description The championship year, US Eastern, the contests went final in, such as 2026. */
+                /** @description The championship year the contests count in, such as 2026: their Seasons' year, however late they went final (#2021). */
                 year: number;
                 /** @description Only the counted contests this squad placed in: its Played count. */
                 squadId?: string;

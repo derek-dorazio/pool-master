@@ -54,7 +54,7 @@ export function championshipModule(fastify: FastifyInstance, opts: YearGatedModu
     schema: {
       tags: ['Championship'],
       summary: 'Get a championship year',
-      description: `One year of the league championship: every counted contest of every sport that went final in the calendar year (US Eastern), each squad scoring from its best entry with the points it earned at settlement. Standings with the finish matrix, and the medal tiles. A year with no counted contest answers every active squad at 0. ${MEMBERS_ONLY} ${describePlanFeatureGate([PlanFeature.CHAMPIONSHIP], true)}`,
+      description: `One year of the league championship: every counted contest of every sport in the championship year (its Season's year, however late it went final), each squad scoring from its best entry with the points it earned at settlement. Standings with the finish matrix, and the medal tiles. A year with no counted contest answers every active squad at 0. ${MEMBERS_ONLY} ${describePlanFeatureGate([PlanFeature.CHAMPIONSHIP], true)}`,
       operationId: 'getChampionship',
       params: YEAR_PARAMS,
       response: {

@@ -536,9 +536,9 @@ export interface ContestRepository {
    * does a bracket starting after round 1 or a squares draft with its game, which close later.
    */
   findCurrentByLeague(leagueId: string, now: Date): Promise<Contest[]>;
-  /** The league's COMPLETED contests that ended in [`endedFrom`, `endedBefore`), newest first (#1161). */
-  findFinishedByLeague(leagueId: string, endedFrom: Date, endedBefore: Date): Promise<Contest[]>;
-  /** Each championship year, US Eastern, a COMPLETED contest of the league ended in, newest first (#1161). */
+  /** The league's COMPLETED contests of one championship year, however late they went final, latest finish first (#1161, #2021). */
+  findFinishedByLeague(leagueId: string, championshipYear: number): Promise<Contest[]>;
+  /** Each championship year the league has a COMPLETED contest in, newest first (#1161, #2021). */
   findFinishedYearsByLeague(leagueId: string): Promise<number[]>;
   /** The league's contests open for entries, oldest first, by id and name only: the welcome email lists them (#903). */
   findOpenByLeague(leagueId: string): Promise<Array<Pick<Contest, 'id' | 'name'>>>;

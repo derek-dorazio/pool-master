@@ -50,7 +50,6 @@ import type {
   User,
 } from '@poolmaster/shared/domain';
 import {
-  championshipYear,
   hasSportEventStarted,
   ContestEntryStatus,
   ContestFormat,
@@ -407,16 +406,14 @@ export class InMemoryContestWorld {
         [...this.contests.values()].filter((contest) => contest.leagueId === leagueId
           && contest.status !== ContestStatus.COMPLETED
           && !(contest.status === ContestStatus.DRAFT && this.canNeverOpen(contest, now))),
-      findFinishedByLeague: async (leagueId, endedFrom, endedBefore) =>
+      findFinishedByLeague: async (leagueId, year) =>
         [...this.contests.values()].filter((contest) => contest.leagueId === leagueId
           && contest.status === ContestStatus.COMPLETED
-          && contest.endsAt !== undefined
-          && contest.endsAt >= endedFrom && contest.endsAt < endedBefore),
+          && contest.championshipYear === year),
       findFinishedYearsByLeague: async (leagueId) =>
         [...new Set([...this.contests.values()].flatMap((contest) =>
-          contest.leagueId === leagueId && contest.status === ContestStatus.COMPLETED && contest.endsAt
-            ? [championshipYear(contest.endsAt)]
-            : []))].sort((left, right) => right - left),
+          contest.leagueId === leagueId && contest.status === ContestStatus.COMPLETED ? [contest.championshipYear] : []))]
+          .sort((left, right) => right - left),
       findOpenByLeague: async (leagueId) =>
         [...this.contests.values()]
           .filter((contest) => contest.leagueId === leagueId && contest.status === ContestStatus.OPEN)

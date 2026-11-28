@@ -12,7 +12,7 @@ import { DateTimeSchema } from './common.dto';
 import { registerSchema } from './schema-registry';
 
 export const ListContestResultsQuerySchema = z.object({
-  year: z.number().int().min(2000).max(9999).describe('The championship year, US Eastern, the contests went final in, such as 2026.'),
+  year: z.number().int().min(2000).max(9999).describe('The championship year the contests count in, such as 2026: their Seasons\' year, however late they went final (#2021).'),
   squadId: z.uuid().optional().describe('Only the counted contests this squad placed in: its Played count.'),
   place: z.number().int().min(1).max(CHAMPIONSHIP_MATRIX_PLACES).optional().describe('With squadId, only the counted contests the squad finished in this place: its matrix cell. Refused without squadId (400 SQUAD_ID_REQUIRED).'),
   finishedSince: z.iso.datetime().optional().describe('Only the contests that went final at or after this instant, within the year (#1782): League Home lists the last few days\' finals without reading the whole year.'),
@@ -64,7 +64,7 @@ export type HistoryCupDto = z.infer<typeof HistoryCupDtoSchema>;
 
 export const HistoryYearDtoSchema = z.object({
   year: z.number().int(),
-  isOver: z.boolean().describe('True once the year has ended in US Eastern; false for the current year, "so far".'),
+  isOver: z.boolean().describe('True once the league\'s year is closed (#2021); false while it is open, "so far".'),
   champions: z.array(ChampionshipSquadDtoSchema).describe('The league championship\'s 1st: its champions once the year is over, its leaders before. Empty when nothing counted.'),
   cups: z.array(HistoryCupDtoSchema).describe('The cups of the season with this year, by sports league name.'),
 }).describe('One year of the league, with its champions.');
@@ -82,13 +82,13 @@ export const HistorySummaryResponseSchema = z.object({
 export type HistorySummaryResponse = z.infer<typeof HistorySummaryResponseSchema>;
 
 export const GetSquadYearQuerySchema = z.object({
-  year: z.number().int().min(2000).max(9999).describe('The championship year, US Eastern, such as 2026; the cups read are the season with this year.'),
+  year: z.number().int().min(2000).max(9999).describe('The championship year, such as 2026; the cups read are the season with this year.'),
 }).describe('Which year of the squad to read.');
 export type GetSquadYearQuery = z.infer<typeof GetSquadYearQuerySchema>;
 
 export const SquadChampionshipDtoSchema = z.object({
   name: z.string().describe('The championship\'s name: "2026 Derek\'s Pool Cup".'),
-  isOver: z.boolean().describe('True once the year has ended in US Eastern: the place is final.'),
+  isOver: z.boolean().describe('True once the league\'s year is closed (#2021): the place is final.'),
   squadCount: z.number().int().describe('Squads in the standings, for "3rd of 12".'),
   pointsBehindLeader: z.number().int().describe('Tenths of a point behind 1st; 0 for a squad in 1st.'),
   contestsCounted: z.number().int().describe('Counted contests that went final in the year, league-wide.'),
@@ -111,7 +111,7 @@ export type SquadCupDto = z.infer<typeof SquadCupDtoSchema>;
 export const SquadYearDtoSchema = z.object({
   squadId: z.uuid(),
   year: z.number().int(),
-  isOver: z.boolean().describe('True once the year has ended in US Eastern: its places are final. False for the current year, "so far".'),
+  isOver: z.boolean().describe('True once the league\'s year is closed (#2021): its places are final. False while it is open, "so far".'),
   championship: SquadChampionshipDtoSchema.nullable().describe('Its championship row; null for an inactive squad that placed in nothing that year.'),
   cups: z.array(SquadCupDtoSchema).describe('Every cup of the season the squad has a row in, by sports league name.'),
 }).describe('One squad\'s year: its championship row and its cup rows, the same rows the league pages show.');

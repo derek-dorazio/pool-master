@@ -580,7 +580,7 @@ describe('ContestService', () => {
       expect(contestRepo.findFinishedByLeague).not.toHaveBeenCalled();
     });
 
-    it('lists the contests that went final in a finished year, from midnight 1 January in New York to the next (#1161)', async () => {
+    it('lists the contests of a championship year when asked for its finished ones, however late they went final (#1161, #2021)', async () => {
       const finished = buildContest({ id: 'finished', status: ContestStatus.COMPLETED });
       const contestRepo = createMockContestRepo({
         findFinishedByLeague: jest.fn().mockResolvedValue([finished]),
@@ -594,11 +594,7 @@ describe('ContestService', () => {
       const result = await service.listByLeague('league-1', { userId: 'user-1', isRootAdmin: false }, 2025);
 
       expect(result).toEqual([finished]);
-      expect(contestRepo.findFinishedByLeague).toHaveBeenCalledWith(
-        'league-1',
-        new Date('2025-01-01T05:00:00.000Z'),
-        new Date('2026-01-01T05:00:00.000Z'),
-      );
+      expect(contestRepo.findFinishedByLeague).toHaveBeenCalledWith('league-1', 2025);
       expect(contestRepo.findCurrentByLeague).not.toHaveBeenCalled();
     });
 

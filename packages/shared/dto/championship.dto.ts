@@ -1,6 +1,6 @@
 /**
- * The league championship (#863): every counted contest of every sport, in the calendar year it
- * went final (US Eastern), named by the league's cup name ("2026 Derek's Pool Cup"). Each squad's
+ * The league championship (#863): every counted contest of every sport, in its championship year
+ * (its Season's year, #2021), named by the league's cup name ("2026 Derek's Pool Cup"). Each squad's
  * finish is stored at settlement with the points it earned then.
  */
 import { z } from 'zod';
@@ -45,10 +45,10 @@ export type ChampionshipTileDto = z.infer<typeof ChampionshipTileDtoSchema>;
 
 export const ChampionshipDtoSchema = z.object({
   leagueId: z.uuid(),
-  year: z.number().int().describe('The calendar year, US Eastern, its contests went final in.'),
+  year: z.number().int().describe('The championship year its contests count in: their Seasons\' year, however late they went final (#2021).'),
   cupName: z.string().describe('The league\'s cup name, such as "Derek\'s Pool Cup".'),
   name: z.string().describe('The championship\'s name: the year and the cup name, "2026 Derek\'s Pool Cup".'),
-  isOver: z.boolean().describe('True once the year has ended in US Eastern: the standings are final and 1st is the champion. False while the year runs: 1st is the leader.'),
+  isOver: z.boolean().describe('True once the league\'s year is closed (#2021): every contest in it final and every Season slot of it played. The standings are then final and 1st is the champion. False while it is open: 1st is the leader.'),
   contestsCounted: z.number().int().describe('Counted contests that went final in the year.'),
   contestsToGo: z.number().int().describe('For the current year, the league\'s open and live contests that will count once final; 0 for any other year.'),
   standings: z.array(ChampionshipStandingRowDtoSchema).describe('Best first; squads sharing a place in name order.'),
@@ -63,7 +63,7 @@ export type ChampionshipResponse = z.infer<typeof ChampionshipResponseSchema>;
 
 export const ChampionshipYearDtoSchema = z.object({
   year: z.number().int(),
-  isOver: z.boolean().describe('True once the year has ended in US Eastern.'),
+  isOver: z.boolean().describe('True once the league\'s year is closed (#2021).'),
   leaders: z.array(ChampionshipSquadDtoSchema).describe('The squads in 1st, several on a tie: the champions once the year is over, the leaders before.'),
 }).describe('One year of the league championship, with who won or leads it.');
 export type ChampionshipYearDto = z.infer<typeof ChampionshipYearDtoSchema>;

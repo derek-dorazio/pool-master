@@ -50,7 +50,6 @@ import type {
 import {
   contestRoundCoverage,
   TIER_SET_SELECTION_TYPES,
-  championshipYearStart,
   ContestFormat,
   ContestStatus,
   SelectionType,
@@ -339,7 +338,7 @@ export class ContestService {
   async listByLeague(leagueId: string, viewer: ContestViewer, finishedYear?: number): Promise<Contest[]> {
     const contests = finishedYear === undefined
       ? await this.deps.contests.findCurrentByLeague(leagueId, this.now())
-      : await this.deps.contests.findFinishedByLeague(leagueId, championshipYearStart(finishedYear), championshipYearStart(finishedYear + 1));
+      : await this.deps.contests.findFinishedByLeague(leagueId, finishedYear);
     if (await this.canSeeDraftContests(leagueId, viewer)) {
       return contests;
     }
