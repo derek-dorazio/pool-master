@@ -1,0 +1,25 @@
+{
+  "data": [
+    {
+      "player": {
+        "id": 501,
+        "first_name": "Arch",
+        "last_name": "Manning"
+      },
+      "team": {
+        "id": 251
+      },
+      "game": {
+        "id": 9001,
+        "status_state": "final"
+      },
+      "passing_yards": 310,
+      "passing_touchdowns": 2,
+      "rushing_yards": 45,
+      "rushing_touchdowns": 1
+    }
+  ],
+  "meta": {
+    "per_page": 100
+  }
+}

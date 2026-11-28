@@ -48,6 +48,9 @@
  * with a shoot-out's scores (#1532). Soccer's events and teams are both leagues', each read on its
  * own, the Premier League's first. Any other event id is a PGA TOUR tournament id.
  *
+ * Box scores (#2026, `box-score-reader.ts`): each game league's players' stats in the games asked
+ * for, from its per-game player stats endpoint (`box-score-contract.ts`), every one on a paid plan.
+ *
  * This adapter only reads. A synced sport league's events are created from its event list by the
  * daily synced event creation sweep (ADR 0011); every other league's, by an admin.
  */
@@ -62,6 +65,8 @@ import {
   type DateRange,
   type ProviderEventListOptions,
   type ProviderParticipant,
+  type ProviderBoxScoreOptions,
+  type ProviderPlayerGameStats,
   type ProviderRosterPlayer,
   type ProviderPayloadCapture,
   type ProviderPayloadCaptureSession,
@@ -110,6 +115,8 @@ import {
   toTourParticipant,
 } from './pga-mapping';
 import { F1Reader } from './f1-reader';
+import { BOX_SCORE_ENDPOINTS } from './box-score-contract';
+import { BoxScoreReader } from './box-score-reader';
 import { parseF1Scope } from './f1-mapping';
 
 export interface BalldontlieAdapterOptions {
@@ -158,6 +165,8 @@ interface LeagueReader {
   participants(): Promise<ProviderParticipant[]>;
   /** The league's roster for a season (#2025); absent for a league whose roster is not read. */
   roster?(season: number | undefined): Promise<ProviderRosterPlayer[]>;
+  /** The league's players' lines in some of its games (#2026); absent for a league with no box scores. */
+  boxScores?(providerGameIds: readonly string[]): Promise<ProviderPlayerGameStats[]>;
   event(eventId: string): LeagueEventReads | null;
 }
 
@@ -271,7 +280,15 @@ export class BalldontlieAdapter implements SportDataProvider, ProviderPayloadDia
         );
         continue;
       }
-      leagues.push({ code: league.code, sport: league.sport, name: league.name, reader: reader() });
+      // A league's box scores come from its own per-game player stats endpoint, where it has one.
+      const endpoint = Object.hasOwn(BOX_SCORE_ENDPOINTS, league.code) ? BOX_SCORE_ENDPOINTS[league.code] : undefined;
+      const boxScores = endpoint === undefined ? undefined : new BoxScoreReader(this.client, endpoint);
+      leagues.push({
+        code: league.code,
+        sport: league.sport,
+        name: league.name,
+        reader: { ...reader(), ...(boxScores !== undefined && { boxScores: (ids: readonly string[]) => boxScores.boxScores(ids) }) },
+      });
     }
     this.leagues = leagues;
   }
@@ -345,6 +362,25 @@ export class BalldontlieAdapter implements SportDataProvider, ProviderPayloadDia
     if (league.reader.roster === undefined) return [];
     try {
       return await league.reader.roster(seasonOf(options.providerSeasonId));
+    } catch (error) {
+      if (isPlanRefusal(error)) throw new ProviderLeagueRefusedError(this.providerName, league.name, error.status, { cause: error });
+      throw error;
+    }
+  }
+
+  /**
+   * One league's box scores for some of its games (#2026): the league the code names, of the
+   * sport; none for a league with no box scores, or when no game is asked for. A code that names
+   * no enabled league of the sport throws `ProviderLeagueUnknownError` and reads nothing; a refusal
+   * by the plan (every box score endpoint needs a paid one) throws `ProviderLeagueRefusedError`.
+   */
+  async getBoxScores(sport: Sport, options: ProviderBoxScoreOptions): Promise<ProviderPlayerGameStats[]> {
+    const code = options.providerLeagueCode;
+    const league = this.leagues.find((each) => each.code === code && each.sport === sport);
+    if (league === undefined) throw new ProviderLeagueUnknownError(this.providerName, code);
+    if (league.reader.boxScores === undefined || options.providerGameIds.length === 0) return [];
+    try {
+      return await league.reader.boxScores(options.providerGameIds);
     } catch (error) {
       if (isPlanRefusal(error)) throw new ProviderLeagueRefusedError(this.providerName, league.name, error.status, { cause: error });
       throw error;

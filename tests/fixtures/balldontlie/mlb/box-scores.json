@@ -1,0 +1,26 @@
+{
+  "data": [
+    {
+      "player": {
+        "id": 660271,
+        "first_name": "Shohei",
+        "last_name": "Ohtani"
+      },
+      "team": {
+        "id": 14
+      },
+      "game_id": 5550001,
+      "team_name": "Los Angeles Dodgers",
+      "at_bats": 4,
+      "runs": 2,
+      "hits": 2,
+      "rbi": 3,
+      "bb": 1,
+      "stolen_bases": 1,
+      "total_bases": 6
+    }
+  ],
+  "meta": {
+    "per_page": 100
+  }
+}
