@@ -20,19 +20,20 @@ Write this table in the ticket, each open point a question with a recommendation
 |---|---|
 | Event | The event a fan would name, and which sport it is under |
 | Slug | Lower case words joined by single dashes (`super-bowl`). Permanent: it lives in emails, ads and chats |
-| Offers | For each way to play: the sport league, the slot definition (the key of a slot in its Season shape) whose event the offer is shown with, the template key, and a bracket starting round if it starts later than the template's |
+| Slot | The page's sport league and slot definition (the key of a slot in its Season shape): every offer is shown with that definition's event |
+| Offers | For each way to play: the template key, one of the page's sport league's. An offer carries nothing else; a bracket starting later is its own template |
 | Primary | The one offer whose edition dates the page, usually the one that opens first |
 | Order | `display_order` among the sport's pages: the calendar order of their events |
 | Copy | Name, eyebrow, hook line, when picks close, the league in the footer, and each offer's card |
 
 Check each offer before writing anything:
 
-- The template exists, is active, and belongs to that sport league. Find it in the contest
-  template reference migrations by its key. The offers insert joins the template to its league,
-  so a template with no league seeds no offer.
-- The slot definition key is one of that sport league's (`sport_league_competition_slots`), and the
-  template covers it. An offer whose definition has no Season slot left that is not over is
-  simply not shown, so a typo fails silently.
+- The template exists, is active, and belongs to the page's sport league. Find it in the contest
+  template reference migrations by its key. The offers insert joins the template to the page's
+  league, so a template of another league seeds no offer.
+- The page's slot definition key is one of that sport league's (`sport_league_competition_slots`),
+  and every offer's template covers it. A page whose definition has no Season slot left that is
+  not over shows no offer, so a typo fails silently.
 - The page's hero is its sport's photo (`rules/ux-rules.md` §13 *Event Pages* item 6), already
   in `clients/poolmaster/public/email/sports/`. A sport without one shows its drawn How to Play
   scene; a better photo is a separate change, with its source note beside it, and can show the
@@ -94,13 +95,13 @@ That deploy writes the page's shell on its own; no Terraform apply is needed. Th
 curl -s -A "facebookexternalhit/1.1" https://qa.ultimateofficepoolmanager.com/play/<sport-url-segment>/<url-segment> | grep og:title
 ```
 
-and paste the link into Slack or iMessage. An offer shows only while its slot definition has a
+and paste the link into Slack or iMessage. An offer shows only while its page's slot definition has a
 Season slot on QA that is not over: the league's synced Season, or its test seed through *Load test data*
 on the user's say-so (`docs/SPORT-DATA-LOADING.md`), then read the page.
 
 ## Traps
 
-- **An offer that seeds nothing.** The offers insert joins by league name, slot key and template key, so
+- **An offer that seeds nothing.** The page insert joins by league name and slot key, and the offers insert by template key, so
   a misspelling inserts no row and raises no error. Only the page's own integration test
   catches it.
 - **A stale preview image.** The unit test checks that each page has an image, not that it
@@ -114,6 +115,6 @@ on the user's say-so (`docs/SPORT-DATA-LOADING.md`), then read the page.
   before merge (`npm run rules:check:migration-timestamps` catches both).
 - **Testing a card in a chat that saw the link before.** Chat apps cache a link's card. Add
   `?t=1` to see the new one.
-- **Offers missing on QA.** An offer is left out while its slot definition has no Season slot
+- **Offers missing on QA.** An offer is left out while its page's slot definition has no Season slot
   that is not over. A test seed's dates are moved forward when it loads, so loading the league's test seed
   (or its sync) brings the offer back; an old load whose dates have passed does not.

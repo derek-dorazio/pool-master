@@ -16,7 +16,7 @@ import { mapContestConfigTemplate, TEMPLATE_INCLUDE } from './prisma-contest-man
 
 /** A page's address reads its sport's stored URL segment (#2042). */
 const ADDRESS_SELECT = { sport: true, urlSegment: true, sportConfig: { select: { urlSegment: true } } } as const;
-const PAGE_INCLUDE = { sportConfig: { select: { urlSegment: true } }, redirectTo: { select: ADDRESS_SELECT } } as const;
+const PAGE_INCLUDE = { sportConfig: { select: { urlSegment: true } }, redirectTo: { select: ADDRESS_SELECT }, sportLeague: { select: { name: true } } } as const;
 
 interface AddressRow {
   sport: Sport;
@@ -33,6 +33,9 @@ function mapEventPage(row: AddressRow & {
   displayOrder: number;
   isActive: boolean;
   redirectTo: AddressRow | null;
+  sportLeagueId: string;
+  sportLeagueCompetitionSlotId: string;
+  sportLeague: { name: string };
 }): EventPage {
   return {
     id: row.id,
@@ -40,6 +43,9 @@ function mapEventPage(row: AddressRow & {
     displayOrder: row.displayOrder,
     isActive: row.isActive,
     redirectTo: row.redirectTo === null ? null : mapAddress(row.redirectTo),
+    sportLeagueId: row.sportLeagueId,
+    sportLeagueName: row.sportLeague.name,
+    sportLeagueCompetitionSlotId: row.sportLeagueCompetitionSlotId,
   };
 }
 
@@ -71,16 +77,13 @@ export class PrismaEventPageRepository implements EventPageRepository {
     const rows = await this.prisma.eventPageOffer.findMany({
       // A disabled setup is left out, as Create contest refuses it, and so is a switched-off
       // sport league's offer (#1812), as Create contest offers none of its events.
-      where: { eventPageId: { in: [...eventPageIds] }, template: { active: true }, sportLeague: { isActive: true } },
-      include: { template: { include: TEMPLATE_INCLUDE }, sportLeague: { select: { name: true } } },
+      where: { eventPageId: { in: [...eventPageIds] }, template: { active: true }, eventPage: { sportLeague: { isActive: true } } },
+      include: { template: { include: TEMPLATE_INCLUDE } },
       orderBy: [{ eventPageId: 'asc' }, { sortOrder: 'asc' }],
     });
     return rows.map((row) => ({
       id: row.id,
       eventPageId: row.eventPageId,
-      sportLeagueId: row.sportLeagueId,
-      sportLeagueName: row.sportLeague.name,
-      sportLeagueCompetitionSlotId: row.sportLeagueCompetitionSlotId,
       template: mapContestConfigTemplate(row.template),
       sortOrder: row.sortOrder,
       isPrimary: row.isPrimary,

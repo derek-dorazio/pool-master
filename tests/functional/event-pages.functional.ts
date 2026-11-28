@@ -54,10 +54,10 @@ describe('SDK Functional: event pages (#1007)', () => {
     expect(created.response?.status).toBe(201);
     const eventId = expectDefined(created.data).event.id;
     createdEventIds.push(eventId);
-    // The offer shows the next slot of its definition (#2010); until the sync gives events their
+    // The page shows the next slot of its definition (#2010, #2050); until the sync gives events their
     // slots (slice 8), the test puts the playoffs in the offer's.
-    const offered = await getFunctionalPrisma().eventPageOffer.findFirstOrThrow({
-      where: { eventPage: { urlSegment: 'championship-weekend' }, isPrimary: true },
+    const offered = await getFunctionalPrisma().eventPage.findFirstOrThrow({
+      where: { urlSegment: 'championship-weekend' },
       select: { sportLeagueCompetitionSlotId: true },
     });
     await putEventInSlot(getFunctionalPrisma(), eventId, offered.sportLeagueCompetitionSlotId);
@@ -72,7 +72,7 @@ describe('SDK Functional: event pages (#1007)', () => {
     // --- The page: its squares offer is the primary -------------------------------------------
     const page = await readPage(visitor);
     const primary = expectDefined(page.offers.find((offer) => offer.isPrimary));
-    expect(primary).toMatchObject({ sportLeagueName: 'NFL', template: { templateKey: 'nfl-squares' } });
+    expect([page.sportLeagueName, primary.template.templateKey]).toEqual(['NFL', 'nfl-squares']);
     expect([EventPageOfferState.NOT_YET, EventPageOfferState.OPEN]).toContain(primary.state);
     expect(page.offers.filter((offer) => offer.isPrimary)).toHaveLength(1);
 

@@ -24410,22 +24410,10 @@ export interface components {
              */
             endDate: string | null;
         };
-        /** @description One way to play on an event page: a contest setup on one sport league's slot definition, with its next Season slot. An offer with no Season slot left that can still take the contest is left out. */
+        /** @description One way to play on an event page: a contest setup on the page's slot definition, with its next Season slot. An offer with no Season slot left that can still take the contest is left out. */
         EventPageOfferDto: {
             /** Format: uuid */
             id: string;
-            /**
-             * Format: uuid
-             * @description The sport league whose slot the offer runs on.
-             */
-            sportLeagueId: string;
-            /** @description The sport league as screens away from its sport's own pages name it, such as "NFL". */
-            sportLeagueName: string;
-            /**
-             * Format: uuid
-             * @description The slot definition the offer runs on (#2010), such as the NFL's conference championships: each Season has a slot of it.
-             */
-            sportLeagueCompetitionSlotId: string;
             /** @description The contest setup the offer starts as: Create contest's ?template=. */
             template: {
                 /**
@@ -24908,22 +24896,22 @@ export interface components {
                 /** @description The page's web address, /play/<sportUrlSegment>/<urlSegment>, built by the API from the two stored segments. Link to it as given. */
                 path: string;
             } | null;
+            /**
+             * Format: uuid
+             * @description The sport league whose slot the page shows (#2050).
+             */
+            sportLeagueId: string;
+            /** @description The sport league as screens away from its sport's own pages name it, such as "NFL". */
+            sportLeagueName: string;
+            /**
+             * Format: uuid
+             * @description The slot definition the page shows (#2010, #2050), such as the NFL's conference championships: each Season has a slot of it, and every offer is shown with the next one not yet over.
+             */
+            sportLeagueCompetitionSlotId: string;
             /** @description The page's ways to play in order, each with its next slot. Offers with no slot left to take the contest are left out, so an active page can have none: it is between seasons. */
             offers: {
                 /** Format: uuid */
                 id: string;
-                /**
-                 * Format: uuid
-                 * @description The sport league whose slot the offer runs on.
-                 */
-                sportLeagueId: string;
-                /** @description The sport league as screens away from its sport's own pages name it, such as "NFL". */
-                sportLeagueName: string;
-                /**
-                 * Format: uuid
-                 * @description The slot definition the offer runs on (#2010), such as the NFL's conference championships: each Season has a slot of it.
-                 */
-                sportLeagueCompetitionSlotId: string;
                 /** @description The contest setup the offer starts as: Create contest's ?template=. */
                 template: {
                     /**
@@ -25409,22 +25397,22 @@ export interface components {
                     /** @description The page's web address, /play/<sportUrlSegment>/<urlSegment>, built by the API from the two stored segments. Link to it as given. */
                     path: string;
                 } | null;
+                /**
+                 * Format: uuid
+                 * @description The sport league whose slot the page shows (#2050).
+                 */
+                sportLeagueId: string;
+                /** @description The sport league as screens away from its sport's own pages name it, such as "NFL". */
+                sportLeagueName: string;
+                /**
+                 * Format: uuid
+                 * @description The slot definition the page shows (#2010, #2050), such as the NFL's conference championships: each Season has a slot of it, and every offer is shown with the next one not yet over.
+                 */
+                sportLeagueCompetitionSlotId: string;
                 /** @description The page's ways to play in order, each with its next slot. Offers with no slot left to take the contest are left out, so an active page can have none: it is between seasons. */
                 offers: {
                     /** Format: uuid */
                     id: string;
-                    /**
-                     * Format: uuid
-                     * @description The sport league whose slot the offer runs on.
-                     */
-                    sportLeagueId: string;
-                    /** @description The sport league as screens away from its sport's own pages name it, such as "NFL". */
-                    sportLeagueName: string;
-                    /**
-                     * Format: uuid
-                     * @description The slot definition the offer runs on (#2010), such as the NFL's conference championships: each Season has a slot of it.
-                     */
-                    sportLeagueCompetitionSlotId: string;
                     /** @description The contest setup the offer starts as: Create contest's ?template=. */
                     template: {
                         /**
@@ -25921,22 +25909,22 @@ export interface components {
                     /** @description The page's web address, /play/<sportUrlSegment>/<urlSegment>, built by the API from the two stored segments. Link to it as given. */
                     path: string;
                 } | null;
+                /**
+                 * Format: uuid
+                 * @description The sport league whose slot the page shows (#2050).
+                 */
+                sportLeagueId: string;
+                /** @description The sport league as screens away from its sport's own pages name it, such as "NFL". */
+                sportLeagueName: string;
+                /**
+                 * Format: uuid
+                 * @description The slot definition the page shows (#2010, #2050), such as the NFL's conference championships: each Season has a slot of it, and every offer is shown with the next one not yet over.
+                 */
+                sportLeagueCompetitionSlotId: string;
                 /** @description The page's ways to play in order, each with its next slot. Offers with no slot left to take the contest are left out, so an active page can have none: it is between seasons. */
                 offers: {
                     /** Format: uuid */
                     id: string;
-                    /**
-                     * Format: uuid
-                     * @description The sport league whose slot the offer runs on.
-                     */
-                    sportLeagueId: string;
-                    /** @description The sport league as screens away from its sport's own pages name it, such as "NFL". */
-                    sportLeagueName: string;
-                    /**
-                     * Format: uuid
-                     * @description The slot definition the offer runs on (#2010), such as the NFL's conference championships: each Season has a slot of it.
-                     */
-                    sportLeagueCompetitionSlotId: string;
                     /** @description The contest setup the offer starts as: Create contest's ?template=. */
                     template: {
                         /**

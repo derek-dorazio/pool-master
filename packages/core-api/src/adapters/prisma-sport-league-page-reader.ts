@@ -315,7 +315,7 @@ export class PrismaSportLeaguePageReader implements SportLeaguePageReader {
     });
     if (event === null) return null;
     const { sportLeagueId, ...eventRow } = event;
-    const [league, latestRunGroups, overdueCandidates, field, offer] = await Promise.all([
+    const [league, latestRunGroups, overdueCandidates, field, page] = await Promise.all([
       this.league(sportLeagueId),
       this.prisma.providerSyncRun.groupBy({ by: ['kind'], where: { sportEventId }, _max: { createdAt: true } }),
       readOverdueCandidates(this.prisma, now, undefined, [sportEventId]),
@@ -324,11 +324,11 @@ export class PrismaSportLeaguePageReader implements SportLeaguePageReader {
         select: { id: true, participantId: true, status: true, oddsToWin: true, seedNumber: true, ranking: true, participant: { select: { name: true } } },
         orderBy: { id: 'asc' },
       }),
-      // An offer names a slot definition (#2010): the event's page offers one of its slots.
-      this.prisma.eventPageOffer.findFirst({
-        where: { sportLeagueId, definition: { seasonSlots: { some: { eventSlot: { sportEventId } } } }, eventPage: { isActive: true } },
-        select: { eventPage: { select: { urlSegment: true, sportConfig: { select: { urlSegment: true } } } } },
-        orderBy: [{ eventPage: { displayOrder: 'asc' } }, { id: 'asc' }],
+      // A page names a slot definition (#2010, #2050): the event's page shows one of its slots.
+      this.prisma.eventPage.findFirst({
+        where: { sportLeagueId, definition: { seasonSlots: { some: { eventSlot: { sportEventId } } } }, isActive: true },
+        select: { urlSegment: true, sportConfig: { select: { urlSegment: true } } },
+        orderBy: [{ displayOrder: 'asc' }, { id: 'asc' }],
       }),
     ]);
     // Every event names a sport league (a foreign key), so it is there.
@@ -364,7 +364,7 @@ export class PrismaSportLeaguePageReader implements SportLeaguePageReader {
         name: row.participant.name,
         mapping: mappingByParticipant.get(row.participantId) ?? null,
       })),
-      eventPagePath: offer ? buildEventPagePath({ sportUrlSegment: offer.eventPage.sportConfig.urlSegment, urlSegment: offer.eventPage.urlSegment }) : null,
+      eventPagePath: page ? buildEventPagePath({ sportUrlSegment: page.sportConfig.urlSegment, urlSegment: page.urlSegment }) : null,
     };
   }
 

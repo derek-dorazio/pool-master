@@ -42,17 +42,18 @@ export interface EventPage extends EventPageAddress {
   isActive: boolean;
   /** Where a retired page's URL goes now; null without a successor. */
   redirectTo: EventPageAddress | null;
-}
-
-/** One offer of an event page, with the setup it starts as and its sport league's name. */
-export interface EventPageOffer {
-  id: string;
-  eventPageId: string;
+  /** The sport league whose slot the page shows (#2050). */
   sportLeagueId: string;
   /** The sport league as screens away from its sport's own pages name it. */
   sportLeagueName: string;
-  /** The slot definition it runs on (#2010): shown with the next Season slot of it not yet over. */
+  /** The slot definition it shows (#2010, #2050): each offer with the next Season slot of it not yet over. */
   sportLeagueCompetitionSlotId: string;
+}
+
+/** One offer of an event page: its page and the setup it starts as, nothing more (#2050). */
+export interface EventPageOffer {
+  id: string;
+  eventPageId: string;
   template: ContestConfigTemplate;
   sortOrder: number;
   isPrimary: boolean;

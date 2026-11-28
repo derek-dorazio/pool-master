@@ -107,7 +107,7 @@ describe('GET /api/v1/events/{eventId}/overview', () => {
     expect(overview.fieldFeed.map((row) => [row.feedId, row.lastInFeedAt])).toEqual([[null, null], [null, null]]);
   });
 
-  it('names the active event page offering the event\'s slot definition, and none once that page is retired', async () => {
+  it('names the active event page showing the event\'s slot definition, and none once that page is retired', async () => {
     const prisma = getPrisma();
     const { event } = await seedEventWithField(1, { status: SportEventStatus.DRAFT });
     const urlSegment = `event-overview-${randomUUID().slice(0, 8)}`;
@@ -115,10 +115,8 @@ describe('GET /api/v1/events/{eventId}/overview', () => {
     const definitionId = await keyedSlotDefinitionId(prisma, event.sportLeagueId, urlSegment.toUpperCase().replace(/-/g, '_'));
     await putEventInSlot(prisma, event.id, definitionId);
     const template = await prisma.contestConfigTemplate.findFirstOrThrow({ select: { id: true } });
-    const page = await prisma.eventPage.create({ data: { sport: Sport.GOLF, urlSegment, displayOrder: 9000 } });
-    await prisma.eventPageOffer.create({
-      data: { eventPageId: page.id, sportLeagueId: event.sportLeagueId, sportLeagueCompetitionSlotId: definitionId, templateId: template.id, sortOrder: 1, isPrimary: true },
-    });
+    const page = await prisma.eventPage.create({ data: { sport: Sport.GOLF, urlSegment, displayOrder: 9000, sportLeagueId: event.sportLeagueId, sportLeagueCompetitionSlotId: definitionId } });
+    await prisma.eventPageOffer.create({ data: { eventPageId: page.id, templateId: template.id, sortOrder: 1, isPrimary: true } });
     const rootAdmin = await createTestUser({ isRootAdmin: true });
 
     try {
