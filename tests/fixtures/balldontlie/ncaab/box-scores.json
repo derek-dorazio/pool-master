@@ -1,0 +1,24 @@
+{
+  "data": [
+    {
+      "player": {
+        "id": 4001,
+        "first_name": "Cooper",
+        "last_name": "Flagg"
+      },
+      "team": {
+        "id": 150
+      },
+      "game": {
+        "id": 3301,
+        "status_state": "final"
+      },
+      "pts": 22,
+      "reb": 9,
+      "ast": 4
+    }
+  ],
+  "meta": {
+    "per_page": 100
+  }
+}

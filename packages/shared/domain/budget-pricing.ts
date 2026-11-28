@@ -20,7 +20,7 @@ import type { FieldOrderBasis } from './enums';
  * contest's salary cap is that of the slot its picks are valued in.
  */
 
-export const BUDGET_SALARY_CAP_MAX = 10_000_000;
+const BUDGET_SALARY_CAP_MAX = 10_000_000;
 export const BUDGET_STEEPNESS_MAX = 10;
 
 /** The five values a field is priced with. */

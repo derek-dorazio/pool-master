@@ -441,6 +441,41 @@ for those leagues. It reads the provider's roster for the current Season's provi
 Mapping lookups by feed id filter to the league's own participant type, so a player mapped in a
 team league never answers for a team the provider numbers the same.
 
+### Box scores
+
+A Game's box score (#2026, plan §5) is its player stat rows
+(`SportEventRoundMatchGamePlayerStat`): one per Game, player and `SportStat` code, with the side
+the player played. `GameBoxScoreSync` (`modules/ingestion/stats/game-box-score-sync.ts`) reads a
+league's box scores for the Games it is given, by each Game's provider id, and the one writer
+(`game-player-stat-writer.ts`) keeps each Game's rows to what the feed last sent:
+
+- **Plan with stats.** A league's box scores are read only from a Provider whose row says its plan
+  has player stats (`hasPlayerStats`, on the Providers page). Off, nothing is read; and a provider
+  that refuses the league's stats reads anyway (BALLDONTLIE's free key answers 401 on every stats
+  endpoint) writes nothing. Either raises one `PROVIDER_PLAN_HAS_NO_STATS` ERROR for the league,
+  which the next read that succeeds resolves.
+- **Placing a stat.** A line goes on the player's own side of the Game's Match where the player is
+  a side (a golfer, a driver), otherwise on the side of their team, the team of their roster row in
+  the Game's Season. The database keeps the side one of the Game's own Match's. A player who plays
+  neither, or has no roster row in the Season, is refused with one `BOX_SCORE_PLAYER_NOT_IN_GAME`
+  WARNING per event and player; a feed id no player is mapped from raises `UNMAPPED_PARTICIPANT`.
+  Since a roster row keeps no trade history, a correction to a Game played before a trade is
+  refused the same way.
+- **Corrections.** A Game whose rows differ from what the feed sends now is rewritten in one
+  transaction; a stat the feed stops sending is dropped. A Game the feed sends no line for keeps
+  its rows. The reads are a fixed few statements however many Games and players.
+- **Per league (BALLDONTLIE, paid plans).** Each league's per-game player stats endpoint, and the
+  columns each code is read from, are the adapter's contract (`box-score-contract.ts`): NFL and
+  college football's passing, rushing and receiving touchdowns and yards and receptions; the NBA's,
+  WNBA's and NCAA basketball's points, rebounds and assists; the NHL's goals, assists and shots on
+  goal; MLB's total bases, runs, RBI, walks and stolen bases; the Premier League's and the World
+  Cup's goals, assists and shots on target. A stat sent as null has no row. PGA TOUR and Formula 1
+  have none.
+
+Which Games are read, and when, arrives with the Clutch Card (#2026 part B): a `ProviderSyncKind`
+on the sync tick that reads only the slots a Clutch Card covers or a rating window needs, in
+leagues whose templates include one. Until then nothing calls the read.
+
 Every sync writes a `provider_sync_runs` row with its **kind** (`EVENTS`, `FIELD`, `SCORES`, `ROSTER`),
 its **trigger** (`SCHEDULE`, `WEBHOOK`, `ADMIN`, `COMMISSIONER`, `SYSTEM`; a job's own when a job
 ran it), its sport league and event (every event sync job names its event by our own id), and the
@@ -576,7 +611,7 @@ sequenceDiagram
   A->>A: route by scope id to the league reader
   A-->>S: LiveScoreResult {GOLF | GAME | RACE}
   S->>P: onLiveScores(result, providerId)
-  P->>P: Zod-validate; find event by the provider's id for it (its mapping); skip unless IN_PROGRESS
+  P->>P: Zod-validate; find event by the provider's id for it (its mapping); skip unless SCHEDULED or IN_PROGRESS
   P->>F: the event's scoring family's writer, if it accepts the category
   F-->>P: rows + REBUILD_LEADERBOARDS job, one transaction
 ```
@@ -617,10 +652,13 @@ provider final overwrites whatever the match holds, a result written by hand bef
 and so the API carries no result source on a match (#2184); nothing stores one. A level knockout game takes its winner from the shoot-out wherever its slot's games
 cannot end level.
 
-**Status** is never set by a sync. `EventLifecycleScheduler` (every 5 minutes) moves
-`SCHEDULED → IN_PROGRESS → COMPLETED` from the round schedule; settlement and emails follow as
-jobs. Scores for an event not yet `IN_PROGRESS` are skipped
-(`liveScore.publish.eventNotInProgress`).
+**Status** is never set by a sync. It bubbles up from the feed's scores (#2013): a Match's
+status moves its Season slot, and the slots move the event, `SCHEDULED → IN_PROGRESS →
+COMPLETED`; settlement and emails follow as jobs. So a score is accepted for an event still
+`SCHEDULED` as well as one `IN_PROGRESS`: the feed's first score is what starts it. Scores for a
+draft, postponed or finished event are skipped (`liveScore.publish.eventNotInProgress`).
+`EventLifecycleScheduler` (every 5 minutes) only takes contests live at their cutoffs on the
+clock, and moves an event covering no slot on its start and end dates.
 
 ## 6. Per league
 

@@ -38,6 +38,8 @@ describe('ContestNotices', () => {
   let outbox: InMemoryEmailMessages;
   let matches: SportEventRoundMatch[];
   let tierCount: number;
+  /** The cap of every event's covered slot, as the tier service reads it from the slot's pricing. */
+  let salaryCap: number | null;
   let final: ContestFinalStandings;
   let logger: ReturnType<typeof fakeLogger>;
   let optOuts: ReturnType<typeof inMemoryEmailOptOuts>;
@@ -51,6 +53,7 @@ describe('ContestNotices', () => {
     optOuts = inMemoryEmailOptOuts();
     matches = [];
     tierCount = 6;
+    salaryCap = null;
     final = { scoringDefinitionId: null, entries: [] };
     logger = fakeLogger();
     eventReads = [];
@@ -100,6 +103,11 @@ describe('ContestNotices', () => {
         getEffectiveTiersForSportEvent: async (sportEventId) => {
           eventReads.push(`tiers:${sportEventId}`);
           return world.addEventTiers(sportEventId, tierCount).map((tier) => ({ ...tier, participants: [] }));
+        },
+        salaryCaps: async (sportEventIds) => {
+          eventReads.push(...sportEventIds.map((sportEventId) => `salaryCap:${sportEventId}`));
+          const cap = salaryCap;
+          return new Map(cap === null ? [] : sportEventIds.map((sportEventId): [string, number] => [sportEventId, cap]));
         },
       },
       entries: world.entryRepo(),
@@ -184,6 +192,26 @@ describe('ContestNotices', () => {
       expect(text).toContain('Picks close: Apr 9, 2026, 7:40 AM EDT');
       expect(outbox.rows[0]?.htmlBody).toContain('src="https://app.example.test/email/formats/tiered.png"');
       expect(text).toContain(`Enter contest: https://app.example.test/league/OFFICE24/contests/${contest.id}`);
+    });
+
+    it.each([
+      ['its covered slot\'s salary cap, read from the slot\'s pricing', 50_000, 'Pick 6 golfers whose prices fit under the $50,000 salary cap.'],
+      ['no amount while its slot is not priced', null, 'Pick 6 golfers whose prices fit under the salary cap.'],
+    ])('states a budget contest\'s rules with %s, never a cap on its rules', async (_case, cap, rules) => {
+      salaryCap = cap;
+      const league = world.addLeague({ name: 'Office League', leagueCode: 'OFFICE24' });
+      const masters = world.addSportEvent({ name: 'The Masters', startDate: STARTS_AT });
+      const contest = world.addContest(league.id, { name: 'Masters Budget', sportEventIds: [masters.id], selectionType: SelectionType.BUDGET_PICK });
+      world.addConfiguration(contest.id, {
+        selectionType: SelectionType.BUDGET_PICK,
+        configJson: { selectionType: SelectionType.BUDGET_PICK, rosterSize: 6, countedScores: 4 },
+      });
+      const nora = member(league.id, 'Nora');
+
+      await notices().contestOpened(contest.id);
+
+      expect(textTo(nora.user.id)).toContain(rules);
+      expect(eventReads).toContain(`salaryCap:${masters.id}`);
     });
 
     it('sends nothing, and says why, for a contest whose rules are gone', async () => {

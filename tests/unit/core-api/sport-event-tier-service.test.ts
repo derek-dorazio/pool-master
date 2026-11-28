@@ -534,6 +534,17 @@ describe('SportEventTierService — prices and the contest-side read', () => {
     expect(store.valuationRows.map((row) => row.price)).toEqual([1200]);
   });
 
+  it('answers each priced event\'s salary cap from its slot\'s pricing and leaves out an event whose slot is not priced', async () => {
+    const { store, event, service } = setup();
+    const unpriced = store.addSlottedEvent({ status: SportEventStatus.DRAFT });
+    store.addToField(event.id, 'p-1', { seedNumber: 1 });
+    await service.autoAssignPrices({ sportEventId: event.id, pricing: { ...inMemoryStandardPricing(), salaryCap: 5000 } });
+
+    const caps = await service.salaryCaps([event.id, unpriced.id]);
+
+    expect(Object.fromEntries(caps)).toEqual({ [event.id]: 5000 });
+  });
+
   it('refuses to price with a pricing profile id there is no profile for with 404 PLATFORM_PRICING_PROFILE_NOT_FOUND, pricing no one and recording nothing', async () => {
     const { store, event, service } = setup();
     store.addToField(event.id, 'p-1', { seedNumber: 1 });

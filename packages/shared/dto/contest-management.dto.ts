@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { registerSchema } from './schema-registry';
 import {
   BracketContestRulesSchema,
-  BudgetContestConfigSchema,
+  BudgetContestRulesSchema,
   ContestRulesWithEntryLimitSchema,
   ContestStatus,
   ContestFormat,
@@ -225,7 +225,7 @@ const persistedConfigurationFields = {
 
 export const ContestConfigurationDtoSchema = z.discriminatedUnion('selectionType', [
   extendRules(TieredContestRulesSchema, persistedConfigurationFields),
-  extendRules(BudgetContestConfigSchema, persistedConfigurationFields),
+  extendRules(BudgetContestRulesSchema, persistedConfigurationFields),
   extendRules(RandomDrawContestRulesSchema, persistedConfigurationFields),
   extendRules(PickEmContestRulesSchema, persistedConfigurationFields),
   extendRules(SquaresContestRulesSchema, persistedConfigurationFields),
@@ -352,6 +352,7 @@ export const ContestManagementDetailDtoSchema = z.object({
     ContestStatus.COMPLETED,
   ]),
   configuration: ContestConfigurationDtoSchema.describe('Current commissioner-managed contest configuration.'),
+  salaryCap: z.number().int().nullable().describe("A budget contest's salary cap in whole dollars: the pricing of the first slot it covers holding a set (#2050), read there and never copied into the rules. Null for any other contest type, and for a budget contest whose slot is not priced yet."),
   cupWeight: z.enum(CupWeight).describe('How much the contest counts toward its cup and the league championship (#841): NORMAL x1, BONUS x1.5, DOUBLE x2, NOT_COUNTED not at all. Fixed once the contest is COMPLETED.'),
   createdAt: z.iso.datetime().describe('When the contest was created.'),
   updatedAt: z.iso.datetime().describe('When the contest was last updated.'),

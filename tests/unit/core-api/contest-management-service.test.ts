@@ -296,6 +296,8 @@ function createParticipantScoringRuleRepo(): ParticipantContestScoringRuleReposi
 function createSportEventTierServiceStub(
   tierCount = 0,
   withParticipants = false,
+  /** Each event's salary cap, its covered slot's pricing (#2050); unpriced unless named. */
+  salaryCaps: Readonly<Record<string, number | null>> = {},
 ): SportEventTierService {
   const tiers = Array.from({ length: tierCount }, (_, index) => ({
     id: `tier-${index + 1}`,
@@ -317,6 +319,10 @@ function createSportEventTierServiceStub(
       tiers.map(({ participants: _participants, ...tier }) => ({ ...tier, sportEventId })))),
     getEffectiveTiersForSportEvents: jest.fn(async (sportEventIds: readonly string[]) =>
       new Map(sportEventIds.map((sportEventId) => [sportEventId, tiers]))),
+    salaryCaps: jest.fn(async (sportEventIds: readonly string[]) => new Map(sportEventIds.flatMap((sportEventId) => {
+      const cap = salaryCaps[sportEventId] ?? null;
+      return cap === null ? [] : [[sportEventId, cap] as const];
+    }))),
   } as unknown as SportEventTierService;
 }
 
@@ -333,7 +339,6 @@ function createSportEventReader(overrides?: Partial<{
   playsMatches: boolean;
   participantCount: number;
   rounds: number | null;
-  salaryCap: number | null;
   activeFieldPrices: number[];
   gameCount: number;
   undecidedGameCount: number;
@@ -385,7 +390,6 @@ function createSportEventReader(overrides?: Partial<{
       rounds: overrides?.rounds === undefined ? 4 : overrides.rounds,
       slotDefinitionIds: overrides?.slotDefinitionIds ?? [],
       playsOnlyKnockoutRounds: overrides?.playsOnlyKnockoutRounds ?? true,
-      salaryCap: overrides?.salaryCap ?? null,
       ...(overrides?.participantType !== undefined && { participantType: overrides.participantType }),
       ...(overrides?.scoringFamily !== undefined && { scoringFamily: overrides.scoringFamily }),
     }),
@@ -1652,7 +1656,11 @@ describe('ContestManagementService budget rules (#93)', () => {
     configuration: { selectionType: SelectionType.BUDGET_PICK, maxEntriesPerSquad: 1, ...configuration },
   });
 
-  function budgetService(reader: ReturnType<typeof createSportEventReader>) {
+  /** The event `createSportEventReader` answers. */
+  const BUDGET_EVENT_ID = '11111111-1111-1111-1111-111111111111';
+
+  /** The service over `reader`'s event, whose covered slot is priced against `salaryCap` (#2050). */
+  function budgetService(reader: ReturnType<typeof createSportEventReader>, salaryCap: number | null) {
     const contestCoreRepo = createContestRepo();
     const contestConfigurationRepo = createContestConfigurationRepo();
     const service = new ContestManagementService({
@@ -1661,7 +1669,7 @@ describe('ContestManagementService budget rules (#93)', () => {
       configTemplates: createContestConfigTemplateRepo(),
       configurations: contestConfigurationRepo,
       scoringRules: createParticipantScoringRuleRepo(),
-      tiers: createSportEventTierServiceStub(),
+      tiers: createSportEventTierServiceStub(0, false, { [BUDGET_EVENT_ID]: salaryCap }),
       seasons: coverableSeasons(),
       sportEventReader: reader,
       cups: createCupKeeper(),
@@ -1670,24 +1678,60 @@ describe('ContestManagementService budget rules (#93)', () => {
     return { contestCoreRepo, contestConfigurationRepo, service };
   }
 
-  it('creates a budget contest with the event\'s salary cap stored beside the commissioner\'s rules', async () => {
+  it('creates a budget contest under its event\'s salary cap, storing only the commissioner\'s rules, never the cap (#2050)', async () => {
     const { contestConfigurationRepo, service } = budgetService(createSportEventReader({
-      salaryCap: 50_000,
       activeFieldPrices: [12_000, 9_400, 7_700, 6_400, 6_000, 6_000, 6_000],
-    }));
+    }), 50_000);
 
     await service.createContest({ leagueId: 'league-1' }, budgetRequest({ rosterSize: 6, countedScores: 4 }));
 
     expect(contestConfigurationRepo.create).toHaveBeenCalledWith(expect.objectContaining({
       selectionType: SelectionType.BUDGET_PICK,
       templateId: templateIdFor(SelectionType.BUDGET_PICK),
-      configJson: { selectionType: SelectionType.BUDGET_PICK, rosterSize: 6, salaryCap: 50_000, countedScores: 4 },
+      configJson: { selectionType: SelectionType.BUDGET_PICK, rosterSize: 6, countedScores: 4 },
       maxEntriesPerSquad: 1,
     }));
   });
 
+  it.each([
+    ['a budget contest', SelectionType.BUDGET_PICK, 50_000],
+    ['a tiered contest', SelectionType.TIERED, null],
+  ])('answers %s\'s salary cap from its first covered slot\'s pricing, which its rules never carry', async (_case, selectionType, expected) => {
+    const { contestCoreRepo, contestConfigurationRepo, service } = budgetService(createSportEventReader(), 50_000);
+    (contestCoreRepo.findById as jest.Mock).mockResolvedValue({
+      id: 'contest-1',
+      leagueId: 'league-1',
+      sportEventIds: [BUDGET_EVENT_ID],
+      name: 'Masters Budget',
+      status: ContestStatus.DRAFT,
+      contestFormat: ContestFormat.ROSTER,
+      selectionType,
+      coveredSeasonSlotIds: ['season-slot-1'],
+      coveredSlotDefinitionIds: [EVENT_SLOT_DEFINITION_ID],
+      cupWeight: CupWeight.NORMAL,
+      createdAt: new Date('2026-04-07T12:00:00.000Z'),
+      updatedAt: new Date('2026-04-07T12:00:00.000Z'),
+    });
+    (contestConfigurationRepo.findByContest as jest.Mock).mockResolvedValue({
+      id: 'config-1',
+      contestId: 'contest-1',
+      selectionType,
+      configJson: selectionType === SelectionType.BUDGET_PICK
+        ? { selectionType, rosterSize: 2, countedScores: 2 }
+        : { selectionType, picksPerTier: 1, countedScores: 2 },
+      maxEntriesPerSquad: 1,
+      createdAt: new Date('2026-04-07T12:00:01.000Z'),
+      updatedAt: new Date('2026-04-07T12:00:01.000Z'),
+    });
+
+    const detail = await service.getContest('contest-1');
+
+    expect(detail.salaryCap).toBe(expected);
+    expect(detail.configuration).not.toHaveProperty('salaryCap');
+  });
+
   it('refuses budget rules on an event whose field was never priced with 409 CONTEST_EVENT_NOT_PRICED, writing nothing', async () => {
-    const { contestCoreRepo, service } = budgetService(createSportEventReader({ salaryCap: null }));
+    const { contestCoreRepo, service } = budgetService(createSportEventReader(), null);
 
     await expect(service.createContest({ leagueId: 'league-1' }, budgetRequest({ rosterSize: 6, countedScores: 6 })))
       .rejects.toMatchObject({ code: CONTEST_EVENT_NOT_PRICED, statusCode: 409 });
@@ -1698,7 +1742,7 @@ describe('ContestManagementService budget rules (#93)', () => {
     ['the cheapest roster costs more than the cap', [40, 40, 30, 20], 3],
     ['the field has fewer priced golfers than the roster holds', [10, 10], 3],
   ])('refuses a budget roster nobody could afford when %s, with 409 CONTEST_BUDGET_UNFILLABLE', async (_case, prices, rosterSize) => {
-    const { contestCoreRepo, service } = budgetService(createSportEventReader({ salaryCap: 80, activeFieldPrices: prices }));
+    const { contestCoreRepo, service } = budgetService(createSportEventReader({ activeFieldPrices: prices }), 80);
 
     await expect(service.createContest({ leagueId: 'league-1' }, budgetRequest({ rosterSize, countedScores: 1 })))
       .rejects.toMatchObject({ code: CONTEST_BUDGET_UNFILLABLE, statusCode: 409 });
@@ -1707,9 +1751,8 @@ describe('ContestManagementService budget rules (#93)', () => {
 
   it('accepts a roster whose cheapest golfers fit the cap to the cent', async () => {
     const { contestConfigurationRepo, service } = budgetService(createSportEventReader({
-      salaryCap: 100,
       activeFieldPrices: [33.34, 33.33, 33.33],
-    }));
+    }), 100);
 
     await service.createContest({ leagueId: 'league-1' }, budgetRequest({ rosterSize: 3, countedScores: 3 }));
 
@@ -1717,7 +1760,7 @@ describe('ContestManagementService budget rules (#93)', () => {
   });
 
   it('refuses more counted scores than the roster holds with 422 CONTEST_BUDGET_FIELD_OUT_OF_RANGE', async () => {
-    const { contestCoreRepo, service } = budgetService(createSportEventReader({ salaryCap: 50_000, activeFieldPrices: [1, 1, 1, 1, 1, 1] }));
+    const { contestCoreRepo, service } = budgetService(createSportEventReader({ activeFieldPrices: [1, 1, 1, 1, 1, 1] }), 50_000);
 
     await expect(service.createContest({ leagueId: 'league-1' }, budgetRequest({ rosterSize: 4, countedScores: 5 })))
       .rejects.toMatchObject({ code: CONTEST_BUDGET_FIELD_OUT_OF_RANGE, statusCode: 422 });
@@ -1726,9 +1769,8 @@ describe('ContestManagementService budget rules (#93)', () => {
 
   it('refuses rules of another selection type than the contest\'s, on create and on update', async () => {
     const { contestCoreRepo, contestConfigurationRepo, service } = budgetService(createSportEventReader({
-      salaryCap: 50_000,
       activeFieldPrices: [1, 1, 1, 1, 1, 1],
-    }));
+    }), 50_000);
 
     await expect(service.createContest({ leagueId: 'league-1' }, { ...budgetRequest({ rosterSize: 6, countedScores: 6 }), selectionType: SelectionType.TIERED, templateId: templateIdFor(SelectionType.TIERED) }))
       .rejects.toMatchObject({ code: CONTEST_RULES_SELECTION_TYPE_MISMATCH, statusCode: 422 });
@@ -1743,9 +1785,8 @@ describe('ContestManagementService budget rules (#93)', () => {
   });
   it('refuses to open a budget draft whose event field, after withdrawals, can no longer fill the roster under the cap, saving nothing', async () => {
     const { contestCoreRepo, contestConfigurationRepo, service } = budgetService(createSportEventReader({
-      salaryCap: 100,
       activeFieldPrices: [60, 50],
-    }));
+    }), 100);
     (contestCoreRepo.findById as jest.Mock).mockResolvedValue({
       id: 'contest-1',
       leagueId: 'league-1',
@@ -1761,7 +1802,7 @@ describe('ContestManagementService budget rules (#93)', () => {
       id: 'config-1',
       contestId: 'contest-1',
       selectionType: SelectionType.BUDGET_PICK,
-      configJson: { selectionType: SelectionType.BUDGET_PICK, rosterSize: 2, countedScores: 2, salaryCap: 100 },
+      configJson: { selectionType: SelectionType.BUDGET_PICK, rosterSize: 2, countedScores: 2 },
       maxEntriesPerSquad: 1,
       createdAt: new Date('2026-04-07T12:00:01.000Z'),
       updatedAt: new Date('2026-04-07T12:00:01.000Z'),
@@ -1803,7 +1844,7 @@ describe('ContestManagementService random-draw rules (#601)', () => {
       scoringRules: createParticipantScoringRuleRepo(),
       tiers: createSportEventTierServiceStub(),
       seasons: coverableSeasons(),
-      sportEventReader: createSportEventReader({ salaryCap: null }),
+      sportEventReader: createSportEventReader(),
       cups: createCupKeeper(),
       planEntitlements: platinumEntitlements(),
     });
@@ -2192,7 +2233,6 @@ describe('ContestManagementService — a contest of several events', () => {
   interface ReaderEvent {
     status: SportEventStatus;
     sportLeagueId: string;
-    salaryCap: number | null;
     championshipYear: number;
   }
 
@@ -2205,7 +2245,6 @@ describe('ContestManagementService — a contest of several events', () => {
       playsMatches: false,
       participantCount: 72,
       rounds: 4,
-      salaryCap: null,
       championshipYear: 2026,
       ...event,
       sportLeagueSeasonId: `season-${String(event.championshipYear ?? 2026)}`,
@@ -2258,7 +2297,9 @@ describe('ContestManagementService — a contest of several events', () => {
     reader?: ReturnType<typeof multiEventReader>;
     contest?: Record<string, unknown>;
     planEntitlements?: ContestManagementServiceDeps['planEntitlements'];
-    storedConfigJson?: { selectionType: typeof SelectionType.BUDGET_PICK; rosterSize: number; salaryCap: number; countedScores: number };
+    storedConfigJson?: { selectionType: typeof SelectionType.BUDGET_PICK; rosterSize: number; countedScores: number };
+    /** Each event's salary cap, its covered slot's pricing (#2050). */
+    salaryCaps?: Readonly<Record<string, number | null>>;
     configTemplates?: ContestManagementServiceDeps['configTemplates'];
     seasons?: Pick<SportLeagueSeasonRepository, 'findCoverableSlots'>;
   } = {}) {
@@ -2307,7 +2348,7 @@ describe('ContestManagementService — a contest of several events', () => {
       configTemplates: options.configTemplates ?? allListedTemplates(),
       configurations: configurationRepo,
       scoringRules: createParticipantScoringRuleRepo(),
-      tiers: createSportEventTierServiceStub(),
+      tiers: createSportEventTierServiceStub(0, false, options.salaryCaps),
       seasons: options.seasons ?? eachEventsSlot(),
       sportEventReader: options.reader ?? multiEventReader(READER_EVENTS),
       now: () => CONTEST_MANAGEMENT_TEST_NOW,
@@ -2388,9 +2429,10 @@ describe('ContestManagementService — a contest of several events', () => {
   it('refuses a budget contest whose events were priced against different salary caps with 409 CONTEST_BUDGET_SALARY_CAP_MISMATCH', async () => {
     const { service, contestRepo } = build({
       reader: multiEventReader([
-        { id: MASTERS, startDate: '2026-05-01T12:00:00.000Z', salaryCap: 100 },
-        { id: PGA, startDate: '2026-05-14T12:00:00.000Z', salaryCap: 200 },
+        { id: MASTERS, startDate: '2026-05-01T12:00:00.000Z' },
+        { id: PGA, startDate: '2026-05-14T12:00:00.000Z' },
       ]),
+      salaryCaps: { [MASTERS]: 100, [PGA]: 200 },
     });
 
     await expect(service.createContest({ leagueId: 'league-1' }, {
@@ -2436,11 +2478,12 @@ describe('ContestManagementService — a contest of several events', () => {
     it('refuses a contest that opened after it was read with 409 CONTEST_EVENTS_LOCKED, its rules unchanged, since the write checks Set up again under the contest row lock', async () => {
       const { service, contestRepo, configurationRepo } = build({
         reader: multiEventReader([
-          { id: MASTERS, startDate: '2026-05-01T12:00:00.000Z', salaryCap: 100 },
-          { id: PGA, startDate: '2026-05-14T12:00:00.000Z', salaryCap: 200 },
+          { id: MASTERS, startDate: '2026-05-01T12:00:00.000Z' },
+          { id: PGA, startDate: '2026-05-14T12:00:00.000Z' },
         ]),
+        salaryCaps: { [MASTERS]: 100, [PGA]: 200 },
         contest: { status: ContestStatus.DRAFT, selectionType: SelectionType.BUDGET_PICK },
-        storedConfigJson: { selectionType: SelectionType.BUDGET_PICK, rosterSize: 2, salaryCap: 100, countedScores: 2 },
+        storedConfigJson: { selectionType: SelectionType.BUDGET_PICK, rosterSize: 2, countedScores: 2 },
       });
       jest.mocked(contestRepo.replaceCoveredSlots).mockResolvedValue(false);
 
@@ -2496,20 +2539,37 @@ describe('ContestManagementService — a contest of several events', () => {
       expect(contestRepo.replaceCoveredSlots).not.toHaveBeenCalled();
     });
 
-    it('stores the new event\'s salary cap on a budget draft, so its entries are built under it', async () => {
+    it('moves a budget draft to another event once its roster fits under that event\'s cap, leaving its rules as they were, since the cap is read from the slot (#2050)', async () => {
       const { service, contestRepo, configurationRepo } = build({
         reader: multiEventReader([
-          { id: MASTERS, startDate: '2026-05-01T12:00:00.000Z', salaryCap: 100 },
-          { id: PGA, startDate: '2026-05-14T12:00:00.000Z', salaryCap: 200 },
+          { id: MASTERS, startDate: '2026-05-01T12:00:00.000Z' },
+          { id: PGA, startDate: '2026-05-14T12:00:00.000Z' },
         ]),
+        salaryCaps: { [MASTERS]: 100, [PGA]: 200 },
         contest: { status: ContestStatus.DRAFT, selectionType: SelectionType.BUDGET_PICK },
-        storedConfigJson: { selectionType: SelectionType.BUDGET_PICK, rosterSize: 2, salaryCap: 100, countedScores: 2 },
+        storedConfigJson: { selectionType: SelectionType.BUDGET_PICK, rosterSize: 2, countedScores: 2 },
       });
 
       await service.setContestCoverage('league-1', 'contest-1', { sportEventIds: [PGA] });
 
-      expect(configurationRepo.update).toHaveBeenCalledWith('config-1', { configJson: expect.objectContaining({ salaryCap: 200 }) });
+      expect(configurationRepo.update).not.toHaveBeenCalled();
       expect(contestRepo.replaceCoveredSlots).toHaveBeenCalledWith('contest-1', [PGA].map(slotOf), [ContestStatus.DRAFT]);
+    });
+
+    it('refuses moving a budget draft to an event whose slot is not priced with 409 CONTEST_EVENT_NOT_PRICED, changing nothing', async () => {
+      const { service, contestRepo } = build({
+        reader: multiEventReader([
+          { id: MASTERS, startDate: '2026-05-01T12:00:00.000Z' },
+          { id: PGA, startDate: '2026-05-14T12:00:00.000Z' },
+        ]),
+        salaryCaps: { [MASTERS]: 100, [PGA]: null },
+        contest: { status: ContestStatus.DRAFT, selectionType: SelectionType.BUDGET_PICK },
+        storedConfigJson: { selectionType: SelectionType.BUDGET_PICK, rosterSize: 2, countedScores: 2 },
+      });
+
+      await expect(service.setContestCoverage('league-1', 'contest-1', { sportEventIds: [PGA] }))
+        .rejects.toMatchObject({ code: CONTEST_EVENT_NOT_PRICED, statusCode: 409 });
+      expect(contestRepo.replaceCoveredSlots).not.toHaveBeenCalled();
     });
 
     it('answers 404 CONTEST_NOT_FOUND for another league\'s contest, changing nothing', async () => {

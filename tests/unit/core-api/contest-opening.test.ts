@@ -33,7 +33,6 @@ function event(overrides: Partial<ContestCreateSportEventState> = {}): ContestCr
     rounds: 4,
     slotDefinitionIds: [],
     playsOnlyKnockoutRounds: true,
-    salaryCap: null,
     ...sportPlay(overrides.sport ?? Sport.FOOTBALL),
     ...overrides,
   };

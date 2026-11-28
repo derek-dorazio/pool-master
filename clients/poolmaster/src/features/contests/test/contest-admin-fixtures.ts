@@ -209,6 +209,7 @@ export function buildManagedContest(
       picksPerTier: 1,
       countedScores: 4,
     },
+    salaryCap: null,
     ...overrides,
   };
 }

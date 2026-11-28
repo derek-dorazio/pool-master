@@ -280,8 +280,23 @@ describe('Golf live-score persistence', () => {
     ]));
   });
 
-  it.each(['SCHEDULED', 'COMPLETED', 'CANCELLED'] as const)(
-    'writes no round or standing to a %s event, since live scores are accepted only while an event is in progress',
+  it('writes the feed\'s first round score to an event still scheduled, with the job that starts its slot, since that score is what starts the event (#2013)', async () => {
+    const { event, sepByKey } = await createLiveField('first-score', ['rory']);
+    await getPrisma().sportEvent.update({ where: { id: event.id }, data: { status: 'SCHEDULED' } });
+
+    const persisted = await publishLiveScoreUpdate({
+      category: 'GOLF',
+      externalEventId: event.externalId,
+      rounds: [{ participantExternalId: 'first-score-rory', round: 1, strokes: 70, scoreToPar: -2, status: 'FINISHED' }],
+    }, { contestActivation: NO_CONTEST_ACTIVATION, prisma: getAppPrisma(), providerId: PROVIDER, domainEvents: testDomainEvents(), scoringFamilyForEvent, findings: integrationSyncFindings() });
+
+    expect(persisted).toMatchObject({ updatesReturned: 1, updatesPersisted: 1, updatesSkipped: 0 });
+    expect(await standingOf(expectDefined(sepByKey.get('rory')))).not.toBeNull();
+    expect(await getPrisma().backgroundJob.count({ where: { type: 'REFRESH_SLOT_STATUS', dedupeKey: { contains: event.id } } })).toBe(1);
+  });
+
+  it.each(['DRAFT', 'POSTPONED', 'COMPLETED', 'CANCELLED'] as const)(
+    'writes no round or standing to a %s event, since live scores are accepted only while an event is scheduled or in progress',
     async (status) => {
       const { event, sepByKey } = await createLiveField(`closed-${status.toLowerCase()}`, ['rory']);
       await getPrisma().sportEvent.update({ where: { id: event.id }, data: { status } });

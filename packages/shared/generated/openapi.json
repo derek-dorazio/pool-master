@@ -11249,12 +11249,6 @@
                     "maximum": 9007199254740991,
                     "description": "How many golfer scores count toward the entry total, best first. At most the roster size."
                   },
-                  "salaryCap": {
-                    "type": "integer",
-                    "minimum": 1,
-                    "maximum": 10000000,
-                    "description": "Whole dollars. The event's salary cap when the rules were saved; an entry's picks must cost no more."
-                  },
                   "id": {
                     "type": "string",
                     "description": "Contest-configuration identifier."
@@ -11277,7 +11271,6 @@
                   "selectionType",
                   "rosterSize",
                   "countedScores",
-                  "salaryCap",
                   "id",
                   "contestId"
                 ],
@@ -11506,6 +11499,15 @@
               }
             ]
           },
+          "salaryCap": {
+            "description": "A budget contest's salary cap in whole dollars: the pricing of the first slot it covers holding a set (#2050), read there and never copied into the rules. Null for any other contest type, and for a budget contest whose slot is not priced yet.",
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+          },
           "cupWeight": {
             "type": "string",
             "enum": [
@@ -11551,6 +11553,7 @@
           "name",
           "status",
           "configuration",
+          "salaryCap",
           "cupWeight",
           "createdAt",
           "updatedAt"
@@ -13411,12 +13414,6 @@
                         "maximum": 9007199254740991,
                         "description": "How many golfer scores count toward the entry total, best first. At most the roster size."
                       },
-                      "salaryCap": {
-                        "type": "integer",
-                        "minimum": 1,
-                        "maximum": 10000000,
-                        "description": "Whole dollars. The event's salary cap when the rules were saved; an entry's picks must cost no more."
-                      },
                       "id": {
                         "type": "string",
                         "description": "Contest-configuration identifier."
@@ -13439,7 +13436,6 @@
                       "selectionType",
                       "rosterSize",
                       "countedScores",
-                      "salaryCap",
                       "id",
                       "contestId"
                     ],
@@ -13668,6 +13664,15 @@
                   }
                 ]
               },
+              "salaryCap": {
+                "description": "A budget contest's salary cap in whole dollars: the pricing of the first slot it covers holding a set (#2050), read there and never copied into the rules. Null for any other contest type, and for a budget contest whose slot is not priced yet.",
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              },
               "cupWeight": {
                 "type": "string",
                 "enum": [
@@ -13713,6 +13718,7 @@
               "name",
               "status",
               "configuration",
+              "salaryCap",
               "cupWeight",
               "createdAt",
               "updatedAt"
@@ -80483,7 +80489,9 @@
               "SYNC_FAILED",
               "CONFERENCE_UNMAPPED",
               "DIVISION_UNMAPPED",
-              "CONFERENCE_TEAMS_MISSING"
+              "CONFERENCE_TEAMS_MISSING",
+              "PROVIDER_PLAN_HAS_NO_STATS",
+              "BOX_SCORE_PLAYER_NOT_IN_GAME"
             ],
             "description": "What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here. PROVIDER_RATE_LIMITED: the Provider has rate limited every call for a while (WARNING after 15 minutes, ERROR after the league's quiet threshold); it resolves on the Provider's next answer. SLOT_NAME_UNMATCHED: a tournament whose normalized name (providerValue) no NAME_PATTERN mapping of the league matches, so it has no Season slot (INFO; LINK_SLOT adds the name as a pattern). SLOT_NAME_AMBIGUOUS: a tournament whose normalized name matches more than one slot, or one another tournament already has (ERROR). SLOT_SEASON_COMPETITION_MISSING: a tournament whose name matched a slot whose phase the Season does not have, so no Season slot could be made (ERROR). SYNC_FAILED: a sync run of the league (of the event, when it names one) ended FAILED, and no run of the same sync has completed since (ERROR, syncKind says which sync)."
           },
@@ -80890,7 +80898,9 @@
                     "SYNC_FAILED",
                     "CONFERENCE_UNMAPPED",
                     "DIVISION_UNMAPPED",
-                    "CONFERENCE_TEAMS_MISSING"
+                    "CONFERENCE_TEAMS_MISSING",
+                    "PROVIDER_PLAN_HAS_NO_STATS",
+                    "BOX_SCORE_PLAYER_NOT_IN_GAME"
                   ],
                   "description": "What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here. PROVIDER_RATE_LIMITED: the Provider has rate limited every call for a while (WARNING after 15 minutes, ERROR after the league's quiet threshold); it resolves on the Provider's next answer. SLOT_NAME_UNMATCHED: a tournament whose normalized name (providerValue) no NAME_PATTERN mapping of the league matches, so it has no Season slot (INFO; LINK_SLOT adds the name as a pattern). SLOT_NAME_AMBIGUOUS: a tournament whose normalized name matches more than one slot, or one another tournament already has (ERROR). SLOT_SEASON_COMPETITION_MISSING: a tournament whose name matched a slot whose phase the Season does not have, so no Season slot could be made (ERROR). SYNC_FAILED: a sync run of the league (of the event, when it names one) ended FAILED, and no run of the same sync has completed since (ERROR, syncKind says which sync)."
                 },
@@ -81150,7 +81160,9 @@
                   "SYNC_FAILED",
                   "CONFERENCE_UNMAPPED",
                   "DIVISION_UNMAPPED",
-                  "CONFERENCE_TEAMS_MISSING"
+                  "CONFERENCE_TEAMS_MISSING",
+                  "PROVIDER_PLAN_HAS_NO_STATS",
+                  "BOX_SCORE_PLAYER_NOT_IN_GAME"
                 ],
                 "description": "What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here. PROVIDER_RATE_LIMITED: the Provider has rate limited every call for a while (WARNING after 15 minutes, ERROR after the league's quiet threshold); it resolves on the Provider's next answer. SLOT_NAME_UNMATCHED: a tournament whose normalized name (providerValue) no NAME_PATTERN mapping of the league matches, so it has no Season slot (INFO; LINK_SLOT adds the name as a pattern). SLOT_NAME_AMBIGUOUS: a tournament whose normalized name matches more than one slot, or one another tournament already has (ERROR). SLOT_SEASON_COMPETITION_MISSING: a tournament whose name matched a slot whose phase the Season does not have, so no Season slot could be made (ERROR). SYNC_FAILED: a sync run of the league (of the event, when it names one) ended FAILED, and no run of the same sync has completed since (ERROR, syncKind says which sync)."
               },

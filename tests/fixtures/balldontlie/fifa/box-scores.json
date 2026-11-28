@@ -1,0 +1,15 @@
+{
+  "data": [
+    {
+      "match_id": 64001,
+      "player_id": 701,
+      "team_id": 31,
+      "goals": 1,
+      "assists": 1,
+      "shots_on_target": 3
+    }
+  ],
+  "meta": {
+    "per_page": 100
+  }
+}

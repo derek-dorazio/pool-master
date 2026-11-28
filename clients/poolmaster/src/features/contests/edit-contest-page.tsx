@@ -1,4 +1,4 @@
-import { ContestStatus, eventSportDefinition, formatSelectionTypeName, SelectionType, sportVocabulary } from '@poolmaster/shared/domain';
+import { ContestStatus, eventSportDefinition, formatSelectionTypeName, sportVocabulary } from '@poolmaster/shared/domain';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useQuery } from '@tanstack/react-query';
 import { Lock } from 'lucide-react';
@@ -94,7 +94,8 @@ function EditContestForm({
   const tierCount = managedContest.sportEvents.at(0)?.effectiveTiers.length ?? 0;
   const { participant } = sportVocabulary(eventSportDefinition(event));
   const { selectionType } = configuration;
-  const salaryCap = configuration.selectionType === SelectionType.BUDGET_PICK ? configuration.salaryCap : null;
+  // The cap the API reads from the contest's first covered slot (#2050); null for any other contest.
+  const { salaryCap } = managedContest;
   const [rulesError, setRulesError] = useState<string | null>(null);
   const form = useForm<EditContestFormValues>({
     resolver: zodResolver(editContestFormSchema),

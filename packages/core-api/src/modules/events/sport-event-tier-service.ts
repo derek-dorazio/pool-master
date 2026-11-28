@@ -195,6 +195,19 @@ export class SportEventTierService {
     return new Map([...slotsByEvent].map(([sportEventId, slots]) => [sportEventId, slots.filter((slot) => slot.holdsTierSet)]));
   }
 
+  /**
+   * Each event's salary cap (#2050): the pricing of the slot `choice` names (`tierSetSlots`), the
+   * one place a budget contest's cap is read. It is never copied into a contest's rules, so a
+   * cap set again before the set locks is the one every reader sees. An event whose slot is not
+   * priced, or that covers none, is left out, as `tierSetSlots` leaves out an event covering no
+   * slot. A fixed number of reads however many events.
+   */
+  async salaryCaps(sportEventIds: readonly string[], choice?: TierSetChoice): Promise<Map<string, number>> {
+    const slots = await this.tierSetSlots(sportEventIds, choice);
+    return new Map([...slots].flatMap(([sportEventId, slot]): Array<[string, number]> =>
+      slot.pricing === null ? [] : [[sportEventId, slot.pricing.salaryCap]]));
+  }
+
   /** The event's tier-set slot (`tierSetSlots`), or undefined when it covers none. */
   async tierSetSlot(sportEventId: string, choice?: TierSetChoice): Promise<SportEventTierSlot | undefined> {
     return (await this.tierSetSlots([sportEventId], choice)).get(sportEventId);
@@ -271,9 +284,9 @@ export class SportEventTierService {
     sportEventId: string,
     field?: readonly SportEventParticipant[],
     choice?: TierSetChoice,
-  ): Promise<{ tiers: SportEventTierGroup[]; valuations: ParticipantValuationView[] }> {
+  ): Promise<{ tiers: SportEventTierGroup[]; valuations: ParticipantValuationView[]; salaryCap: number | null }> {
     const slot = await this.tierSetSlot(sportEventId, choice);
-    if (slot === undefined) return { tiers: [], valuations: [] };
+    if (slot === undefined) return { tiers: [], valuations: [], salaryCap: null };
     const [slotTiers, valuations, fieldRows] = await Promise.all([
       this.deps.tiers.findBySlot(slot.id),
       this.deps.valuations.findBySlot(slot.id),
@@ -284,6 +297,8 @@ export class SportEventTierService {
     const tierById = new Map(tiers.map((tier) => [tier.id, tier]));
     return {
       tiers: tierGroups(tiers, valuations, participantIdByEntry),
+      // The set's slot's cap (`salaryCaps`, #2050), from the slot already read.
+      salaryCap: slot.pricing?.salaryCap ?? null,
       valuations: valuations.map((valuation) => {
         const tier = valuation.sportEventSlotTierId ? tierById.get(valuation.sportEventSlotTierId) : undefined;
         return {

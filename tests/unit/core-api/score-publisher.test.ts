@@ -175,8 +175,8 @@ describe('pool-master-rop.78.3 / plans/117 §10.3 — publishLiveScoreUpdate', (
   });
 
   describe('event status', () => {
-    it.each(['DRAFT', 'SCHEDULED', 'POSTPONED', 'COMPLETED', 'CANCELLED'])(
-      'writes no score to a %s event, since live scores are accepted only while an event is in progress',
+    it.each(['DRAFT', 'POSTPONED', 'COMPLETED', 'CANCELLED'])(
+      'writes no score to a %s event, since live scores are accepted only while an event is scheduled or in progress',
       async (status) => {
         const prisma = {
           sportEventProviderMapping: { findFirst: jest.fn().mockResolvedValue(atProvider({ id: 'evt-1', status })) },
@@ -258,6 +258,20 @@ describe('pool-master-rop.78.3 / plans/117 §10.3 — publishLiveScoreUpdate', (
 
       const result = await publishLiveScoreUpdate(games, { contestActivation: NO_CONTEST_ACTIVATION, findings: NO_FINDINGS,
         prisma: asPrismaClient({ sportEventProviderMapping: inProgressEvent() }),
+        domainEvents: testDomainEvents(), providerId: 'balldontlie',
+        scoringFamilyForEvent: () => ({ ...strokePlayScoringFamily, liveScores: { category: 'GAME', persist } }),
+      });
+
+      expect(result).toBe(persisted);
+      expect(persist).toHaveBeenCalledWith(expect.objectContaining({ providerId: 'balldontlie' }), expect.objectContaining({ id: 'evt-1' }), games);
+    });
+
+    it('hands a GAME batch from the feed to a scheduled event\'s writer too, since the feed\'s first score is what starts its Match, slot and event (#2013)', async () => {
+      const persist = jest.fn().mockResolvedValue(persisted);
+      const scheduledEvent = { findFirst: jest.fn().mockResolvedValue(atProvider({ id: 'evt-1', status: 'SCHEDULED', sportLeagueSeason: { sportLeague: { id: 'league-1', scoringFamily: 'HEAD_TO_HEAD', sport: { sport: 'NFL' } } } })) };
+
+      const result = await publishLiveScoreUpdate(games, { contestActivation: NO_CONTEST_ACTIVATION, findings: NO_FINDINGS,
+        prisma: asPrismaClient({ sportEventProviderMapping: scheduledEvent }),
         domainEvents: testDomainEvents(), providerId: 'balldontlie',
         scoringFamilyForEvent: () => ({ ...strokePlayScoringFamily, liveScores: { category: 'GAME', persist } }),
       });

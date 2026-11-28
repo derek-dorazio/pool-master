@@ -1,0 +1,16 @@
+{
+  "data": [
+    {
+      "match_id": 12001,
+      "player_id": 901,
+      "team_id": 11,
+      "goals": 2,
+      "assists": 0,
+      "shots_on_target": 4,
+      "minutes_played": 90
+    }
+  ],
+  "meta": {
+    "per_page": 100
+  }
+}

@@ -132,6 +132,7 @@ describe('EntryReminders.queueDue', () => {
       tiers: {
         getEffectiveTiersForSportEvent: async (sportEventId) =>
           (world.eventTiers.get(sportEventId) ?? []).map((tier) => ({ ...tier, participants: [] })),
+        salaryCaps: async () => new Map(),
       },
       sportLeagues: {
         findById: async (id) => {
