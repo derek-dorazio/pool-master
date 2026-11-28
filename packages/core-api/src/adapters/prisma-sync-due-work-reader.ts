@@ -5,8 +5,8 @@
  */
 
 import type { Prisma, PrismaClient } from '@prisma/client';
-import type { LiveEventView, SeasonSpanView, SyncDueWorkReader, SyncedLeagueRef } from '@poolmaster/shared/db';
-import { MatchFormat, ProviderSyncKind, ProviderSyncRunStatus, type FieldWindowSlot } from '@poolmaster/shared/domain';
+import type { LiveEventView, OverdueGameView, SeasonSpanView, SyncDueWorkReader, SyncedLeagueRef } from '@poolmaster/shared/db';
+import { MatchFormat, MatchStatus, overdueStartCutoff, ProviderSyncKind, ProviderSyncRunStatus, type FieldWindowSlot } from '@poolmaster/shared/domain';
 import { gameInPlayWhere } from './prisma-game-in-play';
 
 /** An event of one of the leagues, linked under the league's provider mapping. */
@@ -108,6 +108,33 @@ export class PrismaSyncDueWorkReader implements SyncDueWorkReader {
     const changedAt = new Map(changed.map((group) => [group.sportEventId, group._max.createdAt]));
     for (const event of events.values()) event.lastScoresChangedAt = changedAt.get(event.sportEventId) ?? null;
     return [...events.values()];
+  }
+
+  async findOverdueGames(input: { leagues: readonly SyncedLeagueRef[]; now: Date }): Promise<OverdueGameView[]> {
+    if (input.leagues.length === 0) return [];
+    const games = await this.prisma.sportEventRoundMatchGame.findMany({
+      where: {
+        status: { in: [MatchStatus.SCHEDULED, MatchStatus.IN_PROGRESS] },
+        scheduledDate: { lt: overdueStartCutoff(input.now) },
+        movedToGameId: null,
+        eventSlot: { sportEvent: linkedEventOf(input.leagues) },
+      },
+      select: {
+        sportEventId: true,
+        status: true,
+        scheduledDate: true,
+        eventSlot: { select: { sportEvent: { select: { sportLeagueId: true } } } },
+        providerMappings: { select: { externalId: true, provider: { select: { code: true } } }, orderBy: { providerId: 'asc' } },
+      },
+      orderBy: [{ sportEventId: 'asc' }, { id: 'asc' }],
+    });
+    return games.map((game) => ({
+      sportEventId: game.sportEventId,
+      sportLeagueId: game.eventSlot.sportEvent.sportLeagueId,
+      status: game.status,
+      scheduledDate: game.scheduledDate,
+      providerGameIds: game.providerMappings.map((mapping) => ({ providerCode: mapping.provider.code, externalId: mapping.externalId })),
+    }));
   }
 }
 

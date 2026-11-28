@@ -20,7 +20,7 @@ const STATUS_LABELS = {
   COMPLETED: "Completed",
   "COMPLETED WITH WARNINGS": "Completed with warnings",
 };
-const ISSUE_LABELS = { SYNC: "Sync", RELEASE: "Release", LINKING: "Linking", OVERDUE: "Overdue" };
+const ISSUE_LABELS = { SYNC: "Sync", RELEASE: "Release", LINKING: "Linking", FINDINGS: "Findings" };
 
 const columnHelper = createColumnHelper<Run>();
 

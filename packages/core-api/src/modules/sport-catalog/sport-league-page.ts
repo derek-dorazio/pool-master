@@ -46,7 +46,6 @@ export interface SportLeaguePageServiceDeps {
    * play (#1499): their row switched on and their secret set, read now.
    */
   webhookProviderIds: () => readonly string[];
-  now?: () => Date;
 }
 
 export class SportLeaguePageService {
@@ -61,9 +60,8 @@ export class SportLeaguePageService {
 
   /** Null when the league does not exist. */
   async listEvents(sportLeagueId: string): Promise<SportLeagueEventOverview[] | null> {
-    const now = this.now();
-    const facts = await this.deps.reader.readEventFacts(sportLeagueId, now);
-    return facts === null ? null : buildSportLeagueEvents(facts, now);
+    const facts = await this.deps.reader.readEventFacts(sportLeagueId);
+    return facts === null ? null : buildSportLeagueEvents(facts);
   }
 
   /** Null when the league does not exist. */
@@ -109,13 +107,8 @@ export class SportLeaguePageService {
 
   /** The Event page's header and sync rows (#1889). Null when the event does not exist. */
   async getEventOverview(sportEventId: string): Promise<SportEventOverview | null> {
-    const now = this.now();
-    const facts = await this.deps.reader.readEventPageFacts(sportEventId, now);
-    return facts === null ? null : buildSportEventOverview(facts, { webhookProviderIds: this.deps.webhookProviderIds(), now });
-  }
-
-  private now(): Date {
-    return this.deps.now?.() ?? new Date();
+    const facts = await this.deps.reader.readEventPageFacts(sportEventId);
+    return facts === null ? null : buildSportEventOverview(facts, { webhookProviderIds: this.deps.webhookProviderIds() });
   }
 }
 
@@ -159,8 +152,7 @@ export function buildSportLeagueSyncs(
 }
 
 /** Every event of the league, by start then id, with its release, field, issues and last sync. */
-export function buildSportLeagueEvents(facts: SportLeagueEventFacts, now: Date): SportLeagueEventOverview[] {
-  const overdueById = new Map(facts.overdueCandidates.map((event) => [event.id, event]));
+export function buildSportLeagueEvents(facts: SportLeagueEventFacts): SportLeagueEventOverview[] {
   return facts.events.map((event): SportLeagueEventOverview => {
     const runs = facts.latestRunsByEvent.get(event.id) ?? [];
     const failedRuns = runs.filter((run) => run.status === ProviderSyncRunStatus.FAILED);
@@ -168,7 +160,6 @@ export function buildSportLeagueEvents(facts: SportLeagueEventFacts, now: Date):
     const held = event.status === SportEventStatus.DRAFT && check?.outcome === AutoReleaseCheckOutcome.HELD
       ? [{ id: event.id, name: event.name, checkedAt: check.checkedAt, failedChecks: check.failedChecks }]
       : [];
-    const overdue = overdueById.get(event.id);
     const release = sportEventReleaseOf(event, facts.league);
     const lastSyncedAt = runs.reduce<Date | null>((latest, run) => (latest === null || run.createdAt > latest ? run.createdAt : latest), null);
     return {
@@ -181,7 +172,7 @@ export function buildSportLeagueEvents(facts: SportLeagueEventFacts, now: Date):
       ...release,
       lastReleaseCheck: check,
       fieldSize: facts.fieldSizes.get(event.id) ?? null,
-      issues: issuesOf(failedRunItemsOf(failedRuns), held, overdue === undefined ? [] : [overdue], now),
+      issues: issuesOf(failedRunItemsOf(failedRuns), held),
       lastSyncedAt,
     };
   });
@@ -220,7 +211,7 @@ const EVENT_SYNC_KINDS: readonly ProviderSyncKind[] = [ProviderSyncKind.FIELD, P
  */
 export function buildSportEventOverview(
   facts: SportEventPageFacts,
-  context: { webhookProviderIds: readonly string[]; now: Date },
+  context: { webhookProviderIds: readonly string[] },
 ): SportEventOverview {
   const { league, event, latestRuns } = facts;
   const synced = !event.isTestData;
@@ -243,7 +234,7 @@ export function buildSportEventOverview(
       failedRunCount: failedRuns.length,
     }),
     syncs,
-    issues: issuesOf(failedRunItemsOf(failedRuns), held, facts.overdueCandidates.filter((candidate) => candidate.id === event.id), context.now),
+    issues: issuesOf(failedRunItemsOf(failedRuns), held),
     ...sportEventReleaseOf(event, league),
     tierOrderBasis: decision?.basis ?? null,
     tierOrderCoversField: decision?.coversField ?? true,

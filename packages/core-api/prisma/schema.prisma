@@ -597,6 +597,7 @@ enum PrismaProviderSyncFindingKind {
   CONFERENCE_TEAMS_MISSING
   PROVIDER_PLAN_HAS_NO_STATS
   BOX_SCORE_PLAYER_NOT_IN_GAME
+  GAME_OVERDUE
   FIELD_CONTEST_CANNOT_OPEN
 }
 
@@ -2553,6 +2554,8 @@ model SportEventRoundMatchGame {
   @@unique([sportEventRoundMatchId, id], map: "sport_event_round_match_games_match_id_key")
   @@index([sportEventId, sportEventSlotId])
   @@index([movedToGameId])
+  /// The sync tick's Games in play and Games that may be overdue, read every minute (#2013).
+  @@index([status, scheduledDate])
   @@map("sport_event_round_match_games")
 }
 
@@ -2810,8 +2813,8 @@ model ProviderLeague {
   /// How long a game may go between two of the league's notifications in normal play, in
   /// minutes, with room for overtime and breaks: past it, the webhook may have stopped.
   quietAfterMinutes  Int                           @map("quiet_after_minutes")
-  /// How long one of its games usually takes from its scheduled start, in minutes: a start plus
-  /// this is when a game with no scheduled end should have ended.
+  /// How long one of its games usually takes from its scheduled start, in minutes: a Game's start
+  /// plus this is when it should have ended (GAME_OVERDUE, #2013).
   typicalGameMinutes Int                           @map("typical_game_minutes")
   isEnabled          Boolean                       @default(true) @map("is_enabled")
   createdAt          DateTime                      @default(now()) @map("created_at") @db.Timestamptz

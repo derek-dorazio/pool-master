@@ -323,6 +323,21 @@ export class ProviderSyncFindingService {
     }, this.now());
   }
 
+  /**
+   * The sync tick's overdue check against a Provider (named by its source id) found these of its
+   * game ids overdue (#2013): every other OPEN GAME_OVERDUE finding of the Provider resolves, in
+   * one statement, since its Game is no longer overdue. Returns how many did.
+   */
+  async resolveGamesNoLongerOverdue(providerSourceId: string, overdueGameIds: readonly string[]): Promise<number> {
+    const provider = this.providerOfSourceId(providerSourceId);
+    if (provider === undefined) return 0;
+    return this.deps.repository.resolveOpen({
+      kind: ProviderSyncFindingKind.GAME_OVERDUE,
+      providerId: provider.id,
+      exceptProviderValues: overdueGameIds,
+    }, this.now());
+  }
+
   /** The Provider answered again: its rate-limit findings resolve. Returns how many did. */
   async resolveProviderRateLimited(providerId: string): Promise<number> {
     return this.deps.repository.resolveOpen({ kind: ProviderSyncFindingKind.PROVIDER_RATE_LIMITED, providerId }, this.now());

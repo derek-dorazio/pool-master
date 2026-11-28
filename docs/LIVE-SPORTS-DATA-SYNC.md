@@ -496,10 +496,15 @@ fixed few statements however many leagues and events are due (`PrismaSyncDueWork
 carries only our own ids; the event's id at its provider is read when the job runs. A scores job
 runs only while live scores are on; a field job always runs (#2086).
 
-**Overdue.** A released event is `OVERDUE` when it is neither completed nor cancelled more than
-4 hours after it should have ended (its last round's end, else its last start plus its league's
-provider league's `typicalGameMinutes`). A draft never released is never overdue. One function:
-`overdueExpectedEnd` in `packages/shared/domain/event-overdue.ts`.
+**Overdue (#2013).** A Game is overdue when it is still scheduled or in progress more than 4 hours
+after it should have ended: its scheduled start plus its provider league's `typicalGameMinutes`. A
+finished, cancelled or postponed Game never is, nor one with no start. One function:
+`gameOverdueExpectedEnd` in `packages/shared/domain/game-overdue.ts`. The sync tick reads the
+synced leagues' unfinished linked Games that started before the wait (`findOverdueGames`), raises a
+`GAME_OVERDUE` WARNING on each overdue Game under its provider's game id, once per 4-hour wait it
+stays so, and on every tick resolves the Provider's other `GAME_OVERDUE` findings, since their Games
+are no longer overdue. The Sports page counts them under Findings; there is no event-level Overdue
+chip.
 
 ### Webhooks
 

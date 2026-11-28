@@ -14,7 +14,6 @@ import {
   SportEventReleaseAtKind,
   SportEventReleaseMode,
   SportEventStatus,
-  SportLeagueIssueType,
   SportLeagueSyncHealth,
   Sport,
 } from '@poolmaster/shared/domain';
@@ -31,7 +30,6 @@ import { sportRowKeys } from '../../support/sport-rows';
 import { mapEventToProvider, fixtureSeasonId } from '../../support/event-edition';
 import { sportPlay } from '../../support/sport-play';
 import { insertTestSportLeague } from '../../support/test-sport-league';
-import { oneEventSlotId } from '../../support/test-slots';
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
@@ -140,27 +138,6 @@ describe('GET /api/v1/sport-leagues/{sportLeagueId}/events/overview', () => {
       status: SportEventStatus.DRAFT, releaseMode: SportEventReleaseMode.AUTO, releaseAt: new Date(draft.startDate.getTime() - 5 * DAY_MS).toISOString(), releaseAtKind: SportEventReleaseAtKind.PLANNED,
       fieldSize: null, lastSyncedAt: null,
     });
-  });
-
-  it('marks an event overdue once its last round ended more than 4 hours ago, and not one whose last round ended within 4 hours', async () => {
-    const tour = await sportLeague('Overdue Page Tour', { synced: true });
-    const late = await event(tour.id, { startDate: fromNow(-3 * DAY_MS), status: 'IN_PROGRESS' });
-    const recent = await event(tour.id, { startDate: fromNow(-2 * DAY_MS), status: 'IN_PROGRESS' });
-    const roundEnd = fromNow(-5 * HOUR_MS);
-    await getPrisma().sportEventRound.createMany({
-      data: [
-        { sportEventId: late.id, sportEventSlotId: await oneEventSlotId(getPrisma(), late.id), roundNumber: 1, scheduledDate: fromNow(-3 * DAY_MS), scheduledEndAt: fromNow(-2 * DAY_MS) },
-        { sportEventId: late.id, sportEventSlotId: await oneEventSlotId(getPrisma(), late.id), roundNumber: 2, scheduledDate: fromNow(-DAY_MS), scheduledEndAt: roundEnd },
-        { sportEventId: recent.id, sportEventSlotId: await oneEventSlotId(getPrisma(), recent.id), roundNumber: 1, scheduledDate: fromNow(-2 * DAY_MS), scheduledEndAt: fromNow(-DAY_MS) },
-        { sportEventId: recent.id, sportEventSlotId: await oneEventSlotId(getPrisma(), recent.id), roundNumber: 2, scheduledDate: fromNow(-4 * HOUR_MS), scheduledEndAt: fromNow(-HOUR_MS) },
-      ],
-    });
-
-    const response = await get(`/api/v1/sport-leagues/${tour.id}/events/overview`);
-
-    const rows = SportLeagueEventOverviewListResponseSchema.parse(response.json()).events;
-    expect(rows.find((row) => row.id === late.id)?.issues).toEqual([{ type: SportLeagueIssueType.OVERDUE, count: 1, items: [expect.objectContaining({ label: late.name, occurredAt: roundEnd.toISOString() })] }]);
-    expect(rows.find((row) => row.id === recent.id)?.issues).toEqual([]);
   });
 
   it('answers 404 for a sport league that does not exist', async () => {

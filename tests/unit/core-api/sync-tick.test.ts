@@ -5,8 +5,8 @@
  */
 
 import { randomUUID } from 'node:crypto';
-import type { LiveEventView, SeasonSpanView, SyncDueWorkReader } from '@poolmaster/shared/db';
-import { BackgroundJobType, JobTrigger, MatchStatus, ProviderCode, ProviderSyncKind, type FieldWindowSlot, type SportLeague } from '@poolmaster/shared/domain';
+import type { LiveEventView, OverdueGameView, SeasonSpanView, SyncDueWorkReader } from '@poolmaster/shared/db';
+import { BackgroundJobType, JobTrigger, MatchStatus, OVERDUE_AFTER_MS, ProviderCode, ProviderSyncKind, type FieldWindowSlot, type SportLeague } from '@poolmaster/shared/domain';
 import { BackgroundJobQueue } from '../../../packages/core-api/src/modules/background-jobs/background-job-queue';
 import { SyncTick, type NotifiedProviderCadence } from '../../../packages/core-api/src/modules/ingestion/sync-tick';
 import { eventSyncJob, EventSyncWait } from '../../../packages/core-api/src/modules/ingestion/event-sync-job-requests';
@@ -24,6 +24,10 @@ const at = (offsetMs: number) => new Date(NOW.getTime() + offsetMs);
 const PGA_PROVIDER_LEAGUE = 'pga-provider-league';
 /** A provider league subscribed to no webhook events (its set is NONE): synced on the schedule only. */
 const SCHEDULE_ONLY_PROVIDER_LEAGUE = 'f1-provider-league';
+/** A provider league no Provider row has: it has no typical game length. */
+const UNKNOWN_PROVIDER_LEAGUE = 'unknown-provider-league';
+/** Every other provider league's typical game length. */
+const TYPICAL_GAME_MINUTES = 180;
 const seasonal = (inSeason: Record<string, number>, offseason: Record<string, number>) => ({ IN_SEASON: inSeason, OFFSEASON: offseason });
 
 const SCHEDULE = {
@@ -65,8 +69,13 @@ function tickOf(options: {
   seasons?: SeasonSpanView[];
   /** The leagues with a roster: by default none. */
   rostered?: string[];
+  /** The Games the overdue read gives: by default none. */
+  overdue?: OverdueGameView[];
 }) {
-  const findings = { raiseOfSource: jest.fn(async (_providerSourceId: string, _raises: unknown) => undefined) };
+  const findings = {
+    raiseOfSource: jest.fn(async (_providerSourceId: string, _raises: unknown) => undefined),
+    resolveGamesNoLongerOverdue: jest.fn(async (_providerSourceId: string, _overdueGameIds: readonly string[]) => 0),
+  };
   let now = NOW;
   const jobs = inMemoryBackgroundJobs(() => now);
   const queue = new BackgroundJobQueue({ jobs, currentStart: testCurrentJobStart });
@@ -76,6 +85,7 @@ function tickOf(options: {
     findNextSlots: jest.fn(async () => options.slots ?? []),
     findLiveEvents: jest.fn(async () => options.live ?? []),
     findRosteredLeagueIds: jest.fn(async () => new Set(options.rostered ?? [])),
+    findOverdueGames: jest.fn(async () => options.overdue ?? []),
   };
   const sportLeagues = { findEventSynced: jest.fn(async () => options.leagues) };
   const logger = fakeLogger();
@@ -90,6 +100,7 @@ function tickOf(options: {
     // Each provider league's own quiet window: a golf round's is hours, a game's minutes.
     quietAfterMs: (providerLeagueId) => (providerLeagueId === PGA_PROVIDER_LEAGUE ? minutes(240) : minutes(20)),
     leagueSendsNotifications: (providerLeagueId) => providerLeagueId !== SCHEDULE_ONLY_PROVIDER_LEAGUE,
+    typicalGameMinutes: (providerLeagueId) => (providerLeagueId === UNKNOWN_PROVIDER_LEAGUE ? undefined : TYPICAL_GAME_MINUTES),
     findings,
     jobLock: options.lock === 'elsewhere' ? heldElsewhere() : heldHere(),
     now: () => now,
@@ -461,6 +472,109 @@ describe('SyncTick', () => {
 
       expect(started.findings.raiseOfSource).not.toHaveBeenCalled();
       expect(off.findings.raiseOfSource).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('the Game result overdue finding (#2013)', () => {
+    const offSchedule = { ...SCHEDULE, EVENTS: { ...SCHEDULE.EVENTS, enabled: false }, SCORES: { ...SCHEDULE.SCORES, enabled: false } };
+    /** A Game of the league that should have ended `endedAgoMs` ago (its start plus the typical length), mapped at BALLDONTLIE. */
+    const overdueGame = (sportLeagueId: string, externalId: string, endedAgoMs: number, overrides: Partial<OverdueGameView> = {}): OverdueGameView => ({
+      sportEventId: randomUUID(),
+      sportLeagueId,
+      status: MatchStatus.SCHEDULED,
+      scheduledDate: at(-endedAgoMs - minutes(TYPICAL_GAME_MINUTES)),
+      providerGameIds: [{ providerCode: ProviderCode.BALLDONTLIE, externalId }],
+      ...overrides,
+    });
+
+    it('raises a WARNING under the Game\'s provider id on the tick its wait runs out, and not again on the next tick', async () => {
+      const nfl = league();
+      const game = overdueGame(nfl.id, 'bdl-game-1', OVERDUE_AFTER_MS + 30_000, { status: MatchStatus.IN_PROGRESS });
+      const { tick, findings, advance } = tickOf({ leagues: [nfl], overdue: [game], schedule: offSchedule });
+
+      await tick.tick();
+      advance(minutes(1));
+      await tick.tick();
+
+      expect(findings.raiseOfSource).toHaveBeenCalledTimes(1);
+      expect(findings.raiseOfSource).toHaveBeenCalledWith(nfl.selectedProviderMapping?.providerId, [{
+        kind: 'GAME_OVERDUE', severity: 'WARNING', sportLeagueId: nfl.id, sportEventId: game.sportEventId, providerValue: 'bdl-game-1', providerValueName: null,
+      }]);
+    });
+
+    it('raises it again one whole wait later while the Game stays unfinished', async () => {
+      const nfl = league();
+      const game = overdueGame(nfl.id, 'bdl-game-1', 2 * OVERDUE_AFTER_MS + 30_000);
+      const { tick, findings } = tickOf({ leagues: [nfl], overdue: [game], schedule: offSchedule });
+
+      await tick.tick();
+
+      expect(findings.raiseOfSource).toHaveBeenCalledTimes(1);
+    });
+
+    it('raises nothing for a Game within its typical length plus the wait, a finished one, or one with no start', async () => {
+      const nfl = league();
+      const { tick, findings } = tickOf({
+        leagues: [nfl],
+        schedule: offSchedule,
+        overdue: [
+          overdueGame(nfl.id, 'not-yet', OVERDUE_AFTER_MS - minutes(1)),
+          overdueGame(nfl.id, 'final', OVERDUE_AFTER_MS + 30_000, { status: MatchStatus.COMPLETED }),
+          overdueGame(nfl.id, 'unscheduled', OVERDUE_AFTER_MS + 30_000, { scheduledDate: null }),
+        ],
+      });
+
+      await tick.tick();
+
+      expect(findings.raiseOfSource).not.toHaveBeenCalled();
+      expect(findings.resolveGamesNoLongerOverdue).toHaveBeenCalledWith(nfl.selectedProviderMapping?.providerId, []);
+    });
+
+    it('judges a Game by its own league\'s typical length, and skips one whose league has none or that its league\'s provider has no id for', async () => {
+      const nfl = league();
+      const unknown = league({ selectedProviderMapping: buildProviderMapping({ id: randomUUID(), providerLeagueId: UNKNOWN_PROVIDER_LEAGUE }) });
+      const { tick, findings } = tickOf({
+        leagues: [nfl, unknown],
+        schedule: offSchedule,
+        overdue: [
+          overdueGame(unknown.id, 'no-length', OVERDUE_AFTER_MS + 30_000),
+          overdueGame(nfl.id, 'unmapped', OVERDUE_AFTER_MS + 30_000, { providerGameIds: [] }),
+        ],
+      });
+
+      await tick.tick();
+
+      expect(findings.raiseOfSource).not.toHaveBeenCalled();
+    });
+
+    it('resolves the provider\'s other overdue findings on every tick, keeping those of the Games still overdue', async () => {
+      const nfl = league();
+      const nba = league();
+      const { tick, findings } = tickOf({
+        leagues: [nfl, nba],
+        schedule: offSchedule,
+        overdue: [
+          overdueGame(nfl.id, 'still-late', OVERDUE_AFTER_MS + minutes(10)),
+          overdueGame(nba.id, 'also-late', 3 * OVERDUE_AFTER_MS + minutes(10)),
+        ],
+      });
+
+      await tick.tick();
+
+      expect(findings.raiseOfSource).not.toHaveBeenCalled();
+      expect(findings.resolveGamesNoLongerOverdue).toHaveBeenCalledTimes(1);
+      expect(findings.resolveGamesNoLongerOverdue).toHaveBeenCalledWith(nfl.selectedProviderMapping?.providerId, ['still-late', 'also-late']);
+    });
+
+    it('still queues the due syncs and logs the failure when the overdue check fails', async () => {
+      const nfl = league();
+      const { tick, findings, logger, queued } = tickOf({ leagues: [nfl], overdue: [overdueGame(nfl.id, 'late', OVERDUE_AFTER_MS + 30_000)] });
+      findings.raiseOfSource.mockRejectedValueOnce(new Error('findings write failed'));
+
+      await tick.tick();
+
+      expect(queued()).toContainEqual({ type: BackgroundJobType.SYNC_LEAGUE_EVENTS, sportLeagueId: nfl.id, sportEventId: undefined });
+      expect(logger.error).toHaveBeenCalledWith(expect.objectContaining({ action: 'ingestion.syncFinding.overdueGamesFailed' }), expect.any(String));
     });
   });
 });

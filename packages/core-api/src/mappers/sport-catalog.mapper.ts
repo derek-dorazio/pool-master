@@ -114,8 +114,6 @@ export function mapSportLeagueIssueToDto(issue: SportLeagueIssue): SportLeagueIs
       return { type: issue.type, count: issue.count, items: issue.items.map((entry) => ({ ...item(entry), syncKind: entry.syncKind })) };
     case SportLeagueIssueType.RELEASE:
       return { type: issue.type, count: issue.count, items: issue.items.map((entry) => ({ ...item(entry), failedChecks: entry.failedChecks })) };
-    case SportLeagueIssueType.OVERDUE:
-      return { type: issue.type, count: issue.count, items: issue.items.map(item) };
     default:
       return assertNever(issue);
   }

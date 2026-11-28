@@ -297,7 +297,6 @@ export const enUS = {
       FINDINGS: 'Findings',
       SYNC: 'Sync',
       RELEASE: 'Release',
-      OVERDUE: 'Overdue',
     },
     ProviderSyncFindingSeverity: {
       ERROR: 'Error',
@@ -337,6 +336,7 @@ export const enUS = {
       CONFERENCE_TEAMS_MISSING: 'Conference has no teams',
       PROVIDER_PLAN_HAS_NO_STATS: 'Plan has no player stats',
       BOX_SCORE_PLAYER_NOT_IN_GAME: 'Box score player not in game',
+      GAME_OVERDUE: 'Game result overdue',
       FIELD_CONTEST_CANNOT_OPEN: 'Field contest can never open',
     },
     ProviderSyncFindingAction: {
