@@ -576,7 +576,7 @@ sequenceDiagram
   A->>A: route by scope id to the league reader
   A-->>S: LiveScoreResult {GOLF | GAME | RACE}
   S->>P: onLiveScores(result, providerId)
-  P->>P: Zod-validate; find event by the provider's id for it (its mapping); skip unless IN_PROGRESS
+  P->>P: Zod-validate; find event by the provider's id for it (its mapping); skip unless SCHEDULED or IN_PROGRESS
   P->>F: the event's scoring family's writer, if it accepts the category
   F-->>P: rows + REBUILD_LEADERBOARDS job, one transaction
 ```
@@ -617,10 +617,13 @@ provider final overwrites whatever the match holds, a result written by hand bef
 and so the API carries no result source on a match (#2184); nothing stores one. A level knockout game takes its winner from the shoot-out wherever its slot's games
 cannot end level.
 
-**Status** is never set by a sync. `EventLifecycleScheduler` (every 5 minutes) moves
-`SCHEDULED → IN_PROGRESS → COMPLETED` from the round schedule; settlement and emails follow as
-jobs. Scores for an event not yet `IN_PROGRESS` are skipped
-(`liveScore.publish.eventNotInProgress`).
+**Status** is never set by a sync. It bubbles up from the feed's scores (#2013): a Match's
+status moves its Season slot, and the slots move the event, `SCHEDULED → IN_PROGRESS →
+COMPLETED`; settlement and emails follow as jobs. So a score is accepted for an event still
+`SCHEDULED` as well as one `IN_PROGRESS`: the feed's first score is what starts it. Scores for a
+draft, postponed or finished event are skipped (`liveScore.publish.eventNotInProgress`).
+`EventLifecycleScheduler` (every 5 minutes) only takes contests live at their cutoffs on the
+clock, and moves an event covering no slot on its start and end dates.
 
 ## 6. Per league
 

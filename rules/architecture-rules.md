@@ -287,9 +287,11 @@ domain event queues the next step's refresh job:
   takes entries until that slot starts. A contest not made yet has no covered slot, so contest
   setup still goes by the event's start.
 
-An event covering a slot completes when its slots do, never on the clock; one covering none, which has no slot to complete it, completes at its end date. The lifecycle sweep still starts a
-scheduled event at its first round's date, because a live score is accepted only for an event
-in progress; that start moves to the slots when the live-score gate does (#2013).
+An event covering a slot starts and completes when its slots do, never on the clock. A live
+score is therefore accepted for a scheduled event too: the feed's first score is what starts its
+Match, slot and event. The lifecycle sweep only takes contests live at their cutoffs on the
+clock, so a late feed leaves no window open. An event covering no slot has no slot to move it:
+it starts at its start date and completes at its end date.
 
 ### Background jobs run on one server task
 
