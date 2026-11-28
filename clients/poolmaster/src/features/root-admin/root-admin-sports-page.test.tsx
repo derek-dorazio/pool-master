@@ -105,11 +105,6 @@ function overviews(): SportLeagueOverviewDto[] {
             failedChecks: ['TIERS_ASSIGNED', 'PRICES_ASSIGNED'],
           }],
         },
-        {
-          type: 'OVERDUE',
-          count: 1,
-          items: [{ label: 'NBA Cup 2026', occurredAt: '2020-01-01T00:00:00.000Z', target: { type: 'SPORT_EVENT', id: 'evt-late' } }],
-        },
       ],
     }),
     overview({ id: 'ncaa', sport: 'BASKETBALL', name: "NCAA Men's Basketball", eventCount: 2 }),
@@ -204,7 +199,7 @@ describe('RootAdminSportsPage', () => {
     listSportLeagueOverviewsMock.mockResolvedValue({ data: { sportLeagues: [
       overview({ id: 'mlb', name: 'MLB', issues: [{ type: 'SYNC', count: 4, items: [] }] }),
       overview({ id: 'nhl', sport: 'HOCKEY', name: 'NHL', issues: [] }),
-      overview({ id: 'nba', sport: 'BASKETBALL', name: 'NBA', issues: [{ type: 'OVERDUE', count: 1, items: [] }] }),
+      overview({ id: 'nba', sport: 'BASKETBALL', name: 'NBA', issues: [{ type: 'RELEASE', count: 1, items: [] }] }),
     ] } });
     renderPage();
     await screen.findByTestId('root-admin-sports-row-mlb');
@@ -227,17 +222,14 @@ describe('RootAdminSportsPage', () => {
     expect(item).toHaveAttribute('href', '/manage/sports/basketball/events/evt-cup');
   });
 
-  it('lists an overdue event behind its chip with when it should have ended and how late it is, linking to its event', async () => {
+  it('shows only the Sync and Release chips the read gives, with no Overdue chip, since an overdue Game is a finding', async () => {
     listSportLeagueOverviewsMock.mockResolvedValue({ data: { sportLeagues: overviews() } });
     renderPage();
 
-    expect(await screen.findByTestId('root-admin-sports-issue-nba-OVERDUE')).toHaveTextContent('Overdue 1');
-    await userEvent.click(screen.getByTestId('root-admin-sports-issue-nba-OVERDUE-popover'));
-
-    const item = await screen.findByTestId('root-admin-sports-issue-event-evt-late');
-    expect(item).toHaveTextContent('NBA Cup 2026');
-    expect(item).toHaveTextContent(/Should have ended .* · \d+ days late/);
-    expect(item).toHaveAttribute('href', '/manage/sports/basketball/events/evt-late');
+    expect(await screen.findByTestId('root-admin-sports-issue-nba-SYNC')).toBeInTheDocument();
+    expect(screen.getByTestId('root-admin-sports-issue-nba-RELEASE')).toBeInTheDocument();
+    expect(screen.queryByTestId('root-admin-sports-issue-nba-OVERDUE')).not.toBeInTheDocument();
+    expect(screen.queryByText(/Overdue/)).not.toBeInTheDocument();
   });
 
   it('counts a league\'s open sync findings by severity behind its Findings chip, each linking to Findings filtered to them', async () => {

@@ -2156,7 +2156,7 @@ export interface paths {
         };
         /**
          * Get an event's syncs, health, issues, release and tier order
-         * @description The root admin's Event page header and sync rows (#1889), by the League page's rules applied to one event: its field and scores syncs from its own latest runs, its sync health, its issues (SYNC, RELEASE, OVERDUE), its release mode and date, the value its active field is ordered by for tiers and prices, and each field row's feed id and when a sync last saw it. A fixed number of reads however large the field. Root admin only: 403 ROOT_ADMIN_ACCESS_REQUIRED otherwise. 404 EVENT_NOT_FOUND for an unknown event. More than 120 reads a minute from one address answer 429 EVENT_ADMIN_RATE_LIMITED.
+         * @description The root admin's Event page header and sync rows (#1889), by the League page's rules applied to one event: its field and scores syncs from its own latest runs, its sync health, its issues (SYNC, RELEASE), its release mode and date, the value its active field is ordered by for tiers and prices, and each field row's feed id and when a sync last saw it. A fixed number of reads however large the field. Root admin only: 403 ROOT_ADMIN_ACCESS_REQUIRED otherwise. 404 EVENT_NOT_FOUND for an unknown event. More than 120 reads a minute from one address answer 429 EVENT_ADMIN_RATE_LIMITED.
          */
         get: operations["getEventOverview"];
         put?: never;
@@ -2917,7 +2917,7 @@ export interface paths {
         };
         /**
          * List every event of a sport league with its release, field, issues and last sync
-         * @description The League page's Events grid (#1865): every event of the sport league, every year, never paged, by start. Each carries its release mode and date, its latest automatic release check, its field size, its own issues (SYNC, RELEASE, OVERDUE) and when a sync last ran on it. Read from a fixed number of grouped queries, however many events. Root admin only.
+         * @description The League page's Events grid (#1865): every event of the sport league, every year, never paged, by start. Each carries its release mode and date, its latest automatic release check, its field size, its own issues (SYNC, RELEASE) and when a sync last ran on it. Read from a fixed number of grouped queries, however many events. Root admin only.
          */
         get: operations["listSportLeagueEventOverviews"];
         put?: never;
@@ -11642,7 +11642,7 @@ export interface components {
              * @enum {string}
              */
             syncHealth: "OK" | "ERROR" | "NOT_RUN_YET" | "OFF";
-            /** @description Only the types with something to do, always in the order FINDINGS, SYNC, RELEASE, OVERDUE. Empty when nothing needs attention. */
+            /** @description Only the types with something to do, always in the order FINDINGS, SYNC, RELEASE. A Game whose result is overdue is a GAME_OVERDUE finding, counted under FINDINGS. Empty when nothing needs attention. */
             issues: ({
                 /** @enum {string} */
                 type: "FINDINGS";
@@ -11669,7 +11669,7 @@ export interface components {
                     label: string;
                     /**
                      * Format: date-time
-                     * @description When the run was written, the event was last checked, or an overdue event should have ended (how late it is runs from here).
+                     * @description When the run was written, or the event was last checked.
                      */
                     occurredAt: string;
                     /** @description What an issue item links to. */
@@ -11702,7 +11702,7 @@ export interface components {
                     label: string;
                     /**
                      * Format: date-time
-                     * @description When the run was written, the event was last checked, or an overdue event should have ended (how late it is runs from here).
+                     * @description When the run was written, or the event was last checked.
                      */
                     occurredAt: string;
                     /** @description What an issue item links to. */
@@ -11720,34 +11720,6 @@ export interface components {
                     };
                     /** @description The ready checks that held it, in check order. */
                     failedChecks: ("NOT_STARTED" | "ROUNDS_SCHEDULED" | "FIELD_LOADED" | "TIERS_ASSIGNED" | "TIERS_FILLED" | "PRICES_ASSIGNED" | "BRACKET_COMPLETE" | "CONTEST_SETUPS_ON")[];
-                }[];
-            } | {
-                /** @enum {string} */
-                type: "OVERDUE";
-                /** @description How many released events are neither completed nor cancelled more than 4 hours after their last round or match should have ended. A never-released draft is never counted. */
-                count: number;
-                /** @description Most overdue first. */
-                items: {
-                    /** @description The item's name as data, never a sentence: a failed run's outcome summary as the sync history shows it (its sync kind when it has none), or an event's name. */
-                    label: string;
-                    /**
-                     * Format: date-time
-                     * @description When the run was written, the event was last checked, or an overdue event should have ended (how late it is runs from here).
-                     */
-                    occurredAt: string;
-                    /** @description What an issue item links to. */
-                    target: {
-                        /**
-                         * @description What the item opens: SYNC_RUN a provider sync run on the run log, SPORT_EVENT an event's page.
-                         * @enum {string}
-                         */
-                        type: "SYNC_RUN" | "SPORT_EVENT";
-                        /**
-                         * Format: uuid
-                         * @description The sync run's or event's id.
-                         */
-                        id: string;
-                    };
                 }[];
             })[];
             /** @description The first to last event of its event year under way now; between seasons, of the next one to start; with no next one known, of the latest one. Cancelled events are left out. Null while it has no events. */
@@ -11795,7 +11767,7 @@ export interface components {
                  * @enum {string}
                  */
                 syncHealth: "OK" | "ERROR" | "NOT_RUN_YET" | "OFF";
-                /** @description Only the types with something to do, always in the order FINDINGS, SYNC, RELEASE, OVERDUE. Empty when nothing needs attention. */
+                /** @description Only the types with something to do, always in the order FINDINGS, SYNC, RELEASE. A Game whose result is overdue is a GAME_OVERDUE finding, counted under FINDINGS. Empty when nothing needs attention. */
                 issues: ({
                     /** @enum {string} */
                     type: "FINDINGS";
@@ -11822,7 +11794,7 @@ export interface components {
                         label: string;
                         /**
                          * Format: date-time
-                         * @description When the run was written, the event was last checked, or an overdue event should have ended (how late it is runs from here).
+                         * @description When the run was written, or the event was last checked.
                          */
                         occurredAt: string;
                         /** @description What an issue item links to. */
@@ -11855,7 +11827,7 @@ export interface components {
                         label: string;
                         /**
                          * Format: date-time
-                         * @description When the run was written, the event was last checked, or an overdue event should have ended (how late it is runs from here).
+                         * @description When the run was written, or the event was last checked.
                          */
                         occurredAt: string;
                         /** @description What an issue item links to. */
@@ -11873,34 +11845,6 @@ export interface components {
                         };
                         /** @description The ready checks that held it, in check order. */
                         failedChecks: ("NOT_STARTED" | "ROUNDS_SCHEDULED" | "FIELD_LOADED" | "TIERS_ASSIGNED" | "TIERS_FILLED" | "PRICES_ASSIGNED" | "BRACKET_COMPLETE" | "CONTEST_SETUPS_ON")[];
-                    }[];
-                } | {
-                    /** @enum {string} */
-                    type: "OVERDUE";
-                    /** @description How many released events are neither completed nor cancelled more than 4 hours after their last round or match should have ended. A never-released draft is never counted. */
-                    count: number;
-                    /** @description Most overdue first. */
-                    items: {
-                        /** @description The item's name as data, never a sentence: a failed run's outcome summary as the sync history shows it (its sync kind when it has none), or an event's name. */
-                        label: string;
-                        /**
-                         * Format: date-time
-                         * @description When the run was written, the event was last checked, or an overdue event should have ended (how late it is runs from here).
-                         */
-                        occurredAt: string;
-                        /** @description What an issue item links to. */
-                        target: {
-                            /**
-                             * @description What the item opens: SYNC_RUN a provider sync run on the run log, SPORT_EVENT an event's page.
-                             * @enum {string}
-                             */
-                            type: "SYNC_RUN" | "SPORT_EVENT";
-                            /**
-                             * Format: uuid
-                             * @description The sync run's or event's id.
-                             */
-                            id: string;
-                        };
                     }[];
                 })[];
                 /** @description The first to last event of its event year under way now; between seasons, of the next one to start; with no next one known, of the latest one. Cancelled events are left out. Null while it has no events. */
@@ -12063,7 +12007,7 @@ export interface components {
             } | null;
             /** @description How many participants its field holds; null until a field loads. */
             fieldSize: number | null;
-            /** @description The event's own issues, as the Sports page counts them, in the order SYNC (its latest field or scores run failed), RELEASE (its latest automatic check held it), OVERDUE (its results are missing). Empty when none. */
+            /** @description The event's own issues, as the Sports page counts them, in the order SYNC (its latest field or scores run failed), RELEASE (its latest automatic check held it). Empty when none. */
             issues: ({
                 /** @enum {string} */
                 type: "FINDINGS";
@@ -12090,7 +12034,7 @@ export interface components {
                     label: string;
                     /**
                      * Format: date-time
-                     * @description When the run was written, the event was last checked, or an overdue event should have ended (how late it is runs from here).
+                     * @description When the run was written, or the event was last checked.
                      */
                     occurredAt: string;
                     /** @description What an issue item links to. */
@@ -12123,7 +12067,7 @@ export interface components {
                     label: string;
                     /**
                      * Format: date-time
-                     * @description When the run was written, the event was last checked, or an overdue event should have ended (how late it is runs from here).
+                     * @description When the run was written, or the event was last checked.
                      */
                     occurredAt: string;
                     /** @description What an issue item links to. */
@@ -12141,34 +12085,6 @@ export interface components {
                     };
                     /** @description The ready checks that held it, in check order. */
                     failedChecks: ("NOT_STARTED" | "ROUNDS_SCHEDULED" | "FIELD_LOADED" | "TIERS_ASSIGNED" | "TIERS_FILLED" | "PRICES_ASSIGNED" | "BRACKET_COMPLETE" | "CONTEST_SETUPS_ON")[];
-                }[];
-            } | {
-                /** @enum {string} */
-                type: "OVERDUE";
-                /** @description How many released events are neither completed nor cancelled more than 4 hours after their last round or match should have ended. A never-released draft is never counted. */
-                count: number;
-                /** @description Most overdue first. */
-                items: {
-                    /** @description The item's name as data, never a sentence: a failed run's outcome summary as the sync history shows it (its sync kind when it has none), or an event's name. */
-                    label: string;
-                    /**
-                     * Format: date-time
-                     * @description When the run was written, the event was last checked, or an overdue event should have ended (how late it is runs from here).
-                     */
-                    occurredAt: string;
-                    /** @description What an issue item links to. */
-                    target: {
-                        /**
-                         * @description What the item opens: SYNC_RUN a provider sync run on the run log, SPORT_EVENT an event's page.
-                         * @enum {string}
-                         */
-                        type: "SYNC_RUN" | "SPORT_EVENT";
-                        /**
-                         * Format: uuid
-                         * @description The sync run's or event's id.
-                         */
-                        id: string;
-                    };
                 }[];
             })[];
             /**
@@ -12230,7 +12146,7 @@ export interface components {
                 } | null;
                 /** @description How many participants its field holds; null until a field loads. */
                 fieldSize: number | null;
-                /** @description The event's own issues, as the Sports page counts them, in the order SYNC (its latest field or scores run failed), RELEASE (its latest automatic check held it), OVERDUE (its results are missing). Empty when none. */
+                /** @description The event's own issues, as the Sports page counts them, in the order SYNC (its latest field or scores run failed), RELEASE (its latest automatic check held it). Empty when none. */
                 issues: ({
                     /** @enum {string} */
                     type: "FINDINGS";
@@ -12257,7 +12173,7 @@ export interface components {
                         label: string;
                         /**
                          * Format: date-time
-                         * @description When the run was written, the event was last checked, or an overdue event should have ended (how late it is runs from here).
+                         * @description When the run was written, or the event was last checked.
                          */
                         occurredAt: string;
                         /** @description What an issue item links to. */
@@ -12290,7 +12206,7 @@ export interface components {
                         label: string;
                         /**
                          * Format: date-time
-                         * @description When the run was written, the event was last checked, or an overdue event should have ended (how late it is runs from here).
+                         * @description When the run was written, or the event was last checked.
                          */
                         occurredAt: string;
                         /** @description What an issue item links to. */
@@ -12308,34 +12224,6 @@ export interface components {
                         };
                         /** @description The ready checks that held it, in check order. */
                         failedChecks: ("NOT_STARTED" | "ROUNDS_SCHEDULED" | "FIELD_LOADED" | "TIERS_ASSIGNED" | "TIERS_FILLED" | "PRICES_ASSIGNED" | "BRACKET_COMPLETE" | "CONTEST_SETUPS_ON")[];
-                    }[];
-                } | {
-                    /** @enum {string} */
-                    type: "OVERDUE";
-                    /** @description How many released events are neither completed nor cancelled more than 4 hours after their last round or match should have ended. A never-released draft is never counted. */
-                    count: number;
-                    /** @description Most overdue first. */
-                    items: {
-                        /** @description The item's name as data, never a sentence: a failed run's outcome summary as the sync history shows it (its sync kind when it has none), or an event's name. */
-                        label: string;
-                        /**
-                         * Format: date-time
-                         * @description When the run was written, the event was last checked, or an overdue event should have ended (how late it is runs from here).
-                         */
-                        occurredAt: string;
-                        /** @description What an issue item links to. */
-                        target: {
-                            /**
-                             * @description What the item opens: SYNC_RUN a provider sync run on the run log, SPORT_EVENT an event's page.
-                             * @enum {string}
-                             */
-                            type: "SYNC_RUN" | "SPORT_EVENT";
-                            /**
-                             * Format: uuid
-                             * @description The sync run's or event's id.
-                             */
-                            id: string;
-                        };
                     }[];
                 })[];
                 /**
@@ -12409,7 +12297,7 @@ export interface components {
                     changedCount: number | null;
                 } | null;
             }[];
-            /** @description The event's own issues as its League page row has them, in the order SYNC, RELEASE, OVERDUE. Empty when none. */
+            /** @description The event's own issues as its League page row has them, in the order SYNC, RELEASE. Empty when none. */
             issues: ({
                 /** @enum {string} */
                 type: "FINDINGS";
@@ -12436,7 +12324,7 @@ export interface components {
                     label: string;
                     /**
                      * Format: date-time
-                     * @description When the run was written, the event was last checked, or an overdue event should have ended (how late it is runs from here).
+                     * @description When the run was written, or the event was last checked.
                      */
                     occurredAt: string;
                     /** @description What an issue item links to. */
@@ -12469,7 +12357,7 @@ export interface components {
                     label: string;
                     /**
                      * Format: date-time
-                     * @description When the run was written, the event was last checked, or an overdue event should have ended (how late it is runs from here).
+                     * @description When the run was written, or the event was last checked.
                      */
                     occurredAt: string;
                     /** @description What an issue item links to. */
@@ -12487,34 +12375,6 @@ export interface components {
                     };
                     /** @description The ready checks that held it, in check order. */
                     failedChecks: ("NOT_STARTED" | "ROUNDS_SCHEDULED" | "FIELD_LOADED" | "TIERS_ASSIGNED" | "TIERS_FILLED" | "PRICES_ASSIGNED" | "BRACKET_COMPLETE" | "CONTEST_SETUPS_ON")[];
-                }[];
-            } | {
-                /** @enum {string} */
-                type: "OVERDUE";
-                /** @description How many released events are neither completed nor cancelled more than 4 hours after their last round or match should have ended. A never-released draft is never counted. */
-                count: number;
-                /** @description Most overdue first. */
-                items: {
-                    /** @description The item's name as data, never a sentence: a failed run's outcome summary as the sync history shows it (its sync kind when it has none), or an event's name. */
-                    label: string;
-                    /**
-                     * Format: date-time
-                     * @description When the run was written, the event was last checked, or an overdue event should have ended (how late it is runs from here).
-                     */
-                    occurredAt: string;
-                    /** @description What an issue item links to. */
-                    target: {
-                        /**
-                         * @description What the item opens: SYNC_RUN a provider sync run on the run log, SPORT_EVENT an event's page.
-                         * @enum {string}
-                         */
-                        type: "SYNC_RUN" | "SPORT_EVENT";
-                        /**
-                         * Format: uuid
-                         * @description The sync run's or event's id.
-                         */
-                        id: string;
-                    };
                 }[];
             })[];
             /**
@@ -12610,7 +12470,7 @@ export interface components {
                         changedCount: number | null;
                     } | null;
                 }[];
-                /** @description The event's own issues as its League page row has them, in the order SYNC, RELEASE, OVERDUE. Empty when none. */
+                /** @description The event's own issues as its League page row has them, in the order SYNC, RELEASE. Empty when none. */
                 issues: ({
                     /** @enum {string} */
                     type: "FINDINGS";
@@ -12637,7 +12497,7 @@ export interface components {
                         label: string;
                         /**
                          * Format: date-time
-                         * @description When the run was written, the event was last checked, or an overdue event should have ended (how late it is runs from here).
+                         * @description When the run was written, or the event was last checked.
                          */
                         occurredAt: string;
                         /** @description What an issue item links to. */
@@ -12670,7 +12530,7 @@ export interface components {
                         label: string;
                         /**
                          * Format: date-time
-                         * @description When the run was written, the event was last checked, or an overdue event should have ended (how late it is runs from here).
+                         * @description When the run was written, or the event was last checked.
                          */
                         occurredAt: string;
                         /** @description What an issue item links to. */
@@ -12688,34 +12548,6 @@ export interface components {
                         };
                         /** @description The ready checks that held it, in check order. */
                         failedChecks: ("NOT_STARTED" | "ROUNDS_SCHEDULED" | "FIELD_LOADED" | "TIERS_ASSIGNED" | "TIERS_FILLED" | "PRICES_ASSIGNED" | "BRACKET_COMPLETE" | "CONTEST_SETUPS_ON")[];
-                    }[];
-                } | {
-                    /** @enum {string} */
-                    type: "OVERDUE";
-                    /** @description How many released events are neither completed nor cancelled more than 4 hours after their last round or match should have ended. A never-released draft is never counted. */
-                    count: number;
-                    /** @description Most overdue first. */
-                    items: {
-                        /** @description The item's name as data, never a sentence: a failed run's outcome summary as the sync history shows it (its sync kind when it has none), or an event's name. */
-                        label: string;
-                        /**
-                         * Format: date-time
-                         * @description When the run was written, the event was last checked, or an overdue event should have ended (how late it is runs from here).
-                         */
-                        occurredAt: string;
-                        /** @description What an issue item links to. */
-                        target: {
-                            /**
-                             * @description What the item opens: SYNC_RUN a provider sync run on the run log, SPORT_EVENT an event's page.
-                             * @enum {string}
-                             */
-                            type: "SYNC_RUN" | "SPORT_EVENT";
-                            /**
-                             * Format: uuid
-                             * @description The sync run's or event's id.
-                             */
-                            id: string;
-                        };
                     }[];
                 })[];
                 /**
@@ -14217,7 +14049,7 @@ export interface components {
             /** @description CONTEST_SETUPS_ON: how many active contest setups the event's sport league offers; at least one passes. */
             value: number;
         };
-        /** @description Whether one selection type can start a contest on the event now. */
+        /** @description Whether one selection type can start a contest on the event now, and why not. */
         SportEventContestOpeningDto: {
             /**
              * @description A way to pick that the event's sport league offers.
@@ -14229,6 +14061,11 @@ export interface components {
              * @enum {string}
              */
             opening: "OPEN" | "NOT_YET" | "CLOSED";
+            /**
+             * @description Why the row is NOT_YET or CLOSED, null when OPEN. NOT_YET: EVENT_NOT_RELEASED (a draft) or FIELD_NOT_LOADED (no field yet). CLOSED: EVENT_STARTED (the event is under way or over). The event list never reads further, so it never answers BRACKET_NOT_SET or NO_GAME_LEFT, which an event page's offer reads.
+             * @enum {string|null}
+             */
+            reason: "EVENT_NOT_RELEASED" | "FIELD_NOT_LOADED" | "BRACKET_NOT_SET" | "EVENT_STARTED" | "NO_GAME_LEFT" | null;
         };
         /** @description The last automatic release try of an event: when, its result, and the checks that held it. */
         SportEventAutoReleaseCheckDto: {
@@ -14457,6 +14294,11 @@ export interface components {
                  * @enum {string}
                  */
                 opening: "OPEN" | "NOT_YET" | "CLOSED";
+                /**
+                 * @description Why the row is NOT_YET or CLOSED, null when OPEN. NOT_YET: EVENT_NOT_RELEASED (a draft) or FIELD_NOT_LOADED (no field yet). CLOSED: EVENT_STARTED (the event is under way or over). The event list never reads further, so it never answers BRACKET_NOT_SET or NO_GAME_LEFT, which an event page's offer reads.
+                 * @enum {string|null}
+                 */
+                reason: "EVENT_NOT_RELEASED" | "FIELD_NOT_LOADED" | "BRACKET_NOT_SET" | "EVENT_STARTED" | "NO_GAME_LEFT" | null;
             }[];
             /** @description Whether the tiers and prices of the event's first slot are locked: true once the event is released (#431, #2044). A tier or price write on a locked set is refused with 409 SPORT_EVENT_TIERS_LOCKED. */
             tiersLocked: boolean;
@@ -14877,6 +14719,11 @@ export interface components {
                      * @enum {string}
                      */
                     opening: "OPEN" | "NOT_YET" | "CLOSED";
+                    /**
+                     * @description Why the row is NOT_YET or CLOSED, null when OPEN. NOT_YET: EVENT_NOT_RELEASED (a draft) or FIELD_NOT_LOADED (no field yet). CLOSED: EVENT_STARTED (the event is under way or over). The event list never reads further, so it never answers BRACKET_NOT_SET or NO_GAME_LEFT, which an event page's offer reads.
+                     * @enum {string|null}
+                     */
+                    reason: "EVENT_NOT_RELEASED" | "FIELD_NOT_LOADED" | "BRACKET_NOT_SET" | "EVENT_STARTED" | "NO_GAME_LEFT" | null;
                 }[];
                 /** @description Whether the tiers and prices of the event's first slot are locked: true once the event is released (#431, #2044). A tier or price write on a locked set is refused with 409 SPORT_EVENT_TIERS_LOCKED. */
                 tiersLocked: boolean;
@@ -15276,6 +15123,11 @@ export interface components {
                      * @enum {string}
                      */
                     opening: "OPEN" | "NOT_YET" | "CLOSED";
+                    /**
+                     * @description Why the row is NOT_YET or CLOSED, null when OPEN. NOT_YET: EVENT_NOT_RELEASED (a draft) or FIELD_NOT_LOADED (no field yet). CLOSED: EVENT_STARTED (the event is under way or over). The event list never reads further, so it never answers BRACKET_NOT_SET or NO_GAME_LEFT, which an event page's offer reads.
+                     * @enum {string|null}
+                     */
+                    reason: "EVENT_NOT_RELEASED" | "FIELD_NOT_LOADED" | "BRACKET_NOT_SET" | "EVENT_STARTED" | "NO_GAME_LEFT" | null;
                 }[];
                 /** @description Whether the tiers and prices of the event's first slot are locked: true once the event is released (#431, #2044). A tier or price write on a locked set is refused with 409 SPORT_EVENT_TIERS_LOCKED. */
                 tiersLocked: boolean;
@@ -25032,6 +24884,11 @@ export interface components {
              * @enum {string}
              */
             state: "OPEN" | "NOT_YET";
+            /**
+             * @description What a NOT_YET offer waits for: EVENT_NOT_RELEASED, FIELD_NOT_LOADED or BRACKET_NOT_SET. Null when OPEN.
+             * @enum {string|null}
+             */
+            waitingFor: "EVENT_NOT_RELEASED" | "FIELD_NOT_LOADED" | "BRACKET_NOT_SET" | "EVENT_STARTED" | "NO_GAME_LEFT" | null;
             /** @description The Season slot an offer is shown with (#2010): of its slot definition's Season slots, the one under way, or else the soonest upcoming that can still take the contest. */
             nextSlot: {
                 /**
@@ -25530,6 +25387,11 @@ export interface components {
                  * @enum {string}
                  */
                 state: "OPEN" | "NOT_YET";
+                /**
+                 * @description What a NOT_YET offer waits for: EVENT_NOT_RELEASED, FIELD_NOT_LOADED or BRACKET_NOT_SET. Null when OPEN.
+                 * @enum {string|null}
+                 */
+                waitingFor: "EVENT_NOT_RELEASED" | "FIELD_NOT_LOADED" | "BRACKET_NOT_SET" | "EVENT_STARTED" | "NO_GAME_LEFT" | null;
                 /** @description The Season slot an offer is shown with (#2010): of its slot definition's Season slots, the one under way, or else the soonest upcoming that can still take the contest. */
                 nextSlot: {
                     /**
@@ -26031,6 +25893,11 @@ export interface components {
                      * @enum {string}
                      */
                     state: "OPEN" | "NOT_YET";
+                    /**
+                     * @description What a NOT_YET offer waits for: EVENT_NOT_RELEASED, FIELD_NOT_LOADED or BRACKET_NOT_SET. Null when OPEN.
+                     * @enum {string|null}
+                     */
+                    waitingFor: "EVENT_NOT_RELEASED" | "FIELD_NOT_LOADED" | "BRACKET_NOT_SET" | "EVENT_STARTED" | "NO_GAME_LEFT" | null;
                     /** @description The Season slot an offer is shown with (#2010): of its slot definition's Season slots, the one under way, or else the soonest upcoming that can still take the contest. */
                     nextSlot: {
                         /**
@@ -26543,6 +26410,11 @@ export interface components {
                      * @enum {string}
                      */
                     state: "OPEN" | "NOT_YET";
+                    /**
+                     * @description What a NOT_YET offer waits for: EVENT_NOT_RELEASED, FIELD_NOT_LOADED or BRACKET_NOT_SET. Null when OPEN.
+                     * @enum {string|null}
+                     */
+                    waitingFor: "EVENT_NOT_RELEASED" | "FIELD_NOT_LOADED" | "BRACKET_NOT_SET" | "EVENT_STARTED" | "NO_GAME_LEFT" | null;
                     /** @description The Season slot an offer is shown with (#2010): of its slot definition's Season slots, the one under way, or else the soonest upcoming that can still take the contest. */
                     nextSlot: {
                         /**
@@ -27904,7 +27776,7 @@ export interface components {
             webhookEventSet: "GAME_PERIODS" | "GAME_HALVES" | "GOLF_ROUNDS" | "NONE";
             /** @description How long a game may go between two of its notifications in normal play, in minutes; past it the live-score sweep warns that the webhook may have stopped. */
             quietAfterMinutes: number;
-            /** @description How long one of its games usually takes from its scheduled start, in minutes: a start plus this is when a game with no scheduled end should have ended, for the overdue results check. */
+            /** @description How long one of its games usually takes from its scheduled start, in minutes: a Game's start plus this is when it should have ended, for the Game result overdue finding (GAME_OVERDUE). */
             typicalGameMinutes: number;
             /** @description Whether the provider's adapter reads the league. A change takes effect when the server tasks next start. */
             isEnabled: boolean;
@@ -27965,7 +27837,7 @@ export interface components {
                 webhookEventSet: "GAME_PERIODS" | "GAME_HALVES" | "GOLF_ROUNDS" | "NONE";
                 /** @description How long a game may go between two of its notifications in normal play, in minutes; past it the live-score sweep warns that the webhook may have stopped. */
                 quietAfterMinutes: number;
-                /** @description How long one of its games usually takes from its scheduled start, in minutes: a start plus this is when a game with no scheduled end should have ended, for the overdue results check. */
+                /** @description How long one of its games usually takes from its scheduled start, in minutes: a Game's start plus this is when it should have ended, for the Game result overdue finding (GAME_OVERDUE). */
                 typicalGameMinutes: number;
                 /** @description Whether the provider's adapter reads the league. A change takes effect when the server tasks next start. */
                 isEnabled: boolean;
@@ -28055,7 +27927,7 @@ export interface components {
                     webhookEventSet: "GAME_PERIODS" | "GAME_HALVES" | "GOLF_ROUNDS" | "NONE";
                     /** @description How long a game may go between two of its notifications in normal play, in minutes; past it the live-score sweep warns that the webhook may have stopped. */
                     quietAfterMinutes: number;
-                    /** @description How long one of its games usually takes from its scheduled start, in minutes: a start plus this is when a game with no scheduled end should have ended, for the overdue results check. */
+                    /** @description How long one of its games usually takes from its scheduled start, in minutes: a Game's start plus this is when it should have ended, for the Game result overdue finding (GAME_OVERDUE). */
                     typicalGameMinutes: number;
                     /** @description Whether the provider's adapter reads the league. A change takes effect when the server tasks next start. */
                     isEnabled: boolean;
@@ -28135,7 +28007,7 @@ export interface components {
                     webhookEventSet: "GAME_PERIODS" | "GAME_HALVES" | "GOLF_ROUNDS" | "NONE";
                     /** @description How long a game may go between two of its notifications in normal play, in minutes; past it the live-score sweep warns that the webhook may have stopped. */
                     quietAfterMinutes: number;
-                    /** @description How long one of its games usually takes from its scheduled start, in minutes: a start plus this is when a game with no scheduled end should have ended, for the overdue results check. */
+                    /** @description How long one of its games usually takes from its scheduled start, in minutes: a Game's start plus this is when it should have ended, for the Game result overdue finding (GAME_OVERDUE). */
                     typicalGameMinutes: number;
                     /** @description Whether the provider's adapter reads the league. A change takes effect when the server tasks next start. */
                     isEnabled: boolean;
@@ -28173,7 +28045,7 @@ export interface components {
                 webhookEventSet: "GAME_PERIODS" | "GAME_HALVES" | "GOLF_ROUNDS" | "NONE";
                 /** @description How long a game may go between two of its notifications in normal play, in minutes; past it the live-score sweep warns that the webhook may have stopped. */
                 quietAfterMinutes: number;
-                /** @description How long one of its games usually takes from its scheduled start, in minutes: a start plus this is when a game with no scheduled end should have ended, for the overdue results check. */
+                /** @description How long one of its games usually takes from its scheduled start, in minutes: a Game's start plus this is when it should have ended, for the Game result overdue finding (GAME_OVERDUE). */
                 typicalGameMinutes: number;
                 /** @description Whether the provider's adapter reads the league. A change takes effect when the server tasks next start. */
                 isEnabled: boolean;
@@ -28288,7 +28160,7 @@ export interface components {
                         webhookEventSet: "GAME_PERIODS" | "GAME_HALVES" | "GOLF_ROUNDS" | "NONE";
                         /** @description How long a game may go between two of its notifications in normal play, in minutes; past it the live-score sweep warns that the webhook may have stopped. */
                         quietAfterMinutes: number;
-                        /** @description How long one of its games usually takes from its scheduled start, in minutes: a start plus this is when a game with no scheduled end should have ended, for the overdue results check. */
+                        /** @description How long one of its games usually takes from its scheduled start, in minutes: a Game's start plus this is when it should have ended, for the Game result overdue finding (GAME_OVERDUE). */
                         typicalGameMinutes: number;
                         /** @description Whether the provider's adapter reads the league. A change takes effect when the server tasks next start. */
                         isEnabled: boolean;
@@ -29075,7 +28947,7 @@ export interface components {
              * @description What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here. PROVIDER_RATE_LIMITED: the Provider has rate limited every call for a while (WARNING after 15 minutes, ERROR after the league's quiet threshold); it resolves on the Provider's next answer. SLOT_NAME_UNMATCHED: a tournament whose normalized name (providerValue) no NAME_PATTERN mapping of the league matches, so it has no Season slot (INFO; LINK_SLOT adds the name as a pattern). SLOT_NAME_AMBIGUOUS: a tournament whose normalized name matches more than one slot, or one another tournament already has (ERROR). SLOT_SEASON_COMPETITION_MISSING: a tournament whose name matched a slot whose phase the Season does not have, so no Season slot could be made (ERROR). SYNC_FAILED: a sync run of the league (of the event, when it names one) ended FAILED, and no run of the same sync has completed since (ERROR, syncKind says which sync).
              * @enum {string}
              */
-            kind: "PROVIDER_RATE_LIMITED" | "UNMAPPED_PARTICIPANT" | "WEBHOOK_SECRET_MISSING" | "SEASON_MISSING" | "NO_PROVIDER_PARTICIPANTS" | "NO_PROVIDER_LIVE_SCORES" | "GAMES_NOT_SYNCED" | "SLOT_VALUE_UNMAPPED" | "PROVIDER_LEAGUE_UNKNOWN" | "SLOT_NAME_UNMATCHED" | "SLOT_NAME_AMBIGUOUS" | "SLOT_SEASON_COMPETITION_MISSING" | "SLOT_OUTSIDE_SEASON" | "GAMES_UNPLACED" | "SLOT_DATES_NEEDED" | "FIELD_HAS_NO_ORDER" | "GAME_UNKNOWN" | "GAME_ID_REISSUED" | "GAME_MOVED" | "TIEBREAKER_GAME_REPLACED" | "FIELD_TEAM_WITHOUT_GAME" | "SYNC_FAILED" | "CONFERENCE_UNMAPPED" | "DIVISION_UNMAPPED" | "CONFERENCE_TEAMS_MISSING" | "PROVIDER_PLAN_HAS_NO_STATS" | "BOX_SCORE_PLAYER_NOT_IN_GAME";
+            kind: "PROVIDER_RATE_LIMITED" | "UNMAPPED_PARTICIPANT" | "WEBHOOK_SECRET_MISSING" | "SEASON_MISSING" | "NO_PROVIDER_PARTICIPANTS" | "NO_PROVIDER_LIVE_SCORES" | "GAMES_NOT_SYNCED" | "SLOT_VALUE_UNMAPPED" | "PROVIDER_LEAGUE_UNKNOWN" | "SLOT_NAME_UNMATCHED" | "SLOT_NAME_AMBIGUOUS" | "SLOT_SEASON_COMPETITION_MISSING" | "SLOT_OUTSIDE_SEASON" | "GAMES_UNPLACED" | "SLOT_DATES_NEEDED" | "FIELD_HAS_NO_ORDER" | "GAME_UNKNOWN" | "GAME_ID_REISSUED" | "GAME_MOVED" | "TIEBREAKER_GAME_REPLACED" | "FIELD_TEAM_WITHOUT_GAME" | "SYNC_FAILED" | "CONFERENCE_UNMAPPED" | "DIVISION_UNMAPPED" | "CONFERENCE_TEAMS_MISSING" | "PROVIDER_PLAN_HAS_NO_STATS" | "BOX_SCORE_PLAYER_NOT_IN_GAME" | "GAME_OVERDUE";
             /**
              * @description ERROR: synced data is wrong or missing until someone acts (it also raises the alarm when it opens). WARNING: something the sync skipped or guessed at. INFO: something it noticed and left alone on purpose.
              * @enum {string}
@@ -29200,7 +29072,7 @@ export interface components {
                  * @description What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here. PROVIDER_RATE_LIMITED: the Provider has rate limited every call for a while (WARNING after 15 minutes, ERROR after the league's quiet threshold); it resolves on the Provider's next answer. SLOT_NAME_UNMATCHED: a tournament whose normalized name (providerValue) no NAME_PATTERN mapping of the league matches, so it has no Season slot (INFO; LINK_SLOT adds the name as a pattern). SLOT_NAME_AMBIGUOUS: a tournament whose normalized name matches more than one slot, or one another tournament already has (ERROR). SLOT_SEASON_COMPETITION_MISSING: a tournament whose name matched a slot whose phase the Season does not have, so no Season slot could be made (ERROR). SYNC_FAILED: a sync run of the league (of the event, when it names one) ended FAILED, and no run of the same sync has completed since (ERROR, syncKind says which sync).
                  * @enum {string}
                  */
-                kind: "PROVIDER_RATE_LIMITED" | "UNMAPPED_PARTICIPANT" | "WEBHOOK_SECRET_MISSING" | "SEASON_MISSING" | "NO_PROVIDER_PARTICIPANTS" | "NO_PROVIDER_LIVE_SCORES" | "GAMES_NOT_SYNCED" | "SLOT_VALUE_UNMAPPED" | "PROVIDER_LEAGUE_UNKNOWN" | "SLOT_NAME_UNMATCHED" | "SLOT_NAME_AMBIGUOUS" | "SLOT_SEASON_COMPETITION_MISSING" | "SLOT_OUTSIDE_SEASON" | "GAMES_UNPLACED" | "SLOT_DATES_NEEDED" | "FIELD_HAS_NO_ORDER" | "GAME_UNKNOWN" | "GAME_ID_REISSUED" | "GAME_MOVED" | "TIEBREAKER_GAME_REPLACED" | "FIELD_TEAM_WITHOUT_GAME" | "SYNC_FAILED" | "CONFERENCE_UNMAPPED" | "DIVISION_UNMAPPED" | "CONFERENCE_TEAMS_MISSING" | "PROVIDER_PLAN_HAS_NO_STATS" | "BOX_SCORE_PLAYER_NOT_IN_GAME";
+                kind: "PROVIDER_RATE_LIMITED" | "UNMAPPED_PARTICIPANT" | "WEBHOOK_SECRET_MISSING" | "SEASON_MISSING" | "NO_PROVIDER_PARTICIPANTS" | "NO_PROVIDER_LIVE_SCORES" | "GAMES_NOT_SYNCED" | "SLOT_VALUE_UNMAPPED" | "PROVIDER_LEAGUE_UNKNOWN" | "SLOT_NAME_UNMATCHED" | "SLOT_NAME_AMBIGUOUS" | "SLOT_SEASON_COMPETITION_MISSING" | "SLOT_OUTSIDE_SEASON" | "GAMES_UNPLACED" | "SLOT_DATES_NEEDED" | "FIELD_HAS_NO_ORDER" | "GAME_UNKNOWN" | "GAME_ID_REISSUED" | "GAME_MOVED" | "TIEBREAKER_GAME_REPLACED" | "FIELD_TEAM_WITHOUT_GAME" | "SYNC_FAILED" | "CONFERENCE_UNMAPPED" | "DIVISION_UNMAPPED" | "CONFERENCE_TEAMS_MISSING" | "PROVIDER_PLAN_HAS_NO_STATS" | "BOX_SCORE_PLAYER_NOT_IN_GAME" | "GAME_OVERDUE";
                 /**
                  * @description ERROR: synced data is wrong or missing until someone acts (it also raises the alarm when it opens). WARNING: something the sync skipped or guessed at. INFO: something it noticed and left alone on purpose.
                  * @enum {string}
@@ -29280,7 +29152,7 @@ export interface components {
                  * @description What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here. PROVIDER_RATE_LIMITED: the Provider has rate limited every call for a while (WARNING after 15 minutes, ERROR after the league's quiet threshold); it resolves on the Provider's next answer. SLOT_NAME_UNMATCHED: a tournament whose normalized name (providerValue) no NAME_PATTERN mapping of the league matches, so it has no Season slot (INFO; LINK_SLOT adds the name as a pattern). SLOT_NAME_AMBIGUOUS: a tournament whose normalized name matches more than one slot, or one another tournament already has (ERROR). SLOT_SEASON_COMPETITION_MISSING: a tournament whose name matched a slot whose phase the Season does not have, so no Season slot could be made (ERROR). SYNC_FAILED: a sync run of the league (of the event, when it names one) ended FAILED, and no run of the same sync has completed since (ERROR, syncKind says which sync).
                  * @enum {string}
                  */
-                kind: "PROVIDER_RATE_LIMITED" | "UNMAPPED_PARTICIPANT" | "WEBHOOK_SECRET_MISSING" | "SEASON_MISSING" | "NO_PROVIDER_PARTICIPANTS" | "NO_PROVIDER_LIVE_SCORES" | "GAMES_NOT_SYNCED" | "SLOT_VALUE_UNMAPPED" | "PROVIDER_LEAGUE_UNKNOWN" | "SLOT_NAME_UNMATCHED" | "SLOT_NAME_AMBIGUOUS" | "SLOT_SEASON_COMPETITION_MISSING" | "SLOT_OUTSIDE_SEASON" | "GAMES_UNPLACED" | "SLOT_DATES_NEEDED" | "FIELD_HAS_NO_ORDER" | "GAME_UNKNOWN" | "GAME_ID_REISSUED" | "GAME_MOVED" | "TIEBREAKER_GAME_REPLACED" | "FIELD_TEAM_WITHOUT_GAME" | "SYNC_FAILED" | "CONFERENCE_UNMAPPED" | "DIVISION_UNMAPPED" | "CONFERENCE_TEAMS_MISSING" | "PROVIDER_PLAN_HAS_NO_STATS" | "BOX_SCORE_PLAYER_NOT_IN_GAME";
+                kind: "PROVIDER_RATE_LIMITED" | "UNMAPPED_PARTICIPANT" | "WEBHOOK_SECRET_MISSING" | "SEASON_MISSING" | "NO_PROVIDER_PARTICIPANTS" | "NO_PROVIDER_LIVE_SCORES" | "GAMES_NOT_SYNCED" | "SLOT_VALUE_UNMAPPED" | "PROVIDER_LEAGUE_UNKNOWN" | "SLOT_NAME_UNMATCHED" | "SLOT_NAME_AMBIGUOUS" | "SLOT_SEASON_COMPETITION_MISSING" | "SLOT_OUTSIDE_SEASON" | "GAMES_UNPLACED" | "SLOT_DATES_NEEDED" | "FIELD_HAS_NO_ORDER" | "GAME_UNKNOWN" | "GAME_ID_REISSUED" | "GAME_MOVED" | "TIEBREAKER_GAME_REPLACED" | "FIELD_TEAM_WITHOUT_GAME" | "SYNC_FAILED" | "CONFERENCE_UNMAPPED" | "DIVISION_UNMAPPED" | "CONFERENCE_TEAMS_MISSING" | "PROVIDER_PLAN_HAS_NO_STATS" | "BOX_SCORE_PLAYER_NOT_IN_GAME" | "GAME_OVERDUE";
                 /**
                  * @description ERROR: synced data is wrong or missing until someone acts (it also raises the alarm when it opens). WARNING: something the sync skipped or guessed at. INFO: something it noticed and left alone on purpose.
                  * @enum {string}
@@ -33677,7 +33549,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
-            /** @description The event, format or template cannot make this contest. The event: SPORT_EVENT_NOT_FOUND, SPORT_EVENT_NOT_RELEASED, SPORT_EVENT_FIELD_NOT_LOADED, SPORT_EVENT_ALREADY_STARTED. The format: CONTEST_FORMAT_NOT_ALLOWED. The games of a pick'em or survivor contest: CONTEST_EVENT_HAS_NO_GAMES, CONTEST_EVENT_GAME_UNDECIDED, or CONTEST_EVENT_SPREAD_MISSING (a pick'em pool against the spread on a week with a game lacking its spread). CONTEST_SPREAD_NOT_OFFERED: a pick'em pool against the spread in a sport whose pools have no spread (#792). The selection type: CONTEST_SELECTION_TYPE_NOT_ALLOWED (the event's sport does not offer it). The coverage: CONTEST_COVERAGE_NO_LISTED_SLOT (the events hold none of the slots the template lists), CONTEST_COVERAGE_SLOT_NOT_CHOSEN (a one-slot template lists several of them and no `startingSlotId` chooses one), CONTEST_COVERAGE_SLOT_NOT_COVERABLE (`startingSlotId` is not a listed slot of the events). The configuration: CONTEST_RULES_SELECTION_TYPE_MISMATCH (rules of another selection type than the contest's), CONTEST_TIER_FIELD_OUT_OF_RANGE, CONTEST_BUDGET_FIELD_OUT_OF_RANGE (counted scores above the roster size), CONTEST_CONFIGURATION_INVALID (template missing, inactive, or for another format or selection type), or CONTEST_CONFIG_TEMPLATE_LEAGUE_MISMATCH (the template is one sport league's own preset and the event belongs to another league; a template with no sport league is offered for every league of its sport). */
+            /** @description The event, format or template cannot make this contest. The event: SPORT_EVENT_NOT_FOUND, SPORT_EVENT_NOT_RELEASED, SPORT_EVENT_FIELD_NOT_LOADED. The cutoff, one code per kind: CONTEST_FIRST_GAME_STARTED (the event has started) or CONTEST_SQUARES_GAME_STARTED (the squares game has kicked off). The format: CONTEST_FORMAT_NOT_ALLOWED. The games of a pick'em or survivor contest: CONTEST_EVENT_HAS_NO_GAMES, CONTEST_EVENT_GAME_UNDECIDED, or CONTEST_EVENT_SPREAD_MISSING (a pick'em pool against the spread on a week with a game lacking its spread). CONTEST_SPREAD_NOT_OFFERED: a pick'em pool against the spread in a sport whose pools have no spread (#792). The selection type: CONTEST_SELECTION_TYPE_NOT_ALLOWED (the event's sport does not offer it). The coverage: CONTEST_COVERAGE_NO_LISTED_SLOT (the events hold none of the slots the template lists), CONTEST_COVERAGE_SLOT_NOT_CHOSEN (a one-slot template lists several of them and no `startingSlotId` chooses one), CONTEST_COVERAGE_SLOT_NOT_COVERABLE (`startingSlotId` is not a listed slot of the events). The configuration: CONTEST_RULES_SELECTION_TYPE_MISMATCH (rules of another selection type than the contest's), CONTEST_TIER_FIELD_OUT_OF_RANGE, CONTEST_BUDGET_FIELD_OUT_OF_RANGE (counted scores above the roster size), CONTEST_CONFIGURATION_INVALID (template missing, inactive, or for another format or selection type), or CONTEST_CONFIG_TEMPLATE_LEAGUE_MISMATCH (the template is one sport league's own preset and the event belongs to another league; a template with no sport league is offered for every league of its sport). */
             422: {
                 headers: {
                     [name: string]: unknown;
@@ -34149,7 +34021,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
-            /** @description SPORT_EVENT_NOT_RELEASED, SPORT_EVENT_FIELD_NOT_LOADED or SPORT_EVENT_ALREADY_STARTED — an event contests cannot be built on. CONTEST_EVENTS_LEAGUE_MISMATCH — an event from another sport league. CONTEST_EVENTS_SEASON_MISMATCH — an event of another Season than the contest's, fixed at creation. CONTEST_COVERAGE_NO_LISTED_SLOT, CONTEST_COVERAGE_SLOT_NOT_CHOSEN or CONTEST_COVERAGE_SLOT_NOT_COVERABLE — the events and starting slot do not give the template a slot to cover, as at create. CONTEST_DRAW_SINGLE_EVENT, CONTEST_BRACKET_SINGLE_EVENT or CONTEST_SQUARES_SINGLE_EVENT — a one-event contest given more. CONTEST_TIER_FIELD_OUT_OF_RANGE or CONTEST_SCORING_ROUNDS_MISMATCH — the rules do not fit the new event. CONTEST_EVENT_HAS_NO_GAMES, CONTEST_EVENT_GAME_UNDECIDED or CONTEST_EVENT_SPREAD_MISSING — a week that cannot be picked under the pick'em rules. */
+            /** @description SPORT_EVENT_NOT_RELEASED or SPORT_EVENT_FIELD_NOT_LOADED — an event contests cannot be built on yet. CONTEST_FIRST_GAME_STARTED or CONTEST_SQUARES_GAME_STARTED — its cutoff has passed: the event has started, or the squares game has kicked off. CONTEST_EVENTS_LEAGUE_MISMATCH — an event from another sport league. CONTEST_EVENTS_SEASON_MISMATCH — an event of another Season than the contest's, fixed at creation. CONTEST_COVERAGE_NO_LISTED_SLOT, CONTEST_COVERAGE_SLOT_NOT_CHOSEN or CONTEST_COVERAGE_SLOT_NOT_COVERABLE — the events and starting slot do not give the template a slot to cover, as at create. CONTEST_DRAW_SINGLE_EVENT, CONTEST_BRACKET_SINGLE_EVENT or CONTEST_SQUARES_SINGLE_EVENT — a one-event contest given more. CONTEST_TIER_FIELD_OUT_OF_RANGE or CONTEST_SCORING_ROUNDS_MISMATCH — the rules do not fit the new event. CONTEST_EVENT_HAS_NO_GAMES, CONTEST_EVENT_GAME_UNDECIDED or CONTEST_EVENT_SPREAD_MISSING — a week that cannot be picked under the pick'em rules. */
             422: {
                 headers: {
                     [name: string]: unknown;

@@ -7,7 +7,6 @@ import { expect } from '@jest/globals';
 import {
   AutoReleaseCheckOutcome,
   FieldOrderBasis,
-  OVERDUE_AFTER_MS,
   ParticipantAddedBy,
   ProviderSyncKind,
   ProviderSyncRunStatus,
@@ -16,7 +15,6 @@ import {
   SportEventReleaseAtKind,
   SportEventReleaseMode,
   SportEventStatus,
-  SportLeagueIssueTargetType,
   SportLeagueIssueType,
   SportLeagueSyncHealth,
   SportLeagueSyncMode,
@@ -43,7 +41,6 @@ import {
 
 const NOW = new Date('2027-04-15T12:00:00.000Z');
 const DAY = 24 * 60 * 60 * 1000;
-const MINUTE = 60 * 1000;
 const at = (iso: string) => new Date(iso);
 
 function league(overrides: Partial<SportLeaguePageLeague> = {}): SportLeaguePageLeague {
@@ -70,7 +67,7 @@ function pageEvent(overrides: Partial<SportLeaguePageEvent> = {}): SportLeaguePa
 }
 
 function eventFacts(overrides: Partial<SportLeagueEventFacts> = {}): SportLeagueEventFacts {
-  return { league: league(), events: [pageEvent()], fieldSizes: new Map(), latestRunsByEvent: new Map(), overdueCandidates: [], ...overrides };
+  return { league: league(), events: [pageEvent()], fieldSizes: new Map(), latestRunsByEvent: new Map(), ...overrides };
 }
 
 function fieldRow(overrides: Partial<SportEventPageFieldRow> = {}): SportEventPageFieldRow {
@@ -78,10 +75,10 @@ function fieldRow(overrides: Partial<SportEventPageFieldRow> = {}): SportEventPa
 }
 
 function eventPageFacts(overrides: Partial<SportEventPageFacts> = {}): SportEventPageFacts {
-  return { league: league(), event: pageEvent(), latestRuns: [], overdueCandidates: [], field: [], eventPagePath: null, ...overrides };
+  return { league: league(), event: pageEvent(), latestRuns: [], field: [], eventPagePath: null, ...overrides };
 }
 
-const context = { webhookProviderIds: [] as string[], syncsRoster: false, now: NOW };
+const context = { webhookProviderIds: [] as string[], syncsRoster: false };
 
 describe('buildSportLeagueSyncs', () => {
   it('reports every sync kind in order, each with its latest run and its health from that run', () => {
@@ -129,7 +126,7 @@ describe('buildSportLeagueSyncs', () => {
 
 describe('buildSportLeagueEvents', () => {
   it('plans an automatic draft\'s release for its start less its league\'s window', () => {
-    const [row] = buildSportLeagueEvents(eventFacts(), NOW);
+    const [row] = buildSportLeagueEvents(eventFacts());
 
     expect(row).toMatchObject({ releaseMode: SportEventReleaseMode.AUTO, releaseAtKind: SportEventReleaseAtKind.PLANNED });
     expect(row.releaseAt).toEqual(new Date(at('2027-04-20T17:00:00.000Z').getTime() - 7 * DAY));
@@ -142,7 +139,7 @@ describe('buildSportLeagueEvents', () => {
         pageEvent({ status: SportEventStatus.SCHEDULED, releasedAt }),
         pageEvent({ id: 'e2', status: SportEventStatus.SCHEDULED, releasedAt, isTestData: true }),
       ],
-    }), NOW);
+    }));
 
     expect(auto).toMatchObject({ releaseMode: SportEventReleaseMode.AUTO, releaseAt: releasedAt, releaseAtKind: SportEventReleaseAtKind.ACTUAL });
     expect(manual).toMatchObject({ releaseMode: SportEventReleaseMode.MANUAL, releaseAt: releasedAt, releaseAtKind: SportEventReleaseAtKind.ACTUAL });
@@ -150,9 +147,9 @@ describe('buildSportLeagueEvents', () => {
 
   it('gives a manual draft, and an event released before release times were kept, no release date', () => {
     const [unsynced, offLeague, oldRelease] = [
-      buildSportLeagueEvents(eventFacts({ events: [pageEvent({ isTestData: true })] }), NOW)[0],
-      buildSportLeagueEvents(eventFacts({ league: league({ autoReleaseDaysBeforeStart: null }) }), NOW)[0],
-      buildSportLeagueEvents(eventFacts({ events: [pageEvent({ status: SportEventStatus.COMPLETED })] }), NOW)[0],
+      buildSportLeagueEvents(eventFacts({ events: [pageEvent({ isTestData: true })] }))[0],
+      buildSportLeagueEvents(eventFacts({ league: league({ autoReleaseDaysBeforeStart: null }) }))[0],
+      buildSportLeagueEvents(eventFacts({ events: [pageEvent({ status: SportEventStatus.COMPLETED })] }))[0],
     ];
 
     expect(unsynced).toMatchObject({ releaseMode: SportEventReleaseMode.MANUAL, releaseAt: null, releaseAtKind: null });
@@ -160,9 +157,8 @@ describe('buildSportLeagueEvents', () => {
     expect(oldRelease).toMatchObject({ releaseAt: null, releaseAtKind: null });
   });
 
-  it('gives an event its own SYNC, RELEASE and OVERDUE issues, its field size and its last sync', () => {
+  it('gives an event its own SYNC and RELEASE issues, its field size and its last sync', () => {
     const check = { checkedAt: at('2027-04-15T11:00:00.000Z'), outcome: AutoReleaseCheckOutcome.HELD, failedChecks: [ReleaseCheckKey.TIERS_ASSIGNED] };
-    const expectedEnd = new Date(NOW.getTime() - OVERDUE_AFTER_MS - MINUTE);
     const [row] = buildSportLeagueEvents(eventFacts({
       events: [pageEvent({ lastReleaseCheck: check })],
       fieldSizes: new Map([['e1', 26]]),
@@ -170,26 +166,23 @@ describe('buildSportLeagueEvents', () => {
         run(ProviderSyncKind.SCORES, { status: ProviderSyncRunStatus.FAILED, createdAt: at('2027-04-15T11:30:00.000Z') }),
         run(ProviderSyncKind.FIELD),
       ]]]),
-      overdueCandidates: [{ id: 'e1', name: 'Opening Day', sport: Sport.BASEBALL, status: SportEventStatus.IN_PROGRESS, startDate: at('2027-04-14T00:00:00.000Z'), endDate: expectedEnd, rounds: [], typicalGameMinutes: 180 }],
-    }), NOW);
+    }));
 
     expect(row.issues.map((issue) => [issue.type, issue.count])).toEqual([
       [SportLeagueIssueType.SYNC, 1],
       [SportLeagueIssueType.RELEASE, 1],
-      [SportLeagueIssueType.OVERDUE, 1],
     ]);
-    expect(row.issues[2]?.items).toEqual([{ label: 'Opening Day', occurredAt: expectedEnd, target: { type: SportLeagueIssueTargetType.SPORT_EVENT, id: 'e1' } }]);
     expect(row).toMatchObject({ fieldSize: 26, lastSyncedAt: at('2027-04-15T11:30:00.000Z'), lastReleaseCheck: check });
   });
 
   it('gives an event with no runs, no field and nothing wrong no issues, no field size and no last sync', () => {
-    const [row] = buildSportLeagueEvents(eventFacts(), NOW);
+    const [row] = buildSportLeagueEvents(eventFacts());
 
     expect(row).toMatchObject({ issues: [], fieldSize: null, lastSyncedAt: null });
   });
 
   it('sends each event in the shape the contract declares', () => {
-    const [row] = buildSportLeagueEvents(eventFacts({ events: [pageEvent({ id: '7b2eac0a-7c2a-4e3a-9f65-4b8a0a5a6d32', lastReleaseCheck: { checkedAt: NOW, outcome: AutoReleaseCheckOutcome.HELD, failedChecks: [ReleaseCheckKey.FIELD_LOADED] } })] }), NOW);
+    const [row] = buildSportLeagueEvents(eventFacts({ events: [pageEvent({ id: '7b2eac0a-7c2a-4e3a-9f65-4b8a0a5a6d32', lastReleaseCheck: { checkedAt: NOW, outcome: AutoReleaseCheckOutcome.HELD, failedChecks: [ReleaseCheckKey.FIELD_LOADED] } })] }));
 
     expect(SportLeagueEventOverviewDtoSchema.parse(mapSportLeagueEventOverviewToDto(row))).toBeTruthy();
   });
@@ -235,16 +228,6 @@ describe('buildSportEventOverview', () => {
       releaseAt: new Date(at('2027-04-20T17:00:00.000Z').getTime() - 7 * DAY),
       releaseAtKind: SportEventReleaseAtKind.PLANNED,
     });
-  });
-
-  it('counts only this event\'s overdue candidate as its OVERDUE issue', () => {
-    const expectedEnd = new Date(NOW.getTime() - OVERDUE_AFTER_MS - MINUTE);
-    const candidate = { id: 'e1', name: 'Opening Day', sport: Sport.BASEBALL, status: SportEventStatus.IN_PROGRESS, startDate: at('2027-04-14T00:00:00.000Z'), endDate: expectedEnd, rounds: [], typicalGameMinutes: 180 };
-    const overview = buildSportEventOverview(eventPageFacts({ overdueCandidates: [candidate, { ...candidate, id: 'e2' }] }), context);
-
-    expect(overview.issues).toEqual([{
-      type: SportLeagueIssueType.OVERDUE, count: 1, items: [{ label: 'Opening Day', occurredAt: expectedEnd, target: { type: SportLeagueIssueTargetType.SPORT_EVENT, id: 'e1' } }],
-    }]);
   });
 
   it('orders the active field by the first value every active participant has, ignoring a withdrawn one without it', () => {
@@ -308,7 +291,6 @@ describe('SportLeaguePageService', () => {
   const service = (rows: SportLeaguePageParticipant[] | null) => new SportLeaguePageService({
     reader: makeReader(rows),
     webhookProviderIds: () => [],
-    now: () => NOW,
   });
 
   it('marks a participant with a provider mapping added by the feed, with its feed id and when the feed last listed it, and one without added by an admin', async () => {
@@ -332,7 +314,7 @@ describe('SportLeaguePageService', () => {
       isCurrent: false, readBySync: false, providerMappings: [], phases: [],
     });
     const reader = { ...makeReader([]), readSeasons: () => Promise.resolve([season('s2025', 2025), season('s2026', 2026)]) };
-    const seasons = await new SportLeaguePageService({ reader, webhookProviderIds: () => [], now: () => NOW }).listSeasons('mlb');
+    const seasons = await new SportLeaguePageService({ reader, webhookProviderIds: () => [] }).listSeasons('mlb');
 
     expect(seasons?.map((each) => each.id)).toEqual(['s2026', 's2025']);
   });

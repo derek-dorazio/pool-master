@@ -12,7 +12,6 @@ import type {
   MatchStatus,
   PlatformPricingProfile,
   ProviderEventRef,
-  OverdueEventFacts,
   SportEventParticipantStatus,
   Participant,
   ParticipantType,
@@ -611,17 +610,12 @@ export interface SportLeagueOverviewFacts {
   currentSeasonSpans: Map<string, SeasonSpan>;
   /** The earliest start after `now` among each sport league's events not cancelled; absent when none. */
   nextEventStarts: Map<string, Date>;
-  /** Every event that may be overdue (#1865): released, neither completed nor cancelled, started long enough ago. */
-  overdueCandidates: SportLeagueOverdueCandidate[];
   /**
    * Each sport league's OPEN sync findings, per severity (#1999); a league with none has no entry.
    * A failed sync whose run is kept is left out, since the Sync chip lists it with its run.
    */
   openFindings: ProviderSyncFindingOpenCount[];
 }
-
-/** An event whose results may be overdue, in its sport league (#1865). */
-export type SportLeagueOverdueCandidate = OverdueEventFacts & { sportLeagueId: string };
 
 export interface SportLeagueOverviewReader {
   /** Every sport league's facts, as of `now`. */
@@ -683,8 +677,6 @@ export interface SportLeagueEventFacts {
   fieldSizes: Map<string, number>;
   /** Each event's latest run of each kind. */
   latestRunsByEvent: Map<string, SportLeaguePageRun[]>;
-  /** The league's events that may be overdue. */
-  overdueCandidates: OverdueEventFacts[];
 }
 
 /** One participant of the league with its provider mapping in the league, if any. */
@@ -730,8 +722,6 @@ export interface SportEventPageFacts {
   event: SportLeaguePageEvent;
   /** The event's latest run of each kind. */
   latestRuns: SportLeaguePageRun[];
-  /** The event itself when it may be overdue; empty otherwise. */
-  overdueCandidates: OverdueEventFacts[];
   field: SportEventPageFieldRow[];
   /**
    * The address of the active event page that offers the event's series; the first by
@@ -744,7 +734,7 @@ export interface SportLeaguePageReader {
   /** Null when the league does not exist. */
   readSyncFacts(sportLeagueId: string): Promise<SportLeagueSyncFacts | null>;
   /** Null when the league does not exist. */
-  readEventFacts(sportLeagueId: string, now: Date): Promise<SportLeagueEventFacts | null>;
+  readEventFacts(sportLeagueId: string): Promise<SportLeagueEventFacts | null>;
   /** Null when the league does not exist. */
   readParticipants(sportLeagueId: string): Promise<SportLeaguePageParticipant[] | null>;
   /**
@@ -758,7 +748,7 @@ export interface SportLeaguePageReader {
    */
   readSeasons(sportLeagueId: string): Promise<SportLeagueSeasonDetail[] | null>;
   /** One event's facts (#1889). Null when the event does not exist. */
-  readEventPageFacts(sportEventId: string, now: Date): Promise<SportEventPageFacts | null>;
+  readEventPageFacts(sportEventId: string): Promise<SportEventPageFacts | null>;
   /** The league's positions with their provider codes, by display order (#2001). Null when the league does not exist. */
   readPositions(sportLeagueId: string): Promise<SportLeaguePosition[] | null>;
   /** The league's conferences with their divisions and provider codes, by display order (#2052). Null when the league does not exist. */

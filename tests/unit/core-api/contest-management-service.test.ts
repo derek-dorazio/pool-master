@@ -2,6 +2,8 @@ import { withHomeAway, legacyMatch, squaresGameOf } from '../../support/match-si
 import { expect } from '@jest/globals';
 import {
   ContestFormat,
+  ContestOpening,
+  ContestOpeningReason,
   CupWeight,
   BackgroundJobType,
   ContestStatus,
@@ -65,6 +67,7 @@ import {
   type ContestCreateSportEventReader,
   type ContestManagementServiceDeps,
 } from '../../../packages/core-api/src/modules/contest-management/service';
+import { contestOpening } from '../../../packages/core-api/src/modules/contest-management/contest-opening';
 import type { ContestOpenedNotice } from '../../../packages/core-api/src/modules/notifications';
 import type { CupService } from '../../../packages/core-api/src/modules/cups/service';
 import { cutoffTiming } from '../../../packages/core-api/src/modules/contests/entry-window';
@@ -1429,15 +1432,15 @@ describe('ContestManagementService', () => {
       message: 'Selected sporting event is not released for contest creation yet.',
     },
     {
-      name: 'refuses with SPORT_EVENT_ALREADY_STARTED once the event\'s start time has passed',
+      name: 'refuses with CONTEST_FIRST_GAME_STARTED once the event\'s start time has passed',
       event: { startDate: new Date('2026-04-23T12:00:00.000Z') },
-      code: 'SPORT_EVENT_ALREADY_STARTED',
+      code: 'CONTEST_FIRST_GAME_STARTED',
       message: 'Selected sporting event has already started, so contests can no longer be created on it.',
     },
     {
-      name: 'refuses with SPORT_EVENT_ALREADY_STARTED for an event in progress, whatever its start time',
+      name: 'refuses with CONTEST_FIRST_GAME_STARTED for an event in progress, whatever its start time',
       event: { status: SportEventStatus.IN_PROGRESS },
-      code: 'SPORT_EVENT_ALREADY_STARTED',
+      code: 'CONTEST_FIRST_GAME_STARTED',
       message: 'Selected sporting event has already started, so contests can no longer be created on it.',
     },
   ])('createContest $name, creating nothing', async ({ event, code, message }) => {
@@ -1473,6 +1476,62 @@ describe('ContestManagementService', () => {
       },
     )).rejects.toMatchObject({ code, message });
     expect(contestCoreRepo.create).not.toHaveBeenCalled();
+  });
+
+  describe('createContest follows the one opening rule (#1932)', () => {
+    const PAST = new Date('2026-04-20T12:00:00.000Z');
+    const AHEAD = new Date('2026-05-20T12:00:00.000Z');
+    /** The code Create contest refuses with for each reason the opening rule gives. */
+    const CODE_FOR_REASON: Readonly<Record<string, string>> = {
+      [ContestOpeningReason.EVENT_NOT_RELEASED]: 'SPORT_EVENT_NOT_RELEASED',
+      [ContestOpeningReason.FIELD_NOT_LOADED]: 'SPORT_EVENT_FIELD_NOT_LOADED',
+      [ContestOpeningReason.EVENT_STARTED]: 'CONTEST_FIRST_GAME_STARTED',
+    };
+    const EVENTS: Array<[string, Parameters<typeof createSportEventReader>[0]]> = [
+      ['ready', { startDate: AHEAD, participantCount: 72 }],
+      ['a draft', { status: SportEventStatus.DRAFT, startDate: AHEAD, participantCount: 72 }],
+      ['without its field', { startDate: AHEAD, participantCount: 0 }],
+      ['past its start', { startDate: PAST, participantCount: 72 }],
+      ['in progress', { status: SportEventStatus.IN_PROGRESS, startDate: PAST, participantCount: 72 }],
+      ['a draft past its start', { status: SportEventStatus.DRAFT, startDate: PAST, participantCount: 0 }],
+      ['over', { status: SportEventStatus.COMPLETED, startDate: PAST, participantCount: 72 }],
+    ];
+
+    it.each(EVENTS)('for an event %s, refuses exactly when contestOpening is not OPEN, with the code of its reason', async (_name, event) => {
+      const reader = createSportEventReader(event);
+      const window = await contestOpening(
+        { ...reader, nextSquaresKickoff: jest.fn().mockResolvedValue(null) },
+        '11111111-1111-1111-1111-111111111111',
+        { selectionType: SelectionType.TIERED },
+        CONTEST_MANAGEMENT_TEST_NOW,
+      );
+      const contestCoreRepo = createContestRepo();
+      const service = new ContestManagementService({
+        domainEvents: testDomainEvents(),
+        contests: contestCoreRepo,
+        configTemplates: createContestConfigTemplateRepo(),
+        configurations: createContestConfigurationRepo(),
+        scoringRules: createParticipantScoringRuleRepo(),
+        tiers: createSportEventTierServiceStub(),
+        seasons: coverableSeasons(),
+        sportEventReader: reader,
+        cups: createCupKeeper(),
+        planEntitlements: platinumEntitlements(),
+        championshipYears: noClosedYears,
+        now: () => CONTEST_MANAGEMENT_TEST_NOW,
+      });
+
+      const refusal = await service.createContest({ leagueId: 'league-1' }, {
+        templateId: templateIdFor('TIERED'),
+        name: 'One Rule Contest',
+        sportEventIds: ['11111111-1111-1111-1111-111111111111'],
+        contestFormat: 'ROSTER',
+        selectionType: 'TIERED',
+        configuration: { maxEntriesPerSquad: 3, selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 4 },
+      }).then(() => null, (error: unknown) => (error as { code?: string }).code ?? 'no code');
+
+      expect(refusal).toBe(window.opening === ContestOpening.OPEN ? null : CODE_FOR_REASON[window.reason ?? 'none']);
+    });
   });
 
   describe('refusals and legacy rows', () => {
@@ -1520,13 +1579,13 @@ describe('ContestManagementService', () => {
       expect(contestRepo.create).not.toHaveBeenCalled();
     });
 
-    it('refuses creating on an event that has already started, with SPORT_EVENT_ALREADY_STARTED', async () => {
+    it('refuses creating on an event that has already started, with CONTEST_FIRST_GAME_STARTED', async () => {
       const { service, contestRepo } = build({
         reader: createSportEventReader({ startDate: new Date('2026-04-23T08:00:00.000Z') }),
       });
 
       await expect(service.createContest({ leagueId: 'league-1' }, CREATE))
-        .rejects.toMatchObject({ code: 'SPORT_EVENT_ALREADY_STARTED' });
+        .rejects.toMatchObject({ code: 'CONTEST_FIRST_GAME_STARTED' });
       expect(contestRepo.create).not.toHaveBeenCalled();
     });
 
@@ -3078,10 +3137,10 @@ describe('ContestManagementService — a bracket on a knockout already under way
     return promise.then(() => undefined, (caught: unknown) => caught);
   }
 
-  it('refuses a bracket on the event under way with 422 SPORT_EVENT_ALREADY_STARTED, creating nothing', async () => {
+  it('refuses a bracket on the event under way with 422 CONTEST_FIRST_GAME_STARTED, creating nothing', async () => {
     const context = underWay();
 
-    expect(await refusal(context.create())).toMatchObject({ code: 'SPORT_EVENT_ALREADY_STARTED', statusCode: 422 });
+    expect(await refusal(context.create())).toMatchObject({ code: 'CONTEST_FIRST_GAME_STARTED', statusCode: 422 });
     expect(context.world.contests.size).toBe(0);
   });
 
@@ -3311,7 +3370,7 @@ describe('ContestManagementService squares rules (#711)', () => {
     expect(contestCoreRepo.create).not.toHaveBeenCalled();
   });
 
-  it('refuses a squares contest whose game has kicked off with SPORT_EVENT_ALREADY_STARTED, though its event started long before', async () => {
+  it('refuses a squares contest whose game has kicked off with CONTEST_SQUARES_GAME_STARTED, though its event started long before', async () => {
     const { contestCoreRepo, reader, service } = squaresService(MatchStatus.SCHEDULED);
     const live = legacyMatch({ id: 'match-1', roundNumber: 4, status: MatchStatus.IN_PROGRESS });
     const liveMatch = { ...live, games: live.games.map((game) => ({ ...game, id: GAME_ID })) };
@@ -3319,7 +3378,7 @@ describe('ContestManagementService squares rules (#711)', () => {
       cutoffTiming(cutoff, sportEvent, [liveMatch]));
 
     await expect(service.createContest({ leagueId: 'league-1' }, squaresRequest()))
-      .rejects.toMatchObject({ code: 'SPORT_EVENT_ALREADY_STARTED' });
+      .rejects.toMatchObject({ code: 'CONTEST_SQUARES_GAME_STARTED' });
     expect(contestCoreRepo.create).not.toHaveBeenCalled();
   });
 });

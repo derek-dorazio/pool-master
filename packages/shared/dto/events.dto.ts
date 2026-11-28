@@ -4,6 +4,7 @@ import {
   ProviderCode,
   AutoReleaseCheckOutcome,
   ContestOpening,
+  ContestOpeningReason,
   ContestStatus,
   SlotPricingSchema,
   SlotTierLayoutSchema,
@@ -89,7 +90,8 @@ export type SportEventAutoReleaseCheckDto = z.infer<typeof SportEventAutoRelease
 export const SportEventContestOpeningDtoSchema = z.object({
   selectionType: z.enum(SelectionType).describe('A way to pick that the event\'s sport league offers.'),
   opening: z.enum(ContestOpening).describe('OPEN: Create contest would take a contest of this selection type on the event now. NOT_YET: the event is not released or its field is not loaded. CLOSED: the event is under way or over and this selection type can no longer start on it. A knockout under way stays OPEN to squares, whose cutoff is its own game\'s kickoff; Create contest checks the chosen game itself.'),
-}).describe('Whether one selection type can start a contest on the event now.');
+  reason: z.enum(ContestOpeningReason).nullable().describe('Why the row is NOT_YET or CLOSED, null when OPEN. NOT_YET: EVENT_NOT_RELEASED (a draft) or FIELD_NOT_LOADED (no field yet). CLOSED: EVENT_STARTED (the event is under way or over). The event list never reads further, so it never answers BRACKET_NOT_SET or NO_GAME_LEFT, which an event page\'s offer reads.'),
+}).describe('Whether one selection type can start a contest on the event now, and why not.');
 export type SportEventContestOpeningDto = z.infer<typeof SportEventContestOpeningDtoSchema>;
 
 /**

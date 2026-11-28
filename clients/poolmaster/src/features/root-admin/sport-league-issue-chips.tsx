@@ -1,5 +1,5 @@
 import { enumLabel } from '@poolmaster/shared/display-strings';
-import { assertNever } from '@poolmaster/shared/domain';
+import { assertNever, SportLeagueIssueType } from '@poolmaster/shared/domain';
 import {
   Button,
   Chip,
@@ -13,13 +13,13 @@ import {
 import type { SportLeagueOverviewDto } from '@/lib/api';
 import { buildSportEventPath } from './manage-navigation';
 import { buildLeagueOpenFindingsPath } from './sync-findings-links';
-import { overdueLateness, syncFailedText } from './sport-league-overview-text';
+import { syncFailedText } from './sport-league-overview-text';
 
 import type { SportLeagueIssue } from './sport-league-overview-text';
 
 /**
  * One sport league's Issues cell: a short chip per issue type with its count, in the fixed order
- * the read gives (Findings, Sync, Release, Overdue). Hovering a chip lists the items behind the
+ * the read gives (Findings, Sync, Release). Hovering a chip lists the items behind the
  * count, each leading to its fix: a severity's open findings open Findings filtered to them, a
  * failed sync opens its run, a held release opens its event.
  */
@@ -63,7 +63,7 @@ function IssueItems({ issue, onOpenSyncRun, sportUrlSegment, sportLeagueId }: {
   const displayPreferences = useDisplayPreferences();
   const when = (occurredAt: string) => formatDateTimeDisplay(occurredAt, displayPreferences);
   switch (issue.type) {
-    case 'FINDINGS':
+    case SportLeagueIssueType.FINDINGS:
       return (
         <SectionRows>
           {issue.items.map((item) => (
@@ -77,7 +77,7 @@ function IssueItems({ issue, onOpenSyncRun, sportUrlSegment, sportLeagueId }: {
           ))}
         </SectionRows>
       );
-    case 'SYNC':
+    case SportLeagueIssueType.SYNC:
       return (
         <SectionRows>
           {issue.items.map((item) => (
@@ -99,26 +99,12 @@ function IssueItems({ issue, onOpenSyncRun, sportUrlSegment, sportLeagueId }: {
           ))}
         </SectionRows>
       );
-    case 'RELEASE':
+    case SportLeagueIssueType.RELEASE:
       return (
         <SectionRows>
           {issue.items.map((item) => (
             <SectionRow
               facts={`${when(item.occurredAt)} · ${item.failedChecks.map((key) => enumLabel('ReleaseCheckKey', key)).join(', ')} failed`}
-              key={item.target.id}
-              name={item.label}
-              testId={`root-admin-sports-issue-event-${item.target.id}`}
-              to={buildSportEventPath(sportUrlSegment, item.target.id)}
-            />
-          ))}
-        </SectionRows>
-      );
-    case 'OVERDUE':
-      return (
-        <SectionRows>
-          {issue.items.map((item) => (
-            <SectionRow
-              facts={`Should have ended ${when(item.occurredAt)} · ${overdueLateness(item.occurredAt, new Date())}`}
               key={item.target.id}
               name={item.label}
               testId={`root-admin-sports-issue-event-${item.target.id}`}

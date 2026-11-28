@@ -43,7 +43,7 @@ export * from './event-pages';
 export * from './url-segment';
 export * from './time-zones';
 export * from './brand';
-export * from './event-overdue';
+export * from './game-overdue';
 export * from './release-checks';
 export * from './customers';
 export * from './sport-league-overview';

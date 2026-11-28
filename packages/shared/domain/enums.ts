@@ -803,6 +803,30 @@ export const ContestOpeningOrder = explicitOrder<ContestOpening>({
   [ContestOpening.CLOSED]: 2,
 });
 
+/**
+ * Why a contest of one setup does not open on an event now (#2015, #1932): the wait or the close
+ * behind a NOT_YET or CLOSED `ContestOpening`. NOT_YET: EVENT_NOT_RELEASED (the event is a draft),
+ * FIELD_NOT_LOADED (no field yet), BRACKET_NOT_SET (the teams of the bracket's games are not all
+ * known). CLOSED: EVENT_STARTED (the setup's cutoff on the event has passed), NO_GAME_LEFT (every
+ * game a squares contest could be played on has kicked off).
+ */
+export const ContestOpeningReason = {
+  EVENT_NOT_RELEASED: 'EVENT_NOT_RELEASED',
+  FIELD_NOT_LOADED: 'FIELD_NOT_LOADED',
+  BRACKET_NOT_SET: 'BRACKET_NOT_SET',
+  EVENT_STARTED: 'EVENT_STARTED',
+  NO_GAME_LEFT: 'NO_GAME_LEFT',
+} as const;
+export type ContestOpeningReason = (typeof ContestOpeningReason)[keyof typeof ContestOpeningReason];
+/** The waits in the order they clear, then the closes. */
+export const ContestOpeningReasonOrder = explicitOrder<ContestOpeningReason>({
+  [ContestOpeningReason.EVENT_NOT_RELEASED]: 0,
+  [ContestOpeningReason.FIELD_NOT_LOADED]: 1,
+  [ContestOpeningReason.BRACKET_NOT_SET]: 2,
+  [ContestOpeningReason.EVENT_STARTED]: 3,
+  [ContestOpeningReason.NO_GAME_LEFT]: 4,
+});
+
 /** Where one provider sync run is in its lifecycle. */
 export const ProviderSyncRunStatus = {
   SUBMITTED: 'SUBMITTED',
@@ -942,19 +966,13 @@ export const SportLeagueIssueType = {
   SYNC: 'SYNC',
   /** A draft event whose latest automatic release check held it. */
   RELEASE: 'RELEASE',
-  /**
-   * A released event still not completed or cancelled well after its last round or match should
-   * have ended (#1865): its results are missing. A never-released draft never is (#1908).
-   */
-  OVERDUE: 'OVERDUE',
 } as const;
 export type SportLeagueIssueType = (typeof SportLeagueIssueType)[keyof typeof SportLeagueIssueType];
-/** The fixed order the chips show in (#1847, #1865, #1999). */
+/** The fixed order the chips show in (#1847, #1999). A Game whose result is overdue is a GAME_OVERDUE finding (#2013). */
 export const SportLeagueIssueTypeOrder = explicitOrder<SportLeagueIssueType>({
   [SportLeagueIssueType.FINDINGS]: 0,
   [SportLeagueIssueType.SYNC]: 1,
   [SportLeagueIssueType.RELEASE]: 2,
-  [SportLeagueIssueType.OVERDUE]: 3,
 });
 
 /** How serious a sync finding is (#1999): an ERROR also raises the alarm when it opens. */
@@ -1179,6 +1197,14 @@ export const ProviderSyncFindingKind = {
    * WARNING. Subject: league, event, Provider and the player's feed id, with their name.
    */
   BOX_SCORE_PLAYER_NOT_IN_GAME: 'BOX_SCORE_PLAYER_NOT_IN_GAME',
+  /**
+   * A Game is still scheduled or in progress more than the overdue wait after it should have ended
+   * (#2013): its scheduled start plus its provider league's typical game length (`gameOverdueExpectedEnd`).
+   * WARNING, since its result has not come from the feed. The sync tick raises it, once per overdue
+   * wait it stays so, and resolves it once the Game is no longer overdue: finished, cancelled,
+   * postponed or moved to another start. Subject: league, event, Provider and the provider's game id.
+   */
+  GAME_OVERDUE: 'GAME_OVERDUE',
 } as const;
 export type ProviderSyncFindingKind = (typeof ProviderSyncFindingKind)[keyof typeof ProviderSyncFindingKind];
 export const ProviderSyncFindingKindOrder = alphabeticalOrder('ProviderSyncFindingKind');
