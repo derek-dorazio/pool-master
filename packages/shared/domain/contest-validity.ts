@@ -71,6 +71,7 @@ export function isPredictionSelectionType(selectionType: SelectionType): selecti
 }
 
 /** Whether the selection type picks a lineup from the field: neither a prediction type nor squares. */
+// poolmaster-allow-test-export: open PR #2284 gives it server readers; remove this note when it lands
 export function isRosterSelectionType(selectionType: SelectionType): selectionType is RosterSelectionType {
   return contestFormatForSelectionType(selectionType) === ContestFormat.ROSTER;
 }

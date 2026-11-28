@@ -15,6 +15,7 @@ import {
   type SportEventContest,
   isTierSetEditable,
   eventProviderNameOf,
+  tieredRosterChoices,
 } from '@poolmaster/shared/domain';
 import {
   type ReleaseCheckDto,
@@ -45,6 +46,7 @@ export function mapSportEventToDto({
   event,
   participantCount,
   tierCount,
+  tierSizes,
   tierSetSlot,
   tierSets,
   adminCounts,
@@ -100,6 +102,7 @@ export function mapSportEventToDto({
     slots: slots.map(mapSportLeagueSeasonSlotToDto),
     autoLifecycleEnabled: event.autoLifecycleEnabled,
     tierCount,
+    tieredRosterChoices: tieredRosterChoices(tierSizes),
     lastAutoReleaseCheck: event.autoReleaseCheck
       ? { checkedAt: event.autoReleaseCheck.checkedAt.toISOString(), outcome: event.autoReleaseCheck.outcome, failedChecks: [...event.autoReleaseCheck.failedChecks] }
       : null,

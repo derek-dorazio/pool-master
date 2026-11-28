@@ -1,18 +1,28 @@
-import {
-  BUDGET_ROSTER_SIZE_MAX,
-  PickEmMode,
-  RANDOM_DRAW_PICKS_PER_ENTRY_MAX,
-  SQUARES_PER_ENTRY_MAX,
-  SURVIVOR_LIVES_DEFAULT,
-  SURVIVOR_LIVES_MAX,
-  SelectionType,
-  type SportNoun,
-  countParticipants,
-  getDefaultCountedScores,
-  getTieredRosterSize,
-} from '@poolmaster/shared/domain';
+import { PickEmMode, SelectionType, type SportNoun, pluralize } from '@poolmaster/shared/domain';
 import type { ContestConfigurationRequest } from '@poolmaster/shared/dto';
 import { z } from 'zod';
+import type { ContestRulesLimitsDto, TieredRosterChoiceDto } from '@/lib/api';
+
+/**
+ * What the API bounds the rules by (#2107): the template's or contest's limits, null until a
+ * template is chosen, and the event's picks-per-tier choices, empty until its tiers are filled.
+ * The form holds no bound of its own; without one it checks only for a whole number, and the
+ * API checks the rest.
+ */
+export type ContestRulesBounds = {
+  limits: ContestRulesLimitsDto | null;
+  tieredRosterChoices: readonly TieredRosterChoiceDto[];
+};
+
+/** "golfer", "6 golfers": a count in the sport's words. */
+function countOf(count: number, participant: SportNoun) {
+  return pluralize(count, participant.one, participant.many);
+}
+
+/** The error for a count above its bound, or one that is no whole number. */
+function outOfRange(label: string, max: number | undefined) {
+  return max === undefined ? `${label} must be a positive whole number.` : `${label} must be between 1 and ${String(max)}.`;
+}
 
 /** The selection types the rules fields can edit: one arm each of the configuration request. */
 export type EditableSelectionType = ContestConfigurationRequest['selectionType'];
@@ -33,8 +43,8 @@ export type ContestRulesValues = {
   rosterSize: string;
   /** How many boxes a squares entry may claim (#711). */
   maxSquaresPerEntry: string;
-  /** How many weeks a survivor entry can lose before it is out (#1754): 1 or 2. */
-  survivorLives: number;
+  /** How many weeks a survivor entry can lose before it is out (#1754); null keeps the API's default. */
+  survivorLives: number | null;
   /** Whether a survivor entry may pick its teams again once it has used every team (#787). */
   survivorReuseTeams: boolean;
   unlimitedEntries: boolean;
@@ -50,7 +60,7 @@ export const CONTEST_RULES_FORM_SHAPE = {
   picksPerEntry: z.string(),
   picksPerTier: z.string(),
   rosterSize: z.string(),
-  survivorLives: z.number().int().min(1).max(SURVIVOR_LIVES_MAX),
+  survivorLives: z.number().int().min(1).nullable(),
   survivorReuseTeams: z.boolean(),
   unlimitedEntries: z.boolean(),
 } satisfies { [Field in keyof ContestRulesValues]: z.ZodType<ContestRulesValues[Field]> };
@@ -79,49 +89,50 @@ function withEntryLimit<T extends object>(values: ContestRulesValues, rules: T):
 }
 
 /**
- * The tiered rules. An event with no tiers yet has no roster to check "Scores that count"
- * against; the server skips that check too.
+ * The tiered rules, against the event's picks-per-tier choices. An event whose tiers are not all
+ * filled offers none, so there is no roster to check "Scores that count" against; the API checks
+ * the tiers it has.
  */
-function parseTieredRules(values: ContestRulesValues, tierCount: number, participant: SportNoun): RulesResult {
+function parseTieredRules(values: ContestRulesValues, choices: readonly TieredRosterChoiceDto[], participant: SportNoun): RulesResult {
   const picksPerTier = parseWholeNumber(values.picksPerTier);
-  if (picksPerTier === null) {
-    return { configuration: null, error: 'Picks per tier must be a positive whole number.' };
+  const choice = choices.find((candidate) => candidate.picksPerTier === picksPerTier);
+  if (picksPerTier === null || (choices.length > 0 && choice === undefined)) {
+    return { configuration: null, error: outOfRange('Picks per tier', choices.at(-1)?.picksPerTier) };
   }
-  const rosterSize = getTieredRosterSize(tierCount, picksPerTier);
   const countedScores = parseWholeNumber(values.countedScores);
-  if (countedScores === null || (tierCount > 0 && countedScores > rosterSize)) {
+  if (countedScores === null || (choice !== undefined && countedScores > choice.rosterSize)) {
     return {
       configuration: null,
-      error: tierCount > 0
-        ? `Scores that count must be between 1 and the ${countParticipants(rosterSize, participant)} picked.`
-        : 'Scores that count must be a positive whole number.',
+      error: choice === undefined
+        ? 'Scores that count must be a positive whole number.'
+        : `Scores that count must be between 1 and the ${countOf(choice.rosterSize, participant)} picked.`,
     };
   }
   return withEntryLimit(values, { selectionType: SelectionType.TIERED, picksPerTier, countedScores });
 }
 
 /** The budget rules (#93). The salary cap is the event's, so it is not part of them. */
-function parseBudgetRules(values: ContestRulesValues, participant: SportNoun): RulesResult {
+function parseBudgetRules(values: ContestRulesValues, limits: ContestRulesLimitsDto | null, participant: SportNoun): RulesResult {
   const rosterSize = parseWholeNumber(values.rosterSize);
-  if (rosterSize === null || rosterSize > BUDGET_ROSTER_SIZE_MAX) {
-    return { configuration: null, error: `${perEntryLabel(participant)} must be between 1 and ${BUDGET_ROSTER_SIZE_MAX}.` };
+  if (rosterSize === null || (limits !== null && rosterSize > limits.rosterSizeMax)) {
+    return { configuration: null, error: outOfRange(perEntryLabel(participant), limits?.rosterSizeMax) };
   }
   const countedScores = parseWholeNumber(values.countedScores);
   if (countedScores === null || countedScores > rosterSize) {
-    return { configuration: null, error: `Scores that count must be between 1 and the ${countParticipants(rosterSize, participant)} picked.` };
+    return { configuration: null, error: `Scores that count must be between 1 and the ${countOf(rosterSize, participant)} picked.` };
   }
   return withEntryLimit(values, { selectionType: SelectionType.BUDGET_PICK, rosterSize, countedScores });
 }
 
 /** The random-draw rules: how many participants the draw deals each entry, and the scores that count. */
-function parseRandomDrawRules(values: ContestRulesValues, participant: SportNoun): RulesResult {
+function parseRandomDrawRules(values: ContestRulesValues, limits: ContestRulesLimitsDto | null, participant: SportNoun): RulesResult {
   const picksPerEntry = parseWholeNumber(values.picksPerEntry);
-  if (picksPerEntry === null || picksPerEntry > RANDOM_DRAW_PICKS_PER_ENTRY_MAX) {
-    return { configuration: null, error: `${perEntryLabel(participant)} must be between 1 and ${RANDOM_DRAW_PICKS_PER_ENTRY_MAX}.` };
+  if (picksPerEntry === null || (limits !== null && picksPerEntry > limits.picksPerEntryMax)) {
+    return { configuration: null, error: outOfRange(perEntryLabel(participant), limits?.picksPerEntryMax) };
   }
   const countedScores = parseWholeNumber(values.countedScores);
   if (countedScores === null || countedScores > picksPerEntry) {
-    return { configuration: null, error: `Scores that count must be between 1 and the ${countParticipants(picksPerEntry, participant)} dealt.` };
+    return { configuration: null, error: `Scores that count must be between 1 and the ${countOf(picksPerEntry, participant)} dealt.` };
   }
   return withEntryLimit(values, { selectionType: SelectionType.RANDOM_DRAW, picksPerEntry, countedScores });
 }
@@ -142,17 +153,21 @@ function parseBracketRules(values: ContestRulesValues): RulesResult {
 
 /** The survivor rules (#719): whether teams can be picked again once all are used (#787), the lives (#1754), and the entry limit. */
 function parseSurvivorRules(values: ContestRulesValues): RulesResult {
-  return withEntryLimit(values, { selectionType: SelectionType.SURVIVOR, reuseTeamsOnceAllUsed: values.survivorReuseTeams, lives: values.survivorLives });
+  return withEntryLimit(values, {
+    selectionType: SelectionType.SURVIVOR,
+    reuseTeamsOnceAllUsed: values.survivorReuseTeams,
+    ...(values.survivorLives === null ? {} : { lives: values.survivorLives }),
+  });
 }
 
 /**
  * The squares rules (#711): how many boxes an entry may claim. A squares contest takes one entry
  * per member, whatever the entry limit fields hold, since the box limit is per entry.
  */
-function parseSquaresRules(values: ContestRulesValues): RulesResult {
+function parseSquaresRules(values: ContestRulesValues, limits: ContestRulesLimitsDto | null): RulesResult {
   const maxSquaresPerEntry = parseWholeNumber(values.maxSquaresPerEntry);
-  if (maxSquaresPerEntry === null || maxSquaresPerEntry > SQUARES_PER_ENTRY_MAX) {
-    return { configuration: null, error: `Boxes per entry must be between 1 and ${SQUARES_PER_ENTRY_MAX}.` };
+  if (maxSquaresPerEntry === null || (limits !== null && maxSquaresPerEntry > limits.maxSquaresPerEntryMax)) {
+    return { configuration: null, error: outOfRange('Boxes per entry', limits?.maxSquaresPerEntryMax) };
   }
   return { configuration: { selectionType: SelectionType.SQUARES, maxSquaresPerEntry, maxEntriesPerSquad: 1 }, error: null };
 }
@@ -164,16 +179,16 @@ function parseSquaresRules(values: ContestRulesValues): RulesResult {
 export function parseContestRules(
   values: ContestRulesValues,
   selectionType: EditableSelectionType,
-  tierCount: number,
+  bounds: ContestRulesBounds,
   participant: SportNoun,
 ): RulesResult {
   switch (selectionType) {
     case SelectionType.TIERED:
-      return parseTieredRules(values, tierCount, participant);
+      return parseTieredRules(values, bounds.tieredRosterChoices, participant);
     case SelectionType.BUDGET_PICK:
-      return parseBudgetRules(values, participant);
+      return parseBudgetRules(values, bounds.limits, participant);
     case SelectionType.RANDOM_DRAW:
-      return parseRandomDrawRules(values, participant);
+      return parseRandomDrawRules(values, bounds.limits, participant);
     case SelectionType.PICK_EM:
       return parsePickEmRules(values);
     case SelectionType.BRACKET:
@@ -181,7 +196,7 @@ export function parseContestRules(
     case SelectionType.SURVIVOR:
       return parseSurvivorRules(values);
     case SelectionType.SQUARES:
-      return parseSquaresRules(values);
+      return parseSquaresRules(values, bounds.limits);
   }
 }
 
@@ -228,7 +243,7 @@ export function toContestRulesValues(
     case SelectionType.BRACKET:
       return { ...rules, ...entryLimit };
     case SelectionType.SURVIVOR:
-      return { ...rules, ...entryLimit, survivorReuseTeams: configuration.reuseTeamsOnceAllUsed ?? true, survivorLives: configuration.lives ?? SURVIVOR_LIVES_DEFAULT };
+      return { ...rules, ...entryLimit, survivorReuseTeams: configuration.reuseTeamsOnceAllUsed ?? true, survivorLives: configuration.lives ?? null };
     case SelectionType.SQUARES:
       return { ...rules, ...entryLimit, maxSquaresPerEntry: String(configuration.maxSquaresPerEntry) };
   }
@@ -245,18 +260,25 @@ export const DEFAULT_CONTEST_RULES: ContestRulesValues = {
   rosterSize: '6',
   // A squares contest's preset holds 10 boxes per entry (design Q3.3).
   maxSquaresPerEntry: '10',
-  // A survivor entry has one life unless the commissioner gives it two (#1754).
-  survivorLives: SURVIVOR_LIVES_DEFAULT,
+  // A survivor entry has the API's default lives until the commissioner chooses (#1754).
+  survivorLives: null,
   // Teams can be picked again once all are used, in every sport (#787).
   survivorReuseTeams: true,
   unlimitedEntries: false,
 };
 
 /**
- * "Scores that count" follows picks per tier: a new picks-per-tier value resets it to the default
- * for the event's tiers. Returns null when there is nothing to reset to.
+ * "Scores that count" follows picks per tier: a new picks-per-tier value resets it to the API's
+ * default for the event's tiers. Returns null when there is nothing to reset to.
  */
-export function defaultCountedScoresFor(picksPerTier: string, tierCount: number) {
+export function defaultCountedScoresFor(picksPerTier: string, choices: readonly TieredRosterChoiceDto[]) {
   const parsed = parseWholeNumber(picksPerTier);
-  return tierCount > 0 && parsed !== null ? String(getDefaultCountedScores(tierCount, parsed)) : null;
+  const choice = choices.find((candidate) => candidate.picksPerTier === parsed);
+  return choice === undefined ? null : String(choice.countedScoresDefault);
+}
+
+/** The roster a picks-per-tier value makes on the event's tiers, or null when it offers none. */
+export function tieredRosterSizeFor(picksPerTier: string, choices: readonly TieredRosterChoiceDto[]) {
+  const parsed = parseWholeNumber(picksPerTier);
+  return choices.find((candidate) => candidate.picksPerTier === parsed)?.rosterSize ?? null;
 }

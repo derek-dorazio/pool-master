@@ -1,4 +1,5 @@
 import type { EventPageDto, EventPageOfferDto } from '@/lib/api';
+import { RULES_LIMITS } from '@/test/rules-bounds';
 
 /** An event page offer as the API sends it, for the event page tests. */
 export function offerFixture(templateKey: string, overrides: Partial<EventPageOfferDto> = {}): EventPageOfferDto {
@@ -19,6 +20,7 @@ export function offerFixture(templateKey: string, overrides: Partial<EventPageOf
       active: true,
       schemaVersion: 1,
       configuration: { selectionType: 'SQUARES', maxSquaresPerEntry: 10, maxEntriesPerSquad: 1 },
+      rulesLimits: RULES_LIMITS,
     },
     sortOrder: 1,
     isPrimary: false,

@@ -479,7 +479,7 @@ describe('SportEventSlotTierRepository and valuations', () => {
     expect(after.map((tier) => [tier.tierKey, tier.tierNumber])).toEqual([['tier-2', 1], ['tier-1', 2]]);
     const [valuation] = await valuations.findBySlot((await slotOf(event)).id);
     expect(valuation).toMatchObject({ sportEventSlotTierId: after[0].id, tierOrderIndex: null });
-    expect(await tiers.countValuations((await slotOf(event)).id)).toEqual(new Map([[after[0].id, 1]]));
+    expect(await tiers.countValuations([(await slotOf(event)).id])).toEqual(new Map([[after[0].id, 1]]));
   });
 
   it('moves a removed tier\'s valuations to a tier added in the same save', async () => {
@@ -515,7 +515,7 @@ describe('SportEventSlotTierRepository and valuations', () => {
     await expect(repos().events.countUntieredActiveParticipants([await slotOf(event)])).resolves.toEqual(new Map([[(await slotOf(event)).id, 1]]));
   });
 
-  it('counts the valuations in each of one slot\'s tiers by reading only that slot\'s valuations, not every valuation of every event', async () => {
+  it('counts the valuations in each tier of the slots asked for in one grouped read of only those slots\' valuations, not every valuation of every event', async () => {
     const { tiers, valuations, field } = repos();
     const [event, other] = [await createEvent('Counted'), await createEvent('Other')];
     const [ana, ben, cal] = await createParticipants(['Ana', 'Ben', 'Cal']);
@@ -535,9 +535,11 @@ describe('SportEventSlotTierRepository and valuations', () => {
     ]);
 
     const countedSlot = await slotOf(event);
-    const { result, statements } = await recordStatements(() => tiers.countValuations(countedSlot.id));
+    const { result, statements } = await recordStatements(() => tiers.countValuations([countedSlot.id]));
 
     expect(result).toEqual(new Map([[tier1.id, 2]]));
+    await expect(tiers.countValuations([countedSlot.id, (await slotOf(other)).id])).resolves.toEqual(new Map([[tier1.id, 2], [otherTier1.id, 1]]));
+    await expect(tiers.countValuations([])).resolves.toEqual(new Map());
     expect(statements).toHaveLength(1);
     expect(statements.map((statement) => statementShape(statement.sql)).join('\n'))
       .not.toContain('FROM "public"."sport_event_slot_participant_valuations" WHERE 1=1');

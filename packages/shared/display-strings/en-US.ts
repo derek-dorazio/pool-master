@@ -1117,7 +1117,7 @@ export const enUS = {
     PRICE_MISSING: 'This pick has no price yet, so it can’t be chosen.',
     PRICING_CONFIG_INVALID: 'These prices don’t fit together: the worst participant’s share can’t be above the best’s, and the rounding unit can’t be above the worst participant’s price.',
     PLATFORM_PRICING_PROFILE_CODE_TAKEN: 'A pricing profile already uses that code.',
-    PLATFORM_PRICING_PROFILE_INVALID: 'This pricing profile is not valid.',
+    PLATFORM_PRICING_PROFILE_INVALID: 'The floor share can\'t be above the top share, and the rounding unit can\'t be larger than the cheapest price.',
     PLATFORM_PRICING_PROFILE_IN_USE: 'This pricing profile is in use, so it cannot be deleted.',
     PLATFORM_PRICING_PROFILE_NAME_TAKEN: 'A pricing profile already uses that name.',
     PLATFORM_PRICING_PROFILE_NOT_FOUND: 'Pricing profile not found.',

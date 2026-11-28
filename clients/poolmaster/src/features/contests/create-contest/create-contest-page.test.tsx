@@ -6,6 +6,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { MemoryRouter, Route, Routes, useParams } from 'react-router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { bindApiMocks } from '@/test/msw-api';
+import { RULES_LIMITS, tieredChoices } from '@/test/rules-bounds';
 import { buildPlanEntitlements } from '@/features/plans/test/fixtures';
 import { FormatIllustration } from '@/features/contest-types/illustrations';
 import { sportLeagueFixture } from '@/features/root-admin/sport-test-fixtures';
@@ -212,6 +213,7 @@ function primeCommonMocks({ sportLeaguesPerYear = null }: { sportLeaguesPerYear?
           readinessReasons: [],
           contestEligible: true,
           tierCount: 5,
+          tieredRosterChoices: tiersOfEight(5),
         },
         {
           id: 'event-1',
@@ -225,6 +227,7 @@ function primeCommonMocks({ sportLeaguesPerYear = null }: { sportLeaguesPerYear?
           readinessReasons: [],
           contestEligible: true,
           tierCount: 6,
+          tieredRosterChoices: tiersOfEight(6),
         },
         {
           id: 'event-3',
@@ -237,6 +240,7 @@ function primeCommonMocks({ sportLeaguesPerYear = null }: { sportLeaguesPerYear?
           readinessReasons: ['FIELD_NOT_LOADED'],
           contestEligible: false,
           tierCount: 0,
+          tieredRosterChoices: tiersOfEight(0),
         },
       ],
     },
@@ -258,6 +262,7 @@ function primeCommonMocks({ sportLeaguesPerYear = null }: { sportLeaguesPerYear?
           isDefault: true,
           active: true,
           schemaVersion: 1,
+          rulesLimits: RULES_LIMITS,
           configuration: {
             maxEntriesPerSquad: 1,
             selectionType: 'TIERED',
@@ -279,6 +284,7 @@ function primeCommonMocks({ sportLeaguesPerYear = null }: { sportLeaguesPerYear?
           isDefault: false,
           active: true,
           schemaVersion: 1,
+          rulesLimits: RULES_LIMITS,
           configuration: {
             maxEntriesPerSquad: 1,
             selectionType: 'TIERED',
@@ -306,11 +312,17 @@ function singleEvent(overrides: Record<string, unknown> = {}) {
           readinessReasons: [],
           contestEligible: true,
           tierCount: 6,
+          tieredRosterChoices: tiersOfEight(typeof overrides['tierCount'] === 'number' ? overrides['tierCount'] : 6),
           ...overrides,
         },
       ],
     },
   };
+}
+
+/** The picks-per-tier choices the API sends for this many tiers of eight (#2107). */
+function tiersOfEight(tierCount: number) {
+  return tieredChoices(Array.from({ length: tierCount }, () => 8));
 }
 
 /** A contest-ready basketball tournament of three rounds, unless told otherwise. */
@@ -327,6 +339,7 @@ function basketballEvent(overrides: Record<string, unknown> = {}) {
     readinessReasons: [],
     contestEligible: true,
     tierCount: 4,
+    tieredRosterChoices: tiersOfEight(4),
     rounds: 3,
     sportLeagueId: 'ncaa-men',
     ...overrides,
@@ -365,6 +378,7 @@ function basketballPresets(): Array<Record<string, unknown>> {
     isDefault: true,
     active: true,
     schemaVersion: 1,
+    rulesLimits: RULES_LIMITS,
     configuration: { selectionType, maxEntriesPerSquad: 1, ...configuration },
   });
   return [
@@ -608,6 +622,7 @@ describe('Commissioner tools › Contests › Create contest', () => {
             isDefault: true,
             active: true,
             schemaVersion: 1,
+            rulesLimits: RULES_LIMITS,
             configuration: { maxEntriesPerSquad: 1, selectionType: 'TIERED', picksPerTier: 2, countedScores: 10 },
           },
         ],
@@ -638,7 +653,11 @@ describe('Commissioner tools › Contests › Create contest', () => {
 
     fireEvent.change(screen.getByTestId('contest-tiered-picks-per-tier'), { target: { value: '' } });
     expect(screen.getByTestId('create-contest-submit')).toBeDisabled();
-    expect(screen.getByTestId('contest-rules-error')).toHaveTextContent('Picks per tier must be a positive whole number.');
+    expect(screen.getByTestId('contest-rules-error')).toHaveTextContent('Picks per tier must be between 1 and 8.');
+    // The event's smallest tier holds 8, so a ninth pick from each is refused before it is sent.
+    fireEvent.change(screen.getByTestId('contest-tiered-picks-per-tier'), { target: { value: '9' } });
+    expect(screen.getByTestId('create-contest-submit')).toBeDisabled();
+    expect(screen.getByTestId('contest-rules-error')).toHaveTextContent('Picks per tier must be between 1 and 8.');
 
     fireEvent.change(screen.getByTestId('contest-tiered-picks-per-tier'), { target: { value: '1' } });
     fireEvent.change(screen.getByTestId('contest-tiered-counted-scores'), { target: { value: '7' } });
@@ -827,6 +846,7 @@ describe('Commissioner tools › Contests › Create contest', () => {
       isDefault: false,
       active: true,
       schemaVersion: 1,
+      rulesLimits: RULES_LIMITS,
       configuration: { selectionType: 'BRACKET', maxEntriesPerSquad: 1 },
       ...overrides,
     });
@@ -989,6 +1009,7 @@ describe('Commissioner tools › Contests › Create contest › a sport league\
     isDefault: true,
     active: true,
     schemaVersion: 1,
+    rulesLimits: RULES_LIMITS,
     configuration: { maxEntriesPerSquad: 1, selectionType: 'TIERED', picksPerTier: 1, countedScores: 4 },
   };
   // The LPGA Tour's own copy of the same setup, never its default here.
@@ -1067,6 +1088,7 @@ describe('Commissioner tools › Contests › Create contest › Budget format (
     isDefault: true,
     active: true,
     schemaVersion: 1,
+    rulesLimits: RULES_LIMITS,
     configuration: { maxEntriesPerSquad: 1, selectionType: 'BUDGET_PICK', rosterSize: 6, countedScores: 4 },
   };
 
@@ -1167,6 +1189,7 @@ describe('Commissioner tools › Contests › Create contest › Sweepstakes for
       isDefault: false,
       active: true,
       schemaVersion: 1,
+      rulesLimits: RULES_LIMITS,
       configuration: { maxEntriesPerSquad: 1, selectionType: 'RANDOM_DRAW', picksPerEntry: 1, countedScores: 1 },
     },
     {
@@ -1183,6 +1206,7 @@ describe('Commissioner tools › Contests › Create contest › Sweepstakes for
       isDefault: false,
       active: true,
       schemaVersion: 1,
+      rulesLimits: RULES_LIMITS,
       configuration: { maxEntriesPerSquad: 1, selectionType: 'RANDOM_DRAW', picksPerEntry: 3, countedScores: 2 },
     },
   ];
@@ -1281,6 +1305,7 @@ describe('Commissioner tools › Contests › Create contest for a horse race', 
               isDefault: true,
               active: true,
               schemaVersion: 1,
+              rulesLimits: RULES_LIMITS,
               configuration: {
                 maxEntriesPerSquad: 1,
                 selectionType: 'TIERED',
@@ -1408,6 +1433,7 @@ describe('Commissioner tools › Contests › Create contest for a Formula 1 rac
     isDefault,
     active: true,
     schemaVersion: 1,
+    rulesLimits: RULES_LIMITS,
     configuration: { maxEntriesPerSquad: 1, ...configuration, scoring: FORMULA_1_SCORING },
   });
   // The series' presets as the migration seeds them: budget is the default and sorts first.
@@ -1434,6 +1460,7 @@ describe('Commissioner tools › Contests › Create contest for a Formula 1 rac
           name: 'Monaco Grand Prix',
           participantCount: 22,
           tierCount: 4,
+          tieredRosterChoices: tiersOfEight(4),
           pricing,
         })
         : golfEvents?.(options)
@@ -1504,6 +1531,7 @@ describe('Commissioner tools › Contests › Create contest for a Formula 1 rac
       startDate: '2099-05-30T13:00:00.000Z',
       participantCount: 22,
       tierCount: 4,
+      tieredRosterChoices: tiersOfEight(4),
       pricing: PRICING,
     }).data.events);
     const [nascarRace] = (singleEvent({
@@ -1514,6 +1542,7 @@ describe('Commissioner tools › Contests › Create contest for a Formula 1 rac
       startDate: '2099-02-21T19:30:00.000Z',
       participantCount: 40,
       tierCount: 5,
+      tieredRosterChoices: tiersOfEight(5),
       pricing: PRICING,
     }).data.events);
     const nascarTiered = {
@@ -1562,6 +1591,7 @@ describe('Commissioner tools › Contests › Create contest › Squares format'
     contestEligible: false,
     contestOpenings: openingsUnderWay({ sport: 'FOOTBALL', participantType: 'TEAM', scoringFamily: 'HEAD_TO_HEAD' }),
     tierCount: 0,
+    tieredRosterChoices: tiersOfEight(0),
     rounds: 4,
     sportLeagueId: 'nfl',
   };
@@ -1677,6 +1707,7 @@ describe('Commissioner tools › Contests › Create contest › Squares format'
     isDefault: true,
     active: true,
     schemaVersion: 1,
+    rulesLimits: RULES_LIMITS,
     configuration: { selectionType: 'SQUARES', maxSquaresPerEntry: 10, maxEntriesPerSquad: 1 },
   };
 
@@ -1748,6 +1779,7 @@ describe('Commissioner tools › Contests › Create contest › templates by na
     readinessReasons: [],
     contestEligible: true,
     tierCount: 0,
+    tieredRosterChoices: tiersOfEight(0),
     rounds: 1,
     sportLeagueId: 'nfl',
   };
@@ -1756,6 +1788,7 @@ describe('Commissioner tools › Contests › Create contest › templates by na
     sportLeagueId: 'nfl',
     active: true,
     schemaVersion: 1,
+    rulesLimits: RULES_LIMITS,
     ...overrides,
   });
   const WEEK_TEMPLATES = [

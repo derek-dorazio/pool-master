@@ -2,7 +2,6 @@ import {
   type RosterSelectionType,
   SelectionType,
   formatDollars,
-  isRosterSelectionType,
   toCents,
 } from '@poolmaster/shared/domain';
 import type { SelectionPickResponse, SelectionStateResponse } from '@/lib/api';
@@ -165,7 +164,7 @@ function respend(summary: BudgetLineupSummary, group: SelectionGroup): BudgetLin
 }
 
 /** Each roster type's lineup rules. A prediction contest has no lineup: its entries pick games. */
-export const LINEUP_RULES: Record<RosterSelectionType, LineupRules> = {
+export const LINEUP_RULES: Record<RosterSelectionType, LineupRules> & Partial<Record<SelectionType, LineupRules>> = {
   [SelectionType.TIERED]: {
     applySelection: (selectionState, participantId, entryId) => {
       const pickedAtById = buildPickedAtById(selectionState, entryId);
@@ -200,6 +199,6 @@ export const LINEUP_RULES: Record<RosterSelectionType, LineupRules> = {
  * pick the winners of games rather than a lineup from the field.
  */
 export function lineupRulesFor(selectionType: SelectionType): LineupRules | null {
-  return isRosterSelectionType(selectionType) ? LINEUP_RULES[selectionType] : null;
+  return LINEUP_RULES[selectionType] ?? null;
 }
 

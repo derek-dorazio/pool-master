@@ -49,7 +49,7 @@ function sportEvent(overrides: Partial<SportEvent> = {}): SportEvent {
     ...overrides,
   };
 }
-const summary = { event: sportEvent(), participantCount: 88, tierCount: 0, tierSetSlot: null, tierSets: [], adminCounts: null, slots: [] };
+const summary = { event: sportEvent(), participantCount: 88, tierCount: 0, tierSizes: [], tierSetSlot: null, tierSets: [], adminCounts: null, slots: [] };
 const fieldRow = {
   entry: { id: 'sep-1', sportEventId: EVENT_ID, participantId: 'p1', status: SportEventParticipantStatus.ACTIVE, createdAt: AT, updatedAt: AT },
   participant: { id: 'p1', name: 'Scottie', injuryStatus: { status: 'HEALTHY' }, externalIds: {}, createdAt: AT, updatedAt: AT },

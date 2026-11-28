@@ -5,6 +5,7 @@ import { fireEvent, render, screen, waitFor, within } from '@testing-library/rea
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { ContestDto, ContestExpansionResponse, ContestManagementDetailDto, SportEventDto } from '@/lib/api';
+import { tieredChoices } from '@/test/rules-bounds';
 import { bindApiMocks } from '@/test/msw-api';
 import { AuthProvider } from '@/features/auth/auth-provider';
 import { CommissionerToolsLayout } from '@/features/leagues/commissioner-tools-layout';
@@ -232,7 +233,7 @@ describe('Commissioner tools › Contests › one contest', () => {
 
   it('lists the event\'s tiers as Tier 1, Tier 2… with Tier 1 on top, each with its golfer count', async () => {
     primeMocks({
-      managedContest: buildManagedContest({ sportEvents: [{ sportEventId: 'event-1', effectiveTiers: [buildTier(3, 14), buildTier(1, 8), buildTier(2, 1)] }] }),
+      managedContest: buildManagedContest({ sportEvents: [{ sportEventId: 'event-1', effectiveTiers: [buildTier(3, 14), buildTier(1, 8), buildTier(2, 1)], tieredRosterChoices: tieredChoices([8, 1, 14]) }] }),
     });
 
     renderAt('/league/BIGDAWGS/admin/contests/contest-1');

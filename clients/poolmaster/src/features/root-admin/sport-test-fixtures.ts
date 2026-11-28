@@ -1,4 +1,5 @@
 import { sportFacts, sportPlay } from '@/test/sport-play';
+import { tieredChoices } from '@/test/rules-bounds';
 import type {
   SportEventOverviewDto,
   ParticipantDto,
@@ -89,6 +90,7 @@ export function sportEventFixture(overrides: Partial<SportEventDto> = {}): Sport
     slots: [seasonSlotFixture()],
     autoLifecycleEnabled: true,
     tierCount: 6,
+    tieredRosterChoices: tieredChoices([5, 5, 5, 5, 5, 5]),
     adminCounts: { untieredParticipantCount: 0, unpricedParticipantCount: 0, emptyTierNumbers: [], contestCount: 0 },
     releaseChecks: passingReleaseChecks(),
     lastAutoReleaseCheck: null,

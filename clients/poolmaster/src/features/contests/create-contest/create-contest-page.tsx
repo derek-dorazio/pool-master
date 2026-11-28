@@ -2,8 +2,6 @@ import { useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import type { CreateContestRequest } from '@poolmaster/shared/dto';
 import {
-  contestFormatForSelectionType,
-  eventSportDefinition,
   SelectionType,
   sportVocabulary,
 } from '@poolmaster/shared/domain';
@@ -71,8 +69,16 @@ export function CreateContestPage() {
       if (!submitted.selectedTemplateId) {
         throw new Error('Choose a setup to start from.');
       }
-      const submittedParticipant = sportVocabulary(eventSportDefinition(event)).participant;
-      const parsed = parseContestRules(submitted, submitted.selectionType, event.tierCount, submittedParticipant);
+      const template = draft.templatesQuery.data?.find((candidate) => candidate.id === submitted.selectedTemplateId);
+      if (template === undefined) {
+        throw new Error('Choose a setup to start from.');
+      }
+      const parsed = parseContestRules(
+        submitted,
+        submitted.selectionType,
+        { limits: template.rulesLimits, tieredRosterChoices: event.tieredRosterChoices },
+        sportVocabulary(draft.sportDefinition).participant,
+      );
       if (parsed.error !== null) {
         throw new Error(parsed.error);
       }
@@ -86,7 +92,7 @@ export function CreateContestPage() {
         name: submitted.contestName.trim(),
         // A contest starts on one event; the commissioner adds more from its Events page (#713).
         sportEventIds: [event.id],
-        contestFormat: contestFormatForSelectionType(submitted.selectionType),
+        contestFormat: template.contestFormat,
         selectionType: submitted.selectionType,
         ...(submitted.selectionType === SelectionType.SQUARES ? { sportEventRoundMatchGameId: submitted.sportEventRoundMatchGameId } : {}),
         templateId: submitted.selectedTemplateId,
@@ -234,6 +240,7 @@ export function CreateContestPage() {
         sportDefinition={draft.sportDefinition}
       />
       <CreateContestRulesSection
+        bounds={draft.rulesBounds}
         onChange={changeRules}
         rulesError={draft.rulesError}
         salaryCap={draft.salaryCap}

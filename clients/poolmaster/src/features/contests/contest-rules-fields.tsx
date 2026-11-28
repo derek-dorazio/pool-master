@@ -1,9 +1,6 @@
 import type { ReactElement } from 'react';
 import {
   PickEmMode,
-  RANDOM_DRAW_PICKS_PER_ENTRY_MAX,
-  SQUARES_PER_ENTRY_MAX,
-  SURVIVOR_LIVES_MAX,
   SelectionType,
   type SportNoun,
   describeBracketRules,
@@ -11,26 +8,33 @@ import {
   describePickEmMode,
   describeSurvivorRules,
   formatPickEmModeName,
-  getTieredRosterSize,
 } from '@poolmaster/shared/domain';
+import type { ContestRulesLimitsDto, TieredRosterChoiceDto } from '@/lib/api';
 import { Checkbox, FormField, Input, SegmentedControl, Text } from '@/features/shared/ui';
-import { defaultCountedScoresFor, perEntryLabel, type ContestRulesValues, type EditableSelectionType } from './contest-rules-form';
+import {
+  defaultCountedScoresFor,
+  perEntryLabel,
+  tieredRosterSizeFor,
+  type ContestRulesBounds,
+  type ContestRulesValues,
+  type EditableSelectionType,
+} from './contest-rules-form';
 
 function TieredRulesInputs({
+  choices,
   onChange,
   participant,
   tierCount,
   values,
 }: {
+  /** The event's picks-per-tier choices (#2107), empty until its tiers are filled. */
+  choices: readonly TieredRosterChoiceDto[];
   onChange: (next: Partial<ContestRulesValues>) => void;
   participant: SportNoun;
   tierCount: number;
   values: ContestRulesValues;
 }) {
-  const picksPerTier = Number(values.picksPerTier);
-  const rosterSize = tierCount > 0 && Number.isInteger(picksPerTier) && picksPerTier >= 1
-    ? getTieredRosterSize(tierCount, picksPerTier)
-    : null;
+  const rosterSize = tieredRosterSizeFor(values.picksPerTier, choices);
 
   return (
     <div className="grid gap-4 md:grid-cols-2">
@@ -42,10 +46,11 @@ function TieredRulesInputs({
       >
         <Input
           data-testid="contest-tiered-picks-per-tier"
+          max={choices.at(-1)?.picksPerTier}
           min={1}
           onChange={(event) => {
             const next = event.target.value;
-            const countedScores = defaultCountedScoresFor(next, tierCount);
+            const countedScores = defaultCountedScoresFor(next, choices);
             onChange(countedScores === null ? { picksPerTier: next } : { countedScores, picksPerTier: next });
           }}
           type="number"
@@ -70,11 +75,13 @@ function TieredRulesInputs({
 
 /** The budget inputs (#93). The salary cap is the event's, so it shows but does not edit. */
 function BudgetRulesInputs({
+  limits,
   onChange,
   participant,
   salaryCap,
   values,
 }: {
+  limits: ContestRulesLimitsDto | null;
   onChange: (next: Partial<ContestRulesValues>) => void;
   participant: SportNoun;
   salaryCap: number | null;
@@ -86,6 +93,7 @@ function BudgetRulesInputs({
         <FormField label={perEntryLabel(participant)}>
           <Input
             data-testid="contest-budget-roster-size"
+            max={limits?.rosterSizeMax}
             min={1}
             onChange={(event) => onChange({ rosterSize: event.target.value })}
             type="number"
@@ -124,10 +132,12 @@ function BudgetRulesInputs({
  * of their scores count. Nobody picks, so there is nothing else to set.
  */
 function RandomDrawRulesInputs({
+  limits,
   onChange,
   participant,
   values,
 }: {
+  limits: ContestRulesLimitsDto | null;
   onChange: (next: Partial<ContestRulesValues>) => void;
   participant: SportNoun;
   values: ContestRulesValues;
@@ -140,7 +150,7 @@ function RandomDrawRulesInputs({
       >
         <Input
           data-testid="contest-draw-picks-per-entry"
-          max={RANDOM_DRAW_PICKS_PER_ENTRY_MAX}
+          max={limits?.picksPerEntryMax}
           min={1}
           onChange={(event) => onChange({ picksPerEntry: event.target.value })}
           type="number"
@@ -220,10 +230,13 @@ function BracketRulesInputs() {
   return <Text as="p" data-testid="contest-bracket-rules" variant="meta">{describeBracketRules()}</Text>;
 }
 
-/** The survivor Lives choice (#1754): 1 up to the most a contest allows. */
-const SURVIVOR_LIVES_CHOICES = Array.from({ length: SURVIVOR_LIVES_MAX }, (_, index) => index + 1);
+/** The survivor Lives choice (#1754): 1 up to the most the API allows; none until it says. */
+function survivorLivesChoices(limits: ContestRulesLimitsDto | null) {
+  return Array.from({ length: limits?.livesMax ?? 0 }, (_, index) => index + 1);
+}
 
 type RulesInputsProps = {
+  bounds: ContestRulesBounds;
   onChange: (next: Partial<ContestRulesValues>) => void;
   participant: SportNoun;
   salaryCap: number | null;
@@ -233,39 +246,44 @@ type RulesInputsProps = {
 
 /** Each format's own inputs. A `Record` over the type, so a new format without inputs fails the typecheck. */
 const RULES_INPUTS: Record<EditableSelectionType, (props: RulesInputsProps) => ReactElement> = {
-  [SelectionType.TIERED]: ({ onChange, participant, tierCount, values }: RulesInputsProps) => (
-    <TieredRulesInputs onChange={onChange} participant={participant} tierCount={tierCount} values={values} />
+  [SelectionType.TIERED]: ({ bounds, onChange, participant, tierCount, values }: RulesInputsProps) => (
+    <TieredRulesInputs choices={bounds.tieredRosterChoices} onChange={onChange} participant={participant} tierCount={tierCount} values={values} />
   ),
-  [SelectionType.BUDGET_PICK]: ({ onChange, participant, salaryCap, values }: RulesInputsProps) => (
-    <BudgetRulesInputs onChange={onChange} participant={participant} salaryCap={salaryCap} values={values} />
+  [SelectionType.BUDGET_PICK]: ({ bounds, onChange, participant, salaryCap, values }: RulesInputsProps) => (
+    <BudgetRulesInputs limits={bounds.limits} onChange={onChange} participant={participant} salaryCap={salaryCap} values={values} />
   ),
-  [SelectionType.RANDOM_DRAW]: ({ onChange, participant, values }: RulesInputsProps) => (
-    <RandomDrawRulesInputs onChange={onChange} participant={participant} values={values} />
+  [SelectionType.RANDOM_DRAW]: ({ bounds, onChange, participant, values }: RulesInputsProps) => (
+    <RandomDrawRulesInputs limits={bounds.limits} onChange={onChange} participant={participant} values={values} />
   ),
   [SelectionType.PICK_EM]: ({ onChange, values }: RulesInputsProps) => (
     <PickEmRulesInputs onChange={onChange} values={values} />
   ),
   [SelectionType.BRACKET]: () => <BracketRulesInputs />,
-  [SelectionType.SURVIVOR]: ({ onChange, values }: RulesInputsProps) => (
+  [SelectionType.SURVIVOR]: ({ bounds, onChange, values }: RulesInputsProps) => {
+    const choices = survivorLivesChoices(bounds.limits);
+    const lives = values.survivorLives ?? bounds.limits?.livesDefault ?? null;
+    return (
     <div className="space-y-4">
-      <Text as="p" data-testid="contest-survivor-rules" variant="meta">{describeSurvivorRules(values.survivorReuseTeams, values.survivorLives)}</Text>
+      {lives !== null && <Text as="p" data-testid="contest-survivor-rules" variant="meta">{describeSurvivorRules(values.survivorReuseTeams, lives)}</Text>}
+      {lives !== null && (
       <FormField label="Lives">
         <SegmentedControl
           aria-label="Lives"
           onChange={(value) => {
-            const survivorLives = SURVIVOR_LIVES_CHOICES.find((lives) => String(lives) === value);
+            const survivorLives = choices.find((choice) => String(choice) === value);
             if (survivorLives !== undefined) {
               onChange({ survivorLives });
             }
           }}
-          options={SURVIVOR_LIVES_CHOICES.map((lives) => ({
-            label: String(lives),
-            testId: `contest-survivor-lives-${String(lives)}`,
-            value: String(lives),
+          options={choices.map((choice) => ({
+            label: String(choice),
+            testId: `contest-survivor-lives-${String(choice)}`,
+            value: String(choice),
           }))}
-          value={String(values.survivorLives)}
+          value={String(lives)}
         />
       </FormField>
+      )}
       <Text as="div" className="space-y-1">
         <label className="flex items-center gap-3 font-medium text-foreground">
           <Checkbox
@@ -279,12 +297,13 @@ const RULES_INPUTS: Record<EditableSelectionType, (props: RulesInputsProps) => R
         <Text as="p" id="contest-survivor-reuse-teams-hint" size="inherit" tone="muted">{SURVIVOR_REUSE_TEAMS_HINT}</Text>
       </Text>
     </div>
-  ),
-  [SelectionType.SQUARES]: ({ onChange, values }: RulesInputsProps) => (
+    );
+  },
+  [SelectionType.SQUARES]: ({ bounds, onChange, values }: RulesInputsProps) => (
     <FormField helperText="Boxes nobody claims stay empty, and a quarter won by an empty box has no winner." label="Boxes per entry">
       <Input
         data-testid="contest-squares-boxes-per-entry"
-        max={SQUARES_PER_ENTRY_MAX}
+        max={bounds.limits?.maxSquaresPerEntryMax}
         min={1}
         onChange={(event) => onChange({ maxSquaresPerEntry: event.target.value })}
         type="number"
@@ -302,6 +321,7 @@ const RULES_INPUTS: Record<EditableSelectionType, (props: RulesInputsProps) => R
  * adds its fields here once.
  */
 export function ContestRulesFields({
+  bounds,
   onChange,
   participant,
   salaryCap,
@@ -309,6 +329,8 @@ export function ContestRulesFields({
   tierCount,
   values,
 }: {
+  /** The API's bounds on the rules (#2107): the limits and the event's picks-per-tier choices. */
+  bounds: ContestRulesBounds;
   onChange: (next: Partial<ContestRulesValues>) => void;
   /** What the event's sport calls a competitor: "golfer", "horse". */
   participant: SportNoun;
@@ -320,7 +342,7 @@ export function ContestRulesFields({
 }) {
   return (
     <div className="space-y-4">
-      {RULES_INPUTS[selectionType]({ onChange, participant, salaryCap, tierCount, values })}
+      {RULES_INPUTS[selectionType]({ bounds, onChange, participant, salaryCap, tierCount, values })}
       {selectionType === SelectionType.SQUARES ? (
         // The box limit is per entry, so a squares contest takes one entry per member (#711).
         <Text as="p" data-testid="contest-squares-one-entry" variant="meta">One entry per member, which holds their boxes.</Text>

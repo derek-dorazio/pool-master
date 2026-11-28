@@ -1,5 +1,5 @@
 import type { ContestConfigTemplateDto, EffectiveTierDto } from '@poolmaster/shared/dto';
-import type { ContestConfigTemplate } from '@poolmaster/shared/domain';
+import { CONTEST_RULES_LIMITS, type ContestConfigTemplate } from '@poolmaster/shared/domain';
 import type { SportEventTierGroup } from '../modules/events/sport-event-tier-service';
 
 export function mapContestConfigTemplateDto(
@@ -20,6 +20,7 @@ export function mapContestConfigTemplateDto(
     active: template.active,
     schemaVersion: template.schemaVersion,
     configuration: template.configJson,
+    rulesLimits: { ...CONTEST_RULES_LIMITS },
   };
 }
 

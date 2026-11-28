@@ -11,7 +11,12 @@ import {
   suggestContestName,
 } from '@poolmaster/shared/domain';
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_CONTEST_RULES, parseContestRules, toContestRulesValues } from './contest-rules-form';
+import { RULES_LIMITS, tieredChoices } from '@/test/rules-bounds';
+import { DEFAULT_CONTEST_RULES, parseContestRules, toContestRulesValues, type ContestRulesBounds } from './contest-rules-form';
+
+/** The API's bounds for an event with no tiers yet, and for six tiers of five. */
+const NO_TIERS: ContestRulesBounds = { limits: RULES_LIMITS, tieredRosterChoices: [] };
+const SIX_TIERS: ContestRulesBounds = { limits: RULES_LIMITS, tieredRosterChoices: tieredChoices([5, 5, 5, 5, 5, 5]) };
 
 const GOLFER = sportVocabulary(Sport.GOLF).participant;
 const HORSE = sportVocabulary(Sport.HORSE_RACING).participant;
@@ -22,7 +27,7 @@ describe('contest rules sentence', () => {
       .toBe('Pick 1 horse from each of 3 tiers. Every score counts.');
     expect(formatContestRules({ selectionType: SelectionType.RANDOM_DRAW, picksPerEntry: 2, countedScores: 1 }, 3, HORSE))
       .toBe('The draw deals each entry 2 horses at random. The best score counts.');
-    expect(parseContestRules({ ...DEFAULT_CONTEST_RULES, rosterSize: '13' }, SelectionType.BUDGET_PICK, 0, HORSE).error)
+    expect(parseContestRules({ ...DEFAULT_CONTEST_RULES, rosterSize: '13' }, SelectionType.BUDGET_PICK, NO_TIERS, HORSE).error)
       .toMatch(/^Horses per entry must be between 1 and/);
   });
 
@@ -73,38 +78,57 @@ describe('contest rules form', () => {
   const valid = { ...DEFAULT_CONTEST_RULES, picksPerTier: '1', countedScores: '4', maxEntriesPerTeam: '2' };
 
   it('turns valid fields into the configuration the API takes', () => {
-    expect(parseContestRules(valid, SelectionType.TIERED, 6, GOLFER)).toEqual({
+    expect(parseContestRules(valid, SelectionType.TIERED, SIX_TIERS, GOLFER)).toEqual({
       configuration: { selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 4, maxEntriesPerSquad: 2 },
       error: null,
     });
   });
 
   it('sends no entry limit when No limit is ticked', () => {
-    expect(parseContestRules({ ...valid, unlimitedEntries: true, maxEntriesPerTeam: '' }, SelectionType.TIERED, 6, GOLFER).configuration)
+    expect(parseContestRules({ ...valid, unlimitedEntries: true, maxEntriesPerTeam: '' }, SelectionType.TIERED, SIX_TIERS, GOLFER).configuration)
       .toEqual({ selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 4 });
   });
 
   it('refuses more scores that count than golfers picked, naming the roster size', () => {
-    expect(parseContestRules({ ...valid, countedScores: '7' }, SelectionType.TIERED, 6, GOLFER).error)
+    expect(parseContestRules({ ...valid, countedScores: '7' }, SelectionType.TIERED, SIX_TIERS, GOLFER).error)
       .toBe('Scores that count must be between 1 and the 6 golfers picked.');
   });
 
   it('refuses a picks-per-tier or entry limit that is not a positive whole number', () => {
-    expect(parseContestRules({ ...valid, picksPerTier: '0' }, SelectionType.TIERED, 6, GOLFER).error).toBe('Picks per tier must be a positive whole number.');
-    expect(parseContestRules({ ...valid, maxEntriesPerTeam: '1.5' }, SelectionType.TIERED, 6, GOLFER).error).toBe('Entries per member must be a positive whole number.');
+    expect(parseContestRules({ ...valid, picksPerTier: '0' }, SelectionType.TIERED, NO_TIERS, GOLFER).error).toBe('Picks per tier must be a positive whole number.');
+    expect(parseContestRules({ ...valid, maxEntriesPerTeam: '1.5' }, SelectionType.TIERED, SIX_TIERS, GOLFER).error).toBe('Entries per member must be a positive whole number.');
+  });
+
+  it('refuses more picks per tier than the API offers for the event\'s smallest tier, naming that size', () => {
+    expect(parseContestRules({ ...valid, picksPerTier: '6' }, SelectionType.TIERED, SIX_TIERS, GOLFER).error).toBe('Picks per tier must be between 1 and 5.');
+    expect(parseContestRules({ ...valid, picksPerTier: '0' }, SelectionType.TIERED, SIX_TIERS, GOLFER).error).toBe('Picks per tier must be between 1 and 5.');
+  });
+
+  it('leaves picks per tier and scores that count to the API while the event\'s tiers are not filled', () => {
+    expect(parseContestRules({ ...valid, picksPerTier: '9', countedScores: '40' }, SelectionType.TIERED, NO_TIERS, GOLFER).configuration)
+      .toEqual({ selectionType: SelectionType.TIERED, picksPerTier: 9, countedScores: 40, maxEntriesPerSquad: 2 });
+    expect(parseContestRules({ ...valid, countedScores: '0' }, SelectionType.TIERED, NO_TIERS, GOLFER).error).toBe('Scores that count must be a positive whole number.');
+  });
+
+  it('checks a count only for a whole number until a setup brings the API\'s limits', () => {
+    const unbounded: ContestRulesBounds = { limits: null, tieredRosterChoices: [] };
+    expect(parseContestRules({ ...valid, rosterSize: '13', countedScores: '4' }, SelectionType.BUDGET_PICK, unbounded, GOLFER).error).toBeNull();
+    expect(parseContestRules({ ...valid, rosterSize: '0' }, SelectionType.BUDGET_PICK, unbounded, GOLFER).error).toBe('Golfers per entry must be a positive whole number.');
+    expect(parseContestRules({ ...valid, picksPerEntry: '0' }, SelectionType.RANDOM_DRAW, unbounded, GOLFER).error).toBe('Golfers per entry must be a positive whole number.');
+    expect(parseContestRules({ ...valid, maxSquaresPerEntry: '0' }, SelectionType.SQUARES, unbounded, GOLFER).error).toBe('Boxes per entry must be a positive whole number.');
   });
 
   it('turns budget fields into budget rules, leaving the salary cap to the event', () => {
-    expect(parseContestRules({ ...valid, rosterSize: '6' }, SelectionType.BUDGET_PICK, 0, GOLFER)).toEqual({
+    expect(parseContestRules({ ...valid, rosterSize: '6' }, SelectionType.BUDGET_PICK, NO_TIERS, GOLFER)).toEqual({
       configuration: { selectionType: SelectionType.BUDGET_PICK, rosterSize: 6, countedScores: 4, maxEntriesPerSquad: 2 },
       error: null,
     });
   });
 
   it('refuses a budget roster outside 1 to 12 golfers, or more scores that count than it holds', () => {
-    expect(parseContestRules({ ...valid, rosterSize: '13' }, SelectionType.BUDGET_PICK, 0, GOLFER).error)
+    expect(parseContestRules({ ...valid, rosterSize: '13' }, SelectionType.BUDGET_PICK, NO_TIERS, GOLFER).error)
       .toBe('Golfers per entry must be between 1 and 12.');
-    expect(parseContestRules({ ...valid, rosterSize: '3' }, SelectionType.BUDGET_PICK, 0, GOLFER).error)
+    expect(parseContestRules({ ...valid, rosterSize: '3' }, SelectionType.BUDGET_PICK, NO_TIERS, GOLFER).error)
       .toBe('Scores that count must be between 1 and the 3 golfers picked.');
   });
 
@@ -137,7 +161,7 @@ describe('pick\'em rules', () => {
   });
 
   it('turns the against-the-spread box into the pick\'em rules and back', () => {
-    expect(parseContestRules({ ...DEFAULT_CONTEST_RULES, pickEmAgainstTheSpread: true }, SelectionType.PICK_EM, 0, TEAM).configuration)
+    expect(parseContestRules({ ...DEFAULT_CONTEST_RULES, pickEmAgainstTheSpread: true }, SelectionType.PICK_EM, NO_TIERS, TEAM).configuration)
       .toMatchObject({ selectionType: SelectionType.PICK_EM, againstTheSpread: true });
     expect(toContestRulesValues({ selectionType: SelectionType.PICK_EM, mode: PickEmMode.STRAIGHT_UP, againstTheSpread: true, maxEntriesPerSquad: 1 }, DEFAULT_CONTEST_RULES))
       .toMatchObject({ pickEmAgainstTheSpread: true });
@@ -148,7 +172,7 @@ describe('pick\'em rules', () => {
   });
 
   it('turns the mode field into pick\'em rules with no roster size or scores that count', () => {
-    expect(parseContestRules({ ...DEFAULT_CONTEST_RULES, pickEmMode: PickEmMode.CONFIDENCE }, SelectionType.PICK_EM, 0, TEAM))
+    expect(parseContestRules({ ...DEFAULT_CONTEST_RULES, pickEmMode: PickEmMode.CONFIDENCE }, SelectionType.PICK_EM, NO_TIERS, TEAM))
       .toEqual({ configuration: { selectionType: SelectionType.PICK_EM, mode: PickEmMode.CONFIDENCE, againstTheSpread: false, maxEntriesPerSquad: 1 }, error: null });
   });
 
@@ -184,20 +208,20 @@ describe('survivor rules', () => {
       .toBe(formatContestRules({ selectionType: SelectionType.SURVIVOR }, 0, TEAM));
   });
 
-  it('turns the Lives choice into the survivor rules\' lives, 1 unless set to 2, and fills it back', () => {
-    expect(parseContestRules({ ...DEFAULT_CONTEST_RULES, survivorLives: 2 }, SelectionType.SURVIVOR, 0, TEAM).configuration)
+  it('turns the Lives choice into the survivor rules\' lives, leaving them to the API\'s default until one is chosen, and fills it back', () => {
+    expect(parseContestRules({ ...DEFAULT_CONTEST_RULES, survivorLives: 2 }, SelectionType.SURVIVOR, NO_TIERS, TEAM).configuration)
       .toEqual({ selectionType: SelectionType.SURVIVOR, reuseTeamsOnceAllUsed: true, lives: 2, maxEntriesPerSquad: 1 });
     expect(toContestRulesValues({ selectionType: SelectionType.SURVIVOR, lives: 2, maxEntriesPerSquad: 1 }, DEFAULT_CONTEST_RULES))
       .toEqual({ ...DEFAULT_CONTEST_RULES, survivorLives: 2 });
-    // A contest saved before lives reads as one life.
-    expect(toContestRulesValues({ selectionType: SelectionType.SURVIVOR, maxEntriesPerSquad: 1 }, { ...DEFAULT_CONTEST_RULES, survivorLives: 2 }).survivorLives).toBe(1);
+    // A contest saved without lives keeps the API's default, which the Lives choice shows.
+    expect(toContestRulesValues({ selectionType: SelectionType.SURVIVOR, maxEntriesPerSquad: 1 }, { ...DEFAULT_CONTEST_RULES, survivorLives: 2 }).survivorLives).toBeNull();
   });
 
   it('turns the rules fields into survivor rules with the team reuse setting and entry limit, and fills both back', () => {
-    expect(parseContestRules({ ...DEFAULT_CONTEST_RULES, maxEntriesPerTeam: '2' }, SelectionType.SURVIVOR, 0, TEAM))
-      .toEqual({ configuration: { selectionType: SelectionType.SURVIVOR, reuseTeamsOnceAllUsed: true, lives: 1, maxEntriesPerSquad: 2 }, error: null });
-    expect(parseContestRules({ ...DEFAULT_CONTEST_RULES, survivorReuseTeams: false }, SelectionType.SURVIVOR, 0, TEAM).configuration)
-      .toEqual({ selectionType: SelectionType.SURVIVOR, reuseTeamsOnceAllUsed: false, lives: 1, maxEntriesPerSquad: 1 });
+    expect(parseContestRules({ ...DEFAULT_CONTEST_RULES, maxEntriesPerTeam: '2' }, SelectionType.SURVIVOR, NO_TIERS, TEAM))
+      .toEqual({ configuration: { selectionType: SelectionType.SURVIVOR, reuseTeamsOnceAllUsed: true, maxEntriesPerSquad: 2 }, error: null });
+    expect(parseContestRules({ ...DEFAULT_CONTEST_RULES, survivorReuseTeams: false }, SelectionType.SURVIVOR, NO_TIERS, TEAM).configuration)
+      .toEqual({ selectionType: SelectionType.SURVIVOR, reuseTeamsOnceAllUsed: false, maxEntriesPerSquad: 1 });
     expect(toContestRulesValues({ selectionType: SelectionType.SURVIVOR, maxEntriesPerSquad: null }, { ...DEFAULT_CONTEST_RULES, survivorReuseTeams: false }))
       .toEqual({ ...DEFAULT_CONTEST_RULES, unlimitedEntries: true });
     expect(toContestRulesValues({ selectionType: SelectionType.SURVIVOR, reuseTeamsOnceAllUsed: false, maxEntriesPerSquad: 1 }, DEFAULT_CONTEST_RULES))
@@ -217,9 +241,9 @@ describe('squares rules', () => {
   });
 
   it('turns the rules fields into squares rules with the box limit, and refuses a limit past the grid', () => {
-    expect(parseContestRules({ ...DEFAULT_CONTEST_RULES, maxSquaresPerEntry: '5' }, SelectionType.SQUARES, 0, TEAM))
+    expect(parseContestRules({ ...DEFAULT_CONTEST_RULES, maxSquaresPerEntry: '5' }, SelectionType.SQUARES, NO_TIERS, TEAM))
       .toEqual({ configuration: { selectionType: SelectionType.SQUARES, maxSquaresPerEntry: 5, maxEntriesPerSquad: 1 }, error: null });
-    expect(parseContestRules({ ...DEFAULT_CONTEST_RULES, maxSquaresPerEntry: '101' }, SelectionType.SQUARES, 0, TEAM))
+    expect(parseContestRules({ ...DEFAULT_CONTEST_RULES, maxSquaresPerEntry: '101' }, SelectionType.SQUARES, NO_TIERS, TEAM))
       .toEqual({ configuration: null, error: 'Boxes per entry must be between 1 and 100.' });
     expect(toContestRulesValues({ selectionType: SelectionType.SQUARES, maxSquaresPerEntry: 4, maxEntriesPerSquad: 1 }, DEFAULT_CONTEST_RULES))
       .toEqual({ ...DEFAULT_CONTEST_RULES, maxSquaresPerEntry: '4' });
@@ -242,9 +266,9 @@ describe('bracket rules', () => {
   });
 
   it('turns the bracket fields into bracket rules carrying only the entry limit', () => {
-    expect(parseContestRules({ ...DEFAULT_CONTEST_RULES, maxEntriesPerTeam: '3' }, SelectionType.BRACKET, 4, TEAM))
+    expect(parseContestRules({ ...DEFAULT_CONTEST_RULES, maxEntriesPerTeam: '3' }, SelectionType.BRACKET, NO_TIERS, TEAM))
       .toEqual({ configuration: { selectionType: SelectionType.BRACKET, maxEntriesPerSquad: 3 }, error: null });
-    expect(parseContestRules({ ...DEFAULT_CONTEST_RULES, unlimitedEntries: true }, SelectionType.BRACKET, 4, TEAM))
+    expect(parseContestRules({ ...DEFAULT_CONTEST_RULES, unlimitedEntries: true }, SelectionType.BRACKET, NO_TIERS, TEAM))
       .toEqual({ configuration: { selectionType: SelectionType.BRACKET }, error: null });
   });
 

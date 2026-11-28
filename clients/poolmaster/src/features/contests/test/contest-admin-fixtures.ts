@@ -1,6 +1,7 @@
 import { withCoverage } from './covered-slots';
 import { ContestOpening, ContestOpeningReason, SelectionType, eventSportDefinition } from '@poolmaster/shared/domain';
 import { sportPlay } from '@/test/sport-play';
+import { RULES_LIMITS, tieredChoices } from '@/test/rules-bounds';
 import type {
   ContestConfigTemplateDto,
   ContestDto,
@@ -117,7 +118,9 @@ export function buildSportEvent(overrides: Partial<SportEventDto> = {}): SportEv
     isTestData: true,
     slots: [],
     autoLifecycleEnabled: true,
-    tierCount: 6,
+    tierCount: overrides.tierCount ?? 6,
+    // The event's tiers hold 8 each: picks per tier up to 8 on as many tiers as it has.
+    tieredRosterChoices: tieredChoices(Array.from({ length: overrides.tierCount ?? 6 }, () => 8)),
     // A commissioner's read: only a root admin's carries the admin counts (#1198).
     adminCounts: null,
     releaseChecks: null,
@@ -194,6 +197,7 @@ export function buildManagedContest(
       {
         sportEventId: 'event-1',
         effectiveTiers: [buildTier(1, 8), buildTier(2, 12), buildTier(3, 14), buildTier(4, 16), buildTier(5, 18), buildTier(6, 21)],
+        tieredRosterChoices: tieredChoices([8, 12, 14, 16, 18, 21]),
       },
     ],
     name: 'Masters One-and-Done',
@@ -209,6 +213,7 @@ export function buildManagedContest(
       picksPerTier: 1,
       countedScores: 4,
     },
+    rulesLimits: RULES_LIMITS,
     salaryCap: null,
     ...overrides,
   };

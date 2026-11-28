@@ -303,6 +303,19 @@ describe('SportEventTierService — assignment', () => {
     expect(groups.map((group) => group.participants.length)).toEqual([3, 3, 1]);
   });
 
+  it('answers each event\'s tier sizes in tier order, an empty tier as 0 and an event with no tiers as none, so a contest can cap picks per tier at the smallest tier', async () => {
+    const { store, service } = setup();
+    const race = store.addSlottedEvent({ status: SportEventStatus.DRAFT, sport: Sport.HORSE_RACING, sportLeagueId: store.addLeagueWithPlatformTierProfile({ tierCount: 3, tierSize: 3 }).id });
+    await store.addTiers(race.id, tierDefinitions(4));
+    addFieldByOdds(store, race.id, 7);
+    await service.autoAssignTiers({ sportEventId: race.id, tierSize: 3 });
+    const untiered = store.addSlottedEvent({ status: SportEventStatus.DRAFT });
+
+    const sizes = await service.tierSizes([race.id, untiered.id]);
+
+    expect(Object.fromEntries(sizes)).toEqual({ [race.id]: [3, 3, 1, 0], [untiered.id]: [] });
+  });
+
   it('spreads a 22-driver field over a race set to four tiers as 6/6/5/5 when no size is sent, leaving no tier empty', async () => {
     const { store, service } = setup();
     const race = store.addSlottedEvent({ status: SportEventStatus.DRAFT, sport: Sport.AUTO_RACING, sportLeagueId: store.addLeagueWithPlatformTierProfile({ tierCount: 5, tierSize: 8 }).id });
