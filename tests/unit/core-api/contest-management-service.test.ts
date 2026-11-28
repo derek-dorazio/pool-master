@@ -817,6 +817,22 @@ describe('ContestManagementService', () => {
       expect(reader.isSlotFieldDecided).not.toHaveBeenCalled();
     });
 
+    it('holds a field contest on the teams of the slot its event plays first, not of the slot its covered slots list first, since an unscheduled slot has no date to order by', async () => {
+      const reader = createSportEventReader({ slotFieldDecided: false, playsMatches: true, slotDefinitionIds: PLAYOFF_SLOT_DEFINITIONS });
+      const { service } = buildService({
+        reader,
+        coveredSlots: [
+          { seasonSlotId: 'conference-2027', slotDefinitionId: 'conference', sportEventId: '11111111-1111-1111-1111-111111111111', status: SeasonSlotStatus.SCHEDULED, startsAt: new Date('2027-01-24T18:00:00.000Z'), isTestData: false },
+          { seasonSlotId: 'wild-card-2027', slotDefinitionId: 'wild-card', sportEventId: '11111111-1111-1111-1111-111111111111', status: SeasonSlotStatus.SCHEDULED, startsAt: null, isTestData: false },
+        ],
+      });
+
+      const opened = await service.openContest('league-1', 'contest-1');
+
+      expect(opened.status).toBe(ContestStatus.OPEN);
+      expect(reader.isSlotFieldDecided).not.toHaveBeenCalled();
+    });
+
     it.each([
       ['starts at the event\'s first slot', true, 'wild-card'],
       ['is played as a field, not as games', false, 'divisional'],

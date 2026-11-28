@@ -98,7 +98,7 @@ import {
 } from '@poolmaster/shared/domain';
 import { toEffectiveTierDtoList } from '../../mappers/contest-management.mapper';
 import { eventOpening, type EventOpeningReason } from './contest-opening';
-import { ContestCutoffKind, contestCutoff, slotWaitsForFeedingGames, type ContestCutoff, type EventTiming } from '../contests/entry-window';
+import { ContestCutoffKind, contestCutoff, contestStartSlot, slotWaitsForFeedingGames, type ContestCutoff, type EventTiming } from '../contests/entry-window';
 import { errorMessage } from '../../core/error-message';
 
 interface CreateContestManagementContext {
@@ -868,8 +868,10 @@ export class ContestManagementService {
     contest: Pick<Contest, 'id' | 'selectionType' | 'coveredSlots'>,
     sportEvents: readonly ContestCreateSportEventState[],
   ): Promise<void> {
-    const firstSlot = contest.coveredSlots.at(0);
-    const sportEvent = sportEvents.find((each) => each.id === firstSlot?.sportEventId);
+    // The contest's first event is its first covered slot's (they are ordered by event start); its
+    // start slot on that event is the one the event plays first.
+    const sportEvent = sportEvents.find((each) => each.id === contest.coveredSlots.at(0)?.sportEventId);
+    const firstSlot = sportEvent === undefined ? undefined : contestStartSlot(contest.coveredSlots, sportEvent);
     if (!isRosterSelectionType(contest.selectionType) || firstSlot === undefined || sportEvent === undefined
       || !slotWaitsForFeedingGames(sportEvent, firstSlot.slotDefinitionId)) return;
     if (await this.sportEventReader.isSlotFieldDecided(sportEvent.id, firstSlot.seasonSlotId)) return;

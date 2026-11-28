@@ -131,6 +131,22 @@ function stillToStart(status: SportEventStatus): SportEventStatus {
 }
 
 /**
+ * The covered slot a contest starts at on the event (#2015): of the slots it covers there, the one
+ * the event plays first. The event's slot definitions are in play order; a contest's covered slots
+ * are ordered by their dates, and a slot whose games are not scheduled yet has none, so their
+ * order is not the order of play.
+ */
+export function contestStartSlot<Slot extends { sportEventId: string | null; slotDefinitionId: string }>(
+  coveredSlots: readonly Slot[],
+  event: { id: string; slotDefinitionIds: readonly string[] },
+): Slot | undefined {
+  const playOrder = (slot: Slot) => event.slotDefinitionIds.indexOf(slot.slotDefinitionId);
+  return coveredSlots
+    .filter((slot) => slot.sportEventId === event.id && playOrder(slot) >= 0)
+    .reduce<Slot | undefined>((first, slot) => (first === undefined || playOrder(slot) < playOrder(first) ? slot : first), undefined);
+}
+
+/**
  * Whether a field contest starting at the slot waits for the games before it (#2015): the event
  * plays matches and the slot is not its first, so earlier slots' games feed its teams. A contest
  * starting at the event's first slot, or on an event played as one field, has no game to wait for,

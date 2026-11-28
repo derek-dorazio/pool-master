@@ -35,7 +35,7 @@ import {
   hasSportEventStarted,
   isSportEventStatusFinished,
 } from '@poolmaster/shared/domain';
-import { ContestCutoffKind, contestCutoff, cutoffTiming, hasGameMovedOn, isSlotFieldDecided, slotWaitsForFeedingGames, type EventTiming } from '../contests/entry-window';
+import { ContestCutoffKind, contestCutoff, contestStartSlot, cutoffTiming, hasGameMovedOn, isSlotFieldDecided, slotWaitsForFeedingGames, type EventTiming } from '../contests/entry-window';
 import type { ProviderSyncFindingService } from '../ingestion/findings/provider-sync-finding-service';
 import { ContestLifecycle } from '../contests/contest-lifecycle';
 import type { SettleSportEventContestsJobPayload } from '../contests/settle-sport-event-job-requests';
@@ -512,10 +512,11 @@ export class EventLifecycleService {
     now: Date,
     knownGames: readonly SportEventRoundMatch[] | undefined,
   ): Promise<void> {
-    const played = { playsMatches: eventPlaysMatches(sportEvent), slotDefinitionIds: sportEvent.slotDefinitions.map((definition) => definition.id) };
+    const played = { id: sportEvent.id, playsMatches: eventPlaysMatches(sportEvent), slotDefinitionIds: sportEvent.slotDefinitions.map((definition) => definition.id) };
     const pastCutoff = drafts.flatMap((contest) => {
-      const firstSlot = contest.coveredSlots.at(0);
-      if (!isRosterSelectionType(contest.selectionType) || firstSlot?.sportEventId !== sportEvent.id
+      // Only a contest whose first event is this one (covered slots are ordered by event start).
+      const firstSlot = contest.coveredSlots.at(0)?.sportEventId === sportEvent.id ? contestStartSlot(contest.coveredSlots, played) : undefined;
+      if (!isRosterSelectionType(contest.selectionType) || firstSlot === undefined
         || !slotWaitsForFeedingGames(played, firstSlot.slotDefinitionId)) return [];
       return hasSportEventStarted(cutoffTiming(contestCutoff(undefined, contest), sportEvent, []), now) ? [firstSlot.seasonSlotId] : [];
     });

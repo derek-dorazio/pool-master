@@ -1315,6 +1315,18 @@ describe('EventLifecycleService field contests that can never open (#2015)', () 
     expect(contests.contests.transitionStatuses).not.toHaveBeenCalled();
   });
 
+  it('raises nothing for a draft tiered contest covering the first round too, listed after the second: it starts at the round the event plays first, which no game feeds', async () => {
+    const draft = draftAtSecondRound(SelectionType.TIERED);
+    const firstRound = slotOfRound(1);
+    draft.coveredSlots.push(buildCoveredSlot({ seasonSlotId: firstRound.seasonSlotId, slotDefinitionId: firstRound.slotDefinitionId, sportEventId: 'sport-event-1', status: SeasonSlotStatus.COMPLETED, startsAt: STARTED_EVENT_START }));
+    const { service, sportEvents, contests, raise } = serviceOver([draft], secondRoundGames(true));
+
+    await service.activateContestsPastCutoff(expectDefined(await sportEvents.findById('sport-event-1')), after);
+
+    expect(raise).not.toHaveBeenCalled();
+    expect(contests.matches.findBySportEvent).not.toHaveBeenCalled();
+  });
+
   it('raises nothing when every team of the draft\'s first round is known, since the commissioner simply did not open it', async () => {
     const { service, sportEvents, raise } = serviceOver([draftAtSecondRound(SelectionType.TIERED)], secondRoundGames(false));
 
