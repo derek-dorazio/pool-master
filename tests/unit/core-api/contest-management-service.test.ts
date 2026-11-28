@@ -1517,6 +1517,7 @@ describe('ContestManagementService', () => {
         sportEventReader: reader,
         cups: createCupKeeper(),
         planEntitlements: platinumEntitlements(),
+        championshipYears: noClosedYears,
         now: () => CONTEST_MANAGEMENT_TEST_NOW,
       });
 
