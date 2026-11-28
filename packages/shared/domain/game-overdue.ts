@@ -4,6 +4,11 @@
  * or in progress. The sync tick raises a GAME_OVERDUE finding for it, and resolves the finding
  * once the Game is no longer overdue. A finished, cancelled or postponed Game never is, nor one
  * with no scheduled start.
+ *
+ * A Game the feed postponed waits for its new date. Once it is still POSTPONED more than
+ * POSTPONED_NO_DATE_AFTER_MS after its scheduled start, it has no new date, and the tick raises
+ * GAME_POSTPONED_NO_DATE in its place. Only the feed's POSTPONED makes a Game postponed: silence
+ * leaves it scheduled, so it is overdue instead.
  */
 import { MatchStatus } from './enums';
 
@@ -33,8 +38,25 @@ export function gameOverdueExpectedEnd(game: OverdueGameFacts, typicalGameMinute
 }
 
 /**
+ * How long after its scheduled start a postponed Game may wait for its new date before it counts
+ * as having none: 24 hours, since a league usually reschedules a postponed game within a day.
+ */
+export const POSTPONED_NO_DATE_AFTER_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * When a postponed Game's wait for a new date began, or null while it is not waiting past
+ * POSTPONED_NO_DATE_AFTER_MS at `now`: its scheduled start, once it is still POSTPONED more than
+ * that wait after it. The feed's new date moves the start, which ends the wait.
+ */
+export function gamePostponedWaitStart(game: OverdueGameFacts, now: Date): Date | null {
+  if (game.status !== MatchStatus.POSTPONED || game.scheduledDate === null) return null;
+  return now.getTime() - game.scheduledDate.getTime() > POSTPONED_NO_DATE_AFTER_MS ? game.scheduledDate : null;
+}
+
+/**
  * The latest scheduled start a Game may have and be overdue at `now`, whatever its typical length:
- * a reader need only look at Games that started before this.
+ * a reader need only look at Games that started before this. A postponed Game waits longer
+ * (POSTPONED_NO_DATE_AFTER_MS), so it is behind this cutoff too.
  */
 export function overdueStartCutoff(now: Date): Date {
   return new Date(now.getTime() - OVERDUE_AFTER_MS);

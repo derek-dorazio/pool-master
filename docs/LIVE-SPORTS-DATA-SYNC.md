@@ -506,6 +506,21 @@ stays so, and on every tick resolves the Provider's other `GAME_OVERDUE` finding
 are no longer overdue. The Sports page counts them under Findings; there is no event-level Overdue
 chip.
 
+**Postponed with no new date (#2013).** Only the feed postpones a Game: the scores writer marks it
+`POSTPONED` when its provider says so. A feed that leaves the Game out, a scores job the provider
+turns away rate limited, or one refused by its open circuit, writes nothing, so the Game stays
+scheduled and becomes overdue instead. Events have no postponed status of their own. A Game still
+`POSTPONED` more than 24 hours after its scheduled start (`gamePostponedWaitStart`, same file) raises
+a `GAME_POSTPONED_NO_DATE` WARNING from the same tick read, once per 24-hour wait, and resolves once
+the feed moves the Game to a new date or takes it out of `POSTPONED`. A root admin's action to
+complete its slot comes with the slot actions (#2013 part 3).
+
+**Changed after completed (#2013).** A COMPLETED Season slot is final. When a slot refresh finds
+its Matches no longer complete it (a Match moved back from final, or the feed took back a
+tournament's final call), the slot stays COMPLETED and the event gets one
+`SLOT_CHANGED_AFTER_COMPLETED` WARNING for a root admin, who corrects it through Re-settle
+(`isSlotChangedAfterCompleted` in `packages/shared/domain/slot-status.ts`).
+
 ### Webhooks
 
 `POST /api/v1/provider-webhooks/balldontlie` checks the HMAC-SHA256 signature of

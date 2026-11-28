@@ -335,6 +335,8 @@ export const enUS = {
       PROVIDER_PLAN_HAS_NO_STATS: 'Plan has no player stats',
       BOX_SCORE_PLAYER_NOT_IN_GAME: 'Box score player not in game',
       GAME_OVERDUE: 'Game result overdue',
+      GAME_POSTPONED_NO_DATE: 'Postponed game has no new date',
+      SLOT_CHANGED_AFTER_COMPLETED: 'Completed slot changed',
     },
     ProviderSyncFindingAction: {
       MAP_PARTICIPANT: 'Map participant',

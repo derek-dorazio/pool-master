@@ -3,7 +3,7 @@
  * its start plus its provider league's typical game length. The sync tick raises GAME_OVERDUE on it.
  */
 import { expect } from '@jest/globals';
-import { gameOverdueExpectedEnd, MatchStatus, OVERDUE_AFTER_MS, overdueStartCutoff } from '@poolmaster/shared/domain';
+import { gameOverdueExpectedEnd, gamePostponedWaitStart, MatchStatus, OVERDUE_AFTER_MS, overdueStartCutoff, POSTPONED_NO_DATE_AFTER_MS } from '@poolmaster/shared/domain';
 
 const NOW = new Date('2026-11-28T12:00:00.000Z');
 const MINUTE = 60 * 1000;
@@ -44,5 +44,27 @@ describe('gameOverdueExpectedEnd', () => {
 describe('overdueStartCutoff', () => {
   it('is the wait before now: no Game starting later can be overdue, whatever its typical length', () => {
     expect(overdueStartCutoff(NOW)).toEqual(new Date(NOW.getTime() - OVERDUE_AFTER_MS));
+  });
+});
+
+describe('gamePostponedWaitStart', () => {
+  const ago = (ms: number) => new Date(NOW.getTime() - ms);
+
+  it('answers a postponed Game\'s start once it is more than the postponed wait behind now, the Game still having no new date', () => {
+    const start = ago(POSTPONED_NO_DATE_AFTER_MS + MINUTE);
+
+    expect(gamePostponedWaitStart({ status: MatchStatus.POSTPONED, scheduledDate: start }, NOW)).toEqual(start);
+  });
+
+  it('waits the whole postponed wait, so a Game postponed this afternoon raises nothing yet', () => {
+    expect(gamePostponedWaitStart({ status: MatchStatus.POSTPONED, scheduledDate: ago(POSTPONED_NO_DATE_AFTER_MS) }, NOW)).toBeNull();
+    expect(gamePostponedWaitStart({ status: MatchStatus.POSTPONED, scheduledDate: ago(OVERDUE_AFTER_MS + MINUTE) }, NOW)).toBeNull();
+  });
+
+  it('never answers for a Game the feed has not postponed, nor for one with no start', () => {
+    for (const status of [MatchStatus.SCHEDULED, MatchStatus.IN_PROGRESS, MatchStatus.COMPLETED, MatchStatus.CANCELLED]) {
+      expect(gamePostponedWaitStart({ status, scheduledDate: ago(2 * POSTPONED_NO_DATE_AFTER_MS) }, NOW)).toBeNull();
+    }
+    expect(gamePostponedWaitStart({ status: MatchStatus.POSTPONED, scheduledDate: null }, NOW)).toBeNull();
   });
 });

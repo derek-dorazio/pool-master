@@ -54,6 +54,17 @@ export function seasonSlotStatusOf(scoringFamily: ScoringFamily, facts: SlotStat
 }
 
 /**
+ * Whether a COMPLETED slot's Matches changed after it completed (#2013): its family's completion
+ * rule no longer holds, as when a Match moved back from final or the feed took back a
+ * tournament's final. The slot stays COMPLETED, since COMPLETED is final; the change is a finding
+ * for a root admin, who corrects it through Re-settle (ADR 0013). A slot with no Matches, which a
+ * root admin completes by hand, has nothing that could change.
+ */
+export function isSlotChangedAfterCompleted(scoringFamily: ScoringFamily, facts: SlotStatusFacts): boolean {
+  return facts.current === SeasonSlotStatus.COMPLETED && facts.matchStatuses.length > 0 && !SLOT_COMPLETES[scoringFamily](facts);
+}
+
+/**
  * The status an event's slots give it, or null for an event with no slots, which keeps its own:
  * CANCELLED when every slot is, COMPLETED when every slot is complete or cancelled, IN_PROGRESS
  * once any slot has started, SCHEDULED before.

@@ -56,6 +56,9 @@ export interface ProviderSyncFindingServiceDeps {
   logger?: FastifyBaseLogger;
 }
 
+/** The findings the sync tick raises on a Game and resolves once the Game no longer holds them (#2013). */
+export type GameFindingKind = typeof ProviderSyncFindingKind.GAME_OVERDUE | typeof ProviderSyncFindingKind.GAME_POSTPONED_NO_DATE;
+
 export class ProviderSyncFindingService {
   constructor(private readonly deps: ProviderSyncFindingServiceDeps) {}
 
@@ -324,18 +327,19 @@ export class ProviderSyncFindingService {
   }
 
   /**
-   * The sync tick's overdue check against a Provider (named by its source id) found these of its
-   * game ids overdue (#2013): every other OPEN GAME_OVERDUE finding of the Provider resolves, in
-   * one statement, since its Game is no longer overdue. Returns how many did.
+   * The sync tick found the Provider's (by its adapter's source id) Games with these provider
+   * game ids still holding a Game finding of `kind` (#2013): overdue, or postponed with no new date.
+   * Every other OPEN finding of that kind of the Provider resolves, in one statement, since its Game
+   * no longer holds it. Returns how many did.
    */
-  async resolveGamesNoLongerOverdue(providerSourceId: string, overdueGameIds: readonly string[]): Promise<number> {
+  async resolveGameFindingsNoLongerHeld(
+    kind: GameFindingKind,
+    providerSourceId: string,
+    heldGameIds: readonly string[],
+  ): Promise<number> {
     const provider = this.providerOfSourceId(providerSourceId);
     if (provider === undefined) return 0;
-    return this.deps.repository.resolveOpen({
-      kind: ProviderSyncFindingKind.GAME_OVERDUE,
-      providerId: provider.id,
-      exceptProviderValues: overdueGameIds,
-    }, this.now());
+    return this.deps.repository.resolveOpen({ kind, providerId: provider.id, exceptProviderValues: heldGameIds }, this.now());
   }
 
   /** The Provider answered again: its rate-limit findings resolve. Returns how many did. */
