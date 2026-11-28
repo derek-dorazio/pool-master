@@ -4,7 +4,7 @@
  * Seasons are added by migration, so nothing here creates one; a labelled test slot is added here
  * (#2004).
  */
-import { Prisma, PrismaSlotProviderMatchType, PrismaSlotWindowStatus, type PrismaClient } from '@prisma/client';
+import { Prisma, PrismaParticipantType, PrismaSlotProviderMatchType, PrismaSlotWindowStatus, type PrismaClient } from '@prisma/client';
 import type {
   CoverableSeasonSlotRow,
   NameMatchedSlotsRecord,
@@ -156,7 +156,18 @@ export class PrismaSportLeagueSeasonRepository implements SportLeagueSeasonRepos
         id: true,
         sportLeagueCompetitionSlotId: true,
         sportLeagueSeasonCompetitionId: true,
-        seasonCompetition: { select: { competition: { select: { name: true } } } },
+        seasonCompetition: { select: { competition: { select: {
+          name: true,
+          // A conference's competition places only its teams' games (#2052): the provider's feed
+          // ids of the teams holding the conference this Season, in the same read.
+          conference: { select: { seasonTeams: {
+            where: { sportLeagueSeasonId },
+            select: { team: { select: { providerMappings: {
+              where: { participantType: PrismaParticipantType.TEAM, provider: { leagues: { some: { sportLeagues: { some: { id: sportLeagueProviderMappingId } } } } } },
+              select: { externalId: true },
+            } } } },
+          } } },
+        } } } },
         startsAt: true,
         endsAt: true,
         windowStartsAt: true,
@@ -192,6 +203,7 @@ export class PrismaSportLeagueSeasonRepository implements SportLeagueSeasonRepos
         sportEventId: row.eventSlot?.sportEventId ?? null,
         seasonCompetitionId: row.sportLeagueSeasonCompetitionId,
         competitionName: row.seasonCompetition.competition.name,
+        conferenceTeams: conferenceTeamsOf(row.seasonCompetition.competition.conference),
         startsAt: row.startsAt,
         endsAt: row.endsAt,
         placedByWindow: byWindow,
@@ -324,4 +336,9 @@ export class PrismaSportLeagueSeasonRepository implements SportLeagueSeasonRepos
       })]),
     ]);
   }
+}
+
+/** The feed ids of a conference's teams this Season, or null for a competition with no conference. */
+function conferenceTeamsOf(conference: { seasonTeams: Array<{ team: { providerMappings: Array<{ externalId: string }> } }> } | null): ReadonlySet<string> | null {
+  return conference === null ? null : new Set(conference.seasonTeams.flatMap(({ team }) => team.providerMappings.map((mapping) => mapping.externalId)));
 }

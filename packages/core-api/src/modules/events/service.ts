@@ -173,6 +173,11 @@ export interface ProviderSeasonImport {
    */
   slotsNeedingDates: string[] | null;
   /**
+   * The keys of the slots whose competition names a conference no team holds in the Season yet
+   * (#2052), which place no game; null when no slot's competition names a conference.
+   */
+  slotsWithoutConferenceTeams: string[] | null;
+  /**
    * Each tournament name no NAME_PATTERN mapping placed (#2011), once per normalized name: matched
    * by none, ambiguous (more than one slot, or a slot another tournament already has), or matched
    * to a slot whose competition the Season lacks.
@@ -508,6 +513,10 @@ export class SportEventService {
     const slotsNeedingDates = !slots.some((slot) => slot.placedByWindow) ? null : slots
       .filter((slot) => slotNeedsDates(confirmedWindows.has(slot.seasonSlotId) && slot.window !== null ? { ...slot, window: { ...slot.window, status: SlotWindowStatus.CONFIRMED } } : slot))
       .map((slot) => slot.key);
+    const conferenceSlots = slots.filter((slot) => slot.conferenceTeams !== null);
+    const slotsWithoutConferenceTeams = conferenceSlots.length === 0 ? null : conferenceSlots
+      .filter((slot) => slot.conferenceTeams?.size === 0)
+      .map((slot) => slot.key);
 
     this.deps.logger?.info(
       {
@@ -525,6 +534,7 @@ export class SportEventService {
         unplacedGameCount: unplaced.length,
         windowsConfirmedCount: confirmedWindows.size,
         slotsNeedingDates,
+        slotsWithoutConferenceTeams,
       },
       'Imported provider Season',
     );
@@ -532,7 +542,7 @@ export class SportEventService {
       ...slots.flatMap((slot) => (slot.sportEventId === null || slot.competitionName === null ? [] : [[slot.sportEventId, slot.competitionName] as const])),
       ...written.flatMap(({ event }, index) => (editionNames[index] === null ? [] : [[event.id, editionNames[index]] as const])),
     ]);
-    return { created, skipped, unmatched: [...unmatched.values()], placed, unplaced, slotsNeedingDates, unplacedNames: named.unplaced, competitionNames };
+    return { created, skipped, unmatched: [...unmatched.values()], placed, unplaced, slotsNeedingDates, slotsWithoutConferenceTeams, unplacedNames: named.unplaced, competitionNames };
   }
 
   /**

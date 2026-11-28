@@ -1153,6 +1153,14 @@ export const ProviderSyncFindingKind = {
    * code, with the conference's name.
    */
   DIVISION_UNMAPPED: 'DIVISION_UNMAPPED',
+  /**
+   * A Season still open or to come has slots whose competition names a conference that no team
+   * holds in the Season yet (#2052): the slots place no game, since a conference's slot takes only
+   * its teams' games and the field sync writes a team's Season conference. WARNING; it resolves once
+   * every such slot's conference has teams. Subject: league, Provider and the provider's id for the
+   * Season, naming the slots.
+   */
+  CONFERENCE_TEAMS_MISSING: 'CONFERENCE_TEAMS_MISSING',
 } as const;
 export type ProviderSyncFindingKind = (typeof ProviderSyncFindingKind)[keyof typeof ProviderSyncFindingKind];
 export const ProviderSyncFindingKindOrder = alphabeticalOrder('ProviderSyncFindingKind');

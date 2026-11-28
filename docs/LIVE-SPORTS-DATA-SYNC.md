@@ -246,6 +246,16 @@ refreshes the rows already there (#1715). Any game placed outside its Season's s
 `SLOT_OUTSIDE_SEASON` WARNING per place and is still written. An event starts at its slots' first
 game, so a season-long slate whose windowed games lie ahead is still created.
 
+**A conference's slots (#2052).** A slot whose competition names a conference (a
+`POSTSEASON_CONFERENCE` phase's bracket) takes only a game whose teams all hold that conference in
+the Season, by their Season conference rows. A windowed game between another conference's teams
+passes it by for the next slot whose window holds it, or is unplaced; a coded game that names its
+teams and holds another conference's team is unplaced. The teams are read in the same query as the
+slots, so the filter adds no statement. A Season whose conference slots have no team in their
+conference yet (the field sync writes a team's Season conference, so a new Season starts empty)
+places nothing in them and raises one `CONFERENCE_TEAMS_MISSING` WARNING naming the slots, which
+resolves once each has teams.
+
 **The rest of a phase (#2154).** A slot whose mapping row is `REST_OF_PHASE` takes every game in
 its window that no other slot places, whoever plays it, and is matched after every other slot. Its
 window is its phase's span (NCAA Men's Football's bowls, from the Sunday after Army-Navy to the day
