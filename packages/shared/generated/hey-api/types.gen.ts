@@ -5191,10 +5191,6 @@ export type ContestManagementDetailDto = {
          */
         countedScores: number;
         /**
-         * Whole dollars. The event's salary cap when the rules were saved; an entry's picks must cost no more.
-         */
-        salaryCap: number;
-        /**
          * Contest-configuration identifier.
          */
         id: string;
@@ -5305,6 +5301,10 @@ export type ContestManagementDetailDto = {
          */
         maxEntriesPerSquad?: number | null;
     };
+    /**
+     * A budget contest's salary cap in whole dollars: the pricing of the first slot it covers holding a set (#2050), read there and never copied into the rules. Null for any other contest type, and for a budget contest whose slot is not priced yet.
+     */
+    salaryCap: number | null;
     /**
      * How much the contest counts toward its cup and the league championship (#841): NORMAL x1, BONUS x1.5, DOUBLE x2, NOT_COUNTED not at all. Fixed once the contest is COMPLETED.
      */
@@ -6033,10 +6033,6 @@ export type ContestManagementResponse = {
              */
             countedScores: number;
             /**
-             * Whole dollars. The event's salary cap when the rules were saved; an entry's picks must cost no more.
-             */
-            salaryCap: number;
-            /**
              * Contest-configuration identifier.
              */
             id: string;
@@ -6147,6 +6143,10 @@ export type ContestManagementResponse = {
              */
             maxEntriesPerSquad?: number | null;
         };
+        /**
+         * A budget contest's salary cap in whole dollars: the pricing of the first slot it covers holding a set (#2050), read there and never copied into the rules. Null for any other contest type, and for a budget contest whose slot is not priced yet.
+         */
+        salaryCap: number | null;
         /**
          * How much the contest counts toward its cup and the league championship (#841): NORMAL x1, BONUS x1.5, DOUBLE x2, NOT_COUNTED not at all. Fixed once the contest is COMPLETED.
          */

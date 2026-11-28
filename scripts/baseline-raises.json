@@ -926,6 +926,18 @@
       "reason": "retired by #2050"
     },
     {
+      "file": "scripts/retired-names.json",
+      "key": "BudgetContestConfig",
+      "now": 0,
+      "reason": "retired by #2050"
+    },
+    {
+      "file": "scripts/retired-names.json",
+      "key": "ContestSelectionConfig",
+      "now": 0,
+      "reason": "retired by #2050"
+    },
+    {
       "file": "scripts/dead-exports.json",
       "key": "own:packages/shared/dto/bracket.dto.ts",
       "now": 15,

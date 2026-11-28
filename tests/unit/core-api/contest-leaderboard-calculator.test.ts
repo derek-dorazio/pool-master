@@ -3,7 +3,7 @@ import {
   ScoringFamily,
   SelectionType,
   parseContestScoringSettings,
-  type ContestSelectionConfig,
+  type ContestRules,
 } from '@poolmaster/shared/domain';
 import {
   applySettledContestStandings,
@@ -206,7 +206,7 @@ describe('settled contest standings — order among equals', () => {
 });
 
 describe('contest counting rule', () => {
-  const config = (configJson: ContestSelectionConfig | null) => ({
+  const config = (configJson: ContestRules | null) => ({
     configJson,
     coverage: { slotDefinitionIds: ['def-tournament'] },
     participantScoringRules: [],
@@ -218,7 +218,7 @@ describe('contest counting rule', () => {
   });
 
   it('counts the best countedScores golfers of a budget contest, the same as a tiered one', () => {
-    expect(resolveContestCountingRule(config({ selectionType: SelectionType.BUDGET_PICK, rosterSize: 6, salaryCap: 50_000, countedScores: 6 })))
+    expect(resolveContestCountingRule(config({ selectionType: SelectionType.BUDGET_PICK, rosterSize: 6, countedScores: 6 })))
       .toEqual({ type: 'BEST_N', count: 6 });
   });
 
@@ -248,7 +248,7 @@ describe('a full entry\'s pick count, the M of "best N of M"', () => {
   })) as Parameters<typeof resolveLineupSize>[1];
 
   it('is a budget contest\'s roster size', () => {
-    expect(resolveLineupSize({ selectionType: SelectionType.BUDGET_PICK, rosterSize: 6, salaryCap: 50_000, countedScores: 4 }, [])).toBe(6);
+    expect(resolveLineupSize({ selectionType: SelectionType.BUDGET_PICK, rosterSize: 6, countedScores: 4 }, [])).toBe(6);
   });
 
   it('is a random draw\'s picks per entry', () => {

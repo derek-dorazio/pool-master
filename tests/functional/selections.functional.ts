@@ -25,6 +25,7 @@ import { unlinkContestsFromSportEvents } from '../support/contest-event-links';
 import { participantLeagueId } from '../support/participant-league';
 import { sportRowKeys } from '../support/sport-rows';
 import { inTierSet, tierSetSlot } from '../support/event-tier-sets';
+import { priceTierSetIn, standardPricingIn } from '../support/budget-pricing';
 
 const createdParticipantIds: string[] = [];
 const createdSportEventIds: string[] = [];
@@ -240,7 +241,6 @@ async function seedBudgetPickFixture(options: { rosterSize?: number; salaryCap?:
       configJson: {
         selectionType: SelectionType.BUDGET_PICK,
         rosterSize: options.rosterSize ?? 1,
-        salaryCap: options.salaryCap ?? 8000,
         countedScores: 1,
       },
     },
@@ -308,9 +308,12 @@ async function seedBudgetPickFixture(options: { rosterSize?: number; salaryCap?:
     },
   });
   createdSportEventParticipantIds.push(firstEventParticipant.id);
+  // The cap is the event's slot's pricing, which the contest reads there (#2050).
+  const pricedSlot = await tierSetSlot(prisma, event.id);
+  await priceTierSetIn(prisma, pricedSlot.id, { ...await standardPricingIn(prisma), salaryCap: options.salaryCap ?? 8000 });
   await prisma.sportEventSlotParticipantValuation.create({
     data: {
-      ...inTierSet(await tierSetSlot(prisma, event.id)),
+      ...inTierSet(pricedSlot),
       sportEventParticipantId: firstEventParticipant.id,
       price: 3200,
       priceAssignedSource: 'MANUAL',

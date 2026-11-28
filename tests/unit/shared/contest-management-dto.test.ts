@@ -202,6 +202,7 @@ describe('contest-management dto schemas', () => {
         leagueId: 'league-1',
         name: 'Masters Pick 6',
         status: 'OPEN',
+        salaryCap: null,
         cupWeight: 'NORMAL',
         configuration: {
           id: 'config-1',
