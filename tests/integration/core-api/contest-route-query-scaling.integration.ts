@@ -53,7 +53,7 @@ import { recordStatements, statementsOn, StatementVerb } from '../statement-log'
 import { oneEventSlotId } from '../../support/test-slots';
 import { AWAY_SIDE, HOME_SIDE } from '../../support/match-sides';
 import { createMatchRow, rowSideTeam } from '../../support/match-rows';
-import { anySeasonId, contestOnEvents, contestTemplateId } from '../../support/contest-rows';
+import { anySeason, contestOnEvents, contestTemplateId } from '../../support/contest-rows';
 import { squaresGameCreate } from '../../support/squares-game-row';
 
 // No mocks.
@@ -280,7 +280,7 @@ async function seedFinishedYears(years: number) {
     await prisma.contest.create({
       data: {
         leagueId: seeded.league.id,
-        sportLeagueSeasonId: await anySeasonId(prisma, year),
+        ...await anySeason(prisma, year),
         name: `Final ${seeded.suffix} ${String(year)}`,
         status: ContestStatus.COMPLETED,
         contestFormat: 'ROSTER',

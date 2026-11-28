@@ -36,7 +36,7 @@ import {
   transitionEvent,
   updateLeagueCupSettings,
 } from '@poolmaster/shared/generated/hey-api';
-import { ContestFormat, ContestResultCount, CupContestCount, SummaryTile, CupPointsScale, CupStatus, CupTrophy, CupWeight, RecordType, SelectionType, Sport, TrophyKind, championshipYear } from '@poolmaster/shared/domain';
+import { ContestFormat, ContestResultCount, CupContestCount, SummaryTile, CupPointsScale, CupStatus, CupTrophy, CupWeight, RecordType, SelectionType, Sport, TrophyKind } from '@poolmaster/shared/domain';
 import {
   ChampionshipResponseSchema,
   ContestManagementResponseSchema,
@@ -75,8 +75,8 @@ import { tierSetSlotPath } from './tier-set-slot';
 // the third race goes live and the cup's projection (#841 slice 5) counts it as if it ended now.
 // Last, crowning (#841 slice 4): refused while a counted contest is live, then the cup is crowned
 // with both squads sharing the trophy, has no projection, and keeps its points when the table
-// changes again. All years (#837) then lists the cup's season with its two champions and this
-// year's championship so far, and counts the shared cup for both squads. Last, the member's squad
+// changes again. All years (#837) then lists the 2099 championship year with its championship so
+// far beside the cup and its two champions, and counts the shared cup for both squads. Last, the member's squad
 // page (#872) reads its own championship row and its crowned cup row, and its history shelves
 // the crowned cup.
 
@@ -203,13 +203,17 @@ describe('SDK Functional: sports league cups and the league championship (#841, 
     };
 
     /** A contest on the race, both squads entered, settled on `finish` (runner to place). */
-    const runContest = async (eventId: string, name: string, finish: Record<string, number>) => {
+    const openRaceContest = async (eventId: string, name: string) => {
       const contestId = expectDefined((await createContest({
         client: commissioner.client,
         path: { id: league.id },
         body: { name, sportEventIds: [eventId], contestFormat: ContestFormat.ROSTER, selectionType: SelectionType.TIERED, templateId: tieredTemplate.id },
       })).data).contest.id;
       await openContest({ client: commissioner.client, path: { id: league.id, contestId } });
+      return contestId;
+    };
+    const runContest = async (eventId: string, name: string, finish: Record<string, number>) => {
+      const contestId = await openRaceContest(eventId, name);
       await enterSquads(eventId, contestId);
       await transitionEvent({ client: a, path: { eventId }, body: { toStatus: 'IN_PROGRESS' } });
       await applyResults(eventId, finish);
@@ -220,6 +224,10 @@ describe('SDK Functional: sports league cups and the league championship (#841, 
     // --- The first race: the member's Abdi 3rd beats the commissioner's Tola 4th ---------------
     const harbour = await releaseRace('Harbour Marathon', 'HARBOUR', `${SEASON}-04-19T13:30:00.000Z`);
     const valley = await releaseRace('Valley Marathon', 'VALLEY', `${SEASON}-10-11T13:30:00.000Z`);
+    // The Coast picks open before the first race settles: a year whose contests are all final
+    // closes (test slots with no contest on them hold nothing), and a closed year takes no contest.
+    const coast = await releaseRace('Coast Marathon', 'COAST', `${SEASON}-11-01T13:30:00.000Z`);
+    const coastContest = await openRaceContest(coast, `Coast Picks ${RUN}`);
     const harbourContest = await runContest(harbour, `Harbour Picks ${RUN}`, { Kiplimo: 1, Kipruto: 2, Abdi: 3, Tola: 4, Lemma: 5 });
 
     const afterOne = CupListResponseSchema.parse(expectDefined((await listCups({
@@ -256,6 +264,7 @@ describe('SDK Functional: sports league cups and the league championship (#841, 
     expect(cup.contests.map((row) => [row.contestId, row.count, row.cupWeight, row.winners.length])).toEqual([
       [harbourContest, CupContestCount.COUNTED, CupWeight.NORMAL, 1],
       [valleyContest, CupContestCount.COUNTED, CupWeight.NORMAL, 1],
+      [coastContest, CupContestCount.NOT_FINAL, CupWeight.NORMAL, 0],
     ]);
 
     const breakdown = CupSquadPointsResponseSchema.parse(expectDefined((await getCupSquadPoints({
@@ -279,9 +288,9 @@ describe('SDK Functional: sports league cups and the league championship (#841, 
     expect(noCup.response?.status).toBe(404);
     expect(noCup.error?.error.code).toBe('CUP_NOT_FOUND');
 
-    // --- The league championship: both races went final this year (an event completed by hand ends
-    // when it is completed), so the year is level the same way ---
-    const year = championshipYear(new Date());
+    // --- The league championship: both races' contests count in their Season's championship year,
+    // 2099, so the year is level the same way ---
+    const year = SEASON;
     const championship = ChampionshipResponseSchema.parse(expectDefined((await getChampionship({
       client: member.client,
       path: { id: league.id, year },
@@ -320,13 +329,6 @@ describe('SDK Functional: sports league cups and the league championship (#841, 
     expect(strangerSquad.error?.error.code).toBe('SQUAD_NOT_FOUND');
 
     // --- Cup weight: an open contest takes one; a final contest refuses it -------------------
-    const coast = await releaseRace('Coast Marathon', 'COAST', `${SEASON}-11-01T13:30:00.000Z`);
-    const coastContest = expectDefined((await createContest({
-      client: commissioner.client,
-      path: { id: league.id },
-      body: { name: `Coast Picks ${RUN}`, sportEventIds: [coast], contestFormat: ContestFormat.ROSTER, selectionType: SelectionType.TIERED, templateId: tieredTemplate.id },
-    })).data).contest.id;
-    await openContest({ client: commissioner.client, path: { id: league.id, contestId: coastContest } });
     const doubled = await setContestCupWeight({
       client: commissioner.client,
       path: { id: league.id, contestId: coastContest },
@@ -421,11 +423,10 @@ describe('SDK Functional: sports league cups and the league championship (#841, 
     expect(Object.fromEntries(kept.standings.map((row) => [row.squadId === memberSquadId ? 'member' : 'commissioner', [row.points, row.pointsAfter, row.trophy]])))
       .toEqual({ member: [150, [100, 150], CupTrophy.CHAMPION], commissioner: [150, [50, 150], CupTrophy.CHAMPION] });
 
-    // --- All years: the 2099 season with its crowned cup, then this year's championship so far ---
+    // --- All years: the 2099 year, its championship so far beside its crowned cup ---
     const summary = HistorySummaryResponseSchema.parse(expectDefined((await getHistorySummary({ client: member.client, path: { id: league.id } })).data)).summary;
     expect(summary.years.map((row) => [row.year, row.isOver, row.champions.length, row.cups.map((cup) => [cup.name, cup.status, cup.contestsCounted, cup.winners.length])])).toEqual([
-      [SEASON, false, 0, [[`${SEASON} World Marathon Majors (men) Cup`, CupStatus.CROWNED, 2, 2]]],
-      [year, false, 2, []],
+      [SEASON, false, 2, [[`${SEASON} World Marathon Majors (men) Cup`, CupStatus.CROWNED, 2, 2]]],
     ]);
     expect(summary.tiles.map((tile) => [tile.tile, tile.count, tile.squads.length])).toEqual([
       [SummaryTile.MOST_CHAMPIONSHIPS, 0, 0],
@@ -459,7 +460,7 @@ describe('SDK Functional: sports league cups and the league championship (#841, 
       RecordType.BIGGEST_FIELD_WON,
     ]);
 
-    // --- The member's squad page (#872): its championship row this year, and its 2099 cup row ---
+    // --- The member's squad page (#872): its 2099 championship row and cup row ---
     const squadYear = async (forYear: number) => SquadYearResponseSchema.parse(expectDefined((await getSquadYear({
       client: member.client,
       path: { id: league.id, squadId: memberSquadId },
@@ -473,16 +474,14 @@ describe('SDK Functional: sports league cups and the league championship (#841, 
       contestsCounted: 2,
       standing: { squadId: memberSquadId, displayPosition: 'T1', points: 1800, movement: 0, played: 2 },
     });
-    expect(thisYear.cups).toEqual([]);
-    const seasonYear = await squadYear(SEASON);
-    expect(seasonYear.cups.map((row) => [row.name, row.status, row.standing.displayPosition, row.squadCount, row.standing.points, row.standing.trophy])).toEqual([
+    expect(thisYear.cups.map((row) => [row.name, row.status, row.standing.displayPosition, row.squadCount, row.standing.points, row.standing.trophy])).toEqual([
       [`${SEASON} World Marathon Majors (men) Cup`, CupStatus.CROWNED, 'T1', 2, 150, CupTrophy.CHAMPION],
     ]);
     const history = SquadHistoryResponseSchema.parse(expectDefined((await getSquadHistory({
       client: member.client,
       path: { id: league.id, squadId: memberSquadId },
     })).data)).squadHistory;
-    expect(history.years.map((row) => row.year)).toEqual([SEASON, year]);
+    expect(history.years.map((row) => row.year)).toEqual([SEASON]);
     expect(history.medals).toEqual({ firsts: 1, seconds: 1, thirds: 0 });
     // The shared crowned cup is on the shelf; this year's running championship is not.
     expect(history.trophies.map((row) => [row.kind, row.year, row.trophy, row.name])).toEqual([

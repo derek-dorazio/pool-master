@@ -50,12 +50,13 @@ function build(squads: Squad[] = [EAGLES, BIRDIES, BOGEYS]) {
     id: string,
     places: Array<[squadId: string, position: number]>,
     settledAt: Date,
-    overrides: { cupWeight?: CupWeight } = {},
+    overrides: { cupWeight?: CupWeight; championshipYear?: number } = {},
   ) => {
     return service.recordContest({
       id,
       leagueId: LEAGUE,
       cupWeight: overrides.cupWeight ?? CupWeight.NORMAL,
+      championshipYear: overrides.championshipYear ?? settledAt.getUTCFullYear(),
     }, settledAt, places.map(([squadId, position]) => ({ squadId, position })));
   };
   return { cups, finishes, service, settle };
@@ -75,14 +76,15 @@ describe('ChampionshipService (#863)', () => {
     ]);
   });
 
-  it('counts a contest final late on 31 December in New York in that year, and keeps the first write when settlement runs twice', async () => {
+  it('counts a contest in its Season\'s championship year however late it settles, and keeps the first write when settlement runs twice', async () => {
     const { finishes, settle } = build();
 
-    await settle('bowl', [['eagles', 1]], new Date('2027-01-01T04:30:00.000Z'));
-    const again = await settle('bowl', [], new Date('2027-01-01T04:30:00.000Z'));
+    // An NFL 2025 playoffs contest goes final with the Super Bowl in February 2026: it counts in 2025.
+    await settle('playoffs', [['eagles', 1]], new Date('2026-02-09T04:30:00.000Z'), { championshipYear: 2025 });
+    const again = await settle('playoffs', [], new Date('2026-02-09T04:30:00.000Z'), { championshipYear: 2025 });
 
     expect(again).toBe(0);
-    expect(finishes.finishes.map((row) => [row.contestId, row.year])).toEqual([['bowl', 2026]]);
+    expect(finishes.finishes.map((row) => [row.contestId, row.year])).toEqual([['playoffs', 2025]]);
   });
 
   it('writes nothing for a contest nobody placed in', async () => {

@@ -100,7 +100,7 @@ function contest(overrides: Partial<Contest> = {}): Contest {
     coveredSlots: [buildCoveredSlot({ seasonSlotId: 'season-slot-tournament', slotDefinitionId: 'def-tournament', sportEventId: EVENT_ID })],
     name: 'Masters Pool',
     sportLeagueSeasonId: 'season-2026',
-    seasonYear: 2026,
+    championshipYear: 2026,
     cupWeight: CupWeight.NORMAL,
     status: ContestStatus.OPEN,
     contestFormat: ContestFormat.ROSTER,

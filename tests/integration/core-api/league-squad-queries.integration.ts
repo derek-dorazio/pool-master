@@ -105,6 +105,7 @@ describe('LeagueService.countLeagueActivity', () => {
       data: statuses.map((status) => ({
         leagueId: busy.league.id,
         sportLeagueSeasonId,
+        championshipYear: 2026,
         name: `Contest ${status}`,
         status,
         selectionType: 'TIERED' as const,

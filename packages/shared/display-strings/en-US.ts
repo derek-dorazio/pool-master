@@ -776,6 +776,8 @@ export const enUS = {
       SYNC_LEAGUE_ROSTER: 'Roster',
       REFRESH_SLOT_STATUS: 'Slot status',
       REFRESH_EVENT_STATUS: 'Event status',
+      CLOSE_LEAGUE_CHAMPIONSHIP_YEAR: 'Championship year close',
+      CLOSE_SEASON_CHAMPIONSHIP_YEARS: 'Season championship year close',
     },
     BackgroundJobKind: {
       SYNC: 'Sync',
@@ -932,6 +934,7 @@ export const enUS = {
     BRACKET_NOT_RESEEDED: 'This bracket does not reseed: each winner\'s next match is fixed.',
     BRACKET_ROUND_ALREADY_PLAYED: 'This round has already been played.',
     BRACKET_ROUND_NOT_FINISHED: 'The round before has not finished yet.',
+    CHAMPIONSHIP_YEAR_CLOSED: 'That championship year is over, so no contest can be added to it.',
     CLIENT_LOG_BATCH_TOO_LARGE: 'Too many log entries were sent at once.',
     CLIENT_LOG_RATE_LIMITED: 'Too many log entries. Wait a minute and try again.',
     CONTEST_BRACKET_SINGLE_EVENT: 'A bracket contest covers exactly one event.',

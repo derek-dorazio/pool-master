@@ -28787,7 +28787,7 @@ export interface components {
              * @description The job's handler. Its kind follows from it.
              * @enum {string}
              */
-            type: "SYNC_EVENT_FIELD" | "SYNC_EVENT_SCORES" | "CONTEST_STARTED_EMAILS" | "CONTEST_SETTLED_EMAILS" | "CONTEST_EVENT_CHANGED_EMAILS" | "CONTEST_REOPENED_EMAILS" | "SETTLE_SPORT_EVENT_CONTESTS" | "SETTLE_GAME_CONTESTS" | "REBUILD_LEADERBOARDS" | "SYNC_LEAGUE_EVENTS" | "RELEASE_SPORT_EVENT" | "SYNC_EVENT_GAMES_AND_TIERS" | "ACTIVATE_EVENT_CONTESTS" | "FOLLOW_POSTPONED_EVENT_CONTESTS" | "RESOLVE_MAPPED_PARTICIPANT_FINDINGS" | "REFRESH_SLOT_TIEBREAKERS" | "SYNC_LEAGUE_ROSTER" | "REFRESH_SLOT_STATUS" | "REFRESH_EVENT_STATUS";
+            type: "SYNC_EVENT_FIELD" | "SYNC_EVENT_SCORES" | "CONTEST_STARTED_EMAILS" | "CONTEST_SETTLED_EMAILS" | "CONTEST_EVENT_CHANGED_EMAILS" | "CONTEST_REOPENED_EMAILS" | "SETTLE_SPORT_EVENT_CONTESTS" | "SETTLE_GAME_CONTESTS" | "REBUILD_LEADERBOARDS" | "SYNC_LEAGUE_EVENTS" | "RELEASE_SPORT_EVENT" | "SYNC_EVENT_GAMES_AND_TIERS" | "ACTIVATE_EVENT_CONTESTS" | "FOLLOW_POSTPONED_EVENT_CONTESTS" | "RESOLVE_MAPPED_PARTICIPANT_FINDINGS" | "REFRESH_SLOT_TIEBREAKERS" | "SYNC_LEAGUE_ROSTER" | "REFRESH_SLOT_STATUS" | "REFRESH_EVENT_STATUS" | "CLOSE_LEAGUE_CHAMPIONSHIP_YEAR" | "CLOSE_SEASON_CHAMPIONSHIP_YEARS";
             /**
              * @description What a job is about: a provider SYNC, EMAIL to a league, contest SETTLEMENT, an event's RELEASE, or OTHER.
              * @enum {string}
@@ -28911,7 +28911,7 @@ export interface components {
                  * @description The job's handler. Its kind follows from it.
                  * @enum {string}
                  */
-                type: "SYNC_EVENT_FIELD" | "SYNC_EVENT_SCORES" | "CONTEST_STARTED_EMAILS" | "CONTEST_SETTLED_EMAILS" | "CONTEST_EVENT_CHANGED_EMAILS" | "CONTEST_REOPENED_EMAILS" | "SETTLE_SPORT_EVENT_CONTESTS" | "SETTLE_GAME_CONTESTS" | "REBUILD_LEADERBOARDS" | "SYNC_LEAGUE_EVENTS" | "RELEASE_SPORT_EVENT" | "SYNC_EVENT_GAMES_AND_TIERS" | "ACTIVATE_EVENT_CONTESTS" | "FOLLOW_POSTPONED_EVENT_CONTESTS" | "RESOLVE_MAPPED_PARTICIPANT_FINDINGS" | "REFRESH_SLOT_TIEBREAKERS" | "SYNC_LEAGUE_ROSTER" | "REFRESH_SLOT_STATUS" | "REFRESH_EVENT_STATUS";
+                type: "SYNC_EVENT_FIELD" | "SYNC_EVENT_SCORES" | "CONTEST_STARTED_EMAILS" | "CONTEST_SETTLED_EMAILS" | "CONTEST_EVENT_CHANGED_EMAILS" | "CONTEST_REOPENED_EMAILS" | "SETTLE_SPORT_EVENT_CONTESTS" | "SETTLE_GAME_CONTESTS" | "REBUILD_LEADERBOARDS" | "SYNC_LEAGUE_EVENTS" | "RELEASE_SPORT_EVENT" | "SYNC_EVENT_GAMES_AND_TIERS" | "ACTIVATE_EVENT_CONTESTS" | "FOLLOW_POSTPONED_EVENT_CONTESTS" | "RESOLVE_MAPPED_PARTICIPANT_FINDINGS" | "REFRESH_SLOT_TIEBREAKERS" | "SYNC_LEAGUE_ROSTER" | "REFRESH_SLOT_STATUS" | "REFRESH_EVENT_STATUS" | "CLOSE_LEAGUE_CHAMPIONSHIP_YEAR" | "CLOSE_SEASON_CHAMPIONSHIP_YEARS";
                 /**
                  * @description What a job is about: a provider SYNC, EMAIL to a league, contest SETTLEMENT, an event's RELEASE, or OTHER.
                  * @enum {string}
@@ -29007,7 +29007,7 @@ export interface components {
                  * @description The job's handler. Its kind follows from it.
                  * @enum {string}
                  */
-                type: "SYNC_EVENT_FIELD" | "SYNC_EVENT_SCORES" | "CONTEST_STARTED_EMAILS" | "CONTEST_SETTLED_EMAILS" | "CONTEST_EVENT_CHANGED_EMAILS" | "CONTEST_REOPENED_EMAILS" | "SETTLE_SPORT_EVENT_CONTESTS" | "SETTLE_GAME_CONTESTS" | "REBUILD_LEADERBOARDS" | "SYNC_LEAGUE_EVENTS" | "RELEASE_SPORT_EVENT" | "SYNC_EVENT_GAMES_AND_TIERS" | "ACTIVATE_EVENT_CONTESTS" | "FOLLOW_POSTPONED_EVENT_CONTESTS" | "RESOLVE_MAPPED_PARTICIPANT_FINDINGS" | "REFRESH_SLOT_TIEBREAKERS" | "SYNC_LEAGUE_ROSTER" | "REFRESH_SLOT_STATUS" | "REFRESH_EVENT_STATUS";
+                type: "SYNC_EVENT_FIELD" | "SYNC_EVENT_SCORES" | "CONTEST_STARTED_EMAILS" | "CONTEST_SETTLED_EMAILS" | "CONTEST_EVENT_CHANGED_EMAILS" | "CONTEST_REOPENED_EMAILS" | "SETTLE_SPORT_EVENT_CONTESTS" | "SETTLE_GAME_CONTESTS" | "REBUILD_LEADERBOARDS" | "SYNC_LEAGUE_EVENTS" | "RELEASE_SPORT_EVENT" | "SYNC_EVENT_GAMES_AND_TIERS" | "ACTIVATE_EVENT_CONTESTS" | "FOLLOW_POSTPONED_EVENT_CONTESTS" | "RESOLVE_MAPPED_PARTICIPANT_FINDINGS" | "REFRESH_SLOT_TIEBREAKERS" | "SYNC_LEAGUE_ROSTER" | "REFRESH_SLOT_STATUS" | "REFRESH_EVENT_STATUS" | "CLOSE_LEAGUE_CHAMPIONSHIP_YEAR" | "CLOSE_SEASON_CHAMPIONSHIP_YEARS";
                 /**
                  * @description What a job is about: a provider SYNC, EMAIL to a league, contest SETTLEMENT, an event's RELEASE, or OTHER.
                  * @enum {string}
@@ -33694,7 +33694,7 @@ export interface operations {
                     "application/json": components["schemas"]["ErrorEnvelope"];
                 };
             };
-            /** @description PLAN_SPORTS_LEAGUE_LIMIT_REACHED — the league's contests of the new contest's season already use its plan's sports leagues a year, and this event is in another sports league (#947). Budget rules the event cannot run. CONTEST_EVENT_NOT_PRICED — the event's golfers have no prices, so there is no salary cap. CONTEST_BUDGET_UNFILLABLE — the cheapest golfers for every roster place cost more than the cap. */
+            /** @description CHAMPIONSHIP_YEAR_CLOSED — the event's Season is in a championship year the league has closed, which never reopens (#2021). PLAN_SPORTS_LEAGUE_LIMIT_REACHED — the league's contests of the new contest's season already use its plan's sports leagues a year, and this event is in another sports league (#947). Budget rules the event cannot run. CONTEST_EVENT_NOT_PRICED — the event's golfers have no prices, so there is no salary cap. CONTEST_BUDGET_UNFILLABLE — the cheapest golfers for every roster place cost more than the cap. */
             409: {
                 headers: {
                     [name: string]: unknown;

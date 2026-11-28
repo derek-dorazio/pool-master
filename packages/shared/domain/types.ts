@@ -332,8 +332,11 @@ export interface Contest extends DomainEntity {
   coveredSlots: ContestCoveredSlot[];
   /** The Season the contest plays in (#2014), fixed at creation: every covered slot is one of its. */
   sportLeagueSeasonId: string;
-  /** That Season's championship year, read with it: the cup the contest counts toward (#841). */
-  seasonYear: number;
+  /**
+   * That Season's championship year (#2021), copied onto the contest at creation and held to the
+   * Season by a composite key: the year its cup, championship and history count it in.
+   */
+  championshipYear: number;
   /** How much the contest counts toward its cup and the league championship (#841). */
   cupWeight: CupWeight;
 }
@@ -420,7 +423,8 @@ export interface LeagueYearFinish {
 /** A league's year in review (#872 slice 4): its commissioner sent it, once per league and year. */
 export interface LeagueYearReview {
   leagueId: string;
-  year: number;
+  /** The championship year reviewed (#2021): a year its Seasons and contests have closed. */
+  championshipYear: number;
   /** Null once the account that sent it is gone. */
   sentByUserId: string | null;
   sentAt: Date;

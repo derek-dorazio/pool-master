@@ -43,6 +43,8 @@ import { SlotTiebreakerService } from './modules/events/slot-tiebreaker-service'
 import { PrismaSlotTiebreakerRepository } from './adapters/prisma-slot-tiebreaker-repository';
 import { SlotStatusService } from './modules/events/slot-status-service';
 import { PrismaSlotStatusRepository } from './adapters/prisma-slot-status-repository';
+import { ChampionshipYearCloseService } from './modules/championship/year-close-service';
+import { PrismaLeagueChampionshipYearRepository } from './adapters/prisma-league-championship-year-repository';
 import { sportsModule } from './modules/sports/routes';
 import { sportLeaguesModule } from './modules/sport-leagues/routes';
 import { platformPricingProfilesModule, platformTierProfilesModule } from './modules/profiles/routes';
@@ -268,6 +270,8 @@ export function buildApp(options: BuildAppOptions = {}) {
     domainEvents,
     logger: app.log,
   });
+  // A league's championship year closes once nothing in it is unfinished (#2021), on the close jobs' handlers.
+  const championshipYears = new ChampionshipYearCloseService({ years: new PrismaLeagueChampionshipYearRepository(prisma), logger: app.log });
   // One set of event services for the admin routes, the synced event creation sweep and the draft event notices.
   const sportEventServices = createSportEventServices(prisma, app.log.child({ module: 'events.service' }), eventLifecycleService, domainEvents, providers);
   const memberJoined = createMemberJoinedNotices(prisma, { email, readConfig: () => appSettings.get(EMAIL_SETTINGS), appBaseUrl, logger: app.log });
@@ -485,6 +489,8 @@ export function buildApp(options: BuildAppOptions = {}) {
       SYNC_LEAGUE_ROSTER: (payload, context) => leagueRosterSync.run(payload, context),
       REFRESH_SLOT_STATUS: (payload) => slotStatuses.refreshSlots(payload.sportEventId),
       REFRESH_EVENT_STATUS: (payload) => slotStatuses.refreshEvent(payload.sportEventId),
+      CLOSE_LEAGUE_CHAMPIONSHIP_YEAR: (payload) => championshipYears.closeContestYear(payload.contestId),
+      CLOSE_SEASON_CHAMPIONSHIP_YEARS: (payload) => championshipYears.closeSeasonYears(payload.seasonSlotId),
     },
     pollMs: readBackgroundJobPollMs(process.env),
     logger: app.log,

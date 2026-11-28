@@ -4,6 +4,7 @@ import type {
   ContestConfigurationRepository,
   ContestRepository,
   ContestSeasonLimits,
+  LeagueChampionshipYearRepository,
   ParticipantContestScoringRuleRepository,
   SportLeagueSeasonRepository,
 } from '@poolmaster/shared/db';
@@ -187,6 +188,8 @@ export interface ContestManagementServiceDeps {
   cups: Pick<CupService, 'ensureCup'>;
   /** The league's plan caps (#947): how many sports leagues a year its contests may use. */
   planEntitlements: Pick<PlanEntitlementsService, 'forLeague'>;
+  /** The league's closed championship years (#2021): no contest is created into one. */
+  championshipYears: Pick<LeagueChampionshipYearRepository, 'isClosed'>;
   logger?: LifecycleLogger;
   /** Tells the league a contest has opened (#845, the "New contest open" email). */
   contestOpened?: ContestOpenedNotice;
@@ -268,6 +271,7 @@ export class ContestManagementService {
   private readonly seasons: Pick<SportLeagueSeasonRepository, 'findCoverableSlots'>;
   private readonly cups: Pick<CupService, 'ensureCup'>;
   private readonly planEntitlements: Pick<PlanEntitlementsService, 'forLeague'>;
+  private readonly championshipYears: Pick<LeagueChampionshipYearRepository, 'isClosed'>;
   private readonly logger: LifecycleLogger;
   private readonly contestOpened?: ContestOpenedNotice;
   /** The one writer of a contest's status (#1949). */
@@ -284,6 +288,7 @@ export class ContestManagementService {
     this.seasons = deps.seasons;
     this.cups = deps.cups;
     this.planEntitlements = deps.planEntitlements;
+    this.championshipYears = deps.championshipYears;
     this.logger = deps.logger ?? createNoopLogger();
     this.contestOpened = deps.contestOpened;
     this.contestLifecycle = new ContestLifecycle(deps.contests, deps.domainEvents);
@@ -365,7 +370,16 @@ export class ContestManagementService {
     // Its Season is its events' (#841, #2003, #2014): a pick'em season's January playoff weeks
     // keep the season's year, because they are in the same Season.
     this.assertOneSeason(sportEvents, sportEvent.sportLeagueSeasonId);
-    const { sportLeagueSeasonId, championshipYear: seasonYear } = sportEvent;
+    const { sportLeagueSeasonId, championshipYear } = sportEvent;
+    // A closed year never reopens (#2021): its championship, cups and history are final.
+    if (await this.championshipYears.isClosed({ leagueId: context.leagueId, championshipYear })) {
+      this.logger.warn({ leagueId: context.leagueId, championshipYear }, 'contest management create contest refused into a closed championship year');
+      throw new ContestManagementError(
+        `The league's ${String(championshipYear)} championship year is over, so no contest can be added to it.`,
+        'CHAMPIONSHIP_YEAR_CLOSED',
+        409,
+      );
+    }
     // A squares contest covers its game's slot (#2014): its game chooses the slot, over any starting slot sent.
     // A squares contest starts at its Game's slot, which coverage refuses unless the template lists it
     // (#2050): so the Game is always in a covered slot.
@@ -375,7 +389,7 @@ export class ContestManagementService {
       leagueId: context.leagueId,
       sportLeagueSeasonId,
       seasonSlotIds,
-      seasonYear,
+      championshipYear,
       name: input.name,
       // A new contest is the commissioner's draft (#117): only they see it, nobody can enter,
       // and its settings stay editable until they open it to the league.
@@ -385,8 +399,8 @@ export class ContestManagementService {
       squaresGameId: input.sportEventRoundMatchGameId,
     }, limits);
     if (created.status === 'sportsLeagueLimitReached') {
-      this.logger.warn({ leagueId: context.leagueId, seasonYear, sportLeagueId: sportEvent.sportLeagueId, used: created.sportLeagueCount, cap: limits.sportLeaguesPerYear }, 'contest management create contest refused past the plan\'s sports leagues a year');
-      throw sportsLeagueLimitError(created.sportLeaguesPerYear, seasonYear, created.sportLeagueCount, 'New contests can only be in those.');
+      this.logger.warn({ leagueId: context.leagueId, championshipYear, sportLeagueId: sportEvent.sportLeagueId, used: created.sportLeagueCount, cap: limits.sportLeaguesPerYear }, 'contest management create contest refused past the plan\'s sports leagues a year');
+      throw sportsLeagueLimitError(created.sportLeaguesPerYear, championshipYear, created.sportLeagueCount, 'New contests can only be in those.');
     }
     const { contest } = created;
 
@@ -404,7 +418,7 @@ export class ContestManagementService {
       scoring,
       this.participantContestScoringRuleRepo,
     );
-    await this.cups.ensureCup({ leagueId: context.leagueId, seasonYear, sportLeagueId: sportEvent.sportLeagueId });
+    await this.cups.ensureCup({ leagueId: context.leagueId, seasonYear: championshipYear, sportLeagueId: sportEvent.sportLeagueId });
 
     this.logger.info({
       contestId: contest.id,
@@ -705,7 +719,7 @@ export class ContestManagementService {
     if (otherSeason) {
       this.logger.warn({ contestId, sportEventId: otherSeason.id, sportLeagueSeasonId: contest.sportLeagueSeasonId, eventSportLeagueSeasonId: otherSeason.sportLeagueSeasonId }, 'contest management set coverage refused an event of another season');
       throw new ContestManagementError(
-        `This contest is in the ${contest.seasonYear} season, so its events must be too.`,
+        `This contest is in the ${contest.championshipYear} season, so its events must be too.`,
         CONTEST_EVENTS_SEASON_MISMATCH,
       );
     }

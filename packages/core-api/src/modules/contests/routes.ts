@@ -126,7 +126,7 @@ export function contestsModule(fastify: FastifyInstance, opts: MailModuleOptions
         403: schemaRef('ErrorEnvelope'),
         409: {
           ...schemaRef('ErrorEnvelope'),
-          description: 'PLAN_SPORTS_LEAGUE_LIMIT_REACHED — the league\'s contests of the new contest\'s season already use its plan\'s sports leagues a year, and this event is in another sports league (#947). Budget rules the event cannot run. CONTEST_EVENT_NOT_PRICED — the event\'s golfers have no prices, so there is no salary cap. CONTEST_BUDGET_UNFILLABLE — the cheapest golfers for every roster place cost more than the cap.',
+          description: 'CHAMPIONSHIP_YEAR_CLOSED — the event\'s Season is in a championship year the league has closed, which never reopens (#2021). PLAN_SPORTS_LEAGUE_LIMIT_REACHED — the league\'s contests of the new contest\'s season already use its plan\'s sports leagues a year, and this event is in another sports league (#947). Budget rules the event cannot run. CONTEST_EVENT_NOT_PRICED — the event\'s golfers have no prices, so there is no salary cap. CONTEST_BUDGET_UNFILLABLE — the cheapest golfers for every roster place cost more than the cap.',
         },
         422: {
           ...schemaRef('ErrorEnvelope'),

@@ -211,10 +211,10 @@ describe('PrismaLeagueYearReviewRepository (#872)', () => {
     const other = await createTestUser({ firstName: 'Second', lastName: `Press${randomUUID().slice(0, 8)}` });
 
     expect(await repo.findByLeagueYear(league.id, 2025)).toBeNull();
-    const first = await repo.create({ leagueId: league.id, year: 2025, sentByUserId: sender.user.id });
-    const again = await repo.create({ leagueId: league.id, year: 2025, sentByUserId: other.user.id });
+    const first = await repo.create({ leagueId: league.id, championshipYear: 2025, sentByUserId: sender.user.id });
+    const again = await repo.create({ leagueId: league.id, championshipYear: 2025, sentByUserId: other.user.id });
 
-    expect(first).toMatchObject({ leagueId: league.id, year: 2025, sentByUserId: sender.user.id });
+    expect(first).toMatchObject({ leagueId: league.id, championshipYear: 2025, sentByUserId: sender.user.id });
     expect(again).toBeNull();
     expect(await repo.findByLeagueYear(league.id, 2025)).toEqual(first);
     expect(await repo.findByLeagueYear(league.id, 2024)).toBeNull();
@@ -224,6 +224,6 @@ describe('PrismaLeagueYearReviewRepository (#872)', () => {
     const repo = new PrismaLeagueYearReviewRepository(getAppPrisma());
     const sender = await createTestUser({ firstName: 'Review', lastName: `Orphan${randomUUID().slice(0, 8)}` });
 
-    await expect(repo.create({ leagueId: randomUUID(), year: 2025, sentByUserId: sender.user.id })).rejects.toThrow(/Foreign key constraint/);
+    await expect(repo.create({ leagueId: randomUUID(), championshipYear: 2025, sentByUserId: sender.user.id })).rejects.toThrow(/Foreign key constraint/);
   });
 });

@@ -16,7 +16,7 @@ import {
   setupIntegrationTests,
   teardownIntegrationTests,
 } from '../helpers';
-import { anySeasonId } from '../../support/contest-rows';
+import { anySeason } from '../../support/contest-rows';
 
 beforeAll(() => setupIntegrationTests());
 afterAll(async () => {
@@ -36,7 +36,7 @@ async function createLeagueAndContest() {
     data: { leagueId: league.id, userId: payer.user.id, role: 'COMMISSIONER', status: 'ACTIVE', joinedAt: new Date() },
   });
   const contest = await prisma.contest.create({
-    data: { leagueId: league.id, sportLeagueSeasonId: await anySeasonId(prisma, 2026), name: 'Masters Pool', selectionType: 'TIERED' },
+    data: { leagueId: league.id, ...await anySeason(prisma, 2026), name: 'Masters Pool', selectionType: 'TIERED' },
   });
   return { league, contest, payer: payer.user };
 }

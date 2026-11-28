@@ -238,6 +238,8 @@ enum PrismaBackgroundJobType {
   SYNC_LEAGUE_ROSTER
   REFRESH_SLOT_STATUS
   REFRESH_EVENT_STATUS
+  CLOSE_LEAGUE_CHAMPIONSHIP_YEAR
+  CLOSE_SEASON_CHAMPIONSHIP_YEARS
 }
 
 enum PrismaBackgroundJobStatus {
@@ -823,6 +825,7 @@ model League {
   cups                  Cup[]
   yearFinishes          LeagueYearFinish[]
   yearReviews           LeagueYearReview[]
+  closedYears           LeagueChampionshipYear[]
   squads                Squad[]
   squadMemberships      SquadMembership[]
   contests              Contest[]
@@ -1547,13 +1550,17 @@ model Contest {
   /// The sport league Season the contest is in (#2014): fixed at creation, and every slot it covers
   /// is one of this Season's (composite key on `ContestSeasonSlot`). Its cup is this Season's.
   sportLeagueSeasonId String              @map("sport_league_season_id") @db.Uuid
+  /// Its Season's championship year (#2021), copied at creation and held to the Season by the
+  /// composite key below, so the two can never disagree: the year its cup, championship and
+  /// history count it in, never the year it happened to settle.
+  championshipYear    Int                 @map("championship_year")
   /// How much it counts toward its cup and the championship (#841); fixed once COMPLETED.
   cupWeight           PrismaCupWeight     @default(NORMAL) @map("cup_weight")
   createdAt           DateTime            @default(now()) @map("created_at") @db.Timestamptz
   updatedAt           DateTime            @updatedAt @map("updated_at") @db.Timestamptz
 
   league               League                       @relation(fields: [leagueId], references: [id])
-  sportLeagueSeason    SportLeagueSeason            @relation(fields: [sportLeagueSeasonId], references: [id], onDelete: Restrict)
+  sportLeagueSeason    SportLeagueSeason            @relation(fields: [sportLeagueSeasonId, championshipYear], references: [id, championshipYear], onDelete: Restrict, map: "contests_season_year_fkey")
   seasonSlots          ContestSeasonSlot[]
   configuration        ContestConfiguration?
   entries              ContestEntry[]
@@ -1669,18 +1676,35 @@ model LeagueYearFinish {
 /// league and year; the unique key is what stops two presses sending twice, and its existence
 /// clears the "ready to send" banner.
 model LeagueYearReview {
-  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  leagueId     String   @map("league_id") @db.Uuid
-  year         Int
+  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  leagueId         String   @map("league_id") @db.Uuid
+  /// The championship year reviewed (#2021): one the league has closed.
+  championshipYear Int      @map("championship_year")
   sentByUserId String?  @map("sent_by_user_id") @db.Uuid
   sentAt       DateTime @default(now()) @map("sent_at") @db.Timestamptz
 
   league League @relation(fields: [leagueId], references: [id], onDelete: Cascade)
   sentBy User?  @relation(fields: [sentByUserId], references: [id], onDelete: SetNull)
 
-  @@unique([leagueId, year])
+  @@unique([leagueId, championshipYear])
   @@index([sentByUserId])
   @@map("league_year_reviews")
+}
+
+/// A league's closed championship year (#2021, plan §9c): written once, when every Season of that
+/// year in the sport leagues the league ran contests in has finished its last slot and every
+/// contest in the year is final (drafts that can never open aside). A year with no row is open; a
+/// row is never deleted, so a year never reopens, and no contest is created into it.
+model LeagueChampionshipYear {
+  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  leagueId         String   @map("league_id") @db.Uuid
+  championshipYear Int      @map("championship_year")
+  closedAt         DateTime @map("closed_at") @db.Timestamptz
+
+  league League @relation(fields: [leagueId], references: [id], onDelete: Cascade)
+
+  @@unique([leagueId, championshipYear])
+  @@map("league_championship_years")
 }
 
 // One event a contest covers (#713). Every contest has at least one: a golf or race contest has
@@ -3302,6 +3326,8 @@ model SportLeagueSeason {
   @@unique([sportLeagueId, championshipYear])
   /// The target of the composite keys that keep a Season's rows in its own league.
   @@unique([sportLeagueId, id])
+  /// The target of the contest's composite key that holds its championship year to its Season's.
+  @@unique([id, championshipYear])
   @@map("sport_league_seasons")
 }
 

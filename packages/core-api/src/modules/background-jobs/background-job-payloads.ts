@@ -23,6 +23,7 @@ import { ResolveMappedParticipantFindingsJobPayloadSchema } from '../ingestion/f
 import { RefreshSlotTiebreakersJobPayloadSchema } from '../events/slot-tiebreaker-job';
 import { SyncLeagueRosterJobPayloadSchema } from '../ingestion/roster/league-roster-sync-job';
 import { RefreshStatusJobPayloadSchema } from '../events/status-refresh-job-requests';
+import { CloseLeagueChampionshipYearJobPayloadSchema, CloseSeasonChampionshipYearsJobPayloadSchema } from '../championship/year-close-job-requests';
 
 export const BACKGROUND_JOB_PAYLOADS = {
   [BackgroundJobType.SYNC_EVENT_FIELD]: EventSyncJobPayloadSchema,
@@ -44,6 +45,8 @@ export const BACKGROUND_JOB_PAYLOADS = {
   [BackgroundJobType.SYNC_LEAGUE_ROSTER]: SyncLeagueRosterJobPayloadSchema,
   [BackgroundJobType.REFRESH_SLOT_STATUS]: RefreshStatusJobPayloadSchema,
   [BackgroundJobType.REFRESH_EVENT_STATUS]: RefreshStatusJobPayloadSchema,
+  [BackgroundJobType.CLOSE_LEAGUE_CHAMPIONSHIP_YEAR]: CloseLeagueChampionshipYearJobPayloadSchema,
+  [BackgroundJobType.CLOSE_SEASON_CHAMPIONSHIP_YEARS]: CloseSeasonChampionshipYearsJobPayloadSchema,
 } as const satisfies Record<BackgroundJobType, z.ZodType>;
 
 /** What a job of type `T` carries. */
@@ -78,4 +81,7 @@ export const BACKGROUND_JOB_SCOPES: {
   [BackgroundJobType.SYNC_LEAGUE_ROSTER]: ({ sportLeagueId }) => ({ sportLeagueId }),
   [BackgroundJobType.REFRESH_SLOT_STATUS]: ({ sportEventId }) => ({ sportEventId }),
   [BackgroundJobType.REFRESH_EVENT_STATUS]: ({ sportEventId }) => ({ sportEventId }),
+  // A league's year spans its sports leagues and events, so the job names none.
+  [BackgroundJobType.CLOSE_LEAGUE_CHAMPIONSHIP_YEAR]: () => ({}),
+  [BackgroundJobType.CLOSE_SEASON_CHAMPIONSHIP_YEARS]: ({ sportEventId }) => ({ sportEventId }),
 };
