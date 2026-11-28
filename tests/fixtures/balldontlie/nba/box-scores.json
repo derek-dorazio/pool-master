@@ -1,0 +1,45 @@
+{
+  "data": [
+    {
+      "id": 1,
+      "min": "36",
+      "pts": 31,
+      "reb": 5,
+      "ast": 6,
+      "player": {
+        "id": 175,
+        "first_name": "Shai",
+        "last_name": "Gilgeous-Alexander"
+      },
+      "team": {
+        "id": 21
+      },
+      "game": {
+        "id": 15001,
+        "status_state": "final"
+      }
+    },
+    {
+      "id": 2,
+      "min": "0",
+      "pts": 0,
+      "reb": 0,
+      "ast": 0,
+      "player": {
+        "id": 176,
+        "first_name": "Bench",
+        "last_name": "Player"
+      },
+      "team": {
+        "id": 21
+      },
+      "game": {
+        "id": 15001,
+        "status_state": "final"
+      }
+    }
+  ],
+  "meta": {
+    "per_page": 100
+  }
+}
