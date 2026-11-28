@@ -5,6 +5,7 @@ import type { PrismaClient } from '@prisma/client';
 import type { FastifyBaseLogger } from 'fastify';
 import {
   PrismaChampionshipRepository,
+  PrismaLeagueChampionshipYearRepository,
   PrismaLeagueMembershipRepository,
   PrismaLeagueRepository,
   PrismaLeagueYearReviewRepository,
@@ -30,6 +31,7 @@ export function createHistoryService(
     leagues: new PrismaLeagueRepository(prisma),
     championship: createChampionshipService(prisma, logger),
     cups: createCupService(prisma, logger, planEntitlements),
+    closedYears: new PrismaLeagueChampionshipYearRepository(prisma),
     logger,
   });
 }

@@ -32,15 +32,15 @@ async function seedLeague() {
   const squad = (name: string) => prisma.squad.create({ data: { leagueId: league.id, name: `${name} ${suffix}`, createdBy: commissioner.user.id } });
   const squads = { eagles: await squad('Eagles'), birdies: await squad('Birdies') };
   /** A contest of `events` fresh editions of the fixture tour, each in a slot of `slotDefinitionId` when given. */
-  const contest = async (name: string, options: { status?: 'OPEN' | 'ACTIVE' | 'COMPLETED' | 'DRAFT'; events?: number; cupWeight?: 'NORMAL' | 'NOT_COUNTED'; endsAt?: Date; slotDefinitionId?: string } = {}) => {
+  const contest = async (name: string, options: { status?: 'OPEN' | 'ACTIVE' | 'COMPLETED' | 'DRAFT'; events?: number; cupWeight?: 'NORMAL' | 'NOT_COUNTED'; endsAt?: Date; slotDefinitionId?: string; championshipYear?: number } = {}) => {
     const editions = [];
     for (let index = 0; index < (options.events ?? 1); index++) {
-      const edition = await freshEventEdition(prisma, { championshipYear: 2026 });
+      const edition = await freshEventEdition(prisma, { championshipYear: options.championshipYear ?? 2026 });
       editions.push(await prisma.sportEvent.create({
         data: {
           ...edition,
           name: `${name} ${index} ${suffix}`,
-          startDate: new Date('2026-04-09T12:00:00.000Z'),
+          startDate: new Date(`${String(options.championshipYear ?? 2026)}-04-09T12:00:00.000Z`),
         },
       }));
     }
@@ -121,7 +121,7 @@ describe('PrismaChampionshipRepository (#863)', () => {
     ])).resolves.toEqual([true, false, false, false]);
   });
 
-  it('counts the league\'s open and live contests that will count, not drafts, finals or NOT_COUNTED ones', async () => {
+  it('counts the league\'s open and live contests that will count by their championship year, not drafts, finals or NOT_COUNTED ones', async () => {
     const repo = new PrismaChampionshipRepository(getAppPrisma());
     const { league, contest } = await seedLeague();
     await contest('Open', { status: 'OPEN' });
@@ -130,31 +130,28 @@ describe('PrismaChampionshipRepository (#863)', () => {
     await contest('Final', { status: 'COMPLETED' });
     await contest('Fun', { status: 'ACTIVE', cupWeight: 'NOT_COUNTED' });
 
-    await expect(repo.countUnfinishedContests(league.id)).resolves.toBe(2);
+    await expect(repo.countUnfinishedContestsByYear(league.id)).resolves.toEqual(new Map([[2026, 2]]));
   });
 
-  it('reads the completed contests that went final in a year\'s range, end exclusive, plus those named whenever they ended, each with its sports league (#837)', async () => {
+  it('reads the completed contests of a championship year however late they went final, or those named, each with its sports league and year (#837, #2021)', async () => {
     const repo = new PrismaChampionshipRepository(getAppPrisma());
     const { league, contest } = await seedLeague();
-    const from = new Date('2026-01-01T05:00:00.000Z');
-    const to = new Date('2027-01-01T05:00:00.000Z');
-    const first = await contest('First', { endsAt: from });
-    await contest('Next year', { endsAt: to });
-    await contest('Last year', { endsAt: new Date('2026-01-01T04:59:59.000Z') });
-    const undated = await contest('Undated');
-    await contest('Live', { status: 'ACTIVE', endsAt: new Date('2026-06-01T00:00:00.000Z') });
+    // Settled with its Season's last event in February, so still the 2025 year's.
+    const superBowl = await contest('Super Bowl', { championshipYear: 2025, endsAt: new Date('2026-02-09T04:00:00.000Z') });
+    const masters = await contest('Masters', { endsAt: new Date('2026-04-13T22:00:00.000Z') });
+    await contest('Live', { championshipYear: 2025, status: 'ACTIVE' });
     const sportLeague = await getPrisma().sportEvent.findUniqueOrThrow({
-      where: { id: expectDefined(first.sportEventIds[0]) },
+      where: { id: expectDefined(superBowl.sportEventIds[0]) },
       select: { sportLeague: { select: { name: true } } },
     });
 
-    const contests = await repo.findFinalContests(league.id, from, to, [undated.id]);
+    const contests = await repo.findFinalContests(league.id, { championshipYear: 2025 });
 
-    expect(contests.map((row) => [row.name, row.completedAt?.toISOString() ?? null, row.sportLeagueName, row.selectionType]).sort((left, right) => String(left[0]).localeCompare(String(right[0])))).toEqual([
-      ['First', from.toISOString(), sportLeague.sportLeague.name, SelectionType.TIERED],
-      ['Undated', null, sportLeague.sportLeague.name, SelectionType.TIERED],
+    expect(contests.map((row) => [row.name, row.completedAt?.toISOString() ?? null, row.sportLeagueName, row.selectionType, row.championshipYear])).toEqual([
+      ['Super Bowl', '2026-02-09T04:00:00.000Z', sportLeague.sportLeague.name, SelectionType.TIERED, 2025],
     ]);
-    await expect(repo.findFinalContests(randomUUID(), from, to, [undated.id])).resolves.toEqual([]);
+    await expect(repo.findFinalContests(league.id, { contestIds: [masters.id] })).resolves.toEqual([expect.objectContaining({ name: 'Masters', championshipYear: 2026 })]);
+    await expect(repo.findFinalContests(randomUUID(), { championshipYear: 2025 })).resolves.toEqual([]);
   });
 
   it('reads the completed one-event contests with their series, event year and games counted: how many, over how many rounds, and how many send their winner on (#874, #1166)', async () => {

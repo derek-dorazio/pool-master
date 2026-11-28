@@ -60,6 +60,7 @@ function build({ hallOfLameVisible = true }: { hallOfLameVisible?: boolean } = {
     }),
     championship: { getAllYears: jest.fn().mockResolvedValue([]), getYear: jest.fn(), listYears: jest.fn().mockResolvedValue([]) },
     cups: { listLeagueSeasons: jest.fn().mockResolvedValue([]), listSeasonCups: jest.fn().mockResolvedValue([]) },
+    closedYears: finishes,
   });
   const contest = (id: string, completedAt: string | null, overrides: Partial<FinalContest> = {}) => {
     finishes.finalContests.push({
@@ -70,6 +71,7 @@ function build({ hallOfLameVisible = true }: { hallOfLameVisible?: boolean } = {
         selectionType: SelectionType.TIERED,
         sportLeagueName: 'PGA Tour',
         completedAt: completedAt === null ? null : new Date(completedAt),
+        championshipYear: completedAt === null ? 2026 : new Date(completedAt).getUTCFullYear(),
         ...overrides,
       },
     });
@@ -199,6 +201,17 @@ describe('HistoryService (#837)', () => {
       ['open', ContestResultCount.NOT_COUNTED, ['Bogeys'], 6, null],
       ['masters', ContestResultCount.COUNTED, ['Birdies', 'Eagles'], 6, null],
     ]);
+  });
+
+  it('lists a contest under its championship year however late it went final, so a 2025 Super Bowl pool settled in February 2026 is in 2025 and the drill-through matches the board (#2021)', async () => {
+    const { contest, finish, service } = build();
+    contest('super-bowl', '2026-02-09T04:00:00.000Z', { championshipYear: 2025 });
+    finish('super-bowl', 2025, [['eagles', 1, 1]], CupWeight.NORMAL, new Date('2026-02-09T04:30:00.000Z'));
+    contest('masters', '2026-04-13T22:00:00.000Z');
+    finish('masters', 2026, [['birdies', 1, 1]]);
+
+    expect((await service.listYearContests(LEAGUE, 2025)).map((row) => [row.contestId, row.winners.map((winner) => winner.name)])).toEqual([['super-bowl', ['Eagles']]]);
+    expect((await service.listYearContests(LEAGUE, 2026)).map((row) => row.contestId)).toEqual(['masters']);
   });
 
   it('lists only the contests gone final since a moment when asked, so League Home reads its last few days of finals and not the whole year (#1782)', async () => {
@@ -340,7 +353,7 @@ function cupView(
 describe('HistoryService summary (#837)', () => {
   const NOW = new Date('2026-08-01T12:00:00.000Z');
 
-  function buildSummary(years: ChampionshipYearSummaryView[], cupsBySeason: Record<number, CupView[]>) {
+  function buildSummary(years: ChampionshipYearSummaryView[], cupsBySeason: Record<number, CupView[]>, closed: number[] = years.filter((row) => row.isOver).map((row) => row.year)) {
     return new HistoryService({
       finishes: new InMemoryChampionship(),
       leagues: fakeLeagueRepo(),
@@ -351,7 +364,7 @@ describe('HistoryService summary (#837)', () => {
           .map((seasonYear) => ({ seasonYear, cups: cupsBySeason[seasonYear] ?? [] }))),
         listSeasonCups: jest.fn(),
       },
-      now: () => NOW,
+      closedYears: { findClosedYears: jest.fn().mockResolvedValue(closed.map((championshipYear) => ({ championshipYear, closedAt: NOW }))) },
     });
   }
 
@@ -366,6 +379,8 @@ describe('HistoryService summary (#837)', () => {
         ],
         2024: [cupView('NFL', 2024, CupStatus.CROWNED, [[BIRDIES, 1, 1500, CupTrophy.CHAMPION]])],
       },
+      // A year with only a cup in it is over once the league's year has closed.
+      [2025, 2024],
     );
 
     const summary = await service.getSummary(LEAGUE);
@@ -453,6 +468,7 @@ describe('HistoryService squad year (#872)', () => {
       }),
       championship: { getAllYears: jest.fn(), getYear, listYears: jest.fn() },
       cups: { listLeagueSeasons: jest.fn(), listSeasonCups },
+      closedYears: new InMemoryChampionship(),
     });
     return { service, getYear, listSeasonCups };
   }
@@ -518,8 +534,6 @@ describe('HistoryService squad year (#872)', () => {
 });
 
 describe('HistoryService squad history (#872)', () => {
-  const NOW = new Date('2026-08-01T12:00:00.000Z');
-
   function standingRow(rowSquad: Squad, position: number, points: number, finishes = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]): ChampionshipStandingView {
     return {
       squad: rowSquad,
@@ -538,6 +552,7 @@ describe('HistoryService squad history (#872)', () => {
     const finishes = new InMemoryChampionship();
     const byYear = new Map(Object.entries(years).map(([year, row]) => [Number(year), row]));
     const yearNumbers = [...byYear.keys()].sort((left, right) => right - left);
+    for (const year of yearNumbers) if (byYear.get(year)?.isOver === true) finishes.closedYears.add(year);
     return new HistoryService({
       finishes,
       leagues: fakeLeagueRepo(),
@@ -566,7 +581,7 @@ describe('HistoryService squad history (#872)', () => {
           .map((seasonYear) => ({ seasonYear, cups: byYear.get(seasonYear)?.cups ?? [] }))),
         listSeasonCups: jest.fn(),
       },
-      now: () => NOW,
+      closedYears: finishes,
     });
   }
 
