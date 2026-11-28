@@ -42,16 +42,13 @@ function template(id: string, configJson: ContestConfigTemplate['configJson']): 
   };
 }
 
-const PAGE: EventPage = { id: 'page-cw', sport: Sport.FOOTBALL, sportUrlSegment: 'football', urlSegment: 'championship-weekend', displayOrder: 20, isActive: true, redirectTo: null };
-const RETIRED: EventPage = { id: 'page-old', sport: Sport.FOOTBALL, sportUrlSegment: 'football', urlSegment: 'conference-weekend', displayOrder: 30, isActive: false, redirectTo: { sport: Sport.FOOTBALL, sportUrlSegment: 'football', urlSegment: 'championship-weekend' } };
+const PAGE: EventPage = { id: 'page-cw', sport: Sport.FOOTBALL, sportUrlSegment: 'football', urlSegment: 'championship-weekend', displayOrder: 20, isActive: true, redirectTo: null, sportLeagueId: 'nfl', sportLeagueName: 'NFL', sportLeagueCompetitionSlotId: 'conference-championships' };
+const RETIRED: EventPage = { id: 'page-old', sport: Sport.FOOTBALL, sportUrlSegment: 'football', urlSegment: 'conference-weekend', displayOrder: 30, isActive: false, redirectTo: { sport: Sport.FOOTBALL, sportUrlSegment: 'football', urlSegment: 'championship-weekend' }, sportLeagueId: 'nfl', sportLeagueName: 'NFL', sportLeagueCompetitionSlotId: 'conference-championships' };
 
 function offer(id: string, overrides: Partial<EventPageOffer>): EventPageOffer {
   return {
     id,
     eventPageId: PAGE.id,
-    sportLeagueId: 'nfl',
-    sportLeagueName: 'NFL',
-    sportLeagueCompetitionSlotId: 'nfl-playoffs',
     template: template(`${id}-template`, { selectionType: SelectionType.SQUARES, maxSquaresPerEntry: 10 }),
     sortOrder: 1,
     isPrimary: false,
@@ -60,9 +57,6 @@ function offer(id: string, overrides: Partial<EventPageOffer>): EventPageOffer {
 }
 
 const TIERED = offer('tiered', {
-  sportLeagueId: 'cw',
-  sportLeagueName: 'Championship Weekend',
-  sportLeagueCompetitionSlotId: 'conference-championships',
   template: template('cw-tiered', { selectionType: SelectionType.TIERED, picksPerTier: 1, countedScores: 4 }),
   isPrimary: true,
 });
@@ -102,8 +96,10 @@ function build(options: {
       reads.openings += 1;
       return (sportEventId, setup) => {
         asked.push({ sportEventId, setup });
-        const opening = options.openings?.[sportEventId] ?? ContestOpening.OPEN;
-        const closesAt = opening === ContestOpening.CLOSED ? null : options.closesAt?.[sportEventId] ?? DEFAULT_CLOSES_AT;
+        // Keyed by the event, or by the event and the setup's selection type for one setup alone.
+        const key = `${sportEventId}:${setup.selectionType}`;
+        const opening = options.openings?.[key] ?? options.openings?.[sportEventId] ?? ContestOpening.OPEN;
+        const closesAt = opening === ContestOpening.CLOSED ? null : options.closesAt?.[key] ?? options.closesAt?.[sportEventId] ?? DEFAULT_CLOSES_AT;
         return Promise.resolve({ opening, closesAt });
       };
     },
@@ -113,7 +109,7 @@ function build(options: {
 
 describe('EventPageService', () => {
   it('reads every listed page\'s offers\' next slots in one read, and asks their openings from one batch for the whole list (#1316)', async () => {
-    const second = { ...PAGE, id: 'page-2', urlSegment: 'wild-card-weekend', displayOrder: 2 };
+    const second = { ...PAGE, id: 'page-2', urlSegment: 'wild-card-weekend', displayOrder: 2, sportLeagueCompetitionSlotId: 'nfl-playoffs' };
     const { service, reads, asked } = build({
       pages: [PAGE, second],
       offers: [TIERED, { ...BRACKET, eventPageId: second.id }, SQUARES],
@@ -133,21 +129,21 @@ describe('EventPageService', () => {
     expect(asked).toHaveLength(3);
   });
 
-  it('shows each offer with its slot definition\'s next slot and whether it opens now, in order', async () => {
+  it('shows each offer with its page\'s slot definition\'s next slot and whether it opens now, in order (#2050)', async () => {
     const { service } = build({
       slots: {
         'conference-championships': [nextSlot('cw-2027', '2027-01-24T20:00:00.000Z')],
         'nfl-playoffs': [nextSlot('playoffs-2027', '2027-01-09T18:00:00.000Z')],
       },
-      openings: { 'cw-2027': ContestOpening.NOT_YET },
+      openings: { 'cw-2027:TIERED': ContestOpening.NOT_YET },
     });
 
     const view = await service.getPage('football', 'championship-weekend');
 
     expect(view.offers.map((each) => [each.offer.id, each.nextSlot.sportEventId, each.state])).toEqual([
       ['tiered', 'cw-2027', EventPageOfferState.NOT_YET],
-      ['bracket', 'playoffs-2027', EventPageOfferState.OPEN],
-      ['squares', 'playoffs-2027', EventPageOfferState.OPEN],
+      ['bracket', 'cw-2027', EventPageOfferState.OPEN],
+      ['squares', 'cw-2027', EventPageOfferState.OPEN],
     ]);
   });
 
@@ -157,7 +153,7 @@ describe('EventPageService', () => {
         'conference-championships': [nextSlot('cw-2027', '2027-01-24T20:00:00.000Z')],
         'nfl-playoffs': [nextSlot('playoffs-2027', '2027-01-09T18:00:00.000Z')],
       },
-      closesAt: { 'cw-2027': new Date('2027-01-24T20:00:00.000Z'), 'playoffs-2027': new Date('2027-01-16T21:30:00.000Z') },
+      closesAt: { 'cw-2027:TIERED': new Date('2027-01-24T20:00:00.000Z'), 'cw-2027': new Date('2027-01-16T21:30:00.000Z') },
     });
 
     const view = await service.getPage('football', 'championship-weekend');
@@ -170,11 +166,12 @@ describe('EventPageService', () => {
   });
 
   it('asks about each offer by its template\'s selection type alone', async () => {
-    const { service, asked } = build({ slots: { 'nfl-playoffs': [nextSlot('playoffs-2027', '2027-01-09T18:00:00.000Z')] } });
+    const { service, asked } = build({ slots: { 'conference-championships': [nextSlot('cw-2027', '2027-01-24T20:00:00.000Z')] } });
 
     await service.getPage('football', 'championship-weekend');
 
     expect(asked.map((each) => each.setup)).toEqual([
+      { selectionType: SelectionType.TIERED },
       { selectionType: SelectionType.BRACKET },
       { selectionType: SelectionType.SQUARES },
     ]);
@@ -186,7 +183,7 @@ describe('EventPageService', () => {
         'conference-championships': [nextSlot('cw-2027', '2027-01-24T20:00:00.000Z'), nextSlot('cw-2028', '2028-01-23T20:00:00.000Z')],
         'nfl-playoffs': [nextSlot('playoffs-2027', '2027-01-09T18:00:00.000Z')],
       },
-      openings: { 'cw-2027': ContestOpening.CLOSED, 'cw-2028': ContestOpening.NOT_YET, 'playoffs-2027': ContestOpening.CLOSED },
+      openings: { 'cw-2027': ContestOpening.CLOSED, 'cw-2028': ContestOpening.CLOSED, 'cw-2028:TIERED': ContestOpening.NOT_YET },
     });
 
     const view = await service.getPage('football', 'championship-weekend');
@@ -220,11 +217,11 @@ describe('EventPageService', () => {
   });
 
   it('lists only the active pages of the sport asked for, each with its own offers', async () => {
-    const other: EventPage = { ...PAGE, id: 'page-finals', sport: Sport.BASKETBALL, sportUrlSegment: 'basketball', urlSegment: 'nba-finals' };
+    const other: EventPage = { ...PAGE, id: 'page-finals', sport: Sport.BASKETBALL, sportUrlSegment: 'basketball', urlSegment: 'nba-finals', sportLeagueId: 'nba', sportLeagueName: 'NBA', sportLeagueCompetitionSlotId: 'nba-finals' };
     const { service } = build({
       pages: [PAGE, RETIRED, other],
-      offers: [SQUARES, { ...SQUARES, id: 'finals-squares', eventPageId: other.id, sportLeagueId: 'nba' }],
-      slots: { 'nfl-playoffs': [nextSlot('playoffs-2027', '2027-01-09T18:00:00.000Z')] },
+      offers: [SQUARES, { ...SQUARES, id: 'finals-squares', eventPageId: other.id }],
+      slots: { 'conference-championships': [nextSlot('cw-2027', '2027-01-24T20:00:00.000Z')], 'nba-finals': [nextSlot('finals-2027', '2027-06-03T00:30:00.000Z')] },
     });
 
     const football = await service.listPages(Sport.FOOTBALL);
@@ -235,17 +232,17 @@ describe('EventPageService', () => {
   });
 
   it('lists only the pages whose primary offer shows a slot coming, soonest first, when asked for the upcoming ones (#1202)', async () => {
-    const superBowl: EventPage = { ...PAGE, id: 'page-sb', urlSegment: 'super-bowl', displayOrder: 10 };
-    const proBowl: EventPage = { ...PAGE, id: 'page-pb', urlSegment: 'pro-bowl', displayOrder: 30 };
-    const between: EventPage = { ...PAGE, id: 'page-between', urlSegment: 'between-seasons', displayOrder: 40 };
+    const superBowl: EventPage = { ...PAGE, id: 'page-sb', urlSegment: 'super-bowl', displayOrder: 10, sportLeagueCompetitionSlotId: 'super-bowl' };
+    const proBowl: EventPage = { ...PAGE, id: 'page-pb', urlSegment: 'pro-bowl', displayOrder: 30, sportLeagueCompetitionSlotId: 'nfl-playoffs' };
+    const between: EventPage = { ...PAGE, id: 'page-between', urlSegment: 'between-seasons', displayOrder: 40, sportLeagueCompetitionSlotId: 'nothing-scheduled' };
     const { service } = build({
       pages: [superBowl, PAGE, proBowl, between],
       offers: [
-        { ...TIERED, id: 'sb-card', eventPageId: superBowl.id, sportLeagueCompetitionSlotId: 'super-bowl' },
+        { ...TIERED, id: 'sb-card', eventPageId: superBowl.id },
         TIERED,
         // The Pro Bowl's only showing offer is not its primary one, so it has no slot heading it.
         { ...SQUARES, id: 'pb-squares', eventPageId: proBowl.id },
-        { ...TIERED, id: 'between-card', eventPageId: between.id, sportLeagueCompetitionSlotId: 'nothing-scheduled' },
+        { ...TIERED, id: 'between-card', eventPageId: between.id },
       ],
       slots: {
         'super-bowl': [nextSlot('sb-2027', '2027-02-07T23:30:00.000Z')],
@@ -266,8 +263,7 @@ describe('EventPageService', () => {
       pages: [PAGE, LATER, { ...RETIRED, isActive: false }],
       offers: [TIERED, SQUARES, { ...SQUARES, id: 'later-squares', eventPageId: LATER.id }, { ...SQUARES, id: 'retired-squares', eventPageId: RETIRED.id }],
       slots: {
-        'conference-championships': [nextSlot('cw-2027', '2027-01-24T20:00:00.000Z')],
-        'nfl-playoffs': [nextSlot('playoffs-2027', '2027-01-09T18:00:00.000Z'), nextSlot('playoffs-2028', '2028-01-08T18:00:00.000Z')],
+        'conference-championships': [nextSlot('cw-2027', '2027-01-24T20:00:00.000Z'), nextSlot('cw-2028', '2028-01-23T20:00:00.000Z')],
       },
     });
 
@@ -275,7 +271,6 @@ describe('EventPageService', () => {
 
     expect([...pages].map(([sportEventId, page]) => [sportEventId, page.id])).toEqual([
       ['cw-2027', PAGE.id],
-      ['playoffs-2027', PAGE.id],
     ]);
   });
 });

@@ -77,7 +77,7 @@ export class EventPageService {
       return { page, offers: [] };
     }
     const offers = await this.pages.findOffers([page.id]);
-    return { page, offers: await this.showOffers(offers) };
+    return { page, offers: await this.showOffers([page], offers) };
   }
 
   /**
@@ -87,7 +87,7 @@ export class EventPageService {
   async listPages(sport?: Sport, upcoming = false): Promise<EventPageView[]> {
     this.logger?.debug({ action: 'eventPages.list.enter', sport, upcoming }, 'Listing event pages');
     const pages = await this.pages.findActive(sport);
-    const shown = await this.showOffers(await this.pages.findOffers(pages.map((page) => page.id)));
+    const shown = await this.showOffers(pages, await this.pages.findOffers(pages.map((page) => page.id)));
     const views = pages.map((page) => ({ page, offers: shown.filter(({ offer }) => offer.eventPageId === page.id) }));
     if (!upcoming) {
       return views;
@@ -121,10 +121,12 @@ export class EventPageService {
    * at once and every slot's opening asked side by side, so the reads are the same for any
    * number of offers (#1316).
    */
-  private async showOffers(offers: readonly EventPageOffer[]): Promise<EventPageOfferView[]> {
-    const slots = await this.pages.findSlotsNotOver(offers.map((offer) => offer.sportLeagueCompetitionSlotId));
+  private async showOffers(pages: readonly EventPage[], offers: readonly EventPageOffer[]): Promise<EventPageOfferView[]> {
+    // Each offer is shown with its page's slot definition (#2050).
+    const slots = await this.pages.findSlotsNotOver(pages.map((page) => page.sportLeagueCompetitionSlotId));
+    const slotsByPage = new Map(pages.map((page, index) => [page.id, slots[index] ?? []]));
     const askOpening = this.openings();
-    const shown = await Promise.all(offers.map((offer, index) => showOffer(offer, slots[index] ?? [], askOpening)));
+    const shown = await Promise.all(offers.map((offer) => showOffer(offer, slotsByPage.get(offer.eventPageId) ?? [], askOpening)));
     return shown.filter((view): view is EventPageOfferView => view !== null);
   }
 }

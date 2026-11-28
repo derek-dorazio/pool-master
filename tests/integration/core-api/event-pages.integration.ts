@@ -32,34 +32,37 @@ afterAll(async () => {
 
 const NOW = new Date('2030-01-10T12:00:00.000Z');
 
+/** The seeded Championship Weekend's sport league and slot definition, for a scratch page to show (#2050). */
+async function shownSlot(): Promise<{ sportLeagueId: string; sportLeagueCompetitionSlotId: string }> {
+  return getPrisma().eventPage.findFirstOrThrow({ where: { urlSegment: 'championship-weekend' }, select: { sportLeagueId: true, sportLeagueCompetitionSlotId: true } });
+}
+
 describe('Seeded event pages', () => {
   it('seeds Championship Weekend with NFL Squares alone, primary, shown with the conference championships slot, since a bracket is picked from the first round', async () => {
     const pages = new PrismaEventPageRepository(getAppPrisma());
 
     const page = await pages.findByUrlSegments('football', 'championship-weekend');
     const offers = await pages.findOffers([page?.id ?? '']);
-    const definitions = await getPrisma().sportLeagueCompetitionSlot.findMany({ where: { id: { in: offers.map((offer) => offer.sportLeagueCompetitionSlotId) } } });
-    const keyOf = (id: string) => definitions.find((definition) => definition.id === id)?.key;
+    const definition = await getPrisma().sportLeagueCompetitionSlot.findUnique({ where: { id: page?.sportLeagueCompetitionSlotId ?? '' } });
 
-    expect(page).toMatchObject({ isActive: true, redirectTo: null });
-    expect(offers.map((offer) => [offer.sportLeagueName, keyOf(offer.sportLeagueCompetitionSlotId), offer.template.templateKey, offer.isPrimary])).toEqual([
-      ['NFL', 'SEMIFINAL', 'nfl-squares', true],
-    ]);
+    // The page names the slot definition (#2050); its offers carry only their setup.
+    expect([page?.isActive, page?.redirectTo, page?.sportLeagueName, definition?.key]).toEqual([true, null, 'NFL', 'SEMIFINAL']);
+    expect(offers.map((offer) => [offer.template.templateKey, offer.isPrimary])).toEqual([['nfl-squares', true]]);
   });
 
-  it('gives every page a valid URL segment and exactly one primary offer, and every offer an active template its sport league can use', async () => {
+  it('gives every page a valid URL segment, a slot definition of its own sport\'s league and exactly one primary offer, and every offer an active template of the page\'s sport league', async () => {
     const rows = await getPrisma().eventPage.findMany({
-      include: { offers: { include: { template: true, sportLeague: { include: { sport: true } } } } },
+      include: { sportLeague: { include: { sport: true } }, offers: { include: { template: true } } },
     });
 
     expect(rows.length).toBeGreaterThan(0);
     const problems = rows.flatMap((page) => [
       ...(isUrlSegment(page.urlSegment) ? [] : [`${page.urlSegment}: not a valid URL segment`]),
+      ...(page.sportLeague.sport.sport === page.sport ? [] : [`${page.urlSegment}: shows another sport's league`]),
       ...(page.offers.filter((offer) => offer.isPrimary).length === 1 ? [] : [`${page.urlSegment}: not exactly one primary offer`]),
       ...page.offers.flatMap((offer) => [
         ...(offer.template.active ? [] : [`${page.urlSegment}: ${offer.template.templateKey} is inactive`]),
-        ...(offer.sportLeague.sport.sport === page.sport ? [] : [`${page.urlSegment}: ${offer.template.templateKey} is another sport's`]),
-        ...(offer.template.sportLeagueId === offer.sportLeagueId ? [] : [`${page.urlSegment}: ${offer.template.templateKey} is another sport league's`]),
+        ...(offer.template.sportLeagueId === page.sportLeagueId ? [] : [`${page.urlSegment}: ${offer.template.templateKey} is another sport league's`]),
       ]),
     ]);
     expect(problems).toEqual([]);
@@ -68,8 +71,8 @@ describe('Seeded event pages', () => {
   it('refuses a URL segment that is not lower case words joined by single dashes', async () => {
     const prisma = getPrisma();
 
-    await expect(prisma.eventPage.create({ data: { sport: Sport.GOLF, urlSegment: 'The-Masters', displayOrder: 1 } })).rejects.toThrow();
-    await expect(prisma.eventPage.create({ data: { sport: Sport.GOLF, urlSegment: 'the--masters', displayOrder: 1 } })).rejects.toThrow();
+    await expect(prisma.eventPage.create({ data: { sport: Sport.GOLF, urlSegment: 'The-Masters', displayOrder: 1, ...(await shownSlot()) } })).rejects.toThrow();
+    await expect(prisma.eventPage.create({ data: { sport: Sport.GOLF, urlSegment: 'the--masters', displayOrder: 1, ...(await shownSlot()) } })).rejects.toThrow();
   });
 });
 
@@ -77,9 +80,9 @@ describe('PrismaEventPageRepository page reads', () => {
   it('reads a retired page with the address it redirects to, and null for an address with no page', async () => {
     const prisma = getPrisma();
     const pages = new PrismaEventPageRepository(getAppPrisma());
-    const target = await prisma.eventPage.create({ data: { sport: Sport.GOLF, urlSegment: `target-${randomUUID()}`, displayOrder: 998 } });
+    const target = await prisma.eventPage.create({ data: { sport: Sport.GOLF, urlSegment: `target-${randomUUID()}`, displayOrder: 998, ...(await shownSlot()) } });
     const retired = await prisma.eventPage.create({
-      data: { sport: Sport.GOLF, urlSegment: `retired-${randomUUID()}`, displayOrder: 999, isActive: false, redirectToPageId: target.id },
+      data: { sport: Sport.GOLF, urlSegment: `retired-${randomUUID()}`, displayOrder: 999, isActive: false, redirectToPageId: target.id, ...(await shownSlot()) },
     });
     try {
       await expect(pages.findByUrlSegments('golf', retired.urlSegment)).resolves.toMatchObject({
@@ -105,7 +108,7 @@ describe('Event page offers', () => {
   /** A throwaway golf page with the seeded primary offer's league and a copy of its template, removed after. */
   async function scratchPage(templateActive: boolean) {
     const prisma = getPrisma();
-    const seeded = await prisma.eventPageOffer.findFirstOrThrow({ where: { isPrimary: true, eventPage: { urlSegment: 'championship-weekend' } }, include: { template: true } });
+    const seeded = await prisma.eventPageOffer.findFirstOrThrow({ where: { isPrimary: true, eventPage: { urlSegment: 'championship-weekend' } }, include: { template: true, eventPage: true } });
     const template = seeded.template;
     const copy = await prisma.contestConfigTemplate.create({
       data: {
@@ -121,9 +124,11 @@ describe('Event page offers', () => {
         configJson: template.configJson ?? {},
       },
     });
-    const page = await prisma.eventPage.create({ data: { sport: Sport.GOLF, urlSegment: `scratch-${randomUUID()}`, displayOrder: 999 } });
+    const page = await prisma.eventPage.create({
+      data: { sport: Sport.GOLF, urlSegment: `scratch-${randomUUID()}`, displayOrder: 999, sportLeagueId: seeded.eventPage.sportLeagueId, sportLeagueCompetitionSlotId: seeded.eventPage.sportLeagueCompetitionSlotId },
+    });
     const offer = (sortOrder: number, isPrimary: boolean) => prisma.eventPageOffer.create({
-      data: { eventPageId: page.id, sportLeagueId: seeded.sportLeagueId, sportLeagueCompetitionSlotId: seeded.sportLeagueCompetitionSlotId, templateId: copy.id, sortOrder, isPrimary },
+      data: { eventPageId: page.id, templateId: copy.id, sortOrder, isPrimary },
     });
     const remove = async () => {
       await prisma.eventPage.delete({ where: { id: page.id } });
@@ -155,21 +160,21 @@ describe('Event page offers', () => {
     }
   });
 
-  it('leaves out an offer in a switched-off sport league, so no page or start link offers a league no provider syncs', async () => {
+  it('leaves out the offers of a page in a switched-off sport league, so no page or start link offers a league no provider syncs', async () => {
     const prisma = getPrisma();
-    const { page, remove } = await scratchPage(true);
     const golf = await prisma.sport.findFirstOrThrow({ where: { sport: Sport.GOLF } });
     const switchedOff = await prisma.sportLeague.create({ data: { timeZone: 'UTC', ...(await sportLeagueRowDefaults(prisma)), ...sportPlay(Sport.GOLF), sportId: golf.id, name: `Switched off ${randomUUID()}`, isActive: false } });
     const template = await prisma.contestConfigTemplate.findFirstOrThrow({ where: { active: true, sportLeague: { sport: { sport: Sport.GOLF } } } });
     const definitionId = await keyedSlotDefinitionId(prisma, switchedOff.id, 'SCRATCH');
+    const page = await prisma.eventPage.create({
+      data: { sport: Sport.GOLF, urlSegment: `switched-off-${randomUUID()}`, displayOrder: 999, sportLeagueId: switchedOff.id, sportLeagueCompetitionSlotId: definitionId },
+    });
     try {
-      await prisma.eventPageOffer.create({
-        data: { eventPageId: page.id, sportLeagueId: switchedOff.id, sportLeagueCompetitionSlotId: definitionId, templateId: template.id, sortOrder: 1, isPrimary: true },
-      });
+      await prisma.eventPageOffer.create({ data: { eventPageId: page.id, templateId: template.id, sortOrder: 1, isPrimary: true } });
 
       expect(await new PrismaEventPageRepository(getAppPrisma()).findOffers([page.id])).toEqual([]);
     } finally {
-      await remove();
+      await prisma.eventPage.delete({ where: { id: page.id } });
       await prisma.sportLeagueCompetitionSlot.deleteMany({ where: { sportLeagueId: switchedOff.id } });
       await prisma.sportLeaguePhase.deleteMany({ where: { sportLeagueId: switchedOff.id } });
       await prisma.sportLeague.delete({ where: { id: switchedOff.id } });

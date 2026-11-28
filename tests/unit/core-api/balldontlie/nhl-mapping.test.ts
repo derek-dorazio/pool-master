@@ -48,12 +48,12 @@ describe('NHL playoffs league', () => {
 });
 
 describe('toNhlPlayoffTeam', () => {
-  it('keeps the team\'s id and full name, with its tricode, conference and division as facts', () => {
+  it('keeps the team\'s id and full name, with its tricode, and its conference and division as the feed codes them', () => {
     expect(toNhlPlayoffTeam(florida, '/nhl/v1/teams')).toEqual({
       id: 7,
       name: 'Florida Panthers',
       abbreviation: 'FLA',
-      metadata: { conference: 'Eastern', division: 'Atlantic' },
+      conference: { providerCode: 'Eastern', divisionProviderCode: 'Atlantic' },
     });
   });
 

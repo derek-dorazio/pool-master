@@ -14,6 +14,7 @@ import { nhlGameListSchema, nhlStandingListSchema, nhlTeamListSchema, type NhlGa
 import type { PlayoffSeedRanks } from './series-playoff-bracket';
 import { BracketShapeKind, type PlayoffGame, type PlayoffsLeague, type PlayoffTeam } from './series-playoffs';
 import type { PlayoffsSource } from './series-playoffs-reader';
+import { teamConference } from './team-conference';
 
 export const NHL_PLAYOFFS: PlayoffsLeague = {
   key: 'nhl',
@@ -56,7 +57,7 @@ export function toNhlPlayoffTeam(team: NhlTeam, path: string): PlayoffTeam {
     id,
     name: required(team.full_name, path, `team ${String(id)}`, 'full_name'),
     ...(team.tricode ? { abbreviation: team.tricode } : {}),
-    metadata: { conference: team.conference_name, division: team.division_name },
+    ...teamConference(team.conference_name, team.division_name),
   };
 }
 

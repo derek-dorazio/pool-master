@@ -56,7 +56,7 @@ function PickerRow({ league, offer, page, request }: { league: LeagueDto; offer:
       && contest.sportEvents.some((event) => event.sportEventId === offer.nextSlot.sportEventId))
     : undefined;
   const used = usedQuery.data?.sportLeagueIds;
-  const isCapped = offer !== null && cap !== null && used !== undefined && used.length >= cap && !used.includes(offer.sportLeagueId);
+  const isCapped = offer !== null && cap !== null && used !== undefined && used.length >= cap && !used.includes(offer.template.sportLeagueId);
 
   const [description, action] = checkError
     ? ['We couldn\'t check this league. Try again in a moment.', null]

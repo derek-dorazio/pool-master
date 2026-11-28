@@ -210,7 +210,7 @@ describe('BalldontlieAdapter (MLB)', () => {
     const teams = await harness.adapter.getParticipants(Sport.BASEBALL);
 
     expect(teams).toHaveLength(12);
-    expect(teams[0]).toMatchObject({ externalId: '14', name: 'Toronto Blue Jays', sport: Sport.BASEBALL, metadata: { league: 'American' } });
+    expect(teams[0]).toMatchObject({ externalId: '14', name: 'Toronto Blue Jays', sport: Sport.BASEBALL, conference: { providerCode: 'American' } });
     expect(requestLine(harness.api)).toEqual(['/mlb/v1/teams?']);
   });
 

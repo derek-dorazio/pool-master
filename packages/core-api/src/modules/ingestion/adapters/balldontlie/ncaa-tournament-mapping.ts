@@ -26,6 +26,7 @@ import { BalldontlieContractError } from './balldontlie-client';
 import { CompetitionStatusState, eventStatusOf, GAME_STATE_BY_STATUS, hasStarted, PROGRESS_BY_STATE } from './competition-status';
 import type { NcaaBracketGame, NcaaBracketTeam, NcaaTeam } from './ncaa-tournament-contract';
 import { BALLDONTLIE_PROVIDER_ID } from './pga-mapping';
+import { teamConference } from './team-conference';
 import { participantFeedId } from './participant-feed-id';
 import { ProviderSeasonType, providerSlotCode, slotPlaysOf } from './provider-slot-codes';
 
@@ -143,6 +144,7 @@ export function toNcaaTeamParticipant(league: NcaaTournamentLeague, team: NcaaTe
     name: required(team.full_name, path, `team ${String(id)}`, 'full_name'),
     status: SportEventParticipantStatus.ACTIVE,
     ...(team.abbreviation ? { abbreviation: team.abbreviation } : {}),
+    ...teamConference(team.conference_id),
     metadata: {},
   };
 }

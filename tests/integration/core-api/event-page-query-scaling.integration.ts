@@ -58,51 +58,50 @@ async function nflOfferTemplates() {
 }
 
 /**
- * An active NFL page holding `offers` offers, taking the Championship Weekend offers in turn from
- * the `first`th, so 2 offers are already squares and a bracket. Each is on a series of its own
- * whose one edition is scheduled next month, with one game in the offer's starting round between
- * two teams of its own, so the squares offer has a kickoff and the bracket has games and a field.
+ * An active NFL page holding `offers` offers, taking the Championship Weekend setups in turn from
+ * the `first`th, so 2 offers are already squares and a bracket. The page shows a slot definition
+ * of its own (#2050), whose one edition is scheduled next month with one game between two teams of
+ * its own, so the squares offer has a kickoff and the bracket has games and a field.
  */
 async function seedPage(offers: number, displayOrder: number, first = 0) {
   const prisma = getPrisma();
   const kinds = await nflOfferTemplates();
   const football = await prisma.sport.findUniqueOrThrow({ where: { sport: Sport.FOOTBALL } });
   const suffix = randomUUID().slice(0, 8);
-  const page = await prisma.eventPage.create({
-    data: { sport: Sport.FOOTBALL, urlSegment: `${URL_SEGMENT_PREFIX}-${suffix}`, displayOrder },
-  });
+  // poolmaster-allow-position: the setups share one sport league, the NFL
+  const { sportLeagueId } = kinds[0];
   const startDate = new Date(Date.now() + 30 * DAY);
+  const event = await prisma.sportEvent.create({
+    data: {
+      sportLeagueId,
+      sportLeagueSeasonId: await fixtureSeasonId(prisma, sportLeagueId, startDate.getUTCFullYear()),
+      name: `Scaling Weekend ${suffix}`,
+      startDate,
+      status: SportEventStatus.SCHEDULED,
+    },
+  });
+  const round = await prisma.sportEventRound.create({ data: { sportEventId: event.id, sportEventSlotId: await oneEventSlotId(prisma, event.id), roundNumber: 1, scheduledDate: startDate } });
+  const team = async (side: string) => {
+    const participant = await prisma.participant.create({
+      data: { sportLeagueId: await participantLeagueId(prisma, football.id), name: `${side} ${suffix}`, participantType: 'TEAM' },
+    });
+    return prisma.sportEventParticipant.create({ data: { sportEventId: event.id, participantId: participant.id } });
+  };
+  const [home, away] = [await team('Home'), await team('Away')];
+  await createMatchRow(prisma, {
+    sportEventId: event.id, sportEventRoundId: round.id, sportEventSlotId: round.sportEventSlotId, matchNumber: 1,
+    teams: [away.id, home.id], isNeutralSite: true, scheduledDate: startDate,
+  });
+  // The page shows the next slot of a definition of its own, the event's (#2010, #2050).
+  const sportLeagueCompetitionSlotId = await keyedSlotDefinitionId(prisma, sportLeagueId, `${SYNCED_SLOT_KEY_PREFIX}SCALING_${suffix}`.toUpperCase(), { squaresEligible: true });
+  await putEventInSlot(prisma, event.id, sportLeagueCompetitionSlotId);
+  const page = await prisma.eventPage.create({
+    data: { sport: Sport.FOOTBALL, urlSegment: `${URL_SEGMENT_PREFIX}-${suffix}`, displayOrder, sportLeagueId, sportLeagueCompetitionSlotId },
+  });
   for (let sortOrder = 1; sortOrder <= offers; sortOrder += 1) {
-    const { sportLeagueId, templateId } = kinds[(first + sortOrder - 1) % kinds.length];
-    const roundNumber = 1;
-    const name = `Scaling Weekend ${suffix} ${String(sortOrder)}`;
-    const event = await prisma.sportEvent.create({
-      data: {
-        sportLeagueId: sportLeagueId,
-        sportLeagueSeasonId: await fixtureSeasonId(prisma, sportLeagueId, startDate.getUTCFullYear()),
-        name,
-        startDate,
-        status: SportEventStatus.SCHEDULED,
-      },
-    });
-    const round = await prisma.sportEventRound.create({ data: { sportEventId: event.id, sportEventSlotId: await oneEventSlotId(prisma, event.id), roundNumber, scheduledDate: startDate } });
-    const team = async (side: string) => {
-      const participant = await prisma.participant.create({
-        data: { sportLeagueId: await participantLeagueId(prisma, football.id), name: `${side} ${suffix} ${String(sortOrder)}`, participantType: 'TEAM' },
-      });
-      return prisma.sportEventParticipant.create({ data: { sportEventId: event.id, participantId: participant.id } });
-    };
-    const [home, away] = [await team('Home'), await team('Away')];
-    await createMatchRow(prisma, {
-      sportEventId: event.id, sportEventRoundId: round.id, sportEventSlotId: round.sportEventSlotId, matchNumber: 1,
-      teams: [away.id, home.id], isNeutralSite: true, scheduledDate: startDate,
-    });
-    // Each offer shows the next slot of a definition of its own, the event's (#2010).
-    const sportLeagueCompetitionSlotId = await keyedSlotDefinitionId(prisma, sportLeagueId, `${SYNCED_SLOT_KEY_PREFIX}SCALING_${suffix}_${String(sortOrder)}`.toUpperCase());
-    await putEventInSlot(prisma, event.id, sportLeagueCompetitionSlotId);
-    await prisma.eventPageOffer.create({
-      data: { eventPageId: page.id, sportLeagueId, sportLeagueCompetitionSlotId, templateId, sortOrder, isPrimary: sortOrder === 1 },
-    });
+    const { templateId } = kinds[(first + sortOrder - 1) % kinds.length];
+    // poolmaster-allow-query-in-loop: the page's offers, made one by one as an admin would
+    await prisma.eventPageOffer.create({ data: { eventPageId: page.id, templateId, sortOrder, isPrimary: sortOrder === 1 } });
   }
   return page;
 }

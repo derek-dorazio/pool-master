@@ -62669,20 +62669,6 @@
             "type": "string",
             "format": "uuid"
           },
-          "sportLeagueId": {
-            "type": "string",
-            "format": "uuid",
-            "description": "The sport league whose slot the offer runs on."
-          },
-          "sportLeagueName": {
-            "type": "string",
-            "description": "The sport league as screens away from its sport's own pages name it, such as \"NFL\"."
-          },
-          "sportLeagueCompetitionSlotId": {
-            "type": "string",
-            "format": "uuid",
-            "description": "The slot definition the offer runs on (#2010), such as the NFL's conference championships: each Season has a slot of it."
-          },
           "template": {
             "type": "object",
             "properties": {
@@ -64325,9 +64311,6 @@
         },
         "required": [
           "id",
-          "sportLeagueId",
-          "sportLeagueName",
-          "sportLeagueCompetitionSlotId",
           "template",
           "sortOrder",
           "isPrimary",
@@ -64335,7 +64318,7 @@
           "nextSlot"
         ],
         "additionalProperties": false,
-        "description": "One way to play on an event page: a contest setup on one sport league's slot definition, with its next Season slot. An offer with no Season slot left that can still take the contest is left out."
+        "description": "One way to play on an event page: a contest setup on the page's slot definition, with its next Season slot. An offer with no Season slot left that can still take the contest is left out."
       },
       "EventPageDto": {
         "type": "object",
@@ -64441,6 +64424,20 @@
             ],
             "additionalProperties": false
           },
+          "sportLeagueId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The sport league whose slot the page shows (#2050)."
+          },
+          "sportLeagueName": {
+            "type": "string",
+            "description": "The sport league as screens away from its sport's own pages name it, such as \"NFL\"."
+          },
+          "sportLeagueCompetitionSlotId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "The slot definition the page shows (#2010, #2050), such as the NFL's conference championships: each Season has a slot of it, and every offer is shown with the next one not yet over."
+          },
           "offers": {
             "type": "array",
             "items": {
@@ -64449,20 +64446,6 @@
                 "id": {
                   "type": "string",
                   "format": "uuid"
-                },
-                "sportLeagueId": {
-                  "type": "string",
-                  "format": "uuid",
-                  "description": "The sport league whose slot the offer runs on."
-                },
-                "sportLeagueName": {
-                  "type": "string",
-                  "description": "The sport league as screens away from its sport's own pages name it, such as \"NFL\"."
-                },
-                "sportLeagueCompetitionSlotId": {
-                  "type": "string",
-                  "format": "uuid",
-                  "description": "The slot definition the offer runs on (#2010), such as the NFL's conference championships: each Season has a slot of it."
                 },
                 "template": {
                   "type": "object",
@@ -66106,9 +66089,6 @@
               },
               "required": [
                 "id",
-                "sportLeagueId",
-                "sportLeagueName",
-                "sportLeagueCompetitionSlotId",
                 "template",
                 "sortOrder",
                 "isPrimary",
@@ -66116,7 +66096,7 @@
                 "nextSlot"
               ],
               "additionalProperties": false,
-              "description": "One way to play on an event page: a contest setup on one sport league's slot definition, with its next Season slot. An offer with no Season slot left that can still take the contest is left out."
+              "description": "One way to play on an event page: a contest setup on the page's slot definition, with its next Season slot. An offer with no Season slot left that can still take the contest is left out."
             },
             "description": "The page's ways to play in order, each with its next slot. Offers with no slot left to take the contest are left out, so an active page can have none: it is between seasons."
           }
@@ -66131,6 +66111,9 @@
           "displayOrder",
           "isActive",
           "redirectTo",
+          "sportLeagueId",
+          "sportLeagueName",
+          "sportLeagueCompetitionSlotId",
           "offers"
         ],
         "additionalProperties": false,
@@ -66243,6 +66226,20 @@
                 ],
                 "additionalProperties": false
               },
+              "sportLeagueId": {
+                "type": "string",
+                "format": "uuid",
+                "description": "The sport league whose slot the page shows (#2050)."
+              },
+              "sportLeagueName": {
+                "type": "string",
+                "description": "The sport league as screens away from its sport's own pages name it, such as \"NFL\"."
+              },
+              "sportLeagueCompetitionSlotId": {
+                "type": "string",
+                "format": "uuid",
+                "description": "The slot definition the page shows (#2010, #2050), such as the NFL's conference championships: each Season has a slot of it, and every offer is shown with the next one not yet over."
+              },
               "offers": {
                 "type": "array",
                 "items": {
@@ -66251,20 +66248,6 @@
                     "id": {
                       "type": "string",
                       "format": "uuid"
-                    },
-                    "sportLeagueId": {
-                      "type": "string",
-                      "format": "uuid",
-                      "description": "The sport league whose slot the offer runs on."
-                    },
-                    "sportLeagueName": {
-                      "type": "string",
-                      "description": "The sport league as screens away from its sport's own pages name it, such as \"NFL\"."
-                    },
-                    "sportLeagueCompetitionSlotId": {
-                      "type": "string",
-                      "format": "uuid",
-                      "description": "The slot definition the offer runs on (#2010), such as the NFL's conference championships: each Season has a slot of it."
                     },
                     "template": {
                       "type": "object",
@@ -67908,9 +67891,6 @@
                   },
                   "required": [
                     "id",
-                    "sportLeagueId",
-                    "sportLeagueName",
-                    "sportLeagueCompetitionSlotId",
                     "template",
                     "sortOrder",
                     "isPrimary",
@@ -67918,7 +67898,7 @@
                     "nextSlot"
                   ],
                   "additionalProperties": false,
-                  "description": "One way to play on an event page: a contest setup on one sport league's slot definition, with its next Season slot. An offer with no Season slot left that can still take the contest is left out."
+                  "description": "One way to play on an event page: a contest setup on the page's slot definition, with its next Season slot. An offer with no Season slot left that can still take the contest is left out."
                 },
                 "description": "The page's ways to play in order, each with its next slot. Offers with no slot left to take the contest are left out, so an active page can have none: it is between seasons."
               }
@@ -67933,6 +67913,9 @@
               "displayOrder",
               "isActive",
               "redirectTo",
+              "sportLeagueId",
+              "sportLeagueName",
+              "sportLeagueCompetitionSlotId",
               "offers"
             ],
             "additionalProperties": false,
@@ -68082,6 +68065,20 @@
                   ],
                   "additionalProperties": false
                 },
+                "sportLeagueId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "description": "The sport league whose slot the page shows (#2050)."
+                },
+                "sportLeagueName": {
+                  "type": "string",
+                  "description": "The sport league as screens away from its sport's own pages name it, such as \"NFL\"."
+                },
+                "sportLeagueCompetitionSlotId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "description": "The slot definition the page shows (#2010, #2050), such as the NFL's conference championships: each Season has a slot of it, and every offer is shown with the next one not yet over."
+                },
                 "offers": {
                   "type": "array",
                   "items": {
@@ -68090,20 +68087,6 @@
                       "id": {
                         "type": "string",
                         "format": "uuid"
-                      },
-                      "sportLeagueId": {
-                        "type": "string",
-                        "format": "uuid",
-                        "description": "The sport league whose slot the offer runs on."
-                      },
-                      "sportLeagueName": {
-                        "type": "string",
-                        "description": "The sport league as screens away from its sport's own pages name it, such as \"NFL\"."
-                      },
-                      "sportLeagueCompetitionSlotId": {
-                        "type": "string",
-                        "format": "uuid",
-                        "description": "The slot definition the offer runs on (#2010), such as the NFL's conference championships: each Season has a slot of it."
                       },
                       "template": {
                         "type": "object",
@@ -69747,9 +69730,6 @@
                     },
                     "required": [
                       "id",
-                      "sportLeagueId",
-                      "sportLeagueName",
-                      "sportLeagueCompetitionSlotId",
                       "template",
                       "sortOrder",
                       "isPrimary",
@@ -69757,7 +69737,7 @@
                       "nextSlot"
                     ],
                     "additionalProperties": false,
-                    "description": "One way to play on an event page: a contest setup on one sport league's slot definition, with its next Season slot. An offer with no Season slot left that can still take the contest is left out."
+                    "description": "One way to play on an event page: a contest setup on the page's slot definition, with its next Season slot. An offer with no Season slot left that can still take the contest is left out."
                   },
                   "description": "The page's ways to play in order, each with its next slot. Offers with no slot left to take the contest are left out, so an active page can have none: it is between seasons."
                 }
@@ -69772,6 +69752,9 @@
                 "displayOrder",
                 "isActive",
                 "redirectTo",
+                "sportLeagueId",
+                "sportLeagueName",
+                "sportLeagueCompetitionSlotId",
                 "offers"
               ],
               "additionalProperties": false,
@@ -79921,7 +79904,9 @@
               "GAME_MOVED",
               "TIEBREAKER_GAME_REPLACED",
               "FIELD_TEAM_WITHOUT_GAME",
-              "SYNC_FAILED"
+              "SYNC_FAILED",
+              "CONFERENCE_UNMAPPED",
+              "DIVISION_UNMAPPED"
             ],
             "description": "What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here. PROVIDER_RATE_LIMITED: the Provider has rate limited every call for a while (WARNING after 15 minutes, ERROR after the league's quiet threshold); it resolves on the Provider's next answer. SLOT_NAME_UNMATCHED: a tournament whose normalized name (providerValue) no NAME_PATTERN mapping of the league matches, so it has no Season slot (INFO; LINK_SLOT adds the name as a pattern). SLOT_NAME_AMBIGUOUS: a tournament whose normalized name matches more than one slot, or one another tournament already has (ERROR). SLOT_SEASON_COMPETITION_MISSING: a tournament whose name matched a slot whose phase the Season does not have, so no Season slot could be made (ERROR). SYNC_FAILED: a sync run of the league (of the event, when it names one) ended FAILED, and no run of the same sync has completed since (ERROR, syncKind says which sync)."
           },
@@ -80325,7 +80310,9 @@
                     "GAME_MOVED",
                     "TIEBREAKER_GAME_REPLACED",
                     "FIELD_TEAM_WITHOUT_GAME",
-                    "SYNC_FAILED"
+                    "SYNC_FAILED",
+                    "CONFERENCE_UNMAPPED",
+                    "DIVISION_UNMAPPED"
                   ],
                   "description": "What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here. PROVIDER_RATE_LIMITED: the Provider has rate limited every call for a while (WARNING after 15 minutes, ERROR after the league's quiet threshold); it resolves on the Provider's next answer. SLOT_NAME_UNMATCHED: a tournament whose normalized name (providerValue) no NAME_PATTERN mapping of the league matches, so it has no Season slot (INFO; LINK_SLOT adds the name as a pattern). SLOT_NAME_AMBIGUOUS: a tournament whose normalized name matches more than one slot, or one another tournament already has (ERROR). SLOT_SEASON_COMPETITION_MISSING: a tournament whose name matched a slot whose phase the Season does not have, so no Season slot could be made (ERROR). SYNC_FAILED: a sync run of the league (of the event, when it names one) ended FAILED, and no run of the same sync has completed since (ERROR, syncKind says which sync)."
                 },
@@ -80582,7 +80569,9 @@
                   "GAME_MOVED",
                   "TIEBREAKER_GAME_REPLACED",
                   "FIELD_TEAM_WITHOUT_GAME",
-                  "SYNC_FAILED"
+                  "SYNC_FAILED",
+                  "CONFERENCE_UNMAPPED",
+                  "DIVISION_UNMAPPED"
                 ],
                 "description": "What it is about. UNMAPPED_PARTICIPANT: the feed sent a participant id no participant of the league is mapped to (providerValue). WEBHOOK_SECRET_MISSING: the Provider's webhooks are on but its signing secret is not set here. PROVIDER_RATE_LIMITED: the Provider has rate limited every call for a while (WARNING after 15 minutes, ERROR after the league's quiet threshold); it resolves on the Provider's next answer. SLOT_NAME_UNMATCHED: a tournament whose normalized name (providerValue) no NAME_PATTERN mapping of the league matches, so it has no Season slot (INFO; LINK_SLOT adds the name as a pattern). SLOT_NAME_AMBIGUOUS: a tournament whose normalized name matches more than one slot, or one another tournament already has (ERROR). SLOT_SEASON_COMPETITION_MISSING: a tournament whose name matched a slot whose phase the Season does not have, so no Season slot could be made (ERROR). SYNC_FAILED: a sync run of the league (of the event, when it names one) ended FAILED, and no run of the same sync has completed since (ERROR, syncKind says which sync)."
               },

@@ -1144,6 +1144,19 @@ export const ProviderSyncFindingKind = {
    * same subject resolves it. The Sports page's Sync chip lists these.
    */
   SYNC_FAILED: 'SYNC_FAILED',
+  /**
+   * A field sync's feed put a team in a conference code the league's provider mapping has no row
+   * for (#2052): the team gets no conference for the Season. WARNING, since a conference the league
+   * plays is missing until a migration adds it. Only a league that names conference codes raises
+   * it. Subject: league, Provider and the code, with the team's name.
+   */
+  CONFERENCE_UNMAPPED: 'CONFERENCE_UNMAPPED',
+  /**
+   * A field sync's feed put a team in a division code its conference has no row for (#2052): the
+   * team is written with its conference and no division. WARNING. Subject: league, Provider and the
+   * code, with the conference's name.
+   */
+  DIVISION_UNMAPPED: 'DIVISION_UNMAPPED',
 } as const;
 export type ProviderSyncFindingKind = (typeof ProviderSyncFindingKind)[keyof typeof ProviderSyncFindingKind];
 export const ProviderSyncFindingKindOrder = alphabeticalOrder('ProviderSyncFindingKind');
