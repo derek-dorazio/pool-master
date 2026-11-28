@@ -42,6 +42,9 @@ export class PrismaLeagueChampionshipYearRepository implements LeagueChampionshi
       select: { status: true, sportLeagueSeason: { select: { sportLeagueId: true } } },
     });
     const sportLeagueIds = [...new Set(contests.map((contest) => contest.sportLeagueSeason.sportLeagueId))];
+    // Every synced slot of the year counts, placed on an event or not: a round not yet drawn has
+    // no event, and a closed year never reopens, so a year must never close before its last slot.
+    // A slot that will never be played is cancelled (feed or root admin), which releases the year.
     const unfinishedSeasonSlotCount = sportLeagueIds.length === 0 ? 0 : await this.prisma.sportLeagueSeasonCompetitionSlot.count({
       where: {
         status: { in: UNFINISHED_SLOT_STATUSES },

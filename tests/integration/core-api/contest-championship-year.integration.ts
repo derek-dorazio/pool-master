@@ -16,7 +16,7 @@ import { fixtureSeasonId } from '../../support/event-edition';
 import { sportLeagueRowDefaults } from '../../support/league-profiles';
 import { sportPlay } from '../../support/sport-play';
 import { sportRowKeys } from '../../support/sport-rows';
-import { linkTestSlot } from '../../support/test-slots';
+import { linkTestSlot, testSlotIdIn } from '../../support/test-slots';
 import { anySeasonId } from '../../support/contest-rows';
 
 beforeAll(async () => {
@@ -135,7 +135,7 @@ async function footballYear() {
     },
   });
   const finish = (seasonSlotId: string) => prisma.sportLeagueSeasonCompetitionSlot.update({ where: { id: seasonSlotId }, data: { status: SeasonSlotStatus.COMPLETED } });
-  return { league, divisional, superBowl, contest, finish, key: { leagueId: league.id, championshipYear: 2025 } };
+  return { league, sportLeague, sportLeagueSeasonId, divisional, superBowl, contest, finish, key: { leagueId: league.id, championshipYear: 2025 } };
 }
 
 const closer = (now: Date) => new ChampionshipYearCloseService({ years: new PrismaLeagueChampionshipYearRepository(getAppPrisma()), now: () => now });
@@ -165,6 +165,18 @@ describe('the championship year close against Postgres (#2021)', () => {
 
     await getPrisma().contest.update({ where: { id: live.id }, data: { status: 'COMPLETED' } });
     await expect(closer(AFTER_SUPER_BOWL).closeContestYear(live.id)).resolves.toEqual({ changedCount: 1 });
+  });
+
+  it('holds the year open for a synced Season slot no event is placed on yet, as a round not yet drawn, since a closed year never reopens for it', async () => {
+    const year = await footballYear();
+    await year.contest('Divisional pool', 'COMPLETED', year.divisional.seasonSlotId);
+    await year.finish(year.divisional.seasonSlotId);
+    await year.finish(year.superBowl.seasonSlotId);
+    await testSlotIdIn(getPrisma(), year.sportLeague.id, year.sportLeagueSeasonId, new Date('2026-02-15T20:00:00.000Z'), null, false);
+
+    await expect(new PrismaLeagueChampionshipYearRepository(getAppPrisma()).readYearState(year.key, AFTER_SUPER_BOWL))
+      .resolves.toEqual({ contestCount: 1, unfinishedContestCount: 0, unfinishedSeasonSlotCount: 1 });
+    await expect(closer(AFTER_SUPER_BOWL).closeYear(year.key)).resolves.toBe(false);
   });
 
   it('ignores a draft that can never open, its event over, and never reopens a closed year', async () => {
