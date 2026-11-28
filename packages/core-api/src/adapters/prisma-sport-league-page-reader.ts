@@ -15,8 +15,11 @@ import type {
   SportLeagueSyncFacts,
 } from '@poolmaster/shared/db';
 import type {
+  ProviderCode,
+  SportLeagueConference,
   SportLeaguePhaseDefinition,
   SportLeaguePosition,
+  SportLeaguePositionProviderCode,
   SportLeagueSeasonCompetitionSlot,
   SportLeagueSeasonDetail,
   SportLeagueSlotDefinition,
@@ -119,7 +122,7 @@ export class PrismaSportLeaguePageReader implements SportLeaguePageReader {
     const [league, phases, competitions, slots] = await Promise.all([
       this.prisma.sportLeague.findUnique({ where: { id: sportLeagueId }, select: { id: true } }),
       this.prisma.sportLeaguePhase.findMany({ where: { sportLeagueId }, select: { id: true, phase: true, isSynced: true } }),
-      this.prisma.sportLeagueCompetition.findMany({ where: { sportLeagueId }, select: { id: true, sportLeaguePhaseId: true, code: true, orderIndex: true } }),
+      this.prisma.sportLeagueCompetition.findMany({ where: { sportLeagueId }, select: { id: true, sportLeaguePhaseId: true, code: true, orderIndex: true, conferenceId: true } }),
       this.prisma.sportLeagueCompetitionSlot.findMany({ where: { sportLeagueId }, select: SLOT_SELECT }),
     ]);
     if (league === null) return null;
@@ -296,15 +299,41 @@ export class PrismaSportLeaguePageReader implements SportLeaguePageReader {
       }),
     ]);
     if (league === null) return null;
-    return positions.map(({ providerCodes, ...position }) => ({
-      ...position,
-      providerCodes: providerCodes
-        .map(({ providerCode, sportLeagueProviderMapping: { providerLeague } }) => ({
-          providerCode,
-          provider: providerLeague.provider.code,
-          providerLeagueCode: providerLeague.code,
-          providerLeagueName: providerLeague.name,
-        })),
+    return positions.map(({ providerCodes, ...position }) => ({ ...position, providerCodes: providerCodes.map(toProviderCode) }));
+  }
+
+  async readConferences(sportLeagueId: string): Promise<SportLeagueConference[] | null> {
+    const providerCodes = {
+      select: {
+        providerCode: true,
+        sportLeagueProviderMapping: { select: { providerLeague: { select: { code: true, name: true, provider: { select: { code: true } } } } } },
+      },
+      orderBy: [{ sportLeagueProviderMapping: { providerLeague: { code: 'asc' as const } } }, { providerCode: 'asc' as const }],
+    };
+    const [league, conferences] = await Promise.all([
+      this.prisma.sportLeague.findUnique({ where: { id: sportLeagueId }, select: { id: true } }),
+      this.prisma.sportLeagueConference.findMany({
+        where: { sportLeagueId },
+        select: {
+          id: true,
+          code: true,
+          name: true,
+          description: true,
+          displayOrder: true,
+          providerCodes,
+          divisions: {
+            select: { id: true, code: true, name: true, description: true, displayOrder: true, providerCodes },
+            orderBy: [{ displayOrder: 'asc' }, { code: 'asc' }],
+          },
+        },
+        orderBy: [{ displayOrder: 'asc' }, { code: 'asc' }],
+      }),
+    ]);
+    if (league === null) return null;
+    return conferences.map((conference) => ({
+      ...conference,
+      providerCodes: conference.providerCodes.map(toProviderCode),
+      divisions: conference.divisions.map((division) => ({ ...division, providerCodes: division.providerCodes.map(toProviderCode) })),
     }));
   }
 
@@ -421,3 +450,10 @@ function oneRunPerKind(runs: readonly SportLeaguePageRun[]): SportLeaguePageRun[
   return [...byKind.values()];
 }
 
+/** A provider code row with the provider league it is from (#2001, #2052). */
+function toProviderCode({ providerCode, sportLeagueProviderMapping: { providerLeague } }: {
+  providerCode: string;
+  sportLeagueProviderMapping: { providerLeague: { code: string; name: string; provider: { code: ProviderCode } } };
+}): SportLeaguePositionProviderCode {
+  return { providerCode, provider: providerLeague.provider.code, providerLeagueCode: providerLeague.code, providerLeagueName: providerLeague.name };
+}

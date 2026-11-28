@@ -27005,6 +27005,427 @@
         "additionalProperties": false,
         "description": "A sport league's positions."
       },
+      "SportLeagueConferenceProviderCodeDto": {
+        "type": "object",
+        "properties": {
+          "providerCode": {
+            "type": "string",
+            "description": "The provider's own code for the conference or division, exactly as its feed sends it (a vendor's number as text where it numbers them)."
+          },
+          "provider": {
+            "type": "string",
+            "enum": [
+              "BALLDONTLIE"
+            ],
+            "description": "The provider whose code it is."
+          },
+          "providerLeagueCode": {
+            "type": "string",
+            "description": "The provider's own code for the league the code is from."
+          },
+          "providerLeagueName": {
+            "type": "string",
+            "description": "The provider's own name for that league."
+          }
+        },
+        "required": [
+          "providerCode",
+          "provider",
+          "providerLeagueCode",
+          "providerLeagueName"
+        ],
+        "additionalProperties": false,
+        "description": "One provider's code for a sport league's conference or division."
+      },
+      "SportLeagueConferenceDivisionDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "code": {
+            "type": "string",
+            "description": "The division's key within its conference (EAST)."
+          },
+          "name": {
+            "type": "string",
+            "description": "The division's proper name (AFC East). Data, never translated."
+          },
+          "description": {
+            "type": "string",
+            "description": "Plain English for agents and root admins: what the division is. Not shown to members."
+          },
+          "displayOrder": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991,
+            "description": "Where it sits among its conference's divisions. Display only."
+          },
+          "providerCodes": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "providerCode": {
+                  "type": "string",
+                  "description": "The provider's own code for the conference or division, exactly as its feed sends it (a vendor's number as text where it numbers them)."
+                },
+                "provider": {
+                  "type": "string",
+                  "enum": [
+                    "BALLDONTLIE"
+                  ],
+                  "description": "The provider whose code it is."
+                },
+                "providerLeagueCode": {
+                  "type": "string",
+                  "description": "The provider's own code for the league the code is from."
+                },
+                "providerLeagueName": {
+                  "type": "string",
+                  "description": "The provider's own name for that league."
+                }
+              },
+              "required": [
+                "providerCode",
+                "provider",
+                "providerLeagueCode",
+                "providerLeagueName"
+              ],
+              "additionalProperties": false,
+              "description": "One provider's code for a sport league's conference or division."
+            },
+            "description": "Each provider's codes for the division, by provider league then code. A division code is read within its team's conference."
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "name",
+          "description",
+          "displayOrder",
+          "providerCodes"
+        ],
+        "additionalProperties": false,
+        "description": "One division of a conference. Set by migration; never edited through the API."
+      },
+      "SportLeagueConferenceDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "code": {
+            "type": "string",
+            "description": "The conference's key within its league (AFC)."
+          },
+          "name": {
+            "type": "string",
+            "description": "The conference's proper name (American Football Conference). Data, never translated."
+          },
+          "description": {
+            "type": "string",
+            "description": "Plain English for agents and root admins: what the conference is. Not shown to members."
+          },
+          "displayOrder": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991,
+            "description": "Where it sits among the league's conferences. Display only."
+          },
+          "providerCodes": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "providerCode": {
+                  "type": "string",
+                  "description": "The provider's own code for the conference or division, exactly as its feed sends it (a vendor's number as text where it numbers them)."
+                },
+                "provider": {
+                  "type": "string",
+                  "enum": [
+                    "BALLDONTLIE"
+                  ],
+                  "description": "The provider whose code it is."
+                },
+                "providerLeagueCode": {
+                  "type": "string",
+                  "description": "The provider's own code for the league the code is from."
+                },
+                "providerLeagueName": {
+                  "type": "string",
+                  "description": "The provider's own name for that league."
+                }
+              },
+              "required": [
+                "providerCode",
+                "provider",
+                "providerLeagueCode",
+                "providerLeagueName"
+              ],
+              "additionalProperties": false,
+              "description": "One provider's code for a sport league's conference or division."
+            },
+            "description": "Each provider's codes for the conference, by provider league then code. A feed code with no row is not one of the league's conferences, and raises CONFERENCE_UNMAPPED."
+          },
+          "divisions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "code": {
+                  "type": "string",
+                  "description": "The division's key within its conference (EAST)."
+                },
+                "name": {
+                  "type": "string",
+                  "description": "The division's proper name (AFC East). Data, never translated."
+                },
+                "description": {
+                  "type": "string",
+                  "description": "Plain English for agents and root admins: what the division is. Not shown to members."
+                },
+                "displayOrder": {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991,
+                  "description": "Where it sits among its conference's divisions. Display only."
+                },
+                "providerCodes": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "providerCode": {
+                        "type": "string",
+                        "description": "The provider's own code for the conference or division, exactly as its feed sends it (a vendor's number as text where it numbers them)."
+                      },
+                      "provider": {
+                        "type": "string",
+                        "enum": [
+                          "BALLDONTLIE"
+                        ],
+                        "description": "The provider whose code it is."
+                      },
+                      "providerLeagueCode": {
+                        "type": "string",
+                        "description": "The provider's own code for the league the code is from."
+                      },
+                      "providerLeagueName": {
+                        "type": "string",
+                        "description": "The provider's own name for that league."
+                      }
+                    },
+                    "required": [
+                      "providerCode",
+                      "provider",
+                      "providerLeagueCode",
+                      "providerLeagueName"
+                    ],
+                    "additionalProperties": false,
+                    "description": "One provider's code for a sport league's conference or division."
+                  },
+                  "description": "Each provider's codes for the division, by provider league then code. A division code is read within its team's conference."
+                }
+              },
+              "required": [
+                "id",
+                "code",
+                "name",
+                "description",
+                "displayOrder",
+                "providerCodes"
+              ],
+              "additionalProperties": false,
+              "description": "One division of a conference. Set by migration; never edited through the API."
+            },
+            "description": "By display order, never paged. Empty where the conference has none."
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "name",
+          "description",
+          "displayOrder",
+          "providerCodes",
+          "divisions"
+        ],
+        "additionalProperties": false,
+        "description": "One of a sport league's conferences, with its divisions. Set by migration; never edited through the API."
+      },
+      "SportLeagueConferenceListResponse": {
+        "type": "object",
+        "properties": {
+          "conferences": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "code": {
+                  "type": "string",
+                  "description": "The conference's key within its league (AFC)."
+                },
+                "name": {
+                  "type": "string",
+                  "description": "The conference's proper name (American Football Conference). Data, never translated."
+                },
+                "description": {
+                  "type": "string",
+                  "description": "Plain English for agents and root admins: what the conference is. Not shown to members."
+                },
+                "displayOrder": {
+                  "type": "integer",
+                  "minimum": -9007199254740991,
+                  "maximum": 9007199254740991,
+                  "description": "Where it sits among the league's conferences. Display only."
+                },
+                "providerCodes": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "providerCode": {
+                        "type": "string",
+                        "description": "The provider's own code for the conference or division, exactly as its feed sends it (a vendor's number as text where it numbers them)."
+                      },
+                      "provider": {
+                        "type": "string",
+                        "enum": [
+                          "BALLDONTLIE"
+                        ],
+                        "description": "The provider whose code it is."
+                      },
+                      "providerLeagueCode": {
+                        "type": "string",
+                        "description": "The provider's own code for the league the code is from."
+                      },
+                      "providerLeagueName": {
+                        "type": "string",
+                        "description": "The provider's own name for that league."
+                      }
+                    },
+                    "required": [
+                      "providerCode",
+                      "provider",
+                      "providerLeagueCode",
+                      "providerLeagueName"
+                    ],
+                    "additionalProperties": false,
+                    "description": "One provider's code for a sport league's conference or division."
+                  },
+                  "description": "Each provider's codes for the conference, by provider league then code. A feed code with no row is not one of the league's conferences, and raises CONFERENCE_UNMAPPED."
+                },
+                "divisions": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "format": "uuid"
+                      },
+                      "code": {
+                        "type": "string",
+                        "description": "The division's key within its conference (EAST)."
+                      },
+                      "name": {
+                        "type": "string",
+                        "description": "The division's proper name (AFC East). Data, never translated."
+                      },
+                      "description": {
+                        "type": "string",
+                        "description": "Plain English for agents and root admins: what the division is. Not shown to members."
+                      },
+                      "displayOrder": {
+                        "type": "integer",
+                        "minimum": -9007199254740991,
+                        "maximum": 9007199254740991,
+                        "description": "Where it sits among its conference's divisions. Display only."
+                      },
+                      "providerCodes": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "providerCode": {
+                              "type": "string",
+                              "description": "The provider's own code for the conference or division, exactly as its feed sends it (a vendor's number as text where it numbers them)."
+                            },
+                            "provider": {
+                              "type": "string",
+                              "enum": [
+                                "BALLDONTLIE"
+                              ],
+                              "description": "The provider whose code it is."
+                            },
+                            "providerLeagueCode": {
+                              "type": "string",
+                              "description": "The provider's own code for the league the code is from."
+                            },
+                            "providerLeagueName": {
+                              "type": "string",
+                              "description": "The provider's own name for that league."
+                            }
+                          },
+                          "required": [
+                            "providerCode",
+                            "provider",
+                            "providerLeagueCode",
+                            "providerLeagueName"
+                          ],
+                          "additionalProperties": false,
+                          "description": "One provider's code for a sport league's conference or division."
+                        },
+                        "description": "Each provider's codes for the division, by provider league then code. A division code is read within its team's conference."
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "code",
+                      "name",
+                      "description",
+                      "displayOrder",
+                      "providerCodes"
+                    ],
+                    "additionalProperties": false,
+                    "description": "One division of a conference. Set by migration; never edited through the API."
+                  },
+                  "description": "By display order, never paged. Empty where the conference has none."
+                }
+              },
+              "required": [
+                "id",
+                "code",
+                "name",
+                "description",
+                "displayOrder",
+                "providerCodes",
+                "divisions"
+              ],
+              "additionalProperties": false,
+              "description": "One of a sport league's conferences, with its divisions. Set by migration; never edited through the API."
+            },
+            "description": "Every conference of the sport league, by display order, never paged. Empty for a league with none (soccer, golf)."
+          }
+        },
+        "required": [
+          "conferences"
+        ],
+        "additionalProperties": false,
+        "description": "A sport league's conferences and divisions."
+      },
       "SlotProviderMappingDto": {
         "type": "object",
         "properties": {
@@ -27262,6 +27683,14 @@
             "maximum": 9007199254740991,
             "description": "Its place among its phase's competitions, from 1."
           },
+          "conferenceId": {
+            "description": "The conference whose teams alone it places, one of the league's conferences (`GET /sport-leagues/{sportLeagueId}/conferences`); null for none. Only a POSTSEASON_CONFERENCE competition names one.",
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
           "slots": {
             "type": "array",
             "items": {
@@ -27459,6 +27888,7 @@
           "id",
           "code",
           "orderIndex",
+          "conferenceId",
           "slots"
         ],
         "additionalProperties": false,
@@ -27502,6 +27932,14 @@
                   "minimum": 1,
                   "maximum": 9007199254740991,
                   "description": "Its place among its phase's competitions, from 1."
+                },
+                "conferenceId": {
+                  "description": "The conference whose teams alone it places, one of the league's conferences (`GET /sport-leagues/{sportLeagueId}/conferences`); null for none. Only a POSTSEASON_CONFERENCE competition names one.",
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "format": "uuid"
                 },
                 "slots": {
                   "type": "array",
@@ -27700,6 +28138,7 @@
                 "id",
                 "code",
                 "orderIndex",
+                "conferenceId",
                 "slots"
               ],
               "additionalProperties": false,
@@ -27760,6 +28199,14 @@
                         "minimum": 1,
                         "maximum": 9007199254740991,
                         "description": "Its place among its phase's competitions, from 1."
+                      },
+                      "conferenceId": {
+                        "description": "The conference whose teams alone it places, one of the league's conferences (`GET /sport-leagues/{sportLeagueId}/conferences`); null for none. Only a POSTSEASON_CONFERENCE competition names one.",
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "format": "uuid"
                       },
                       "slots": {
                         "type": "array",
@@ -27958,6 +28405,7 @@
                       "id",
                       "code",
                       "orderIndex",
+                      "conferenceId",
                       "slots"
                     ],
                     "additionalProperties": false,
@@ -94858,6 +95306,69 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/SportLeaguePositionListResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Standard API error envelope.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sport-leagues/{sportLeagueId}/conferences": {
+      "get": {
+        "operationId": "listSportLeagueConferences",
+        "summary": "List a sport league's conferences and divisions with their provider codes",
+        "tags": [
+          "Sport leagues"
+        ],
+        "description": "The League page's Structure tab (#2052): every conference of the sport league, by display order, never paged, each with its divisions and each provider's codes for both. Set by migration; read-only. Which conference a team is in is kept per Season by the events sync. Read in a fixed number of queries. Root admin only.",
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "in": "path",
+            "name": "sportLeagueId",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A sport league's conferences and divisions.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SportLeagueConferenceListResponse"
                 }
               }
             }

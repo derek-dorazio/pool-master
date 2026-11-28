@@ -11,6 +11,7 @@ import type {
   SportLeagueParticipantOverviewDto,
   SportLeaguePhaseDefinitionDto,
   SportLeagueSeasonDto,
+  SportLeagueConferenceDto,
   SportLeaguePositionDto,
   SportLeagueSyncDto,
 } from '@/lib/api';
@@ -35,6 +36,7 @@ const {
   listSportLeagueParticipantOverviewsMock,
   listSportLeagueSeasonsMock,
   listSportLeaguePositionsMock,
+  listSportLeagueConferencesMock,
   listSportLeaguesMock,
   listSportLeagueSyncsMock,
   mockLogger,
@@ -54,6 +56,7 @@ const {
     listSportLeagueParticipantOverviewsMock: vi.fn(),
     listSportLeagueSeasonsMock: vi.fn(),
     listSportLeaguePositionsMock: vi.fn(),
+    listSportLeagueConferencesMock: vi.fn(),
     listSportLeaguesMock: vi.fn(),
     listSportLeagueSyncsMock: vi.fn(),
     mockLogger: logger,
@@ -73,6 +76,7 @@ bindApiMocks({
   listSportLeagueParticipantOverviews: listSportLeagueParticipantOverviewsMock,
   listSportLeagueSeasons: listSportLeagueSeasonsMock,
   listSportLeaguePositions: listSportLeaguePositionsMock,
+  listSportLeagueConferences: listSportLeagueConferencesMock,
   listSportLeagues: listSportLeaguesMock,
   listSportLeagueSyncs: listSportLeagueSyncsMock,
   syncLeagueEvents: syncLeagueEventsMock,
@@ -240,10 +244,10 @@ const STRUCTURE_SLOT: Omit<SportLeaguePhaseDefinitionDto['competitions'][number]
   matchFormat: 'HEAD_TO_HEAD', canEndTied: false, periodUnit: 'QUARTER', periodCount: 4, providerMappings: [],
 };
 const STRUCTURE: SportLeaguePhaseDefinitionDto[] = [
-  { id: '00000000-0000-4000-8000-00000000c001', phase: 'PRESEASON', isSynced: false, competitions: [{ id: '00000000-0000-4000-8000-00000000a101', code: 'PRESEASON', orderIndex: 1, slots: [] }] },
+  { id: '00000000-0000-4000-8000-00000000c001', phase: 'PRESEASON', isSynced: false, competitions: [{ id: '00000000-0000-4000-8000-00000000a101', code: 'PRESEASON', orderIndex: 1, conferenceId: null, slots: [] }] },
   {
     id: '00000000-0000-4000-8000-00000000c002', phase: 'REGULAR', isSynced: true, competitions: [{
-      id: '00000000-0000-4000-8000-00000000a102', code: 'REGULAR', orderIndex: 1, slots: [{
+      id: '00000000-0000-4000-8000-00000000a102', code: 'REGULAR', orderIndex: 1, conferenceId: null, slots: [{
         ...STRUCTURE_SLOT, id: '00000000-0000-4000-8000-00000000d001', key: 'WEEK_1', slotKind: 'WEEK', weekNumber: 1, squaresEligible: true,
         providerMappings: [{ ...STRUCTURE_MAPPING, id: '00000000-0000-4000-8000-00000000e001', matchType: 'CALENDAR_WEEK', providerValue: null }],
       }],
@@ -251,7 +255,7 @@ const STRUCTURE: SportLeaguePhaseDefinitionDto[] = [
   },
   {
     id: '00000000-0000-4000-8000-00000000c003', phase: 'POSTSEASON', isSynced: true, competitions: [{
-      id: '00000000-0000-4000-8000-00000000a103', code: 'PLAYOFFS', orderIndex: 1, slots: [
+      id: '00000000-0000-4000-8000-00000000a103', code: 'PLAYOFFS', orderIndex: 1, conferenceId: null, slots: [
         { ...STRUCTURE_SLOT, id: '00000000-0000-4000-8000-00000000d002', key: 'SEMIFINAL', slotKind: 'SEMIFINAL', seriesFormat: 'BEST_OF', seriesGames: 7, isNeutralSite: true },
         {
           ...STRUCTURE_SLOT, id: '00000000-0000-4000-8000-00000000d003', key: 'FINAL', slotKind: 'FINAL', name: 'NBA Finals', awardsTrophy: true, seriesFormat: 'BEST_OF', seriesGames: 7,
@@ -265,6 +269,18 @@ const POSITION_CODE = { provider: 'BALLDONTLIE', providerLeagueCode: 'nfl', prov
 const POSITIONS: SportLeaguePositionDto[] = [
   { id: '00000000-0000-4000-8000-00000000f001', code: 'QB', displayOrder: 1, isFieldEligible: true, providerCodes: [{ ...POSITION_CODE, providerCode: 'QB' }] },
   { id: '00000000-0000-4000-8000-00000000f002', code: 'K', displayOrder: 2, isFieldEligible: false, providerCodes: [] },
+];
+
+const CONFERENCES: SportLeagueConferenceDto[] = [
+  {
+    id: '00000000-0000-4000-8000-00000000c001', code: 'AFC', name: 'American Football Conference', description: 'One of the NFL\'s two conferences.', displayOrder: 1,
+    providerCodes: [{ ...POSITION_CODE, providerCode: 'AFC' }],
+    divisions: [
+      { id: '00000000-0000-4000-8000-00000000c011', code: 'EAST', name: 'AFC East', description: 'A division of the AFC.', displayOrder: 1, providerCodes: [{ ...POSITION_CODE, providerCode: 'EAST' }] },
+      { id: '00000000-0000-4000-8000-00000000c012', code: 'NORTH', name: 'AFC North', description: 'A division of the AFC.', displayOrder: 2, providerCodes: [] },
+    ],
+  },
+  { id: '00000000-0000-4000-8000-00000000c002', code: 'NFC', name: 'National Football Conference', description: 'One of the NFL\'s two conferences.', displayOrder: 2, providerCodes: [], divisions: [] },
 ];
 
 function renderLeaguePage(path: string, seasons: SportLeagueSeasonDto[] = SEASONS) {
@@ -570,7 +586,7 @@ describe('League page', () => {
   it('shows each slot\'s match format, whether its games can end tied and its periods, in the grid and its dialog', async () => {
     const phases: SportLeaguePhaseDefinitionDto[] = [{
       id: '00000000-0000-4000-8000-00000000c010', phase: 'REGULAR', isSynced: true, competitions: [{
-        id: '00000000-0000-4000-8000-00000000a110', code: 'REGULAR', orderIndex: 1, slots: [
+        id: '00000000-0000-4000-8000-00000000a110', code: 'REGULAR', orderIndex: 1, conferenceId: null, slots: [
           { ...STRUCTURE_SLOT, id: '00000000-0000-4000-8000-00000000d010', key: 'WEEK_1', slotKind: 'WEEK', weekNumber: 1, canEndTied: true, periodUnit: 'HALF', periodCount: 2 },
           { ...STRUCTURE_SLOT, id: '00000000-0000-4000-8000-00000000d011', key: 'MONACO', slotKind: 'TOURNAMENT', name: 'Monaco Grand Prix', matchFormat: 'FIELD', periodUnit: null, periodCount: null },
         ],
@@ -640,6 +656,48 @@ describe('League page', () => {
 
     expect(await screen.findByTestId('root-admin-league-structure-positions-state-error')).toBeInTheDocument();
     expect(screen.getByTestId('root-admin-league-structure-phases-table')).toBeInTheDocument();
+  });
+
+  it('lists the league\'s conferences in the API\'s order with their divisions and provider codes, and opens one to read with its description and each division\'s codes, with no Edit', async () => {
+    getSportLeagueStructureMock.mockResolvedValue({ data: { phases: [] } });
+    listSportLeaguePositionsMock.mockResolvedValue({ data: { positions: [] } });
+    listSportLeagueConferencesMock.mockResolvedValue({ data: { conferences: CONFERENCES } });
+    renderLeaguePage('/manage/sports/basketball/leagues/nba/structure');
+
+    const table = await screen.findByTestId('root-admin-league-structure-conferences-table');
+    expect(listSportLeagueConferencesMock).toHaveBeenCalledWith(expect.objectContaining({ path: { sportLeagueId: 'nba' } }));
+    const rows = within(table).getAllByTestId(/^root-admin-league-structure-conference-/);
+    expect(rows.map((row) => row.getAttribute('data-testid'))).toEqual(['AFC', 'NFC'].map((code) => `root-admin-league-structure-conference-${code}`));
+    expect(rows[0]).toHaveTextContent(/American Football Conference.*AFC.*AFC East, AFC North.*BALLDONTLIE nfl · AFC/);
+
+    await userEvent.click(within(rows[0]).getByRole('button', { name: 'Open details' }));
+    const dialog = await screen.findByTestId('root-admin-league-structure-conference');
+    expect(within(dialog).getByText('One of the NFL\'s two conferences.')).toBeInTheDocument();
+    expect(within(dialog).getByTestId('root-admin-league-structure-division-EAST')).toHaveTextContent('AFC East (EAST) · BALLDONTLIE nfl · EAST');
+    expect(within(dialog).getByTestId('root-admin-league-structure-division-NORTH')).toHaveTextContent('AFC North (NORTH) · No provider');
+    expect(within(dialog).queryByRole('button', { name: 'Edit' })).not.toBeInTheDocument();
+    await userEvent.keyboard('{Escape}');
+    await waitFor(() => expect(screen.queryByTestId('root-admin-league-structure-conference')).not.toBeInTheDocument());
+
+    await userEvent.click(within(rows[1]).getByRole('button', { name: 'Open details' }));
+    const nfc = await screen.findByTestId('root-admin-league-structure-conference');
+    expect(within(nfc).getByTestId('root-admin-league-structure-conference-codes')).toHaveTextContent('No provider');
+    expect(within(nfc).getByTestId('root-admin-league-structure-conference-divisions')).toHaveTextContent('No divisions');
+  });
+
+  it('says the conferences could not load while the league\'s positions still show, and says so for a league with none', async () => {
+    getSportLeagueStructureMock.mockResolvedValue({ data: { phases: [] } });
+    listSportLeaguePositionsMock.mockResolvedValue({ data: { positions: POSITIONS } });
+    listSportLeagueConferencesMock.mockResolvedValue({ error: { error: { code: 'INTERNAL', message: 'down' } } });
+    const { unmount } = renderLeaguePage('/manage/sports/basketball/leagues/nba/structure');
+
+    expect(await screen.findByTestId('root-admin-league-structure-conferences-state-error')).toBeInTheDocument();
+    expect(await screen.findByTestId('root-admin-league-structure-position-QB')).toBeInTheDocument();
+    unmount();
+
+    listSportLeagueConferencesMock.mockResolvedValue({ data: { conferences: [] } });
+    renderLeaguePage('/manage/sports/basketball/leagues/nba/structure');
+    expect(await screen.findByText('No conferences for this league.')).toBeInTheDocument();
   });
 
   it('says the phases and slots could not load while the league\'s positions still show', async () => {

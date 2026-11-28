@@ -136,3 +136,36 @@ export interface SportLeaguePosition {
   /** Each provider's codes for it, by provider league then code. */
   providerCodes: SportLeaguePositionProviderCode[];
 }
+
+/** One division of a conference (#2052), as the Structure tab lists it. */
+export interface SportLeagueConferenceDivision {
+  id: string;
+  code: string;
+  /** Its proper name: AFC East. */
+  name: string;
+  /** Plain English for agents and root admins. */
+  description: string;
+  /** Where it sits among its conference's divisions; display only. */
+  displayOrder: number;
+  /** Each provider's codes for it, by provider league then code. */
+  providerCodes: SportLeaguePositionProviderCode[];
+}
+
+/**
+ * One of a sport league's conferences (#2052), with its divisions, as the League page's Structure
+ * tab lists it: set by migration, never edited on screen.
+ */
+export interface SportLeagueConference {
+  id: string;
+  code: string;
+  /** Its proper name: American Football Conference. */
+  name: string;
+  /** Plain English for agents and root admins. */
+  description: string;
+  /** Where it sits among the league's conferences; display only. */
+  displayOrder: number;
+  /** Each provider's codes for it, by provider league then code. */
+  providerCodes: SportLeaguePositionProviderCode[];
+  /** By display order; empty where the conference has none. */
+  divisions: SportLeagueConferenceDivision[];
+}

@@ -75,8 +75,8 @@ export function seasonMappingText(mapping: SportLeagueSeasonProviderMappingDto):
   return `${mapping.providerName} ${mapping.providerLeagueCode} · ${mapping.providerSeasonId}`;
 }
 
-/** One provider code in a line, as the slots' mappings read: the provider and its league, then the code its feed sends. */
-export function positionCodeText(code: SportLeaguePositionProviderCodeDto): string {
+/** One provider code for a position, conference or division in a line, as the slots' mappings read: the provider and its league, then the code its feed sends. */
+export function providerCodeText(code: SportLeaguePositionProviderCodeDto): string {
   return `${enumLabel('ProviderCode', code.provider)} ${code.providerLeagueCode} · ${code.providerCode}`;
 }
 

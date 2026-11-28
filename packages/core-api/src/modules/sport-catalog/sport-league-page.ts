@@ -30,6 +30,7 @@ import {
   type SportLeagueEventOverview,
   type SportLeagueParticipantOverview,
   type SportLeagueSeasonDetail,
+  type SportLeagueConference,
   type SportLeaguePosition,
   type SportLeagueStructure,
   type SportLeagueSync,
@@ -81,6 +82,11 @@ export class SportLeaguePageService {
   /** The league's positions with their provider codes (#2001). Null when the league does not exist. */
   async listPositions(sportLeagueId: string): Promise<SportLeaguePosition[] | null> {
     return this.deps.reader.readPositions(sportLeagueId);
+  }
+
+  /** The league's conferences with their divisions and provider codes (#2052). Null when the league does not exist. */
+  async listConferences(sportLeagueId: string): Promise<SportLeagueConference[] | null> {
+    return this.deps.reader.readConferences(sportLeagueId);
   }
 
   /**

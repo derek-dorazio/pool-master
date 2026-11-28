@@ -2,7 +2,7 @@ import { createColumnHelper } from '@tanstack/react-table';
 import { useState } from 'react';
 import { DataGrid, DetailEditModal, SectionCard, type Fact } from '@/features/shared/ui';
 import type { SportLeaguePositionDto } from '@/lib/api';
-import { positionCodeText } from './league-structure-rows';
+import { providerCodeText } from './league-structure-rows';
 
 const columnHelper = createColumnHelper<SportLeaguePositionDto>();
 
@@ -17,7 +17,7 @@ const positionColumns = [
     meta: { info: 'Whether the position\'s players can be picked into an event\'s field. The roster sync keeps only these players.', type: { kind: 'boolean' } },
     cell: ({ getValue }) => (getValue() ? 'Yes' : 'No'),
   }),
-  columnHelper.accessor((position) => position.providerCodes.map(positionCodeText).join(', '), {
+  columnHelper.accessor((position) => position.providerCodes.map(providerCodeText).join(', '), {
     id: 'providerCodes',
     header: 'Provider codes',
     meta: { info: 'Each provider\'s code for the position. Blank: no feed names it.', type: { kind: 'text' } },
@@ -59,7 +59,7 @@ function PositionDialog({ onClose, position }: { onClose: () => void; position: 
       id: 'provider-codes',
       label: 'Provider codes',
       testId: 'root-admin-league-structure-position-codes',
-      value: position.providerCodes.length === 0 ? 'No provider' : position.providerCodes.map(positionCodeText).join(', '),
+      value: position.providerCodes.length === 0 ? 'No provider' : position.providerCodes.map(providerCodeText).join(', '),
     },
   ];
   return (

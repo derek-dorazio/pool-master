@@ -248,6 +248,7 @@ export const QueryKeys = {
       leagueStructure: (sportLeagueId: QueryKeyId) => ['poolmaster', 'root-admin', 'manage-sport', 'leagues', 'structure', sportLeagueId] as const,
       // The Structure tab's positions (#2001), under `leagues`.
       leaguePositions: (sportLeagueId: QueryKeyId) => ['poolmaster', 'root-admin', 'manage-sport', 'leagues', 'positions', sportLeagueId] as const,
+      leagueConferences: (sportLeagueId: QueryKeyId) => ['poolmaster', 'root-admin', 'manage-sport', 'leagues', 'conferences', sportLeagueId] as const,
       events: ['poolmaster', 'root-admin', 'manage-sport', 'events'] as const,
       // The League page's Events grid (#1866), every year, under `events` like each year's list.
       leagueEventOverviews: (sportLeagueId: QueryKeyId) =>

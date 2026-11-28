@@ -36,6 +36,7 @@ import type {
   SlotPricing,
   SlotTierSettings,
   SportLeague,
+  SportLeagueConference,
   SportLeaguePosition,
   TierProfileValues,
   PlatformTierProfile,
@@ -760,6 +761,8 @@ export interface SportLeaguePageReader {
   readEventPageFacts(sportEventId: string, now: Date): Promise<SportEventPageFacts | null>;
   /** The league's positions with their provider codes, by display order (#2001). Null when the league does not exist. */
   readPositions(sportLeagueId: string): Promise<SportLeaguePosition[] | null>;
+  /** The league's conferences with their divisions and provider codes, by display order (#2052). Null when the league does not exist. */
+  readConferences(sportLeagueId: string): Promise<SportLeagueConference[] | null>;
 }
 
 /** A profile write: its code, name and values. */
