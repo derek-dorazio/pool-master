@@ -620,6 +620,22 @@ describe('SportEventService.importProviderSeason', () => {
     expect((await service.importProviderSeason(importOf(sportLeague, slate))).slotsNeedingDates).toBeNull();
   });
 
+  it('names the conference slots whose conference has no team in the Season, none once each has teams, and null for a Season with no conference slot', async () => {
+    const { store, service, sportLeague } = setup();
+    const [east, west] = slotsFor(store, sportLeague, slate.slice(0, 2));
+    const keys = (await service.importProviderSeason(importOf(sportLeague, slate))).slotsWithoutConferenceTeams;
+    expect(keys).toBeNull();
+
+    store.slotConferenceTeams.set(expectDefined(east), new Set(['1', '2']));
+    store.slotConferenceTeams.set(expectDefined(west), new Set());
+    const missing = (await service.importProviderSeason(importOf(sportLeague, slate))).slotsWithoutConferenceTeams;
+    store.slotConferenceTeams.set(expectDefined(west), new Set(['3']));
+    const filled = (await service.importProviderSeason(importOf(sportLeague, slate))).slotsWithoutConferenceTeams;
+
+    expect(missing).toEqual([expectDefined(store.seasonSlots.find((slot) => slot.id === west)).key]);
+    expect(filled).toEqual([]);
+  });
+
   it('reports a started provider event that is already linked as already linked, so the linked event keeps updating', async () => {
     const { store, service, sportLeague } = setup();
     store.addEvent({ providerRef: { providerId: FEED, externalId: 'pga-2026-past' } });

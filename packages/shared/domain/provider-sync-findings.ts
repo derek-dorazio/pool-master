@@ -101,6 +101,7 @@ const KIND_ACTIONS: Readonly<Record<ProviderSyncFindingKind, readonly ProviderSy
   [ProviderSyncFindingKind.SYNC_FAILED]: [],
   [ProviderSyncFindingKind.CONFERENCE_UNMAPPED]: [],
   [ProviderSyncFindingKind.DIVISION_UNMAPPED]: [],
+  [ProviderSyncFindingKind.CONFERENCE_TEAMS_MISSING]: [],
 };
 
 /**

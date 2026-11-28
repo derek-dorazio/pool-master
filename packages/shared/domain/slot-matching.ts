@@ -71,6 +71,13 @@ export interface SyncSeasonSlot {
   restOfPhase: boolean;
   /** The Season slot's date window, when it is placed by one and the Season has dates for it; null otherwise. */
   window: SlotWindow | null;
+  /**
+   * Where the slot's competition names a conference (#2052): the provider's feed ids of the teams
+   * that hold that conference in the Season, from their Season conference rows. Only a game whose
+   * teams are all among them is placed in the slot. Null for a competition with no conference,
+   * which takes any game.
+   */
+  conferenceTeams: ReadonlySet<string> | null;
 }
 
 /** A provider event's plays, each matched to its Season slot or left unmatched. */
@@ -104,6 +111,12 @@ export interface ProviderSlotMatches<Slot extends SyncSeasonSlot> {
  * takes whoever plays, and it is matched last, so a game a DATE_WINDOW slot places never lands
  * there too. A game neither places is `unplaced` when no window holds it. A slot's own games are
  * one play, from the earliest start to the latest.
+ *
+ * A slot whose competition names a conference (#2052) takes only a game whose teams all hold that
+ * conference in the Season (`conferenceTeams`): a game with no code and another conference's team
+ * passes it by for the next slot whose window holds it, or is unplaced; a coded play that names its
+ * teams and holds another conference's team is unplaced. A coded play that names no teams (a
+ * week of games) is the code's to place.
  */
 export function matchProviderSlots<Slot extends SyncSeasonSlot>(
   plays: readonly ProviderSlotPlay[],
@@ -114,7 +127,8 @@ export function matchProviderSlots<Slot extends SyncSeasonSlot>(
   const windowed = slots.flatMap((slot) => (slot.window === null ? [] : [{ slot, window: slot.window }]));
   const byDate = windowed.filter(({ slot }) => !slot.restOfPhase);
   const rest = windowed.filter(({ slot }) => slot.restOfPhase);
-  const holding = (play: ProviderSlotPlay) => ({ window }: { window: SlotWindow }) => play.startsAt >= window.startsAt && play.startsAt < window.endsAt;
+  const holding = (play: ProviderSlotPlay) => ({ slot, window }: { slot: Slot; window: SlotWindow }) =>
+    play.startsAt >= window.startsAt && play.startsAt < window.endsAt && inConference(slot, play.teams ?? []);
   const matches: ProviderSlotMatches<Slot> = { matched: [], unmatched: [], unplaced: [] };
   /** Each window a game is in, with the games that are its slot's own. */
   const byWindow = new Map<Slot, { window: SlotWindow; games: ProviderSlotPlay[] }>();
@@ -127,6 +141,7 @@ export function matchProviderSlots<Slot extends SyncSeasonSlot>(
     if (play.code !== null) {
       const slot = slotByCode.get(play.code);
       if (slot === undefined) matches.unmatched.push({ ...play, code: play.code });
+      else if (play.teams !== undefined && !inConference(slot, play.teams)) matches.unplaced.push(play);
       else matches.matched.push({ slot, play, fromGames: true, games: [play] });
       continue;
     }
@@ -149,6 +164,12 @@ export function matchProviderSlots<Slot extends SyncSeasonSlot>(
       : { slot, play: span, fromGames: true, games });
   }
   return matches;
+}
+
+/** Whether the slot takes a game between these teams: any game, unless its competition names a conference. */
+function inConference(slot: SyncSeasonSlot, teams: readonly string[]): boolean {
+  const { conferenceTeams } = slot;
+  return conferenceTeams === null || (teams.length > 0 && teams.every((team) => conferenceTeams.has(team)));
 }
 
 /** Games as one play, from the earliest start to the latest; null for none. */

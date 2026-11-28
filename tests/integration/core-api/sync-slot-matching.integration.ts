@@ -175,7 +175,7 @@ describe('The events sync matches games to Season slots by provider code (#2005)
  * A college football league synced from BALLDONTLIE's NCAAF, its 2027 Season current, with a slot
  * placed by date window for each of `slots`: `window` its window, or none.
  */
-async function windowedLeague(slots: ReadonlyArray<{ key: string; window: TestSlotWindow | undefined; restOfPhase?: boolean; competitionCode?: string; covered?: boolean }>) {
+async function windowedLeague(slots: ReadonlyArray<{ key: string; window: TestSlotWindow | undefined; restOfPhase?: boolean; competitionCode?: string; competitionPhase?: 'POSTSEASON' | 'POSTSEASON_CONFERENCE'; covered?: boolean }>) {
   const prisma = getPrisma();
   const sport = await prisma.sport.upsert({
     where: { sport: Sport.FOOTBALL },
@@ -189,7 +189,7 @@ async function windowedLeague(slots: ReadonlyArray<{ key: string; window: TestSl
   for (const slot of slots) {
     const [id] = await syncSlotsFor(prisma, {
       sportLeagueId: league.id, sportLeagueProviderMappingId, code: null, seasonIds: [seasonId], window: slot.window,
-      restOfPhase: slot.restOfPhase, competitionCode: slot.competitionCode, covered: slot.covered,
+      restOfPhase: slot.restOfPhase, competitionCode: slot.competitionCode, competitionPhase: slot.competitionPhase, covered: slot.covered,
     });
     slotIds.set(slot.key, id);
   }
@@ -425,6 +425,69 @@ describe('The events sync gives a REST_OF_PHASE slot the games of its window no 
 
     const few = await importInto([kickoff('2027-12-20T17:00:00Z'), kickoff('2027-12-31T20:00:00Z')]);
     const many = await importInto(Array.from({ length: 12 }, (_, index) => kickoff(`2027-12-${index < 6 ? '20' : '31'}T${String(10 + index).padStart(2, '0')}:00:00Z`)));
+
+    expect(statementCounts(many.statements)).toEqual(statementCounts(few.statements));
+  });
+});
+
+describe('The events sync places only a conference\'s teams in its conference\'s competition (#2052)', () => {
+  /**
+   * A league with two conference tournaments in its POSTSEASON_CONFERENCE phase, each a
+   * rest-of-phase slot over the same week, and teams holding those conferences this Season by
+   * their BALLDONTLIE feed ids.
+   */
+  async function conferenceTournaments(teamsOf: Record<'ACC' | 'SEC', readonly string[]>) {
+    const prisma = getPrisma();
+    const window = windowOf('2027-03-10T10:00:00Z', '2027-03-16T12:00:00Z', 'TENTATIVE');
+    const fixture = await windowedLeague([
+      { key: 'ACC', window, restOfPhase: true, competitionCode: 'ACC_TOURNAMENT', competitionPhase: 'POSTSEASON_CONFERENCE' },
+      { key: 'SEC', window, restOfPhase: true, competitionCode: 'SEC_TOURNAMENT', competitionPhase: 'POSTSEASON_CONFERENCE' },
+    ]);
+    const sportLeagueId = fixture.league.id;
+    for (const [index, code] of (['ACC', 'SEC'] as const).entries()) {
+      const conference = await prisma.sportLeagueConference.create({ data: { sportLeagueId, code, name: `${code} name`, description: `The ${code}, a test conference.`, displayOrder: index + 1 } });
+      await prisma.sportLeagueCompetition.update({ where: { sportLeagueId_code: { sportLeagueId, code: `${code}_TOURNAMENT` } }, data: { conferenceId: conference.id } });
+      for (const externalId of teamsOf[code]) {
+        const team = await prisma.participant.create({ data: { sportLeagueId, name: `Team ${externalId}`, participantType: 'TEAM' } });
+        await prisma.participantProviderMapping.create({ data: { participantId: team.id, sportLeagueId, providerId: BALLDONTLIE_TEST_PROVIDER_ID, participantType: 'TEAM', externalId } });
+        await prisma.sportLeagueSeasonTeamConference.create({ data: { sportLeagueId, sportLeagueSeasonId: fixture.seasonId, participantId: team.id, conferenceId: conference.id } });
+      }
+    }
+    return fixture;
+  }
+  const placedIn = async (sportLeagueId: string) => (await getPrisma().sportLeagueSeasonCompetitionSlotGameProviderMapping.findMany({
+    where: { sportLeagueId },
+    select: { sportLeagueSeasonCompetitionSlotId: true, externalId: true },
+    orderBy: { externalId: 'asc' },
+  })).map((row) => [row.sportLeagueSeasonCompetitionSlotId, row.externalId]);
+
+  it('places each game in the tournament of the conference both its teams hold, and leaves a game with another conference\'s team unplaced as an INFO finding', async () => {
+    const { league, slotIds } = await conferenceTournaments({ ACC: ['duke', 'unc'], SEC: ['auburn', 'florida'] });
+
+    await runSync(buildSync({ events: [seasonSlate([
+      kickoff('2027-03-12T23:00:00Z', ['duke', 'unc'], ['acc-game']),
+      kickoff('2027-03-13T01:00:00Z', ['auburn', 'florida'], ['sec-game']),
+      kickoff('2027-03-13T17:00:00Z', ['duke', 'florida'], ['cross-game']),
+    ])] }), league.id);
+
+    expect(await placedIn(league.id)).toEqual([[slotIds.get('ACC'), 'acc-game'], [slotIds.get('SEC'), 'sec-game']]);
+    const findings = await getPrisma().providerSyncFinding.findMany({ where: { sportLeagueId: league.id }, select: { kind: true, severity: true } });
+    expect(findings).toEqual([{ kind: ProviderSyncFindingKind.GAMES_UNPLACED, severity: ProviderSyncFindingSeverity.INFO }]);
+  });
+
+  it('places any number of conference games in the same number of statements', async () => {
+    const importInto = async (games: number) => {
+      const teams = Array.from({ length: games * 2 }, (_, index) => `acc-${String(index)}`);
+      const { league, seasonId, sportLeagueProviderMappingId } = await conferenceTournaments({ ACC: teams, SEC: [] });
+      const plays = Array.from({ length: games }, (_, index) => ({ ...kickoff(`2027-03-12T${String(10 + index).padStart(2, '0')}:00:00Z`, [teams[2 * index], teams[2 * index + 1]]), gameIds: [randomUUID()] }));
+      const { sportEvents } = integrationSportEventServices(getAppPrisma());
+      return recordStatements(() => sportEvents.importProviderSeason({
+        sportLeagueId: league.id, sportLeagueSeasonId: seasonId, providerId: 'balldontlie', sportLeagueProviderMappingId, providerEvents: [{ ...seasonSlate(plays), externalId: `ncaab-${randomUUID()}` }],
+      }));
+    };
+
+    const few = await importInto(2);
+    const many = await importInto(12);
 
     expect(statementCounts(many.statements)).toEqual(statementCounts(few.statements));
   });
