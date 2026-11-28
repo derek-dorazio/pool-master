@@ -6,23 +6,19 @@
 import type {
   ProviderSyncFindingOpenCount,
   SportLeagueFailedSync,
-  SportLeagueOverdueCandidate,
   SportLeagueOverviewFacts,
   SportLeagueOverviewReader,
 } from '@poolmaster/shared/db';
 import {
   compareByEnumOrder,
-  overdueExpectedEnd,
   ProviderSyncFindingSeverityOrder,
   ProviderSyncKindOrder,
   SportLeagueIssueTargetType,
   SportLeagueIssueType,
   SportLeagueSyncHealth,
-  type OverdueEventFacts,
   type ProviderSyncKind,
   type SportLeagueFindingsIssueItem,
   type SportLeagueIssue,
-  type SportLeagueOverdueIssueItem,
   type SportLeagueOverview,
   type SportLeagueSyncIssueItem,
 } from '@poolmaster/shared/domain';
@@ -32,15 +28,14 @@ export class SportLeagueOverviewService {
 
   async listOverviews(): Promise<SportLeagueOverview[]> {
     const now = this.deps.now?.() ?? new Date();
-    return buildSportLeagueOverviews(await this.deps.reader.readFacts(now), now);
+    return buildSportLeagueOverviews(await this.deps.reader.readFacts(now));
   }
 }
 
 /** Every sport league's overview, by sport (most popular first), then by name. */
-export function buildSportLeagueOverviews(facts: SportLeagueOverviewFacts, now: Date): SportLeagueOverview[] {
+export function buildSportLeagueOverviews(facts: SportLeagueOverviewFacts): SportLeagueOverview[] {
   const failedByLeague = groupBy(facts.failedSyncs, (sync) => sync.sportLeagueId);
   const heldByLeague = groupBy(facts.heldEvents, (event) => event.sportLeagueId);
-  const overdueByLeague = groupBy<SportLeagueOverdueCandidate>(facts.overdueCandidates, (event) => event.sportLeagueId);
   const findingsByLeague = groupBy(facts.openFindings, (count) => count.sportLeagueId);
 
   const overviews = facts.leagues.map((league): SportLeagueOverview => {
@@ -63,7 +58,7 @@ export function buildSportLeagueOverviews(facts: SportLeagueOverviewFacts, now: 
       }),
       issues: [
         ...findingsIssuesOf(findingsByLeague.get(league.id) ?? []),
-        ...issuesOf(failedSyncItemsOf(failed), heldByLeague.get(league.id) ?? [], overdueByLeague.get(league.id) ?? [], now),
+        ...issuesOf(failedSyncItemsOf(failed), heldByLeague.get(league.id) ?? []),
       ],
       season: facts.currentSeasonSpans.get(league.id) ?? null,
       nextEventStartsAt: facts.nextEventStarts.get(league.id) ?? null,
@@ -134,14 +129,13 @@ function failedSyncItemsOf(failedSyncs: readonly Omit<SportLeagueFailedSync, 'sp
 }
 
 /**
- * The issue types with something to do, in their fixed order: SYNC, RELEASE, OVERDUE. The League
- * page's events read gives each event its own, from that event's runs, hold and dates.
+ * The issue types with something to do, in their fixed order: SYNC, RELEASE. The League page's
+ * events read gives each event its own, from that event's runs and hold. A Game whose result is
+ * overdue is a GAME_OVERDUE finding (#2013), counted with the findings.
  */
 export function issuesOf(
   syncItems: readonly SportLeagueSyncIssueItem[],
   heldEvents: readonly Omit<SportLeagueOverviewFacts['heldEvents'][number], 'sportLeagueId'>[],
-  overdueCandidates: readonly OverdueEventFacts[],
-  now: Date,
 ): SportLeagueIssue[] {
   const issues: SportLeagueIssue[] = [];
   if (syncItems.length > 0) {
@@ -158,21 +152,7 @@ export function issuesOf(
       }));
     issues.push({ type: SportLeagueIssueType.RELEASE, count: items.length, items });
   }
-  const overdue = overdueItemsOf(overdueCandidates, now);
-  if (overdue.length > 0) {
-    issues.push({ type: SportLeagueIssueType.OVERDUE, count: overdue.length, items: overdue });
-  }
   return issues;
-}
-
-/** The overdue events among the candidates (#1865), most overdue first, each with when it should have ended. */
-function overdueItemsOf(candidates: readonly OverdueEventFacts[], now: Date): SportLeagueOverdueIssueItem[] {
-  return candidates
-    .flatMap((event): SportLeagueOverdueIssueItem[] => {
-      const expectedEnd = overdueExpectedEnd(event, now);
-      return expectedEnd === null ? [] : [{ label: event.name, occurredAt: expectedEnd, target: { type: SportLeagueIssueTargetType.SPORT_EVENT, id: event.id } }];
-    })
-    .sort((left, right) => left.occurredAt.getTime() - right.occurredAt.getTime() || left.label.localeCompare(right.label));
 }
 
 function compareOverviews(left: SportLeagueOverview, right: SportLeagueOverview): number {

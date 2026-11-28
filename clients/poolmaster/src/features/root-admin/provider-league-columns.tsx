@@ -49,7 +49,7 @@ export const providerLeagueColumns = (sportOrder: ExplicitEnumOrder<string>) => 
   }),
   columnHelper.accessor('typicalGameMinutes', {
     header: 'Typical game (min)',
-    meta: { info: 'How long one of its games usually takes; a game with no scheduled end is overdue this long after its start plus the overdue wait.', type: { kind: 'number' } },
+    meta: { info: 'How long one of its games usually takes; a Game still unfinished this long after its start, plus the overdue wait, raises a Game result overdue finding.', type: { kind: 'number' } },
   }),
   columnHelper.accessor('quietAfterMinutes', {
     header: 'Webhook quiet (min)',

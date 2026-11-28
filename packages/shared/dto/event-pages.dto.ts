@@ -3,7 +3,7 @@
  * name, each with its ways to play. Public reads: nothing here is about a league or a user.
  */
 import { z } from 'zod';
-import { EventPageOfferState, Sport, URL_SEGMENT_PATTERN } from '@poolmaster/shared/domain';
+import { ContestOpeningReason, EventPageOfferState, Sport, URL_SEGMENT_PATTERN } from '@poolmaster/shared/domain';
 import { DateTimeSchema } from './common.dto';
 import { ContestConfigTemplateDtoSchema } from './contest-management.dto';
 import { registerSchema } from './schema-registry';
@@ -34,6 +34,7 @@ export const EventPageOfferDtoSchema = z.object({
   sortOrder: z.number().int().describe('Where the offer sits on its page, first first.'),
   isPrimary: z.boolean().describe('The offer whose next slot heads the page: its dates are the page\'s. A page has one.'),
   state: z.enum(EventPageOfferState).describe('OPEN: Create contest would take the contest on the next slot\'s event now. NOT_YET: the event is still to open (not released, field not loaded, or a bracket\'s teams not set); show when it is expected from its start date.'),
+  waitingFor: z.enum(ContestOpeningReason).nullable().describe('What a NOT_YET offer waits for: EVENT_NOT_RELEASED, FIELD_NOT_LOADED or BRACKET_NOT_SET. Null when OPEN.'),
   nextSlot: EventPageNextSlotDtoSchema,
 }).describe('One way to play on an event page: a contest setup on the page\'s slot definition, with its next Season slot. An offer with no Season slot left that can still take the contest is left out.');
 export type EventPageOfferDto = z.infer<typeof EventPageOfferDtoSchema>;

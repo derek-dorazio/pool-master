@@ -915,7 +915,7 @@ describe('Commissioner tools › Contests › Create contest', () => {
     createContestMock.mockResolvedValue({
       error: {
         error: {
-          code: 'SPORT_EVENT_ALREADY_STARTED',
+          code: 'CONTEST_FIRST_GAME_STARTED',
           message: 'The event has already started, so a contest can no longer be made on it.',
         },
       },

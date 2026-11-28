@@ -4,7 +4,7 @@
  * Games there are.
  */
 
-import type { FieldWindowSlot, ScoresGame } from '../domain';
+import type { FieldWindowSlot, ProviderCode, ScoresGame } from '../domain';
 
 /** A synced league as the tick reads it: its id and the provider mapping its events are linked under. */
 export interface SyncedLeagueRef {
@@ -22,6 +22,14 @@ export interface LiveEventView {
   lastHeardAt: Date | null;
   /** When a completed scores sync of the event last changed something (#2094); null before the first. */
   lastScoresChangedAt: Date | null;
+}
+
+/** A Game that may be overdue (`gameOverdueExpectedEnd`): its event, its league, and each provider's id for it. */
+export interface OverdueGameView extends ScoresGame {
+  sportEventId: string;
+  sportLeagueId: string;
+  /** The Game's ids, one per provider that maps it. */
+  providerGameIds: ReadonlyArray<{ providerCode: ProviderCode; externalId: string }>;
 }
 
 /** One Season's span, as the tick reads it to tell whether its league is in season (`syncSeasonStateOf`). */
@@ -49,5 +57,11 @@ export interface SyncDueWorkReader {
    * Which of the leagues have a roster to sync (#2025): those whose provider mapping names the
    * provider's code for at least one of the league's positions. In one read.
    */
+  /**
+   * The leagues' Games that may be overdue at `now` (#2013): of their linked events, still
+   * scheduled or in progress, not moved to another Game, and scheduled to start before
+   * `overdueStartCutoff(now)`. In one read; the tick judges each by its league's typical length.
+   */
+  findOverdueGames(input: { leagues: readonly SyncedLeagueRef[]; now: Date }): Promise<OverdueGameView[]>;
   findRosteredLeagueIds(input: { leagues: readonly SyncedLeagueRef[] }): Promise<Set<string>>;
 }

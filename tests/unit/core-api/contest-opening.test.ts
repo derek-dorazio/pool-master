@@ -4,10 +4,11 @@
  * cutoff).
  */
 import { sportEventSlots, sportPlay } from '../../support/sport-play';
-import { ContestOpening, SelectionType, SportEventStatus, Sport } from '@poolmaster/shared/domain';
+import { ContestOpening, ContestOpeningReason, SelectionType, SportEventStatus, Sport } from '@poolmaster/shared/domain';
 import {
   contestOpening,
   eventContestOpenings,
+  eventOpening,
   type ContestOpeningReader,
   type EventContestOpening,
   type EventOpeningFacts,
@@ -93,10 +94,65 @@ describe('contestOpening', () => {
     const underWay = event({ status: SportEventStatus.IN_PROGRESS, startDate: EARLIER });
 
     expect(await contestOpening(reader(event({ status: SportEventStatus.DRAFT })), 'event-1', TIERED, NOW))
-      .toEqual({ opening: ContestOpening.NOT_YET, closesAt: LATER });
+      .toEqual({ opening: ContestOpening.NOT_YET, reason: ContestOpeningReason.EVENT_NOT_RELEASED, closesAt: LATER });
     expect((await contestOpening(reader(event()), 'event-1', BRACKET, NOW)).closesAt).toEqual(LATER);
     expect((await contestOpening(reader(underWay, { squaresKickoff: kickoff }), 'event-1', SQUARES, NOW)).closesAt).toEqual(kickoff);
-    expect(await contestOpening(reader(event({ startDate: EARLIER })), 'event-1', TIERED, NOW)).toEqual({ opening: ContestOpening.CLOSED, closesAt: null });
+    expect(await contestOpening(reader(event({ startDate: EARLIER })), 'event-1', TIERED, NOW)).toEqual({ opening: ContestOpening.CLOSED, reason: ContestOpeningReason.EVENT_STARTED, closesAt: null });
+  });
+});
+
+describe('contestOpening\'s reason for each wait and close (#2015)', () => {
+  const reasonOf = async (sportEvent: ContestCreateSportEventState | null, setup: { selectionType: SelectionType }, options: Parameters<typeof reader>[1] = {}) =>
+    (await contestOpening(reader(sportEvent, options), 'event-1', setup, NOW)).reason;
+
+  it('names the wait: release first, then the field, then a bracket\'s teams', async () => {
+    expect(await reasonOf(event({ status: SportEventStatus.DRAFT, participantCount: 0 }), TIERED)).toBe(ContestOpeningReason.EVENT_NOT_RELEASED);
+    expect(await reasonOf(event({ participantCount: 0 }), TIERED)).toBe(ContestOpeningReason.FIELD_NOT_LOADED);
+    expect(await reasonOf(event(), BRACKET, { bracketProblem: 'a team to be decided' })).toBe(ContestOpeningReason.BRACKET_NOT_SET);
+  });
+
+  it('names the close: the event under way, or squares with every game kicked off', async () => {
+    const underWay = event({ status: SportEventStatus.IN_PROGRESS, startDate: EARLIER });
+    expect(await reasonOf(underWay, TIERED)).toBe(ContestOpeningReason.EVENT_STARTED);
+    expect(await reasonOf(underWay, SQUARES, { squaresKickoff: null })).toBe(ContestOpeningReason.NO_GAME_LEFT);
+    // An event that no longer exists is closed with no wait or start to name.
+    expect(await reasonOf(null, TIERED)).toBeNull();
+  });
+
+  it('gives no reason for an open setup', async () => {
+    expect(await reasonOf(event(), TIERED)).toBeNull();
+  });
+});
+
+describe('contestOpening starts from the event-level rule (#1932)', () => {
+  const EVENTS: Array<[string, ContestCreateSportEventState]> = [
+    ['ready', event()],
+    ['a draft', event({ status: SportEventStatus.DRAFT })],
+    ['without its field', event({ participantCount: 0 })],
+    ['past its start', event({ startDate: EARLIER })],
+    ['a knockout under way', event({ status: SportEventStatus.IN_PROGRESS, startDate: EARLIER })],
+    ['a draft past its start', event({ status: SportEventStatus.DRAFT, startDate: EARLIER })],
+    ['over', event({ status: SportEventStatus.COMPLETED, startDate: EARLIER })],
+  ];
+  const SETUPS = Object.values(SelectionType).map((selectionType) => ({ selectionType }));
+
+  it.each(EVENTS)('for an event %s, every setup is CLOSED or NOT_YET whenever the event-level row is, with its reason, and OPEN where it is and its own checks pass', async (_name, sportEvent) => {
+    for (const setup of SETUPS) {
+      const row = eventOpening(sportEvent, setup.selectionType, NOW);
+      const window = await contestOpening(reader(sportEvent), 'event-1', setup, NOW);
+      if (row.opening === ContestOpening.OPEN) {
+        // With its own checks passing (a squares game ahead, the bracket set), an OPEN row stays OPEN.
+        expect([setup.selectionType, window.opening]).toEqual([setup.selectionType, ContestOpening.OPEN]);
+      } else {
+        expect([setup.selectionType, window.opening, window.reason]).toEqual([setup.selectionType, row.opening, row.reason]);
+      }
+    }
+  });
+
+  it('agrees with the event list\'s row for squares on a knockout with no game left only by narrowing it: OPEN in the list, CLOSED on create', async () => {
+    const underWay = event({ status: SportEventStatus.IN_PROGRESS, startDate: EARLIER });
+    expect(eventOpening(underWay, SelectionType.SQUARES, NOW).opening).toBe(ContestOpening.OPEN);
+    expect((await contestOpening(reader(underWay, { squaresKickoff: null }), 'event-1', SQUARES, NOW)).opening).toBe(ContestOpening.CLOSED);
   });
 });
 
@@ -120,7 +176,7 @@ describe('eventContestOpenings, the event list\'s openings per selection type (#
 
   it('keeps a knockout under way open to squares alone, closing every other format, a bracket included', () => {
     const rows = byType(eventContestOpenings(facts({ status: SportEventStatus.IN_PROGRESS, startDate: EARLIER }), NOW));
-    expect(rows.BRACKET).toEqual({ selectionType: 'BRACKET', opening: 'CLOSED' });
+    expect(rows.BRACKET).toEqual({ selectionType: 'BRACKET', opening: 'CLOSED', reason: 'EVENT_STARTED' });
     expect(rows.SQUARES.opening).toBe(ContestOpening.OPEN);
     expect(rows.TIERED.opening).toBe(ContestOpening.CLOSED);
     expect(rows.PICK_EM.opening).toBe(ContestOpening.CLOSED);

@@ -44,7 +44,7 @@ export const ProviderLeagueDtoSchema = z.object({
   sport: SportDtoSchema.describe('The sport the league plays.'),
   webhookEventSet: z.enum(ProviderWebhookEventSet).describe('Which of the provider\'s webhook events the league sends for its games.'),
   quietAfterMinutes: LeagueMinutesSchema.describe('How long a game may go between two of its notifications in normal play, in minutes; past it the live-score sweep warns that the webhook may have stopped.'),
-  typicalGameMinutes: LeagueMinutesSchema.describe('How long one of its games usually takes from its scheduled start, in minutes: a start plus this is when a game with no scheduled end should have ended, for the overdue results check.'),
+  typicalGameMinutes: LeagueMinutesSchema.describe('How long one of its games usually takes from its scheduled start, in minutes: a Game\'s start plus this is when it should have ended, for the Game result overdue finding (GAME_OVERDUE).'),
   isEnabled: z.boolean().describe('Whether the provider\'s adapter reads the league. A change takes effect when the server tasks next start.'),
 }).describe('One of a provider\'s own leagues (#1997).');
 export type ProviderLeagueDto = z.infer<typeof ProviderLeagueDtoSchema>;

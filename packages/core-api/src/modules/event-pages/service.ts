@@ -8,6 +8,7 @@ import type { FastifyBaseLogger } from 'fastify';
 import type { EventPageRepository } from '@poolmaster/shared/db';
 import {
   ContestOpening,
+  type ContestOpeningReason,
   EventPageOfferState,
   type EventPage,
   type EventPageNextSlot,
@@ -31,6 +32,8 @@ export class EventPageNotFoundError extends Error {
 export interface EventPageOfferView {
   offer: EventPageOffer;
   state: EventPageOfferState;
+  /** What a NOT_YET offer waits for (`ContestOpeningReason`); null when OPEN. */
+  waitingFor: ContestOpeningReason | null;
   nextSlot: EventPageNextSlot;
   /** When the setup's cutoff on the slot's event falls, after which this offer no longer shows as it does now. */
   closesAt: Date;
@@ -135,10 +138,10 @@ export class EventPageService {
 async function showOffer(offer: EventPageOffer, slots: readonly EventPageNextSlot[], askOpening: ContestOpeningAsk): Promise<EventPageOfferView | null> {
   const setup: ContestOpeningSetup = { selectionType: offer.template.selectionType };
   for (const nextSlot of slots) {
-    const { opening, closesAt } = await askOpening(nextSlot.sportEventId, setup);
+    const { opening, reason, closesAt } = await askOpening(nextSlot.sportEventId, setup);
     if (opening !== ContestOpening.CLOSED && closesAt !== null) {
       const state = opening === ContestOpening.OPEN ? EventPageOfferState.OPEN : EventPageOfferState.NOT_YET;
-      return { offer, state, nextSlot, closesAt };
+      return { offer, state, waitingFor: reason, nextSlot, closesAt };
     }
   }
   return null;

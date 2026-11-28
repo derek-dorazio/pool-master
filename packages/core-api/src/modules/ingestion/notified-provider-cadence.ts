@@ -40,6 +40,14 @@ export function providerLeagueQuietAfterMs(store: Pick<ProviderSettingsStore, 'f
 }
 
 /**
+ * How long one game of each provider league, by its row's id, usually takes, in minutes (#2013):
+ * its row's `typicalGameMinutes`; undefined for a league no Provider row has.
+ */
+export function providerLeagueTypicalGameMinutes(store: Pick<ProviderSettingsStore, 'findLeague'>): (providerLeagueId: string) => number | undefined {
+  return (providerLeagueId) => store.findLeague(providerLeagueId)?.league.typicalGameMinutes;
+}
+
+/**
  * Whether each provider league, by its row's id, subscribes to webhook events: false for a league
  * whose set is NONE (a feed with no notifications, #2045), and for a league no Provider row has.
  */
